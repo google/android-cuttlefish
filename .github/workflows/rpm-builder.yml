@@ -29,6 +29,11 @@ jobs:
 
     steps:
 
+      - name: Run matrix for ${{ MATRIX.TARGET }}-${{ MATRIX.PLATFORM }}
+        run: |
+          echo "Target: ${{ MATRIX.TARGET }}"
+          echo "Platform: ${{ MATRIX.PLATFORM }}"
+
       # https://github.com/actions/checkout
       - uses: 'actions/checkout@v4'
         id: checkout
