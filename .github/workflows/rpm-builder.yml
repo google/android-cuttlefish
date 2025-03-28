@@ -95,6 +95,8 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     with:
       docker-image: ${{ needs.build-docker-images.outputs.rhel-integration }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
 
   rhel-orchestration:
     needs: test-rpm-packages
