@@ -11,14 +11,15 @@ jobs:
       matrix:
         platform:
           - name: linux/amd64
-        target:
-          - name: rpm-builder
+        target: [ 'rpm-builder', 'rpm-testing', 'rhel-integration', 'rhel-orchestration' ]
+        include:
+          - target: rpm-builder
             stage: builder
-          - name: rpm-testing
+          - target: rpm-testing
             stage: testing
-          - name: rhel-integration
+          - target: rhel-integration
             stage: integration
-          - name: rhel-orchestration
+          - target: rhel-orchestration
             stage: orchestration
 
     permissions:
