@@ -266,12 +266,50 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "lint",
+    srcs = ["lint.cpp"],
+    hdrs = ["lint.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+    ],
+)
+
+clang_tidy_test(
+    name = "lint_clang_tidy",
+    srcs = [":lint"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "login",
+    srcs = ["login.cpp"],
+    hdrs = ["login.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/web",
+        "//libbase",
+        "@zlib",
+    ],
+)
+
+clang_tidy_test(
+    name = "login_clang_tidy",
+    srcs = [":login"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Leaf commands: commands that don't execute other commands
 cc_library(
     name = "leaf_commands",
     srcs = [
-        "lint.cpp",
-        "login.cpp",
         "noop.cpp",
         "power_btn.cpp",
         "powerwash.cpp",
@@ -287,8 +325,6 @@ cc_library(
         "version.cpp",
     ],
     hdrs = [
-        "lint.h",
-        "login.h",
         "noop.h",
         "power_btn.h",
         "powerwash.h",
