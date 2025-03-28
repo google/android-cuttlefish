@@ -51,15 +51,15 @@ jobs:
         # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
         run: |
           mkdir ${{ RUNNER.TEMP }}/root_volume
-          docker run --name rpm-build --quiet --attach STDOUT --attach STDERR --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
-          CID=`docker ps -aqf "name=^rpm-build$"`
+          docker run --name rpm-builder --quiet --attach STDOUT --attach STDERR --volume ${{ RUNNER.TEMP }}/root_volume:/root ${{ INPUTS.DOCKER-IMAGE }}
+          CID=`docker ps -aqf "name=^rpm-builder$"`
           echo "CID: ${CID}"          
           docker inspect -f {{.Mounts}} $CID
-          ls ${{ RUNNER.TEMP }}/root_volume
+          ls -la ${{ RUNNER.TEMP }}/root_volume
           
-          docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
-          docker cp $CID:/root/android-cuttlefish-src-rpm.tar.gz ${{ RUNNER.TEMP }}
-          docker rm rpm-build
+          # docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+          # docker cp $CID:/root/android-cuttlefish-src-rpm.tar.gz ${{ RUNNER.TEMP }}
+          docker rm rpm-builder
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/upload-artifact
