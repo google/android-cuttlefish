@@ -6,10 +6,10 @@ ARG BAZEL_VERSION=7.6.0
 
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler" \
 org.opencontainers.image.source="https://github.com/google/android-cuttlefish/blob/main/docker/rpm-builder/Dockerfile" \
+org.opencontainers.image.vendor="Rocky Enterprise Software Foundation" \
 org.opencontainers.image.title="RPM Builder" \
 org.opencontainers.image.description="RPM package builder image based on Rocky Linux" \
 org.opencontainers.image.authors="Martin Zeitler" \
-org.opencontainers.image.vendor="Google" \
 org.opencontainers.image.version="latest"
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
@@ -42,7 +42,7 @@ RUN dnf -y install qemu-kvm nginx systemd-journal-remote
 RUN dnf clean all
 
 # Add entrypoint scripts.
-VOLUME "/home/runner"
+# VOLUME "/home/runner"
 ENTRYPOINT [ "/bin/bash" ]
 RUN groupadd docker && adduser runner && usermod -a -G docker runner
 USER runner
