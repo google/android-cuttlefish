@@ -63,10 +63,11 @@ jobs:
         id: build-rpm-packages
         # --entrypoint ${{ INPUTS.ENTRY-POINT }}
         run: |
+          mkdir ${{ GITHUB.WORKSPACE }/packages
           docker run --name rpm-build --attach STDOUT --attach STDERR --quiet ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-build$"`
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/.gitkeep ${{ GITHUB.WORKSPACE }}
-          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/.gitkeep ${{ GITHUB.WORKSPACE }}
+          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/SRPMS/ ${{ GITHUB.WORKSPACE }}/packages
+          docker cp $CID:/root/android-cuttlefish/tools/rpmbuild/RPMS/ ${{ GITHUB.WORKSPACE }}/packages
           docker stop rpm-build && docker rm rpm-build
           echo "result=ok" >> $GITHUB_OUTPUT
 
