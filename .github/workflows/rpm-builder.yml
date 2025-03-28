@@ -30,19 +30,6 @@ jobs:
       - name: Get latest code
         uses: actions/checkout@v4
 
-      # https://docs.docker.com/reference/cli/dockerd/#daemon-configuration-file
-      # https://github.com/docker/setup-docker-action
-      - name: Set up Docker
-        uses: 'docker/setup-docker-action@v4'
-        with:
-          daemon-config: |
-            {
-              "debug": true,
-              "features": {
-                "containerd-snapshotter": true
-              }
-            }
-
       - name: Setup Buildx
         id: buildx-setup
         if: ${{ inputs.enable-docker-cache }}
@@ -85,6 +72,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
+          build-args: |
+            --target builder
 
       - name: Build and push Docker images with cache
         if: ${{ inputs.enable-docker-cache }}
