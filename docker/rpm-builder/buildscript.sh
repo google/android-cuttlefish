@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+touch -p cd /home/test.txt
+
 cd /root || exit
 # git clone https://github.com/google/android-cuttlefish.git
 git clone https://github.com/syslogic/android-cuttlefish.git
