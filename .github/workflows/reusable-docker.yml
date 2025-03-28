@@ -52,10 +52,11 @@ jobs:
         run: |
           # Mounting file-system to docker volume
           mkdir ${{ RUNNER.TEMP }}/home_volume
-          docker volume create --opt type=none --opt o=bind --opt device=${{ RUNNER.TEMP }}/home_volume home_volume
+          # docker volume create --opt type=none --opt o=bind --opt device=${{ RUNNER.TEMP }}/home_volume home_volume
+          # --volume ${{ RUNNER.TEMP }}/home_volume:/home
           
           # Running the container with that volume
-          docker run --name rpm-builder --quiet --entrypoint /root/entrypoint.sh --volume ${{ RUNNER.TEMP }}/home_volume:/home ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-builder --quiet --entrypoint /root/entrypoint.sh  ${{ INPUTS.DOCKER-IMAGE }}
           CID=`docker ps -aqf "name=^rpm-builder$"`
           
           # Debug Output
@@ -64,8 +65,9 @@ jobs:
           sudo ls -la $MOUNTPOINT
           
           ls -la ${{ RUNNER.TEMP }}/home_volume
-          docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
-
+          # docker cp $CID:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+          docker cp rpm-builder:/home/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
+  
           # Cleanup
           docker rm rpm-builder
           echo "result=ok" >> $GITHUB_OUTPUT

@@ -1,11 +1,9 @@
 # Dockerfile based on Rocky Linux
 # https://hub.docker.com/_/rockylinux
-# docker build --target builder -t syslogic/rpm-builder:latest .
-# docker build --target integration -t syslogic/rpm-integration:latest .
-# docker build --target orchestration -t syslogic/rpm-orchestration:latest .
 ARG ROCKY_LINUX_VERSION=9.5
 FROM rockylinux/rockylinux:$ROCKY_LINUX_VERSION AS rockylinux
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
+VOLUME [ "/home/runner/work/_temp/home_volume:/home" ]
 
 # Base Image
 FROM rockylinux AS base
