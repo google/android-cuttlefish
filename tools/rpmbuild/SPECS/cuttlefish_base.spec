@@ -10,7 +10,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Note: `ncurses-compat-libs` require EPEL repository and `protobuf` requires CRB repository.
-BuildRequires:  curl-devel, openssl-devel, ncurses-compat-libs, protobuf-devel, protobuf-compiler
+BuildRequires:  curl-devel, openssl-devel, wayland-devel ncurses-compat-libs, protobuf-devel, protobuf-compiler
 
 Requires:       shadow-utils, redhat-lsb-core, ebtables-legacy, iproute
 Requires:       iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
