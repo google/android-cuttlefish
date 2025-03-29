@@ -23,11 +23,12 @@ jobs:
 
   metadata:
     runs-on: ubuntu-latest
-
     continue-on-error: true
-
     outputs:
-      metadata: string
+      metadata_1: ${{ steps.metadata.outputs.output_1 }}
+      metadata_2: ${{ steps.metadata.outputs.output_2 }}
+      metadata_3: ${{ steps.metadata.outputs.output_3 }}
+      metadata_4: ${{ steps.metadata.outputs.output_4 }}
     strategy:
       max-parallel: 4
       matrix:
@@ -52,10 +53,9 @@ jobs:
 
       - id: metadata-step-output
         env:
-          MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
           OUTPUTS: ${{ steps.metadata.outputs }}
         run: |
-          TARGET=${-/_/$MATRIX_TARGET}
+          TARGET=${-/_/metadata-${{ MATRIX.TARGET }}}
           echo "${TARGET}='${OUTPUTS}'\n" >> $GITHUB_OUTPUT
           echo "### Workflow variables\n$TARGET | $OUTPUTS" >> $GITHUB_STEP_SUMMARY
 
