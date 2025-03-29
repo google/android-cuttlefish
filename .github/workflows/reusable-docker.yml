@@ -2,10 +2,22 @@ name: Reusable Docker Container Run
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
     inputs:
+      registry:
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        default: ${{ GITHUB.ACTOR }}
+        required: false
+        type: string
       image:
         required: true
         type: string
+
       platform:
         default: linux/amd64
         required: false
@@ -41,9 +53,9 @@ jobs:
         uses: 'docker/login-action@v3'
         id: container-registry
         with:
-          registry: ghcr.io
-          username: ${{ GITHUB.ACTOR }}
-          password: ${{ SECRETS.GITHUB_TOKEN }}
+          registry: ${{ INPUTS.REGISTRY }}
+          username: ${{ INPUTS.USERNAME }}
+          password: ${{ SECRETS.TOKEN }}
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/

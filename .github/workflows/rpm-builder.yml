@@ -30,6 +30,7 @@ jobs:
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'docker/setup-buildx-action@v3'
+
       - uses: './.github/workflows/reusable-metadata.yml'
         id: metadata
         with:
@@ -59,6 +60,11 @@ jobs:
           checksums: ${{ steps.build.outputs.checksums }}
           digest: ${{ steps.build.outputs.digest }}
 
+  build-metadata:
+    uses: ./.github/workflows/reusable-metadata.yml
+    secrets:
+      token: ${{ SECRETS.TOKEN }}
+
   run-docker-image:
     uses: ./.github/workflows/reusable-docker.yml
     needs: build-docker-images
@@ -66,7 +72,7 @@ jobs:
       image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
       platform: ${{ MATRIX.PLATFORM }}
     secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
+      token: ${{ SECRETS.TOKEN }}
     strategy:
       max-parallel: 5
       matrix:

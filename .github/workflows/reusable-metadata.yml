@@ -2,6 +2,9 @@ name: Reusable Container Metadata Job
 
 on:
   workflow_call:
+    secrets:
+      token:
+        required: true
     inputs:
       registry:
         default: 'ghcr.io'
@@ -11,13 +14,6 @@ on:
         default: ${{ GITHUB.ACTOR }}
         required: false
         type: string
-      password:
-        default: ${{ GITHUB.GITHUB_TOKEN }}
-        required: false
-        type: string
-      image:
-        required: true
-        type: string
 
     outputs:
       metadata:
@@ -25,10 +21,17 @@ on:
         description: "Metadata output"
 
 jobs:
+
   metadata:
     runs-on: ubuntu-latest
     outputs:
-      metadata: ${{ steps.metadata.outputs }}
+      metadata: ${{ step.metadata.outputs }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        platform: [ linux/amd64 ]
+        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
+
     steps:
 
       - uses: 'docker/login-action@v3'
@@ -36,7 +39,7 @@ jobs:
         with:
           registry: ${{ INPUTS.REGISTRY }}
           username: ${{ INPUTS.USERNAME }}
-          password: ${{ INPUTS.PASSWORD }}
+          password: ${{ SECRETS.TOKEN }}
 
       - uses: 'docker/metadata-action@v5'
         id: metadata

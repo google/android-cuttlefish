@@ -2,7 +2,9 @@ name: Reusable Container Attestation Job
 
 on:
   workflow_call:
-
+    secrets:
+      token:
+        required: true
     inputs:
       registry:
         default: 'ghcr.io'
@@ -43,7 +45,7 @@ jobs:
         with:
           registry: ${{ INPUTS.REGISTRY }}
           username: ${{ INPUTS.USERNAME }}
-          password: ${{ INPUTS.PASSWORD }}
+          password: ${{ SECRETS.TOKEN }}
 
       - uses: 'actions/attest-build-provenance@v2'
         id: attestation
