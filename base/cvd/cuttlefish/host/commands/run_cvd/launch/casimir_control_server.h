@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/run_cvd/launch/casimir_control_server.h"
-
-#include <string>
+#pragma once
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -30,20 +27,6 @@ Result<std::optional<MonitorCommand>> CasimirControlServer(
     const CuttlefishConfig& config,
     const CuttlefishConfig::EnvironmentSpecific& environment,
     const CuttlefishConfig::InstanceSpecific& instance,
-    GrpcSocketCreator& grpc_socket) {
-  if (!config.enable_host_nfc()) {
-    return {};
-  }
-  if (!instance.start_casimir()) {
-    return {};
-  }
-
-  Command casimir_control_server_cmd(CasimirControlServerBinary());
-  casimir_control_server_cmd.AddParameter(
-      "-grpc_uds_path=", grpc_socket.CreateGrpcSocket("CasimirControlServer"));
-  casimir_control_server_cmd.AddParameter("-casimir_rf_path=",
-                                          environment.casimir_rf_socket_path());
-  return casimir_control_server_cmd;
-}
+    GrpcSocketCreator& grpc_socket);
 
 }  // namespace cuttlefish

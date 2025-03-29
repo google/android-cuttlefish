@@ -77,6 +77,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "casimir_control_server",
+    srcs = ["casimir_control_server.cpp"],
+    hdrs = ["casimir_control_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "casimir_control_server_clang_tidy",
+    srcs = [":casimir_control_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "grpc_socket_creator",
     srcs = ["grpc_socket_creator.cpp"],
     hdrs = ["grpc_socket_creator.h"],
@@ -157,7 +175,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "casimir_control_server.cpp",
         "console_forwarder.cpp",
         "control_env_proxy_server.cpp",
         "echo_server.cpp",
