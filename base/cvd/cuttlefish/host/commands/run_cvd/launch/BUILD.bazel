@@ -58,6 +58,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "casimir",
+    srcs = ["casimir.cpp"],
+    hdrs = ["casimir.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "casimir_clang_tidy",
+    srcs = [":casimir"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "log_tee_creator",
     srcs = ["log_tee_creator.cpp"],
     hdrs = ["log_tee_creator.h"],
@@ -121,7 +140,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "casimir.cpp",
         "casimir_control_server.cpp",
         "console_forwarder.cpp",
         "control_env_proxy_server.cpp",
