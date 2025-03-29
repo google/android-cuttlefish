@@ -31,10 +31,13 @@ jobs:
       - uses: 'actions/checkout@v4'
       - uses: 'docker/setup-buildx-action@v3'
 
-      - uses: './.github/workflows/reusable-metadata.yml'
+      # https://github.com/docker/metadata-action
+      - name: Extract metadata (tags, labels)
+        uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          image: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
+          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
