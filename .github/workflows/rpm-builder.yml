@@ -4,14 +4,14 @@ on: [ push ]
 
 jobs:
 
-  image-metadata:
+  collect-metadata:
     uses: ./.github/workflows/reusable-metadata.yml
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
 
   build-images:
     runs-on: ubuntu-latest
-    needs: image-metadata
+    needs: collect-metadata
     permissions:
       contents: read
       packages: write
