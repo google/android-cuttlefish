@@ -98,11 +98,6 @@ launchStreamerComponent();
 
 fruit::Component<WebRtcController> WebRtcControllerComponent();
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
-McuComponent();
-
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  InputConnectionsProvider, LogTeeCreator>
 VhostInputDevicesComponent();
