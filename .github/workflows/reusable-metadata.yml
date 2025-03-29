@@ -58,8 +58,8 @@ jobs:
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
           
-          echo INDEX: ${TARGET} >> $GITHUB_STEP_SUMMARY
-          echo DATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
+          echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
+          echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
 
   summary:
     runs-on: ubuntu-latest
