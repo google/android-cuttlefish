@@ -13,20 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/echo_server.h"
-
-#include <string>
+#pragma once
 
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/command_source.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
-MonitorCommand EchoServer(GrpcSocketCreator& grpc_socket) {
-  return Command(EchoServerBinary())
-      .AddParameter("--grpc_uds_path=",
-                    grpc_socket.CreateGrpcSocket("EchoServer"));
-}
+MonitorCommand EchoServer(GrpcSocketCreator& grpc_socket);
 
 }  // namespace cuttlefish

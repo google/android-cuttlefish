@@ -131,6 +131,24 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+
+cc_library(
+    name = "echo_server",
+    srcs = ["echo_server.cpp"],
+    hdrs = ["echo_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "echo_server_clang_tidy",
+    srcs = [":echo_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "grpc_socket_creator",
     srcs = ["grpc_socket_creator.cpp"],
@@ -212,7 +230,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "echo_server.cpp",
         "gnss_grpc_proxy.cpp",
         "input_connections_provider.h",
         "kernel_log_monitor.cpp",
