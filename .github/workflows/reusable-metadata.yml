@@ -21,7 +21,7 @@ on:
 
 jobs:
 
-  metadata-matrix:
+  metadata:
     runs-on: ubuntu-latest
     outputs:
       builder: ${{ steps.metadata.outputs.metadata_rpm_builder }}
@@ -59,9 +59,9 @@ jobs:
           echo INDEX: ${TARGET} | tr "[:lower:]" "[:upper:]" >> $GITHUB_STEP_SUMMARY
           echo DATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
-  metadata-matrix-output:
+  metadata-summary:
     runs-on: ubuntu-latest
-    needs: metadata-matrix
+    needs: metadata
     steps:
       - run: |
           echo ## ENV: >> $GITHUB_STEP_SUMMARY
