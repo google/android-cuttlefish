@@ -47,10 +47,6 @@ Result<MonitorCommand> NfcConnector(
     const CuttlefishConfig::EnvironmentSpecific&,
     const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 KernelLogPipeProvider>
-KernelLogMonitorComponent();
-
 Result<MonitorCommand> LogcatReceiver(
     const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific&);
