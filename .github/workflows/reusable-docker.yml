@@ -57,18 +57,20 @@ jobs:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
         run: |
           docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet $RPM_PLATFORM
-          VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')
+          MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
+          VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')          
           DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
           CID=`docker ps -aqf "name=^rpm-builder$"`
-          echo Listing container $CID with attached volume: /var/lib/docker/volumes/$VOLUME/_data
-
+          
+          echo Listing container $CID with attached volume: $DIRECTORY
+          echo Mountpoint value: $MOUNT_POINT
+          
           # TODO: Finds nothing, because the entrypoint.sh does not seem to execute.
           # docker cp $CID:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           # docker cp rpm-builder:/root/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           sudo ls -la $DIRECTORY
           cp $DIRECTORY/android-cuttlefish-rpm.tar.gz ${{ RUNNER.TEMP }}
           
-          # Cleanup
           docker rm rpm-builder
           echo "result=ok" >> $GITHUB_OUTPUT
 
