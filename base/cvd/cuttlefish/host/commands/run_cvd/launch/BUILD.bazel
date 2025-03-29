@@ -25,6 +25,22 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "automotive_proxy",
+    srcs = ["automotive_proxy.cpp"],
+    hdrs = ["automotive_proxy.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "automotive_proxy_clang_tidy",
+    srcs = [":automotive_proxy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -69,7 +85,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "automotive_proxy.cpp",
         "bluetooth_connector.cpp",
         "casimir.cpp",
         "casimir_control_server.cpp",

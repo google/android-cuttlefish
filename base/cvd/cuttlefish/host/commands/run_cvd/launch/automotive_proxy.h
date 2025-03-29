@@ -13,26 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/automotive_proxy.h"
+#pragma once
 
 #include <optional>
-#include <string>
 
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
 std::optional<MonitorCommand> AutomotiveProxyService(
-    const CuttlefishConfig& config) {
-  if (!config.enable_automotive_proxy()) {
-    return {};
-  }
-  // Create the Automotive Proxy command
-  return Command(AutomotiveProxyBinary())
-      .AddParameter(
-          DefaultHostArtifactsPath("etc/automotive/proxy_config.json"));
-}
+    const CuttlefishConfig& config);
 
 }  // namespace cuttlefish
