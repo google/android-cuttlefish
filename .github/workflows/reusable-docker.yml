@@ -65,7 +65,7 @@ jobs:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
         run: |
 
-          docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet ${{ INPUTS.IMAGE }}
+          docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
           VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')          
           DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
@@ -98,7 +98,7 @@ jobs:
         if: ${{ contains(INPUTS.IMAGE, 'testing') }}
         id: test-rpm-packages
         run: |
-          docker run --name rpm-testing --quiet ${{ INPUTS.IMAGE }}
+          docker run --name rpm-testing --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
           docker rm rpm-testing
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -107,7 +107,7 @@ jobs:
         if: ${{ contains(INPUTS.IMAGE, 'integration') }}
         id: test-integration
         run: |
-          docker run --name rhel-integration --quiet ${{ INPUTS.IMAGE }}
+          docker run --name rhel-integration --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -115,5 +115,5 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         run: |
-          docker run --name rhel-orchestration --quiet ${{ INPUTS.IMAGE }}
+          docker run --name rhel-orchestration --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
           echo "result=ok" >> $GITHUB_OUTPUT
