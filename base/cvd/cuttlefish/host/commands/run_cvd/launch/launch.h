@@ -41,11 +41,6 @@ fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::EnvironmentSpecific,
-                                 GrpcSocketCreator>>
-OpenwrtControlServerComponent();
-
 fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>

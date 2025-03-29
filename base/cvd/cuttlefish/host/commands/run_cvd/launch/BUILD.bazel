@@ -365,6 +365,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "openwrt_control_server",
+    srcs = ["openwrt_control_server.cpp"],
+    hdrs = ["openwrt_control_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "openwrt_control_server_clang_tidy",
+    srcs = [":openwrt_control_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -432,7 +452,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "openwrt_control_server.cpp",
         "pica.cpp",
         "root_canal.cpp",
         "screen_recording_server.cpp",
