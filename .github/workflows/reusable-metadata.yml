@@ -70,7 +70,7 @@ jobs:
     needs: metadata
     steps:
       - env:
-          JSON_OUTPUT: ${{ fromJSON(needs.metadata.outputs) }}
+          JSON_OUTPUT: ${{ needs.metadata.outputs }}
         run: |
           echo $JSON_OUTPUT
           echo "metadata='$JSON_OUTPUT'\n" >> $GITHUB_OUTPUT
