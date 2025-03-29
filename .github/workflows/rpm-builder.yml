@@ -37,7 +37,6 @@ jobs:
           username: ${{ GITHUB.ACTOR }}
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
-
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels)
         uses: 'docker/metadata-action@v5'
@@ -55,7 +54,7 @@ jobs:
         with:
           context: .
           file: docker/rpm-builder/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
           platforms: ${{ MATRIX.PLATFORM }}
           target: ${{ MATRIX.TARGET_STAGE }}
           builder: ${{ steps.buildx.outputs.name }}
