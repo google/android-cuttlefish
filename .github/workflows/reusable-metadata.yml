@@ -66,6 +66,12 @@ jobs:
       - run: |
           echo ## ENV: >> $GITHUB_STEP_SUMMARY
           echo ${`printenv`/\n'/<br>} >> $GITHUB_STEP_SUMMARY
+          
+          echo ## RUNNER
+          echo ${{ steps.metadata.outputs.metadata_rpm_runner }}
+          echo ## TESTING
+          echo ${{ steps.metadata.outputs.metadata_rpm_testing }}
+          
           OUTPUTS=metadata='${{ toJSON(needs.metadata-matrix.outputs) }}'
           echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
           echo $OUTPUTS >> $GITHUB_OUTPUT
