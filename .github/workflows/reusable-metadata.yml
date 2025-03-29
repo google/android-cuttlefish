@@ -21,9 +21,8 @@ on:
 
 jobs:
 
-  metadata:
+  metadata-matrix:
     runs-on: ubuntu-latest
-    continue-on-error: true
     outputs:
       builder: ${{ steps.metadata.outputs.metadata_rpm_builder }}
       testing: ${{ steps.metadata.outputs.metadata_rpm_testing }}
@@ -61,10 +60,9 @@ jobs:
           echo OUTPUTS: '${OUTPUTS}' >> $GITHUB_STEP_SUMMARY
           echo ${TARGET}='${OUTPUTS}' >> $GITHUB_OUTPUT
 
-  metadata-output:
+  metadata-matrix-output:
     runs-on: ubuntu-latest
-    continue-on-error: true
-    needs: metadata
+    needs: metadata-matrix
     steps:
       - run: |
           echo metadata='${{ toJSON(needs.metadata.outputs) }}' >> $GITHUB_STEP_SUMMARY
