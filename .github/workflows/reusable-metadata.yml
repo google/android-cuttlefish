@@ -60,12 +60,12 @@ jobs:
 
       - id: metadata-step-output
         run: |
-          echo metadata=metadata_${_/-/${{ MATRIX.TARGET }}}=${{ toJSON(steps.metadata.outputs.metadata) }} >> $GITHUB_OUTPUT  
+          echo metadata=metadata_${-/_/${{ MATRIX.TARGET }}}=${{ toJSON(steps.metadata.outputs) }} >> $GITHUB_OUTPUT  
 
   metadata-job-output:
     runs-on: ubuntu-latest
     needs: metadata
     outputs:
-      metadata: ${{ steps.output.outputs }}
+      metadata: ${{ metadata.output.outputs }}
     steps:
-      - run: echo ${{ steps.output.outputs }}
+      - run: $GITHUB_OUTPUT
