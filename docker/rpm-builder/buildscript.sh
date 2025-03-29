@@ -10,5 +10,6 @@ then
 fi
 
 ./tools/buildutils/build_packages.sh
-tar zcvf ~/android-cuttlefish-src-rpm.tar.gz ~/${REPO_NAME}/tools/rpmbuild/*.rpm
+
+tar zcvf ~/android-cuttlefish-rpm.tar.gz ~/${REPO_NAME}/tools/rpmbuild/*.rpm
 ls -la ~
