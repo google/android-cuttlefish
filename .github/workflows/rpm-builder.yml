@@ -4,11 +4,6 @@ on: [ push ]
 
 jobs:
 
-  collect-metadata:
-    uses: ./.github/workflows/reusable-metadata.yml
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
-
   build-images:
     runs-on: ubuntu-latest
     needs: collect-metadata
@@ -48,8 +43,8 @@ jobs:
       - uses: 'docker/login-action@v3'
         id: container-registry
         with:
-          registry: ${{ INPUTS.REGISTRY }}
-          username: ${{ INPUTS.USERNAME }}
+          registry: 'ghcr.io'
+          username: ${{ GITBUB.ACTOR }}
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
@@ -106,3 +101,14 @@ jobs:
             target: rhel-integration
           - platform: linux/arm64
             target: rpm-testing
+
+  collect-metadata:
+    uses: ./.github/workflows/reusable-metadata.yml
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+
+  attest-images:
+    uses: ./.github/workflows/reusable-attestation.yml
+    needs: build-images
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}

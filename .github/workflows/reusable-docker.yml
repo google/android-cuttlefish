@@ -17,25 +17,23 @@ on:
       image:
         required: true
         type: string
-
       platform:
         default: linux/amd64
         required: false
         type: string
-
     outputs:
       builder:
         value: ${{ jobs.docker-run.outputs.builder }}
         description: "Build output"
       testing:
         value: ${{ jobs.docker-run.outputs.testing }}
-        description: "Test output"
+        description: "Package test output"
       integration:
         value: ${{ jobs.docker-run.outputs.integration }}
-        description: "Test output"
+        description: "Integration output"
       orchestration:
         value: ${{ jobs.docker-run.outputs.orchestration }}
-        description: "Test output"
+        description: "Orchestration output"
 jobs:
 
   docker-run:
