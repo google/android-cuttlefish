@@ -111,7 +111,7 @@ jobs:
     needs: build-images
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
-      inputs: ${{ steps.build.outputs }}
+      inputs: ${{ needs.build-images.outputs }}
     with:
 
       # TODO
