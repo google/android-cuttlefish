@@ -24,8 +24,6 @@ jobs:
 
   metadata:
     runs-on: ubuntu-latest
-    outputs:
-      metadata: ${{ steps.metadata.outputs }}
     strategy:
       max-parallel: 4
       matrix:
