@@ -52,7 +52,7 @@ jobs:
 
       - id: metadata-step-output
         env:
-          JSON: ${{ toJSON(steps.metadata.outputs) }}
+          JSON: '${{ toJSON(steps.metadata.outputs) }}'
           MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
         run: |
           TARGET=${-/_/$MATRIX_TARGET}
