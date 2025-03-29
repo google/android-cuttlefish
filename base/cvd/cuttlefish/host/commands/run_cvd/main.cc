@@ -44,6 +44,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/console_forwarder.h"
 #include "cuttlefish/host/commands/run_cvd/launch/control_env_proxy_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/echo_server.h"
+#include "cuttlefish/host/commands/run_cvd/launch/gnss_grpc_proxy.h"
 #include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
