@@ -81,7 +81,8 @@ jobs:
       max-parallel: 5
       matrix:
         # The `platform` is being passed into the shell as variable $RPM_PLATFORM.
-        platform: [ linux/amd64, linux/arm64 ]
+        # platform: [ linux/amd64, linux/arm64 ]
+        platform: [ linux/amd64 ]
         target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
         include:
           - target: rpm-builder
