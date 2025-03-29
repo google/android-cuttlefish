@@ -66,8 +66,4 @@ jobs:
       OUTPUTS: ${{ GITHUB_OUTPUT }}
     steps:
       - run: |
-          for i in "${!OUTPUTS[@]}"
-          do
-            echo " $i ${OUTPUTS[$i]}" >> $GITHUB_STEP_SUMMARY
-          done
           echo ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
