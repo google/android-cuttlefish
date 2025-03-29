@@ -44,7 +44,7 @@ jobs:
         id: container-registry
         with:
           registry: 'ghcr.io'
-          username: ${{ GITBUB.ACTOR }}
+          username: ${{ GITHUB.ACTOR }}
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
@@ -67,7 +67,6 @@ jobs:
         uses: './.github/workflows/reusable-attestation.yml'
         id: attestation
         with:
-          image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
           checksums: ${{ steps.build.outputs.checksums }}
           digest: ${{ steps.build.outputs.digest }}
 
@@ -112,3 +111,8 @@ jobs:
     needs: build-images
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
+    with:
+
+      # TODO
+      checksums: ${{ steps.build.outputs.checksums }}
+      digest: ${{ steps.build.outputs.digest }}
