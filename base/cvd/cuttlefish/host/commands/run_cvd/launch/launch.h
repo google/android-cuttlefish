@@ -66,10 +66,6 @@ Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
     LogTeeCreator&);
 
-fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
-NetsimServerComponent();
-
 Result<std::optional<MonitorCommand>> ScreenRecordingServer(GrpcSocketCreator&);
 
 Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
