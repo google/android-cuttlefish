@@ -2,8 +2,6 @@ name: Reusable Container Metadata Job
 
 on:
   workflow_call:
-    secrets: inherit
-
     inputs:
       registry:
         default: 'ghcr.io'
