@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     outputs:
-      metadata_1: ${{ steps.metadata.outputs.output_1 }}
-      metadata_2: ${{ steps.metadata.outputs.output_2 }}
-      metadata_3: ${{ steps.metadata.outputs.output_3 }}
-      metadata_4: ${{ steps.metadata.outputs.output_4 }}
+      builder: ${{ steps.metadata.outputs.metadata_rpm_builder }}
+      testing: ${{ steps.metadata.outputs.metadata_rpm_testing }}
+      integration: ${{ steps.metadata.outputs.metadata_rhel_integration }}
+      orchestration: ${{ steps.metadata.outputs.metadata_rhel_orchestration }}
     strategy:
       max-parallel: 4
       matrix:
