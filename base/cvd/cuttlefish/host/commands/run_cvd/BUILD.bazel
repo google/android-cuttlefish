@@ -63,6 +63,7 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:logcat_receiver",
         "//cuttlefish/host/commands/run_cvd/launch:mcu",
         "//cuttlefish/host/commands/run_cvd/launch:metrics",
+        "//cuttlefish/host/commands/run_cvd/launch:modem",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/command_util",

@@ -283,6 +283,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "modem",
+    srcs = ["modem.cpp"],
+    hdrs = ["modem.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "modem_clang_tidy",
+    srcs = [":modem"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -329,7 +349,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "launch.h",
-        "modem.cpp",
         "netsim_server.cpp",
         "nfc_connector.cpp",
         "open_wrt.cpp",
