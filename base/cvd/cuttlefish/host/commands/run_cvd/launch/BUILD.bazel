@@ -95,6 +95,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "console_forwarder",
+    srcs = ["console_forwarder.cpp"],
+    hdrs = ["console_forwarder.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "console_forwarder_clang_tidy",
+    srcs = [":console_forwarder"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "grpc_socket_creator",
     srcs = ["grpc_socket_creator.cpp"],
     hdrs = ["grpc_socket_creator.h"],
@@ -175,7 +193,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "console_forwarder.cpp",
         "control_env_proxy_server.cpp",
         "echo_server.cpp",
         "gnss_grpc_proxy.cpp",
