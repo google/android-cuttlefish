@@ -65,7 +65,8 @@ jobs:
     steps:
       - run: |
           
-          OUTPUTS=metadata=$GITHUB_OUTPUT
+          OUTPUTS=metadata=${{ fromJSON(steps.metadata.outputs.metadata_rpm_runner) }}
+          # OUTPUTS=metadata=$GITHUB_OUTPUT
           echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
           echo $OUTPUTS >> $GITHUB_OUTPUT
           
