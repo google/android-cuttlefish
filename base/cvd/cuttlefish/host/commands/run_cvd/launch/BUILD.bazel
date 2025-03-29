@@ -225,6 +225,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "logcat_receiver",
+    srcs = ["logcat_receiver.cpp"],
+    hdrs = ["logcat_receiver.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "logcat_receiver_clang_tidy",
+    srcs = [":logcat_receiver"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -271,7 +289,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "launch.h",
-        "logcat_receiver.cpp",
         "mcu.cpp",
         "metrics.cpp",
         "modem.cpp",

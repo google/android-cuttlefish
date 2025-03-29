@@ -13,32 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/logcat_receiver.h"
+#pragma once
 
 #include <string>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
-std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance) {
-  return "Logcat output: " + instance.logcat_path();
-}
+std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance);
 
 Result<MonitorCommand> LogcatReceiver(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  // Open the pipe here (from the launcher) to ensure the pipe is not deleted
-  // due to the usage counters in the kernel reaching zero. If this is not
-  // done and the logcat_receiver crashes for some reason the VMM may get
-  // SIGPIPE.
-  auto log_name = instance.logcat_pipe_name();
-
-  return Command(LogcatReceiverBinary())
-      .AddParameter("-log_pipe_fd=", CF_EXPECT(SharedFD::Fifo(log_name, 0600)));
-}
+    const CuttlefishConfig::InstanceSpecific& instance);
 
 }  // namespace cuttlefish
