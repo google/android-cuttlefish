@@ -110,10 +110,8 @@ jobs:
     uses: ./.github/workflows/reusable-attestation.yml
     needs: build-images
     secrets:
+      # inputs: ${{ needs.build-images.outputs }}
       token: ${{ SECRETS.GITHUB_TOKEN }}
-      inputs: ${{ needs.build-images.outputs }}
     with:
-
-      # TODO
-      checksums: ${{ inputs.checksums }}
-      digest: ${{ inputs.digest }}
+      checksums: ''
+      digest: ''
