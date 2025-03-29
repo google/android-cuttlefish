@@ -203,6 +203,11 @@ func (h *DockerHelper) ExecADBShellCommand(id, adbBin, serial string, cmd []stri
 	return h.exec(id, append([]string{adbBin, "-s", serial, "shell"}, cmd...))
 }
 
+func (h *DockerHelper) VerifySymlink(id, filename string) error {
+	_, err := h.exec(id, []string{"readlink", filename})
+	return err
+}
+
 type DockerExecExitCodeError struct {
 	ExitCode int
 }
