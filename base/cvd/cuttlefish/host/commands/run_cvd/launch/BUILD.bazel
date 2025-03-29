@@ -58,6 +58,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "log_tee_creator",
+    srcs = ["log_tee_creator.cpp"],
+    hdrs = ["log_tee_creator.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "log_tee_creator_clang_tidy",
+    srcs = [":log_tee_creator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -113,8 +132,6 @@ cc_library(
         "input_connections_provider.h",
         "kernel_log_monitor.cpp",
         "launch.h",
-        "log_tee_creator.cpp",
-        "log_tee_creator.h",
         "logcat_receiver.cpp",
         "mcu.cpp",
         "metrics.cpp",
@@ -153,6 +170,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",
