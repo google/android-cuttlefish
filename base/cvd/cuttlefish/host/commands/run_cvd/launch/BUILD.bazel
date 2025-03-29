@@ -385,6 +385,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "pica",
+    srcs = ["pica.cpp"],
+    hdrs = ["pica.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "pica_clang_tidy",
+    srcs = [":pica"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -452,7 +471,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "pica.cpp",
         "root_canal.cpp",
         "screen_recording_server.cpp",
         "secure_env.cpp",
