@@ -47,7 +47,7 @@ jobs:
         with:
           images: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ MATRIX.TARGET }}
           tags: |
-            ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/:latest
+            ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ MATRIX.TARGET }}/:latest
             type=sha
 
       - id: metadata-step-output
