@@ -57,14 +57,16 @@ jobs:
           tags: |
             ${{ INPUTS.REGISTRY }}/${{ MATRIX.TARGET }}/:latest
             type=sha
-            
-  metadata-combined:
-      needs: metadata
-      runs-on:  ubuntu-latest
-      outputs:
-        metadata: ${{ steps.append-variable.outputs.metadata }}
-      steps:
-        - id: append-variable
-          run: |
-            metadata="$(cat */metadata | jq -c --slurp .)"
-            echo metadata=$metadata >> $GITHUB_OUTPUT
+
+      - id: output
+        run: |
+          metadata_${{ MATRIX.TARGET }}=${{ steps.metadata.outputs.metadata }}
+          echo metadata=$metadata >> $GITHUB_OUTPUT  
+
+  metadata-combine:
+    needs: metadata
+    runs-on:  ubuntu-latest
+    outputs:
+      metadata: ${{ steps.output.outputs }}
+    steps:
+      - run: echo ${{ steps.output.outputs }}
