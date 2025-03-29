@@ -54,11 +54,10 @@ jobs:
         run: |
           
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
-          TARGET=${-/_/metadata-${{ MATRIX.TARGET }}}
-          
-          echo TARGET: metadata_${{ MATRIX.TARGET }} >> $GITHUB_STEP_SUMMARY
-          echo OUTPUTS:\n${OUTPUTS} >> $GITHUB_STEP_SUMMARY
+          TARGET="${-/_/metadata-${{ MATRIX.TARGET }}}"
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
+          echo TARGET: metadata_${{ MATRIX.TARGET }} >> $GITHUB_STEP_SUMMARY
+          echo OUTPUTS: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
   metadata-matrix-output:
     runs-on: ubuntu-latest
