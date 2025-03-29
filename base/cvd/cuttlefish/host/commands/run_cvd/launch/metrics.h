@@ -13,22 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/metrics.h"
+#pragma once
 
 #include <optional>
 
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
-std::optional<MonitorCommand> MetricsService(const CuttlefishConfig& config) {
-  if (config.enable_metrics() != cuttlefish::CuttlefishConfig::Answer::kYes) {
-    return {};
-  }
-  return Command(MetricsBinary());
-}
+std::optional<MonitorCommand> MetricsService(const CuttlefishConfig& config);
 
 }  // namespace cuttlefish

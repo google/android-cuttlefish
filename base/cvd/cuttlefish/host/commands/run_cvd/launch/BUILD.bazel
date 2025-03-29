@@ -266,6 +266,23 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "metrics",
+    srcs = ["metrics.cpp"],
+    hdrs = ["metrics.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "metrics_clang_tidy",
+    srcs = [":metrics"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -312,7 +329,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "launch.h",
-        "metrics.cpp",
         "modem.cpp",
         "netsim_server.cpp",
         "nfc_connector.cpp",
