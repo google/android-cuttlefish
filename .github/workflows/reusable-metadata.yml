@@ -59,8 +59,10 @@ jobs:
             type=sha
 
       - id: metadata-step-output
+        env:
+          JSON_OUTPUT: toJSON(steps.metadata.outputs)
         run: |
-          echo metadata=metadata_${-/_/${{ MATRIX.TARGET }}}='${{ toJSON(steps.metadata.outputs) }}' >> $GITHUB_OUTPUT  
+          echo metadata=metadata_${-/_/${{ MATRIX.TARGET }}}='$JSON_OUTPUT' >> $GITHUB_OUTPUT  
 
   metadata-job-output:
     runs-on: ubuntu-latest
