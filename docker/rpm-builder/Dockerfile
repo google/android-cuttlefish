@@ -41,48 +41,47 @@ ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
 # Run go install `bazelisk`.
 RUN go install github.com/bazelbuild/bazelisk@latest
 
-# # RPM Testing
-# FROM base AS testing
-#
-# # Runtime Dependencies
-# RUN dnf -y install nano dos2unix libwayland-* && dnf clean all
-#
-# # Add entrypoint script.
-# COPY ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
-# RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
-# ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
-#
-#
-# # RHEL Integration
-# FROM base AS integration
-# ENTRYPOINT [ "/bin/bash" ]
-#
-# # Runtime Dependencies
-# RUN dnf -y install nano qemu-kvm && dnf clean all
-#
-# # Expose Operator Port (HTTP:1080, HTTPS:1443)
-# EXPOSE 1080 1443
-# # Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
-# EXPOSE 2080 2443
-# # Expose WebRTC
-# EXPOSE 8443/tcp 15550-15560
-# # Expose ADB
-# EXPOSE 6520-6620
-#
-#
-# # RHEL Orchestration
-# FROM base AS orchestration
-# ENTRYPOINT [ "/bin/bash" ]
-#
-# # Runtime Dependencies
-# RUN dnf -y install nano nginx systemd-journal-remote && dnf clean all
-#
-# # Expose Operator Port (HTTP:1080, HTTPS:1443)
-# EXPOSE 1080 1443
-# # Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
-# EXPOSE 2080 2443
-# # Expose WebRTC
-# EXPOSE 8443/tcp 15550-15560
-# # Expose ADB
-# EXPOSE 6520-6620
-#
+# RPM Testing
+FROM base AS testing
+
+# Runtime Dependencies
+RUN dnf -y install nano dos2unix libwayland-* && dnf clean all
+
+# Add entrypoint script.
+COPY ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
+RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
+ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
+
+
+# RHEL Integration
+FROM base AS integration
+ENTRYPOINT [ "/bin/bash" ]
+
+# Runtime Dependencies
+RUN dnf -y install nano qemu-kvm && dnf clean all
+
+# Expose Operator Port (HTTP:1080, HTTPS:1443)
+EXPOSE 1080 1443
+# Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
+EXPOSE 2080 2443
+# Expose WebRTC
+EXPOSE 8443/tcp 15550-15560
+# Expose ADB
+EXPOSE 6520-6620
+
+
+# RHEL Orchestration
+FROM base AS orchestration
+ENTRYPOINT [ "/bin/bash" ]
+
+# Runtime Dependencies
+RUN dnf -y install nano nginx systemd-journal-remote && dnf clean all
+
+# Expose Operator Port (HTTP:1080, HTTPS:1443)
+EXPOSE 1080 1443
+# Expose HO(Host Orchestrator) Port (HTTP:2080, HTTPS:2443)
+EXPOSE 2080 2443
+# Expose WebRTC
+EXPOSE 8443/tcp 15550-15560
+# Expose ADB
+EXPOSE 6520-6620

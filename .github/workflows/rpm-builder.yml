@@ -66,6 +66,7 @@ jobs:
       # One of subject-path, subject-digest, or subject-checksums must be provided
       - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
+        id: attestation
         with:
           subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           subject-digest: ${{ steps.build.outputs.digest }}
@@ -73,8 +74,11 @@ jobs:
 
   run-docker-image:
     needs: build-docker-images
+    uses: ./.github/workflows/reusable-docker.yml
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
+    with:
+      docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
     strategy:
       max-parallel: 1
       matrix:
@@ -89,6 +93,3 @@ jobs:
             stage: integration
           - target: rhel-orchestration
             stage: orchestration
-    uses: ./.github/workflows/reusable-docker.yml
-    with:
-      docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
