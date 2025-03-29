@@ -79,10 +79,12 @@ jobs:
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       docker-image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
+      platform: ${{ MATRIX.PLATFORM }}
     strategy:
       max-parallel: 1
       matrix:
-        platform: [ linux/amd64 ]
+        # The `platform` is being passed into the shell as variable $RPM_PLATFORM.
+        platform: [ linux/amd64, linux/arm64 ]
         target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
         include:
           - target: rpm-builder
@@ -93,3 +95,10 @@ jobs:
             stage: integration
           - target: rhel-orchestration
             stage: orchestration
+        exclude:
+          - platform: linux/arm64
+            target: rpm-testing
+          - platform: linux/arm64
+            target: rhel-integration
+          - platform: linux/arm64
+            target: rpm-testing

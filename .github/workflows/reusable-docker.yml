@@ -9,6 +9,10 @@ on:
       docker-image:
         required: true
         type: string
+      platform:
+        default: linux/amd64
+        required: false
+        type: string
     outputs:
       builder:
         value: ${{ jobs.docker-run.outputs.builder }}
@@ -49,6 +53,8 @@ jobs:
       - name: Run docker and somehow extract the archive from the volume.
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         id: build-rpm-packages
+        env:
+          RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
         run: |
           docker run --name rpm-builder --quiet  ${{ INPUTS.DOCKER-IMAGE }}
           VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')
