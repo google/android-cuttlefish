@@ -14,10 +14,7 @@ on:
         default: ${{ GITHUB.ACTOR }}
         required: false
         type: string
-      password:
-        default: ${{ GITHUB.GITHUB_TOKEN }}
-        required: false
-        type: string
+
       image:
         required: true
         type: string
@@ -50,7 +47,7 @@ jobs:
       - uses: 'actions/attest-build-provenance@v2'
         id: attestation
         with:
-          subject-name: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}
+          subject-name: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:latest
           subject-checksums: ${{ INPUTS.CHECKSUMS }}
           subject-digest: ${{ INPUTS.DIGEST }}
           push-to-registry: true
