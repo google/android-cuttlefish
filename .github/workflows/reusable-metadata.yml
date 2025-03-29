@@ -65,6 +65,7 @@ jobs:
 
   metadata-output:
     runs-on: ubuntu-latest
+    continue-on-error: true
     needs: metadata
     steps:
       - env:
