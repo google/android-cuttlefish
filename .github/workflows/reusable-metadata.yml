@@ -66,6 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: metadata
     outputs:
-      metadata: ${{ metadata.output.outputs }}
+      metadata: ${{ steps.metadata.outputs }}
     steps:
-      - run: $GITHUB_OUTPUT
+      - id: metadata
+        run: echo $GITHUB_OUTPUT
