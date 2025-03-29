@@ -73,11 +73,6 @@ Result<MonitorCommand> TombstoneReceiver(
     const CuttlefishConfig::InstanceSpecific&);
 
 fruit::Component<fruit::Required<
-    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
-    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, GrpcSocketCreator>>
-WmediumdServerComponent();
-
-fruit::Component<fruit::Required<
     const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
     WebRtcController>>
