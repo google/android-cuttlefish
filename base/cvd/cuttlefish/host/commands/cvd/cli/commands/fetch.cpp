@@ -20,15 +20,17 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"

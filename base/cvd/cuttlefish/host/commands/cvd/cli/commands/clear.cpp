@@ -16,13 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
 
-#include <sys/types.h>
-
-#include <android-base/file.h>
-#include <android-base/parseint.h>
-#include <android-base/scopeguard.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
