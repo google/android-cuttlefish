@@ -60,7 +60,8 @@ jobs:
 
       - id: output
         run: |
-          metadata_${{ MATRIX.TARGET }}=${{ steps.metadata.outputs.metadata }}
+          target = ${{ MATRIX.TARGET }}
+          metadata_${-/_/${{ MATRIX.TARGET }}}=${{ steps.metadata.outputs.metadata }}
           echo metadata=$metadata >> $GITHUB_OUTPUT  
 
   metadata-combine:
