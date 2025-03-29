@@ -46,5 +46,3 @@ else
   build_package "${REPO_DIR}/frontend"
   exit 0
 fi
-exit 1
-
