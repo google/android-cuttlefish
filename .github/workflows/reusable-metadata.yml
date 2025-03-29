@@ -53,11 +53,16 @@ jobs:
 
       - id: metadata-step-output
         run: |
-          OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
+          OUTPUTS='${{ toJSON(steps.metadata.output.builder) }}'
           TARGET=${-/_/metadata-${{ MATRIX.TARGET }}}
-          echo "### Workflow variables:\N\N OUTPUTS" >> $GITHUB_STEP_SUMMARY
-          echo "${TARGET}='${OUTPUTS}'\n" >> $GITHUB_OUTPUT
           
+          echo "### Workflow variables:\n" >> $GITHUB_STEP_SUMMARY
+          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rpm_builder) }}" >> $GITHUB_STEP_SUMMARY
+          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rpm_testing) }}" >> $GITHUB_STEP_SUMMARY
+          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rhel_integration) }}" >> $GITHUB_STEP_SUMMARY
+          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rhel_orchestration) }}" >> $GITHUB_STEP_SUMMARY
+          echo "${TARGET}='${OUTPUTS}'\n" >> $GITHUB_OUTPUT
+
   metadata-output:
     runs-on: ubuntu-latest
     needs: metadata
