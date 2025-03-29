@@ -59,6 +59,7 @@ git_override(
 )
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
 git_repository(
     name = "fruit",
     build_file = "@//:BUILD.fruit.bazel",
@@ -146,7 +147,6 @@ git_repository(
     build_file = "@//build_external/wayland:BUILD.wayland.bazel",
     commit = "b2649cb3ee6bd70828a17e50beb16591e6066288", # 1.22.0
     remote = "https://gitlab.freedesktop.org/wayland/wayland.git",
-    patch_strip = 1,
     patches = [
         "@//build_external/wayland:PATCH.wayland.wayland_config.patch",
     ],
