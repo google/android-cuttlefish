@@ -52,6 +52,7 @@ jobs:
           push-to-registry: true
 
       - id: artifact-attestation-step-output
+        shell: bash
         run: |
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           TARGET=`echo metadata-${{ MATRIX.TARGET }}} | tr - _` 
@@ -64,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: artifact-attestation-matrix
     steps:
-      - run: |
+      - shell: bash
+        run: |
           echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_STEP_SUMMARY
           echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_OUTPUT
