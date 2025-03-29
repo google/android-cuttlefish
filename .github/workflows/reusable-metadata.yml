@@ -59,13 +59,13 @@ jobs:
           echo INDEX: ${TARGET} | tr "[:lower:]" "[:upper:]" >> $GITHUB_STEP_SUMMARY
           echo DATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
-  metadata-summary:
+  summary:
     runs-on: ubuntu-latest
     needs: metadata
     steps:
       - run: |
           echo ## ENV: >> $GITHUB_STEP_SUMMARY
-          echo ${`printenv`/$'\n'/\\n } >> $GITHUB_STEP_SUMMARY
+          echo ${`printenv`/\n'/'<br>'} >> $GITHUB_STEP_SUMMARY
           OUTPUTS=metadata='${{ toJSON(needs.metadata-matrix.outputs) }}'
           echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
           echo $OUTPUTS >> $GITHUB_OUTPUT
