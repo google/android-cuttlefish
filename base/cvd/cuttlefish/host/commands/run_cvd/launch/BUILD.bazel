@@ -383,10 +383,31 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "wmediumd_server",
+    srcs = ["wmediumd_server.cpp"],
+    hdrs = ["wmediumd_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/vm_manager",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "wmediumd_server_clang_tidy",
+    srcs = [":wmediumd_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "launch.h",
         "open_wrt.cpp",
         "openwrt_control_server.cpp",
         "pica.cpp",
@@ -404,8 +425,6 @@ cc_library(
         "vhost_device_vsock.cpp",
         "vhost_device_vsock.h",
         "vhost_input_devices.cpp",
-        "wmediumd_server.cpp",
-        "wmediumd_server.h",
     ],
     hdrs = [
         "launch.h",
@@ -423,6 +442,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
+        "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",
         "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/host/libs/command_util",

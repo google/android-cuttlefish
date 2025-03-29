@@ -24,6 +24,7 @@
 #include <android-base/file.h>
 #include <fruit/fruit.h>
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
