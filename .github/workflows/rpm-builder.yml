@@ -111,8 +111,9 @@ jobs:
     needs: build-images
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
+      inputs: ${{ steps.build.outputs }}
     with:
 
       # TODO
-      checksums: ${{ steps.build.outputs.checksums }}
-      digest: ${{ steps.build.outputs.digest }}
+      checksums: ${{ inputs.checksums }}
+      digest: ${{ inputs.digest }}
