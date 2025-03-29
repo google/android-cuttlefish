@@ -85,9 +85,6 @@ fruit::Component<fruit::Required<
     const CuttlefishConfig::InstanceSpecific, LogTeeCreator, GrpcSocketCreator>>
 WmediumdServerComponent();
 
-Result<std::optional<MonitorCommand>> ModemSimulator(
-    const CuttlefishConfig::InstanceSpecific&);
-
 fruit::Component<fruit::Required<
     const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
