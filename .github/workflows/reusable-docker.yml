@@ -92,7 +92,7 @@ jobs:
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
-      - name: Run integration tests
+      - name: Run integration test
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'integration') }}
         id: test-integration
         run: |

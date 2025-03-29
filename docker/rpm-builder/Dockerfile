@@ -11,7 +11,7 @@ WORKDIR "/root"
 VOLUME "/root"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm sudo git nano dos2unix && dnf -y upgrade
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm sudo git dos2unix nano && dnf -y upgrade
 
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
 RUN dnf config-manager --set-enabled crb && dnf config-manager --set-disabled extras && dnf clean all
@@ -21,6 +21,7 @@ RUN echo "export GOPATH=${HOME}/go" >> ~/.bash_profile \
 echo "export PATH=${PATH}:${HOME}/go/bin" >> ~/.bash_profile \
 echo "USE_BAZEL_VERSION=${BAZEL_VERSION}" >> ~/.bazeliskrc \
 source ~/.bash_profile
+
 
 # RPM Builder
 FROM base AS builder
@@ -45,7 +46,7 @@ RUN go install github.com/bazelbuild/bazelisk@latest
 FROM base AS testing
 
 # Runtime Dependencies
-RUN dnf -y install nano dos2unix libwayland-* && dnf clean all
+RUN dnf -y install libwayland-* && dnf clean all
 
 # Add entrypoint script.
 COPY ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
@@ -53,12 +54,12 @@ RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
 ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
 
 
-# RHEL Integration
+# Integration Test
 FROM base AS integration
 ENTRYPOINT [ "/bin/bash" ]
 
 # Runtime Dependencies
-RUN dnf -y install nano qemu-kvm && dnf clean all
+RUN dnf -y install qemu-kvm && dnf clean all
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
@@ -70,12 +71,12 @@ EXPOSE 8443/tcp 15550-15560
 EXPOSE 6520-6620
 
 
-# RHEL Orchestration
+# Orchestration Test
 FROM base AS orchestration
 ENTRYPOINT [ "/bin/bash" ]
 
 # Runtime Dependencies
-RUN dnf -y install nano nginx systemd-journal-remote && dnf clean all
+RUN dnf -y install nginx systemd-journal-remote && dnf clean all
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
