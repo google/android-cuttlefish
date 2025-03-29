@@ -79,8 +79,6 @@ Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
     LogTeeCreator&);
 
-MonitorCommand EchoServer(GrpcSocketCreator& grpc_socket);
-
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 NetsimServerComponent();
