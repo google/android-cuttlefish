@@ -64,12 +64,11 @@ jobs:
       # Note: The digest comes from `buildx`, not the metadata.
       # https://github.com/actions/attest-build-provenance
       - name: Generate artifact attestation
-        uses: './.github/workflows/reusable-attestation.yml'
-        id: attestation
+        uses: 'actions/attest-build-provenance@v2'
         with:
-          checksums: ${{ steps.build.outputs.checksums }}
-          digest: ${{ steps.build.outputs.digest }}
-
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
   run-images:
     uses: ./.github/workflows/reusable-docker.yml
     needs: build-images

@@ -23,10 +23,10 @@ on:
     outputs:
       metadata:
         value: ${{ jobs.attestation.outputs }}
-        description: "Attestation output"
+        description: "Artifact attestation output"
 
 jobs:
-  attestation-matrix:
+  artifact-attestation-matrix:
     runs-on: ubuntu-latest
     outputs:
       attestation: ${{ steps.metadata.outputs.metadata_rpm_builder }}
@@ -44,14 +44,14 @@ jobs:
           password: ${{ SECRETS.TOKEN }}
 
       - uses: 'actions/attest-build-provenance@v2'
-        id: attestation
+        id: artifact-attestation
         with:
           subject-name: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ MATRIX.TARGET }}:latest
           subject-checksums: ${{ INPUTS.CHECKSUMS }}
           subject-digest: ${{ INPUTS.DIGEST }}
           push-to-registry: true
 
-      - id: attestation-step-output
+      - id: artifact-attestation-step-output
         run: |
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           TARGET=`echo metadata-${{ MATRIX.TARGET }}} | tr - _` 
@@ -60,10 +60,10 @@ jobs:
           echo TARGET: ${TARGET} >> $GITHUB_STEP_SUMMARY
           echo METADATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
-  attestation-matrix-output:
+  artifact-attestation-matrix-output:
     runs-on: ubuntu-latest
-    needs: attestation-matrix
+    needs: artifact-attestation-matrix
     steps:
       - run: |
-          echo attestation='${{ toJSON(needs.attestation-matrix.outputs) }}' >> $GITHUB_OUTPUT
-          echo attestation='${{ toJSON(needs.attestation-matrix.outputs) }}' >> $GITHUB_STEP_SUMMARY
+          echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_STEP_SUMMARY
+          echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_OUTPUT
