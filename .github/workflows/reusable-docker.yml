@@ -65,7 +65,7 @@ jobs:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
         run: |
 
-          docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet $RPM_PLATFORM
+          docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet ${{ INPUTS.IMAGE }}
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
           VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')          
           DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
