@@ -187,6 +187,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "kernel_log_monitor",
+    srcs = ["kernel_log_monitor.cpp"],
+    hdrs = ["kernel_log_monitor.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd:reporting",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_log_monitor_clang_tidy",
+    srcs = [":kernel_log_monitor"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "log_tee_creator",
     srcs = ["log_tee_creator.cpp"],
     hdrs = ["log_tee_creator.h"],
@@ -251,7 +270,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "kernel_log_monitor.cpp",
         "launch.h",
         "logcat_receiver.cpp",
         "mcu.cpp",

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/kernel_log_monitor.h"
 
 #include <string>
 #include <unordered_set>
@@ -25,7 +25,9 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/inject.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
