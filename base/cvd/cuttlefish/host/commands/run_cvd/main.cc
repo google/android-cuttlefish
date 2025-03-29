@@ -55,6 +55,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/nfc_connector.h"
 #include "cuttlefish/host/commands/run_cvd/launch/open_wrt.h"
 #include "cuttlefish/host/commands/run_cvd/launch/openwrt_control_server.h"
+#include "cuttlefish/host/commands/run_cvd/launch/pica.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"

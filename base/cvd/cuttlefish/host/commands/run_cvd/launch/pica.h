@@ -13,37 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/pica.h"
+#pragma once
 
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
+#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
 Result<std::vector<MonitorCommand>> Pica(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance,
-    LogTeeCreator& log_tee) {
-  if (!instance.start_pica()) {
-    return {};
-  }
-  auto pcap_dir = instance.PerInstanceLogPath("/pica/");
-  CF_EXPECT(EnsureDirectoryExists(pcap_dir),
-            "Pica pcap directory cannot be created.");
-
-  auto pica = Command(PicaBinary())
-                  .AddParameter("--uci-port=", config.pica_uci_port())
-                  .AddParameter("--pcapng-dir=", pcap_dir);
-
-  std::vector<MonitorCommand> commands;
-  commands.emplace_back(CF_EXPECT(log_tee.CreateFullLogTee(pica, "pica")));
-  commands.emplace_back(std::move(pica));
-  return commands;
-}
+    const CuttlefishConfig::InstanceSpecific& instance, LogTeeCreator& log_tee);
 
 }  // namespace cuttlefish

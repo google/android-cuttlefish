@@ -16,7 +16,6 @@
 #pragma once
 
 #include <optional>
-#include <vector>
 
 #include <fruit/fruit.h>
 
@@ -45,10 +44,6 @@ fruit::Component<
     fruit::Required<const CuttlefishConfig,
                     const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
 RootCanalComponent();
-
-Result<std::vector<MonitorCommand>> Pica(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    LogTeeCreator&);
 
 Result<std::optional<MonitorCommand>> ScreenRecordingServer(GrpcSocketCreator&);
 
