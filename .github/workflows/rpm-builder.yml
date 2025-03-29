@@ -66,7 +66,7 @@ jobs:
         uses: './.github/workflows/reusable-attestation.yml'
         id: attestation
         with:
-          image: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
           checksums: ${{ steps.build.outputs.checksums }}
           digest: ${{ steps.build.outputs.digest }}
 
