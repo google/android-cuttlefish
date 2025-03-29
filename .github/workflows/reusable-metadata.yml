@@ -52,11 +52,19 @@ jobs:
 
       - id: metadata-step-output
         env:
-          JSON: ${{ steps.metadata.outputs }}
           MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
+          OUTPUTS: ${{ steps.metadata.outputs }}
         run: |
           TARGET=${-/_/$MATRIX_TARGET}
-          echo "${TARGET}=${JSON}\n" >> $GITHUB_OUTPUT
+          {
+            "${TARGET}='${OUTPUTS}'\n"
+          } >> $GITHUB_OUTPUT
+          {
+            echo "### Workflow variables"
+            echo "| Variable | Value   "
+            echo "| -------- | --------"
+            echo "| $TARGET  | $OUTPUTS"
+          } >> $GITHUB_STEP_SUMMARY
 
   metadata-output:
     runs-on: ubuntu-latest
