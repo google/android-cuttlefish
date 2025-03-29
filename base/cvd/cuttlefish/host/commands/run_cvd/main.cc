@@ -40,6 +40,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/automotive_proxy.h"
 #include "cuttlefish/host/commands/run_cvd/launch/bluetooth_connector.h"
 #include "cuttlefish/host/commands/run_cvd/launch/casimir.h"
+#include "cuttlefish/host/commands/run_cvd/launch/casimir_control_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"

@@ -55,10 +55,6 @@ Result<MonitorCommand> LogcatReceiver(
     const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific&);
 
-Result<std::optional<MonitorCommand>> CasimirControlServer(
-    const CuttlefishConfig&, const CuttlefishConfig::EnvironmentSpecific&,
-    const CuttlefishConfig::InstanceSpecific&, GrpcSocketCreator&);
-
 Result<std::optional<MonitorCommand>> ConsoleForwarder(
     const CuttlefishConfig::InstanceSpecific&);
 std::string ConsoleInfo(const CuttlefishConfig::InstanceSpecific&);
