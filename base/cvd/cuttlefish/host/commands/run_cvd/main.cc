@@ -47,6 +47,8 @@
 #include "cuttlefish/host/commands/run_cvd/launch/gnss_grpc_proxy.h"
 #include "cuttlefish/host/commands/run_cvd/launch/kernel_log_monitor.h"
 #include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/logcat_receiver.h"
+#include "cuttlefish/host/commands/run_cvd/launch/mcu.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
