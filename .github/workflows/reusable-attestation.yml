@@ -1,0 +1,51 @@
+name: Reusable Container Attestation Job
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      registry:
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        default: ${{ GITHUB.ACTOR }}
+        required: false
+        type: string
+      name:
+        required: true
+        type: string
+      checksums:
+        required: false
+        type: string
+      digest:
+        required: false
+        type: string
+    outputs:
+      metadata:
+        value: ${{ jobs.attestation.outputs }}
+        description: "Attestation output"
+
+jobs:
+  attestation:
+    runs-on: ubuntu-latest
+    outputs:
+      attestation: ${{ steps.attestation.outputs }}
+    steps:
+
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: ${{ INPUTS.REGISTRY }}
+          username: ${{ INPUTS.USERNAME }}
+          password: ${{ SECRETS.TOKEN }}
+
+      - uses: 'actions/attest-build-provenance@v2'
+        id: attestation
+        with:
+          subject-name: ${{ INPUTS.REGISTRY }}/${{ INPUTS.NAME }}
+          subject-checksums: ${{ INPUTS.CHECKSUMS }}
+          subject-digest: ${{ INPUTS.DIGEST }}
+          push-to-registry: true

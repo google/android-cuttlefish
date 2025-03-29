@@ -1,9 +1,9 @@
-name: Docker Container
+name: Reusable Docker Container Run
 
 on:
   workflow_call:
     secrets:
-      token:
+      GITHUB_TOKEN:
         required: true
     inputs:
       docker-image:
@@ -45,7 +45,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ GITHUB.ACTOR }}
-          password: ${{ SECRETS.TOKEN }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/

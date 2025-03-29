@@ -1,0 +1,43 @@
+name: Reusable Container Metadata Job
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      registry:
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        default: ${{ GITHUB.ACTOR }}
+        required: false
+        type: string
+      image:
+        required: true
+        type: string
+    outputs:
+      metadata:
+        value: ${{ jobs.metadata.outputs }}
+        description: "Metadata output"
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      metadata: ${{ steps.metadata.outputs }}
+    steps:
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: ${{ INPUTS.REGISTRY }}
+          username: ${{ INPUTS.USERNAME }}
+          password: ${{ SECRETS.TOKEN }}
+      - uses: 'docker/metadata-action@v5'
+        id: metadata
+        with:
+          images: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}
+          tags: |
+            /${{ INPUTS.IMAGE }}:latest
+            type=sha
