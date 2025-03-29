@@ -39,8 +39,6 @@ namespace cuttlefish {
 Result<std::optional<MonitorCommand>> UwbConnector(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
-std::optional<MonitorCommand> AutomotiveProxyService(const CuttlefishConfig&);
-
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
