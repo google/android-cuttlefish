@@ -75,7 +75,7 @@ jobs:
       image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
       platform: ${{ MATRIX.PLATFORM }}
     secrets:
-      token: ${{ SECRETS.TOKEN }}
+      token: ${{ SECRETS.GITHUB_TOKEN }}
     strategy:
       max-parallel: 5
       matrix:
