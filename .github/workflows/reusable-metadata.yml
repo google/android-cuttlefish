@@ -70,7 +70,7 @@ jobs:
     needs: metadata
     steps:
       - env:
-          JSON_OUTPUT: "${{ jobs.metadata.outputs.rpm_builder }}"
+          JSON_OUTPUT: "${{ steps.metadata.outputs.rpm_builder }}"
         run: |
           echo $JSON_OUTPUT
           echo "metadata='$JSON_OUTPUT'\n" >> $GITHUB_OUTPUT
