@@ -38,6 +38,7 @@
 #include "cuttlefish/host/commands/run_cvd/boot_state_machine.h"
 #include "cuttlefish/host/commands/run_cvd/launch/auto_cmd.h"
 #include "cuttlefish/host/commands/run_cvd/launch/automotive_proxy.h"
+#include "cuttlefish/host/commands/run_cvd/launch/bluetooth_connector.h"
 #include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"

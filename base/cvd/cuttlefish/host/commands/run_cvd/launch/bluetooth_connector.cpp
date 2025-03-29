@@ -13,12 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/bluetooth_connector.h"
 
 #include <string>
 #include <vector>
-
-#include <fruit/fruit.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/command_source.h"
