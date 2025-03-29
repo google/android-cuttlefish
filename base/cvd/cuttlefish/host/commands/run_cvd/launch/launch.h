@@ -55,10 +55,6 @@ Result<MonitorCommand> LogcatReceiver(
     const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific,
-                                 GrpcSocketCreator>>
-ControlEnvProxyServerComponent();
-
 Result<std::optional<MonitorCommand>> GnssGrpcProxyServer(
     const CuttlefishConfig::InstanceSpecific&, GrpcSocketCreator&);
 

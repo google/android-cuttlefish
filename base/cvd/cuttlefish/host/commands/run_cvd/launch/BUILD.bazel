@@ -113,6 +113,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "control_env_proxy_server",
+    srcs = ["control_env_proxy_server.cpp"],
+    hdrs = ["control_env_proxy_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "control_env_proxy_server_clang_tidy",
+    srcs = [":control_env_proxy_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "grpc_socket_creator",
     srcs = ["grpc_socket_creator.cpp"],
     hdrs = ["grpc_socket_creator.h"],
@@ -193,7 +212,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "control_env_proxy_server.cpp",
         "echo_server.cpp",
         "gnss_grpc_proxy.cpp",
         "input_connections_provider.h",
