@@ -65,7 +65,7 @@ jobs:
     steps:
       - run: |
           echo ## ENV: >> $GITHUB_STEP_SUMMARY
-          echo `printenv` | tr \n <br\\> >> $GITHUB_STEP_SUMMARY
+          echo `printenv` | tr \n '<br/>' >> $GITHUB_STEP_SUMMARY
           
           echo ## RUNNER
           echo ${{ steps.metadata.outputs.metadata_rpm_runner }}
