@@ -53,6 +53,8 @@
 #include "cuttlefish/host/commands/run_cvd/launch/modem.h"
 #include "cuttlefish/host/commands/run_cvd/launch/netsim_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/nfc_connector.h"
+#include "cuttlefish/host/commands/run_cvd/launch/open_wrt.h"
+#include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"

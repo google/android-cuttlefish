@@ -341,6 +341,30 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "open_wrt",
+    srcs = ["open_wrt.cpp"],
+    hdrs = ["open_wrt.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit"
+    ],
+)
+
+clang_tidy_test(
+    name = "open_wrt_clang_tidy",
+    srcs = [":open_wrt"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -408,7 +432,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "open_wrt.cpp",
         "openwrt_control_server.cpp",
         "pica.cpp",
         "root_canal.cpp",
