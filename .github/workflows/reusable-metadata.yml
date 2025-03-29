@@ -55,9 +55,9 @@ jobs:
         run: |
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           TARGET=${-/_/metadata-${{ MATRIX.TARGET }}}
+          echo "### Workflow variables:\N\N OUTPUTS" >> $GITHUB_STEP_SUMMARY
           echo "${TARGET}='${OUTPUTS}'\n" >> $GITHUB_OUTPUT
-          echo "### Workflow variables\n$TARGET | $OUTPUTS" >> $GITHUB_STEP_SUMMARY
-
+          
   metadata-output:
     runs-on: ubuntu-latest
     needs: metadata
