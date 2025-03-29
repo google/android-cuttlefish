@@ -17,7 +17,7 @@ on:
 
     outputs:
       metadata:
-        value: ${{ jobs.metadata-combined.outputs }}
+        value: ${{ jobs.metadata-output.outputs }}
         description: "Metadata output"
 
 jobs:
@@ -64,11 +64,9 @@ jobs:
         run: |
           echo metadata=metadata_${-/_/${{ MATRIX.TARGET }}}='$JSON_OUTPUT' >> $GITHUB_OUTPUT  
 
-  metadata-job-output:
+  metadata-output:
     runs-on: ubuntu-latest
     needs: metadata
-    outputs:
-      metadata: ${{ steps.metadata.outputs }}
     steps:
       - id: metadata
         run: echo $GITHUB_OUTPUT
