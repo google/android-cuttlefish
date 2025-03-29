@@ -63,16 +63,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: metadata
     env:
-      GITHUB_OUTPUT: ${{ GITHUB_OUTPUT }}
+      OUTPUTS: ${{ GITHUB_OUTPUT }}
     steps:
       - run: |
+          for i in "${!OUTPUTS[@]}"
+          do
+            echo " $i ${OUTPUTS[$i]}" >> $GITHUB_STEP_SUMMARY
+          done
+          echo ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
           
-          OUTPUTS=metadata=${{ toJSON(steps.metadata.outputs.metadata_rpm_runner) }}
-          # OUTPUTS=metadata=$GITHUB_OUTPUT
-          echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
-          echo $OUTPUTS >> $GITHUB_OUTPUT
-          
-          echo ## RUNNER
-          echo ${{ steps.metadata.outputs.metadata_rpm_runner }}
-          echo ## TESTING
-          echo ${{ steps.metadata.outputs.metadata_rpm_testing }}
