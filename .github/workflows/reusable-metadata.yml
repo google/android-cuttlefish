@@ -2,9 +2,8 @@ name: Reusable Container Metadata Job
 
 on:
   workflow_call:
-    secrets:
-      token:
-        required: true
+    secrets: inherit
+
     inputs:
       registry:
         default: 'ghcr.io'
@@ -14,9 +13,14 @@ on:
         default: ${{ GITHUB.ACTOR }}
         required: false
         type: string
+      password:
+        default: ${{ GITHUB.GITHUB_TOKEN }}
+        required: false
+        type: string
       image:
         required: true
         type: string
+
     outputs:
       metadata:
         value: ${{ jobs.metadata.outputs }}
@@ -28,10 +32,18 @@ jobs:
     outputs:
       metadata: ${{ steps.metadata.outputs }}
     steps:
+
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: ${{ INPUTS.REGISTRY }}
+          username: ${{ INPUTS.USERNAME }}
+          password: ${{ INPUTS.PASSWORD }}
+
       - uses: 'docker/metadata-action@v5'
         id: metadata
         with:
           images: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}
           tags: |
-            /${{ INPUTS.IMAGE }}:latest
+            ${{ INPUTS.IMAGE }}:latest
             type=sha

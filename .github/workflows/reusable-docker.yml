@@ -2,17 +2,17 @@ name: Reusable Docker Container Run
 
 on:
   workflow_call:
-    secrets:
-      token:
-        required: true
+    secrets: inherit
+
     inputs:
-      docker-image:
+      image:
         required: true
         type: string
       platform:
         default: linux/amd64
         required: false
         type: string
+
     outputs:
       builder:
         value: ${{ jobs.docker-run.outputs.builder }}
@@ -45,13 +45,13 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ GITHUB.ACTOR }}
-          password: ${{ SECRETS.TOKEN }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
       # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
       - name: Run docker and somehow extract the archive from the volume.
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
+        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
         id: build-rpm-packages
         env:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
@@ -76,29 +76,29 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'builder') }}
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm-packages
+        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
         with:
           path: ${{ RUNNER.TEMP }}/*.tar.gz
-          name: android-cuttlefish-rhel
+          name: android-cuttlefish-rhel-${{ INPUTS.PLATFORM }}
           retention-days: 14
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run package tests
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'testing') }}
+        if: ${{ contains(INPUTS.IMAGE, 'testing') }}
         id: test-rpm-packages
         run: |
-          docker run --name rpm-testing --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rpm-testing --quiet ${{ INPUTS.IMAGE }}
           docker rm rpm-testing
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run integration test
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'integration') }}
+        if: ${{ contains(INPUTS.IMAGE, 'integration') }}
         id: test-integration
         run: |
-          docker run --name rhel-integration --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-integration --quiet ${{ INPUTS.IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -106,5 +106,5 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         run: |
-          docker run --name rhel-orchestration --quiet ${{ INPUTS.DOCKER-IMAGE }}
+          docker run --name rhel-orchestration --quiet ${{ INPUTS.IMAGE }}
           echo "result=ok" >> $GITHUB_OUTPUT
