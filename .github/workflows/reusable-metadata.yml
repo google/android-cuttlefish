@@ -56,13 +56,14 @@ jobs:
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr - _` 
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
 
-          echo TARGET: ${TARGET} >> $GITHUB_STEP_SUMMARY
-          echo METADATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
+          echo INDEX: ${TARGET} >> $GITHUB_STEP_SUMMARY
+          echo DATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
   metadata-matrix-output:
     runs-on: ubuntu-latest
     needs: metadata-matrix
     steps:
       - run: |
-          echo metadata='${{ toJSON(needs.metadata-matrix.outputs) }}' >> $GITHUB_OUTPUT
-          echo metadata='${{ toJSON(needs.metadata-matrix.outputs) }}' >> $GITHUB_STEP_SUMMARY
+          OUTPUTS=metadata='${{ toJSON(needs.metadata-matrix.outputs) }}'
+          echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
+          echo $OUTPUTS >> $GITHUB_OUTPUT
