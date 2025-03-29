@@ -75,7 +75,7 @@ jobs:
     steps:
       - id: metadata
         env:
-          MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
+          JSON_OUTPUT: ${{ fromJSON(needs.metadata.outputs.metadata) }}
         run: |
-          TARGET=${-/_/$MATRIX_TARGET}
-          echo $GITHUB_OUTPUT[ $TARGET ]
+          echo $JSON_OUTPUT
+          echo "metadata='$JSON_OUTPUT'\n" >> $GITHUB_OUTPUT
