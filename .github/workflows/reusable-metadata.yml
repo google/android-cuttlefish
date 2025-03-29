@@ -64,14 +64,15 @@ jobs:
     needs: metadata
     steps:
       - run: |
-          echo ## ENV: >> $GITHUB_STEP_SUMMARY
-          echo `printenv` | tr \n '<br/>' >> $GITHUB_STEP_SUMMARY
+          
+          OUTPUTS=metadata='${{ toJSON(needs.metadata-matrix.outputs) }}'
+          echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
+          echo $OUTPUTS >> $GITHUB_OUTPUT
           
           echo ## RUNNER
           echo ${{ steps.metadata.outputs.metadata_rpm_runner }}
           echo ## TESTING
           echo ${{ steps.metadata.outputs.metadata_rpm_testing }}
-          
-          OUTPUTS=metadata='${{ toJSON(needs.metadata-matrix.outputs) }}'
-          echo $OUTPUTS >> $GITHUB_STEP_SUMMARY
-          echo $OUTPUTS >> $GITHUB_OUTPUT
+
+          echo ## ENV: >> $GITHUB_STEP_SUMMARY
+          echo `printenv` | tr \n '<br/>' >> $GITHUB_STEP_SUMMARY
