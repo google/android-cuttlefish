@@ -16,7 +16,6 @@
 #pragma once
 
 #include <optional>
-#include <string>
 #include <vector>
 
 #include <fruit/fruit.h>
@@ -27,7 +26,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
-#include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -42,11 +40,6 @@ Result<std::optional<MonitorCommand>> UwbConnector(
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
-
-fruit::Component<fruit::Required<
-    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
-    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, WmediumdServer>>
-OpenWrtComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::EnvironmentSpecific,
