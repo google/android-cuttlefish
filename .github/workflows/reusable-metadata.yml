@@ -58,15 +58,16 @@ jobs:
             ${{ INPUTS.REGISTRY }}/${{ MATRIX.TARGET }}/:latest
             type=sha
 
-      - id: output
+      - id: metadata-output
+        env:
+          target: ${{ MATRIX.TARGET }}
         run: |
-          target = ${{ MATRIX.TARGET }}
-          metadata_${-/_/${{ MATRIX.TARGET }}}=${{ steps.metadata.outputs.metadata }}
+          metadata_${-/_/$TARGET}=${{ steps.metadata.outputs.metadata }}
           echo metadata=$metadata >> $GITHUB_OUTPUT  
 
   metadata-combine:
+    runs-on: ubuntu-latest
     needs: metadata
-    runs-on:  ubuntu-latest
     outputs:
       metadata: ${{ steps.output.outputs }}
     steps:
