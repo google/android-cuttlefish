@@ -73,6 +73,3 @@ jobs:
           echo ${{ steps.metadata.outputs.metadata_rpm_runner }}
           echo ## TESTING
           echo ${{ steps.metadata.outputs.metadata_rpm_testing }}
-
-          echo ## ENV: >> $GITHUB_STEP_SUMMARY
-          echo `printenv` | tr \n '<br/>' >> $GITHUB_STEP_SUMMARY
