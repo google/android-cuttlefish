@@ -60,10 +60,8 @@ jobs:
 
       - id: metadata-output
         env:
-          target: ${{ MATRIX.TARGET }}
         run: |
-          metadata=metadata_${-/_/$TARGET}=${{ steps.metadata.outputs.metadata }}
-          echo metadata=$metadata >> $GITHUB_OUTPUT  
+          echo metadata=metadata_${-/_/${{ MATRIX.TARGET }}}=${{ steps.metadata.outputs.metadata }} >> $GITHUB_OUTPUT  
 
   metadata-combine:
     runs-on: ubuntu-latest
