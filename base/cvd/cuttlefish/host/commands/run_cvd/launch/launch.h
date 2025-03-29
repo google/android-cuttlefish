@@ -43,9 +43,6 @@ fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
 
-Result<std::optional<MonitorCommand>> BluetoothConnector(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
-
 Result<MonitorCommand> NfcConnector(
     const CuttlefishConfig::EnvironmentSpecific&,
     const CuttlefishConfig::InstanceSpecific&);

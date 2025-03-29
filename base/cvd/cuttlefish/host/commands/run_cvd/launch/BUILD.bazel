@@ -41,6 +41,23 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "bluetooth_connector",
+    srcs = ["bluetooth_connector.cpp"],
+    hdrs = ["bluetooth_connector.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "bluetooth_connector_clang_tidy",
+    srcs = [":bluetooth_connector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -85,7 +102,6 @@ clang_tidy_test(
 cc_library(
     name = "launch",
     srcs = [
-        "bluetooth_connector.cpp",
         "casimir.cpp",
         "casimir_control_server.cpp",
         "console_forwarder.cpp",
