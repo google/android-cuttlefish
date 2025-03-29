@@ -53,16 +53,27 @@ jobs:
       - id: metadata-step-output
         shell: bash
         run: |
-          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr - _` 
+          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr "[:lower:]" "[:upper:] | tr - _"` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
-
-          echo INDEX: ${TARGET} | tr "[:lower:]" "[:upper:]" >> $GITHUB_STEP_SUMMARY
+          echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
+          
+          echo INDEX: ${TARGET} >> $GITHUB_STEP_SUMMARY
           echo DATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
   summary:
     runs-on: ubuntu-latest
     needs: metadata
+    env:
+      builder: ${{ needs.metadata.outputs.builder }}
+      testing: ${{ needs.metadata.outputs.testing }}
+      integration: ${{ needs.metadata.outputs.integration }}
+      orchestration: ${{ needs.metadata.outputs.orchestration }}
     steps:
-      - run: |
-          ls -la ${GITHUB_OUTPUT} >> $GITHUB_STEP_SUMMARY
+      - id: metadata-summary
+        shell: bash
+        run: |
+          echo $BUILDER >> $GITHUB_STEP_SUMMARY
+          echo $TESTING >> $GITHUB_STEP_SUMMARY
+          echo $INTEGRATION >> $GITHUB_STEP_SUMMARY
+          echo $ORCHESTRATION >> $GITHUB_STEP_SUMMARY
