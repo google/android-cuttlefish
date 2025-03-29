@@ -59,7 +59,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/cp/
       # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
       - name: Run docker and somehow extract the archive from the volume.
-        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
+        if: ${{ contains(INPUTS.IMAGE, 'builder') && !contains(INPUTS.PLATFORM, 'linux/arm64') }}
         id: build-rpm-packages
         env:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
@@ -87,7 +87,7 @@ jobs:
       - name: Retain Artifacts (*.rpm)
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm-packages
-        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
+        if: ${{ contains(INPUTS.IMAGE, 'builder') && !contains(INPUTS.PLATFORM, 'linux/arm64') }}
         with:
           path: ${{ RUNNER.TEMP }}/*.tar.gz
           name: android-cuttlefish-rhel-${{ INPUTS.PLATFORM }}
