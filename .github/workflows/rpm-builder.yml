@@ -38,6 +38,7 @@ jobs:
 
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels)
+        if: ${{ !contains(fromJSON(needs.image-metadata.outputs.metadata), null) }}
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
