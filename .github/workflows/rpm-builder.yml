@@ -19,13 +19,13 @@ jobs:
         target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
         include:
           - target: rpm-builder
-            stage: builder
+            target_stage: builder
           - target: rpm-testing
-            stage: testing
+            target_stage: testing
           - target: rhel-integration
-            stage: integration
+            target_stage: integration
           - target: rhel-orchestration
-            stage: orchestration
+            target_stage: orchestration
 
     steps:
       - uses: 'actions/checkout@v4'
