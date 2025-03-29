@@ -65,6 +65,7 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:metrics",
         "//cuttlefish/host/commands/run_cvd/launch:modem",
         "//cuttlefish/host/commands/run_cvd/launch:netsim_server",
+        "//cuttlefish/host/commands/run_cvd/launch:nfc_connector",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/command_util",

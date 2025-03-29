@@ -43,10 +43,6 @@ fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
 
-Result<MonitorCommand> NfcConnector(
-    const CuttlefishConfig::EnvironmentSpecific&,
-    const CuttlefishConfig::InstanceSpecific&);
-
 fruit::Component<fruit::Required<
     const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
     const CuttlefishConfig::InstanceSpecific, LogTeeCreator, WmediumdServer>>

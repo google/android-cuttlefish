@@ -323,6 +323,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "nfc_connector",
+    srcs = ["nfc_connector.cpp"],
+    hdrs = ["nfc_connector.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "nfc_connector_clang_tidy",
+    srcs = [":nfc_connector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -369,7 +387,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "launch.h",
-        "nfc_connector.cpp",
         "open_wrt.cpp",
         "openwrt_control_server.cpp",
         "pica.cpp",
