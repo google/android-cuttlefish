@@ -28,12 +28,6 @@ jobs:
     outputs:
       metadata: ${{ steps.metadata.outputs }}
     steps:
-      - uses: 'docker/login-action@v3'
-        id: container-registry
-        with:
-          registry: ${{ INPUTS.REGISTRY }}
-          username: ${{ INPUTS.USERNAME }}
-          password: ${{ SECRETS.TOKEN }}
       - uses: 'docker/metadata-action@v5'
         id: metadata
         with:
