@@ -65,4 +65,4 @@ jobs:
     needs: metadata
     steps:
       - run: |
-          echo ${GITHUB_OUTPUT} >> $GITHUB_STEP_SUMMARY
+          cat ${GITHUB_OUTPUT} >> $GITHUB_STEP_SUMMARY
