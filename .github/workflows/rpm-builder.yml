@@ -36,8 +36,8 @@ jobs:
         uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
-          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+          tags: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - name: Build and push Docker image
