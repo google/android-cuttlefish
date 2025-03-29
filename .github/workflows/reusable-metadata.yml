@@ -52,9 +52,9 @@ jobs:
 
       - id: metadata-step-output
         shell: bash
-        run: |          
-          OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
+        run: |
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr - _` 
+          OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
 
           echo INDEX: ${TARGET} | tr "[:lower:]" "[:upper:]" >> $GITHUB_STEP_SUMMARY
