@@ -39,8 +39,8 @@ if [[ -f /bin/dnf ]]; then
   build_spec cuttlefish_orchestration.spec
   exit 0
 else
-  INSTALL_BAZEL="$(dirname $0)/installbazel.sh"  
-  command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
+  INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
+  if ! { command -v bazel || command -v bazelisk; } >/dev/null 2>&1; then sudo "${INSTALL_BAZEL}"; fi
   install_debuild_dependencies
   build_package "${REPO_DIR}/base"
   build_package "${REPO_DIR}/frontend"
