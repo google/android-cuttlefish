@@ -4,7 +4,12 @@ on: [ push ]
 
 jobs:
 
-  build-docker-images:
+  image-metadata:
+    uses: ./.github/workflows/reusable-metadata.yml
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+
+  build-images:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,16 +68,11 @@ jobs:
           checksums: ${{ steps.build.outputs.checksums }}
           digest: ${{ steps.build.outputs.digest }}
 
-  build-metadata:
-    uses: ./.github/workflows/reusable-metadata.yml
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
-
-  run-docker-image:
+  run-images:
     uses: ./.github/workflows/reusable-docker.yml
-    needs: build-docker-images
+    needs: build-images
     with:
-      image: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}:latest
+      image: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
       platform: ${{ MATRIX.PLATFORM }}
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
