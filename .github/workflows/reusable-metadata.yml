@@ -53,14 +53,11 @@ jobs:
 
       - id: metadata-step-output
         run: |
-          OUTPUTS='${{ toJSON(steps.metadata.output.builder) }}'
+          OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           TARGET=${-/_/metadata-${{ MATRIX.TARGET }}}
           
-          echo "### Workflow variables:\n" >> $GITHUB_STEP_SUMMARY
-          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rpm_builder) }}" >> $GITHUB_STEP_SUMMARY
-          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rpm_testing) }}" >> $GITHUB_STEP_SUMMARY
-          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rhel_integration) }}" >> $GITHUB_STEP_SUMMARY
-          echo "\n${{ toJSON(steps.metadata.outputs.metadata_rhel_orchestration) }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow variables:" >> $GITHUB_STEP_SUMMARY
+          echo "${{ toJSON(steps.metadata.outputs) }}" >> $GITHUB_STEP_SUMMARY
           echo "${TARGET}='${OUTPUTS}'\n" >> $GITHUB_OUTPUT
 
   metadata-output:
