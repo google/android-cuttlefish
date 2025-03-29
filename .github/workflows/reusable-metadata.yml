@@ -54,7 +54,7 @@ jobs:
       - id: metadata-step-output
         run: |
           
-          OUTPUTS=${{ toJSON(steps.metadata.outputs) }}
+          OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           TARGET=${-/_/metadata-${{ MATRIX.TARGET }}}
           
           echo TARGET: metadata-${{ MATRIX.TARGET }} >> $GITHUB_STEP_SUMMARY
