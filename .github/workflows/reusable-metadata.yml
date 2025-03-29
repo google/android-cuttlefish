@@ -59,9 +59,10 @@ jobs:
 
       - id: metadata-step-output
         env:
+          MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
           JSON_OUTPUT: toJSON(steps.metadata.outputs)
         run: |
-          TARGET=`metadata_${-/_/${{ MATRIX.TARGET }}}`
+          TARGET=`${-/_/$MATRIX_TARGET}`
           echo "metadata=$TARGET='$JSON_OUTPUT'\n" >> $GITHUB_OUTPUT  
 
   metadata-output:
@@ -73,6 +74,8 @@ jobs:
         target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
     steps:
       - id: metadata
+        env:
+          MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
         run: |
-          TARGET=`metadata_${-/_/${{ MATRIX.TARGET }}}`
+          TARGET=`${-/_/$MATRIX_TARGET}`
           echo $GITHUB_OUTPUT[ $TARGET ]
