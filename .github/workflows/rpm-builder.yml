@@ -106,12 +106,11 @@ jobs:
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
 
-  attest-images:
-    uses: ./.github/workflows/reusable-attestation.yml
-    needs: build-images
-    secrets:
-      # inputs: ${{ needs.build-images.outputs }}
-      token: ${{ SECRETS.GITHUB_TOKEN }}
-    with:
-      checksums: ''
-      digest: ''
+#  attest-images:
+#    uses: ./.github/workflows/reusable-attestation.yml
+#    needs: build-images
+#    secrets:
+#      token: ${{ SECRETS.GITHUB_TOKEN }}
+#    with:
+#      checksums: ''
+#      digest: ''
