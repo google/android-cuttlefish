@@ -62,7 +62,7 @@ jobs:
           MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
           JSON_OUTPUT: toJSON(steps.metadata.outputs)
         run: |
-          TARGET=`${-/_/$MATRIX_TARGET}`
+          TARGET=${-/_/$MATRIX_TARGET}
           echo "metadata=$TARGET='$JSON_OUTPUT'\n" >> $GITHUB_OUTPUT  
 
   metadata-output:
@@ -77,5 +77,5 @@ jobs:
         env:
           MATRIX_TARGET: metadata-${{ MATRIX.TARGET }}
         run: |
-          TARGET=`${-/_/$MATRIX_TARGET}`
+          TARGET=${-/_/$MATRIX_TARGET}
           echo $GITHUB_OUTPUT[ $TARGET ]
