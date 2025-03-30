@@ -96,17 +96,17 @@ jobs:
             stage: builder
           - target: rpm-testing
             stage: testing
-          - target: rhel-integration
-            stage: integration
-          - target: rhel-orchestration
-            stage: orchestration
-        exclude:
-          - platform: linux/arm64
-            target: rpm-testing
-          - platform: linux/arm64
-            target: rhel-integration
-          - platform: linux/arm64
-            target: rpm-testing
+#          - target: rhel-integration
+#            stage: integration
+#          - target: rhel-orchestration
+#            stage: orchestration
+#        exclude:
+#          - platform: linux/arm64
+#            target: rpm-testing
+#          - platform: linux/arm64
+#            target: rhel-integration
+#          - platform: linux/arm64
+#            target: rpm-testing
 
 #  collect-metadata:
 #    uses: ./.github/workflows/reusable-metadata.yml
