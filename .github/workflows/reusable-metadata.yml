@@ -56,9 +56,8 @@ jobs:
           TMPDIR: ${{ RUNNER.TEMP }}
         run: |
           
-          ls -la $TMPDIR >> $GITHUB_STEP_SUMMARY
           FILENAME=`echo ${{ MATRIX.TARGET }}.json | tr - _`
-          cat $OUTPUTS >> $TMPDIR/$FILENAME
+          cat $OUTPUTS > $TMPDIR/$FILENAME
           ls -la $TMPDIR >> $GITHUB_STEP_SUMMARY
           
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr [:lower:] [:upper:] | tr - _` 
