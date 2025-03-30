@@ -69,10 +69,12 @@ jobs:
           subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
+
   run-images:
     uses: ./.github/workflows/reusable-docker.yml
     needs: build-images
     with:
+      registry: 'ghcr.io'
       image: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
       platform: ${{ MATRIX.PLATFORM }}
     secrets:

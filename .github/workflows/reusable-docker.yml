@@ -17,6 +17,10 @@ on:
       image:
         required: true
         type: string
+      tag:
+        default: latest
+        required: false
+        type: string
       platform:
         default: linux/amd64
         required: false
@@ -63,11 +67,12 @@ jobs:
         id: build-rpm-packages
         shell: bash
         env:
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
         run: |
           PLATFORM=linux/amd64
-          # docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet ${{ INPUTS.IMAGE }}
-          docker run --name rpm-builder --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
+          # docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet $$DOCKER_IMAGE
+          docker run --name rpm-builder --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
           VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')          
           DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
@@ -100,8 +105,10 @@ jobs:
         if: ${{ contains(INPUTS.IMAGE, 'testing') }}
         id: test-rpm-packages
         shell: bash
+        env:
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run --name rpm-testing --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
+          docker run --name rpm-testing --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           docker rm rpm-testing
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -110,8 +117,10 @@ jobs:
         if: ${{ contains(INPUTS.IMAGE, 'integration') }}
         id: test-integration
         shell: bash
+        env:
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run --name rhel-integration --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
+          docker run --name rhel-integration --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -119,6 +128,8 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         shell: bash
+        env:
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run --name rhel-orchestration --quiet ${{ INPUTS.IMAGE }} >> $GITHUB_STEP_SUMMARY
+          docker run --name rhel-orchestration --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           echo "result=ok" >> $GITHUB_OUTPUT
