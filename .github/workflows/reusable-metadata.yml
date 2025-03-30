@@ -55,7 +55,7 @@ jobs:
         env:
           TMPDIR: ${{ RUNNER.TEMP }}
         run: |
-          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr "[:lower:]" "[:upper:]" | tr - _"` 
+          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr - _"` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
