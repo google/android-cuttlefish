@@ -57,16 +57,14 @@ jobs:
         run: |
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr [:lower:] [:upper:] | tr - _` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'          
-          
+
+          echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
           FILE_NAME=$GITHUB_WORKSPACE/${{ MATRIX.TARGET }}.json
           echo $OUTPUTS > $FILE_NAME
           stat $FILE_NAME >> $GITHUB_STEP_SUMMARY
-
-          echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
-          echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
-          echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
-          # echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
+          
           # echo "" >> $GITHUB_STEP_SUMMARY
+          # echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
 
       - uses: actions/upload-artifact@v4
         with:
