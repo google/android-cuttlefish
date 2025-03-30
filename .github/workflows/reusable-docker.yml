@@ -67,12 +67,13 @@ jobs:
         id: build-rpm-packages
         shell: bash
         env:
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_OPTIONS: '--name rpm-builder --attach STDOUT --attach STDERR --quiet'
         run: |
           PLATFORM=linux/amd64
-          # docker run --name rpm-builder --env RPM_PLATFORM=$RPM_PLATFORM --quiet $$DOCKER_IMAGE
-          docker run --name rpm-builder --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
+          # docker run $DOCKER_OPTIONS --env RPM_PLATFORM=$RPM_PLATFORM $$DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
           VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')          
           DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
@@ -107,8 +108,9 @@ jobs:
         shell: bash
         env:
           DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_OPTIONS: '--name rpm-testing --attach STDOUT --attach STDERR'
         run: |
-          docker run --name rpm-testing --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           docker rm rpm-testing
           echo "result=ok" >> $GITHUB_OUTPUT
 
@@ -119,8 +121,9 @@ jobs:
         shell: bash
         env:
           DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_OPTIONS: '--name rhel-integration --attach STDOUT --attach STDERR --quiet'
         run: |
-          docker run --name rhel-integration --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -130,6 +133,7 @@ jobs:
         shell: bash
         env:
           DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_OPTIONS: '--name rhel-orchestration --attach STDOUT --attach STDERR --quiet'
         run: |
-          docker run --name rhel-orchestration --append STDOUT --append STDERR --quiet $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           echo "result=ok" >> $GITHUB_OUTPUT
