@@ -20,6 +20,7 @@ package_files(
         "//cuttlefish/host/commands/extract_vmlinux:extract-vmlinux.sh": "cuttlefish-common/bin/extract-vmlinux",
         "//cuttlefish/host/commands/gnss_grpc_proxy": "cuttlefish-common/bin/gnss_grpc_proxy",
         "//cuttlefish/host/commands/health": "cuttlefish-common/bin/health",
+        "//cuttlefish/host/commands/host_bugreport:cvd_internal_host_bugreport": "cuttlefish-common/bin/cvd_internal_host_bugreport",
         "//cuttlefish/host/commands/kernel_log_monitor": "cuttlefish-common/bin/kernel_log_monitor",
         "//cuttlefish/host/commands/logcat_receiver": "cuttlefish-common/bin/logcat_receiver",
         "//cuttlefish/host/commands/log_tee": "cuttlefish-common/bin/log_tee",
