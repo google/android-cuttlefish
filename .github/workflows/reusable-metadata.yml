@@ -56,7 +56,7 @@ jobs:
           TMPDIR: ${{ RUNNER.TEMP }}
         run: |
           
-          FILE_NAME=${{ ENV.GITHUB_WORKSPACE }}/${{ MATRIX.TARGET }}.json
+          FILE_NAME=$GITHUB_WORKSPACE/${{ MATRIX.TARGET }}.json
           cat $OUTPUTS > $FILE_NAME
           chmod 644 $FILE_NAME
           stat $FILE_NAME >> $GITHUB_STEP_SUMMARY
