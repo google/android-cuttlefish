@@ -3,7 +3,6 @@ name: ReusableBuild
 on: [workflow_call]
 
 jobs:
-
   build-arm64-cuttlefish-deb-job:
     runs-on: ubuntu-latest
     steps:
@@ -24,6 +23,3 @@ jobs:
       with:
         name: cuttlefish_packages_arm64
         path: tools/cuttlefish-host-image-installer/cuttlefish_packages.7z
-
-# build-arm64-cuttlefish-rpm-job:
-#   uses: ./.github/workflows/rpm-builder.yml

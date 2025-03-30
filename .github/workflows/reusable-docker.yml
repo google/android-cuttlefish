@@ -125,13 +125,6 @@ jobs:
     outputs:
       artifact: ${{ steps.retain-rpm-packages.outputs }}
     steps:
-      - name: Run orchestration test
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
-        id: test-orchestration
-        shell: bash
-        run: |
-          
-          echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
