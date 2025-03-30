@@ -81,7 +81,7 @@ jobs:
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
     strategy:
-      max-parallel: 5
+      max-parallel: 1
       matrix:
         # The `platform` is being passed into the shell as variable $RPM_PLATFORM.
         # platform: [ linux/amd64, linux/arm64 ]
