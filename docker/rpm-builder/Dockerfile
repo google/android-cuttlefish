@@ -11,7 +11,7 @@ WORKDIR "/root"
 VOLUME "/root"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm sudo git dos2unix nano && dnf -y upgrade
+RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm bash sudo git dos2unix nano && dnf -y upgrade
 
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
 RUN dnf config-manager --set-enabled crb && dnf config-manager --set-disabled extras && dnf clean all
