@@ -53,15 +53,15 @@ jobs:
       - id: metadata-step-output
         shell: bash
         run: |
-          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr - _"` 
+          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr "[:lower:]" "[:upper:] | tr - _"` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
           
           ls la $HOME
-          FILENAME=`echo  | tr - _"`
-          cat $OUTPUTS >> $HOME/$TARGET.json
-          stat $HOME/$TARGET.json >> $GITHUB_STEP_SUMMARY
+          FILENAME=`echo ${{ MATRIX.TARGET }}.json | tr - _"`
+          cat $OUTPUTS >> $HOME/$FILENAME
+          stat $HOME/$FILENAME >> $GITHUB_STEP_SUMMARY
           
           echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
           echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
