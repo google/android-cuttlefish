@@ -31,8 +31,8 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
-
+        # target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
+        target: [ rpm-builder, rpm-testing ]
     steps:
 
       - uses: 'docker/login-action@v3'
@@ -55,7 +55,7 @@ jobs:
         env:
           TMPDIR: ${{ RUNNER.TEMP }}
         run: |
-          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr "[:lower:]" "[:upper:]" | tr - _` 
+          TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr [:lower:] [:upper:] | tr - _` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
