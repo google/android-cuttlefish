@@ -108,10 +108,10 @@ jobs:
           - platform: linux/arm64
             target: rpm-testing
 
-  collect-metadata:
-    uses: ./.github/workflows/reusable-metadata.yml
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
+#  collect-metadata:
+#    uses: ./.github/workflows/reusable-metadata.yml
+#    secrets:
+#      token: ${{ SECRETS.GITHUB_TOKEN }}
 
 #  attest-images:
 #    uses: ./.github/workflows/reusable-attestation.yml
