@@ -78,10 +78,11 @@ jobs:
       testing: ${{ needs.metadata.outputs.testing }}
       integration: ${{ needs.metadata.outputs.integration }}
       orchestration: ${{ needs.metadata.outputs.orchestration }}
+
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: metadata-rpm-builder
+      # - uses: actions/download-artifact@v4
+      #   with:
+      #     name: metadata-rpm-builder
 
       - id: metadata-summary
         shell: bash
