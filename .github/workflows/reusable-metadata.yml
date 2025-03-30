@@ -56,7 +56,7 @@ jobs:
           TMPDIR: ${{ RUNNER.TEMP }}
         run: |
           
-          FILE_NAME=${{ MATRIX.TARGET }}.json
+          FILE_NAME=${{ ENV.GITHUB_WORKSPACE }}/${{ MATRIX.TARGET }}.json
           cat $OUTPUTS > $FILE_NAME
           stat $FILE_NAME >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: metadata-${{ MATRIX.TARGET }}
-          path: ${{ MATRIX.TARGET }}.json
+          path: ${{ ENV.GITHUB_WORKSPACE }}/${{ MATRIX.TARGET }}.json
 
   summary:
     runs-on: ubuntu-latest
