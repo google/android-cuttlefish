@@ -31,8 +31,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        # target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
-        target: [ rpm-builder, rpm-testing ]
+        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
     steps:
 
       - uses: 'docker/login-action@v3'
@@ -83,7 +82,7 @@ jobs:
       - id: metadata-summary
         shell: bash
         run: |
-          echo $BUILDER >> $GITHUB_STEP_SUMMARY
-          echo $TESTING >> $GITHUB_STEP_SUMMARY
-          echo $INTEGRATION >> $GITHUB_STEP_SUMMARY
-          echo $ORCHESTRATION >> $GITHUB_STEP_SUMMARY
+          stat $GITHUB_WORKSPACE/rpm-builder.json >> $GITHUB_STEP_SUMMARY
+          stat $GITHUB_WORKSPACE/rpm-testing.json >> $GITHUB_STEP_SUMMARY
+          stat $GITHUB_WORKSPACE/rhel-integration.json >> $GITHUB_STEP_SUMMARY
+          stat $GITHUB_WORKSPACE/rhel-orchestration >> $GITHUB_STEP_SUMMARY
