@@ -1,5 +1,5 @@
 Name:           cuttlefish-orchestration
-Version:        0.9.29
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Contains the host orchestrator.
 
@@ -10,7 +10,7 @@ BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  openssl
-Requires:       cuttlefish-base, cuttlefish-user, shadow-utils, bash, openssl, nginx, systemd-journal-remote
+Requires:       cuttlefish-base, cuttlefish-user, bash, shadow-utils, openssl, nginx, systemd-journal-remote
 
 %description
 Cuttlefish Android Virtual Device companion package
@@ -51,8 +51,8 @@ install -m 655 %{srcpath}/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/et
 /etc/sudoers.d/cuttlefish-orchestration
 
 #%%license add-license-file-here
-#%%doc add-docs-here
 
+#%%doc add-docs-here
 
 %post
 ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/fetch_cvd
@@ -83,6 +83,5 @@ fi
 systemctl try-reload-or-restart nginx.service
 
 %changelog
-* Thu Jul 11 2024 Martin Zeitler <?>
+* Sun Mar 30 2025 Martin Zeitler <syslogic@users.noreply.github.com>
 - Initial version.
-
