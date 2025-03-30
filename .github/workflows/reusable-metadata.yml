@@ -58,7 +58,7 @@ jobs:
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'          
 
           echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
-          FILE_NAME=$GITHUB_WORKSPACE/${{ MATRIX.TARGET }}.json
+          FILE_NAME=$GITHUB_WORKSPACE/metadata-${{ MATRIX.TARGET }}.json
           echo $OUTPUTS > $FILE_NAME
           stat $FILE_NAME >> $GITHUB_STEP_SUMMARY
           
@@ -82,7 +82,7 @@ jobs:
       - id: metadata-summary
         shell: bash
         run: |
-          stat $GITHUB_WORKSPACE/rpm-builder.json >> $GITHUB_STEP_SUMMARY
-          stat $GITHUB_WORKSPACE/rpm-testing.json >> $GITHUB_STEP_SUMMARY
-          stat $GITHUB_WORKSPACE/rhel-integration.json >> $GITHUB_STEP_SUMMARY
-          stat $GITHUB_WORKSPACE/rhel-orchestration >> $GITHUB_STEP_SUMMARY
+          # stat $GITHUB_WORKSPACE/metadata-rpm-builder.json >> $GITHUB_STEP_SUMMARY
+          # stat $GITHUB_WORKSPACE/metadata-rpm-testing.json >> $GITHUB_STEP_SUMMARY
+          # stat $GITHUB_WORKSPACE/metadata-rhel-integration.json >> $GITHUB_STEP_SUMMARY
+          # stat $GITHUB_WORKSPACE/metadata-rhel-orchestration >> $GITHUB_STEP_SUMMARY
