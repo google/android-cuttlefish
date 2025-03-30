@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bssh
 # The file deployed seems stuck.
 REPO_NAME=android-cuttlefish
 REPO_OWNER=syslogic
