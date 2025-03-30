@@ -26,10 +26,13 @@ on:
         description: "Artifact attestation output"
 
 jobs:
-  artifact-attestation-matrix:
+  artifact-attestation:
     runs-on: ubuntu-latest
     outputs:
-      attestation: ${{ steps.metadata.outputs.metadata_rpm_builder }}
+      builder: ${{ steps.attestation.outputs.attestation_rpm_builder }}
+      testing: ${{ steps.attestation.outputs.attestation_rpm_testing }}
+      integration: ${{ steps.attestation.outputs.attestation_rhel_integration }}
+      orchestration: ${{ steps.attestation.outputs.attestation_rhel_orchestration }}
     strategy:
       max-parallel: 4
       matrix:
@@ -55,17 +58,17 @@ jobs:
         shell: bash
         run: |
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
-          TARGET=`echo metadata-${{ MATRIX.TARGET }}} | tr - _` 
+          TARGET=`echo attestation-${{ MATRIX.TARGET }}} | tr - _` 
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
 
           echo TARGET: ${TARGET} >> $GITHUB_STEP_SUMMARY
           echo METADATA: ${OUTPUTS} >> $GITHUB_STEP_SUMMARY
 
-  artifact-attestation-matrix-output:
+  artifact-attestation-output:
     runs-on: ubuntu-latest
-    needs: artifact-attestation-matrix
+    needs: artifact-attestation
     steps:
       - shell: bash
         run: |
-          echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_STEP_SUMMARY
-          echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_OUTPUT
+          # echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_STEP_SUMMARY
+          # echo attestation='${{ toJSON(needs.artifact-attestation-matrix.outputs) }}' >> $GITHUB_OUTPUT
