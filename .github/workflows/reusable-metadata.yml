@@ -65,10 +65,10 @@ jobs:
           # echo "" >> $GITHUB_STEP_SUMMARY
           # echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: metadata-${{ MATRIX.TARGET }}
-          path: /home/runner/work/android-cuttlefish/android-cuttlefish/${{ MATRIX.TARGET }}.json
+     # - uses: actions/upload-artifact@v4
+     #   with:
+     #     name: metadata-${{ MATRIX.TARGET }}
+     #     path: /home/runner/work/android-cuttlefish/android-cuttlefish/${{ MATRIX.TARGET }}.json
 
   summary:
     runs-on: ubuntu-latest
