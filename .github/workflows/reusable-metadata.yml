@@ -59,6 +59,7 @@ jobs:
           FILE_NAME=${{ MATRIX.TARGET }}.json
           cat $OUTPUTS > $FILE_NAME
           stat $FILE_NAME >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr [:lower:] [:upper:] | tr - _` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'          
