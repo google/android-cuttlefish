@@ -17,16 +17,24 @@ jobs:
       max-parallel: 1
       matrix:
         platform: [ linux/amd64 ]
-        target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
+        #  target: [ rpm-builder, rpm-testing, rhel-integration, rhel-orchestration ]
+        target: [ rpm-builder, rpm-testing ]
         include:
           - target: rpm-builder
-            target_stage: builder
+            stage: builder
           - target: rpm-testing
-            target_stage: testing
-          - target: rhel-integration
-            target_stage: integration
-          - target: rhel-orchestration
-            target_stage: orchestration
+            stage: testing
+    #          - target: rhel-integration
+    #            stage: integration
+    #          - target: rhel-orchestration
+    #            stage: orchestration
+    #        exclude:
+    #          - platform: linux/arm64
+    #            target: rpm-testing
+    #          - platform: linux/arm64
+    #            target: rhel-integration
+    #          - platform: linux/arm64
+    #            target: rpm-testing
 
     steps:
       - uses: 'actions/checkout@v4'
