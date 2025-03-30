@@ -7,7 +7,7 @@ LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/g
 
 # Base Image
 FROM rockylinux AS base
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/bin/sh" ]
 WORKDIR "/root"
 VOLUME "/root"
 
@@ -30,7 +30,7 @@ ARG BAZEL_VERSION=7.6.0
 
 # Add entrypoint script.
 ADD ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
-ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
+ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
 
 # Build dependencies.
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
@@ -48,7 +48,7 @@ FROM base AS testing
 
 # Add entrypoint script.
 ADD ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
-ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
+ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
 
 # Runtime Dependencies
 RUN dnf -y install libwayland-* && dnf clean all
