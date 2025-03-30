@@ -5,8 +5,6 @@ on:
     secrets:
       token:
         required: true
-    env:
-      TMPDIR: ${{ RUNNER.TEMP }}
     inputs:
       registry:
         default: 'ghcr.io'
@@ -54,6 +52,8 @@ jobs:
 
       - id: metadata-step-output
         shell: bash
+        env:
+          TMPDIR: ${{ RUNNER.TEMP }}
         run: |
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr "[:lower:]" "[:upper:] | tr - _"` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'
