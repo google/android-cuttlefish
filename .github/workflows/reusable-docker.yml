@@ -11,8 +11,7 @@ on:
         required: false
         type: string
       username:
-        default: ${{ GITHUB.ACTOR }}
-        required: false
+        required: true
         type: string
       image:
         required: true
@@ -68,7 +67,7 @@ jobs:
         shell: bash
         env:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           DOCKER_OPTIONS: '--name rpm-builder --attach STDOUT --attach STDERR --quiet'
         run: |
           PLATFORM=linux/amd64
@@ -107,7 +106,7 @@ jobs:
         id: test-rpm-packages
         shell: bash
         env:
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           DOCKER_OPTIONS: '--name rpm-testing --attach STDOUT --attach STDERR'
         run: |
           docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
@@ -120,7 +119,7 @@ jobs:
         id: test-integration
         shell: bash
         env:
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           DOCKER_OPTIONS: '--name rhel-integration --attach STDOUT --attach STDERR --quiet'
         run: |
           docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
@@ -132,7 +131,7 @@ jobs:
         id: test-orchestration
         shell: bash
         env:
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           DOCKER_OPTIONS: '--name rhel-orchestration --attach STDOUT --attach STDERR --quiet'
         run: |
           docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY

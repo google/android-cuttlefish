@@ -75,7 +75,8 @@ jobs:
     needs: build-images
     with:
       registry: 'ghcr.io'
-      image: ${{ GITHUB.ACTOR }}/${{ MATRIX.TARGET }}
+      username: ${{ GITHUB.ACTOR }}
+      image: ${{ MATRIX.TARGET }}
       platform: ${{ MATRIX.PLATFORM }}
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
