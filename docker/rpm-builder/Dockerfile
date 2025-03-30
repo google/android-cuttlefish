@@ -35,7 +35,7 @@ RUN dnf -y install rpm-build golang-bin curl-devel wayland-devel ncurses-compat-
 protobuf protobuf-devel protobuf-compiler && dnf clean all
 
 # Add entrypoint script.
-COPY ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
+ADD ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
 RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
 ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
 
@@ -49,7 +49,7 @@ FROM base AS testing
 RUN dnf -y install libwayland-* && dnf clean all
 
 # Add entrypoint script.
-COPY ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
+ADD ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
 RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
 ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
 
