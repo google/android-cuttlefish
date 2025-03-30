@@ -6,7 +6,7 @@ on:
       token:
         required: true
     env:
-      TEMP: ${{ RUNNER.TEMP }}
+      TMPDIR: ${{ RUNNER.TEMP }}
     inputs:
       registry:
         default: 'ghcr.io'
@@ -60,10 +60,10 @@ jobs:
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
           
-          ls -la $TEMP >> $GITHUB_STEP_SUMMARY
+          ls -la $TMPDIR >> $GITHUB_STEP_SUMMARY
           FILENAME=`echo ${{ MATRIX.TARGET }}.json | tr - _"`
-          cat $OUTPUTS >> $TEMP/$FILENAME
-          stat $TEMP/$FILENAME >> $GITHUB_STEP_SUMMARY
+          cat $OUTPUTS >> $TMPDIR/$FILENAME
+          stat $TMPDIR/$FILENAME >> $GITHUB_STEP_SUMMARY
           
           echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
           echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
