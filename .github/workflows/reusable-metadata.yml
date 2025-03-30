@@ -58,6 +58,11 @@ jobs:
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_ENV
           
+          ls la $HOME
+          FILENAME=`echo ${{ MATRIX.TARGET }}.json | tr - _"`
+          cat $OUTPUTS >> $HOME/&FILENAME
+          stat $HOME/&FILENAME
+          
           echo "INDEX: <b>${TARGET}</b>" >> $GITHUB_STEP_SUMMARY
           echo "DATA: ${OUTPUTS}" >> $GITHUB_STEP_SUMMARY
 
