@@ -32,6 +32,7 @@ function build_spec() {
   rpmbuild --define "_topdir `pwd`/tools/rpmbuild" -v -ba $specfile
 }
 
+which dnf
 if [[ -f /usr/bin/dnf ]]; then
   build_spec cuttlefish_base.spec
   build_spec cuttlefish_user.spec
