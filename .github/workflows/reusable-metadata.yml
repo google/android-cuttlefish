@@ -16,7 +16,7 @@ on:
         type: string
     outputs:
       metadata:
-        value: ${{ jobs.metadata-output.outputs }}
+        value: ${{ jobs.metadata-output.outputs.metadata }}
         description: "Metadata output"
 
 jobs:
@@ -73,12 +73,16 @@ jobs:
   summary:
     runs-on: ubuntu-latest
     needs: metadata
-    env:
+    outputs:
       builder: ${{ needs.metadata.outputs.builder }}
       testing: ${{ needs.metadata.outputs.testing }}
       integration: ${{ needs.metadata.outputs.integration }}
       orchestration: ${{ needs.metadata.outputs.orchestration }}
     steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: metadata-rpm-builder
+
       - id: metadata-summary
         shell: bash
         run: |
