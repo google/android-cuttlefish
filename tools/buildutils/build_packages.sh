@@ -27,24 +27,24 @@ function build_package() {
 function build_spec() {
   local specfile="${REPO_DIR}/tools/rpmbuild/SPECS/$1"
   echo "Installing package dependencies"
-  sudo dnf builddep --skip-unavailable $specfile
+  sudo dnf builddep --skip-unavailable "$specfile"
   echo "Building packages"
-  rpmbuild --define "_topdir `pwd`/tools/rpmbuild" -v -ba $specfile
+  rpmbuild --define "_topdir $(pwd)/tools/rpmbuild" -v -ba "$specfile"
 }
 
 if [[ -f /bin/dnf ]]; then
+  echo "DNF found"
   build_spec cuttlefish_base.spec
   build_spec cuttlefish_user.spec
   build_spec cuttlefish_integration.spec
   build_spec cuttlefish_orchestration.spec
   exit 0
 else
-  INSTALL_BAZEL="$(dirname $0)/installbazel.sh"  
-  command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
+  INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
+
+  if ! { command -v bazel || command -v bazelisk; } >/dev/null 2>&1; then sudo "${INSTALL_BAZEL}"; fi
   install_debuild_dependencies
   build_package "${REPO_DIR}/base"
   build_package "${REPO_DIR}/frontend"
   exit 0
 fi
-exit 1
-

@@ -1,5 +1,5 @@
 Name:           cuttlefish-base
-Version:        0.9.29
+Version:        1.2.0
 Release:        1%{?dist}
 Summary:        Cuttlefish Android Virtual Device
 
@@ -8,7 +8,9 @@ URL:            https://github.com/google/android-cuttlefish
 
 BuildArch:      x86_64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires:  curl-devel, openssl-devel, protobuf-devel, protobuf-compiler
+
+# Note: `ncurses-compat-libs` require EPEL repository and `protobuf` requires CRB repository.
+BuildRequires:  curl-devel, openssl-devel, wayland-devel ncurses-compat-libs, protobuf-devel, protobuf-compiler
 
 Requires:       shadow-utils, redhat-lsb-core, ebtables-legacy, iproute
 Requires:       iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
@@ -30,9 +32,9 @@ Cuttlefish Android Virtual Device that are used in all deployments.
 
 
 %build
-cd ../../../base/cvd
-bazel build cuttlefish:cvd --spawn_strategy=local
-
+# $HOME/go/bin/bazelisk build cuttlefish:cvd --spawn_strategy=local
+# $HOME/go/bin/bazelisk build --linkopt="-Wl,--build-id=sha1" 'cuttlefish/package:cvd' --spawn_strategy=local
+cd ../../../base/cvd && $HOME/go/bin/bazelisk build ...
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -58,8 +60,21 @@ install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.init %{build
 %define srcpath ../../../base/rhel
 install -m 655 %{srcpath}/cuttlefish.service %{buildroot}/lib/systemd/system/cuttlefish.service
 
-%define srcpath ../../../base/cvd/bazel-bin
-install -m 755 %{srcpath}/cuttlefish/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
+# TODO: there are more commands there now.
+%define srcpath ../../../base/cvd/bazel-bin/cuttlefish/package
+# acloud_translator         cvd_internal_env               health                  process_restarter
+# adb_connector             cvd_internal_start             kernel_log_monitor      record_cvd
+# allocd_client             cvd_internal_status            log_tee                 restart_cvd
+# assemble_cvd              cvd_internal_stop              logcat_receiver         run_cvd
+# console_forwarder         cvd_send_id_disclosure         metrics                 screen_recording_server
+# control_env_proxy_server  cvd_update_security_algorithm  metrics_launcher        snapshot_util_cvd
+# cvd                       echo_server                    mkenvimage_slim         socket_vsock_proxy
+# cvd.repo_mapping          extract-ikconfig               modem_simulator         tcp_connector
+# cvd.runfiles              extract-vmlinux                openwrt_control_server  tombstone_receiver
+# cvd.runfiles_manifest     generate_shader_embed          operator_proxy
+# cvd_import_locations      gnss_grpc_proxy                powerbtn_cvd
+# cvd_internal_display      graphics_detector              powerwash_cvd
+install -m 755 %{srcpath}/cuttlefish-common/bin/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
 
 %define srcpath ../../../base/host/deploy
 install -m 655 %{srcpath}/install_zip.sh %{buildroot}/usr/bin/install_zip.sh
@@ -105,10 +120,9 @@ fi
 /lib/udev/rules.d/60-cuttlefish-integration.rules
 
 #%%license add-license-file-here
+
 #%%doc add-docs-here
 
-
 %changelog
-* Thu Jul 11 2024 Martin Zeitler <?>
+* Sun Mar 30 2025 Martin Zeitler <syslogic@users.noreply.github.com>
 - Initial version.
-
