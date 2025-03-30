@@ -68,7 +68,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: metadata-${{ MATRIX.TARGET }}
-          path: /home/runner/work/android-cuttlefish/android-cuttlefish/${{ MATRIX.TARGET }}.json
+          path: ${{ GITHUB_WORKSPACE }}/${{ MATRIX.TARGET }}.json
 
   summary:
     runs-on: ubuntu-latest
