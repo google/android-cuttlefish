@@ -29,8 +29,8 @@ FROM base AS builder
 ARG BAZEL_VERSION=7.6.0
 
 # Add entrypoint script.
-ADD ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
-ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
+ADD ./docker/rpm-builder/buildscript.sh /root/buildscript.sh
+ENTRYPOINT [ "/bin/sh", "-c", "./buildscript.sh" ]
 
 # Build dependencies.
 # RUN dnf -y install dpkg-dev devscripts vim-enhanced
@@ -47,8 +47,8 @@ RUN go install github.com/bazelbuild/bazelisk@latest
 FROM base AS testing
 
 # Add entrypoint script.
-ADD ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
-ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
+ADD ./docker/rpm-builder/testscript.sh /root/testscript.sh
+ENTRYPOINT [ "/bin/sh", "-c", "./testscript.sh" ]
 
 # Runtime Dependencies
 RUN dnf -y install libwayland-* && dnf clean all
