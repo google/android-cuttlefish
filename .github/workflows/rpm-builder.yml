@@ -30,7 +30,10 @@ jobs:
 
     steps:
       - uses: 'actions/checkout@v4'
-      - uses: 'docker/setup-buildx-action@v3'
+      - uses: 'docker/setup-qemu-action@v3'
+        with:
+          platforms: and64,arm64
+          cache-image: false
 
       # https://github.com/docker/metadata-action
       - name: Extract metadata (tags, labels)
@@ -48,6 +51,7 @@ jobs:
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://github.com/marketplace/actions/build-and-push-docker-images
+      - uses: 'docker/setup-buildx-action@v3'
       - name: Build and push Docker image
         uses: 'docker/build-push-action@v6'
         id: build
