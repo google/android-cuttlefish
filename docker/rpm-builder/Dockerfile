@@ -56,7 +56,7 @@ ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
 
 # Integration Test
 FROM base AS integration
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/bin/sh" ]
 
 # Runtime Dependencies
 RUN dnf -y install qemu-kvm && dnf clean all
@@ -73,7 +73,7 @@ EXPOSE 6520-6620
 
 # Orchestration Test
 FROM base AS orchestration
-ENTRYPOINT [ "/bin/bash" ]
+ENTRYPOINT [ "/bin/sh" ]
 
 # Runtime Dependencies
 RUN dnf -y install nginx systemd-journal-remote && dnf clean all
