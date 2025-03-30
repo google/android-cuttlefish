@@ -56,9 +56,9 @@ jobs:
           TMPDIR: ${{ RUNNER.TEMP }}
         run: |
           
-          FILENAME=`echo ${{ MATRIX.TARGET }}.json | tr - _`
-          cat $OUTPUTS > $TMPDIR/$FILENAME
-          ls -la $TMPDIR >> $GITHUB_STEP_SUMMARY
+          FILE_NAME=${{ MATRIX.TARGET }}.json
+          cat $OUTPUTS > $FILE_NAME
+          ls -la >> $GITHUB_STEP_SUMMARY
           
           TARGET=`echo metadata-${{ MATRIX.TARGET }} | tr [:lower:] [:upper:] | tr - _` 
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'          
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: metadata-${{ MATRIX.TARGET }}
-          path: ${{ TMPDIR }}/${{ MATRIX.TARGET }}.json
+          path: ${{ MATRIX.TARGET }}.json
 
   summary:
     runs-on: ubuntu-latest
