@@ -7,6 +7,7 @@ LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/g
 
 # Base Image
 FROM rockylinux AS base
+ENTRYPOINT [ "/bin/bash" ]
 WORKDIR "/root"
 VOLUME "/root"
 
@@ -37,7 +38,7 @@ protobuf protobuf-devel protobuf-compiler && dnf clean all
 # Add entrypoint script.
 ADD ./docker/rpm-builder/buildscript.sh /root/entrypoint.sh
 RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
-ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
+ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
 
 # Run go install `bazelisk`.
 RUN go install github.com/bazelbuild/bazelisk@latest
@@ -51,12 +52,11 @@ RUN dnf -y install libwayland-* && dnf clean all
 # Add entrypoint script.
 ADD ./docker/rpm-builder/testscript.sh /root/entrypoint.sh
 RUN dos2unix /root/entrypoint.sh && chmod +x /root/entrypoint.sh
-ENTRYPOINT [ "/bin/sh", "-c", "./entrypoint.sh" ]
+ENTRYPOINT [ "/bin/bash", "-c", "./entrypoint.sh" ]
 
 
 # Integration Test
 FROM base AS integration
-ENTRYPOINT [ "/bin/sh" ]
 
 # Runtime Dependencies
 RUN dnf -y install qemu-kvm && dnf clean all
@@ -73,7 +73,6 @@ EXPOSE 6520-6620
 
 # Orchestration Test
 FROM base AS orchestration
-ENTRYPOINT [ "/bin/sh" ]
 
 # Runtime Dependencies
 RUN dnf -y install nginx systemd-journal-remote && dnf clean all
