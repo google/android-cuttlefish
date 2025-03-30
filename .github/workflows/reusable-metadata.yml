@@ -59,7 +59,7 @@ jobs:
           OUTPUTS='${{ toJSON(steps.metadata.outputs) }}'          
           
           FILE_NAME=$GITHUB_WORKSPACE/${{ MATRIX.TARGET }}.json
-          cat $OUTPUTS > $FILE_NAME
+          echo $OUTPUTS > $FILE_NAME
           stat $FILE_NAME >> $GITHUB_STEP_SUMMARY
 
           echo ${TARGET}=${OUTPUTS} >> $GITHUB_OUTPUT
