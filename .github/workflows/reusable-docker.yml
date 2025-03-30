@@ -71,8 +71,8 @@ jobs:
           DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
           DOCKER_OPTIONS: '--name rpm-builder'
         run: |
-          docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS --env RPM_PLATFORM="$RPM_PLATFORM" $$DOCKER_IMAGE
-          # docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
+          # docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS --env platform="$RPM_PLATFORM" $$DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
           VOLUME_HASH=$(docker volume ls --filter driver="local" --format '{{.Name}}')          
           DIRECTORY=/var/lib/docker/volumes/$VOLUME_HASH/_data
