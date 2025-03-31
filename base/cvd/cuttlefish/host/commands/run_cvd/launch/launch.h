@@ -22,7 +22,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
-#include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
@@ -38,11 +37,6 @@ Result<std::optional<MonitorCommand>> UwbConnector(
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
-
-Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
-                                 const CuttlefishConfig::InstanceSpecific&,
-                                 AutoSnapshotControlFiles::Type&,
-                                 KernelLogPipeProvider&);
 
 Result<MonitorCommand> TombstoneReceiver(
     const CuttlefishConfig::InstanceSpecific&);

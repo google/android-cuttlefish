@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/pica.h"
 #include "cuttlefish/host/commands/run_cvd/launch/root_canal.h"
 #include "cuttlefish/host/commands/run_cvd/launch/screen_recording_server.h"
+#include "cuttlefish/host/commands/run_cvd/launch/secure_env.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
