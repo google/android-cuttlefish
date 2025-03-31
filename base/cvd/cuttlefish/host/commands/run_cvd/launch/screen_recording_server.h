@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/run_cvd/launch/screen_recording_server.h"
+#pragma once
 
 #include <optional>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/command_source.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
 Result<std::optional<MonitorCommand>> ScreenRecordingServer(
-    GrpcSocketCreator& grpc_socket) {
-  Command screen_recording_server_cmd(ScreenRecordingServerBinary());
-  screen_recording_server_cmd.AddParameter(
-      "-grpc_uds_path=", grpc_socket.CreateGrpcSocket("ScreenRecordingServer"));
-  return screen_recording_server_cmd;
-}
+    GrpcSocketCreator& grpc_socket);
 
 }  // namespace cuttlefish
