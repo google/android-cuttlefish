@@ -1,7 +1,14 @@
 name: RPM Builder
 
-on: [ push ]
-
+on:
+  push:
+  pull_request:
+    paths:
+      - 'tools/rpmbuild/**'
+      - 'docker/rpm-builder/**'
+      - '.github/workflows/reusable-docker.yml'
+      - '.github/workflows/rpm-builder-matrix.yml'
+      - '.github/workflows/rpm-builder.yml'
 jobs:
 
   build-image:

@@ -6,7 +6,7 @@ Summary:        Contains the host signaling server supporting multi-device flows
 License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish
 
-BuildArch:      x86_64
+BuildArch:      x86_64 arm64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  golang-bin
@@ -46,7 +46,7 @@ install -m 655 %{srcpath}//operator/intercept/js/server_connector.js %{buildroot
 
 %define srcpath ../../../frontend/src/operator/webui/dist/static
 for filename in $(ls %{srcpath}) ; do
-  install -m 655 %{srcpath}/$filename %{buildroot}/usr/share/cuttlefish-common/operator/static/$filename
+  install -m 644 %{srcpath}/$filename %{buildroot}/usr/share/cuttlefish-common/operator/static/$filename
 done
 
 

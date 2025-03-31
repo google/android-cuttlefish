@@ -6,11 +6,11 @@ Summary:        Contains the host orchestrator.
 License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish
 
-BuildArch:      x86_64
+BuildArch:      x86_64 arm64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  openssl
-Requires:       cuttlefish-base, cuttlefish-user, bash, shadow-utils, openssl, nginx, systemd-journal-remote
+Requires:       cuttlefish-base, cuttlefish-user, bash, nginx, openssl, ca-certificates, shadow-utils, systemd-udev, systemd-journal-remote
 
 %description
 Cuttlefish Android Virtual Device companion package
@@ -36,12 +36,12 @@ mkdir -p %{buildroot}/etc/rc.d/init.d
 mkdir -p %{buildroot}/etc/sudoers.d
 
 %define srcpath ../../../frontend/.sslcert
-install -m 655 %{srcpath}/cert.pem %{buildroot}/etc/cuttlefish-orchestration/ssl/cert/cert.pem
-install -m 655 %{srcpath}/key.pem %{buildroot}/etc/cuttlefish-orchestration/ssl/cert/key.pem
+install -m 544 %{srcpath}/cert.pem %{buildroot}/etc/cuttlefish-orchestration/ssl/cert/cert.pem
+install -m 544 %{srcpath}/key.pem %{buildroot}/etc/cuttlefish-orchestration/ssl/cert/key.pem
 
 %define srcpath ../../../frontend/host/packages/cuttlefish-orchestration
-install -m 655 %{srcpath}/etc/nginx/conf.d/cuttlefish-orchestration.conf %{buildroot}/etc/nginx/conf.d/cuttlefish-orchestration.conf
-install -m 655 %{srcpath}/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/etc/sudoers.d/cuttlefish-orchestration
+install -m 544 %{srcpath}/etc/nginx/conf.d/cuttlefish-orchestration.conf %{buildroot}/etc/nginx/conf.d/cuttlefish-orchestration.conf
+install -m 544 %{srcpath}/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/etc/sudoers.d/cuttlefish-orchestration
 
 
 %files

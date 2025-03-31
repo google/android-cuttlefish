@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -x
 
@@ -24,27 +24,11 @@ function build_package() {
   popd
 }
 
-function build_spec() {
-  local specfile="${REPO_DIR}/tools/rpmbuild/SPECS/$1"
-  echo "Installing package dependencies"
-  sudo dnf builddep --skip-unavailable "$specfile"
-  echo "Building packages"
-  rpmbuild --define "_topdir $(pwd)/tools/rpmbuild" -v -ba "$specfile"
-}
-
-if [[ -f /bin/dnf ]]; then
-  echo "DNF found"
-  build_spec cuttlefish_base.spec
-  build_spec cuttlefish_user.spec
-  build_spec cuttlefish_integration.spec
-  build_spec cuttlefish_orchestration.spec
-  exit 0
-else
-  INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
-
-  if ! { command -v bazel || command -v bazelisk; } >/dev/null 2>&1; then sudo "${INSTALL_BAZEL}"; fi
+if [[ -f /bin/apt ]]; then
+  if ! { command -v bazel || command -v bazelisk; } >/dev/null 2>&1; then sudo "$(dirname $0)/installbazel.sh"; fi
   install_debuild_dependencies
   build_package "${REPO_DIR}/base"
   build_package "${REPO_DIR}/frontend"
-  exit 0
+else
+  "${REPO_DIR}/docker/rpm-builder/build_rpm_spec.sh"
 fi

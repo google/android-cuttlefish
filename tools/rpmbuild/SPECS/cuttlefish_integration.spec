@@ -6,7 +6,7 @@ Summary:        Contains the host signaling server supporting multi-device flows
 License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish
 
-BuildArch:      x86_64
+BuildArch:      x86_64 arm64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  
@@ -31,9 +31,9 @@ mkdir -p %{buildroot}/etc/ssh
 mkdir -p %{buildroot}/lib/udev/rules.d
 
 %define srcpath ../../../base/host/packages/cuttlefish-integration
-install -m 655 %{srcpath}/etc/default/instance_configs.cfg.template %{buildroot}/etc/default/instance_configs.cfg.template
-install -m 655 %{srcpath}/etc/modprobe.d/cuttlefish-integration.conf %{buildroot}/etc/modprobe.d/cuttlefish-integration.conf
-install -m 655 %{srcpath}/etc/rsyslog.d/91-cuttlefish.conf %{buildroot}/etc/rsyslog.d/91-cuttlefish.conf
+install -m 644 %{srcpath}/etc/default/instance_configs.cfg.template %{buildroot}/etc/default/instance_configs.cfg.template
+install -m 644 %{srcpath}/etc/modprobe.d/cuttlefish-integration.conf %{buildroot}/etc/modprobe.d/cuttlefish-integration.conf
+install -m 644 %{srcpath}/etc/rsyslog.d/91-cuttlefish.conf %{buildroot}/etc/rsyslog.d/91-cuttlefish.conf
 install -m 655 %{srcpath}/etc/ssh/sshd_config.cuttlefish %{buildroot}/etc/ssh/sshd_config.cuttlefish
 
 %define srcpath ../../../base/debian

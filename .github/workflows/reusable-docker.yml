@@ -44,7 +44,10 @@ jobs:
     outputs:
       filename: ${{ steps.build-rpm-packages.outputs.filename }}
     env:
-      DEFAULT_OPTIONS: '--attach STDOUT --attach STDERR --quiet'
+      DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+      # DEFAULT_OPTIONS: '--quiet --tty --volume /github/home/android-cuttlefish/.cache:/tmp/.cache --volume /github/home/android-cuttlefish/.rpms/:/tmp/.rpms'
+      DEFAULT_OPTIONS: '--quiet --tty'
+      ENV_OPTIONS: ''
     steps:
 
       # https://github.com/docker/login-action
@@ -66,9 +69,9 @@ jobs:
         env:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
           DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS $DOCKER_IMAGE
+          mkdir /tmp/.cache && mkdir /tmp/.rpms
+          docker run $DEFAULT_OPTIONS $DOCKER_OPTIONS $ENV_OPTIONS $DOCKER_IMAGE
           # --env platform="$RPM_PLATFORM"
           
           # TODO: Finds nothing, because the entrypoint.sh does not seem to execute.
@@ -78,10 +81,16 @@ jobs:
           sudo ls -la $MOUNT_POINT >> $GITHUB_STEP_SUMMARY
           
           echo Attempting to copy to /tmp directory ...
-          sudo cp $MOUNT_POINT/android-cuttlefish-rpm.tar.gz /tmp
-          sudo ls -la /tmp >> $GITHUB_STEP_SUMMARY
-          # docker cp $CID:/root/android-cuttlefish-rpm.tar.gz /tmp
-          echo "filename=/tmp/android-cuttlefish-rpm.tar.gz" >> $GITHUB_OUTPUT
+          FILENAME=$MOUNT_POINT/android-cuttlefish-rpm.tar.gz
+          if [ ! -f $FILENAME ]; then
+            echo "File not found: $FILENAME" >> $GITHUB_STEP_SUMMARY
+            echo "File not found: $FILENAME" >> $GITHUB_STEP_SUMMARY
+          else
+            sudo cp $MOUNT_POINT/android-cuttlefish-rpm.tar.gz /tmp
+            sudo ls -la /tmp >> $GITHUB_STEP_SUMMARY
+            # docker cp $CID:/root/android-cuttlefish-rpm.tar.gz /tmp
+            echo "filename=/tmp/android-cuttlefish-rpm.tar.gz" >> $GITHUB_OUTPUT
+          fi
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Run package tests
@@ -90,9 +99,8 @@ jobs:
         shell: bash
         env:
           DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS $DOCKER_IMAGE
+          docker run $DEFAULT_OPTIONS $DOCKER_OPTIONS $ENV_OPTIONS $DOCKER_IMAGE
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -102,9 +110,8 @@ jobs:
         shell: bash
         env:
           DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS $DOCKER_IMAGE
+          docker run $DEFAULT_OPTIONS $DOCKER_OPTIONS $ENV_OPTIONS $DOCKER_IMAGE
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -122,8 +129,6 @@ jobs:
   rpm-upload:
     runs-on: ubuntu-latest
     needs: docker-run
-    outputs:
-      artifact: ${{ steps.retain-rpm-packages.outputs }}
     steps:
 
       # https://github.com/actions/upload-artifact
@@ -131,6 +136,6 @@ jobs:
         uses: 'actions/upload-artifact@v4'
         id: retain-rpm-packages
         with:
-          path: /github/home/android-cuttlefish-rpm.tar.gz
+          path: /tmp/android-cuttlefish-rpm.tar.gz
           name: android-cuttlefish-rhel9
           retention-days: 14
