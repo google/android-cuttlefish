@@ -519,6 +519,32 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "streamer",
+    srcs = ["streamer.cpp"],
+    hdrs = ["streamer.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd:reporting",
+        "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
+        "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
+        "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fruit",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "streamer_clang_tidy",
+    srcs = [":streamer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "ti50_emulator",
     srcs = ["ti50_emulator.cpp"],
     hdrs = ["ti50_emulator.h"],
@@ -683,49 +709,5 @@ cc_library(
 clang_tidy_test(
     name = "wmediumd_server_clang_tidy",
     srcs = [":wmediumd_server"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
-    name = "launch",
-    srcs = [
-        "streamer.cpp",
-    ],
-    hdrs = [
-        "launch.h",
-    ],
-    copts = COPTS,
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/transport",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/run_cvd:reporting",
-        "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
-        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
-        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
-        "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
-        "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
-        "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
-        "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
-        "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
-        "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_command_channel",
-        "//cuttlefish/host/frontend/webrtc:libcuttlefish_webrtc_commands_proto",
-        "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config",
-        "//cuttlefish/host/libs/vhal_proxy_server",
-        "//cuttlefish/host/libs/vm_manager",
-        "//libbase",
-        "@fmt",
-        "@fruit",
-        "@googleapis//google/rpc:code_cc_proto",
-        "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "launch_clang_tidy",
-    srcs = [":launch"],
     tags = ["clang_tidy", "clang-tidy"],
 )
