@@ -579,6 +579,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "vhal_proxy_server",
+    srcs = ["vhal_proxy_server.cpp"],
+    hdrs = ["vhal_proxy_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/vhal_proxy_server",
+    ],
+)
+
+clang_tidy_test(
+    name = "vhal_proxy_server_clang_tidy",
+    srcs = [":vhal_proxy_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
@@ -628,7 +647,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "streamer.cpp",
-        "vhal_proxy_server.cpp",
         "vhost_device_vsock.cpp",
         "vhost_device_vsock.h",
         "vhost_input_devices.cpp",

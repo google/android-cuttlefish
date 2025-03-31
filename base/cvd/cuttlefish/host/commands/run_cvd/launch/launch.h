@@ -45,7 +45,4 @@ fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
                  InputConnectionsProvider, LogTeeCreator>
 VhostInputDevicesComponent();
 
-std::optional<MonitorCommand> VhalProxyServer(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
-
 }  // namespace cuttlefish
