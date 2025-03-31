@@ -19,7 +19,6 @@
 
 #include <fruit/fruit.h>
 
-#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
@@ -39,8 +38,6 @@ Result<std::optional<MonitorCommand>> UwbConnector(
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
-
-Result<std::optional<MonitorCommand>> ScreenRecordingServer(GrpcSocketCreator&);
 
 Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
                                  const CuttlefishConfig::InstanceSpecific&,

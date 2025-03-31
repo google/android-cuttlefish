@@ -70,6 +70,7 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:openwrt_control_server",
         "//cuttlefish/host/commands/run_cvd/launch:pica",
         "//cuttlefish/host/commands/run_cvd/launch:root_canal",
+        "//cuttlefish/host/commands/run_cvd/launch:screen_recording_server",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",

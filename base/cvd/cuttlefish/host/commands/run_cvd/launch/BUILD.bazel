@@ -424,6 +424,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "screen_recording_server",
+    srcs = ["screen_recording_server.cpp"],
+    hdrs = ["screen_recording_server.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "screen_recording_server_clang_tidy",
+    srcs = [":screen_recording_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -491,7 +510,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "screen_recording_server.cpp",
         "secure_env.cpp",
         "sensors_simulator.cpp",
         "sensors_socket_pair.cpp",
