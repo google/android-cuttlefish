@@ -519,6 +519,30 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "ti50_emulator",
+    srcs = ["ti50_emulator.cpp"],
+    hdrs = ["ti50_emulator.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "ti50_emulator_clang_tidy",
+    srcs = [":ti50_emulator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
@@ -568,7 +592,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "streamer.cpp",
-        "ti50_emulator.cpp",
         "tombstone_receiver.cpp",
         "uwb_connector.cpp",
         "vhal_proxy_server.cpp",
