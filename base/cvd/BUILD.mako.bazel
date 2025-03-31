@@ -1,0 +1,22 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@mesa//:__subpackages__",
+    ],
+)
+
+py_library(
+    name = "mako",
+    srcs = glob(
+        [
+            "mako/*.py",
+            "mako/ext/*.py",
+        ],
+        exclude = [
+            "mako/ext/pygmentplugin.py",
+        ],
+    ),
+    deps = [
+        "@markupsafe",
+    ],
+)

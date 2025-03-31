@@ -1,0 +1,14 @@
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
+
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+expand_template(
+    name = "vk_lavapipe_icd",
+    out = "vk_lavapipe_icd.json",
+    substitutions = {
+        "${ICD_LIBRARY_PATH}": "./libvk_lavapipe.so",
+    },
+    template = "vulkan_icd.json.tmpl",
+)
