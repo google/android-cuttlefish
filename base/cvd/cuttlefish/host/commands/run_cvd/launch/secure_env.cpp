@@ -13,19 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/secure_env.h"
 
 #include <unistd.h>
 
 #include <string>
 #include <vector>
 
-#include <fruit/fruit.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 
