@@ -15,14 +15,10 @@
 
 #pragma once
 
-#include <optional>
-
 #include <fruit/fruit.h>
 
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
-#include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
-#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
@@ -34,7 +30,5 @@ fruit::Component<fruit::Required<
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
     WebRtcController>>
 launchStreamerComponent();
-
-fruit::Component<WebRtcController> WebRtcControllerComponent();
 
 }  // namespace cuttlefish
