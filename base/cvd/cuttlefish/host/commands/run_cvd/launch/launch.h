@@ -36,9 +36,6 @@ fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
 
-Result<MonitorCommand> TombstoneReceiver(
-    const CuttlefishConfig::InstanceSpecific&);
-
 fruit::Component<fruit::Required<
     const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
