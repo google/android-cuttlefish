@@ -21,12 +21,10 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
-#include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
 #include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
@@ -60,7 +58,4 @@ fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 Ti50EmulatorComponent();
 
-Result<MonitorCommand> SensorsSimulator(
-    const CuttlefishConfig::InstanceSpecific&,
-    AutoSensorsSocketPair::Type& sensors_socket_pair);
 }  // namespace cuttlefish

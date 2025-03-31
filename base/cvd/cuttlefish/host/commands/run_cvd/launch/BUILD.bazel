@@ -462,6 +462,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "sensors_simulator",
+    srcs = ["sensors_simulator.cpp"],
+    hdrs = ["sensors_simulator.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "sensors_simulator_clang_tidy",
+    srcs = [":sensors_simulator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "sensors_socket_pair",
     srcs = ["sensors_socket_pair.cpp"],
     hdrs = ["sensors_socket_pair.h"],
@@ -547,7 +567,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "sensors_simulator.cpp",
         "streamer.cpp",
         "ti50_emulator.cpp",
         "tombstone_receiver.cpp",
