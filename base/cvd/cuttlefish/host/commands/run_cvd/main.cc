@@ -60,6 +60,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/screen_recording_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/secure_env.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_simulator.h"
+#include "cuttlefish/host/commands/run_cvd/launch/ti50_emulator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
