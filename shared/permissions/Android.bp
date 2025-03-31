@@ -16,3 +16,13 @@
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_privapp_permissions_cuttlefish",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: [
+        "privapp-permissions-cuttlefish.xml",
+    ],
+    vendor: true,
+    relative_install_path: "permissions",
+}
