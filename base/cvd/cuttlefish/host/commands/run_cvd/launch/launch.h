@@ -37,8 +37,4 @@ launchStreamerComponent();
 
 fruit::Component<WebRtcController> WebRtcControllerComponent();
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
-                 InputConnectionsProvider, LogTeeCreator>
-VhostInputDevicesComponent();
-
 }  // namespace cuttlefish
