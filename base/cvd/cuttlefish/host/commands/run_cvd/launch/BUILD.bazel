@@ -598,6 +598,28 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "vhost_device_vsock",
+    srcs = ["vhost_device_vsock.cpp"],
+    hdrs = ["vhost_device_vsock.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/vm_manager",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "vhost_device_vsock_clang_tidy",
+    srcs = [":vhost_device_vsock"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
@@ -647,8 +669,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "streamer.cpp",
-        "vhost_device_vsock.cpp",
-        "vhost_device_vsock.h",
         "vhost_input_devices.cpp",
     ],
     hdrs = [

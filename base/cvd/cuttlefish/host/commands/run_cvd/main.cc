@@ -64,6 +64,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/tombstone_receiver.h"
 #include "cuttlefish/host/commands/run_cvd/launch/uwb_connector.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhal_proxy_server.h"
+#include "cuttlefish/host/commands/run_cvd/launch/vhost_device_vsock.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"

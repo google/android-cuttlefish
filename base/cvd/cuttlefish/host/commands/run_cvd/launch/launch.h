@@ -29,10 +29,6 @@
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
-                                 const CuttlefishConfig::InstanceSpecific>>
-VhostDeviceVsockComponent();
-
 fruit::Component<fruit::Required<
     const CuttlefishConfig, KernelLogPipeProvider, InputConnectionsProvider,
     const CuttlefishConfig::InstanceSpecific, const CustomActionConfigProvider,
