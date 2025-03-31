@@ -37,6 +37,7 @@ filegroup(
     srcs = [
         ".clang-tidy",
         "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",
+        "//cuttlefish/host/commands/run_cvd/launch:.clang-tidy",
     ],
 )
 
