@@ -462,6 +462,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "sensors_socket_pair",
+    srcs = ["sensors_socket_pair.cpp"],
+    hdrs = ["sensors_socket_pair.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "sensors_socket_pair_clang_tidy",
+    srcs = [":sensors_socket_pair"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -530,8 +548,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "sensors_simulator.cpp",
-        "sensors_socket_pair.cpp",
-        "sensors_socket_pair.h",
         "streamer.cpp",
         "ti50_emulator.cpp",
         "tombstone_receiver.cpp",
@@ -555,6 +571,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",

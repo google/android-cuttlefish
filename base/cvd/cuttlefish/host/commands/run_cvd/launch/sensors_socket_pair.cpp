@@ -15,6 +15,9 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 Result<SensorsSocketPair> SensorsSocketPair::Create() {
