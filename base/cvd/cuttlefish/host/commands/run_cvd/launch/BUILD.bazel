@@ -543,6 +543,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "tombstone_receiver",
+    srcs = ["tombstone_receiver.cpp"],
+    hdrs = ["tombstone_receiver.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "tombstone_receiver_clang_tidy",
+    srcs = [":tombstone_receiver"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
@@ -592,7 +610,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "streamer.cpp",
-        "tombstone_receiver.cpp",
         "uwb_connector.cpp",
         "vhal_proxy_server.cpp",
         "vhost_device_vsock.cpp",
