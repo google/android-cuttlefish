@@ -76,6 +76,7 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:ti50_emulator",
         "//cuttlefish/host/commands/run_cvd/launch:tombstone_receiver",
+        "//cuttlefish/host/commands/run_cvd/launch:uwb_connector",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/libs/command_util",

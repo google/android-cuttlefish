@@ -561,6 +561,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "uwb_connector",
+    srcs = ["uwb_connector.cpp"],
+    hdrs = ["uwb_connector.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+    ],
+)
+
+clang_tidy_test(
+    name = "uwb_connector_clang_tidy",
+    srcs = [":uwb_connector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
@@ -610,7 +628,6 @@ cc_library(
     srcs = [
         "input_connections_provider.h",
         "streamer.cpp",
-        "uwb_connector.cpp",
         "vhal_proxy_server.cpp",
         "vhost_device_vsock.cpp",
         "vhost_device_vsock.h",
