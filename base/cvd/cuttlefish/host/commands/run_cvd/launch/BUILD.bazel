@@ -404,6 +404,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "root_canal",
+    srcs = ["root_canal.cpp"],
+    hdrs = ["root_canal.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "root_canal_clang_tidy",
+    srcs = [":root_canal"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
@@ -471,7 +491,6 @@ cc_library(
     name = "launch",
     srcs = [
         "input_connections_provider.h",
-        "root_canal.cpp",
         "screen_recording_server.cpp",
         "secure_env.cpp",
         "sensors_simulator.cpp",
