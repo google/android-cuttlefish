@@ -15,9 +15,12 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/nfc_connector.h"
 
+#include <stddef.h>
+
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/command_source.h"

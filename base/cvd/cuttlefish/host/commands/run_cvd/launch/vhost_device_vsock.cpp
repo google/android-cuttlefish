@@ -15,19 +15,28 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/vhost_device_vsock.h"
 
+#include <unistd.h>
+
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include <android-base/logging.h>
+#include <fmt/core.h>
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/macro.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 

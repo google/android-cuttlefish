@@ -5,6 +5,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cc_library(
     name = "auto_cmd",
     hdrs = ["auto_cmd.h"],
@@ -46,6 +48,8 @@ cc_library(
     hdrs = ["bluetooth_connector.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
     ],
@@ -64,6 +68,7 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
@@ -82,6 +87,7 @@ cc_library(
     hdrs = ["casimir_control_server.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
@@ -101,6 +107,7 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
     ],
@@ -118,6 +125,7 @@ cc_library(
     hdrs = ["control_env_proxy_server.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
@@ -192,9 +200,11 @@ cc_library(
     hdrs = ["kernel_log_monitor.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/libs/config",
+        "//libbase",
         "@fruit",
     ],
 )
@@ -211,6 +221,7 @@ cc_library(
     hdrs = ["log_tee_creator.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
@@ -230,6 +241,7 @@ cc_library(
     hdrs = ["logcat_receiver.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
@@ -328,6 +340,7 @@ cc_library(
     hdrs = ["nfc_connector.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
@@ -574,9 +587,11 @@ cc_library(
     hdrs = ["tombstone_receiver.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//libbase",
     ],
 )
 
@@ -592,6 +607,7 @@ cc_library(
     hdrs = ["uwb_connector.h"],
     copts = COPTS,
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
@@ -614,6 +630,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/vhal_proxy_server",
+        "@fmt",
     ],
 )
 
@@ -635,6 +652,8 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fmt",
         "@fruit",
     ],
 )
@@ -657,6 +676,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
         "//libbase",
+        "@fmt",
         "@fruit",
     ],
 )

@@ -20,11 +20,16 @@
 #include <utility>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/macro.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {

@@ -19,6 +19,7 @@
 #include <string>
 
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
