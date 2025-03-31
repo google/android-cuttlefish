@@ -40,11 +40,6 @@ fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
 VhostDeviceVsockComponent();
 
-fruit::Component<
-    fruit::Required<const CuttlefishConfig,
-                    const CuttlefishConfig::InstanceSpecific, LogTeeCreator>>
-RootCanalComponent();
-
 Result<std::optional<MonitorCommand>> ScreenRecordingServer(GrpcSocketCreator&);
 
 Result<MonitorCommand> SecureEnv(const CuttlefishConfig&,
