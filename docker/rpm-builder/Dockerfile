@@ -48,6 +48,7 @@ COPY [ "./docker/rpm-builder/scripts/install.sh", "/root/install.sh" ]
 # RUN [ "chmod", "+x", "/root/clone.sh", "/root/build.sh", "/root/install.sh", "/usr/bin/sign.exp", "/root/sign.sh" ]
 RUN [ "chmod", "+x", "/root/clone.sh", "/root/build.sh", "/root/install.sh" ]
 ENTRYPOINT [ "/bin/bash", "-c", "./build.sh", "${OWNER}", "${REPO_NAME}" ]
+RUN [ "touch", "/root/.dockerfile" ]
 
 # Build dependencies.
 # RUN dnf -y install dpkg-dev devscripts
