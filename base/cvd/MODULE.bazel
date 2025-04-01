@@ -218,3 +218,11 @@ git_repository(
     build_file = "@//:BUILD.libwebm.bazel",
     remote = "https://github.com/webmproject/libwebm",
 )
+
+git_repository(
+    name = "librnnoise",
+    commit = "1cbdbcf1283499bbb2230a6b0f126eb9b236defd",
+    build_file = "@//:BUILD.librnnoise.bazel",
+    remote = "https://github.com/xiph/rnnoise",
+)
+
