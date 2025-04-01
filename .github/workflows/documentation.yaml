@@ -16,9 +16,9 @@ concurrency:
 
 jobs:
   document-cvd:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
+      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -42,12 +42,12 @@ jobs:
         path: ./docs/
 
   deploy:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    container:
-      image: debian@sha256:3b6053ca925336c804e2d3f080af177efcdc9f51198a627569bfc7c7e730ef7e
     needs: document-cvd
     steps:
       - name: Deploy to GitHub Pages
