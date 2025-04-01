@@ -41,12 +41,10 @@ Session::Session(const std::string& session_name,
  * but it might not be immediate. So, add alpha to 1s
  */
 static std::chrono::milliseconds GetGracePeriod() {
-  using std::literals::chrono_literals::operator""ms;
-  return 1000ms + 100ms;
+  return std::chrono::milliseconds(1000) + std::chrono::milliseconds(100);
 }
 
 bool Session::IsReadyForUserInput() const {
-  using std::literals::chrono_literals::operator""ms;
   if (!start_time_) {
     return false;
   }
