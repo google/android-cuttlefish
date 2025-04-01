@@ -10,6 +10,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.14.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
+bazel_dep(name = "crc32c", version = "1.1.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
 bazel_dep(name = "freetype", version = "2.13.3")
@@ -21,6 +22,7 @@ bazel_dep(name = "grpc", version = "1.71.0")
 bazel_dep(name = "grpc-proto", version = "0.0.0-20240627-ec30f58")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "jsoncpp", version = "1.9.5")
+bazel_dep(name = "libevent", version = "2.1.12-stable.bcr.0")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "libzip", version = "1.10.1")
 bazel_dep(name = "platforms", version = "0.0.11")
@@ -241,3 +243,9 @@ git_repository(
     remote = "https://github.com/marton78/pffft",
 )
 
+git_repository(
+    name = "libwebrtc",
+    commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
+    build_file = "@//:BUILD.libwebrtc.bazel",
+    remote = "https://webrtc.googlesource.com/src/",
+)
