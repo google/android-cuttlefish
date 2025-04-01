@@ -22,9 +22,9 @@ on: [push]
 
 jobs:
   build-installer-iso-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
+      image: debian@sha256:d12a7c2a24a396fc669fc4a571e482b75346dfc5af4a5c1140c8250eacdf3b3f # debian:bookworm-20250317 (amd64)
     env:
       DEBIAN_ISO_URL: https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso
     steps:
@@ -32,7 +32,7 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare building environment
       run: apt-get update && apt-get upgrade -y && apt-get install -y sudo wget libarchive-tools xorriso cpio xz-utils fdisk
-    - name: Inject name and ID into preseed 
+    - name: Inject name and ID into preseed
       run: echo "CI_PROJECT_NAME=${{ github.event.repository.name }}" >> tools/cuttlefish-host-image-installer/preseed/after_install_1.sh && echo "CI_PIPELINE_ID=${{ github.repository}}/${{ github.workflow }}" >> tools/cuttlefish-host-image-installer/preseed//after_install_1.sh
     - name: Download Debian installer
       run: cd tools/cuttlefish-host-image-installer && wget -nv -c ${DEBIAN_ISO_URL} && ./addpreseed.sh && xz -9e preseed-mini.iso
@@ -46,12 +46,12 @@ jobs:
     uses: ./.github/workflows/reusable-build.yaml
 
   build-metapackage-deb-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare building environment
       run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
     - name: Prepare tzdata
@@ -75,11 +75,11 @@ jobs:
       with:
         name: meta_gigamp_packages
         path: tools/cuttlefish-host-image-installer/meta_gigamp_packages.7z
-      
+
   build-uboot-qemu-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:c2cedd7f80a4dd0f9f80d3699bd433ccf3de33ab63bfa2d4c4ba870c998222d6 # debian:bookworm-20240311
+      image: debian@sha256:d12a7c2a24a396fc669fc4a571e482b75346dfc5af4a5c1140c8250eacdf3b3f # debian:bookworm-20250317 (amd64)
     env:
       UBOOT_GIT_URL: https://source.denx.de/u-boot/u-boot.git
       UBOOT_GIT_BRANCH: v2023.10
@@ -103,7 +103,7 @@ jobs:
         path: tools/cuttlefish-host-image-installer/u-boot.bin
 
   test-install-cuttlefish-deb-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build-cuttlefish-deb-job
     steps:
     - name: checkout repository
@@ -114,7 +114,7 @@ jobs:
         name: cuttlefish_packages_arm64
         path: "tools/cuttlefish-host-image-installer"
     - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare building environment
       run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
     - name: Prepare tzdata
@@ -131,7 +131,7 @@ jobs:
       run: cd tools/cuttlefish-host-image-installer && ./tests/test-inside-pbuilder.sh stable arm64 ./tests/test-install-cuttlefish-deb.sh ./cuttlefish_packages.7z
 
   test-install-metapackage-deb-job:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: build-metapackage-deb-job
     steps:
     - name: checkout repository
@@ -142,7 +142,7 @@ jobs:
         name: meta_gigamp_packages
         path: "tools/cuttlefish-host-image-installer"
     - name: Prepare pbuilder environment
-      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs      
+      run: sudo apt update && sudo apt-get install -y ubuntu-dev-tools qemu-user-static binfmt-support fakeroot equivs
     - name: Prepare building environment
       run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y debconf-utils
     - name: Prepare tzdata

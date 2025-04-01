@@ -12,7 +12,7 @@ jobs:
   export-debs:
     runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:4cb3f4198e4af2d03dffe6bfa4f3686773596494ef298f3882553d52e885634b # debian:bullseye-20240110
+      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
     steps:
     - name: apt update
       run: apt update -y && apt upgrade -y
@@ -32,10 +32,10 @@ jobs:
         name: debs
         path: debs.tar
   export-gce-image:
-    needs: export-debs 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-4core
+    needs: export-debs
     steps:
-    - name: Free space 
+    - name: Free space
       run: rm -rf /opt/hostedtoolcache
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
