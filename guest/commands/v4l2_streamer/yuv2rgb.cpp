@@ -69,11 +69,14 @@ void Yuv2Rgb(unsigned char *src, unsigned char *dst, int width, int height) {
       int r = *y + T1[*vline];
       int g = *y + T2[*vline] + T3[*uline];
       int b = *y + T4[*uline];
-      // Note: going BGRA here not RGBA
-      dst[0] = clamp(b);  // 16-bit to 8-bit, chuck precision
-      dst[1] = clamp(g);
-      dst[2] = clamp(r);
-      dst[3] = 255;
+
+      // Store bytes in XBGR (byte 0..3).
+      // See https://docs.kernel.org/userspace-api/media/v4l/pixfmt-rgb.html
+      // for details on byte order of various formats.
+      dst[0] = 255;
+      dst[1] = clamp(b);  // 16-bit to 8-bit, chuck precision
+      dst[2] = clamp(g);
+      dst[3] = clamp(r);
       dst += ZOF_RGB;
       if (w & 0x01) {
         uline++;
