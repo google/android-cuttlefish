@@ -116,7 +116,7 @@ func assertAdbBugReportIsIncluded(filename string) error {
 		return err
 	}
 	defer r.Close()
-	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_phone-MAIN\..*\.zip$`)
+	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_only_phone.*\.zip$`)
 	if err != nil {
 		return err
 	}

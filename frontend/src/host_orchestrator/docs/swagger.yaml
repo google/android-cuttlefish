@@ -28,8 +28,8 @@ definitions:
       main_build:
         allOf:
         - $ref: '#/definitions/v1.AndroidCIBuild'
-        description: Main build. If omitted, defaults to branch "aosp-main" and target
-          `aosp_cf_x86_64_phone-trunk_staging-userdebug`.
+        description: Main build. If omitted, defaults to branch "aosp-android-latest-release"
+          and target `aosp_cf_x86_64_only_phone-userdebug`.
       system_image_build:
         allOf:
         - $ref: '#/definitions/v1.AndroidCIBuild'
@@ -40,7 +40,8 @@ definitions:
       build:
         allOf:
         - $ref: '#/definitions/v1.AndroidCIBuild'
-        description: If omitted, defaults to branch "aosp-main" and target `aosp_cf_x86_64_phone-trunk_staging-userdebug`.
+        description: If omitted, defaults to branch "aosp-android-latest-release"
+          and target `aosp_cf_x86_64_only_phone-userdebug`.
       type:
         allOf:
         - $ref: '#/definitions/v1.ArtifactsBundleType'

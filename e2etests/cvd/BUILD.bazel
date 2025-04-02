@@ -9,8 +9,8 @@ launch_cvd_boot_test(
 
 launch_cvd_boot_test(
     name = "fetch_and_launch_aosp_main_x64_phone",
-    branch = "aosp-main",
-    target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+    branch = "aosp-android-latest-release",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
 launch_cvd_boot_test(
@@ -50,29 +50,29 @@ cvd_load_boot_test(
 
 cvd_command_boot_test(
     name = "list_env_services",
-    branch = "aosp-main",
+    branch = "aosp-android-latest-release",
     cvd_command = [
         "env",
         "ls",
     ],
-    target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
 cvd_command_boot_test(
     name = "take_bugreport",
-    branch = "aosp-main",
+    branch = "aosp-android-latest-release",
     cvd_command = ["host_bugreport"],
-    target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
 cvd_command_boot_test(
     name = "list_displays",
-    branch = "aosp-main",
+    branch = "aosp-android-latest-release",
     cvd_command = [
         "display",
         "list",
     ],
-    target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
 # TODO(b/329100411) test loading older branches
