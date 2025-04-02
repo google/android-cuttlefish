@@ -356,7 +356,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
         parsed_flags.build_target) {
       auto target = parsed_flags.build_target ? *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
-          parsed_flags.branch.value_or("aosp-main"));
+          parsed_flags.branch.value_or("aosp-android-latest-release"));
       host_dir += (build + target);
     } else {
       given_branch_target_info = CF_EXPECT(GetDefaultBranchBuildTarget("git_"));
@@ -383,7 +383,7 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       auto target =
           parsed_flags.build_target ? "/" + *parsed_flags.build_target : "";
       auto build = parsed_flags.build_id.value_or(
-          parsed_flags.branch.value_or("aosp-main"));
+          parsed_flags.branch.value_or("aosp-android-latest-release"));
       fetch_request_builder.AddArguments({build + target});
       fetch_command_str += (build + target);
     }
@@ -393,8 +393,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       if (!target.empty()) {
         target = "/" + target;
       }
-      auto build =
-          system_build_id.value_or(system_branch.value_or("aosp-main"));
+      auto build = system_build_id.value_or(
+          system_branch.value_or("aosp-android-latest-release"));
       fetch_request_builder.AddArguments({"--system_build", build + target});
       fetch_command_str += " --system_build=" + build + target;
     }
@@ -414,7 +414,8 @@ Result<ConvertedAcloudCreateCommand> ConvertAcloudCreate(
       if (!target.empty()) {
         target = "/" + target;
       }
-      auto build = boot_build_id.value_or(boot_branch.value_or("aosp-main"));
+      auto build = boot_build_id.value_or(
+          boot_branch.value_or("aosp-android-latest-release"));
       fetch_request_builder.AddArguments({"--boot_build", build + target});
       fetch_command_str += " --boot_build=" + build + target;
     }
