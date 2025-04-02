@@ -33,6 +33,7 @@ cc_test(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
