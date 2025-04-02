@@ -93,6 +93,7 @@ cc_library(
         "third_party/llvm-16.0/llvm/lib/Analysis/PtrUseVisitor.cpp",
         "third_party/llvm-16.0/llvm/lib/Analysis/RegionInfo.cpp",
         "third_party/llvm-16.0/llvm/lib/Analysis/RegionPass.cpp",
+        "third_party/llvm-16.0/llvm/lib/Analysis/RegionPrinter.cpp",
         "third_party/llvm-16.0/llvm/lib/Analysis/ReplayInlineAdvisor.cpp",
         "third_party/llvm-16.0/llvm/lib/Analysis/ScalarEvolution.cpp",
         "third_party/llvm-16.0/llvm/lib/Analysis/ScalarEvolutionAliasAnalysis.cpp",
@@ -1555,7 +1556,7 @@ cc_library(
 )
 
 cc_library(
-    name = "vk_swiftshader",
+    name = "vk_swiftshader_impl",
     srcs = glob(
         include = [
             "src/System/Build.cpp",
@@ -1566,6 +1567,7 @@ cc_library(
             "src/System/Math.cpp",
             "src/System/Memory.cpp",
             "src/System/Socket.cpp",
+            "src/System/SwiftConfig.cpp",
             "src/System/Timer.cpp",
             "src/System/*.hpp",
             "src/Device/*.cpp",
@@ -1578,6 +1580,7 @@ cc_library(
             "src/Reactor/LLVMReactor.cpp",
             "src/Reactor/Pragma.cpp",
             "src/Reactor/Reactor.cpp",
+            "src/Reactor/SIMD.cpp",
             "src/Vulkan/*.cpp",
             "src/WSI/HeadlessSurfaceKHR.cpp",
             "src/WSI/VkSwapchainKHR.cpp",
@@ -1594,6 +1597,10 @@ cc_library(
         ],
     }),
     cxxopts = COPTS + [
+        "-DNDEBUG",
+        "-DREACTOR_ANONYMOUS_MMAP_NAME=swiftshader_jit",
+        "-DSWIFTSHADER_DEVICE_MEMORY_ALLOCATION_ALIGNMENT=4096",
+        "-DSWIFTSHADER_EXTERNAL_MEMORY_OPAQUE_FD",
         "-DVK_EXPORT=",
         "-Wno-deprecated",
         "-Wno-ignored-attributes",
@@ -1609,8 +1616,24 @@ cc_library(
         ":swiftshader_headers",
         ":swiftshader_llvm",
         ":swiftshader_vulkan_headers",
+        "//third_party/marl",
         "@spirv_headers//:spirv_cpp_headers",
         "@spirv_tools//:spirv_tools_opt",
-        "//third_party/marl",
+    ],
+)
+
+cc_shared_library(
+    name = "vk_swiftshader",
+    additional_linker_inputs = [
+        ":src/Vulkan/vk_swiftshader.lds",
+    ],
+    user_link_flags = [
+        "-Wl,-Bsymbolic",
+        "-Wl,--gc-sections",
+        "-Wl,--version-script=$(location src/Vulkan/vk_swiftshader.lds)",
+        "-Wl,--undefined-version",
+    ],
+    deps = [
+        ":vk_swiftshader_impl",
     ],
 )

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
 
 #pragma once
 
-#include <string>
-
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
-namespace cvd_start_impl {
 
-Result<std::string> ExtractBuildId(const std::string& home_dir);
+Result<std::optional<MonitorCommand>> CasimirControlServer(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::EnvironmentSpecific& environment,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    GrpcSocketCreator& grpc_socket);
 
-}  // namespace cvd_start_impl
 }  // namespace cuttlefish

@@ -5,6 +5,7 @@ package(
 )
 
 exports_files([
+    ".clang-tidy",
     "acloud_command.cpp",
     "acloud_command.h",
     "cmd_list.cpp",
@@ -16,6 +17,135 @@ exports_files([
     "load_configs.cpp",
     "load_configs.h",
 ])
+
+cc_library(
+    name = "acloud_common",
+    srcs = ["acloud_common.cpp"],
+    hdrs = ["acloud_common.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "acloud_common_clang_tidy",
+    srcs = [":acloud_common"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "acloud_mixsuperimage",
+    srcs = ["acloud_mixsuperimage.cpp"],
+    hdrs = ["acloud_mixsuperimage.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "acloud_mixsuperimage_clang_tidy",
+    srcs = [":acloud_mixsuperimage"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "acloud_translator",
+    srcs = ["acloud_translator.cpp"],
+    hdrs = ["acloud_translator.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+    ],
+)
+
+clang_tidy_test(
+    name = "acloud_translator_clang_tidy",
+    srcs = [":acloud_translator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "bugreport",
+    srcs = ["bugreport.cpp"],
+    hdrs = ["bugreport.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/utils",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "bugreport_clang_tidy",
+    srcs = [":bugreport"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "cache",
+    srcs = ["cache.cpp"],
+    hdrs = ["cache.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "cache_clang_tidy",
+    srcs = [":cache"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "clear",
+    srcs = ["clear.cpp"],
+    hdrs = ["clear.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
+    ],
+)
+
+clang_tidy_test(
+    name = "clear_clang_tidy",
+    srcs = [":clear"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
 
 cc_library(
     name = "command_handler",
@@ -32,6 +162,99 @@ cc_library(
 clang_tidy_test(
     name = "command_handler_clang_tidy",
     srcs = [":command_handler"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "display",
+    srcs = ["display.cpp"],
+    hdrs = ["display.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "display_clang_tidy",
+    srcs = [":display"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "env",
+    srcs = ["env.cpp"],
+    hdrs = ["env.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "env_clang_tidy",
+    srcs = [":env"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "fetch",
+    srcs = ["fetch.cpp"],
+    hdrs = ["fetch.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/fetch",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_clang_tidy",
+    srcs = [":fetch"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "fleet",
+    srcs = ["fleet.cpp"],
+    hdrs = ["fleet.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "fleet_clang_tidy",
+    srcs = [":fleet"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
@@ -55,102 +278,335 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
-# Commands that don't execute other commands
 cc_library(
-    name = "leaf_commands",
-    srcs = [
-        "acloud_common.cpp",
-        "acloud_mixsuperimage.cpp",
-        "acloud_translator.cpp",
-        "bugreport.cpp",
-        "cache.cpp",
-        "clear.cpp",
-        "command_handler.cpp",
-        "display.cpp",
-        "env.cpp",
-        "fetch.cpp",
-        "fleet.cpp",
-        "lint.cpp",
-        "login.cpp",
-        "noop.cpp",
-        "power_btn.cpp",
-        "powerwash.cpp",
-        "remove.cpp",
-        "reset.cpp",
-        "restart.cpp",
-        "snapshot.cpp",
-        "start.cpp",
-        "start_impl.cpp",
-        "status.cpp",
-        "stop.cpp",
-        "try_acloud.cpp",
-        "version.cpp",
-    ],
-    hdrs = [
-        "acloud_common.h",
-        "acloud_mixsuperimage.h",
-        "acloud_translator.h",
-        "bugreport.h",
-        "cache.h",
-        "clear.h",
-        "command_handler.h",
-        "display.h",
-        "env.h",
-        "fetch.h",
-        "fleet.h",
-        "lint.h",
-        "login.h",
-        "noop.h",
-        "power_btn.h",
-        "powerwash.h",
-        "remove.h",
-        "reset.h",
-        "restart.h",
-        "snapshot.h",
-        "start.h",
-        "start_impl.h",
-        "status.h",
-        "stop.h",
-        "try_acloud.h",
-        "version.h",
-    ],
+    name = "lint",
+    srcs = ["lint.cpp"],
+    hdrs = ["lint.h"],
     deps = [
-        ":host_tool_target",
-        "//:libbuildversion",
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/parser",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+    ],
+)
+
+clang_tidy_test(
+    name = "lint_clang_tidy",
+    srcs = [":lint"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "login",
+    srcs = ["login.cpp"],
+    hdrs = ["login.h"],
+    deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/acloud",
-        "//cuttlefish/host/commands/cvd/cache",
-        "//cuttlefish/host/commands/cvd/cli/parser",
-        "//cuttlefish/host/commands/cvd/cli/selector",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli:utils",
-        "//cuttlefish/host/commands/cvd/fetch",
-        "//cuttlefish/host/commands/cvd/fetch:substitute",
-        "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/instances/lock",
-        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
-        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
-        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
-        "//cuttlefish/host/commands/cvd/legacy",
-        "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
-        "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/libs/web",
         "//libbase",
-        "@jsoncpp",
-        "@fmt",
         "@zlib",
     ],
 )
 
 clang_tidy_test(
-    name = "leaf_commands_clang_tidy",
-    srcs = [":leaf_commands"],
+    name = "login_clang_tidy",
+    srcs = [":login"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "noop",
+    srcs = ["noop.cpp"],
+    hdrs = ["noop.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/common/libs/utils:result",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "noop_clang_tidy",
+    srcs = [":noop"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "power_btn",
+    srcs = ["power_btn.cpp"],
+    hdrs = ["power_btn.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "power_btn_clang_tidy",
+    srcs = [":power_btn"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "powerwash",
+    srcs = ["powerwash.cpp"],
+    hdrs = ["powerwash.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "powerwash_clang_tidy",
+    srcs = [":powerwash"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "remove",
+    srcs = ["remove.cpp"],
+    hdrs = ["remove.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "remove_clang_tidy",
+    srcs = [":remove"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "reset",
+    srcs = ["reset.cpp"],
+    hdrs = ["reset.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "reset_clang_tidy",
+    srcs = [":reset"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "restart",
+    srcs = ["restart.cpp"],
+    hdrs = ["restart.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "restart_clang_tidy",
+    srcs = [":restart"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "snapshot",
+    srcs = ["snapshot.cpp"],
+    hdrs = ["snapshot.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "snapshot_clang_tidy",
+    srcs = [":snapshot"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "start",
+    srcs = ["start.cpp"],
+    hdrs = ["start.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/fetch:substitute",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
+        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "start_clang_tidy",
+    srcs = [":start"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "status",
+    srcs = ["status.cpp"],
+    hdrs = ["status.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "status_clang_tidy",
+    srcs = [":status"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "stop",
+    srcs = ["stop.cpp"],
+    hdrs = ["stop.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "stop_clang_tidy",
+    srcs = [":stop"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "try_acloud",
+    srcs = ["try_acloud.cpp"],
+    hdrs = ["try_acloud.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/acloud",
+        "//cuttlefish/host/commands/cvd/cli/commands:acloud_common",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "try_acloud_clang_tidy",
+    srcs = [":try_acloud"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "version",
+    srcs = ["version.cpp"],
+    hdrs = ["version.h"],
+    deps = [
+        "//:libbuildversion",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:proto",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/legacy",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "version_clang_tidy",
+    srcs = [":version"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 

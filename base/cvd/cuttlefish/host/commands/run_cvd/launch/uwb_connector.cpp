@@ -13,13 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/uwb_connector.h"
+
+#include <stddef.h>
+
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 #define UCI_HEADER_SIZE 4
 #define UCI_MAX_PAYLOAD_SIZE 255
 #define UCI_MAX_PACKET_SIZE (UCI_HEADER_SIZE + UCI_MAX_PAYLOAD_SIZE)
 
-constexpr const size_t kBufferSize = UCI_MAX_PACKET_SIZE * 2;
+static constexpr const size_t kBufferSize = UCI_MAX_PACKET_SIZE * 2;
 
 namespace cuttlefish {
 

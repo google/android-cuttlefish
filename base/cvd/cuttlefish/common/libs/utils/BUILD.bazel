@@ -6,6 +6,24 @@ package(
 )
 
 cc_library(
+    name = "proto",
+    hdrs = ["proto.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@fmt",
+        "@protobuf",
+        "@protobuf//:json_util",
+    ],
+)
+
+clang_tidy_test(
+    name = "proto_clang_tidy",
+    srcs = [":proto"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "result",
     srcs = [
         "result.cpp",
@@ -111,7 +129,6 @@ cc_library(
         "json.h",
         "network.h",
         "proc_file_utils.h",
-        "proto.h",
         "shared_fd_flag.h",
         "signals.h",
         "size_utils.h",
@@ -136,8 +153,6 @@ cc_library(
         "@fmt",
         "@gflags",
         "@jsoncpp",
-        "@protobuf",
-        "@protobuf//:json_util",
     ],
 )
 

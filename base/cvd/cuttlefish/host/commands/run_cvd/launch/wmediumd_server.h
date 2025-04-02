@@ -17,12 +17,10 @@
 
 #include <string>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include <fruit/fruit.h>
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
@@ -58,5 +56,10 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
   GrpcSocketCreator& grpc_socket_;
   std::string config_path_;
 };
+
+fruit::Component<fruit::Required<
+    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
+    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, GrpcSocketCreator>>
+WmediumdServerComponent();
 
 }  // namespace cuttlefish
