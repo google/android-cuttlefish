@@ -149,10 +149,6 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     return CF_ERR(msg);
   }
 
-  auto save = [&archive, config](const std::string& path) {
-    SaveFile(archive.get(), "cuttlefish_assembly/" + path,
-             config->AssemblyPath(path));
-  };
   SaveFile(archive.get(), "cuttlefish_assembly/assemble_cvd.log",
            config->AssemblyPath("assemble_cvd.log"));
   SaveFile(archive.get(), "cuttlefish_assembly/cuttlefish_config.json",
