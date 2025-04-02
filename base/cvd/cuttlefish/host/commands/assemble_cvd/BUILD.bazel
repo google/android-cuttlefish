@@ -12,6 +12,11 @@ cc_library(
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
     strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_utils",
+    ],
 )
 
 clang_tidy_test(

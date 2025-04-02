@@ -61,4 +61,6 @@ bool HostSupportsQemuCli();
 
 // Whether to use our local QEMU prebuilt
 bool UseQemuPrebuilt();
+
+std::string GetSeccompPolicyDir();
 }
