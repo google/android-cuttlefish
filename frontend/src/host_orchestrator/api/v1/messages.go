@@ -134,6 +134,12 @@ type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
 
+type CreateSnapshotRequest struct {
+	// [Optional]
+	// Use a valid UUID value (https://datatracker.ietf.org/doc/html/rfc4122).
+	SnapshotID string `json:"snapshot_id,omitempty"`
+}
+
 type CreateSnapshotResponse struct {
 	SnapshotID string `json:"snapshot_id"`
 }
