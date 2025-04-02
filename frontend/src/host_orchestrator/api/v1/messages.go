@@ -32,7 +32,7 @@ const (
 )
 
 type AndroidCIBundle struct {
-	// If omitted, defaults to branch "aosp-main" and target `aosp_cf_x86_64_phone-trunk_staging-userdebug`.
+	// If omitted, defaults to branch "aosp-android-latest-release" and target `aosp_cf_x86_64_only_phone-userdebug`.
 	Build *AndroidCIBuild `json:"build,omitempty"`
 	// If omitted, it defaults to the `main` bundle type.
 	Type ArtifactsBundleType `json:"type"`
@@ -73,7 +73,7 @@ type AndroidCIBuild struct {
 }
 
 type AndroidCIBuildSource struct {
-	// Main build. If omitted, defaults to branch "aosp-main" and target `aosp_cf_x86_64_phone-trunk_staging-userdebug`.
+	// Main build. If omitted, defaults to branch "aosp-android-latest-release" and target `aosp_cf_x86_64_only_phone-userdebug`.
 	MainBuild *AndroidCIBuild `json:"main_build,omitempty"`
 	// Uses this specific kernel build target if set.
 	KernelBuild *AndroidCIBuild `json:"kernel_build,omitempty"`
