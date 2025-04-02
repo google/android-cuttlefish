@@ -2,8 +2,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-load("//:build_variables.bzl", "COPTS")
-
 cc_library(
     name = "libziparchive",
     srcs = [
@@ -23,7 +21,10 @@ cc_library(
         "include/ziparchive/zip_archive_stream_entry.h",
         "include/ziparchive/zip_writer.h",
     ],
-    copts = COPTS + [
+    copts = [
+        "-std=c++20",
+        # https://cs.android.com/android/platform/superproject/main/+/main:build/soong/cc/config/global.go;l=428;drc=27f57506c28cc8e4f6a0c0b8ac22c85aa9140688
+        "-ftrivial-auto-var-init=zero",
         "-Wno-vla-cxx-extension",
         "-Wno-c99-designator",
     ],

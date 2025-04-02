@@ -209,7 +209,7 @@ void CompositionManager::OnFrame(std::uint32_t display_number,
 // layers are updated, the user will see the blended result.
 void CompositionManager::ComposeFrame(
     int display_index, std::shared_ptr<VideoFrameBuffer> buffer) {
-  if (!last_frame_info_map_.contains(display_index)) {
+  if (!last_frame_info_map_.count(display_index)) {
     return;
   }
   LastFrameInfo& last_frame_info = last_frame_info_map_[display_index];
