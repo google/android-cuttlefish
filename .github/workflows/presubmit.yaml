@@ -39,7 +39,7 @@ jobs:
     - name: Vet Test Build
       run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
   build-debian-package:
-    runs-on: ubuntu-20.04-4core
+    runs-on: ubuntu-latest-4core
     if: ${{ always() && needs.build-orchestrator.result == 'success' }}
     needs: [build-orchestrator]
     container:
@@ -105,7 +105,7 @@ jobs:
         name: testlogs
         path: bazel-testlogs
   e2e-tests-orchestration:
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-latest
     steps:
       # Do not reuse bazel cache among `e2e-tests-orchestration` runs.
       #
