@@ -34,6 +34,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "//libsparse",
         "@protobuf",
