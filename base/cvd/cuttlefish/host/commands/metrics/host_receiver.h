@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <string>
 #include <thread>
 
 namespace cuttlefish {
