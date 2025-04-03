@@ -16,6 +16,7 @@
 
 #include "common/libs/utils/architecture.h"
 
+#include <string.h>
 #include <sys/utsname.h>
 
 #include <cstdlib>
