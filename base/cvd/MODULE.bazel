@@ -43,7 +43,6 @@ git_override(
     remote = "https://github.com/mikael-s-persson/bazel-compile-commands-extractor",
 )
 
-# Configure and register the toolchain.
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
 llvm.toolchain(
    llvm_version = "18.1.8",
@@ -51,7 +50,44 @@ llvm.toolchain(
 
 use_repo(llvm, "llvm_toolchain")
 
-register_toolchains("@llvm_toolchain//:all")
+file_detector = use_repo_rule("//toolchain:file_detector.bzl", "file_detector")
+
+file_detector(
+    name = "clang_detector",
+    files = {
+        "/usr/bin/clang-11": "clang_11",
+        "/usr/bin/clang-12": "clang_12",
+        "/usr/bin/clang-13": "clang_13",
+        "/usr/bin/clang-14": "clang_14",
+        "/usr/bin/clang-15": "clang_15",
+        "/usr/bin/clang-16": "clang_16",
+        "/usr/bin/clang-17": "clang_17",
+        "/usr/bin/clang-18": "clang_18",
+        "/usr/bin/clang-19": "clang_19",
+    },
+)
+
+# The first toolchain that satisfies platform constraints is chosen.
+# Alternatively, a specific toolchain can be chosen with the
+# `--extra_toolchains` flag, e.g.
+# ```
+# bazel build //cuttlefish/package:cvd \
+#   --extra_toolchains=//toolchain:linux_local_clang_19
+# ```
+#
+# For more information, see https://bazel.build/extending/toolchains
+register_toolchains(
+    "@llvm_toolchain//:all",  # TODO: b/407854179 - demote after testing others
+    "//toolchain:linux_local_clang_19",
+    "//toolchain:linux_local_clang_18",
+    "//toolchain:linux_local_clang_17",
+    "//toolchain:linux_local_clang_16",
+    "//toolchain:linux_local_clang_15",
+    "//toolchain:linux_local_clang_14",
+    "//toolchain:linux_local_clang_13",
+    "//toolchain:linux_local_clang_12",
+    "//toolchain:linux_local_clang_11",
+)
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(
