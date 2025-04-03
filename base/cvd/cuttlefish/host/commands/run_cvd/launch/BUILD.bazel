@@ -549,6 +549,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@fruit",
