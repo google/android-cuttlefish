@@ -11,11 +11,14 @@ SRC_DIR="${REPO_DIR}/tools/rpmbuild"
 [ ! -f "${REPO_DIR}" ] && "${HOME}/clone.sh" "$REPO_USER" "$REPO_NAME"
 cd "${REPO_DIR}" || exit
 
-# Build and moves the RPM packages to bind-mount.
-# Note: One could as well publish them.
+# Build and moves the RPM packages to `--volume` bind-mount.
+# Problem: The `gh` client does not support artifact upload.
 /bin/bash -c ./docker/rpm-builder/build_rpm_spec.sh
 
-mv "${SRC_DIR}/RPMS/x86_64/*.rpm" "${HOME}/.rpms"
-mv "${SRC_DIR}/SPMS/x86_64/*.rpm" "${HOME}/.rpms"
-tar czf "${HOME}/.rpms/${REPO_NAME}-rpm.tar.gz" "${HOME}/.rpms"
+for f in "${SRC_DIR}"/RPMS/x86_64/*.rpm; do
+  cp -v "$f" "${HOME}/.rpms/"
+done
 ls -la "${HOME}/.rpms"
+
+#Note: This still stores the absolute path, but it archives.
+tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.x86_64.tar.gz" "${SRC_DIR}/RPMS/x86_64"

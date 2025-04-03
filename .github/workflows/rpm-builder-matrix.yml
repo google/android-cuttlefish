@@ -65,7 +65,7 @@ jobs:
         id: build
         with:
           context: .
-          file: docker/rpm-builder/Dockerfile
+          file: docker/rpm-builder/builder/x86_64/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
           platforms: ${{ MATRIX.PLATFORM }}
           target: ${{ MATRIX.TARGET_STAGE }}

@@ -9,8 +9,9 @@ RPMS="${HOME}/.rpms"
 cd "$HOME" || exit
 [ ! -f "$HOME/${REPO_NAME}" ] && ./build.sh "$REPO_USER" "$REPO_NAME"
 [ ! -d "${RPMS}" ] && mkdir -p "${RPMS}"
-
 cd "${RPMS}" || exit
+
 [ "$(ls -1 *.rpm 2>/dev/null | wc -l)" -gt 0 ] && ./build.sh
 
-sudo dnf -y install "${RPMS}/cuttlefish-*.rpm"
+# Install RPM packages.
+./rpm_instal.sh

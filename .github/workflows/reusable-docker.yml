@@ -44,10 +44,9 @@ jobs:
     outputs:
       filename: ${{ steps.build-rpm-packages.outputs.filename }}
     env:
+      DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }} --volume /tmp/.cache:/root/.cache --volume /tmp/.rpms:/root/.rpms --quiet --tty'
+      # DOCKER_OPTIONS: '--volume /github/home/android-cuttlefish/.cache:/tmp/.cache --volume /github/home/android-cuttlefish/.rpms/:/tmp/.rpms'
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
-      # DEFAULT_OPTIONS: '--quiet --tty --volume /github/home/android-cuttlefish/.cache:/tmp/.cache --volume /github/home/android-cuttlefish/.rpms/:/tmp/.rpms'
-      DEFAULT_OPTIONS: '--quiet --tty'
-      ENV_OPTIONS: ''
     steps:
 
       # https://github.com/docker/login-action
@@ -68,28 +67,26 @@ jobs:
         shell: bash
         env:
           RPM_PLATFORM: ${{ INPUTS.PLATFORM }}
-          DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
         run: |
           mkdir /tmp/.cache && mkdir /tmp/.rpms
-          docker run $DEFAULT_OPTIONS $DOCKER_OPTIONS $ENV_OPTIONS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
           # --env platform="$RPM_PLATFORM"
-          
-          # TODO: Finds nothing, because the entrypoint.sh does not seem to execute.
+
           CID=`docker ps -aqf "name=^rpm-builder$"`
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
           echo Listing container $CID mountpoint: $MOUNT_POINT >> $GITHUB_STEP_SUMMARY
           sudo ls -la $MOUNT_POINT >> $GITHUB_STEP_SUMMARY
-          
+
           echo Attempting to copy to /tmp directory ...
+          MOUNT_POINT=/tmp/.rpms
           FILENAME=$MOUNT_POINT/android-cuttlefish-rpm.tar.gz
           if [ ! -f $FILENAME ]; then
             echo "File not found: $FILENAME" >> $GITHUB_STEP_SUMMARY
-            echo "File not found: $FILENAME" >> $GITHUB_STEP_SUMMARY
-          else
-            sudo cp $MOUNT_POINT/android-cuttlefish-rpm.tar.gz /tmp
-            sudo ls -la /tmp >> $GITHUB_STEP_SUMMARY
-            # docker cp $CID:/root/android-cuttlefish-rpm.tar.gz /tmp
-            echo "filename=/tmp/android-cuttlefish-rpm.tar.gz" >> $GITHUB_OUTPUT
+          else          
+            # TODO: It is still unclear, how to upload the built artifacts,
+            # in order to install them in integration/orchestration images. 
+            # Due to this limitation, this currently only works locally.
+            sudo ls -la "${MOUNT_POINT}" >> $GITHUB_STEP_SUMMARY
           fi
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -97,10 +94,8 @@ jobs:
         if: ${{ contains(INPUTS.IMAGE, 'testing') }}
         id: test-rpm-packages
         shell: bash
-        env:
-          DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
         run: |
-          docker run $DEFAULT_OPTIONS $DOCKER_OPTIONS $ENV_OPTIONS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -108,10 +103,8 @@ jobs:
         if: ${{ contains(INPUTS.IMAGE, 'integration') }}
         id: test-integration
         shell: bash
-        env:
-          DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
         run: |
-          docker run $DEFAULT_OPTIONS $DOCKER_OPTIONS $ENV_OPTIONS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
           echo "result=ok" >> $GITHUB_OUTPUT
 
       # https://docs.docker.com/reference/cli/docker/container/run/
@@ -119,11 +112,8 @@ jobs:
         if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
         id: test-orchestration
         shell: bash
-        env:
-          DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }}'
-          DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
         run: |
-          docker run $DOCKER_OPTIONS $DEFAULT_OPTIONS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
           echo "result=ok" >> $GITHUB_OUTPUT
 
   rpm-upload:

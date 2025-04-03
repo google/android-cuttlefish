@@ -46,12 +46,12 @@ jobs:
 #     - uses: 'docker/setup-qemu-action@v3'
 #       with:
 #         platforms: arm64
-      - name: Build and push Docker image
+      - name: Build and push amd64 builder image
         uses: 'docker/build-push-action@v6'
         id: build
         with:
           context: .
-          file: docker/rpm-builder/Dockerfile
+          file: docker/rpm-builder/builder/x86_64/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
           target: ${{ MATRIX.TARGET_STAGE }}
           builder: ${{ steps.buildx.outputs.name }}
