@@ -26,7 +26,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"  // flags_defaults.h dep
 
 namespace cuttlefish {
 
