@@ -1185,11 +1185,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
   // TODO(moelsherif): Handle this flag (set_metrics_binary) in the future
 
-#ifdef ENFORCE_MAC80211_HWSIM
+  // TODO: schuffelen - make this a device-specific android-info.txt setting
   tmp_config_obj.set_virtio_mac80211_hwsim(true);
-#else
-  tmp_config_obj.set_virtio_mac80211_hwsim(false);
-#endif
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
     LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
