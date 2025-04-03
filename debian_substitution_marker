@@ -1,0 +1,6 @@
+# cuttlefish debian_substitution_marker v1
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/process_restarter"
+  link_name: "bin/process_restarter"
+}
