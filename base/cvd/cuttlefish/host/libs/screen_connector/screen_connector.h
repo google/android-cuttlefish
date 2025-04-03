@@ -34,6 +34,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/size_utils.h"
+#include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_utils.h"
