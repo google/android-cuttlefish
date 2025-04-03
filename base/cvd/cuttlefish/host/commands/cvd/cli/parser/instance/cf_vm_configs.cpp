@@ -27,9 +27,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
-// for a function in a flags_defaults.h preprocessor constant
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 #define UI_DEFAULTS_MEMORY_MB 2048
 
