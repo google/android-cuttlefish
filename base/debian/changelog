@@ -1,3 +1,9 @@
+cuttlefish-common (1.2.1) unstable; urgency=medium
+
+  * pull in fix from PR: Revert "Expose `gpu_mode` parameter in env config."
+
+ -- Chad Reynolds <chadreynolds@google.com>  Thu, 03 Apr 2025 01:52:00 -0800
+
 cuttlefish-common (1.2.0) stable; urgency=medium
 
   * migrate many of the Cuttlefish host tools from AOSP
