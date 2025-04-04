@@ -31,10 +31,9 @@ ENV REPO_NAME="${REPO}"
 
 # https://docs.docker.com/reference/dockerfile/#notes-about-specifying-volumes
 # The host directory is declared at container run-time, with `--volume`, eg.
-# --volume /home/username/android-cuttlefish/.cache:/root/.cache \
 # --volume /home/username/android-cuttlefish/.rpms/:/root/.rpms
-RUN [ "mkdir", "/root/.cache", "/root/.rpms" ]
-VOLUME [ "/root/.cache", "/root/.rpms" ]
+RUN [ "mkdir", "/root/.rpms" ]
+VOLUME [ "/root/.rpms" ]
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories

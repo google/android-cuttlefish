@@ -41,7 +41,7 @@ jobs:
     outputs:
       filename: ${{ steps.build-rpm-packages.outputs.filename }}
     env:
-      DOCKER_OPTIONS: '--env platform=${{ INPUTS.PLATFORM }} --name ${{ INPUTS.IMAGE }} --volume /tmp/.cache:/root/.cache --volume /tmp/.rpms:/root/.rpms --quiet --tty'
+      DOCKER_OPTIONS: '--env platform=${{ INPUTS.PLATFORM }} --name ${{ INPUTS.IMAGE }} --volume /tmp/.cache:/root/.cache --volume /tmp/.rpms:/root/.rpms --attach STDERR --attach STDOUT --quiet'
       # DOCKER_OPTIONS: '--volume /github/home/android-cuttlefish/.cache:/tmp/.cache --volume /github/home/android-cuttlefish/.rpms/:/tmp/.rpms'
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
     steps:
@@ -72,7 +72,7 @@ jobs:
         shell: bash
         run: |
           mkdir /tmp/.cache && mkdir /tmp/.rpms
-          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE >> $GITHUB_STEP_SUMMARY
 
           CID=`docker ps -aqf "name=^rpm-builder$"`
           MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
