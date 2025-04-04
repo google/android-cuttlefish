@@ -511,6 +511,15 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         if (!read_result.ok()) {
           return;
         }
+        if ((*read_result)->event == monitor::Event::BootCompleted) {
+          LOG(INFO) << "Virtual device rebooted successfully";
+          if (!instance_.vcpu_config_path().empty()) {
+            auto res = WattsonRebalanceThreads(instance_.id());
+            if (!res.ok()) {
+              LOG(ERROR) << res.error().FormatForEnv();
+            }
+          }
+        }
       }
     }
   }
