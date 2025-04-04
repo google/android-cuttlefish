@@ -21,7 +21,7 @@ android_app {
     vendor: true,
     srcs: ["java/**/*.java"],
     static_libs: ["guava"],
-    sdk_version: "28",
+    sdk_version: "current",
     privileged: true,
     optimize: {
         proguard_flags_files: ["proguard.flags"],

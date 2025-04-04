@@ -17,12 +17,13 @@
     <privapp-permissions package="com.android.google.gce.gceservice">
         <permission name="android.permission.ACCESS_NETWORK_STATE" />
         <permission name="android.permission.ACCESS_WIFI_STATE" />
+        <permission name="android.permission.BLUETOOTH_ADMIN" />
         <permission name="android.permission.CHANGE_WIFI_STATE" />
         <permission name="android.permission.FOREGROUND_SERVICE" />
+        <permission name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
         <permission name="android.permission.INTERNET" />
         <permission name="android.permission.RECEIVE_BOOT_COMPLETED" />
-        <permission name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        <permission name="android.permission.USE_EXACT_ALARM" />
         <permission name="android.permission.WRITE_SETTINGS" />
-        <permission name="android.permission.BLUETOOTH" />
     </privapp-permissions>
 </permissions>
