@@ -2,6 +2,8 @@
 
 set -e -x
 
+REPO_DIR="$(realpath "$(dirname "$0")/../..")"
+
 function install_debuild_dependencies() {
   echo "Installing debuild dependencies"
   sudo apt-get update
@@ -22,11 +24,11 @@ function build_package() {
   popd
 }
 
-REPO_DIR="$(realpath "$(dirname "$0")/../..")"
-INSTALL_BAZEL="$(dirname $0)/installbazel.sh"
-
-command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
-install_debuild_dependencies
-
-build_package "${REPO_DIR}/base"
-build_package "${REPO_DIR}/frontend"
+if [[ -f /bin/apt ]]; then
+  if ! { command -v bazel || command -v bazelisk; } &> /dev/null; then sudo "$(dirname $0)/installbazel.sh"; fi
+  install_debuild_dependencies
+  build_package "${REPO_DIR}/base"
+  build_package "${REPO_DIR}/frontend"
+else
+  "${REPO_DIR}/docker/rpm-builder/build_rpm_spec.sh"
+fi

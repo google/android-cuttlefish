@@ -1,0 +1,124 @@
+name: RPM Builder
+
+on:
+  push:
+  pull_request:
+    paths:
+      - 'tools/rpmbuild/**'
+      - 'docker/rpm-builder/**'
+      - '.github/workflows/reusable-docker.yml'
+      - '.github/workflows/rpm-builder-matrix.yml'
+      - '.github/workflows/rpm-builder.yml'
+jobs:
+
+  build-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    env:
+      target: rpm-builder
+      target_stage: builder
+    steps:
+      - uses: 'actions/checkout@v4'
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: 'ghcr.io'
+          username: ${{ GITHUB.ACTOR }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
+
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+      - uses: 'docker/setup-buildx-action@v3'
+      - uses: 'docker/setup-qemu-action@v3'
+        with:
+          platforms: arm64
+
+      # https://github.com/docker/metadata-action
+      - name: Extract metadata (tags, labels) for x86_64 image
+        uses: 'docker/metadata-action@v5'
+        id: metadata-x86_64
+        with:
+          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
+          tags: |
+            type=sha
+            latest
+            x86_64
+
+      - name: Extract metadata (tags, labels) for ARM image
+        uses: 'docker/metadata-action@v5'
+        id: metadata-arm_64
+        with:
+          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
+          tags: |
+            type=sha
+            latest
+            arm64
+
+      - name: Build and push x86_64 image
+        uses: 'docker/build-push-action@v6'
+        id: build-x86_64
+        with:
+          context: .
+          file: docker/rpm-builder/x86_64/Dockerfile
+          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
+          target: ${{ ENV.TARGET_STAGE }}
+          builder: ${{ steps.buildx.outputs.name }}
+          labels: ${{ steps.metadata-x86_64.outputs.labels }}
+          tags: ${{ steps.metadata-x86_64.outputs.tags }}
+          platforms: linux/amd64
+
+      - name: Build and push ARM image
+        uses: 'docker/build-push-action@v6'
+        id: build-arm_64
+        with:
+          context: .
+          file: docker/rpm-builder/arm_64/Dockerfile
+          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
+          target: ${{ ENV.TARGET_STAGE }}
+          builder: ${{ steps.buildx.outputs.name }}
+          labels: ${{ steps.metadata-arm_64.outputs.labels }}
+          tags: ${{ steps.metadata-arm_64.outputs.tags }}
+          platforms: linux/arm64
+
+      # Note: The digest comes from `buildx`, not the metadata.
+      # https://github.com/actions/attest-build-provenance
+      - name: Generate artifact attestation for x86_64 image
+        uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
+          subject-digest: ${{ steps.build-x86_64.outputs.digest }}
+          push-to-registry: true
+
+      - name: Generate artifact attestation for ARM image
+        uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
+          subject-digest: ${{ steps.build-arm_64.outputs.digest }}
+          push-to-registry: true
+
+  builder-x86_64:
+    uses: ./.github/workflows/reusable-docker.yml
+    needs: build-images
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.ACTOR }}
+      platform: linux/amd64
+      image: rpm-builder
+      tag: x86_64
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+
+  builder-arm64:
+    uses: ./.github/workflows/reusable-docker.yml
+    needs: build-images
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.ACTOR }}
+      platform: linux/arm64
+      image: rpm-builder
+      tag: arm64
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}

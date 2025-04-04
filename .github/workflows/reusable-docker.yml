@@ -1,0 +1,132 @@
+name: Reusable Docker Container Run
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      registry:
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+      tag:
+        default: latest
+        required: false
+        type: string
+      platform:
+        default: linux/amd64
+        required: false
+        type: string
+    outputs:
+      builder:
+        value: ${{ jobs.docker-run.outputs.builder }}
+        description: "Build output"
+      integration:
+        value: ${{ jobs.docker-run.outputs.integration }}
+        description: "Integration output"
+      orchestration:
+        value: ${{ jobs.docker-run.outputs.orchestration }}
+        description: "Orchestration output"
+jobs:
+
+  docker-run:
+    runs-on: ubuntu-latest
+    outputs:
+      filename: ${{ steps.build-rpm-packages.outputs.filename }}
+    env:
+      DOCKER_OPTIONS: '--env platform=${{ INPUTS.PLATFORM }} --name ${{ INPUTS.IMAGE }} --volume /tmp/.cache:/root/.cache --volume /tmp/.rpms:/root/.rpms --quiet --tty'
+      # DOCKER_OPTIONS: '--volume /github/home/android-cuttlefish/.cache:/tmp/.cache --volume /github/home/android-cuttlefish/.rpms/:/tmp/.rpms'
+      DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+    steps:
+
+      # https://github.com/docker/login-action
+      - name: Log in to the Container registry
+        uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: ${{ INPUTS.REGISTRY }}
+          username: ${{ INPUTS.USERNAME }}
+          password: ${{ SECRETS.TOKEN }}
+
+      # https://github.com/actions/cache
+      - name: Restore build cache
+        id: build-cache-restore
+        uses: 'actions/cache/restore@v4'
+        with:
+          key: build-cache-${{ INPUTS.PLATFORM }}-${{ hashFiles('base/cvd/MODULE.bazel') }}
+          path: /tmp/.cache
+
+      # https://docs.docker.com/reference/cli/docker/container/run/
+      # https://docs.docker.com/reference/cli/docker/container/cp/
+      # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
+      - name: Run ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
+        id: build-rpm-packages
+        shell: bash
+        run: |
+          mkdir /tmp/.cache && mkdir /tmp/.rpms
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
+
+          CID=`docker ps -aqf "name=^rpm-builder$"`
+          MOUNT_POINT=$(docker volume ls --filter driver="local" --format '{{.Mountpoint}}')
+          echo Listing container $CID mountpoint: $MOUNT_POINT >> $GITHUB_STEP_SUMMARY
+          sudo ls -la $MOUNT_POINT >> $GITHUB_STEP_SUMMARY
+
+          echo Attempting to copy to /tmp directory ...
+          MOUNT_POINT=/tmp/.rpms
+          FILENAME=$MOUNT_POINT/android-cuttlefish-rpm.tar.gz
+          if [ ! -f $FILENAME ]; then
+            echo "File not found: $FILENAME" >> $GITHUB_STEP_SUMMARY
+          else
+            # TODO: It is still unclear, how to upload the built artifacts,
+            # in order to install them in integration/orchestration images. 
+            # Due to this limitation, this currently only works locally.
+            sudo ls -la "${MOUNT_POINT}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # https://github.com/actions/cache
+      - name: Save build cache
+        id: build-cache-save
+        uses: 'actions/cache/save@v4'
+        with:
+          key: ${{ steps.build-cache-restore.outputs.cache-primary-key }}
+          path: /tmp/.cache
+
+      # https://docs.docker.com/reference/cli/docker/container/run/
+      - name: Build integration image
+        if: ${{ contains(INPUTS.IMAGE, 'integration') }}
+        id: build-integration-image
+        shell: bash
+        run: |
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
+          echo "result=ok" >> $GITHUB_OUTPUT
+
+      # https://docs.docker.com/reference/cli/docker/container/run/
+      - name: Build orchestration image
+        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
+        id: build-orchestration-image
+        shell: bash
+        run: |
+          docker run $DOCKER_OPTIONS $DOCKER_IMAGE
+          echo "result=ok" >> $GITHUB_OUTPUT
+
+  artifact-upload:
+    runs-on: ubuntu-latest
+    needs: docker-run
+    steps:
+
+      # https://github.com/actions/upload-artifact
+      - name: Retain Artifacts (*.rpm)
+        uses: 'actions/upload-artifact@v4'
+        id: retain-rpm-packages
+        with:
+          path: /tmp/android-cuttlefish-rpm.tar.gz
+          name: android-cuttlefish-rhel9
+          retention-days: 14
