@@ -29,13 +29,13 @@ namespace teeui {
 
 DECLARE_PARAMETER(RightEdgeOfScreen);
 DECLARE_PARAMETER(BottomOfScreen);
-DECLARE_PARAMETER(DefaultFontSize);  // 14_dp regular and 18_dp magnified
-DECLARE_PARAMETER(BodyFontSize);     // 16_dp regular and 20_dp magnified
+DECLARE_PARAMETER(DefaultFontSize);  // dps(14) regular and dps(18) magnified
+DECLARE_PARAMETER(BodyFontSize);     // dps(16) regular and dps(20) magnified
 DECLARE_TYPED_PARAMETER(ShieldColor, ::teeui::Color);
 DECLARE_TYPED_PARAMETER(ColorText, ::teeui::Color);
 DECLARE_TYPED_PARAMETER(ColorBG, ::teeui::Color);
 
-CONSTANT(BorderWidth, 24_dp);
+CONSTANT(BorderWidth, dps(24));
 
 DECLARE_FONT_BUFFER(RobotoMedium, RobotoMedium, RobotoMedium_length);
 DECLARE_FONT_BUFFER(RobotoRegular, RobotoRegular, RobotoRegular_length);
@@ -49,19 +49,19 @@ NEW_PARAMETER_SET(ConfUIParameters, RightEdgeOfScreen, BottomOfScreen,
                   DefaultFontSize, BodyFontSize, ShieldColor, ColorText,
                   ColorBG, ColorButton);
 
-CONSTANT(IconShieldDistanceFromTop, 100_dp);
-CONSTANT(LabelBorderZone, 4_dp);
+CONSTANT(IconShieldDistanceFromTop, dps(100));
+CONSTANT(LabelBorderZone, dps(4));
 CONSTANT(RightLabelEdge, RightEdgeOfScreen() - BorderWidth);
 CONSTANT(LabelWidth, RightLabelEdge - BorderWidth);
-CONSTANT(ButtonHeight, 72_dp);
+CONSTANT(ButtonHeight, dps(72));
 CONSTANT(ButtonPositionX, 0);
 CONSTANT(ButtonPositionY, BottomOfScreen() - ButtonHeight);
-CONSTANT(ButtonWidth, 130_dp);
-CONSTANT(ButtonLabelDistance, 12_dp);
+CONSTANT(ButtonWidth, dps(130));
+CONSTANT(ButtonLabelDistance, dps(12));
 
 BEGIN_ELEMENT(IconShield, teeui::Label)
-FontSize(24_dp);
-LineHeight(24_dp);
+FontSize(dps(24));
+LineHeight(dps(24));
 NumberOfLines(1);
 Dimension(LabelWidth, HeightFromLines);
 Position(BorderWidth, IconShieldDistanceFromTop);
@@ -73,11 +73,11 @@ Font(FONT(Shield));
 END_ELEMENT();
 
 BEGIN_ELEMENT(LabelTitle, teeui::Label)
-FontSize(20_dp);
-LineHeight(20_dp);
+FontSize(dps(20));
+LineHeight(dps(20));
 NumberOfLines(1);
 Dimension(LabelWidth, HeightFromLines);
-Position(BorderWidth, BOTTOM_EDGE_OF(IconShield) + 16_dp);
+Position(BorderWidth, BOTTOM_EDGE_OF(IconShield) + dps(16));
 DefaultText("Android Protected Confirmation");
 Font(FONT(RobotoMedium));
 VerticallyCentered;
@@ -89,7 +89,7 @@ BEGIN_ELEMENT(IconOk, teeui::Button, ConvexObjectCount(1))
 Dimension(ButtonWidth, ButtonHeight - BorderWidth);
 Position(RightEdgeOfScreen() - ButtonWidth - BorderWidth,
          ButtonPositionY + ButtonLabelDistance);
-CornerRadius(4_dp);
+CornerRadius(dps(4));
 ButtonColor(ColorButton());
 RoundTopLeft;
 RoundBottomLeft;
@@ -99,10 +99,10 @@ END_ELEMENT();
 
 BEGIN_ELEMENT(LabelOK, teeui::Label)
 FontSize(BodyFontSize());
-LineHeight(BodyFontSize() * 1.4_px);
+LineHeight(BodyFontSize() * pxs(1.4));
 NumberOfLines(1);
-Dimension(ButtonWidth - (LabelBorderZone * 2_dp),
-          ButtonHeight - BorderWidth - (LabelBorderZone * 2_dp));
+Dimension(ButtonWidth - (LabelBorderZone * dps(2)),
+          ButtonHeight - BorderWidth - (LabelBorderZone * dps(2)));
 Position(RightEdgeOfScreen() - ButtonWidth - BorderWidth + LabelBorderZone,
          ButtonPositionY + ButtonLabelDistance + LabelBorderZone);
 DefaultText("Confirm");
@@ -115,10 +115,10 @@ END_ELEMENT();
 
 BEGIN_ELEMENT(LabelCancel, teeui::Label)
 FontSize(BodyFontSize());
-LineHeight(BodyFontSize() * 1.4_px);
+LineHeight(BodyFontSize() * pxs(1.4));
 NumberOfLines(1);
-Dimension(ButtonWidth - (LabelBorderZone * 2_dp),
-          ButtonHeight - BorderWidth - (LabelBorderZone * 2_dp));
+Dimension(ButtonWidth - (LabelBorderZone * dps(2)),
+          ButtonHeight - BorderWidth - (LabelBorderZone * dps(2)));
 Position(BorderWidth + LabelBorderZone,
          ButtonPositionY + ButtonLabelDistance + LabelBorderZone);
 DefaultText("Cancel");
@@ -131,10 +131,10 @@ END_ELEMENT();
 
 BEGIN_ELEMENT(LabelHint, teeui::Label)
 FontSize(DefaultFontSize());
-LineHeight(DefaultFontSize() * 1.5_px);
+LineHeight(DefaultFontSize() * pxs(1.5));
 NumberOfLines(4);
 Dimension(LabelWidth, HeightFromLines);
-Position(BorderWidth, ButtonPositionY - dim_h - 48_dp);
+Position(BorderWidth, ButtonPositionY - dim_h - dps(48));
 DefaultText(
     "This confirmation provides an extra layer of security for the action "
     "you're "
@@ -147,10 +147,10 @@ END_ELEMENT();
 
 BEGIN_ELEMENT(LabelBody, teeui::Label)
 FontSize(BodyFontSize());
-LineHeight(BodyFontSize() * 1.4_px);
+LineHeight(BodyFontSize() * pxs(1.4));
 NumberOfLines(20);
-Position(BorderWidth, BOTTOM_EDGE_OF(LabelTitle) + 16_dp);
-Dimension(LabelWidth, LabelHint::pos_y - pos_y - 24_dp);
+Position(BorderWidth, BOTTOM_EDGE_OF(LabelTitle) + dps(16));
+Dimension(LabelWidth, LabelHint::pos_y - pos_y - dps(24));
 DefaultText(
     "12345678901234567890123456789012345678901234567890123456789012345678901234"
     "567890123456"

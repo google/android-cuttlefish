@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <regex>
@@ -2120,7 +2121,7 @@ Result<void> SetDefaultFlagsForQemu(
     // it's presented.
     if (!FileExists(curr_bootloader)) {
       // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath(std::format(
+      curr_bootloader = DefaultHostArtifactsPath(fmt::format(
           "etc/bootloader_{}/bootloader.qemu",
           DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
     }
@@ -2202,7 +2203,7 @@ Result<void> SetDefaultFlagsForCrosvm(
     // it's presented.
     if (!FileExists(curr_bootloader)) {
       // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath(std::format(
+      curr_bootloader = DefaultHostArtifactsPath(fmt::format(
           "etc/bootloader_{}/bootloader.crosvm",
           DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
     }

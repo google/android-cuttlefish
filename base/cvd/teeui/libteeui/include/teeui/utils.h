@@ -528,25 +528,6 @@ using dps = Coordinate<dp>;
 using mms = Coordinate<mm>;
 using pxs = Coordinate<px>;
 
-constexpr dps operator""_dp(long double dp) {
-    return dps(dp);
-}
-constexpr mms operator""_mm(long double mm) {
-    return mms(mm);
-}
-constexpr pxs operator""_px(long double px) {
-    return pxs(px);
-}
-constexpr dps operator""_dp(unsigned long long dp) {
-    return dps(dp);
-}
-constexpr mms operator""_mm(unsigned long long mm) {
-    return mms(mm);
-}
-constexpr pxs operator""_px(unsigned long long px) {
-    return pxs(px);
-}
-
 template <typename Coord> class Vec2d {
     Coord x_, y_;
 

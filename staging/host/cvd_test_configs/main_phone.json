@@ -1,6 +1,6 @@
 {
   "common": {
-    "host_package": "@ab/aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug"
+    "host_package": "@ab/aosp-android-latest-release/aosp_cf_x86_64_only_phone-userdebug"
   },
   "instances": [
     {

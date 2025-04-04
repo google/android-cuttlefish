@@ -66,7 +66,7 @@ class LabelImpl {
     };
 
     LabelImpl()
-        : fontSize_(10_px), lineHeight_(12_px), text_{}, horizontalTextAlignment_(Alignment::LEFT),
+        : fontSize_(pxs(10)), lineHeight_(pxs(12)), text_{}, horizontalTextAlignment_(Alignment::LEFT),
           verticalTextAlignment_(Alignment::TOP), textColor_(0), font_{}, textId_(0) {}
     LabelImpl(pxs fontSize, pxs lineHeight, text_t text, Alignment horizontal,
               Alignment verticalJustified, Color textColor, FontBuffer font, uint64_t textId)

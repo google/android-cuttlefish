@@ -39,18 +39,29 @@ Result<void> SubstituteWithFlag(
     const std::vector<std::string>& host_substitutions) {
   std::string self_path;
   CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
-  // One dirname is "cvd" -> "bin", second dirname is "bin" ->
-  // "cuttlefish-common"
-  std::string cuttlefish_common =
+  // In substitution case the inner dirname is "cvd" -> "bin", outer dirname is
+  // "bin" -> "cuttlefish-common"
+  std::string bin_dir_parent =
       android::base::Dirname(android::base::Dirname(self_path));
-  CF_EXPECTF(android::base::EndsWith(cuttlefish_common, "cuttlefish-common"),
-             "{}", cuttlefish_common);
+  if (!android::base::EndsWith(bin_dir_parent, "cuttlefish-common")) {
+    LOG(DEBUG) << "Binary substitution not available, run `cvd fetch` from "
+                  "`cuttlefish-common` package to enable.";
+    CF_EXPECTF(host_substitutions.empty(),
+               "Error due to being unable to perform requested host tool "
+               "substitutions. This is because `cvd` was not run from a "
+               "`cuttlefish-common/bin` directory (as if from the package). "
+               "`cvd` path: {}",
+               self_path);
+    return {};
+  }
 
   if (host_substitutions == std::vector<std::string>{"all"}) {
     bool substitution_error = false;
-    std::function<bool(const std::string& path)> callback = [&cuttlefish_common, &target_dir, &substitution_error](const std::string& path) -> bool {
+    std::function<bool(const std::string& path)> callback =
+        [&bin_dir_parent, &target_dir,
+         &substitution_error](const std::string& path) -> bool {
       std::string_view local_path(path);
-      if (!android::base::ConsumePrefix(&local_path, cuttlefish_common)) {
+      if (!android::base::ConsumePrefix(&local_path, bin_dir_parent)) {
         LOG(ERROR) << "Unexpected prefix in : '" << local_path << "'";
         substitution_error = true;
         return false;
@@ -71,11 +82,11 @@ Result<void> SubstituteWithFlag(
       }
       return true;
     };
-    CF_EXPECT(WalkDirectory(cuttlefish_common, callback));
+    CF_EXPECT(WalkDirectory(bin_dir_parent, callback));
     CF_EXPECT(!substitution_error);
   } else {
     for (const std::string& substitution : host_substitutions) {
-      std::string source = fmt::format("{}/{}", cuttlefish_common, substitution);
+      std::string source = fmt::format("{}/{}", bin_dir_parent, substitution);
       std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
       // TODO: schuffelen - relax this check after migration completes
       CF_EXPECTF(FileExists(to_substitute),

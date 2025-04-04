@@ -1,6 +1,6 @@
 {
   "common": {
-    "host_package": "@ab/aosp-main"
+    "host_package": "@ab/aosp-android-latest-release"
   },
   "instances": [
     {
