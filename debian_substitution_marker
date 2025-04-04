@@ -1,5 +1,10 @@
 # cuttlefish debian_substitution_marker v1
 
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/kernel_log_monitor"
+  link_name: "bin/kernel_log_monitor"
+}
+
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/process_restarter"
   link_name: "bin/process_restarter"
