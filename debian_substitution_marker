@@ -5,6 +5,11 @@ symlinks {
   link_name: "bin/kernel_log_monitor"
 }
 
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/logcat_receiver"
+  link_name: "bin/logcat_receiver"
+}
+
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/process_restarter"
   link_name: "bin/process_restarter"
