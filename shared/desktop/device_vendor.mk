@@ -19,7 +19,6 @@ SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_m
 
 # Extend cuttlefish common sepolicy with desktop-specific functionality.
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/desktop/sepolicy
-SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += device/google/cuttlefish/shared/desktop/sepolicy/system_ext/private
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
 
