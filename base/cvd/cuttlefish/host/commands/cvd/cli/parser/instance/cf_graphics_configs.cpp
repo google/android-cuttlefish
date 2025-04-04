@@ -91,10 +91,15 @@ bool RecordScreen(const Instance& instance) {
 }
 
 std::string GpuMode(const Instance& instance) {
-  if (instance.graphics().has_gpu_mode()) {
+  if (instance.graphics().has_gpu_mode() &&
+      instance.graphics().gpu_mode() != "") {
     return instance.graphics().gpu_mode();
+  } else {
+    // Use the instance default
+    // https://github.com/google/android-cuttlefish/blob/c4f1643479f98bdc7310d281e81751188595233b/base/cvd/cuttlefish/host/commands/assemble_cvd/flags.cc#L948
+    // See also b/406464352#comment7
+    return "unset";
   }
-  return CF_DEFAULTS_GPU_MODE;
 }
 
 Result<std::vector<std::string>> GenerateGraphicsFlags(
