@@ -1,6 +1,35 @@
-cuttlefish-common (1.3.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.3.0) stable; urgency=medium
 
-  * 
+ * Fix wifi and vhost_device_vsock invocation flows - https://github.com/google/android-cuttlefish/pull/1016
+ * Define toolchain options to use a host clang executable - https://github.com/google/android-cuttlefish/pull/1014
+ * Use libzip in host_bugreport - https://github.com/google/android-cuttlefish/pull/1011
+ * Downgrade from c++20 to c++17
+ * Remove use of literal operators - https://github.com/google/android-cuttlefish/pull/1008
+ * Add missing include - https://github.com/google/android-cuttlefish/pull/1007
+ * Remove outdated build file - https://github.com/google/android-cuttlefish/pull/1006
+ * Remove unnecessary @ - https://github.com/google/android-cuttlefish/pull/1005
+ * Extract //cuttlefish/common/libs/utils:proto - https://github.com/google/android-cuttlefish/pull/1004
+ * Fetch error case fix and build+target cleanup - https://github.com/google/android-cuttlefish/pull/1003
+ * Split `//cuttlefish/host/commands/run_cvd/launch:launch` and enforce `misc-include-cleaner` - https://github.com/google/android-cuttlefish/pull/1002
+ * Migrate `cvd_internal_host_bugreport` out of staging - https://github.com/google/android-cuttlefish/pull/996
+ * Split `//cuttlefish/host/commands/cvd/cli/commands:leaf_commands` and enforce `misc-include-cleaner` - https://github.com/google/android-cuttlefish/pull/995
+ * Disable e2e orchistration snapshot test - https://github.com/google/android-cuttlefish/pull/994
+ * Fix include paths and strip_include_prefix in `//cuttlefish/host/commands/cvd` - https://github.com/google/android-cuttlefish/pull/992
+ * Migrate libcuttlefish_screen_connector and remaining dependencies - https://github.com/google/android-cuttlefish/pull/991
+ * Separate run_cvd/launch into a separate bazel target. - https://github.com/google/android-cuttlefish/pull/990
+ * Revert "Expose `gpu_mode` parameter in env config." - https://github.com/google/android-cuttlefish/pull/988
+ * Update build-debian-package to larger runner - https://github.com/google/android-cuttlefish/pull/987
+ * Enforce include-cleaner validation on kernel_log_monitor. - https://github.com/google/android-cuttlefish/pull/982
+ * Include //cuttlefish headers relative to the bazel workspace in run_cvd - https://github.com/google/android-cuttlefish/pull/981
+ * Rename `//external` to `//external_build` in `base/cvd` - https://github.com/google/android-cuttlefish/pull/980
+ * Remove `#ifdef CUTTLEFISH_HOST` checks - https://github.com/google/android-cuttlefish/pull/979
+ * Add new doc about host tools development on Github - https://github.com/google/android-cuttlefish/pull/978
+ * Fix 100% CPU uage in webRTC process - https://github.com/google/android-cuttlefish/pull/977
+ * Reorganize debian package creation from bazel files and executable substitution - https://github.com/google/android-cuttlefish/pull/976
+ * libwebsockets and libcbor - https://github.com/google/android-cuttlefish/pull/975
+ * Package swiftshader - https://github.com/google/android-cuttlefish/pull/974
+ * Add more codeowners to the debian directories - https://github.com/google/android-cuttlefish/pull/973
+ * Begin development on unreleased version 1.3.0 - https://github.com/google/android-cuttlefish/pull/971
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 21 Mar 2025 14:52:16 -0700
 
