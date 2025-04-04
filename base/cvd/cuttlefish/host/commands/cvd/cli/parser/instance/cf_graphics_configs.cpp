@@ -68,6 +68,11 @@ Result<std::string> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
       } else {
         out_display.set_refresh_rate_hertz(CF_DEFAULTS_DISPLAY_REFRESH_RATE);
       }
+      for (const auto& overlay_entry : in_display.overlays()) {
+        DisplayOverlay* overlay_proto = out_display.add_overlays();
+        overlay_proto->set_vm_index(overlay_entry.vm_index());
+        overlay_proto->set_display_index(overlay_entry.display_index());
+      }
     }
   }
 
