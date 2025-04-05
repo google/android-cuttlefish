@@ -1,5 +1,5 @@
 # Dockerfile based on `rockylinux/rockylinux:9.5`
-FROM rockylinux/rockylinux:9.5 AS linux
+FROM --platform=linux/amd64 rockylinux/rockylinux:9.5 AS linux
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
 WORKDIR "/root"
 
@@ -22,11 +22,20 @@ FROM linux AS base_x86
 ENV REPO_USER="${USER}"
 ENV REPO_NAME="${REPO}"
 
+# Required for GitHub.
+ARG USER_UID=1000
+ARG USER_GID=1000
+ARG USER_NAME=runner
+
+RUN groupadd -g $USER_GID $USER_NAME
+RUN useradd -rm -d /home/$USER_NAME -s /bin/bash -g $USER_GID -u $USER_UID $USER_NAME
+USER $USER_NAME
+
 # https://docs.docker.com/reference/dockerfile/#notes-about-specifying-volumes
 # The host directory is declared at container run-time, with `--volume`, eg.
-# --volume /home/username/android-cuttlefish/.rpms/:/root/.rpms
-RUN [ "mkdir", "/root/.rpms" ]
-VOLUME [ "/root/.rpms" ]
+# --volume /home/username/android-cuttlefish/.rpms/:/home/runner/.rpms
+RUN [ "mkdir", "/home/runner/.rpms" ]
+VOLUME [ "/home/runner/.rpms" ]
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories

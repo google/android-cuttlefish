@@ -1,12 +1,12 @@
 Name:           cuttlefish-integration
-Version:        1.2.0
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        Contains the host signaling server supporting multi-device flows over WebRTC.
 
 License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish
 
-BuildArch:      x86_64 arm64
+BuildArch:      x86_64 aarch64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:  

@@ -13,6 +13,6 @@ cd "${REPO_DIR}/docker/rpm-builder-orchestration" || exit
 docker buildx create --use --file docker/rpm-builder-orchestration/x86_64/Dockerfile
 docker buildx create --append --name android-cuttlefish rhel-orchestration
 docker buildx create --append --tag android-cuttlefish/rhel-orchestration:latest
-docker buildx create --append --tag android-cuttlefish/rhel-orchestration:1.2.0
+docker buildx create --append --tag android-cuttlefish/rhel-orchestration:1.3.0
 docker buildx create --append --platform linux/amd64
 docker buildx build

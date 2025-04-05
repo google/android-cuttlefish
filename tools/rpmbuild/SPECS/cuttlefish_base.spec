@@ -1,12 +1,12 @@
 Name:           cuttlefish-base
-Version:        1.2.0
+Version:        1.3.0
 Release:        1%{?dist}
 Summary:        Cuttlefish Android Virtual Device
 
 License:        Apache License 2.0
 URL:            https://github.com/google/android-cuttlefish
 
-BuildArch:      x86_64 arm64
+BuildArch:      x86_64 aarch64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Note: `ncurses-compat-libs` require EPEL repository and `protobuf` requires CRB repository.

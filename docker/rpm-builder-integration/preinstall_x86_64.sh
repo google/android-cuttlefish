@@ -13,6 +13,6 @@ cd "${REPO_DIR}/docker/rpm-builder-integration" || exit
 docker buildx create --use --file docker/rpm-builder-integration/arm_64/Dockerfile
 docker buildx create --append --name android-cuttlefish rhel-integration
 docker buildx create --append --tag android-cuttlefish/rhel-integration:latest
-docker buildx create --append --tag android-cuttlefish/rhel-integration:1.2.0
+docker buildx create --append --tag android-cuttlefish/rhel-integration:1.3.0
 docker buildx create --append --platform linux/amd64
 docker buildx build

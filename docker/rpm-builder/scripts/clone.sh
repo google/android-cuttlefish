@@ -8,4 +8,4 @@ cd "${HOME}" && git clone "https://github.com/${REPO_USER}/${REPO_NAME}.git"
 cd "${REPO_NAME}" || exit
 
 # TODO: Line to be removed upon merging to `main` branch.
-[ "${REPO_USER}" == "syslogic" ] && git switch rpmbuild
+[ "${REPO_USER}" == "syslogic" ] && git switch rpm-build

@@ -20,7 +20,6 @@ jobs:
       id-token: write
     env:
       target: rpm-builder
-      target_stage: builder
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'docker/login-action@v3'
@@ -37,88 +36,90 @@ jobs:
           platforms: arm64
 
       # https://github.com/docker/metadata-action
-      - name: Extract metadata (tags, labels) for x86_64 image
+      - name: Extract metadata (tags, labels) for linux/amd64
         uses: 'docker/metadata-action@v5'
-        id: metadata-x86_64
+        id: metadata-amd64
         with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
+          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-amd64
           tags: |
             type=sha
             latest
-            x86_64
 
-      - name: Extract metadata (tags, labels) for ARM image
-        uses: 'docker/metadata-action@v5'
-        id: metadata-arm_64
-        with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
-          tags: |
-            type=sha
-            latest
-            arm64
-
-      - name: Build and push x86_64 image
+      - name: Build and push images for linux/amd64
         uses: 'docker/build-push-action@v6'
-        id: build-x86_64
+        id: build-image-amd64
         with:
           context: .
           file: docker/rpm-builder/x86_64/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
-          target: ${{ ENV.TARGET_STAGE }}
           builder: ${{ steps.buildx.outputs.name }}
-          labels: ${{ steps.metadata-x86_64.outputs.labels }}
-          tags: ${{ steps.metadata-x86_64.outputs.tags }}
+          labels: ${{ steps.metadata-amd64.outputs.labels }}
+          tags: ${{ steps.metadata-amd64.outputs.tags }}
           platforms: linux/amd64
+          target: builder
 
-      - name: Build and push ARM image
+      # https://github.com/actions/attest-build-provenance
+      # Note: The digest comes from `buildx`, not the metadata.
+      - name: Generate artifact attestation for linux/amd64
+        uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-amd64
+          subject-digest: ${{ steps.build-image-amd64.outputs.digest }}
+          push-to-registry: true
+
+      # https://github.com/docker/metadata-action
+      - name: Extract metadata (tags, labels) for linux/arm64/v8
+        uses: 'docker/metadata-action@v5'
+        id: metadata-arm64v8
+        with:
+          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-arm64v8
+          tags: |
+            type=sha
+            latest
+
+      # https://github.com/docker/build-push-action
+      - name: Build and push images for linux/arm64/v8
         uses: 'docker/build-push-action@v6'
-        id: build-arm_64
+        id: build-image-arm64v8
         with:
           context: .
           file: docker/rpm-builder/arm_64/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
-          target: ${{ ENV.TARGET_STAGE }}
           builder: ${{ steps.buildx.outputs.name }}
-          labels: ${{ steps.metadata-arm_64.outputs.labels }}
-          tags: ${{ steps.metadata-arm_64.outputs.tags }}
-          platforms: linux/arm64
+          labels: ${{ steps.metadata-arm64v8.outputs.labels }}
+          tags: ${{ steps.metadata-arm64v8.outputs.tags }}
+          platforms: linux/arm64/v8
+          target: builder
 
-      # Note: The digest comes from `buildx`, not the metadata.
       # https://github.com/actions/attest-build-provenance
-      - name: Generate artifact attestation for x86_64 image
+      # Note: The digest comes from `buildx`, not the metadata.
+      - name: Generate artifact attestation for linux/arm64/v8
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
-          subject-digest: ${{ steps.build-x86_64.outputs.digest }}
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-arm64v8
+          subject-digest: ${{ steps.build-image-arm64v8.outputs.digest }}
           push-to-registry: true
 
-      - name: Generate artifact attestation for ARM image
-        uses: 'actions/attest-build-provenance@v2'
-        with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder
-          subject-digest: ${{ steps.build-arm_64.outputs.digest }}
-          push-to-registry: true
-
-  builder-x86_64:
+  rpm-spec-x86_64:
     uses: ./.github/workflows/reusable-docker.yml
     needs: build-images
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.ACTOR }}
+      runner: ubuntu-latest
+      image: rpm-builder-amd64
       platform: linux/amd64
-      image: rpm-builder
-      tag: x86_64
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
 
-  builder-arm64:
+  rpm-spec-arm64:
     uses: ./.github/workflows/reusable-docker.yml
     needs: build-images
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.ACTOR }}
-      platform: linux/arm64
-      image: rpm-builder
-      tag: arm64
+      runner: ubuntu-24.04-arm
+      image: rpm-builder-arm64v8
+      platform: linux/arm64/v8
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}

@@ -15,10 +15,20 @@ cd "${REPO_DIR}" || exit
 # Problem: The `gh` client does not support artifact upload.
 /bin/bash -c ./docker/rpm-builder/build_rpm_spec.sh
 
-for f in "${SRC_DIR}"/RPMS/x86_64/*.rpm; do
-  cp -v "$f" "${HOME}/.rpms/"
-done
-ls -la "${HOME}/.rpms"
+if [ -d "${SRC_DIR}/RPMS/x86_64" ]; then
+  for f in "${SRC_DIR}"/RPMS/x86_64/*.rpm; do
+    cp -v "$f" "${HOME}/.rpms/"
+  done
+  # TODO: The `tar` command still stores the absolute path, but it archives.
+  tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.x86_64.tar.gz" "${SRC_DIR}/RPMS/x86_64"
+fi
 
-#Note: This still stores the absolute path, but it archives.
-tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.x86_64.tar.gz" "${SRC_DIR}/RPMS/x86_64"
+if [ -d "${SRC_DIR}/RPMS/aarch64" ]; then
+  for f in "${SRC_DIR}"/RPMS/aarch64/*.rpm; do
+    cp -v "$f" "${HOME}/.rpms/"
+  done
+  # TODO: The `tar` command still stores the absolute path, but it archives.
+  tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.aarch64.tar.gz" "${SRC_DIR}/RPMS/aarch64"
+fi
+
+ls -la "${HOME}/.rpms"
