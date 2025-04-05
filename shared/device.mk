@@ -241,6 +241,7 @@ PRODUCT_PACKAGES += \
     device_google_cuttlefish_shared_config_media_profiles_vendor \
     device_google_cuttlefish_shared_config_seriallogging_rc \
     device_google_cuttlefish_shared_config_ueventd_rc \
+    device_google_cuttlefish_shared_default_permissions_cuttlefish \
     device_google_cuttlefish_shared_privapp_permissions_cuttlefish
 
 PRODUCT_COPY_FILES += \

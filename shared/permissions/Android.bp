@@ -26,3 +26,13 @@ prebuilt_etc {
     vendor: true,
     relative_install_path: "permissions",
 }
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_default_permissions_cuttlefish",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: [
+        "default-permissions-cuttlefish.xml",
+    ],
+    vendor: true,
+    relative_install_path: "default-permissions",
+}

@@ -41,7 +41,9 @@ public class GceBroadcastReceiver extends BroadcastReceiver {
             Log.i(LOG_TAG, "Received broadcast: " + action);
 
             if (action.equals(Intent.ACTION_BOOT_COMPLETED)) {
-                reportIntent(context, GceService.INTENT_ACTION_CONFIGURE);
+                reportIntent(context, GceService.INTENT_ACTION_BOOT_COMPLETED);
+            } else if (action.equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
+                reportIntent(context, GceService.INTENT_ACTION_CONFIGURATION_CHANGED);
             } else if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 reportIntent(context, GceService.INTENT_ACTION_NETWORK_CHANGED);
             } else if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
