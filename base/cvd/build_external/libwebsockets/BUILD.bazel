@@ -1,0 +1,14 @@
+package(
+    default_visibility = [
+        "@libwebsockets//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "libwebsockets_config",
+    hdrs = [
+      "include/lws_config.h",
+      "include/lws_config_private.h",
+    ],
+    strip_include_prefix = "//build_external/libwebsockets/include",
+)
