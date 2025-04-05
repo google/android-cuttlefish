@@ -16,11 +16,17 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
 
+#include <sys/types.h>
+
 #include <string>
+
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 
 namespace cuttlefish {
 

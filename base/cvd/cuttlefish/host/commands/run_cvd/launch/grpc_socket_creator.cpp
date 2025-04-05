@@ -15,6 +15,10 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/grpc_socket_creator.h"
 
+#include <string>
+
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+
 namespace cuttlefish {
 
 GrpcSocketCreator::GrpcSocketCreator(

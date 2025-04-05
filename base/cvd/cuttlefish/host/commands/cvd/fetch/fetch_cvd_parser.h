@@ -54,7 +54,7 @@ inline constexpr char kDefaultTargetDirectory[] = "";
 inline constexpr bool kDefaultKeepDownloadedArchives = false;
 
 inline constexpr char kDefaultBuildTarget[] =
-    "aosp_cf_x86_64_phone-trunk_staging-userdebug";
+    "aosp_cf_x86_64_only_phone-userdebug";
 
 struct CredentialFlags {
   bool use_gce_metadata = kDefaultUseGceMetadata;

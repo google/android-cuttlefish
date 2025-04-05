@@ -1093,32 +1093,6 @@ class CuttlefishConfig {
 // device would actually perform a restore instead of their respective actions.
 bool IsRestoring(const CuttlefishConfig&);
 
-// Vhost-user-vsock modes
-extern const char* const kVhostUserVsockModeAuto;
-extern const char* const kVhostUserVsockModeTrue;
-extern const char* const kVhostUserVsockModeFalse;
-
-// GPU modes
-extern const char* const kGpuModeAuto;
-extern const char* const kGpuModeCustom;
-extern const char* const kGpuModeDrmVirgl;
-extern const char* const kGpuModeGfxstream;
-extern const char* const kGpuModeGfxstreamGuestAngle;
-extern const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader;
-extern const char* const kGpuModeGfxstreamGuestAngleHostLavapipe;
-extern const char* const kGpuModeGuestSwiftshader;
-extern const char* const kGpuModeNone;
-
-// GPU vhost user modes
-extern const char* const kGpuVhostUserModeAuto;
-extern const char* const kGpuVhostUserModeOn;
-extern const char* const kGpuVhostUserModeOff;
-
-// HwComposer modes
-extern const char* const kHwComposerAuto;
-extern const char* const kHwComposerDrm;
-extern const char* const kHwComposerRanchu;
-extern const char* const kHwComposerNone;
 }  // namespace cuttlefish
 
 #if FMT_VERSION >= 90000

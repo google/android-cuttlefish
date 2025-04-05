@@ -19,6 +19,8 @@
  * Functions for manipulating disk files given to crosvm or QEMU.
  */
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 

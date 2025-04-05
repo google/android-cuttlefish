@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include <fmt/format.h>
 #include <json/value.h>
 
 #include "common/libs/utils/json.h"
@@ -41,7 +42,7 @@ std::string SerializeFreqDomains(
     freq_domain_arg << "[" << android::base::Join(pair.second, ",") << "]";
   }
 
-  return {std::format("[{}]", freq_domain_arg.str())};
+  return {fmt::format("[{}]", freq_domain_arg.str())};
 }
 
 }  // namespace

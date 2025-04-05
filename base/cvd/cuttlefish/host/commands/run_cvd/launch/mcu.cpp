@@ -13,21 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/mcu.h"
 
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
-#include <fruit/fruit.h>
-#include <json/json.h>
+#include <android-base/strings.h>
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/macro.h>
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 // timeout for the MCU channels to be created after the start command is issued
 #define MCU_START_TIMEOUT 30

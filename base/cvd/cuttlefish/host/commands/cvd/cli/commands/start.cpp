@@ -16,26 +16,37 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
-#include <sys/types.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <iterator>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -43,7 +54,11 @@
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/fetch/substitute.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -522,7 +537,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
     ShowLaunchCommand(command, envs);
 
-    siginfo_t infop;
+    siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
     CF_EXPECT(CheckProcessExitedNormally(infop));
     return {};
@@ -635,6 +650,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   }
 
   siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
+  // NOLINTNEXTLINE(misc-include-cleaner)
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     LOG(INFO) << "Device launch failed, cleaning up";
     // run_cvd processes may be still running in background

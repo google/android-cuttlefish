@@ -17,6 +17,8 @@
 
 #include <fruit/fruit.h>
 
+#include <string>
+
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {

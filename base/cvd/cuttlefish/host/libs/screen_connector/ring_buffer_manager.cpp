@@ -127,7 +127,7 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
     int vm_index, int display_index, int display_width, int display_height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
 
-  if (!display_buffer_cache_.contains(buffer_key)) {
+  if (!display_buffer_cache_.count(buffer_key)) {
     std::string shmem_name = MakeLayerName(display_index);
 
     auto shm_buffer = CF_EXPECT(DisplayRingBuffer::Create(
@@ -153,7 +153,7 @@ std::uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index,
                                                    std::uint8_t* frame_data,
                                                    int size) {
   auto buffer_key = std::make_pair(vm_index, display_index);
-  if (display_buffer_cache_.contains(buffer_key)) {
+  if (display_buffer_cache_.count(buffer_key)) {
     return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, size);
   }
   // It's possible to request a write to buffer that doesn't yet exist.
@@ -168,7 +168,7 @@ std::uint8_t* DisplayRingBufferManager::ReadFrame(int vm_index,
 
   // If this buffer was read successfully in the past, that valid pointer is
   // returned from the cache
-  if (!display_buffer_cache_.contains(buffer_key)) {
+  if (!display_buffer_cache_.count(buffer_key)) {
     // Since no cache found, next step is to request from OS to map a new IPC
     // buffer. It may not yet exist so we want this method to only cache if it
     // is a non-null pointer, to retrigger this logic continually every request.
@@ -195,7 +195,7 @@ std::string DisplayRingBufferManager::MakeLayerName(int display_index,
   if (vm_index == -1) {
     vm_index = local_group_index_;
   }
-  return std::format("/cf_shmem_display_{}_{}_{}", vm_index, display_index,
+  return fmt::format("/cf_shmem_display_{}_{}_{}", vm_index, display_index,
                      group_uuid_);
 }
 

@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/lint.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>

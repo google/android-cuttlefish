@@ -19,6 +19,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 
 namespace cuttlefish {
 
@@ -36,5 +38,9 @@ class InputConnectionsProvider : public virtual SetupFeature {
   virtual std::vector<SharedFD> TouchscreenConnections() const = 0;
   virtual std::vector<SharedFD> TouchpadConnections() const = 0;
 };
+
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 InputConnectionsProvider, LogTeeCreator>
+VhostInputDevicesComponent();
 
 }  // namespace cuttlefish

@@ -16,10 +16,18 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/acloud_command.h"
 
+#include <signal.h>  // IWYU pragma: keep
+#include <stdlib.h>
+
+#include <iostream>
+#include <memory>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -28,6 +36,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/acloud/converter.h"
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -166,7 +175,7 @@ Result<void> AcloudCommand::HandleRemote(const CommandRequest& request) {
       << "UPDATE! Try the new `cvdr` tool directly. Run `cvdr --help` to get "
          "started.\n";
 
-  siginfo_t siginfo;
+  siginfo_t siginfo;  // NOLINT(misc-include-cleaner)
 
   cmd.Start().Wait(&siginfo, WEXITED);
   {
@@ -177,6 +186,7 @@ Result<void> AcloudCommand::HandleRemote(const CommandRequest& request) {
   stdout_pipe_write->Close();
   stdout_thread.join();
   std::cout << stdout_;
+  // NOLINTNEXTLINE(misc-include-cleaner)
   if (args[0] == "create" && siginfo.si_status == EXIT_SUCCESS) {
     std::string hostname = stdout_.substr(0, stdout_.find(" "));
     CF_EXPECT(RunAcloudConnect(request, hostname));

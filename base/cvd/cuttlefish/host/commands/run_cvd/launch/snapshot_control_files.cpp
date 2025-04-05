@@ -15,7 +15,12 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 
+#include <sys/socket.h>
 #include <unistd.h>
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

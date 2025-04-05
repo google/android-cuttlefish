@@ -29,7 +29,6 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
-        "//cuttlefish/host/libs/config",
         "//libbase",
         "@jsoncpp",
         "@protobuf",

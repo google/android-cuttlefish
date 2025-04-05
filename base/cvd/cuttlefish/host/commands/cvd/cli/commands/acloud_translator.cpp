@@ -16,11 +16,17 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/acloud_translator.h"
 
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 

@@ -9,7 +9,6 @@ cc_library(
     name = "config",
     srcs = [
         "config_flag.cpp",
-        "config_utils.cpp",
         "custom_actions.cpp",
         "cuttlefish_config.cpp",
         "cuttlefish_config_instance.cpp",
@@ -30,10 +29,8 @@ cc_library(
     ],
     hdrs = [
         "command_source.h",
-        "config_constants.h",
         "config_flag.h",
         "config_fragment.h",
-        "config_utils.h",
         "custom_actions.h",
         "cuttlefish_config.h",
         "data_image.h",
@@ -56,6 +53,8 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
+        ":config_constants",
+        ":config_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
@@ -73,5 +72,44 @@ cc_library(
 clang_tidy_test(
     name = "config_clang_tidy",
     srcs = [":config"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "config_constants",
+    hdrs = [
+        "config_constants.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "config_constants_clang_tidy",
+    srcs = [":config_constants"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "config_utils",
+    srcs = [
+        "config_utils.cpp",
+    ],
+    hdrs = [
+        "config_utils.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":config_constants",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "config_utils_clang_tidy",
+    srcs = [":config_utils"],
     tags = ["clang_tidy", "clang-tidy"],
 )

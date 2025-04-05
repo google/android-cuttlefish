@@ -63,7 +63,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
     drawBox(bounds, 0xff);
 #endif
 
-    Point<pxs> pen = {0_px, 0_px};
+    Point<pxs> pen = {pxs(0), pxs(0)};
     auto textBegin = text_.begin();
     optional<Box<pxs>> boundingBox;
 
@@ -95,7 +95,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
         case Alignment::BOTTOM:
             break;
         case Alignment::CENTER:
-            pen += {(bounds.w() - bBox.w()) / 2.0_px, 0};
+            pen += {(bounds.w() - bBox.w()) / pxs(2.0), 0};
             break;
         case Alignment::RIGHT:
             pen += {bounds.w() - bBox.w(), 0};
@@ -116,7 +116,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
             textBegin++;
         }
 
-        pen += {0_px, lineHeight_};
+        pen += {pxs(0), lineHeight_};
         ++curLine;
     }
 
@@ -128,7 +128,7 @@ Error LabelImpl::draw(const PixelDrawer& drawPixel, const Box<pxs>& bounds, Line
     TEEUI_LOG << "Offset: " << offset << ENDL;
 
     if (verticalTextAlignment_ == Alignment::CENTER)
-        offset += {0, (bounds.h() - boundingBox->h()) / 2.0_px};
+        offset += {0, (bounds.h() - boundingBox->h()) / pxs(2.0)};
     else if (verticalTextAlignment_ == Alignment::BOTTOM)
         offset += {0, (bounds.h() - boundingBox->h())};
 

@@ -13,15 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/tombstone_receiver.h"
 
-#include <string>
+#include <errno.h>
+#include <sys/stat.h>
 
-#include <fruit/fruit.h>
+#include <cstring>
+#include <optional>
 
+#include <android-base/logging.h>
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -32,6 +39,7 @@ Result<MonitorCommand> TombstoneReceiver(
   if (!DirectoryExists(tombstone_dir)) {
     LOG(DEBUG) << "Setting up " << tombstone_dir;
     CF_EXPECTF(mkdir(tombstone_dir.c_str(),
+                     // NOLINTNEXTLINE(misc-include-cleaner)
                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
                "Failed to create tombstone directory: '{}'. error: '{}'",
                tombstone_dir, strerror(errno));

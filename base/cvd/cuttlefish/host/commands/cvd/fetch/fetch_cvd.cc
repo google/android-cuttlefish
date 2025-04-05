@@ -473,8 +473,8 @@ Result<Build> GetHostBuild(BuildApi& build_api,
   CF_EXPECT(host_package_build.has_value() || fallback_host_build.has_value(),
             "Either `--host_package_build` or `--default_build` needs to be "
             "specified. Try "
-            "`--default_build=aosp-main/"
-            "aosp_cf_x86_64_phone-trunk_staging-userdebug`");
+            "`--default_build=aosp-android-latest-release/"
+            "aosp_cf_x86_64_only_phone-userdebug");
   return host_package_build.value_or(*fallback_host_build);
 }
 

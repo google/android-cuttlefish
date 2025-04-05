@@ -15,10 +15,11 @@
  */
 #pragma once
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 

@@ -16,14 +16,25 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/try_acloud.h"
 
+#include <signal.h>  // IWYU pragma: keep
+#include <stdlib.h>
+
+#include <csignal>
+#include <memory>
 #include <thread>
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/acloud/config.h"
 #include "cuttlefish/host/commands/cvd/acloud/converter.h"
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -140,7 +151,7 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
     }
   });
 
-  siginfo_t siginfo;
+  siginfo_t siginfo;  // NOLINT(misc-include-cleaner)
   cmd.Start().Wait(&siginfo, WEXITED);
   {
     // Force the destructor to run by moving it into a smaller scope.
@@ -149,7 +160,7 @@ Result<std::string> TryAcloudCommand::RunCvdRemoteGetConfig(
   }
   stdout_pipe_write->Close();
   stdout_thread.join();
-  CF_EXPECT(siginfo.si_status == EXIT_SUCCESS);
+  CF_EXPECT(siginfo.si_status == EXIT_SUCCESS);  // NOLINT(misc-include-cleaner)
   stdout_.erase(stdout_.find('\n'));
   return stdout_;
 }

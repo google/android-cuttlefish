@@ -13,19 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/run_cvd/launch/launch.h"
+#include "cuttlefish/host/commands/run_cvd/launch/kernel_log_monitor.h"
+
+#include <errno.h>
+#include <stddef.h>
+#include <string.h>
 
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <fruit/fruit.h>
+#include <android-base/logging.h>
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/injector.h>
+#include <fruit/macro.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
 #include "cuttlefish/host/libs/config/inject.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {

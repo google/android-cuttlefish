@@ -711,11 +711,6 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 SharedFD SharedFD::VsockServer(
     unsigned int port, int type,
     std::optional<int> vhost_user_vsock_listening_cid, unsigned int cid) {
-#ifndef CUTTLEFISH_HOST
-  CHECK(!vhost_user_vsock_listening_cid)
-      << "vhost_user_vsock_listening_cid is supposed to be nullopt in the "
-         "guest";
-#endif
   if (vhost_user_vsock_listening_cid) {
     return SharedFD::SocketLocalServer(
         GetVhostUserVsockServerAddr(port, *vhost_user_vsock_listening_cid),
@@ -766,9 +761,6 @@ std::string SharedFD::GetVhostUserVsockClientAddr(int cid) {
 
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type,
                                bool vhost_user) {
-#ifndef CUTTLEFISH_HOST
-  CHECK(!vhost_user) << "vhost_user is supposed to be false in the guest";
-#endif
   if (vhost_user) {
     // TODO(b/277909042): better path than /tmp/vsock_{}/vm.vsock
     auto client = SharedFD::SocketLocalClient(GetVhostUserVsockClientAddr(cid),

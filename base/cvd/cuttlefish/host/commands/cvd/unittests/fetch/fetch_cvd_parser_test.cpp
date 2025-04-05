@@ -30,7 +30,8 @@ using testing::Eq;
 
 inline constexpr char kTargetDirectory[] = "--target_directory=/tmp/fetch_test";
 inline constexpr char kDefaultBuild[] =
-    "--default_build=aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug";
+    "--default_build=aosp-android-latest-release/"
+    "aosp_cf_x86_64_only_phone-userdebug";
 inline constexpr char kCasDownloaderPath[] =
     "--cas_downloader_path=/tmp/casdownloader";
 inline constexpr char kCasCacheDir[] = "--cas_cache_dir=/tmp/cas_cache";

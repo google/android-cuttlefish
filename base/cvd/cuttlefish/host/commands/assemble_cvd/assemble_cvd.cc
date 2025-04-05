@@ -193,7 +193,8 @@ Result<void> RestoreHostFiles(const std::string& cuttlefish_root_dir,
       CF_EXPECT(GuestSnapshotDirectories(snapshot_dir_path));
   auto filter_guest_dir =
       [&guest_snapshot_dirs](const std::string& src_dir) -> bool {
-    if (src_dir.ends_with("logs") && Contains(guest_snapshot_dirs, src_dir)) {
+    if (android::base::EndsWith(src_dir, "logs") &&
+        Contains(guest_snapshot_dirs, src_dir)) {
       return false;
     }
     return !Contains(guest_snapshot_dirs, src_dir);

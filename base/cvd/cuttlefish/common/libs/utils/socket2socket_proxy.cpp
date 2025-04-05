@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <atomic>
 #include <cstring>
 #include <functional>
 #include <list>

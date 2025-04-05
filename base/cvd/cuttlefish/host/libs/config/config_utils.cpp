@@ -171,4 +171,9 @@ bool HostSupportsQemuCli() {
   return supported;
 }
 
+std::string GetSeccompPolicyDir() {
+  std::string kSeccompDir =
+      "usr/share/crosvm/" + HostArchStr() + "-linux-gnu/seccomp";
+  return DefaultHostArtifactsPath(kSeccompDir);
+}
 }

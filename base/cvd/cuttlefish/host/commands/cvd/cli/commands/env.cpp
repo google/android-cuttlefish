@@ -16,17 +16,24 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/env.h"
 
-#include <android-base/strings.h>
+#include <signal.h>  // IWYU pragma: keep
+#include <stdlib.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
+#include <fmt/core.h>
+
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -69,7 +76,7 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
         is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, env))
                 : CF_EXPECT(NonHelpCommand(request, subcmd_args, env));
 
-    siginfo_t infop;
+    siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
 
     CF_EXPECT(CheckProcessExitedNormally(infop));

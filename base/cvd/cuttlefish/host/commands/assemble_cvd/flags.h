@@ -53,6 +53,5 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
-std::string GetSeccompPolicyDir();
 
 } // namespace cuttlefish

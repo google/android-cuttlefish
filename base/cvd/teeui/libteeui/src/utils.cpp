@@ -93,8 +93,8 @@ Color drawLinePoint(Point<pxs> a, Point<pxs> b, Point<pxs> px_origin, Color c, p
     auto len = line.length();
     auto l = line / len;
     auto seg = l * (px_origin - b);
-    auto dist = 0_px;
-    if (seg < 0_px) {
+    auto dist = pxs(0);
+    if (seg < pxs(0)) {
         //        line = px_origin - b;
         //        dist = line.length();
         //        line /= dist;
@@ -108,7 +108,7 @@ Color drawLinePoint(Point<pxs> a, Point<pxs> b, Point<pxs> px_origin, Color c, p
         return 0;
     } else {
         line = Point<pxs>(-line.y(), line.x()) / len;
-        dist = (line * (px_origin - a)).abs() - width + .5_px;
+        dist = (line * (px_origin - a)).abs() - width + pxs(.5);
     }
 
     return pixelLineIntersect(line, dist, c);

@@ -40,6 +40,7 @@
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/command_source.h"
+#include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vhost_user.h"
 

@@ -15,9 +15,13 @@ cc_binary(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/libs/config",
         "//libbase",
-        "//libziparchive",
+        "@fmt",
         "@gflags",
+        "@libzip",
+        "@zlib",
     ],
+    linkopts = ["-llzma"],
+    features = ["-layering_check"], # Incompatible with libzip cmake build
 )
 
 clang_tidy_test(

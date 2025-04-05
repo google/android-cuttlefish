@@ -284,16 +284,16 @@ void ConfUiRendererImpl::SetDeviceContext(unsigned long long w,
                                           bool is_inverted,
                                           bool is_magnified) {
   using namespace teeui;
-  const auto screen_width = operator""_px(w);
-  const auto screen_height = operator""_px(h);
+  const auto screen_width = pxs(w);
+  const auto screen_height = pxs(h);
   ctx_.setParam<RightEdgeOfScreen>(pxs(screen_width));
   ctx_.setParam<BottomOfScreen>(pxs(screen_height));
   if (is_magnified) {
-    ctx_.setParam<DefaultFontSize>(18_dp);
-    ctx_.setParam<BodyFontSize>(20_dp);
+    ctx_.setParam<DefaultFontSize>(dps(18));
+    ctx_.setParam<BodyFontSize>(dps(20));
   } else {
-    ctx_.setParam<DefaultFontSize>(14_dp);
-    ctx_.setParam<BodyFontSize>(16_dp);
+    ctx_.setParam<DefaultFontSize>(dps(14));
+    ctx_.setParam<BodyFontSize>(dps(16));
   }
   if (is_inverted) {
     ctx_.setParam<ShieldColor>(kColorShieldInv);

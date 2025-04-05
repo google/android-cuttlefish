@@ -23,6 +23,7 @@
 #include <thread>
 
 #include "common/libs/concurrency/semaphore.h"
+#include "host/libs/screen_connector/screen_connector_common.h"
 
 namespace cuttlefish {
 // move-based concurrent queue
