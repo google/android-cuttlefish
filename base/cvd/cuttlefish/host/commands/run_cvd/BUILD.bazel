@@ -27,8 +27,6 @@ cc_binary(
         "boot_state_machine.cc",
         "boot_state_machine.h",
         "main.cc",
-        "reporting.cpp",
-        "reporting.h",
         "server_loop.cpp",
         "server_loop.h",
         "server_loop_impl.cpp",

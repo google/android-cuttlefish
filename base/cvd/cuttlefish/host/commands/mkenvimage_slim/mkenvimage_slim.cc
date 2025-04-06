@@ -17,16 +17,21 @@
 // https://github.com/u-boot/u-boot/blob/master/tools/mkenvimage.c The bare
 // minimum amount of functionality for our application is replicated.
 
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <zlib.h>
 
+#include <vector>
+
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 #define PAD_VALUE (0xff)
 #define CRC_SIZE (sizeof(uint32_t))
@@ -68,7 +73,7 @@ Result<int> MkenvimageSlimMain(int argc, char** argv) {
   uint32_t crc = crc32(0, env_ptr, FLAGS_env_size - CRC_SIZE);
   memcpy(env_buffer.data(), &crc, sizeof(uint32_t));
 
-  auto output_fd =
+  auto output_fd =  // NOLINTNEXTLINE(misc-include-cleaner)
       SharedFD::Creat(FLAGS_output_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
   if (!output_fd->IsOpen()) {
     return CF_ERR("Couldn't open the output file " + FLAGS_output_path);

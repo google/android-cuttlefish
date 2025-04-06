@@ -26,7 +26,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"  // flags_defaults.h dep
 
 namespace cuttlefish {
 
@@ -90,11 +89,24 @@ bool RecordScreen(const Instance& instance) {
   }
 }
 
+std::string GpuMode(const Instance& instance) {
+  if (instance.graphics().has_gpu_mode() &&
+      instance.graphics().gpu_mode() != "") {
+    return instance.graphics().gpu_mode();
+  } else {
+    // Use the instance default
+    // https://github.com/google/android-cuttlefish/blob/c4f1643479f98bdc7310d281e81751188595233b/base/cvd/cuttlefish/host/commands/assemble_cvd/flags.cc#L948
+    // See also b/406464352#comment7
+    return "unset";
+  }
+}
+
 Result<std::vector<std::string>> GenerateGraphicsFlags(
     const EnvironmentSpecification& cfg) {
   return std::vector<std::string>{
       CF_EXPECT(GenerateDisplayFlag(cfg)),
       GenerateInstanceFlag("record_screen", cfg, RecordScreen),
+      GenerateInstanceFlag("gpu_mode", cfg, GpuMode),
   };
 }
 

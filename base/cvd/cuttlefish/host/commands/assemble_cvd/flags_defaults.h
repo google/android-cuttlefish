@@ -15,16 +15,24 @@
  */
 #pragma once
 
+#include "common/libs/utils/environment.h"
+#include "host/libs/config/config_constants.h"
+#include "host/libs/config/config_utils.h"
+
 #define CF_DEFAULTS_DYNAMIC_STRING ""
 #define CF_DEFAULTS_DYNAMIC_INT 0
 
-// Common configs paramneters
+// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=122;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
+#define USERDATA_FILE_SYSTEM_TYPE "f2fs"
+
+// Common configs parameters
 #define CF_DEFAULTS_NUM_INSTANCES 1
 #define CF_DEFAULTS_INSTANCE_NUMS CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_BASE_INSTANCE_NUM cuttlefish::GetInstance()
 #define CF_DEFAULTS_ASSEMBLY_DIR \
-  (StringFromEnv("HOME", ".") + "/cuttlefish_assembly")
-#define CF_DEFAULTS_INSTANCE_DIR (StringFromEnv("HOME", ".") + "/cuttlefish")
+  (cuttlefish::StringFromEnv("HOME", ".") + "/cuttlefish_assembly")
+#define CF_DEFAULTS_INSTANCE_DIR \
+  (cuttlefish::StringFromEnv("HOME", ".") + "/cuttlefish")
 
 #define CF_DEFAULTS_SYSTEM_IMAGE_DIR CF_DEFAULTS_DYNAMIC_STRING
 
@@ -59,7 +67,7 @@
 #define CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK "tap"
 
 // crosvm default parameters
-#define CF_DEFAULTS_CROSVM_BINARY HostBinaryPath("crosvm")
+#define CF_DEFAULTS_CROSVM_BINARY cuttlefish::HostBinaryPath("crosvm")
 #define CF_DEFAULTS_SECCOMP_POLICY_DIR cuttlefish::GetSeccompPolicyDir()
 #define CF_DEFAULTS_ENABLE_SANDBOX false
 #define CF_DEFAULTS_ENABLE_VIRTIOFS false
@@ -69,7 +77,7 @@
 #define CF_DEFAULTS_QEMU_BINARY_DIR cuttlefish::DefaultQemuBinaryDir()
 
 // Gem5 default parameters
-#define CF_DEFAULTS_GEM5_BINARY_DIR HostBinaryPath("gem5")
+#define CF_DEFAULTS_GEM5_BINARY_DIR cuttlefish::HostBinaryPath("gem5")
 #define CF_DEFAULTS_GEM5_CHECKPOINT_DIR CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_GEM5_DEBUG_FILE CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_GEM5_DEBUG_FLAGS CF_DEFAULTS_DYNAMIC_STRING
@@ -214,9 +222,9 @@
 #define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
 #define CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE false
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
-  DefaultHostArtifactsPath("usr/share/webrtc/assets")
+  cuttlefish::DefaultHostArtifactsPath("usr/share/webrtc/assets")
 #define CF_DEFAULTS_WEBRTC_CERTS_DIR \
-  DefaultHostArtifactsPath("usr/share/webrtc/certs")
+  cuttlefish::DefaultHostArtifactsPath("usr/share/webrtc/certs")
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_ADDR CF_DEFAULTS_DYNAMIC_STRING
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_PATH "/register_device"
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_PORT 443

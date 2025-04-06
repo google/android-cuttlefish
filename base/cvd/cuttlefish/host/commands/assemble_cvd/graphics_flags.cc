@@ -27,6 +27,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
+#include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 #ifdef __APPLE__

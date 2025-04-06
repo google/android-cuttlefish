@@ -61,6 +61,7 @@
 #include "host/commands/assemble_cvd/misc_info.h"
 #include "host/commands/assemble_cvd/network_flags.h"
 #include "host/commands/assemble_cvd/touchpad.h"
+#include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_flag.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
@@ -74,16 +75,6 @@
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
-
-using cuttlefish::DefaultHostArtifactsPath;
-using cuttlefish::HostBinaryPath;
-using cuttlefish::TempDir;
-using cuttlefish::vm_manager::CrosvmManager;
-using google::FlagSettingMode::SET_FLAGS_DEFAULT;
-using google::FlagSettingMode::SET_FLAGS_VALUE;
-
-// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=122;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
-#define USERDATA_FILE_SYSTEM_TYPE "f2fs"
 
 #define DEFINE_vec DEFINE_string
 #define DEFINE_proto DEFINE_string
@@ -551,7 +542,7 @@ DEFINE_vec(
 DEFINE_vec(vhost_user_block, CF_DEFAULTS_VHOST_USER_BLOCK ? "true" : "false",
            "(experimental) use crosvm vhost-user block device implementation ");
 
-DEFINE_string(early_tmp_dir, TempDir(),
+DEFINE_string(early_tmp_dir, cuttlefish::TempDir(),
               "Parent directory to use for temporary files in early startup");
 
 DEFINE_vec(enable_tap_devices, "true",
@@ -1185,11 +1176,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
   // TODO(moelsherif): Handle this flag (set_metrics_binary) in the future
 
-#ifdef ENFORCE_MAC80211_HWSIM
+  // TODO: schuffelen - make this a device-specific android-info.txt setting
   tmp_config_obj.set_virtio_mac80211_hwsim(true);
-#else
-  tmp_config_obj.set_virtio_mac80211_hwsim(false);
-#endif
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
     LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
@@ -2153,13 +2141,13 @@ Result<void> SetDefaultFlagsForQemu(
   // This is the 1st place to set "start_webrtc" flag value
   // for now, we don't set non-default options for QEMU
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("android_efi_loader",
                                default_android_efi_loader.c_str(),
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   return {};
 }
 
@@ -2234,27 +2222,30 @@ Result<void> SetDefaultFlagsForCrosvm(
     }
   }
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("android_efi_loader",
                                default_android_efi_loader.c_str(),
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // This is the 1st place to set "start_webrtc" flag value
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // This is the 1st place to set "enable_sandbox" flag value
-  SetCommandLineOptionWithMode(
-      "enable_sandbox", default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode(
-      "enable_virtiofs", default_enable_sandbox_str.c_str(), SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("enable_sandbox",
+                               default_enable_sandbox_str.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("enable_virtiofs",
+                               default_enable_sandbox_str.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   return {};
 }
 
 void SetDefaultFlagsForGem5() {
   // TODO: Add support for gem5 gpu models
   SetCommandLineOptionWithMode("gpu_mode", kGpuModeGuestSwiftshader,
-                               SET_FLAGS_DEFAULT);
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
-  SetCommandLineOptionWithMode("cpus", "1", SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("cpus", "1",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
 void SetDefaultFlagsForMcu() {
@@ -2262,7 +2253,8 @@ void SetDefaultFlagsForMcu() {
   if (!CanAccess(path, R_OK)) {
     return;
   }
-  SetCommandLineOptionWithMode("mcu_config_path", path.c_str(), SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("mcu_config_path", path.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
 void SetDefaultFlagsForOpenwrt(Arch target_arch) {
@@ -2271,23 +2263,23 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
         "ap_kernel_image",
         DefaultHostArtifactsPath("etc/openwrt/images/openwrt_kernel_x86_64")
             .c_str(),
-        SET_FLAGS_DEFAULT);
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
     SetCommandLineOptionWithMode(
         "ap_rootfs_image",
         DefaultHostArtifactsPath("etc/openwrt/images/openwrt_rootfs_x86_64")
             .c_str(),
-        SET_FLAGS_DEFAULT);
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
   } else if (target_arch == Arch::Arm64) {
     SetCommandLineOptionWithMode(
         "ap_kernel_image",
         DefaultHostArtifactsPath("etc/openwrt/images/openwrt_kernel_aarch64")
             .c_str(),
-        SET_FLAGS_DEFAULT);
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
     SetCommandLineOptionWithMode(
         "ap_rootfs_image",
         DefaultHostArtifactsPath("etc/openwrt/images/openwrt_rootfs_aarch64")
             .c_str(),
-        SET_FLAGS_DEFAULT);
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 }
 
@@ -2358,11 +2350,11 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
     SetCommandLineOptionWithMode(
         "start_webrtc_sig_server",
         start_webrtc && !host_operator_present ? "true" : "false",
-        SET_FLAGS_DEFAULT);
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
     SetCommandLineOptionWithMode(
         "webrtc_sig_server_addr",
         host_operator_present ? HOST_OPERATOR_SOCKET_PATH : "0.0.0.0",
-        SET_FLAGS_DEFAULT);
+        google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
   SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
@@ -2377,12 +2369,6 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
 
 std::string GetConfigFilePath(const CuttlefishConfig& config) {
   return config.AssemblyPath("cuttlefish_config.json");
-}
-
-std::string GetSeccompPolicyDir() {
-  std::string kSeccompDir =
-      "usr/share/crosvm/" + HostArchStr() + "-linux-gnu/seccomp";
-  return DefaultHostArtifactsPath(kSeccompDir);
 }
 
 } // namespace cuttlefish

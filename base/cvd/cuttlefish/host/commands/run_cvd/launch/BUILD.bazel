@@ -33,6 +33,7 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
     ],
 )
 
@@ -225,6 +226,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
         "@fruit",
     ],
 )
@@ -264,6 +266,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@fruit",
@@ -324,6 +327,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
         "@fruit",
     ],
 )
@@ -545,6 +549,8 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@fruit",
         "@fmt",
@@ -611,6 +617,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
     ],
 )
 
@@ -651,6 +658,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@fmt",

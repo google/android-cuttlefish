@@ -42,31 +42,6 @@ const char* kInstances = "instances";
 
 }  // namespace
 
-const char* const kVhostUserVsockModeAuto = "auto";
-const char* const kVhostUserVsockModeTrue = "true";
-const char* const kVhostUserVsockModeFalse = "false";
-
-const char* const kGpuModeAuto = "auto";
-const char* const kGpuModeCustom = "custom";
-const char* const kGpuModeDrmVirgl = "drm_virgl";
-const char* const kGpuModeGfxstream = "gfxstream";
-const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
-const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
-    "gfxstream_guest_angle_host_swiftshader";
-const char* const kGpuModeGfxstreamGuestAngleHostLavapipe =
-    "gfxstream_guest_angle_host_lavapipe";
-const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
-const char* const kGpuModeNone = "none";
-
-const char* const kGpuVhostUserModeAuto = "auto";
-const char* const kGpuVhostUserModeOn = "on";
-const char* const kGpuVhostUserModeOff = "off";
-
-const char* const kHwComposerAuto = "auto";
-const char* const kHwComposerDrm = "drm_hwcomposer";
-const char* const kHwComposerRanchu = "ranchu";
-const char* const kHwComposerNone = "none";
-
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
                                    const char* subpath) {
