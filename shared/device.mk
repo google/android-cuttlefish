@@ -325,8 +325,7 @@ ifndef LOCAL_AUDIO_PRODUCT_COPY_FILES
 PRODUCT_PACKAGES += device_google_cuttlefish_shared_config_audio_policy
 $(call soong_config_set_bool,cuttlefish_config,use_audio_policy,true)
 
-LOCAL_AUDIO_PRODUCT_COPY_FILES += \
-    hardware/interfaces/audio/aidl/default/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml
+$(call inherit-product, hardware/interfaces/audio/aidl/default/audio_effects.mk)
 endif
 endif
 
