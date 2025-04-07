@@ -16,19 +16,12 @@ ARG REPO="android-cuttlefish"
 ARG SIGNATURE=""
 ARG PASSPHRASE=""
 
-# Decluttering some unused files.
-RUN [ "rm", "/root/.cshrc", "/root/.tcshrc" ]
-
-# Note: The container scripts are checking for this file,
-# in order to prevent accidentlly running them on the host.
-RUN [ "touch", "/root/.dockerenv" ]
-
 # Adding the user provides the home directory.
 RUN [ "groupadd", "-g", "117", "docker" ]
 RUN [ "useradd", "-g", "117", "-u", "1001", "-s", "/bin/bash", "runner" ]
-RUN [ "mkdir", "-p", "/github/home" ]
-RUN [ "chown", "-R", "runner:docker", "/github" ]
-RUN [ "ln", "-s", "/github/home", "/home/runner" ]
+# Note: The container scripts are checking for this file,
+# in order to prevent accidentlly running them on the host.
+RUN [ "touch", "/home/runner/.dockerenv" ]
 
 
 # Base Image

@@ -19,20 +19,16 @@ ARG PASSPHRASE=""
 # Decluttering some unused files.
 RUN [ "rm", "/root/.cshrc", "/root/.tcshrc" ]
 
-# Note: The container scripts are checking for this file,
-# in order to prevent accidentlly running them on the host.
-RUN [ "touch", "/root/.dockerenv" ]
-
 # Adding the user provides the home directory.
 RUN [ "groupadd", "-g", "117", "docker" ]
 RUN [ "useradd", "-g", "117", "-u", "1001", "-s", "/bin/bash", "runner" ]
-RUN [ "mkdir", "-p", "/github/home" ]
-RUN [ "chown", "-R", "runner:docker", "/github" ]
-RUN [ "ln", "-s", "/github/home", "/home/runner" ]
+# Note: The container scripts are checking for this file,
+# in order to prevent accidentlly running them on the host.
+RUN [ "touch", "/home/runner/.dockerenv" ]
 
 
 # Base Image
-FROM linux AS base_arm
+FROM linux AS base
 ENV REPO_USER="${USER}"
 ENV REPO_NAME="${REPO}"
 
@@ -53,7 +49,7 @@ RUN [ "dnf", "clean", "all" ]
 
 
 # Host Orchestration
-FROM base_arm AS orchestration
+FROM base AS orchestration
 ENTRYPOINT [ "/home/runner/services.sh" ]
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
@@ -67,13 +63,15 @@ EXPOSE 6520-6620
 
 RUN [ "touch", "/home/runner/.dockerenv" ]
 RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
+COPY [ "./docker/rpm-builder/scripts/install_rpm.sh", "/home/runner/install_rpm.sh" ]
+RUN [ "chmod", "+x", "/home/runner/install_rpm.sh" ]
 
 # Add prebuilt RPM packages.
 COPY [ "./.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
 COPY [ "./.rpms/cuttlefish-orchestration-*", "/home/runner/.rpms/" ]
 
 # Install Android Cuttlefish.
-RUN [ "/bin/bash", "-c", "/home/runner/rpm_install.sh" ]
+RUN [ "/bin/bash", "-c", "/home/runner/install_rpm.sh" ]
 RUN [ "dnf", "clean", "all" ]
 
 COPY [ "./docker/rpm-builder/scripts/services.sh", "/home/runner/services.sh" ]
