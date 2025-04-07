@@ -29,6 +29,7 @@
 #include <fmt/ostream.h>
 
 #include "common/libs/utils/architecture.h"
+#include "common/libs/utils/device_type.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/config_fragment.h"
@@ -594,6 +595,8 @@ class CuttlefishConfig {
     // forces.
     bool use_bootloader() const;
 
+    DeviceType device_type() const;
+
     Arch target_arch() const;
 
     int cpus() const;
@@ -835,6 +838,7 @@ class CuttlefishConfig {
     void set_enable_sandbox(const bool enable_sandbox);
     void set_enable_virtiofs(const bool enable_virtiofs);
     void set_kgdb(bool kgdb);
+    void set_device_type(DeviceType type);
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
     void set_vcpu_config_path(const std::string& vcpu_config_path);
