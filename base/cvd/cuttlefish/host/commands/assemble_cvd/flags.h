@@ -30,6 +30,7 @@ namespace cuttlefish {
 
 struct GuestConfig {
   Arch target_arch;
+  DeviceType device_type;
   bool bootconfig_supported = false;
   bool hctr2_supported = false;
   std::string android_version_number;
