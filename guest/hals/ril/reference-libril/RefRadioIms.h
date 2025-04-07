@@ -49,6 +49,10 @@ class RefRadioIms : public android::hardware::radio::compat::RadioIms {
     ::ndk::ScopedAStatus updateImsCallStatus(
             int32_t serial,
             const std::vector<::aidl::android::hardware::radio::ims::ImsCall>& imsCalls) override;
+    ::ndk::ScopedAStatus updateAllowedServices(
+            int32_t serial,
+            const std::vector<::aidl::android::hardware::radio::ims::ImsService>& imsServices)
+            override;
 };
 
 }  // namespace cf::ril
