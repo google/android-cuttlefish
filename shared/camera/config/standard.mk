@@ -27,7 +27,8 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.camerax.extensions.enabled=true
 
 # Loads the non-APEX config files. The APEX loads all the configs by default, which the HAl picks from.
-PRODUCT_COPY_FILES += \
-	hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_back.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_back.json \
-	hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json \
-	hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_depth.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_depth.json
+PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
+PRODUCT_PACKAGES += \
+    emu_camera_back.json \
+    emu_camera_front.json \
+    emu_camera_depth.json
