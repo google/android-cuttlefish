@@ -378,9 +378,16 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   }
 
   // Validate the host artifacts path before proceeding
-  (void)CF_EXPECT(HostToolTarget(flags.host_path).GetStartBinName(),
-                  "\nMaybe try `cvd fetch` or running `lunch "
-                  "<target>; m` to enable starting a CF device?");
+  (void)CF_EXPECT(
+      HostToolTarget(flags.host_path).GetStartBinName(),
+      "\nCould not find the required host tools to launch a device.\n\n"
+      "If you already have the host tools and devices images downloaded use "
+      "the `--host_path` and `--product_path` flags.\nSee `cvd help create` "
+      "for more details.\n\n"
+      "If you need to download host tools or system images try using `cvd "
+      "fetch`.\nFor example: `cvd fetch --default_build=<branch>/<target>`\n\n"
+      "If you are building Android from source, try running `lunch <target>; "
+      "m` to set up your environment and build the images.");
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
   envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
