@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 # It clones the repository, builds the packages and archives them.
-[ ! -f "${HOME}/.dockerfile" ] && echo ".dockerfile not present, exiting now." && exit
+[ ! -f "${HOME}/.dockerenv" ] && echo ".dockerenv not present, exiting now." && exit
 [ $# -eq 2 ] && REPO_USER=$1 && REPO_NAME=$2
 
+RPMS="${HOME}/.rpms"
 REPO_DIR="${HOME}/${REPO_NAME}"
 SRC_DIR="${REPO_DIR}/tools/rpmbuild"
 
@@ -17,18 +18,23 @@ cd "${REPO_DIR}" || exit
 
 if [ -d "${SRC_DIR}/RPMS/x86_64" ]; then
   for f in "${SRC_DIR}"/RPMS/x86_64/*.rpm; do
-    cp -v "$f" "${HOME}/.rpms/"
+    cp -v "$f" "${RPMS}/"
   done
-  # TODO: The `tar` command still stores the absolute path, but it archives.
-  tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.x86_64.tar.gz" "${SRC_DIR}/RPMS/x86_64"
+  # The `tar` command stores the absolute path, but it archives.
+  # tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.x86_64.tar.gz" "${SRC_DIR}/RPMS/x86_64"
 fi
 
 if [ -d "${SRC_DIR}/RPMS/aarch64" ]; then
   for f in "${SRC_DIR}"/RPMS/aarch64/*.rpm; do
-    cp -v "$f" "${HOME}/.rpms/"
+    cp -v "$f" "${RPMS}/"
   done
-  # TODO: The `tar` command still stores the absolute path, but it archives.
-  tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.aarch64.tar.gz" "${SRC_DIR}/RPMS/aarch64"
+  # The `tar` command stores the absolute path, but it archives.
+  # tar -czf "${HOME}/.rpms/${REPO_NAME}-rpm.aarch64.tar.gz" "${SRC_DIR}/RPMS/aarch64"
 fi
 
-ls -la "${HOME}/.rpms"
+echo "nRocky mount-point: ${RPMS}"
+ls -la "${RPMS}"
+ls -lan "${RPMS}"
+
+# shellcheck disable=SC2012
+[ "$(ls -1 "${RPMS}" 2>/dev/null | wc -l)" -gt 0 ] || exit 1

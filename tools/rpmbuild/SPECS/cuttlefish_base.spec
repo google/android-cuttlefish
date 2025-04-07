@@ -32,7 +32,7 @@ Cuttlefish Android Virtual Device that are used in all deployments.
 
 
 %build
-cd ../../../base/cvd && $HOME/go/bin/bazelisk build ...
+cd ../../../base/cvd && bazel build ...
 
 %install
 rm -rf $RPM_BUILD_ROOT

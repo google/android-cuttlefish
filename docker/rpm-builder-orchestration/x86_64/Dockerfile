@@ -1,14 +1,9 @@
-# Dockerfile based on `rockylinux/rockylinux:9.5`
-FROM --platform=linux/amd64 rockylinux/rockylinux:9.5 AS linux
+# Dockerfile based on `rockylinux/rockylinux:9.5` or `arm64v8/rockylinux:9.3`
+ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
+FROM $LINUX_IMAGE AS linux
+
 LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
 WORKDIR "/root"
-
-# Note: The container scripts are checking for this file,
-# in order to prevent accidentlly running them on the host.
-RUN [ "touch", "/root/.dockerfile" ]
-
-# Decluttering some unused files.
-RUN [ "rm", "/root/.cshrc", "/root/.tcshrc" ]
 
 # GitHub Arguments
 # TODO: To be changed to `google` upon merging to `main` branch.
@@ -16,24 +11,35 @@ RUN [ "rm", "/root/.cshrc", "/root/.tcshrc" ]
 ARG USER="syslogic"
 ARG REPO="android-cuttlefish"
 
+# PGP Arguments
+# TODO: PGP signature and passphrase are required to sign packages.
+ARG SIGNATURE=""
+ARG PASSPHRASE=""
+
+# Decluttering some unused files.
+RUN [ "rm", "/root/.cshrc", "/root/.tcshrc" ]
+
+# Note: The container scripts are checking for this file,
+# in order to prevent accidentlly running them on the host.
+RUN [ "touch", "/root/.dockerenv" ]
+
+# Adding the user provides the home directory.
+RUN [ "groupadd", "-g", "117", "docker" ]
+RUN [ "useradd", "-g", "117", "-u", "1001", "-s", "/bin/bash", "runner" ]
+RUN [ "mkdir", "-p", "/github/home" ]
+RUN [ "chown", "-R", "runner:docker", "/github" ]
+RUN [ "ln", "-s", "/github/home", "/home/runner" ]
+
 
 # Base Image
 FROM linux AS base_x86
 ENV REPO_USER="${USER}"
 ENV REPO_NAME="${REPO}"
 
-# Required for GitHub.
-ARG USER_UID=1000
-ARG USER_GID=1000
-ARG USER_NAME=runner
-
-RUN groupadd -g $USER_GID $USER_NAME
-RUN useradd -rm -d /home/$USER_NAME -s /bin/bash -g $USER_GID -u $USER_UID $USER_NAME
-USER $USER_NAME
-
 # https://docs.docker.com/reference/dockerfile/#notes-about-specifying-volumes
 # The host directory is declared at container run-time, with `--volume`, eg.
-# --volume /home/username/android-cuttlefish/.rpms/:/home/runner/.rpms
+# --volume /home/username/android-cuttlefish/.rpms/:/home/github/.rpms
+WORKDIR "/home/runner"
 RUN [ "mkdir", "/home/runner/.rpms" ]
 VOLUME [ "/home/runner/.rpms" ]
 
@@ -48,7 +54,7 @@ RUN [ "dnf", "clean", "all" ]
 
 # Host Orchestration
 FROM base_x86 AS orchestration
-ENTRYPOINT [ "/root/services.sh" ]
+ENTRYPOINT [ "/home/runner/services.sh" ]
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
@@ -59,10 +65,16 @@ EXPOSE 15550-15560
 # Expose ADB
 EXPOSE 6520-6620
 
-# Add prebuilt RPM packages.
-COPY [ "./.rpms/cuttlefish-base-*", "/root/.rpms/" ]
-COPY [ "./.rpms/cuttlefish-orchestration-*", "/root/.rpms/" ]
-RUN [ "/bin/bash", "-c", "/root/rpm_install.sh" ]
+RUN [ "touch", "/home/runner/.dockerenv" ]
+RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
 
-COPY [ "./docker/rpm-builder/scripts/services.sh", "/root/services.sh" ]
-RUN [ "chmod", "+x", "/root/services.sh" ]
+# Add prebuilt RPM packages.
+COPY [ "./.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
+COPY [ "./.rpms/cuttlefish-orchestration-*", "/home/runner/.rpms/" ]
+RUN [ "/bin/bash", "-c", "/home/runner/rpm_install.sh" ]
+
+COPY [ "./docker/rpm-builder/scripts/services.sh", "/home/runner/services.sh" ]
+RUN [ "chmod", "+x", "/home/runner/services.sh" ]
+
+# Run commands as user `runner` by default.
+USER 1001

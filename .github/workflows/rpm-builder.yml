@@ -4,22 +4,35 @@ on:
   push:
   pull_request:
     paths:
-      - 'tools/rpmbuild/**'
-      - 'docker/rpm-builder/**'
-      - '.github/workflows/reusable-docker.yml'
-      - '.github/workflows/rpm-builder-matrix.yml'
       - '.github/workflows/rpm-builder.yml'
+      - '.github/workflows/reusable-docker.yml'
+      - 'docker/rpm-builder/**'
+      - 'tools/rpmbuild/**'
 jobs:
 
-  build-images:
+  build-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
-    env:
-      target: rpm-builder
+
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            image: rpm-builder-amd64
+            dirname: x86_64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            image: rpm-builder-arm64
+            dirname: arm_64
+
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'docker/login-action@v3'
@@ -29,97 +42,120 @@ jobs:
           username: ${{ GITHUB.ACTOR }}
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
+      # https://github.com/docker/metadata-action
+      - name: Extract metadata (tags, labels)
+        uses: 'docker/metadata-action@v5'
+        id: metadata
+        with:
+          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.IMAGE }}
+          tags: |
+            type=sha
+            latest
+
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - uses: 'docker/setup-buildx-action@v3'
       - uses: 'docker/setup-qemu-action@v3'
+        if: ${{ MATRIX.PLATFORM != 'linux/amd64' }}
         with:
           platforms: arm64
 
-      # https://github.com/docker/metadata-action
-      - name: Extract metadata (tags, labels) for linux/amd64
-        uses: 'docker/metadata-action@v5'
-        id: metadata-amd64
-        with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-amd64
-          tags: |
-            type=sha
-            latest
-
-      - name: Build and push images for linux/amd64
+      - name: Build and push container image
         uses: 'docker/build-push-action@v6'
-        id: build-image-amd64
+        id: build
         with:
           context: .
-          file: docker/rpm-builder/x86_64/Dockerfile
+          file: docker/rpm-builder/${{ MATRIX.DIRNAME }}/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
-          builder: ${{ steps.buildx.outputs.name }}
-          labels: ${{ steps.metadata-amd64.outputs.labels }}
-          tags: ${{ steps.metadata-amd64.outputs.tags }}
-          platforms: linux/amd64
+          platforms: ${{ MATRIX.PLATFORM }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          tags: ${{ steps.metadata.outputs.tags }}
           target: builder
 
-      # https://github.com/actions/attest-build-provenance
       # Note: The digest comes from `buildx`, not the metadata.
-      - name: Generate artifact attestation for linux/amd64
+      # https://github.com/actions/attest-build-provenance
+      - name: Generate artifact attestation
         uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-amd64
-          subject-digest: ${{ steps.build-image-amd64.outputs.digest }}
+          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
-      # https://github.com/docker/metadata-action
-      - name: Extract metadata (tags, labels) for linux/arm64/v8
-        uses: 'docker/metadata-action@v5'
-        id: metadata-arm64v8
-        with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-arm64v8
-          tags: |
-            type=sha
-            latest
-
-      # https://github.com/docker/build-push-action
-      - name: Build and push images for linux/arm64/v8
-        uses: 'docker/build-push-action@v6'
-        id: build-image-arm64v8
-        with:
-          context: .
-          file: docker/rpm-builder/arm_64/Dockerfile
-          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
-          builder: ${{ steps.buildx.outputs.name }}
-          labels: ${{ steps.metadata-arm64v8.outputs.labels }}
-          tags: ${{ steps.metadata-arm64v8.outputs.tags }}
-          platforms: linux/arm64/v8
-          target: builder
-
-      # https://github.com/actions/attest-build-provenance
-      # Note: The digest comes from `buildx`, not the metadata.
-      - name: Generate artifact attestation for linux/arm64/v8
-        uses: 'actions/attest-build-provenance@v2'
-        with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/rpm-builder-arm64v8
-          subject-digest: ${{ steps.build-image-arm64v8.outputs.digest }}
-          push-to-registry: true
-
-  rpm-spec-x86_64:
+  # This must be a job, in order to pass `secrets`.
+  build-packages:
     uses: ./.github/workflows/reusable-docker.yml
-    needs: build-images
+    needs: build-image
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.ACTOR }}
-      runner: ubuntu-latest
-      image: rpm-builder-amd64
-      platform: linux/amd64
+      platform: ${{ MATRIX.PLATFORM }}
+      runner: ${{ MATRIX.RUNNER }}
+      image: ${{ MATRIX.IMAGE }}
+    strategy:
+      max-parallel: 2
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - image: rpm-builder-amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+            dirname: x86_64
+          - image: rpm-builder-arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            dirname: arm_64
+
+  # This must be a job, in order to pass `secrets`.
+  preinstall-integration:
+    uses: ./.github/workflows/reusable-docker.yml
+    needs: build-packages
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
-
-  rpm-spec-arm64:
-    uses: ./.github/workflows/reusable-docker.yml
-    needs: build-images
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.ACTOR }}
-      runner: ubuntu-24.04-arm
-      image: rpm-builder-arm64v8
-      platform: linux/arm64/v8
+      platform: ${{ MATRIX.PLATFORM }}
+      runner: ${{ MATRIX.RUNNER }}
+      image: ${{ MATRIX.IMAGE }}
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - image: rhel-integration-amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+            dirname: x86_64
+          - image: rhel-integration-arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            dirname: arm_64
+
+  # This must be a job, in order to pass `secrets`.
+  preinstall-orchestration:
+    uses: ./.github/workflows/reusable-docker.yml
+    needs: build-packages
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.ACTOR }}
+      platform: ${{ MATRIX.PLATFORM }}
+      runner: ${{ MATRIX.RUNNER }}
+      image: ${{ MATRIX.IMAGE }}
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - image: rhel-orchestration-amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+            dirname: x86_64
+          - image: rhel-orchestration-arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            dirname: arm_64
