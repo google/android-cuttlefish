@@ -520,7 +520,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
     siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
-    CF_EXPECT(CheckProcessExitedNormally(infop));
+    // gflags (and flag_parser for compatibility) exit with 1 after help output
+    CF_EXPECT(CheckProcessExitedNormally(infop, 1));
     return {};
   }
 
