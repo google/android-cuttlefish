@@ -27,6 +27,7 @@
 #include "common/libs/utils/architecture.h"
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/config_constants.h"
@@ -158,6 +159,11 @@ std::string DefaultEnvironmentPath(const std::string& environment_key,
                                    const std::string& default_value,
                                    const std::string& subpath) {
   return StringFromEnv(environment_key, default_value) + "/" + subpath;
+}
+
+bool IsValidAndroidHostOutPath(const std::string& path) {
+  std::string start_bin_path = path + "/bin/cvd_internal_start";
+  return FileExists(start_bin_path);
 }
 
 // In practice this is mostly validating that the `cuttlefish-base` debian
