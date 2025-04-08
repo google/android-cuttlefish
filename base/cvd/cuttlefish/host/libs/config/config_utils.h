@@ -54,7 +54,7 @@ std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
-                                   const char* path);
+                                   const char* subpath);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
