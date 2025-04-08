@@ -421,25 +421,6 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
   return non_help_command;
 }
 
-static void ShowLaunchCommand(const Command& command,
-                              const cvd_common::Envs& envs) {
-  std::stringstream ss;
-  std::vector<std::string> interesting_env_names{"HOME",
-                                                 kAndroidHostOut,
-                                                 kAndroidSoongHostOut,
-                                                 "ANDROID_PRODUCT_OUT",
-                                                 kCuttlefishInstanceEnvVarName,
-                                                 kCuttlefishConfigEnvVarName};
-  for (const auto& interesting_env_name : interesting_env_names) {
-    if (Contains(envs, interesting_env_name)) {
-      ss << interesting_env_name << "=\"" << envs.at(interesting_env_name)
-         << "\" ";
-    }
-  }
-  ss << " " << command;
-  LOG(INFO) << "launcher command: " << ss.str();
-}
-
 Result<std::string> CvdStartCommandHandler::FindStartBin(
     const std::string& android_host_out) {
   return CF_EXPECT(HostToolTarget(android_host_out).GetStartBinName());
@@ -535,7 +516,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
 
     Command command =
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
-    ShowLaunchCommand(command, envs);
+    LOG(INFO) << "help command: " << command;
 
     siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
@@ -638,7 +619,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
                   "information won't show in the UI: "
                << conn_res.error().FormatForEnv();
   }
-  ShowLaunchCommand(launch_command, envs);
+  LOG(INFO) << "launch command: " << launch_command;
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
