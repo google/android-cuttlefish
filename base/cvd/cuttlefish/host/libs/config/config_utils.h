@@ -63,4 +63,5 @@ bool HostSupportsQemuCli();
 bool UseQemuPrebuilt();
 
 std::string GetSeccompPolicyDir();
-}
+
+}  // namespace cuttlefish
