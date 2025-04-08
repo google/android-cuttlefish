@@ -39,6 +39,8 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -46,6 +48,7 @@
 #include <android-base/strings.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/contains.h"
 #include "common/libs/utils/files.h"
 
 extern char** environ;
@@ -483,6 +486,18 @@ Subprocess Command::Start(SubprocessOptions options) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Command& command) {
+  std::unordered_set<std::string> to_show{"HOME",
+                                          "ANDROID_HOST_OUT",
+                                          "ANDROID_SOONG_HOST_OUT",
+                                          "ANDROID_PRODUCT_OUT",
+                                          "CUTTLEFISH_CONFIG_FILE",
+                                          "CUTTLEFISH_INSTANCE"};
+  for (const std::string& env_var : command.env_) {
+    std::vector<std::string> env_split = android::base::Split(env_var, "=");
+    if (!env_split.empty() && Contains(to_show, env_split.front())) {
+      out << env_var << " ";
+    }
+  }
   return out << android::base::Join(command.command_, " ");
 }
 
