@@ -154,6 +154,12 @@ std::string DefaultGuestImagePath(const std::string& file_name) {
          file_name;
 }
 
+std::string DefaultEnvironmentPath(const std::string& environment_key,
+                                   const std::string& default_value,
+                                   const std::string& subpath) {
+  return StringFromEnv(environment_key, default_value) + "/" + subpath;
+}
+
 // In practice this is mostly validating that the `cuttlefish-base` debian
 // package is installed, which implies that more things are present like the
 // predefined network setup.

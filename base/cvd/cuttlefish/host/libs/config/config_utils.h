@@ -52,9 +52,9 @@ std::string HostBinaryPath(const std::string& binary_name);
 std::string HostUsrSharePath(const std::string& file);
 std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
-std::string DefaultEnvironmentPath(const char* environment_key,
-                                   const char* default_value,
-                                   const char* path);
+std::string DefaultEnvironmentPath(const std::string& environment_key,
+                                   const std::string& default_value,
+                                   const std::string& subpath);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
