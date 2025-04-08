@@ -6,6 +6,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_import_locations"
+  link_name: "bin/cvd_import_locations"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/kernel_log_monitor"
   link_name: "bin/kernel_log_monitor"
 }
