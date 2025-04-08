@@ -1,6 +1,11 @@
 # cuttlefish debian_substitution_marker v1
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/console_forwarder"
+  link_name: "bin/console_forwarder"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/kernel_log_monitor"
   link_name: "bin/kernel_log_monitor"
 }
