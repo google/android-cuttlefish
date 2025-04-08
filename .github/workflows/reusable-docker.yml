@@ -36,8 +36,20 @@ jobs:
     env:
       DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }} --platform ${{ INPUTS.PLATFORM }} --attach STDERR --attach STDOUT --quiet'
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
-      DOCKER_MOUNTS: '--volume ${{ GITHUB.WORKSPACE }}/.rpms:/home/github/.rpms'
+      DOCKER_MOUNTS: '--volume ${{ RUNNER.TEMP }}/.rpms:/home/github/.rpms'
+      # The images to build with are being defined right here.
+      BUILD_ARGS_X86: '--build-arg LINUX_IMAGE=rockylinux/rockylinux:9.5'
+      BUILD_ARGS_ARM: '--build-arg LINUX_IMAGE=arm64v8/rockylinux:9.3'
+    outputs:
+      BUILD_ARGS: string
     steps:
+
+      - name: Set up build args.
+        id: build-args
+        shell: bash
+        run: |
+          [ "${{ INPUTS.PLATFORM }}" = "linux/arm64" ] &&  echo BUILD_ARGS=${{ ENV.BUILD_ARGS_X86 }} >> $GITHUB_OUTPUT
+          [ "${{ INPUTS.PLATFORM }}" = "linux/amd64" ] &&  echo BUILD_ARGS=${{ ENV.BUILD_ARGS_ARM }} >> $GITHUB_OUTPUT
 
       # https://github.com/docker/login-action
       - name: Log in to the Container registry
@@ -50,6 +62,7 @@ jobs:
 
       # Need to check out once again, in order to utilize `hashFiles()`.
       - uses: 'actions/checkout@v4'
+
       - name: Restore bazel cache
         if: ${{ contains(INPUTS.IMAGE, 'builder') }}
         id: bazel-cache-restore
@@ -68,10 +81,11 @@ jobs:
         shell: bash
         env:
           DOCKER_MOUNTS: '--volume ${{ RUNNER.TEMP }}/.cache:/home/runner/.cache --volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
+          BUILD_ARGS: ${{ steps.build-args.outputs.BUILD_ARGS }}
         run: |
           mkdir -p ${{ RUNNER.TEMP }}/.rpms
           mkdir -p ${{ RUNNER.TEMP }}/.cache
-          docker run $DOCKER_OPTIONS $DOCKER_MOUNTS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_MOUNTS $BUILD_ARGS $DOCKER_IMAGE
 
       - name: List ${{ RUNNER.TEMP }}
         if: ${{ contains(INPUTS.IMAGE, 'builder') }}
@@ -108,9 +122,10 @@ jobs:
         shell: bash
         env:
           DOCKER_MOUNTS: '--volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
+          BUILD_ARGS: ${{ steps.build-args.outputs.BUILD_ARGS }}
         run: |
           mkdir -p ${{ RUNNER.TEMP }}/.rpms
-          docker run $DOCKER_OPTIONS $DOCKER_MOUNTS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_MOUNTS $BUILD_ARGS $DOCKER_IMAGE
 
       # https://docs.docker.com/reference/cli/docker/container/run/
       - name: Build orchestration image
@@ -119,6 +134,7 @@ jobs:
         shell: bash
         env:
           DOCKER_MOUNTS: '--volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
+          BUILD_ARGS: ${{ steps.build-args.outputs.BUILD_ARGS }}
         run: |
           mkdir -p ${{ RUNNER.TEMP }}/.rpms
-          docker run $DOCKER_OPTIONS $DOCKER_MOUNTS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $DOCKER_MOUNTS $BUILD_ARGS $DOCKER_IMAGE

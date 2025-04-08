@@ -100,11 +100,9 @@ jobs:
           - image: rpm-builder-amd64
             runner: ubuntu-latest
             platform: linux/amd64
-            dirname: x86_64
           - image: rpm-builder-arm64
             runner: ubuntu-24.04-arm
             platform: linux/arm64
-            dirname: arm_64
 
   # This must be a job, in order to pass `secrets`.
   preinstall-integration:
