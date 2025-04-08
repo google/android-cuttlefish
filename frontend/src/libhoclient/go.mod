@@ -46,4 +46,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+replace github.com/google/android-cuttlefish/frontend/src/host_orchestrator => ../host_orchestrator
 replace github.com/google/android-cuttlefish/frontend/src/liboperator => ../liboperator
