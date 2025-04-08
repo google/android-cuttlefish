@@ -511,7 +511,10 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   const bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
 
   if (is_help) {
-    auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
+    auto android_host_out =
+        CF_EXPECT(AndroidHostPath(envs),
+                  "\nTry running this command from the same directory as the "
+                  "downloaded or fetched host tools.");
     const auto bin = CF_EXPECT(FindStartBin(android_host_out));
 
     Command command =
