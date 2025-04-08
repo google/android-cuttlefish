@@ -24,14 +24,14 @@ jobs:
       matrix:
         platform: [ linux/amd64, linux/arm64 ]
         include:
-          - platform: linux/amd64
+          - image: rpm-builder-amd64
             runner: ubuntu-latest
-            image: rpm-builder-amd64
-            dirname: x86_64
-          - platform: linux/arm64
+            platform: linux/amd64
+            linux: rockylinux/rockylinux:9.5
+          - image: rpm-builder-arm64
             runner: ubuntu-24.04-arm
-            image: rpm-builder-arm64
-            dirname: arm_64
+            platform: linux/arm64
+            linux: arm64v8/rockylinux:9.3
 
     steps:
       - uses: 'actions/checkout@v4'
@@ -70,6 +70,15 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           tags: ${{ steps.metadata.outputs.tags }}
           target: builder
+          # load: true
+          build-args: |
+            LINUX_IMAGE=${{ MATRIX.LINUX }}
+          # GITHUB_USER_NAME=${{ GITHUB.ACTOR }}
+          # GITHUB_REPO_NAME=${{ GITHUB.EVENT.REPOSITORY_NAME }}
+          # PGP_SIGNATURE=${{ INPUTS.PGP_SIGNATURE }}
+          # PGP_PASSPHRASE=${{ INPUTS.PGP_PASSPHRASE }}
+
+      # ARG_LINUX: '--build-arg LINUX_IMAGE=${{ INPUTS.LINUX }}'
 
       # Note: The digest comes from `buildx`, not the metadata.
       # https://github.com/actions/attest-build-provenance
@@ -85,12 +94,16 @@ jobs:
     uses: ./.github/workflows/reusable-docker.yml
     needs: build-image
     secrets:
+      # TODO: RPM repository PGP signature & passphrase would be required to sign RPM packages.
+      # pgp_signature: ${{ SECRETS.PGP_SIGNATURE }}
+      # pgp_passphrase: ${{ SECRETS.PGP_PASSPHRASE }}
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.ACTOR }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
+      linux: ${{ MATRIX.LINUX }}
       image: ${{ MATRIX.IMAGE }}
     strategy:
       max-parallel: 2
@@ -100,9 +113,11 @@ jobs:
           - image: rpm-builder-amd64
             runner: ubuntu-latest
             platform: linux/amd64
+            linux: rockylinux/rockylinux:9.5
           - image: rpm-builder-arm64
             runner: ubuntu-24.04-arm
             platform: linux/arm64
+            linux: arm64v8/rockylinux:9.3
 
   # This must be a job, in order to pass `secrets`.
   preinstall-integration:
@@ -115,6 +130,7 @@ jobs:
       username: ${{ GITHUB.ACTOR }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
+      linux: ${{ MATRIX.LINUX }}
       image: ${{ MATRIX.IMAGE }}
     strategy:
       max-parallel: 2
@@ -122,14 +138,14 @@ jobs:
       matrix:
         platform: [ linux/amd64, linux/arm64 ]
         include:
-          - image: rhel-integration-amd64
+          - image: rpm-builder-amd64
             runner: ubuntu-latest
             platform: linux/amd64
-            dirname: x86_64
-          - image: rhel-integration-arm64
+            linux: rockylinux/rockylinux:9.5
+          - image: rpm-builder-arm64
             runner: ubuntu-24.04-arm
             platform: linux/arm64
-            dirname: arm_64
+            linux: arm64v8/rockylinux:9.3
 
   # This must be a job, in order to pass `secrets`.
   preinstall-orchestration:
@@ -142,6 +158,7 @@ jobs:
       username: ${{ GITHUB.ACTOR }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
+      linux: ${{ MATRIX.LINUX }}
       image: ${{ MATRIX.IMAGE }}
     strategy:
       max-parallel: 2
@@ -149,11 +166,11 @@ jobs:
       matrix:
         platform: [ linux/amd64, linux/arm64 ]
         include:
-          - image: rhel-orchestration-amd64
+          - image: rpm-builder-amd64
             runner: ubuntu-latest
             platform: linux/amd64
-            dirname: x86_64
-          - image: rhel-orchestration-arm64
+            linux: rockylinux/rockylinux:9.5
+          - image: rpm-builder-arm64
             runner: ubuntu-24.04-arm
             platform: linux/arm64
-            dirname: arm_64
+            linux: arm64v8/rockylinux:9.3

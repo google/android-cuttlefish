@@ -2,37 +2,37 @@
 ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
 FROM $LINUX_IMAGE AS linux
 
-LABEL description="RPM Builder" version="1.0.0" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
+LABEL description="RPM Builder" version="1.0.1" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
 WORKDIR "/root"
 
-# GitHub Arguments
+# Arguments
 # TODO: To be changed to `google` upon merging to `main` branch.
 # This is merely being used in `clone.sh`, to switch the correct brach.
-ARG GITHUB_USER="syslogic"
-ARG GITHUB_REPO="android-cuttlefish"
+ARG GITHUB_USER_NAME="syslogic"
+ARG GUTHUB_REPO_NAME="android-cuttlefish"
 
 # PGP Arguments
 # TODO: PGP signature and passphrase are required to sign packages.
-ARG SIGNATURE=""
-ARG PASSPHRASE=""
+ARG PGP_SIGNATURE=""
+ARG PGP_PASSPHRASE=""
 
-# Note: The container scripts are checking for this file,
-# in order to prevent accidentlly running them on the host.
-RUN [ "touch", "/home/runner/.dockerenv" ]
+# Don't ask for the `sudo` password.
+RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
 
 # Adding the user provides the home directory.
 RUN [ "groupadd", "-g", "117", "docker" ]
 RUN [ "useradd", "-g", "117", "-u", "1001", "-s", "/bin/bash", "runner" ]
 
-# Don't ask for the `sudo` password.
-RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
+# Note: The container scripts are checking for this file,
+# in order to prevent accidentlly running them on the host.
+RUN [ "touch", "/home/runner/.dockerenv" ]
 
 # Base Image
 FROM linux AS base_image
-ENV PGP_SIGNATURE="${SIGNATURE}"
-ENV PGP_PASSPHRASE="${PASSPHRASE}"
-ENV REPO_USER="${GITHUB_USER}"
-ENV REPO_NAME="${GITHUB_REPO}"
+ENV REPO_USER="${GITHUB_USER_NAME}"
+ENV REPO_NAME="${GUTHUB_REPO_NAME}"
+ENV RPM_SIGN_SIGNATURE="${PGP_SIGNATURE}"
+ENV RPM_SIGN_PASSPHRASE="${PGP_PASSPHRASE}"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
@@ -59,7 +59,8 @@ RUN [ "dnf", "-y", "upgrade" ]
 RUN [ "dnf", "clean", "all" ]
 
 # Install `bazelisk` for all users.
-RUN [ "wget", "--no-verbose", "--output-document", "/usr/local/bin/bazel", "https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64" ]
+RUN if [ "$(uname -i)" =  "x86_64" ]; then wget --no-verbose --output-document /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64; fi
+RUN if [ "$(uname -i)" = "aarch64" ]; then wget --no-verbose --output-document /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-arm64; fi
 RUN [ "chmod", "+x", "/usr/local/bin/bazel" ]
 
 # Container scripts.
