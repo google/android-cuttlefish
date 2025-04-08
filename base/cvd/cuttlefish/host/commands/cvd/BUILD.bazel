@@ -34,9 +34,7 @@ clang_tidy_test(
 cc_binary(
     name = "cvd",
     srcs = ["main.cc" ],
-    copts = COPTS + [
-        "-Wno-ctad-maybe-unsupported",
-    ],
+    copts = COPTS,
     deps = [
         ":libcvd",
         "//cuttlefish/common/libs/utils",

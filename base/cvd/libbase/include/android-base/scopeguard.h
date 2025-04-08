@@ -63,5 +63,8 @@ ScopeGuard<F> make_scope_guard(F&& f) {
   return ScopeGuard<F>(std::forward<F>(f));
 }
 
+template<typename F>
+ScopeGuard(F&& t) -> ScopeGuard<F>;
+
 }  // namespace base
 }  // namespace android

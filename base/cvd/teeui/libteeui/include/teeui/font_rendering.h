@@ -67,6 +67,9 @@ template <typename T, typename Deleter = HandleDelete<T>> class Handle {
     T handle_;
 };
 
+template<typename T>
+Handle(T handle) -> Handle<T, HandleDelete<T>>;
+
 #define MAP_HANDLE_DELETER(type, deleter)                                                          \
     template <> struct HandleDelete<type> {                                                        \
         void operator()(type h) { deleter(h); }                                                    \

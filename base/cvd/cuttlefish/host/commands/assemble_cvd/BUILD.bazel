@@ -85,7 +85,6 @@ cc_library(
     ],
     copts = COPTS + [
         "-Wno-ambiguous-macro",
-        "-Wno-ctad-maybe-unsupported",
     ],
     deps = [
         ":launch_cvd_cc_proto",
