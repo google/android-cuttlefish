@@ -199,7 +199,6 @@ cc_test(
         "unix_sockets_test.cpp",
     ],
     copts = COPTS + [
-        "-Wno-ctad-maybe-unsupported",
         "-Icuttlefish",
     ],
     deps = [

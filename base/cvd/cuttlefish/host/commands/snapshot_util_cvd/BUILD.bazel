@@ -14,9 +14,7 @@ cc_binary(
         "snapshot_taker.cc",
         "snapshot_taker.h",
     ],
-    copts = COPTS + [
-        "-Wno-ctad-maybe-unsupported",
-    ],
+    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",

@@ -25,9 +25,7 @@ cc_library(
         "include/teeui/utf8range.h",
         "include/teeui/utils.h",
     ],
-    copts = COPTS + [
-        "-Wno-ctad-maybe-unsupported",
-    ],
+    copts = COPTS,
     strip_include_prefix = "include",
     deps = [
         "@freetype",
