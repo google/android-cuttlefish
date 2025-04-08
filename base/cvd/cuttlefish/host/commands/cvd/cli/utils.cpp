@@ -84,13 +84,12 @@ Result<Command> ConstructCvdHelpCommand(
     const std::string& bin_file, cvd_common::Envs envs,
     const std::vector<std::string>& subcmd_args,
     const CommandRequest& request) {
-  const auto host_artifacts_path = envs.at("ANDROID_HOST_OUT");
-  const auto bin_path = host_artifacts_path + "/bin/" + bin_file;
   auto client_pwd = CurrentDirectory();
   const auto home = (Contains(envs, "HOME") ? envs.at("HOME") : client_pwd);
   cvd_common::Envs envs_copy{envs};
   envs_copy["HOME"] = AbsolutePath(home);
   auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
+  const auto bin_path = android_host_out + "/bin/" + bin_file;
   envs_copy[kAndroidHostOut] = android_host_out;
   envs_copy[kAndroidSoongHostOut] = android_host_out;
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,

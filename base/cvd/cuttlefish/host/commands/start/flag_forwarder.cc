@@ -30,6 +30,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/contains.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
@@ -245,6 +246,13 @@ FlagForwarder::FlagForwarder(std::set<std::string> subprocesses,
   for (const auto& subprocess : subprocesses_) {
     Command cmd(subprocess);
     cmd.AddParameter("--helpxml");
+    //  set by `cvd` in some cases when it executes its internal binaries
+    //  assemble_cvd needs to find the host tools directory to read etc/ for
+    //  flag information
+    std::optional<std::string> host_out = StringFromEnv("ANDROID_HOST_OUT");
+    if (host_out) {
+      cmd.AddEnvironmentVariable("ANDROID_HOST_OUT", *host_out);
+    }
 
     if (subprocess_index < args.size()) {
       for (auto arg : args[subprocess_index]) {
