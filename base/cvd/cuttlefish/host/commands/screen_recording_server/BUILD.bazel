@@ -45,6 +45,7 @@ cc_binary(
         "@grpc//:grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
+        "@protobuf//:empty_cc_proto",
     ],
 )
 

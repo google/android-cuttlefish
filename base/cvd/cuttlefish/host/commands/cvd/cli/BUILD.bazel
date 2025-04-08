@@ -45,6 +45,7 @@ cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
+    copts = ["-Wno-ctad-maybe-unsupported"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",

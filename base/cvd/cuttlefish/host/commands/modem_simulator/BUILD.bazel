@@ -49,7 +49,7 @@ cc_library(
     copts = [
         "-Wall",
         "-Werror",
-        "-fexceptions",
+        "-Wno-unused-const-variable",
     ],
     strip_include_prefix = "//cuttlefish",
     deps = [
