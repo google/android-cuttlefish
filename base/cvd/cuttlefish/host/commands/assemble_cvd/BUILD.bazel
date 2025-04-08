@@ -83,7 +83,10 @@ cc_library(
         "touchpad.cpp",
         "vendor_dlkm_utils.cc",
     ],
-    copts = COPTS,
+    copts = COPTS + [
+        "-Wno-ambiguous-macro",
+        "-Wno-ctad-maybe-unsupported",
+    ],
     deps = [
         ":launch_cvd_cc_proto",
         ":libassemble_cvd",
