@@ -26,17 +26,9 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
-
-namespace {
-
-bool IsValidAndroidHostOutPath(const std::string& path) {
-  std::string start_bin_path = path + "/bin/cvd_internal_start";
-  return FileExists(start_bin_path);
-}
-
-}  // namespace
 
 /*
  * Most branches read the kAndroidHostOut environment variable, but a few read
@@ -61,7 +53,8 @@ Result<std::string> AndroidHostPath(const cvd_common::Envs& envs) {
     return it->second;
   }
   auto current_dir = CurrentDirectory();
-  CF_EXPECT(IsValidAndroidHostOutPath(current_dir));
+  CF_EXPECT(IsValidAndroidHostOutPath(current_dir),
+            "Unable to find a valid host tool directory.");
   return current_dir;
 }
 

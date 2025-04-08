@@ -24,6 +24,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@tinyxml2",
     ],

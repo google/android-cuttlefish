@@ -15,6 +15,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <unordered_set>
 
@@ -26,6 +27,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/subprocess.h"
@@ -70,12 +72,38 @@ namespace {
 
 using android::base::NoDestructor;
 
+// NOTE: "/bin" appended to certain return values to match the return value of
+// android::base::GetExecutableDirectory
+std::string GetHostToolPath() {
+  std::optional<std::string> opt_path = StringFromEnv("ANDROID_HOST_OUT");
+  if (opt_path && IsValidAndroidHostOutPath(*opt_path)) {
+    return *opt_path + "/bin";
+  }
+  opt_path = StringFromEnv("HOME");
+  if (opt_path && IsValidAndroidHostOutPath(*opt_path)) {
+    return *opt_path + "/bin";
+  }
+  std::string path = CurrentDirectory();
+  if (IsValidAndroidHostOutPath(path)) {
+    return path + "/bin";
+  }
+  // default to previous behavior
+  path = android::base::GetExecutableDirectory();
+  if (!IsValidAndroidHostOutPath(path)) {
+    LOG(WARNING) << "Could not find obvious host tool path from environment "
+                    "variables HOME, ANDROID_HOST_OUT, or the current working "
+                    "directory.  Falling back to executable directory at: "
+                 << path;
+  }
+  return path;
+}
+
 std::string SubtoolPath(const std::string& subtool_base) {
-  auto my_own_dir = android::base::GetExecutableDirectory();
+  std::string host_tool_path = GetHostToolPath();
   std::stringstream subtool_path_stream;
-  subtool_path_stream << my_own_dir << "/" << subtool_base;
+  subtool_path_stream << host_tool_path << "/" << subtool_base;
   auto subtool_path = subtool_path_stream.str();
-  if (my_own_dir.empty() || !FileExists(subtool_path)) {
+  if (host_tool_path.empty() || !FileExists(subtool_path)) {
     return HostBinaryPath(subtool_base);
   }
   return subtool_path;

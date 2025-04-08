@@ -55,6 +55,7 @@ std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const std::string& environment_key,
                                    const std::string& default_value,
                                    const std::string& subpath);
+bool IsValidAndroidHostOutPath(const std::string& path);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
