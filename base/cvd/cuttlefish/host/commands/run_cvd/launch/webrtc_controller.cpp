@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 #include <fruit/component.h>
 #include "google/rpc/code.pb.h"
+#include "google/rpc/status.pb.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"

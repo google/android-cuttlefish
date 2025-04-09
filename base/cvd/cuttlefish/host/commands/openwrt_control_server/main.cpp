@@ -24,6 +24,7 @@
 
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include <google/protobuf/empty.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
