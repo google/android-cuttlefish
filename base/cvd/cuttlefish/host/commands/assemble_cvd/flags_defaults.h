@@ -72,6 +72,7 @@
 #define CF_DEFAULTS_ENABLE_SANDBOX false
 #define CF_DEFAULTS_ENABLE_VIRTIOFS false
 #define CF_DEFAULTS_CROSVM_V4L2_PROXY ""
+#define CF_DEFAULTS_CROSVM_SIMPLE_MEDIA_DEVICE false
 
 // Qemu default parameters
 #define CF_DEFAULTS_QEMU_BINARY_DIR cuttlefish::DefaultQemuBinaryDir()
