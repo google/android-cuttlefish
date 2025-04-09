@@ -294,10 +294,16 @@ func newCreateSnapshotHandler(c Config, om OperationManager) *createSnapshotHand
 }
 
 func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.CreateSnapshotRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("malformed JSON in request", err)
+	}
 	vars := mux.Vars(r)
 	group := vars["group"]
 	name := vars["name"]
 	opts := CreateSnapshotActionOpts{
+		Request:          req,
 		Selector:         cvd.Selector{Group: group, Instance: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,

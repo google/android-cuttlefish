@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -31,7 +30,7 @@ import (
 
 func TestSnapshot(t *testing.T) {
 	t.Skip("b/403233780: Skipping snapshot tests due to out of disk issues on standard runners.")
-	
+
 	ctx, err := common.Setup()
 	if err != nil {
 		t.Fatal(err)
@@ -67,10 +66,14 @@ func TestSnapshot(t *testing.T) {
 	if _, err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
+	snapshotID := "00000000-0000-0000-0000-000000000000"
 	// Create a snapshot containing the temporary file.
-	createSnapshotRes, err := createSnapshot(ctx.ServiceURL, groupName, cvd.Name)
+	createSnapshotRes, err := srv.CreateSnapshot(groupName, cvd.Name, &hoapi.CreateSnapshotRequest{SnapshotID: snapshotID})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if diff := cmp.Diff(snapshotID, createSnapshotRes.SnapshotID); diff != "" {
+		t.Fatalf("snapshot id mismatch (-want +got):\n%s", diff)
 	}
 	// Powerwash the device removing the temporary file.
 	if err := srv.Powerwash(groupName, cvd.Name); err != nil {
@@ -163,26 +166,6 @@ func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir
 		return nil, createErr
 	}
 	return res.CVDs[0], nil
-}
-
-// TODO(b/370550070) Remove once this method is added to the client implementation.
-func createSnapshot(srvURL, group, name string) (*hoapi.CreateSnapshotResponse, error) {
-	helper := hoclient.HTTPHelper{
-		Client:       http.DefaultClient,
-		RootEndpoint: srvURL,
-	}
-	op := &hoapi.Operation{}
-	path := fmt.Sprintf("/cvds/%s/%s/snapshots", group, name)
-	rb := helper.NewPostRequest(path, nil)
-	if err := rb.JSONResDo(op); err != nil {
-		return nil, err
-	}
-	srv := hoclient.NewHostOrchestratorService(srvURL)
-	res := &hoapi.CreateSnapshotResponse{}
-	if err := srv.WaitForOperation(op.Name, res); err != nil {
-		return nil, err
-	}
-	return res, nil
 }
 
 func getCVD(srv hoclient.HostOrchestratorService) (*hoapi.CVD, error) {
