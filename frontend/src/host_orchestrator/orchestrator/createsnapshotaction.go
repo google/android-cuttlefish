@@ -15,9 +15,11 @@
 package orchestrator
 
 import (
+	"fmt"
 	"log"
 	"os/user"
 	"path/filepath"
+	"regexp"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -26,6 +28,7 @@ import (
 )
 
 type CreateSnapshotActionOpts struct {
+	Request          *apiv1.CreateSnapshotRequest
 	Selector         cvd.Selector
 	Paths            IMPaths
 	OperationManager OperationManager
@@ -34,6 +37,7 @@ type CreateSnapshotActionOpts struct {
 }
 
 type CreateSnapshotAction struct {
+	req      *apiv1.CreateSnapshotRequest
 	selector cvd.Selector
 	paths    IMPaths
 	om       OperationManager
@@ -42,6 +46,7 @@ type CreateSnapshotAction struct {
 
 func NewCreateSnapshotAction(opts CreateSnapshotActionOpts) *CreateSnapshotAction {
 	return &CreateSnapshotAction{
+		req:      opts.Request,
 		selector: opts.Selector,
 		paths:    opts.Paths,
 		om:       opts.OperationManager,
@@ -50,6 +55,9 @@ func NewCreateSnapshotAction(opts CreateSnapshotActionOpts) *CreateSnapshotActio
 }
 
 func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
+	if err := a.validateRequest(); err != nil {
+		return apiv1.Operation{}, err
+	}
 	if err := createDir(a.paths.SnapshotsRootDir); err != nil {
 		return apiv1.Operation{}, err
 	}
@@ -64,12 +72,29 @@ func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
+var snapshotIDRegex = regexp.MustCompile(`^([a-z0-9\-]+)$`)
+
+func (a *CreateSnapshotAction) validateRequest() error {
+	if a.req.SnapshotID != "" {
+		if !snapshotIDRegex.MatchString(a.req.SnapshotID) {
+			return operator.NewBadRequestError(
+				"invalid snapshot id value", fmt.Errorf("%s does not match %s", a.req.SnapshotID, snapshotIDRegex))
+		}
+	}
+	return nil
+}
+
 func (a *CreateSnapshotAction) createSnapshot(op apiv1.Operation) (*apiv1.CreateSnapshotResponse, error) {
 	if err := a.cvdCLI.Suspend(a.selector); err != nil {
 		return nil, operator.NewInternalError("cvd suspend failed", err)
 	}
-	snapshotID := op.Name
+	snapshotID := a.req.SnapshotID
+	if snapshotID == "" {
+		snapshotID = op.Name
+	}
 	dir := filepath.Join(a.paths.SnapshotsRootDir, snapshotID)
+	// snapshot_util_cvd makes sure the directory is not being used before.
+	// https://github.com/google/android-cuttlefish/blob/7fb47855a2c937e4531044437616bd82e11e3b2e/base/cvd/cuttlefish/host/commands/snapshot_util_cvd/main.cc#L97
 	if err := a.cvdCLI.TakeSnapshot(a.selector, dir); err != nil {
 		return nil, operator.NewInternalError("cvd snapshot_take failed", err)
 	}

@@ -47,3 +47,5 @@ require (
 )
 
 replace github.com/google/android-cuttlefish/frontend/src/liboperator => ../liboperator
+
+replace github.com/google/android-cuttlefish/frontend/src/host_orchestrator => ../host_orchestrator
