@@ -124,7 +124,7 @@ type HostOrchestratorService interface {
 	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
 
 	// Create device snapshot.
-	CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error)
+	CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error)
 }
 
 const (
@@ -429,9 +429,9 @@ func (c *HostOrchestratorServiceImpl) Start(groupName, instanceName string, req 
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorServiceImpl) CreateSnapshot(groupName, instanceName string) (*hoapi.CreateSnapshotResponse, error) {
+func (c *HostOrchestratorServiceImpl) CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error) {
 	path := fmt.Sprintf("/cvds/%s/%s/snapshots", groupName, instanceName)
-	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	rb := c.HTTPHelper.NewPostRequest(path, req)
 	op := &hoapi.Operation{}
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
