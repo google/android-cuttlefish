@@ -28,6 +28,8 @@ rust_binary {
         "libargh",
         "libbinder_rs",
         "libbinder_tokio_rs",
+        "libbluetooth_offload_hal",
+        "libbluetooth_offload_leaudio_hci",
         "libbytes",
         "liblibc",
         "liblog_rust",
