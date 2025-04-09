@@ -14,3 +14,5 @@ set_prop(vendor_init, vendor_wifi_impl)
 set_prop(vendor_init, vendor_uwb_prop)
 
 set_prop(vendor_init, vendor_boot_security_patch_level_prop)
+
+set_prop(vendor_init, vendor_cuttlefish_service_prop)

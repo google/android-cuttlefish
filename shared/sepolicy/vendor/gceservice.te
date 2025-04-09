@@ -8,3 +8,6 @@ allow gceservice app_api_service:service_manager find;
 # Write to kernel log (/dev/kmsg)
 allow gceservice kmsg_device:chr_file w_file_perms;
 allow gceservice kmsg_device:chr_file getattr;
+
+# Read-only vendor property access
+get_prop(gceservice, vendor_cuttlefish_service_prop)

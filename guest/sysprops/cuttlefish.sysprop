@@ -1,0 +1,10 @@
+owner: Vendor
+module: "com.google.cuttlefish.DeviceProperties"
+
+prop {
+    api_name: "cuttlefish_service_bluetooth_checker"
+    type: Boolean
+    prop_name: "ro.vendor.cuttlefish_service_bluetooth_checker"
+    scope: Internal
+    access: Readonly
+}
