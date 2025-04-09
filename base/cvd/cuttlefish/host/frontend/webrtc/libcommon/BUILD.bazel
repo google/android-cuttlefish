@@ -1,0 +1,42 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libcommon",
+    srcs = [
+        "audio_device.cpp",
+        "connection_controller.cpp",
+        "peer_connection_utils.cpp",
+        "port_range_socket_factory.cpp",
+        "utils.cpp",
+        "vp8only_encoder_factory.cpp",
+    ],
+    hdrs = [
+        "audio_device.h",
+        "audio_source.h",
+        "connection_controller.h",
+        "peer_connection_utils.h",
+        "peer_signaling_handler.h",
+        "port_range_socket_factory.h",
+        "signaling_constants.h",
+        "utils.h",
+        "vp8only_encoder_factory.h",
+    ],
+    copts = COPTS,
+    linkopts = [
+        "-lopus",
+        "-lvpx",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
