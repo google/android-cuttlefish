@@ -13,24 +13,31 @@ on:
       username:
         required: true
         type: string
-      image:
+      repository:
+        default: android-cuttlefish
         required: true
+        type: string
+      branch:
+        default: main
+        required: false
         type: string
       tag:
         default: latest
         required: false
         type: string
       runner:
-          default: ubuntu-latest
+          default: ubuntu-22.04
           required: false
           type: string
+      image:
+        required: true
+        type: string
       platform:
         default: linux/amd64
         required: false
         type: string
-      linux:
-        default: rockylinux/rockylinux:9.5
-        required: false
+      artifact:
+        required: true
         type: string
       pgp_signature:
         required: false
@@ -46,7 +53,7 @@ jobs:
     env:
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
       DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }} --platform ${{ INPUTS.PLATFORM }} --attach STDERR --attach STDOUT --quiet'
-      VARS: '--env GITHUB_USER=${{ GITHUB.ACTOR }} --env GITHUB_REPO=${{ GITHUB.EVENT.REPOSITORY.NAME }}'
+      ENV_VARS: '--env REPO_USER="${{ INPUTS.USERNAME }}" --env REPO_NAME="${{ INPUTS.REPOSITORY }}" --env REPO_BRANCH="${{ INPUTS.BRANCH }}"'
     steps:
 
       # https://github.com/docker/login-action
@@ -60,9 +67,7 @@ jobs:
 
       # Need to check out once again, in order to utilize `hashFiles()`.
       - uses: 'actions/checkout@v4'
-
       - name: Restore bazel cache
-        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
         id: bazel-cache-restore
         uses: 'actions/cache/restore@v4'
         with:
@@ -73,8 +78,7 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
       # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
-      - name: Run ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
-        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
+      - name: Run ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }} with ${{ INPUTS.USERNAME }} / ${{ INPUTS.REPOSITORY }} / ${{ INPUTS.BRANCH }}
         id: build-rpm-packages
         shell: bash
         env:
@@ -84,52 +88,30 @@ jobs:
           mkdir -p ${{ RUNNER.TEMP }}/.cache
           docker run $DOCKER_OPTIONS $VOLUMES $VARS $DOCKER_IMAGE
 
-      - name: List ${{ RUNNER.TEMP }}
-        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
+      # https://github.com/actions/upload-artifact
+      - name: Retain Artifacts (*.rpm)
+        uses: 'actions/upload-artifact@v4'
+        id: retain-rpm-packages
+        if: ${{ success() }}
+        with:
+          name: ${{ INPUTS.ARTIFACT }}
+          path: "${{ RUNNER.TEMP }}/.rpms"
+          include-hidden-files: 'true'
+          retention-days: 14
+
+      - name: List directory ${{ RUNNER.TEMP }}/.rpms
         id: list-rpm-packages
         shell: bash
         run: |
+          [ "$(ls -1 ${{ RUNNER.TEMP }}/.rpms/*.rpm 2>/dev/null | wc -l)" -lt 4 ] && echo "::warning file=reusable-docker.yml,line=108,endLine=108,title=RPM Build::Less than four ${{ INPUTS.REPOSITORY }} RPM packages were built."
           printf "Ubuntu mount-point: %s" "${{ RUNNER.TEMP }}/.rpms"
           ls -la ${{ RUNNER.TEMP }}/.rpms
           ls -lan ${{ RUNNER.TEMP }}/.rpms
 
-      # https://github.com/actions/upload-artifact
-      - name: Retain Artifacts (*.rpm)
-        if: ${{ contains(INPUTS.IMAGE, 'builder') && success() }}
-        uses: 'actions/upload-artifact@v4'
-        id: retain-rpm-packages
-        with:
-          name: android-cuttlefish-rhel9-${{ RUNNER.ARCH }}
-          path: '${{ RUNNER.TEMP }}/.rpms/**'
-          retention-days: 14
-
       # https://github.com/actions/cache
       - name: Save bazel cache
-        if: ${{ contains(INPUTS.IMAGE, 'builder') }}
         id: bazel-cache-save
         uses: 'actions/cache/save@v4'
         with:
           key: ${{ steps.bazel-cache-restore.outputs.cache-primary-key }}
           path: ${{ RUNNER.TEMP }}/.cache
-
-      # https://docs.docker.com/reference/cli/docker/container/run/
-      - name: Build integration image
-        if: ${{ contains(INPUTS.IMAGE, 'integration') }}
-        id: build-integration
-        shell: bash
-        env:
-          VOLUMES: '--volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
-        run: |
-          mkdir -p ${{ RUNNER.TEMP }}/.rpms
-          docker run $DOCKER_OPTIONS $VOLUMES $VARS $DOCKER_IMAGE
-
-      # https://docs.docker.com/reference/cli/docker/container/run/
-      - name: Build orchestration image
-        if: ${{ contains(INPUTS.DOCKER-IMAGE, 'orchestration') }}
-        id: build-orchestration
-        shell: bash
-        env:
-          VOLUMES: '--volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
-        run: |
-          mkdir -p ${{ RUNNER.TEMP }}/.rpms
-          docker run $DOCKER_OPTIONS $VOLUMES $VARS $DOCKER_IMAGE

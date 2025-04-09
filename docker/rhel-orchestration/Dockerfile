@@ -1,15 +1,8 @@
-# Dockerfile based on `rockylinux/rockylinux:9.5` or `arm64v8/rockylinux:9.3`
+# Dockerfile based on `rockylinux/rockylinux:9.5`
 ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
 FROM $LINUX_IMAGE AS linux
 
 LABEL description="RPM Builder" version="1.0.1" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
-WORKDIR "/root"
-
-# Arguments
-# TODO: To be changed to `google` upon merging to `main` branch.
-# This is merely being used in `clone.sh`, to switch the correct brach.
-ARG GITHUB_USER_NAME="syslogic"
-ARG GUTHUB_REPO_NAME="android-cuttlefish"
 
 # Don't ask for the `sudo` password.
 RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
@@ -25,8 +18,6 @@ RUN [ "touch", "/home/runner/.dockerenv" ]
 
 # Base Image
 FROM linux AS base_image
-ENV REPO_USER="${GITHUB_USER_NAME}"
-ENV REPO_NAME="${GUTHUB_REPO_NAME}"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
@@ -56,16 +47,14 @@ EXPOSE 15550-15560
 # Expose ADB
 EXPOSE 6520-6620
 
-RUN [ "touch", "/home/runner/.dockerenv" ]
-RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
-COPY [ "./docker/rpm-builder/scripts/install_rpm.sh", "/home/runner/install_rpm.sh" ]
-RUN [ "chmod", "+x", "/home/runner/install_rpm.sh" ]
-
-# Add prebuilt RPM packages.
+# Add prebuilt RPM packages and install them.
 COPY [ "./.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
 COPY [ "./.rpms/cuttlefish-orchestration-*", "/home/runner/.rpms/" ]
-RUN [ "/bin/bash", "-c", "/home/runner/install_rpm.sh" ]
 
+RUN for file in /home/runner/.rpms/* ; do dnf -y install $file; done
+RUN [ "dnf", "clean", "all" ]
+
+# Copy services.sh
 COPY [ "./docker/rpm-builder/scripts/services.sh", "/home/runner/services.sh" ]
 RUN [ "chmod", "+x", "/home/runner/services.sh" ]
 

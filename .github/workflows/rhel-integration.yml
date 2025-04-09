@@ -1,0 +1,99 @@
+name: RHEL Integration
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+    inputs:
+      registry:
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+      tag:
+        default: latest
+        required: false
+        type: string
+      runner:
+          default: ubuntu-22.04
+          required: false
+          type: string
+      platform:
+        default: linux/amd64
+        required: false
+        type: string
+
+jobs:
+
+  create-image:
+    runs-on: ${{ INPUTS.RUNNER }}
+    env:
+      REPO_NAME: 'android-cuttlefish'
+      DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}
+    steps:
+
+      # https://github.com/actions/download-artifact
+      - uses: 'actions/download-artifact@v4'
+        id: restore-rpm-packages
+        with:
+          name: android-cuttlefish-rhel9-**
+          path: '${{ RUNNER.TEMP }}/.rpms'
+
+      - name: List directory ${{ RUNNER.TEMP }}/.rpms
+        id: list-rpm-packages
+        shell: bash
+        run: |
+          printf "Ubuntu mount-point: %s" "${{ RUNNER.TEMP }}/.rpms"
+          ls -la ${{ RUNNER.TEMP }}/.rpms
+          ls -lan ${{ RUNNER.TEMP }}/.rpms
+
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: 'ghcr.io'
+          username: ${{ GITHUB.ACTOR }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
+
+      # https://github.com/docker/metadata-action
+      - uses: 'docker/metadata-action@v5'
+        id: metadata
+        with:
+          images: ${{ ENV.DOCKER_IMAGE }}
+          tags: |
+            type=sha
+            latest
+
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+      - uses: 'actions/checkout@v4'
+      - uses: 'docker/setup-buildx-action@v3'
+      - uses: 'docker/setup-qemu-action@v3'
+        if: ${{ INPUTS.PLATFORM != 'linux/amd64' }}
+        with:
+          platforms: arm64
+
+      - uses: 'docker/build-push-action@v6'
+        id: build
+        with:
+          context: .
+          file: docker/rhel-integration/Dockerfile
+          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
+          platforms: ${{ INPUTS.PLATFORM }}
+          labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
+          tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
+          target: integration
+          build-args: |
+            LINUX_IMAGE=${{ INPUTS.LINUX }}
+
+      # Note: The digest comes from `buildx`, not the metadata.
+      # https://github.com/actions/attest-build-provenance
+      - uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ${{ ENV.DOCKER_IMAGE }}
+          subject-digest: ${{ STEPS.BUILD.OUTPUTS.DIGEST }}
+          push-to-registry: true

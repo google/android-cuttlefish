@@ -1,4 +1,4 @@
-# Dockerfile based on `rockylinux/rockylinux:9.5` or `arm64v8/rockylinux:9.3`
+# Dockerfile based on `rockylinux/rockylinux:9.5`
 ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
 FROM $LINUX_IMAGE AS linux
 
@@ -8,8 +8,9 @@ WORKDIR "/root"
 # Arguments
 # TODO: To be changed to `google` upon merging to `main` branch.
 # This is merely being used in `clone.sh`, to switch the correct brach.
-ARG GITHUB_USER_NAME="syslogic"
-ARG GUTHUB_REPO_NAME="android-cuttlefish"
+ARG GITHUB_USER="syslogic"
+ARG GUTHUB_REPO="android-cuttlefish"
+ARG GITHUB_BRANCH="rpmbuild"
 
 # PGP Arguments
 # TODO: PGP signature and passphrase are required to sign packages.
@@ -29,10 +30,6 @@ RUN [ "touch", "/home/runner/.dockerenv" ]
 
 # Base Image
 FROM linux AS base_image
-ENV REPO_USER="${GITHUB_USER_NAME}"
-ENV REPO_NAME="${GUTHUB_REPO_NAME}"
-ENV RPM_SIGN_SIGNATURE="${PGP_SIGNATURE}"
-ENV RPM_SIGN_PASSPHRASE="${PGP_PASSPHRASE}"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
@@ -51,7 +48,14 @@ VOLUME [ "/home/runner/.cache", "/home/runner/.rpms" ]
 
 # RPM Builder
 FROM base_image AS builder
-ENTRYPOINT [ "/bin/bash", "-c", "/home/runner/build.sh", "${OWNER}", "${REPO_NAME}" ]
+ENV REPO_USER="${GITHUB_USER}"
+ENV REPO_NAME="${GUTHUB_REPO}"
+ENV REPO_BRANCH="${GITHUB_BRANCH}"
+
+ENV RPM_SIGN_SIGNATURE="${PGP_SIGNATURE}"
+ENV RPM_SIGN_PASSPHRASE="${PGP_PASSPHRASE}"
+
+ENTRYPOINT [ "/bin/bash", "-c", "/home/runner/build.sh", "${REPO_USER}", "${REPO_NAME}", "${REPO_BRANCH}" ]
 
 # Build dependencies.
 RUN [ "dnf", "-y", "install", "sudo", "nano", "git", "wget", "cmake", "gcc-c++", "rpm-build", "golang-bin", "expect", "vim-common", "ncurses-compat-libs", "curl-devel", "wayland-devel", "protobuf-devel", "protobuf-compiler", "ca-certificates" ]

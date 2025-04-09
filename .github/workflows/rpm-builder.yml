@@ -6,12 +6,16 @@ on:
     paths:
       - '.github/workflows/rpm-builder.yml'
       - '.github/workflows/reusable-docker.yml'
+      - '.github/workflows/rhel-integration.yml'
+      - '.github/workflows/rhel-orchestration.yml'
       - 'docker/rpm-builder/**'
       - 'tools/rpmbuild/**'
+
 jobs:
 
-  build-image:
-    runs-on: ubuntu-latest
+  create_image:
+    runs-on: ubuntu-22.04
+
     permissions:
       contents: read
       packages: write
@@ -24,14 +28,12 @@ jobs:
       matrix:
         platform: [ linux/amd64, linux/arm64 ]
         include:
-          - image: rpm-builder-amd64
-            runner: ubuntu-latest
-            platform: linux/amd64
-            linux: rockylinux/rockylinux:9.5
-          - image: rpm-builder-arm64
-            runner: ubuntu-24.04-arm
-            platform: linux/arm64
-            linux: arm64v8/rockylinux:9.3
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rpm-builder-amd64
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rpm-builder-arm64
 
     steps:
       - uses: 'actions/checkout@v4'
@@ -43,8 +45,7 @@ jobs:
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://github.com/docker/metadata-action
-      - name: Extract metadata (tags, labels)
-        uses: 'docker/metadata-action@v5'
+      - uses: 'docker/metadata-action@v5'
         id: metadata
         with:
           images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.IMAGE }}
@@ -59,70 +60,67 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Build and push container image
-        uses: 'docker/build-push-action@v6'
+      - uses: 'docker/build-push-action@v6'
         id: build
         with:
           context: .
-          file: docker/rpm-builder/${{ MATRIX.DIRNAME }}/Dockerfile
+          file: docker/rpm-builder/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
           platforms: ${{ MATRIX.PLATFORM }}
-          labels: ${{ steps.metadata.outputs.labels }}
-          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
+          tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
           target: builder
-          # load: true
           build-args: |
-            LINUX_IMAGE=${{ MATRIX.LINUX }}
-          # GITHUB_USER_NAME=${{ GITHUB.ACTOR }}
-          # GITHUB_REPO_NAME=${{ GITHUB.EVENT.REPOSITORY_NAME }}
+            GITHUB_USER=${{ GITHUB.ACTOR }}
+            GITHUB_REPO=${{ ENV.REPO_NAME }}
+            GITHUB_BRANCH=${{ GITHUB.HEAD_REF || GITHUB.REF_NAME }}
           # PGP_SIGNATURE=${{ INPUTS.PGP_SIGNATURE }}
           # PGP_PASSPHRASE=${{ INPUTS.PGP_PASSPHRASE }}
 
-      # ARG_LINUX: '--build-arg LINUX_IMAGE=${{ INPUTS.LINUX }}'
-
       # Note: The digest comes from `buildx`, not the metadata.
       # https://github.com/actions/attest-build-provenance
-      - name: Generate artifact attestation
-        uses: 'actions/attest-build-provenance@v2'
+      - uses: 'actions/attest-build-provenance@v2'
         with:
           subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.IMAGE }}
-          subject-digest: ${{ steps.build.outputs.digest }}
+          subject-digest: ${{ STEPS.BUILD.OUTPUTS.DIGEST }}
           push-to-registry: true
 
   # This must be a job, in order to pass `secrets`.
-  build-packages:
+  build_packages:
     uses: ./.github/workflows/reusable-docker.yml
-    needs: build-image
+    needs: [ create_image ]
     secrets:
-      # TODO: RPM repository PGP signature & passphrase would be required to sign RPM packages.
-      # pgp_signature: ${{ SECRETS.PGP_SIGNATURE }}
-      # pgp_passphrase: ${{ SECRETS.PGP_PASSPHRASE }}
+#     TODO: RPM repository PGP signature & passphrase would be required to sign RPM packages.
+#     pgp_signature: ${{ SECRETS.PGP_SIGNATURE }}
+#     pgp_passphrase: ${{ SECRETS.PGP_PASSPHRASE }}
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.ACTOR }}
-      platform: ${{ MATRIX.PLATFORM }}
+      repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
+      branch: ${{ GITHUB.HEAD_REF || GITHUB.REF_NAME }}
       runner: ${{ MATRIX.RUNNER }}
-      linux: ${{ MATRIX.LINUX }}
       image: ${{ MATRIX.IMAGE }}
+      platform: ${{ MATRIX.PLATFORM }}
+      artifact: ${{ MATRIX.ARTIFACT }}
     strategy:
       max-parallel: 2
       matrix:
         platform: [ linux/amd64, linux/arm64 ]
         include:
-          - image: rpm-builder-amd64
-            runner: ubuntu-latest
-            platform: linux/amd64
-            linux: rockylinux/rockylinux:9.5
-          - image: rpm-builder-arm64
-            runner: ubuntu-24.04-arm
-            platform: linux/arm64
-            linux: arm64v8/rockylinux:9.3
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rpm-builder-amd64
+            artifact: android-cuttlefish-rhel9-amd64-unsigned
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rpm-builder-arm64
+            artifact: android-cuttlefish-rhel9-arm64-unsigned
 
   # This must be a job, in order to pass `secrets`.
-  preinstall-integration:
-    uses: ./.github/workflows/reusable-docker.yml
-    needs: build-packages
+  preinstall_integration:
+    uses: ./.github/workflows/rhel-integration.yml
+    needs: [ build_packages ]
     secrets:
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
@@ -130,7 +128,32 @@ jobs:
       username: ${{ GITHUB.ACTOR }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
-      linux: ${{ MATRIX.LINUX }}
+      image: ${{ MATRIX.IMAGE }}
+
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-22.04
+            image: rhel-integration-amd64
+          - platform: linux/arm64
+            runner: ubuntu-22.04-arm
+            image: rhel-integration-arm64
+
+  # This must be a job, in order to pass `secrets`.
+  preinstall_orchestration:
+    uses: ./.github/workflows/rhel-orchestration.yml
+    needs: [ build_packages ]
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.ACTOR }}
+      platform: ${{ MATRIX.PLATFORM }}
+      runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
     strategy:
       max-parallel: 2
@@ -138,39 +161,10 @@ jobs:
       matrix:
         platform: [ linux/amd64, linux/arm64 ]
         include:
-          - image: rpm-builder-amd64
-            runner: ubuntu-latest
-            platform: linux/amd64
-            linux: rockylinux/rockylinux:9.5
-          - image: rpm-builder-arm64
-            runner: ubuntu-24.04-arm
-            platform: linux/arm64
-            linux: arm64v8/rockylinux:9.3
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rhel-orchestration-amd64
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rhel-orchestration-arm64
 
-  # This must be a job, in order to pass `secrets`.
-  preinstall-orchestration:
-    uses: ./.github/workflows/reusable-docker.yml
-    needs: build-packages
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
-    with:
-      registry: 'ghcr.io'
-      username: ${{ GITHUB.ACTOR }}
-      platform: ${{ MATRIX.PLATFORM }}
-      runner: ${{ MATRIX.RUNNER }}
-      linux: ${{ MATRIX.LINUX }}
-      image: ${{ MATRIX.IMAGE }}
-    strategy:
-      max-parallel: 2
-      fail-fast: true
-      matrix:
-        platform: [ linux/amd64, linux/arm64 ]
-        include:
-          - image: rpm-builder-amd64
-            runner: ubuntu-latest
-            platform: linux/amd64
-            linux: rockylinux/rockylinux:9.5
-          - image: rpm-builder-arm64
-            runner: ubuntu-24.04-arm
-            platform: linux/arm64
-            linux: arm64v8/rockylinux:9.3
