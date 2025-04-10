@@ -196,8 +196,8 @@ ClientHandler::Build(
   // This channel is meant to carry control commands from the client.
   auto result = peer_connection->CreateDataChannelOrError(kControlChannelLabel,
                                                           nullptr /* config */);
-  CF_EXPECT(result.ok(), "Failed to create control data channel: {}",
-            result.error().message());
+  CF_EXPECTF(result.ok(), "Failed to create control data channel: {}",
+             result.error().message());
 
   auto control_channel = result.MoveValue();
   data_channels_handler_.OnDataChannelOpen(control_channel);

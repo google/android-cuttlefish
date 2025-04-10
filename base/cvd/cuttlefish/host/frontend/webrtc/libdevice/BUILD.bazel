@@ -1,0 +1,62 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libdevice",
+    srcs = [
+        "audio_track_source_impl.cpp",
+        "camera_streamer.cpp",
+        "client_handler.cpp",
+        "data_channels.cpp",
+        "keyboard.cpp",
+        "lights_observer.cpp",
+        "local_recorder.cpp",
+        "recording_manager.cpp",
+        "server_connection.cpp",
+        "streamer.cpp",
+        "video_track_source_impl.cpp",
+    ],
+    hdrs = [
+        "audio_frame_buffer.h",
+        "audio_sink.h",
+        "audio_track_source_impl.h",
+        "camera_controller.h",
+        "camera_streamer.h",
+        "client_handler.h",
+        "connection_observer.h",
+        "data_channels.h",
+        "keyboard.h",
+        "lights_observer.h",
+        "local_recorder.h",
+        "recording_manager.h",
+        "server_connection.h",
+        "streamer.h",
+        "video_sink.h",
+        "video_track_source_impl.h",
+    ],
+    copts = COPTS,
+    linkopts = [
+        "-lopus",
+        "-lvpx",
+    ],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/frontend/webrtc/libcommon",
+        "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "//libbase",
+        "@boringssl//:crypto",
+        "@jsoncpp",
+        "@libwebm//:mkvmuxer",
+        "@libwebrtc",
+        "@libwebsockets",
+    ],
+)
