@@ -58,7 +58,7 @@ class ClientHandler : public ConnectionController::Observer,
   static std::shared_ptr<ClientHandler> Create(
       int client_id, std::shared_ptr<ConnectionObserver> observer,
       PeerConnectionBuilder& connection_builder,
-      std::function<void(const Json::Value&)> send_client_cb,
+      std::function<void(const Json::Value&)> send_to_client_cb,
       std::function<void(bool)> on_connection_changed_cb);
   ~ClientHandler() override = default;
 
@@ -75,7 +75,7 @@ class ClientHandler : public ConnectionController::Observer,
 
   // ConnectionController::Observer implementation
   void OnConnectionStateChange(
-      Result<webrtc::PeerConnectionInterface::PeerConnectionState> status) override;
+      Result<webrtc::PeerConnectionInterface::PeerConnectionState> new_state) override;
   void OnDataChannel(
       rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override;
   void OnTrack(
@@ -97,7 +97,7 @@ class ClientHandler : public ConnectionController::Observer,
  private:
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
                 PeerConnectionBuilder& connection_builder,
-                std::function<void(const Json::Value&)> send_client_cb,
+                std::function<void(const Json::Value&)> send_to_client_cb,
                 std::function<void(bool)> on_connection_changed_cb);
 
   // Intentionally private, disconnect the client by destroying the object.
