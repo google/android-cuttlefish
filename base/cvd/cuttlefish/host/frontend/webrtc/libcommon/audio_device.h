@@ -40,7 +40,7 @@ class CfAudioDeviceModule : public webrtc::AudioDeviceModule,
   int32_t ActiveAudioLayer(AudioLayer* audioLayer) const override;
 
   // Full-duplex transportation of PCM audio
-  int32_t RegisterAudioCallback(webrtc::AudioTransport* audioCallback) override;
+  int32_t RegisterAudioCallback(webrtc::AudioTransport* audio_callback) override;
 
   // Main initialization and termination
   int32_t Init() override;
