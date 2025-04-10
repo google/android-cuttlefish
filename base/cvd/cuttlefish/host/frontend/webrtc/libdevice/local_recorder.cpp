@@ -218,7 +218,7 @@ void LocalRecorder::Display::EncoderLoop() {
     std::unique_ptr<webrtc::VideoFrame> frame;
     {
       std::unique_lock queue_lock(encode_queue_mutex_);
-      while (encode_queue_.size() == 0 && encoder_running_) {
+      while (encode_queue_.empty() && encoder_running_) {
         encoder_queue_signal_.wait(queue_lock);
       }
       if (!encoder_running_) {

@@ -97,21 +97,21 @@ class InputChannelHandler : public DataChannelHandler {
 
     auto event_type = CF_EXPECT(GetValue<std::string>(evt, {"type"}),
                                 "Failed to get property 'type' from message");
-    auto get_or_err = [&event_type,
-                       &evt]<typename T>(const std::string &prop) -> Result<T> {
-      return CF_EXPECTF(GetValue<T>(evt, {prop}),
+    auto get_int = [&event_type, &evt](auto prop) -> Result<int> {
+      return CF_EXPECTF(GetValue<int>(evt, {prop}),
                         "Failed to get property '{}' from '{}' message", prop,
                         event_type);
     };
-    auto get_int = [get_or_err](auto prop) -> Result<int> {
-      return get_or_err.operator()<int>(prop);
+    auto get_str = [&event_type, &evt](auto prop) -> Result<std::string> {
+      return CF_EXPECTF(GetValue<std::string>(evt, {prop}),
+                 "Failed to get property '{}' from '{}' message", prop,
+                 event_type);
     };
-    auto get_str = [get_or_err](auto prop) -> Result<std::string> {
-      return get_or_err.operator()<std::string>(prop);
-    };
-    auto get_arr = [get_or_err, &event_type](
-                              const std::string &prop) -> Result<Json::Value> {
-      Json::Value arr = CF_EXPECT(get_or_err.operator()<Json::Value>(prop));
+    auto get_arr = [&event_type,
+                    &evt](const std::string &prop) -> Result<Json::Value> {
+      Json::Value arr = CF_EXPECTF(
+          GetValue<Json::Value>(evt, {prop}),
+          "Failed to get property '{}' from '{}' message", prop, event_type);
       CF_EXPECTF(arr.isArray(), "Property '{}' of '{}' message is not an array",
                  prop, event_type);
       return arr;

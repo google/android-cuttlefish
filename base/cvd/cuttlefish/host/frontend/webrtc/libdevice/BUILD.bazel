@@ -60,3 +60,12 @@ cc_library(
         "@libwebsockets",
     ],
 )
+
+clang_tidy_test(
+    name = "libdevice_clang_tidy",
+    srcs = [":libdevice"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)

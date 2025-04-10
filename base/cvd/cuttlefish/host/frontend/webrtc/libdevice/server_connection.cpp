@@ -61,7 +61,7 @@ class WsConnection : public std::enable_shared_from_this<WsConnection> {
   };
 
   WsConnection(int port, const std::string& addr, const std::string& path,
-               ServerConfig::Security secure,
+               ServerConfig::Security security,
                std::weak_ptr<ServerConnectionObserver> observer,
                std::shared_ptr<WsConnectionContext> context);
 
@@ -123,7 +123,7 @@ class WsConnectionContext
 
   std::unique_ptr<ServerConnection> CreateConnection(
       int port, const std::string& addr, const std::string& path,
-      ServerConfig::Security secure,
+      ServerConfig::Security security,
       std::weak_ptr<ServerConnectionObserver> observer);
 
   void RememberConnection(void*, std::weak_ptr<WsConnection>);
@@ -461,7 +461,7 @@ void WsConnection::OnWriteable() {
   WsBuffer buffer;
   {
     std::lock_guard<std::mutex> lock(write_queue_mutex_);
-    if (write_queue_.size() == 0) {
+    if (write_queue_.empty()) {
       return;
     }
     buffer = std::move(write_queue_.front());
