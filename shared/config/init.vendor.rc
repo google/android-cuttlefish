@@ -59,7 +59,7 @@ on post-fs-data && property:ro.vendor.disable_rename_eth0=
     # TODO(b/202731768): Add this `start rename_eth0` command to the init.rc for rename_netiface
     start rename_eth0
 
-on post-fs-data && property:ro.vendor.wifi_impl=virt_wifi
+on post-fs-data && property:ro.boot.wifi_impl=virt_wifi
     # TODO(b/202731768): Add this `start setup_wifi` command to the init.rc for setup_wifi
     start setup_wifi
 
@@ -73,7 +73,7 @@ on late-fs
 
     write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
-on post-fs-data && property:ro.vendor.wifi_impl=mac80211_hwsim_virtio
+on post-fs-data && property:ro.boot.wifi_impl=mac80211_hwsim_virtio
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/hostapd 0770 wifi wifi
     mkdir /data/vendor/wifi/hostapd/sockets 0770 wifi wifi
@@ -137,4 +137,3 @@ on early-init
 
 on early-init && property:ro.boot.enable_bootanimation=0
     setprop debug.sf.nobootanimation 1
-
