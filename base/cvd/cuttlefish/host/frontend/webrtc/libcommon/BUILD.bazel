@@ -40,3 +40,12 @@ cc_library(
         "@libwebrtc",
     ],
 )
+
+clang_tidy_test(
+    name = "libcommon_clang_tidy",
+    srcs = [":libcommon"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)
