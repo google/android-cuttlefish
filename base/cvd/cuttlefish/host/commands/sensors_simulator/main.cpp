@@ -21,12 +21,19 @@
 #include <gflags/gflags.h>
 
 #include "common/libs/transport/channel_sharedfd.h"
+#include "common/libs/utils/device_type.h"
+#include "host/commands/sensors_simulator/sensors_hal_proxy.h"
 #include "host/commands/sensors_simulator/sensors_simulator.h"
 #include "host/libs/config/logging.h"
 
 DEFINE_int32(sensors_in_fd, -1, "Sensors virtio-console from host to guest");
 DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");
 DEFINE_int32(webrtc_fd, -1, "A file descriptor to communicate with webrtc");
+DEFINE_int32(kernel_events_fd, -1,
+             "A pipe for monitoring events based on messages "
+             "written to the kernel log. This is used by "
+             "SensorsHalProxy to monitor for device reboots.");
+DEFINE_int32(device_type, 0, "The form factor of the Cuttlefish instance.");
 
 namespace cuttlefish {
 namespace sensors {
@@ -34,6 +41,7 @@ namespace sensors {
 namespace {
 
 static constexpr char kReqMisFormatted[] = "The request is mis-formatted.";
+static constexpr char kFdNotOpen[] = "Unable to connect: ";
 
 Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
                                   SensorsSimulator& sensors_simulator) {
@@ -79,13 +87,31 @@ Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
 int SensorsSimulatorMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  auto webrtc_fd = SharedFD::Dup(FLAGS_webrtc_fd);
+  SharedFD webrtc_fd = SharedFD::Dup(FLAGS_webrtc_fd);
   close(FLAGS_webrtc_fd);
   if (!webrtc_fd->IsOpen()) {
-    LOG(FATAL) << "Unable to connect webrtc: " << webrtc_fd->StrError();
+    LOG(FATAL) << kFdNotOpen << webrtc_fd->StrError();
   }
+  SharedFD sensors_in_fd = SharedFD::Dup(FLAGS_sensors_in_fd);
+  close(FLAGS_sensors_in_fd);
+  if (!sensors_in_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << sensors_in_fd->StrError();
+  }
+  SharedFD sensors_out_fd = SharedFD::Dup(FLAGS_sensors_out_fd);
+  close(FLAGS_sensors_out_fd);
+  if (!sensors_out_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << sensors_out_fd->StrError();
+  }
+  SharedFD kernel_events_fd = SharedFD::Dup(FLAGS_kernel_events_fd);
+  close(FLAGS_kernel_events_fd);
+
   transport::SharedFdChannel channel(webrtc_fd, webrtc_fd);
-  SensorsSimulator sensors_simulator;
+
+  auto device_type = static_cast<DeviceType>(FLAGS_device_type);
+  SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
+  SensorsHalProxy sensors_hal_proxy(sensors_in_fd, sensors_out_fd,
+                                    kernel_events_fd, sensors_simulator,
+                                    device_type);
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
     if (!result.ok()) {
