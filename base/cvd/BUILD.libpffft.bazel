@@ -1,0 +1,23 @@
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+# The library is actually composed of more source files, but webrtc only uses these
+cc_library(
+    name = "libpffft",
+    srcs = [
+        "pffft.c",
+        "pffft_common.c",
+    ] + glob(["**/*.h"]),
+    hdrs = ["pffft.h"],
+    copts = [
+        "-Wno-#pragma-messages",
+    ] + select({
+        "@platforms//cpu:arm": ["-DPFFFT_ENABLE_NEON"],
+        "@platforms//cpu:arm64": ["-DPFFFT_ENABLE_NEON"],
+        "//conditions:default": [],
+    }),
+    includes = ["."],
+)

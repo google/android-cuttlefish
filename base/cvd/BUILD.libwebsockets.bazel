@@ -199,6 +199,6 @@ cc_library(
         "plugins",
     ],
     deps = [
-        "//external/libwebsockets:libwebsockets_config",
+        "@//build_external/libwebsockets:libwebsockets_config",
     ],
 )

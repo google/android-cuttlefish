@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <utility>
+
 namespace cuttlefish {
 
 // Constants representing a not known or not detectable value for different

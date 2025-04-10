@@ -26,7 +26,9 @@ cc_library(
         "image_aggregator.h",
         "sparse_image_utils.h",
     ],
-    copts = COPTS,
+    copts = COPTS + [
+        "-Wno-packed-non-pod",
+    ],
     strip_include_prefix = "//cuttlefish",
     deps = [
         ":cdisk_spec_cc_proto",

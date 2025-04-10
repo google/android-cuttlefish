@@ -91,6 +91,7 @@ cc_binary(
         "//libbase",
         "@fruit",
         "@gflags",
+        "@googleapis//google/rpc:status_cc_proto",
         "@grpc//:grpc",
         "@grpc//:grpc++",
     ],

@@ -53,4 +53,5 @@ package_files(
         "@swiftshader//:vk_swiftshader": "cuttlefish-common/bin/libvk_swiftshader.so",
         "//cuttlefish/host/graphics/vulkan:vk_swiftshader_icd": "cuttlefish-common/bin/vk_swiftshader_icd.json",
     },
+    visibility = ["//:android_cuttlefish"],
 )
