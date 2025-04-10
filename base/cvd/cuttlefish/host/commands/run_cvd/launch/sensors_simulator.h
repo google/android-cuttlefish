@@ -18,11 +18,13 @@
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 
 Result<MonitorCommand> SensorsSimulator(
     const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSensorsSocketPair::Type& sensors_socket_pair);
+    AutoSensorsSocketPair::Type& sensors_socket_pair,
+    KernelLogPipeProvider& kernel_log_pipe_provider);
 
 }  // namespace cuttlefish

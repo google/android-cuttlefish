@@ -36,6 +36,7 @@ package_files(
         "//cuttlefish/host/commands/restart_cvd": "cuttlefish-common/bin/restart_cvd",
         "//cuttlefish/host/commands/run_cvd": "cuttlefish-common/bin/run_cvd",
         "//cuttlefish/host/commands/screen_recording_server": "cuttlefish-common/bin/screen_recording_server",
+        "//cuttlefish/host/commands/sensors_simulator": "cuttlefish-common/bin/sensors_simulator",
         "//cuttlefish/host/commands/snapshot_util_cvd": "cuttlefish-common/bin/snapshot_util_cvd",
         "//cuttlefish/host/commands/start:cvd_internal_start": "cuttlefish-common/bin/cvd_internal_start",
         "//cuttlefish/host/commands/status:cvd_internal_status": "cuttlefish-common/bin/cvd_internal_status",

@@ -26,9 +26,16 @@
 namespace cuttlefish {
 namespace sensors {
 
+struct SensorsData {
+  Eigen::Vector3d v;
+  float f;
+
+  SensorsData() : v(Eigen::Vector3d::Zero()), f(0.0f) {}
+};
+
 class SensorsSimulator {
  public:
-  SensorsSimulator();
+  SensorsSimulator(bool is_auto);
   // Update sensor values based on new rotation status.
   void RefreshSensors(double x, double y, double z);
 
@@ -42,10 +49,11 @@ class SensorsSimulator {
 
  private:
   std::mutex sensors_data_mtx_;
-  Eigen::Vector3d sensors_data_[kMaxSensorId + 1];
+  SensorsData sensors_data_[kMaxSensorId + 1];
   Eigen::Matrix3d prior_rotation_matrix_, current_rotation_matrix_;
   std::chrono::time_point<std::chrono::high_resolution_clock>
       last_event_timestamp_;
+  bool is_auto_;
 };
 
 }  // namespace sensors

@@ -47,7 +47,7 @@ git_override(
 
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
 llvm.toolchain(
-   llvm_version = "18.1.8",
+    llvm_version = "18.1.8",
 )
 
 use_repo(llvm, "llvm_toolchain")
@@ -248,4 +248,11 @@ git_repository(
     commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
     build_file = "@//:BUILD.libwebrtc.bazel",
     remote = "https://webrtc.googlesource.com/src/",
+)
+
+git_repository(
+    name = "libeigen",
+    commit = "3147391d946bb4b6c68edd901f2add6ac1f31f8c",  # 3.4.0
+    build_file = "@//:BUILD.libeigen.bazel",
+    remote = "https://gitlab.com/libeigen/eigen",
 )
