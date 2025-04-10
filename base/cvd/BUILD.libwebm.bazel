@@ -19,5 +19,6 @@ cc_library(
       "mkvmuxer/mkvwriter.h",
       "mkvparser/mkvparser.h",
     ],
+    includes = ["."],
 )
 
