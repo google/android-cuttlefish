@@ -26,6 +26,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/echo_server"
+  link_name: "bin/echo_server"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/kernel_log_monitor"
   link_name: "bin/kernel_log_monitor"
 }
