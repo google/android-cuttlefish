@@ -1,15 +1,17 @@
 # Dockerfile based on `rockylinux/rockylinux:9.5`
 ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
 FROM $LINUX_IMAGE AS base_image
-LABEL description="RPM Builder" version="1.0.1" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
+LABEL description="RPM Builder"
+LABEL version="1.0.2"
+LABEL repository="https://github.com/google/android-cuttlefish"
+LABEL maintainer="Martin Zeitler"
 SHELL [ "/bin/bash", "-c" ]
 
 # Arguments
-# TODO: To be changed to `google` upon merging to `main` branch.
-# This is merely being used by `clone.sh`, to switch the brach.
-ARG GITHUB_USER="syslogic"
+# This is being used by `clone.sh`, to switch the branch.
+ARG GITHUB_USER="google"
 ARG GUTHUB_REPO="android-cuttlefish"
-ARG GITHUB_BRANCH="rpmbuild"
+ARG GITHUB_BRANCH="main"
 
 ARG RUNNER_GID="118"
 ARG RUNNER_UID="1001"
@@ -90,9 +92,7 @@ COPY [ "./docker/rpm-builder/scripts/install_src.sh", "/home/runner/install_src.
 
 RUN [ "echo", "export", "GOPATH=/home/runner/go", ">>", "/home/runner/.bash_profile" ]
 RUN [ "echo", "export", "PATH=$PATH:/home/runner/go/bin", ">>", "/home/runner/.bash_profile" ]
-
 RUN [ "echo", "export", "BUILDX_GIT_LABELS=1", ">>", "/home/runner/.bash_profile" ]
-RUN [ "echo", "export", "export BUILDKIT_COLORS=\"run=123,20,245:error=yellow:cancel=blue:warning=white\"", ">>", "/home/runner/.bash_profile" ]
 
 RUN [ "chmod", "+x", "/home/runner/install_rpm.sh", "/home/runner/install_src.sh" ]
 RUN [ "chmod", "+x", "/home/runner/sign_rpm.sh", "/usr/local/bin/sign_rpm.exp" ]

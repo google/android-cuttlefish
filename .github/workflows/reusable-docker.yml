@@ -15,6 +15,11 @@ on:
         description: 'Passphrase for PGP signature'
         required: false
     inputs:
+      platform:
+        description: 'The platform to build for'
+        default: linux/amd64
+        required: false
+        type: string
       registry:
         description: 'Docker registry hostname'
         default: 'ghcr.io'
@@ -43,17 +48,21 @@ on:
         default: main
         required: false
         type: string
-      platform:
-        description: 'The platform to build for'
-        default: linux/amd64
-        required: false
-        type: string
       runner:
-        description: 'GitHub actions runner image label'
+        description: 'GitHub runner image label'
         default: ${{ VARS.RUNNER_86 }}
         required: false
         type: string
-
+      runner_gid:
+        description: 'GitHub runner GID'
+        default: 118
+        required: false
+        type: string
+      runner_uid:
+        description: 'GitHub runner UIG'
+        default: 118
+        required: false
+        type: string
 jobs:
 
   docker-run:
@@ -61,7 +70,7 @@ jobs:
     env:
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
       DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }} --platform ${{ INPUTS.PLATFORM }} --attach STDERR --attach STDOUT --quiet'
-      ENV_VARS: '--env REPO_USER="${{ INPUTS.USERNAME }}" --env REPO_NAME="${{ INPUTS.REPOSITORY }}" --env REPO_BRANCH="${{ INPUTS.BRANCH }}" --env RUNNER_UID="${{ NEEDS.SETUP.OUTPUTS.RUNNER_UID }}" --env RUNNER_GID="${{ NEEDS.SETUP.OUTPUTS.RUNNER_GID }}"'
+      ENV_VARS: '--env REPO_USER="${{ INPUTS.USERNAME }}" --env REPO_NAME="${{ INPUTS.REPOSITORY }}" --env REPO_BRANCH="${{ INPUTS.BRANCH }}" --env RUNNER_UID="${{ INPUTS.RUNNER_UID }}" --env RUNNER_GID="${{ INPUTS.RUNNER_GID }}"'
     steps:
 
       # https://github.com/docker/login-action
@@ -99,11 +108,12 @@ jobs:
       - shell: bash
         id: setup
         run: |
-          ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${${{ INPUTS.PLATFORM }}/linux\/}-unsigned"
+          PLATFORM=${{ INPUTS.PLATFORM }}
+          ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${PLATFORM:6}-unsigned
           echo "ARTIFACT_NAME=$ARTIFACT_NAME >> $GITHUB_OUTPUT
           echo "Artifact: $ARTIFACT_NAME" >> $GITHUB_STEP_SUMMARY
           echo "::group::Setup"
-          echo "::notice file=reusable-docker.yml,title=Artifact: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}"
+          echo "::notice file=reusable-docker.yml,title=Artifact: $ARTIFACT_NAME"
           echo "::endgroup::"
 
       # https://github.com/actions/upload-artifact

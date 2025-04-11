@@ -34,21 +34,23 @@ jobs:
           - platform: linux/arm64
             runner: ${{ VARS.RUNNER_ARM }}
             image: rpm-builder-arm64
-
+    outputs:
+      RUNNER_UID: ${{ STEPS.SETUP.OUTPUTS.RUNNER_UID }}
+      RUNNER:GID: ${{ STEPS.SETUP.OUTPUTS.RUNNER_GID }}
     steps:
       - uses: 'actions/checkout@v4'
       - uses: 'docker/login-action@v3'
         id: container-registry
         with:
           registry: 'ghcr.io'
-          username: ${{ GITHUB.ACTOR }}
+          username: ${{ GITHUB.REPOSITORY_OWNER }}
           password: ${{ SECRETS.GITHUB_TOKEN }}
 
       # https://github.com/docker/metadata-action
       - uses: 'docker/metadata-action@v5'
         id: metadata
         with:
-          images: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.IMAGE }}
+          images: ghcr.io/${{ GITHUB.REPOSITORY_OWNER }}/${{ MATRIX.IMAGE }}
           tags: |
             type=sha
             latest
@@ -64,6 +66,11 @@ jobs:
         run: |
           echo "RUNNER_GID=$(id -g)" >> $GITHUB_OUTPUT
           echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
+          REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
+          echo "REPOSITORY_NAME=${REPOSITORY_NAME}" >> $GITHUB_OUTPUT
+          echo "::group::Setup"
+          echo "::notice file=rpm-builder.yml,title=Repository: $REPOSITORY_NAME"
+          echo "::endgroup::"
 
       - uses: 'docker/build-push-action@v6'
         id: build
@@ -76,8 +83,8 @@ jobs:
           labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
           tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
           build-args: |
-            GITHUB_USER=${{ GITHUB.ACTOR }}
-            GITHUB_REPO=${{ ENV.REPO_NAME }}
+            GITHUB_USER=${{ GITHUB.REPOSITORY_OWNER }}
+            GITHUB_REPO=${{ STEPS.SETUP.OUTPUTS.REPOSITORY_NAME }}
             GITHUB_BRANCH=${{ GITHUB.HEAD_REF || GITHUB.REF_NAME }}
             RUNNER_GID=${{ STEPS.SETUP.OUTPUTS.RUNNER_GID }}
             RUNNER_UID=${{ STEPS.SETUP.OUTPUTS.RUNNER_UID }}
@@ -87,7 +94,7 @@ jobs:
       # https://github.com/actions/attest-build-provenance
       - uses: 'actions/attest-build-provenance@v2'
         with:
-          subject-name: ghcr.io/${{ GITHUB.ACTOR }}/${{ MATRIX.IMAGE }}
+          subject-name: ghcr.io/${{ GITHUB.REPOSITORY_OWNER }}/${{ MATRIX.IMAGE }}
           subject-digest: ${{ STEPS.BUILD.OUTPUTS.DIGEST }}
           push-to-registry: true
 
@@ -99,12 +106,14 @@ jobs:
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
-      username: ${{ GITHUB.ACTOR }}
+      username: ${{ GITHUB.REPOSITORY_OWNER }}
       repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
       branch: ${{ GITHUB.HEAD_REF || GITHUB.REF_NAME }}
+      platform: ${{ MATRIX.PLATFORM }}
+      runner_gid: ${{ NEEDS.CREATE_IMAGE.OUTPUTS.RUNNER_GID }}
+      runner_uid: ${{ NEEDS.CREATE_IMAGE.OUTPUTS.RUNNER_UID }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
-      platform: ${{ MATRIX.PLATFORM }}
     strategy:
       max-parallel: 2
       matrix:
@@ -125,7 +134,7 @@ jobs:
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
-      username: ${{ GITHUB.ACTOR }}
+      username: ${{ GITHUB.REPOSITORY_OWNER }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
@@ -150,7 +159,7 @@ jobs:
       token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
-      username: ${{ GITHUB.ACTOR }}
+      username: ${{ GITHUB.REPOSITORY_OWNER }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
