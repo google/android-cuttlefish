@@ -421,25 +421,6 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
   return non_help_command;
 }
 
-static void ShowLaunchCommand(const Command& command,
-                              const cvd_common::Envs& envs) {
-  std::stringstream ss;
-  std::vector<std::string> interesting_env_names{"HOME",
-                                                 kAndroidHostOut,
-                                                 kAndroidSoongHostOut,
-                                                 "ANDROID_PRODUCT_OUT",
-                                                 kCuttlefishInstanceEnvVarName,
-                                                 kCuttlefishConfigEnvVarName};
-  for (const auto& interesting_env_name : interesting_env_names) {
-    if (Contains(envs, interesting_env_name)) {
-      ss << interesting_env_name << "=\"" << envs.at(interesting_env_name)
-         << "\" ";
-    }
-  }
-  ss << " " << command;
-  LOG(INFO) << "launcher command: " << ss.str();
-}
-
 Result<std::string> CvdStartCommandHandler::FindStartBin(
     const std::string& android_host_out) {
   return CF_EXPECT(HostToolTarget(android_host_out).GetStartBinName());
@@ -530,16 +511,20 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   const bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
 
   if (is_help) {
-    auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
+    auto android_host_out =
+        CF_EXPECT(AndroidHostPath(envs),
+                  "\nTry running this command from the same directory as the "
+                  "downloaded or fetched host tools.");
     const auto bin = CF_EXPECT(FindStartBin(android_host_out));
 
     Command command =
         CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
-    ShowLaunchCommand(command, envs);
+    LOG(INFO) << "help command: " << command;
 
     siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
-    CF_EXPECT(CheckProcessExitedNormally(infop));
+    // gflags (and flag_parser for compatibility) exit with 1 after help output
+    CF_EXPECT(CheckProcessExitedNormally(infop, 1));
     return {};
   }
 
@@ -638,7 +623,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
                   "information won't show in the UI: "
                << conn_res.error().FormatForEnv();
   }
-  ShowLaunchCommand(launch_command, envs);
+  LOG(INFO) << "launch command: " << launch_command;
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 

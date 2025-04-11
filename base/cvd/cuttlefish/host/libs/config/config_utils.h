@@ -54,7 +54,8 @@ std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
-                                   const char* path);
+                                   const char* subpath);
+bool IsValidAndroidHostOutPath(const std::string& path);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
@@ -63,4 +64,5 @@ bool HostSupportsQemuCli();
 bool UseQemuPrebuilt();
 
 std::string GetSeccompPolicyDir();
-}
+
+}  // namespace cuttlefish

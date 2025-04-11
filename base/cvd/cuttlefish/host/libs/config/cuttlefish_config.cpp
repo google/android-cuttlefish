@@ -42,12 +42,6 @@ const char* kInstances = "instances";
 
 }  // namespace
 
-std::string DefaultEnvironmentPath(const char* environment_key,
-                                   const char* default_value,
-                                   const char* subpath) {
-  return StringFromEnv(environment_key, default_value) + "/" + subpath;
-}
-
 bool IsRestoring(const CuttlefishConfig& config) {
   return FileExists(config.AssemblyPath("restore"));
 }
