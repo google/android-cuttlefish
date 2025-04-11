@@ -68,7 +68,7 @@ jobs:
           echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
           REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
           echo "REPOSITORY_NAME=${REPOSITORY_NAME}" >> $GITHUB_OUTPUT
-          echo "::group::Setup"
+          echo "::group::Setup Info"
           echo "::notice file=rpm-builder.yml,title=Repository: $REPOSITORY_NAME"
           echo "::endgroup::"
 
@@ -102,8 +102,6 @@ jobs:
   build_packages:
     uses: ./.github/workflows/reusable-docker.yml
     needs: [ create_image ]
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.REPOSITORY_OWNER }}
@@ -114,6 +112,8 @@ jobs:
       runner_uid: ${{ NEEDS.CREATE_IMAGE.OUTPUTS.RUNNER_UID }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
     strategy:
       max-parallel: 2
       matrix:
@@ -130,14 +130,14 @@ jobs:
   preinstall_integration:
     uses: ./.github/workflows/rhel-integration.yml
     needs: [ build_packages ]
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.REPOSITORY_OWNER }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
     strategy:
       max-parallel: 2
       fail-fast: true
@@ -155,14 +155,14 @@ jobs:
   preinstall_orchestration:
     uses: ./.github/workflows/rhel-orchestration.yml
     needs: [ build_packages ]
-    secrets:
-      token: ${{ SECRETS.GITHUB_TOKEN }}
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.REPOSITORY_OWNER }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
     strategy:
       max-parallel: 2
       fail-fast: true

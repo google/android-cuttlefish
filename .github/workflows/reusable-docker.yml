@@ -106,21 +106,22 @@ jobs:
           docker run $DOCKER_OPTIONS $VOLUMES $ENV_VARS $DOCKER_IMAGE
 
       - shell: bash
+        if: ${{ success() }}
         id: setup
         run: |
-          PLATFORM=${{ INPUTS.PLATFORM }}
-          ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${PLATFORM:6}-unsigned
-          echo "ARTIFACT_NAME=$ARTIFACT_NAME >> $GITHUB_OUTPUT
-          echo "Artifact: $ARTIFACT_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "::group::Setup"
+          if [ "${{ RUNNER.ARCH }}" == "X64" ]; then ARCH="amd64"; else ARCH="arm64"; fi
+          ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${ARCH}-unsigned
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          echo "Artifact: ${ARTIFACT_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "::group::Setup Info"
           echo "::notice file=reusable-docker.yml,title=Artifact: $ARTIFACT_NAME"
           echo "::endgroup::"
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
         uses: 'actions/upload-artifact@v4'
-        id: retain-rpm-packages
         if: ${{ success() }}
+        id: retain-rpm-packages
         with:
           name: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}
           path: "${{ RUNNER.TEMP }}/.rpms"
