@@ -87,8 +87,9 @@ def _impl(ctx):
         ctx = ctx,
         features = features,
         cxx_builtin_include_directories = [
-            "/usr/lib/llvm-%d/lib/clang/" % ctx.attr.version,
             "/usr/include",
+            "/usr/lib/clang/%d" % ctx.attr.version,
+            "/usr/lib/llvm-%d/lib/clang/" % ctx.attr.version,
         ],
         toolchain_identifier = "local",
         host_system_name = "local",

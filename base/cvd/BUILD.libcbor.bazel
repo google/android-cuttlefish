@@ -32,7 +32,7 @@ genrule(
         "INITIAL_WD=`pwd`",
         "cd `dirname $(location CMakeLists.txt)`",
         # Interprocedural optimizations mangles the names in the resulting .a file so it's disabled
-        "cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF .",
+        "cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .",
         "cmake --build .",
         # Export the .a and .h files for cbor rule, below.
         "cp -R src/* $$INITIAL_WD/$(RULEDIR)",
