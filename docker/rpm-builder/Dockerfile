@@ -90,6 +90,10 @@ COPY [ "./docker/rpm-builder/scripts/install_src.sh", "/home/runner/install_src.
 
 RUN [ "echo", "export", "GOPATH=/home/runner/go", ">>", "/home/runner/.bash_profile" ]
 RUN [ "echo", "export", "PATH=$PATH:/home/runner/go/bin", ">>", "/home/runner/.bash_profile" ]
+
+RUN [ "echo", "export", "BUILDX_GIT_LABELS=1", ">>", "/home/runner/.bash_profile" ]
+RUN [ "echo", "export", "export BUILDKIT_COLORS=\"run=123,20,245:error=yellow:cancel=blue:warning=white\"", ">>", "/home/runner/.bash_profile" ]
+
 RUN [ "chmod", "+x", "/home/runner/install_rpm.sh", "/home/runner/install_src.sh" ]
 RUN [ "chmod", "+x", "/home/runner/sign_rpm.sh", "/usr/local/bin/sign_rpm.exp" ]
 RUN [ "chmod", "+x", "/home/runner/build.sh", "/home/runner/clone.sh" ]

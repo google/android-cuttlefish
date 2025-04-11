@@ -99,10 +99,12 @@ jobs:
       - shell: bash
         id: setup
         run: |
-          [ "${{ INPUTS.PLATFORM }}" = "linux/amd64" ] && PLATFORM=amd64
-          [ "${{ INPUTS.PLATFORM }}" = "linux/arm64" ] && PLATFORM=arm64
+          [ "${{ INPUTS.PLATFORM }}" == "linux/amd64" ] && PLATFORM="amd64"
+          [ "${{ INPUTS.PLATFORM }}" == "linux/arm64" ] && PLATFORM="arm64"
           echo "ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${PLATFORM}-unsigned" >> $GITHUB_OUTPUT
+          echo "::group::Setup"
           echo "::notice file=reusable-docker.yml,title=Artifact name: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}.
+          echo "::endgroup::"
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)

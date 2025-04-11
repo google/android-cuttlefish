@@ -64,7 +64,7 @@ jobs:
         run: |
           echo "RUNNER_GID=$(id -g)" >> $GITHUB_OUTPUT
           echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
-          echo "::notice file=rpm-builder.yml,title=ID: $(id -g):$(id -u)"
+
       - uses: 'docker/build-push-action@v6'
         id: build
         with:
