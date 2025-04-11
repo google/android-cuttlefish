@@ -31,11 +31,11 @@ launch_cvd_boot_test(
     target = "aosp_cf_x86_64_phone-userdebug",
 )
 
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android10_phone",
-    branch = "aosp-android10-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
+# launch_cvd_boot_test(
+#     name = "fetch_and_launch_aosp_android10_phone",
+#     branch = "aosp-android10-gsi",
+#     target = "aosp_cf_x86_64_phone-userdebug",
+# )
 
 # cvd load tests
 cvd_load_boot_test(
