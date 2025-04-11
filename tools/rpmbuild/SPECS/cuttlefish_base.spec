@@ -58,21 +58,50 @@ install -m 655 %{srcpath}/cuttlefish-base.cuttlefish-host-resources.init %{build
 %define srcpath ../../../base/rhel
 install -m 655 %{srcpath}/cuttlefish.service %{buildroot}/lib/systemd/system/cuttlefish.service
 
-# TODO: there are more commands there now.
 %define srcpath ../../../base/cvd/bazel-bin/cuttlefish/package
-# acloud_translator         cvd_internal_env               health                  process_restarter
-# adb_connector             cvd_internal_start             kernel_log_monitor      record_cvd
-# allocd_client             cvd_internal_status            log_tee                 restart_cvd
-# assemble_cvd              cvd_internal_stop              logcat_receiver         run_cvd
-# console_forwarder         cvd_send_id_disclosure         metrics                 screen_recording_server
-# control_env_proxy_server  cvd_update_security_algorithm  metrics_launcher        snapshot_util_cvd
-# cvd                       echo_server                    mkenvimage_slim         socket_vsock_proxy
-# cvd.repo_mapping          extract-ikconfig               modem_simulator         tcp_connector
-# cvd.runfiles              extract-vmlinux                openwrt_control_server  tombstone_receiver
-# cvd.runfiles_manifest     generate_shader_embed          operator_proxy
-# cvd_import_locations      gnss_grpc_proxy                powerbtn_cvd
-# cvd_internal_display      graphics_detector              powerwash_cvd
-install -m 755 %{srcpath}/cuttlefish-common/bin/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd %{buildroot}/usr/lib/cuttlefish-common/bin/cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/snapshot_util_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/snapshot_util_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/powerwash_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/powerwash_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/powerbtn_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/powerbtn_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/assemble_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/assemble_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/restart_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/restart_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/record_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/record_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/run_cvd %{buildroot}/usr/lib/cuttlefish-common/bin/run_cvd
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_update_security_algorithm %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_update_security_algorithm
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_send_id_disclosure %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_send_id_disclosure
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_internal_display %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_internal_display
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_import_locations %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_import_locations
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_internal_status %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_internal_status
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_internal_start %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_internal_start
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_internal_stop %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_internal_stop
+install -m 655 %{srcpath}/cuttlefish-common/bin/cvd_internal_env %{buildroot}/usr/lib/cuttlefish-common/bin/cvd_internal_env
+install -m 655 %{srcpath}/cuttlefish-common/bin/echo_server %{buildroot}/usr/lib/cuttlefish-common/bin/echo_server
+install -m 655 %{srcpath}/cuttlefish-common/bin/openwrt_control_server %{buildroot}/usr/lib/cuttlefish-common/bin/openwrt_control_server
+install -m 655 %{srcpath}/cuttlefish-common/bin/screen_recording_server %{buildroot}/usr/lib/cuttlefish-common/bin/screen_recording_server
+install -m 655 %{srcpath}/cuttlefish-common/bin/control_env_proxy_server %{buildroot}/usr/lib/cuttlefish-common/bin/control_env_proxy_server
+install -m 655 %{srcpath}/cuttlefish-common/bin/socket_vsock_proxy %{buildroot}/usr/lib/cuttlefish-common/bin/socket_vsock_proxy
+install -m 655 %{srcpath}/cuttlefish-common/bin/gnss_grpc_proxy %{buildroot}/usr/lib/cuttlefish-common/bin/gnss_grpc_proxy
+install -m 655 %{srcpath}/cuttlefish-common/bin/operator_proxy %{buildroot}/usr/lib/cuttlefish-common/bin/operator_proxy
+install -m 655 %{srcpath}/cuttlefish-common/bin/modem_simulator %{buildroot}/usr/lib/cuttlefish-common/bin/modem_simulator
+install -m 655 %{srcpath}/cuttlefish-common/bin/tcp_connector %{buildroot}/usr/lib/cuttlefish-common/bin/tcp_connector
+install -m 655 %{srcpath}/cuttlefish-common/bin/adb_connector %{buildroot}/usr/lib/cuttlefish-common/bin/adb_connector
+install -m 655 %{srcpath}/cuttlefish-common/bin/logcat_receiver %{buildroot}/usr/lib/cuttlefish-common/bin/logcat_receiver
+install -m 655 %{srcpath}/cuttlefish-common/bin/tombstone_receiver %{buildroot}/usr/lib/cuttlefish-common/bin/tombstone_receiver
+install -m 655 %{srcpath}/cuttlefish-common/bin/console_forwarder %{buildroot}/usr/lib/cuttlefish-common/bin/console_forwarder
+install -m 655 %{srcpath}/cuttlefish-common/bin/acloud_translator %{buildroot}/usr/lib/cuttlefish-common/bin/acloud_translator
+install -m 655 %{srcpath}/cuttlefish-common/bin/kernel_log_monitor %{buildroot}/usr/lib/cuttlefish-common/bin/kernel_log_monitor
+install -m 655 %{srcpath}/cuttlefish-common/bin/process_restarter %{buildroot}/usr/lib/cuttlefish-common/bin/process_restarter
+install -m 655 %{srcpath}/cuttlefish-common/bin/graphics_detector %{buildroot}/usr/lib/cuttlefish-common/bin/graphics_detector
+install -m 655 %{srcpath}/cuttlefish-common/bin/generate_shader_embed %{buildroot}/usr/lib/cuttlefish-common/bin/generate_shader_embed
+install -m 655 %{srcpath}/cuttlefish-common/bin/mkenvimage_slim %{buildroot}/usr/lib/cuttlefish-common/bin/mkenvimage_slim
+install -m 655 %{srcpath}/cuttlefish-common/bin/extract-ikconfig %{buildroot}/usr/lib/cuttlefish-common/bin/extract-ikconfig
+install -m 655 %{srcpath}/cuttlefish-common/bin/extract-vmlinux %{buildroot}/usr/lib/cuttlefish-common/bin/extract-vmlinux
+install -m 655 %{srcpath}/cuttlefish-common/bin/allocd_client %{buildroot}/usr/lib/cuttlefish-common/bin/allocd_client
+install -m 655 %{srcpath}/cuttlefish-common/bin/metrics_launcher %{buildroot}/usr/lib/cuttlefish-common/bin/metrics_launcher
+install -m 655 %{srcpath}/cuttlefish-common/bin/metrics %{buildroot}/usr/lib/cuttlefish-common/bin/metrics
+install -m 655 %{srcpath}/cuttlefish-common/bin/log_tee %{buildroot}/usr/lib/cuttlefish-common/bin/log_tee
+install -m 655 %{srcpath}/cuttlefish-common/bin/health %{buildroot}/usr/lib/cuttlefish-common/bin/health
+
 
 %define srcpath ../../../base/host/deploy
 install -m 655 %{srcpath}/install_zip.sh %{buildroot}/usr/bin/install_zip.sh
