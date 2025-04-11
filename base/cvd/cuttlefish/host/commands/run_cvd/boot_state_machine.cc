@@ -55,6 +55,19 @@ DEFINE_int32(reboot_notification_fd, CF_DEFAULTS_REBOOT_NOTIFICATION_FD,
 namespace cuttlefish {
 namespace {
 
+Result<void> MoveSelfToCgroup(const std::string& id) {
+  auto to_path_file = "/sys/fs/cgroup/vsoc-" + id + "-cf/cgroup.procs";
+  auto pid = std::to_string(getpid());
+  SharedFD fd = SharedFD::Open(to_path_file, O_WRONLY | O_APPEND);
+  CF_EXPECT(fd->IsOpen(),
+            "failed to open " << to_path_file << ": " << fd->StrError());
+  if (WriteAll(fd, pid) != pid.size()) {
+    return CF_ERR("failed to write to" << to_path_file);
+  }
+
+  return {};
+}
+
 Result<void> MoveThreadsToCgroup(const std::string& from_path,
                                  const std::string& to_path) {
   std::string file_path = from_path + "/cgroup.threads";
@@ -210,6 +223,12 @@ Result<SharedFD> ProcessLeader(
     CF_EXPECT(SharedFD::Fifo(instance.restore_adbd_pipe_name(), 0600),
               "Unable to create adbd restore fifo");
   }
+
+  // Move to designated cgroup path when running with vcpufreq enabled.
+  if (!instance.vcpu_config_path().empty()) {
+    CF_EXPECT(MoveSelfToCgroup(instance.id()));
+  }
+
   /* These two paths result in pretty different process state, but both
    * achieve the same goal of making the current process the leader of a
    * process group, and are therefore grouped together. */
