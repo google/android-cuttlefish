@@ -12,3 +12,12 @@ expand_template(
     },
     template = "vulkan_icd.json.tmpl",
 )
+
+expand_template(
+    name = "vk_lavapipe_icd",
+    out = "vk_lavapipe_icd.json",
+    substitutions = {
+        "${ICD_LIBRARY_PATH}": "./libvk_lavapipe.so",
+    },
+    template = "vulkan_icd.json.tmpl",
+)
