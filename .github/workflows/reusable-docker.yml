@@ -4,45 +4,53 @@ on:
   workflow_call:
     secrets:
       token:
+        description: 'GitHub auth token'
         required: true
+      # TODO: This might be the signature required.
+      # https://dl.google.com/linux/linux_signing_key.pub
+      pgp_signature:
+        description: 'PGP signature for signing RPM'
+        required: false
+      pgp_passphrase:
+        description: 'Passphrase for PGP signature'
+        required: false
     inputs:
       registry:
+        description: 'Docker registry hostname'
         default: 'ghcr.io'
         required: false
         type: string
       username:
+        description: 'Docker registry username'
         required: true
         type: string
+      image:
+        description: 'Docker image name'
+        required: true
+        type: string
+      tag:
+        description: 'Docker image tag'
+        default: latest
+        required: false
+        type: string
       repository:
+        description: 'GitHub repository'
         default: android-cuttlefish
         required: true
         type: string
       branch:
+        description: 'GitHub branch'
         default: main
         required: false
         type: string
-      tag:
-        default: latest
-        required: false
-        type: string
-      runner:
-          default: ubuntu-22.04
-          required: false
-          type: string
-      image:
-        required: true
-        type: string
       platform:
+        description: 'The platform to build for'
         default: linux/amd64
         required: false
         type: string
-      artifact:
-        required: true
-        type: string
-      pgp_signature:
-        required: false
-        type: string
-      pgp_passphrase:
+      runner:
+        description: 'GitHub actions runner image label'
+        default: ${{ VARS.RUNNER_86 }}
         required: false
         type: string
 
@@ -53,7 +61,7 @@ jobs:
     env:
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
       DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }} --platform ${{ INPUTS.PLATFORM }} --attach STDERR --attach STDOUT --quiet'
-      ENV_VARS: '--env REPO_USER="${{ INPUTS.USERNAME }}" --env REPO_NAME="${{ INPUTS.REPOSITORY }}" --env REPO_BRANCH="${{ INPUTS.BRANCH }}"'
+      ENV_VARS: '--env REPO_USER="${{ INPUTS.USERNAME }}" --env REPO_NAME="${{ INPUTS.REPOSITORY }}" --env REPO_BRANCH="${{ INPUTS.BRANCH }}" --env RUNNER_UID="${{ NEEDS.SETUP.OUTPUTS.RUNNER_UID }}" --env RUNNER_GID="${{ NEEDS.SETUP.OUTPUTS.RUNNER_GID }}"'
     steps:
 
       # https://github.com/docker/login-action
@@ -86,7 +94,15 @@ jobs:
         run: |
           mkdir -p ${{ RUNNER.TEMP }}/.rpms
           mkdir -p ${{ RUNNER.TEMP }}/.cache
-          docker run $DOCKER_OPTIONS $VOLUMES $VARS $DOCKER_IMAGE
+          docker run $DOCKER_OPTIONS $VOLUMES $ENV_VARS $DOCKER_IMAGE
+
+      - shell: bash
+        id: setup
+        run: |
+          [ "${{ INPUTS.PLATFORM }}" = "linux/amd64" ] && PLATFORM=amd64
+          [ "${{ INPUTS.PLATFORM }}" = "linux/arm64" ] && PLATFORM=arm64
+          echo "ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${PLATFORM}-unsigned" >> $GITHUB_OUTPUT
+          echo "::notice file=reusable-docker.yml,title=Artifact name: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}.
 
       # https://github.com/actions/upload-artifact
       - name: Retain Artifacts (*.rpm)
@@ -94,7 +110,7 @@ jobs:
         id: retain-rpm-packages
         if: ${{ success() }}
         with:
-          name: ${{ INPUTS.ARTIFACT }}
+          name: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}
           path: "${{ RUNNER.TEMP }}/.rpms"
           include-hidden-files: 'true'
           retention-days: 14
@@ -103,7 +119,7 @@ jobs:
         id: list-rpm-packages
         shell: bash
         run: |
-          [ "$(ls -1 ${{ RUNNER.TEMP }}/.rpms/*.rpm 2>/dev/null | wc -l)" -lt 4 ] && echo "::warning file=reusable-docker.yml,line=108,endLine=108,title=RPM Build::Less than four ${{ INPUTS.REPOSITORY }} RPM packages were built."
+          [ "$(ls -1 ${{ RUNNER.TEMP }}/.rpms/*.rpm 2>/dev/null | wc -l)" -lt 4 ] && echo "::warning file=reusable-docker.yml,title=RPM Build::Less than 4 ${{ INPUTS.REPOSITORY }} RPM packages were built."
           printf "Ubuntu mount-point: %s" "${{ RUNNER.TEMP }}/.rpms"
           ls -la ${{ RUNNER.TEMP }}/.rpms
           ls -lan ${{ RUNNER.TEMP }}/.rpms

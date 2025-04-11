@@ -4,28 +4,35 @@ on:
   workflow_call:
     secrets:
       token:
+        description: 'GitHub auth token'
         required: true
     inputs:
       registry:
+        description: 'Docker registry hostname'
         default: 'ghcr.io'
         required: false
         type: string
       username:
+        description: 'Docker registry username'
         required: true
         type: string
       image:
+        description: 'Docker image name'
         required: true
         type: string
       tag:
+        description: 'Docker image tag'
         default: latest
         required: false
         type: string
-      runner:
-          default: ubuntu-22.04
-          required: false
-          type: string
       platform:
+        description: 'The platform to build for'
         default: linux/amd64
+        required: false
+        type: string
+      runner:
+        description: 'GitHub actions runner image label'
+        default: ${{ VARS.RUNNER_86 }}
         required: false
         type: string
 
@@ -34,15 +41,25 @@ jobs:
   create-image:
     runs-on: ${{ INPUTS.RUNNER }}
     env:
-      REPO_NAME: 'android-cuttlefish'
       DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}
+      ARTIFACT_NAME: ${{ NEEDS.SETUP.OUTPUTS.ARTIFACT_NAME }}
     steps:
+
+      - shell: bash
+        id: setup
+        run: |
+          [ "${{ INPUTS.PLATFORM }}" = "linux/amd64" ] && PLATFORM=amd64
+          [ "${{ INPUTS.PLATFORM }}" = "linux/arm64" ] && PLATFORM=arm64
+          echo "ARTIFACT_NAME=${{ INPUTS.REPOSITORY }}-rhel9-${PLATFORM}-unsigned" >> $GITHUB_OUTPUT
+          echo "::notice file=rhel-integration.yml,title=Artifact name: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}.
+          echo "RUNNER_GID=$(id -g)" >> $GITHUB_OUTPUT
+          echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
 
       # https://github.com/actions/download-artifact
       - uses: 'actions/download-artifact@v4'
         id: restore-rpm-packages
         with:
-          name: android-cuttlefish-rhel9-**
+          name: ${{ STEPS.SETUP.OUTPUT.ARTIFACT_NAME }}
           path: '${{ RUNNER.TEMP }}/.rpms'
 
       - name: List directory ${{ RUNNER.TEMP }}/.rpms
@@ -72,21 +89,20 @@ jobs:
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - uses: 'actions/checkout@v4'
       - uses: 'docker/setup-buildx-action@v3'
-      - uses: 'docker/setup-qemu-action@v3'
-        if: ${{ INPUTS.PLATFORM != 'linux/amd64' }}
-        with:
-          platforms: arm64
-
       - uses: 'docker/build-push-action@v6'
         id: build
         with:
           context: .
+          target: orchestration
           file: docker/rhel-orchestration/Dockerfile
           push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
           platforms: ${{ INPUTS.PLATFORM }}
           labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
           tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
-          target: orchestration
+          build-args: |
+            RUNNER_GID=${{ NEEDS.SETUP.OUTPUTS.RUNNER_GID }}
+            RUNNER_UID=${{ NEEDS.SETUP.OUTPUTS.RUNNER_UID }}
+            LINUX_IMAGE=${{ VARS.RHEL_LINUX_IMAGE }}
 
       # Note: The digest comes from `buildx`, not the metadata.
       # https://github.com/actions/attest-build-provenance

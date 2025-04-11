@@ -1,35 +1,39 @@
 # Dockerfile based on `rockylinux/rockylinux:9.5`
 ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
-FROM $LINUX_IMAGE AS linux
-
+FROM $LINUX_IMAGE AS base_image
 LABEL description="RPM Builder" version="1.0.1" repository="https://github.com/google/android-cuttlefish" maintainer="Martin Zeitler"
-WORKDIR "/root"
+SHELL [ "/bin/bash", "-c" ]
 
 # Arguments
 # TODO: To be changed to `google` upon merging to `main` branch.
-# This is merely being used in `clone.sh`, to switch the correct brach.
+# This is merely being used by `clone.sh`, to switch the brach.
 ARG GITHUB_USER="syslogic"
 ARG GUTHUB_REPO="android-cuttlefish"
 ARG GITHUB_BRANCH="rpmbuild"
 
-# PGP Arguments
-# TODO: PGP signature and passphrase are required to sign packages.
-ARG PGP_SIGNATURE=""
-ARG PGP_PASSPHRASE=""
+ARG RUNNER_GID="118"
+ARG RUNNER_UID="1001"
+ENV GID="${RUNNER_GID}"
+ENV UID="${RUNNER_UID}"
+
+# Adding the user provides the home directory.
+RUN groupadd -f -g ${GID} docker
+RUN useradd -g ${GID} -u ${UID} -s /bin/bash runner
 
 # Don't ask for the `sudo` password.
 RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
 
-# Adding the user provides the home directory.
-RUN [ "groupadd", "-g", "117", "docker" ]
-RUN [ "useradd", "-g", "117", "-u", "1001", "-s", "/bin/bash", "runner" ]
-
-# Note: The container scripts are checking for this file,
-# in order to prevent accidentlly running them on the host.
-RUN [ "touch", "/home/runner/.dockerenv" ]
-
-# Base Image
-FROM linux AS base_image
+# Google Cloud SDK
+# COPY <<EOF /etc/yum.repos.d/google-cloud-sdk.repo
+# [google-cloud-sdk]
+# name=Google Cloud SDK
+# baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64
+# enabled=1
+# gpgcheck=1
+# repo_gpgcheck=1
+# gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+#        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+# EOF
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
@@ -52,15 +56,22 @@ ENV REPO_USER="${GITHUB_USER}"
 ENV REPO_NAME="${GUTHUB_REPO}"
 ENV REPO_BRANCH="${GITHUB_BRANCH}"
 
-ENV RPM_SIGN_SIGNATURE="${PGP_SIGNATURE}"
-ENV RPM_SIGN_PASSPHRASE="${PGP_PASSPHRASE}"
+# To be supplied at runtime.
+ENV RPM_SIGN_SIGNATURE=""
+ENV RPM_SIGN_PASSPHRASE=""
 
+# Run the build script.
 ENTRYPOINT [ "/bin/bash", "-c", "/home/runner/build.sh", "${REPO_USER}", "${REPO_NAME}", "${REPO_BRANCH}" ]
 
 # Build dependencies.
-RUN [ "dnf", "-y", "install", "sudo", "nano", "git", "wget", "cmake", "gcc-c++", "rpm-build", "golang-bin", "expect", "vim-common", "ncurses-compat-libs", "curl-devel", "wayland-devel", "protobuf-devel", "protobuf-compiler", "ca-certificates" ]
+RUN [ "dnf", "-y", "install", "sudo", "nano", "git", "wget", "cmake", "gcc-c++", "rpm-build", "golang-bin", "expect", "vim-common", "ncurses-compat-libs", "curl-devel", "wayland-devel", "libzip-devel", "protobuf-devel", "protobuf-compiler", "ca-certificates" ]
 RUN [ "dnf", "-y", "upgrade" ]
 RUN [ "dnf", "clean", "all" ]
+
+# Import Google RPM repository public key.
+# https://www.google.com/linuxrepositories/
+RUN [ "wget", "https://dl.google.com/linux/linux_signing_key.pub" ]
+RUN [ "rpm", "--import", "linux_signing_key.pub" ]
 
 # Install `bazelisk` for all users.
 RUN if [ "$(uname -i)" =  "x86_64" ]; then wget --no-verbose --output-document /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64; fi
@@ -73,21 +84,22 @@ RUN [ "cp", "/root/.bash_profile", "/home/runner/.bash_profile" ]
 COPY [ "./docker/rpm-builder/scripts/build.sh", "/home/runner/build.sh" ]
 COPY [ "./docker/rpm-builder/scripts/clone.sh", "/home/runner/clone.sh" ]
 COPY [ "./docker/rpm-builder/scripts/sign_rpm.sh", "/home/runner/sign_rpm.sh" ]
-COPY [ "./docker/rpm-builder/scripts/sign_rpm.exp", "/home/runner/sign_rpm.exp" ]
+COPY [ "./docker/rpm-builder/scripts/sign_rpm.exp", "/usr/local/bin/sign_rpm.exp" ]
 COPY [ "./docker/rpm-builder/scripts/install_rpm.sh", "/home/runner/install_rpm.sh" ]
 COPY [ "./docker/rpm-builder/scripts/install_src.sh", "/home/runner/install_src.sh" ]
-RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
+
 RUN [ "echo", "export", "GOPATH=/home/runner/go", ">>", "/home/runner/.bash_profile" ]
 RUN [ "echo", "export", "PATH=$PATH:/home/runner/go/bin", ">>", "/home/runner/.bash_profile" ]
 RUN [ "chmod", "+x", "/home/runner/install_rpm.sh", "/home/runner/install_src.sh" ]
-RUN [ "chmod", "+x", "/home/runner/sign_rpm.sh", "/home/runner/sign_rpm.exp" ]
+RUN [ "chmod", "+x", "/home/runner/sign_rpm.sh", "/usr/local/bin/sign_rpm.exp" ]
 RUN [ "chmod", "+x", "/home/runner/build.sh", "/home/runner/clone.sh" ]
 RUN [ "chown", "-R", "runner:docker", "/home/runner" ]
 
-# Run commands as by default as user $UID,
-# else the bind-mounts will be owned by root.
+# Run commands as by default as user `runner`,
+# else the files in the bind-mounts will be owned by user `root`.
 USER "runner"
 RUN source ~/.bash_profile
+WORKDIR "/home/runner"
 
 
 # RPM Testing
