@@ -62,11 +62,11 @@ RUN [ "rpm", "--import", "linux_signing_key.pub" ]
 
 # Add prebuilt RPM packages and install them.
 RUN [ "touch", "/home/runner/.dockerenv" ]
-COPY [ "./.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
 COPY [ "./.rpms/cuttlefish-integration-*", "/home/runner/.rpms/" ]
 COPY [ "./.rpms/cuttlefish-user-*", "/home/runner/.rpms/" ]
+COPY [ "./.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
 
-RUN for FILE in /home/runner/.rpms/* ; do dnf -y --skip-broken install $FILE; done
+RUN for FILE in /home/runner/.rpms/* ; do dnf -y install $FILE; done
 RUN [ "dnf", "clean", "all" ]
 
 # Run commands as user `runner`, who is the owner of the RPM packages.

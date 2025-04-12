@@ -133,6 +133,7 @@ jobs:
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.REPOSITORY_OWNER }}
+      repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}
@@ -158,6 +159,7 @@ jobs:
     with:
       registry: 'ghcr.io'
       username: ${{ GITHUB.REPOSITORY_OWNER }}
+      repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
       platform: ${{ MATRIX.PLATFORM }}
       runner: ${{ MATRIX.RUNNER }}
       image: ${{ MATRIX.IMAGE }}

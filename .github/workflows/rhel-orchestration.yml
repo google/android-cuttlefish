@@ -25,6 +25,11 @@ on:
         default: latest
         required: false
         type: string
+      repository:
+        description: 'GitHub repository'
+        default: android-cuttlefish
+        required: true
+        type: string
       platform:
         description: 'The platform to build for'
         default: linux/amd64
@@ -76,6 +81,12 @@ jobs:
             type=sha
             latest
 
+      - shell: bash
+        id: setup
+        run: |
+          echo "RUNNER_GID=$(id -g)" >> $GITHUB_OUTPUT
+          echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
+
       # https://github.com/marketplace/actions/build-and-push-docker-images
       - uses: 'actions/checkout@v4'
       - uses: 'docker/setup-buildx-action@v3'
@@ -90,8 +101,8 @@ jobs:
           labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
           tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
           build-args: |
-            RUNNER_GID=${{ NEEDS.SETUP.OUTPUTS.RUNNER_GID }}
-            RUNNER_UID=${{ NEEDS.SETUP.OUTPUTS.RUNNER_UID }}
+            RUNNER_GID=${{ STEPS.SETUP.OUTPUTS.RUNNER_GID }}
+            RUNNER_UID=${{ STEPS.SETUP.OUTPUTS.RUNNER_UID }}
             LINUX_IMAGE=${{ VARS.RHEL_LINUX_IMAGE }}
 
       # Note: The digest comes from `buildx`, not the metadata.
