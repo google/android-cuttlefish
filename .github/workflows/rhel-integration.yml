@@ -1,0 +1,117 @@
+name: RHEL Integration
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        description: 'GitHub auth token'
+        required: true
+    inputs:
+      registry:
+        description: 'Docker registry hostname'
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        description: 'Docker registry username'
+        required: true
+        type: string
+      image:
+        description: 'Docker image name'
+        required: true
+        type: string
+      tag:
+        description: 'Docker image tag'
+        default: latest
+        required: false
+        type: string
+      repository:
+        description: 'GitHub repository'
+        default: android-cuttlefish
+        required: true
+        type: string
+      platform:
+        description: 'The platform to build for'
+        default: linux/amd64
+        required: false
+        type: string
+      runner:
+        description: 'GitHub actions runner image label'
+        default: ${{ VARS.RUNNER_86 }}
+        required: false
+        type: string
+
+jobs:
+
+  create-image:
+    runs-on: ${{ INPUTS.RUNNER }}
+    env:
+      DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}
+    steps:
+
+      # https://github.com/actions/download-artifact
+      - uses: 'actions/download-artifact@v4'
+        id: restore-rpm-packages
+        with:
+          name: ${{ INPUTS.REPOSITORY }}-rhel9-${{ RUNNER.ARCH }}-unsigned
+          path: '${{ RUNNER.TEMP }}/.rpms'
+
+      - name: List directory ${{ RUNNER.TEMP }}/.rpms
+        id: list-rpm-packages
+        shell: bash
+        run: |
+          printf "Ubuntu mount-point: %s" "${{ RUNNER.TEMP }}/.rpms"
+          ls -la ${{ RUNNER.TEMP }}/.rpms
+          ls -lan ${{ RUNNER.TEMP }}/.rpms
+
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: 'ghcr.io'
+          username: ${{ GITHUB.REPOSITORY_OWNER }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
+
+      # https://github.com/docker/metadata-action
+      - uses: 'docker/metadata-action@v5'
+        id: metadata
+        with:
+          images: ${{ ENV.DOCKER_IMAGE }}
+          tags: |
+            type=sha
+            latest
+
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+      - uses: 'actions/checkout@v4'
+      - uses: 'docker/setup-buildx-action@v3'
+      - uses: 'docker/setup-qemu-action@v3'
+        if: ${{ INPUTS.PLATFORM != 'linux/amd64' }}
+        with: { platforms: arm64 }
+
+      - shell: bash
+        id: setup
+        run: |
+          echo "RUNNER_GID=$(id -g)" >> $GITHUB_OUTPUT
+          echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
+
+      - uses: 'docker/build-push-action@v6'
+        id: build
+        with:
+          context: .
+          target: integration
+          file: docker/rhel-integration/Dockerfile
+          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
+          platforms: ${{ INPUTS.PLATFORM }}
+          labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
+          tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
+          build-args: |
+            RUNNER_GID=${{ STEPS.SETUP.OUTPUTS.RUNNER_GID }}
+            RUNNER_UID=${{ STEPS.SETUP.OUTPUTS.RUNNER_UID }}
+            LINUX_IMAGE=${{ VARS.RHEL_LINUX_IMAGE }}
+
+      # Note: The digest comes from `buildx`, not the metadata.
+      # https://github.com/actions/attest-build-provenance
+      - uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ${{ ENV.DOCKER_IMAGE }}
+          subject-digest: ${{ STEPS.BUILD.OUTPUTS.DIGEST }}
+          push-to-registry: true

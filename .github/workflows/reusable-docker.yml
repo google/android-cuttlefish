@@ -1,0 +1,134 @@
+name: Reusable Docker Container Run
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        description: 'GitHub auth token'
+        required: true
+      # TODO: This might be the signature required.
+      # https://dl.google.com/linux/linux_signing_key.pub
+      pgp_signature:
+        description: 'PGP signature for signing RPM'
+        required: false
+      pgp_passphrase:
+        description: 'Passphrase for PGP signature'
+        required: false
+    inputs:
+      platform:
+        description: 'The platform to build for'
+        default: linux/amd64
+        required: false
+        type: string
+      registry:
+        description: 'Docker registry hostname'
+        default: 'ghcr.io'
+        required: false
+        type: string
+      username:
+        description: 'Docker registry username'
+        required: true
+        type: string
+      image:
+        description: 'Docker image name'
+        required: true
+        type: string
+      tag:
+        description: 'Docker image tag'
+        default: latest
+        required: false
+        type: string
+      repository:
+        description: 'GitHub repository'
+        default: android-cuttlefish
+        required: true
+        type: string
+      branch:
+        description: 'GitHub branch'
+        default: main
+        required: false
+        type: string
+      runner:
+        description: 'GitHub runner image label'
+        default: ${{ VARS.RUNNER_86 }}
+        required: false
+        type: string
+      runner_gid:
+        description: 'GitHub runner GID'
+        default: 118
+        required: false
+        type: string
+      runner_uid:
+        description: 'GitHub runner UIG'
+        default: 118
+        required: false
+        type: string
+jobs:
+
+  docker-run:
+    runs-on: ${{ INPUTS.RUNNER }}
+    env:
+      DOCKER_IMAGE: ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }}:${{ INPUTS.TAG }}
+      DOCKER_OPTIONS: '--name ${{ INPUTS.IMAGE }} --platform ${{ INPUTS.PLATFORM }} --attach STDERR --attach STDOUT --quiet'
+      ENV_VARS: '--env REPO_USER="${{ INPUTS.USERNAME }}" --env REPO_NAME="${{ INPUTS.REPOSITORY }}" --env REPO_BRANCH="${{ INPUTS.BRANCH }}" --env RUNNER_UID="${{ INPUTS.RUNNER_UID }}" --env RUNNER_GID="${{ INPUTS.RUNNER_GID }}"'
+    steps:
+
+      # https://github.com/docker/login-action
+      - name: Log in to the Container registry
+        uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: ${{ INPUTS.REGISTRY }}
+          username: ${{ INPUTS.USERNAME }}
+          password: ${{ SECRETS.TOKEN }}
+
+      # Need to check out once again, in order to utilize `hashFiles()`.
+      - uses: 'actions/checkout@v4'
+      - name: Restore bazel cache
+        id: bazel-cache-restore
+        uses: 'actions/cache/restore@v4'
+        with:
+          key: bazel-cache-${{ RUNNER.ARCH }}-${{ hashFiles('./base/cvd/**.bazel') }}
+          restore-keys: bazel-cache-${{ RUNNER.ARCH }}-
+          path: ${{ RUNNER.TEMP }}/.cache
+
+      # https://docs.docker.com/reference/cli/docker/container/run/
+      # https://docs.docker.com/reference/cli/docker/container/cp/
+      # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
+      - name: Run ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }} with ${{ INPUTS.USERNAME }} / ${{ INPUTS.REPOSITORY }} / ${{ INPUTS.BRANCH }}
+        id: build-rpm-packages
+        shell: bash
+        env:
+          VOLUMES: '--volume ${{ RUNNER.TEMP }}/.cache:/home/runner/.cache --volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
+        run: |
+          mkdir -p ${{ RUNNER.TEMP }}/.rpms
+          mkdir -p ${{ RUNNER.TEMP }}/.cache
+          docker run $DOCKER_OPTIONS $VOLUMES $ENV_VARS $DOCKER_IMAGE
+
+      # https://github.com/actions/upload-artifact
+      - name: Retain Artifacts (*.rpm)
+        uses: 'actions/upload-artifact@v4'
+        if: ${{ success() }}
+        id: retain-rpm-packages
+        with:
+          name: ${{ INPUTS.REPOSITORY }}-rhel9-${{ RUNNER.ARCH }}-unsigned
+          path: "${{ RUNNER.TEMP }}/.rpms"
+          include-hidden-files: 'true'
+          retention-days: 14
+
+      - name: List directory ${{ RUNNER.TEMP }}/.rpms
+        id: list-rpm-packages
+        shell: bash
+        run: |
+          [ "$(ls -1 ${{ RUNNER.TEMP }}/.rpms/*.rpm 2>/dev/null | wc -l)" -lt 4 ] && echo "::warning file=reusable-docker.yml,title=RPM Build::Less than 4 ${{ INPUTS.REPOSITORY }} RPM packages were built."
+          printf "Ubuntu mount-point: %s" "${{ RUNNER.TEMP }}/.rpms"
+          ls -la ${{ RUNNER.TEMP }}/.rpms
+          ls -lan ${{ RUNNER.TEMP }}/.rpms
+
+      # https://github.com/actions/cache
+      - name: Save bazel cache
+        id: bazel-cache-save
+        uses: 'actions/cache/save@v4'
+        with:
+          key: ${{ steps.bazel-cache-restore.outputs.cache-primary-key }}
+          path: ${{ RUNNER.TEMP }}/.cache

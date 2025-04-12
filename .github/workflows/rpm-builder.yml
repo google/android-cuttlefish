@@ -1,0 +1,179 @@
+name: RPM Builder
+
+on:
+  push:
+  pull_request:
+    paths:
+      - '.github/workflows/rhel-orchestration.yml'
+      - '.github/workflows/rhel-integration.yml'
+      - '.github/workflows/reusable-docker.yml'
+      - '.github/workflows/rpm-builder.yml'
+      - 'docker/rhel-orchestration/**'
+      - 'docker/rhel-integration/**'
+      - 'docker/rpm-builder/**'
+      - 'tools/rpmbuild/**'
+
+jobs:
+
+  create_image:
+    runs-on: ${{ VARS.RUNNER_X86 }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rpm-builder-amd64
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rpm-builder-arm64
+    outputs:
+      RUNNER_UID: ${{ STEPS.SETUP.OUTPUTS.RUNNER_UID }}
+      RUNNER:GID: ${{ STEPS.SETUP.OUTPUTS.RUNNER_GID }}
+    steps:
+      - uses: 'actions/checkout@v4'
+      - uses: 'docker/login-action@v3'
+        id: container-registry
+        with:
+          registry: 'ghcr.io'
+          username: ${{ GITHUB.REPOSITORY_OWNER }}
+          password: ${{ SECRETS.GITHUB_TOKEN }}
+
+      # https://github.com/docker/metadata-action
+      - uses: 'docker/metadata-action@v5'
+        id: metadata
+        with:
+          images: ghcr.io/${{ GITHUB.REPOSITORY_OWNER }}/${{ MATRIX.IMAGE }}
+          tags: |
+            type=sha
+            latest
+
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+      - uses: 'docker/setup-buildx-action@v3'
+      - uses: 'docker/setup-qemu-action@v3'
+        if: ${{ MATRIX.PLATFORM == 'linux/arm64' }}
+        with: { platforms: arm64 }
+
+      - shell: bash
+        id: setup
+        run: |
+          echo "RUNNER_GID=$(id -g)" >> $GITHUB_OUTPUT
+          echo "RUNNER_UID=$(id -u)" >> $GITHUB_OUTPUT
+          REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}
+          echo "REPOSITORY_NAME=${REPOSITORY_NAME}" >> $GITHUB_OUTPUT
+          echo "::group::Setup Info"
+          echo "::notice file=rpm-builder.yml,title=Repository: $REPOSITORY_NAME"
+          echo "::endgroup::"
+
+      - uses: 'docker/build-push-action@v6'
+        id: build
+        with:
+          context: .
+          target: builder
+          file: docker/rpm-builder/Dockerfile
+          push: ${{ GITHUB.EVENT_NAME != 'pull_request' }}
+          platforms: ${{ MATRIX.PLATFORM }}
+          labels: ${{ STEPS.METADATA.OUTPUTS.LABELS }}
+          tags: ${{ STEPS.METADATA.OUTPUTS.TAGS }}
+          build-args: |
+            GITHUB_USER=${{ GITHUB.REPOSITORY_OWNER }}
+            GITHUB_REPO=${{ STEPS.SETUP.OUTPUTS.REPOSITORY_NAME }}
+            GITHUB_BRANCH=${{ GITHUB.HEAD_REF || GITHUB.REF_NAME }}
+            RUNNER_GID=${{ STEPS.SETUP.OUTPUTS.RUNNER_GID }}
+            RUNNER_UID=${{ STEPS.SETUP.OUTPUTS.RUNNER_UID }}
+            LINUX_IMAGE=${{ VARS.RHEL_LINUX_IMAGE }}
+
+      # Note: The digest comes from `buildx`, not the metadata.
+      # https://github.com/actions/attest-build-provenance
+      - uses: 'actions/attest-build-provenance@v2'
+        with:
+          subject-name: ghcr.io/${{ GITHUB.REPOSITORY_OWNER }}/${{ MATRIX.IMAGE }}
+          subject-digest: ${{ STEPS.BUILD.OUTPUTS.DIGEST }}
+          push-to-registry: true
+
+  # This must be a job, in order to pass `secrets`.
+  build_packages:
+    uses: ./.github/workflows/reusable-docker.yml
+    needs: [ create_image ]
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.REPOSITORY_OWNER }}
+      repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
+      branch: ${{ GITHUB.HEAD_REF || GITHUB.REF_NAME }}
+      platform: ${{ MATRIX.PLATFORM }}
+      runner_gid: ${{ NEEDS.CREATE_IMAGE.OUTPUTS.RUNNER_GID }}
+      runner_uid: ${{ NEEDS.CREATE_IMAGE.OUTPUTS.RUNNER_UID }}
+      runner: ${{ MATRIX.RUNNER }}
+      image: ${{ MATRIX.IMAGE }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+    strategy:
+      max-parallel: 2
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rpm-builder-amd64
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rpm-builder-arm64
+
+  # This must be a job, in order to pass `secrets`.
+  preinstall_integration:
+    uses: ./.github/workflows/rhel-integration.yml
+    needs: [ build_packages ]
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.REPOSITORY_OWNER }}
+      repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
+      platform: ${{ MATRIX.PLATFORM }}
+      runner: ${{ MATRIX.RUNNER }}
+      image: ${{ MATRIX.IMAGE }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rhel-integration-amd64
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rhel-integration-arm64
+
+  # This must be a job, in order to pass `secrets`.
+  preinstall_orchestration:
+    uses: ./.github/workflows/rhel-orchestration.yml
+    needs: [ build_packages ]
+    with:
+      registry: 'ghcr.io'
+      username: ${{ GITHUB.REPOSITORY_OWNER }}
+      repository: ${{ GITHUB.EVENT.REPOSITORY.NAME }}
+      platform: ${{ MATRIX.PLATFORM }}
+      runner: ${{ MATRIX.RUNNER }}
+      image: ${{ MATRIX.IMAGE }}
+    secrets:
+      token: ${{ SECRETS.GITHUB_TOKEN }}
+    strategy:
+      max-parallel: 2
+      fail-fast: true
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            runner: ${{ VARS.RUNNER_X86 }}
+            image: rhel-orchestration-amd64
+          - platform: linux/arm64
+            runner: ${{ VARS.RUNNER_ARM }}
+            image: rhel-orchestration-arm64
