@@ -5,7 +5,7 @@
 cd "${HOME}/.rpms" || echo "${HOME}/.rpms not found, exiting now." && exit 1
 
 PACKAGES="nano"
-for FILE in ${HOME}/.rpms/*.rpm; do
+for FILE in ${HOME}/.rpms; do
     PACKAGES="${PACKAGES} $FILE"
 done
 echo "Packages to install: ${PACKAGES}"

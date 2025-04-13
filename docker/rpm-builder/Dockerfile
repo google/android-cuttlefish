@@ -79,11 +79,12 @@ COPY [ "./docker/rpm-builder/scripts/install_rpm.sh", "/home/runner/install_rpm.
 COPY [ "./docker/rpm-builder/scripts/patch_zlib.sh", "/home/runner/patch_zlib.sh" ]
 COPY [ "./docker/rpm-builder/build_rpm_spec.sh", "/home/runner/build_rpm_spec.sh" ]
 
+
 RUN [ "echo", "export", "GOPATH=/home/runner/go", ">>", "/home/runner/.bash_profile" ]
 RUN [ "echo", "export", "PATH=$PATH:/home/runner/go/bin", ">>", "/home/runner/.bash_profile" ]
 RUN [ "echo", "export", "BUILDX_GIT_LABELS=1", ">>", "/home/runner/.bash_profile" ]
 
-RUN [ "chmod", "+x", "/home/runner/build_rpm_spec.sh", "/home/runner/patch_zlib.sh", "/home/runner/install_rpm.sh" ]
+RUN [ "chmod", "+x", "/home/runner/install_rpm.sh", "/home/runner/patch_zlib.sh", "/home/runner/build_rpm_spec.sh" ]
 RUN [ "chmod", "+x", "/home/runner/sign_rpm.sh", "/usr/local/bin/sign_rpm.exp" ]
 RUN [ "chmod", "+x", "/home/runner/build.sh", "/home/runner/clone.sh" ]
 RUN [ "chown", "-R", "runner:docker", "/home/runner" ]
