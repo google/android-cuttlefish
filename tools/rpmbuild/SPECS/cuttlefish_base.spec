@@ -1,5 +1,5 @@
 Name:           cuttlefish-base
-Version:        1.3.0
+Version:        1.4.0
 Release:        1%{?dist}
 Summary:        Cuttlefish Android Virtual Device
 
@@ -10,7 +10,8 @@ BuildArch:      x86_64 aarch64
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Note: `ncurses-compat-libs` require EPEL repository and `protobuf` requires CRB repository.
-BuildRequires:  go, cmake, gcc-c++, curl-devel, openssl-devel, wayland-devel ncurses-compat-libs, protobuf-devel, protobuf-compiler, vim-common
+BuildRequires:  go, cmake, gcc-c++, ncurses-compat-libs, protobuf-devel, protobuf-compiler, vim-common
+BuildRequires:   curl-devel, openssl-devel, wayland-devel, libaom-devel, opus-devel, libzip-devel
 
 Requires:       shadow-utils, redhad-lsb-5.0, ebtables-legacy, iproute
 Requires:       iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
@@ -18,9 +19,7 @@ Requires:       libcurl, libdrm, mesa-libGL, libusb, libXext, net-tools, openssl
 Requires:       curl >= 7.63.0, glibc >= 2.34, libgcc >= 3.0, libstdc++ >= 11
 Requires:       fmt-devel, gflags-devel, jsoncpp-devel, protobuf-devel, openssl-devel, libxml2-devel
 #Requires:      f2fs-tools, libx11-6, libz3-4
-# libwayland-client0, libwayland-server0
 Requires:       wayland-utils
-
 
 %description
 Cuttlefish Android Virtual Device
@@ -32,9 +31,11 @@ Cuttlefish Android Virtual Device that are used in all deployments.
 
 
 %build
-# WARNING: For repository 'zlib', the root module requires module version zlib@1.3.1.bcr.3, but got zlib@1.3.1.bcr.4 in the resolved dependency graph.
-# Please update the version in your MODULE.bazel or set --check_direct_dependencies=off
-cd ../../../base/cvd && bazel build --ui_event_filters=-INFO --verbose_failures --check_direct_dependencies=off ...
+# The root module requires module version zlib@1.3.1.bcr.3,
+# but got zlib@1.3.1.bcr.4 in the resolved dependency graph.
+/home/runner/patch_zlib.sh
+
+cd ../../../base/cvd && bazel build --ui_event_filters=-INFO --verbose_failures ...
 
 %install
 rm -rf $RPM_BUILD_ROOT

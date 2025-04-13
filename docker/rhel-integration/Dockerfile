@@ -1,28 +1,18 @@
-# Dockerfile based on `rockylinux/rockylinux:9.5`
+# RHEL Integration Dockerfile
 ARG LINUX_IMAGE=rockylinux/rockylinux:9.5
 FROM $LINUX_IMAGE AS base_image
 LABEL description="RHEL Integration"
 LABEL version="1.0.2"
 LABEL repository="https://github.com/google/android-cuttlefish"
 LABEL maintainer="Martin Zeitler"
+RUN [ "touch", "/root/.dockerenv" ]
 SHELL [ "/bin/bash", "-c" ]
-
-# Arguments
-ARG RUNNER_GID="118"
-ARG RUNNER_UID="1001"
-ENV GID="${RUNNER_GID}"
-ENV UID="${RUNNER_UID}"
-
-# Adding the user provides the home directory.
-RUN groupadd -f -g ${GID} docker
-RUN useradd -g ${GID} -u ${UID} -s /bin/bash runner
-
-# Don't ask for the `sudo` password.
-RUN [ "echo", "%docker", "ALL=(ALL)", "NOPASSWD:", "ALL", ">", "/etc/sudoers.d/docker.conf" ]
+WORKDIR "/root"
+USER "root"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
-RUN [ "dnf", "-y", "install", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm" ]
+RUN [ "dnf", "-y", "install", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"]
 RUN [ "rm", "/etc/yum.repos.d/epel-cisco-openh264.repo" ]
 RUN [ "dnf", "config-manager", "--set-enabled", "crb" ]
 RUN [ "dnf", "-y", "upgrade" ]
@@ -31,9 +21,7 @@ RUN [ "dnf", "clean", "all" ]
 
 # Integration
 FROM base_image AS integration
-
-# Provide an interactive shell.
-ENTRYPOINT [ "/bin/bash" ]
+ARG ARTIFACT_PATH=./.rpms
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
@@ -47,30 +35,19 @@ EXPOSE 15550-15560
 # Expose ADB
 EXPOSE 6520-6620
 
-# https://docs.docker.com/reference/dockerfile/#notes-about-specifying-volumes
-# The host directory is declared at container run-time, with `--volume`, eg.
-# --volume /home/username/android-cuttlefish/.rpms/:/home/github/.rpms
-RUN [ "mkdir", "/home/runner/.rpms" ]
-VOLUME [ "/home/runner/.rpms" ]
-WORKDIR "/home/runner"
+# Restore build artifacts.
+RUN [ "mkdir", "/root/.rpms" ]
+COPY [ "${ARTIFACT_PATH}/cuttlefish-integration-*", "/root/.rpms" ]
+COPY [ "${ARTIFACT_PATH}/cuttlefish-user-*", "/root/.rpms/" ]
+COPY [ "${ARTIFACT_PATH}/cuttlefish-base-*", "/root/.rpms/" ]
 
-# Import Google RPM repository public key.
-# https://www.google.com/linuxrepositories/
-RUN [ "dnf", "-y", "install", "wget"]
-RUN [ "wget", "https://dl.google.com/linux/linux_signing_key.pub" ]
-RUN [ "rpm", "--import", "linux_signing_key.pub" ]
+# Container scripts.
+COPY [ "./docker/rpm-builder/scripts/install_rpm.sh", "/root/install_rpm.sh" ]
+RUN [ "chmod", "+x", "/root/install_rpm.sh" ]
 
-# Add prebuilt RPM packages and install them.
-RUN [ "touch", "/home/runner/.dockerenv" ]
-COPY [ "/home/runner/work/_temp/.rpms/cuttlefish-integration-*", "/home/runner/.rpms/" ]
-COPY [ "/home/runner/work/_temp/.rpms/cuttlefish-user-*", "/home/runner/.rpms/" ]
-COPY [ "/home/runner/work/_temp/.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
-# COPY [ "./.rpms/cuttlefish-integration-*", "/home/runner/.rpms/" ]
-# COPY [ "./.rpms/cuttlefish-user-*", "/home/runner/.rpms/" ]
-# COPY [ "./.rpms/cuttlefish-base-*", "/home/runner/.rpms/" ]
-
-RUN for FILE in /home/runner/.rpms/* ; do dnf -y install $FILE; done
+# Install RPM.
+RUN [ "/bin/bash", "-c", "/root/install_rpm.sh" ]
 RUN [ "dnf", "clean", "all" ]
 
-# Run commands as user `runner`, who is the owner of the RPM packages.
-USER "runner"
+# Provide an interactive shell.
+ENTRYPOINT [ "/bin/bash" ]
