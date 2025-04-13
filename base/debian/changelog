@@ -1,8 +1,28 @@
-cuttlefish-common (1.4.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.4.0) stable; urgency=medium
 
-  * 
+  * Disable android10-gsi boot test for now. - https://github.com/google/android-cuttlefish/pull/1032
+  * move_self_to_cgroup - https://github.com/google/android-cuttlefish/pull/1031
+  * Add default_vvmtruststore_file_name parameter - https://github.com/google/android-cuttlefish/pull/1030
+  * Changes to simplify the internal import configuration - https://github.com/google/android-cuttlefish/pull/1028
+  * Import sensors_simulator command and its dependencies - https://github.com/google/android-cuttlefish/pull/1025
+  * Check for reboot completion and rebalance threads - https://github.com/google/android-cuttlefish/pull/1024
+  * Move stamp_helper.sh into base directory. - https://github.com/google/android-cuttlefish/pull/1022
+  * Restore gpu_mode flag and propagate gpu_mode presence from cvd canonical configs - https://github.com/google/android-cuttlefish/pull/1021
+  * Enforce misc-include-cleaner on mkenvimage_slim - https://github.com/google/android-cuttlefish/pull/1019
+  * Libwebrtc and dependencies - https://github.com/google/android-cuttlefish/pull/1017
+  * Make `flags_defaults.h` dependencies explicit - https://github.com/google/android-cuttlefish/pull/1013
+  * Allow client to set the snapshot id. - https://github.com/google/android-cuttlefish/pull/1012
+  * Use ubuntu 22.04 for consistency and update debian container images - https://github.com/google/android-cuttlefish/pull/1009
+  * Implement display composition parser - https://github.com/google/android-cuttlefish/pull/985
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 04 Apr 2025 13:05:10 -0700
+
+cuttlefish-common (1.3.1) stable; urgency=medium
+
+  * HO - Allow client to set the snapshot id.
+  * Move stamp_helper.sh into base directory.
+
+ -- Sergio Rodriguez <sorama@google.com>  Mon, 07 Apr 2025 16:00:00 -0800
 
 cuttlefish-common (1.3.0) stable; urgency=medium
 
