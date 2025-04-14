@@ -52,6 +52,7 @@ package_files(
         "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml": "cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml",
         "@swiftshader//:vk_swiftshader": "cuttlefish-common/bin/libvk_swiftshader.so",
         "//cuttlefish/host/graphics/vulkan:vk_swiftshader_icd": "cuttlefish-common/bin/vk_swiftshader_icd.json",
+        "@jasonjason//:test_kokoro_cc": "cuttlefish-common/bin/test_kokoro_cc",
     },
     visibility = ["//:android_cuttlefish"],
 )

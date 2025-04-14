@@ -1,0 +1,27 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+py_binary(
+    name = "testing_kokoro_gen",
+    srcs = ["testing_kokoro.py"],
+    main = "testing_kokoro.py",
+)
+
+genrule(
+    name = "gen_test_kokoro",
+    outs = [
+        "test_kokoro.cpp",
+        "test_kokoro.h",
+    ],
+    cmd = "python3 $(location :testing_kokoro_gen) --outdir=$$(dirname $(location test_kokoro.h))",
+    tools = [":testing_kokoro_gen"],
+)
+
+cc_binary(
+    name = "test_kokoro_cc",
+    srcs = [
+        "test_kokoro.cpp",
+        "test_kokoro.h",
+    ],
+)

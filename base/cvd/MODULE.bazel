@@ -249,3 +249,10 @@ git_repository(
     build_file = "@//:BUILD.libwebrtc.bazel",
     remote = "https://webrtc.googlesource.com/src/",
 )
+
+git_repository(
+    name = "jasonjason",
+    commit = "832b3dfcd22a3dd2cc01993037b5f5d8a18011d2",
+    build_file = "@//:BUILD.jasonjason.bazel",
+    remote = "https://github.com/jmacnak/testing",
+)
