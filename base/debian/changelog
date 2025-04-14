@@ -1,3 +1,9 @@
+cuttlefish-common (1.5.0) UNRELEASED; urgency=medium
+
+  *
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Mon, 14 Apr 2025 00:39:22 -0700
+
 cuttlefish-common (1.4.0) stable; urgency=medium
 
   * Disable android10-gsi boot test for now. - https://github.com/google/android-cuttlefish/pull/1032
