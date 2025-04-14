@@ -37,7 +37,7 @@ genrule(
     outs = [
         "shield.cc",
     ],
-    cmd = "./$(location generate_font_cc.sh) \"$<\" shield >\"$@\"",
+    cmd = "./$(location generate_font_cc.sh) \"$<\" Shield >\"$@\"",
     tools = ["generate_font_cc.sh"],
 )
 
