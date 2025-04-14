@@ -11,7 +11,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Note: `ncurses-compat-libs` require EPEL repository and `protobuf` requires CRB repository.
 BuildRequires:  go, cmake, gcc-c++, ncurses-compat-libs, protobuf-devel, protobuf-compiler, vim-common
-BuildRequires:   curl-devel, openssl-devel, wayland-devel, libaom-devel, opus-devel, libzip-devel, libzstd-devel
+BuildRequires:   curl-devel, openssl-devel, wayland-devel, libaom-devel, opus-devel, libzip-devel
 
 Requires:       shadow-utils, redhad-lsb-5.0, ebtables-legacy, iproute
 Requires:       iptables-legacy, bridge-utils, dnsmasq, libfdt, e2fsprogs, ebtables, iptables, bsdtar
@@ -31,8 +31,9 @@ Cuttlefish Android Virtual Device that are used in all deployments.
 
 
 %build
-# WARNING: For repository 'zlib', the root module requires module version zlib@1.3.1.bcr.3, but got zlib@1.3.1.bcr.4 in the resolved dependency graph.
-if [ -f /home/runner/patch_zlib.sh ] && /home/runner/patch_zlib.sh
+# The root module requires module version zlib@1.3.1.bcr.3,
+# but got zlib@1.3.1.bcr.4 in the resolved dependency graph.
+/home/runner/patch_zlib.sh
 
 cd ../../../base/cvd && bazel build --ui_event_filters=-INFO --verbose_failures ...
 
