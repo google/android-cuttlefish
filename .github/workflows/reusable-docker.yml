@@ -59,8 +59,8 @@ on:
         required: false
         type: string
       runner_uid:
-        description: 'GitHub runner UIG'
-        default: 118
+        description: 'GitHub runner UID'
+        default: 1001
         required: false
         type: string
 jobs:
@@ -78,11 +78,11 @@ jobs:
         run: |
           PLATFORM='${{ INPUTS.PLATFORM }}'
           ARTIFACT_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}-rhel9-${PLATFORM#linux/}-unsigned
-          echo "CACHE_PATH=${{ RUNNER.TEMP }}/.cache" >> $GITHUB_OUTPUT
-          echo "ARTIFACT_PATH=${{ RUNNER.TEMP }}/.rpms" >> $GITHUB_OUTPUT
           echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          echo "ARTIFACT_PATH=${{ RUNNER.TEMP }}/.rpms" >> $GITHUB_OUTPUT
+          echo "CACHE_PATH=${{ RUNNER.TEMP }}/.cache" >> $GITHUB_OUTPUT
           echo "::group::Setup Info"
-          echo "::notice file=reusable-docker.yml,line={83},title=Artifact Name: ${ARTIFACT_NAME}"
+          echo "::notice file=reusable-docker.yml,line={85},title=Artifact Name: ${ARTIFACT_NAME}"
           echo "::endgroup::"
 
       # https://github.com/docker/login-action
@@ -107,14 +107,14 @@ jobs:
       # https://docs.docker.com/reference/cli/docker/container/run/
       # https://docs.docker.com/reference/cli/docker/container/cp/
       # --entrypoint ${{ INPUTS.ENTRY-POINT }} cannot be changed with GitHub docker.
-      - name: Run image ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }} with source https://github.com/${{ INPUTS.USERNAME }}/${{ INPUTS.REPOSITORY }}.git#${{ INPUTS.BRANCH }}
+      - name: 'Run image ${{ INPUTS.REGISTRY }}/${{ INPUTS.USERNAME }}/${{ INPUTS.IMAGE }} with source branch: https://github.com/${{ INPUTS.USERNAME }}/${{ INPUTS.REPOSITORY }}.git#${{ INPUTS.BRANCH }}'
         id: build-rpm-packages
         shell: bash
         env:
-          VOLUMES: '--volume ${{ RUNNER.TEMP }}/.cache:/home/runner/.cache --volume ${{ RUNNER.TEMP }}/.rpms:/home/runner/.rpms'
+          VOLUMES: '--volume ${{ STEPS.SETUP.OUTPUTS.CACHE_PATH }}:/home/runner/.cache --volume ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}:/home/runner/.rpms'
         run: |
-          mkdir -p ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}
           mkdir -p ${{ STEPS.SETUP.OUTPUTS.CACHE_PATH }}
+          mkdir -p ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}
           docker run $DOCKER_OPTIONS $VOLUMES $ENV_VARS $DOCKER_IMAGE
 
       # https://github.com/actions/upload-artifact
@@ -134,7 +134,7 @@ jobs:
         run: |
           if [ "$(ls -1 ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}/*.rpm 2>/dev/null | wc -l)" -lt 4 ]; then
             echo "::warning file=reusable-docker.yml,line=134,title=RPM Build::Less than the expected 4 RPM packages were built."
-            # for FILE in ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}/*.rpm; do echo "::notice file=reusable-docker.yml,line=136,title=${FILE}"; done
+            for package in ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}/*.rpm; do echo "::notice file=reusable-docker.yml,line=136,title=${package}"; done
           fi
           echo "Ubuntu mount-point: ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}"
           ls -la ${{ STEPS.SETUP.OUTPUTS.ARTIFACT_PATH }}
@@ -145,5 +145,5 @@ jobs:
         id: bazel-cache-save
         uses: 'actions/cache/save@v4'
         with:
-          key: ${{ steps.bazel-cache-restore.outputs.cache-primary-key }}
           path: ${{ STEPS.SETUP.OUTPUTS.CACHE_PATH }}
+          key: ${{ STEPS.BAZEL-CACHE-RESTORE.OUTPUTS.CACHE-PRIMARY-KEY }}

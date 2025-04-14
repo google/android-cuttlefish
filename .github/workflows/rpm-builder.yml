@@ -1,4 +1,6 @@
 name: RPM Builder
+description: |
+  It builds RPM packages and Docker images, with these preinstalled.
 
 on:
   push:
