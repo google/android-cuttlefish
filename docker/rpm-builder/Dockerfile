@@ -20,7 +20,7 @@ ENV UID="${RUNNER_UID}"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
-RUN [ "dnf", "-y", "install", "sudo", "https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm"]
+RUN [ "dnf", "-y", "install", "sudo", "epel-release" ]
 RUN [ "rm", "/etc/yum.repos.d/epel-cisco-openh264.repo" ]
 RUN [ "dnf", "config-manager", "--set-enabled", "crb" ]
 RUN [ "dnf", "-y", "upgrade" ]
