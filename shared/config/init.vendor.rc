@@ -131,5 +131,8 @@ service suspend_blocker /vendor/bin/suspend_blocker
 on early-init
     setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
+on early-init
+    setprop ro.vendor.cuttlefish_service_bluetooth_checker ${ro.boot.cuttlefish_service_bluetooth_checker}
+
 on early-init && property:ro.boot.enable_bootanimation=0
     setprop debug.sf.nobootanimation 1

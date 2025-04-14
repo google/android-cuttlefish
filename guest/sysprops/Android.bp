@@ -1,4 +1,4 @@
-// Copyright 2020 Google Inc. All Rights Reserved.
+// Copyright 2025 Google Inc. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,18 +16,9 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_app {
-    name: "CuttlefishService",
+sysprop_library {
+    name: "cuttlefish_properties",
+    srcs: ["cuttlefish.sysprop"],
+    property_owner: "Vendor",
     vendor: true,
-    srcs: ["java/**/*.java"],
-    static_libs: [
-        "cuttlefish_properties",
-        "guava",
-    ],
-    sdk_version: "current",
-    privileged: true,
-    optimize: {
-        proguard_flags_files: ["proguard.flags"],
-        enabled: true,
-    },
 }

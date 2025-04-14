@@ -4,6 +4,7 @@ ro.boot.wifi_mac_prefix  u:object_r:vendor_wifi_mac_prefix:s0 exact string
 ro.boot.vhal_proxy_server_port  u:object_r:vendor_vhal_proxy_server_port_prop:s0
 ro.boot.wifi_impl u:object_r:vendor_wifi_impl:s0 exact string
 ro.vendor.boot_security_patch u:object_r:vendor_boot_security_patch_level_prop:s0
+ro.vendor.cuttlefish_service_bluetooth_checker u:object_r:vendor_cuttlefish_service_prop:s0 exact bool
 ro.vendor.uwb.dev              u:object_r:vendor_uwb_prop:s0 exact string
 vendor.wlan.firmware.version   u:object_r:vendor_wlan_versions_prop:s0 exact string
 vendor.wlan.driver.version     u:object_r:vendor_wlan_versions_prop:s0 exact string

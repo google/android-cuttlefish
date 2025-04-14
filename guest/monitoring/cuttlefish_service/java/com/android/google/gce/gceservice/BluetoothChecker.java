@@ -21,6 +21,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.util.Log;
 
+import java.util.Optional;
+
+import com.google.cuttlefish.DeviceProperties;
+
 /*
  * A job that checks for Bluetooth being enabled before reporting VIRTUAL_DEVICE_BOOT_COMPLETED. Our
  * devices should always boot with bt enabled, it can be configured in
@@ -39,7 +43,13 @@ public class BluetoothChecker extends JobBase {
         PackageManager pm = context.getPackageManager();
         boolean hasBluetooth = pm.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
         if (!hasBluetooth) {
-            Log.i(LOG_TAG, "Bluetooth checker disabled");
+            Log.i(LOG_TAG, "Bluetooth checker disabled (feature missing)");
+            mEnabled.set(false);
+        }
+        Optional<Boolean> wantsBluetooth =
+            DeviceProperties.cuttlefish_service_bluetooth_checker();
+        if (wantsBluetooth.isPresent() && !wantsBluetooth.get()) {
+            Log.i(LOG_TAG, "Bluetooth checker disabled (by property)");
             mEnabled.set(false);
         }
     }
