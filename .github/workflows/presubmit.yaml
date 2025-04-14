@@ -91,7 +91,7 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Build cvd
