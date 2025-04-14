@@ -20,12 +20,12 @@
 #include <memory>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/frontend/webrtc/display_handler.h"
-#include "host/frontend/webrtc/kernel_log_events_handler.h"
+#include "cuttlefish/host/frontend/webrtc/display_handler.h"
+#include "cuttlefish/host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
 #include "host/frontend/webrtc/libdevice/connection_observer.h"
 #include "host/frontend/webrtc/libdevice/lights_observer.h"
-#include "host/frontend/webrtc/sensors_handler.h"
+#include "cuttlefish/host/frontend/webrtc/sensors_handler.h"
 #include "host/libs/confui/host_virtual_input.h"
 #include "host/libs/input_connector/input_connector.h"
 

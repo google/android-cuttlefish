@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/cvd_video_frame_buffer.h"
+#include "cuttlefish/host/frontend/webrtc/cvd_video_frame_buffer.h"
 
 #include <map>
 #include <mutex>

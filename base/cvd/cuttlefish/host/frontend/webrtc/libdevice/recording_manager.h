@@ -37,7 +37,7 @@ class Source {
 public:
   size_t width_;
   size_t height_;
-  std::shared_ptr<webrtc::VideoTrackSourceInterface> video_;
+  std::shared_ptr<::webrtc::VideoTrackSourceInterface> video_;
 };
 
 class RecordingManager {
@@ -45,7 +45,7 @@ public:
   RecordingManager();
 
   void AddSource(size_t width, size_t height,
-           std::shared_ptr<webrtc::VideoTrackSourceInterface> video,
+           std::shared_ptr<::webrtc::VideoTrackSourceInterface> video,
            const std::string& label);
   void RemoveSource(const std::string& label);
   void Start();
