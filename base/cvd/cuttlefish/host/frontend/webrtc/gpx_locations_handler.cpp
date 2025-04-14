@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/gpx_locations_handler.h"
+#include "cuttlefish/host/frontend/webrtc/gpx_locations_handler.h"
 
 #include <unistd.h>
 

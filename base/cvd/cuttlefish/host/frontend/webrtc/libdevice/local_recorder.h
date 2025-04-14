@@ -35,7 +35,7 @@ public:
   static std::unique_ptr<LocalRecorder> Create(const std::string& filename);
 
   void AddDisplay(const std::string& label, size_t width, size_t height,
-                  std::shared_ptr<webrtc::VideoTrackSourceInterface> source);
+                  std::shared_ptr<::webrtc::VideoTrackSourceInterface> source);
   void Stop();
 
 private:

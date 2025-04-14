@@ -38,7 +38,7 @@ class ScreenshotHandler {
   Result<void> Screenshot(std::uint32_t display_number,
                           const std::string& screenshot_path);
 
-  void OnFrame(std::uint32_t display_number, SharedFrame& buffer);
+  void OnFrame(std::uint32_t display_number, SharedFrame& frame);
 
  private:
   std::mutex pending_screenshot_displays_mutex_;

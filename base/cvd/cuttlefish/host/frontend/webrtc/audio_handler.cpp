@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/audio_handler.h"
+#include "cuttlefish/host/frontend/webrtc/audio_handler.h"
 
 #include <algorithm>
 #include <chrono>
@@ -531,7 +531,6 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
       } else if (muted) {
         // The source is muted, just fill the buffer with zeros and return
         memset(rx_buffer + bytes_read, 0, buffer.len() - bytes_read);
-        bytes_read = buffer.len();
       } else {
         auto bytes_received = res * bytes_per_sample * stream_desc.channels;
         holding_buffer.count += bytes_received;

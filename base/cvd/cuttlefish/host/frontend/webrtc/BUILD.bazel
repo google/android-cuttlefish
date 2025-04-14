@@ -1,5 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
-# load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -29,16 +29,77 @@ cc_library(
     ],
 )
 
-# cc_binary(
-# name = "webrtc",
-# srcs = ["main.cpp"],
-# copts = COPTS,
-# deps = [
-# ],
-# )
+cc_binary(
+    name = "webrtc",
+    srcs = [
+        "adb_handler.cpp",
+        "adb_handler.h",
+        "audio_handler.cpp",
+        "audio_handler.h",
+        "bluetooth_handler.cpp",
+        "bluetooth_handler.h",
+        "client_server.cpp",
+        "client_server.h",
+        "connection_observer.cpp",
+        "connection_observer.h",
+        "cvd_video_frame_buffer.cpp",
+        "cvd_video_frame_buffer.h",
+        "display_handler.cpp",
+        "display_handler.h",
+        "gpx_locations_handler.cpp",
+        "gpx_locations_handler.h",
+        "kernel_log_events_handler.cpp",
+        "kernel_log_events_handler.h",
+        "kml_locations_handler.cpp",
+        "kml_locations_handler.h",
+        "location_handler.cpp",
+        "location_handler.h",
+        "main.cpp",
+        "screenshot_handler.cpp",
+        "screenshot_handler.h",
+        "sensors_handler.cpp",
+        "sensors_handler.h",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcuttlefish_webrtc_command_channel",
+        ":libcuttlefish_webrtc_commands_proto",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/sensors",
+        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/frontend/webrtc/libcommon",
+        "//cuttlefish/host/frontend/webrtc/libdevice",
+        "//cuttlefish/host/libs/audio_connector",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/confui:host_confui",
+        "//cuttlefish/host/libs/input_connector",
+        "//cuttlefish/host/libs/location",
+        "//cuttlefish/host/libs/screen_connector",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fmt",
+        "@fruit",
+        "@gflags",
+        "@googleapis//google/rpc:code_cc_proto",
+        "@jsoncpp",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+        "@libwebsockets",
+        "@libyuv",
+    ],
+)
 
-# clang_tidy_test(
-# name = "webrtc_clang_tidy",
-# srcs = [":webrtc"],
-# tags = ["clang_tidy", "clang-tidy"],
-# )
+clang_tidy_test(
+    name = "webrtc_clang_tidy",
+    srcs = [":webrtc"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)

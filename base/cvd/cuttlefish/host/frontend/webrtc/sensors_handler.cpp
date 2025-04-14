@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/sensors_handler.h"
+#include "cuttlefish/host/frontend/webrtc/sensors_handler.h"
 
 #include <android-base/logging.h>
 
