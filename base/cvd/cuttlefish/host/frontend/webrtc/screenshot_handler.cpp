@@ -16,120 +16,145 @@
 
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 
-// TODO(b/410069864): Re-enable screenshot functionality once the dependencies
-// issue is resolved.
+#include <stdio.h>
 
-// #include <SkData.h>
-// #include <SkImage.h>
-// #include <SkJpegEncoder.h>
-// #include <SkPngEncoder.h>
-// #include <SkRefCnt.h>
-// #include <SkStream.h>
-// #include <SkWebpEncoder.h>
-// #include <libyuv.h>
+#include "android-base/scopeguard.h"
+#include "android-base/strings.h"
+#include "jpeglib.h"
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
-// namespace {
-// 
-// Result<sk_sp<SkImage>> GetSkImage(const VideoFrameBuffer& frame) {
-//   const int w = frame.width();
-//   const int h = frame.height();
-// 
-//   sk_sp<SkData> rgba_data = SkData::MakeUninitialized(w * h * 4);
-//   const int rgba_stride = w * 4;
-// 
-//   int ret = libyuv::I420ToABGR(
-//       frame.DataY(), frame.StrideY(),                                       //
-//       frame.DataU(), frame.StrideU(),                                       //
-//       frame.DataV(), frame.StrideV(),                                       //
-//       reinterpret_cast<uint8_t*>(rgba_data->writable_data()), rgba_stride,  //
-//       w, h);
-//   CF_EXPECT_EQ(ret, 0, "Failed to convert input frame to RGBA.");
-// 
-//   const SkImageInfo& image_info =
-//       SkImageInfo::Make(w, h, kRGBA_8888_SkColorType, kOpaque_SkAlphaType);
-// 
-//   sk_sp<SkImage> image =
-//       SkImages::RasterFromData(image_info, rgba_data, rgba_stride);
-//   CF_EXPECT(image != nullptr, "Failed to raster RGBA data.");
-// 
-//   return image;
-// }
-// 
-// }  // namespace
-// 
+namespace {
+
+Result<void> JpegScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
+                            const std::string& screenshot_path) {
+  // libjpeg uses an MCU size of 16x16 so we require the stride to be a multiple
+  // of 16 bytes and to have at least 16 rows (we'll use the previous rows as
+  // padding if the height is not a multiple of 16).
+  // In practice this restriction will hold most times because the
+  // CvdVideoFrameBuffer aligns its stride to a multiple of 64.
+  CF_EXPECTF(frame->StrideY() % 16 == 0 && frame->height() >= 16,
+             "Frame size not compatible with required MCU size of 16x16: {}x{}",
+             frame->width(), frame->height());
+
+  struct jpeg_compress_struct cinfo;
+  struct jpeg_error_mgr jerr;
+  FILE* outfile; /* target file */
+
+  // This actually causes libjpeg to exit on error, but that's better than the
+  // recommended approach of jumping around goto-style. The only function that
+  // could cause this is jpeg_write_raw_data, which is unlikely to fail anyways.
+  cinfo.err = jpeg_std_error(&jerr);
+  jpeg_create_compress(&cinfo);
+  android::base::ScopeGuard destroy_compress(
+      [&cinfo]() { jpeg_destroy_compress(&cinfo); });
+
+  CF_EXPECTF((outfile = fopen(screenshot_path.c_str(), "wb")) != NULL,
+             "Failed to open screenshot destination ({})", screenshot_path);
+  android::base::ScopeGuard close_file([&outfile]() { fclose(outfile); });
+  jpeg_stdio_dest(&cinfo, outfile);
+
+  cinfo.image_width = frame->width();
+  cinfo.image_height = frame->height();
+  cinfo.input_components = 3;
+  cinfo.in_color_space = JCS_YCbCr;
+  jpeg_set_defaults(&cinfo);
+  const int kJpegQuality = 100;
+  jpeg_set_quality(&cinfo, kJpegQuality, true);
+  // Frame is already in YCbCr format with the right downsampling.
+  cinfo.raw_data_in = true;
+  jpeg_set_colorspace(&cinfo, JCS_YCbCr);
+  // jpeg_set_defaults should have set these, but libjpeg recommends setting
+  // them manually anyways.
+  cinfo.comp_info[0].h_samp_factor = 2;
+  cinfo.comp_info[0].v_samp_factor = 2;
+  cinfo.comp_info[1].h_samp_factor = 1;
+  cinfo.comp_info[1].v_samp_factor = 1;
+  cinfo.comp_info[2].h_samp_factor = 1;
+  cinfo.comp_info[2].v_samp_factor = 1;
+
+  // libjpeg accepts no less than 16 rows at a time
+  constexpr int kScanRows = 16;
+  JSAMPROW y_rows[kScanRows];
+  JSAMPROW u_rows[kScanRows / 2];
+  JSAMPROW v_rows[kScanRows / 2];
+  JSAMPARRAY rows[]{y_rows, u_rows, v_rows};
+
+  jpeg_start_compress(&cinfo, true);
+
+  while (cinfo.next_scanline < cinfo.image_height) {
+    JDIMENSION row = cinfo.next_scanline;
+    // If the image height is not a multiple of kScanRows it will be padded with
+    // rows from the previous iteration.
+    for (int r = 0; r < kScanRows && r + row < cinfo.image_height; ++r) {
+      int offset = (row + r) * frame->StrideY();
+      y_rows[r] = &frame->DataY()[offset];
+    }
+    for (int r = 0;
+         r < kScanRows / 2 && r + row / 2 < (cinfo.image_height + 1) / 2; ++r) {
+      int offset_u = (row / 2 + r) * frame->StrideU();
+      u_rows[r] = &frame->DataU()[offset_u];
+      int offset_v = (row / 2 + r) * frame->StrideV();
+      v_rows[r] = &frame->DataV()[offset_v];
+    }
+    jpeg_write_raw_data(&cinfo, rows, kScanRows);
+  }
+
+  jpeg_finish_compress(&cinfo);
+
+  return {};
+}
+
+}  // namespace
+
 Result<void> ScreenshotHandler::Screenshot(std::uint32_t display_number,
                                            const std::string& screenshot_path) {
-//   SharedFrameFuture frame_future;
-//   {
-//     std::lock_guard<std::mutex> lock(pending_screenshot_displays_mutex_);
-// 
-//     auto [it, inserted] = pending_screenshot_displays_.emplace(
-//         display_number, SharedFramePromise{});
-//     if (!inserted) {
-//       return CF_ERRF("Screenshot already pending for display {}",
-//                      display_number);
-//     }
-// 
-//     frame_future = it->second.get_future().share();
-//   }
-// 
-//   static constexpr const int kScreenshotTimeoutSeconds = 5;
-//   auto result =
-//       frame_future.wait_for(std::chrono::seconds(kScreenshotTimeoutSeconds));
-//   CF_EXPECT(result == std::future_status::ready,
-//             "Failed to get screenshot from webrtc display handler within "
-//                 << kScreenshotTimeoutSeconds << " seconds.");
-// 
-//   SharedFrame frame = frame_future.get();
-// 
-//   sk_sp<SkImage> screenshot_image =
-//       CF_EXPECT(GetSkImage(*frame), "Failed to get skia image from raw frame.");
-// 
-//   sk_sp<SkData> screenshot_data;
-//   if (screenshot_path.ends_with(".jpg")) {
-//     screenshot_data =
-//         SkJpegEncoder::Encode(nullptr, screenshot_image.get(), {});
-//     CF_EXPECT(screenshot_data != nullptr, "Failed to encode to JPEG.");
-//   } else if (screenshot_path.ends_with(".png")) {
-//     screenshot_data = SkPngEncoder::Encode(nullptr, screenshot_image.get(), {});
-//     CF_EXPECT(screenshot_data != nullptr, "Failed to encode to PNG.");
-//   } else if (screenshot_path.ends_with(".webp")) {
-//     screenshot_data =
-//         SkWebpEncoder::Encode(nullptr, screenshot_image.get(), {});
-//     CF_EXPECT(screenshot_data != nullptr, "Failed to encode to WEBP.");
-//   } else {
-//     return CF_ERR("Unsupport file format: " << screenshot_path);
-//   }
-// 
-//   SkFILEWStream screenshot_file(screenshot_path.c_str());
-//   CF_EXPECT(screenshot_file.isValid(),
-//             "Failed to open " << screenshot_path << " for writing.");
-// 
-//   CF_EXPECT(
-//       screenshot_file.write(screenshot_data->data(), screenshot_data->size()),
-//       "Failed to fully write png content to " << screenshot_path << ".");
-// 
-//   return {};
-    return CF_ERR("Not implemented");
+  SharedFrameFuture frame_future;
+  {
+    std::lock_guard<std::mutex> lock(pending_screenshot_displays_mutex_);
+
+    auto [it, inserted] = pending_screenshot_displays_.emplace(
+        display_number, SharedFramePromise{});
+    if (!inserted) {
+      return CF_ERRF("Screenshot already pending for display {}",
+                     display_number);
+    }
+
+    frame_future = it->second.get_future().share();
+  }
+
+  static constexpr const int kScreenshotTimeoutSeconds = 5;
+  auto result =
+      frame_future.wait_for(std::chrono::seconds(kScreenshotTimeoutSeconds));
+  CF_EXPECT(result == std::future_status::ready,
+            "Failed to get screenshot from webrtc display handler within "
+                << kScreenshotTimeoutSeconds << " seconds.");
+
+  SharedFrame frame = frame_future.get();
+
+  if (android::base::EndsWith(screenshot_path, ".jpg")) {
+    CF_EXPECT(JpegScreenshot(frame, screenshot_path));
+  } else {
+    return CF_ERR("Unsupport file format: " << screenshot_path);
+  }
+  return CF_ERR("Not implemented");
 }
-// 
+
 void ScreenshotHandler::OnFrame(std::uint32_t display_number,
                                 SharedFrame& frame) {
-//   std::lock_guard<std::mutex> lock(pending_screenshot_displays_mutex_);
-// 
-//   auto pending_screenshot_it =
-//       pending_screenshot_displays_.find(display_number);
-//   if (pending_screenshot_it == pending_screenshot_displays_.end()) {
-//     return;
-//   }
-//   SharedFramePromise& frame_promise = pending_screenshot_it->second;
-// 
-//   frame_promise.set_value(frame);
-// 
-//   pending_screenshot_displays_.erase(pending_screenshot_it);
+  std::lock_guard<std::mutex> lock(pending_screenshot_displays_mutex_);
+
+  auto pending_screenshot_it =
+      pending_screenshot_displays_.find(display_number);
+  if (pending_screenshot_it == pending_screenshot_displays_.end()) {
+    return;
+  }
+  SharedFramePromise& frame_promise = pending_screenshot_it->second;
+
+  frame_promise.set_value(frame);
+
+  pending_screenshot_displays_.erase(pending_screenshot_it);
 }
 
 }  // namespace cuttlefish

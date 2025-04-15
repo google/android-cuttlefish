@@ -89,6 +89,7 @@ cc_binary(
         "@googleapis//google/rpc:code_cc_proto",
         "@jsoncpp",
         "@libdrm//:libdrm_fourcc",
+        "@libjpeg_turbo//:jpeg",
         "@libwebrtc",
         "@libwebsockets",
         "@libyuv",
