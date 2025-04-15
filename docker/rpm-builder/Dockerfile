@@ -20,9 +20,9 @@ ENV UID="${RUNNER_UID}"
 
 # The EPEL repository installs `dnf-core-plugin` (`config-manager` and `builddeps`) and provides `ncurses-compat-libs`.
 # Configuring further package repositories: / https://wiki.rockylinux.org/rocky/repo/#extra-repositories
-RUN [ "dnf", "-y", "install", "sudo", "epel-release" ]
-RUN [ "rm", "/etc/yum.repos.d/epel-cisco-openh264.repo" ]
+RUN [ "dnf", "-y", "install", "sudo", "nano", "wget", "epel-release" ]
 RUN [ "dnf", "config-manager", "--set-enabled", "crb" ]
+RUN [ "rm", "/etc/yum.repos.d/epel-cisco-openh264.repo" ]
 RUN [ "dnf", "-y", "upgrade" ]
 RUN [ "dnf", "clean", "all" ]
 
@@ -57,7 +57,8 @@ ENV RPM_SIGN_PASSPHRASE=""
 ENTRYPOINT [ "/bin/bash", "-c", "/home/runner/build.sh", "${REPO_USER}", "${REPO_NAME}", "${REPO_BRANCH}" ]
 
 # Build dependencies.
-RUN [ "dnf", "-y", "install", "nano", "wget", "git", "cmake", "gcc-c++", "rpm-build", "golang-bin", "expect", "vim-common", "ncurses-compat-libs", "curl-devel", "wayland-devel", "libaom-devel", "opus-devel", "libzip-devel", "protobuf-devel", "protobuf-compiler" ]
+RUN [ "dnf", "-y", "install", "git", "cmake", "gcc-c++", "rpm-build", "golang-bin", "expect", "vim-common", "ncurses-compat-libs", "curl-devel", "wayland-devel", "libaom-devel", "opus-devel", "libvpx-devel", "libzip-devel", "protobuf-devel", "protobuf-compiler" ]
+# RUN [ "dnf", "-y", "install", "libaom", "opus-tools", "libvpx-utils" ]
 RUN [ "dnf", "-y", "upgrade" ]
 RUN [ "dnf", "clean", "all" ]
 
