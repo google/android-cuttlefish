@@ -131,4 +131,8 @@
   <!-- Colon separated list of package names that should be granted Notification Listener access -->
   <string name="config_defaultListenerAccessPackages" translatable="false">com.google.android.wearable.media.sessions:com.google.wear.services</string>
 
+  <!-- Disable mic and camera muting on Wear CF emulator due to feature missing. -->
+  <bool name="config_supportsMicToggle">false</bool>
+  <bool name="config_supportsCamToggle">false</bool>
+
 </resources>
