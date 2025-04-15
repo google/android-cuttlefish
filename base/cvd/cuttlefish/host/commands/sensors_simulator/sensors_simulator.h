@@ -17,6 +17,7 @@
 #pragma once
 
 #include <chrono>
+#include <mutex>
 #include <string>
 
 #include <Eigen/Dense>
