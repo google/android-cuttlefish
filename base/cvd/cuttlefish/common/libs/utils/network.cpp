@@ -49,23 +49,6 @@
 namespace cuttlefish {
 namespace {
 
-#ifdef __linux__
-// This should be the size of virtio_net_hdr_v1, from linux/virtio_net.h, but
-// the version of that header that ships with android in Pie does not include
-// that struct (it was added in Q).
-// This is what that struct looks like:
-// struct virtio_net_hdr_v1 {
-// u8 flags;
-// u8 gso_type;
-// u16 hdr_len;
-// u16 gso_size;
-// u16 csum_start;
-// u16 csum_offset;
-// u16 num_buffers;
-// };
-static constexpr int SIZE_OF_VIRTIO_NET_HDR_V1 = 12;
-#endif
-
 /**
  * Generate mac address following:
  * 00:1a:11:e0:cf:index
