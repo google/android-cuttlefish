@@ -2,7 +2,7 @@
 name = "append_squashfs_overlay"
 version = "0.1.0"
 authors = ["Jeongik Cha <jeongik@google.com>"]
-edition = 2021
+edition = "2021"
 
 [dependencies]
-clap = "2.33"
+clap = { version = "4.5.0", feature = [ "derive", "error-context", "help", "std", "usage" ] }
