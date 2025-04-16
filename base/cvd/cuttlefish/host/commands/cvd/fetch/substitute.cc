@@ -114,9 +114,18 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
     }
     CF_EXPECTF(FileExists(target), "{}", target);
     // TODO: schuffelen - relax this check after migration completes
-    CF_EXPECTF(FileExists(full_link_name),
-               "Cannot substitute '{}', does not exist", full_link_name);
-    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+    const bool full_link_name_exists = FileExists(full_link_name);
+    if (symlink.ignore_link_name_presence_check()) {
+      LOG(DEBUG) << "Skipping checking for " << full_link_name
+                 << " per migration config.";
+      CF_EXPECTF(EnsureDirectoryExists(android::base::Dirname(full_link_name)),
+                 "Failed to create directory for '{}'", full_link_name);
+    } else {
+      CF_EXPECTF(FileExists(full_link_name),
+                 "Cannot substitute '{}', does not exist", full_link_name);
+      CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+    }
+
     CF_EXPECT(CreateSymLink(target, full_link_name));
   }
   return {};
