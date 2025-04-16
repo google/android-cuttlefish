@@ -52,8 +52,6 @@
 namespace cuttlefish {
 namespace vm_manager {
 
-constexpr auto kTouchpadDefaultPrefix = "Crosvm_Virtio_Multitouch_Touchpad_";
-
 bool CrosvmManager::IsSupported() {
 #ifdef __ANDROID__
   return true;
