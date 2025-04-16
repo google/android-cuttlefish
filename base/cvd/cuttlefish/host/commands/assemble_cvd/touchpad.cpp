@@ -31,7 +31,8 @@ class TouchpadsConfigsImpl : public TouchpadsConfigs {
   }
 
   void SetConfigs(
-      const std::vector<CuttlefishConfig::TouchpadConfig>& configs) {
+      const std::vector<CuttlefishConfig::TouchpadConfig>& configs)
+      override {
     touchpad_configs_ = configs;
   }
 

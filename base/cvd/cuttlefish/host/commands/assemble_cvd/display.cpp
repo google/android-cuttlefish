@@ -30,7 +30,8 @@ class DisplaysConfigsImpl : public DisplaysConfigs {
     return display_configs_;
   }
 
-  void SetConfigs(const std::vector<CuttlefishConfig::DisplayConfig>& configs) {
+  void SetConfigs(const std::vector<CuttlefishConfig::DisplayConfig>& configs)
+      override {
     display_configs_ = configs;
   }
 
