@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "host/libs/screen_connector/video_frame_buffer.h"
