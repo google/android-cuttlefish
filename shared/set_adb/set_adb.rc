@@ -1,0 +1,9 @@
+service set_adb /system_ext/bin/set_adb.sh
+    class core
+    user root
+    group shell
+    oneshot
+    disabled
+
+on sys-boot-completed-set
+    start set_adb

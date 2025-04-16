@@ -85,8 +85,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 # spawn adbd by default without authorization for "adb logcat"
 ifeq ($(TARGET_BUILD_VARIANT),user)
 PRODUCT_PRODUCT_PROPERTIES += \
-    ro.adb.secure=0 \
-    ro.debuggable=1
+    ro.adb.secure=0
 
 PRODUCT_PACKAGES += \
     logpersist.start
@@ -601,6 +600,9 @@ $(call soong_config_set_bool,cuttlefish_config,use_pci_ids,true)
 PRODUCT_PACKAGES += \
     com.android.hardware.threadnetwork \
     ThreadNetworkDemoApp
+
+# Enable adb debugging
+PRODUCT_PACKAGES += set_adb
 
 PRODUCT_CHECK_VENDOR_SEAPP_VIOLATIONS := true
 
