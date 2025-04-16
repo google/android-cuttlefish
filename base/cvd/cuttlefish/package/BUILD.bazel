@@ -55,6 +55,7 @@ package_files(
         "//cuttlefish/host/graphics/vulkan:vk_swiftshader_icd": "cuttlefish-common/bin/vk_swiftshader_icd.json",
         "@mesa//:vk_lavapipe": "cuttlefish-common/bin/libvk_lavapipe.so",
         "//cuttlefish/host/graphics/vulkan:vk_lavapipe_icd": "cuttlefish-common/bin/vk_lavapipe_icd.json",
+        # "@crosvm_bin//:crosvm__crosvm": "cuttlefish-common/bin/crosvm", # TODO: b/402274999 - currently requires --gpu_mode=guest_swiftshader --enable_sandbox=false
     },
     visibility = ["//:android_cuttlefish"],
 )

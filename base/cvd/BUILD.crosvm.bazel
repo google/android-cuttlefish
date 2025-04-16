@@ -74,3 +74,29 @@ cc_library(
         "-Wno-unused-function",
     ],
 )
+
+py_binary(
+    name = "compile_seccomp_policy",
+    srcs = [
+        "third_party/minijail/tools/arch.py",
+        "third_party/minijail/tools/bpf.py",
+        "third_party/minijail/tools/compile_seccomp_policy.py",
+        "third_party/minijail/tools/compiler.py",
+        "third_party/minijail/tools/parser.py",
+    ],
+    precompile = "enabled",
+    imports = ["third_party/minijail/tools"],
+)
+
+# see https://www.github.com/bazel-contrib/rules_python/issues/2544
+
+filegroup(
+    name = "compile_seccomp_policy_zip",
+    srcs = [":compile_seccomp_policy"],
+    output_group = "python_zip_file",
+)
+
+filegroup(
+    name = "minijail_sources",
+    srcs = glob(["third_party/minijail/**"]),
+)
