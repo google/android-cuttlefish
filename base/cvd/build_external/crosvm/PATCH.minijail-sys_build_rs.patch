@@ -1,0 +1,22 @@
+diff --git a/build.rs b/build.rs
+index 51ddb56..f43ce71 100644
+--- a/build.rs
++++ b/build.rs
+@@ -59,7 +59,7 @@ fn set_up_libminijail() -> io::Result<PathBuf> {
+     }
+ 
+     if env::var("MINIJAIL_DO_NOT_BUILD").as_deref().unwrap_or("") == "" {
+-        let current_dir = env::var("CARGO_MANIFEST_DIR").unwrap() + "/../..";
++        let current_dir = env::current_dir().unwrap();
+         let out_dir = env::var("OUT_DIR").unwrap();
+         let profile = env::var("PROFILE").unwrap();
+         let jobs = env::var("JOBS").unwrap_or("4".to_string());
+@@ -82,7 +82,7 @@ fn set_up_libminijail() -> io::Result<PathBuf> {
+         println!("cargo:rustc-link-lib=static=minijail.pic");
+     }
+ 
+-    let header_dir = Path::new("../../");
++    let header_dir = env::current_dir().unwrap();
+     let header_path = header_dir.join(HEADER_FILENAME);
+     Ok(header_path)
+ }

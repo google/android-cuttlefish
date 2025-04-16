@@ -58,6 +58,7 @@ package_files(
         "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
         "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0.xml",
         "cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml",
+        # "cuttlefish-common/bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --gpu_mode=guest_swiftshader --enable_sandbox=false
     },
     visibility = ["//:android_cuttlefish"],
 )
