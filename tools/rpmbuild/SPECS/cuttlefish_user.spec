@@ -41,7 +41,7 @@ mkdir -p %{buildroot}/usr/share/cuttlefish-common/operator/static
 %define srcpath ../../../frontend/src
 install -m 755 %{srcpath}/host_orchestrator/host_orchestrator %{buildroot}/usr/lib/cuttlefish-common/bin/host_orchestrator
 install -m 755 %{srcpath}/operator/operator %{buildroot}/usr/lib/cuttlefish-common/bin/operator
-install -m 655 %{srcpath}/operator/intercept/js/server_connector.d.ts %{buildroot}/usr/share/cuttlefish-common/operator/intercept/js/server_connector.d.ts
+# install -m 655 %{srcpath}/operator/intercept/js/server_connector.d.ts %{buildroot}/usr/share/cuttlefish-common/operator/intercept/js/server_connector.d.ts
 install -m 655 %{srcpath}//operator/intercept/js/server_connector.js %{buildroot}/usr/share/cuttlefish-common/operator/intercept/js/server_connector.js
 
 %define srcpath ../../../frontend/src/operator/webui/dist/static
@@ -53,8 +53,7 @@ done
 %files
 /usr/lib/cuttlefish-common/bin/host_orchestrator
 /usr/lib/cuttlefish-common/bin/operator
-
-/usr/share/cuttlefish-common/operator/intercept/js/server_connector.d.ts
+# /usr/share/cuttlefish-common/operator/intercept/js/server_connector.d.ts
 /usr/share/cuttlefish-common/operator/intercept/js/server_connector.js
 
 /usr/share/cuttlefish-common/operator/static/index.html

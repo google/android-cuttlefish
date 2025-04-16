@@ -57,7 +57,7 @@ install -m 544 %{srcpath}/etc/sudoers.d/cuttlefish-orchestration %{buildroot}/et
 %post
 ln -sf /usr/lib/cuttlefish-common/bin/cvd /usr/bin/fetch_cvd
 
-# The cvdnetwork group is created by cuttlefish-base
+# The `cvdnetwork` group is being created by cuttlefish-base.
 if ! getent passwd _cvd-executor > /dev/null 2>&1 ; then
     adduser --system --shell /sbin/nologin --home /var/empty --no-create-home _cvd-executor
     usermod -a -G cvdnetwork,kvm _cvd-executor

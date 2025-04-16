@@ -29,12 +29,11 @@ Cuttlefish Android Virtual Device that are used in all deployments.
 %prep
 %define workdir `pwd`
 
-
-%build
 # The root module requires module version zlib@1.3.1.bcr.3,
 # but got zlib@1.3.1.bcr.4 in the resolved dependency graph.
 /home/runner/patch_zlib.sh
 
+%build
 cd ../../../base/cvd && bazel build --ui_event_filters=-INFO --verbose_failures ...
 
 %install
