@@ -1,0 +1,12 @@
+diff --git a/third_party/minijail/common.mk b/third_party/minijail/common.mk
+index 03e886c..2a011fc 100644
+--- a/third_party/minijail/common.mk
++++ b/third_party/minijail/common.mk
+@@ -322,6 +322,7 @@ COMMON_CFLAGS := -Wall -Wunused -Wno-unused-parameter -Wunreachable-code \
+   -Wbool-operation -Wstring-compare $(call check_cc,-Wxor-used-as-pow) \
+   -Wint-in-bool-context -Wfree-nonheap-object \
+   -Werror -Wformat=2 -fno-strict-aliasing  \
++  -Wno-unused-command-line-argument \
+   $(SSP_CFLAGS) -O1
+ CXXFLAGS += $(COMMON_CFLAGS) $(COMMON_CFLAGS-$(CXXDRIVER)) -std=gnu++20 \
+   -fvisibility-inlines-hidden

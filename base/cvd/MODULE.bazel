@@ -24,6 +24,7 @@ bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "jsoncpp", version = "1.9.5")
 bazel_dep(name = "libevent", version = "2.1.12-stable.bcr.0")
 bazel_dep(name = "libjpeg_turbo", version = "2.1.91")
+bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "libzip", version = "1.10.1")
 bazel_dep(name = "platforms", version = "0.0.11")
@@ -36,7 +37,9 @@ bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "toolchains_llvm", version = "1.2.0")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.3")
 
-bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
+# this needs to be at parity with with build_external/crosvm/crosvm.config.toml
+CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
+CROSVM_REV = "bc84c8bd6ce078e251594aa1af9e84932c5d0d81"
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor
@@ -105,9 +108,11 @@ python.toolchain(
 crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 crate.from_cargo(
     name = "append_squashfs_overlay_crates",
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     manifests = [
         "//cuttlefish/host/commands/append_squashfs_overlay:Cargo.toml",
     ],
+    host_tools_repo = "rust_host_tools_nightly",
 )
 use_repo(crate, "append_squashfs_overlay_crates")
 
@@ -118,6 +123,95 @@ git_override(
     commit = "62e8aa0e9935bb7db76ead9cc2c1804e4dd740b9",
     remote = "https://github.com/Databean/rules_lint.git",
 )
+
+# note that this won't use the same source checkout as the git_repository directive below
+#
+# The following `annotation` directives modify the generated bazel rules for
+# individual crates in the crosvm dependency chart.
+#
+# See https://bazelbuild.github.io/rules_rust/crate_universe_bzlmod.html
+crosvm_bin = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+
+crosvm_bin.spec(
+    artifact = "bin",
+    package = "crosvm",
+    features = [
+        "android-sparse",
+        "android_display",
+        "android_display_stub",
+        "audio",
+        "audio_aaudio",
+        "balloon",
+        "composite-disk",
+        "config-file",
+        "fs_runtime_ugid_map",
+        "gdb",
+        "gdbstub",
+        "gdbstub_arch",
+        "geniezone",
+        # TODO: b/402274999 - add gfxstream
+        "gpu",
+        "gpu_display",
+        "gunyah",
+        "libaaudio_stub",
+        "media",
+        "net",
+        "qcow",
+        "usb",
+    ],
+    # TODO: schuffelen - build gfxstream
+    # TODO: schuffelen - fix the sandbox
+    git = CROSVM_REMOTE,
+    rev = CROSVM_REV,
+)
+
+crosvm_bin.annotation(
+    crate = "crosvm",
+    gen_all_binaries = True,
+    patch_args = ["-p1"],
+)
+
+crosvm_bin.annotation(
+    crate = "jail",
+    build_script_data_glob = ["seccomp/**"],
+    build_script_data = ["@@//:compile_seccomp_policy_exe"],
+    build_script_env = {"COMPILE_SECCOMP_POLICY": "$(execpath @@//:compile_seccomp_policy_exe)"},
+)
+
+# minijail-sys/build.rs invokes `make` to build the minijail C library, so all
+# the sources need to be made available to it at runtime in a filegroup.
+# rules_rust only checks out the crate directory and the C sources are two
+# directories above, so we grab them from the submodule checkout in our crosvm
+# git_repository.
+crosvm_bin.annotation(
+    crate = "minijail-sys",
+    build_script_data = ["@@//:minijail_sources"],
+    build_script_rundir = "external/+_repo_rules2+crosvm/third_party/minijail",
+    patch_args = ["-p1"],
+    # crates_universe checks out only a subdirectory of the repository, so the
+    # file paths in this patch are relative to that directory.
+    patches = ["@//build_external/crosvm:PATCH.minijail-sys_build_rs.patch"],
+)
+
+# Disable the `path` directives for the generated code as they end up with
+# temporary paths within the bazel sandbox.
+crosvm_bin.annotation(
+    crate = "proto_build_tools",
+    patch_args = ["-p1"],
+    # crates_universe checks out only a subdirectory of the repository, so the
+    # file paths in this patch are relative to that directory.
+    patches = ["@//build_external/crosvm:PATCH.proto_build_tools.patch"],
+)
+
+crosvm_bin.from_specs(
+    name = "crosvm_bin",
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    cargo_lockfile = "@crosvm//:Cargo.lock",
+    # Executable dependencies are an unstable cargo feature.
+    host_tools_repo = "rust_host_tools_nightly",
+)
+
+use_repo(crosvm_bin, "crosvm_bin")
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
@@ -191,8 +285,11 @@ git_repository(
 git_repository(
     name = "crosvm",
     build_file = "@//:BUILD.crosvm.bazel",
-    commit = "dee7838993bae90cad49d5595b958cfe4c28b58d",
-    remote = "https://chromium.googlesource.com/crosvm/crosvm",
+    commit = CROSVM_REV,
+    remote = CROSVM_REMOTE,
+    init_submodules = True,
+    patch_strip = 1,
+    patches = ["@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch"],
 )
 
 git_repository(
