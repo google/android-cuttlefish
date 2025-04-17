@@ -30,6 +30,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
@@ -71,7 +72,7 @@ Result<void> ForceRawImage(const std::string& image_path) {
   std::string tmp_raw_image_path = image_path + ".raw";
   // Use simg2img to convert sparse image to raw images.
   int simg2img_status =
-      Execute({HostBinaryPath("simg2img"), image_path, tmp_raw_image_path});
+      Execute({Simg2ImgBinary(), image_path, tmp_raw_image_path});
 
   CF_EXPECT_EQ(simg2img_status, 0,
                "Unable to convert Android sparse image '"
