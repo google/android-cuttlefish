@@ -1,0 +1,76 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "host_pkg_migration_proto",
+    srcs = ["host_pkg_migration.proto"],
+)
+
+cc_proto_library(
+    name = "host_pkg_migration_cc_proto",
+    deps = [":host_pkg_migration_proto"],
+)
+
+cc_library(
+    name = "substitute",
+    srcs = ["substitute.cc"],
+    hdrs = ["substitute.h"],
+    copts = COPTS,
+    deps = [
+        ":host_pkg_migration_cc_proto",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fmt",
+        "@protobuf",
+    ],
+)
+
+clang_tidy_test(
+    name = "substitute_clang_tidy",
+    srcs = [":substitute"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "fetch",
+    srcs = [
+        "fetch_cvd.cc",
+        "fetch_cvd_parser.cc",
+        "fetch_tracer.cpp",
+    ],
+    hdrs = [
+        "fetch_cvd.h",
+        "fetch_cvd_parser.h",
+        "fetch_tracer.h",
+    ],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    deps = [
+        ":substitute",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/web",
+        "//libbase",
+        "//libsparse",
+        "@curl",
+        "@fmt",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_clang_tidy",
+    srcs = [":fetch"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

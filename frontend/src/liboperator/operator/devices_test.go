@@ -193,7 +193,6 @@ func TestListDevices(t *testing.T) {
 		t.Error("Error listing after 2 device registrations, 1 unregistration and 1 failed unregistration: ", l)
 	}
 	p.Unregister("2")
-	l = p.DeviceIds()
 	if len(p.DeviceIds()) != 0 {
 		t.Error("Empty pool listed devices")
 	}

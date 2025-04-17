@@ -28,11 +28,17 @@ tools/buildutils/build_packages.sh
 
 Cuttlefish requires only `cuttlefish-base` to be installed, but `cuttlefish-user`
 is recommended to enjoy a better user experience. These can be installed after
-building with the following command:
+building with the following commands:
 
 ```bash
 sudo apt install ./cuttlefish-base_*.deb ./cuttlefish-user_*.deb
+sudo usermod -aG kvm,cvdnetwork,render $USER
+sudo reboot
 ```
+
+The last two commands above add the user to the groups necessary to run the Cuttlefish 
+Virtual Device and reboot the machine to trigger the installation of additional
+kernel modules and apply udev rules.
 
 ## Google Compute Engine
 
@@ -45,44 +51,5 @@ to obtain the script.
 
 ## Docker
 
-We also provide the docker image with installed cuttlefish debian packages
-inside; including `cuttlefish-base`, `cuttlefish-user`, and
-`cuttlefish-orchestration`.
-Currently it's available for x86_64 and ARM64 architecture.
-
-### Build docker image manually
-
-Please run below command to build manually.
-
-```bash
-cd /path/to/android-cuttlefish
-cd docker
-./image-builder.sh
-```
-
-You can validate if the docker image is successfully built by checking
-`cuttlefish-orchestration` in `docker image list` like below.
-```
-$ docker image list
-REPOSITORY               TAG    IMAGE ID       CREATED          SIZE
-cuttlefish-orchestration latest 0123456789ab   2 minutes ago    690MB
-...
-```
-
-### Download prebuilt image
-
-Downloading latest image is available
-[here](https://github.com/google/android-cuttlefish/actions/workflows/artifacts.yaml?query=event%3Apush).
-
-After downloading image, please load the image and verify with
-`docker image list`.
-
-```bash
-docker load --input ${PATH_TO_PREBUILT_DOCKER_IMAGE}
-```
-
-Registering the tag of loaded image as `latest` is available with below script.
-
-```bash
-docker tag cuttlefish-orchestration:${PREBUILT_DOCKER_IMAGE_TAG} cuttlefish-orchestration:latest
-```
+Please read [docker/README.md](docker/README.md) to know how to use docker image
+containing Cuttlefish debian packages.

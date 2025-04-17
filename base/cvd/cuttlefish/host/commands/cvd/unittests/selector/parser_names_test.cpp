@@ -16,26 +16,35 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "host/commands/cvd/unittests/selector/parser_names_helper.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
+#include "cuttlefish/host/commands/cvd/unittests/selector/parser_names_helper.h"
 
 namespace cuttlefish {
 namespace selector {
 
 TEST_P(ValidNamesTest, ValidInputs) {
-  auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+  auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
+  ASSERT_THAT(selector_options_res, IsOk());
 
-  ASSERT_TRUE(parser.ok());
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      *selector_options_res, cvd_common::Args{}, cvd_common::Envs{});
+
+  ASSERT_THAT(parser, IsOk());
 }
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST_P(ValidNamesTest, FieldsNoSubstring) {
-  auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      selector_args_, cvd_common::Args{}, cvd_common::Envs{});
+  auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
+  ASSERT_THAT(selector_options_res, IsOk());
 
-  ASSERT_TRUE(parser.ok());
+  auto parser = StartSelectorParser::ConductSelectFlagsParser(
+      *selector_options_res, cvd_common::Args{}, cvd_common::Envs{});
+
+  ASSERT_THAT(parser, IsOk());
   ASSERT_EQ(parser->GroupName(), expected_output_.group_name);
   ASSERT_EQ(parser->PerInstanceNames(), expected_output_.per_instance_names);
 }
@@ -70,10 +79,8 @@ INSTANTIATE_TEST_SUITE_P(
                 .per_instance_names = std::vector<std::string>{"my-cool"}}}));
 
 TEST_P(InvalidNamesTest, InvalidInputs) {
-  auto parser = StartSelectorParser::ConductSelectFlagsParser(
-      selector_args_, cvd_common::Args{}, cvd_common::Envs{});
-
-  ASSERT_FALSE(parser.ok());
+  auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
+  ASSERT_FALSE(selector_options_res.ok());
 }
 
 INSTANTIATE_TEST_SUITE_P(CvdParser, InvalidNamesTest,

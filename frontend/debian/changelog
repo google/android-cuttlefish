@@ -1,6 +1,28 @@
-cuttlefish-frontend (1.0.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.3.0) UNRELEASED; urgency=medium
 
   * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 21 Mar 2025 14:52:51 -0700
+
+cuttlefish-frontend (1.2.0) stable; urgency=medium
+
+  * allow usage of protected TURN servers
+  * minor refactors and fixes
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 24 Jan 2025 11:24:30 -0800
+
+cuttlefish-frontend (1.1.0) stable; urgency=medium
+
+  * the adb bugreport can now be included in the cvd bugreport
+  * add --log_file flag
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 01 Nov 2024 16:02:34 -0700
+
+cuttlefish-frontend (1.0.0) stable; urgency=medium
+
+  [ Sergio A. Rodriguez ]
+  * Send build api credentials through the host orchestrator client
+  * Host Orchestrator support for snapshots.
 
  -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Sep 2024 11:06:56 -0700
 

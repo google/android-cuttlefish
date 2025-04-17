@@ -1,0 +1,30 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "vulkan_headers",
+    hdrs = glob([
+        "include/**/*.h",
+    ]),
+    includes = [
+        "include",
+    ],
+)
+
+cc_library(
+    name = "vulkan_hpp",
+    textual_hdrs = glob([
+        "include/**/*.hpp",
+    ]),
+    includes = [
+        "include",
+    ],
+)
+
+filegroup(
+    name = "vulkan_xml",
+    srcs = [
+        "registry/vk.xml",
+    ],
+)

@@ -14,27 +14,33 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/cvd.h"
+#include "cuttlefish/host/commands/cvd/cvd.h"
+
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cvd_server.pb.h"
-#include "host/commands/cvd/frontline_parser.h"
-#include "host/commands/cvd/instance_lock.h"
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/request_context.h"
-#include "host/commands/cvd/command_request.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/request_context.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 
 namespace {
 [[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
   auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-  CHECK(android_top != "") << "Could not find android environment. Please run "
-                           << "\"source build/envsetup.sh\".";
+  CHECK(!android_top.empty())
+      << "Could not find android environment. Please run "
+      << "\"source build/envsetup.sh\".";
   // TODO(b/206893146): Detect what the platform actually is.
   auto py_acloud_path =
       android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
@@ -50,28 +56,33 @@ namespace {
 
 }  // namespace
 
-Cvd::Cvd(const android::base::LogSeverity verbosity,
-         InstanceLockFileManager& instance_lockfile_manager,
-         InstanceManager& instance_manager,
-         HostToolTargetManager& host_tool_target_manager)
-    : verbosity_(verbosity),
-      instance_lockfile_manager_(instance_lockfile_manager),
-      instance_manager_(instance_manager),
-      host_tool_target_manager_(host_tool_target_manager) {}
+Cvd::Cvd(InstanceManager& instance_manager,
+         InstanceLockFileManager& lock_file_manager)
+    : instance_manager_(instance_manager),
+      lock_file_manager_(lock_file_manager) {}
 
-Result<cvd::Response> Cvd::HandleCommand(
+Result<void> Cvd::HandleCommand(
     const std::vector<std::string>& cvd_process_args,
     const std::unordered_map<std::string, std::string>& env,
     const std::vector<std::string>& selector_args) {
-  CommandRequest request = CommandRequest()
-                                 .AddArguments(cvd_process_args)
-                                 .SetEnv(env)
-                                 .AddSelectorArguments(selector_args);
+  CommandRequest request = CF_EXPECT(CommandRequestBuilder()
+                                         .AddArguments(cvd_process_args)
+                                         .SetEnv(env)
+                                         .AddSelectorArguments(selector_args)
+                                         .Build());
 
-  RequestContext context(instance_lockfile_manager_, instance_manager_,
-                         host_tool_target_manager_);
+  RequestContext context(instance_manager_, lock_file_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
-  return handler->Handle(request);
+  if (handler->ShouldInterceptHelp()) {
+    std::vector<std::string> invocation_args = request.SubcommandArguments();
+    if (CF_EXPECT(HasHelpFlag(invocation_args))) {
+      std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
+                << std::endl;
+      return {};
+    }
+  }
+  CF_EXPECT(handler->Handle(request));
+  return {};
 }
 
 Result<void> Cvd::HandleCvdCommand(
@@ -94,7 +105,7 @@ Result<void> Cvd::HandleAcloud(
   std::vector<std::string> args_copy{args};
   args_copy[0] = "try-acloud";
 
-  auto attempt = HandleCommand(args_copy, env, {});
+  Result<void> attempt = HandleCommand(args_copy, env, {});
   if (!attempt.ok()) {
     CallPythonAcloud(args_copy);
     // no return

@@ -1,0 +1,31 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_test(
+    name = "fetch",
+    srcs = [
+        "fetch_cvd_parser_test.cpp",
+        "fetch_cvd_test.cpp",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/fetch",
+        "//libbase",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_clang_tidy",
+    srcs = [":fetch"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

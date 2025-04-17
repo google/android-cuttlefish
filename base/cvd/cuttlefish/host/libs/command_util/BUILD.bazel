@@ -1,0 +1,48 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+proto_library(
+    name = "run_cvd_proto",
+    srcs = ["runner/run_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "libcuttlefish_run_cvd_proto",
+    deps = [":run_cvd_proto"],
+)
+
+cc_library(
+    name = "command_util",
+    srcs = [
+        "snapshot_utils.cc",
+        "util.cc",
+    ],
+    hdrs = [
+        "runner/defs.h",
+        "snapshot_utils.h",
+        "util.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        ":libcuttlefish_run_cvd_proto",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@protobuf",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "command_util_clang_tidy",
+    srcs = [":command_util"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

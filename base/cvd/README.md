@@ -21,6 +21,16 @@ bazel test '...'
 ```sh
 bazel run @hedron_compile_commands//:refresh_all
 ```
+
 creates a `compile_commands.json` file which text editors / LSP servers can use
 to implement autocompletion and cross references. This is a one-shot command and
 the file will become stale if new source or header files are added.
+
+## Fixing missing standard library modules when building
+
+```sh
+bazel clean --expunge
+```
+
+The expunge flag also clears `bazel` cache information related to your toolchain
+and external to the repository.

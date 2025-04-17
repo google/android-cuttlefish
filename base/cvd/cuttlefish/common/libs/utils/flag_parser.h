@@ -89,8 +89,8 @@ class Flag {
   /* Examines a list of arguments, removing any matches from the list and
    * invoking the `Setter` for every match. Returns `false` if the callback ever
    * returns `false`. Non-matches are left in place. */
-  Result<void> Parse(std::vector<std::string>& flags) const;
-  Result<void> Parse(std::vector<std::string>&& flags) const;
+  Result<void> Parse(std::vector<std::string>& arguments) const;
+  Result<void> Parse(std::vector<std::string>&& arguments) const;
 
   /* Write gflags `--helpxml` style output for a string-type flag. */
   bool WriteGflagsCompatXml(std::ostream&) const;
@@ -120,6 +120,9 @@ class Flag {
   friend Flag InvalidFlagGuard();
   friend Flag UnexpectedArgumentGuard();
 
+  friend Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                              std::vector<std::string>&);
+
   std::vector<FlagAlias> aliases_;
   std::optional<std::string> help_;
   std::optional<std::function<std::string()>> getter_;
@@ -137,10 +140,18 @@ Result<bool> ParseBool(const std::string& value, const std::string& name);
  * unmatched arguments. */
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>& args,
-                          const bool recognize_end_of_option_mark = false);
+                          bool recognize_end_of_option_mark = false);
 Result<void> ConsumeFlags(const std::vector<Flag>& flags,
                           std::vector<std::string>&&,
-                          const bool recognize_end_of_option_mark = false);
+                          bool recognize_end_of_option_mark = false);
+
+/* Handles a list of flags. Arguments are handled from the beginning. When an
+ * unrecognized argument is encountered, parsing stops. At most one flag matcher
+ * can handle a particular argument. */
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&);
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&&);
 
 bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
@@ -173,9 +184,13 @@ Flag UnexpectedArgumentGuard();
 Flag GflagsCompatFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
 Flag GflagsCompatFlag(const std::string& name, std::int32_t& value);
+Flag GflagsCompatFlag(const std::string& name, std::size_t& value);
 Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool default_value);
+                      bool default_value);
+
+// e.g. cvd start --help, cvd stop -help, cvd fleet -h
+Result<bool> HasHelpFlag(const std::vector<std::string>& args);
 
 }  // namespace cuttlefish

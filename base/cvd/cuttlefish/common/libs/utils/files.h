@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <chrono>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
@@ -28,24 +29,41 @@
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);
 Result<dev_t> FileDeviceId(const std::string& path);
-Result<bool> CanHardLink(const std::string& path1, const std::string& path2);
+Result<bool> CanHardLink(const std::string& source,
+                         const std::string& destination);
+inline Result<bool> CanRename(const std::string& source,
+                              const std::string& destination) {
+  return CanHardLink(source, destination);
+}
 Result<ino_t> FileInodeNumber(const std::string& path);
-Result<bool> AreHardLinked(const std::string& path1, const std::string& path2);
+Result<bool> AreHardLinked(const std::string& source,
+                           const std::string& destination);
 Result<std::string> CreateHardLink(const std::string& target,
                                    const std::string& hardlink,
-                                   const bool overwrite_existing = false);
+                                   bool overwrite_existing = false);
 Result<void> CreateSymLink(const std::string& target, const std::string& link,
-                           const bool overwrite_existing = false);
+                           bool overwrite_existing = false);
+Result<void> HardLinkDirecoryContentsRecursively(
+    const std::string& source, const std::string& destination);
+// Merges the contents of the source directory into the destination directory.
+// The source directory is empty after this operation.
+Result<void> MoveDirectoryContents(const std::string& source,
+                                   const std::string& destination);
 bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
+Result<std::vector<std::string>> DirectoryContentsPaths(
+    const std::string& path);
 bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
+inline bool IsDirectory(const std::string& path) {
+  return DirectoryExists(path);
+};
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
-                                   const mode_t mode = S_IRWXU | S_IRWXG |
-                                                       S_IROTH | S_IXOTH,
+                                   mode_t mode = S_IRWXU | S_IRWXG | S_IROTH |
+                                                 S_IXOTH,
                                    const std::string& group_name = "");
 Result<void> ChangeGroup(const std::string& path,
                          const std::string& group_name);
-bool CanAccess(const std::string& path, const int mode);
+bool CanAccess(const std::string& path, int mode);
 bool IsDirectoryEmpty(const std::string& path);
 Result<void> RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);
@@ -56,14 +74,14 @@ Result<std::string> RenameFile(const std::string& current_filepath,
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& filepath);
 bool MakeFileExecutable(const std::string& path);
-std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
-std::string cpp_dirname(const std::string& str);
-std::string cpp_basename(const std::string& str);
+Result<std::chrono::system_clock::time_point> FileModificationTime(
+    const std::string& path);
 // Whether a file exists and is a unix socket
 bool FileIsSocket(const std::string& path);
 // Get disk usage of a path. If this path is a directory, disk usage will
 // account for all files under this folder(recursively).
-int GetDiskUsage(const std::string& path);
+Result<std::size_t> GetDiskUsageBytes(const std::string& path);
+Result<std::size_t> GetDiskUsageGigabytes(const std::string& path);
 
 // acloud related API
 std::string FindImage(const std::string& search_path,
@@ -84,7 +102,8 @@ FileSizes SparseFileSizes(const std::string& path);
 
 // Find file with name |target_name| under directory |path|, return path to
 // found file(if any)
-std::string FindFile(const std::string& path, const std::string& target_name);
+Result<std::string> FindFile(const std::string& path,
+                             const std::string& target_name);
 
 Result<void> WalkDirectory(
     const std::string& dir,

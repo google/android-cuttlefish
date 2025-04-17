@@ -90,8 +90,8 @@ class Subprocess {
   pid_t pid() const { return pid_; }
   StopperResult Stop() { return stopper_(this); }
 
-  Result<void> SendSignal(const int signal);
-  Result<void> SendSignalToGroup(const int signal);
+  Result<void> SendSignal(int signal);
+  Result<void> SendSignalToGroup(int signal);
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
@@ -123,16 +123,12 @@ class SubprocessOptions {
 
   bool Verbose() const { return verbose_; }
   bool ExitWithParent() const { return exit_with_parent_; }
-  const std::vector<std::string>& SandboxArguments() const {
-    return sandbox_arguments_;
-  }
   bool InGroup() const { return in_group_; }
   const std::string& Strace() const { return strace_; }
 
  private:
   bool verbose_;
   bool exit_with_parent_;
-  std::vector<std::string> sandbox_arguments_;
   bool in_group_;
   std::string strace_;
 };
@@ -308,6 +304,8 @@ class Command {
     return command_[0];
   }
 
+  std::string ToString() const;
+
   // Generates the contents for a bash script that can be used to run this
   // command. Note that this command must not require any file descriptors
   // or stdio redirects as those would not be available when the bash script
@@ -340,7 +338,7 @@ std::ostream& operator<<(std::ostream& out, const Command& command);
  * If some setup fails, `command` fails to start, or `command` exits due to a
  * signal, the return value will be negative.
  */
-int RunWithManagedStdio(Command&& command, const std::string* stdin,
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
                         std::string* stdout, std::string* stderr,
                         SubprocessOptions options = SubprocessOptions());
 

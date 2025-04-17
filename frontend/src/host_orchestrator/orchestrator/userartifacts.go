@@ -27,7 +27,7 @@ import (
 	"strings"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
@@ -179,8 +179,8 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
 }
 
 func Untar(dst string, src string, owner *user.User) error {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
-	_, err := cvd.Exec(ctx, "tar", "-xf", src, "-C", dst)
+	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
+	_, err := hoexec.Exec(ctx, "tar", "-xf", src, "-C", dst)
 	if err != nil {
 		return err
 	}
@@ -226,27 +226,27 @@ func Unzip(dstDir string, src string, owner *user.User) error {
 }
 
 func createNewUADir(parent string, owner *user.User) (string, error) {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
-	stdout, err := cvd.Exec(ctx, "mktemp", "--directory", "-p", parent)
+	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
+	stdout, err := hoexec.Exec(ctx, "mktemp", "--directory", "-p", parent)
 	if err != nil {
 		return "", err
 	}
 	name := strings.TrimRight(stdout, "\n")
 	// Sets permission regardless of umask.
-	if _, err := cvd.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
+	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
 		return "", err
 	}
 	return name, nil
 }
 
 func createUAFile(filename string, owner *user.User) error {
-	ctx := newCVDExecContext(exec.CommandContext, owner)
-	_, err := cvd.Exec(ctx, "touch", filename)
+	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
+	_, err := hoexec.Exec(ctx, "touch", filename)
 	if err != nil {
 		return err
 	}
 	// Sets permission regardless of umask.
-	if _, err := cvd.Exec(ctx, "chmod", "u=rwx,g=rw,o=r", filename); err != nil {
+	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rw,o=r", filename); err != nil {
 		return err
 	}
 	return nil

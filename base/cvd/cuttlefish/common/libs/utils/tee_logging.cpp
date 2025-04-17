@@ -133,6 +133,18 @@ TeeLogger::TeeLogger(const std::vector<SeverityTarget>& destinations,
                      const std::string& prefix)
     : destinations_(destinations), prefix_(prefix) {}
 
+ScopedTeeLogger::ScopedTeeLogger(TeeLogger tee_logger)
+    // Set the android logger to full verbosity, the tee_logger will choose
+    // whether to write each line.
+    : scoped_severity_(android::base::VERBOSE) {
+  old_logger_ = android::base::SetLogger(tee_logger);
+}
+
+ScopedTeeLogger::~ScopedTeeLogger() {
+  // restore the previous logger
+  android::base::SetLogger(std::move(old_logger_));
+}
+
 // Copied from system/libbase/logging_splitters.h
 static std::pair<int, int> CountSizeAndNewLines(const char* message) {
   int size = 0;
@@ -273,20 +285,29 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   return log_severities;
 }
 
+TeeLogger LogToStderr(
+    const std::string& log_prefix, MetadataLevel stderr_level,
+    std::optional<android::base::LogSeverity> stderr_severity) {
+  std::vector<SeverityTarget> log_severities{
+      SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
+                     SharedFD::Dup(/* stderr */ 2), stderr_level}};
+  return TeeLogger(log_severities, log_prefix);
+}
+
 TeeLogger LogToFiles(const std::vector<std::string>& files,
-                     const std::string& prefix) {
-  return TeeLogger(SeverityTargetsForFiles(files), prefix);
+                     const std::string& log_prefix) {
+  return TeeLogger(SeverityTargetsForFiles(files), log_prefix);
 }
 
 TeeLogger LogToStderrAndFiles(
-    const std::vector<std::string>& files, const std::string& prefix,
+    const std::vector<std::string>& files, const std::string& log_prefix,
     MetadataLevel stderr_level,
     std::optional<android::base::LogSeverity> stderr_severity) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
   log_severities.push_back(
       SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
                      SharedFD::Dup(/* stderr */ 2), stderr_level});
-  return TeeLogger(log_severities, prefix);
+  return TeeLogger(log_severities, log_prefix);
 }
 
 }  // namespace cuttlefish

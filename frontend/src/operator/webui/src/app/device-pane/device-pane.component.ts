@@ -1,4 +1,4 @@
-import {Component} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
 import {filter, first, mergeMap} from 'rxjs/operators';
@@ -12,16 +12,14 @@ import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
   styleUrls: ['./device-pane.component.scss'],
 })
 export class DevicePaneComponent {
+  private deviceService = inject(DeviceService);
+  displaysService = inject(DisplaysService);
+  private groupService = inject(GroupService);
+  private activatedRoute = inject(ActivatedRoute);
+  private router = inject(Router);
+
   groups = this.groupService.getGroups();
   devices = this.deviceService.getDevices();
-
-  constructor(
-    private deviceService: DeviceService,
-    public displaysService: DisplaysService,
-    private groupService: GroupService,
-    private activatedRoute: ActivatedRoute,
-    private router: Router
-  ) {}
 
   ngOnInit(): void {
     this.router.events

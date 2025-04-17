@@ -1,0 +1,23 @@
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+# gazelle:resolve_regexp go github.com/google/android-cuttlefish/frontend/src/liboperator/operator @liboperator//operator
+gazelle(name = "gazelle")
+
+go_library(
+    name = "host_orchestrator_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//orchestrator",
+        "//orchestrator/debug",
+        "@com_github_gorilla_mux//:mux",
+    ],
+)
+
+go_binary(
+    name = "host_orchestrator",
+    embed = [":host_orchestrator_lib"],
+    visibility = ["//visibility:public"],
+)

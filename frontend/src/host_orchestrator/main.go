@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -51,25 +52,6 @@ func startHttpServer(addr string, port int) error {
 
 	// handler is nil, so DefaultServeMux is used.
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), nil)
-}
-
-func startHttpsServer(addr string, port int, certPath string, keyPath string) error {
-	log.Printf("Host Orchestrator is listening at https://%s:%d", addr, port)
-	return http.ListenAndServeTLS(fmt.Sprintf("%s:%d", addr, port),
-		certPath,
-		keyPath,
-		// handler is nil, so DefaultServeMux is used.
-		//
-		// Using DefaultServerMux in both servers (http and https) is not a problem
-		// as http.ServeMux instances are thread safe.
-		nil)
-}
-
-func fromEnvOrDefault(key string, def string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return val
-	}
-	return def
 }
 
 func start(starters []func() error) {
@@ -110,8 +92,19 @@ func main() {
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
+	logFile := flag.String("log_file", "", "Path to file to write logs to.")
 
 	flag.Parse()
+
+	if *logFile != "" {
+		f, err := os.OpenFile(*logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening log file %q: %v", *logFile, err)
+		}
+		defer f.Close()
+		w := io.MultiWriter(os.Stderr, f)
+		log.SetOutput(w)
+	}
 
 	if err := os.MkdirAll(*imRootDir, 0774); err != nil {
 		log.Fatalf("Unable to create artifacts directory: %v", err)

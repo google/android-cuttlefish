@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+#include <stdlib.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/file.h>
@@ -27,16 +30,16 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/cvd/client.h"
-#include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/cvd.h"
-#include "common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvd/cvd.h"
+#include "cuttlefish/host/commands/cvd/legacy/client.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "host/commands/cvd/run_server.h"
+#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 
 namespace cuttlefish {
 namespace {
@@ -154,8 +157,7 @@ void IncreaseFileLimit() {
   }
 }
 
-Result<void> CvdMain(int argc, char** argv, char** envp,
-                     const android::base::LogSeverity verbosity) {
+Result<void> CvdMain(int argc, char** argv, char** envp) {
   CF_EXPECT(EnsureCvdDirectoriesExist());
 
   CF_EXPECT(KillOldServer());
@@ -192,12 +194,9 @@ Result<void> CvdMain(int argc, char** argv, char** envp,
   IncreaseFileLimit();
 
   InstanceLockFileManager instance_lockfile_manager;
-  auto host_tool_target_manager = NewHostToolTargetManager();
-  selector::InstanceDatabase instance_db(InstanceDatabasePath());
-  InstanceManager instance_manager(instance_lockfile_manager,
-                                   *host_tool_target_manager, instance_db);
-  Cvd cvd(verbosity, instance_lockfile_manager, instance_manager,
-          *host_tool_target_manager);
+  InstanceDatabase instance_db(InstanceDatabasePath());
+  InstanceManager instance_manager(instance_lockfile_manager, instance_db);
+  Cvd cvd(instance_manager, instance_lockfile_manager);
 
   // TODO(b/206893146): Make this decision inside the server.
   if (android::base::Basename(all_args[0]) == "acloud") {
@@ -258,13 +257,15 @@ std::string ColoredUrl(const std::string& url) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv, char** envp) {
+  srand(time(NULL));
+
   android::base::LogSeverity verbosity =
       cuttlefish::CvdVerbosityOption(argc, argv);
   android::base::InitLogging(argv, android::base::StderrLogger);
   // set verbosity for this process
   cuttlefish::SetMinimumVerbosity(verbosity);
 
-  auto result = cuttlefish::CvdMain(argc, argv, envp, verbosity);
+  auto result = cuttlefish::CvdMain(argc, argv, envp);
   if (result.ok()) {
     return 0;
   } else {

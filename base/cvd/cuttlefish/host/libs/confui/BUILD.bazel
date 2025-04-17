@@ -1,0 +1,106 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+genrule(
+    name = "roboto_medium_font",
+    srcs = [
+        "Roboto-Medium.ttf",
+    ],
+    outs = [
+        "roboto_medium.cc",
+    ],
+    cmd = "./$(location generate_font_cc.sh) \"$<\" RobotoMedium >\"$@\"",
+    tools = ["generate_font_cc.sh"],
+)
+
+genrule(
+    name = "roboto_regular_font",
+    srcs = [
+        "Roboto-Regular.ttf",
+    ],
+    outs = [
+        "roboto_regular.cc",
+    ],
+    cmd = "./$(location generate_font_cc.sh) \"$<\" RobotoRegular >\"$@\"",
+    tools = ["generate_font_cc.sh"],
+)
+
+genrule(
+    name = "shield_font",
+    srcs = [
+        "Shield.ttf",
+    ],
+    outs = [
+        "shield.cc",
+    ],
+    cmd = "./$(location generate_font_cc.sh) \"$<\" shield >\"$@\"",
+    tools = ["generate_font_cc.sh"],
+)
+
+cc_library(
+    name = "host_confui",
+    srcs = [
+        "confui_cbor.cc",
+        "host_renderer.cc",
+        "host_server.cc",
+        "host_utils.cc",
+        "host_virtual_input.cc",
+        "secure_input.cc",
+        "server_common.cc",
+        "session.cc",
+        "sign.cc",
+        ":roboto_medium_font",
+        ":roboto_regular_font",
+        ":shield_font",
+    ],
+    hdrs = [
+        "confui_cbor.h",
+        "host_mode_ctrl.h",
+        "host_renderer.h",
+        "host_server.h",
+        "host_utils.h",
+        "host_virtual_input.h",
+        "layouts/fonts.h",
+        "layouts/layout.h",
+        "secure_input.h",
+        "server_common.h",
+        "session.h",
+        "sign.h",
+        "sign_utils.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/concurrency",
+        "//cuttlefish/common/libs/confui",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/security:confui_sign",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/input_connector",
+        "//cuttlefish/host/libs/screen_connector:screen_connector_common",
+        "//libbase",
+        "//teeui/libteeui",
+        "//teeui/libteeui/prebuilt/localization:libteeui_localization",
+        "@boringssl//:crypto",
+        "@freetype",
+        "@fruit",
+        "@libcbor//:cbor",
+        "@libdrm//:libdrm_fourcc",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_confui_clang_tidy",
+    srcs = [":host_confui"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)

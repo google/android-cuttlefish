@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -24,12 +25,12 @@
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
-#include "gflags/gflags.h"
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_string.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 
 namespace cuttlefish {
 namespace {
@@ -39,7 +40,8 @@ constexpr char kUsageMessage[] =
     "format:\n"
     "{<branch> | <build_id>}[/<build_target>][{<filepath>}]\n"
     "For example: "
-    "\"aosp-main/aosp_cf_x86_64_phone-trunk_staging-userdebug{file.txt}\""
+    "\"aosp-android-latest-release/"
+    "aosp_cf_x86_64_only_phone-userdebug{file.txt}\""
     "<branch> fetches artifacts from the latest build of the argument\n"
     "{<filepath>} is used for certain artifacts to specify the file to "
     "download location in the build artifacts\n"
@@ -54,6 +56,19 @@ Flag GflagsCompatFlagSeconds(const std::string& name,
         CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
                    "Failed to parse \"{}\" as an integer", match.value);
         value = std::chrono::seconds(parsed_int);
+        return {};
+      });
+}
+
+Flag GflagsCompatFlagInt64(const std::string& name, int64_t& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        int64_t parsed_int;
+        CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
+                   "Failed to parse \"{}\" as an integer (int64_t)",
+                   match.value);
+        value = parsed_int;
         return {};
       });
 }
@@ -80,6 +95,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("host_package_build", fetch_flags.host_package_build)
           .Help("source for the host cvd tools"));
+  flags.emplace_back(
+      GflagsCompatFlag("host_substitutions", fetch_flags.host_substitutions)
+          .Help("list of executables to override with packaged versions."));
 
   BuildApiFlags& build_api_flags = fetch_flags.build_api_flags;
   flags.emplace_back(GflagsCompatFlag("api_key", build_api_flags.api_key)
@@ -104,6 +122,11 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(
       GflagsCompatFlag("enable_caching", build_api_flags.enable_caching)
           .Help("Whether to enable local fetch file caching or not"));
+  flags.emplace_back(
+      GflagsCompatFlag("max_cache_size_gb", build_api_flags.max_cache_size_gb)
+          .Help("Max allowed size(in gigabytes) of the local fetch file cache. "
+                " If the cache grows beyond this size it will be pruned after "
+                "the fetches complete."));
 
   CredentialFlags& credential_flags = build_api_flags.credential_flags;
   flags.emplace_back(
@@ -117,6 +140,76 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                       credential_flags.service_account_filepath)
                          .Help("Enforce reading service account credentials "
                                "from the given filepath."));
+
+  // Most of these flags are passed to casdownloader (a go binary). A prefix
+  // "cas-" is added to the flag name if it doesn't already have one to minimize
+  // chances of flag name conflicts and "-" is replaced with "_" for consistency
+  // with cvd flags. E.g. the casdownloader flag "cache-dir" becomes cvd flag
+  // "cas_cache_dir".
+  CasDownloaderFlags& cas_downloader_flags =
+      fetch_flags.build_api_flags.cas_downloader_flags;
+  flags.emplace_back(GflagsCompatFlag("cas_config_filepath",
+                                      cas_downloader_flags.cas_config_filepath)
+                         .Help("Path to the CAS downloader config file. Other "
+                               "CAS flags will be ignored if this is set."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_downloader_path",
+                       cas_downloader_flags.downloader_path)
+          .Help("Path to the CAS downloader binary. Enables CAS downloading if "
+                "specified."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_prefer_uncompressed",
+                       cas_downloader_flags.prefer_uncompressed)
+          .Help("Download uncompressed artifacts if available."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_cache_dir", cas_downloader_flags.cache_dir)
+          .Help("Cache directory to store downloaded files (casdownloader "
+                "flag: cache-dir)."));
+  flags.emplace_back(
+      GflagsCompatFlagInt64("cas_cache_max_size",
+                            cas_downloader_flags.cache_max_size)
+          .Help("Cache is trimmed if the cache gets larger than "
+                "this value in bytes (casdownloader flag: cache-max-size)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_cache_lock", cas_downloader_flags.use_hardlink)
+          .Help("Enable cache lock (casdownloader flag: cache-lock)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_use_hardlink", cas_downloader_flags.use_hardlink)
+          .Help("By default local cache will use hardlink when push and pull "
+                "files (casdownloader flag: use-hardlink)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_concurrency", cas_downloader_flags.cas_concurrency)
+          .Help("the maximum number of concurrent download operations "
+                "(casdownloader flag: cas-concurrency)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_memory_limit", cas_downloader_flags.memory_limit)
+          .Help("Memory limit in MiB (casdownloader flag: memory-limit)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_rpc_timeout", cas_downloader_flags.rpc_timeout)
+          .Help("Default RPC timeout in seconds (casdownloader flag: "
+                "rpc-timeout)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_get_capabilities_timeout",
+                       cas_downloader_flags.get_capabilities_timeout)
+          .Help("RPC timeout for GetCapabilities in seconds (casdownloader "
+                "flag: get-capabilities-timeout)."));
+  flags.emplace_back(GflagsCompatFlag("cas_get_tree_timeout",
+                                      cas_downloader_flags.get_tree_timeout)
+                         .Help("RPC timeout for GetTree in seconds "
+                               "(casdownloader flag: get-tree-timeout)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_batch_read_blobs_timeout",
+                       cas_downloader_flags.batch_read_blobs_timeout)
+          .Help("RPC timeout for BatchReadBlobs in seconds (casdownloader "
+                "flag: batch-read-blobs-timeout)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_batch_update_blobs_timeout",
+                       cas_downloader_flags.batch_update_blobs_timeout)
+          .Help("RPC timeout for BatchUpdateBlobs in seconds (casdownloader "
+                "flag: batch-update-blobs-timeout)."));
+  flags.emplace_back(GflagsCompatFlag("version", cas_downloader_flags.version)
+                         .Help("Print CAS downloader version information "
+                               "(casdownloader flag: version)."));
 
   VectorFlags& vector_flags = fetch_flags.vector_flags;
   flags.emplace_back(
@@ -193,15 +286,14 @@ Result<int> GetNumberOfBuilds(
 
 }  // namespace
 
-Result<FetchFlags> GetFlagValues(int argc, char** argv) {
+Result<FetchFlags> FetchFlags::Parse(std::vector<std::string>& args) {
   FetchFlags fetch_flags;
   std::string directory;
   std::vector<Flag> flags = GetFlagsVector(fetch_flags, directory);
-  std::vector<std::string> args = ArgsToVec(argc - 1, argv + 1);
   CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
 
   if (!directory.empty()) {
-    LOG(ERROR) << "Please use --target_directory instead of --directory";
+    LOG(WARNING) << "Please use --target_directory instead of --directory";
     if (fetch_flags.target_directory.empty()) {
       fetch_flags.target_directory = directory;
     }
@@ -213,7 +305,7 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   fetch_flags.target_directory = AbsolutePath(fetch_flags.target_directory);
 
   if (!fetch_flags.vector_flags.boot_artifact.empty()) {
-    LOG(ERROR) << "Please use the build string filepath syntax instead of "
+    LOG(WARNING) << "Please use the build string filepath syntax instead of "
                   "deprecated --boot_artifact";
     for (const auto& build_string : fetch_flags.vector_flags.boot_build) {
       if (build_string) {
@@ -226,7 +318,7 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
   }
 
   if (!fetch_flags.build_api_flags.credential_source.empty()) {
-    LOG(ERROR) << "Please use the new, specific credential flags instead of "
+    LOG(WARNING) << "Please use the new, specific credential flags instead of "
                   "the deprecated --credential_source";
   }
   CredentialFlags& credential_flags =
@@ -241,6 +333,7 @@ Result<FetchFlags> GetFlagValues(int argc, char** argv) {
 
   fetch_flags.number_of_builds = CF_EXPECT(GetNumberOfBuilds(
       fetch_flags.vector_flags, fetch_flags.target_subdirectory));
+
   return {fetch_flags};
 }
 

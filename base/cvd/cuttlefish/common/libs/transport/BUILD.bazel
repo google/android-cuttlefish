@@ -1,0 +1,31 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "transport",
+    srcs = [
+        "channel.cpp",
+        "channel_sharedfd.cpp",
+    ],
+    hdrs = [
+        "channel.h",
+        "channel_sharedfd.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "transport_clang_tidy",
+    srcs = [":transport"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

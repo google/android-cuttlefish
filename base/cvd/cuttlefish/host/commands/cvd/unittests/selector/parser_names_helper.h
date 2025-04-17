@@ -17,14 +17,11 @@
 
 #include <optional>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include <gtest/gtest.h>
 
-#include "host/commands/cvd/selector/start_selector_parser.h"
-#include "host/commands/cvd/types.h"
+#include "cuttlefish/host/commands/cvd/cli/types.h"
 
 namespace cuttlefish {
 namespace selector {

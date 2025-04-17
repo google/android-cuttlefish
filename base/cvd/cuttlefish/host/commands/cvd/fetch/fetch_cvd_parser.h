@@ -16,16 +16,19 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_api.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/chrome_os_build_string.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cache/cache.h"
+#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 
 namespace cuttlefish {
 
@@ -51,7 +54,7 @@ inline constexpr char kDefaultTargetDirectory[] = "";
 inline constexpr bool kDefaultKeepDownloadedArchives = false;
 
 inline constexpr char kDefaultBuildTarget[] =
-    "aosp_cf_x86_64_phone-trunk_staging-userdebug";
+    "aosp_cf_x86_64_only_phone-userdebug";
 
 struct CredentialFlags {
   bool use_gce_metadata = kDefaultUseGceMetadata;
@@ -68,6 +71,8 @@ struct BuildApiFlags {
   bool external_dns_resolver = kDefaultExternalDnsResolver;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
+  std::size_t max_cache_size_gb = kDefaultCacheSizeGb;
+  CasDownloaderFlags cas_downloader_flags;
 };
 
 struct VectorFlags {
@@ -94,8 +99,9 @@ struct FetchFlags {
   BuildApiFlags build_api_flags;
   VectorFlags vector_flags;
   int number_of_builds = 0;
-};
+  std::vector<std::string> host_substitutions;
 
-Result<FetchFlags> GetFlagValues(int argc, char** argv);
+  static Result<FetchFlags> Parse(std::vector<std::string>& args);
+};
 
 }  // namespace cuttlefish

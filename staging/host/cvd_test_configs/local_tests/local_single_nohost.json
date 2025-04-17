@@ -1,0 +1,15 @@
+{
+  "instances": [
+    {
+      "@import": "phone",
+      "vm": {
+        "memory_mb": 8192,
+        "setupwizard_mode": "OPTIONAL",
+        "cpus": 4
+      },
+      "disk": {
+        "default_build": "/tmp/vsoc_x86_64"
+      }
+    }
+  ]
+}

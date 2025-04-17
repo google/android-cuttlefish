@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd/acloud/create_converter_parser.h"
+#include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
 
-#include <array>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 
 namespace cuttlefish {
 namespace {
@@ -225,7 +223,7 @@ Result<ConverterParsed> ParseAcloudCreateFlags(cvd_common::Args& arguments) {
 }
 
 Result<cvd_common::Args> CompileFromAcloudToCvdr(cvd_common::Args& arguments) {
-  CF_EXPECT(arguments.size() > 0);
+  CF_EXPECT(!arguments.empty());
   CF_EXPECT(arguments[0] == kAcloudCmdCreate);
   std::string main_cmd = arguments[0];
   arguments.erase(arguments.begin());

@@ -1,0 +1,23 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+cc_library(
+    name = "mkvmuxer",
+    srcs = [
+      "mkvmuxer/mkvmuxer.cc",
+      "mkvmuxer/mkvmuxerutil.cc",
+      "mkvmuxer/mkvwriter.cc",
+    ],
+    hdrs = [
+      "common/webmids.h",
+      "mkvmuxer/mkvmuxer.h",
+      "mkvmuxer/mkvmuxertypes.h",
+      "mkvmuxer/mkvmuxerutil.h",
+      "mkvmuxer/mkvwriter.h",
+      "mkvparser/mkvparser.h",
+    ],
+)
+

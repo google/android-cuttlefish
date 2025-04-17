@@ -1,0 +1,38 @@
+{
+  "name": "Cuttlefish Vhost User Touchpad %INDEX%",
+  "serial_name": "virtio-touchpad-%INDEX%",
+  "events": [
+    {
+      "event_type": "EV_KEY",
+      "event_type_code": 1,
+      "supported_events": {
+        "BTN_TOUCH": 330,
+        "BTN_LEFT": 272,
+        "BTN_RIGHT": 273,
+        "BTN_TOOL_FINGER": 325
+      }
+    },
+    {
+      "event_type": "EV_ABS",
+      "event_type_code": 3,
+      "supported_events": {
+        "ABS_X": 0,
+        "ABS_Y": 1
+      }
+    }
+  ],
+  "axis_info": [
+    {
+      "axis": "ABS_X",
+      "axis_code": 0,
+      "min": 0,
+      "max": %WIDTH%
+    },
+    {
+      "axis": "ABS_Y",
+      "axis_code": 1,
+      "min": 0,
+      "max": %HEIGHT%
+    }
+  ]
+}

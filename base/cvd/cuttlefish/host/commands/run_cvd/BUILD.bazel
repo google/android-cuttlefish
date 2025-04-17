@@ -1,0 +1,104 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "reporting",
+    srcs = ["reporting.cpp"],
+    hdrs = ["reporting.h"],
+    deps = [
+        "//libbase",
+        "@fruit"
+    ],
+)
+
+clang_tidy_test(
+    name = "reporting_clang_tidy",
+    srcs = [":reporting"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_binary(
+    name = "run_cvd",
+    srcs = [
+        "boot_state_machine.cc",
+        "boot_state_machine.h",
+        "main.cc",
+        "server_loop.cpp",
+        "server_loop.h",
+        "server_loop_impl.cpp",
+        "server_loop_impl.h",
+        "server_loop_impl_snapshot.cpp",
+        "server_loop_impl_webrtc.cpp",
+        "validate.cpp",
+        "validate.h",
+    ],
+    copts = COPTS,
+    deps = [
+        ":reporting",
+        "//:libbuildversion",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
+        "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
+        "//cuttlefish/host/commands/run_cvd/launch:automotive_proxy",
+        "//cuttlefish/host/commands/run_cvd/launch:bluetooth_connector",
+        "//cuttlefish/host/commands/run_cvd/launch:casimir",
+        "//cuttlefish/host/commands/run_cvd/launch:casimir_control_server",
+        "//cuttlefish/host/commands/run_cvd/launch:console_forwarder",
+        "//cuttlefish/host/commands/run_cvd/launch:control_env_proxy_server",
+        "//cuttlefish/host/commands/run_cvd/launch:echo_server",
+        "//cuttlefish/host/commands/run_cvd/launch:gnss_grpc_proxy",
+        "//cuttlefish/host/commands/run_cvd/launch:kernel_log_monitor",
+        "//cuttlefish/host/commands/run_cvd/launch:logcat_receiver",
+        "//cuttlefish/host/commands/run_cvd/launch:mcu",
+        "//cuttlefish/host/commands/run_cvd/launch:metrics",
+        "//cuttlefish/host/commands/run_cvd/launch:modem",
+        "//cuttlefish/host/commands/run_cvd/launch:netsim_server",
+        "//cuttlefish/host/commands/run_cvd/launch:nfc_connector",
+        "//cuttlefish/host/commands/run_cvd/launch:open_wrt",
+        "//cuttlefish/host/commands/run_cvd/launch:openwrt_control_server",
+        "//cuttlefish/host/commands/run_cvd/launch:pica",
+        "//cuttlefish/host/commands/run_cvd/launch:root_canal",
+        "//cuttlefish/host/commands/run_cvd/launch:screen_recording_server",
+        "//cuttlefish/host/commands/run_cvd/launch:secure_env",
+        "//cuttlefish/host/commands/run_cvd/launch:sensors_simulator",
+        "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
+        "//cuttlefish/host/commands/run_cvd/launch:streamer",
+        "//cuttlefish/host/commands/run_cvd/launch:ti50_emulator",
+        "//cuttlefish/host/commands/run_cvd/launch:tombstone_receiver",
+        "//cuttlefish/host/commands/run_cvd/launch:uwb_connector",
+        "//cuttlefish/host/commands/run_cvd/launch:vhal_proxy_server",
+        "//cuttlefish/host/commands/run_cvd/launch:vhost_device_vsock",
+        "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
+        "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
+        "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config/adb",
+        "//cuttlefish/host/libs/config/fastboot",
+        "//cuttlefish/host/libs/metrics",
+        "//cuttlefish/host/libs/process_monitor",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+        "@googleapis//google/rpc:status_cc_proto",
+        "@grpc//:grpc",
+        "@grpc//:grpc++",
+    ],
+)
+
+clang_tidy_test(
+    name = "run_cvd_clang_tidy",
+    srcs = [":run_cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

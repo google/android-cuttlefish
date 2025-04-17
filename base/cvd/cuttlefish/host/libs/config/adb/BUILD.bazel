@@ -1,0 +1,59 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "adb",
+    srcs = [
+        "config.cpp",
+        "data.cpp",
+        "flags.cpp",
+        "launch.cpp",
+        "strings.cpp",
+    ],
+    hdrs = [
+        "adb.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "adb_clang_tidy",
+    srcs = [":adb"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "adb_test",
+    srcs = [
+        "test.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":adb",
+        "//cuttlefish/host/libs/config",
+        "@fruit",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "adb_test_clang_tidy",
+    srcs = [":adb_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

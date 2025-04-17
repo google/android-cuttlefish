@@ -20,34 +20,40 @@ import (
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type CreateCVDBugReportActionOpts struct {
-	Group            string
-	Paths            IMPaths
-	OperationManager OperationManager
-	ExecContext      cvd.CVDExecContext
-	UUIDGen          func() string
+	Group               string
+	IncludeADBBugreport bool
+	Paths               IMPaths
+	OperationManager    OperationManager
+	ExecContext         exec.ExecContext
+	UUIDGen             func() string
 }
 
 type CreateCVDBugReportAction struct {
-	group       string
-	paths       IMPaths
-	om          OperationManager
-	execContext cvd.CVDExecContext
-	uuidgen     func() string
+	group               string
+	includeADBBugreport bool
+	paths               IMPaths
+	om                  OperationManager
+	cvdCLI              *cvd.CLI
+	uuidgen             func() string
 }
 
 func NewCreateCVDBugReportAction(opts CreateCVDBugReportActionOpts) *CreateCVDBugReportAction {
 	return &CreateCVDBugReportAction{
-		group:       opts.Group,
-		paths:       opts.Paths,
-		om:          opts.OperationManager,
-		execContext: opts.ExecContext,
-		uuidgen:     opts.UUIDGen,
+		group:               opts.Group,
+		includeADBBugreport: opts.IncludeADBBugreport,
+		paths:               opts.Paths,
+		om:                  opts.OperationManager,
+		cvdCLI:              cvd.NewCLI(opts.ExecContext),
+		uuidgen:             opts.UUIDGen,
 	}
 }
+
+const BugReportZipFileName = "cvd_bugreport.zip"
 
 func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	if a.group == "" {
@@ -61,25 +67,17 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
-	go a.createBugReport(uuid, a.group, op)
+	go func(uuid string, op apiv1.Operation) {
+		dst := filepath.Join(a.paths.CVDBugReportsDir, uuid, BugReportZipFileName)
+		result := &OperationResult{}
+		if err := a.cvdCLI.BugReport(cvd.Selector{Group: a.group}, a.includeADBBugreport, dst); err != nil {
+			result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
+		} else {
+			result.Value = uuid
+		}
+		if err := a.om.Complete(op.Name, result); err != nil {
+			log.Printf("error completing operation %q: %v", op.Name, err)
+		}
+	}(uuid, op)
 	return op, nil
-}
-
-const BugReportZipFileName = "cvd_bugreport.zip"
-
-func (a *CreateCVDBugReportAction) createBugReport(uuid, group string, op apiv1.Operation) {
-	result := &OperationResult{}
-	filename := filepath.Join(a.paths.CVDBugReportsDir, uuid, "cvd_bugreport.zip")
-	sel := &CVDSelector{Group: group}
-	args := sel.ToCVDCLI()
-	args = append(args, []string{"host_bugreport", "--output=" + filename}...)
-	cmd := cvd.NewCommand(a.execContext, args, cvd.CommandOpts{})
-	if err := cmd.Run(); err != nil {
-		result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
-	} else {
-		result.Value = uuid
-	}
-	if err := a.om.Complete(op.Name, result); err != nil {
-		log.Printf("error completing operation %q: %v", op.Name, err)
-	}
 }

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -34,6 +35,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/parsebool.h>
+#include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -42,6 +44,22 @@
 #include "common/libs/utils/tee_logging.h"
 
 namespace cuttlefish {
+
+namespace {
+
+/*
+ * From external/gflags/src, commit:
+ *  061f68cd158fa658ec0b9b2b989ed55764870047
+ *
+ */
+constexpr std::array help_bool_opts{
+    "help", "helpfull", "helpshort", "helppackage", "helpxml", "version", "h"};
+constexpr std::array help_str_opts{
+    "helpon",
+    "helpmatch",
+};
+
+}  // namespace
 
 std::ostream& operator<<(std::ostream& out, const FlagAlias& alias) {
   switch (alias.mode) {
@@ -150,7 +168,7 @@ Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   using android::base::StringReplace;
   auto normalized_arg = StringReplace(arg, "-", "_", true);
-  if (!setter_ && aliases_.size() > 0) {
+  if (!setter_ && !aliases_.empty()) {
     return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
   }
   for (auto& alias : aliases_) {
@@ -402,6 +420,49 @@ Result<void> ConsumeFlags(const std::vector<Flag>& flags,
   return {};
 }
 
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>& args) {
+  while (!args.empty()) {
+    const std::string& first_arg = args[0];
+    std::optional<std::string> next_arg;
+    if (args.size() > 1) {
+      next_arg = args[1];
+    }
+    Flag::FlagProcessResult outcome = Flag::FlagProcessResult::kFlagSkip;
+    for (const Flag& flag : flags) {
+      Flag::FlagProcessResult flag_outcome = 
+          CF_EXPECT(flag.Process(first_arg, next_arg));
+      if (flag_outcome == Flag::FlagProcessResult::kFlagSkip) {
+        continue;
+      }
+      CF_EXPECTF(outcome == Flag::FlagProcessResult::kFlagSkip,
+                 "Multiple '{}' handlers", first_arg);
+      outcome = flag_outcome;
+    }
+    switch (outcome) {
+      case Flag::FlagProcessResult::kFlagSkip:
+        return {};
+      case Flag::FlagProcessResult::kFlagConsumed:
+        args.erase(args.begin());
+        break;
+      case Flag::FlagProcessResult::kFlagConsumedWithFollowing:
+        args.erase(args.begin(), args.begin() + 2);
+        break;
+      case Flag::FlagProcessResult::kFlagConsumedOnlyFollowing:
+        args.erase(args.begin() + 1, args.begin() + 2);
+        break;
+    }
+  }
+  return {};
+}
+
+Result<void> ConsumeFlagsConstrained(const std::vector<Flag>& flags,
+                                     std::vector<std::string>&& args) {
+  std::vector<std::string>& args_ref = args;
+  CF_EXPECT(ConsumeFlagsConstrained(flags, args_ref));
+  return {};
+}
+
 bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
   for (const auto& flag : flags) {
     if (!flag.WriteGflagsCompatXml(out)) {
@@ -423,13 +484,15 @@ Flag VerbosityFlag(android::base::LogSeverity& value) {
 
 Flag HelpFlag(const std::vector<Flag>& flags, std::string text) {
   auto setter = [&flags, text](FlagMatch) -> Result<void> {
-    if (text.size() > 0) {
+    if (!text.empty()) {
       LOG(INFO) << text;
     }
     for (const auto& flag : flags) {
       LOG(INFO) << flag;
     }
-    return CF_ERR("user requested early exit");
+    // return value of 1 matches gflags --help flag behavior
+    std::exit(1);
+    return {};
   };
   return Flag()
       .Alias({FlagAliasMode::kFlagExact, "-help"})
@@ -535,7 +598,7 @@ Flag GflagsCompatFlag(const std::string& name, std::string& value) {
 
 template <typename T>
 std::optional<T> ParseInteger(const std::string& value) {
-  if (value.size() == 0) {
+  if (value.empty()) {
     return {};
   }
   const char* base = value.c_str();
@@ -566,6 +629,25 @@ Flag GflagsCompatFlag(const std::string& name, int32_t& value) {
   return GflagsCompatNumericFlagGeneric(name, value);
 }
 
+template <typename T>
+static Flag GflagsCompatUnsignedNumericFlagGeneric(const std::string& name,
+                                                   T& value) {
+  return GflagsCompatFlag(name)
+      .Getter([&value]() { return std::to_string(value); })
+      .Setter([&value](const FlagMatch& match) -> Result<void> {
+        T result;
+        CF_EXPECTF(android::base::ParseUint<T>(match.value, &result),
+                   "Failed to parse \"{}\" as an unsigned integer",
+                   match.value);
+        value = result;
+        return {};
+      });
+}
+
+Flag GflagsCompatFlag(const std::string& name, std::size_t& value) {
+  return GflagsCompatUnsignedNumericFlagGeneric(name, value);
+}
+
 Flag GflagsCompatFlag(const std::string& name, bool& value) {
   return GflagsCompatBoolFlagBase(name)
       .Getter([&value]() { return fmt::format("{}", value); })
@@ -591,10 +673,11 @@ Flag GflagsCompatFlag(const std::string& name,
 }
 
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
-                      const bool def_val) {
+                      const bool default_value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return fmt::format("{}", fmt::join(value, ",")); })
-      .Setter([&name, &value, def_val](const FlagMatch& match) -> Result<void> {
+      .Setter([&name, &value,
+               default_value](const FlagMatch& match) -> Result<void> {
         if (match.value.empty()) {
           value.clear();
           return {};
@@ -606,7 +689,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
         output_vals.reserve(str_vals.size());
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {
-            output_vals.push_back(def_val);
+            output_vals.push_back(default_value);
           } else {
             output_vals.push_back(CF_EXPECT(ParseBool(str_val, name)));
           }
@@ -614,6 +697,23 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
         value = output_vals;
         return {};
       });
+}
+
+Result<bool> HasHelpFlag(const std::vector<std::string>& args) {
+  std::vector<std::string> copied_args(args);
+  std::vector<Flag> flags;
+  flags.reserve(help_bool_opts.size() + help_str_opts.size());
+  bool bool_value_placeholder = false;
+  std::string str_value_placeholder;
+  for (const auto bool_opt : help_bool_opts) {
+    flags.emplace_back(GflagsCompatFlag(bool_opt, bool_value_placeholder));
+  }
+  for (const auto str_opt : help_str_opts) {
+    flags.emplace_back(GflagsCompatFlag(str_opt, str_value_placeholder));
+  }
+  CF_EXPECT(ConsumeFlags(flags, copied_args));
+  // if there was any match, some in copied_args were consumed.
+  return (args.size() != copied_args.size());
 }
 
 }  // namespace cuttlefish

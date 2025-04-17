@@ -36,11 +36,10 @@ int GetVsockServerPort(const int base,
 // it easily discoverable regardless of what vm manager is in use
 std::string GetGlobalConfigFileLink();
 
-// These functions modify a given base value to make it different across
+// This function modifies a given base value to make it different across
 // different instances by appending the instance id in case of strings or adding
 // it in case of integers.
 std::string ForCurrentInstance(const char* prefix);
-int ForCurrentInstance(int base);
 
 int InstanceFromString(std::string instance_str);
 
@@ -49,17 +48,21 @@ std::string RandomSerialNumber(const std::string& prefix);
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultQemuBinaryDir();
-std::string HostBinaryPath(const std::string& file);
+std::string HostBinaryPath(const std::string& binary_name);
 std::string HostUsrSharePath(const std::string& file);
 std::string HostQemuBiosPath();
 std::string DefaultGuestImagePath(const std::string& file);
-std::string DefaultEnvironmentPath(const char* environment_key,
-                                   const char* default_value,
-                                   const char* path);
+std::string DefaultEnvironmentPath(const std::string& environment_key,
+                                   const std::string& default_value,
+                                   const std::string& subpath);
+bool IsValidAndroidHostOutPath(const std::string& path);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
 
 // Whether to use our local QEMU prebuilt
 bool UseQemuPrebuilt();
-}
+
+std::string GetSeccompPolicyDir();
+
+}  // namespace cuttlefish

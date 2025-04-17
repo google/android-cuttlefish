@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Step 1. Build Cuttlefish docker image if there is no such one
 cf_image=$(docker image list | grep "cuttlefish-orchestration")

@@ -81,8 +81,8 @@ std::optional<std::map<std::string, std::string>> flagXml(const Flag& f) {
   }
   auto xml = xml_stream.str();
   // Holds all memory for the parsed structure.
-  std::unique_ptr<xmlDoc, xmlFreeFunc> doc(
-      xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFree);
+  std::unique_ptr<xmlDoc, void(*)(xmlDocPtr)> doc(
+      xmlReadMemory(xml.c_str(), xml.size(), nullptr, nullptr, 0), xmlFreeDoc);
   if (!doc) {
     return {};
   }
@@ -276,13 +276,10 @@ TEST(FlagParser, BoolVectorFlag) {
   std::vector<bool> value;
   bool default_value = true;
   auto flag = GflagsCompatFlag("myflag", value, default_value);
-
   ASSERT_THAT(flag.Parse({"--myflag="}), IsOk());
   ASSERT_TRUE(value.empty());
-
   ASSERT_THAT(flag.Parse({"--myflag=foo"}), IsError());
   ASSERT_TRUE(value.empty());
-
   ASSERT_THAT(flag.Parse({"--myflag=true,bar"}), IsError());
   ASSERT_TRUE(value.empty());
 
@@ -398,6 +395,34 @@ TEST(FlagParser, EndOfOptionMark) {
                            /* recognize_end_of_option_mark */ true),
               IsOk());
   ASSERT_TRUE(flag);
+}
+
+TEST(FlagParser, ConsumesConstrainedEquals) {
+  std::vector<std::string> args{"--name=abc", "status", "--name=def"};
+
+  std::string name;
+  Flag name_flag = GflagsCompatFlag("name", name);
+
+  std::vector<Flag> flags = {name_flag};
+  EXPECT_THAT(ConsumeFlagsConstrained(flags, args), IsOk());
+
+  std::vector<std::string> expected_args = {"status", "--name=def"};
+  EXPECT_EQ(args, expected_args);
+  EXPECT_EQ(name, "abc");
+}
+
+TEST(FlagParser, ConsumesConstrainedSeparated) {
+  std::vector<std::string> args{"--name", "abc", "status", "--name", "def"};
+
+  std::string name;
+  Flag name_flag = GflagsCompatFlag("name", name);
+
+  std::vector<Flag> flags = {name_flag};
+  EXPECT_THAT(ConsumeFlagsConstrained(flags, args), IsOk());
+
+  std::vector<std::string> expected_args = {"status", "--name", "def"};
+  EXPECT_EQ(args, expected_args);
+  EXPECT_EQ(name, "abc");
 }
 
 class FlagConsumesArbitraryTest : public ::testing::Test {

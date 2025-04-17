@@ -1,0 +1,25 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "acloud_translator",
+    srcs = [
+        "main.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//libbase",
+    ]
+)
+
+clang_tidy_test(
+    name = "acloud_translator_clang_tidy",
+    srcs = [":acloud_translator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

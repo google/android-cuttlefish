@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Cuttlefish is only supported on 64-bit host architectures
 # curl https://nodejs.org/dist/$NODE_VERSION/SHASUMS256.txt -O

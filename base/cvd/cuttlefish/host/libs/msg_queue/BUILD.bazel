@@ -1,0 +1,27 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "msg_queue",
+    srcs = [
+        "msg_queue.cc",
+    ],
+    hdrs = [
+        "msg_queue.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "msg_queue_clang_tidy",
+    srcs = [":msg_queue"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

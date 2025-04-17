@@ -1,0 +1,14 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@opengl_headers//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "egl_headers",
+    hdrs = glob([
+        "api/**/*.h",
+    ]),
+    strip_include_prefix = "api",
+)

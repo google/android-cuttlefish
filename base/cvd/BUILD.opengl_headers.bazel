@@ -1,0 +1,44 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "opengl_headers",
+    hdrs = glob([
+        "api/**/*.h",
+    ]),
+    strip_include_prefix = "api",
+)
+
+cc_library(
+    name = "GLES_headers",
+    hdrs = glob([
+        "api/GLES/*.h",
+    ]),
+    strip_include_prefix = "api",
+    deps = [
+        "@egl_headers//:egl_headers",
+    ],
+)
+
+cc_library(
+    name = "GLES2_headers",
+    hdrs = glob([
+        "api/GLES2/*.h",
+    ]),
+    strip_include_prefix = "api",
+    deps = [
+        "@egl_headers//:egl_headers",
+    ],
+)
+
+cc_library(
+    name = "GLES3_headers",
+    hdrs = glob([
+        "api/GLES3/*.h",
+    ]),
+    strip_include_prefix = "api",
+    deps = [
+        "@egl_headers//:egl_headers",
+    ],
+)

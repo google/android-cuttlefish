@@ -1,3 +1,28 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "proto",
+    hdrs = ["proto.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@fmt",
+        "@protobuf",
+        "@protobuf//:json_util",
+    ],
+)
+
+clang_tidy_test(
+    name = "proto_clang_tidy",
+    srcs = [":proto"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "result",
     srcs = [
@@ -6,86 +31,126 @@ cc_library(
     hdrs = [
         "result.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
         "//libbase",
         "@fmt",
     ],
 )
 
+clang_tidy_test(
+    name = "result_clang_tidy",
+    srcs = [":result"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "result_matchers",
+    testonly = 1,
     hdrs = [
         "result_matchers.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
-        "//libbase",
         ":result",
+        "//libbase",
         "@googletest//:gtest",
     ],
-    testonly = 1,
+)
+
+clang_tidy_test(
+    name = "result_matchers_clang_tidy",
+    srcs = [":result_matchers"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "environment",
+    srcs = [
+        "environment.cpp",
+        "known_paths.cpp",
+    ],
+    hdrs = [
+        "environment.h",
+        "known_paths.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "environment_clang_tidy",
+    srcs = [":environment"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
     name = "utils",
     srcs = [
+        "architecture.cpp",
         "archive.cpp",
         "base64.cpp",
-        "environment.cpp",
+        "container.cpp",
+        "device_type.cpp",
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
+        "in_sandbox.cpp",
         "inotify.cpp",
         "json.cpp",
+        "network.cpp",
         "proc_file_utils.cpp",
         "shared_fd_flag.cpp",
         "signals.cpp",
+        "socket2socket_proxy.cpp",
         "subprocess.cpp",
+        "tcp_socket.cpp",
         "tee_logging.cpp",
         "unix_sockets.cpp",
         "users.cpp",
+        "vsock_connection.cpp",
     ],
     hdrs = [
+        "architecture.h",
         "archive.h",
         "base64.h",
+        "cf_endian.h",
+        "container.h",
         "contains.h",
-        "environment.h",
+        "device_type.h",
         "files.h",
         "flag_parser.h",
         "flags_validator.h",
+        "in_sandbox.h",
         "inotify.h",
         "json.h",
         "network.h",
         "proc_file_utils.h",
-        "proto.h",
         "shared_fd_flag.h",
         "signals.h",
         "size_utils.h",
+        "socket2socket_proxy.h",
         "subprocess.h",
         "tcp_socket.h",
         "tee_logging.h",
+        "type_name.h",
         "unique_resource_allocator.h",
         "unix_sockets.h",
         "users.h",
+        "vsock_connection.h",
     ],
-    copts = [
-        "-std=c++17",
-    ],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:public"],
     deps = [
+        ":environment",
+        ":result",
         "//cuttlefish/common/libs/fs",
         "//libbase",
-        ":result",
         "@boringssl//:crypto",
         "@fmt",
         "@gflags",
@@ -93,16 +158,19 @@ cc_library(
     ],
 )
 
+# TODO: b/403278821 - fix warnings and re-enable after migration work
+##clang_tidy_test(
+##    name = "utils_clang_tidy",
+##    srcs = [":utils"],
+##    tags = ["clang_tidy", "clang-tidy"],
+##)
+
 cc_test(
     name = "result_test",
     srcs = [
         "result_test.cpp",
     ],
-    copts = [
-        "-Wno-ctad-maybe-unsupported",
-        "-std=c++17",
-        "-Icuttlefish",
-    ],
+    copts = COPTS + [ "-Icuttlefish" ],
     deps = [
         ":result",
         ":result_matchers",
@@ -112,28 +180,48 @@ cc_test(
     ],
 )
 
+clang_tidy_test(
+    name = "result_test_clang_tidy",
+    srcs = [":result_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_test(
     name = "utils_test",
     srcs = [
-        #"flag_parser_test.cpp",
+        "base64_test.cpp",
+        "files_test.cpp",
+        "files_test_helper.cpp",
+        "files_test_helper.h",
+        "flag_parser_test.cpp",
         "proc_file_utils_test.cpp",
         "result_test.cpp",
         "unique_resource_allocator_test.cpp",
         "unique_resource_allocator_test.h",
         "unix_sockets_test.cpp",
     ],
-    copts = [
-        "-Wno-ctad-maybe-unsupported",
-        "-std=c++17",
+    copts = COPTS + [
         "-Icuttlefish",
     ],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//libbase",
         ":result",
         ":result_matchers",
         ":utils",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@boringssl//:crypto",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+        "@libxml2//:libxml2",
     ],
+    # `layering_check` conflicts with the combination of the clang prebuilt and
+    # the cmake build rules used for @libxml2.
+    features = ["-layering_check"],
 )
+
+# TODO: b/403278821 - fix warnings and re-enable after migration work
+#clang_tidy_test(
+#    name = "utils_test_clang_tidy",
+#    srcs = [":utils_test"],
+#    tags = ["clang_tidy", "clang-tidy"],
+#)

@@ -1,0 +1,2557 @@
+load("@//:build_variables.bzl", "COPTS")
+
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+MESA_DEFAULT_COPTS = [
+    "-Wno-error",
+    "-D__STDC_CONSTANT_MACROS",
+    "-D__STDC_LIMIT_MACROS",
+    "-D_GNU_SOURCE",
+    "-DHAVE_SECURE_GETENV",
+    "-DDRAW_LLVM_AVAILABLE=1",
+    "-DENABLE_SHADER_CACHE",
+    "-DHAVE___BUILTIN_CLZ",
+    "-DHAVE___BUILTIN_CLZLL",
+    "-DHAVE___BUILTIN_CTZ",
+    "-DHAVE___BUILTIN_EXPECT",
+    "-DHAVE___BUILTIN_FFS",
+    "-DHAVE___BUILTIN_FFSLL",
+    "-DHAVE___BUILTIN_POPCOUNT",
+    "-DHAVE___BUILTIN_POPCOUNTLL",
+    "-DHAVE___BUILTIN_UNREACHABLE",
+    "-DHAVE_ENDIAN_H",
+    "-DHAVE_LIBDRM",
+    "-DHAVE_FUNC_ATTRIBUTE_ALIAS",
+    "-DHAVE_FUNC_ATTRIBUTE_FLATTEN",
+    "-DHAVE_FUNC_ATTRIBUTE_FORMAT",
+    "-DHAVE_FUNC_ATTRIBUTE_NORETURN",
+    "-DHAVE_FUNC_ATTRIBUTE_PACKED",
+    "-DHAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL",
+    "-DHAVE_FUNC_ATTRIBUTE_UNUSED",
+    "-DHAVE_FUNC_ATTRIBUTE_WARN_UNUSED_RESULT",
+    "-DHAVE_REALLOCARRAY",
+    "-DHAVE_PTHREAD=1",
+    "-DHAVE_STRUCT_TIMESPEC",
+    "-DHAVE_TIMESPEC_GET",
+    "-DHAVE_COMPRESSION",
+    "-DCLOCK_MONOTONIC=1",
+    "-DHAVE_ZLIB",
+    "-DMAJOR_IN_SYSMACROS",
+    "-DMESA_DEBUG=0",
+    "-DMESA_LLVM_VERSION_STRING=\\\"16.0.0\\\"",
+    "-DPACKAGE_BUGREPORT=\\\"https://bugs.freedesktop.org/enter_bug.cgi?product=Mesa\\\"",
+    "-DPACKAGE_VERSION=\\\"24.2\\\"",
+    "-fno-math-errno",
+    "-fno-trapping-math",
+    "-fvisibility=hidden",
+    "-Werror",
+    "-Werror=incompatible-pointer-types",
+    "-Wno-#warnings",
+    "-Wno-asm-operand-widths",
+    "-Wno-cast-calling-convention",
+    "-Wno-constant-conversion",
+    "-Wno-constant-logical-operand",
+    "-Wno-enum-conversion",
+    "-Wno-format",
+    "-Wno-gnu-variable-sized-type-not-at-end",
+    "-Wno-implicit-const-int-float-conversion",
+    "-Wno-implicit-fallthrough",
+    "-Wno-implicit-function-declaration",
+    "-Wno-implicit-int",
+    "-Wno-incompatible-pointer-types",
+    "-Wno-initializer-overrides",
+    "-Wno-mismatched-tags",
+    "-Wno-missing-braces",
+    "-Wno-missing-field-initializers",
+    "-Wno-overloaded-virtual",
+    "-Wno-pointer-arith",
+    "-Wno-self-assign",
+    "-Wno-shift-negative-value",
+    "-Wno-sign-compare",
+    "-Wno-sometimes-uninitialized",
+    "-Wno-switch",
+    "-Wno-sync-alignment",
+    "-Wno-typedef-redefinition",
+    "-Wno-uninitialized",
+    "-Wno-unused-function",
+    "-Wno-unused-parameter",
+    "-Wno-visibility",
+    "-DTIME_UTC",
+    "-DTIME_MONOTONIC",
+    "-DTIME_ACTIVE",
+    "-DTIME_THREAD_ACTIVE",
+    "-DTIME_MONOTONIC_RAW",
+]
+
+MESA_DEFAULT_CXXOPTS = COPTS
+
+py_binary(
+    name = "builtin_types_header_gen",
+    srcs = [
+        "src/compiler/builtin_types.py",
+        "src/compiler/builtin_types_h.py",
+    ],
+    imports = [
+        "src/compiler",
+    ],
+    main = "src/compiler/builtin_types_h.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "builtin_types_impl_gen",
+    srcs = [
+        "src/compiler/builtin_types.py",
+        "src/compiler/builtin_types_c.py",
+    ],
+    imports = [
+        "src/compiler",
+    ],
+    main = "src/compiler/builtin_types_c.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "gen_mesa_commit",
+    outs = ["git_sha1.h"],
+    cmd = """
+        echo '#define MESA_GIT_SHA1 "unspecified"' > $(location git_sha1.h)
+    """,
+)
+
+cc_library(
+    name = "mesa_commit",
+    hdrs = [
+        ":gen_mesa_commit",
+    ],
+)
+
+genrule(
+    name = "builtin_types_header",
+    outs = ["src/compiler/builtin_types.h"],
+    cmd = "python3 $(location builtin_types_header_gen) $(location src/compiler/builtin_types.h)",
+    tools = ["builtin_types_header_gen"],
+)
+
+genrule(
+    name = "builtin_types_impl",
+    outs = ["src/compiler/builtin_types.c"],
+    cmd = "python3 $(location builtin_types_impl_gen) $(location src/compiler/builtin_types.c)",
+    tools = ["builtin_types_impl_gen"],
+)
+
+cc_library(
+    name = "mesa_util_detect",
+    hdrs = [
+        "src/util/detect.h",
+        "src/util/detect_arch.h",
+        "src/util/detect_os.h",
+        "src/util/u_endian.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "src",
+)
+
+py_binary(
+    name = "u_format_table_gen",
+    srcs = [
+        "src/util/format/u_format_pack.py",
+        "src/util/format/u_format_parse.py",
+        "src/util/format/u_format_table.py",
+    ],
+    imports = [
+        "src/util/format",
+    ],
+    main = "src/util/format/u_format_table.py",
+    deps = [
+        "@pyyaml//:yaml",
+    ],
+)
+
+filegroup(
+    name = "mesa_u_format_yaml",
+    srcs = [
+        "src/util/format/u_format.yaml",
+    ],
+)
+
+genrule(
+    name = "gen_u_format_pack_header",
+    srcs = [
+        ":mesa_u_format_yaml",
+    ],
+    outs = ["src/util/format/u_format_pack.h"],
+    cmd = "python3 $(location u_format_table_gen) " +
+          "$(location :mesa_u_format_yaml) --header " +
+          "&> $(location src/util/format/u_format_pack.h)",
+    tools = ["u_format_table_gen"],
+)
+
+genrule(
+    name = "gen_u_format_gen_header",
+    srcs = [
+        ":mesa_u_format_yaml",
+    ],
+    outs = [
+        "src/util/format/u_format_gen.h",
+    ],
+    cmd = "python3 $(location u_format_table_gen) " +
+          "$(location :mesa_u_format_yaml) --enums " +
+          "&> $(location src/util/format/u_format_gen.h)",
+    tools = [":u_format_table_gen"],
+)
+
+genrule(
+    name = "gen_u_format_table_impl",
+    srcs = [":mesa_u_format_yaml"],
+    outs = [
+        "src/util/format/u_format_table.c",
+    ],
+    cmd = "python3 $(location u_format_table_gen) " +
+          "$(location :mesa_u_format_yaml) " +
+          " &> $(location src/util/format/u_format_table.c)",
+    tools = [":u_format_table_gen"],
+)
+
+py_binary(
+    name = "format_srgb_gen",
+    srcs = [
+        "src/util/format_srgb.py",
+    ],
+    imports = [
+        "src/util",
+    ],
+    main = "src/util/format_srgb.py",
+)
+
+genrule(
+    name = "gen_format_srgb_impl",
+    outs = ["src/util/format_srgb.c"],
+    cmd = "python3 $(location :format_srgb_gen) &> $(location src/util/format_srgb.c)",
+    tools = [":format_srgb_gen"],
+)
+
+cc_library(
+    name = "mesa_util_format",
+    srcs = [
+        "src/util/format/u_format.c",
+        "src/util/format/u_format_bptc.c",
+        "src/util/format/u_format_etc.c",
+        "src/util/format/u_format_fxt1.c",
+        "src/util/format/u_format_latc.c",
+        "src/util/format/u_format_other.c",
+        "src/util/format/u_format_rgtc.c",
+        "src/util/format/u_format_s3tc.c",
+        "src/util/format/u_format_table.c",
+        "src/util/format/u_format_tests.c",
+        "src/util/format/u_format_unpack_neon.c",
+        "src/util/format/u_format_yuv.c",
+        "src/util/format/u_format_zs.c",
+        "src/util/format_srgb.c",
+    ],
+    hdrs = [
+        "src/util/format/format_utils.h",
+        "src/util/format/texcompress_bptc_tmp.h",
+        "src/util/format/texcompress_etc_tmp.h",
+        "src/util/format/texcompress_s3tc_tmp.h",
+        "src/util/format/u_format.h",
+        "src/util/format/u_format_bptc.h",
+        "src/util/format/u_format_etc.h",
+        "src/util/format/u_format_fxt1.h",
+        "src/util/format/u_format_gen.h",
+        "src/util/format/u_format_latc.h",
+        "src/util/format/u_format_other.h",
+        "src/util/format/u_format_pack.h",
+        "src/util/format/u_format_rgtc.h",
+        "src/util/format/u_format_s3tc.h",
+        "src/util/format/u_format_tests.h",
+        "src/util/format/u_format_yuv.h",
+        "src/util/format/u_format_zs.h",
+        "src/util/format/u_formats.h",
+        "src/util/format_srgb.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/util/format",
+    ],
+    strip_include_prefix = "src",
+    deps = [
+        ":mesa_include_gl",
+        ":mesa_util",
+        ":mesa_util_detect",
+    ],
+)
+
+py_binary(
+    name = "nir_builder_opcodes_gen",
+    srcs = [
+        "src/compiler/nir/nir_builder_opcodes_h.py",
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_opcodes.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_builder_opcodes_h.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_constant_expressions_gen",
+    srcs = [
+        "src/compiler/nir/nir_constant_expressions.py",
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_opcodes.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_constant_expressions.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_opcodes_header_gen",
+    srcs = [
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_opcodes.py",
+        "src/compiler/nir/nir_opcodes_h.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_opcodes_h.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_opcodes_impl_gen",
+    srcs = [
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_opcodes.py",
+        "src/compiler/nir/nir_opcodes_c.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_opcodes_c.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_opt_algebraic_gen",
+    srcs = [
+        "src/compiler/nir/nir_algebraic.py",
+        "src/compiler/nir/nir_opcodes.py",
+        "src/compiler/nir/nir_opt_algebraic.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_opt_algebraic.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_intrinsics_header_gen",
+    srcs = [
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_intrinsics_h.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_intrinsics_h.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_intrinsics_indices_gen",
+    srcs = [
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_intrinsics_indices_h.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_intrinsics_indices_h.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "nir_intrinsics_impl_gen",
+    srcs = [
+        "src/compiler/nir/nir_intrinsics.py",
+        "src/compiler/nir/nir_intrinsics_c.py",
+    ],
+    imports = [
+        "src/compiler/nir",
+    ],
+    main = "src/compiler/nir/nir_intrinsics_c.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "nir_builder_opcodes_header",
+    outs = ["src/compiler/nir_builder_opcodes.h"],
+    cmd = "python3 $(location nir_builder_opcodes_gen) &> $(location src/compiler/nir_builder_opcodes.h)",
+    tools = ["nir_builder_opcodes_gen"],
+)
+
+genrule(
+    name = "nir_constant_expressions_impl",
+    outs = ["src/compiler/nir_constant_expressions.c"],
+    cmd = "python3 $(location nir_constant_expressions_gen) &> $(location src/compiler/nir_constant_expressions.c)",
+    tools = ["nir_constant_expressions_gen"],
+)
+
+genrule(
+    name = "nir_opcodes_header",
+    outs = ["src/compiler/nir_opcodes.h"],
+    cmd = "python3 $(location nir_opcodes_header_gen) &> $(location src/compiler/nir_opcodes.h)",
+    tools = ["nir_opcodes_header_gen"],
+)
+
+genrule(
+    name = "nir_opcodes_impl",
+    outs = ["src/compiler/nir_opcodes.c"],
+    cmd = "python3 $(location nir_opcodes_impl_gen) &> $(location src/compiler/nir_opcodes.c)",
+    tools = ["nir_opcodes_impl_gen"],
+)
+
+genrule(
+    name = "nir_opt_algebraic_impl",
+    outs = ["src/compiler/nir_opt_algebraic.c"],
+    cmd = "python3 $(location nir_opt_algebraic_gen) --out $(location src/compiler/nir_opt_algebraic.c)",
+    tools = ["nir_opt_algebraic_gen"],
+)
+
+genrule(
+    name = "nir_intrinsics_header",
+    outs = ["src/compiler/nir_intrinsics.h"],
+    cmd = "python3 $(location nir_intrinsics_header_gen) --outdir $$(dirname $(location src/compiler/nir_intrinsics.h))",
+    tools = ["nir_intrinsics_header_gen"],
+)
+
+genrule(
+    name = "nir_intrinsics_indices_header",
+    outs = ["src/compiler/nir_intrinsics_indices.h"],
+    cmd = "python3 $(location nir_intrinsics_indices_gen) --outdir $$(dirname $(location src/compiler/nir_intrinsics_indices.h))",
+    tools = ["nir_intrinsics_indices_gen"],
+)
+
+genrule(
+    name = "nir_intrinsics_impl",
+    outs = ["src/compiler/nir_intrinsics.c"],
+    cmd = "python3 $(location nir_intrinsics_impl_gen) --outdir $$(dirname $(location src/compiler/nir_intrinsics.c))",
+    tools = ["nir_intrinsics_impl_gen"],
+)
+
+py_binary(
+    name = "vk_entrypoints_gen",
+    srcs = [
+        "src/vulkan/util/vk_entrypoints.py",
+        "src/vulkan/util/vk_entrypoints_gen.py",
+        "src/vulkan/util/vk_extensions.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_entrypoints_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "gen_lvp_vk_entrypoints",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/gallium/frontends/lavapipe/lvp_entrypoints.c",
+        "src/gallium/frontends/lavapipe/lvp_entrypoints.h",
+    ],
+    cmd = "python3 $(location :vk_entrypoints_gen) --xml " +
+          "$(location src/vulkan/registry/vk.xml) --proto --weak " +
+          "--out-c $(location src/gallium/frontends/lavapipe/lvp_entrypoints.c) " +
+          "--out-h $(location src/gallium/frontends/lavapipe/lvp_entrypoints.h) " +
+          "--prefix lvp --beta false",
+    tools = [":vk_entrypoints_gen"],
+)
+
+py_binary(
+    name = "vk_format_info_gen",
+    srcs = ["src/vulkan/runtime/vk_format_info_gen.py"],
+    imports = [
+        "src/vulkan/runtime",
+    ],
+    main = "src/vulkan/runtime/vk_format_info_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_dispatch_trampolines_gen",
+    srcs = [
+        "src/vulkan/util/vk_dispatch_trampolines_gen.py",
+        "src/vulkan/util/vk_entrypoints.py",
+        "src/vulkan/util/vk_extensions.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_dispatch_trampolines_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_physical_device_features_gen",
+    srcs = [
+        "src/vulkan/util/vk_entrypoints.py",
+        "src/vulkan/util/vk_extensions.py",
+        "src/vulkan/util/vk_physical_device_features_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_physical_device_features_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_physical_device_properties_gen",
+    srcs = [
+        "src/vulkan/util/vk_entrypoints.py",
+        "src/vulkan/util/vk_extensions.py",
+        "src/vulkan/util/vk_physical_device_properties_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_physical_device_properties_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_extensions_gen",
+    srcs = [
+        "src/vulkan/util/vk_extensions.py",
+        "src/vulkan/util/vk_extensions_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_extensions_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_dispatch_table_gen",
+    srcs = [
+        "src/vulkan/util/vk_dispatch_table_gen.py",
+        "src/vulkan/util/vk_entrypoints.py",
+        "src/vulkan/util/vk_extensions.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_dispatch_table_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "gen_enum_to_str",
+    srcs = [
+        "src/vulkan/util/gen_enum_to_str.py",
+        "src/vulkan/util/vk_extensions.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/gen_enum_to_str.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_struct_type_cast_gen",
+    srcs = [
+        "src/vulkan/util/vk_extensions.py",
+        "src/vulkan/util/vk_struct_type_cast_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_struct_type_cast_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_physical_device_spirv_caps_gen",
+    srcs = [
+        "src/vulkan/util/vk_extensions.py",
+        "src/vulkan/util/vk_physical_device_features_gen.py",
+        "src/vulkan/util/vk_physical_device_spirv_caps_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_physical_device_spirv_caps_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_synchronization_helpers_gen",
+    srcs = [
+        "src/vulkan/util/vk_extensions.py",
+        "src/vulkan/util/vk_synchronization_helpers_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_synchronization_helpers_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+filegroup(
+    name = "mesa_vulkan_xml",
+    srcs = [
+        "src/vulkan/registry/vk.xml",
+    ],
+)
+
+genrule(
+    name = "vk_extensions_header",
+    srcs = [":mesa_vulkan_xml"],
+    outs = ["vk_extensions.h"],
+    cmd = "python3 $(location vk_extensions_gen) --xml " +
+          "$(location :mesa_vulkan_xml) --out-h " +
+          "$(location vk_extensions.h)",
+    tools = ["vk_extensions_gen"],
+)
+
+genrule(
+    name = "vk_extensions_impl",
+    srcs = [":mesa_vulkan_xml"],
+    outs = ["vk_extensions.c"],
+    cmd = "python3 $(location vk_extensions_gen) --xml " +
+          "$(location :mesa_vulkan_xml) --out-c " +
+          "$(location vk_extensions.c)",
+    tools = ["vk_extensions_gen"],
+)
+
+genrule(
+    name = "vk_dispatch_table_header",
+    srcs = [":mesa_vulkan_xml"],
+    outs = ["vk_dispatch_table.h"],
+    cmd = "python3 $(location vk_dispatch_table_gen) --xml " +
+          "$(location :mesa_vulkan_xml) --out-h " +
+          "$(location vk_dispatch_table.h) --beta false",
+    tools = ["vk_dispatch_table_gen"],
+)
+
+genrule(
+    name = "vk_dispatch_table_impl",
+    srcs = [":mesa_vulkan_xml"],
+    outs = ["vk_dispatch_table.c"],
+    cmd = "python3 $(location vk_dispatch_table_gen) --xml " +
+          "$(location :mesa_vulkan_xml) --out-c " +
+          "$(location vk_dispatch_table.c) --beta false",
+    tools = ["vk_dispatch_table_gen"],
+)
+
+genrule(
+    name = "gen_vk_enum_to_str_sources",
+    srcs = [":mesa_vulkan_xml"],
+    outs = [
+        "vk_enum_to_str.c",
+        "vk_enum_to_str.h",
+        "vk_enum_defines.h",
+    ],
+    cmd = "python3 $(location gen_enum_to_str) --xml " +
+          "$(location :mesa_vulkan_xml) --outdir $$(dirname $(location vk_enum_to_str.h)) " +
+          "--beta false",
+    tools = ["gen_enum_to_str"],
+)
+
+genrule(
+    name = "vk_struct_type_cast_header",
+    srcs = [":mesa_vulkan_xml"],
+    outs = ["vk_struct_type_cast.h"],
+    cmd = "python3 $(location vk_struct_type_cast_gen) --xml " +
+          "$(location :mesa_vulkan_xml) --outdir $$(dirname $(location vk_struct_type_cast.h)) " +
+          "--beta false",
+    tools = ["vk_struct_type_cast_gen"],
+)
+
+cc_library(
+    name = "mesa_drm",
+    hdrs = [
+        "include/drm-uapi/amdgpu_drm.h",
+        "include/drm-uapi/d3dkmthk.h",
+        "include/drm-uapi/dma-buf.h",
+        "include/drm-uapi/drm.h",
+        "include/drm-uapi/drm_fourcc.h",
+        "include/drm-uapi/drm_mode.h",
+        "include/drm-uapi/etnaviv_drm.h",
+        "include/drm-uapi/gpu_scheduler.h",
+        "include/drm-uapi/i915_drm.h",
+        "include/drm-uapi/lima_drm.h",
+        "include/drm-uapi/msm_drm.h",
+        "include/drm-uapi/nouveau_drm.h",
+        "include/drm-uapi/panfrost_drm.h",
+        "include/drm-uapi/panthor_drm.h",
+        "include/drm-uapi/pvr_drm.h",
+        "include/drm-uapi/radeon_drm.h",
+        "include/drm-uapi/sync_file.h",
+        "include/drm-uapi/tegra_drm.h",
+        "include/drm-uapi/v3d_drm.h",
+        "include/drm-uapi/vc4_drm.h",
+        "include/drm-uapi/virtgpu_drm.h",
+        "include/drm-uapi/xe_drm.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "include",
+        "include/drm-uapi",
+    ],
+    strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "mesa_include_c99",
+    hdrs = [
+        "include/c99_alloca.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "mesa_include_gl",
+    hdrs = glob([
+        "include/EGL/**/*.h",
+        "include/GL/**/*.h",
+        "include/GLES/**/*.h",
+        "include/GLES2/**/*.h",
+        "include/GLES3/**/*.h",
+        "include/KHR/**/*.h",
+    ]),
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "mesa_include_vulkan",
+    hdrs = glob([
+        "include/vulkan/**/*.h",
+        "include/vk_video/**/*.h",
+    ]),
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "mesa_util_c11",
+    srcs = [
+        "src/c11/impl/threads_posix.c",
+        "src/c11/impl/time.c",
+    ],
+    hdrs = [
+        "src/c11/threads.h",
+        "src/c11/time.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    cxxopts = MESA_DEFAULT_CXXOPTS,
+    strip_include_prefix = "src",
+)
+
+filegroup(
+    name = "mesa_util_driconf",
+    srcs = [
+        "src/util/00-mesa-defaults.conf",
+    ],
+)
+
+py_binary(
+    name = "mesa_util_driconf_static",
+    srcs = ["src/util/driconf_static.py"],
+    imports = [
+        "src/util",
+    ],
+    main = "src/util/driconf_static.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "mesa_util_driconf_static_header",
+    srcs = [
+        ":mesa_util_driconf",
+    ],
+    outs = [
+        "driconf_static.h",
+    ],
+    cmd = "python3 $(location mesa_util_driconf_static) $(location :mesa_util_driconf) $(location driconf_static.h)",
+    tools = [
+        "mesa_util_driconf_static",
+    ],
+)
+
+cc_library(
+    name = "mesa_util",
+    srcs = [
+        "src/util/anon_file.c",
+        "src/util/bitscan.c",
+        "src/util/blob.c",
+        "src/util/build_id.c",
+        "src/util/cnd_monotonic.c",
+        "src/util/compress.c",
+        "src/util/crc32.c",
+        "src/util/dag.c",
+        "src/util/disk_cache.c",
+        "src/util/disk_cache_os.c",
+        "src/util/double.c",
+        "src/util/fast_idiv_by_const.c",
+        "src/util/fossilize_db.c",
+        "src/util/futex.c",
+        "src/util/half_float.c",
+        "src/util/hash_table.c",
+        "src/util/log.c",
+        "src/util/memstream.c",
+        "src/util/mesa-blake3.c",
+        "src/util/mesa-sha1.c",
+        "src/util/mesa_cache_db.c",
+        "src/util/mesa_cache_db_multipart.c",
+        "src/util/os_file.c",
+        "src/util/os_memory_fd.c",
+        "src/util/os_misc.c",
+        "src/util/os_socket.c",
+        "src/util/os_time.c",
+        "src/util/perf/u_trace.c",
+        "src/util/ralloc.c",
+        "src/util/rand_xor.c",
+        "src/util/rb_tree.c",
+        "src/util/register_allocate.c",
+        "src/util/rgtc.c",
+        "src/util/rwlock.c",
+        "src/util/set.c",
+        "src/util/sha1/sha1.c",
+        "src/util/simple_mtx.c",
+        "src/util/slab.c",
+        "src/util/softfloat.c",
+        "src/util/sparse_array.c",
+        "src/util/string_buffer.c",
+        "src/util/strtod.c",
+        "src/util/thread_sched.c",
+        "src/util/u_atomic.c",
+        "src/util/u_call_once.c",
+        "src/util/u_cpu_detect.c",
+        "src/util/u_debug.c",
+        "src/util/u_debug_memory.c",
+        "src/util/u_dl.c",
+        "src/util/u_dynarray.c",
+        "src/util/u_hash_table.c",
+        "src/util/u_idalloc.c",
+        "src/util/u_math.c",
+        "src/util/u_mm.c",
+        "src/util/u_printf.c",
+        "src/util/u_process.c",
+        "src/util/u_qsort.cpp",
+        "src/util/u_queue.c",
+        "src/util/u_thread.c",
+        "src/util/u_vector.c",
+        "src/util/u_worklist.c",
+        "src/util/vl_zscan_data.c",
+        "src/util/vma.c",
+        "src/util/xmlconfig.c",
+    ],
+    hdrs = [
+        "include/c99_compat.h",
+        "include/no_extern_c.h",
+        ":mesa_util_driconf_static_header",
+    ] + glob([
+        "src/util/**/*.h",
+    ]),
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "include",
+        "src",
+        "src/util",
+    ],
+    deps = [
+        ":mesa_util_blake",
+        ":mesa_util_c11",
+        "@libdrm",
+        "@zlib",
+    ],
+)
+
+cc_library(
+    name = "mesa_util_blake",
+    srcs = [
+        "src/util/blake3/blake3.c",
+        "src/util/blake3/blake3_dispatch.c",
+        "src/util/blake3/blake3_impl.h",
+        "src/util/blake3/blake3_portable.c",
+    ],
+    hdrs = [
+        "src/util/blake3/blake3.h",
+    ],
+    copts = MESA_DEFAULT_COPTS + [
+        "-DBLAKE3_NO_SSE2",
+        "-DBLAKE3_NO_SSE41",
+        "-DBLAKE3_NO_AVX2",
+        "-DBLAKE3_NO_AVX512",
+    ],
+    strip_include_prefix = "src",
+)
+
+cc_library(
+    name = "mesa_compiler",
+    srcs = [
+        "src/compiler/glsl_types.c",
+        "src/compiler/shader_enums.c",
+        ":builtin_types_impl",
+    ],
+    hdrs = [
+        "src/compiler/glsl_types.h",
+        "src/compiler/shader_enums.h",
+        "src/compiler/shader_info.h",
+        ":builtin_types_header",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/compiler",
+    ],
+    strip_include_prefix = "src",
+    deps = [
+        ":mesa_util",
+        ":mesa_util_format",
+    ],
+)
+
+cc_library(
+    name = "mesa_compiler_glsl_list",
+    hdrs = [
+        "src/compiler/glsl/list.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "src",
+    deps = [
+        ":mesa_util",
+    ],
+)
+
+cc_library(
+    name = "mesa_compiler_nir",
+    srcs = [
+        "src/compiler/nir/nir.c",
+        "src/compiler/nir/nir_builder.c",
+        "src/compiler/nir/nir_builtin_builder.c",
+        "src/compiler/nir/nir_clone.c",
+        "src/compiler/nir/nir_control_flow.c",
+        "src/compiler/nir/nir_deref.c",
+        "src/compiler/nir/nir_divergence_analysis.c",
+        "src/compiler/nir/nir_dominance.c",
+        "src/compiler/nir/nir_fixup_is_exported.c",
+        "src/compiler/nir/nir_format_convert.c",
+        "src/compiler/nir/nir_from_ssa.c",
+        "src/compiler/nir/nir_functions.c",
+        "src/compiler/nir/nir_gather_info.c",
+        "src/compiler/nir/nir_gather_types.c",
+        "src/compiler/nir/nir_gather_xfb_info.c",
+        "src/compiler/nir/nir_gs_count_vertices.c",
+        "src/compiler/nir/nir_inline_uniforms.c",
+        "src/compiler/nir/nir_instr_set.c",
+        "src/compiler/nir/nir_legacy.c",
+        "src/compiler/nir/nir_linking_helpers.c",
+        "src/compiler/nir/nir_liveness.c",
+        "src/compiler/nir/nir_loop_analyze.c",
+        "src/compiler/nir/nir_lower_alu.c",
+        "src/compiler/nir/nir_lower_alu_width.c",
+        "src/compiler/nir/nir_lower_array_deref_of_vec.c",
+        "src/compiler/nir/nir_lower_bit_size.c",
+        "src/compiler/nir/nir_lower_bool_to_float.c",
+        "src/compiler/nir/nir_lower_bool_to_int32.c",
+        "src/compiler/nir/nir_lower_clip.c",
+        "src/compiler/nir/nir_lower_clip_cull_distance_arrays.c",
+        "src/compiler/nir/nir_lower_continue_constructs.c",
+        "src/compiler/nir/nir_lower_convert_alu_types.c",
+        "src/compiler/nir/nir_lower_discard_if.c",
+        "src/compiler/nir/nir_lower_double_ops.c",
+        "src/compiler/nir/nir_lower_flrp.c",
+        "src/compiler/nir/nir_lower_fp16_conv.c",
+        "src/compiler/nir/nir_lower_fragcolor.c",
+        "src/compiler/nir/nir_lower_frexp.c",
+        "src/compiler/nir/nir_lower_global_vars_to_local.c",
+        "src/compiler/nir/nir_lower_goto_ifs.c",
+        "src/compiler/nir/nir_lower_gs_intrinsics.c",
+        "src/compiler/nir/nir_lower_idiv.c",
+        "src/compiler/nir/nir_lower_image.c",
+        "src/compiler/nir/nir_lower_indirect_derefs.c",
+        "src/compiler/nir/nir_lower_input_attachments.c",
+        "src/compiler/nir/nir_lower_int64.c",
+        "src/compiler/nir/nir_lower_int_to_float.c",
+        "src/compiler/nir/nir_lower_interpolation.c",
+        "src/compiler/nir/nir_lower_io.c",
+        "src/compiler/nir/nir_lower_io_arrays_to_elements.c",
+        "src/compiler/nir/nir_lower_io_to_scalar.c",
+        "src/compiler/nir/nir_lower_io_to_temporaries.c",
+        "src/compiler/nir/nir_lower_io_to_vector.c",
+        "src/compiler/nir/nir_lower_is_helper_invocation.c",
+        "src/compiler/nir/nir_lower_load_const_to_scalar.c",
+        "src/compiler/nir/nir_lower_locals_to_regs.c",
+        "src/compiler/nir/nir_lower_mediump.c",
+        "src/compiler/nir/nir_lower_multiview.c",
+        "src/compiler/nir/nir_lower_non_uniform_access.c",
+        "src/compiler/nir/nir_lower_packing.c",
+        "src/compiler/nir/nir_lower_patch_vertices.c",
+        "src/compiler/nir/nir_lower_phis_to_scalar.c",
+        "src/compiler/nir/nir_lower_reg_intrinsics_to_ssa.c",
+        "src/compiler/nir/nir_lower_returns.c",
+        "src/compiler/nir/nir_lower_samplers.c",
+        "src/compiler/nir/nir_lower_scratch.c",
+        "src/compiler/nir/nir_lower_shader_calls.c",
+        "src/compiler/nir/nir_lower_single_sampled.c",
+        "src/compiler/nir/nir_lower_subgroups.c",
+        "src/compiler/nir/nir_lower_system_values.c",
+        "src/compiler/nir/nir_lower_sysvals_to_varyings.c",
+        "src/compiler/nir/nir_lower_task_shader.c",
+        "src/compiler/nir/nir_lower_tex.c",
+        "src/compiler/nir/nir_lower_two_sided_color.c",
+        "src/compiler/nir/nir_lower_ubo_vec4.c",
+        "src/compiler/nir/nir_lower_uniforms_to_ubo.c",
+        "src/compiler/nir/nir_lower_var_copies.c",
+        "src/compiler/nir/nir_lower_variable_initializers.c",
+        "src/compiler/nir/nir_lower_vars_to_ssa.c",
+        "src/compiler/nir/nir_lower_vec_to_regs.c",
+        "src/compiler/nir/nir_lower_view_index_to_device_index.c",
+        "src/compiler/nir/nir_lower_wpos_center.c",
+        "src/compiler/nir/nir_metadata.c",
+        "src/compiler/nir/nir_move_vec_src_uses_to_dest.c",
+        "src/compiler/nir/nir_normalize_cubemap_coords.c",
+        "src/compiler/nir/nir_opt_access.c",
+        "src/compiler/nir/nir_opt_barriers.c",
+        "src/compiler/nir/nir_opt_combine_stores.c",
+        "src/compiler/nir/nir_opt_comparison_pre.c",
+        "src/compiler/nir/nir_opt_conditional_discard.c",
+        "src/compiler/nir/nir_opt_constant_folding.c",
+        "src/compiler/nir/nir_opt_copy_prop_vars.c",
+        "src/compiler/nir/nir_opt_copy_propagate.c",
+        "src/compiler/nir/nir_opt_cse.c",
+        "src/compiler/nir/nir_opt_dce.c",
+        "src/compiler/nir/nir_opt_dead_cf.c",
+        "src/compiler/nir/nir_opt_dead_write_vars.c",
+        "src/compiler/nir/nir_opt_find_array_copies.c",
+        "src/compiler/nir/nir_opt_gcm.c",
+        "src/compiler/nir/nir_opt_idiv_const.c",
+        "src/compiler/nir/nir_opt_if.c",
+        "src/compiler/nir/nir_opt_intrinsics.c",
+        "src/compiler/nir/nir_opt_large_constants.c",
+        "src/compiler/nir/nir_opt_load_store_vectorize.c",
+        "src/compiler/nir/nir_opt_loop.c",
+        "src/compiler/nir/nir_opt_loop_unroll.c",
+        "src/compiler/nir/nir_opt_memcpy.c",
+        "src/compiler/nir/nir_opt_move.c",
+        "src/compiler/nir/nir_opt_non_uniform_access.c",
+        "src/compiler/nir/nir_opt_offsets.c",
+        "src/compiler/nir/nir_opt_peephole_select.c",
+        "src/compiler/nir/nir_opt_phi_precision.c",
+        "src/compiler/nir/nir_opt_ray_queries.c",
+        "src/compiler/nir/nir_opt_rematerialize_compares.c",
+        "src/compiler/nir/nir_opt_remove_phis.c",
+        "src/compiler/nir/nir_opt_shrink_stores.c",
+        "src/compiler/nir/nir_opt_shrink_vectors.c",
+        "src/compiler/nir/nir_opt_sink.c",
+        "src/compiler/nir/nir_opt_undef.c",
+        "src/compiler/nir/nir_opt_uniform_atomics.c",
+        "src/compiler/nir/nir_opt_vectorize.c",
+        "src/compiler/nir/nir_phi_builder.c",
+        "src/compiler/nir/nir_print.c",
+        "src/compiler/nir/nir_propagate_invariant.c",
+        "src/compiler/nir/nir_range_analysis.c",
+        "src/compiler/nir/nir_remove_dead_variables.c",
+        "src/compiler/nir/nir_repair_ssa.c",
+        "src/compiler/nir/nir_search.c",
+        "src/compiler/nir/nir_serialize.c",
+        "src/compiler/nir/nir_split_64bit_vec3_and_vec4.c",
+        "src/compiler/nir/nir_split_per_member_structs.c",
+        "src/compiler/nir/nir_split_var_copies.c",
+        "src/compiler/nir/nir_split_vars.c",
+        "src/compiler/nir/nir_sweep.c",
+        "src/compiler/nir/nir_to_lcssa.c",
+        "src/compiler/nir/nir_trivialize_registers.c",
+        "src/compiler/nir/nir_validate.c",
+        "src/compiler/nir/nir_worklist.c",
+        ":nir_constant_expressions_impl",
+        ":nir_intrinsics_impl",
+        ":nir_opcodes_impl",
+        ":nir_opt_algebraic_impl",
+    ],
+    hdrs = [
+        "src/compiler/nir/nir.h",
+        "src/compiler/nir/nir_builder.h",
+        "src/compiler/nir/nir_builtin_builder.h",
+        "src/compiler/nir/nir_constant_expressions.h",
+        "src/compiler/nir/nir_control_flow.h",
+        "src/compiler/nir/nir_control_flow_private.h",
+        "src/compiler/nir/nir_conversion_builder.h",
+        "src/compiler/nir/nir_defines.h",
+        "src/compiler/nir/nir_deref.h",
+        "src/compiler/nir/nir_format_convert.h",
+        "src/compiler/nir/nir_inline_helpers.h",
+        "src/compiler/nir/nir_instr_set.h",
+        "src/compiler/nir/nir_legacy.h",
+        "src/compiler/nir/nir_loop_analyze.h",
+        "src/compiler/nir/nir_lower_blend.h",
+        "src/compiler/nir/nir_phi_builder.h",
+        "src/compiler/nir/nir_precompiled.h",
+        "src/compiler/nir/nir_range_analysis.h",
+        "src/compiler/nir/nir_schedule.h",
+        "src/compiler/nir/nir_search.h",
+        "src/compiler/nir/nir_search_helpers.h",
+        "src/compiler/nir/nir_serialize.h",
+        "src/compiler/nir/nir_vla.h",
+        "src/compiler/nir/nir_worklist.h",
+        "src/compiler/nir/nir_xfb_info.h",
+        "src/compiler/nir/tests/nir_opt_varyings_test.h",
+        "src/compiler/nir/tests/nir_test.h",
+        ":nir_builder_opcodes_header",
+        ":nir_intrinsics_header",
+        ":nir_intrinsics_indices_header",
+        ":nir_opcodes_header",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/compiler/nir",
+    ],
+    strip_include_prefix = "src/compiler",
+    deps = [
+        ":mesa_compiler",
+        ":mesa_compiler_glsl_list",
+        ":mesa_include_c99",
+        ":mesa_include_vulkan",
+    ],
+)
+
+py_binary(
+    name = "spirv_info_gen",
+    srcs = ["src/compiler/spirv/spirv_info_gen.py"],
+    imports = [
+        "src/compiler/spirv",
+    ],
+    main = "src/compiler/spirv/spirv_info_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "spirv_info_header",
+    srcs = ["src/compiler/spirv/spirv.core.grammar.json"],
+    outs = [
+        "src/compiler/spirv/spirv_info.c",
+        "src/compiler/spirv/spirv_info.h",
+    ],
+    cmd = "python3 $(location spirv_info_gen) " +
+          "--json $(location src/compiler/spirv/spirv.core.grammar.json) " +
+          "--out-h $(location src/compiler/spirv/spirv_info.h) " +
+          "--out-c $(location src/compiler/spirv/spirv_info.c)",
+    tools = ["spirv_info_gen"],
+)
+
+py_binary(
+    name = "vtn_gather_types_gen",
+    srcs = ["src/compiler/spirv/vtn_gather_types_c.py"],
+    imports = [
+        "src/compiler/spirv",
+    ],
+    main = "src/compiler/spirv/vtn_gather_types_c.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "vtn_gather_types_impl",
+    srcs = [
+        "src/compiler/spirv/spirv.core.grammar.json",
+    ],
+    outs = [
+        "src/compiler/spirv/vtn_gather_types.c",
+    ],
+    cmd = "python3 $(location :vtn_gather_types_gen) $(location src/compiler/spirv/spirv.core.grammar.json) $(location src/compiler/spirv/vtn_gather_types.c)",
+    tools = [":vtn_gather_types_gen"],
+)
+
+py_binary(
+    name = "vtn_generator_ids_gen",
+    srcs = ["src/compiler/spirv/vtn_generator_ids_h.py"],
+    imports = [
+        "src/compiler/spirv",
+    ],
+    main = "src/compiler/spirv/vtn_generator_ids_h.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "gen_vtn_generator_ids_header",
+    srcs = [
+        "src/compiler/spirv/spir-v.xml",
+    ],
+    outs = [
+        "src/compiler/spirv/vtn_generator_ids.h",
+    ],
+    cmd = "python3 $(location vtn_generator_ids_gen) $(location src/compiler/spirv/spir-v.xml) $(location src/compiler/spirv/vtn_generator_ids.h)",
+    tools = ["vtn_generator_ids_gen"],
+)
+
+cc_library(
+    name = "mesa_compiler_spirv",
+    srcs = [
+        "src/compiler/spirv/spirv_info.c",
+        "src/compiler/spirv/spirv_to_nir.c",
+        "src/compiler/spirv/vtn_alu.c",
+        "src/compiler/spirv/vtn_amd.c",
+        "src/compiler/spirv/vtn_cfg.c",
+        "src/compiler/spirv/vtn_cmat.c",
+        "src/compiler/spirv/vtn_debug.c",
+        "src/compiler/spirv/vtn_gather_types.c",
+        "src/compiler/spirv/vtn_generator_ids.h",
+        "src/compiler/spirv/vtn_glsl450.c",
+        "src/compiler/spirv/vtn_opencl.c",
+        "src/compiler/spirv/vtn_private.h",
+        "src/compiler/spirv/vtn_structured_cfg.c",
+        "src/compiler/spirv/vtn_subgroup.c",
+        "src/compiler/spirv/vtn_variables.c",
+    ],
+    hdrs = [
+        "src/compiler/spirv/GLSL.ext.AMD.h",
+        "src/compiler/spirv/GLSL.std.450.h",
+        "src/compiler/spirv/OpenCL.std.h",
+        "src/compiler/spirv/nir_spirv.h",
+        "src/compiler/spirv/spirv.h",
+        "src/compiler/spirv/spirv_info.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/compiler/spirv",
+    ],
+    strip_include_prefix = "src",
+    deps = [
+        ":mesa_compiler",
+        ":mesa_compiler_nir",
+        ":mesa_include_vulkan",
+    ],
+)
+
+cc_library(
+    name = "mesa_vulkan_util",
+    srcs = [
+        "src/vulkan/util/vk_alloc.c",
+        "src/vulkan/util/vk_format.c",
+        "src/vulkan/util/vk_util.c",
+        "vk_enum_to_str.c",
+        ":vk_dispatch_table_impl",
+        ":vk_extensions_impl",
+    ],
+    hdrs = [
+        "vk_enum_defines.h",
+        "vk_enum_to_str.h",
+        ":vk_dispatch_table_header",
+        ":vk_extensions_header",
+        ":vk_struct_type_cast_header",
+    ] + glob([
+        "src/vulkan/util/*.h",
+    ]),
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/vulkan/util",
+    ],
+    deps = [
+        ":mesa_compiler",
+        ":mesa_compiler_nir",
+        ":mesa_compiler_spirv",
+        ":mesa_include_vulkan",
+        ":mesa_util",
+        ":mesa_util_format",
+    ],
+)
+
+cc_library(
+    name = "mesa_gallium_drivers_llvmpipe",
+    srcs = [
+        "src/gallium/drivers/llvmpipe/lp_bld_alpha.c",
+        "src/gallium/drivers/llvmpipe/lp_bld_blend.c",
+        "src/gallium/drivers/llvmpipe/lp_bld_blend_aos.c",
+        "src/gallium/drivers/llvmpipe/lp_bld_blend_logicop.c",
+        "src/gallium/drivers/llvmpipe/lp_bld_depth.c",
+        "src/gallium/drivers/llvmpipe/lp_bld_interp.c",
+        "src/gallium/drivers/llvmpipe/lp_clear.c",
+        "src/gallium/drivers/llvmpipe/lp_context.c",
+        "src/gallium/drivers/llvmpipe/lp_cs_tpool.c",
+        "src/gallium/drivers/llvmpipe/lp_draw_arrays.c",
+        "src/gallium/drivers/llvmpipe/lp_fence.c",
+        "src/gallium/drivers/llvmpipe/lp_flush.c",
+        "src/gallium/drivers/llvmpipe/lp_jit.c",
+        "src/gallium/drivers/llvmpipe/lp_linear.c",
+        "src/gallium/drivers/llvmpipe/lp_linear_fastpath.c",
+        "src/gallium/drivers/llvmpipe/lp_linear_interp.c",
+        "src/gallium/drivers/llvmpipe/lp_linear_sampler.c",
+        "src/gallium/drivers/llvmpipe/lp_memory.c",
+        "src/gallium/drivers/llvmpipe/lp_perf.c",
+        "src/gallium/drivers/llvmpipe/lp_query.c",
+        "src/gallium/drivers/llvmpipe/lp_rast.c",
+        "src/gallium/drivers/llvmpipe/lp_rast_debug.c",
+        "src/gallium/drivers/llvmpipe/lp_rast_linear.c",
+        "src/gallium/drivers/llvmpipe/lp_rast_linear_fallback.c",
+        "src/gallium/drivers/llvmpipe/lp_rast_rect.c",
+        "src/gallium/drivers/llvmpipe/lp_rast_tri.c",
+        "src/gallium/drivers/llvmpipe/lp_scene.c",
+        "src/gallium/drivers/llvmpipe/lp_scene_queue.c",
+        "src/gallium/drivers/llvmpipe/lp_screen.c",
+        "src/gallium/drivers/llvmpipe/lp_setup.c",
+        "src/gallium/drivers/llvmpipe/lp_setup_analysis.c",
+        "src/gallium/drivers/llvmpipe/lp_setup_line.c",
+        "src/gallium/drivers/llvmpipe/lp_setup_point.c",
+        "src/gallium/drivers/llvmpipe/lp_setup_rect.c",
+        "src/gallium/drivers/llvmpipe/lp_setup_tri.c",
+        "src/gallium/drivers/llvmpipe/lp_setup_vbuf.c",
+        "src/gallium/drivers/llvmpipe/lp_state_blend.c",
+        "src/gallium/drivers/llvmpipe/lp_state_clip.c",
+        "src/gallium/drivers/llvmpipe/lp_state_cs.c",
+        "src/gallium/drivers/llvmpipe/lp_state_derived.c",
+        "src/gallium/drivers/llvmpipe/lp_state_fs.c",
+        "src/gallium/drivers/llvmpipe/lp_state_fs_analysis.c",
+        "src/gallium/drivers/llvmpipe/lp_state_fs_fastpath.c",
+        "src/gallium/drivers/llvmpipe/lp_state_fs_linear.c",
+        "src/gallium/drivers/llvmpipe/lp_state_fs_linear_llvm.c",
+        "src/gallium/drivers/llvmpipe/lp_state_gs.c",
+        "src/gallium/drivers/llvmpipe/lp_state_rasterizer.c",
+        "src/gallium/drivers/llvmpipe/lp_state_sampler.c",
+        "src/gallium/drivers/llvmpipe/lp_state_setup.c",
+        "src/gallium/drivers/llvmpipe/lp_state_so.c",
+        "src/gallium/drivers/llvmpipe/lp_state_surface.c",
+        "src/gallium/drivers/llvmpipe/lp_state_tess.c",
+        "src/gallium/drivers/llvmpipe/lp_state_vertex.c",
+        "src/gallium/drivers/llvmpipe/lp_state_vs.c",
+        "src/gallium/drivers/llvmpipe/lp_surface.c",
+        "src/gallium/drivers/llvmpipe/lp_tex_sample.c",
+        "src/gallium/drivers/llvmpipe/lp_texture.c",
+        "src/gallium/drivers/llvmpipe/lp_texture_handle.c",
+    ],
+    hdrs = [
+        "src/gallium/drivers/llvmpipe/lp_bld_alpha.h",
+        "src/gallium/drivers/llvmpipe/lp_bld_blend.h",
+        "src/gallium/drivers/llvmpipe/lp_bld_depth.h",
+        "src/gallium/drivers/llvmpipe/lp_bld_interp.h",
+        "src/gallium/drivers/llvmpipe/lp_clear.h",
+        "src/gallium/drivers/llvmpipe/lp_context.h",
+        "src/gallium/drivers/llvmpipe/lp_cs_tpool.h",
+        "src/gallium/drivers/llvmpipe/lp_debug.h",
+        "src/gallium/drivers/llvmpipe/lp_fence.h",
+        "src/gallium/drivers/llvmpipe/lp_flush.h",
+        "src/gallium/drivers/llvmpipe/lp_jit.h",
+        "src/gallium/drivers/llvmpipe/lp_limits.h",
+        "src/gallium/drivers/llvmpipe/lp_linear_priv.h",
+        "src/gallium/drivers/llvmpipe/lp_linear_sampler_tmp.h",
+        "src/gallium/drivers/llvmpipe/lp_memory.h",
+        "src/gallium/drivers/llvmpipe/lp_perf.h",
+        "src/gallium/drivers/llvmpipe/lp_public.h",
+        "src/gallium/drivers/llvmpipe/lp_query.h",
+        "src/gallium/drivers/llvmpipe/lp_rast.h",
+        "src/gallium/drivers/llvmpipe/lp_rast_priv.h",
+        "src/gallium/drivers/llvmpipe/lp_rast_tri_tmp.h",
+        "src/gallium/drivers/llvmpipe/lp_scene.h",
+        "src/gallium/drivers/llvmpipe/lp_scene_queue.h",
+        "src/gallium/drivers/llvmpipe/lp_screen.h",
+        "src/gallium/drivers/llvmpipe/lp_setup.h",
+        "src/gallium/drivers/llvmpipe/lp_setup_context.h",
+        "src/gallium/drivers/llvmpipe/lp_state.h",
+        "src/gallium/drivers/llvmpipe/lp_state_cs.h",
+        "src/gallium/drivers/llvmpipe/lp_state_fs.h",
+        "src/gallium/drivers/llvmpipe/lp_state_setup.h",
+        "src/gallium/drivers/llvmpipe/lp_surface.h",
+        "src/gallium/drivers/llvmpipe/lp_test.h",
+        "src/gallium/drivers/llvmpipe/lp_tex_sample.h",
+        "src/gallium/drivers/llvmpipe/lp_texture.h",
+        "src/gallium/drivers/llvmpipe/lp_texture_handle.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/gallium/drivers",
+        "src/gallium/drivers/llvmpipe",
+    ],
+    strip_include_prefix = "src",
+    deps = [
+        ":mesa_commit",
+        ":mesa_drm",
+        ":mesa_gallium",
+        ":mesa_util",
+    ],
+)
+
+py_binary(
+    name = "enums2names_py",
+    srcs = [
+        "src/gallium/auxiliary/driver_trace/enums2names.py",
+    ],
+    imports = [
+        "src/gallium/auxiliary/driver_trace",
+    ],
+    main = "src/gallium/auxiliary/driver_trace/enums2names.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "gen_tr_util",
+    srcs = [
+        "src/gallium/include/pipe/p_video_enums.h",
+        "src/gallium/include/pipe/p_defines.h",
+        "src/util/blend.h",
+    ],
+    outs = [
+        "src/gallium/auxiliary/tr_util.c",
+        "src/gallium/auxiliary/tr_util.h",
+    ],
+    cmd = "python3 $(location :enums2names_py) $(location src/gallium/include/pipe/p_defines.h) $(location src/gallium/include/pipe/p_video_enums.h) $(location src/util/blend.h) -C $(location src/gallium/auxiliary/tr_util.c) -H $(location src/gallium/auxiliary/tr_util.h) -I tr_util.h",
+    tools = [
+        ":enums2names_py",
+    ],
+)
+
+py_binary(
+    name = "u_tracepoints_py",
+    srcs = [
+        "src/gallium/auxiliary/util/u_tracepoints.py",
+        "src/util/perf/u_trace.py",
+    ],
+    imports = [
+        "src/gallium/auxiliary/util",
+        "src/util/perf",
+    ],
+    main = "src/gallium/auxiliary/util/u_tracepoints.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "gen_u_tracepoints_c",
+    outs = [
+        "src/gallium/auxiliary/u_tracepoints.c",
+    ],
+    cmd = "python3 $(location u_tracepoints_py) -p external/mesa3d/src/util/perf -C $(location src/gallium/auxiliary/u_tracepoints.c)",
+    tools = [
+        ":u_tracepoints_py",
+    ],
+)
+
+genrule(
+    name = "gen_u_tracepoints_h",
+    outs = [
+        "src/gallium/auxiliary/u_tracepoints.h",
+    ],
+    cmd = "python3 $(location u_tracepoints_py) -p external/mesa3d/src/util/perf -H $(location src/gallium/auxiliary/u_tracepoints.h)",
+    tools = [
+        "u_tracepoints_py",
+    ],
+)
+
+py_binary(
+    name = "u_indices_gen",
+    srcs = [
+        "src/gallium/auxiliary/indices/u_indices_gen.py",
+    ],
+    imports = [
+        "src/gallium/auxiliary/indices",
+        "src/util/perf",
+    ],
+    main = "src/gallium/auxiliary/indices/u_indices_gen.py",
+)
+
+genrule(
+    name = "gen_u_indices",
+    outs = [
+        "src/gallium/auxiliary/u_indices_gen.c",
+    ],
+    cmd = "python3 $(location :u_indices_gen) $(location src/gallium/auxiliary/u_indices_gen.c)",
+    tools = [
+        ":u_indices_gen",
+    ],
+)
+
+cc_library(
+    name = "mesa_gallium",
+    srcs = [
+        "src/gallium/auxiliary/cso_cache/cso_cache.c",
+        "src/gallium/auxiliary/cso_cache/cso_context.c",
+        "src/gallium/auxiliary/cso_cache/cso_hash.c",
+        "src/gallium/auxiliary/draw/draw_context.c",
+        "src/gallium/auxiliary/draw/draw_fs.c",
+        "src/gallium/auxiliary/draw/draw_gs.c",
+        "src/gallium/auxiliary/draw/draw_llvm.c",
+        "src/gallium/auxiliary/draw/draw_mesh.c",
+        "src/gallium/auxiliary/draw/draw_mesh_prim.c",
+        "src/gallium/auxiliary/draw/draw_pipe.c",
+        "src/gallium/auxiliary/draw/draw_pipe_aaline.c",
+        "src/gallium/auxiliary/draw/draw_pipe_aapoint.c",
+        "src/gallium/auxiliary/draw/draw_pipe_clip.c",
+        "src/gallium/auxiliary/draw/draw_pipe_cull.c",
+        "src/gallium/auxiliary/draw/draw_pipe_flatshade.c",
+        "src/gallium/auxiliary/draw/draw_pipe_offset.c",
+        "src/gallium/auxiliary/draw/draw_pipe_pstipple.c",
+        "src/gallium/auxiliary/draw/draw_pipe_stipple.c",
+        "src/gallium/auxiliary/draw/draw_pipe_twoside.c",
+        "src/gallium/auxiliary/draw/draw_pipe_unfilled.c",
+        "src/gallium/auxiliary/draw/draw_pipe_user_cull.c",
+        "src/gallium/auxiliary/draw/draw_pipe_util.c",
+        "src/gallium/auxiliary/draw/draw_pipe_validate.c",
+        "src/gallium/auxiliary/draw/draw_pipe_vbuf.c",
+        "src/gallium/auxiliary/draw/draw_pipe_wide_line.c",
+        "src/gallium/auxiliary/draw/draw_pipe_wide_point.c",
+        "src/gallium/auxiliary/draw/draw_prim_assembler.c",
+        "src/gallium/auxiliary/draw/draw_pt.c",
+        "src/gallium/auxiliary/draw/draw_pt_emit.c",
+        "src/gallium/auxiliary/draw/draw_pt_fetch.c",
+        "src/gallium/auxiliary/draw/draw_pt_fetch_shade_emit.c",
+        "src/gallium/auxiliary/draw/draw_pt_fetch_shade_pipeline.c",
+        "src/gallium/auxiliary/draw/draw_pt_fetch_shade_pipeline_llvm.c",
+        "src/gallium/auxiliary/draw/draw_pt_mesh_pipeline.c",
+        "src/gallium/auxiliary/draw/draw_pt_post_vs.c",
+        "src/gallium/auxiliary/draw/draw_pt_so_emit.c",
+        "src/gallium/auxiliary/draw/draw_pt_util.c",
+        "src/gallium/auxiliary/draw/draw_pt_vsplit.c",
+        "src/gallium/auxiliary/draw/draw_tess.c",
+        "src/gallium/auxiliary/draw/draw_vertex.c",
+        "src/gallium/auxiliary/draw/draw_vs.c",
+        "src/gallium/auxiliary/draw/draw_vs_exec.c",
+        "src/gallium/auxiliary/draw/draw_vs_llvm.c",
+        "src/gallium/auxiliary/draw/draw_vs_variant.c",
+        "src/gallium/auxiliary/driver_ddebug/dd_context.c",
+        "src/gallium/auxiliary/driver_ddebug/dd_draw.c",
+        "src/gallium/auxiliary/driver_ddebug/dd_screen.c",
+        "src/gallium/auxiliary/driver_noop/noop_pipe.c",
+        "src/gallium/auxiliary/driver_noop/noop_state.c",
+        "src/gallium/auxiliary/driver_trace/tr_context.c",
+        "src/gallium/auxiliary/driver_trace/tr_dump.c",
+        "src/gallium/auxiliary/driver_trace/tr_dump_state.c",
+        "src/gallium/auxiliary/driver_trace/tr_screen.c",
+        "src/gallium/auxiliary/driver_trace/tr_texture.c",
+        "src/gallium/auxiliary/driver_trace/tr_video.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_arit.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_arit_overflow.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_assert.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_bitarit.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_const.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_conv.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_coro.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_debug.cpp",
+        "src/gallium/auxiliary/gallivm/lp_bld_flow.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_aos.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_aos_array.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_float.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_s3tc.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_soa.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_srgb.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_format_yuv.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_gather.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_init.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_init_common.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_intr.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_ir_common.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_jit_sample.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_jit_types.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_logic.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_misc.cpp",
+        "src/gallium/auxiliary/gallivm/lp_bld_nir.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_nir_aos.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_nir_soa.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_pack.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_passmgr.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_printf.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_quad.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_sample.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_sample_aos.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_sample_soa.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_struct.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_swizzle.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_tgsi.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_tgsi_action.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_tgsi_info.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_tgsi_soa.c",
+        "src/gallium/auxiliary/gallivm/lp_bld_type.c",
+        "src/gallium/auxiliary/hud/font.c",
+        "src/gallium/auxiliary/hud/hud_context.c",
+        "src/gallium/auxiliary/hud/hud_cpu.c",
+        "src/gallium/auxiliary/hud/hud_cpufreq.c",
+        "src/gallium/auxiliary/hud/hud_diskstat.c",
+        "src/gallium/auxiliary/hud/hud_driver_query.c",
+        "src/gallium/auxiliary/hud/hud_fps.c",
+        "src/gallium/auxiliary/hud/hud_nic.c",
+        "src/gallium/auxiliary/hud/hud_sensors_temp.c",
+        "src/gallium/auxiliary/indices/u_primconvert.c",
+        "src/gallium/auxiliary/nir/nir_draw_helpers.c",
+        "src/gallium/auxiliary/nir/nir_to_tgsi.c",
+        "src/gallium/auxiliary/nir/nir_to_tgsi_info.c",
+        "src/gallium/auxiliary/nir/tgsi_to_nir.c",
+        "src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.c",
+        "src/gallium/auxiliary/pipebuffer/pb_bufmgr_cache.c",
+        "src/gallium/auxiliary/pipebuffer/pb_bufmgr_debug.c",
+        "src/gallium/auxiliary/pipebuffer/pb_bufmgr_mm.c",
+        "src/gallium/auxiliary/pipebuffer/pb_bufmgr_slab.c",
+        "src/gallium/auxiliary/pipebuffer/pb_cache.c",
+        "src/gallium/auxiliary/pipebuffer/pb_slab.c",
+        "src/gallium/auxiliary/pipebuffer/pb_validate.c",
+        "src/gallium/auxiliary/postprocess/pp_celshade.c",
+        "src/gallium/auxiliary/postprocess/pp_colors.c",
+        "src/gallium/auxiliary/postprocess/pp_init.c",
+        "src/gallium/auxiliary/postprocess/pp_mlaa.c",
+        "src/gallium/auxiliary/postprocess/pp_program.c",
+        "src/gallium/auxiliary/postprocess/pp_run.c",
+        "src/gallium/auxiliary/rtasm/rtasm_execmem.c",
+        "src/gallium/auxiliary/rtasm/rtasm_x86sse.c",
+        "src/gallium/auxiliary/tessellator/p_tessellator.cpp",
+        "src/gallium/auxiliary/tessellator/tessellator.cpp",
+        "src/gallium/auxiliary/tgsi/tgsi_aa_point.c",
+        "src/gallium/auxiliary/tgsi/tgsi_build.c",
+        "src/gallium/auxiliary/tgsi/tgsi_dump.c",
+        "src/gallium/auxiliary/tgsi/tgsi_dynamic_indexing.c",
+        "src/gallium/auxiliary/tgsi/tgsi_exec.c",
+        "src/gallium/auxiliary/tgsi/tgsi_from_mesa.c",
+        "src/gallium/auxiliary/tgsi/tgsi_info.c",
+        "src/gallium/auxiliary/tgsi/tgsi_iterate.c",
+        "src/gallium/auxiliary/tgsi/tgsi_lowering.c",
+        "src/gallium/auxiliary/tgsi/tgsi_parse.c",
+        "src/gallium/auxiliary/tgsi/tgsi_point_sprite.c",
+        "src/gallium/auxiliary/tgsi/tgsi_sanity.c",
+        "src/gallium/auxiliary/tgsi/tgsi_scan.c",
+        "src/gallium/auxiliary/tgsi/tgsi_strings.c",
+        "src/gallium/auxiliary/tgsi/tgsi_text.c",
+        "src/gallium/auxiliary/tgsi/tgsi_transform.c",
+        "src/gallium/auxiliary/tgsi/tgsi_two_side.c",
+        "src/gallium/auxiliary/tgsi/tgsi_ureg.c",
+        "src/gallium/auxiliary/tgsi/tgsi_util.c",
+        "src/gallium/auxiliary/tgsi/tgsi_vpos.c",
+        "src/gallium/auxiliary/tr_util.c",
+        "src/gallium/auxiliary/translate/translate.c",
+        "src/gallium/auxiliary/translate/translate_cache.c",
+        "src/gallium/auxiliary/translate/translate_generic.c",
+        "src/gallium/auxiliary/translate/translate_sse.c",
+        "src/gallium/auxiliary/u_indices_gen.c",
+        "src/gallium/auxiliary/u_tracepoints.c",
+        "src/gallium/auxiliary/util/u_async_debug.c",
+        "src/gallium/auxiliary/util/u_bitmask.c",
+        "src/gallium/auxiliary/util/u_blitter.c",
+        "src/gallium/auxiliary/util/u_cache.c",
+        "src/gallium/auxiliary/util/u_compute.c",
+        "src/gallium/auxiliary/util/u_debug_describe.c",
+        "src/gallium/auxiliary/util/u_debug_flush.c",
+        "src/gallium/auxiliary/util/u_debug_image.c",
+        "src/gallium/auxiliary/util/u_debug_refcnt.c",
+        "src/gallium/auxiliary/util/u_draw.c",
+        "src/gallium/auxiliary/util/u_draw_quad.c",
+        "src/gallium/auxiliary/util/u_driconf.c",
+        "src/gallium/auxiliary/util/u_dump_defines.c",
+        "src/gallium/auxiliary/util/u_dump_state.c",
+        "src/gallium/auxiliary/util/u_framebuffer.c",
+        "src/gallium/auxiliary/util/u_gen_mipmap.c",
+        "src/gallium/auxiliary/util/u_handle_table.c",
+        "src/gallium/auxiliary/util/u_helpers.c",
+        "src/gallium/auxiliary/util/u_index_modify.c",
+        "src/gallium/auxiliary/util/u_live_shader_cache.c",
+        "src/gallium/auxiliary/util/u_log.c",
+        "src/gallium/auxiliary/util/u_prim.c",
+        "src/gallium/auxiliary/util/u_prim_restart.c",
+        "src/gallium/auxiliary/util/u_pstipple.c",
+        "src/gallium/auxiliary/util/u_resource.c",
+        "src/gallium/auxiliary/util/u_sample_positions.c",
+        "src/gallium/auxiliary/util/u_sampler.c",
+        "src/gallium/auxiliary/util/u_screen.c",
+        "src/gallium/auxiliary/util/u_simple_shaders.c",
+        "src/gallium/auxiliary/util/u_split_draw.c",
+        "src/gallium/auxiliary/util/u_suballoc.c",
+        "src/gallium/auxiliary/util/u_surface.c",
+        "src/gallium/auxiliary/util/u_tests.c",
+        "src/gallium/auxiliary/util/u_texture.c",
+        "src/gallium/auxiliary/util/u_threaded_context.c",
+        "src/gallium/auxiliary/util/u_tile.c",
+        "src/gallium/auxiliary/util/u_trace_gallium.c",
+        "src/gallium/auxiliary/util/u_transfer.c",
+        "src/gallium/auxiliary/util/u_transfer_helper.c",
+        "src/gallium/auxiliary/util/u_upload_mgr.c",
+        "src/gallium/auxiliary/util/u_vbuf.c",
+        "src/gallium/auxiliary/util/u_vertex_state_cache.c",
+    ],
+    hdrs = [
+        "src/gallium/auxiliary/cso_cache/cso_cache.h",
+        "src/gallium/auxiliary/cso_cache/cso_context.h",
+        "src/gallium/auxiliary/cso_cache/cso_hash.h",
+        "src/gallium/auxiliary/draw/draw_cliptest_tmp.h",
+        "src/gallium/auxiliary/draw/draw_context.h",
+        "src/gallium/auxiliary/draw/draw_decompose_tmp.h",
+        "src/gallium/auxiliary/draw/draw_fs.h",
+        "src/gallium/auxiliary/draw/draw_gs.h",
+        "src/gallium/auxiliary/draw/draw_gs_tmp.h",
+        "src/gallium/auxiliary/draw/draw_llvm.h",
+        "src/gallium/auxiliary/draw/draw_mesh.h",
+        "src/gallium/auxiliary/draw/draw_mesh_prim.h",
+        "src/gallium/auxiliary/draw/draw_mesh_prim_tmp.h",
+        "src/gallium/auxiliary/draw/draw_pipe.h",
+        "src/gallium/auxiliary/draw/draw_prim_assembler.h",
+        "src/gallium/auxiliary/draw/draw_prim_assembler_tmp.h",
+        "src/gallium/auxiliary/draw/draw_private.h",
+        "src/gallium/auxiliary/draw/draw_pt.h",
+        "src/gallium/auxiliary/draw/draw_pt_decompose.h",
+        "src/gallium/auxiliary/draw/draw_pt_vsplit_tmp.h",
+        "src/gallium/auxiliary/draw/draw_so_emit_tmp.h",
+        "src/gallium/auxiliary/draw/draw_split_tmp.h",
+        "src/gallium/auxiliary/draw/draw_tess.h",
+        "src/gallium/auxiliary/draw/draw_vbuf.h",
+        "src/gallium/auxiliary/draw/draw_vertex.h",
+        "src/gallium/auxiliary/draw/draw_vertex_header.h",
+        "src/gallium/auxiliary/draw/draw_vs.h",
+        "src/gallium/auxiliary/driver_ddebug/dd_pipe.h",
+        "src/gallium/auxiliary/driver_ddebug/dd_public.h",
+        "src/gallium/auxiliary/driver_ddebug/dd_util.h",
+        "src/gallium/auxiliary/driver_noop/noop_public.h",
+        "src/gallium/auxiliary/driver_trace/tr_context.h",
+        "src/gallium/auxiliary/driver_trace/tr_dump.h",
+        "src/gallium/auxiliary/driver_trace/tr_dump_defines.h",
+        "src/gallium/auxiliary/driver_trace/tr_dump_state.h",
+        "src/gallium/auxiliary/driver_trace/tr_public.h",
+        "src/gallium/auxiliary/driver_trace/tr_screen.h",
+        "src/gallium/auxiliary/driver_trace/tr_texture.h",
+        "src/gallium/auxiliary/driver_trace/tr_video.h",
+        "src/gallium/auxiliary/gallivm/lp_bld.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_arit.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_arit_overflow.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_assert.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_bitarit.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_const.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_conv.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_coro.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_debug.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_flow.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_format.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_gather.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_init.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_intr.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_ir_common.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_jit_sample.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_jit_types.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_limits.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_logic.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_misc.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_nir.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_pack.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_passmgr.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_printf.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_quad.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_sample.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_sample_aos.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_struct.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_swizzle.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_tgsi.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_tgsi_action.h",
+        "src/gallium/auxiliary/gallivm/lp_bld_type.h",
+        "src/gallium/auxiliary/hud/font.h",
+        "src/gallium/auxiliary/hud/hud_context.h",
+        "src/gallium/auxiliary/hud/hud_private.h",
+        "src/gallium/auxiliary/indices/u_indices.h",
+        "src/gallium/auxiliary/indices/u_indices_priv.h",
+        "src/gallium/auxiliary/indices/u_primconvert.h",
+        "src/gallium/auxiliary/nir/nir_draw_helpers.h",
+        "src/gallium/auxiliary/nir/nir_to_tgsi.h",
+        "src/gallium/auxiliary/nir/nir_to_tgsi_info.h",
+        "src/gallium/auxiliary/nir/pipe_nir.h",
+        "src/gallium/auxiliary/nir/tgsi_to_nir.h",
+        "src/gallium/auxiliary/pipebuffer/pb_buffer.h",
+        "src/gallium/auxiliary/pipebuffer/pb_buffer_fenced.h",
+        "src/gallium/auxiliary/pipebuffer/pb_bufmgr.h",
+        "src/gallium/auxiliary/pipebuffer/pb_cache.h",
+        "src/gallium/auxiliary/pipebuffer/pb_slab.h",
+        "src/gallium/auxiliary/pipebuffer/pb_validate.h",
+        "src/gallium/auxiliary/postprocess/filters.h",
+        "src/gallium/auxiliary/postprocess/postprocess.h",
+        "src/gallium/auxiliary/postprocess/pp_celshade.h",
+        "src/gallium/auxiliary/postprocess/pp_colors.h",
+        "src/gallium/auxiliary/postprocess/pp_filters.h",
+        "src/gallium/auxiliary/postprocess/pp_mlaa.h",
+        "src/gallium/auxiliary/postprocess/pp_mlaa_areamap.h",
+        "src/gallium/auxiliary/postprocess/pp_private.h",
+        "src/gallium/auxiliary/rtasm/rtasm_execmem.h",
+        "src/gallium/auxiliary/rtasm/rtasm_x86sse.h",
+        "src/gallium/auxiliary/target-helpers/drm_helper.h",
+        "src/gallium/auxiliary/target-helpers/drm_helper_public.h",
+        "src/gallium/auxiliary/target-helpers/inline_debug_helper.h",
+        "src/gallium/auxiliary/target-helpers/sw_helper.h",
+        "src/gallium/auxiliary/target-helpers/sw_helper_public.h",
+        "src/gallium/auxiliary/tessellator/p_tessellator.h",
+        "src/gallium/auxiliary/tessellator/tessellator.hpp",
+        "src/gallium/auxiliary/tgsi/tgsi_aa_point.h",
+        "src/gallium/auxiliary/tgsi/tgsi_build.h",
+        "src/gallium/auxiliary/tgsi/tgsi_dump.h",
+        "src/gallium/auxiliary/tgsi/tgsi_dynamic_indexing.h",
+        "src/gallium/auxiliary/tgsi/tgsi_exec.h",
+        "src/gallium/auxiliary/tgsi/tgsi_from_mesa.h",
+        "src/gallium/auxiliary/tgsi/tgsi_info.h",
+        "src/gallium/auxiliary/tgsi/tgsi_info_opcodes.h",
+        "src/gallium/auxiliary/tgsi/tgsi_iterate.h",
+        "src/gallium/auxiliary/tgsi/tgsi_lowering.h",
+        "src/gallium/auxiliary/tgsi/tgsi_opcode_tmp.h",
+        "src/gallium/auxiliary/tgsi/tgsi_parse.h",
+        "src/gallium/auxiliary/tgsi/tgsi_point_sprite.h",
+        "src/gallium/auxiliary/tgsi/tgsi_sanity.h",
+        "src/gallium/auxiliary/tgsi/tgsi_scan.h",
+        "src/gallium/auxiliary/tgsi/tgsi_strings.h",
+        "src/gallium/auxiliary/tgsi/tgsi_text.h",
+        "src/gallium/auxiliary/tgsi/tgsi_transform.h",
+        "src/gallium/auxiliary/tgsi/tgsi_two_side.h",
+        "src/gallium/auxiliary/tgsi/tgsi_ureg.h",
+        "src/gallium/auxiliary/tgsi/tgsi_util.h",
+        "src/gallium/auxiliary/tgsi/tgsi_vpos.h",
+        "src/gallium/auxiliary/tr_util.h",
+        "src/gallium/auxiliary/translate/translate.h",
+        "src/gallium/auxiliary/translate/translate_cache.h",
+        "src/gallium/auxiliary/u_tracepoints.h",
+        "src/gallium/auxiliary/util/u_async_debug.h",
+        "src/gallium/auxiliary/util/u_bitcast.h",
+        "src/gallium/auxiliary/util/u_bitmask.h",
+        "src/gallium/auxiliary/util/u_blend.h",
+        "src/gallium/auxiliary/util/u_blitter.h",
+        "src/gallium/auxiliary/util/u_cache.h",
+        "src/gallium/auxiliary/util/u_compute.h",
+        "src/gallium/auxiliary/util/u_debug_cb.h",
+        "src/gallium/auxiliary/util/u_debug_describe.h",
+        "src/gallium/auxiliary/util/u_debug_flush.h",
+        "src/gallium/auxiliary/util/u_debug_image.h",
+        "src/gallium/auxiliary/util/u_debug_refcnt.h",
+        "src/gallium/auxiliary/util/u_draw.h",
+        "src/gallium/auxiliary/util/u_draw_quad.h",
+        "src/gallium/auxiliary/util/u_driconf.h",
+        "src/gallium/auxiliary/util/u_dual_blend.h",
+        "src/gallium/auxiliary/util/u_dump.h",
+        "src/gallium/auxiliary/util/u_file.h",
+        "src/gallium/auxiliary/util/u_framebuffer.h",
+        "src/gallium/auxiliary/util/u_gen_mipmap.h",
+        "src/gallium/auxiliary/util/u_handle_table.h",
+        "src/gallium/auxiliary/util/u_helpers.h",
+        "src/gallium/auxiliary/util/u_index_modify.h",
+        "src/gallium/auxiliary/util/u_inlines.h",
+        "src/gallium/auxiliary/util/u_live_shader_cache.h",
+        "src/gallium/auxiliary/util/u_log.h",
+        "src/gallium/auxiliary/util/u_prim.h",
+        "src/gallium/auxiliary/util/u_prim_restart.h",
+        "src/gallium/auxiliary/util/u_pstipple.h",
+        "src/gallium/auxiliary/util/u_pwr8.h",
+        "src/gallium/auxiliary/util/u_range.h",
+        "src/gallium/auxiliary/util/u_rect.h",
+        "src/gallium/auxiliary/util/u_resource.h",
+        "src/gallium/auxiliary/util/u_sample_positions.h",
+        "src/gallium/auxiliary/util/u_sampler.h",
+        "src/gallium/auxiliary/util/u_screen.h",
+        "src/gallium/auxiliary/util/u_simple_shaders.h",
+        "src/gallium/auxiliary/util/u_split_draw.h",
+        "src/gallium/auxiliary/util/u_split_prim.h",
+        "src/gallium/auxiliary/util/u_sse.h",
+        "src/gallium/auxiliary/util/u_suballoc.h",
+        "src/gallium/auxiliary/util/u_surface.h",
+        "src/gallium/auxiliary/util/u_tests.h",
+        "src/gallium/auxiliary/util/u_texture.h",
+        "src/gallium/auxiliary/util/u_threaded_context.h",
+        "src/gallium/auxiliary/util/u_threaded_context_calls.h",
+        "src/gallium/auxiliary/util/u_tile.h",
+        "src/gallium/auxiliary/util/u_trace_gallium.h",
+        "src/gallium/auxiliary/util/u_transfer.h",
+        "src/gallium/auxiliary/util/u_transfer_helper.h",
+        "src/gallium/auxiliary/util/u_upload_mgr.h",
+        "src/gallium/auxiliary/util/u_vbuf.h",
+        "src/gallium/auxiliary/util/u_vertex_state_cache.h",
+        "src/gallium/auxiliary/util/u_video.h",
+        "src/gallium/auxiliary/util/u_viewport.h",
+        "src/gallium/auxiliary/vl/vl_bicubic_filter.h",
+        "src/gallium/auxiliary/vl/vl_codec.h",
+        "src/gallium/auxiliary/vl/vl_compositor.h",
+        "src/gallium/auxiliary/vl/vl_compositor_cs.h",
+        "src/gallium/auxiliary/vl/vl_compositor_gfx.h",
+        "src/gallium/auxiliary/vl/vl_csc.h",
+        "src/gallium/auxiliary/vl/vl_decoder.h",
+        "src/gallium/auxiliary/vl/vl_defines.h",
+        "src/gallium/auxiliary/vl/vl_deint_filter.h",
+        "src/gallium/auxiliary/vl/vl_idct.h",
+        "src/gallium/auxiliary/vl/vl_matrix_filter.h",
+        "src/gallium/auxiliary/vl/vl_mc.h",
+        "src/gallium/auxiliary/vl/vl_median_filter.h",
+        "src/gallium/auxiliary/vl/vl_mpeg12_bitstream.h",
+        "src/gallium/auxiliary/vl/vl_mpeg12_decoder.h",
+        "src/gallium/auxiliary/vl/vl_probs_table.h",
+        "src/gallium/auxiliary/vl/vl_types.h",
+        "src/gallium/auxiliary/vl/vl_vertex_buffers.h",
+        "src/gallium/auxiliary/vl/vl_video_buffer.h",
+        "src/gallium/auxiliary/vl/vl_winsys.h",
+        "src/gallium/auxiliary/vl/vl_zscan.h",
+        "src/gallium/include/frontend/api.h",
+        "src/gallium/include/frontend/drisw_api.h",
+        "src/gallium/include/frontend/drm_driver.h",
+        "src/gallium/include/frontend/opencl_interop.h",
+        "src/gallium/include/frontend/sw_driver.h",
+        "src/gallium/include/frontend/sw_winsys.h",
+        "src/gallium/include/frontend/vdpau_dmabuf.h",
+        "src/gallium/include/frontend/vdpau_funcs.h",
+        "src/gallium/include/frontend/vdpau_interop.h",
+        "src/gallium/include/frontend/winsys_handle.h",
+        "src/gallium/include/frontend/xlibsw_api.h",
+        "src/gallium/include/mesa_interface.h",
+        "src/gallium/include/pipe/p_context.h",
+        "src/gallium/include/pipe/p_defines.h",
+        "src/gallium/include/pipe/p_screen.h",
+        "src/gallium/include/pipe/p_shader_tokens.h",
+        "src/gallium/include/pipe/p_state.h",
+        "src/gallium/include/pipe/p_video_codec.h",
+        "src/gallium/include/pipe/p_video_enums.h",
+        "src/gallium/include/pipe/p_video_state.h",
+        "src/gallium/include/winsys/radeon_winsys.h",
+        "src/gallium/winsys/sw/dri/dri_sw_winsys.h",
+        "src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/gallium/auxiliary",
+        "src/gallium/auxiliary/indices",
+        "src/gallium/auxiliary/tessellator",
+        "src/gallium/auxiliary/util",
+        "src/gallium/include",
+        "src/gallium/winsys",
+    ],
+    strip_include_prefix = "src/gallium",
+    textual_hdrs = [
+        "src/gallium/auxiliary/indices/u_indices.c",  # This is used as a kind of inl file...
+    ],
+    deps = [
+        ":mesa_compiler",
+        ":mesa_compiler_nir",
+        ":mesa_drm",
+        ":mesa_util",
+        "@libdrm",
+        "@swiftshader//:swiftshader_llvm",
+    ],
+)
+
+cc_library(
+    name = "mesa_pci_ids",
+    hdrs = [
+        "include/pci_ids/crocus_pci_ids.h",
+        "include/pci_ids/i830_pci_ids.h",
+        "include/pci_ids/i915_pci_ids.h",
+        "include/pci_ids/iris_pci_ids.h",
+        "include/pci_ids/r300_pci_ids.h",
+        "include/pci_ids/r600_pci_ids.h",
+        "include/pci_ids/radeonsi_pci_ids.h",
+        "include/pci_ids/virtio_gpu_pci_ids.h",
+        "include/pci_ids/vmwgfx_pci_ids.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "include",
+)
+
+cc_library(
+    name = "mesa_virtio",
+    hdrs = [
+        "src/virtio/virtio-gpu/drm_hw.h",
+        "src/virtio/virtio-gpu/venus_hw.h",
+        "src/virtio/virtio-gpu/virgl_hw.h",
+        "src/virtio/virtio-gpu/virgl_protocol.h",
+        "src/virtio/virtio-gpu/virgl_video_hw.h",
+        "src/virtio/virtio-gpu/virglrenderer_hw.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "src",
+)
+
+cc_library(
+    name = "mesa_loader",
+    srcs = [
+        "src/loader/loader.c",
+        "src/loader/loader_dri_helper.c",
+        "src/loader/pci_id_driver_map.h",
+    ],
+    hdrs = [
+        "src/loader/loader.h",
+        "src/loader/loader_dri_helper.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "src/loader",
+    deps = [
+        ":mesa_commit",
+        ":mesa_gallium",
+        ":mesa_pci_ids",
+    ],
+)
+
+cc_library(
+    name = "mesa_gallium_winsys_sw_null",
+    srcs = [
+        "src/gallium/winsys/sw/null/null_sw_winsys.c",
+    ],
+    hdrs = [
+        "src/gallium/winsys/sw/null/null_sw_winsys.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "src/gallium/winsys/sw/null",
+    deps = [
+        ":mesa_gallium",
+    ],
+)
+
+cc_library(
+    name = "mesa_gallium_winsys_sw_wrapper",
+    srcs = [
+        "src/gallium/winsys/sw/wrapper/wrapper_sw_winsys.c",
+    ],
+    hdrs = [
+        "src/gallium/winsys/sw/wrapper/wrapper_sw_winsys.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    strip_include_prefix = "src/gallium/winsys/sw/wrapper",
+    deps = [
+        ":mesa_gallium",
+    ],
+)
+
+cc_library(
+    name = "mesa_pipe_loader",
+    srcs = [
+        "src/gallium/auxiliary/pipe-loader/driinfo_gallium.h",
+        "src/gallium/auxiliary/pipe-loader/pipe_loader.c",
+        "src/gallium/auxiliary/pipe-loader/pipe_loader_drm.c",
+        "src/gallium/auxiliary/pipe-loader/pipe_loader_priv.h",
+        "src/gallium/auxiliary/pipe-loader/pipe_loader_sw.c",
+    ],
+    hdrs = [
+        "src/gallium/auxiliary/pipe-loader/pipe_loader.h",
+    ],
+    copts = MESA_DEFAULT_COPTS + [
+        "-DGALLIUM_STATIC_TARGETS=1",
+    ],
+    includes = [
+        "src/gallium/auxiliary/pipe-loader",
+    ],
+    strip_include_prefix = "src/gallium/auxiliary",
+    deps = [
+        ":mesa_drm",
+        ":mesa_gallium",
+        ":mesa_gallium_winsys_sw_null",
+        ":mesa_gallium_winsys_sw_wrapper",
+        ":mesa_loader",
+        ":mesa_util",
+        ":mesa_virtio",
+    ],
+)
+
+py_binary(
+    name = "vk_icd_gen",
+    srcs = [
+        "src/vulkan/util/vk_icd_gen.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_icd_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+py_binary(
+    name = "vk_cmd_queue_gen",
+    srcs = [
+        "src/vulkan/util/vk_cmd_queue_gen.py",
+        "src/vulkan/util/vk_entrypoints.py",
+        "src/vulkan/util/vk_extensions.py",
+    ],
+    imports = [
+        "src/vulkan/util",
+    ],
+    main = "src/vulkan/util/vk_cmd_queue_gen.py",
+    deps = [
+        "@mako",
+    ],
+)
+
+genrule(
+    name = "gen_wsi_common_entrypoints",
+    srcs = [
+        "src/vulkan/registry/vk.xml",
+    ],
+    outs = [
+        "src/vulkan/wsi/wsi_common_entrypoints.c",
+        "src/vulkan/wsi/wsi_common_entrypoints.h",
+    ],
+    cmd = "python3 $(location :vk_entrypoints_gen) --xml " +
+          "$(location src/vulkan/registry/vk.xml) --proto --weak " +
+          "--out-c $(location src/vulkan/wsi/wsi_common_entrypoints.c) " +
+          "--out-h $(location src/vulkan/wsi/wsi_common_entrypoints.h) " +
+          "--prefix wsi --beta false",
+    tools = [":vk_entrypoints_gen"],
+)
+
+genrule(
+    name = "gen_vk_cmd_queue",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/vk_cmd_queue.c",
+        "src/vulkan/runtime/vk_cmd_queue.h",
+    ],
+    cmd = "python3 $(location :vk_cmd_queue_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-c $(location src/vulkan/runtime/vk_cmd_queue.c) " +
+          "--out-h $(location src/vulkan/runtime/vk_cmd_queue.h) " +
+          "--beta false",
+    tools = [":vk_cmd_queue_gen"],
+)
+
+genrule(
+    name = "gen_vk_common_entrypoints",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/temp/vk_common_entrypoints.c",
+        "src/vulkan/runtime/temp/vk_common_entrypoints.h",
+    ],
+    cmd = "python3 $(location :vk_entrypoints_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) --proto --weak " +
+          "--out-c $(location src/vulkan/runtime/temp/vk_common_entrypoints.c) " +
+          "--out-h $(location src/vulkan/runtime/temp/vk_common_entrypoints.h) " +
+          " --prefix vk_common --beta false",
+    tools = [":vk_entrypoints_gen"],
+)
+
+genrule(
+    name = "gen_modified_vk_common_entrypoints_header",
+    srcs = [
+        "src/vulkan/runtime/temp/vk_common_entrypoints.c",
+        "src/vulkan/runtime/temp/vk_common_entrypoints.h",
+    ],
+    outs = [
+        "src/vulkan/runtime/vk_common_entrypoints.c",
+        "src/vulkan/runtime/vk_common_entrypoints.h",
+    ],
+    cmd = "sed 's/vk_common_DeviceWaitIdle(VkDevice device) VK_ENTRY_WEAK VK_ENTRY_HIDDEN/vk_common_DeviceWaitIdle(VkDevice device) VK_ENTRY_WEAK/g;' $(location :src/vulkan/runtime/temp/vk_common_entrypoints.h) > $(location :src/vulkan/runtime/vk_common_entrypoints.h); " +
+          "cp $(location src/vulkan/runtime/temp/vk_common_entrypoints.c) $(location src/vulkan/runtime/vk_common_entrypoints.c)",
+)
+
+genrule(
+    name = "gen_vk_cmd_enqueue_entrypoints",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/vk_cmd_enqueue_entrypoints.c",
+        "src/vulkan/runtime/vk_cmd_enqueue_entrypoints.h",
+    ],
+    cmd = "python3 $(location :vk_entrypoints_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) --proto --weak " +
+          "--out-c $(location src/vulkan/runtime/vk_cmd_enqueue_entrypoints.c) " +
+          "--out-h $(location src/vulkan/runtime/vk_cmd_enqueue_entrypoints.h) " +
+          "--prefix vk_cmd_enqueue " +
+          "--prefix vk_cmd_enqueue_unless_primary " +
+          "--beta false",
+    tools = [":vk_entrypoints_gen"],
+)
+
+genrule(
+    name = "gen_vk_dispatch_trampolines",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/vk_dispatch_trampolines.c",
+        "src/vulkan/runtime/vk_dispatch_trampolines.h",
+    ],
+    cmd = "python3 $(location :vk_dispatch_trampolines_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-c $(location src/vulkan/runtime/vk_dispatch_trampolines.c) " +
+          "--out-h $(location src/vulkan/runtime/vk_dispatch_trampolines.h) " +
+          "--beta false",
+    tools = [":vk_dispatch_trampolines_gen"],
+)
+
+genrule(
+    name = "gen_vk_physical_device_features",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/vk_physical_device_features.c",
+        "src/vulkan/runtime/vk_physical_device_features.h",
+    ],
+    cmd = "python3 $(location :vk_physical_device_features_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-h $(location src/vulkan/runtime/vk_physical_device_features.h) " +
+          "--out-c $(location src/vulkan/runtime/vk_physical_device_features.c) " +
+          "--beta false",
+    tools = [":vk_physical_device_features_gen"],
+)
+
+genrule(
+    name = "gen_vk_physical_device_properties",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/vk_physical_device_properties.c",
+        "src/vulkan/runtime/vk_physical_device_properties.h",
+    ],
+    cmd = "python3 $(location :vk_physical_device_properties_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-h $(location src/vulkan/runtime/vk_physical_device_properties.h) " +
+          "--out-c $(location src/vulkan/runtime/vk_physical_device_properties.c) " +
+          "--beta false",
+    tools = [":vk_physical_device_properties_gen"],
+)
+
+genrule(
+    name = "gen_vk_format_info",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = [
+        "src/vulkan/runtime/vk_format_info.c",
+        "src/vulkan/runtime/vk_format_info.h",
+    ],
+    cmd = "python3 $(location :vk_format_info_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-h $(location src/vulkan/runtime/vk_format_info.h) " +
+          "--out-c $(location src/vulkan/runtime/vk_format_info.c) ",
+    tools = [":vk_format_info_gen"],
+)
+
+genrule(
+    name = "gen_vk_physical_device_spirv_caps",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = ["src/vulkan/runtime/vk_physical_device_spirv_caps.c"],
+    cmd = "python3 $(location :vk_physical_device_spirv_caps_gen) " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-c $(location src/vulkan/runtime/vk_physical_device_spirv_caps.c) " +
+          "--beta false",
+    tools = [":vk_physical_device_spirv_caps_gen"],
+)
+
+genrule(
+    name = "gen_vk_synchronization_helpers_gen",
+    srcs = ["src/vulkan/registry/vk.xml"],
+    outs = ["src/vulkan/runtime/vk_synchronization_helpers.c"],
+    cmd = "python3 $(location :vk_synchronization_helpers_gen)  " +
+          "--xml $(location src/vulkan/registry/vk.xml) " +
+          "--out-c $(location src/vulkan/runtime/vk_synchronization_helpers.c) " +
+          "--beta false",
+    tools = [":vk_synchronization_helpers_gen"],
+)
+
+cc_library(
+    name = "mesa_vulkan_runtime",
+    srcs = [
+        "src/vulkan/runtime/radix_sort/common/util.c",
+        "src/vulkan/runtime/radix_sort/common/vk/barrier.c",
+        "src/vulkan/runtime/radix_sort/radix_sort_u64.c",
+        "src/vulkan/runtime/radix_sort/radix_sort_vk.c",
+        "src/vulkan/runtime/rmv/vk_rmv_common.c",
+        "src/vulkan/runtime/rmv/vk_rmv_exporter.c",
+        "src/vulkan/runtime/vk_acceleration_structure.c",
+        "src/vulkan/runtime/vk_blend.c",
+        "src/vulkan/runtime/vk_buffer.c",
+        "src/vulkan/runtime/vk_buffer_view.c",
+        "src/vulkan/runtime/vk_cmd_copy.c",
+        "src/vulkan/runtime/vk_cmd_enqueue.c",
+        "src/vulkan/runtime/vk_cmd_enqueue_entrypoints.c",
+        "src/vulkan/runtime/vk_cmd_queue.c",
+        "src/vulkan/runtime/vk_command_buffer.c",
+        "src/vulkan/runtime/vk_command_pool.c",
+        "src/vulkan/runtime/vk_common_entrypoints.c",
+        "src/vulkan/runtime/vk_debug_report.c",
+        "src/vulkan/runtime/vk_debug_utils.c",
+        "src/vulkan/runtime/vk_deferred_operation.c",
+        "src/vulkan/runtime/vk_descriptor_set_layout.c",
+        "src/vulkan/runtime/vk_descriptor_update_template.c",
+        "src/vulkan/runtime/vk_descriptors.c",
+        "src/vulkan/runtime/vk_device.c",
+        "src/vulkan/runtime/vk_device_generated_commands.c",
+        "src/vulkan/runtime/vk_device_memory.c",
+        "src/vulkan/runtime/vk_dispatch_trampolines.c",
+        "src/vulkan/runtime/vk_fence.c",
+        "src/vulkan/runtime/vk_format_info.c",
+        "src/vulkan/runtime/vk_framebuffer.c",
+        "src/vulkan/runtime/vk_graphics_state.c",
+        "src/vulkan/runtime/vk_image.c",
+        "src/vulkan/runtime/vk_instance.c",
+        "src/vulkan/runtime/vk_log.c",
+        "src/vulkan/runtime/vk_meta.c",
+        "src/vulkan/runtime/vk_meta_draw_rects.c",
+        "src/vulkan/runtime/vk_meta_object_list.c",
+        "src/vulkan/runtime/vk_nir.c",
+        "src/vulkan/runtime/vk_nir_convert_ycbcr.c",
+        "src/vulkan/runtime/vk_object.c",
+        "src/vulkan/runtime/vk_physical_device.c",
+        "src/vulkan/runtime/vk_physical_device_features.c",
+        "src/vulkan/runtime/vk_physical_device_properties.c",
+        "src/vulkan/runtime/vk_physical_device_spirv_caps.c",
+        "src/vulkan/runtime/vk_pipeline.c",
+        "src/vulkan/runtime/vk_pipeline_cache.c",
+        "src/vulkan/runtime/vk_pipeline_layout.c",
+        "src/vulkan/runtime/vk_query_pool.c",
+        "src/vulkan/runtime/vk_queue.c",
+        "src/vulkan/runtime/vk_render_pass.c",
+        "src/vulkan/runtime/vk_sampler.c",
+        "src/vulkan/runtime/vk_semaphore.c",
+        "src/vulkan/runtime/vk_shader.c",
+        "src/vulkan/runtime/vk_shader_module.c",
+        "src/vulkan/runtime/vk_standard_sample_locations.c",
+        "src/vulkan/runtime/vk_sync.c",
+        "src/vulkan/runtime/vk_sync_binary.c",
+        "src/vulkan/runtime/vk_sync_dummy.c",
+        "src/vulkan/runtime/vk_sync_timeline.c",
+        "src/vulkan/runtime/vk_synchronization.c",
+        "src/vulkan/runtime/vk_synchronization_helpers.c",
+        "src/vulkan/runtime/vk_video.c",
+        "src/vulkan/runtime/vk_ycbcr_conversion.c",
+        "src/vulkan/wsi/wsi_common.c",
+        "src/vulkan/wsi/wsi_common_drm.c",
+        "src/vulkan/wsi/wsi_common_entrypoints.c",
+        "src/vulkan/wsi/wsi_common_headless.c",
+    ],
+    hdrs = [
+        "src/vulkan/runtime/astc_spv.h",
+        "src/vulkan/runtime/bvh/lbvh_generate_ir.spv.h",
+        "src/vulkan/runtime/bvh/lbvh_main.spv.h",
+        "src/vulkan/runtime/bvh/leaf.spv.h",
+        "src/vulkan/runtime/bvh/leaf_always_active.spv.h",
+        "src/vulkan/runtime/bvh/morton.spv.h",
+        "src/vulkan/runtime/bvh/ploc_internal.spv.h",
+        "src/vulkan/runtime/bvh/vk_build_helpers.h",
+        "src/vulkan/runtime/bvh/vk_build_interface.h",
+        "src/vulkan/runtime/bvh/vk_bvh.h",
+        "src/vulkan/runtime/radix_sort/common/macros.h",
+        "src/vulkan/runtime/radix_sort/common/util.h",
+        "src/vulkan/runtime/radix_sort/common/vk/barrier.h",
+        "src/vulkan/runtime/radix_sort/radix_sort_u64.h",
+        "src/vulkan/runtime/radix_sort/radix_sort_vk.h",
+        "src/vulkan/runtime/radix_sort/radix_sort_vk_devaddr.h",
+        "src/vulkan/runtime/radix_sort/radix_sort_vk_ext.h",
+        "src/vulkan/runtime/radix_sort/shaders/bufref.h",
+        "src/vulkan/runtime/radix_sort/shaders/config.h",
+        "src/vulkan/runtime/radix_sort/shaders/fill.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/histogram.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/init.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/prefix.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/prefix.h",
+        "src/vulkan/runtime/radix_sort/shaders/prefix_limits.h",
+        "src/vulkan/runtime/radix_sort/shaders/push.h",
+        "src/vulkan/runtime/radix_sort/shaders/scatter_0_even.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/scatter_0_odd.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/scatter_1_even.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/shaders/scatter_1_odd.comp.spv.h",
+        "src/vulkan/runtime/radix_sort/target.h",
+        "src/vulkan/runtime/rmv/vk_rmv_common.h",
+        "src/vulkan/runtime/rmv/vk_rmv_tokens.h",
+        "src/vulkan/runtime/vk_acceleration_structure.h",
+        "src/vulkan/runtime/vk_android.h",
+        "src/vulkan/runtime/vk_blend.h",
+        "src/vulkan/runtime/vk_buffer.h",
+        "src/vulkan/runtime/vk_buffer_view.h",
+        "src/vulkan/runtime/vk_cmd_enqueue_entrypoints.h",
+        "src/vulkan/runtime/vk_cmd_queue.h",
+        "src/vulkan/runtime/vk_command_buffer.h",
+        "src/vulkan/runtime/vk_command_pool.h",
+        "src/vulkan/runtime/vk_common_entrypoints.h",
+        "src/vulkan/runtime/vk_debug_report.h",
+        "src/vulkan/runtime/vk_debug_utils.h",
+        "src/vulkan/runtime/vk_deferred_operation.h",
+        "src/vulkan/runtime/vk_descriptor_set_layout.h",
+        "src/vulkan/runtime/vk_descriptor_update_template.h",
+        "src/vulkan/runtime/vk_descriptors.h",
+        "src/vulkan/runtime/vk_device.h",
+        "src/vulkan/runtime/vk_device_generated_commands.h",
+        "src/vulkan/runtime/vk_device_memory.h",
+        "src/vulkan/runtime/vk_dispatch_trampolines.h",
+        "src/vulkan/runtime/vk_drm_syncobj.h",
+        "src/vulkan/runtime/vk_fence.h",
+        "src/vulkan/runtime/vk_format_info.h",
+        "src/vulkan/runtime/vk_framebuffer.h",
+        "src/vulkan/runtime/vk_graphics_state.h",
+        "src/vulkan/runtime/vk_image.h",
+        "src/vulkan/runtime/vk_instance.h",
+        "src/vulkan/runtime/vk_limits.h",
+        "src/vulkan/runtime/vk_log.h",
+        "src/vulkan/runtime/vk_meta.h",
+        "src/vulkan/runtime/vk_meta_object_list.h",
+        "src/vulkan/runtime/vk_meta_private.h",
+        "src/vulkan/runtime/vk_nir.h",
+        "src/vulkan/runtime/vk_nir_convert_ycbcr.h",
+        "src/vulkan/runtime/vk_object.h",
+        "src/vulkan/runtime/vk_physical_device.h",
+        "src/vulkan/runtime/vk_physical_device_features.h",
+        "src/vulkan/runtime/vk_physical_device_properties.h",
+        "src/vulkan/runtime/vk_pipeline.h",
+        "src/vulkan/runtime/vk_pipeline_cache.h",
+        "src/vulkan/runtime/vk_pipeline_layout.h",
+        "src/vulkan/runtime/vk_query_pool.h",
+        "src/vulkan/runtime/vk_queue.h",
+        "src/vulkan/runtime/vk_render_pass.h",
+        "src/vulkan/runtime/vk_sampler.h",
+        "src/vulkan/runtime/vk_semaphore.h",
+        "src/vulkan/runtime/vk_shader.h",
+        "src/vulkan/runtime/vk_shader_module.h",
+        "src/vulkan/runtime/vk_standard_sample_locations.h",
+        "src/vulkan/runtime/vk_sync.h",
+        "src/vulkan/runtime/vk_sync_binary.h",
+        "src/vulkan/runtime/vk_sync_dummy.h",
+        "src/vulkan/runtime/vk_sync_timeline.h",
+        "src/vulkan/runtime/vk_synchronization.h",
+        "src/vulkan/runtime/vk_texcompress_astc.h",
+        "src/vulkan/runtime/vk_texcompress_etc2.h",
+        "src/vulkan/runtime/vk_video.h",
+        "src/vulkan/runtime/vk_ycbcr_conversion.h",
+        "src/vulkan/wsi/wsi_common.h",
+        "src/vulkan/wsi/wsi_common_display.h",
+        "src/vulkan/wsi/wsi_common_drm.h",
+        "src/vulkan/wsi/wsi_common_entrypoints.h",
+        "src/vulkan/wsi/wsi_common_metal_layer.h",
+        "src/vulkan/wsi/wsi_common_private.h",
+        "src/vulkan/wsi/wsi_common_queue.h",
+    ],
+    copts = MESA_DEFAULT_COPTS,
+    includes = [
+        "src/vulkan/runtime",
+        "src/vulkan/wsi",
+    ],
+    deps = [
+        ":mesa_compiler",
+        ":mesa_drm",
+        ":mesa_util",
+        ":mesa_util_c11",
+        ":mesa_util_format",
+        ":mesa_vulkan_util",
+        "@libdrm",
+    ],
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "vk_lavapipe_impl",
+    srcs = [
+        "src/gallium/frontends/lavapipe/lvp_acceleration_structure.c",
+        "src/gallium/frontends/lavapipe/lvp_cmd_buffer.c",
+        "src/gallium/frontends/lavapipe/lvp_descriptor_set.c",
+        "src/gallium/frontends/lavapipe/lvp_device.c",
+        "src/gallium/frontends/lavapipe/lvp_device_generated_commands.c",
+        "src/gallium/frontends/lavapipe/lvp_entrypoints.c",
+        "src/gallium/frontends/lavapipe/lvp_entrypoints.h",
+        "src/gallium/frontends/lavapipe/lvp_execute.c",
+        "src/gallium/frontends/lavapipe/lvp_formats.c",
+        "src/gallium/frontends/lavapipe/lvp_image.c",
+        "src/gallium/frontends/lavapipe/lvp_inline_uniforms.c",
+        "src/gallium/frontends/lavapipe/lvp_lower_exec_graph.c",
+        "src/gallium/frontends/lavapipe/lvp_lower_input_attachments.c",
+        "src/gallium/frontends/lavapipe/lvp_lower_vulkan_resource.c",
+        "src/gallium/frontends/lavapipe/lvp_nir_lower_ray_queries.c",
+        "src/gallium/frontends/lavapipe/lvp_nir_lower_sparse_residency.c",
+        "src/gallium/frontends/lavapipe/lvp_nir_ray_tracing.c",
+        "src/gallium/frontends/lavapipe/lvp_pipe_sync.c",
+        "src/gallium/frontends/lavapipe/lvp_pipeline.c",
+        "src/gallium/frontends/lavapipe/lvp_pipeline_cache.c",
+        "src/gallium/frontends/lavapipe/lvp_query.c",
+        "src/gallium/frontends/lavapipe/lvp_ray_tracing_pipeline.c",
+        "src/gallium/frontends/lavapipe/lvp_util.c",
+        "src/gallium/frontends/lavapipe/lvp_wsi.c",
+        "src/gallium/targets/lavapipe/lavapipe_target.c",
+    ],
+    hdrs = [
+    ] + glob([
+        "src/gallium/include/**/*.h",
+        "src/gallium/drivers/llvmpipe/**/*.h",
+        "src/gallium/frontends/lavapipe/**/*.h",
+    ]),
+    copts = MESA_DEFAULT_COPTS + [
+        "-DGALLIUM_LLVMPIPE",
+        "-DLVP_USE_WSI_PLATFORM",
+        "-Wno-unused-but-set-variable",
+    ],
+    includes = [
+        "src/gallium/drivers/llvmpipe",
+        "src/gallium/frontends/lavapipe",
+        "src/gallium/include",
+    ],
+    linkopts = [
+        # Mesa always adds Bsymbolic when available (see 'ld_args_bsymbolic' in Meson build). Duplicate that
+        # behavior here. '--gc-sections' has stronger justification: this lets drivers drop
+        # shared code unused by that specific driver (particularly relevant for Vulkan drivers).
+        "-Wl,-Bsymbolic",
+        "-Wl,--gc-sections",
+    ],
+    deps = [
+        ":mesa_commit",
+        ":mesa_compiler",
+        ":mesa_compiler_nir",
+        ":mesa_drm",
+        ":mesa_gallium",
+        ":mesa_gallium_drivers_llvmpipe",
+        ":mesa_pipe_loader",
+        ":mesa_util",
+        ":mesa_util_c11",
+        ":mesa_util_format",
+        ":mesa_vulkan_runtime",
+        ":mesa_vulkan_util",
+    ],
+)
+
+cc_shared_library(
+    name = "vk_lavapipe",
+    additional_linker_inputs = [
+        "src/vulkan/vulkan.sym",
+    ],
+    user_link_flags = [
+        "-Wl,-Bsymbolic",
+        "-Wl,--gc-sections",
+        "-Wl,--version-script=$(location src/vulkan/vulkan.sym)",
+        "-Wl,--undefined-version",
+    ],
+    deps = [
+        ":vk_lavapipe_impl",
+    ],
+)

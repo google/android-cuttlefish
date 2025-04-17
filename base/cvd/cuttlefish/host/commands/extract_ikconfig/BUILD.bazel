@@ -1,0 +1,10 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+exports_files(["extract-ikconfig.sh"])
+
+sh_binary(
+    name = "extract-ikconfig",
+    srcs = ["extract-ikconfig.sh"],
+)

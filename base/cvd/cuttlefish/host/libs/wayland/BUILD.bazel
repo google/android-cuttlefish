@@ -1,0 +1,44 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "cuttlefish_wayland_server",
+    srcs = [
+        "wayland_compositor.cpp",
+        "wayland_dmabuf.cpp",
+        "wayland_seat.cpp",
+        "wayland_server.cpp",
+        "wayland_shell.cpp",
+        "wayland_subcompositor.cpp",
+        "wayland_surface.cpp",
+        "wayland_surfaces.cpp",
+        "wayland_virtio_gpu_metadata.cpp",
+    ],
+    hdrs = [
+        "wayland_compositor.h",
+        "wayland_dmabuf.h",
+        "wayland_seat.h",
+        "wayland_server.h",
+        "wayland_server_callbacks.h",
+        "wayland_shell.h",
+        "wayland_subcompositor.h",
+        "wayland_surface.h",
+        "wayland_surfaces.h",
+        "wayland_utils.h",
+        "wayland_virtio_gpu_metadata.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@crosvm//:crosvm_gpu_display_wayland_protocols",
+        "@libdrm//:libdrm_fourcc",
+        "@libffi",
+        "@wayland//:wayland_server",
+    ],
+)

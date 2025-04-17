@@ -1,0 +1,8 @@
+cc_library(
+    name = "libeigen",
+    hdrs = glob([
+        "**",
+    ]),
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)

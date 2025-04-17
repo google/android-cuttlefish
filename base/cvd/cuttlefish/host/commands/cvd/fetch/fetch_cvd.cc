@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 
+#include <android-base/file.h>
 #include <sys/stat.h>
 
 #include <chrono>
@@ -23,31 +24,34 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
 #include <sparse/sparse.h>
 
-#include "common/libs/utils/archive.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/tee_logging.h"
-#include "host/commands/cvd/common_utils.h"
-#include "host/commands/cvd/fetch/fetch_cvd_parser.h"
-#include "host/commands/cvd/fetch/fetch_tracer.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/image_aggregator/sparse_image_utils.h"
-#include "host/libs/web/android_build_api.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/caching_build_api.h"
-#include "host/libs/web/chrome_os_build_string.h"
-#include "host/libs/web/credential_source.h"
-#include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/luci_build_api.h"
+#include "cuttlefish/common/libs/utils/archive.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
+#include "cuttlefish/host/commands/cvd/fetch/substitute.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/caching_build_api.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/chrome_os_build_string.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/web/oauth2_consent.h"
 
 namespace cuttlefish {
 namespace {
@@ -176,11 +180,6 @@ TargetDirectories GetTargetDirectories(
 #endif
 
 bool ConvertToRawImageNoBinary(const std::string& image_path) {
-  if (!IsSparseImage(image_path)) {
-    LOG(DEBUG) << "Skip non-sparse image " << image_path;
-    return false;
-  }
-
   std::string tmp_raw_image_path = image_path + ".raw";
 
   // simg2img logic to convert sparse image to raw image.
@@ -238,12 +237,18 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
  * crosvm has read-only support for Android-Sparse files, but QEMU does not
  * support them.
  */
-void DeAndroidSparse(const std::vector<std::string>& image_files) {
+Result<void> DeAndroidSparse(const std::vector<std::string>& image_files) {
   for (const auto& file : image_files) {
-    if (!ConvertToRawImageNoBinary(file)) {
-      LOG(DEBUG) << "Failed to desparse " << file;
+    if (!CF_EXPECT(IsSparseImage(file))) {
+      continue;
+    }
+    if (ConvertToRawImageNoBinary(file)) {
+      LOG(DEBUG) << "De-sparsed '" << file << "'";
+    } else {
+      LOG(ERROR) << "Failed to de-sparse '" << file << "'";
     }
   }
+  return {};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -273,10 +278,8 @@ HostToolsTarget GetHostToolsTarget(const FetchFlags& flags,
   };
 }
 
-Result<void> EnsureDirectoriesExist(const std::string& target_directory,
-                                    const std::string& host_tools_directory,
+Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
                                     const std::vector<Target>& targets) {
-  CF_EXPECT(EnsureDirectoryExists(target_directory));
   CF_EXPECT(EnsureDirectoryExists(host_tools_directory));
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
@@ -290,10 +293,12 @@ Result<void> EnsureDirectoriesExist(const std::string& target_directory,
   return {};
 }
 
-Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
-                              const std::string& target_dir,
-                              const bool keep_archives,
-                              FetchTracer::Trace trace) {
+Result<void> FetchHostPackage(
+    BuildApi& build_api, const Build& build, const std::string& target_dir,
+    const bool keep_archives,
+    const std::vector<std::string>& host_substitutions,
+    FetchTracer::Trace trace) {
+  LOG(INFO) << "Preparing host package for " << build;
   // This function is called asynchronously, so it may take a while to start.
   // Complete a phase here to ensure that delay is not counted in the download
   // time.
@@ -304,16 +309,23 @@ Result<void> FetchHostPackage(BuildApi& build_api, const Build& build,
   std::string host_tools_filepath =
       CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
   trace.CompletePhase("Download", FileSize(host_tools_filepath));
+
   CF_EXPECT(
       ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
   trace.CompletePhase("Extract");
+
+  CF_EXPECT(HostPackageSubstitution(target_dir, host_substitutions));
+
+  trace.CompletePhase("Substitute");
   return {};
 }
 
 Result<std::vector<std::string>> FetchSystemImgZipImages(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory, const bool keep_downloaded_archives) {
-  const std::string system_img_zip_name = GetBuildZipName(build, "img");
+  LOG(INFO) << "Downloading system image zip for " << build;
+  const std::string system_img_zip_name =
+      CF_EXPECT(build_api.GetBuildZipName(build, "img"));
   std::string system_img_zip = CF_EXPECTF(
       build_api.DownloadFile(build, target_directory, system_img_zip_name),
       "Unable to download {}", system_img_zip_name);
@@ -324,6 +336,18 @@ Result<std::vector<std::string>> FetchSystemImgZipImages(
       system_img_zip_name);
 }
 
+Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
+    HttpClient& http_client, const BuildApiFlags& flags,
+    const std::string& oauth_filepath) {
+  return CF_EXPECT(
+      GetCredentialSource(http_client, flags.credential_source, oauth_filepath,
+                          flags.credential_flags.use_gce_metadata,
+                          flags.credential_flags.credential_filepath,
+                          flags.credential_flags.service_account_filepath));
+}
+
+}  // namespace
+
 Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   auto resolver =
       flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
@@ -333,22 +357,40 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
+
+  std::vector<std::string> scopes = {
+      kAndroidBuildApiScope,
+      "https://www.googleapis.com/auth/userinfo.email",
+  };
+  Result<std::unique_ptr<CredentialSource>> cvd_creds =
+      CredentialForScopes(*curl, scopes);
+
   std::string oauth_filepath =
       StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
-  std::unique_ptr<CredentialSource> credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
 
-  const auto cache_base_path = PerUserDir() + "/cache";
+  std::unique_ptr<CredentialSource> credential_source =
+      cvd_creds.ok() && cvd_creds->get()
+          ? std::move(*cvd_creds)
+          : CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
+                                                   oauth_filepath));
+
+  const auto cache_base_path = PerUserCacheDir();
+
+  std::unique_ptr<CasDownloader> cas_downloader = nullptr;
+  Result<std::unique_ptr<CasDownloader>> result =
+      CasDownloader::Create(flags.cas_downloader_flags,
+                            flags.credential_flags.service_account_filepath);
+  if (result.ok()) {
+    cas_downloader = std::move(result.value());
+  }
   return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
                         std::move(credential_source), std::move(flags.api_key),
                         flags.wait_retry_period, std::move(flags.api_base_url),
                         std::move(flags.project_id), flags.enable_caching,
-                        std::move(cache_base_path));
+                        std::move(cache_base_path), std::move(cas_downloader));
 }
+
+namespace {
 
 Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
   auto resolver =
@@ -359,22 +401,14 @@ Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
-  std::string luci_oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.config/chrome_infra/auth/tokens.json";
   std::unique_ptr<CredentialSource> luci_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, luci_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
-
-  std::string gsutil_oauth_filepath = StringFromEnv("HOME", ".") + "/.boto";
+      CF_EXPECT(GetCredentialSourceFromFlags(
+          *retrying_http_client, flags,
+          StringFromEnv("HOME", ".") +
+              "/.config/chrome_infra/auth/tokens.json"));
   std::unique_ptr<CredentialSource> gsutil_credential_source =
-      CF_EXPECT(GetCredentialSource(
-          *retrying_http_client, flags.credential_source, gsutil_oauth_filepath,
-          flags.credential_flags.use_gce_metadata,
-          flags.credential_flags.credential_filepath,
-          flags.credential_flags.service_account_filepath));
+      CF_EXPECT(GetCredentialSourceFromFlags(
+          *retrying_http_client, flags, StringFromEnv("HOME", ".") + "/.boto"));
 
   return LuciBuildApi(std::move(retrying_http_client), std::move(curl),
                       std::move(luci_credential_source),
@@ -431,15 +465,16 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
   return {};
 }
 
-Result<Build> GetHostBuild(BuildApi& build_api, HostToolsTarget& host_target,
+Result<Build> GetHostBuild(BuildApi& build_api,
+                           const HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
   auto host_package_build = CF_EXPECT(
       GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
   CF_EXPECT(host_package_build.has_value() || fallback_host_build.has_value(),
             "Either `--host_package_build` or `--default_build` needs to be "
             "specified. Try "
-            "`--default_build=aosp-main/"
-            "aosp_cf_x86_64_phone-trunk_staging-userdebug`");
+            "`--default_build=aosp-android-latest-release/"
+            "aosp_cf_x86_64_only_phone-userdebug");
   return host_package_build.value_or(*fallback_host_build);
 }
 
@@ -458,6 +493,39 @@ Result<void> SaveConfig(FetcherConfig& config,
     LOG(VERBOSE) << target_directory << "/" << file.second.file_path << "\n";
   }
   return {};
+}
+
+Result<std::vector<std::string>> ExtractImageContents(
+    const std::string& image_filepath, const std::string& target_dir,
+    const bool keep_archive) {
+  if (!IsDirectory(image_filepath)) {
+    return CF_EXPECT(
+        ExtractArchiveContents(image_filepath, target_dir, keep_archive));
+  }
+
+  // The image is already uncompressed. Link or move its contents.
+  std::vector<std::string> files;
+  const std::function<bool(const std::string&)> file_collector =
+      [&files, &image_filepath,
+       &target_dir](const std::string& filepath) mutable {
+        std::string target_filepath =
+            target_dir + "/" + filepath.substr(image_filepath.size() + 1);
+        if (!IsDirectory(filepath)) {
+          files.push_back(target_filepath);
+        }
+        return true;
+      };
+  CF_EXPECT(WalkDirectory(image_filepath, file_collector));
+
+  if (keep_archive) {
+    // Must use hard linking due to the way fetch_cvd uses the cache.
+    CF_EXPECT(HardLinkDirecoryContentsRecursively(image_filepath, target_dir));
+  } else {
+    CF_EXPECT(MoveDirectoryContents(image_filepath, target_dir));
+    // Ignore even if removing directory fails - harmless.
+    RecursivelyRemoveDirectory(image_filepath);
+  }
+  return files;
 }
 
 Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
@@ -481,29 +549,32 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
   }
 
   if (flags.download_img_zip) {
-    std::string img_zip_name = GetBuildZipName(*builds.default_build, "img");
+    LOG(INFO) << "Downloading image zip for " << *builds.default_build;
+    std::string img_zip_name =
+        CF_EXPECT(build_api.GetBuildZipName(*builds.default_build, "img"));
     std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.root, img_zip_name));
     trace.CompletePhase("Download image zip",
                         FileSize(default_img_zip_filepath));
-    std::vector<std::string> image_files = CF_EXPECT(ExtractArchiveContents(
-        default_img_zip_filepath, target_directories.root,
-        keep_downloaded_archives));
+    std::vector<std::string> image_files = CF_EXPECT(
+        ExtractImageContents(default_img_zip_filepath, target_directories.root,
+                             keep_downloaded_archives));
     trace.CompletePhase("Extract image zip contents");
-    LOG(INFO) << "Adding img-zip files for default build";
+    LOG(DEBUG) << "Adding img-zip files for default build";
     for (auto& file : image_files) {
       LOG(VERBOSE) << file;
     }
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
                                       image_files, target_directories.root));
-    DeAndroidSparse(image_files);
+    CF_EXPECT(DeAndroidSparse(image_files));
     trace.CompletePhase("Desparse image files");
   }
 
   if (builds.system || flags.download_target_files_zip) {
-    std::string target_files_name =
-        GetBuildZipName(*builds.default_build, "target_files");
+    LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
+    std::string target_files_name = CF_EXPECT(
+        build_api.GetBuildZipName(*builds.default_build, "target_files"));
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.default_target_files,
         target_files_name));
@@ -522,7 +593,8 @@ Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
                                const bool keep_downloaded_archives,
                                FetcherConfig& config,
                                FetchTracer::Trace trace) {
-  std::string target_files_name = GetBuildZipName(system_build, "target_files");
+  std::string target_files_name =
+      CF_EXPECT(build_api.GetBuildZipName(system_build, "target_files"));
   std::string target_files = CF_EXPECT(build_api.DownloadFile(
       system_build, target_directories.system_target_files, target_files_name));
   trace.CompletePhase("Download Target Files", FileSize(target_files_name));
@@ -532,6 +604,7 @@ Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
                                     target_directories.root));
 
   if (download_img_zip) {
+    LOG(INFO) << "Downloading system image zip for " << system_build;
     std::vector<std::string> system_images;
     Result<std::string> extracted_system = ExtractImage(
         target_files, target_directories.root, "IMAGES/system.img");
@@ -643,15 +716,16 @@ Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
                              const std::string& target_directory,
                              const bool keep_downloaded_archives,
                              FetcherConfig& config, FetchTracer::Trace trace) {
-  std::string boot_img_zip_name = GetBuildZipName(boot_build, "img");
+  std::string boot_img_zip_name =
+      CF_EXPECT(build_api.GetBuildZipName(boot_build, "img"));
   std::string downloaded_boot_filepath;
   std::optional<std::string> boot_filepath = GetFilepath(boot_build);
   if (boot_filepath) {
     downloaded_boot_filepath = CF_EXPECT(build_api.DownloadFileWithBackup(
         boot_build, target_directory, *boot_filepath, boot_img_zip_name));
   } else {
-    downloaded_boot_filepath = CF_EXPECT(
-        build_api.DownloadFile(boot_build, target_directory, boot_img_zip_name));
+    downloaded_boot_filepath = CF_EXPECT(build_api.DownloadFile(
+        boot_build, target_directory, boot_img_zip_name));
   }
   trace.CompletePhase("Download", FileSize(downloaded_boot_filepath));
 
@@ -659,8 +733,8 @@ Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
   // downloaded a zip that needs to be extracted
   if (android::base::EndsWith(downloaded_boot_filepath, boot_img_zip_name)) {
     std::string extract_target = boot_filepath.value_or("boot.img");
-    std::string extracted_boot = CF_EXPECT(
-        ExtractImage(downloaded_boot_filepath, target_directory, extract_target));
+    std::string extracted_boot = CF_EXPECT(ExtractImage(
+        downloaded_boot_filepath, target_directory, extract_target));
     std::string target_boot =
         CF_EXPECT(RenameFile(extracted_boot, target_directory + "/boot.img"));
     boot_files.push_back(target_boot);
@@ -844,50 +918,50 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
   return {};
 }
 
-Result<void> Fetch(const FetchFlags& flags, HostToolsTarget& host_target,
+Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
                    std::vector<Target>& targets) {
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
   setenv("ANDROID_ROOT", "/", /* overwrite */ 0);
 #endif
+  CurlGlobalInit curl_init;
 
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-  {
-    std::unique_ptr<BuildApi> build_api =
-        CF_EXPECT(GetBuildApi(flags.build_api_flags));
-    LuciBuildApi luci_build_api =
-        CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
-    FetchTracer tracer;
-    FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
-    CF_EXPECT(UpdateTargetsWithBuilds(*build_api, targets));
-    std::optional<Build> fallback_host_build = std::nullopt;
-    if (!targets.empty()) {
-      fallback_host_build = targets[0].builds.default_build;
-    }
-    const auto host_target_build =
-        CF_EXPECT(GetHostBuild(*build_api, host_target, fallback_host_build));
-    prefetch_trace.CompletePhase("GetBuilds");
-
-    auto host_package_future =
-        std::async(std::launch::async, FetchHostPackage, std::ref(*build_api),
-                   std::cref(host_target_build),
-                   std::cref(host_target.host_tools_directory),
-                   std::cref(flags.keep_downloaded_archives),
-                   tracer.NewTrace("Host Package"));
-    for (const auto& target : targets) {
-      LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
-      FetcherConfig config;
-      CF_EXPECT(FetchTarget(*build_api, luci_build_api, target.builds,
-                            target.directories, target.download_flags,
-                            flags.keep_downloaded_archives, config, tracer));
-      CF_EXPECT(SaveConfig(config, target.directories.root));
-      LOG(INFO) << "Completed fetch to \"" << target.directories.root << "\"";
-    }
-    CF_EXPECT(host_package_future.get());
-    LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
+  std::unique_ptr<BuildApi> build_api =
+      CF_EXPECT(GetBuildApi(flags.build_api_flags));
+  LuciBuildApi luci_build_api =
+      CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
+  FetchTracer tracer;
+  FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
+  CF_EXPECT(UpdateTargetsWithBuilds(*build_api, targets));
+  std::optional<Build> fallback_host_build = std::nullopt;
+  if (!targets.empty()) {
+    fallback_host_build = targets[0].builds.default_build;
   }
-  curl_global_cleanup();
+  const auto host_target_build =
+      CF_EXPECT(GetHostBuild(*build_api, host_target, fallback_host_build));
+  prefetch_trace.CompletePhase("GetBuilds");
+
+  auto host_package_future = std::async(
+      std::launch::async, FetchHostPackage, std::ref(*build_api),
+      std::cref(host_target_build), std::cref(host_target.host_tools_directory),
+      std::cref(flags.keep_downloaded_archives),
+      std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
+  size_t count = 1;
+  for (const auto& target : targets) {
+    LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
+    FetcherConfig config;
+    CF_EXPECT(FetchTarget(*build_api, luci_build_api, target.builds,
+                          target.directories, target.download_flags,
+                          flags.keep_downloaded_archives, config, tracer));
+    CF_EXPECT(SaveConfig(config, target.directories.root));
+    LOG(INFO) << "Completed target fetch to '" << target.directories.root
+              << "' (" << count << " out of " << targets.size() << ")";
+    count++;
+  }
+  LOG(DEBUG) << "Waiting for host package fetch";
+  CF_EXPECT(host_package_future.get());
+  LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
 
   LOG(INFO) << "Completed all fetches";
   return {};
@@ -899,31 +973,12 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
-Result<void> FetchCvdMain(int argc, char** argv) {
-  android::base::InitLogging(argv, android::base::StderrLogger);
-  const FetchFlags flags = CF_EXPECT(GetFlagValues(argc, argv));
+Result<void> FetchCvdMain(const FetchFlags& flags) {
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
-  CF_EXPECT(EnsureDirectoriesExist(flags.target_directory,
-                                   host_target.host_tools_directory, targets));
-  std::string log_file = GetFetchLogsFileName(flags.target_directory);
-  auto old_logger = android::base::SetLogger(LogToStderrAndFiles(
-      {log_file}, "", MetadataLevel::FULL, flags.verbosity));
-  // Set the android logger to full verbosity, the tee logger will choose
-  // whether to write each line.
-  auto old_severity =
-      android::base::SetMinimumLogSeverity(android::base::VERBOSE);
-
-  auto fetch_res = Fetch(flags, host_target, targets);
-
-  // This function is no longer only called direcly from a main function, so the
-  // previous logger must be restored. This also ensures logs from other
-  // components don't land in fetch.log.
-  android::base::SetLogger(std::move(old_logger));
-  android::base::SetMinimumLogSeverity(old_severity);
-
-  CF_EXPECT(std::move(fetch_res));
+  CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory, targets));
+  CF_EXPECT(Fetch(flags, host_target, targets));
   return {};
 }
 

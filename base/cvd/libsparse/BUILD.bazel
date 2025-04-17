@@ -1,5 +1,5 @@
 package(
-    default_visibility = ["//visibility:public"],
+    default_visibility = ["//:android_cuttlefish"],
 )
 
 cc_library(

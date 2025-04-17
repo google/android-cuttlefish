@@ -1,0 +1,27 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_test(
+    name = "server",
+    srcs = [
+        "frontline_parser_test.cpp",
+        "utils.h",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli:frontline_parser",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "server_clang_tidy",
+    srcs = [":server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

@@ -34,9 +34,6 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/gem5_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace {
@@ -44,35 +41,6 @@ namespace {
 const char* kInstances = "instances";
 
 }  // namespace
-
-const char* const kVhostUserVsockModeAuto = "auto";
-const char* const kVhostUserVsockModeTrue = "true";
-const char* const kVhostUserVsockModeFalse = "false";
-
-const char* const kGpuModeAuto = "auto";
-const char* const kGpuModeCustom = "custom";
-const char* const kGpuModeDrmVirgl = "drm_virgl";
-const char* const kGpuModeGfxstream = "gfxstream";
-const char* const kGpuModeGfxstreamGuestAngle = "gfxstream_guest_angle";
-const char* const kGpuModeGfxstreamGuestAngleHostSwiftShader =
-    "gfxstream_guest_angle_host_swiftshader";
-const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
-const char* const kGpuModeNone = "none";
-
-const char* const kGpuVhostUserModeAuto = "auto";
-const char* const kGpuVhostUserModeOn = "on";
-const char* const kGpuVhostUserModeOff = "off";
-
-const char* const kHwComposerAuto = "auto";
-const char* const kHwComposerDrm = "drm";
-const char* const kHwComposerRanchu = "ranchu";
-const char* const kHwComposerNone = "none";
-
-std::string DefaultEnvironmentPath(const char* environment_key,
-                                   const char* default_value,
-                                   const char* subpath) {
-  return StringFromEnv(environment_key, default_value) + "/" + subpath;
-}
 
 bool IsRestoring(const CuttlefishConfig& config) {
   return FileExists(config.AssemblyPath("restore"));
@@ -127,41 +95,18 @@ void CuttlefishConfig::set_ap_vm_manager(const std::string& name) {
   (*dictionary_)[kApVmManager] = name;
 }
 
-static SecureHal StringToSecureHal(std::string mode) {
-  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  std::unordered_map<std::string, SecureHal> mapping = {
-      {"keymint", SecureHal::HostKeymintSecure},
-      {"host_secure_keymint", SecureHal::HostKeymintSecure},
-      {"host_keymint_secure", SecureHal::HostKeymintSecure},
-      {"guest_gatekeeper_insecure", SecureHal::GuestGatekeeperInsecure},
-      {"guest_insecure_gatekeeper", SecureHal::GuestGatekeeperInsecure},
-      {"guest_insecure_keymint", SecureHal::GuestKeymintInsecure},
-      {"guest_keymint_insecure", SecureHal::GuestKeymintInsecure},
-      {"gatekeeper", SecureHal::HostGatekeeperSecure},
-      {"host_gatekeeper_secure", SecureHal::HostGatekeeperSecure},
-      {"host_secure_gatekeeper", SecureHal::HostGatekeeperSecure},
-      {"host_gatekeeper_insecure", SecureHal::HostGatekeeperInsecure},
-      {"host_insecure_gatekeeper", SecureHal::HostGatekeeperInsecure},
-      {"oemlock", SecureHal::HostOemlockSecure},
-      {"host_oemlock_secure", SecureHal::HostOemlockSecure},
-      {"host_secure_oemlock", SecureHal::HostOemlockSecure},
-  };
-  auto it = mapping.find(mode);
-  return it == mapping.end() ? SecureHal::Unknown : it->second;
-}
-
 static constexpr char kSecureHals[] = "secure_hals";
-std::set<SecureHal> CuttlefishConfig::secure_hals() const {
+Result<std::set<SecureHal>> CuttlefishConfig::secure_hals() const {
   std::set<SecureHal> args_set;
   for (auto& hal : (*dictionary_)[kSecureHals]) {
-    args_set.insert(StringToSecureHal(hal.asString()));
+    args_set.insert(CF_EXPECT(ParseSecureHal(hal.asString())));
   }
   return args_set;
 }
-void CuttlefishConfig::set_secure_hals(const std::set<std::string>& hals) {
+void CuttlefishConfig::set_secure_hals(const std::set<SecureHal>& hals) {
   Json::Value hals_json_obj(Json::arrayValue);
   for (const auto& hal : hals) {
-    hals_json_obj.append(hal);
+    hals_json_obj.append(ToString(hal));
   }
   (*dictionary_)[kSecureHals] = hals_json_obj;
 }
@@ -235,6 +180,19 @@ bool CuttlefishConfig::sig_server_strict() const {
   return (*dictionary_)[kSigServerStrict].asBool();
 }
 
+bool CuttlefishConfig::OverlaysEnabled() const {
+  for (const auto& curinstance : Instances()) {
+    if (!curinstance.display_configs().empty()) {
+      for (const auto& curdisplay : curinstance.display_configs()) {
+        if (!curdisplay.overlays.empty()) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 static constexpr char kHostToolsVersion[] = "host_tools_version";
 void CuttlefishConfig::set_host_tools_version(
     const std::map<std::string, uint32_t>& versions) {
@@ -304,6 +262,14 @@ void CuttlefishConfig::set_enable_automotive_proxy(
 }
 bool CuttlefishConfig::enable_automotive_proxy() const {
   return (*dictionary_)[kEnableAutomotiveProxy].asBool();
+}
+
+static constexpr char kVhalProxyServerPort[] = "vhal_proxy_server_port";
+void CuttlefishConfig::set_vhal_proxy_server_port(int port) {
+  (*dictionary_)[kVhalProxyServerPort] = port;
+}
+int CuttlefishConfig::vhal_proxy_server_port() const {
+  return (*dictionary_)[kVhalProxyServerPort].asInt();
 }
 
 static constexpr char kEnableHostNfc[] = "enable_host_nfc";
@@ -556,6 +522,22 @@ void CuttlefishConfig::set_snapshot_path(const std::string& snapshot_path) {
   (*dictionary_)[kSnapshotPath] = snapshot_path;
 }
 
+static constexpr char kKvmPath[] = "kvm_path";
+std::string CuttlefishConfig::kvm_path() const {
+  return (*dictionary_)[kKvmPath].asString();
+}
+void CuttlefishConfig::set_kvm_path(const std::string& kvm_path) {
+  (*dictionary_)[kKvmPath] = kvm_path;
+}
+
+static constexpr char kVhostVsockPath[] = "vhost_vsock_path";
+std::string CuttlefishConfig::vhost_vsock_path() const {
+  return (*dictionary_)[kVhostVsockPath].asString();
+}
+void CuttlefishConfig::set_vhost_vsock_path(const std::string& path) {
+  (*dictionary_)[kVhostVsockPath] = path;
+}
+
 static constexpr char kStracedExecutables[] = "straced_host_executables";
 void CuttlefishConfig::set_straced_host_executables(
     const std::set<std::string>& straced_host_executables) {
@@ -571,14 +553,6 @@ std::set<std::string> CuttlefishConfig::straced_host_executables() const {
     straced_host_executables.insert(arg.asString());
   }
   return straced_host_executables;
-}
-
-static constexpr char kHostSandbox[] = "host_sandbox";
-bool CuttlefishConfig::host_sandbox() const {
-  return (*dictionary_)[kHostSandbox].asBool();
-}
-void CuttlefishConfig::set_host_sandbox(bool host_sandbox) {
-  (*dictionary_)[kHostSandbox] = host_sandbox;
 }
 
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl(
@@ -668,18 +642,12 @@ std::string CuttlefishConfig::AssemblyPath(
   return AbsolutePath(assembly_dir() + "/" + file_name);
 }
 
+static constexpr char kInstancesUdsDir[] = "instances_uds_dir";
+void CuttlefishConfig::set_instances_uds_dir(const std::string& dir) {
+  (*dictionary_)[kInstancesUdsDir] = dir;
+}
 std::string CuttlefishConfig::instances_uds_dir() const {
-  // Try to use /tmp/cf_avd_{uid}/ for UDS directory.
-  // If it fails, use HOME directory(legacy) instead.
-
-  auto defaultPath = AbsolutePath("/tmp/cf_avd_" + std::to_string(getuid()));
-
-  if (!DirectoryExists(defaultPath) ||
-      CanAccess(defaultPath, R_OK | W_OK | X_OK)) {
-    return defaultPath;
-  }
-
-  return instances_dir();
+  return (*dictionary_)[kInstancesUdsDir].asString();
 }
 
 std::string CuttlefishConfig::InstancesUdsPath(
@@ -696,18 +664,12 @@ std::string CuttlefishConfig::EnvironmentsPath(
   return AbsolutePath(environments_dir() + "/" + file_name);
 }
 
+static constexpr char kEnvironmentsUdsDir[] = "environments_uds_dir";
+void CuttlefishConfig::set_environments_uds_dir(const std::string& dir) {
+  (*dictionary_)[kEnvironmentsUdsDir] = dir;
+}
 std::string CuttlefishConfig::environments_uds_dir() const {
-  // Try to use /tmp/cf_env_{uid}/ for UDS directory.
-  // If it fails, use HOME directory instead.
-
-  auto defaultPath = AbsolutePath("/tmp/cf_env_" + std::to_string(getuid()));
-
-  if (!DirectoryExists(defaultPath) ||
-      CanAccess(defaultPath, R_OK | W_OK | X_OK)) {
-    return defaultPath;
-  }
-
-  return environments_dir();
+  return (*dictionary_)[kEnvironmentsUdsDir].asString();
 }
 
 std::string CuttlefishConfig::EnvironmentsUdsPath(
