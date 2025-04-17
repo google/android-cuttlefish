@@ -28,7 +28,7 @@ std::string AutomotiveProxyBinary() {
   return HostBinaryPath("automotive_vsock_proxy");
 }
 
-std::string AvbToolBinary() { return HostBinaryPath("avbtool"); }
+std::string AvbToolBinary() { return HostBinaryPath("avbtool.py"); }
 
 std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
