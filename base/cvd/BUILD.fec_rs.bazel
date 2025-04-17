@@ -1,0 +1,19 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libfec_rs",
+    srcs = [
+        "char.h",
+        "encode_rs.h",
+        "encode_rs_char.c",
+        "decode_rs.h",
+        "decode_rs_char.c",
+        "init_rs.h",
+        "init_rs_char.c",
+        "rs-common.h",
+    ],
+    includes = ["."],
+    hdrs = ["fec.h"],
+)
