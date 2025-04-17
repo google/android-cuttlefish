@@ -119,6 +119,10 @@ std::string SensorsSimulatorBinary() {
   return HostBinaryPath("sensors_simulator");
 }
 
+std::string Simg2ImgBinary() {
+  return HostBinaryPath("simg2img");
+}
+
 std::string SocketVsockProxyBinary() {
   return HostBinaryPath("socket_vsock_proxy");
 }

@@ -48,6 +48,7 @@ std::string RootCanalBinary();
 std::string ScreenRecordingServerBinary();
 std::string SecureEnvBinary();
 std::string SensorsSimulatorBinary();
+std::string Simg2ImgBinary();
 std::string SocketVsockProxyBinary();
 std::string StopCvdBinary();
 std::string TcpConnectorBinary();

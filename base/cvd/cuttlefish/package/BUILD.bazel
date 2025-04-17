@@ -46,6 +46,7 @@ package_files(
         "cuttlefish-common/bin/run_cvd": "//cuttlefish/host/commands/run_cvd",
         "cuttlefish-common/bin/screen_recording_server": "//cuttlefish/host/commands/screen_recording_server",
         "cuttlefish-common/bin/sensors_simulator": "//cuttlefish/host/commands/sensors_simulator",
+        "cuttlefish-common/bin/simg2img": "//libsparse:simg2img",
         "cuttlefish-common/bin/snapshot_util_cvd": "//cuttlefish/host/commands/snapshot_util_cvd",
         "cuttlefish-common/bin/socket_vsock_proxy": "//cuttlefish/common/frontend/socket_vsock_proxy",
         "cuttlefish-common/bin/tcp_connector": "//cuttlefish/host/commands/tcp_connector",
