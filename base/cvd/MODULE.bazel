@@ -297,3 +297,17 @@ git_repository(
     commit = "41309b0bcb4559edb1d691d47199035ef539d785", # 6.0.2
     remote = "https://github.com/yaml/pyyaml.git",
 )
+
+git_repository(
+    name = "avb",
+    build_file = "@//:BUILD.avb.bazel",
+    commit = "761178607206f4cb2af79ed9eec52d8cbd814adb",
+    remote = "https://android.googlesource.com/platform/external/avb",
+)
+
+git_repository(
+    name = "fec_rs",
+    build_file = "@//:BUILD.fec_rs.bazel",
+    commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
+    remote = "https://android.googlesource.com/platform/external/fec",
+)
