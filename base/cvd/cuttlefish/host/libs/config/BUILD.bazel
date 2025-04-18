@@ -53,13 +53,14 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        ":config_constants",
-        ":config_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@fmt",
         "@fruit",
@@ -77,9 +78,7 @@ clang_tidy_test(
 
 cc_library(
     name = "config_constants",
-    hdrs = [
-        "config_constants.h",
-    ],
+    hdrs = ["config_constants.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
 )
@@ -91,19 +90,29 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "config_fragment",
+    hdrs = ["config_fragment.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["@jsoncpp"],
+)
+
+clang_tidy_test(
+    name = "config_fragment_clang_tidy",
+    srcs = [":config_fragment"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "config_utils",
-    srcs = [
-        "config_utils.cpp",
-    ],
-    hdrs = [
-        "config_utils.h",
-    ],
+    srcs = ["config_utils.cpp"],
+    hdrs = ["config_utils.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        ":config_constants",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
     ],
 )
