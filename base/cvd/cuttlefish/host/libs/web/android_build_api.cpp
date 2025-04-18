@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_api.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -32,16 +32,16 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <json/value.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/build_api.h"
-#include "host/libs/web/cas/cas_downloader.h"
-#include "host/libs/web/credential_source.h"
-#include "json/value.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
 
 namespace cuttlefish {
 namespace {

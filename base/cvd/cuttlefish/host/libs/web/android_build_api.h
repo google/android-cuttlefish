@@ -16,23 +16,19 @@
 #pragma once
 
 #include <chrono>
-#include <functional>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <tuple>
 #include <unordered_set>
-#include <utility>
-#include <variant>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_string.h"
-#include "host/libs/web/build_api.h"
-#include "host/libs/web/cas/cas_downloader.h"
-#include "host/libs/web/credential_source.h"
-#include "host/libs/web/http_client/http_client.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
