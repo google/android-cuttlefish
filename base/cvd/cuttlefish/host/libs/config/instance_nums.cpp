@@ -13,15 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
+
+#include <optional>
+#include <set>
+#include <string>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 
