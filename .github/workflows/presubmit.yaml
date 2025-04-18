@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies
       uses: actions/setup-go@v3
       with:
-        go-version: '1.13.15'
+        go-version: '1.17.13'
     - run: go version
     - name: Vet Test Build
       run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
