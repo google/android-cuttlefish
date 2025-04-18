@@ -17,7 +17,6 @@ cc_library(
         "instance_nums.cpp",
         "kernel_args.cpp",
         "known_paths.cpp",
-        "logging.cpp",
         "openwrt_args.cpp",
     ],
     # Intentionally repeats headers from other targets so other targets can
@@ -59,6 +58,7 @@ cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:touchpad",
         "//libbase",
@@ -193,6 +193,25 @@ cc_library(
 clang_tidy_test(
     name = "feature_clang_tidy",
     srcs = [":feature"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "logging",
+    srcs = ["logging.cpp"],
+    hdrs = ["logging.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "logging_clang_tidy",
+    srcs = [":logging"],
     tags = ["clang-tidy", "clang_tidy"],
 )
 

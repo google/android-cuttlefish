@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "common/libs/utils/tee_logging.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 
 namespace cuttlefish {
 
