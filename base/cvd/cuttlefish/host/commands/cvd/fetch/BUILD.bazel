@@ -60,6 +60,7 @@ cc_library(
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/web",
+        "//cuttlefish/host/libs/web/http_client",
         "//libbase",
         "//libsparse",
         "@curl",
