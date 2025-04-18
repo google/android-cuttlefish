@@ -15,7 +15,7 @@
 
 #include <curl/curl.h>
 
-#include "host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 
 namespace cuttlefish {
 
