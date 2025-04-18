@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <android-base/parseint.h>
+#include "cuttlefish/host/libs/config/openwrt_args.h"
 
-#include "host/libs/config/openwrt_args.h"
+#include <android-base/parseint.h>
 
 namespace cuttlefish {
 
