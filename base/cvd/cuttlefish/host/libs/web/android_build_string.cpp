@@ -22,9 +22,11 @@
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <android-base/strings.h>
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"

@@ -16,11 +16,14 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 
 #include <dirent.h>
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <set>
 #include <string>
 #include <thread>
@@ -42,6 +45,7 @@
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 namespace {
