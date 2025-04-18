@@ -20,12 +20,15 @@
 #include <string>
 #include <utility>
 
+#include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"

@@ -15,20 +15,27 @@
 
 #include "host/libs/web/credential_source.h"
 
-#include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 
+#include <cstddef>
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <json/json.h>
+#include <json/reader.h>
+#include <json/value.h>
+#include <json/writer.h>
+#include <openssl/base.h>
 #include <openssl/bio.h>
+#include <openssl/digest.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>

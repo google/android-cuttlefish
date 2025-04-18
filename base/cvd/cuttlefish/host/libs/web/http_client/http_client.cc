@@ -15,8 +15,10 @@
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
+#include <stdint.h>
 #include <stdio.h>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -24,12 +26,15 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
-#include <json/json.h>
+#include <curl/easy.h>
+#include <curl/urlapi.h>
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd_stream.h"

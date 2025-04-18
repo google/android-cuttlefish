@@ -40,6 +40,7 @@ filegroup(
         "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",
         "//cuttlefish/host/commands/mkenvimage_slim:.clang-tidy",
         "//cuttlefish/host/commands/run_cvd/launch:.clang-tidy",
+        "//cuttlefish/host/libs/web:.clang-tidy",
     ],
 )
 
