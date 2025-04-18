@@ -19,7 +19,6 @@ cc_library(
         "known_paths.cpp",
         "logging.cpp",
         "openwrt_args.cpp",
-        "touchpad.cpp",
     ],
     # Intentionally repeats headers from other targets so other targets can
     # continue to depend on `:config` for everything.
@@ -61,6 +60,7 @@ cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:feature",
         "//cuttlefish/host/libs/config:secure_hals",
+        "//cuttlefish/host/libs/config:touchpad",
         "//libbase",
         "@fmt",
         "@fruit",
@@ -211,5 +211,25 @@ cc_library(
 clang_tidy_test(
     name = "secure_hals_clang_tidy",
     srcs = [":secure_hals"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "touchpad",
+    srcs = ["touchpad.cpp"],
+    hdrs = ["touchpad.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "touchpad_clang_tidy",
+    srcs = [":touchpad"],
     tags = ["clang_tidy", "clang-tidy"],
 )
