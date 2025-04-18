@@ -18,12 +18,11 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <tuple>
 #include <variant>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_string.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 
