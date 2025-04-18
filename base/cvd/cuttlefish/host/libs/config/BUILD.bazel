@@ -58,6 +58,7 @@ cc_library(
         "//cuttlefish/host/libs/config:kernel_args",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:touchpad",
@@ -349,6 +350,19 @@ clang_tidy_test(
     name = "logging_clang_tidy",
     srcs = [":logging"],
     tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "mbr",
+    hdrs = ["mbr.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "mbr_clang_tidy",
+    srcs = [":mbr"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
