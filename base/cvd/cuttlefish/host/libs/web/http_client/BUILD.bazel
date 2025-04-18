@@ -6,14 +6,26 @@ package(
 )
 
 cc_library(
+    name = "curl_global_init",
+    srcs = ["curl_global_init.cpp"],
+    hdrs = ["curl_global_init.h"],
+    strip_include_prefix = "//cuttlefish",
+    deps = ["@curl"],
+)
+
+clang_tidy_test(
+    name = "curl_global_init_clang_tidy",
+    srcs = [":curl_global_init"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "http_client",
     srcs = [
-        "curl_global_init.cpp",
         "http_client.cc",
         "http_client_util.cc",
     ],
     hdrs = [
-        "curl_global_init.h",
         "http_client.h",
         "http_client_util.h",
     ],
