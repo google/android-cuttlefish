@@ -36,6 +36,7 @@ Architecture: any
 Depends: adduser,
          binfmt-support [arm64],
          bridge-utils,
+         cpio,
          curl,
          dnsmasq-base,
          e2fsprogs,
