@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 #include <stdio.h>
 
@@ -31,13 +31,13 @@
 #include <curl/curl.h>
 #include <json/json.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_fd_stream.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/web/http_client/http_client_util.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd_stream.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/web/http_client/http_client_util.h"
 
 namespace cuttlefish {
 namespace {
