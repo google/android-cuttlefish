@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish_config.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 #include <fstream>
 #include <string>
@@ -25,8 +24,8 @@
 #include <android-base/strings.h>
 #include <json/json.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flags_validator.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flags_validator.h"
 
 namespace cuttlefish {
 namespace {

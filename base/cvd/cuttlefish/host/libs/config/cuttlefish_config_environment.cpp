@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 const char* kEnvironments = "environments";
 
