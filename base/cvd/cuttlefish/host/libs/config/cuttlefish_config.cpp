@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
-#include <algorithm>
-#include <climits>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#include <iomanip>
-#include <iterator>
-#include <sstream>
 #include <string>
-#include <time.h>
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 #include <json/json.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 namespace {
