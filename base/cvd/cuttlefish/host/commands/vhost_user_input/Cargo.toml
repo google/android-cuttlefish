@@ -1,0 +1,23 @@
+[package]
+name = "vhost_user_input"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { version = "1.0.97", features = [ "default", "std" ] }
+clap = { version = "4.5.0", features = [ "derive", "error-context", "help", "std", "usage" ] }
+clap_derive = { version = "4.5.0", features = [ "default" ] }
+clap_builder = { version = "4.5.0", features = [ "error-context", "help", "std", "suggestions", "usage" ] }
+env_logger = { version = "0.10.2" }
+log = { version = "0.4.26", features = [ "std" ] }
+nix = { version = "0.29.0", features = [ "event", "feature", "fs", "inotify", "ioctl", "memoffset", "mman", "mount", "net", "poll", "process", "sched", "signal", "socket", "term", "time", "uio", "user" ] }
+serde = { version = "1.0.219", features = [ "default", "derive", "rc", "serde_derive", "std" ] }
+serde_json = { version = "1.0.140", features = [ "default", "std" ] }
+thiserror = { version = "2.0.11", features = [ "default", "std" ] }
+vhost = { version = "0.13.0", features = [ "default", "vhost-user", "vhost-user-backend" ] }
+vhost-user-backend = { version = "0.17.0" }
+virtio-bindings = { version = "0.2.4" }
+virtio-queue = { version = "0.14.0" }
+vm-memory = { version = "0.16.1", features = [ "arc-swap", "backend-atomic", "backend-bitmap", "backend-mmap", "default" ] }
+vmm-sys-util = { version = "0.12.1" }
+zerocopy = { version = "0.8.24", features = [ "alloc", "derive", "simd", "std", "zerocopy-derive" ] }
