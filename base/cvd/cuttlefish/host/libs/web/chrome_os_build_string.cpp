@@ -13,18 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/chrome_os_build_string.h"
+#include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 
 #include <optional>
 #include <string>
-#include <variant>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
