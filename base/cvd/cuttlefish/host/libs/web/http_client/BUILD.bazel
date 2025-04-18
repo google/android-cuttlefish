@@ -21,20 +21,15 @@ clang_tidy_test(
 
 cc_library(
     name = "http_client",
-    srcs = [
-        "http_client.cc",
-        "http_client_util.cc",
-    ],
-    hdrs = [
-        "http_client.h",
-        "http_client_util.h",
-    ],
+    srcs = ["http_client.cc"],
+    hdrs = ["http_client.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client:http_client_util",
         "//libbase",
         "@curl",
         "@fmt",
@@ -48,13 +43,27 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "http_client_util",
+    srcs = ["http_client_util.cc"],
+    hdrs = ["http_client_util.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "http_client_util_clang_tidy",
+    srcs = [":http_client_util"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_test(
     name = "http_client_util_test",
     srcs = ["http_client_util_test.cc"],
     copts = COPTS,
     includes = [""],
     deps = [
-        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_client_util",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@jsoncpp",
