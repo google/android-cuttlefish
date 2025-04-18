@@ -23,4 +23,7 @@ message HostPkgMigrationConfig {
 message Symlink {
   string target = 1;
   string link_name = 2;
+  // If true, disables checking that `link_name` exists. Useful for targets
+  // which conditionally exist such as host arch specific files.
+  bool ignore_link_name_presence_check = 3;
 }
