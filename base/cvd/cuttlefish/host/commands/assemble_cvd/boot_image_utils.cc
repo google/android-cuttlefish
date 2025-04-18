@@ -61,7 +61,7 @@ void RunMkBootFs(const std::string& input_dir, const std::string& output) {
 void RunLz4(const std::string& input, const std::string& output) {
   SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
   CHECK(output_fd->IsOpen()) << output_fd->StrError();
-  int success = Command(HostBinaryPath("lz4"))
+  int success = Command("lz4")
                     .AddParameter("-c")
                     .AddParameter("-l")
                     .AddParameter("-12")
@@ -162,7 +162,7 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                                         O_CREAT | O_RDWR | O_TRUNC, 0644);
     CHECK(output_fd->IsOpen()) << output_fd->StrError();
 
-    success = Command(HostBinaryPath("lz4"))
+    success = Command("lz4")
                   .AddParameter("-c")
                   .AddParameter("-d")
                   .AddParameter("-l")
