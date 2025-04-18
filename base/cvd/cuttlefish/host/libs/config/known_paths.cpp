@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 
