@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 
 #include <android-base/strings.h>
 
@@ -30,10 +30,10 @@
 #include <android-base/logging.h>
 #include <json/value.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 
