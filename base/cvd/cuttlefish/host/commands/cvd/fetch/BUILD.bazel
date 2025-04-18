@@ -66,6 +66,7 @@ cc_library(
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:oauth2_consent",
         "//libbase",
         "//libsparse",
         "@curl",
