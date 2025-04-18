@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/kernel_args.h"
+#include "cuttlefish/host/libs/config/kernel_args.h"
 
-#include <array>
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/environment.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {

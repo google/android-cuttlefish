@@ -15,7 +15,6 @@ cc_library(
         "fetcher_config.cpp",
         "host_tools_version.cpp",
         "instance_nums.cpp",
-        "kernel_args.cpp",
     ],
     # Intentionally repeats headers from other targets so other targets can
     # continue to depend on `:config` for everything.
@@ -56,6 +55,7 @@ cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/config:kernel_args",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/host/libs/config:openwrt_args",
@@ -195,6 +195,22 @@ clang_tidy_test(
     srcs = [":feature"],
     tags = ["clang-tidy", "clang_tidy"],
 )
+
+cc_library(
+    name = "kernel_args",
+    srcs = ["kernel_args.cpp"],
+    hdrs = ["kernel_args.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["//cuttlefish/host/libs/config:cuttlefish_config"],
+)
+
+clang_tidy_test(
+    name = "kernel_args_clang_tidy",
+    srcs = ["kernel_args"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 
 cc_library(
     name = "known_paths",
