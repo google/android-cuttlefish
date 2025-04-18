@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
 )
@@ -73,5 +74,5 @@ func ConnectControlEnvProxyServer(devId string, pool *DevicePool) (*grpc.ClientC
 	if !ok {
 		return nil, errors.New("ControlEnvProxyServer path not found")
 	}
-	return grpc.Dial("unix://"+serverPath, grpc.WithInsecure())
+	return grpc.Dial("unix://"+serverPath, grpc.WithTransportCredentials(insecure.NewCredentials()))
 }
