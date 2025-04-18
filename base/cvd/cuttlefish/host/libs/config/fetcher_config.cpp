@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
 
 #include <fstream>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "android-base/file.h"
-#include "android-base/logging.h"
-#include "android-base/strings.h"
-#include "gflags/gflags.h"
-#include "json/json.h"
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gflags/gflags.h>
+#include <json/json.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

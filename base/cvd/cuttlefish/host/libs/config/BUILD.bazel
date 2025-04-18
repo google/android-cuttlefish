@@ -7,11 +7,8 @@ package(
 
 cc_library(
     name = "config",
-    srcs = [
-        "fetcher_config.cpp",
-    ],
-    # Intentionally repeats headers from other targets so other targets can
-    # continue to depend on `:config` for everything.
+    # Intentionally repeats headers from other targets so outside targets can
+    # continue to depend on :config for everything. See go/cpp-build#splitting
     hdrs = [
         "command_source.h",
         "config_flag.h",
@@ -38,36 +35,26 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
-        "//cuttlefish/host/libs/config:config_constants",
-        "//cuttlefish/host/libs/config:config_flag",
-        "//cuttlefish/host/libs/config:config_fragment",
-        "//cuttlefish/host/libs/config:config_utils",
-        "//cuttlefish/host/libs/config:custom_actions",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:data_image",
-        "//cuttlefish/host/libs/config:display",
-        "//cuttlefish/host/libs/config:esp",
-        "//cuttlefish/host/libs/config:feature",
-        "//cuttlefish/host/libs/config:host_tools_version",
-        "//cuttlefish/host/libs/config:instance_nums",
-        "//cuttlefish/host/libs/config:kernel_args",
-        "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/host/libs/config:logging",
-        "//cuttlefish/host/libs/config:mbr",
-        "//cuttlefish/host/libs/config:openwrt_args",
-        "//cuttlefish/host/libs/config:secure_hals",
-        "//cuttlefish/host/libs/config:touchpad",
-        "//libbase",
-        "@fmt",
-        "@fruit",
-        "@gflags",
-        "@jsoncpp",
-        "@zlib",
+        ":config_constants",
+        ":config_flag",
+        ":config_fragment",
+        ":config_utils",
+        ":custom_actions",
+        ":cuttlefish_config",
+        ":data_image",
+        ":display",
+        ":esp",
+        ":feature",
+        ":fetcher_config",
+        ":host_tools_version",
+        ":instance_nums",
+        ":kernel_args",
+        ":known_paths",
+        ":logging",
+        ":mbr",
+        ":openwrt_args",
+        ":secure_hals",
+        ":touchpad",
     ],
 )
 
@@ -284,6 +271,27 @@ clang_tidy_test(
     name = "feature_clang_tidy",
     srcs = [":feature"],
     tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "fetcher_config",
+    srcs = ["fetcher_config.cpp"],
+    hdrs = ["fetcher_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetcher_config_clang_tidy",
+    srcs = [":fetcher_config"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
