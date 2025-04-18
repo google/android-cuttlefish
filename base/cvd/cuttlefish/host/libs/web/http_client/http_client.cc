@@ -35,6 +35,7 @@
 #include "common/libs/fs/shared_fd_stream.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/web/http_client/http_client_util.h"
 
