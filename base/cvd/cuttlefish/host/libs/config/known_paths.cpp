@@ -26,7 +26,7 @@ std::string AutomotiveProxyBinary() {
   return HostBinaryPath("automotive_vsock_proxy");
 }
 
-std::string AvbToolBinary() { return HostBinaryPath("avbtool"); }
+std::string AvbToolBinary() { return HostBinaryPath("avbtool.py"); }
 
 std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
@@ -115,6 +115,10 @@ std::string SecureEnvBinary() { return HostBinaryPath("secure_env"); }
 
 std::string SensorsSimulatorBinary() {
   return HostBinaryPath("sensors_simulator");
+}
+
+std::string Simg2ImgBinary() {
+  return HostBinaryPath("simg2img");
 }
 
 std::string SocketVsockProxyBinary() {

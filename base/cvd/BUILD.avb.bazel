@@ -1,0 +1,56 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libavb",
+    srcs = [
+        "libavb/avb_chain_partition_descriptor.c",
+        "libavb/avb_chain_partition_descriptor.h",
+        "libavb/avb_cmdline.c",
+        "libavb/avb_cmdline.h",
+        "libavb/avb_crc32.c",
+        "libavb/avb_crypto.c",
+        "libavb/avb_crypto.h",
+        "libavb/avb_descriptor.c",
+        "libavb/avb_descriptor.h",
+        "libavb/avb_footer.c",
+        "libavb/avb_footer.h",
+        "libavb/avb_hash_descriptor.c",
+        "libavb/avb_hash_descriptor.h",
+        "libavb/avb_hashtree_descriptor.c",
+        "libavb/avb_hashtree_descriptor.h",
+        "libavb/avb_kernel_cmdline_descriptor.c",
+        "libavb/avb_kernel_cmdline_descriptor.h",
+        "libavb/avb_ops.h",
+        "libavb/avb_property_descriptor.c",
+        "libavb/avb_property_descriptor.h",
+        "libavb/avb_rsa.c",
+        "libavb/avb_rsa.h",
+        "libavb/avb_sha.h",
+        "libavb/avb_slot_verify.c",
+        "libavb/avb_slot_verify.h",
+        "libavb/avb_sysdeps.h",
+        "libavb/avb_sysdeps_posix.c",
+        "libavb/avb_util.c",
+        "libavb/avb_util.h",
+        "libavb/avb_vbmeta_image.c",
+        "libavb/avb_vbmeta_image.h",
+        "libavb/avb_version.c",
+        "libavb/avb_version.h",
+        "libavb/boringssl/avb_crypto_ops_impl.h",
+        "libavb/boringssl/sha.c",
+    ],
+    includes = [
+        ".",
+        "libavb/boringssl",
+    ],
+    hdrs = ["libavb/libavb.h"],
+    copts = [
+        "-DAVB_ENABLE_DEBUG",
+        "-DAVB_COMPILATION",
+    ],
+    deps = ["@boringssl//:crypto"],
+)
+
+exports_files(["avbtool.py"])
