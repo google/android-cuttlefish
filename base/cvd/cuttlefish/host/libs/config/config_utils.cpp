@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 #include <string.h>
 
@@ -24,13 +24,13 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/architecture.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/in_sandbox.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/config_constants.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 
