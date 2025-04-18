@@ -10,7 +10,6 @@ cc_library(
     srcs = [
         "data_image.cpp",
         "fetcher_config.cpp",
-        "host_tools_version.cpp",
     ],
     # Intentionally repeats headers from other targets so other targets can
     # continue to depend on `:config` for everything.
@@ -54,6 +53,7 @@ cc_library(
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/config:kernel_args",
         "//cuttlefish/host/libs/config:known_paths",
@@ -259,6 +259,25 @@ clang_tidy_test(
     name = "feature_clang_tidy",
     srcs = [":feature"],
     tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "host_tools_version",
+    srcs = ["host_tools_version.cpp"],
+    hdrs = ["host_tools_version.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:config_utils",
+        "@zlib",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_tools_version_clang_tidy",
+    srcs = [":host_tools_version"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
