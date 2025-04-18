@@ -6,10 +6,49 @@ package(
 )
 
 cc_library(
+    name = "android_build_string",
+    srcs = ["android_build_string.cpp"],
+    hdrs = ["android_build_string.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "android_build_string_clang_tidy",
+    srcs = [":android_build_string"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "android_build_string_test",
+    srcs = ["android_build_string_tests.cpp"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "android_build_string_test_clang_tidy",
+    srcs = [":android_build_string_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "web",
     srcs = [
         "android_build_api.cpp",
-        "android_build_string.cpp",
         "caching_build_api.cpp",
         "chrome_os_build_string.cpp",
         "credential_source.cc",
@@ -18,7 +57,6 @@ cc_library(
     ],
     hdrs = [
         "android_build_api.h",
-        "android_build_string.h",
         "build_api.h",
         "caching_build_api.h",
         "chrome_os_build_string.h",
@@ -34,6 +72,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/directories",
+        "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
         "//libbase",
@@ -48,30 +87,5 @@ cc_library(
 clang_tidy_test(
     name = "web_clang_tidy",
     srcs = [":web"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
-    name = "web_test",
-    srcs = ["android_build_string_tests.cpp"],
-    copts = COPTS,
-    includes = [""],
-    deps = [
-        ":web",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:result_matchers",
-        "//libbase",
-        "//libsparse",
-        "@fmt",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-        "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "web_test_clang_tidy",
-    srcs = [":web_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )

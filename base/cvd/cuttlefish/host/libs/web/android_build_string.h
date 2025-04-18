@@ -20,8 +20,8 @@
 #include <variant>
 #include <vector>
 
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
