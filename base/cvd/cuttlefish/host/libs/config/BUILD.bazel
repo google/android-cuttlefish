@@ -8,9 +8,7 @@ package(
 cc_library(
     name = "config",
     srcs = [
-        "custom_actions.cpp",
         "data_image.cpp",
-        "esp.cpp",
         "fetcher_config.cpp",
         "host_tools_version.cpp",
     ],
@@ -51,8 +49,10 @@ cc_library(
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:display",
+        "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:feature",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/config:kernel_args",
@@ -147,6 +147,31 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "custom_actions",
+    srcs = ["custom_actions.cpp"],
+    hdrs = ["custom_actions.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@fruit",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "custom_actions_clang_tidy",
+    srcs = [":custom_actions"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "cuttlefish_config",
     srcs = [
         "cuttlefish_config.cpp",
@@ -194,6 +219,25 @@ cc_library(
 clang_tidy_test(
     name = "display_clang_tidy",
     srcs = [":display"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "esp",
+    srcs = ["esp.cpp"],
+    hdrs = ["esp.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+clang_tidy_test(
+    name = "esp_clang_tidy",
+    srcs = [":esp"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
