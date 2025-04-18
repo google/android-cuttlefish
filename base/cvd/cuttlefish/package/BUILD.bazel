@@ -56,5 +56,9 @@ package_files(
         "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0.xml",
         "cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml",
     },
+    dst_to_target_symlinks = {
+        "cuttlefish-common/bin/aarch64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
+        "cuttlefish-common/bin/x86_64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
+    },
     visibility = ["//:android_cuttlefish"],
 )
