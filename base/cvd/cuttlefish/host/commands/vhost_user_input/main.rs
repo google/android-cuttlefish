@@ -1,6 +1,7 @@
 //! vhost-user input device
 
 mod buf_reader;
+mod inherited_fd;
 mod vhu_input;
 mod vio_input;
 
@@ -48,7 +49,7 @@ fn init_logging(verbosity: &str) -> Result<()> {
 fn main() -> Result<()> {
     // SAFETY: First thing after main
     unsafe {
-        rustutils::inherited_fd::init_once()
+        inherited_fd::init_once()
             .context("Failed to take ownership of process' file descriptors")?
     };
     let args = Args::parse();
@@ -65,7 +66,7 @@ fn main() -> Result<()> {
         .context("Unable to parse config file")?;
 
     // SAFETY: No choice but to trust the caller passed a valid fd representing a unix socket.
-    let server_fd = rustutils::inherited_fd::take_fd_ownership(args.socket_fd)
+    let server_fd = inherited_fd::take_fd_ownership(args.socket_fd)
         .context("Failed to take ownership of socket fd")?;
     loop {
         let backend =
