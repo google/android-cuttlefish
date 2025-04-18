@@ -8,7 +8,6 @@ package(
 cc_library(
     name = "config",
     srcs = [
-        "config_flag.cpp",
         "custom_actions.cpp",
         "data_image.cpp",
         "display.cpp",
@@ -56,6 +55,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -87,6 +87,29 @@ clang_tidy_test(
     name = "config_constants_clang_tidy",
     srcs = [":config_constants"],
     tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "config_flag",
+    srcs = ["config_flag.cpp"],
+    hdrs = ["config_flag.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "config_flag_clang_tidy",
+    srcs = [":config_flag"],
+    tags = ["clang-tidy", "clang_tidy"],
 )
 
 cc_library(

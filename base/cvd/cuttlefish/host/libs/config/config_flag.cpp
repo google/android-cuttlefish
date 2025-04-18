@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/config_flag.h"
+
+#include <set>
+#include <string>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <json/json.h>
-#include <fstream>
-#include <set>
-#include <string>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/json.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 // To support other files that use this from gflags.
 // TODO: Add a description to this flag
