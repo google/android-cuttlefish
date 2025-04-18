@@ -13,10 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/caching_build_api.h"
+#include "cuttlefish/host/libs/web/caching_build_api.h"
 
 #include <chrono>
-#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
@@ -24,12 +23,12 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/web/android_build_api.h"
-#include "host/libs/web/cas/cas_downloader.h"
-#include "host/libs/web/credential_source.h"
-#include "host/libs/web/http_client/http_client.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 namespace {
