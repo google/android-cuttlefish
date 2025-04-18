@@ -8,7 +8,6 @@ package(
 cc_library(
     name = "config",
     srcs = [
-        "data_image.cpp",
         "fetcher_config.cpp",
     ],
     # Intentionally repeats headers from other targets so other targets can
@@ -50,6 +49,7 @@ cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:feature",
@@ -200,6 +200,30 @@ clang_tidy_test(
     name = "cuttlefish_config_clang_tidy",
     srcs = [":cuttlefish_config"],
     tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "data_image",
+    srcs = ["data_image.cpp"],
+    hdrs = ["data_image.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:esp",
+        "//cuttlefish/host/libs/config:mbr",
+        "//cuttlefish/host/libs/config:openwrt_args",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "data_image_clang_tidy",
+    srcs = [":data_image"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
