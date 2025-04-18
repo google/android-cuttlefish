@@ -49,7 +49,7 @@ Result<void> ForceFsckImage(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::string fsck_path;
   if (instance.userdata_format() == "f2fs") {
-    fsck_path = HostBinaryPath("fsck.f2fs");
+    fsck_path = "/sbin/fsck.f2fs";
   } else if (instance.userdata_format() == "ext4") {
     fsck_path = "/sbin/e2fsck";
   }
