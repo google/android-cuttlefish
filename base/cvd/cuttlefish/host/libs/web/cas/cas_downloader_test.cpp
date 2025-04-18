@@ -23,13 +23,14 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/file.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "android-base/file.h"
+#include <fmt/core.h>
+
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/result_matchers.h"
-#include "fmt/core.h"
 
 namespace cuttlefish {
 
