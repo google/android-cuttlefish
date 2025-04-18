@@ -11,7 +11,6 @@ cc_library(
         "android_build_api.cpp",
         "android_build_string.cpp",
         "caching_build_api.cpp",
-        "cas/cas_downloader.cpp",
         "chrome_os_build_string.cpp",
         "credential_source.cc",
         "luci_build_api.cpp",
@@ -22,7 +21,6 @@ cc_library(
         "android_build_string.h",
         "build_api.h",
         "caching_build_api.h",
-        "cas/cas_downloader.h",
         "chrome_os_build_string.h",
         "credential_source.h",
         "luci_build_api.h",
@@ -36,6 +34,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/directories",
+        "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
         "//libbase",
         "@boringssl//:crypto",
@@ -54,10 +53,7 @@ clang_tidy_test(
 
 cc_test(
     name = "web_test",
-    srcs = [
-        "android_build_string_tests.cpp",
-        "cas/cas_downloader_test.cpp",
-    ],
+    srcs = ["android_build_string_tests.cpp"],
     copts = COPTS,
     includes = [""],
     deps = [
