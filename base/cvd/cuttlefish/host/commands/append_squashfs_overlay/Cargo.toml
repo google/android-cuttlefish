@@ -5,4 +5,4 @@ authors = ["Jeongik Cha <jeongik@google.com>"]
 edition = "2021"
 
 [dependencies]
-clap = { version = "4.5.0", feature = [ "derive", "error-context", "help", "std", "usage" ] }
+clap = { version = "4.5.0", features = [ "derive", "error-context", "help", "std", "usage" ] }
