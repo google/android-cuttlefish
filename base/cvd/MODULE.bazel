@@ -105,8 +105,8 @@ python.toolchain(
     python_version = "3.12",
 )
 
-crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
-crate.from_cargo(
+append_squashfs_overlay_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+append_squashfs_overlay_crates.from_cargo(
     name = "append_squashfs_overlay_crates",
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     manifests = [
@@ -114,7 +114,18 @@ crate.from_cargo(
     ],
     host_tools_repo = "rust_host_tools_nightly",
 )
-use_repo(crate, "append_squashfs_overlay_crates")
+use_repo(append_squashfs_overlay_crates, "append_squashfs_overlay_crates")
+
+vhost_user_input_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+vhost_user_input_crates.from_cargo(
+    name = "vhost_user_input_crates",
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    manifests = [
+        "//cuttlefish/host/commands/vhost_user_input:Cargo.toml",
+    ],
+    host_tools_repo = "rust_host_tools_nightly",
+)
+use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 
 git_override(
     module_name = "aspect_rules_lint",

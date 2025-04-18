@@ -1,0 +1,22 @@
+load("@vhost_user_input_crates//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+exports_files(glob(["device_specs/**"]))
+
+rust_binary(
+    name = "cf_vhost_user_input",
+    srcs = [
+        "src/buf_reader.rs",
+        "src/inherited_fd.rs",
+        "src/main.rs",
+        "src/vhu_input.rs",
+        "src/vio_input.rs",
+    ],
+    deps = all_crate_deps(normal = True),
+    aliases = aliases(),
+    proc_macro_deps = all_crate_deps(proc_macro = True),
+)
