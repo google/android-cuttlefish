@@ -89,6 +89,31 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "caching_build_api",
+    srcs = ["caching_build_api.cpp"],
+    hdrs = ["caching_build_api.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/cas:cas_downloader",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "caching_build_api_clang_tidy",
+    srcs = [":caching_build_api"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "chrome_os_build_string",
     srcs = ["chrome_os_build_string.cpp"],
     hdrs = ["chrome_os_build_string.h"],
@@ -169,43 +194,4 @@ cc_library(
         "//cuttlefish/host/libs/web:credential_source",
         "//libbase",
     ],
-)
-
-cc_library(
-    name = "web",
-    srcs = [
-        "caching_build_api.cpp",
-    ],
-    hdrs = [
-        "caching_build_api.h",
-    ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/directories",
-        "//cuttlefish/host/libs/web/cas:cas_downloader",
-        "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web:android_build_api",
-        "//cuttlefish/host/libs/web:android_build_string",
-        "//cuttlefish/host/libs/web:build_api",
-        "//cuttlefish/host/libs/web:chrome_os_build_string",
-        "//cuttlefish/host/libs/web:credential_source",
-        "//cuttlefish/host/libs/web:luci_build_api",
-        "//libbase",
-        "@boringssl//:crypto",
-        "@curl",
-        "@fmt",
-        "@jsoncpp",
-        "@zlib",
-    ],
-)
-
-clang_tidy_test(
-    name = "web_clang_tidy",
-    srcs = [":web"],
-    tags = ["clang_tidy", "clang-tidy"],
 )
