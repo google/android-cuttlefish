@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/display.h"
+#include "cuttlefish/host/libs/config/display.h"
 
 #include <unordered_map>
 #include <vector>
@@ -23,9 +23,9 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/flag_parser.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 
 namespace cuttlefish {
 namespace {
