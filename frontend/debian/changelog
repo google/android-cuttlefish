@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.6.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Apr 2025 18:02:20 -0700
+
 cuttlefish-frontend (1.5.0) stable; urgency=medium
 
   * Upgrade Angular to v19, nodejs to v22 - https://github.com/google/android-cuttlefish/pull/1052
