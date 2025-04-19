@@ -1,6 +1,15 @@
-cuttlefish-common (1.5.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.5.0) stable; urgency=medium
 
-  *
+  * Warning fixes - https://github.com/google/android-cuttlefish/pull/1053
+  * Migrate `append_squashfs_overlay` - https://github.com/google/android-cuttlefish/pull/1048
+  * Remove android11-gsi test since the latest build is archived - https://github.com/google/android-cuttlefish/pull/1045
+  * Flip dst<->src in package_files() - https://github.com/google/android-cuttlefish/pull/1042
+  * Add -fPIC to fix mesa_util compilation - https://github.com/google/android-cuttlefish/pull/1040
+  * Add a missing include - https://github.com/google/android-cuttlefish/pull/1038
+  * move_self_to_cgroup - https://github.com/google/android-cuttlefish/pull/1031
+  * Bazel changes necessary to build on Arch Linux - https://github.com/google/android-cuttlefish/pull/1029
+  * Allow separate substitution of `cvd_internal_start` and its subtools, fix `cvd start --help` exception failure - https://github.com/google/android-cuttlefish/pull/1027
+  * Build and package lavapipe - https://github.com/google/android-cuttlefish/pull/983
 
  -- A. Cody Schuffelen <schuffelen@google.com>  Mon, 14 Apr 2025 00:39:22 -0700
 
