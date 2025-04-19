@@ -17,9 +17,12 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 
 #include <string.h>
+#include <time.h>
 
+#include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>

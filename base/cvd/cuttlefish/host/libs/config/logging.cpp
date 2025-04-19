@@ -15,8 +15,11 @@
 
 #include "cuttlefish/host/libs/config/logging.h"
 
+#include <string>
+
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 using android::base::SetLogger;

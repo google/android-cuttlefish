@@ -16,7 +16,12 @@
 
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 
+#include <string>
+#include <unordered_map>
+
 #include <android-base/parseint.h>
+
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

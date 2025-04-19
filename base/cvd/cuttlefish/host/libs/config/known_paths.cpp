@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/config/known_paths.h"
 
+#include <string>
+
 #include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {

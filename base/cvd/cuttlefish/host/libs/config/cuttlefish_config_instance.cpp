@@ -16,16 +16,32 @@
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
+#include <stdint.h>
+
+#include <algorithm>
+#include <cctype>
 #include <fstream>
+#include <optional>
+#include <ostream>
+#include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <json/json.h>
+#include <fmt/core.h>
+#include <json/config.h>
+#include <json/reader.h>
+#include <json/value.h>
 
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flags_validator.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {

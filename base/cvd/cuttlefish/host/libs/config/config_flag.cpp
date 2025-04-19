@@ -16,20 +16,32 @@
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 
+#include <optional>
+#include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
+#include <unordered_set>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
+#include <fruit/component.h>
+#include <fruit/macro.h>
 #include <gflags/gflags.h>
-#include <json/json.h>
+#include <json/value.h>
+#include <json/writer.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
 // To support other files that use this from gflags.
 // TODO: Add a description to this flag

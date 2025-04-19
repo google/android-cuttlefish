@@ -15,11 +15,18 @@
 
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 
+#include <stdint.h>
 #include <zlib.h>
 
+#include <cstdint>
 #include <fstream>
 #include <future>
+#include <map>
+#include <string>
+#include <utility>
 #include <vector>
+
+#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
