@@ -283,13 +283,8 @@ Result<void> GenerateFileContexts(const std::string& output_path,
                                  mount_point, file_label);
   CF_EXPECT_EQ(WriteAll(fd, line), line.size(), fd->StrError());
 
-  int exit_code = Execute({
-      HostBinaryPath("sefcontext_compile"),
-      "-o",
-      output_path,
-      file_contexts_txt,
-  });
-
+  int exit_code = Execute({"/sbin/sefcontext_compile", "-o", output_path,
+                           file_contexts_txt});
   CF_EXPECT_EQ(exit_code, 0);
 
   return {};
