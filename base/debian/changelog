@@ -1,3 +1,9 @@
+cuttlefish-common (1.6.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Apr 2025 18:03:32 -0700
+
 cuttlefish-common (1.5.0) stable; urgency=medium
 
   * Warning fixes - https://github.com/google/android-cuttlefish/pull/1053
