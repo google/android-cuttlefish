@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/config/fastboot/fastboot.h"
+#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 
-#include "common/libs/utils/flag_parser.h"
-#include "host/libs/config/config_flag.h"
-#include "host/libs/config/feature.h"
+#include <ostream>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/macro.h>
+
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
 namespace cuttlefish {
 namespace {

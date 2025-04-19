@@ -5,6 +5,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cc_library(
     name = "config",
     # Intentionally repeats headers from other targets so outside targets can
@@ -84,10 +86,12 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:feature",
-        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//libbase",
+        "@fmt",
         "@fruit",
         "@gflags",
         "@jsoncpp",
@@ -145,6 +149,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:feature",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
@@ -199,6 +204,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:mbr",
@@ -243,7 +249,8 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
     ],
 )
 
@@ -303,6 +310,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
         "@zlib",
     ],
 )
@@ -340,7 +348,10 @@ cc_library(
     hdrs = ["kernel_args.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
-    deps = ["//cuttlefish/host/libs/config:cuttlefish_config"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
 )
 
 clang_tidy_test(

@@ -15,13 +15,24 @@
  */
 #include "cuttlefish/host/libs/config/data_image.h"
 
+#include <fcntl.h>
+#include <sys/types.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <utility>
+
 #include <android-base/logging.h>
-#include <android-base/result.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/esp.h"
 #include "cuttlefish/host/libs/config/mbr.h"

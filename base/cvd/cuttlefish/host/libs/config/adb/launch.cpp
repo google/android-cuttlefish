@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/config/adb/adb.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/macro.h>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/libs/config/command_source.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/libs/config/command_source.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {

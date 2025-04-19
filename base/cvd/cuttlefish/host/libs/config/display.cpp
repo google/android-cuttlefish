@@ -16,16 +16,19 @@
 
 #include "cuttlefish/host/libs/config/display.h"
 
+#include <optional>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {

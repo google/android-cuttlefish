@@ -16,7 +16,10 @@
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
+#include <string>
+
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 const char* kEnvironments = "environments";
 

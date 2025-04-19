@@ -16,9 +16,12 @@
 
 #include "cuttlefish/host/libs/config/feature.h"
 
+#include <ostream>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
-#include <android-base/strings.h>
+#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 

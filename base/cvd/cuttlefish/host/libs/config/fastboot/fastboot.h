@@ -17,11 +17,11 @@
 
 #include <fruit/fruit.h>
 
-#include "host/libs/config/config_flag.h"
-#include "host/libs/config/config_fragment.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/feature.h"
-#include "host/libs/config/kernel_log_pipe_provider.h"
+#include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/config_fragment.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 
