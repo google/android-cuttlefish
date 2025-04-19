@@ -1,4 +1,11 @@
-cuttlefish-frontend (1.3.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.5.0) stable; urgency=medium
+
+  * Upgrade Angular to v19, nodejs to v22 - https://github.com/google/android-cuttlefish/pull/1052
+  * Bump the npm_and_yarn group in /frontend/src/operator/webui with 7 updates - https://github.com/google/android-cuttlefish/pull/610
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Apr 2025 17:48:33 -0700
+
+cuttlefish-frontend (1.3.0) stable; urgency=medium
 
   * 
 
