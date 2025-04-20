@@ -16,11 +16,9 @@
 
 #pragma once
 
-#include <type_traits>
-
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/config/fastboot/fastboot.h"
+#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
+
+#include <fruit/component.h>
+#include <fruit/macro.h>
 
 namespace cuttlefish {
 namespace {

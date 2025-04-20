@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

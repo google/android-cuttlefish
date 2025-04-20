@@ -13,11 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "logging.h"
+#include "cuttlefish/host/libs/config/logging.h"
+
+#include <string>
 
 #include <android-base/logging.h>
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 using android::base::SetLogger;
 

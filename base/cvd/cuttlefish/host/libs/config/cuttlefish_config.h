@@ -16,6 +16,7 @@
 #pragma once
 
 #include <sys/types.h>
+
 #include <array>
 #include <cstdint>
 #include <map>
@@ -28,13 +29,13 @@
 
 #include <fmt/ostream.h>
 
-#include "common/libs/utils/architecture.h"
-#include "common/libs/utils/device_type.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/config_fragment.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/secure_hals.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_fragment.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/secure_hals.h"
 
 namespace Json {
 class Value;

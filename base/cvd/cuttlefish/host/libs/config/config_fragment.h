@@ -15,9 +15,9 @@
  */
 #pragma once
 
-#include <json/json.h>
-#include <memory>
 #include <string>
+
+#include <json/json.h>
 
 namespace cuttlefish {
 

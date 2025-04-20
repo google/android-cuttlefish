@@ -13,19 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/libs/config/esp.h"
+
+#include <sys/types.h>
+
 #include <algorithm>
 #include <array>
+#include <iterator>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/architecture.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/esp.h"
+#include <android-base/logging.h>
+
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 

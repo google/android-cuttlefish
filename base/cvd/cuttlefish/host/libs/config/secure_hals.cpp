@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/config/secure_hals.h"
 
 #include <cctype>
 #include <set>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include <android-base/no_destructor.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 using android::base::NoDestructor;
 using android::base::Tokenize;

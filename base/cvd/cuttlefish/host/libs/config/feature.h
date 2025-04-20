@@ -25,8 +25,8 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/type_name.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/type_name.h"
 
 namespace cuttlefish {
 

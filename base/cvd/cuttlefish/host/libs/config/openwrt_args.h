@@ -19,7 +19,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
