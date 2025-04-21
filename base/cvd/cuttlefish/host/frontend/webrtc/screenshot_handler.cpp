@@ -16,16 +16,67 @@
 
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 
+#include <errno.h>
 #include <stdio.h>
+#include <strings.h>
 
 #include "android-base/scopeguard.h"
 #include "android-base/strings.h"
 #include "jpeglib.h"
+#include "libyuv.h"
+#include "png.h"
 
 #include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {
+
+Result<void> PngScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
+                           const std::string& screenshot_path) {
+  int width = frame->width();
+  int height = frame->height();
+  std::vector<uint8_t> rgb_frame(width * height * 3, 0);
+  auto convert_res =
+      libyuv::I420ToRAW(frame->DataY(), frame->StrideY(), frame->DataU(),
+                        frame->StrideU(), frame->DataV(), frame->StrideV(),
+                        rgb_frame.data(), frame->width() * 3, width, height);
+  CF_EXPECT(convert_res == 0, "Failed to convert I420 frame to RGB");
+  FILE* outfile = fopen(screenshot_path.c_str(), "wb");
+  auto err = errno;
+  CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
+             strerror(err));
+  android::base::ScopeGuard close_file([outfile]() { fclose(outfile); });
+
+  png_structp png_ptr =
+      png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  CF_EXPECT(png_ptr != nullptr, "Failed to create png write struct");
+  android::base::ScopeGuard free_png_ptr(
+      [&png_ptr]() { png_destroy_write_struct(&png_ptr, (png_infopp)NULL); });
+
+  png_infop info_ptr = png_create_info_struct(png_ptr);
+  CF_EXPECT(info_ptr != nullptr, "Failed to create png info struct");
+  android::base::ScopeGuard free_info_ptr([png_ptr, info_ptr]() {
+    png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+  });
+
+  // Set header info
+  png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
+               PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+               PNG_FILTER_TYPE_BASE);
+
+  png_init_io(png_ptr, outfile);
+
+  png_write_info(png_ptr, info_ptr);
+
+  for (int y = 0; y < height; ++y) {
+    png_write_row(png_ptr, rgb_frame.data() + y * height);
+  }
+
+  // Finalize
+  png_write_end(png_ptr, info_ptr);
+
+  return {};
+}
 
 Result<void> JpegScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
                             const std::string& screenshot_path) {
@@ -135,6 +186,8 @@ Result<void> ScreenshotHandler::Screenshot(std::uint32_t display_number,
 
   if (android::base::EndsWith(screenshot_path, ".jpg")) {
     CF_EXPECT(JpegScreenshot(frame, screenshot_path));
+  } else if (android::base::EndsWith(screenshot_path, ".png")) {
+    CF_EXPECT(PngScreenshot(frame, screenshot_path));
   } else {
     return CF_ERR("Unsupport file format: " << screenshot_path);
   }
