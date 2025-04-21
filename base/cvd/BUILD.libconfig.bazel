@@ -1,0 +1,42 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+        "@wmediumd//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "libconfig",
+    srcs = [
+        "lib/grammar.c",
+        "lib/grammar.h",
+        "lib/libconfig.c",
+        "lib/libconfig.h",
+        "lib/parsectx.h",
+        "lib/scanctx.c",
+        "lib/scanctx.h",
+        "lib/scanner.c",
+        "lib/scanner.h",
+        "lib/strbuf.c",
+        "lib/strbuf.h",
+        "lib/strvec.c",
+        "lib/strvec.h",
+        "lib/util.c",
+        "lib/util.h",
+        "lib/wincompat.c",
+        "lib/wincompat.h",
+    ],
+    includes = ["."],
+    hdrs = ["lib/libconfig.h"],
+    strip_include_prefix = "lib",
+    local_defines = [
+        "HAVE_USELOCALE",
+        "HAVE_FREELOCALE",
+        "HAVE_NEWLOCALE",
+    ],
+    copts = [
+        "-std=gnu99",
+        "-Wno-deprecated-non-prototype",
+        "-Wno-unused-but-set-variable",
+    ],
+)

@@ -432,3 +432,25 @@ git_repository(
     commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
     remote = "https://android.googlesource.com/platform/system/tools/mkbootimg",
 )
+
+git_repository(
+    name = "wmediumd",
+    build_file = "@//:BUILD.wmediumd.bazel",
+    commit = "f44d2af28b8045eb31ff045d3c078e60865afa98",
+    remote = "https://android.googlesource.com/platform/external/wmediumd",
+)
+
+git_repository(
+    name = "libconfig",
+    build_file = "@//:BUILD.libconfig.bazel",
+    commit = "81fe4632f01cbf24bf7efcd7ce1913f441c5ea96",
+    remote = "https://github.com/hyperrealm/libconfig",
+)
+
+# Upstream uses autotools, for now use the Android copy
+git_repository(
+    name = "libnl",
+    build_file = "@//:BUILD.libnl.bazel",
+    commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
+    remote = "https://android.googlesource.com/platform/external/libnl",
+)
