@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/feature.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
+#include <ostream>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
-#include <android-base/strings.h>
+#include <android-base/logging.h>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

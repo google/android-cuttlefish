@@ -3298,6 +3298,7 @@ cc_library(
     deps = [
         "@//build_external/libwebrtc:third_party",
         "@//build_external/libwebrtc:webrtc_config",
+        "@abseil-cpp//absl/functional:bind_front",
         "@boringssl//:crypto",
         "@boringssl//:ssl",
         "@crc32c",

@@ -13,16 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/web/luci_build_api.h"
 
 #include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
+#include <android-base/strings.h>
+#include <fmt/core.h>
 #include <fmt/format.h>
+#include <json/value.h>
 
-#include "android-base/strings.h"
-#include "common/libs/utils/json.h"
-#include "host/libs/web/chrome_os_build_string.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/chrome_os_build_string.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 

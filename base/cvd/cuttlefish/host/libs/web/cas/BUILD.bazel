@@ -1,0 +1,51 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "cas_downloader",
+    srcs = ["cas_downloader.cpp"],
+    hdrs = ["cas_downloader.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "cas_downloader_clang_tidy",
+    srcs = [":cas_downloader"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "cas_downloader_test",
+    srcs = ["cas_downloader_test.cpp"],
+    copts = COPTS,
+    includes = [""],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web/cas:cas_downloader",
+        "//libbase",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "cas_downloader_test_clang_tidy",
+    srcs = [":cas_downloader_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

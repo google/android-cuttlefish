@@ -13,17 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/config/host_tools_version.h"
+#include "cuttlefish/host/libs/config/host_tools_version.h"
 
-#include <algorithm>
-#include <fstream>
-#include <future>
-#include <vector>
-
+#include <stdint.h>
 #include <zlib.h>
 
-#include "common/libs/utils/files.h"
-#include "host/libs/config/config_utils.h"
+#include <cstdint>
+#include <fstream>
+#include <future>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
+
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 using std::uint32_t;
 

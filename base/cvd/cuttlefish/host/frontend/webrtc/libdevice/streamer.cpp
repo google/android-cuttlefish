@@ -156,7 +156,7 @@ class Streamer::Impl : public ServerConnectionObserver,
   void OnError(const std::string& error) override;
   void OnReceive(const uint8_t* msg, size_t length, bool is_binary) override;
 
-  void HandleConfigMessage(const Json::Value& msg);
+  void HandleConfigMessage(const Json::Value& server_message);
   void HandleClientMessage(const Json::Value& server_message);
 
   // PeerConnectionBuilder

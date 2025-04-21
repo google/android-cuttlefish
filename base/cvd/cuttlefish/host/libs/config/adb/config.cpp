@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/config/adb/adb.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
+
+#include <set>
+#include <string>
+#include <utility>
 
 #include <android-base/logging.h>
-#include <fruit/fruit.h>
-#include <json/json.h>
+#include <fruit/component.h>
+#include <fruit/fruit_forward_decls.h>
+#include <fruit/macro.h>
+#include <json/value.h>
 
-#include "host/libs/config/config_fragment.h"
+#include "cuttlefish/host/libs/config/config_fragment.h"
 
 namespace cuttlefish {
 namespace {

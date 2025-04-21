@@ -37,7 +37,7 @@ cc_binary(
         ":libopenwrt_control_server",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/web",
+        "//cuttlefish/host/libs/web/http_client",
         "//libbase",
         "@gflags",
         "@grpc//:grpc",

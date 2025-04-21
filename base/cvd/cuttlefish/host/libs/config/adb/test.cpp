@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-#include <fruit/fruit.h>
-#include <gtest/gtest.h>
-#include <host/libs/config/adb/adb.h>
+#include "cuttlefish/host/libs/config/adb/adb.h"
 
+#include <set>
 #include <string>
+#include <vector>
 
-#include "host/libs/config/feature.h"
+#include <fruit/component.h>
+#include <fruit/macro.h>
+#include <fruit/injector.h>
+#include <gtest/gtest.h>
+
+#include "cuttlefish/host/libs/config/config_flag.h"
+#include "cuttlefish/host/libs/config/feature.h"
 
 namespace cuttlefish {
 

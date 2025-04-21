@@ -130,6 +130,7 @@ static LogId log_id_tToLogId(int32_t buffer_id) {
   }
 }
 
+/*
 static int32_t LogIdTolog_id_t(LogId log_id) {
   switch (log_id) {
     case MAIN:
@@ -145,6 +146,7 @@ static int32_t LogIdTolog_id_t(LogId log_id) {
       return LOG_ID_DEFAULT;
   }
 }
+*/
 
 static LogSeverity PriorityToLogSeverity(int priority) {
   switch (priority) {

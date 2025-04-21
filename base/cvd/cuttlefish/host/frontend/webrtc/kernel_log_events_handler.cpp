@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/kernel_log_events_handler.h"
+#include "cuttlefish/host/frontend/webrtc/kernel_log_events_handler.h"
 
 #include <android-base/logging.h>
 
@@ -64,7 +64,7 @@ void KernelLogEventsHandler::ReadLoop() {
     if (read_set.IsSet(kernel_log_fd_)) {
       Result<std::optional<monitor::ReadEventResult>> read_result =
           monitor::ReadEvent(kernel_log_fd_);
-      if (!read_result) {
+      if (!read_result.ok()) {
         LOG(ERROR) << "Failed to read kernel log event: "
                    << read_result.error().FormatForEnv();
         break;

@@ -16,7 +16,7 @@
 
 #define LOG_TAG "ConnectionObserver"
 
-#include "host/frontend/webrtc/connection_observer.h"
+#include "cuttlefish/host/frontend/webrtc/connection_observer.h"
 
 #include <linux/input.h>
 
@@ -35,13 +35,13 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
-#include "host/frontend/webrtc/adb_handler.h"
-#include "host/frontend/webrtc/bluetooth_handler.h"
-#include "host/frontend/webrtc/gpx_locations_handler.h"
-#include "host/frontend/webrtc/kml_locations_handler.h"
+#include "cuttlefish/host/frontend/webrtc/adb_handler.h"
+#include "cuttlefish/host/frontend/webrtc/bluetooth_handler.h"
+#include "cuttlefish/host/frontend/webrtc/gpx_locations_handler.h"
+#include "cuttlefish/host/frontend/webrtc/kml_locations_handler.h"
 #include "host/frontend/webrtc/libdevice/camera_controller.h"
 #include "host/frontend/webrtc/libdevice/lights_observer.h"
-#include "host/frontend/webrtc/location_handler.h"
+#include "cuttlefish/host/frontend/webrtc/location_handler.h"
 #include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/input_connector/input_connector.h"
@@ -112,7 +112,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   Result<void> OnMultiTouchEvent(const std::string &device_label,
                                  Json::Value id, Json::Value x, Json::Value y,
-                                 bool down, int size) {
+                                 bool down, int size) override {
     std::vector<MultitouchSlot> slots(size);
     for (int i = 0; i < size; i++) {
       slots[i].id = id[i].asInt();
@@ -129,7 +129,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     return {};
   }
 
-  Result<void> OnRotaryWheelEvent(int pixels) {
+  Result<void> OnRotaryWheelEvent(int pixels) override {
     CF_EXPECT(input_events_sink_->SendRotaryEvent(pixels));
     return {};
   }

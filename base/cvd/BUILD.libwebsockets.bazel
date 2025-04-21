@@ -200,5 +200,7 @@ cc_library(
     ],
     deps = [
         "@//build_external/libwebsockets:libwebsockets_config",
+        "@boringssl//:crypto",
+        "@boringssl//:ssl",
     ],
 )

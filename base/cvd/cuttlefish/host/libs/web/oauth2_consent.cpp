@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/web/oauth2_consent.h"
+#include "cuttlefish/host/libs/web/oauth2_consent.h"
 
-#include <android-base/file.h>
 #include <unistd.h>
-
 #include <zlib.h>
 
 #include <iostream>
@@ -25,13 +23,16 @@
 #include <string>
 #include <string_view>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/web/http_client/http_client.h"
-#include "host/libs/directories/xdg.h"
+#include <android-base/file.h>
+
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/directories/xdg.h"
 
 namespace cuttlefish {
 namespace {

@@ -5,28 +5,12 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cc_library(
     name = "config",
-    srcs = [
-        "config_flag.cpp",
-        "custom_actions.cpp",
-        "cuttlefish_config.cpp",
-        "cuttlefish_config_instance.cpp",
-        "cuttlefish_config_environment.cpp",
-        "data_image.cpp",
-        "display.cpp",
-        "esp.cpp",
-        "feature.cpp",
-        "fetcher_config.cpp",
-        "host_tools_version.cpp",
-        "instance_nums.cpp",
-        "kernel_args.cpp",
-        "known_paths.cpp",
-        "logging.cpp",
-        "openwrt_args.cpp",
-        "secure_hals.cpp",
-        "touchpad.cpp",
-    ],
+    # Intentionally repeats headers from other targets so outside targets can
+    # continue to depend on :config for everything. See go/cpp-build#splitting
     hdrs = [
         "command_source.h",
         "config_flag.h",
@@ -54,18 +38,25 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         ":config_constants",
+        ":config_flag",
+        ":config_fragment",
         ":config_utils",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
-        "//libbase",
-        "@fmt",
-        "@fruit",
-        "@gflags",
-        "@jsoncpp",
-        "@zlib",
+        ":custom_actions",
+        ":cuttlefish_config",
+        ":data_image",
+        ":display",
+        ":esp",
+        ":feature",
+        ":fetcher_config",
+        ":host_tools_version",
+        ":instance_nums",
+        ":kernel_args",
+        ":known_paths",
+        ":logging",
+        ":mbr",
+        ":openwrt_args",
+        ":secure_hals",
+        ":touchpad",
     ],
 )
 
@@ -77,9 +68,7 @@ clang_tidy_test(
 
 cc_library(
     name = "config_constants",
-    hdrs = [
-        "config_constants.h",
-    ],
+    hdrs = ["config_constants.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
 )
@@ -91,19 +80,54 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "config_flag",
+    srcs = ["config_flag.cpp"],
+    hdrs = ["config_flag.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:feature",
+        "//libbase",
+        "@fmt",
+        "@fruit",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "config_flag_clang_tidy",
+    srcs = [":config_flag"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "config_fragment",
+    hdrs = ["config_fragment.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["@jsoncpp"],
+)
+
+clang_tidy_test(
+    name = "config_fragment_clang_tidy",
+    srcs = [":config_fragment"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "config_utils",
-    srcs = [
-        "config_utils.cpp",
-    ],
-    hdrs = [
-        "config_utils.h",
-    ],
+    srcs = ["config_utils.cpp"],
+    hdrs = ["config_utils.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        ":config_constants",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
     ],
 )
@@ -111,5 +135,331 @@ cc_library(
 clang_tidy_test(
     name = "config_utils_clang_tidy",
     srcs = [":config_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "custom_actions",
+    srcs = ["custom_actions.cpp"],
+    hdrs = ["custom_actions.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@fruit",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "custom_actions_clang_tidy",
+    srcs = [":custom_actions"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "cuttlefish_config",
+    srcs = [
+        "cuttlefish_config.cpp",
+        "cuttlefish_config_environment.cpp",
+        "cuttlefish_config_instance.cpp",
+    ],
+    hdrs = ["cuttlefish_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:secure_hals",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "cuttlefish_config_clang_tidy",
+    srcs = [":cuttlefish_config"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "data_image",
+    srcs = ["data_image.cpp"],
+    hdrs = ["data_image.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:esp",
+        "//cuttlefish/host/libs/config:mbr",
+        "//cuttlefish/host/libs/config:openwrt_args",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "data_image_clang_tidy",
+    srcs = [":data_image"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "display",
+    srcs = ["display.cpp"],
+    hdrs = ["display.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "display_clang_tidy",
+    srcs = [":display"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "esp",
+    srcs = ["esp.cpp"],
+    hdrs = ["esp.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "esp_clang_tidy",
+    srcs = [":esp"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "feature",
+    srcs = ["feature.cpp"],
+    hdrs = ["feature.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "feature_clang_tidy",
+    srcs = [":feature"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "fetcher_config",
+    srcs = ["fetcher_config.cpp"],
+    hdrs = ["fetcher_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetcher_config_clang_tidy",
+    srcs = [":fetcher_config"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "host_tools_version",
+    srcs = ["host_tools_version.cpp"],
+    hdrs = ["host_tools_version.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+        "@zlib",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_tools_version_clang_tidy",
+    srcs = [":host_tools_version"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "instance_nums",
+    srcs = ["instance_nums.cpp"],
+    hdrs = ["instance_nums.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "instance_nums_clang_tidy",
+    srcs = [":instance_nums"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "kernel_args",
+    srcs = ["kernel_args.cpp"],
+    hdrs = ["kernel_args.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_args_clang_tidy",
+    srcs = ["kernel_args"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+
+cc_library(
+    name = "known_paths",
+    srcs = ["known_paths.cpp"],
+    hdrs = ["known_paths.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["//cuttlefish/host/libs/config:config_utils"],
+)
+
+clang_tidy_test(
+    name = "known_paths_clang_tidy",
+    srcs = [":known_paths"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "logging",
+    srcs = ["logging.cpp"],
+    hdrs = ["logging.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "logging_clang_tidy",
+    srcs = [":logging"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
+    name = "mbr",
+    hdrs = ["mbr.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "mbr_clang_tidy",
+    srcs = [":mbr"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "openwrt_args",
+    srcs = ["openwrt_args.cpp"],
+    hdrs = ["openwrt_args.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "openwrt_args_clang_tidy",
+    srcs = [":openwrt_args"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "secure_hals",
+    srcs = ["secure_hals.cpp"],
+    hdrs = ["secure_hals.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ]
+)
+
+clang_tidy_test(
+    name = "secure_hals_clang_tidy",
+    srcs = [":secure_hals"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "touchpad",
+    srcs = ["touchpad.cpp"],
+    hdrs = ["touchpad.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "touchpad_clang_tidy",
+    srcs = [":touchpad"],
     tags = ["clang_tidy", "clang-tidy"],
 )

@@ -138,14 +138,14 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   void AddPendingIceCandidates();
   void FailConnection(const std::string& message);
 
-  Result<void> HandleSignalingMessageInner(const Json::Value& msg);
+  Result<void> HandleSignalingMessageInner(const Json::Value& message);
   Result<void> OnOfferRequestMsg(
       const std::vector<webrtc::PeerConnectionInterface::IceServer>&
           ice_servers);
   Result<void> OnOfferMsg(
       std::unique_ptr<webrtc::SessionDescriptionInterface> offer);
   Result<void> OnAnswerMsg(
-      std::unique_ptr<webrtc::SessionDescriptionInterface> offer);
+      std::unique_ptr<webrtc::SessionDescriptionInterface> answer);
   Result<void> OnIceCandidateMsg(
       std::unique_ptr<webrtc::IceCandidateInterface> ice_candidate);
   Result<void> OnErrorMsg(const std::string& msg);

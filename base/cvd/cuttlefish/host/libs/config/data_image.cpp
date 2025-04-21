@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/config/data_image.h"
+
+#include <fcntl.h>
+#include <sys/types.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <utility>
 
 #include <android-base/logging.h>
-#include <android-base/result.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/esp.h"
-#include "host/libs/config/mbr.h"
-#include "host/libs/config/openwrt_args.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/esp.h"
+#include "cuttlefish/host/libs/config/mbr.h"
+#include "cuttlefish/host/libs/config/openwrt_args.h"
 
 // https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=127;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
 #define F2FS_BLOCKSIZE "4096"

@@ -194,10 +194,12 @@ ClientHandler::Build(
   // At least one data channel needs to be created on the side that creates the
   // SDP offer (the device) for data channels to be enabled at all.
   // This channel is meant to carry control commands from the client.
-  auto control_channel = peer_connection->CreateDataChannel(
-      kControlChannelLabel, nullptr /* config */);
-  CF_EXPECT(control_channel.get(), "Failed to create control data channel");
+  auto result = peer_connection->CreateDataChannelOrError(kControlChannelLabel,
+                                                          nullptr /* config */);
+  CF_EXPECTF(result.ok(), "Failed to create control data channel: {}",
+             result.error().message());
 
+  auto control_channel = result.MoveValue();
   data_channels_handler_.OnDataChannelOpen(control_channel);
 
   return peer_connection;

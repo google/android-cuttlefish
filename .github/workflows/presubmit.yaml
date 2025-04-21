@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies
       uses: actions/setup-go@v3
       with:
-        go-version: '1.13.15'
+        go-version: '1.17.13'
     - run: go version
     - name: Vet Test Build
       run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
@@ -78,7 +78,7 @@ jobs:
   build-cvd:
     runs-on: ubuntu-22.04-4core
     container:
-      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     steps:
     - name: Common bazel setup
       uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
@@ -91,11 +91,11 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Build cvd
-      run: cd base/cvd && bazel build ...
+      run: cd base/cvd && bazel build --verbose_failures ...
     - name: Test cvd
       run: cd base/cvd && bazel test --sandbox_writable_path=$HOME --test_output=errors ...
     - name: Upload test logs

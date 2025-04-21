@@ -15,10 +15,11 @@
  */
 #pragma once
 
-#include <fruit/fruit.h>
 #include <string>
 
-#include "host/libs/config/feature.h"
+#include <fruit/fruit.h>
+
+#include "cuttlefish/host/libs/config/feature.h"
 
 namespace cuttlefish {
 

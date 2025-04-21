@@ -13,10 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
+#include <stdint.h>
 #include <stdio.h>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -24,19 +26,23 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <curl/curl.h>
-#include <json/json.h>
+#include <curl/easy.h>
+#include <curl/urlapi.h>
+#include <json/value.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_fd_stream.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/web/http_client/http_client_util.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd_stream.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/web/http_client/http_client_util.h"
 
 namespace cuttlefish {
 namespace {
