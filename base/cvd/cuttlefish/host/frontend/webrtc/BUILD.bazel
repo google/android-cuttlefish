@@ -90,6 +90,7 @@ cc_binary(
         "@jsoncpp",
         "@libdrm//:libdrm_fourcc",
         "@libjpeg_turbo//:jpeg",
+        "@libpng",
         "@libwebrtc",
         "@libwebsockets",
         "@libyuv",
