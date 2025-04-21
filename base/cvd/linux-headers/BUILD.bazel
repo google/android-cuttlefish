@@ -1,0 +1,13 @@
+package(
+    default_visibility = [
+        "//:android_cuttlefish",
+        "@libnl//:__subpackages__",
+        "@wmediumd//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "linux-headers",
+    hdrs = glob(["uapi/**/*.h"]),
+    strip_include_prefix = "uapi",
+)

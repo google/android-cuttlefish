@@ -1,0 +1,109 @@
+load("@//:build_variables.bzl", "COPTS")
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
+
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+wmediumd_version = "0.3.1"
+
+proto_library(
+    name = "wmediumd_server_proto",
+    srcs = ["wmediumd_server/wmediumd.proto"],
+    deps = ["@protobuf//:empty_proto"]
+)
+
+cc_proto_library(
+    name = "wmediumd_server_cc_proto",
+    deps = [":wmediumd_server_proto"],
+)
+
+java_proto_library(
+    name = "wmediumd_server_java_proto",
+    deps = [":wmediumd_server_proto"],
+)
+
+cc_grpc_library(
+    name = "libwmediumd_server",
+    srcs = [":wmediumd_server_proto"],
+    deps = [
+        ":wmediumd_server_cc_proto",
+        "@grpc//:grpc++",
+    ],
+    grpc_only = True,
+)
+
+cc_binary(
+    name = "wmediumd_gen_config",
+    srcs = ["util/wmediumd_gen_config.c"],
+    deps = ["@libconfig"],
+    copts = ["-Wno-tautological-constant-out-of-range-compare"],
+)
+
+cc_binary(
+    name = "wmediumd",
+    srcs = [
+        "main.cc",
+        "wmediumd_server/wmediumd_server.cc",
+        "wmediumd_server/wmediumd_server.h",
+        "wmediumd/api.h",
+        "wmediumd/config.c",
+        "wmediumd/config.h",
+        "wmediumd/grpc.h",
+        "wmediumd/ieee80211.h",
+        "wmediumd/inc/linux/um_timetravel.h",
+        "wmediumd/inc/usfstl/loop.h",
+        "wmediumd/inc/usfstl/schedctrl.h",
+        "wmediumd/inc/usfstl/sched.h",
+        "wmediumd/inc/usfstl/vhostproto.h",
+        "wmediumd/inc/usfstl/uds.h",
+        "wmediumd/inc/usfstl/assert.h",
+        "wmediumd/inc/usfstl/vhost.h",
+        "wmediumd/inc/usfstl/list.h",
+        "wmediumd/list.h",
+        "wmediumd/per.c",
+        "wmediumd/pmsr.c",
+        "wmediumd/pmsr.h",
+        "wmediumd/wmediumd.c",
+        "wmediumd/wmediumd.h",
+        "wmediumd/lib/internal.h",
+        "wmediumd/lib/loop.c",
+        "wmediumd/lib/sched.c",
+        "wmediumd/lib/schedctrl.c",
+        "wmediumd/lib/uds.c",
+        "wmediumd/lib/vhost.c",
+        "wmediumd/lib/wallclock.c",
+    ],
+    includes = [
+        ".",
+        "wmediumd",
+        "wmediumd_server",
+        "wmediumd/inc",
+    ],
+    local_defines = [
+        "CONFIG_LIBNL30",
+        "VERSION_STR=\\\"" + wmediumd_version + "\\\"",
+    ],
+    cxxopts = COPTS,
+    copts = [
+        "-Wno-gnu-variable-sized-type-not-at-end",
+        "-Wno-implicit-const-int-float-conversion",
+        "-Wno-unused-but-set-variable",
+        "-Wno-unused-function",
+        "-Wno-unused-variable",
+    ],
+    deps = [
+        "@//libbase",
+        "@//linux-headers",
+        "@gflags",
+        "@grpc//:grpc",
+        "@grpc//:grpc++",
+        "@grpc//:grpc++_reflection",
+        "@libconfig",
+        "@libnl",
+        "@protobuf",
+        ":libwmediumd_server",
+    ],
+)
