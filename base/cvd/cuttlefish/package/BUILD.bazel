@@ -7,7 +7,6 @@ package_files(
         "cuttlefish-common/bin/acloud_translator": "//cuttlefish/host/commands/acloud_translator",
         "cuttlefish-common/bin/adb_connector": "//cuttlefish/host/frontend/adb_connector",
         "cuttlefish-common/bin/allocd_client": "//cuttlefish/host/libs/allocd:allocd_client",
-        "cuttlefish-common/bin/append_squashfs_overlay": "//cuttlefish/host/commands/append_squashfs_overlay:append_squashfs_overlay",
         "cuttlefish-common/bin/assemble_cvd": "//cuttlefish/host/commands/assemble_cvd",
         "cuttlefish-common/bin/console_forwarder": "//cuttlefish/host/commands/console_forwarder",
         "cuttlefish-common/bin/control_env_proxy_server": "//cuttlefish/host/commands/control_env_proxy_server",
