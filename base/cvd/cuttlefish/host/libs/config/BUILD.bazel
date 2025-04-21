@@ -57,13 +57,23 @@ cc_library(
         ":openwrt_args",
         ":secure_hals",
         ":touchpad",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
     ],
 )
 
 clang_tidy_test(
     name = "config_clang_tidy",
     srcs = [":config"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -76,7 +86,10 @@ cc_library(
 clang_tidy_test(
     name = "config_constants_clang_tidy",
     srcs = [":config_constants"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -101,7 +114,10 @@ cc_library(
 clang_tidy_test(
     name = "config_flag_clang_tidy",
     srcs = [":config_flag"],
-    tags = ["clang-tidy", "clang_tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -115,7 +131,10 @@ cc_library(
 clang_tidy_test(
     name = "config_fragment_clang_tidy",
     srcs = [":config_fragment"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -135,7 +154,10 @@ cc_library(
 clang_tidy_test(
     name = "config_utils_clang_tidy",
     srcs = [":config_utils"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -150,8 +172,8 @@ cc_library(
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
-        "//cuttlefish/host/libs/config:feature",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:feature",
         "//libbase",
         "@fruit",
         "@jsoncpp",
@@ -161,7 +183,10 @@ cc_library(
 clang_tidy_test(
     name = "custom_actions_clang_tidy",
     srcs = [":custom_actions"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -191,7 +216,10 @@ cc_library(
 clang_tidy_test(
     name = "cuttlefish_config_clang_tidy",
     srcs = [":cuttlefish_config"],
-    tags = ["clang-tidy", "clang_tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -216,7 +244,10 @@ cc_library(
 clang_tidy_test(
     name = "data_image_clang_tidy",
     srcs = [":data_image"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -237,7 +268,10 @@ cc_library(
 clang_tidy_test(
     name = "display_clang_tidy",
     srcs = [":display"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -257,7 +291,10 @@ cc_library(
 clang_tidy_test(
     name = "esp_clang_tidy",
     srcs = [":esp"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -277,7 +314,10 @@ cc_library(
 clang_tidy_test(
     name = "feature_clang_tidy",
     srcs = [":feature"],
-    tags = ["clang-tidy", "clang_tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -298,7 +338,10 @@ cc_library(
 clang_tidy_test(
     name = "fetcher_config_clang_tidy",
     srcs = [":fetcher_config"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -318,7 +361,10 @@ cc_library(
 clang_tidy_test(
     name = "host_tools_version_clang_tidy",
     srcs = [":host_tools_version"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -339,7 +385,10 @@ cc_library(
 clang_tidy_test(
     name = "instance_nums_clang_tidy",
     srcs = [":instance_nums"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -357,9 +406,11 @@ cc_library(
 clang_tidy_test(
     name = "kernel_args_clang_tidy",
     srcs = ["kernel_args"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
-
 
 cc_library(
     name = "known_paths",
@@ -373,7 +424,10 @@ cc_library(
 clang_tidy_test(
     name = "known_paths_clang_tidy",
     srcs = [":known_paths"],
-    tags = ["clang-tidy", "clang_tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -392,7 +446,10 @@ cc_library(
 clang_tidy_test(
     name = "logging_clang_tidy",
     srcs = [":logging"],
-    tags = ["clang-tidy", "clang_tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -405,7 +462,10 @@ cc_library(
 clang_tidy_test(
     name = "mbr_clang_tidy",
     srcs = [":mbr"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -423,7 +483,10 @@ cc_library(
 clang_tidy_test(
     name = "openwrt_args_clang_tidy",
     srcs = [":openwrt_args"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -435,13 +498,16 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
-    ]
+    ],
 )
 
 clang_tidy_test(
     name = "secure_hals_clang_tidy",
     srcs = [":secure_hals"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -461,5 +527,8 @@ cc_library(
 clang_tidy_test(
     name = "touchpad_clang_tidy",
     srcs = [":touchpad"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
