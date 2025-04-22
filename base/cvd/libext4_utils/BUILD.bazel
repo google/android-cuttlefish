@@ -1,0 +1,27 @@
+load("//:build_variables.bzl", "COPTS")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libext4_utils",
+    srcs = [
+        "ext4_sb.cpp",
+        "ext4_utils.cpp",
+        "helpers.h",
+    ],
+    hdrs = [
+        "include/ext4_utils/ext4_extents.h",
+        "include/ext4_utils/ext4.h",
+        "include/ext4_utils/ext4_kernel_headers.h",
+        "include/ext4_utils/ext4_sb.h",
+        "include/ext4_utils/ext4_utils.h",
+        "include/ext4_utils/jbd2.h",
+        "include/ext4_utils/xattr.h",
+    ],
+    strip_include_prefix = "include",
+    copts = COPTS + [
+        "-Wno-module-import-in-extern-c",
+    ],
+)
