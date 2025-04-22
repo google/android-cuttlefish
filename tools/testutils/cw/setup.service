@@ -1,0 +1,8 @@
+[Unit]
+Description=foo
+
+[Service]
+ExecStart=/bin/bash -c "chown root:kvm /dev/kvm && chown root:kvm /dev/vhost-net && chown root:kvm /dev/vhost-vsock"
+
+[Install]
+WantedBy=multi-user.target
