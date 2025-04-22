@@ -1,0 +1,21 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "mkbootfs",
+    srcs = [
+        "include/cutils/fs.h",
+        "include/private/android_filesystem_config.h",
+        "include/private/fs_config.h",
+        "fs_config.cpp",
+        "fs_config.h",
+        "mkbootfs.cpp",
+    ],
+    includes = ["include"],
+    deps = [
+        "//android:log_header",
+        "//libbase",
+    ],
+    copts = ["-std=gnu++17"],
+)

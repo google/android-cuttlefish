@@ -38,6 +38,7 @@ package_files(
         "cuttlefish-common/bin/lpmake": "//liblp:lpmake",
         "cuttlefish-common/bin/metrics_launcher": "//cuttlefish/host/commands/metrics_launcher",
         "cuttlefish-common/bin/metrics": "//cuttlefish/host/commands/metrics",
+        "cuttlefish-common/bin/mkbootfs": "//mkbootfs",
         "cuttlefish-common/bin/mkbootimg.py": "@mkbootimg//:mkbootimg.py",
         "cuttlefish-common/bin/mkenvimage_slim": "//cuttlefish/host/commands/mkenvimage_slim",
         "cuttlefish-common/bin/modem_simulator": "//cuttlefish/host/commands/modem_simulator",
