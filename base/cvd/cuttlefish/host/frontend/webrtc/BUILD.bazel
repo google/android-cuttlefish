@@ -30,7 +30,7 @@ cc_library(
 )
 
 cc_binary(
-    name = "webrtc",
+    name = "webRTC",
     srcs = [
         "adb_handler.cpp",
         "adb_handler.h",
@@ -98,8 +98,8 @@ cc_binary(
 )
 
 clang_tidy_test(
-    name = "webrtc_clang_tidy",
-    srcs = [":webrtc"],
+    name = "webRTC_clang_tidy",
+    srcs = [":webRTC"],
     tags = [
         "clang-tidy",
         "clang_tidy",
