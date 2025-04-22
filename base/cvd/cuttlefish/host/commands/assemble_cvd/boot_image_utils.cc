@@ -209,8 +209,8 @@ Result<void> UnpackBootImage(const std::string& boot_image_path,
              "Unable to create intermediate boot params file: '{}'",
              output_file->StrError());
 
-  Command unpack_cmd =
-      Command(HostBinaryPath("unpack_bootimg"))
+  auto unpack_cmd =
+      Command(UnpackBootimgBinary())
           .AddParameter("--boot_img")
           .AddParameter(boot_image_path)
           .AddParameter("--out")
@@ -231,12 +231,12 @@ bool UnpackVendorBootImageIfNotUnpacked(
     return true;
   }
 
-  auto unpack_path = HostBinaryPath("unpack_bootimg");
-  Command unpack_cmd(unpack_path);
-  unpack_cmd.AddParameter("--boot_img");
-  unpack_cmd.AddParameter(vendor_boot_image_path);
-  unpack_cmd.AddParameter("--out");
-  unpack_cmd.AddParameter(unpack_dir);
+  auto unpack_cmd =
+      Command(UnpackBootimgBinary())
+          .AddParameter("--boot_img")
+          .AddParameter(vendor_boot_image_path)
+          .AddParameter("--out")
+          .AddParameter(unpack_dir);
   auto output_file = SharedFD::Creat(unpack_dir + "/vendor_boot_params", 0666);
   if (!output_file->IsOpen()) {
     LOG(ERROR) << "Unable to create intermediate vendor boot params file: "
@@ -297,18 +297,18 @@ Result<void> RepackBootImage(const Avb& avb,
   LOG(DEBUG) << "Cmdline from boot image is " << kernel_cmdline;
 
   auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
-  auto repack_path = HostBinaryPath("mkbootimg");
-  Command repack_cmd(repack_path);
-  repack_cmd.AddParameter("--kernel");
-  repack_cmd.AddParameter(new_kernel_path);
-  repack_cmd.AddParameter("--ramdisk");
-  repack_cmd.AddParameter(build_dir + "/ramdisk");
-  repack_cmd.AddParameter("--header_version");
-  repack_cmd.AddParameter("4");
-  repack_cmd.AddParameter("--cmdline");
-  repack_cmd.AddParameter(kernel_cmdline);
-  repack_cmd.AddParameter("-o");
-  repack_cmd.AddParameter(tmp_boot_image_path);
+  auto repack_cmd =
+      Command(MkbootimgBinary())
+          .AddParameter("--kernel")
+          .AddParameter(new_kernel_path)
+          .AddParameter("--ramdisk")
+          .AddParameter(build_dir + "/ramdisk")
+          .AddParameter("--header_version")
+          .AddParameter("4")
+          .AddParameter("--cmdline")
+          .AddParameter(kernel_cmdline)
+          .AddParameter("-o")
+          .AddParameter(tmp_boot_image_path);
   int result = repack_cmd.Start().Wait();
   CF_EXPECT(result == 0, "Unable to run mkbootimg. Exited with status " << result);
 
@@ -364,18 +364,19 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   LOG(DEBUG) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
   auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
-  auto repack_path = HostBinaryPath("mkbootimg");
-  Command repack_cmd(repack_path);
-  repack_cmd.AddParameter("--vendor_ramdisk");
-  repack_cmd.AddParameter(ramdisk_path);
-  repack_cmd.AddParameter("--header_version");
-  repack_cmd.AddParameter("4");
-  repack_cmd.AddParameter("--vendor_cmdline");
-  repack_cmd.AddParameter(kernel_cmdline);
-  repack_cmd.AddParameter("--vendor_boot");
-  repack_cmd.AddParameter(tmp_vendor_boot_image_path);
-  repack_cmd.AddParameter("--dtb");
-  repack_cmd.AddParameter(unpack_dir + "/dtb");
+
+  auto repack_cmd =
+      Command(MkbootimgBinary())
+          .AddParameter("--vendor_ramdisk")
+          .AddParameter(ramdisk_path)
+          .AddParameter("--header_version")
+          .AddParameter("4")
+          .AddParameter("--vendor_cmdline")
+          .AddParameter(kernel_cmdline)
+          .AddParameter("--vendor_boot")
+          .AddParameter(tmp_vendor_boot_image_path)
+          .AddParameter("--dtb")
+          .AddParameter(unpack_dir + "/dtb");
   if (bootconfig_supported) {
     repack_cmd.AddParameter("--vendor_bootconfig");
     repack_cmd.AddParameter(unpack_dir + "/bootconfig");
