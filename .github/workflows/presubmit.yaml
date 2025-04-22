@@ -75,6 +75,13 @@ jobs:
       run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
     - name: install user debian package
       run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
+    - name: Build debs.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs.tar --null --files-from -
+    - name: Publish debs.tar
+      uses: actions/upload-artifact@v4
+      with:
+        name: debs
+        path: debs.tar
   build-cvd:
     runs-on: ubuntu-22.04-4core
     container:
@@ -154,3 +161,45 @@ jobs:
       with:
         name: testlogs
         path: e2etests/bazel-testlogs
+  e2e-tests-orchestration-runner:
+    runs-on: ubuntu-24.04
+    if: ${{ always() && needs.build-debian-package.result == 'success' }}
+    needs: [build-debian-package]
+    steps:
+    - name: Check kvm
+      run: |
+        ls -la /dev/kvm
+    - name: Free space
+      run: |
+        echo "disk space before cleanup:"
+        df -h
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/local/share/boost
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/hostedtoolcache
+        sudo rm -rf /opt/ghc
+        sudo apt-get clean
+        echo "disk space after cleanup:"
+        df -h
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: download debs
+      uses: actions/download-artifact@v4
+      with:
+        name: debs
+        github-token: ${{ github.token }}
+    - name: Run tests
+      run: |
+        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
+        sudo podman info
+        sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
+        mkdir -p /tmp/bazel_output
+        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/bazel_output:/tmp/bazel/output -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+        sudo podman exec --user=$(id -u):$(id -g) -e "USER=$(whoami)" -it tester bazel --output_user_root=/tmp/bazel/output test //orchestration/journal_gatewayd_test:journal_gatewayd_test_test
+    - name: Upload test logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: e2e-tests-orchestration-runner-testlogs
+        path: /tmp/bazel_output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main
