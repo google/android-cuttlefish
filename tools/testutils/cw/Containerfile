@@ -1,0 +1,27 @@
+FROM debian:stable AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y sudo systemd init systemd-journal-remote jq
+
+RUN groupadd kvm
+COPY tools/testutils/cw/setup.service /etc/systemd/system/setup.service
+RUN systemctl enable setup
+
+FROM base AS with_bazel
+
+RUN --mount=source=.,target=/mnt,type=bind \
+  /mnt/tools/buildutils/installbazel.sh
+
+FROM with_bazel AS with_cuttlefish_packages
+
+RUN --mount=source=.,target=/mnt,type=bind apt-get install -y \
+  /mnt/cuttlefish-base_*_*64.deb \
+  /mnt/cuttlefish-user_*_*64.deb \
+  /mnt/cuttlefish-orchestration_*_*64.deb
+
+FROM with_cuttlefish_packages
+
+CMD [ "/usr/sbin/init" ]
+
