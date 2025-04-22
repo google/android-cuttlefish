@@ -1,0 +1,66 @@
+load("//:build_variables.bzl", "COPTS")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "liblp",
+    srcs = [
+        "builder.cpp",
+        "images.cpp",
+        "images.h",
+        "include/liblp/property_fetcher.h",
+        "partition_opener.cpp",
+        "property_fetcher.cpp",
+        "reader.cpp",
+        "reader.h",
+        "super_layout_builder.cpp",
+        "utility.cpp",
+        "utility.h",
+        "writer.cpp",
+        "writer.h",
+    ],
+    includes = [
+        "include",
+    ],
+    hdrs = [
+        "include/liblp/builder.h",
+        "include/liblp/liblp.h",
+        "include/liblp/metadata_format.h",
+        "include/liblp/partition_opener.h",
+        "include/liblp/super_layout_builder.h",
+    ],
+    strip_include_prefix = "include",
+    deps = [
+        "//libbase",
+        "//libext4_utils",
+        "//libsparse",
+	"@boringssl//:crypto",
+    ],
+    copts = COPTS + [
+        "-Wno-module-import-in-extern-c",
+        "-Wno-vla-cxx-extension",
+    ],
+)
+
+cc_binary(
+    name = "lpadd",
+    srcs = ["partition_tools/lpadd.cc"],
+    deps = [
+        "//libbase",
+        "//libsparse",
+        ":liblp",
+    ],
+    copts = COPTS,
+)
+
+cc_binary(
+    name = "lpmake",
+    srcs = ["partition_tools/lpmake.cc"],
+    deps = [
+        "//libbase",
+        ":liblp",
+    ],
+    copts = COPTS,
+)

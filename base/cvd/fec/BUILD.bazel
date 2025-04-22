@@ -5,13 +5,6 @@ package(
 cc_binary(
     name = "fec",
     srcs = [
-        "ext4_utils/ext4_sb.cpp",
-        "ext4_utils/include/ext4_utils/ext4_extents.h",
-        "ext4_utils/include/ext4_utils/ext4.h",
-        "ext4_utils/include/ext4_utils/ext4_kernel_headers.h",
-        "ext4_utils/include/ext4_utils/ext4_sb.h",
-        "ext4_utils/include/ext4_utils/jbd2.h",
-        "ext4_utils/include/ext4_utils/xattr.h",
         "libfec/avb_utils.cpp",
         "libfec/avb_utils.h",
         "libfec/fec_open.cpp",
@@ -29,7 +22,6 @@ cc_binary(
         "verity/fec/main.cpp",
     ],
     includes = [
-        "ext4_utils/include",
         "libcrypto_utils/include",
         "libfec/include",
         "libutils/include",
@@ -46,6 +38,7 @@ cc_binary(
         "@boringssl//:crypto",
         "@fec_rs//:libfec_rs",
         "//libbase",
+        "//libext4_utils",
         "//libsparse",
     ],
 )
