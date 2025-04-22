@@ -33,11 +33,7 @@ PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/shared/sensors/multihal
 # Should check if the default feature list is okay with the implementation. Otherwise, it should set
 # LOCAL_SENSOR_FILE_OVERRIDES and copy feature files.
 ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
-    LOCAL_SENSOR_PRODUCT_PACKAGE := \
-        android.hardware.sensors-service.multihal \
-        android.hardware.sensors@2.1-impl.cuttlefish
-    PRODUCT_COPY_FILES += \
-        device/google/cuttlefish/shared/sensors/multihal/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf
+       LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_SENSOR_PRODUCT_PACKAGE)
