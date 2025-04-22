@@ -408,3 +408,10 @@ git_repository(
     commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
     remote = "https://android.googlesource.com/platform/external/fec",
 )
+
+git_repository(
+    name = "mkbootimg",
+    build_file = "@//:BUILD.mkbootimg.bazel",
+    commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
+    remote = "https://android.googlesource.com/platform/system/tools/mkbootimg",
+)

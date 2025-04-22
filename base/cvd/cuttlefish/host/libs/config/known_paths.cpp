@@ -93,6 +93,8 @@ std::string LogcatReceiverBinary() { return HostBinaryPath("logcat_receiver"); }
 
 std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
+std::string MkbootimgBinary() { return HostBinaryPath("mkbootimg.py"); }
+
 std::string ModemSimulatorBinary() { return HostBinaryPath("modem_simulator"); }
 
 std::string NetsimdBinary() { return HostBinaryPath("netsimd"); }
@@ -149,6 +151,10 @@ std::string TestPubKeyRsa4096() {
 
 std::string TombstoneReceiverBinary() {
   return HostBinaryPath("tombstone_receiver");
+}
+
+std::string UnpackBootimgBinary() {
+  return HostBinaryPath("unpack_bootimg.py");
 }
 
 std::string VhalProxyServerBinary() {

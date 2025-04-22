@@ -1,0 +1,14 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "bootimg_header",
+    hdrs = ["include/bootimg/bootimg.h"],
+    strip_include_prefix = "include/bootimg",
+)
+
+exports_files([
+    "mkbootimg.py",
+    "unpack_bootimg.py",
+]);
