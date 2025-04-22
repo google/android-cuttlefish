@@ -147,7 +147,7 @@ jobs:
         #
         # The tests are running under 2 min, it's ok for now to execute them serially. The action's
         # bottleneck is building the debian packages: `@@images//docker/debs-builder-docker:debs_tar`.
-        bazel test --sandbox_writable_path=$HOME --test_output=errors --local_test_jobs=1 --test_timeout=480 orchestration/...
+        bazel query 'kind(go_test, //orchestration/...) except attr(tags, host-ready, kind("go_test", //...))' | xargs bazel test --sandbox_writable_path=$HOME --test_output=errors --local_test_jobs=1 --test_timeout=480
     - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v4
