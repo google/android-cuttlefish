@@ -24,6 +24,7 @@ package_files(
         "cuttlefish-common/bin/echo_server": "//cuttlefish/host/commands/echo_server",
         "cuttlefish-common/bin/extract-ikconfig": "//cuttlefish/host/commands/extract_ikconfig:extract-ikconfig.sh",
         "cuttlefish-common/bin/extract-vmlinux": "//cuttlefish/host/commands/extract_vmlinux:extract-vmlinux.sh",
+        "cuttlefish-common/bin/fastboot": "//fastboot",
         "cuttlefish-common/bin/fec": "//fec",
         "cuttlefish-common/bin/generate_shader_embed": "//cuttlefish/host/graphics_detector/shaders:generate_shader_embed",
         "cuttlefish-common/bin/gnss_grpc_proxy": "//cuttlefish/host/commands/gnss_grpc_proxy",
