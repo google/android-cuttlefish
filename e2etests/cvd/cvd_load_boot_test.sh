@@ -37,7 +37,7 @@ function collect_logs_and_cleanup() {
     cp "${CMD_OUT}" "${TEST_UNDECLARED_OUTPUTS_DIR}"
     cp "${CMD_ERR}" "${TEST_UNDECLARED_OUTPUTS_DIR}"
     # TODO(b/324650975): cvd doesn't print very useful information yet so file locations must be extracted this way
-    home_dir="$(grep -o -E 'HOME="/tmp/cvd/[0-9a-zA-Z/_]+"' "${CMD_ERR}" | cut -d= -f2 | grep -o -E '[^"]*')"
+    home_dir="$(grep -o -E -m1 HOME="/tmp/cvd/[0-9a-zA-Z/_]+" "${CMD_ERR}" | cut -d= -f2)"
     artifacts_dir="$(grep -o -E '\-\-target_directory=/tmp/cvd/[0-9a-zA-Z/_]+' "${CMD_ERR}" | cut -d= -f2 | grep -o -E '[^"]*')"
 
     cp "${artifacts_dir}/fetch.log" "${TEST_UNDECLARED_OUTPUTS_DIR}"
