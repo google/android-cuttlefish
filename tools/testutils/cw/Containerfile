@@ -3,11 +3,14 @@ FROM debian:stable AS base
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y sudo systemd init systemd-journal-remote jq
+RUN apt-get install -y sudo systemd init systemd-journal-remote nginx jq
 
 RUN groupadd kvm
 COPY tools/testutils/cw/setup.service /etc/systemd/system/setup.service
 RUN systemctl enable setup
+
+# Enabled with `podman run --add-host="metadata.google.internal:127.0.0.1"`
+COPY tools/testutils/cw/fake_gce_metadata_nginx.conf /etc/nginx/conf.d/fake_gce_metadata_nginx.conf
 
 FROM base AS with_bazel
 
