@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <fmt/format.h>
 
 #include "common/libs/utils/json.h"
 #include "host/frontend/webrtc/libcommon/utils.h"
@@ -129,8 +130,8 @@ void ConnectionController::AddPendingIceCandidates() {
     peer_connection_->AddIceCandidate(
         std::move(candidate), [this](webrtc::RTCError error) {
           if (!error.ok()) {
-            FailConnection(ToString(error.type()) + std::string(": ") +
-                           error.message());
+            FailConnection(
+                fmt::format("{}: {}", ToString(error.type()), error.message()));
           }
         });
   }
@@ -166,8 +167,8 @@ Result<void> ConnectionController::OnIceCandidateMsg(
     peer_connection_->AddIceCandidate(
         std::move(candidate), [this](webrtc::RTCError error) {
           if (!error.ok()) {
-            FailConnection(ToString(error.type()) + std::string(": ") +
-                           error.message());
+            FailConnection(
+                fmt::format("{}: {}", ToString(error.type()), error.message()));
           }
         });
   } else {
@@ -205,7 +206,8 @@ Result<void> ConnectionController::OnCreateSDPSuccess(
 }
 
 void ConnectionController::OnCreateSDPFailure(const webrtc::RTCError& error) {
-  FailConnection(ToString(error.type()) + std::string(": ") + error.message());
+  FailConnection(
+      fmt::format("{}: {}", ToString(error.type()), error.message()));
 }
 
 void ConnectionController::OnSetLocalDescriptionSuccess() {
@@ -217,15 +219,16 @@ void ConnectionController::OnSetLocalDescriptionFailure(
   LOG(ERROR) << "Error setting local description: Either there is a bug in "
                 "libwebrtc or the local description was (incorrectly) modified "
                 "after creating it";
-  FailConnection(ToString(error.type()) + std::string(": ") + error.message());
+  FailConnection(
+      fmt::format("{}: {}", ToString(error.type()), error.message()));
 }
 
 void ConnectionController::OnSetRemoteDescriptionComplete(
     const webrtc::RTCError& error) {
   if (!error.ok()) {
     // The remote description was rejected, can't connect to device.
-    FailConnection(ToString(error.type()) + std::string(": ") +
-                   error.message());
+    FailConnection(
+        fmt::format("{}: {}", ToString(error.type()), error.message()));
     return;
   }
   AddPendingIceCandidates();
