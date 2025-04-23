@@ -24,15 +24,20 @@ namespace cuttlefish {
 namespace sensors {
 
 namespace {
-constexpr float kPressure = 1013.25f;
-constexpr float kHingeAngle0 = 180.0f;
+constexpr float kTemperature = 25.0f;   // celsius
+constexpr float kProximity = 1.0f;      // cm
+constexpr float kLight = 1000.0f;       // lux
+constexpr float kPressure = 1013.25f;   // hpa
+constexpr float kHumidity = 40.0f;      // percent
+constexpr float kHingeAngle0 = 180.0f;  // degree
 constexpr double kG = 9.80665;  // meter per second^2
 const Eigen::Vector3d kMagneticField{0, 5.9, -48.4};
 inline double ToRadians(double x) { return x * M_PI / 180; }
 
 // Check if a given sensor id provides scalar data
 static bool IsScalarSensor(int id) {
-  return (id == kPressureId) || (id == kHingeAngle0Id);
+  return (id == kTemperatureId) || (id == kProximityId) || (id == kLightId) ||
+         (id == kPressureId) || (id == kHumidityId) || (id == kHingeAngle0Id);
 }
 
 // Calculate the rotation matrix of the pitch, roll, and yaw angles.
@@ -95,7 +100,11 @@ SensorsSimulator::SensorsSimulator(bool is_auto)
   // Initialize sensors_data_ based on rotation vector = (0, 0, 0)
   RefreshSensors(0, 0, 0);
   // Set constant values for the sensors that are independent of rotation vector
+  sensors_data_[kTemperatureId].f = kTemperature;
+  sensors_data_[kProximityId].f = kProximity;
+  sensors_data_[kLightId].f = kLight;
   sensors_data_[kPressureId].f = kPressure;
+  sensors_data_[kHumidityId].f = kHumidity;
   sensors_data_[kHingeAngle0Id].f = kHingeAngle0;
 }
 

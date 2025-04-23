@@ -33,8 +33,16 @@ Result<std::string> SensorIdToName(int id) {
       return "gyroscope";
     case kMagneticId:
       return "magnetic";
+    case kTemperatureId:
+      return "temperature";
+    case kProximityId:
+      return "proximity";
+    case kLightId:
+      return "light";
     case kPressureId:
       return "pressure";
+    case kHumidityId:
+      return "humidity";
     case kUncalibMagneticId:
       return "magnetic-uncalibrated";
     case kUncalibGyroscopeId:
@@ -114,9 +122,10 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
   SensorsMask host_enabled_sensors;
   switch (device_type) {
     case DeviceType::Foldable:
-      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
-                             (1 << kMagneticId) | (1 << kPressureId) |
-                             (1 << kHingeAngle0Id);
+      host_enabled_sensors =
+          (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
+          (1 << kTemperatureId) | (1 << kProximityId) | (1 << kLightId) |
+          (1 << kPressureId) | (1 << kHumidityId) | (1 << kHingeAngle0Id);
       break;
     case DeviceType::Auto:
       host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
@@ -125,7 +134,9 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
       break;
     default:
       host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
-                             (1 << kMagneticId) | (1 << kPressureId);
+                             (1 << kMagneticId) | (1 << kTemperatureId) |
+                             (1 << kProximityId) | (1 << kLightId) |
+                             (1 << kPressureId) | (1 << kHumidityId);
   }
 
   req_responder_thread_ = std::thread([this, host_enabled_sensors] {
