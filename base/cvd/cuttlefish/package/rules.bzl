@@ -62,6 +62,7 @@ def _package_files_impl(ctx):
 
         input_file = _file_from_label(src)
         ctx.actions.run_shell(
+            mnemonic = "MakeOutputDir",
             outputs = [out_file],
             inputs = [input_file],
             command = "mkdir -p " + out_file.dirname + " && cp " + input_file.path + " " + out_file.path,
@@ -82,6 +83,7 @@ def _package_files_impl(ctx):
         # here because that appears to a link using the absolute path whereas links relative to
         # the package are desired here.
         ctx.actions.run_shell(
+            mnemonic = "MakeOutputDir",
             outputs = [dst_file],
             inputs = [src_file],
             command = "mkdir -p " + dst_file.dirname + " && ln -s " + relative_target + " " + dst_file.path,
