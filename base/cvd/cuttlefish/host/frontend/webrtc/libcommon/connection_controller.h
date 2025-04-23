@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 
 #include <api/peer_connection_interface.h>
 #include <json/json.h>
