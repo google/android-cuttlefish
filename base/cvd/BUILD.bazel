@@ -70,3 +70,26 @@ sh_binary(
     srcs = ["gen_ffi_header.sh"],
     visibility = ["//visibility:public"],
 )
+
+# for crosvm/jail. Has to be in the base repository, as the @crosvm repository isn't visible.
+#
+# Collections of python files can be combined into a zip file. The python
+# interpreter can execute these zip files. Zip files are identified by a suffix
+# rather than a prefix, so we can prepend '#!/usr/bin/python' to make the zip
+# archive into an executable that automatically invokes the system python to
+# run it.
+genrule(
+    name = "compile_seccomp_policy_exe",
+    srcs = ["@crosvm//:compile_seccomp_policy_zip"],
+    outs = ["compile_seccomp_policy.py"],
+    cmd = "cat <(echo \"#!/usr/bin/python3\n\") $(location @crosvm//:compile_seccomp_policy_zip) > \"$@\"",
+    executable = True,
+    visibility = ["//visibility:public"],
+)
+
+# for crosvm/third_party/minijail/rust/minijail
+alias(
+    name = "minijail_sources",
+    actual = "@crosvm//:minijail_sources",
+    visibility = ["//visibility:public"],
+)
