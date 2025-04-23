@@ -25,7 +25,11 @@ namespace sensors {
 inline constexpr int kAccelerationId = 0;
 inline constexpr int kGyroscopeId = 1;
 inline constexpr int kMagneticId = 2;
+inline constexpr int kTemperatureId = 4;
+inline constexpr int kProximityId = 5;
+inline constexpr int kLightId = 6;
 inline constexpr int kPressureId = 7;
+inline constexpr int kHumidityId = 8;
 inline constexpr int kUncalibMagneticId = 9;
 inline constexpr int kUncalibGyroscopeId = 10;
 inline constexpr int kHingeAngle0Id = 11;
