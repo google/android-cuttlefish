@@ -23,5 +23,4 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.camera.config=external
 
 # Load the non-APEX external camera config. The APEX loads all the configs by default, which the HAl picks from.
-PRODUCT_COPY_FILES += \
-	hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_external.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_external.json
+PRODUCT_PACKAGES += emu_camera_external.json
