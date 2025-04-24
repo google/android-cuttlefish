@@ -16,16 +16,12 @@
 
 #include "host/frontend/webrtc/libcommon/peer_connection_utils.h"
 
-#include <api/audio_codecs/audio_decoder_factory.h>
-#include <api/audio_codecs/audio_encoder_factory.h>
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
 #include <api/audio_codecs/builtin_audio_encoder_factory.h>
 #include <api/create_peerconnection_factory.h>
 #include <api/peer_connection_interface.h>
 #include <api/video_codecs/builtin_video_decoder_factory.h>
 #include <api/video_codecs/builtin_video_encoder_factory.h>
-#include <api/video_codecs/video_decoder_factory.h>
-#include <api/video_codecs/video_encoder_factory.h>
 
 #include "host/frontend/webrtc/libcommon/audio_device.h"
 #include "host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
