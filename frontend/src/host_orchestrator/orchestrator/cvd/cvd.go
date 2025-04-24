@@ -90,7 +90,7 @@ type FetchGceCredentials struct{}
 
 func (c *FetchGceCredentials) AddToCmd(cmd *exec.Cmd) error {
 	// TODO(b/401592023) Use --use_gce_metadata when cvd load supports them
-	_ = append(cmd.Args, "--credential_source=gce")
+	cmd.Args = append(cmd.Args, "--credential_source=gce")
 	return nil
 }
 
