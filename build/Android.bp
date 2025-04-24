@@ -23,6 +23,18 @@ install_symlink_host {
     symlink_target: "avbtool",
 }
 
+install_symlink_host {
+    name: "mkbootimg.py",
+    installed_location: "bin/mkbootimg.py",
+    symlink_target: "mkbootimg",
+}
+
+install_symlink_host {
+    name: "unpack_bootimg.py",
+    installed_location: "bin/unpack_bootimg.py",
+    symlink_target: "unpack_bootimg",
+}
+
 bootstrap_go_package {
     name: "cuttlefish-soong-rules",
     pkgPath: "android/soong/cuttlefish",
@@ -159,6 +171,7 @@ cvd_host_tools = [
     "metrics_launcher",
     "mkbootfs",
     "mkbootimg",
+    "mkbootimg.py",
     "mke2fs",
     "mkenvimage_slim",
     "mkuserimg_mke2fs",
@@ -194,6 +207,7 @@ cvd_host_tools = [
     "tombstone_receiver",
     "toybox",
     "unpack_bootimg",
+    "unpack_bootimg.py",
     "vhal_proxy_server",
     "vhost_device_vsock",
     "vulkan.lvp",
