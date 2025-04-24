@@ -144,13 +144,19 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 			AccessToken: a.buildAPICredentials.AccessToken,
 			ProjectId:   a.buildAPICredentials.UserProjectID,
 		}
-	} else if isRunningOnGCE() {
-		if ok, err := hasServiceAccountAccessToken(); err != nil {
-			log.Printf("service account token check failed: %s", err)
-		} else if ok {
-			creds = &cvd.FetchGceCredentials{}
+	} else {
+		log.Printf("fetch credentials: no access token provided by client")
+		if isRunningOnGCE() {
+			log.Println("fetch credentials: running on gce")
+			if ok, err := hasServiceAccountAccessToken(); err != nil {
+				log.Printf("fetch credentials: service account token check failed: %s", err)
+			} else if ok {
+				log.Println("fetch credentials: using gce service account credentials")
+				creds = &cvd.FetchGceCredentials{}
+			}
 		}
 	}
+
 	group, err := a.cvdCLI.Load(configFile.Name(), creds)
 	if err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
