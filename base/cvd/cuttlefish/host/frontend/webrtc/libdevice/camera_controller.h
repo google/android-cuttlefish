@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <functional>
+
 #include <json/json.h>
 
 namespace cuttlefish {

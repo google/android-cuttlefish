@@ -42,7 +42,7 @@ class AudioTrackSourceImpl : public webrtc::AudioSourceInterface {
   // Returns options for the AudioSource.
   // (for some of the settings this approach is broken, e.g. setting
   // audio network adaptation on the source is the wrong layer of abstraction).
-  virtual const cricket::AudioOptions options() const;
+  virtual const cricket::AudioOptions options() const override;
 
   void OnFrame(const AudioFrameBuffer& frame, int64_t timestamp_ms);
 

@@ -18,13 +18,10 @@
 
 #include "host/frontend/webrtc/libdevice/local_recorder.h"
 
-#include <atomic>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
-#include <vector>
-
-#include "common/libs/fs/shared_fd.h"
 
 namespace webrtc {
 class VideoTrackSourceInterface;
