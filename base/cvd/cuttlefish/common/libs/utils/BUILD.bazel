@@ -348,6 +348,23 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_test(
+    name = "network_test",
+    srcs = ["network_test.cpp"],
+    copts = COPTS,
+    deps = [
+        ":network",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "network_test_clang_tidy",
+    srcs = [":network_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "proc_file_utils",
     srcs = ["proc_file_utils.cpp"],
