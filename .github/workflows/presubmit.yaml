@@ -111,7 +111,7 @@ jobs:
         name: testlogs
         path: bazel-testlogs
   e2e-tests-orchestration:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-4core
     steps:
       # Do not reuse bazel cache among `e2e-tests-orchestration` runs.
       #
