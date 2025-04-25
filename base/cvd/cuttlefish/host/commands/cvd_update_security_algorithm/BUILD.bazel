@@ -47,3 +47,21 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_test(
+    name = "cvd_update_security_algorithm_test",
+    srcs = [
+        "unittest/update_security_algorithm_command_builder_test.cc",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcvd_update_security_algorithm_builder",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "cvd_id_disclosure_test_clang_tidy",
+    srcs = [":cvd_update_security_algorithm_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
