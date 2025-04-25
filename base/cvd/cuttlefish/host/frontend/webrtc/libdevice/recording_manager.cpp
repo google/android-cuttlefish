@@ -15,15 +15,9 @@
  */
 #include "host/frontend/webrtc/libdevice/recording_manager.h"
 
-#include <thread>
-#include <vector>
-
 #include <android-base/logging.h>
 #include <rtc_base/time_utils.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
 #include "host/frontend/webrtc/libdevice/local_recorder.h"
 #include "host/libs/config/cuttlefish_config.h"
 
