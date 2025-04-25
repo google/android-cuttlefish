@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 
-#include "host/commands/metrics/utils.h"
+#include "cuttlefish/host/commands/metrics/utils.h"
 
 namespace cuttlefish {
 TEST(MacAddressTest, ValidMacAddress) {

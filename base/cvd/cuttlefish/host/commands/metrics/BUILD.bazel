@@ -13,11 +13,10 @@ cc_binary(
         "host_receiver.cc",
         "host_receiver.h",
         "metrics.cc",
-        "utils.cc",
-        "utils.h",
     ],
     copts = COPTS,
     deps = [
+        ":libmetrics_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
@@ -38,4 +37,42 @@ clang_tidy_test(
     name = "metrics_clang_tidy",
     srcs = [":metrics"],
     tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "libmetrics_utils",
+    srcs = [
+        "utils.cc",
+    ],
+    hdrs = [
+        "utils.h",
+    ],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/host/commands/metrics/proto:metrics_protos",
+        "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//libbase",
+        "@curl",
+        "@gflags",
+    ]
+)
+
+clang_tidy_test(
+    name = "libmetrics_utils_clang_tidy",
+    srcs = [":libmetrics_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "metrics_test",
+    srcs = [
+        "unittest/utils_tests.cpp",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libmetrics_utils",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
