@@ -46,3 +46,22 @@ clang_tidy_test(
     srcs = [":libcvd_id_disclosure_builder"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_test(
+    name = "cvd_send_id_disclosure_test",
+    srcs = [
+        "unittest/cellular_identifier_disclosure_command_builder_test.cc",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcvd_id_disclosure_builder",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "cvd_id_disclosure_test_clang_tidy",
+    srcs = [":cvd_send_id_disclosure_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
