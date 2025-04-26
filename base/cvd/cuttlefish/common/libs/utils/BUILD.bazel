@@ -23,6 +23,21 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "base64",
+    srcs = ["base64.cpp"],
+    hdrs = ["base64.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["@boringssl//:crypto"],
+)
+
+clang_tidy_test(
+    name = "base64_clang_tidy",
+    srcs = [":base64"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "contains",
     hdrs = ["contains.h"],
     copts = COPTS,
@@ -123,7 +138,6 @@ cc_library(
     name = "utils",
     srcs = [
         "archive.cpp",
-        "base64.cpp",
         "container.cpp",
         "device_type.cpp",
         "files.cpp",
@@ -180,9 +194,9 @@ cc_library(
         ":result",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:architecture",
+        "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:contains",
         "//libbase",
-        "@boringssl//:crypto",
         "@fmt",
         "@gflags",
         "@jsoncpp",
@@ -240,7 +254,6 @@ cc_test(
         ":utils",
         "//cuttlefish/common/libs/fs",
         "//libbase",
-        "@boringssl//:crypto",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@libxml2//:libxml2",
