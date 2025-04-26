@@ -1,8 +1,56 @@
-cuttlefish-common (1.6.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.6.0) unstable; urgency=medium
 
-  * 
+  * Build cf_vhost_user_input
+  * Build and package lpadd and lpmake
+  * sensors_simulator: Support more sensors
+  * Build and package mkbootimg and unpack_bootimg
+  * Prepare webrtc/libcommon for upgrade of libwebrtc
+  * Delete unnecessary depencies
+  * Add option to add symlinks to the cuttlefish package
+  * Support building crosvm from source out of a different git repository using `rules_rust`
+  * Add options to control virtio-media
+  * Use correct name for webRTC binary
+  * Build fec tool and copy avbtool.py
+  * Build and package simg2img
+  * Support png screenshots in webRTC
+  * Support jpeg screenshots in webRTC
+  * Don't include append_squash_overlay in cvd package
+  * Switch from injections for motion
+  * Enforce misc-include-cleaner on //cuttlefish/host/libs/config
+  * Extract //cuttlefish/host/libs/config:fetcher_config
+  * Extract //cuttlefish/host/libs/config:data_image
+  * Extract //cuttlefish/host/libs/config:mbr
+  * Extract //cuttlefish/host/libs/config:host_tools_version
+  * Extract //cuttlefish/host/libs/config:[custom_actions,esp]
+  * Extract //cuttlefish/host/libs/config:instance_nums
+  * Extract //cuttlefish/host/libs/config:display
+  * Extract //cuttlefish/host/libs/config:kernel_args
+  * Extract //cuttlefish/host/libs/config:openwrt_args
+  * Extract //cuttlefish/host/libs/config:known_paths
+  * Extract //cuttlefish/host/libs/config:logging
+  * Extract //cuttlefish/host/libs/config:touchpad
+  * Extract //cuttlefish/host/libs/config:config_flag
+  * Extract //cuttlefish/host/libs/config:feature
+  * Extract //cuttlefish/host/libs/config:secure_hals
+  * Extract //cuttlefish/host/libs/config:config_fragment
+  * Fix visibility for package append_squashfs_overlay
+  * Enforce misc-include-cleaner on host/libs/web
+  * Extract web:caching_build_api
+  * Extract web:android_build_api
+  * Extract web:luci_build_api
+  * Extract web:oauth2_consent
+  * Split out web:chrome_os_build_string
+  * Split out web:credential_source
+  * Split out web:build_api
+  * Use include paths relative to the bazel workspace for cuttlefish files in web/cas
+  * Use include paths relative to the bazel workspace for cuttlefish files in web/http_client
+  * Separate out web:android_build_string
+  * Separate `web/cas` from `web`
+  * Split `http_client:http_client_util` out of `http_client`
+  * Split `http_client:curl_global_init` off from `http_client`.
+  * Separate `//cuttlefish/host/libs/web/http_client` into a separate bazel target
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Apr 2025 18:03:32 -0700
+ -- Jorge E. Moreira <jemoreira@google.com>  Fri, 25 Apr 2025 17:17:25 -0700
 
 cuttlefish-common (1.5.0) stable; urgency=medium
 
