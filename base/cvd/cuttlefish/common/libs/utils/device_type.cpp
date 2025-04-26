@@ -16,6 +16,8 @@
 
 #include "common/libs/utils/device_type.h"
 
+#include <string_view>
+
 namespace cuttlefish {
 
 // Parse device type from android-info.txt config field.
