@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.7.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 25 Apr 2025 17:44:50 -0700
+
 cuttlefish-frontend (1.6.0) unstable; urgency=medium
 
   * Increase required go versions to 1.17.13
