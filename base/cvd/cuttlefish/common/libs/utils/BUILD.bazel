@@ -88,6 +88,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "flag_parser",
+    srcs = ["flag_parser.cpp"],
+    hdrs = ["flag_parser.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "flag_parser_clang_tidy",
+    srcs = [":flag_parser"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "proto",
     hdrs = ["proto.h"],
     copts = COPTS,
@@ -175,7 +195,6 @@ cc_library(
         "archive.cpp",
         "container.cpp",
         "files.cpp",
-        "flag_parser.cpp",
         "flags_validator.cpp",
         "in_sandbox.cpp",
         "inotify.cpp",
@@ -230,6 +249,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:device_type",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//libbase",
         "@fmt",
