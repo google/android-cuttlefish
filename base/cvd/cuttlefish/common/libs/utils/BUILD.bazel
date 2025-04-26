@@ -6,6 +6,29 @@ package(
 )
 
 cc_library(
+    name = "environment",
+    srcs = [
+        "environment.cpp",
+        "known_paths.cpp",
+    ],
+    hdrs = [
+        "environment.h",
+        "known_paths.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "environment_clang_tidy",
+    srcs = [":environment"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "proto",
     hdrs = ["proto.h"],
     copts = COPTS,
@@ -63,29 +86,6 @@ cc_library(
 clang_tidy_test(
     name = "result_matchers_clang_tidy",
     srcs = [":result_matchers"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
-    name = "environment",
-    srcs = [
-        "environment.cpp",
-        "known_paths.cpp",
-    ],
-    hdrs = [
-        "environment.h",
-        "known_paths.h",
-    ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-    deps = [
-        "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "environment_clang_tidy",
-    srcs = [":environment"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
