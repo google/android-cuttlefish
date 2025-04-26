@@ -222,6 +222,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "users",
+    srcs = ["users.cpp"],
+    hdrs = ["users.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "users_clang_tidy",
+    srcs = [":users"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "utils",
     srcs = [
         "archive.cpp",
@@ -237,7 +256,6 @@ cc_library(
         "subprocess.cpp",
         "tcp_socket.cpp",
         "unix_sockets.cpp",
-        "users.cpp",
         "vsock_connection.cpp",
     ],
     hdrs = [
@@ -283,6 +301,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/common/libs/utils:users",
         "//libbase",
         "@fmt",
         "@gflags",
