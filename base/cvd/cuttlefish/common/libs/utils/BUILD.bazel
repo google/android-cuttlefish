@@ -51,6 +51,20 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "device_type",
+    srcs = ["device_type.cpp"],
+    hdrs = ["device_type.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "device_type_clang_tidy",
+    srcs = [":device_type"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "environment",
     srcs = [
         "environment.cpp",
@@ -139,7 +153,6 @@ cc_library(
     srcs = [
         "archive.cpp",
         "container.cpp",
-        "device_type.cpp",
         "files.cpp",
         "flag_parser.cpp",
         "flags_validator.cpp",
@@ -196,6 +209,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:device_type",
         "//libbase",
         "@fmt",
         "@gflags",
