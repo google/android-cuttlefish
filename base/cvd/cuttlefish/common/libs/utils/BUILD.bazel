@@ -6,6 +6,23 @@ package(
 )
 
 cc_library(
+    name = "architecture",
+    srcs = ["architecture.cpp"],
+    hdrs = ["architecture.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "architecture_clang_tidy",
+    srcs = [":architecture"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "environment",
     srcs = [
         "environment.cpp",
@@ -92,7 +109,6 @@ clang_tidy_test(
 cc_library(
     name = "utils",
     srcs = [
-        "architecture.cpp",
         "archive.cpp",
         "base64.cpp",
         "container.cpp",
@@ -150,6 +166,7 @@ cc_library(
         ":environment",
         ":result",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:architecture",
         "//libbase",
         "@boringssl//:crypto",
         "@fmt",
