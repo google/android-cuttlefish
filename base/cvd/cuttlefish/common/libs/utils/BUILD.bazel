@@ -125,6 +125,21 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "inotify",
+    srcs = ["inotify.cpp"],
+    hdrs = ["inotify.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["//libbase"],
+)
+
+clang_tidy_test(
+    name = "inotify_clang_tidy",
+    srcs = [":inotify"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "proto",
     hdrs = ["proto.h"],
     copts = COPTS,
@@ -213,7 +228,6 @@ cc_library(
         "container.cpp",
         "files.cpp",
         "in_sandbox.cpp",
-        "inotify.cpp",
         "json.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
@@ -266,6 +280,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:flags_validator",
+        "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//libbase",
