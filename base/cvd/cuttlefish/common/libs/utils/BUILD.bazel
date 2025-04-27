@@ -81,6 +81,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "disk_usage",
+    srcs = ["disk_usage.cpp"],
+    hdrs = ["disk_usage.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "disk_usage_clang_tidy",
+    srcs = [":disk_usage"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "environment",
     srcs = [
         "environment.cpp",
