@@ -125,6 +125,20 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "in_sandbox",
+    srcs = ["in_sandbox.cpp"],
+    hdrs = ["in_sandbox.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "in_sandbox_clang_tidy",
+    srcs = [":in_sandbox"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
@@ -329,7 +343,6 @@ cc_library(
         "archive.cpp",
         "container.cpp",
         "files.cpp",
-        "in_sandbox.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
         "subprocess.cpp",
@@ -376,6 +389,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:flags_validator",
+        "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
