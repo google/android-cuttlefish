@@ -220,6 +220,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "shared_fd_flag",
+    srcs = ["shared_fd_flag.cpp"],
+    hdrs = ["shared_fd_flag.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "shared_fd_flag_clang_tidy",
+    srcs = [":shared_fd_flag"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "tcp_socket",
     srcs = ["tcp_socket.cpp"],
     hdrs = ["tcp_socket.h"],
@@ -286,7 +305,6 @@ cc_library(
         "in_sandbox.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
-        "shared_fd_flag.cpp",
         "signals.cpp",
         "socket2socket_proxy.cpp",
         "subprocess.cpp",
@@ -336,6 +354,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:shared_fd_flag",
         "//cuttlefish/common/libs/utils:tcp_socket",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/common/libs/utils:users",
