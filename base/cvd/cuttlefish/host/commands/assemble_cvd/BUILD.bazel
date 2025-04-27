@@ -91,6 +91,7 @@ cc_library(
         ":libassemble_cvd",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:disk_usage",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",

@@ -78,10 +78,6 @@ Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path);
 // Whether a file exists and is a unix socket
 bool FileIsSocket(const std::string& path);
-// Get disk usage of a path. If this path is a directory, disk usage will
-// account for all files under this folder(recursively).
-Result<std::size_t> GetDiskUsageBytes(const std::string& path);
-Result<std::size_t> GetDiskUsageGigabytes(const std::string& path);
 
 // acloud related API
 std::string FindImage(const std::string& search_path,
