@@ -415,6 +415,7 @@ cc_library(
         "network.cpp",
         "proc_file_utils.cpp",
         "subprocess.cpp",
+        "wait_for_unix_socket.cpp",
     ],
     hdrs = [
         "architecture.h",
@@ -444,6 +445,7 @@ cc_library(
         "unix_sockets.h",
         "users.h",
         "vsock_connection.h",
+        "wait_for_unix_socket.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",

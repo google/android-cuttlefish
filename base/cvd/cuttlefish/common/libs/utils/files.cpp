@@ -68,7 +68,6 @@
 #include "common/libs/utils/in_sandbox.h"
 #include "common/libs/utils/inotify.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 
 #ifdef __APPLE__
@@ -761,84 +760,6 @@ auto WaitForFile(const std::string& path, int timeoutSec)
   return {};
 }
 
-Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec) {
-  const auto targetTime =
-      std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
-
-  CF_EXPECT(WaitForFile(path, timeoutSec),
-            "Waiting for socket path creation failed");
-  CF_EXPECT(FileIsSocket(path), "Specified path is not a socket");
-
-  while (true) {
-    const auto currentTime = std::chrono::system_clock::now();
-
-    if (currentTime >= targetTime) {
-      return CF_ERR("Timed out");
-    }
-
-    const auto timeRemain = std::chrono::duration_cast<std::chrono::seconds>(
-                                targetTime - currentTime)
-                                .count();
-    auto testConnect =
-        SharedFD::SocketLocalClient(path, false, SOCK_STREAM, timeRemain);
-
-    if (testConnect->IsOpen()) {
-      return {};
-    }
-
-    sched_yield();
-  }
-
-  return CF_ERR("This shouldn't be executed");
-}
-
-Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
-                                                      int timeoutSec) {
-  const auto targetTime =
-      std::chrono::system_clock::now() + std::chrono::seconds(timeoutSec);
-
-  CF_EXPECT(WaitForFile(path, timeoutSec),
-            "Waiting for socket path creation failed");
-  CF_EXPECT(FileIsSocket(path), "Specified path is not a socket");
-
-  std::regex socket_state_regex("TST=(.*)");
-
-  while (true) {
-    const auto currentTime = std::chrono::system_clock::now();
-
-    if (currentTime >= targetTime) {
-      return CF_ERR("Timed out");
-    }
-
-    Command lsof("/usr/bin/lsof");
-    lsof.AddParameter(/*"format"*/ "-F", /*"connection state"*/ "TST");
-    lsof.AddParameter(path);
-    std::string lsof_out;
-    std::string lsof_err;
-    int rval =
-        RunWithManagedStdio(std::move(lsof), nullptr, &lsof_out, &lsof_err);
-    if (rval != 0) {
-      return CF_ERR("Failed to run `lsof`, stderr: " << lsof_err);
-    }
-
-    LOG(DEBUG) << "lsof stdout:|" << lsof_out << "|";
-    LOG(DEBUG) << "lsof stderr:|" << lsof_err << "|";
-
-    std::smatch socket_state_match;
-    if (std::regex_search(lsof_out, socket_state_match, socket_state_regex)) {
-      if (socket_state_match.size() == 2) {
-        const std::string& socket_state = socket_state_match[1];
-        if (socket_state == "LISTEN") {
-          return {};
-        }
-      }
-    }
-
-    sched_yield();
-  }
-
-  return CF_ERR("This shouldn't be executed");
-}
 #endif
 
 namespace {

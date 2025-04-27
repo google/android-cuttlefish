@@ -41,6 +41,7 @@
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/wait_for_unix_socket.h"
 #include "host/libs/command_util/snapshot_utils.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
