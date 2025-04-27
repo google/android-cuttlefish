@@ -228,6 +228,27 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_test(
+    name = "result_test",
+    srcs = [
+        "result_test.cpp",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        ":result",
+        ":result_matchers",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "result_test_clang_tidy",
+    srcs = [":result_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "result_matchers",
     testonly = 1,
@@ -441,6 +462,43 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_test(
+    name = "utils_test",
+    srcs = [
+        "files_test.cpp",
+        "files_test_helper.cpp",
+        "files_test_helper.h",
+        "flag_parser_test.cpp",
+        "proc_file_utils_test.cpp",
+        "unique_resource_allocator_test.cpp",
+        "unique_resource_allocator_test.h",
+        "unix_sockets_test.cpp",
+    ],
+    copts = COPTS + [
+        "-Icuttlefish",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@libxml2//:libxml2",
+    ],
+    # `layering_check` conflicts with the combination of the clang prebuilt and
+    # the cmake build rules used for @libxml2.
+    features = ["-layering_check"],
+)
+
+# TODO: b/403278821 - fix warnings and re-enable after migration work
+#clang_tidy_test(
+#    name = "utils_test_clang_tidy",
+#    srcs = [":utils_test"],
+#    tags = ["clang_tidy", "clang-tidy"],
+#)
+
 cc_library(
     name = "vsock_connection",
     srcs = ["vsock_connection.cpp"],
@@ -460,62 +518,3 @@ cc_library(
 #     srcs = [":vsock_connection"],
 #     tags = ["clang_tidy", "clang-tidy"],
 # )
-
-cc_test(
-    name = "result_test",
-    srcs = [
-        "result_test.cpp",
-    ],
-    copts = COPTS + [ "-Icuttlefish" ],
-    deps = [
-        ":result",
-        ":result_matchers",
-        "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "result_test_clang_tidy",
-    srcs = [":result_test"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
-    name = "utils_test",
-    srcs = [
-        "files_test.cpp",
-        "files_test_helper.cpp",
-        "files_test_helper.h",
-        "flag_parser_test.cpp",
-        "proc_file_utils_test.cpp",
-        "result_test.cpp",
-        "unique_resource_allocator_test.cpp",
-        "unique_resource_allocator_test.h",
-        "unix_sockets_test.cpp",
-    ],
-    copts = COPTS + [
-        "-Icuttlefish",
-    ],
-    deps = [
-        ":result",
-        ":result_matchers",
-        ":utils",
-        "//cuttlefish/common/libs/fs",
-        "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-        "@libxml2//:libxml2",
-    ],
-    # `layering_check` conflicts with the combination of the clang prebuilt and
-    # the cmake build rules used for @libxml2.
-    features = ["-layering_check"],
-)
-
-# TODO: b/403278821 - fix warnings and re-enable after migration work
-#clang_tidy_test(
-#    name = "utils_test_clang_tidy",
-#    srcs = [":utils_test"],
-#    tags = ["clang_tidy", "clang-tidy"],
-#)
