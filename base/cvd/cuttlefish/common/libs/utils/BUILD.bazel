@@ -365,6 +365,27 @@ cc_library(
 # )
 
 cc_library(
+    name = "subprocess",
+    srcs = ["subprocess.cpp"],
+    hdrs = ["subprocess.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "subprocess_clang_tidy",
+    srcs = [":subprocess"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "tcp_socket",
     srcs = ["tcp_socket.cpp"],
     hdrs = ["tcp_socket.h"],
@@ -442,7 +463,6 @@ cc_library(
         "container.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
-        "subprocess.cpp",
         "wait_for_unix_socket.cpp",
     ],
     hdrs = [
@@ -494,6 +514,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:shared_fd_flag",
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tcp_socket",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/common/libs/utils:unix_sockets",
