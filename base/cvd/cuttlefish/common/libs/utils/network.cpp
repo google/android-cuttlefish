@@ -132,7 +132,7 @@ std::set<std::string> TapInterfacesInUse() {
   auto lines = android::base::Split(stdout_str, "\n");
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
-    if (line == "") {
+    if (line.empty()) {
       continue;
     }
     if (!android::base::StartsWith(line, "iff:\t")) {

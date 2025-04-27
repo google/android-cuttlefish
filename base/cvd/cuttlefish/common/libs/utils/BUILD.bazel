@@ -359,7 +359,6 @@ cc_library(
         "network.cpp",
         "proc_file_utils.cpp",
         "subprocess.cpp",
-        "vsock_connection.cpp",
     ],
     hdrs = [
         "architecture.h",
@@ -412,6 +411,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/common/libs/utils:vsock_connection",
         "//libbase",
         "@fmt",
         "@gflags",
@@ -419,12 +419,31 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "utils_clang_tidy",
+    srcs = [":utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "vsock_connection",
+    srcs = ["vsock_connection.cpp"],
+    hdrs = ["vsock_connection.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@jsoncpp",
+    ],
+)
+
 # TODO: b/403278821 - fix warnings and re-enable after migration work
-##clang_tidy_test(
-##    name = "utils_clang_tidy",
-##    srcs = [":utils"],
-##    tags = ["clang_tidy", "clang-tidy"],
-##)
+# clang_tidy_test(
+#     name = "vsock_connection_clang_tidy",
+#     srcs = [":vsock_connection"],
+#     tags = ["clang_tidy", "clang-tidy"],
+# )
 
 cc_test(
     name = "result_test",
