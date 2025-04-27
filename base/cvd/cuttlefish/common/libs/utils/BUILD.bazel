@@ -123,6 +123,29 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "files",
+    srcs = ["files.cpp"],
+    hdrs = ["files.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:inotify",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "files_clang_tidy",
+    srcs = [":files"],
+    tags = ["clang-tidy", "clang_tidy"],
+)
+
+cc_library(
     name = "flag_parser",
     srcs = ["flag_parser.cpp"],
     hdrs = ["flag_parser.h"],
@@ -335,6 +358,12 @@ cc_library(
     ],
 )
 
+# clang_tidy_test(
+#     name = "socket2socket_proxy_clang_tidy",
+#     srcs = [":socket2socket_proxy"],
+#     tags = ["clang_tidy", "clang-tidy"],
+# )
+
 cc_library(
     name = "tcp_socket",
     srcs = ["tcp_socket.cpp"],
@@ -411,7 +440,6 @@ cc_library(
     srcs = [
         "archive.cpp",
         "container.cpp",
-        "files.cpp",
         "network.cpp",
         "proc_file_utils.cpp",
         "subprocess.cpp",
@@ -456,6 +484,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:in_sandbox",
