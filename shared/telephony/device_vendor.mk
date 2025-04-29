@@ -20,6 +20,15 @@ ifneq ($(TARGET_NO_TELEPHONY), true)
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
 
+# Include the package for Cuttlefish telephony satellite configurations.
+PRODUCT_PACKAGES += \
+    cuttlefish_telephony_satellite_configs
+
+# Include the Soong namespace for Cuttlefish satellite telephony configurations.
+PRODUCT_SOONG_NAMESPACES += \
+    device/google/cuttlefish/shared/telephony/satellite
+
+
 # If downstream target provides its own RILD, set TARGET_USES_CF_RILD := false
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)

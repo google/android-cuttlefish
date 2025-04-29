@@ -27,4 +27,47 @@
     <string name="config_extensionFallbackServiceName" translatable="false">
             android.camera.extensions.impl.service.EyesFreeVidService
     </string>
+    <!-- List of country codes where oem-enabled satellite services are either allowed or disallowed
+             by the device. Each country code is a lowercase 2 character ISO-3166-1 alpha-2. -->
+    <string-array name="config_oem_enabled_satellite_country_codes">
+        <item>US</item>
+        <item>PR</item>
+        <item>CA</item>
+        <item>AU</item>
+        <item>AT</item>
+        <item>BE</item>
+        <item>BG</item>
+        <item>HR</item>
+        <item>CY</item>
+        <item>CZ</item>
+        <item>DK</item>
+        <item>EE</item>
+        <item>FI</item>
+        <item>FR</item>
+        <item>DE</item>
+        <item>GR</item>
+        <item>HU</item>
+        <item>IE</item>
+        <item>IT</item>
+        <item>LI</item>
+        <item>LV</item>
+        <item>LT</item>
+        <item>LU</item>
+        <item>NL</item>
+        <item>NO</item>
+        <item>PL</item>
+        <item>PT</item>
+        <item>RO</item>
+        <item>SK</item>
+        <item>SI</item>
+        <item>ES</item>
+        <item>SE</item>
+        <item>CH</item>
+        <item>GB</item>
+    </string-array>
+    <!-- The file storing S2-cell-based satellite access restriction of the countries defined by
+         config_oem_enabled_satellite_countries. -->
+    <string name="config_oem_enabled_satellite_s2cell_file">/vendor/etc/telephony/sats2.dat</string>
+    <!-- The absolute path to the satellite config file. -->
+    <string name="satellite_access_config_file">/vendor/etc/telephony/satellite_access_config.json</string>
 </resources>

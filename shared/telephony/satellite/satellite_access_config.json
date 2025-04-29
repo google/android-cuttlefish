@@ -1,0 +1,231 @@
+{
+  "access_control_configs": [
+    {
+      "config_id": 0,
+      "satellite_infos": [
+        {
+          "satellite_id": "967f8e86-fc27-4673-9343-a820280a14dd",
+          "satellite_position": {
+            "longitude": 10.25,
+            "altitude": 35793.1
+          },
+          "bands": [
+            256
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 229360,
+              "end_earfcn": 229360
+            },
+            {
+              "start_earfcn": 229362,
+              "end_earfcn": 229362
+            },
+            {
+              "start_earfcn": 229364,
+              "end_earfcn": 229364
+            },
+            {
+              "start_earfcn": 229366,
+              "end_earfcn": 229366
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        101
+      ]
+    },
+    {
+      "config_id": 1,
+      "satellite_infos": [
+        {
+          "satellite_id": "c9d78ffa-ffa5-4d41-a81b-34693b33b496",
+          "satellite_position": {
+            "longitude": -101.3,
+            "altitude": 35786.0
+          },
+          "bands": [
+            255
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 229011,
+              "end_earfcn": 229011
+            },
+            {
+              "start_earfcn": 229013,
+              "end_earfcn": 229013
+            },
+            {
+              "start_earfcn": 229015,
+              "end_earfcn": 229015
+            },
+            {
+              "start_earfcn": 229017,
+              "end_earfcn": 229017
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        11,
+        1001
+      ]
+    },
+    {
+      "config_id": 2,
+      "satellite_infos": [
+        {
+          "satellite_id": "bd81e265-b8fb-4780-a6fb-6e6fbf5cda55",
+          "satellite_position": {
+            "longitude": 143.5,
+            "altitude": 35775.1
+          },
+          "bands": [
+            255
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 229001,
+              "end_earfcn": 229001
+            },
+            {
+              "start_earfcn": 229003,
+              "end_earfcn": 229003
+            },
+            {
+              "start_earfcn": 229005,
+              "end_earfcn": 229005
+            },
+            {
+              "start_earfcn": 229007,
+              "end_earfcn": 229007
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        101
+      ]
+    },
+    {
+      "config_id": 3,
+      "satellite_infos": [
+        {
+          "satellite_id": "62de127d-ead1-481f-8524-b58e2664103a",
+          "satellite_position": {
+            "longitude": -98.0,
+            "altitude": 35775.1
+          },
+          "bands": [
+            255
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 228837,
+              "end_earfcn": 228837
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        11,
+        1001
+      ]
+    },
+    {
+      "config_id": 4,
+      "satellite_infos": [
+        {
+          "satellite_id": "62de127d-ead1-481f-8524-b58e2664103a",
+          "satellite_position": {
+            "longitude": -98.0,
+            "altitude": 35775.1
+          },
+          "bands": [
+            255
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 228909,
+              "end_earfcn": 228909
+            },
+            {
+              "start_earfcn": 228919,
+              "end_earfcn": 228919
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        11
+      ]
+    },
+    {
+      "config_id": 5,
+      "satellite_infos": [
+        {
+          "satellite_id": "c9d78ffa-ffa5-4d41-a81b-34693b33b496",
+          "satellite_position": {
+            "longitude": -101.3,
+            "altitude": 35786.0
+          },
+          "bands": [
+            255
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 229011,
+              "end_earfcn": 229011
+            },
+            {
+              "start_earfcn": 229013,
+              "end_earfcn": 229013
+            },
+            {
+              "start_earfcn": 229015,
+              "end_earfcn": 229015
+            },
+            {
+              "start_earfcn": 229017,
+              "end_earfcn": 229017
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        12
+      ]
+    },
+    {
+      "config_id": 6,
+      "satellite_infos": [
+        {
+          "satellite_id": "62de127d-ead1-481f-8524-b58e2664103a",
+          "satellite_position": {
+            "longitude": -98.0,
+            "altitude": 35775.1
+          },
+          "bands": [
+            255
+          ],
+          "earfcn_ranges": [
+            {
+              "start_earfcn": 228919,
+              "end_earfcn": 228919
+            },
+            {
+              "start_earfcn": 228909,
+              "end_earfcn": 228909
+            }
+          ]
+        }
+      ],
+      "tag_ids": [
+        11,
+        1001
+      ]
+    }
+  ]
+}
