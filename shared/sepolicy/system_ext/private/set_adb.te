@@ -1,0 +1,11 @@
+type set_adb, coredomain, domain;
+type set_adb_exec, exec_type, system_file_type, file_type;
+
+init_daemon_domain(set_adb)
+
+allow set_adb shell_exec:file rx_file_perms;
+allow set_adb system_file:file execute_no_trans;
+allow set_adb servicemanager:binder call;
+allow set_adb settings_service:service_manager find;
+allow set_adb system_server:binder { call transfer };
+allow system_server set_adb:binder call;
