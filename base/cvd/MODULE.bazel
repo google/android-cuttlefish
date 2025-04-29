@@ -331,7 +331,7 @@ git_repository(
     name = "libwebsockets",
     build_file = "@//:BUILD.libwebsockets.bazel",
     commit = "9075f01e1670e64435f4ea501667982fc911ad6b", # v4.3-stable
-    remote = "https://libwebsockets.org/repo/libwebsockets",
+    remote = "https://github.com/warmcat/libwebsockets",
 )
 
 git_repository(
