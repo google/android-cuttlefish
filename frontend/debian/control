@@ -1,5 +1,5 @@
 Source: cuttlefish-frontend
-Maintainer: Cuttlefish Team
+Maintainer: Cuttlefish Team <cloud-android-ext@google.com>
 Section: misc
 Priority: optional
 Build-Depends: config-package-dev,
@@ -26,12 +26,10 @@ Package: cuttlefish-orchestration
 Architecture: any
 Depends: cuttlefish-user,
          adduser,
-         bash,
          openssl,
          nginx,
          systemd-journal-remote,
-         ${misc:Depends},
-         ${shlibs:Depends}
+         ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
  Contains the host orchestrator.

@@ -1,0 +1,6 @@
+# Ignore bazel workspace clutter
+cuttlefish-common source: absolute-symbolic-link-target-in-source
+
+# This is a "local package" for now
+cuttlefish-common source: no-nmu-in-changelog
+cuttlefish-common source: source-nmu-has-incorrect-version-number
