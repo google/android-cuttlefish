@@ -1,0 +1,5 @@
+# Ignore statically-linked libraries (b/414850137)
+cuttlefish-base binary: embedded-library
+
+# No intention to provide a manpage
+cuttlefish-base binary: no-manual-page

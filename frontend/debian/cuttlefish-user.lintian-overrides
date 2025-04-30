@@ -1,0 +1,5 @@
+# No intention to provide a manpage
+cuttlefish-user binary: no-manual-page
+
+# See https://developers.google.com/fonts/faq/privacy
+cuttlefish-user binary: privacy-breach-generic

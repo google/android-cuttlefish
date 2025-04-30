@@ -1,5 +1,5 @@
 Source: cuttlefish-common
-Maintainer: Cuttlefish Team
+Maintainer: Cuttlefish Team <cloud-android-ext@google.com>
 Section: misc
 Priority: optional
 Build-Depends: bazel [amd64],
@@ -25,9 +25,8 @@ Build-Depends: bazel [amd64],
                libvpx-dev,
                libxml2-dev,
                libz3-dev,
-               pkg-config,
+               pkgconf,
                protobuf-compiler,
-               sed,
                uuid-dev,
                xxd
 Standards-Version: 4.5.0
@@ -66,13 +65,11 @@ Depends: adduser,
          libxext6,
          libxml2-dev,
          libz3-4,
-         lsb-base,
          net-tools,
          openssl,
          opus-tools,
          python3,
          qemu-user-static [arm64],
-         util-linux,
          vpx-tools,
          xdg-utils,
          ${misc:Depends},
@@ -87,6 +84,8 @@ Package: cuttlefish-common
 Architecture: any
 Depends: cuttlefish-base,
          cuttlefish-user,
+         ${misc:Depends}
+Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
  Metapackage ensuring all packages needed to run and interact with
  Cuttlefish device are installed.
@@ -97,7 +96,6 @@ Depends: cuttlefish-base,
          qemu-system-arm (>= 2.8.0),
          qemu-system-x86 (>= 2.8.0),
          qemu-system-misc (>= 2.8.0),
-         ${shlibs:Depends},
          ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
 Conflicts: ${diverted-files}
