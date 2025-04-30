@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.6.0) unstable; urgency=medium
+cuttlefish-frontend (1.6.0) stable; urgency=medium
 
   * Increase required go versions to 1.17.13
 

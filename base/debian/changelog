@@ -1,4 +1,4 @@
-cuttlefish-common (1.6.0) unstable; urgency=medium
+cuttlefish-common (1.6.0) stable; urgency=medium
 
   * Build cf_vhost_user_input
   * Build and package lpadd and lpmake
