@@ -21,6 +21,8 @@ message HostPkgMigrationConfig {
 }
 
 message Symlink {
+  // target is actually deprecated, but removing it and reserving field 1 causes
+  // it to fail older marker files that specify this field.
   string target = 1;
   string link_name = 2;
 }
