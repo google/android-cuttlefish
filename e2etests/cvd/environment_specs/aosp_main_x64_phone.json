@@ -10,7 +10,7 @@
       },
       "boot": {
         "kernel": {
-          "build": "@ab\/aosp_kernel-common-android15-6.1\/kernel_virt_x86_64"
+          "build": "@ab\/aosp_kernel-common-android16-6.12\/kernel_virt_x86_64"
         },
         "build": "@ab\/aosp-main\/aosp_cf_x86_64_phone-trunk_staging-userdebug"
       },
