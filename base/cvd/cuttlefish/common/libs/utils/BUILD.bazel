@@ -265,6 +265,27 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "network",
+    srcs = ["network.cpp"],
+    hdrs = ["network.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "network_clang_tidy",
+    srcs = [":network"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "proto",
     hdrs = ["proto.h"],
     copts = COPTS,
@@ -493,7 +514,6 @@ clang_tidy_test(
 cc_library(
     name = "utils",
     srcs = [
-        "network.cpp",
         "proc_file_utils.cpp",
         "wait_for_unix_socket.cpp",
     ],
@@ -544,6 +564,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:shared_fd_flag",
         "//cuttlefish/common/libs/utils:signals",

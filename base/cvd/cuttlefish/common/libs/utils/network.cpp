@@ -44,6 +44,7 @@
 #include <fmt/ranges.h>
 
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
