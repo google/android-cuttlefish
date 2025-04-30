@@ -16,11 +16,22 @@
 #include <unordered_set>
 #include <vector>
 
+#include <gtest/gtest.h>
+
 #include "common/libs/utils/contains.h"
 #include "common/libs/utils/unique_resource_allocator.h"
-#include "common/libs/utils/unique_resource_allocator_test.h"
 
 namespace cuttlefish {
+//
+// Get one unique item at a time
+class OneEachTest : public testing::TestWithParam<std::vector<unsigned>> {};
+
+/*
+ * ClaimAll, StrideBeyond, Consecutive, Take, TakeAll, TakeRange,
+ * Reclaim
+ *
+ */
+class CvdIdAllocatorTest : public testing::Test {};
 
 TEST_P(OneEachTest, GetAnyAvailableOne) {
   const auto resources = GetParam();

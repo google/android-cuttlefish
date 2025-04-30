@@ -121,8 +121,8 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//libbase",
     ],
 )
@@ -243,7 +243,6 @@ cc_test(
     srcs = ["flag_parser_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
@@ -516,6 +515,7 @@ cc_library(
     ],
 )
 
+# TODO: b/414665224 - fix and enable linting
 # clang_tidy_test(
 #     name = "socket2socket_proxy_clang_tidy",
 #     srcs = [":socket2socket_proxy"],
@@ -593,6 +593,24 @@ cc_library(
 clang_tidy_test(
     name = "unique_resource_allocator_clang_tidy",
     srcs = [":unique_resource_allocator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "unique_resource_allocator_test",
+    srcs = ["unique_resource_allocator_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:unique_resource_allocator",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "unique_resource_allocator_test_clang_tidy",
+    srcs = [":unique_resource_allocator_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
@@ -688,7 +706,6 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:base64",
@@ -715,10 +732,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/common/libs/utils:vsock_connection",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
-        "//libbase",
-        "@fmt",
-        "@gflags",
-        "@jsoncpp",
     ],
 )
 
@@ -727,34 +740,6 @@ clang_tidy_test(
     srcs = [":utils"],
     tags = ["clang_tidy", "clang-tidy"],
 )
-
-cc_test(
-    name = "utils_test",
-    srcs = [
-        "unique_resource_allocator_test.cpp",
-        "unique_resource_allocator_test.h",
-    ],
-    copts = COPTS + [
-        "-Icuttlefish",
-    ],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:result_matchers",
-        "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-        "@libxml2//:libxml2",
-    ],
-)
-
-# TODO: b/403278821 - fix warnings and re-enable after migration work
-#clang_tidy_test(
-#    name = "utils_test_clang_tidy",
-#    srcs = [":utils_test"],
-#    tags = ["clang_tidy", "clang-tidy"],
-#)
 
 cc_library(
     name = "vsock_connection",
