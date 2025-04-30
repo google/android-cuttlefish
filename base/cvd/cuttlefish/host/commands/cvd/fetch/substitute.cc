@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/substitute.h"
 
+#include <unistd.h>
+
 #include <functional>
 #include <optional>
 #include <string>
@@ -99,6 +101,43 @@ Result<void> SubstituteWithFlag(
   return {};
 }
 
+/**
+ * cvd needs to be run from a path ending in cuttlefish-common/bin/cvd. This
+ * function validates that and returns the path to the cuttlefish-common
+ * directory.
+ */
+Result<std::string> GetCuttlefishCommonDir() {
+  std::string cvd_exe = android::base::GetExecutablePath();
+  CF_EXPECTF(android::base::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
+             "Can't perform substitutions when cvd is not under "
+             "cuttlefish-common/bin, it's currently at {}",
+             cvd_exe);
+  return cvd_exe.substr(0, cvd_exe.size() - std::string("/bin/cvd").size());
+}
+
+Result<void> Substitute(const std::string& target_dir, std::string link_name) {
+    static constexpr std::string_view kV1_2ModemSimulatorFiles =
+        "modem_simulator/files/";
+    static constexpr std::string_view kV1_3ModemSimulatorFiles =
+        "etc/modem_simulator/files/";
+    if (android::base::StartsWith(link_name, kV1_2ModemSimulatorFiles)) {
+      link_name = std::string(kV1_3ModemSimulatorFiles) +
+                  link_name.substr(kV1_2ModemSimulatorFiles.size());
+    }
+
+    static const std::string common_dir = CF_EXPECT(GetCuttlefishCommonDir());
+    std::string target = fmt::format("{}/{}", common_dir, link_name);
+    std::string full_link_name = fmt::format("{}/{}", target_dir, link_name);
+
+    CF_EXPECTF(FileExists(target), "{}", target);
+    // TODO: schuffelen - relax this check after migration completes
+    CF_EXPECTF(FileExists(full_link_name),
+               "Cannot substitute '{}', does not exist", full_link_name);
+    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+    CF_EXPECT(CreateSymLink(target, full_link_name));
+    return {};
+}
+
 Result<void> SubstituteWithMarker(const std::string& target_dir,
                                   const std::string& marker_file) {
   std::string content;
@@ -108,27 +147,7 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
   CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config),
             "failed parsing debian_substitution_marker file");
   for (int j = 0; j < config.symlinks_size(); j++) {
-    const fetch::Symlink& symlink = config.symlinks(j);
-    std::string full_link_name =
-        fmt::format("{}/{}", target_dir, symlink.link_name());
-
-    std::string target = symlink.target();
-    static constexpr std::string_view kV1_2ModemSimulatorFiles =
-        "/usr/lib/cuttlefish-common/modem_simulator/files/";
-    static constexpr std::string_view kV1_3ModemSimulatorFiles =
-        "/usr/lib/cuttlefish-common/etc/modem_simulator/files/";
-
-    if (!FileExists(target) &&
-        android::base::StartsWith(target, kV1_2ModemSimulatorFiles)) {
-      target = std::string(kV1_3ModemSimulatorFiles) +
-               target.substr(kV1_2ModemSimulatorFiles.size());
-    }
-    CF_EXPECTF(FileExists(target), "{}", target);
-    // TODO: schuffelen - relax this check after migration completes
-    CF_EXPECTF(FileExists(full_link_name),
-               "Cannot substitute '{}', does not exist", full_link_name);
-    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
-    CF_EXPECT(CreateSymLink(target, full_link_name));
+    CF_EXPECT(Substitute(target_dir, config.symlinks(j).link_name()));
   }
   return {};
 }
