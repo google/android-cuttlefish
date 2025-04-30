@@ -1,17 +1,11 @@
 #!/usr/bin/make -f
 
 # Start build by executing:
-# $ debuild --prepend-path /usr/local/bin --no-tgz-check -us -uc
+# $ debuild --prepend-path /usr/local/bin -i -us -uc
 
 # Uncomment this line out to make installation process more chatty.
 # Keep it on until we know there's no outstanding problems with installation.
 # export DH_VERBOSE=1
-
-# There's a bug here
-export DEB_BUILD_MAINT_OPTIONS=hardening=-format
-
-include /usr/share/dpkg/buildflags.mk
-
 
 %:
 	dh $@ --with=config-package
@@ -24,23 +18,27 @@ BUILD_WEBUI := ./build-webui.sh
 GEN_SSL_CERT := ./gen_ssl_cert.sh
 GEN_SSL_CERT_OUT_DIR := ./.sslcert
 
+.PHONY: override_dh_auto_build
 override_dh_auto_build:
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -ldflags="-w"
 	$(BUILD_WEBUI)
 	$(GEN_SSL_CERT) -o $(GEN_SSL_CERT_OUT_DIR)
 
+.PHONY: override_dh_auto_test
 override_dh_auto_test:
 	$(GOUTIL) $(LIBOPERATOR_SOURCE_DIR) test ./...
 	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) test ./...
 	$(GOUTIL) $(OPERATOR_SOURCE_DIR) test ./...
 	dh_auto_test
 
+.PHONY: override_dh_installinit
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-operator
 	dh_installinit --name=cuttlefish-host_orchestrator
 	dh_installinit
 
+.PHONY: override_dh_auto_clean
 override_dh_auto_clean:
 	rm -f $(ORCHESTRATOR_SOURCE_DIR)/host_orchestrator
 	rm -f $(OPERATOR_SOURCE_DIR)/operator
