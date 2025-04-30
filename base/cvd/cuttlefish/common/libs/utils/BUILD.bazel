@@ -180,6 +180,45 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "files_test_helper",
+    srcs = ["files_test_helper.cpp"],
+    hdrs = ["files_test_helper.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    testonly = 1,
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "@googletest//:gtest"
+    ],
+)
+
+clang_tidy_test(
+    name = "files_test_helper_clang_tidy",
+    srcs = [":files_test_helper"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "files_test",
+    srcs = ["files_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:files_test_helper",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "files_test_clang_tidy",
+    srcs = [":files_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "flag_parser",
     srcs = ["flag_parser.cpp"],
     hdrs = ["flag_parser.h"],
@@ -544,6 +583,20 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "unique_resource_allocator",
+    hdrs = ["unique_resource_allocator.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = ["//cuttlefish/common/libs/utils:contains"],
+)
+
+clang_tidy_test(
+    name = "unique_resource_allocator_clang_tidy",
+    srcs = [":unique_resource_allocator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "unix_sockets",
     srcs = ["unix_sockets.cpp"],
     hdrs = ["unix_sockets.h"],
@@ -678,9 +731,6 @@ clang_tidy_test(
 cc_test(
     name = "utils_test",
     srcs = [
-        "files_test.cpp",
-        "files_test_helper.cpp",
-        "files_test_helper.h",
         "unique_resource_allocator_test.cpp",
         "unique_resource_allocator_test.h",
     ],
