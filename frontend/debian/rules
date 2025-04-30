@@ -44,3 +44,12 @@ override_dh_auto_clean:
 	rm -f $(OPERATOR_SOURCE_DIR)/operator
 	rm -rf $(GEN_SSL_CERT_OUT_DIR)
 	dh_auto_clean
+
+# Debug info was stripped by ldflags=-w
+.PHONY: override_dh_dwz
+override_dh_dwz:
+
+# Debug info was stripped by ldflags=-w
+.PHONY: override_dh_strip
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
