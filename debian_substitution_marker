@@ -21,6 +21,11 @@ symlinks {
 }
 
 symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_internal_status"
+  link_name: "bin/cvd_internal_status"
+}
+
+symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/cvd_internal_stop"
   link_name: "bin/cvd_internal_stop"
 }
