@@ -538,6 +538,31 @@ cc_library(
     ],
 )
 
+clang_tidy_test(
+    name = "unix_sockets_clang_tidy",
+    srcs = [":unix_sockets"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "unix_sockets_test",
+    srcs = ["unix_sockets_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:unix_sockets",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "unix_sockets_test_clang_tidy",
+    srcs = [":unix_sockets_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "users",
     srcs = ["users.cpp"],
@@ -641,7 +666,6 @@ cc_test(
         "proc_file_utils_test.cpp",
         "unique_resource_allocator_test.cpp",
         "unique_resource_allocator_test.h",
-        "unix_sockets_test.cpp",
     ],
     copts = COPTS + [
         "-Icuttlefish",
