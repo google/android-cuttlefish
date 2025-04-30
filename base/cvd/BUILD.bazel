@@ -12,6 +12,12 @@ package(
 exports_files([".clang-tidy"])
 
 genrule(
+    name = "build_compilation_mode_txt",
+    outs = ["build/compilation_mode.txt"],
+    cmd = "echo $(COMPILATION_MODE) > $@",
+)
+
+genrule(
     name = "build_version_header",
     srcs = ["build_version.h.in"],
     outs = ["build/version.h"],
