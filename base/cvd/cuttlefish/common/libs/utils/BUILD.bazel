@@ -515,7 +515,6 @@ cc_library(
     name = "utils",
     srcs = [
         "proc_file_utils.cpp",
-        "wait_for_unix_socket.cpp",
     ],
     hdrs = [
         "architecture.h",
@@ -575,6 +574,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/common/libs/utils:vsock_connection",
+        "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//libbase",
         "@fmt",
         "@gflags",
@@ -644,3 +644,22 @@ cc_library(
 #     srcs = [":vsock_connection"],
 #     tags = ["clang_tidy", "clang-tidy"],
 # )
+
+cc_library(
+    name = "wait_for_unix_socket",
+    srcs = ["wait_for_unix_socket.cpp"],
+    hdrs = ["wait_for_unix_socket.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+    ],
+)
+
+clang_tidy_test(
+    name = "wait_for_unix_socket_clang_tidy",
+    srcs = [":wait_for_unix_socket"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
