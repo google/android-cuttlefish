@@ -1,14 +1,11 @@
 #!/usr/bin/make -f
 
 # Start build by executing:
-# $ debuild --prepend-path /usr/local/bin --no-tgz-check -us -uc
+# $ debuild --prepend-path /usr/local/bin -i -us -uc
 
 # Uncomment this line out to make installation process more chatty.
 # Keep it on until we know there's no outstanding problems with installation.
 # export DH_VERBOSE=1
-
-# There's a bug here
-export DEB_BUILD_MAINT_OPTIONS=hardening=-format
 
 include /usr/share/dpkg/buildflags.mk
 
@@ -16,11 +13,13 @@ include /usr/share/dpkg/buildflags.mk
 %:
 	dh $@ --with=config-package
 
+.PHONY: override_dh_installinit
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-host-resources
 	dh_installinit
 
 # the `--workspace_status_command` flag path depends on the current working directory of base/cvd
+.PHONY: override_dh_auto_build
 override_dh_auto_build:
 	cd cvd && bazel build --linkopt="-Wl,--build-id=sha1" 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
 	dh_auto_build
