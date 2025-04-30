@@ -25,6 +25,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
