@@ -46,7 +46,6 @@ MESA_DEFAULT_COPTS = [
     "-fno-math-errno",
     "-fno-trapping-math",
     "-fvisibility=hidden",
-    "-Werror",
     "-Werror=incompatible-pointer-types",
     "-Wno-#warnings",
     "-Wno-asm-operand-widths",
