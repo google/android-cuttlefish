@@ -9,6 +9,50 @@
 
 include /usr/share/dpkg/buildflags.mk
 
+# Retrieve bazel's view of the current compilation_mode
+compilation_mode :=
+default_compilation_mode := \
+  $(shell cd cvd; \
+          bazel build //:build_compilation_mode_txt >/dev/null 2>&1; \
+	  cat bazel-bin/build/compilation_mode.txt)
+$(if $(default_compilation_mode),,$(error Bazel install is broken))
+
+filters := $(if $(filter noopt,${DEB_BUILD_OPTIONS}),-O%,)
+ifneq (${filters},)
+  # If DEB_BUILD_OPTIONS=noopt is set, assume the user wants debug symbol
+  # packages and no optimization. Override bazel defaults, if necessary.
+  ifneq (${default_compilation_mode},dbg)
+    compilation_mode := --compilation_mode=dbg
+  endif
+else
+  ifeq (${default_compilation_mode},fastbuild)
+    filters := -g -O%
+  endif
+  ifeq (${default_compilation_mode},dbg)
+    filters := -O%
+  endif
+  ifeq (${default_compilation_mode},opt)
+    filters :=
+  endif
+endif
+
+# Convert dpkg-buildflags to bazel flags, filtering out debug and optimization
+# flags as necessary
+conlyopts := $(foreach flag,${CFLAGS},$(if $(filter ${filters},${flag}),,--conlyopt="${flag}"))
+cxxopts   := $(foreach flag,${CXXFLAGS},$(if $(filter ${filters},${flag}),,--cxxopt="${flag}"))
+linkopts  := $(foreach flag,${LDFLAGS},--linkopt="${flag}")
+
+# Force llvm.ld to use sha1 build-id instead of blake3
+linkopts  += --linkopt="-Wl,--build-id=sha1"
+
+ifeq ($(filter ${filters},-g),)
+# When debug packaging is enabled, tell bazel not to strip debuginfo
+copts := --strip=never
+# Clang defaults to emitting dwarf-5, which at the time of writing the debug
+# symbol handing in debuild does not like, so limit it to dwarf-4.
+copts += --copt="-gdwarf-4"
+endif
+
 cuttlefish_common := debian/cuttlefish-base/usr/lib/cuttlefish-common
 
 %:
@@ -22,14 +66,25 @@ override_dh_installinit:
 # the `--workspace_status_command` flag path depends on the current working directory of base/cvd
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	cd cvd && bazel build --linkopt="-Wl,--build-id=sha1" 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
+	cd cvd && bazel build ${compilation_mode} ${conlyopts} ${copts} ${cxxopts} ${linkopts} 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
 	dh_auto_build
+
+# Only generate optimized DWARF if debug is enabled
+.PHONY: override_dh_dwz
+override_dh_dwz:
+	$(if $(filter ${filters},-g),,dh_dwz)
+
+# Only generate dbgsym package if debug is enabled
+.PHONY: override_dh_strip
+override_dh_strip:
+	dh_strip $(if $(filter ${filters},-g),--no-automatic-dbgsym,)
 
 # Remove bazel metadata during installation
 .PHONY: override_dh_install
 override_dh_install:
 	dh_install
-	rm -rf ${cuttlefish_common}/bin/cvd.{repo_mapping,runfiles*}
+	rm -rf ${cuttlefish_common}/bin/cvd.repo_mapping
+	rm -rf ${cuttlefish_common}/bin/cvd.runfiles*
 
 # Repair output files bazel actions made executable
 .PHONY: override_dh_fixperms
