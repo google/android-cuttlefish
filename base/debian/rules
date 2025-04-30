@@ -9,6 +9,7 @@
 
 include /usr/share/dpkg/buildflags.mk
 
+cuttlefish_common := debian/cuttlefish-base/usr/lib/cuttlefish-common
 
 %:
 	dh $@ --with=config-package
@@ -24,3 +25,15 @@ override_dh_auto_build:
 	cd cvd && bazel build --linkopt="-Wl,--build-id=sha1" 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
 	dh_auto_build
 
+# Remove bazel metadata during installation
+.PHONY: override_dh_install
+override_dh_install:
+	dh_install
+	rm -rf ${cuttlefish_common}/bin/cvd.{repo_mapping,runfiles*}
+
+# Repair output files bazel actions made executable
+.PHONY: override_dh_fixperms
+override_dh_fixperms:
+	dh_fixperms
+	chmod -x ${cuttlefish_common}/bin/*.json
+	find ${cuttlefish_common}/etc -type f -exec chmod -x '{}' ';'
