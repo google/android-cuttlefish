@@ -286,6 +286,27 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "proc_file_utils",
+    srcs = ["proc_file_utils.cpp"],
+    hdrs = ["proc_file_utils.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:files",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "proc_file_utils_clang_tidy",
+    srcs = [":proc_file_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "proto",
     hdrs = ["proto.h"],
     copts = COPTS,
@@ -513,9 +534,6 @@ clang_tidy_test(
 
 cc_library(
     name = "utils",
-    srcs = [
-        "proc_file_utils.cpp",
-    ],
     hdrs = [
         "architecture.h",
         "archive.h",
@@ -564,6 +582,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:network",
+        "//cuttlefish/common/libs/utils:proc_file_utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:shared_fd_flag",
         "//cuttlefish/common/libs/utils:signals",
