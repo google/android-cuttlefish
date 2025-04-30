@@ -115,27 +115,19 @@ Result<std::string> GetCuttlefishCommonDir() {
   return cvd_exe.substr(0, cvd_exe.size() - std::string("/bin/cvd").size());
 }
 
-Result<void> Substitute(const std::string& target_dir, std::string link_name) {
-    static constexpr std::string_view kV1_2ModemSimulatorFiles =
-        "modem_simulator/files/";
-    static constexpr std::string_view kV1_3ModemSimulatorFiles =
-        "etc/modem_simulator/files/";
-    if (android::base::StartsWith(link_name, kV1_2ModemSimulatorFiles)) {
-      link_name = std::string(kV1_3ModemSimulatorFiles) +
-                  link_name.substr(kV1_2ModemSimulatorFiles.size());
-    }
+Result<void> Substitute(const std::string& target_dir,
+                        const std::string& link_name) {
+  static const std::string common_dir = CF_EXPECT(GetCuttlefishCommonDir());
+  std::string target = fmt::format("{}/{}", common_dir, link_name);
+  std::string full_link_name = fmt::format("{}/{}", target_dir, link_name);
 
-    static const std::string common_dir = CF_EXPECT(GetCuttlefishCommonDir());
-    std::string target = fmt::format("{}/{}", common_dir, link_name);
-    std::string full_link_name = fmt::format("{}/{}", target_dir, link_name);
-
-    CF_EXPECTF(FileExists(target), "{}", target);
-    // TODO: schuffelen - relax this check after migration completes
-    CF_EXPECTF(FileExists(full_link_name),
-               "Cannot substitute '{}', does not exist", full_link_name);
-    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
-    CF_EXPECT(CreateSymLink(target, full_link_name));
-    return {};
+  CF_EXPECTF(FileExists(target), "{}", target);
+  // TODO: schuffelen - relax this check after migration completes
+  CF_EXPECTF(FileExists(full_link_name),
+             "Cannot substitute '{}', does not exist", full_link_name);
+  CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+  CF_EXPECT(CreateSymLink(target, full_link_name));
+  return {};
 }
 
 Result<void> SubstituteWithMarker(const std::string& target_dir,
