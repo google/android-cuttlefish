@@ -15,4 +15,6 @@
 -->
 <resources>
   <bool name="is_multicast_list_update_ntf_v2_supported">true</bool>
+  <bool name="is_multicast_list_update_rsp_v2_supported">true</bool>
 </resources>
+
