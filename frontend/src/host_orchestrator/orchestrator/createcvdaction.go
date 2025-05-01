@@ -130,6 +130,7 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("environment config:\n%s", string(data))
 	data = bytes.ReplaceAll(data,
 		[]byte(apiv1.EnvConfigUserArtifactsVar+"/"),
 		[]byte(a.userArtifactsDirResolver.GetDirPath("")))
