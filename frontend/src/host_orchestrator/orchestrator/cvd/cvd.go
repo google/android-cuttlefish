@@ -146,14 +146,6 @@ func (cli *CLI) runCmd(cmd *exec.Cmd) ([]byte, error) {
 // Runs the given command returning the stdout output as a byte array.
 // Both stdout and stderr output also written to the logs.
 func (cli *CLI) exec(bin string, args ...string) ([]byte, error) {
-	const begin = "############################################\n" +
-		"## BEGIN \n" +
-		"############################################"
-	const end = "############################################\n" +
-		"## END \n" +
-		"############################################"
-	log.Println(begin)
-	defer log.Println(end)
 	return cli.runCmd(cli.buildCmd(bin, args...))
 }
 
