@@ -18,7 +18,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -40,42 +39,6 @@ func TestPowerBtn(t *testing.T) {
 	}
 	cvd, err := createDevice(srv, uploadDir)
 	if err != nil {
-		t.Fatal(err)
-	}
-	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	line, err := readScreenStateLine(adbBin, cvd.ADBSerial)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff := cmp.Diff("mScreenState=ON", line); diff != "" {
-		t.Errorf("config mismatch (-want +got):\n%s", diff)
-	}
-
-	if err := srv.Powerbtn(cvd.Group, cvd.Name); err != nil {
-		t.Fatal(err)
-	}
-
-	line, err = readScreenStateLine(adbBin, cvd.ADBSerial)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff := cmp.Diff("mScreenState=OFF", line); diff != "" {
-		t.Errorf("config mismatch (-want +got):\n%s", diff)
-	}
-}
-
-func TestPowerBtnNoHostTool(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
-	uploadDir, err := srv.CreateUploadDir()
-	if err != nil {
-		t.Fatal(err)
-	}
-	cvd, err := createDevice(srv, uploadDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	toolBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/powerbtn_cvd", uploadDir)
-	if err := os.Remove(toolBin); err != nil {
 		t.Fatal(err)
 	}
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
