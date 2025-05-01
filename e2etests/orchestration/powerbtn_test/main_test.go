@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
@@ -54,12 +55,18 @@ func TestPowerBtn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	line, err = readScreenStateLine(adbBin, cvd.ADBSerial)
-	if err != nil {
-		t.Fatal(err)
+	screenOff := false
+	// The change is not reflected in `dumpsys display` right away.
+	for attempt := 0; attempt < 3 && !screenOff; attempt++ {
+		time.Sleep(1 * time.Second)
+		line, err = readScreenStateLine(adbBin, cvd.ADBSerial)
+		if err != nil {
+			t.Fatal(err)
+		}
+		screenOff = (line == "mScreenState=OFF")
 	}
-	if diff := cmp.Diff("mScreenState=OFF", line); diff != "" {
-		t.Errorf("config mismatch (-want +got):\n%s", diff)
+	if !screenOff {
+		t.Error("`mScreenState=OFF` never found in `dumpsys display`")
 	}
 }
 
