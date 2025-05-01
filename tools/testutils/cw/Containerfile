@@ -26,5 +26,7 @@ RUN --mount=source=.,target=/mnt,type=bind apt-get install -y \
 
 FROM with_cuttlefish_packages
 
+RUN useradd -m "testrunner"
+
 CMD [ "/usr/sbin/init" ]
 
