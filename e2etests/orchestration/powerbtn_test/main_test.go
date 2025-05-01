@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -29,15 +30,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+const baseURL = "http://0.0.0.0:2080"
+
 func TestPowerBtn(t *testing.T) {
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -47,36 +43,29 @@ func TestPowerBtn(t *testing.T) {
 		t.Fatal(err)
 	}
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	line, err := readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
+	line, err := readScreenStateLine(adbBin, cvd.ADBSerial)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff("mScreenState=ON", line); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 
 	if err := srv.Powerbtn(cvd.Group, cvd.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	line, err = readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
+	line, err = readScreenStateLine(adbBin, cvd.ADBSerial)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff("mScreenState=OFF", line); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 }
 
 func TestPowerBtnNoHostTool(t *testing.T) {
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -85,33 +74,29 @@ func TestPowerBtnNoHostTool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dh, err := common.NewDockerHelper()
-	if err != nil {
-		t.Fatal(err)
-	}
 	toolBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/powerbtn_cvd", uploadDir)
-	if err := dh.RemoveHostTool(ctx.DockerContainerID, toolBin); err != nil {
+	if err := os.Remove(toolBin); err != nil {
 		t.Fatal(err)
 	}
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	line, err := readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
+	line, err := readScreenStateLine(adbBin, cvd.ADBSerial)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff("mScreenState=ON", line); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 
 	if err := srv.Powerbtn(cvd.Group, cvd.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	line, err = readScreenStateLine(ctx.DockerContainerID, adbBin, cvd.ADBSerial)
+	line, err = readScreenStateLine(adbBin, cvd.ADBSerial)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff("mScreenState=OFF", line); diff != "" {
-		t.Errorf("response mismatch (-want +got):\n%s", diff)
+		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -125,23 +110,20 @@ func createDevice(srv hoclient.HostOrchestratorService, dir string) (*hoapi.CVD,
 	return common.CreateCVDFromUserArtifactsDir(srv, dir)
 }
 
-func readScreenStateLine(cID, adbBin, serial string) (string, error) {
-	dh, err := common.NewDockerHelper()
+func readScreenStateLine(adbBin, serial string) (string, error) {
+	adbH := &common.AdbHelper{Bin: adbBin}
+	if err := adbH.StartServer(); err != nil {
+		return "", fmt.Errorf("adb start-server failed: %w", err)
+	}
+	if err := adbH.Connect(serial); err != nil {
+		return "", fmt.Errorf("adb connect with serial %q failed: %w", serial, err)
+	}
+	stdoutStderr, err := adbH.ExecShellCommand(serial, []string{"dumpsys", "display"})
 	if err != nil {
-		return "", err
-	}
-	if err := dh.StartADBServer(cID, adbBin); err != nil {
-		return "", err
-	}
-	if err := dh.ConnectADB(cID, adbBin, serial); err != nil {
-		return "", err
-	}
-	stdOut, err := dh.ExecADBShellCommand(cID, adbBin, serial, []string{"dumpsys", "display"})
-	if err != nil {
-		return "", err
+		return "", fmt.Errorf("adb shell with serial %q failed: %w", serial, err)
 	}
 	re := regexp.MustCompile("^  mScreenState=[A-Z]+$")
-	scanner := bufio.NewScanner(stdOut)
+	scanner := bufio.NewScanner(strings.NewReader(stdoutStderr))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if re.MatchString(line) {
