@@ -17,17 +17,10 @@
 
 #include <string.h>
 
-#include <deque>
-#include <functional>
-#include <map>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
-#include <vector>
 
-#include <json/json.h>
-#include <libwebsockets.h>
+#include "json/json.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

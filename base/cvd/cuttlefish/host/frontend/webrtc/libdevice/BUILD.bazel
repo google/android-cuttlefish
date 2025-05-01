@@ -57,7 +57,6 @@ cc_library(
         "@jsoncpp",
         "@libwebm//:mkvmuxer",
         "@libwebrtc",
-        "@libwebsockets",
     ],
 )
 
