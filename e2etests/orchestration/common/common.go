@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"time"
@@ -388,4 +389,36 @@ func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorService, dir str
 		return nil, fmt.Errorf("failed creating instance: %w", err)
 	}
 	return res.CVDs[0], nil
+}
+
+type AdbHelper struct {
+	Bin string
+}
+
+func (h *AdbHelper) StartServer() error {
+	_, err := runCmd(h.Bin, "start-server")
+	return err
+}
+
+func (h *AdbHelper) Connect(serial string) error {
+	_, err := runCmd(h.Bin, "connect", serial)
+	return err
+}
+
+// Return combined stdout and stderr
+func (h *AdbHelper) ExecShellCommand(serial string, cmd []string) (string, error) {
+	return runCmd(h.Bin, append([]string{"-s", serial, "shell"}, cmd...)...)
+}
+
+func runCmd(name string, args ...string) (string, error) {
+	cmd := exec.CommandContext(context.TODO(), name, args...)
+	log.Printf("Executing command: `%s`\n", cmd.String())
+	stdoutStderr, err := cmd.CombinedOutput()
+	if len(stdoutStderr) > 0 {
+		log.Printf("Combined stdout and stderr: %s\n", stdoutStderr)
+	}
+	if err != nil {
+		return "", nil
+	}
+	return string(stdoutStderr), nil
 }
