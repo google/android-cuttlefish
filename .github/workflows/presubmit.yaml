@@ -195,8 +195,13 @@ jobs:
         sudo podman info
         sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
         mkdir -p -m 777 /tmp/cw_bazel
-        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/journal_gatewayd_test:journal_gatewayd_test_test
+        # TODO: Use bazel query.
+        targets=("//orchestration/journal_gatewayd_test:journal_gatewayd_test_test" "//orchestration/powerbtn_test:powerbtn_test_test")
+        for t in "${targets[@]}"; do
+          sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+          sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
+          sudo podman rm -f tester
+        done
     - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v4
@@ -242,4 +247,3 @@ jobs:
       with:
         name: e2e-tests-orchestration-runner-special-testlogs
         path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main
-
