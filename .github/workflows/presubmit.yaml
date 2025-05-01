@@ -207,7 +207,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: e2e-tests-orchestration-runner-testlogs
-        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main
+        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/_main/bazel-out/k8-fastbuild/testlogs
   e2e-tests-orchestration-runner-special:
     runs-on: ubuntu-24.04
     if: ${{ always() && needs.build-debian-package.result == 'success' }}
@@ -246,4 +246,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: e2e-tests-orchestration-runner-special-testlogs
-        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main
+        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/_main/bazel-out/k8-fastbuild/testlogs
