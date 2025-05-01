@@ -30,6 +30,7 @@ Build-Depends: bazel [amd64],
                uuid-dev,
                xxd
 Standards-Version: 4.5.0
+Rules-Requires-Root: no
 
 Package: cuttlefish-base
 Architecture: any

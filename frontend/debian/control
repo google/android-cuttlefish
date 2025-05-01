@@ -9,6 +9,7 @@ Build-Depends: config-package-dev,
                libprotobuf-dev,
                protobuf-compiler,
 Standards-Version: 4.5.0
+Rules-Requires-Root: no
 
 Package: cuttlefish-user
 Architecture: any
