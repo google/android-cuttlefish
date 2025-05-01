@@ -28,13 +28,13 @@ sudo podman build \
 The run container command must be run at the root of the `android-cuttlefish` repo directory.
 
 ```
-mkdir -p /tmp/bazel_output && \
+mkdir -p -m 777 /tmp/cw_bazel && \
 sudo podman run \
   --name tester \
   -d \
   --privileged \
   --pids-limit=8192 \
-  -v /tmp/bazel_output:/tmp/bazel/output \
+  -v /tmp/cw_bazel:/tmp/cw_bazel \
   -v .:/src/workspace \
   -w /src/workspace/e2etests \
   android-cuttlefish-e2etest:latest
@@ -44,8 +44,7 @@ sudo podman run \
 
 ```
 sudo podman exec \
-  --user=$(id -u):$(id -g) \
-  -e "USER=$(whoami)" \
+  --user=testrunner \
   -it tester \
-  bazel --output_user_root=/tmp/bazel/output test //orchestration/journal_gatewayd_test:journal_gatewayd_test_test
+  bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/journal_gatewayd_test:journal_gatewayd_test_test
 ```
