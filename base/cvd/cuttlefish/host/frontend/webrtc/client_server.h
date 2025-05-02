@@ -35,12 +35,14 @@ class ClientFilesServer {
  private:
   struct Config;
 
-  ClientFilesServer(std::unique_ptr<Config> config, lws_context* context);
+  ClientFilesServer(std::unique_ptr<Config> config, lws_context* context,
+                    lws_vhost* vhost);
 
   void Serve();
 
   std::unique_ptr<Config> config_;
   lws_context* context_;
+  lws_vhost* vhost_;
   std::atomic<bool> running_;
   std::thread server_thread_;
 };
