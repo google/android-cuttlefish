@@ -72,5 +72,5 @@ cc_library(
         "_NL_SYSCONFDIR_LIBNL=\"\\\"/etc/libnl\\\"\"",
     ],
     conlyopts = ["-std=gnu11"],
-    deps = ["@//linux-headers"],
+    deps = ["@//linux_headers"],
 )

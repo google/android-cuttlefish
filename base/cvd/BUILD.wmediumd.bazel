@@ -96,7 +96,7 @@ cc_binary(
     ],
     deps = [
         "@//libbase",
-        "@//linux-headers",
+        "@//linux_headers",
         "@gflags",
         "@grpc//:grpc",
         "@grpc//:grpc++",
