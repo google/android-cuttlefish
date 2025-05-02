@@ -1,8 +1,21 @@
-cuttlefish-common (1.7.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.7.0) unstable; urgency=medium
 
-  * 
+  * Build and package mkbootfs by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1071
+  * Swap libdrm/wayland repo URLs during outage by @cjreynol in https://github.com/google/android-cuttlefish/pull/1087
+  * Swap to Github mirror for libwebsockets by @cjreynol in https://github.com/google/android-cuttlefish/pull/1088
+  * Split `//cuttlefish/common/libs/utils` by @Databean in https://github.com/google/android-cuttlefish/pull/1090
+  * Prepare webrtc/libdevice for internal build by @jemoreira in https://github.com/google/android-cuttlefish/pull/1086
+  * cvd substitutions work when running from source by @jemoreira in https://github.com/google/android-cuttlefish/pull/1091
+  * Build and package wmediumd and wmediumd_gen_config by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1067
+  * Add missing dependencies by @jemoreira in https://github.com/google/android-cuttlefish/pull/1095
+  * Debian packaging improvements by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1094
+  * Migrate more files out of staging, particularly unittests left when migrating binary targets by @cjreynol in https://github.com/google/android-cuttlefish/pull/1083
+  * Drop operator websocket connection support from webRTC by @jemoreira in https://github.com/google/android-cuttlefish/pull/1097
+  * Support older versions of libwebsockets in webRTC by @jemoreira in https://github.com/google/android-cuttlefish/pull/1100
+  * Rename linux-headers as linux_headers by @jemoreira in https://github.com/google/android-cuttlefish/pull/1101
+  * Add missing licenses by @jemoreira in https://github.com/google/android-cuttlefish/pull/1102
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 25 Apr 2025 17:44:35 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 02 May 2025 16:40:47 -0700
 
 cuttlefish-common (1.6.0) stable; urgency=medium
 
