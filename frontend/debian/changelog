@@ -1,8 +1,11 @@
-cuttlefish-frontend (1.7.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.7.0) unstable; urgency=medium
 
-  * 
+  * HO GCE credentials fix by @ser-io in https://github.com/google/android-cuttlefish/pull/1081
+  * Log received environment config by @ser-io in https://github.com/google/android-cuttlefish/pull/1099
+  * Remove BEGIN END blocks from logs. by @ser-io in https://github.com/google/android-cuttlefish/pull/1098
+  * Fixes powerbtn_test_test flakiness. by @ser-io in https://github.com/google/android-cuttlefish/pull/1096
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 25 Apr 2025 17:44:50 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 02 May 2025 16:46:51 -0700
 
 cuttlefish-frontend (1.6.0) stable; urgency=medium
 
