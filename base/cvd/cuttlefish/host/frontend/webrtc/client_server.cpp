@@ -42,6 +42,7 @@ struct ClientFilesServer::Config {
     memset(&info_, 0, sizeof info_);
     info_.port = 0;             // let the kernel select an available port
     info_.iface = "127.0.0.1";  // listen only on localhost
+    info_.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
     info_.mounts = &mount_;
   }
 
@@ -51,9 +52,10 @@ struct ClientFilesServer::Config {
 };
 
 ClientFilesServer::ClientFilesServer(std::unique_ptr<Config> config,
-                                     lws_context* context)
+                                     lws_context* context, lws_vhost* vhost)
     : config_(std::move(config)),
       context_(context),
+      vhost_(vhost),
       running_(true),
       server_thread_([this]() { Serve(); }) {}
 
@@ -64,6 +66,7 @@ ClientFilesServer::~ClientFilesServer() {
   }
   if (context_) {
     // Release the port and other resources
+    lws_vhost_destroy(vhost_);
     lws_context_destroy(context_);
   }
 }
@@ -80,13 +83,19 @@ std::unique_ptr<ClientFilesServer> ClientFilesServer::New(
     LOG(ERROR) << "Failed to create lws context";
     return nullptr;
   }
+  auto vhost = lws_create_vhost(ctx, &conf->info_);
+  if (!vhost) {
+    LOG(ERROR) << "Failed to create lws vhost";
+    lws_context_destroy(ctx);
+    return nullptr;
+  }
   return std::unique_ptr<ClientFilesServer>(
-      new ClientFilesServer(std::move(conf), ctx));
+      new ClientFilesServer(std::move(conf), ctx, vhost));
 }
 
 int ClientFilesServer::port() const {
   // Get the port for the first (and only) vhost.
-  return lws_get_vhost_listen_port(lws_get_vhost_by_name(context_, "default"));
+  return lws_get_vhost_listen_port(vhost_);
 }
 
 void ClientFilesServer::Serve() {
