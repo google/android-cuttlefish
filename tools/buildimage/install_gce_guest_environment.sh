@@ -19,43 +19,49 @@
 # IMPORTANT!!! This script expects debian-11-genericcloud-amd64-20240104-1616.raw image.
 # https://cloud.debian.org/images/cloud/bullseye/20240104-1616/debian-11-genericcloud-amd64-20240104-1616.raw
 
-usage() {
-  echo "usage: $0 -r /path/to/disk.raw"
-  exit 1
+set -o errexit -o nounset -o pipefail
+
+function print_usage() {
+  >&2 echo "usage: $0 -r /path/to/disk.raw"
 }
 
-diskraw=
+DISK_RAW=
 
 while getopts ":hr:" opt; do
   case "${opt}" in
     h)
-      usage
+      print_usage
       ;;
     r)
-      diskraw="${OPTARG}"
+      DISK_RAW="${OPTARG}"
       ;;
-    \?)
-      echo "Invalid option: ${OPTARG}" >&2
-      usage
-      ;;
-    :)
-      echo "Invalid option: ${OPTARG} requires an argument" >&2
-      usage
+    *)
+      >&2 echo "Invalid option: -${OPTARG}"
+      print_usage
+      exit 1
       ;;
   esac
 done
 
-mount_point="/mnt/image"
-sudo mkdir ${mount_point}
+readonly DISK_RAW
 
+if [[ "${DISK_RAW}" == "" ]]; then
+  echo "path to disk raw is required"
+  print_usage
+  exit 1
+fi
+
+readonly MOUNT_POINT="/mnt/image"
+
+sudo mkdir ${MOUNT_POINT}
 # offset value is 262144 * 512, the `262144`th is the sector where the `Linux filesystem` partition
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
-sudo mount -o loop,offset=$((262144 * 512)) ${diskraw} ${mount_point}
+sudo mount -o loop,offset=$((262144 * 512)) ${DISK_RAW} ${MOUNT_POINT}
 
-sudo chroot /mnt/image mkdir /run/resolvconf
-sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
+sudo chroot ${MOUNT_POINT} mkdir /run/resolvconf
+sudo cp /etc/resolv.conf ${MOUNT_POINT}/run/resolvconf/resolv.conf
 
-cat <<'EOF' >${mount_point}/tmp/install.sh
+cat <<'EOF' >${MOUNT_POINT}/tmp/install.sh
 #!/usr/bin/env bash
 echo "== Installing Google guest environment for Debian =="
 export DEBIAN_FRONTEND=noninteractive
@@ -89,7 +95,7 @@ done
 EOF
 sudo chroot /mnt/image bash /tmp/install.sh
 
-sudo rm -r ${mount_point}/run/resolvconf
+sudo rm -r ${MOUNT_POINT}/run/resolvconf
 
-sudo umount ${mount_point}
-sudo rm -r ${mount_point}
+sudo umount ${MOUNT_POINT}
+sudo rm -r ${MOUNT_POINT}
