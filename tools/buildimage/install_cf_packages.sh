@@ -67,6 +67,7 @@ readonly MOUNT_POINT="/mnt/image"
 function cleanup() {
   sudo rm -rf ${MOUNT_POINT}/run/resolvconf
 
+  sudo umount -f ${MOUNT_POINT}/dev
   sudo umount -f ${MOUNT_POINT} && sudo rm -r ${MOUNT_POINT}
 }
 
@@ -76,15 +77,20 @@ sudo mkdir ${MOUNT_POINT}
 # offset value is 262144 * 512, the `262144`th is the sector where the `Linux filesystem` partition
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
 sudo mount -o loop,offset=$((262144 * 512)) ${DISK_RAW} ${MOUNT_POINT}
+sudo mount --bind /dev/ ${MOUNT_POINT}/dev
+
+sudo chroot /mnt/image mkdir /run/resolvconf
+sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
 
 cp ${PACKAGES_DIR}/cuttlefish-base_*_amd64.deb ${MOUNT_POINT}/tmp/
 cp ${PACKAGES_DIR}/cuttlefish-user_*_amd64.deb ${MOUNT_POINT}/tmp/
 cp ${PACKAGES_DIR}/cuttlefish-orchestration_*_amd64.deb ${MOUNT_POINT}/tmp/
 
-sudo chroot /mnt/image mkdir /run/resolvconf
-sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
+cat <<'EOF' >${MOUNT_POINT}/tmp/install.sh
+apt update && apt install -y gnupg2
+apt install -y /tmp/cuttlefish-base_*_amd64.deb
+apt install -y /tmp/cuttlefish-user_*_amd64.deb
+apt install -y /tmp/cuttlefish-orchestration_*_amd64.deb
+EOF
 
-sudo chroot ${MOUNT_POINT} apt update
-sudo chroot ${MOUNT_POINT} bash -c 'apt install -y /tmp/cuttlefish-base_*_amd64.deb'
-sudo chroot ${MOUNT_POINT} bash -c 'apt install -y /tmp/cuttlefish-user_*_amd64.deb'
-sudo chroot ${MOUNT_POINT} bash -c 'apt install -y /tmp/cuttlefish-orchestration_*_amd64.deb'
+sudo chroot /mnt/image bash /tmp/install.sh
