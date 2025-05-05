@@ -56,6 +56,7 @@ readonly MOUNT_POINT="/mnt/image"
 function cleanup() {
   sudo rm -rf ${MOUNT_POINT}/run/resolvconf
 
+  sudo umount -f ${MOUNT_POINT}/dev
   sudo umount -f ${MOUNT_POINT} && sudo rm -r ${MOUNT_POINT}
 }
 
@@ -65,40 +66,24 @@ sudo mkdir ${MOUNT_POINT}
 # offset value is 262144 * 512, the `262144`th is the sector where the `Linux filesystem` partition
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
 sudo mount -o loop,offset=$((262144 * 512)) ${DISK_RAW} ${MOUNT_POINT}
+sudo mount --bind /dev/ ${MOUNT_POINT}/dev
 
 sudo chroot ${MOUNT_POINT} mkdir /run/resolvconf
 sudo cp /etc/resolv.conf ${MOUNT_POINT}/run/resolvconf/resolv.conf
 
 cat <<'EOF' >${MOUNT_POINT}/tmp/install.sh
 #!/usr/bin/env bash
-echo "== Installing Google guest environment for Debian =="
-export DEBIAN_FRONTEND=noninteractive
-echo "Determining Debian version..."
-eval $(grep VERSION_CODENAME /etc/os-release)
-if [[ -z $VERSION_CODENAME ]]; then
- echo "ERROR: Could not determine Debian version."
- exit 1
-fi
-echo "Running apt update..."
-apt update
-echo "Installing gnupg..."
-apt install -y gnupg
-echo "Adding GPG key for Google cloud repo."
+apt-get update && apt-get install -y gnupg2
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-echo "Updating repo file..."
-tee "/etc/apt/sources.list.d/google-cloud.list" << EOM
+eval $(grep VERSION_CODENAME /etc/os-release)
+echo "${VERSION_CODENAME}"
+tee /etc/apt/sources.list.d/google-cloud.list << EOM
 deb http://packages.cloud.google.com/apt google-compute-engine-${VERSION_CODENAME}-stable main
 deb http://packages.cloud.google.com/apt google-cloud-packages-archive-keyring-${VERSION_CODENAME} main
 EOM
-echo "Running apt update..."
 apt update
-echo "Installing packages..."
-for pkg in google-cloud-packages-archive-keyring google-compute-engine; do
- echo "Running apt install ${pkg}..."
- apt install -y ${pkg}
- if [[ $? -ne 0 ]]; then
-    echo "ERROR: Failed to install ${pkg}."
- fi
-done
+apt install -y google-cloud-packages-archive-keyring
+apt install -y google-compute-engine google-osconfig-agent
 EOF
+
 sudo chroot /mnt/image bash /tmp/install.sh
