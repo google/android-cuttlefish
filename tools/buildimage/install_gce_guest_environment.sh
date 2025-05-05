@@ -53,6 +53,14 @@ fi
 
 readonly MOUNT_POINT="/mnt/image"
 
+function cleanup() {
+  sudo rm -rf ${MOUNT_POINT}/run/resolvconf
+
+  sudo umount -f ${MOUNT_POINT} && sudo rm -r ${MOUNT_POINT}
+}
+
+trap cleanup EXIT
+
 sudo mkdir ${MOUNT_POINT}
 # offset value is 262144 * 512, the `262144`th is the sector where the `Linux filesystem` partition
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
@@ -94,8 +102,3 @@ for pkg in google-cloud-packages-archive-keyring google-compute-engine; do
 done
 EOF
 sudo chroot /mnt/image bash /tmp/install.sh
-
-sudo rm -r ${MOUNT_POINT}/run/resolvconf
-
-sudo umount ${MOUNT_POINT}
-sudo rm -r ${MOUNT_POINT}
