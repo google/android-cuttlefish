@@ -19,15 +19,14 @@
 # IMPORTANT!!! This script expects an `image_bullseye_gce_amd64.raw` file
 # from https://salsa.debian.org/cloud-team/debian-cloud-images
 
-set -e
+set -o errexit -o nounset -o pipefail
 
-usage() {
-  echo "usage: $0 -r /path/to/disk.raw -p /path/to/packages_dir"
-  exit 1
+function print_usage() {
+  >&2 echo "usage: $0 -r /path/to/disk.raw -p /path/to/packages_dir"
 }
 
-diskraw=
-packages_dir=
+DISK_RAW=
+PACKAGES_DIR=
 
 while getopts ":hr:p:" opt; do
   case "${opt}" in
@@ -35,41 +34,54 @@ while getopts ":hr:p:" opt; do
       usage
       ;;
     r)
-      diskraw="${OPTARG}"
+      DISK_RAW="${OPTARG}"
       ;;
     p)
-      packages_dir="${OPTARG}"
+      PACKAGES_DIR="${OPTARG}"
       ;;
-    \?)
-      echo "Invalid option: ${OPTARG}" >&2
-      usage
-      ;;
-    :)
-      echo "Invalid option: ${OPTARG} requires an argument" >&2
-      usage
+    *)
+      >&2 echo "Invalid option: -${OPTARG}"
+      print_usage
+      exit 1
       ;;
   esac
 done
 
-mount_point="/mnt/image"
-sudo mkdir ${mount_point}
+readonly DISK_RAW
+readonly PACKAGES_DIR
+
+if [[ "${DISK_RAW}" == "" ]]; then
+  echo "path to disk raw is required"
+  print_usage
+  exit 1
+fi
+
+if [[ "${PACKAGES_DIR}" == "" ]] || ! [[ -d "${PACKAGES_DIR}" ]]; then
+  echo "invalid packages directory"
+  print_usage
+  exit 1
+fi
+
+readonly MOUNT_POINT="/mnt/image"
+
+sudo mkdir ${MOUNT_POINT}
 # offset value is 262144 * 512, the `262144`th is the sector where the `Linux filesystem` partition
 # starts and `512` bytes is the sectors size. See `sudo fdisk -l disk.raw`.
-sudo mount -o loop,offset=$((262144 * 512)) ${diskraw} ${mount_point}
+sudo mount -o loop,offset=$((262144 * 512)) ${DISK_RAW} ${MOUNT_POINT}
 
-cp ${packages_dir}/cuttlefish-base_*_amd64.deb ${mount_point}/tmp/
-cp ${packages_dir}/cuttlefish-user_*_amd64.deb ${mount_point}/tmp/
-cp ${packages_dir}/cuttlefish-orchestration_*_amd64.deb ${mount_point}/tmp/
+cp ${PACKAGES_DIR}/cuttlefish-base_*_amd64.deb ${MOUNT_POINT}/tmp/
+cp ${PACKAGES_DIR}/cuttlefish-user_*_amd64.deb ${MOUNT_POINT}/tmp/
+cp ${PACKAGES_DIR}/cuttlefish-orchestration_*_amd64.deb ${MOUNT_POINT}/tmp/
 
 sudo chroot /mnt/image mkdir /run/resolvconf
 sudo cp /etc/resolv.conf /mnt/image/run/resolvconf/resolv.conf
 
-sudo chroot ${mount_point} apt update
-sudo chroot ${mount_point} bash -c 'apt install -y /tmp/cuttlefish-base_*_amd64.deb'
-sudo chroot ${mount_point} bash -c 'apt install -y /tmp/cuttlefish-user_*_amd64.deb'
-sudo chroot ${mount_point} bash -c 'apt install -y /tmp/cuttlefish-orchestration_*_amd64.deb'
+sudo chroot ${MOUNT_POINT} apt update
+sudo chroot ${MOUNT_POINT} bash -c 'apt install -y /tmp/cuttlefish-base_*_amd64.deb'
+sudo chroot ${MOUNT_POINT} bash -c 'apt install -y /tmp/cuttlefish-user_*_amd64.deb'
+sudo chroot ${MOUNT_POINT} bash -c 'apt install -y /tmp/cuttlefish-orchestration_*_amd64.deb'
 
-sudo rm -r ${mount_point}/run/resolvconf
+sudo rm -r ${MOUNT_POINT}/run/resolvconf
 
-sudo umount ${mount_point}
-sudo rm -r ${mount_point}
+sudo umount ${MOUNT_POINT}
+sudo rm -r ${MOUNT_POINT}
