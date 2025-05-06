@@ -67,6 +67,7 @@ package_files(
         "cuttlefish-common/bin/unpack_bootimg.py": "@mkbootimg//:unpack_bootimg.py",
         "cuttlefish-common/bin/vk_lavapipe_icd.json": "//cuttlefish/host/graphics/vulkan:vk_lavapipe_icd",
         "cuttlefish-common/bin/vk_swiftshader_icd.json": "//cuttlefish/host/graphics/vulkan:vk_swiftshader_icd",
+        "cuttlefish-common/bin/webRTC": "//cuttlefish/host/frontend/webrtc:webRTC",
         "cuttlefish-common/bin/wmediumd": "@wmediumd//:wmediumd",
         "cuttlefish-common/bin/wmediumd_gen_config": "@wmediumd//:wmediumd_gen_config",
         "cuttlefish-common/etc/default_input_devices/keyboard.json": "//cuttlefish/host/commands/vhost_user_input:device_specs/keyboard.json",
