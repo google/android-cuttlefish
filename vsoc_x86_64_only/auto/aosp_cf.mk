@@ -29,6 +29,7 @@ PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true
 # Telephony: Use Minradio RIL instead of Cuttlefish RIL
 TARGET_USES_CF_RILD := false
 PRODUCT_PACKAGES += com.android.hardware.radio.minradio.virtual
+PRODUCT_PACKAGES += ConnectivityOverlayMinradio
 
 #
 # All components inherited here go to system_ext image
