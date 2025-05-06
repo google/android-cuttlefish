@@ -1,5 +1,5 @@
 load("@append_squashfs_overlay_crates//:defs.bzl", "aliases", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -12,4 +12,9 @@ rust_binary(
     ],
     deps = all_crate_deps(normal = True),
     aliases = aliases(),
+)
+
+rust_test(
+    name = "append_squashfs_overlay_test",
+    crate = ":append_squashfs_overlay",
 )
