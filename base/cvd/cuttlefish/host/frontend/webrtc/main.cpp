@@ -27,6 +27,7 @@
 #include "common/libs/utils/files.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 #include "google/rpc/code.pb.h"
+#include "google/rpc/status.pb.h"
 #include "cuttlefish/host/frontend/webrtc/audio_handler.h"
 #include "cuttlefish/host/frontend/webrtc/client_server.h"
 #include "cuttlefish/host/frontend/webrtc/connection_observer.h"
