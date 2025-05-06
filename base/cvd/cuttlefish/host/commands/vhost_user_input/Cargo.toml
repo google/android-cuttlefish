@@ -21,3 +21,6 @@ virtio-queue = { version = "0.14.0" }
 vm-memory = { version = "0.16.1", features = [ "arc-swap", "backend-atomic", "backend-bitmap", "backend-mmap", "default" ] }
 vmm-sys-util = { version = "0.12.1" }
 zerocopy = { version = "0.8.24", features = [ "alloc", "derive", "simd", "std", "zerocopy-derive" ] }
+
+[dev-dependencies]
+tempfile = { version = "3.12.0" }
