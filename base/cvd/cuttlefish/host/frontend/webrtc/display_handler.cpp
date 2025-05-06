@@ -72,7 +72,7 @@ DisplayHandler::DisplayHandler(
             display_sinks_.erase(display_number);
             streamer_.RemoveDisplay(display_id);
           } else {
-            static_assert("Unhandled display event.");
+            static_assert(false, "Unhandled display event.");
           }
         },
         event);
