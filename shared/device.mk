@@ -393,10 +393,6 @@ ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
 endif
 PRODUCT_PACKAGES += $(LOCAL_HEALTH_PRODUCT_PACKAGE)
 
-# Health Storage
-PRODUCT_PACKAGES += \
-    com.google.cf.health.storage
-
 PRODUCT_PACKAGES += \
     com.android.hardware.input.processor
 

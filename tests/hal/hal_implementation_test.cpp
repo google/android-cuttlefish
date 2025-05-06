@@ -255,6 +255,8 @@ static const std::set<std::string> kAlwaysMissingAidl = {
     // TODO(b/360102915): remove this after implementing no-op version of HAL
     //  for cuttlefish.
     "android.hardware.virtualization.capabilities.capabilities_service",
+    // Removed in b/409403322.
+    "android.hardware.health.storage",
 };
 
 /*
