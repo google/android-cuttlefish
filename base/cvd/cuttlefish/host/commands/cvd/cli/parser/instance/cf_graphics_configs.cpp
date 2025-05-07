@@ -15,6 +15,11 @@
  */
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_graphics_configs.h"
 
+#include <algorithm>
+#include <optional>
+#include <string>
+#include <vector>
+
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
@@ -33,7 +38,15 @@ using cvd::config::Display;
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 
-Result<std::string> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
+Result<std::optional<std::string>> GenerateDisplayFlag(const EnvironmentSpecification& cfg) {
+  bool no_displays_configured =
+      std::all_of(cfg.instances().begin(), cfg.instances().end(),
+                  [](const auto& instance) -> bool {
+                    return instance.graphics().displays().empty();
+                  });
+  if (no_displays_configured) {
+    return {};
+  }
   cuttlefish::InstancesDisplays all_instances_displays;
 
   for (const auto& in_instance : cfg.instances()) {
@@ -96,7 +109,7 @@ bool RecordScreen(const Instance& instance) {
 
 std::string GpuMode(const Instance& instance) {
   if (instance.graphics().has_gpu_mode() &&
-      instance.graphics().gpu_mode() != "") {
+      !instance.graphics().gpu_mode().empty()) {
     return instance.graphics().gpu_mode();
   } else {
     // Use the instance default
@@ -108,11 +121,14 @@ std::string GpuMode(const Instance& instance) {
 
 Result<std::vector<std::string>> GenerateGraphicsFlags(
     const EnvironmentSpecification& cfg) {
-  return std::vector<std::string>{
-      CF_EXPECT(GenerateDisplayFlag(cfg)),
-      GenerateInstanceFlag("record_screen", cfg, RecordScreen),
-      GenerateInstanceFlag("gpu_mode", cfg, GpuMode),
-  };
+  std::vector<std::string> flags;
+  std::optional<std::string> display_flag = CF_EXPECT(GenerateDisplayFlag(cfg));
+  if (display_flag.has_value()) {
+    flags.push_back(std::move(display_flag.value()));
+  }
+  flags.push_back(GenerateInstanceFlag("record_screen", cfg, RecordScreen));
+  flags.push_back(GenerateInstanceFlag("gpu_mode", cfg, GpuMode));
+  return flags;
 }
 
 }  // namespace cuttlefish
