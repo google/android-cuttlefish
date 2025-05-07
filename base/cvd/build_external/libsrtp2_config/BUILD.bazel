@@ -1,0 +1,29 @@
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+cc_library(
+    name = "libsrtp2_config",
+    hdrs = [
+        "crypto/include/config.h",
+    ],
+    defines = select({
+        "@platforms//cpu:x86_32": [
+            "CPU_CISC=1",
+            "HAVE_X86=1",
+        ],
+        "@platforms//cpu:x86_64": [
+            "CPU_CISC=1",
+            "HAVE_X86=1",
+        ],
+        "//conditions:default": [
+            "CPU_RISC=1",
+        ],
+    }),
+    includes = [
+        ".",
+        "crypto/include",
+    ],
+)
