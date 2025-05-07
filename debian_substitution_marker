@@ -66,6 +66,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/extract-ikconfig"
+  link_name: "bin/extract-ikconfig"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/extract-vmlinux"
   link_name: "bin/extract-vmlinux"
 }
