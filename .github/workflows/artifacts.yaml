@@ -9,28 +9,6 @@ on:
     branches:
       - main
 jobs:
-  export-debs:
-    runs-on: ubuntu-22.04
-    container:
-      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
-    steps:
-    - name: apt update
-      run: apt update -y && apt upgrade -y
-    - name: install sudo
-      run: apt install -y sudo
-    - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Build debs
-      run: |
-        bash tools/buildutils/build_packages.sh
-        ls -la *.deb
-    - name: Build debs.tar
-      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs.tar --null --files-from -
-    - name: Publish debs.tar
-      uses: actions/upload-artifact@v4
-      with:
-        name: debs
-        path: debs.tar
   export-docker-image-x86_64:
     runs-on: ubuntu-22.04
     steps:
