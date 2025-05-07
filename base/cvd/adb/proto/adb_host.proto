@@ -1,0 +1,140 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+option java_package = "com.android.server.adb.protos";
+option java_outer_classname = "DevicesProto";
+
+package adb.proto;
+
+// This mirrors adb.h's "enum ConnectionState"
+enum ConnectionState {
+    ANY = 0;
+    CONNECTING = 1;
+    AUTHORIZING = 2;
+    UNAUTHORIZED = 3;
+    NOPERMISSION = 4;
+    DETACHED = 5;
+    OFFLINE = 6;
+    BOOTLOADER = 7;
+    DEVICE = 8;
+    HOST = 9;
+    RECOVERY = 10;
+    SIDELOAD = 11;
+    RESCUE = 12;
+}
+
+enum ConnectionType {
+    UNKNOWN = 0;
+    USB = 1;
+    SOCKET = 2;
+}
+
+message Device {
+    string serial = 1;
+    ConnectionState state = 2;
+    string bus_address = 3;
+    string product = 4;
+    string model = 5;
+    string device = 6;
+    ConnectionType connection_type = 7;
+    int64 negotiated_speed = 8;
+    int64 max_speed = 9;
+    int64 transport_id = 10;
+}
+
+message Devices {
+    repeated Device device = 1;
+}
+
+message AdbServerStatus {
+    enum UsbBackend {
+        UNKNOWN_USB = 0;
+        NATIVE = 1;
+        LIBUSB = 2;
+    }
+
+    enum MdnsBackend {
+        UNKNOWN_MDNS = 0;
+        BONJOUR = 1;
+        OPENSCREEN = 2;
+     }
+
+     UsbBackend usb_backend = 1;
+     bool usb_backend_forced = 2;
+
+     MdnsBackend mdns_backend = 3;
+     bool mdns_backend_forced = 4;
+
+     string version = 5;
+     string build = 6;
+     string executable_absolute_path = 7;
+     string log_absolute_path = 8;
+     string os = 9;
+     optional string trace_level = 10;
+     optional bool burst_mode = 11;
+     optional bool mdns_enabled = 12;
+     optional string keystore_path = 13;
+     optional string known_hosts_path = 14;
+}
+
+message MdnsServices {
+    repeated ServiceAdbTcp tcp = 1;
+    repeated ServiceAdbTls tls = 2;
+    repeated ServiceAdbPairing pair = 3;
+}
+
+message ServiceAdbTcp {
+    MdnsService service = 1;
+}
+
+message ServiceAdbTls {
+    MdnsService service = 1 ;
+    // If this device has previously been paired, it is considered a known device.
+    bool known_device = 2;
+}
+
+message ServiceAdbPairing {
+    MdnsService service = 1;
+}
+
+message MdnsService {
+    // For explanation about the meaning of instance, service, and domain
+    // refer to RFC 6763 (mdns-sd).
+
+    // e.g.: "adb-43081FDAS000ST-GIVKML"
+    string instance = 1;
+
+    // e.g.: _adb-tls-connect._tcp
+    string service = 2;
+
+    // e.g.: local
+    string domain = 3;
+
+    optional string ipv4 = 4;
+    repeated string ipv6 = 5;
+    uint32 port = 6;
+
+    // Comes from device property "ro.product.model"
+    optional string product_model = 7;
+
+    // Comes from device property "ro.build.version.sdk_full"
+    optional string build_version_sdk_full = 8;
+}
+
+
+
