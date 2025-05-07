@@ -56,6 +56,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/gnss_grpc_proxy"
+  link_name: "bin/gnss_grpc_proxy"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/kernel_log_monitor"
   link_name: "bin/kernel_log_monitor"
 }
