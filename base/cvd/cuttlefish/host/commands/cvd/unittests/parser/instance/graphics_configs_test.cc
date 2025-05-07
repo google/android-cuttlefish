@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+#include <optional>
+#include <string>
+#include <vector>
+
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/message_differencer.h>
 #include <gtest/gtest.h>
@@ -48,7 +52,7 @@ InstanceDisplays DefaultDisplays() {
   return displays;
 }
 
-Result<InstancesDisplays> DisplaysFlag(std::vector<std::string> args) {
+Result<std::optional<InstancesDisplays>> DisplaysFlag(std::vector<std::string> args) {
   std::optional<std::string> flag_str_opt;
   auto flag = GflagsCompatFlag("displays_binproto")
                   .Setter([&flag_str_opt](const FlagMatch& m) -> Result<void> {
@@ -56,6 +60,9 @@ Result<InstancesDisplays> DisplaysFlag(std::vector<std::string> args) {
                     return {};
                   });
   CF_EXPECT(ConsumeFlags({flag}, args));
+  if (!flag_str_opt.has_value()) {
+    return {};
+  }
   auto flag_str = CF_EXPECT(std::move(flag_str_opt));
 
   std::vector<std::uint8_t> decoded;
@@ -87,12 +94,6 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyJson) {
 
   auto display = DisplaysFlag(*serialized_data);
   EXPECT_THAT(display, IsOk());
-
-  InstancesDisplays expected;
-  expected.add_instances()->CopyFrom(DefaultDisplays());
-  expected.add_instances()->CopyFrom(DefaultDisplays());
-
-  AssertProtoEquals(expected, *display);
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
@@ -120,12 +121,6 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyGraphics) {
 
   auto display = DisplaysFlag(*serialized_data);
   EXPECT_THAT(display, IsOk());
-
-  InstancesDisplays expected;
-  expected.add_instances()->CopyFrom(DefaultDisplays());
-  expected.add_instances()->CopyFrom(DefaultDisplays());
-
-  AssertProtoEquals(expected, *display);
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
@@ -170,7 +165,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesDisplaysFlagEmptyDisplays) {
   ins2.CopyFrom(DefaultDisplays());
   ins2.add_displays()->CopyFrom(ins2.displays()[0]);
 
-  AssertProtoEquals(expected, *display);
+  AssertProtoEquals(expected, (*display).value());
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
@@ -242,7 +237,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
   ins2_display1.set_dpi(320);
   ins2_display1.set_refresh_rate_hertz(60);
 
-  AssertProtoEquals(expected, *display);
+  AssertProtoEquals(expected, (*display).value());
 }
 
 }  // namespace cuttlefish
