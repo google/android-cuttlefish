@@ -5,6 +5,7 @@ package_files(
     executable = "cuttlefish-common/bin/cvd",
     package_file_to_src = {
         "cuttlefish-common/bin/acloud_translator": "//cuttlefish/host/commands/acloud_translator",
+        "cuttlefish-common/bin/adb": "//adb:adb",
         "cuttlefish-common/bin/adb_connector": "//cuttlefish/host/frontend/adb_connector",
         "cuttlefish-common/bin/allocd_client": "//cuttlefish/host/libs/allocd:allocd_client",
         "cuttlefish-common/bin/assemble_cvd": "//cuttlefish/host/commands/assemble_cvd",
