@@ -55,8 +55,9 @@ static std::string Gsm7bitEncode(const std::string& input) {
   icu::UCharCharacterIterator iter(unicode_str.getTerminatedBuffer(),
                                    unicode_str.length());
   size_t octects_size = unicode_str.length() - (unicode_str.length() / 8);
-  std::byte octets[octects_size];
-  std::byte* octects_index = octets;
+  std::vector<std::byte> octets;
+  octets.reserve(octects_size);
+  auto octects_index = octets.begin();
   int bits_to_write_in_prev_octect = 0;
   for (; iter.hasNext(); iter.next()) {
     UChar uchar = iter.current();
