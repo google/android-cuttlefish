@@ -593,6 +593,12 @@ PRODUCT_PACKAGES += \
 # Enable adb debugging
 PRODUCT_PACKAGES += set_adb
 
+#
+# virtio-media utils
+#
+PRODUCT_PACKAGES += \
+    v4l2-ctl
+
 PRODUCT_CHECK_VENDOR_SEAPP_VIOLATIONS := true
 
 PRODUCT_CHECK_DEV_TYPE_VIOLATIONS := true
