@@ -1,0 +1,33 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libcvd_send_sms",
+    srcs = [
+        "pdu_format_builder.cc",
+        "sms_sender.cc",
+    ],
+    hdrs = [
+        "pdu_format_builder.h",
+        "sms_sender.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@icu//icu4c/source/common:headers",
+        "@icu//icu4c/source/common:schriter",
+        "@icu//icu4c/source/common:utypes",
+    ],
+)
+
+clang_tidy_test(
+    name = "libcvd_send_sms_clang_tidy",
+    srcs = [":libcvd_send_sms"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
