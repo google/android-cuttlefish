@@ -4,7 +4,7 @@ cuttlefish-frontend (1.8.0) UNRELEASED; urgency=medium
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 02 May 2025 17:07:34 -0700
 
-cuttlefish-frontend (1.7.0) unstable; urgency=medium
+cuttlefish-frontend (1.7.0) stable; urgency=medium
 
   * HO GCE credentials fix by @ser-io in https://github.com/google/android-cuttlefish/pull/1081
   * Log received environment config by @ser-io in https://github.com/google/android-cuttlefish/pull/1099
