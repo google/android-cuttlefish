@@ -1,0 +1,29 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "cvd_update_location",
+    srcs = [
+        "main.cc",
+    ],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/location",
+        "//libbase",
+        "@gflags",
+        "@grpc//:grpc",
+        "@grpc//:grpc++",
+    ],
+)
+
+clang_tidy_test(
+    name = "cvd_update_location_clang_tidy",
+    srcs = [":cvd_update_location"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
