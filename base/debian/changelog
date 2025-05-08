@@ -1,4 +1,4 @@
-cuttlefish-common (1.7.0) unstable; urgency=medium
+cuttlefish-common (1.7.0) stable; urgency=medium
 
   * Build and package mkbootfs by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1071
   * Swap libdrm/wayland repo URLs during outage by @cjreynol in https://github.com/google/android-cuttlefish/pull/1087
