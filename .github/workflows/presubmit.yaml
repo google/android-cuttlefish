@@ -87,6 +87,10 @@ jobs:
     container:
       image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     steps:
+    - name: Authenticate
+      uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
     - name: Common bazel setup
       uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
       with:
@@ -102,9 +106,13 @@ jobs:
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Build cvd
-      run: cd base/cvd && bazel build --verbose_failures ...
+      run: cd base/cvd && bazel build \
+           --google_default_credentials remote_cache=https://storage.googleapis.com/android-cuttlefish-cache \
+           --verbose_failures ...
     - name: Test cvd
-      run: cd base/cvd && bazel test --sandbox_writable_path=$HOME --test_output=errors ...
+      run: cd base/cvd && bazel test --sandbox_writable_path=$HOME --test_output=errors \
+           --google_default_credentials remote_cache=https://storage.googleapis.com/android-cuttlefish-cache \
+           ...
     - name: Upload test logs
       uses: actions/upload-artifact@v4
       with:
