@@ -96,6 +96,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/mkenvimage_slim"
+  link_name: "bin/mkenvimage_slim"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/openwrt_control_server"
   link_name: "bin/openwrt_control_server"
 }
