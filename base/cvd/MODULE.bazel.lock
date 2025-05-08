@@ -124,6 +124,8 @@
     "https://bcr.bazel.build/modules/grpc/1.66.0.bcr.3/MODULE.bazel": "f6047e89faf488f5e3e65cb2594c6f5e86992abec7487163ff6b623526e543b0",
     "https://bcr.bazel.build/modules/grpc/1.71.0/MODULE.bazel": "7fcab2c05530373f1a442c362b17740dd0c75b6a2a975eec8f5bf4c70a37928a",
     "https://bcr.bazel.build/modules/grpc/1.71.0/source.json": "60ef8c4c72c8280ae94c05b4f38bf67785acb25477ab8dbac096a9604449ff90",
+    "https://bcr.bazel.build/modules/icu/76.1.bcr.1/MODULE.bazel": "ea12074ba90001a437a8064e0c85a19b0858bad354ae9967a25ebacb252c70a3",
+    "https://bcr.bazel.build/modules/icu/76.1.bcr.1/source.json": "829924a8993cd25220cd4e441ef4040856a89c5b1b76f0b23f4c59faa120e755",
     "https://bcr.bazel.build/modules/jsoncpp/1.9.5/MODULE.bazel": "31271aedc59e815656f5736f282bb7509a97c7ecb43e927ac1a37966e0578075",
     "https://bcr.bazel.build/modules/jsoncpp/1.9.5/source.json": "4108ee5085dd2885a341c7fab149429db457b3169b86eb081fa245eadf69169d",
     "https://bcr.bazel.build/modules/libevent/2.1.12-stable.bcr.0/MODULE.bazel": "c49e5bcb520c9b07bcc17309fc867ad1d04f8fce7830a2f7cb9742516453aa62",
