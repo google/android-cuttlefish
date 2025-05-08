@@ -170,3 +170,6 @@ GOOGLE_CAR_SERVICE_OVERLAY += ConnectivityOverlayCuttleFishGoogle
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/auto/android-info.txt
 BOARD_BOOTCONFIG += androidboot.hibernation_resume_device=259:3
+
+# TODO (b/405655265) Remove once the BT issue is fixed
+BOARD_BOOTCONFIG += androidboot.cuttlefish_service_bluetooth_checker=false
