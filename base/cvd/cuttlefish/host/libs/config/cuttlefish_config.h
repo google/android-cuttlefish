@@ -638,6 +638,7 @@ class CuttlefishConfig {
     bool fail_fast() const;
     bool vhost_user_block() const;
     std::string ti50_emulator() const;
+    bool enable_jcard_simulator() const;
 
     // Kernel and bootloader logging
     bool enable_kernel_log() const;
@@ -876,6 +877,8 @@ class CuttlefishConfig {
     void set_fail_fast(bool fail_fast);
     void set_vhost_user_block(bool qemu_vhost_user_block);
     void set_ti50_emulator(const std::string& ti50_emulator);
+    // jcardsim
+    void set_enable_jcard_simulator(bool enable);
 
     // Kernel and bootloader logging
     void set_enable_kernel_log(bool enable_kernel_log);
