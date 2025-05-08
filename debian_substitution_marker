@@ -71,6 +71,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/operator_proxy"
+  link_name: "bin/operator_proxy"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/powerbtn_cvd"
   link_name: "bin/powerbtn_cvd"
 }
