@@ -134,3 +134,8 @@ symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/restart_cvd"
   link_name: "bin/restart_cvd"
 }
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/tombstone_receiver"
+  link_name: "bin/tombstone_receiver"
+}
