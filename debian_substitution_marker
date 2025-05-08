@@ -94,3 +94,8 @@ symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/process_restarter"
   link_name: "bin/process_restarter"
 }
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/record_cvd"
+  link_name: "bin/record_cvd"
+}
