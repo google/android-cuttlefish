@@ -20,6 +20,7 @@ package_files(
         "cuttlefish-common/bin/cvd_internal_stop": "//cuttlefish/host/commands/stop:cvd_internal_stop",
         "cuttlefish-common/bin/cvd_send_id_disclosure": "//cuttlefish/host/commands/cvd_send_id_disclosure",
         "cuttlefish-common/bin/cvd_send_sms": "//cuttlefish/host/commands/cvd_send_sms",
+        "cuttlefish-common/bin/cvd_update_location": "//cuttlefish/host/commands/cvd_update_location",
         "cuttlefish-common/bin/cvd_update_security_algorithm": "//cuttlefish/host/commands/cvd_update_security_algorithm",
         "cuttlefish-common/bin/cvd": "//cuttlefish/host/commands/cvd",
         "cuttlefish-common/bin/echo_server": "//cuttlefish/host/commands/echo_server",
