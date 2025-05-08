@@ -3304,7 +3304,6 @@ cc_library(
         "@crc32c",
         "@libevent//:event",
         "@libpffft",
-        "@librnnoise",
         "@libyuv",
         "@protobuf",
     ],
