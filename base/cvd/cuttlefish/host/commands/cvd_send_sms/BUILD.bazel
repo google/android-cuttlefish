@@ -5,6 +5,26 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cc_binary(
+    name = "cvd_send_sms",
+    srcs = [
+        "main.cc",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcvd_send_sms",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "cvd_send_sms_clang_tidy",
+    srcs = [":cvd_send_sms"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "libcvd_send_sms",
     srcs = [
