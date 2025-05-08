@@ -51,3 +51,25 @@ clang_tidy_test(
     srcs = [":libcvd_send_sms"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_test(
+    name = "libcvd_send_sms_test",
+    srcs = [
+        "unittest/pdu_format_builder_test.cc",
+        "unittest/sms_sender_test.cc",
+    ],
+    copts = COPTS,
+    deps = [
+        ":libcvd_send_sms",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "libcvd_send_sms_test_clang_tidy",
+    srcs = [":libcvd_send_sms_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
