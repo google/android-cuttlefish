@@ -90,6 +90,11 @@ symlinks {
   link_name: "bin/powerbtn_cvd"
 }
 
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/powerwash_cvd"
+  link_name: "bin/powerwash_cvd"
+}
+
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/process_restarter"
   link_name: "bin/process_restarter"
