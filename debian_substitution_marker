@@ -111,6 +111,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/modem_simulator"
+  link_name: "bin/modem_simulator"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/openwrt_control_server"
   link_name: "bin/openwrt_control_server"
 }
@@ -153,4 +158,19 @@ symlinks: {
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/tombstone_receiver"
   link_name: "bin/tombstone_receiver"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
+  link_name: "etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml"
+  link_name: "etc/modem_simulator/files/iccprofile_for_sim0.xml"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml"
+  link_name: "etc/modem_simulator/files/numeric_operator.xml"
 }
