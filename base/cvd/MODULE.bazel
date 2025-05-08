@@ -352,13 +352,6 @@ git_repository(
 )
 
 git_repository(
-    name = "librnnoise",
-    commit = "1cbdbcf1283499bbb2230a6b0f126eb9b236defd",
-    build_file = "@//:BUILD.librnnoise.bazel",
-    remote = "https://github.com/xiph/rnnoise",
-)
-
-git_repository(
     name = "libsrtp2",
     # This is quite old, but it's what libwebrtc depends on
     commit = "860492290f7d1f25e2bd45da6471bfd4cd4d7add",
