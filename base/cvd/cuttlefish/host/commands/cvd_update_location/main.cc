@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
+#include <ostream>
+#include <string>
+
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include <grpc/grpc.h>
+#include <grpcpp/create_channel.h>
+
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/location/GnssClient.h"
 
