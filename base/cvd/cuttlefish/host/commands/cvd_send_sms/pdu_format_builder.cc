@@ -54,11 +54,11 @@ static std::string Gsm7bitEncode(const std::string& input) {
   icu::UnicodeString unicode_str(input.c_str());
   icu::UCharCharacterIterator iter(unicode_str.getTerminatedBuffer(),
                                    unicode_str.length());
-  size_t octects_size = unicode_str.length() - (unicode_str.length() / 8);
+  size_t octets_size = unicode_str.length() - (unicode_str.length() / 8);
   std::vector<std::byte> octets;
-  octets.reserve(octects_size);
-  auto octects_index = octets.begin();
-  int bits_to_write_in_prev_octect = 0;
+  octets.reserve(octets_size);
+  auto octets_index = octets.begin();
+  int bits_to_write_in_prev_octet = 0;
   for (; iter.hasNext(); iter.next()) {
     UChar uchar = iter.current();
     char dest[5];
@@ -80,24 +80,24 @@ static std::string Gsm7bitEncode(const std::string& input) {
     std::byte code =
         (std::byte)std::distance(kGSM7BitDefaultAlphabet.begin(), found_it);
     if (iter.hasPrevious()) {
-      std::byte prev_octect_value = *(octects_index - 1);
+      std::byte prev_octet_value = *(octets_index - 1);
       // Writes the corresponding lowest part in the previous octet.
-      *(octects_index - 1) =
-          code << (8 - bits_to_write_in_prev_octect) | prev_octect_value;
+      *(octets_index - 1) =
+          code << (8 - bits_to_write_in_prev_octet) | prev_octet_value;
     }
-    if (bits_to_write_in_prev_octect < 7) {
+    if (bits_to_write_in_prev_octet < 7) {
       // Writes the remaining highest part in the current octet.
-      *octects_index = code >> bits_to_write_in_prev_octect;
-      bits_to_write_in_prev_octect++;
-      octects_index++;
-    } else {  // bits_to_write_in_prev_octect == 7
+      *octets_index = code >> bits_to_write_in_prev_octet;
+      bits_to_write_in_prev_octet++;
+      octets_index++;
+    } else {  // bits_to_write_in_prev_octet == 7
       // The 7 bits of the current character were fully packed into the
       // previous octet.
-      bits_to_write_in_prev_octect = 0;
+      bits_to_write_in_prev_octet = 0;
     }
   }
   std::stringstream result;
-  for (int i = 0; i < octects_size; i++) {
+  for (int i = 0; i < octets_size; i++) {
     result << std::setfill('0') << std::setw(2) << std::hex
            << std::to_integer<int>(octets[i]);
   }
@@ -111,8 +111,8 @@ static bool IsValidE164PhoneNumber(const std::string& number) {
   return std::regex_match(number, e164_regex);
 }
 
-// Encodes numeric values by using the Semi-Octect representation.
-static std::string SemiOctectsEncode(const std::string& input) {
+// Encodes numeric values by using the Semi-Octet representation.
+static std::string SemiOctetsEncode(const std::string& input) {
   bool length_is_odd = input.length() % 2 == 1;
   int end = length_is_odd ? input.length() - 1 : input.length();
   std::stringstream ss;
@@ -174,7 +174,7 @@ std::string PDUFormatBuilder::Build() {
   std::stringstream ss;
   ss << "000100" << DecimalToHexString(sender_number_without_plus.length())
      << "91"  // 91 indicates international phone number format.
-     << SemiOctectsEncode(sender_number_without_plus)
+     << SemiOctetsEncode(sender_number_without_plus)
      << "00"  // TP-PID. Protocol identifier
      << "00"  // TP-DCS. Data coding scheme. The GSM 7bit default alphabet.
      << DecimalToHexString(ulength) << encoded;
