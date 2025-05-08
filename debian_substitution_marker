@@ -101,6 +101,11 @@ symlinks {
 }
 
 symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/metrics_launcher"
+  link_name: "bin/metrics_launcher"
+}
+
+symlinks {
   target: "/usr/lib/cuttlefish-common/bin/mkenvimage_slim"
   link_name: "bin/mkenvimage_slim"
 }
