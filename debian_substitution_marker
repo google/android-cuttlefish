@@ -124,3 +124,8 @@ symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/record_cvd"
   link_name: "bin/record_cvd"
 }
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/restart_cvd"
+  link_name: "bin/restart_cvd"
+}
