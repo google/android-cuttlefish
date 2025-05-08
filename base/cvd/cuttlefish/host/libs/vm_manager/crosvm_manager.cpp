@@ -887,6 +887,15 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddHvcSink();
   }
 
+  if (instance.enable_jcard_simulator()) {
+    // /dev/hvc17 = JCardSimulator
+    crosvm_cmd.AddHvcReadWrite(
+        instance.PerInstanceInternalPath("jcardsim_fifo_vm.out"),
+        instance.PerInstanceInternalPath("jcardsim_fifo_vm.in"));
+  } else {
+    crosvm_cmd.AddHvcSink();
+  }
+
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     crosvm_cmd.AddHvcSink();
   }
