@@ -166,6 +166,11 @@ symlinks: {
 }
 
 symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/snapshot_util_cvd"
+  link_name: "bin/snapshot_util_cvd"
+}
+
+symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/tcp_connector"
   link_name: "bin/tcp_connector"
 }
