@@ -62,10 +62,24 @@ clang_tidy_test(
 )
 
 cc_library(
-    name = "utils",
-    srcs = [
-        "subprocess_waiter.cpp",
+    name = "subprocess_waiter",
+    srcs = ["subprocess_waiter.cpp"],
+    hdrs = ["subprocess_waiter.h"],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
     ],
+)
+
+clang_tidy_test(
+    name = "subprocess_waiter_clang_tidy",
+    srcs = [":subprocess_waiter"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "utils",
     hdrs = [
         "common.h",
         "flags_collector.h",
@@ -80,9 +94,8 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/commands/cvd/utils:flags_collector",
         "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
-        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/commands/cvd/utils:subprocess_waiter",
         "//libbase",
-        "@tinyxml2",
     ],
 )
 
