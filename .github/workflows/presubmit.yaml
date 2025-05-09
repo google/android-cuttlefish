@@ -181,19 +181,10 @@ jobs:
     - name: Check kvm
       run: |
         ls -la /dev/kvm
-    - name: Free space
-      run: |
-        echo "disk space before cleanup:"
-        df -h
-        sudo rm -rf /usr/local/.ghcup
-        sudo rm -rf /usr/local/lib/android/sdk/ndk
-        sudo rm -rf /usr/local/share/boost
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/hostedtoolcache
-        sudo rm -rf /opt/ghc
-        sudo apt-get clean
-        echo "disk space after cleanup:"
-        df -h
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: download image
@@ -223,19 +214,10 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
     steps:
-    - name: Free space
-      run: |
-        echo "disk space before cleanup:"
-        df -h
-        sudo rm -rf /usr/local/.ghcup
-        sudo rm -rf /usr/local/lib/android/sdk/ndk
-        sudo rm -rf /usr/local/share/boost
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/hostedtoolcache
-        sudo rm -rf /opt/ghc
-        sudo apt-get clean
-        echo "disk space after cleanup:"
-        df -h
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: download image
