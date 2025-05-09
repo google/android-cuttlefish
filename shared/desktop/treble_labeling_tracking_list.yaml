@@ -1,0 +1,23 @@
+coredomain_in_vendor:
+  - domain: timberslide
+    bug: 414659235
+  - domain: arc_media_migrator
+    bug: 416629196
+platform_file_in_vendor_file_contexts:
+  - path: /system/bin/timberslide
+    bug: 414659235
+  - path: /system/bin/arc-media-migrator
+    bug: 416629196
+  - path: /system/bin/chrome-data-migrator
+    bug: 416629201
+  - path: /system/bin/arc-app-data-migrator
+    bug: 416629201
+  - path: /system_ext/bin/hw/android\.hardware\.audio\.parameter_parser\.android-desktop
+    bug: 399153834
+platform_apps_in_vendor_seapp_contexts:
+  - apk: vendor.google.desktop.serviceability.apk
+    bug: 416629965
+non_coredomain_for_platform_apps:
+  - apk: vendor.google.desktop.serviceability.apk
+    bug: 416629965
+coredomain_for_vendor_apps: []
