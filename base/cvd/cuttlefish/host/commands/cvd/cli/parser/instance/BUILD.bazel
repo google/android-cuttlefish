@@ -1,3 +1,6 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
@@ -35,4 +38,38 @@ cc_library(
         "@protobuf",
         "@protobuf//:json_util",
     ],
+)
+
+cc_test(
+    name = "instance_test",
+    srcs = [
+        "boot_configs_test.cc",
+        "disk_configs_test.cc",
+        "graphics_configs_test.cc",
+        "vm_configs_test.cc",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+        "@protobuf",
+        "@protobuf//:differencer",
+    ],
+)
+
+clang_tidy_test(
+    name = "instance_test_clang_tidy",
+    srcs = [":instance_test"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

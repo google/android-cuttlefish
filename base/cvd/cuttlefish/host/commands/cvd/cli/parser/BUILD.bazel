@@ -1,3 +1,4 @@
+load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
@@ -75,5 +76,57 @@ cc_library(
 clang_tidy_test(
     name = "parser_clang_tidy",
     srcs = [":parser"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "parser_test",
+    srcs = [
+        "configs_inheritance_test.cc",
+        "flags_parser_test.cc",
+        "metrics_configs_test.cc",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/host/libs/config",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+        "@protobuf",
+        "@protobuf//:differencer",
+    ],
+)
+
+clang_tidy_test(
+    name = "parser_test_clang_tidy",
+    srcs = [":parser_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "test_common",
+    srcs = ["test_common.cc"],
+    hdrs = ["test_common.h"],
+    testonly = True,
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/parser",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "test_common_clang_tidy",
+    srcs = [":test_common"],
     tags = ["clang_tidy", "clang-tidy"],
 )
