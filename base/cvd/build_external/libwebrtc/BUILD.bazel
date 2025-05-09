@@ -48,5 +48,6 @@ cc_library(
     deps = [
       "@libpffft",
       "@libsrtp2",
+      "@libyuv",
     ],
 )

@@ -449,3 +449,10 @@ git_repository(
     commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
     remote = "https://android.googlesource.com/platform/external/libnl",
 )
+
+git_repository(
+    name = "libvpx",
+    build_file = "@//:BUILD.libvpx.bazel",
+    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
+    remote = "https://chromium.googlesource.com/webm/libvpx",
+)
