@@ -422,7 +422,7 @@ func runCmd(name string, args ...string) (string, error) {
 		log.Printf("Combined stdout and stderr: %s\n", stdoutStderr)
 	}
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return string(stdoutStderr), nil
 }
