@@ -694,7 +694,6 @@ clang_tidy_test(
 cc_library(
     name = "utils",
     hdrs = [
-        "architecture.h",
         "cf_endian.h",
         "container.h",
         "contains.h",
@@ -724,7 +723,6 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:device_type",
