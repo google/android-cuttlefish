@@ -26,9 +26,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 // Messages are always 128 bytes.
-#define MESSAGE_SIZE 128
-
-using cuttlefish::SharedFD;
+static constexpr std::size_t kMessageSize = 128;
 
 int main(int argc, char** argv) {
   if (argc <= 1) {
@@ -38,7 +36,7 @@ int main(int argc, char** argv) {
   // Connect to WebRTC
   int fd = std::atoi(argv[1]);
   LOG(INFO) << "Connecting to WebRTC server...";
-  SharedFD webrtc_socket = SharedFD::Dup(fd);
+  cuttlefish::SharedFD webrtc_socket = cuttlefish::SharedFD::Dup(fd);
   close(fd);
   if (webrtc_socket->IsOpen()) {
     LOG(INFO) << "Connected";
@@ -51,15 +49,15 @@ int main(int argc, char** argv) {
   bool statusbar_expanded = false;
   bool dnd_on = false;
 
-  char buf[MESSAGE_SIZE];
+  char buf[kMessageSize];
   while (1) {
     // Read the command message from the socket.
     if (!webrtc_socket->IsOpen()) {
       LOG(WARNING) << "WebRTC was closed.";
       break;
     }
-    if (cuttlefish::ReadExact(webrtc_socket, buf, MESSAGE_SIZE) !=
-        MESSAGE_SIZE) {
+    if (cuttlefish::ReadExact(webrtc_socket, buf, kMessageSize) !=
+        kMessageSize) {
       LOG(WARNING) << "Failed to read the correct number of bytes.";
       break;
     }
