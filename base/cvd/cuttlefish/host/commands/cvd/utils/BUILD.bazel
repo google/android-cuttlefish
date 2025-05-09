@@ -26,9 +26,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "flags_collector",
+    srcs = ["flags_collector.cpp"],
+    hdrs = ["flags_collector.h"],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//libbase",
+        "@tinyxml2",
+    ],
+)
+
+clang_tidy_test(
+    name = "flags_collector_clang_tidy",
+    srcs = [":flags_collector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "utils",
     srcs = [
-        "flags_collector.cpp",
         "interrupt_listener.cpp",
         "subprocess_waiter.cpp",
     ],
@@ -44,6 +61,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/host/commands/cvd/utils:flags_collector",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@tinyxml2",
