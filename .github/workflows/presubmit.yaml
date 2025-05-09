@@ -101,6 +101,28 @@ jobs:
       with:
         name: debs
         path: debs.tar
+  e2e-tests-orchestration-build-image:
+    runs-on: ubuntu-24.04
+    needs: [build-debian-package]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Download cuttlefish debs
+      uses: actions/download-artifact@v4
+      with:
+        name: debs
+        github-token: ${{ github.token }}
+    - name: Build image
+      run: |
+        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
+        sudo podman info
+        sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
+        sudo podman save --quiet -o android-cuttlefish-e2etest.tar localhost/android-cuttlefish-e2etest
+    - name: Upload image
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-cuttlefish-e2etest-image-tar
+        path: android-cuttlefish-e2etest.tar
   e2e-tests-orchestration:
     runs-on: ubuntu-22.04-4core
     steps:
@@ -154,8 +176,7 @@ jobs:
         path: e2etests/bazel-testlogs
   e2e-tests-orchestration-runner:
     runs-on: ubuntu-24.04
-    if: ${{ always() && needs.build-debian-package.result == 'success' }}
-    needs: [build-debian-package]
+    needs: [e2e-tests-orchestration-build-image]
     steps:
     - name: Check kvm
       run: |
@@ -175,16 +196,15 @@ jobs:
         df -h
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: download debs
+    - name: download image
       uses: actions/download-artifact@v4
       with:
-        name: debs
+        name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
     - name: Run tests
       run: |
-        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
         sudo podman info
-        sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
+        sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
         mkdir -p -m 777 /tmp/cw_bazel
         # TODO: Use bazel query.
         targets=("//orchestration/journal_gatewayd_test:journal_gatewayd_test_test" "//orchestration/powerbtn_test:powerbtn_test_test")
@@ -201,8 +221,7 @@ jobs:
         path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/_main/bazel-out/k8-fastbuild/testlogs
   e2e-tests-orchestration-runner-special:
     runs-on: ubuntu-24.04
-    if: ${{ always() && needs.build-debian-package.result == 'success' }}
-    needs: [build-debian-package]
+    needs: [e2e-tests-orchestration-build-image]
     steps:
     - name: Free space
       run: |
@@ -219,16 +238,15 @@ jobs:
         df -h
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: download debs
+    - name: download image
       uses: actions/download-artifact@v4
       with:
-        name: debs
+        name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
     - name: Run tests
       run: |
-        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
         sudo podman info
-        sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
+        sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
         mkdir -p -m 777 /tmp/cw_bazel
         sudo podman run --name tester -d --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests --add-host="metadata.google.internal:127.0.0.1" android-cuttlefish-e2etest:latest
         sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_credentials_test:create_with_gce_credentials_test_test
@@ -238,3 +256,4 @@ jobs:
       with:
         name: e2e-tests-orchestration-runner-special-testlogs
         path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/_main/bazel-out/k8-fastbuild/testlogs
+
