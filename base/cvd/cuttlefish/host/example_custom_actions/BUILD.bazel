@@ -5,6 +5,12 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files(
+    [
+    "custom_action_config.json",
+    ]
+)
+
 cc_binary(
     name = "cuttlefish_example_action_server",
     srcs = [
