@@ -55,7 +55,7 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool nasm
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Run unit tests
@@ -82,7 +82,7 @@ jobs:
     - name: setup apt
       run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler nasm
     - name: go version
       run: go version
     - name: checkout repository
