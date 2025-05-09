@@ -695,7 +695,6 @@ cc_library(
     name = "utils",
     hdrs = [
         "architecture.h",
-        "archive.h",
         "cf_endian.h",
         "container.h",
         "contains.h",
@@ -727,7 +726,6 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:architecture",
-        "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:device_type",
