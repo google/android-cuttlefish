@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os/exec"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -28,21 +29,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestSnapshot(t *testing.T) {
-	t.Skip("b/403233780: Skipping snapshot tests due to out of disk issues on standard runners.")
+const baseURL = "http://0.0.0.0:2080"
 
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	dh, err := common.NewDockerHelper()
-	if err != nil {
-		t.Fatal(err)
-	}
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+func TestSnapshot(t *testing.T) {
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := uploadArtifacts(srv)
 	if err != nil {
 		t.Fatal(err)
@@ -52,18 +42,17 @@ func TestSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cID := ctx.DockerContainerID
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	// adb connect
-	if err := dh.StartADBServer(cID, adbBin); err != nil {
+	adbH := &common.AdbHelper{Bin: adbBin}
+	if err := adbH.StartServer(); err != nil {
 		t.Fatal(err)
 	}
-	if err := dh.ConnectADB(cID, adbBin, cvd.ADBSerial); err != nil {
+	if err := adbH.Connect(cvd.ADBSerial); err != nil {
 		t.Fatal(err)
 	}
 	const tmpFile = "/data/local/tmp/foo"
 	// Create temporary file
-	if _, err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
+	if _, err := adbH.ExecShellCommand(cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
 	snapshotID := "00000000-0000-0000-0000-000000000000"
@@ -80,8 +69,8 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Verifies temporary file does not exist.
-	_, err = dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile})
-	var exitCodeErr *common.DockerExecExitCodeError
+	_, err = adbH.ExecShellCommand(cvd.ADBSerial, []string{"stat", tmpFile})
+	var exitCodeErr *exec.ExitError
 	if !errors.As(err, &exitCodeErr) {
 		t.Fatal(err)
 	}
@@ -107,10 +96,10 @@ func TestSnapshot(t *testing.T) {
 		}
 		t.Fatalf("status mismatch (-want +got):\n%s", diff)
 	}
-	if err := dh.ConnectADB(cID, adbBin, cvd.ADBSerial); err != nil {
+	if err := adbH.Connect(cvd.ADBSerial); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile}); err != nil {
+	if _, err = adbH.ExecShellCommand(cvd.ADBSerial, []string{"stat", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
 }
