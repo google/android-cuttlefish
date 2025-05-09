@@ -84,3 +84,28 @@ clang_tidy_test(
     srcs = [":fetch"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_test(
+    name = "fetch_test",
+    srcs = [
+        "fetch_cvd_parser_test.cpp",
+        "fetch_cvd_test.cpp",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/fetch",
+        "//libbase",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_test_clang_tidy",
+    srcs = [":fetch_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
