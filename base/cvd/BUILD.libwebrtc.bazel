@@ -3293,7 +3293,6 @@ cc_library(
     linkopts = [
         "-laom",
         "-lopus",
-        "-lvpx",
     ],
     deps = [
         "@//build_external/libwebrtc:third_party",
@@ -3304,6 +3303,7 @@ cc_library(
         "@crc32c",
         "@libevent//:event",
         "@libpffft",
+        "@libvpx",
         "@libyuv",
         "@protobuf",
     ],

@@ -471,3 +471,10 @@ git_repository(
         "@//build_external/libopenscreen:PATCH.bazelignore.patch",
     ],
 )
+
+git_repository(
+    name = "libvpx",
+    build_file = "@//:BUILD.libvpx.bazel",
+    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
+    remote = "https://chromium.googlesource.com/webm/libvpx",
+)
