@@ -44,9 +44,26 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "interrupt_listener",
+    srcs = ["interrupt_listener.cpp"],
+    hdrs = ["interrupt_listener.h"],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "interrupt_listener_clang_tidy",
+    srcs = [":interrupt_listener"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "utils",
     srcs = [
-        "interrupt_listener.cpp",
         "subprocess_waiter.cpp",
     ],
     hdrs = [
@@ -62,6 +79,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/commands/cvd/utils:flags_collector",
+        "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@tinyxml2",
