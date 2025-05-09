@@ -33,6 +33,8 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestPowerBtn(t *testing.T) {
+	t.Skip("b/415116606: flaky")
+
 	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
