@@ -144,6 +144,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
         "//libbase",
