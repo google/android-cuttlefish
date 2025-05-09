@@ -6,9 +6,28 @@ package(
 )
 
 cc_library(
+    name = "common",
+    srcs = ["common.cpp"],
+    hdrs = ["common.h"],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    deps = [
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "common_clang_tidy",
+    srcs = [":common"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "utils",
     srcs = [
-        "common.cpp",
         "flags_collector.cpp",
         "interrupt_listener.cpp",
         "subprocess_waiter.cpp",
@@ -21,9 +40,10 @@ cc_library(
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
         "@tinyxml2",
