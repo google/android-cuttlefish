@@ -43,6 +43,7 @@ cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
