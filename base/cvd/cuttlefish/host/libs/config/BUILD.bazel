@@ -313,6 +313,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:type_name",
         "//libbase",
         "@fruit",
     ],

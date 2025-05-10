@@ -616,6 +616,19 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "type_name",
+    hdrs = ["type_name.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "type_name_clang_tidy",
+    srcs = [":type_name"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "unique_resource_allocator",
     hdrs = ["unique_resource_allocator.h"],
     strip_include_prefix = "//cuttlefish",
@@ -717,7 +730,6 @@ cc_library(
         "size_utils.h",
         "subprocess.h",
         "tee_logging.h",
-        "type_name.h",
         "users.h",
     ],
     copts = COPTS,
