@@ -537,6 +537,19 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "size_utils",
+    hdrs = ["size_utils.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "size_utils_clang_tidy",
+    srcs = [":size_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
@@ -727,7 +740,6 @@ cc_library(
         "files.h",
         "flag_parser.h",
         "json.h",
-        "size_utils.h",
         "subprocess.h",
         "tee_logging.h",
         "users.h",
