@@ -20,7 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
-#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
 

@@ -19,7 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
-#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
 

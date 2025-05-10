@@ -1,3 +1,4 @@
+load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
@@ -38,6 +39,24 @@ cc_library(
 clang_tidy_test(
     name = "frontline_parser_clang_tidy",
     srcs = [":frontline_parser"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "frontline_parser_test",
+    srcs = ["frontline_parser_test.cpp"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli:frontline_parser",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "frontline_parser_test_clang_tidy",
+    srcs = [":frontline_parser_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 

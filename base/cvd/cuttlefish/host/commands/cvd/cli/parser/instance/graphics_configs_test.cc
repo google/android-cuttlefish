@@ -27,7 +27,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
-#include "cuttlefish/host/commands/cvd/unittests/parser/test_common.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 using google::protobuf::Message;
 using google::protobuf::util::MessageDifferencer;

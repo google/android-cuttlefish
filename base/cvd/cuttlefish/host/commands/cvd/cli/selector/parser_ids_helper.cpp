@@ -13,24 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/commands/cvd/unittests/selector/parser_names_helper.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/parser_ids_helper.h"
+
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <android-base/strings.h>
-#include <gtest/gtest.h>
+
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace selector {
 
-ValidNamesTest::ValidNamesTest() { Init(); }
-
-void ValidNamesTest::Init() {
-  auto [input, expected_output] = GetParam();
-  selector_args_ = android::base::Tokenize(input, " ");
-  expected_output_ = std::move(expected_output);
-}
-
-InvalidNamesTest::InvalidNamesTest() {
-  selector_args_ = android::base::Tokenize(GetParam(), " ");
+InstanceIdTest::InstanceIdTest() {
+  auto cuttlefish_instance = GetParam().cuttlefish_instance;
+  if (cuttlefish_instance) {
+    envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
+  }
+  cmd_args_ = android::base::Tokenize(GetParam().cmd_args, " ");
+  selector_args_ = android::base::Tokenize(GetParam().selector_args, " ");
+  expected_ids_ = GetParam().expected_ids;
+  expected_result_ = GetParam().expected_result;
+  requested_num_instances_ = GetParam().requested_num_instances;
 }
 
 }  // namespace selector

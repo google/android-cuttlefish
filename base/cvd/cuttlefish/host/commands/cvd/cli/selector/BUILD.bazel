@@ -1,3 +1,4 @@
+load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
@@ -64,5 +65,46 @@ cc_library(
 clang_tidy_test(
     name = "selector_clang_tidy",
     srcs = [":selector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "selector_test",
+    srcs = [
+        "group_record_test.cpp",
+        "host_tool_target_test.cpp",
+        "instance_database_helper.cpp",
+        "instance_database_helper.h",
+        "instance_database_test.cpp",
+        "instance_record_test.cpp",
+        "parser_ids_helper.cpp",
+        "parser_ids_helper.h",
+        "parser_ids_test.cpp",
+        "parser_names_helper.cpp",
+        "parser_names_helper.h",
+        "parser_names_test.cpp",
+    ],
+    copts = COPTS + [ "-Icuttlefish" ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "selector_test_clang_tidy",
+    srcs = [":selector_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
