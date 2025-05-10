@@ -572,6 +572,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/vm_manager",
@@ -656,6 +657,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_utils",
@@ -727,6 +729,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
