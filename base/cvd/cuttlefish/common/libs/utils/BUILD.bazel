@@ -718,7 +718,6 @@ cc_library(
         "subprocess.h",
         "tee_logging.h",
         "type_name.h",
-        "unique_resource_allocator.h",
         "users.h",
     ],
     copts = COPTS,
