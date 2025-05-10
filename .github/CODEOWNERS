@@ -1,27 +1,4 @@
 # refer to https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
 
 # overall code owners
-* @Databean @jemoreira @rmuthiah @jmacnak @adelva1984
-
-# cvd
-/base/cvd @Databean @rmuthiah @jemoreira @ser-io @google/android-cuttlefish
-
-# github workflows
-/.github/workflows/ @jemoreira @ser-io @Databean @cjreynol
-
-# docker TLs
-/docker/ @jemoreira @ikicha @0405ysj @Databean
-
-# host orchestration TLs
-/frontend/ @jemoreira @ser-io
-
-# WebUI Owners
-/frontend/src/operator/webui/ @jemoreira @ikicha 
-
-# AOSP migration
-/staging @Databean @cjreynol @google/android-cuttlefish
-
-# debian package updates
-
-/base/debian/ @cjreynol @Databean @jemoreira @ser-io
-/frontend/debian/ @cjreynol @Databean @jemoreira @ser-io
+@google/android-cuttlefish
