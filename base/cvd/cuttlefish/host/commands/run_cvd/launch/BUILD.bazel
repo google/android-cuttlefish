@@ -366,6 +366,7 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",

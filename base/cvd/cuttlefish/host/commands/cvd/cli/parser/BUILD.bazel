@@ -61,6 +61,7 @@ cc_library(
         ":configs_common",
         ":load_config_cc_proto",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/commands/cvd/fetch",

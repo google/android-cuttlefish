@@ -30,6 +30,7 @@ cc_library(
         ":cvd_server_cc_proto",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:proto",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:shared_fd_flag",
