@@ -44,6 +44,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
