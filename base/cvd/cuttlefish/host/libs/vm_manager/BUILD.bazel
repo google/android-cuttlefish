@@ -39,6 +39,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/command_util",
