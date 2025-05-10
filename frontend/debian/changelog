@@ -1,8 +1,6 @@
-cuttlefish-frontend (1.8.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.8.0) unstable; urgency=medium
 
-  * 
-
- -- Jorge Moreira <jemoreira@google.com>  Fri, 02 May 2025 17:07:34 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 09 May 2025 18:07:34 -0700
 
 cuttlefish-frontend (1.7.0) stable; urgency=medium
 

@@ -1,8 +1,21 @@
-cuttlefish-common (1.8.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.8.0) unstable; urgency=medium
 
-  * 
+  * Start development on Cuttlefish 1.8 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1104
+  * Build and package fastboot by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1075
+  * static_assert expects a boolean by @jemoreira in https://github.com/google/android-cuttlefish/pull/1106
+  * Add missing dependency and header by @jemoreira in https://github.com/google/android-cuttlefish/pull/1107
+  * Add Rust test targets by @cjreynol in https://github.com/google/android-cuttlefish/pull/1109
+  * Don't pass display flags when none is configured by @jemoreira in https://github.com/google/android-cuttlefish/pull/1112
+  * Clean duplicated effort jobs. by @ser-io in https://github.com/google/android-cuttlefish/pull/1111
+  * Migrate cvd_send_sms by @cjreynol in https://github.com/google/android-cuttlefish/pull/1126
+  * Separate out dependencies on `//cuttlefish/common/libs/utils:[archive,base64,inotify]` by @Databean in https://github.com/google/android-cuttlefish/pull/1129
+  * Cleanup jobs by @ser-io in https://github.com/google/android-cuttlefish/pull/1124
+  * Migrate cvd_update_location by @cjreynol in https://github.com/google/android-cuttlefish/pull/1127
+  * Enable jcardsim simulator for Strongbox via new flag. by @subrahmanyaman in https://github.com/google/android-cuttlefish/pull/1125
+  * Migrate cuttlefish_example_action_server by @cjreynol in https://github.com/google/android-cuttlefish/pull/1134
+  * Split `//cuttlefish/host/commands/cvd/utils` by @Databean in https://github.com/google/android-cuttlefish/pull/1137
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 02 May 2025 17:07:16 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 09 May 2025 18:07:16 -0700
 
 cuttlefish-common (1.7.0) stable; urgency=medium
 
