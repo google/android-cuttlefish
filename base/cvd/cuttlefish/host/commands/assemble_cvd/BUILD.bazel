@@ -100,6 +100,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
         "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/avb",

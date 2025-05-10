@@ -36,6 +36,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
