@@ -711,7 +711,6 @@ cc_library(
     name = "utils",
     hdrs = [
         "contains.h",
-        "device_type.h",
         "files.h",
         "flag_parser.h",
         "in_sandbox.h",
@@ -731,7 +730,6 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
