@@ -86,6 +86,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -173,6 +174,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -489,6 +491,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector",
@@ -548,6 +551,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector",
