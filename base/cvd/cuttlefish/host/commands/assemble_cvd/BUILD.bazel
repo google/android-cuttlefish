@@ -98,6 +98,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:disk_usage",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",

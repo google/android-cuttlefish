@@ -491,6 +491,7 @@ cc_library(
     hdrs = ["start.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
