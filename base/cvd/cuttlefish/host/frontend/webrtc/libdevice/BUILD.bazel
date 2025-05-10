@@ -48,6 +48,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:vsock_connection",
         "//cuttlefish/host/frontend/webrtc/libcommon",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config",
