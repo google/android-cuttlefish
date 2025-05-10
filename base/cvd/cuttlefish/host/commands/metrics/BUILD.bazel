@@ -19,6 +19,7 @@ cc_binary(
         ":libmetrics_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/metrics",
@@ -50,6 +51,7 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//libbase",

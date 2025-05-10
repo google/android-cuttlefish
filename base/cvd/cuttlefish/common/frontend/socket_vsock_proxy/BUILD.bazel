@@ -20,6 +20,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
