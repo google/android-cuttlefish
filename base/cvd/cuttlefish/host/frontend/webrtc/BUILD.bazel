@@ -78,6 +78,7 @@ cc_binary(
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/confui:host_confui",
         "//cuttlefish/host/libs/input_connector",
         "//cuttlefish/host/libs/location",
