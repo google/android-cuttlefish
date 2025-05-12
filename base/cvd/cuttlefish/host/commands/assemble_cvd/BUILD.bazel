@@ -148,6 +148,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
