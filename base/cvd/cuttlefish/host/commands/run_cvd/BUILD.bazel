@@ -89,6 +89,7 @@ cc_binary(
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/metrics",
