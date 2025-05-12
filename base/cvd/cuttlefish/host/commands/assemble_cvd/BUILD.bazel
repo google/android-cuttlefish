@@ -118,6 +118,7 @@ cc_library(
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/config:kernel_args",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:touchpad",
         "//cuttlefish/host/libs/config/adb",
