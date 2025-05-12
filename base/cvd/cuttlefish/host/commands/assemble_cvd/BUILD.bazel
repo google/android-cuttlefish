@@ -112,6 +112,7 @@ cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:secure_hals",
+        "//cuttlefish/host/libs/config:touchpad",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/image_aggregator",
