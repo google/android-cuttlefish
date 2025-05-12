@@ -111,6 +111,7 @@ cc_library(
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config:display",

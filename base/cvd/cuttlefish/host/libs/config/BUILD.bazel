@@ -12,7 +12,6 @@ cc_library(
     # Intentionally repeats headers from other targets so outside targets can
     # continue to depend on :config for everything. See go/cpp-build#splitting
     hdrs = [
-        "config_fragment.h",
         "cuttlefish_config.h",
         "known_paths.h",
         "logging.h",
@@ -20,7 +19,6 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        ":config_fragment",
         ":cuttlefish_config",
         ":known_paths",
         ":logging",

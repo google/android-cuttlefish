@@ -90,6 +90,7 @@ cc_binary(
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config/adb",
