@@ -1,0 +1,2 @@
+config=phone
+gfxstream=unsupported

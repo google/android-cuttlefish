@@ -59,3 +59,6 @@ AUDIOSERVER_MULTILIB := first
 ifneq ($(BOARD_IS_AUTOMOTIVE), true)
 -include device/google/cuttlefish/shared/virgl/BoardConfig.mk
 endif
+
+# Override for gfxstream support
+TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/x86_16kb/android-info.txt
