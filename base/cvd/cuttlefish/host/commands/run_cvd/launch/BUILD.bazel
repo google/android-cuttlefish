@@ -372,6 +372,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@fruit"
