@@ -109,6 +109,7 @@ cc_library(
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
