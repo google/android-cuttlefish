@@ -21,7 +21,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
+#include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 

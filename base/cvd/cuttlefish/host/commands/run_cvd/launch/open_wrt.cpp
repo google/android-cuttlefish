@@ -30,10 +30,10 @@
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
-#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 
 namespace cuttlefish {

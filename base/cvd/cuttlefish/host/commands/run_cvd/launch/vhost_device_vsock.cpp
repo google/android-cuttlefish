@@ -33,11 +33,11 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
-#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {

@@ -31,7 +31,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 namespace {

@@ -15,20 +15,35 @@
 
 #pragma once
 
+#include <utility>
+#include <vector>
+
+#include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-class KernelLogPipeProvider : public virtual SetupFeature {
- public:
-  virtual ~KernelLogPipeProvider() = default;
-  virtual SharedFD KernelLogPipe() = 0;
+struct MonitorCommand {
+  Command command;
+  bool is_critical;
+
+  MonitorCommand(Command command, bool is_critical = false)
+      : command(std::move(command)), is_critical(is_critical) {}
 };
 
-/** Parent class tag for classes that inject KernelLogPipe. */
-class KernelLogPipeConsumer {};
+class CommandSource : public virtual SetupFeature {
+ public:
+  virtual ~CommandSource() = default;
+  virtual Result<std::vector<MonitorCommand>> Commands() = 0;
+};
+
+class StatusCheckCommandSource : public virtual CommandSource {
+ public:
+  virtual Result<void> WaitForAvailability() const = 0;
+};
 
 }  // namespace cuttlefish

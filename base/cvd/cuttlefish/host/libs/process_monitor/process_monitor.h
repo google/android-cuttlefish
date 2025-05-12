@@ -26,7 +26,7 @@
 #include "common/libs/transport/channel_sharedfd.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/config/command_source.h"
+#include "host/libs/feature/command_source.h"
 
 namespace cuttlefish {
 

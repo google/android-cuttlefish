@@ -20,7 +20,7 @@
 
 #include "common/libs/utils/files.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/libs/config/feature.h"
+#include "host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

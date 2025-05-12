@@ -41,7 +41,7 @@
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 using grpc::ClientContext;
 using openwrtcontrolserver::LuciRpcReply;

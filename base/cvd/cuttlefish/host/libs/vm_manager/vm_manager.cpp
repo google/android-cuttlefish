@@ -27,9 +27,9 @@
 #include <fruit/fruit.h>
 
 #include "common/libs/utils/result.h"
-#include "host/libs/config/command_source.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/inject.h"
+#include "host/libs/feature/command_source.h"
+#include "host/libs/feature/inject.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"

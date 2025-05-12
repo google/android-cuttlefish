@@ -23,7 +23,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include "host/libs/config/feature.h"
+#include "host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

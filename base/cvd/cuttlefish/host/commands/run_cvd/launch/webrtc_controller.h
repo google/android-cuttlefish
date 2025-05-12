@@ -21,7 +21,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

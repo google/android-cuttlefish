@@ -38,14 +38,14 @@
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
-#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
-#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 

@@ -46,6 +46,8 @@ cc_library(
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/feature:inject",
         "//libbase",
         "@fmt",
         "@fruit",

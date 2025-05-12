@@ -38,7 +38,7 @@
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 namespace {

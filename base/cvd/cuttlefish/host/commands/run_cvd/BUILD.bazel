@@ -92,6 +92,8 @@ cc_binary(
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/process_monitor",
         "//cuttlefish/host/libs/vm_manager",

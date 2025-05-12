@@ -19,7 +19,7 @@
 
 #include <fruit/fruit.h>
 
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
