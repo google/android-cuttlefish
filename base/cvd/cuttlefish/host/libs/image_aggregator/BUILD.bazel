@@ -39,6 +39,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:mbr",
         "//libbase",
         "//libsparse",
         "@protobuf",
