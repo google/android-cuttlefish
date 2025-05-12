@@ -25,6 +25,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
