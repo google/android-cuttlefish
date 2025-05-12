@@ -556,6 +556,7 @@ cc_library(
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:custom_actions",
         "//libbase",
         "@fruit",
         "@fmt",
