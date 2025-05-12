@@ -58,7 +58,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
