@@ -19,6 +19,7 @@ cc_binary(
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
     ]
