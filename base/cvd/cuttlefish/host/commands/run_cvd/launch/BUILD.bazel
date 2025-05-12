@@ -36,6 +36,7 @@ cc_library(
     deps = [
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -56,6 +57,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -77,6 +79,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -97,6 +100,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -117,6 +121,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -137,6 +142,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "@fruit",
     ],
@@ -157,6 +163,7 @@ cc_library(
     deps = [
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -179,6 +186,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -216,6 +224,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd:reporting",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
         "//libbase",
@@ -260,6 +269,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -303,6 +313,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -323,6 +334,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//libbase",
     ],
@@ -345,6 +357,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "@fruit",
     ],
@@ -366,6 +379,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -413,6 +427,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "@fruit",
     ],
@@ -434,6 +449,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -454,6 +470,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "@fruit",
     ],
@@ -475,6 +492,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -495,6 +513,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/feature",
     ],
@@ -517,6 +536,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
     ],
 )
@@ -583,6 +603,7 @@ cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:custom_actions",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//libbase",
         "@fruit",
@@ -633,6 +654,7 @@ cc_library(
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//libbase",
     ],
@@ -674,6 +696,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vhal_proxy_server",
         "@fmt",
@@ -699,6 +722,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
@@ -724,6 +748,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//libbase",
         "@fmt",
@@ -774,6 +799,7 @@ cc_library(
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
         "@fruit",

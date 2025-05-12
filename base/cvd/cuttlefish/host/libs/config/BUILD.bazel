@@ -13,14 +13,12 @@ cc_library(
     # continue to depend on :config for everything. See go/cpp-build#splitting
     hdrs = [
         "cuttlefish_config.h",
-        "known_paths.h",
         "logging.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         ":cuttlefish_config",
-        ":known_paths",
         ":logging",
     ],
 )
