@@ -1,0 +1,53 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "feature",
+    srcs = [
+        "feature.cpp",
+    ],
+    hdrs = [
+        "command_source.h",
+        "feature.h",
+        "kernel_log_pipe_provider.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:type_name",
+        "//libbase",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "feature_clang_tidy",
+    srcs = [":feature"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "inject",
+    hdrs = [
+        "inject.h",
+    ],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "inject_clang_tidy",
+    srcs = [":inject"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

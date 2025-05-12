@@ -12,43 +12,20 @@ cc_library(
     # Intentionally repeats headers from other targets so outside targets can
     # continue to depend on :config for everything. See go/cpp-build#splitting
     hdrs = [
-        "command_source.h",
         "config_flag.h",
         "config_fragment.h",
         "cuttlefish_config.h",
-        "feature.h",
-        "inject.h",
-        "kernel_log_pipe_provider.h",
         "known_paths.h",
         "logging.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        ":config_constants",
         ":config_flag",
         ":config_fragment",
-        ":config_utils",
         ":cuttlefish_config",
-        ":feature",
         ":known_paths",
         ":logging",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:result",
-        "//libbase",
-        "@fmt",
-        "@fruit",
-        "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "config_clang_tidy",
-    srcs = [":config"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
 
@@ -80,7 +57,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/feature",
         "//libbase",
         "@fmt",
         "@fruit",
@@ -156,7 +133,7 @@ cc_library(
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:feature",
+        "//cuttlefish/host/libs/feature",
         "//libbase",
         "@fruit",
         "@jsoncpp",
@@ -281,30 +258,6 @@ cc_library(
 clang_tidy_test(
     name = "esp_clang_tidy",
     srcs = [":esp"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
-    name = "feature",
-    srcs = ["feature.cpp"],
-    hdrs = ["feature.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-    deps = [
-        "//cuttlefish/common/libs/utils",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:type_name",
-        "//libbase",
-        "@fruit",
-    ],
-)
-
-clang_tidy_test(
-    name = "feature_clang_tidy",
-    srcs = [":feature"],
     tags = [
         "clang-tidy",
         "clang_tidy",

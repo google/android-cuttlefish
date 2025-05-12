@@ -44,7 +44,7 @@
 #include "host/libs/config/custom_actions.h"
 #include "host/libs/config/fastboot/fastboot.h"
 #include "host/libs/config/fetcher_config.h"
-#include "host/libs/config/inject.h"
+#include "host/libs/feature/inject.h"
 
 using cuttlefish::StringFromEnv;
 

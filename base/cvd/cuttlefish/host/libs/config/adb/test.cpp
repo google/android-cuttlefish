@@ -26,7 +26,7 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/libs/config/config_flag.h"
-#include "cuttlefish/host/libs/config/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

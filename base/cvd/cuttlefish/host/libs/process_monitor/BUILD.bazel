@@ -22,6 +22,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/feature",
         "//libbase",
     ],
 )

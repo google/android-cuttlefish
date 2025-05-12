@@ -28,11 +28,11 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
-#include "cuttlefish/host/libs/config/kernel_log_pipe_provider.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
 
 namespace cuttlefish {
 namespace {

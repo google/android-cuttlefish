@@ -31,10 +31,10 @@
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
-#include "cuttlefish/host/libs/config/command_source.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/feature.h"
-#include "cuttlefish/host/libs/config/inject.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 
 namespace cuttlefish {

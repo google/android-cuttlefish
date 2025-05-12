@@ -24,6 +24,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/feature",
         "//libbase",
         "@fruit",
         "@gflags",

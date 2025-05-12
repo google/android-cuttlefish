@@ -77,7 +77,7 @@
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
-#include "cuttlefish/host/libs/config/inject.h"
+#include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"

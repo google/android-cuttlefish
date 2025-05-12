@@ -29,8 +29,8 @@
 #include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
-#include "host/libs/config/feature.h"
 #include "host/libs/config/known_paths.h"
+#include "host/libs/feature/feature.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {

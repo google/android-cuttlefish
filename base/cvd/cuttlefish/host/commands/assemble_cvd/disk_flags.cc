@@ -46,8 +46,8 @@
 #include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
-#include "host/libs/config/inject.h"
 #include "host/libs/config/instance_nums.h"
+#include "host/libs/feature/inject.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 DECLARE_string(system_image_dir);
