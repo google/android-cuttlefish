@@ -201,6 +201,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/directories",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web:credential_source",
