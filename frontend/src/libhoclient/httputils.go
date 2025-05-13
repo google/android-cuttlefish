@@ -480,16 +480,11 @@ func writeMultipartRequest(writer *multipart.Writer, job uploadChunkJob) error {
 		return err
 	}
 	defer file.Close()
-	if _, err := file.Seek(int64(job.ChunkNumber-1)*job.ChunkSizeBytes, 0); err != nil {
+	offset := int64(job.ChunkNumber-1) * job.ChunkSizeBytes
+	if _, err := file.Seek(offset, 0); err != nil {
 		return err
 	}
-	if err := addFormField(writer, "chunk_number", strconv.Itoa(job.ChunkNumber)); err != nil {
-		return err
-	}
-	if err := addFormField(writer, "chunk_total", strconv.Itoa(job.TotalChunks)); err != nil {
-		return err
-	}
-	if err := addFormField(writer, "chunk_size_bytes", strconv.FormatInt(job.ChunkSizeBytes, 10)); err != nil {
+	if err := addFormField(writer, "chunk_offset_bytes", strconv.FormatInt(offset, 10)); err != nil {
 		return err
 	}
 	fw, err := writer.CreateFormFile("file", filepath.Base(job.Filename))
