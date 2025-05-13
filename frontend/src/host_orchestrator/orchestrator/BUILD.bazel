@@ -14,6 +14,7 @@ go_library(
         "operation.go",
         "startcvdaction.go",
         "userartifacts.go",
+        "userartifacts_v1.go",
     ],
     importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator",
     visibility = ["//visibility:public"],
@@ -39,6 +40,7 @@ go_test(
         "listcvdsaction_test.go",
         "operation_test.go",
         "userartifacts_test.go",
+        "userartifacts_v1_test.go",
     ],
     embed = [":orchestrator"],
     deps = [
