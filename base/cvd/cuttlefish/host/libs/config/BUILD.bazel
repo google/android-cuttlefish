@@ -98,6 +98,7 @@ cc_library(
     hdrs = ["config_flag.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
@@ -172,6 +173,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_flag",
@@ -267,6 +269,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
@@ -387,6 +390,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_utils",
@@ -533,6 +537,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",

@@ -43,6 +43,7 @@ cc_library(
     hdrs = ["acloud_mixsuperimage.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -65,6 +66,7 @@ cc_library(
     hdrs = ["acloud_translator.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -85,6 +87,7 @@ cc_library(
     hdrs = ["bugreport.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -111,6 +114,7 @@ cc_library(
     hdrs = ["cache.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -175,6 +179,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -199,6 +204,7 @@ cc_library(
     hdrs = ["env.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
@@ -311,6 +317,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -376,6 +383,7 @@ cc_library(
     hdrs = ["powerwash.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
@@ -422,6 +430,7 @@ cc_library(
     hdrs = ["reset.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -445,6 +454,7 @@ cc_library(
     hdrs = ["restart.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
@@ -494,6 +504,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
@@ -528,6 +539,7 @@ cc_library(
     hdrs = ["status.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
@@ -555,6 +567,7 @@ cc_library(
     hdrs = ["stop.h"],
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
