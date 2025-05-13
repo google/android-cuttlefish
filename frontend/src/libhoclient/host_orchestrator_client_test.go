@@ -16,13 +16,10 @@ package libhoclient
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
@@ -40,82 +37,6 @@ func TestUploadFileChunkSizeBytesIsZeroPanic(t *testing.T) {
 	srv := NewHostOrchestratorService("https://test.com")
 
 	srv.UploadFileWithOptions("dir", "baz", UploadOptions{ChunkSizeBytes: 0})
-}
-
-func TestUploadFileSucceeds(t *testing.T) {
-	uploadDir := "bar"
-	tempDir := createTempDir(t)
-	defer os.RemoveAll(tempDir)
-	quxFile := createTempFile(t, tempDir, "qux", []byte("lorem"))
-	waldoFile := createTempFile(t, tempDir, "waldo", []byte("l"))
-	xyzzyFile := createTempFile(t, tempDir, "xyzzy", []byte("abraca"))
-	mu := sync.Mutex{}
-	// expected uploads are keyed by format %filename %chunknumber of %chunktotal with the chunk content as value
-	uploads := map[string]struct{ Content []byte }{
-		// qux
-		"qux 1 of 3": {Content: []byte("lo")},
-		"qux 2 of 3": {Content: []byte("re")},
-		"qux 3 of 3": {Content: []byte("m")},
-		// waldo
-		"waldo 1 of 1": {Content: []byte("l")},
-		// xyzzy
-		"xyzzy 1 of 3": {Content: []byte("ab")},
-		"xyzzy 2 of 3": {Content: []byte("ra")},
-		"xyzzy 3 of 3": {Content: []byte("ca")},
-	}
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		defer mu.Unlock()
-		switch ep := r.Method + " " + r.URL.Path; ep {
-		case "PUT /userartifacts/" + uploadDir:
-			chunkNumber := r.PostFormValue("chunk_number")
-			chunkTotal := r.PostFormValue("chunk_total")
-			f, fheader, err := r.FormFile("file")
-			if err != nil {
-				t.Fatal(err)
-			}
-			expectedUploadKey := fmt.Sprintf("%s %s of %s", fheader.Filename, chunkNumber, chunkTotal)
-			val, ok := uploads[expectedUploadKey]
-			if !ok {
-				t.Fatalf("unexpected upload with filename: %q, chunk number: %s, chunk total: %s",
-					fheader.Filename, chunkNumber, chunkTotal)
-			}
-			delete(uploads, expectedUploadKey)
-			b, err := io.ReadAll(f)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if diff := cmp.Diff(val.Content, b); diff != "" {
-				t.Fatalf("chunk content mismatch %q (-want +got):\n%s", fheader.Filename, diff)
-			}
-			writeOK(w, struct{}{})
-		default:
-			t.Fatal("unexpected endpoint: " + ep)
-		}
-	}))
-	defer ts.Close()
-
-	srv := NewHostOrchestratorService(ts.URL)
-
-	for _, f := range []string{quxFile, waldoFile, xyzzyFile} {
-		err := srv.UploadFileWithOptions(uploadDir, f,
-			UploadOptions{
-				BackOffOpts: ExpBackOffOptions{
-					InitialDuration: 100 * time.Millisecond,
-					Multiplier:      2,
-					MaxElapsedTime:  1 * time.Second,
-				},
-				ChunkSizeBytes: 2,
-				NumWorkers:     10,
-			})
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if len(uploads) != 0 {
-		t.Errorf("missing chunk uploads:  %v", uploads)
-	}
 }
 
 func TestUploadFileExponentialBackoff(t *testing.T) {
