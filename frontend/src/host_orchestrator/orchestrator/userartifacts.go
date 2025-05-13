@@ -38,11 +38,13 @@ type UserArtifactsDirResolver interface {
 }
 
 type UserArtifactChunk struct {
-	Name           string
-	ChunkNumber    int
-	ChunkTotal     int
-	ChunkSizeBytes int64
-	File           io.Reader
+	Name             string
+	File             io.Reader
+	ChunkOffsetBytes int64
+
+	ChunkNumber    int   // Deprecated: use `ChunkOffsetBytes`
+	ChunkTotal     int   // Deprecated: use `OffsetBytes`
+	ChunkSizeBytes int64 // Deprecated: use `OffsetBytes`
 }
 
 // Abstraction for managing user artifacts for launching CVDs.
@@ -142,7 +144,12 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 		return err
 	}
 	defer f.Close()
-	if _, err := f.Seek(int64(chunk.ChunkNumber-1)*chunk.ChunkSizeBytes, 0); err != nil {
+	offset := chunk.ChunkOffsetBytes
+	if chunk.ChunkSizeBytes != 0 {
+		log.Println("deprecated: use `ChunkOffsetBytes`")
+		offset = int64(chunk.ChunkNumber-1) * chunk.ChunkSizeBytes
+	}
+	if _, err := f.Seek(offset, 0); err != nil {
 		return err
 	}
 	if _, err = io.Copy(f, chunk.File); err != nil {
