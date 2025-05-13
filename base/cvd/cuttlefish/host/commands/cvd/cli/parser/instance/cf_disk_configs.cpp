@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 
@@ -27,6 +28,21 @@ namespace cuttlefish {
 
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
+
+static std::string DefaultVvmtrustoreFileName(const Instance& instance) {
+  // Only one VvmtrustoreFileName is supporyed per instance. The the flag will
+  // be given the last value provided if there is more than one.
+  std::string default_vvmtruststore_file_name =
+      CF_DEFAULTS_DEFAULT_VVMTRUSTSTORE_FILE_NAME;
+
+  for (const auto& partition : instance.disk().extra_partitions()) {
+    if (partition.has_default_vvmtruststore_file_name()) {
+      default_vvmtruststore_file_name =
+          partition.default_vvmtruststore_file_name();
+    }
+  }
+  return default_vvmtruststore_file_name;
+}
 
 std::vector<std::string> GenerateDiskFlags(
     const EnvironmentSpecification& config) {
@@ -41,6 +57,8 @@ std::vector<std::string> GenerateDiskFlags(
   }
   return std::vector<std::string>{
       GenerateVecFlag("blank_data_image_mb", data_image_mbs),
+      GenerateInstanceFlag("default_vvmtruststore_file_name", config,
+                           DefaultVvmtrustoreFileName),
   };
 }
 

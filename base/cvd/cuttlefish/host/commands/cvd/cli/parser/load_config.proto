@@ -96,6 +96,11 @@ message Disk {
   optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;
   optional string otatools = 6;
+  repeated ExtraPartition extra_partitions = 7;
+}
+
+message ExtraPartition {
+  optional string default_vvmtruststore_file_name = 1;
 }
 
 message Super {
