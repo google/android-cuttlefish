@@ -520,7 +520,8 @@ cvd_debian_marker = [
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
-        cvd_host_tests,
+        cvd_host_tests +
+        ["jcardsim"],
     multilib: {
         common: {
             deps: cvd_default_input_device_specs +
