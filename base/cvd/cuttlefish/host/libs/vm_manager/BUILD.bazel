@@ -41,6 +41,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",
         "//cuttlefish/host/libs/command_util",

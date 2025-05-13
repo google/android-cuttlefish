@@ -737,7 +737,6 @@ cc_library(
     name = "utils",
     hdrs = [
         "files.h",
-        "subprocess.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
