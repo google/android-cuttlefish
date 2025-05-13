@@ -24,6 +24,7 @@ import (
 	"syscall"
 
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+	"github.com/google/btree"
 )
 
 type UserArtifactChunkV1 struct {
@@ -88,11 +89,18 @@ func (m *UserArtifactsManagerV1Impl) UpdateArtifact(chunk UserArtifactChunkV1) e
 	if chunk.FileSize < 0 {
 		return operator.NewBadRequestError(fmt.Sprintf("invalid value (file_size:%d)", chunk.FileSize), nil)
 	}
+	if prevSize := m.getChunkState(chunk).fileSize; chunk.FileSize != prevSize {
+		return operator.NewBadRequestError(fmt.Sprintf("different value of file_size (previous:%d, current: %d)", prevSize, chunk.FileSize), nil)
+	}
 	if chunk.Offset+chunk.Size > chunk.FileSize {
 		return operator.NewBadRequestError(fmt.Sprintf("invalid value pair (chunk_offset:%d, chunk_size:%d, file_size:%d)", chunk.Offset, chunk.Size, chunk.FileSize), nil)
 	}
-	if err := m.writeChunk(chunk); err != nil {
+	if mayMoveArtifact, err := m.writeChunk(chunk); err != nil {
 		return fmt.Errorf("failed to update chunk: %w", err)
+	} else if !mayMoveArtifact {
+		// Opening the user artifact and calculating hash sum is heavy task. Instead, it records
+		// the state of updated chunks and checks it in advance.
+		return nil
 	}
 	if err := m.moveArtifactIfNeeds(chunk); err != nil {
 		return fmt.Errorf("failed to move user artifact from working directory: %w", err)
@@ -110,6 +118,11 @@ func (m *UserArtifactsManagerV1Impl) getMoveArtifactMutex(hash string) *sync.RWM
 	return mu.(*sync.RWMutex)
 }
 
+func (m *UserArtifactsManagerV1Impl) getChunkState(chunk UserArtifactChunkV1) *chunkState {
+	cs, _ := m.chunkStates.LoadOrStore(chunk.Hash, newChunkState(chunk.FileSize))
+	return cs.(*chunkState)
+}
+
 func (m *UserArtifactsManagerV1Impl) dirExists(hash string) (bool, error) {
 	if info, err := os.Stat(filepath.Join(m.RootDir, hash)); os.IsNotExist(err) {
 		return false, nil
@@ -120,7 +133,7 @@ func (m *UserArtifactsManagerV1Impl) dirExists(hash string) (bool, error) {
 	}
 }
 
-func (m *UserArtifactsManagerV1Impl) writeChunk(chunk UserArtifactChunkV1) error {
+func (m *UserArtifactsManagerV1Impl) writeChunk(chunk UserArtifactChunkV1) (bool, error) {
 	mu := m.getMoveArtifactMutex(chunk.Hash)
 	mu.Lock()
 	wg := m.getWriteChunkWaitGroup(chunk.Hash)
@@ -128,27 +141,29 @@ func (m *UserArtifactsManagerV1Impl) writeChunk(chunk UserArtifactChunkV1) error
 	mu.Unlock()
 	defer wg.Done()
 	if dirExists, err := m.dirExists(chunk.Hash); err != nil {
-		return fmt.Errorf("failed to check existence of directory: %w", err)
+		return false, fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if dirExists {
-		return operator.NewConflictError(fmt.Sprintf("user artifact(hash:%q) already exists", chunk.Hash), nil)
+		return false, operator.NewConflictError(fmt.Sprintf("user artifact(hash:%q) already exists", chunk.Hash), nil)
 	}
 	workDir := filepath.Join(m.RootWorkDir, chunk.Hash)
 	if err := createDir(workDir); err != nil {
-		return fmt.Errorf("failed to create working directory for uploading user artifact: %w", err)
+		return false, fmt.Errorf("failed to create working directory for uploading user artifact: %w", err)
 	}
 	workFile := filepath.Join(workDir, chunk.Name)
 	f, err := os.OpenFile(workFile, os.O_WRONLY|os.O_CREATE, 0664)
 	if err != nil {
-		return fmt.Errorf("failed to create or open working file for uploading user artifact: %w", err)
+		return false, fmt.Errorf("failed to create or open working file for uploading user artifact: %w", err)
 	}
 	defer f.Close()
 	if _, err := f.Seek(chunk.Offset, io.SeekStart); err != nil {
-		return fmt.Errorf("failed to seek offset of working file: %w", err)
+		return false, fmt.Errorf("failed to seek offset of working file: %w", err)
 	}
 	if _, err := io.Copy(f, chunk.File); err != nil {
-		return fmt.Errorf("failed to copy chunk into working file: %w", err)
+		return false, fmt.Errorf("failed to copy chunk into working file: %w", err)
 	}
-	return nil
+	cs := m.getChunkState(chunk)
+	cs.update(chunk.Offset, chunk.Offset+chunk.Size)
+	return cs.isCompleted(), nil
 }
 
 func (m *UserArtifactsManagerV1Impl) checkHash(chunk UserArtifactChunkV1) (bool, error) {
@@ -200,4 +215,114 @@ func (m *UserArtifactsManagerV1Impl) moveArtifactIfNeeds(chunk UserArtifactChunk
 		}
 	}
 	return nil
+}
+
+// Structure for managing the state of updated chunk for efficiently knowing whether the user
+// artifact may need to calculate hash sum or not.
+type chunkState struct {
+	fileSize int64
+	items    *btree.BTree
+	mutex    sync.RWMutex
+}
+
+type chunkStateItem struct {
+	// Starting byte offset of the continuous range having same state whether updated or not.
+	offset int64
+	// State description whether given byte offset of the user artifact is updated or not.
+	isUpdated bool
+}
+
+func (i chunkStateItem) Less(item btree.Item) bool {
+	return i.offset < item.(chunkStateItem).offset
+}
+
+func newChunkState(fileSize int64) *chunkState {
+	cs := chunkState{
+		fileSize: fileSize,
+		items:    btree.New(2),
+		mutex:    sync.RWMutex{},
+	}
+	cs.items.ReplaceOrInsert(chunkStateItem{offset: 0, isUpdated: false})
+	return &cs
+}
+
+func (cs *chunkState) getItem(offset int64) *chunkStateItem {
+	entry := cs.items.Get(chunkStateItem{offset: offset})
+	if item, ok := entry.(chunkStateItem); ok {
+		return &item
+	} else {
+		return nil
+	}
+}
+
+func (cs *chunkState) getPrevItem(offset int64) *chunkStateItem {
+	var record *chunkStateItem
+	cs.items.DescendLessOrEqual(chunkStateItem{offset: offset - 1}, func(item btree.Item) bool {
+		entry := item.(chunkStateItem)
+		record = &entry
+		return false
+	})
+	return record
+}
+
+func (cs *chunkState) getNextItem(offset int64) *chunkStateItem {
+	var record *chunkStateItem
+	cs.items.AscendGreaterOrEqual(chunkStateItem{offset: offset + 1}, func(item btree.Item) bool {
+		entry := item.(chunkStateItem)
+		record = &entry
+		return false
+	})
+	return record
+}
+
+func (cs *chunkState) update(start int64, end int64) error {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+	if item := cs.getItem(start); item != nil {
+		if !item.isUpdated {
+			cs.items.Delete(*item)
+			if item.offset == 0 {
+				cs.items.ReplaceOrInsert(chunkStateItem{offset: start, isUpdated: true})
+			}
+		}
+	} else if prev := cs.getPrevItem(start); prev != nil {
+		if !prev.isUpdated {
+			cs.items.ReplaceOrInsert(chunkStateItem{offset: start, isUpdated: true})
+		}
+	} else {
+		return fmt.Errorf("previous item should exist")
+	}
+
+	for next := cs.getNextItem(start); ; next = cs.getNextItem(start) {
+		if next == nil {
+			cs.items.ReplaceOrInsert(chunkStateItem{offset: end, isUpdated: false})
+			break
+		}
+		if next.offset < end {
+			cs.items.Delete(*next)
+		} else if next.offset == end {
+			if next.isUpdated {
+				cs.items.Delete(*next)
+			} else {
+				break
+			}
+		} else {
+			if next.isUpdated {
+				cs.items.ReplaceOrInsert(chunkStateItem{offset: end, isUpdated: false})
+			}
+			break
+		}
+	}
+	return nil
+}
+
+func (cs *chunkState) isCompleted() bool {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+	if cs.items.Len() != 2 {
+		return false
+	}
+	first := chunkStateItem{offset: 0, isUpdated: true}
+	last := chunkStateItem{offset: cs.fileSize, isUpdated: false}
+	return cs.items.Min() == first && cs.items.Max() == last
 }
