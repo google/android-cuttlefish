@@ -15,6 +15,7 @@ cc_binary(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
         "//libbase",
