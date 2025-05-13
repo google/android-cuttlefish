@@ -64,6 +64,7 @@ cc_library(
         "//cuttlefish/common/libs/confui",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config",

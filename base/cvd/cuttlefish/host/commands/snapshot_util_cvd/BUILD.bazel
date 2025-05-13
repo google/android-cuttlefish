@@ -18,6 +18,7 @@ cc_binary(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
