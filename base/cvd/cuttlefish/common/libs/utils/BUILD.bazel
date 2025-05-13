@@ -737,7 +737,6 @@ cc_library(
     name = "utils",
     hdrs = [
         "files.h",
-        "flag_parser.h",
         "subprocess.h",
     ],
     copts = COPTS,
