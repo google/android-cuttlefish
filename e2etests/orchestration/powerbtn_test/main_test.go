@@ -15,10 +15,9 @@
 package main
 
 import (
-	"bufio"
-	"errors"
+	"bytes"
 	"fmt"
-	"regexp"
+	"log"
 	"strings"
 	"testing"
 	"time"
@@ -27,14 +26,11 @@ import (
 
 	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
-	"github.com/google/go-cmp/cmp"
 )
 
 const baseURL = "http://0.0.0.0:2080"
 
 func TestPowerBtn(t *testing.T) {
-	t.Skip("b/415116606: flaky")
-
 	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
@@ -44,31 +40,41 @@ func TestPowerBtn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Monitor input devices events
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	line, err := readScreenStateLine(adbBin, cvd.ADBSerial)
-	if err != nil {
+	adbH := &common.AdbHelper{Bin: adbBin}
+	if err := adbH.StartServer(); err != nil {
 		t.Fatal(err)
 	}
-	if diff := cmp.Diff("mScreenState=ON", line); diff != "" {
-		t.Errorf("config mismatch (-want +got):\n%s", diff)
+	if err := adbH.Connect(cvd.ADBSerial); err != nil {
+		t.Fatal(err)
 	}
+	// Power button should generate at least 4 events.
+	// EV_KEY       KEY_POWER            DOWN
+	// EV_SYN       SYN_REPORT           00000000
+	// EV_KEY       KEY_POWER            UP
+	// EV_SYN       SYN_REPORT           00000000
+	cmd := adbH.BuildShellCommand(cvd.ADBSerial, []string{"getevent", "-l", "-c 2", "/dev/input/event0"})
+	stdoutBuff := &bytes.Buffer{}
+	cmd.Stdout = stdoutBuff
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	// Add some delay for `getevent` to properly start listening.
+	time.Sleep(5 * time.Second)
 
 	if err := srv.Powerbtn(cvd.Group, cvd.Name); err != nil {
 		t.Fatal(err)
 	}
 
-	screenOff := false
-	// The change is not reflected in `dumpsys display` right away.
-	for attempt := 0; attempt < 3 && !screenOff; attempt++ {
-		time.Sleep(1 * time.Second)
-		line, err = readScreenStateLine(adbBin, cvd.ADBSerial)
-		if err != nil {
-			t.Fatal(err)
-		}
-		screenOff = (line == "mScreenState=OFF")
+	if err := cmd.Wait(); err != nil {
+		t.Fatal(err)
 	}
-	if !screenOff {
-		t.Error("`mScreenState=OFF` never found in `dumpsys display`")
+	stdoutStr := stdoutBuff.String()
+	log.Printf("getevent stdout: %s", stdoutStr)
+	const eventName = "KEY_POWER"
+	if !strings.Contains(stdoutStr, eventName) {
+		t.Errorf("event %q was not captured", eventName)
 	}
 }
 
@@ -80,27 +86,4 @@ func createDevice(srv hoclient.HostOrchestratorService, dir string) (*hoapi.CVD,
 		return nil, err
 	}
 	return common.CreateCVDFromUserArtifactsDir(srv, dir)
-}
-
-func readScreenStateLine(adbBin, serial string) (string, error) {
-	adbH := &common.AdbHelper{Bin: adbBin}
-	if err := adbH.StartServer(); err != nil {
-		return "", fmt.Errorf("adb start-server failed: %w", err)
-	}
-	if err := adbH.Connect(serial); err != nil {
-		return "", fmt.Errorf("adb connect with serial %q failed: %w", serial, err)
-	}
-	stdoutStderr, err := adbH.ExecShellCommand(serial, []string{"dumpsys", "display"})
-	if err != nil {
-		return "", fmt.Errorf("adb shell with serial %q failed: %w", serial, err)
-	}
-	re := regexp.MustCompile("^  mScreenState=[A-Z]+$")
-	scanner := bufio.NewScanner(strings.NewReader(stdoutStderr))
-	for scanner.Scan() {
-		line := scanner.Text()
-		if re.MatchString(line) {
-			return strings.TrimLeft(line, " "), nil
-		}
-	}
-	return "", errors.New("`mScreenState=` line not found")
 }
