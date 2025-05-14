@@ -41,3 +41,6 @@ function install_bazel_aarch64() {
 }
 
 install_bazel_$(uname -m)
+
+echo build --google_default_credentials >> /etc/bazel.bazelrc
+echo build --remote_cache=https://storage.googleapis.com/android-cuttlefish-cache >> /etc/bazel.bazelrc
