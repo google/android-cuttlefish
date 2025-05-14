@@ -1,0 +1,81 @@
+name: 'Run sharded e2e test'
+inputs:
+  runner-index:
+    required: true
+  runners-total:
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
+    - name: Download image
+      uses: actions/download-artifact@v4
+      with:
+        name: android-cuttlefish-e2etest-image-tar
+        github-token: ${{ github.token }}
+    - name: Run tests
+      shell: bash
+      env:
+        INPUT_RUNNER_INDEX: ${{ inputs.runner-index }}
+        INPUT_RUNNERS_TOTAL: ${{ inputs.runners-total }}
+      run: |
+        # Handle input
+        echo "RUNNER_INDEX: $INPUT_RUNNER_INDEX"
+        echo "RUNNERS_TOTAL: $INPUT_RUNNERS_TOTAL"
+        echo ""
+        if [ -z "$INPUT_RUNNER_INDEX" ]; then
+          echo "Error: 'inputs.runner-index' is empty"
+          exit 1
+        fi
+        if [ -z "$INPUT_RUNNERS_TOTAL" ]; then
+          echo "Error: 'inputs.runners-total' is empty"
+          exit 1
+        fi
+
+        # Run container
+        sudo podman info
+        sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
+        mkdir -p -m 777 /tmp/cw_bazel
+        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+
+        # Compute tests for this runner
+        all_tests=$( sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output  query --noshow_progress 'attr(tags, "[\[ ]host-ready[,\]]", //...)' | grep -e "^\/\/" | sort )
+        all_tests_count=$(echo "${all_tests}" | wc --lines)
+        echo "ALL TESTS:"
+        echo "${all_tests}"
+        echo ""
+        runner_tests_count=$((all_tests_count / INPUT_RUNNERS_TOTAL))
+        if [[ $((all_tests_count % INPUT_RUNNERS_TOTAL)) -gt 0 ]]; then
+          runner_tests_count=$((runner_tests_count + 1))
+        fi
+        start_index=$(( ((INPUT_RUNNER_INDEX - 1) * runner_tests_count) + 1  ))
+        runner_tests=$(echo "${all_tests}" | sed -n "${start_index},${runner_tests_count} p")
+        if [ -z "${runner_tests}" ]; then
+          >&2 echo "runner has an empty list of tests to run"
+          exit 1
+        fi
+        echo "RUNNER TESTS:"
+        echo "${runner_tests}"
+
+        # Run tests
+        targets=( $(echo ${runner_tests}) )
+        for t in "${targets[@]}"; do
+          t="${t::-1}"
+          echo "running test: ${t}"
+          sudo podman rm -f tester
+          sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+          sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
+        done
+    - name: Upload test logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: "e2e-tests-orchestration-runner-${{ inputs.runner-index }}"
+        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main//bazel-out/k8-fastbuild/testlogs
+    - name: Remaining disk space
+      shell: bash
+      run: |
+        df -h

@@ -174,45 +174,39 @@ jobs:
       with:
         name: testlogs
         path: e2etests/bazel-testlogs
-  e2e-tests-orchestration-runner:
+  e2e-tests-orchestration-runner-1:
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
     steps:
-    - name: Check kvm
-      run: |
-        ls -la /dev/kvm
-    - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
-      with:
-        tool-cache: true
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: download image
-      uses: actions/download-artifact@v4
-      with:
-        name: android-cuttlefish-e2etest-image-tar
-        github-token: ${{ github.token }}
-    - name: Run tests
-      run: |
-        sudo podman info
-        sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
-        mkdir -p -m 777 /tmp/cw_bazel
-        # TODO: Use bazel query.
-        targets=("//orchestration/journal_gatewayd_test:journal_gatewayd_test_test" "//orchestration/powerbtn_test:powerbtn_test_test" "//orchestration/snapshot_test:snapshot_test_test")
-        for t in "${targets[@]}"; do
-          sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-          sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
-          sudo podman rm -f tester
-        done
-    - name: Upload test logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: e2e-tests-orchestration-runner-testlogs
-        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/_main/bazel-out/k8-fastbuild/testlogs
-    - name: Used disk space
-      run: |
-        df -h
+      - name: Checkout repository
+        uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      - name: Run tests
+        uses: ./.github/actions/run-cw-sharded-e2e-test
+        with:
+          runner-index: 1
+          runners-total: 3
+  e2e-tests-orchestration-runner-2:
+    runs-on: ubuntu-24.04
+    needs: [e2e-tests-orchestration-build-image]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      - name: Run tests
+        uses: ./.github/actions/run-cw-sharded-e2e-test
+        with:
+          runner-index: 2
+          runners-total: 3
+  e2e-tests-orchestration-runner-3:
+    runs-on: ubuntu-24.04
+    needs: [e2e-tests-orchestration-build-image]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      - name: Run tests
+        uses: ./.github/actions/run-cw-sharded-e2e-test
+        with:
+          runner-index: 3
+          runners-total: 3
   e2e-tests-orchestration-runner-special:
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
