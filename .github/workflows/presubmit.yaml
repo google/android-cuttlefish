@@ -64,12 +64,6 @@ jobs:
     container:
       image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
     steps:
-    - name: Common bazel setup
-      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
-      with:
-        bazelisk-cache: true # Avoid downloading Bazel every time.
-        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
-        repository-cache: true # Share repository cache between workflows.
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
     - name: setup apt
@@ -82,6 +76,19 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         path: "android-cuttlefish"
+    - name: Common bazel setup
+      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
+      with:
+        bazelisk-cache: true # Avoid downloading Bazel every time.
+        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
+        repository-cache: true # Share repository cache between workflows.
+        bazelrc: |
+          build --google_default_credentials=true
+          build --remote_cache="https://storage.googleapis.com/android-cuttlefish-cache"
+    - name: Authenticate
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
     - name: install bazel
       run: bash android-cuttlefish/tools/buildutils/installbazel.sh
     - name: install package build dependencies
