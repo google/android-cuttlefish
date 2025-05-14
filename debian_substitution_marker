@@ -151,11 +151,6 @@ symlinks: {
 }
 
 symlinks: {
-  target: "/usr/lib/cuttlefish-common/bin/run_cvd"
-  link_name: "bin/run_cvd"
-}
-
-symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/screen_recording_server"
   link_name: "bin/screen_recording_server"
 }
