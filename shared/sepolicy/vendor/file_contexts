@@ -118,6 +118,9 @@
 /vendor/bin/hw/android\.hardware\.authsecret-service.example u:object_r:hal_authsecret_default_exec:s0
 /vendor/bin/dlkm_loader  u:object_r:dlkm_loader_exec:s0
 /vendor/bin/init\.wifi    u:object_r:init_wifi_sh_exec:s0
+starting_at_board_api(202604, `
+    /vendor/bin/init_dev_config u:object_r:init_dev_config_exec:s0
+')
 /vendor/bin/snapshot_hook_post_resume u:object_r:snapshot_hook_sh:s0
 /vendor/bin/snapshot_hook_pre_suspend u:object_r:snapshot_hook_sh:s0
 
