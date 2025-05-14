@@ -410,6 +410,10 @@ func (h *AdbHelper) ExecShellCommand(serial string, cmd []string) (string, error
 	return runCmd(h.Bin, append([]string{"-s", serial, "shell"}, cmd...)...)
 }
 
+func (h *AdbHelper) BuildShellCommand(serial string, cmd []string) *exec.Cmd {
+	return exec.Command(h.Bin, append([]string{"-s", serial, "shell"}, cmd...)...)
+}
+
 func runCmd(name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(context.TODO(), name, args...)
 	log.Printf("Executing command: `%s`\n", cmd.String())
