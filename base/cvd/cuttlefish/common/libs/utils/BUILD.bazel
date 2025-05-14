@@ -736,7 +736,6 @@ clang_tidy_test(
 cc_library(
     name = "utils",
     hdrs = [
-        "files.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",

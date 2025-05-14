@@ -67,7 +67,7 @@ cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/sensors",
         "//cuttlefish/common/libs/transport",
-        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",

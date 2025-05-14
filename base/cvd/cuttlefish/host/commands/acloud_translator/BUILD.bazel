@@ -12,8 +12,8 @@ cc_binary(
     ],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//libbase",
     ]
 )

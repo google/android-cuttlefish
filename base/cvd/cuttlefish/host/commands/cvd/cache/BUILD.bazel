@@ -11,8 +11,8 @@ cc_library(
     hdrs = ["cache.h"],
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:disk_usage",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
         "@fmt",
