@@ -31,8 +31,8 @@ cc_library(
     deps = [
         ":libcuttlefish_run_cvd_proto",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",

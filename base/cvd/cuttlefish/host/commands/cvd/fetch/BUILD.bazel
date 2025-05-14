@@ -22,8 +22,8 @@ cc_library(
     copts = COPTS,
     deps = [
         ":host_pkg_migration_cc_proto",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
         "@fmt",
@@ -51,10 +51,10 @@ cc_library(
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
@@ -95,7 +95,7 @@ cc_test(
     ],
     copts = COPTS + [ "-Icuttlefish" ],
     deps = [
-        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/fetch",

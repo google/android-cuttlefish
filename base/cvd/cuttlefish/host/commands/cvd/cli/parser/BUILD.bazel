@@ -60,7 +60,7 @@ cc_library(
     deps = [
         ":configs_common",
         ":load_config_cc_proto",
-        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",

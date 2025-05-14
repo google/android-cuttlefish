@@ -35,7 +35,7 @@ cc_binary(
     copts = COPTS,
     deps = [
         ":libcontrol_env_proxy_server",
-        "//cuttlefish/common/libs/utils",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/control_env",
         "@gflags",
         "@jsoncpp",
