@@ -22,7 +22,7 @@ java_test_host {
         "src/com/android/cuttlefish/tests/FastbootRebootTest.java",
     ],
     test_suites: [
-        "device-tests",
+        "general-tests",
     ],
     libs: [
         "tradefed",
@@ -36,7 +36,7 @@ java_test_host {
         "src/com/android/cuttlefish/tests/FastbootFlashingTest.java",
     ],
     test_suites: [
-        "device-tests",
+        "general-tests",
     ],
     libs: [
         "tradefed",
@@ -50,7 +50,7 @@ java_test_host {
         "src/com/android/cuttlefish/tests/OemlockTest.java",
     ],
     test_suites: [
-        "device-tests",
+        "general-tests",
     ],
     libs: [
         "tradefed",
