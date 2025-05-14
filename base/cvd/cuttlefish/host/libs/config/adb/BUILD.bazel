@@ -20,7 +20,6 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",

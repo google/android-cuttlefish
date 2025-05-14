@@ -66,7 +66,6 @@ cc_library(
     srcs = ["acloud_translator.cpp"],
     hdrs = ["acloud_translator.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -115,7 +114,6 @@ cc_library(
     srcs = ["cache.cpp"],
     hdrs = ["cache.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
@@ -160,7 +158,6 @@ cc_library(
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -206,7 +203,6 @@ cc_library(
     srcs = ["env.cpp"],
     hdrs = ["env.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -320,7 +316,6 @@ cc_library(
     srcs = ["login.cpp"],
     hdrs = ["login.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
@@ -387,7 +382,6 @@ cc_library(
     srcs = ["powerwash.cpp"],
     hdrs = ["powerwash.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -458,7 +452,6 @@ cc_library(
     srcs = ["restart.cpp"],
     hdrs = ["restart.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -545,7 +538,6 @@ cc_library(
     srcs = ["status.cpp"],
     hdrs = ["status.h"],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
@@ -603,7 +595,6 @@ cc_library(
     hdrs = ["try_acloud.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/acloud",
@@ -627,7 +618,6 @@ cc_library(
     hdrs = ["version.h"],
     deps = [
         "//:libbuildversion",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:proto",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
