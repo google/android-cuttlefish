@@ -198,7 +198,7 @@ jobs:
         sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
         mkdir -p -m 777 /tmp/cw_bazel
         # TODO: Use bazel query.
-        targets=("//orchestration/journal_gatewayd_test:journal_gatewayd_test_test" "//orchestration/powerbtn_test:powerbtn_test_test")
+        targets=("//orchestration/journal_gatewayd_test:journal_gatewayd_test_test" "//orchestration/powerbtn_test:powerbtn_test_test" "//orchestration/snapshot_test:snapshot_test_test")
         for t in "${targets[@]}"; do
           sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
           sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --sandbox_writable_path=/home/testrunner $t
