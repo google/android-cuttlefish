@@ -90,7 +90,6 @@ cc_test(
     ],
     copts = COPTS + [ "-Icuttlefish" ],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",

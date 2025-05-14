@@ -12,7 +12,6 @@ cc_binary(
     ],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/msg_queue",

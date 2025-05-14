@@ -79,7 +79,6 @@ cc_library(
         "//cuttlefish/common/libs/confui",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/security:confui_sign",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",

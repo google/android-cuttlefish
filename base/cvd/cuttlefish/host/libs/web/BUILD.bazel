@@ -41,7 +41,6 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
@@ -60,7 +59,6 @@ cc_test(
     srcs = ["android_build_string_tests.cpp"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
@@ -126,7 +124,6 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
@@ -171,7 +168,6 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
@@ -197,7 +193,6 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",

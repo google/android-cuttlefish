@@ -12,7 +12,6 @@ cc_library(
     hdrs = ["auto_cmd.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:type_name",
         "//cuttlefish/host/libs/config",
@@ -54,7 +53,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -75,7 +73,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
@@ -97,7 +94,6 @@ cc_library(
     hdrs = ["casimir_control_server.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
@@ -120,7 +116,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
@@ -141,7 +136,6 @@ cc_library(
     hdrs = ["control_env_proxy_server.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
@@ -185,7 +179,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
@@ -224,7 +217,6 @@ cc_library(
     hdrs = ["kernel_log_monitor.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
@@ -250,7 +242,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
@@ -272,7 +263,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
@@ -319,7 +309,6 @@ cc_library(
     hdrs = ["metrics.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -340,7 +329,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
@@ -387,7 +375,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
@@ -408,7 +395,6 @@ cc_library(
     hdrs = ["open_wrt.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
@@ -479,7 +465,6 @@ cc_library(
     hdrs = ["root_canal.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
@@ -502,7 +487,6 @@ cc_library(
     hdrs = ["screen_recording_server.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
@@ -524,7 +508,6 @@ cc_library(
     hdrs = ["secure_env.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
@@ -548,7 +531,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
@@ -610,7 +592,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
@@ -642,7 +623,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -693,7 +673,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
@@ -715,7 +694,6 @@ cc_library(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:known_paths",
@@ -737,7 +715,6 @@ cc_library(
     hdrs = ["vhost_device_vsock.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -817,7 +794,6 @@ cc_library(
     hdrs = ["wmediumd_server.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:wait_for_unix_socket",

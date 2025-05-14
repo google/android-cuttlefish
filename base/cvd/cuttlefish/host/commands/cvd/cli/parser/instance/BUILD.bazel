@@ -26,7 +26,6 @@ cc_library(
         "cf_vm_configs.h",
     ],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:result",
@@ -51,7 +50,6 @@ cc_test(
     ],
     copts = COPTS + [ "-Icuttlefish" ],
     deps = [
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",

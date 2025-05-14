@@ -55,7 +55,6 @@ cc_library(
     hdrs = ["selector.h"],
     deps = [
         ":parser",
-        "//cuttlefish/common/libs/utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli:command_request",
