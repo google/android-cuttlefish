@@ -56,6 +56,7 @@ package_files(
         "cuttlefish-common/bin/restart_cvd": "//cuttlefish/host/commands/restart_cvd",
         "cuttlefish-common/bin/run_cvd": "//cuttlefish/host/commands/run_cvd",
         "cuttlefish-common/bin/screen_recording_server": "//cuttlefish/host/commands/screen_recording_server",
+        # "cuttlefish-common/bin/secure_env": "//cuttlefish/host/commands/secure_env", # TODO: schuffelen - make this more complete
         "cuttlefish-common/bin/sensors_simulator": "//cuttlefish/host/commands/sensors_simulator",
         "cuttlefish-common/bin/simg2img": "//libsparse:simg2img",
         "cuttlefish-common/bin/snapshot_util_cvd": "//cuttlefish/host/commands/snapshot_util_cvd",

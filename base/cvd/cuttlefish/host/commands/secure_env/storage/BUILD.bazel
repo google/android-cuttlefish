@@ -1,0 +1,46 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "insecure_json_storage",
+    srcs = ["insecure_json_storage.cpp"],
+    hdrs = ["insecure_json_storage.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/secure_env/storage",
+        "//libbase",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "insecure_json_storage_clang_tidy",
+    srcs = [":insecure_json_storage"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "storage",
+    srcs = ["storage.cpp"],
+    hdrs = ["storage.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+clang_tidy_test(
+    name = "storage_clang_tidy",
+    srcs = [":storage"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

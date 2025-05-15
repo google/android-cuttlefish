@@ -1,0 +1,70 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "secure_env",
+    srcs = ["secure_env_only_oemlock.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/transport",
+        "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
+        "//cuttlefish/host/commands/secure_env/oemlock",
+        "//cuttlefish/host/commands/secure_env/oemlock:oemlock_responder",
+        "//cuttlefish/host/commands/secure_env/storage:insecure_json_storage",
+        "//cuttlefish/host/commands/secure_env:suspend_resume_handler",
+        "//cuttlefish/host/commands/secure_env:worker_thread_loop_body",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/config:logging",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "secure_env_clang_tidy",
+    srcs = [":secure_env"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "suspend_resume_handler",
+    srcs = ["suspend_resume_handler.cpp"],
+    hdrs = ["suspend_resume_handler.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/command_util",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "suspend_resume_handler_clang_tidy",
+    srcs = [":suspend_resume_handler"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "worker_thread_loop_body",
+    srcs = ["worker_thread_loop_body.cpp"],
+    hdrs = ["worker_thread_loop_body.h"],
+    strip_include_prefix = "//cuttlefish",
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/secure_env:suspend_resume_handler",
+    ],
+)
+
+clang_tidy_test(
+    name = "worker_thread_loop_body_clang_tidy",
+    srcs = [":worker_thread_loop_body"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
