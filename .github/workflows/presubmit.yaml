@@ -6,6 +6,13 @@ on:
     branches-ignore:
       - main  # push events to main branch occur after PRs are merged, when the same checks were run
 
+
+concurrency:
+  # limits the workflow to a single run per branch/PR
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # previous runs are cancelled when a new run is started
+  cancel-in-progress: true
+
 jobs:
   staticcheck:
     runs-on: ubuntu-22.04
