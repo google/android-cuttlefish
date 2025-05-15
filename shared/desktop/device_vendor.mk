@@ -36,6 +36,3 @@ $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 # Loads the camera HAL and which set of cameras is required.
 $(call inherit-product, device/google/cuttlefish/shared/camera/device_vendor.mk)
 $(call inherit-product, device/google/cuttlefish/shared/camera/config/standard.mk)
-
-# TODO(b/412933237): remove this once all violations are fixed.
-PRODUCT_SELINUX_TREBLE_LABELING_TRACKING_LIST_FILE := device/google/cuttlefish/shared/desktop/treble_labeling_tracking_list.yaml
