@@ -163,7 +163,6 @@ cvd_host_tools = [
     "logcat_receiver",
     "lpadd",
     "lpmake",
-    "lpunpack",
     "lz4",
     "make_f2fs",
     "mcopy",
