@@ -16,8 +16,6 @@ syntax = "proto3";
 
 package casimircontrolserver;
 
-import "google/protobuf/empty.proto";
-
 service CasimirControlService {
   rpc SendApdu (SendApduRequest) returns (SendApduReply) {}
   rpc PollA (Void) returns (SenderId) {}
