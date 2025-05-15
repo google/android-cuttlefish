@@ -24,7 +24,7 @@ namespace cuttlefish {
 namespace secure_env_impl {
 
 Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
-                             SharedFD read_fd, SharedFD suspend_socket);
+                             SharedFD read_fd, SharedFD snapshot_socket);
 
 }  // namespace secure_env_impl
 }  // namespace cuttlefish

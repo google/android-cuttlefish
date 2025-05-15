@@ -16,15 +16,10 @@
 
 #include "host/commands/secure_env/storage/storage.h"
 
-#include "keymaster/android_keymaster_utils.h"
-
 namespace cuttlefish {
 namespace secure_env {
 
 void StorageDataDestroyer::operator()(StorageData* ptr) {
-  {
-    keymaster::Eraser(ptr, sizeof(StorageData) + ptr->size);
-  }
   std::free(ptr);
 }
 
