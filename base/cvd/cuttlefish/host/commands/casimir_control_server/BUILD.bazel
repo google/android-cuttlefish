@@ -1,6 +1,6 @@
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
-load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -22,16 +22,20 @@ cc_binary(
         "//cuttlefish/host/libs/config",
         "//libbase",
         "@gflags",
-        "@grpc//:grpc",
+        "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
+        "@protobuf//:empty_cc_proto",
     ],
 )
 
 clang_tidy_test(
     name = "casimir_control_server_clang_tidy",
     srcs = [":casimir_control_server"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -61,7 +65,10 @@ cc_library(
 clang_tidy_test(
     name = "libcasimir_clang_tidy",
     srcs = [":libcasimir"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 proto_library(
@@ -78,9 +85,9 @@ cc_proto_library(
 cc_grpc_library(
     name = "libcasimir_control_server",
     srcs = [":casimir_control_server_proto"],
+    grpc_only = True,
     deps = [
         ":casimir_control_server_cc_proto",
         "@grpc//:grpc++",
     ],
-    grpc_only = True,
 )

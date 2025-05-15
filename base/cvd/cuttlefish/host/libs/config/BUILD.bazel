@@ -20,6 +20,15 @@ cc_library(
     deps = [
         ":cuttlefish_config",
         ":logging",
+        ":config_constants",
+        ":config_fragment",
+        ":config_utils",
+        ":secure_hals",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/common/libs/utils:architecture",
+        "//cuttlefish/common/libs/utils:device_type",
+        "//cuttlefish/common/libs/utils:result",
+        "@fmt",
     ],
 )
 
