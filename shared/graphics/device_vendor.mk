@@ -21,7 +21,6 @@ PRODUCT_PACKAGES += device_google_cuttlefish_shared_config_init_graphics_vendor_
 $(call soong_config_set_bool,cuttlefish_config,use_init_graphics_vendor_rc,true)
 
 # Gfxstream common libraries:
-PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl
 PRODUCT_PACKAGES += \
     libandroidemu \
     libOpenglCodecCommon \
