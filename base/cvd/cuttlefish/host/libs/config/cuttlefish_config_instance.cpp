@@ -1164,16 +1164,6 @@ std::string CuttlefishConfig::InstanceSpecific::ti50_emulator() const {
   return (*Dictionary())[kTi50].asString();
 }
 
-// jcardsim
-static constexpr char kEnableJcardSimulator[] = "enable_jcard_simulator";
-void CuttlefishConfig::MutableInstanceSpecific::set_enable_jcard_simulator(
-    bool enable_jcard_simulator) {
-  (*Dictionary())[kEnableJcardSimulator] = enable_jcard_simulator;
-}
-bool CuttlefishConfig::InstanceSpecific::enable_jcard_simulator() const {
-  return (*Dictionary())[kEnableJcardSimulator].asBool();
-}
-
 static constexpr char kEnableWebRTC[] = "enable_webrtc";
 void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(bool enable_webrtc) {
   (*Dictionary())[kEnableWebRTC] = enable_webrtc;
