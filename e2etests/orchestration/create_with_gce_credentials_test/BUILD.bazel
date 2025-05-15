@@ -17,7 +17,7 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "create_with_gce_credentials_test_test",
     srcs = ["main_test.go"],
-    tags = ["host-ready"],
+    tags = ["host-ready-special"],
     deps = [
         "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
         "@com_github_google_android_cuttlefish_frontend_src_libhoclient//:libhoclient",
