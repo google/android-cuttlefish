@@ -26,3 +26,16 @@ clang_tidy_test(
     srcs = [":confui_sign"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "oemlock",
+    hdrs = ["oemlock.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "oemlock_clang_tidy",
+    srcs = [":oemlock"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
