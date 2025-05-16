@@ -10,6 +10,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.14.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
+bazel_dep(name = "brotli", version = "1.1.0")
 bazel_dep(name = "crc32c", version = "1.1.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
@@ -28,6 +29,7 @@ bazel_dep(name = "libjpeg_turbo", version = "2.1.91")
 bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "libzip", version = "1.10.1")
+bazel_dep(name = "lz4", version = "1.9.4")
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "rules_cc", version = "0.1.1")
@@ -454,4 +456,24 @@ git_repository(
     build_file = "@//:BUILD.libnl.bazel",
     commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
     remote = "https://android.googlesource.com/platform/external/libnl",
+)
+
+# Upstream uses autotools, for now use the Android copy
+git_repository(
+    name = "libusb",
+    build_file = "@//:BUILD.libusb.bazel",
+    commit = "7b5267099855d320f6013d667d113e3619f18bf5",
+    remote = "https://android.googlesource.com/platform/external/libusb",
+)
+
+# Android version is slightly forked from the chromium upstream
+git_repository(
+    name = "libopenscreen",
+    build_file = "@//:BUILD.libopenscreen.bazel",
+    commit = "3f982cf4871df8771c9d4abe6e9a6f8d829b2736",
+    remote = "https://android.googlesource.com/platform/external/openscreen",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/libopenscreen:PATCH.bazelignore.patch",
+    ],
 )

@@ -60,6 +60,7 @@ cc_library(
         "include/android-base/scopeguard.h",
         "include/android-base/stringprintf.h",
         "include/android-base/strings.h",
+        "include/android-base/thread_annotations.h",
         "include/android-base/threads.h",
         "include/android-base/unique_fd.h",
         "include/android-base/utf8.h",

@@ -1,0 +1,5 @@
+package(
+    default_visibility = [
+        "@libopenscreen//:__subpackages__",
+    ],
+)
