@@ -135,6 +135,48 @@ func TestCreateCVD(t *testing.T) {
 	}
 }
 
+func TestUploadArtifactAlreadyExist(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeOK(w, hoapi.StatArtifactResponse{})
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	if err := client.UploadArtifact(testFile); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestUploadArtifactReceive409WhenUploadingChunks(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeErr(w, http.StatusNotFound)
+		case "PUT /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeErr(w, http.StatusConflict)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	if err := client.UploadArtifact(testFile); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
 	token := "foo"
