@@ -9,7 +9,8 @@ cc_binary(
     name = "logcat_receiver",
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
     ],

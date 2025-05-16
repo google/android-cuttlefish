@@ -97,7 +97,6 @@ cc_test(
         "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "//cuttlefish/host/libs/config",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

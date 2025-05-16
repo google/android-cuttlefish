@@ -11,14 +11,17 @@ cc_library(
     hdrs = ["reporting.h"],
     deps = [
         "//libbase",
-        "@fruit"
+        "@fruit",
     ],
 )
 
 clang_tidy_test(
     name = "reporting_clang_tidy",
     srcs = [":reporting"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_binary(
@@ -89,10 +92,10 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:custom_actions",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
@@ -105,7 +108,7 @@ cc_binary(
         "@fruit",
         "@gflags",
         "@googleapis//google/rpc:status_cc_proto",
-        "@grpc//:grpc",
+        "@grpc",
         "@grpc//:grpc++",
     ],
 )
@@ -113,5 +116,8 @@ cc_binary(
 clang_tidy_test(
     name = "run_cvd_clang_tidy",
     srcs = [":run_cvd"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

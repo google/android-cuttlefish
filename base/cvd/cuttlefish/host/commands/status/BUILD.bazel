@@ -18,7 +18,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",
         "@jsoncpp",

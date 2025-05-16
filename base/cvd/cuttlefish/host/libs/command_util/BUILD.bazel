@@ -35,7 +35,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@protobuf",
         "@jsoncpp",

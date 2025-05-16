@@ -18,7 +18,6 @@ cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config",
         "//libbase",
         "@gflags",
         "@grpc",

@@ -14,7 +14,7 @@ cc_binary(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",
     ],

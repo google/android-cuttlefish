@@ -12,8 +12,8 @@ cc_binary(
     ],
     copts = COPTS,
     deps = [
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",
     ],

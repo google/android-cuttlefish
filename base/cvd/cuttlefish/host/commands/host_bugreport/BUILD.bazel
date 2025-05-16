@@ -9,23 +9,28 @@ cc_binary(
     name = "cvd_internal_host_bugreport",
     srcs = ["main.cc"],
     copts = COPTS,
+    features = ["-layering_check"],  # Incompatible with libzip cmake build
+    linkopts = ["-llzma"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@fmt",
         "@gflags",
         "@libzip",
         "@zlib",
     ],
-    linkopts = ["-llzma"],
-    features = ["-layering_check"], # Incompatible with libzip cmake build
 )
 
 clang_tidy_test(
     name = "cvd_internal_host_bugreport_clang_tidy",
     srcs = [":cvd_internal_host_bugreport"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

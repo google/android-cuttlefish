@@ -13,7 +13,7 @@ cc_binary(
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
     ],

@@ -8,31 +8,6 @@ package(
 exports_files([".clang-tidy"])
 
 cc_library(
-    name = "config",
-    # Intentionally repeats headers from other targets so outside targets can
-    # continue to depend on :config for everything. See go/cpp-build#splitting
-    hdrs = [
-        "cuttlefish_config.h",
-        "logging.h",
-    ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-    deps = [
-        ":cuttlefish_config",
-        ":logging",
-        ":config_constants",
-        ":config_fragment",
-        ":config_utils",
-        ":secure_hals",
-        "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/common/libs/utils:architecture",
-        "//cuttlefish/common/libs/utils:device_type",
-        "//cuttlefish/common/libs/utils:result",
-        "@fmt",
-    ],
-)
-
-cc_library(
     name = "config_constants",
     hdrs = ["config_constants.h"],
     copts = COPTS,

@@ -15,7 +15,7 @@ cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:shared_fd_flag",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@fmt",
     ],

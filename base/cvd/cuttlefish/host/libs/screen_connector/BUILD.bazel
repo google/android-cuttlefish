@@ -14,7 +14,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:size_utils",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
     ],
 )
@@ -65,8 +65,8 @@ cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/confui:host_confui",
         "//cuttlefish/host/libs/wayland:cuttlefish_wayland_server",
         "//libbase",

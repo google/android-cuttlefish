@@ -10,7 +10,7 @@ cc_library(
     hdrs = [
         "flags_defaults.h",
     ],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:environment",
@@ -22,7 +22,10 @@ cc_library(
 clang_tidy_test(
     name = "libassemble_cvd_clang_tidy",
     srcs = [":libassemble_cvd"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 proto_library(
@@ -38,26 +41,6 @@ cc_proto_library(
 # Separate target so it can use strip_include_prefix
 cc_library(
     name = "assemble_cvd_not_main",
-    hdrs = [
-        "alloc.h",
-        "boot_config.h",
-        "boot_image_utils.h",
-        "bootconfig_args.h",
-        "clean.h",
-        "disk/disk.h",
-        "disk_builder.h",
-        "disk_flags.h",
-        "display.h",
-        "flag_feature.h",
-        "flags.h",
-        "graphics_flags.h",
-        "kernel_module_parser.h",
-        "misc_info.h",
-        "network_flags.h",
-        "super_image_mixer.h",
-        "touchpad.h",
-        "vendor_dlkm_utils.h",
-    ],
     srcs = [
         "alloc.cc",
         "boot_config.cc",
@@ -83,9 +66,31 @@ cc_library(
         "touchpad.cpp",
         "vendor_dlkm_utils.cc",
     ],
+    hdrs = [
+        "alloc.h",
+        "boot_config.h",
+        "boot_image_utils.h",
+        "bootconfig_args.h",
+        "clean.h",
+        "disk/disk.h",
+        "disk_builder.h",
+        "disk_flags.h",
+        "display.h",
+        "flag_feature.h",
+        "flags.h",
+        "graphics_flags.h",
+        "kernel_module_parser.h",
+        "misc_info.h",
+        "network_flags.h",
+        "super_image_mixer.h",
+        "touchpad.h",
+        "vendor_dlkm_utils.h",
+    ],
     copts = COPTS + [
         "-Wno-ambiguous-macro",
     ],
+    strip_include_prefix = "//cuttlefish",
+    visibility = ["//visibility:private"],
     deps = [
         ":launch_cvd_cc_proto",
         ":libassemble_cvd",
@@ -109,11 +114,11 @@ cc_library(
         "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:esp",
@@ -138,8 +143,6 @@ cc_library(
         "@jsoncpp",
         "@protobuf",
     ],
-    strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:private"],
 )
 
 cc_binary(
@@ -157,7 +160,6 @@ cc_binary(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -172,5 +174,8 @@ cc_binary(
 clang_tidy_test(
     name = "assemble_cvd_clang_tidy",
     srcs = [":assemble_cvd"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
