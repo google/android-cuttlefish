@@ -264,9 +264,9 @@ type UploadOptions struct {
 }
 
 type FilesUploader struct {
-	HTTPHelper HTTPHelper
-	UploadDir  string
-	DumpOut    io.Writer
+	HTTPHelper     HTTPHelper
+	UploadEndpoint string
+	DumpOut        io.Writer
 	UploadOptions
 }
 
@@ -346,7 +346,7 @@ func (u *FilesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 	wg := sync.WaitGroup{}
 	for i := 0; i < u.NumWorkers; i++ {
 		wg.Add(1)
-		w := newUploadChunkWorker(ctx, u.HTTPHelper, u.UploadDir, u.DumpOut, jobsChan, u.UploadOptions)
+		w := newUploadChunkWorker(ctx, u.HTTPHelper, u.UploadEndpoint, u.DumpOut, jobsChan, u.UploadOptions)
 		go func() {
 			defer wg.Done()
 			ch := w.Start()
@@ -373,17 +373,17 @@ type uploadChunkJob struct {
 
 type uploadChunkWorker struct {
 	UploadOptions
-	ctx        context.Context
-	httpHelper HTTPHelper
-	uploadDir  string
-	dumpOut    io.Writer
-	jobsChan   <-chan uploadChunkJob
+	ctx            context.Context
+	httpHelper     HTTPHelper
+	uploadEndpoint string
+	dumpOut        io.Writer
+	jobsChan       <-chan uploadChunkJob
 }
 
 func newUploadChunkWorker(
 	ctx context.Context,
 	httpHelper HTTPHelper,
-	uploadDir string,
+	uploadEndpoint string,
 	dumpOut io.Writer,
 	jobsChan <-chan uploadChunkJob,
 	opts UploadOptions) *uploadChunkWorker {
@@ -391,12 +391,12 @@ func newUploadChunkWorker(
 		dumpOut = io.Discard
 	}
 	return &uploadChunkWorker{
-		ctx:           ctx,
-		httpHelper:    httpHelper,
-		uploadDir:     uploadDir,
-		dumpOut:       dumpOut,
-		jobsChan:      jobsChan,
-		UploadOptions: opts,
+		ctx:            ctx,
+		httpHelper:     httpHelper,
+		uploadEndpoint: uploadEndpoint,
+		dumpOut:        dumpOut,
+		jobsChan:       jobsChan,
+		UploadOptions:  opts,
 	}
 }
 
@@ -458,7 +458,7 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 	traceCtx := httptrace.WithClientTrace(ctx, clientTrace)
 	res, err := w.httpHelper.NewUploadFileRequest(
 		traceCtx,
-		"/userartifacts/"+w.uploadDir,
+		w.uploadEndpoint,
 		pipeReader,
 		writer.FormDataContentType()).
 		Do()
