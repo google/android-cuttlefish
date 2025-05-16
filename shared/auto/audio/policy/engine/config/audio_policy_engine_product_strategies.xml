@@ -150,9 +150,6 @@
         <AttributesGroup streamType="AUDIO_STREAM_TTS" volumeGroup="tts">
             <Attributes> <Flags value="AUDIO_FLAG_BEACON"/> </Attributes>
         </AttributesGroup>
-        <AttributesGroup streamType="AUDIO_STREAM_ACCESSIBILITY" volumeGroup="tts">
-            <Attributes> <Usage value="AUDIO_USAGE_ASSISTANCE_ACCESSIBILITY"/> </Attributes>
-        </AttributesGroup>
     </ProductStrategy>
 
 </ProductStrategies>
