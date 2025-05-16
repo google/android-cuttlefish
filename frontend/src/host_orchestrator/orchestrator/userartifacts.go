@@ -48,6 +48,8 @@ type UserArtifactChunk struct {
 // Abstraction for managing user artifacts for launching CVDs.
 type UserArtifactsManager interface {
 	UserArtifactsDirResolver
+	// Update the artifact given the checksum.
+	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
@@ -76,6 +78,20 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsMa
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
 	}
+}
+
+func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	if err := createDir(m.RootDir); err != nil {
+		return err
+	}
+	filename := filepath.Join(m.RootDir, checksum)
+	if err := createUAFile(filename, m.Owner); err != nil {
+		return err
+	}
+	if err := writeChunk(filename, chunk); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {

@@ -189,6 +189,10 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 
 type testUAM struct{}
 
+func (testUAM) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	return nil
+}
+
 func (testUAM) NewDir() (*apiv1.UploadDirectory, error) {
 	return &apiv1.UploadDirectory{}, nil
 }
