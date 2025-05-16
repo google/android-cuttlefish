@@ -26,7 +26,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@fmt",
         "@gflags",

@@ -23,7 +23,6 @@ cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",

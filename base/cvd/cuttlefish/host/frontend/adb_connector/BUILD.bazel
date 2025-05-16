@@ -17,7 +17,8 @@ cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
     ]

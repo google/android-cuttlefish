@@ -14,7 +14,7 @@ cc_binary(
     deps = [
         ":allocd_utils",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
         "@jsoncpp",
@@ -40,7 +40,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@jsoncpp",
     ],

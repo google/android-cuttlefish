@@ -72,7 +72,7 @@ cc_binary(
         ":libsensors_simulator",
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:device_type",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
         "@libeigen",

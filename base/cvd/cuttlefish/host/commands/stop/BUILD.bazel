@@ -19,7 +19,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/metrics",
         "//libbase",
         "@gflags",

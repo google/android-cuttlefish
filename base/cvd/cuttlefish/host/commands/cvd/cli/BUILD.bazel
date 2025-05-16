@@ -181,7 +181,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/instances:instance_database_utils",
         "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "@fmt",
     ],

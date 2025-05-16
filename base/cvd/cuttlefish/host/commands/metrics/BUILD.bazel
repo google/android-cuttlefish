@@ -22,7 +22,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
-        "//cuttlefish/host/libs/config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/msg_queue",
