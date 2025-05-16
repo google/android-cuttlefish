@@ -1,0 +1,26 @@
+name: Update Stable Tag
+
+on: [pull_request]
+  # TODO CJR: change event trigger away from test
+  #release:
+  #  types: [published]
+
+permissions:
+  contents: write
+
+# TODO CJR: s/test_chad/stable
+jobs:
+  mark-stable:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Determine build to mark
+      # returns in reverse chronological order by default
+      run:  echo "STABLE=$(git rev-list --tags --max-count=1)" >> $GITHUB_ENV
+    - name: Delete current, local stable tag
+      run:  git tag -d test_chad
+    - name: Create new stable tag
+      run: git tag test_chad ${STABLE}
+    - name: Force push to overwrite current stable
+      run: git push -f tag test_chad
