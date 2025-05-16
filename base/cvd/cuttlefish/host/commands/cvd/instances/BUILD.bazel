@@ -15,9 +15,26 @@ cc_proto_library(
 )
 
 cc_library(
+    name = "data_viewer",
+    srcs = ["data_viewer.cpp"],
+    hdrs = ["data_viewer.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:signals",
+    ],
+)
+
+clang_tidy_test(
+    name = "data_viewer_clang_tidy",
+    srcs = [":data_viewer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "instances",
     srcs = [
-        "data_viewer.cpp",
         "instance_database.cpp",
         "instance_database_types.cpp",
         "instance_group_record.cpp",
@@ -28,7 +45,6 @@ cc_library(
         "status_fetcher.cpp",
     ],
     hdrs = [
-        "data_viewer.h",
         "instance_database.h",
         "instance_database_types.h",
         "instance_group_record.h",
@@ -56,6 +72,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/instances:data_viewer",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/command_util",
