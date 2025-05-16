@@ -90,6 +90,7 @@ cc_library(
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/commands/cvd/utils:flags_collector",
