@@ -131,6 +131,11 @@ func main() {
 		Owner:   cvdUser,
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
+	uamV1Opts := orchestrator.UserArtifactsManagerV1Opts{
+		RootDir:     filepath.Join(*imRootDir, "user_artifacts_v1"),
+		RootWorkDir: filepath.Join(os.TempDir(), "user_artifacts_working"),
+	}
+	uamV1 := orchestrator.NewUserArtifactsManagerV1Impl(uamV1Opts)
 	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{
@@ -139,10 +144,11 @@ func main() {
 			AndroidBuildServiceURL: *abURL,
 			CVDUser:                cvdUser,
 		},
-		OperationManager:      om,
-		WaitOperationDuration: 2 * time.Minute,
-		UserArtifactsManager:  uam,
-		DebugVariablesManager: debugVarsManager,
+		OperationManager:       om,
+		WaitOperationDuration:  2 * time.Minute,
+		UserArtifactsManager:   uam,
+		UserArtifactsManagerV1: uamV1,
+		DebugVariablesManager:  debugVarsManager,
 	}
 	proxy := newOperatorProxy(*operatorPort)
 
