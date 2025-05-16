@@ -44,20 +44,27 @@ runs:
         # Compute tests for this runner
         all_tests=$( sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output  query --noshow_progress 'attr(tags, "[\[ ]host-ready[,\]]", //...)' | grep -e "^\/\/" | sort )
         all_tests_count=$(echo "${all_tests}" | wc --lines)
-        echo "ALL TESTS:"
+        echo "ALL TESTS: ${all_tests_count}"
         echo "${all_tests}"
         echo ""
-        runner_tests_count=$((all_tests_count / INPUT_RUNNERS_TOTAL))
-        if [[ $((all_tests_count % INPUT_RUNNERS_TOTAL)) -gt 0 ]]; then
+        remainder=$(( all_tests_count % INPUT_RUNNERS_TOTAL ))
+        prev_runners_count=$(( INPUT_RUNNER_INDEX - 1 ))
+        prev_runners_count_with_plus_one=$(( prev_runners_count < remainder ? prev_runners_count : remainder ))
+        prev_runners_count_plain=$(( prev_runners_count - prev_runners_count_with_plus_one  ))
+        quotient=$(( all_tests_count / INPUT_RUNNERS_TOTAL ))
+        start_index=$(( (prev_runners_count_with_plus_one * (quotient + 1)) + (prev_runners_count_plain * quotient) + 1 ))
+        runner_tests_count=$((quotient))
+        if [[ ${INPUT_RUNNER_INDEX} -le ${remainder} ]]; then
           runner_tests_count=$((runner_tests_count + 1))
         fi
-        start_index=$(( ((INPUT_RUNNER_INDEX - 1) * runner_tests_count) + 1  ))
-        runner_tests=$(echo "${all_tests}" | sed -n "${start_index},${runner_tests_count} p")
+        echo "start_index: ${start_index}"
+        echo "runner_tests_count: ${runner_tests_count}"
+        runner_tests=$(echo "${all_tests}" | sed -n "${start_index},+$((runner_tests_count-1)) p")
         if [ -z "${runner_tests}" ]; then
           >&2 echo "runner has an empty list of tests to run"
           exit 1
         fi
-        echo "RUNNER TESTS:"
+        echo "RUNNER TESTS"
         echo "${runner_tests}"
 
         # Run tests
