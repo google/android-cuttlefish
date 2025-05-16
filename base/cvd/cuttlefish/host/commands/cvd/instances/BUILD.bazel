@@ -15,27 +15,41 @@ cc_proto_library(
 )
 
 cc_library(
+    name = "data_viewer",
+    srcs = ["data_viewer.cpp"],
+    hdrs = ["data_viewer.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:signals",
+    ],
+)
+
+clang_tidy_test(
+    name = "data_viewer_clang_tidy",
+    srcs = [":data_viewer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "instances",
     srcs = [
-        "data_viewer.cpp",
         "instance_database.cpp",
         "instance_database_types.cpp",
         "instance_group_record.cpp",
         "instance_manager.cpp",
         "instance_record.cpp",
         "operator_client.cpp",
-        "run_cvd_proc_collector.cpp",
         "status_fetcher.cpp",
     ],
     hdrs = [
-        "data_viewer.h",
         "instance_database.h",
         "instance_database_types.h",
         "instance_group_record.h",
         "instance_manager.h",
         "instance_record.h",
         "operator_client.h",
-        "run_cvd_proc_collector.h",
         "status_fetcher.h",
     ],
     deps = [
@@ -56,12 +70,14 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/instances:data_viewer",
+        "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
-        "//cuttlefish/host/libs/command_util",
         "//libbase",
         "@fmt",
         "@jsoncpp",
@@ -97,7 +113,6 @@ cc_library(
     srcs = ["reset_client_utils.cpp"],
     hdrs = ["reset_client_utils.h"],
     deps = [
-        ":instances",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -105,6 +120,8 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/legacy",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "@fmt",
@@ -114,5 +131,27 @@ cc_library(
 clang_tidy_test(
     name = "reset_client_utils_clang_tidy",
     srcs = [":reset_client_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "run_cvd_proc_collector",
+    srcs = ["run_cvd_proc_collector.cpp"],
+    hdrs = ["run_cvd_proc_collector.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:proc_file_utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "run_cvd_proc_collector_clang_tidy",
+    srcs = [":run_cvd_proc_collector"],
     tags = ["clang_tidy", "clang-tidy"],
 )
