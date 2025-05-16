@@ -568,7 +568,7 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		ChunkSizeBytes: chunkSizeBytes,
 		File:           f,
 	}
-	return nil, h.m.UpdateArtifact(dir, chunk)
+	return nil, h.m.UpdateArtifactWithDir(dir, chunk)
 }
 
 type extractUserArtifactHandler struct {
@@ -582,7 +582,7 @@ func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error
 	name := vars["name"]
 	op := h.om.New()
 	go func() {
-		err := h.uam.ExtractArtifact(dir, name)
+		err := h.uam.ExtractArtifactWithDir(dir, name)
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}
