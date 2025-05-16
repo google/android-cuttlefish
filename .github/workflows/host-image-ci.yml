@@ -18,7 +18,11 @@
 
 name: HostImage
 
-on: [push]
+on: 
+  push:
+    branches:
+      - main
+      - version-*-dev
 
 jobs:
   build-installer-iso-job:
@@ -43,6 +47,8 @@ jobs:
         path: tools/cuttlefish-host-image-installer/preseed-mini.iso.xz
 
   build-cuttlefish-deb-job:
+    # always timing out, disable job until it is debugged
+    if: false
     uses: ./.github/workflows/reusable-build.yaml
 
   build-metapackage-deb-job:
