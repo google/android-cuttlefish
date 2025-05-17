@@ -1,8 +1,12 @@
-cuttlefish-frontend (1.9.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.9.0) unstable; urgency=medium
 
-  * 
+  * Skip powerbtn_test due flakiness. by @ser-io in https://github.com/google/android-cuttlefish/pull/1135
+  * e2e orchestration jobs improvements by @ser-io in https://github.com/google/android-cuttlefish/pull/1133
+  * Fix powerbtn_test flakiness. by @ser-io in https://github.com/google/android-cuttlefish/pull/1159
+  * Make orchestration e2e tests host ready by @ser-io in https://github.com/google/android-cuttlefish/pull/1158
+  * Shard e2e tests by @ser-io in https://github.com/google/android-cuttlefish/pull/1161
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 09 May 2025 18:27:31 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 16 May 2025 18:07:00 -0700
 
 cuttlefish-frontend (1.8.0) stable; urgency=medium
 
