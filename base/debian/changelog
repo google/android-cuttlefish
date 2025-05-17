@@ -1,8 +1,21 @@
-cuttlefish-common (1.9.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.9.0) unstable; urgency=medium
 
-  * 
+  * Begin development of version 1.9.0 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1143
+  * Migrate casimir_control_server by @cjreynol in https://github.com/google/android-cuttlefish/pull/1139
+  * Move tests out of `//cuttlefish/host/commands/cvd/unittests` by @Databean in https://github.com/google/android-cuttlefish/pull/1138
+  * Split most dependencies on `common/libs/utils` by @Databean in https://github.com/google/android-cuttlefish/pull/1145
+  * Deleting webrtc_operator files from staging by @cjreynol in https://github.com/google/android-cuttlefish/pull/1140
+  * Split dependencies on `//cuttlefish/common/libs/utils:[contains,flag_parser]` by @Databean in https://github.com/google/android-cuttlefish/pull/1148
+  * Remove most of the `host/libs/config:config` re-exports by @cjreynol in https://github.com/google/android-cuttlefish/pull/1146
+  * Build a minimal version of `secure_env` by @Databean in https://github.com/google/android-cuttlefish/pull/1160
+  * Split dependencies on `//cuttlefish/common/libs/utils:[files,subprocess]` by @Databean in https://github.com/google/android-cuttlefish/pull/1149
+  * Add missing dependencies by @jemoreira in https://github.com/google/android-cuttlefish/pull/1162
+  * Revert "Enable jcardsim simulator for Strongbox via new flag." by @jemoreira in https://github.com/google/android-cuttlefish/pull/1164
+  * Skip HostImage actions on PR and merge pushes by @cjreynol in https://github.com/google/android-cuttlefish/pull/1166
+  * Finish splitting config target and add some missing dependencies by @jemoreira in https://github.com/google/android-cuttlefish/pull/1171
+  * Mark 1.8 as stable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1172
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 09 May 2025 18:27:14 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 16 May 2025 17:57:02 -0700
 
 cuttlefish-common (1.8.0) stable; urgency=medium
 
