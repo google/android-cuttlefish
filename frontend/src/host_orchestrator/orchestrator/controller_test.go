@@ -189,6 +189,10 @@ func TestWaitOperationOperationIsDone(t *testing.T) {
 
 type testUAM struct{}
 
+func (testUAM) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	return nil
+}
+
 func (testUAM) NewDir() (*apiv1.UploadDirectory, error) {
 	return &apiv1.UploadDirectory{}, nil
 }
@@ -197,7 +201,7 @@ func (testUAM) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
 	return &apiv1.ListUploadDirectoriesResponse{}, nil
 }
 
-func (testUAM) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
+func (testUAM) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error {
 	return nil
 }
 
@@ -205,7 +209,7 @@ func (testUAM) GetDirPath(string) string {
 	return ""
 }
 
-func (testUAM) ExtractArtifact(string, string) error {
+func (testUAM) ExtractArtifactWithDir(string, string) error {
 	return nil
 }
 

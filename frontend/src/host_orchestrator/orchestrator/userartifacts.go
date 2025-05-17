@@ -48,14 +48,16 @@ type UserArtifactChunk struct {
 // Abstraction for managing user artifacts for launching CVDs.
 type UserArtifactsManager interface {
 	UserArtifactsDirResolver
+	// Update the artifact given the checksum.
+	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
-	UpdateArtifact(dir string, chunk UserArtifactChunk) error
+	UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error
 	// Extract artifact
-	ExtractArtifact(dir, name string) error
+	ExtractArtifactWithDir(dir, name string) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -76,6 +78,20 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsMa
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
 	}
+}
+
+func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	if err := createDir(m.RootDir); err != nil {
+		return err
+	}
+	filename := filepath.Join(m.RootDir, checksum)
+	if err := createUAFile(filename, m.Owner); err != nil {
+		return err
+	}
+	if err := writeChunk(filename, chunk); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
@@ -119,7 +135,7 @@ func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
 
-func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
+func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error {
 	dir = m.RootDir + "/" + dir
 	if ok, err := fileExist(dir); err != nil {
 		return err
@@ -151,7 +167,7 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 	return nil
 }
 
-func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
+func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) error {
 	dir = filepath.Join(m.RootDir, dir)
 	if ok, err := fileExist(dir); err != nil {
 		return err

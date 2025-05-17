@@ -15,11 +15,13 @@
 package libhoclient
 
 import (
+	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	wclient "github.com/google/android-cuttlefish/frontend/src/libhoclient/webrtcclient"
@@ -74,6 +76,7 @@ type CreateBugReportOpts struct {
 
 // A client to the host orchestrator service running in a remote host.
 type HostOrchestratorService interface {
+	UserArtifactsService
 	// Lists currently running devices.
 	ListCVDs() ([]*hoapi.CVD, error)
 
@@ -125,6 +128,11 @@ type HostOrchestratorService interface {
 
 	// Create device snapshot.
 	CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error)
+}
+
+type UserArtifactsService interface {
+	// Upload artifact.
+	UploadArtifact(filename string) error
 }
 
 const (
@@ -472,6 +480,31 @@ func (c *HostOrchestratorServiceImpl) UploadFile(uploadDir string, filename stri
 	return c.UploadFileWithOptions(uploadDir, filename, DefaultUploadOptions())
 }
 
+func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, filename string, uploadOpts UploadOptions) error {
+	return c.upload("/userartifacts/"+uploadDir, filename, uploadOpts)
+}
+
+func SHA256Checksum(filename string) (string, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func (c *HostOrchestratorServiceImpl) UploadArtifact(filename string) error {
+	checksum, err := SHA256Checksum(filename)
+	if err != nil {
+		return err
+	}
+	return c.upload("/v1/userartifacts/"+checksum, filename, DefaultUploadOptions())
+}
+
 func DefaultUploadOptions() UploadOptions {
 	return UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
@@ -485,7 +518,7 @@ func DefaultUploadOptions() UploadOptions {
 	}
 }
 
-func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, filename string, uploadOpts UploadOptions) error {
+func (c *HostOrchestratorServiceImpl) upload(endpoint, filename string, uploadOpts UploadOptions) error {
 	if uploadOpts.ChunkSizeBytes == 0 {
 		panic("ChunkSizeBytes value cannot be zero")
 	}
@@ -496,10 +529,10 @@ func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, fi
 		panic("MaxElapsedTime value cannot be zero")
 	}
 	uploader := &FilesUploader{
-		HTTPHelper:    c.HTTPHelper,
-		DumpOut:       c.HTTPHelper.Dumpster,
-		UploadDir:     uploadDir,
-		UploadOptions: uploadOpts,
+		HTTPHelper:     c.HTTPHelper,
+		DumpOut:        c.HTTPHelper.Dumpster,
+		UploadEndpoint: endpoint,
+		UploadOptions:  uploadOpts,
 	}
 	return uploader.Upload([]string{filename})
 }
