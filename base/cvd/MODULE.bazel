@@ -350,13 +350,6 @@ git_repository(
 )
 
 git_repository(
-    name = "librnnoise",
-    commit = "1cbdbcf1283499bbb2230a6b0f126eb9b236defd",
-    build_file = "@//:BUILD.librnnoise.bazel",
-    remote = "https://github.com/xiph/rnnoise",
-)
-
-git_repository(
     name = "libsrtp2",
     # This is quite old, but it's what libwebrtc depends on
     commit = "860492290f7d1f25e2bd45da6471bfd4cd4d7add",
@@ -376,6 +369,7 @@ git_repository(
     commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
     build_file = "@//:BUILD.libwebrtc.bazel",
     remote = "https://webrtc.googlesource.com/src/",
+    patches = ["@//build_external/libwebrtc:PATCH.third_party_libyuv.patch"],
 )
 
 git_repository(
@@ -454,4 +448,11 @@ git_repository(
     build_file = "@//:BUILD.libnl.bazel",
     commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
     remote = "https://android.googlesource.com/platform/external/libnl",
+)
+
+git_repository(
+    name = "libvpx",
+    build_file = "@//:BUILD.libvpx.bazel",
+    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
+    remote = "https://chromium.googlesource.com/webm/libvpx",
 )
