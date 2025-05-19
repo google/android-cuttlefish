@@ -46,6 +46,8 @@ inline constexpr char kHibernationExitMessage[] =
     "PM: hibernation: hibernation exit";
 inline constexpr char kFastbootStartedMessage[] =
     "Listening for fastboot command on tcp";
+inline constexpr char kGblFastbootStartedMessage[] =
+    "Started Fastboot over TCP";
 inline constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 inline constexpr char kDisplayPowerModeChangedMessage[] =
     "VIRTUAL_DEVICE_DISPLAY_POWER_MODE_CHANGED";

@@ -66,6 +66,7 @@ constexpr struct {
     {kAdbdStartedMessage, Event::AdbdStarted, kBare},
     {kFastbootdStartedMessage, Event::FastbootStarted, kBare},
     {kFastbootStartedMessage, Event::FastbootStarted, kBare},
+    {kGblFastbootStartedMessage, Event::FastbootStarted, kBare},
     {kScreenChangedMessage, Event::ScreenChanged, kKeyValuePair},
     {kBootloaderLoadedMessage, Event::BootloaderLoaded, kBare},
     {kKernelLoadedMessage, Event::KernelLoaded, kBare},
