@@ -31,15 +31,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+const baseURL = "http://0.0.0.0:2080"
+
 func TestInstance(t *testing.T) {
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -90,7 +85,7 @@ func TestInstance(t *testing.T) {
 	if createErr != nil {
 		t.Fatal(createErr)
 	}
-	if err := common.VerifyLogsEndpoint(ctx.ServiceURL, group_name, "1"); err != nil {
+	if err := common.VerifyLogsEndpoint(baseURL, group_name, "1"); err != nil {
 		t.Fatalf("failed verifying /logs endpoint: %s", err)
 	}
 	want := &hoapi.CreateCVDResponse{
