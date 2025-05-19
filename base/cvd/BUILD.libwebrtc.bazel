@@ -3291,7 +3291,6 @@ cc_library(
         "webrtc",
     ],
     linkopts = [
-        "-laom",
         "-lopus",
     ],
     deps = [
