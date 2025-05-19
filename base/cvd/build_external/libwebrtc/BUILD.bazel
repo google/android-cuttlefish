@@ -42,7 +42,6 @@ cc_library(
     ],
     includes = ["."],
     linkopts = [
-        "-laom",
         "-lopus",
     ],
     deps = [
