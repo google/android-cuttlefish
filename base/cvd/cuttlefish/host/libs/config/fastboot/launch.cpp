@@ -46,8 +46,8 @@ class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
         log_pipe_provider_(log_pipe_provider) {}
 
   Result<std::vector<MonitorCommand>> Commands() override {
-    const std::string ethernet_host = instance_.ethernet_ipv6() + "%" +
-                                      instance_.ethernet_bridge_name();
+    const std::string ethernet_host =
+        instance_.ethernet_ipv6() + "%" + instance_.ethernet_bridge_name();
 
     Command tunnel(SocketVsockProxyBinary());
     tunnel.AddParameter("--events_fd=", kernel_log_pipe_);
@@ -67,8 +67,13 @@ class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
 
   std::string Name() const override { return "FastbootProxy"; }
   bool Enabled() const override {
-    return instance_.boot_flow() == CuttlefishConfig::InstanceSpecific::BootFlow::Android &&
-           fastboot_config_.ProxyFastboot();
+    const auto boot_flow = instance_.boot_flow();
+    const bool is_android_boot =
+        boot_flow == CuttlefishConfig::InstanceSpecific::BootFlow::Android ||
+        boot_flow ==
+            CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader;
+
+    return is_android_boot && fastboot_config_.ProxyFastboot();
   }
 
  private:
