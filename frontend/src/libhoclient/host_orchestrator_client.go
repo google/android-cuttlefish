@@ -133,6 +133,9 @@ type HostOrchestratorService interface {
 type UserArtifactsService interface {
 	// Upload artifact.
 	UploadArtifact(filename string) error
+
+	// Stat artifact.
+	StatArtifact(checksum string) (*hoapi.UserArtifactStatResponse, error)
 }
 
 const (
@@ -503,6 +506,15 @@ func (c *HostOrchestratorServiceImpl) UploadArtifact(filename string) error {
 		return err
 	}
 	return c.upload("/v1/userartifacts/"+checksum, filename, DefaultUploadOptions())
+}
+
+func (c *HostOrchestratorServiceImpl) StatArtifact(checksum string) (*hoapi.UserArtifactStatResponse, error) {
+	res := &hoapi.UserArtifactStatResponse{}
+	path := fmt.Sprintf("/v1/userartifacts/%s", checksum)
+	if err := c.HTTPHelper.NewGetRequest(path).JSONResDo(res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func DefaultUploadOptions() UploadOptions {
