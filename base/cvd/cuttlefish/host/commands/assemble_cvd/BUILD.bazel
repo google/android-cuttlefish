@@ -108,6 +108,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:misc_info",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
         "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/avb",
@@ -197,5 +198,28 @@ cc_library(
 clang_tidy_test(
     name = "clean_clang_tidy",
     srcs = [":clean"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "misc_info",
+    srcs = ["misc_info.cc"],
+    hdrs = ["misc_info.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "misc_info_clang_tidy",
+    srcs = [":misc_info"],
     tags = ["clang_tidy", "clang-tidy"],
 )
