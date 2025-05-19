@@ -46,7 +46,6 @@ cc_library(
         "boot_config.cc",
         "boot_image_utils.cc",
         "bootconfig_args.cpp",
-        "clean.cc",
         "disk/factory_reset_protected.cc",
         "disk/gem5_image_unpacker.cpp",
         "disk/generate_persistent_bootconfig.cpp",
@@ -71,7 +70,6 @@ cc_library(
         "boot_config.h",
         "boot_image_utils.h",
         "bootconfig_args.h",
-        "clean.h",
         "disk/disk.h",
         "disk_builder.h",
         "disk_flags.h",
@@ -159,6 +157,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/assemble_cvd:clean",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:custom_actions",
@@ -178,4 +177,25 @@ clang_tidy_test(
         "clang-tidy",
         "clang_tidy",
     ],
+)
+
+cc_library(
+    name = "clean",
+    srcs = ["clean.cc"],
+    hdrs = ["clean.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "clean_clang_tidy",
+    srcs = [":clean"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

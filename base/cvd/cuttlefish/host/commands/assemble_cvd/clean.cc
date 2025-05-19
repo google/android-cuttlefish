@@ -100,7 +100,7 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   LOG(DEBUG) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
 
   // TODO(schuffelen): Fix logic for host-sandboxing mode.
-  if (!InSandbox() && (prior_dirs.size() > 0 || prior_files.size() > 0)) {
+  if (!InSandbox() && (!prior_dirs.empty() || !prior_files.empty())) {
     Command lsof("lsof");
     lsof.AddParameter("-t");
     for (const auto& prior_dir : prior_dirs) {
