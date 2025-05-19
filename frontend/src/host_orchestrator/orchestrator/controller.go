@@ -111,6 +111,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/v1/userartifacts/{checksum}",
+		httpHandler(&getUserArtifactHandler{m: c.UserArtifactsManager})).Methods("GET")
+	router.Handle("/v1/userartifacts/{checksum}",
 		httpHandler(&createUpdateUserArtifactHandler{m: c.UserArtifactsManager, v1: true})).Methods("PUT")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
@@ -575,6 +577,19 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 	} else {
 		return nil, h.m.UpdateArtifactWithDir(vars["name"], chunk)
 	}
+}
+
+type getUserArtifactHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *getUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	_, err := h.m.StatArtifact(vars["checksum"])
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.UserArtifactStatResponse{}, nil
 }
 
 type extractUserArtifactHandler struct {

@@ -152,3 +152,5 @@ type StartCVDRequest struct {
 	// Start from the relevant snaphost if not empty.
 	SnapshotID string `json:"snapshot_id,omitempty"`
 }
+
+type UserArtifactStatResponse struct{}

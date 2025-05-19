@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"archive/zip"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -50,6 +51,8 @@ type UserArtifactsManager interface {
 	UserArtifactsDirResolver
 	// Update the artifact given the checksum.
 	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
+	// Returns artifact's file info given its checksum.
+	StatArtifact(checksum string) (os.FileInfo, error)
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
@@ -92,6 +95,42 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArt
 		return err
 	}
 	return nil
+}
+
+func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (os.FileInfo, error) {
+	filename := filepath.Join(m.RootDir, checksum)
+	exist, err := fileExist(filename)
+	if err != nil {
+		return nil, err
+	}
+	if !exist {
+		return nil, operator.NewBadRequestError(fmt.Sprintf("user artifact with checksum %q does not exist", checksum), nil)
+	}
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("error closing file: %s", err)
+		}
+	}()
+	currentChecksum, err := sha256Checksum(f)
+	if err != nil {
+		return nil, err
+	}
+	if checksum != currentChecksum {
+		return nil, operator.NewNotFoundError(fmt.Sprintf("user artifact with checksum %q does not exist", checksum), nil)
+	}
+	return f.Stat()
+}
+
+func sha256Checksum(f *os.File) (string, error) {
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {

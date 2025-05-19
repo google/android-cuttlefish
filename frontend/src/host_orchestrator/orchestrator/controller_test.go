@@ -20,6 +20,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -191,6 +192,10 @@ type testUAM struct{}
 
 func (testUAM) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
 	return nil
+}
+
+func (testUAM) StatArtifact(checksum string) (os.FileInfo, error) {
+	return nil, nil
 }
 
 func (testUAM) NewDir() (*apiv1.UploadDirectory, error) {
