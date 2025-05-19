@@ -30,9 +30,3 @@ local_path_override(
     module_name = "com_github_google_android_cuttlefish_frontend_src_liboperator",
     path = "../frontend/src/liboperator",
 )
-
-bazel_dep(name = "images")
-local_path_override(
-    module_name = "images",
-    path = "../docker",
-)
