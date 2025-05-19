@@ -25,15 +25,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestInstance(t *testing.T) {
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+const baseURL = "http://0.0.0.0:2080"
+
+func TestCreateInstance(t *testing.T) {
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
