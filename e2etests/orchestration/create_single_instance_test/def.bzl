@@ -18,13 +18,11 @@ def create_single_instance_test(name, build_id, build_target):
     go_test(
         name = name,
         srcs = ["main_test.go"],
-        data = [
-            "@images//:orchestration_image_dev_tar",
-        ],
         env = {
             "BUILD_ID": build_id,
             "BUILD_TARGET": build_target,
         },
+        tags = ["host-ready"],
         deps = [
             "//orchestration/common",
             "@com_github_google_go_cmp//cmp",
