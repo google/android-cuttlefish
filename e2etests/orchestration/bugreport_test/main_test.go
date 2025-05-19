@@ -28,15 +28,10 @@ import (
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
 
+const baseURL = "http://0.0.0.0:2080"
+
 func TestBugReport(t *testing.T) {
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
