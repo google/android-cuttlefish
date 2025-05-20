@@ -610,3 +610,22 @@ clang_tidy_test(
     srcs = [":webrtc"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "wmediumd",
+    srcs = ["wmediumd.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+    ],
+)
+
+clang_tidy_test(
+    name = "wmediumd_clang_tidy",
+    srcs = [":wmediumd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
