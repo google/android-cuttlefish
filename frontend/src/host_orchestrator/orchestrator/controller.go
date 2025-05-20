@@ -28,7 +28,6 @@ import (
 	"time"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
 	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
@@ -174,19 +173,13 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		AccessToken:   creds,
 		UserProjectID: userProjectID,
 	}
-	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
-	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
-		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
-	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	execCtx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
-		BuildAPI:         buildAPI,
 		CVDBundleFetcher: cvdBundleFetcher,
-		ArtifactsFetcher: artifactsFetcher,
 	}
 	return NewFetchArtifactsAction(opts).Run()
 }
@@ -217,10 +210,6 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		AccessToken:   creds,
 		UserProjectID: userProjectID,
 	}
-	buildAPIOpts := artifacts.AndroidCIBuildAPIOpts{Credentials: creds}
-	buildAPI := artifacts.NewAndroidCIBuildAPIWithOpts(
-		http.DefaultClient, h.Config.AndroidBuildServiceURL, buildAPIOpts)
-	artifactsFetcher := newBuildAPIArtifactsFetcher(buildAPI)
 	execCtx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
 	opts := CreateCVDActionOpts{
@@ -229,8 +218,6 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		Paths:                    h.Config.Paths,
 		OperationManager:         h.OM,
 		ExecContext:              exec.CommandContext,
-		BuildAPI:                 buildAPI,
-		ArtifactsFetcher:         artifactsFetcher,
 		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
 		CVDUser:                  h.Config.CVDUser,

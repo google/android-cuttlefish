@@ -17,10 +17,11 @@ package orchestrator
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
@@ -28,9 +29,7 @@ type FetchArtifactsActionOpts struct {
 	Request          *apiv1.FetchArtifactsRequest
 	Paths            IMPaths
 	OperationManager OperationManager
-	BuildAPI         artifacts.BuildAPI
-	CVDBundleFetcher artifacts.CVDBundleFetcher
-	ArtifactsFetcher artifacts.Fetcher
+	CVDBundleFetcher CVDBundleFetcher
 	UUIDGen          func() string
 }
 
@@ -38,10 +37,7 @@ type FetchArtifactsAction struct {
 	req              *apiv1.FetchArtifactsRequest
 	paths            IMPaths
 	om               OperationManager
-	buildAPI         artifacts.BuildAPI
-	cvdBundleFetcher artifacts.CVDBundleFetcher
-	artifactsFetcher artifacts.Fetcher
-	artifactsMngr    *artifacts.Manager
+	cvdBundleFetcher CVDBundleFetcher
 }
 
 func NewFetchArtifactsAction(opts FetchArtifactsActionOpts) *FetchArtifactsAction {
@@ -49,11 +45,7 @@ func NewFetchArtifactsAction(opts FetchArtifactsActionOpts) *FetchArtifactsActio
 		req:              opts.Request,
 		paths:            opts.Paths,
 		om:               opts.OperationManager,
-		buildAPI:         opts.BuildAPI,
 		cvdBundleFetcher: opts.CVDBundleFetcher,
-		artifactsFetcher: opts.ArtifactsFetcher,
-
-		artifactsMngr: artifacts.NewManager(opts.Paths.ArtifactsRootDir, opts.UUIDGen),
 	}
 }
 
@@ -61,7 +53,7 @@ func (a *FetchArtifactsAction) Run() (apiv1.Operation, error) {
 	if err := validateFetchArtifactsRequest(a.req); err != nil {
 		return apiv1.Operation{}, operator.NewBadRequestError("invalid FetchArtifactsRequest", err)
 	}
-	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
+	if err := createDir(a.paths.InstancesDir); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
@@ -83,25 +75,29 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 			Error: operator.NewInternalError("error cloning request", err),
 		}
 	}
-
-	if req.AndroidCIBundle.Build == nil {
-		req.AndroidCIBundle.Build = defaultMainBuild()
+	dir, err := ioutil.TempDir(a.paths.InstancesDir, "ins*")
+	if err != nil {
+		return OperationResult{Error: operator.NewInternalError("error creating tmp dir", err)}
 	}
-	build := req.AndroidCIBundle.Build
-	if build.BuildID == "" {
-		if err := updateBuildsWithLatestGreenBuildID(a.buildAPI, []*apiv1.AndroidCIBuild{build}); err != nil {
-			return OperationResult{
-				Error: operator.NewInternalError("failed getting latest green build id", err),
-			}
+	// Let `cvd fetch` create the directory.
+	if err := os.RemoveAll(dir); err != nil {
+		return OperationResult{Error: operator.NewInternalError("error removing tmp dir", err)}
+	}
+	defer func() {
+		// Remove directory, original artifacts remains in cache at /tmp/cvd/$USER/cache
+		if err := os.RemoveAll(dir); err != nil {
+			log.Printf("error removing directory %q: %s", dir, err)
 		}
-	}
+	}()
+	build := req.AndroidCIBundle.Build
 	switch t := req.AndroidCIBundle.Type; t {
 	case apiv1.MainBundleType:
-		_, err = a.artifactsMngr.GetCVDBundle(build.BuildID, build.Target, nil, a.cvdBundleFetcher)
+		err = a.cvdBundleFetcher.Fetch(dir, build.BuildID, build.Target, ExtraCVDOptions{})
 	case apiv1.KernelBundleType:
-		_, err = a.artifactsMngr.GetKernelBundle(build.BuildID, build.Target, a.artifactsFetcher)
 	case apiv1.BootloaderBundleType:
-		_, err = a.artifactsMngr.GetBootloaderBundle(build.BuildID, build.Target, a.artifactsFetcher)
+		// Do not fail due backwards compatibility. If artifact does not exist, the
+		// follow up create request is going to fail.
+		err = nil
 	default:
 		err = operator.NewBadRequestError(fmt.Sprintf("Unsupported artifact bundle type: %d", t), nil)
 	}
