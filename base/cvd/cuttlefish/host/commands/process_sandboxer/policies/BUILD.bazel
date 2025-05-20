@@ -1,0 +1,27 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+ALLOW_C = ["-Wno-module-import-in-extern-c"]
+
+cc_library(
+    name = "adb_connector",
+    srcs = ["adb_connector.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "adb_connector_clang_tidy",
+    srcs = [":adb_connector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
