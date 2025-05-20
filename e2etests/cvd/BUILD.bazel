@@ -2,6 +2,12 @@ load("boot_tests.bzl", "cvd_command_boot_test", "cvd_load_boot_test", "launch_cv
 
 # cvd fetch + launch_cvd tests
 launch_cvd_boot_test(
+    name = "fetch_and_launch_git_main_x64_phone",
+    branch = "git_main",
+    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+)
+
+launch_cvd_boot_test(
     name = "fetch_and_launch_aosp_main_x64_phone",
     branch = "aosp-main",
     target = "aosp_cf_x86_64_phone-trunk_staging-userdebug",
@@ -26,6 +32,11 @@ launch_cvd_boot_test(
 )
 
 # cvd load tests
+cvd_load_boot_test(
+    name = "load_git_main_x64_phone",
+    env_file = "environment_specs/git_main_x64_phone.json",
+)
+
 cvd_load_boot_test(
     name = "load_aosp_main_x64_phone",
     env_file = "environment_specs/aosp_main_x64_phone.json",
