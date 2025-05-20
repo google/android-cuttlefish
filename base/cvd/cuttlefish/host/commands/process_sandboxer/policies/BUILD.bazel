@@ -261,3 +261,21 @@ clang_tidy_test(
     srcs = [":logcat_receiver"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "metrics",
+    srcs = ["metrics.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "metrics_clang_tidy",
+    srcs = [":metrics"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
