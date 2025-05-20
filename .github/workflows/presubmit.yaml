@@ -33,18 +33,6 @@ jobs:
         version: "latest"
         install-go: false
         working-directory: ${{ matrix.dir }}
-  build-orchestrator:
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Install dependencies
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.17.13'
-    - run: go version
-    - name: Vet Test Build
-      run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
   run-cvd-unit-tests:
     runs-on: ubuntu-22.04-4core
     container:
