@@ -181,6 +181,44 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "sandbox_manager",
+    srcs = ["sandbox_manager.cpp"],
+    hdrs = ["sandbox_manager.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:credentialed_unix_server",
+        "//cuttlefish/host/commands/process_sandboxer:pidfd",
+        "//cuttlefish/host/commands/process_sandboxer:policies",
+        "//cuttlefish/host/commands/process_sandboxer:poll_callback",
+        "//cuttlefish/host/commands/process_sandboxer:proxy_common",
+        "//cuttlefish/host/commands/process_sandboxer:signal_fd",
+        "@abseil-cpp//absl/functional:bind_front",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:vlog_is_on",
+        "@abseil-cpp//absl/memory",
+        "@abseil-cpp//absl/random",
+        "@abseil-cpp//absl/random:bit_gen_ref",
+        "@abseil-cpp//absl/random:distributions",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/time",
+        "@abseil-cpp//absl/types:span",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "sandbox_manager_clang_tidy",
+    srcs = [":sandbox_manager"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_binary(
     name = "sandboxer_proxy",
     srcs = ["sandboxer_proxy.cpp"],
