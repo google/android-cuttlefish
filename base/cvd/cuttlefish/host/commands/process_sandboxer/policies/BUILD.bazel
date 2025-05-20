@@ -192,3 +192,21 @@ clang_tidy_test(
     srcs = [":echo_server"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "gnss_grpc_proxy",
+    srcs = ["gnss_grpc_proxy.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "gnss_grpc_proxy_clang_tidy",
+    srcs = [":gnss_grpc_proxy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
