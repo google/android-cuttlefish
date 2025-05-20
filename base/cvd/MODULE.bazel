@@ -60,6 +60,11 @@ git_override(
     module_name = "sandboxed_api",
     commit = "75b6c16e8e95314456795b34af06571879b18e1f",
     remote = "https://github.com/google/sandboxed-api.git",
+    patch_strip = 1,
+    patches = [
+        # See cl/711879539
+        "@//build_external/sandboxed_api:PATCH.sandboxed_api.util.visibility.patch",
+    ],
 )
 
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")

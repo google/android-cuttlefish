@@ -25,3 +25,22 @@ clang_tidy_test(
     srcs = [":adb_connector"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "assemble_cvd",
+    srcs = ["assemble_cvd.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+    ],
+)
+
+clang_tidy_test(
+    name = "assemble_cvd_clang_tidy",
+    srcs = [":assemble_cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
