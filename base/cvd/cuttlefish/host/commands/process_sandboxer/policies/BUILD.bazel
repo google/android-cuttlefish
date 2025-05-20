@@ -478,3 +478,21 @@ clang_tidy_test(
     srcs = [":secure_env"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "simg2img",
+    srcs = ["simg2img.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "simg2img_clang_tidy",
+    srcs = [":simg2img"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
