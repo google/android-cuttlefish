@@ -590,3 +590,23 @@ clang_tidy_test(
     srcs = [":webrtc"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "webrtc_operator",
+    srcs = ["webrtc_operator.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+    ],
+)
+
+clang_tidy_test(
+    name = "webrtc_operator_clang_tidy",
+    srcs = [":webrtc"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
