@@ -6,6 +6,25 @@ package(
 )
 
 cc_library(
+    name = "credentialed_unix_server",
+    srcs = ["credentialed_unix_server.cpp"],
+    hdrs = ["credentialed_unix_server.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "credentialed_unix_server_clang_tidy",
+    srcs = [":credentialed_unix_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "logs",
     srcs = ["logs.cpp"],
     hdrs = ["logs.h"],
