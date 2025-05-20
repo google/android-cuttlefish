@@ -629,3 +629,23 @@ clang_tidy_test(
     srcs = [":wmediumd"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "wmediumd_gen_config",
+    srcs = ["wmediumd_gen_config.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+    ],
+)
+
+clang_tidy_test(
+    name = "wmediumd_gen_config_clang_tidy",
+    srcs = [":wmediumd_gen_config"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
