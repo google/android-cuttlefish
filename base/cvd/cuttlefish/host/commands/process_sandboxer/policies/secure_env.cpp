@@ -20,7 +20,7 @@
 
 #include <string>
 
-#include <sandboxed_api/sandbox2/policybuilder.h>
+#include "sandboxed_api/sandbox2/policybuilder.h"
 
 namespace cuttlefish::process_sandboxer {
 
