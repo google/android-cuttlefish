@@ -21,7 +21,7 @@
 #include <functional>
 #include <vector>
 
-#include <absl/status/status.h>
+#include "absl/status/status.h"
 
 namespace cuttlefish::process_sandboxer {
 
