@@ -352,3 +352,19 @@ clang_tidy_test(
     srcs = [":newfs_msdos"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "no_policy",
+    srcs = ["no_policy.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+    ],
+)
+
+clang_tidy_test(
+    name = "no_policy_clang_tidy",
+    srcs = [":no_policy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
