@@ -387,3 +387,21 @@ clang_tidy_test(
     srcs = [":openwrt_control_server"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "operator_proxy",
+    srcs = ["operator_proxy.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "operator_proxy_clang_tidy",
+    srcs = [":operator_proxy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
