@@ -30,9 +30,11 @@ bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "libzip", version = "1.10.1")
 bazel_dep(name = "lz4", version = "1.9.4")
+bazel_dep(name = "pcre2", version = "10.45")
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_python", version = "0.40.0")
 bazel_dep(name = "rules_rust", version = "0.60.0")
@@ -489,4 +491,12 @@ git_repository(
     build_file = "@//:BUILD.libvpx.bazel",
     commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
     remote = "https://chromium.googlesource.com/webm/libvpx",
+)
+
+# Android version is forked from github upstream
+git_repository(
+    name = "selinux",
+    build_file = "@//:BUILD.selinux.bazel",
+    commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
+    remote = "https://android.googlesource.com/platform/external/selinux",
 )
