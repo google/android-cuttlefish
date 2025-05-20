@@ -423,3 +423,23 @@ clang_tidy_test(
     srcs = [":process_restarter"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "run_cvd",
+    srcs = ["run_cvd.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@abseil-cpp//absl/strings",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+    ],
+)
+
+clang_tidy_test(
+    name = "run_cvd_clang_tidy",
+    srcs = [":run_cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
