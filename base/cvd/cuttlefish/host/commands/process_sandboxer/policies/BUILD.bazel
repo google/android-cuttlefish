@@ -335,3 +335,20 @@ clang_tidy_test(
     srcs = [":netsimd"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "newfs_msdos",
+    srcs = ["newfs_msdos.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "newfs_msdos_clang_tidy",
+    srcs = [":newfs_msdos"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
