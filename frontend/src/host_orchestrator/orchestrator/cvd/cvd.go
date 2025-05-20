@@ -312,35 +312,60 @@ func (cli *CLI) PowerBtn(selector Selector) error {
 	return err
 }
 
-type FetchOpts struct {
-	DefaultBuildID         string
-	DefaultBuildTarget     string
-	SystemImageBuildID     string
-	SystemImageBuildTarget string
+type AndroidBuild struct {
+	BuildID     string
+	BuildTarget string
 }
 
-func (cli *CLI) Fetch(opts FetchOpts, creds FetchCredentials, targetDir string) error {
-	if opts.DefaultBuildID == "" {
+type FetchOpts struct {
+	Credentials      FetchCredentials
+	KernelBuild      AndroidBuild
+	BootloaderBuild  AndroidBuild
+	SystemImageBuild AndroidBuild
+}
+
+func (cli *CLI) Fetch(buildID, buildTarget, targetDir string, opts FetchOpts) error {
+	if buildID == "" {
 		return fmt.Errorf("default build id is required")
 	}
-	if opts.DefaultBuildTarget == "" {
+	if buildTarget == "" {
 		return fmt.Errorf("default build target is required")
 	}
 	args := []string{
 		fmt.Sprintf("--directory=%s", targetDir),
-		fmt.Sprintf("--default_build=%s/%s", opts.DefaultBuildID, opts.DefaultBuildTarget),
+		fmt.Sprintf("--default_build=%s/%s", buildID, buildTarget),
 	}
-	if opts.SystemImageBuildID != "" || opts.SystemImageBuildTarget != "" {
-		if opts.SystemImageBuildID == "" || opts.SystemImageBuildTarget == "" {
+	// TODO: Refactor validation of build objects.
+	if opts.SystemImageBuild != (AndroidBuild{}) {
+		build := opts.SystemImageBuild
+		if build.BuildID == "" || build.BuildTarget == "" {
 			return fmt.Errorf(
-				"either system image build and target are set or neither: build=%q, target=%q",
-				opts.SystemImageBuildID, opts.SystemImageBuildTarget)
+				"system image build: either build id and build target are set or neither: id=%q, target=%q",
+				build.BuildID, build.BuildTarget)
 		}
-		args = append(args, fmt.Sprintf("--system_build=%s/%s", opts.SystemImageBuildID, opts.SystemImageBuildTarget))
+		args = append(args, fmt.Sprintf("--system_build=%s/%s", build.BuildID, build.BuildTarget))
+	}
+	if opts.KernelBuild != (AndroidBuild{}) {
+		build := opts.KernelBuild
+		if build.BuildID == "" || build.BuildTarget == "" {
+			return fmt.Errorf(
+				"kernel build: either build id and build target are set or neither: id=%q, target=%q",
+				build.BuildID, build.BuildTarget)
+		}
+		args = append(args, fmt.Sprintf("--kernel_build=%s/%s", build.BuildID, build.BuildTarget))
+	}
+	if opts.BootloaderBuild != (AndroidBuild{}) {
+		build := opts.BootloaderBuild
+		if build.BuildID == "" || build.BuildTarget == "" {
+			return fmt.Errorf(
+				"bootloader build: either build id and build target are set or neither: id=%q, target=%q",
+				build.BuildID, build.BuildTarget)
+		}
+		args = append(args, fmt.Sprintf("--bootloader_build=%s/%s", build.BuildID, build.BuildTarget))
 	}
 	cmd := cli.buildCmd(FetchCVDBin, args...)
-	if creds != nil {
-		creds.AddToCmd(cmd)
+	if opts.Credentials != nil {
+		opts.Credentials.AddToCmd(cmd)
 	}
 	if _, err := cli.runCmd(cmd); err != nil {
 		return fmt.Errorf("`fetch_cvd` failed: %w", err)

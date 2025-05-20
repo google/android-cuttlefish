@@ -26,12 +26,9 @@ import (
 	"path/filepath"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 type Validator interface {
@@ -44,14 +41,9 @@ func (s EmptyFieldError) Error() string {
 	return fmt.Sprintf("field %v is empty", string(s))
 }
 
-type AndroidBuild struct {
-	ID     string
-	Target string
-}
-
 type IMPaths struct {
 	RootDir          string
-	ArtifactsRootDir string
+	InstancesDir     string
 	CVDBugReportsDir string
 	SnapshotsRootDir string
 }
@@ -112,19 +104,20 @@ func CVDLogsDir(ctx hoexec.ExecContext, groupName, name string) (string, error) 
 	return ins.InstanceDir + "/logs", nil
 }
 
-const (
-	// TODO(b/267525748): Make these values configurable.
-	mainBuildDefaultBranch = "aosp-main"
-	mainBuildDefaultTarget = "aosp_cf_x86_64_phone-trunk_staging-userdebug"
-)
-
-func defaultMainBuild() *apiv1.AndroidCIBuild {
-	return &apiv1.AndroidCIBuild{Branch: mainBuildDefaultBranch, Target: mainBuildDefaultTarget}
-}
-
 type fetchCVDCommandArtifactsFetcher struct {
 	execContext         hoexec.ExecContext
 	buildAPICredentials BuildAPICredentials
+}
+
+type ExtraCVDOptions struct {
+	KernelBuild      cvd.AndroidBuild
+	BootloaderBuild  cvd.AndroidBuild
+	SystemImageBuild cvd.AndroidBuild
+}
+
+type CVDBundleFetcher interface {
+	// Fetches artifacts to launch a Cuttlefish device
+	Fetch(outDir, buildID, target string, opts ExtraCVDOptions) error
 }
 
 func newFetchCVDCommandArtifactsFetcher(execContext hoexec.ExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
@@ -136,9 +129,7 @@ func newFetchCVDCommandArtifactsFetcher(execContext hoexec.ExecContext, buildAPI
 
 // The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
 // which translated to granting the necessary permissions to the cvd executor user.
-func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, extraOptions *artifacts.ExtraCVDOptions) error {
-	cvdCLI := cvd.NewCLI(f.execContext)
-
+func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, opts ExtraCVDOptions) error {
 	var creds cvd.FetchCredentials
 	if f.buildAPICredentials.AccessToken != "" {
 		creds = &cvd.FetchTokenFileCredentials{
@@ -152,47 +143,14 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 			creds = &cvd.FetchGceCredentials{}
 		}
 	}
-	opts := cvd.FetchOpts{
-		DefaultBuildID:     buildID,
-		DefaultBuildTarget: target,
+	fetchOpts := cvd.FetchOpts{
+		Credentials:      creds,
+		KernelBuild:      opts.KernelBuild,
+		BootloaderBuild:  opts.BootloaderBuild,
+		SystemImageBuild: opts.SystemImageBuild,
 	}
-	if extraOptions != nil {
-		opts.SystemImageBuildID = extraOptions.SystemImgBuildID
-		opts.SystemImageBuildTarget = extraOptions.SystemImgTarget
-	}
-	return cvdCLI.Fetch(opts, creds, outDir)
-}
-
-type buildAPIArtifactsFetcher struct {
-	buildAPI artifacts.BuildAPI
-}
-
-func newBuildAPIArtifactsFetcher(buildAPI artifacts.BuildAPI) *buildAPIArtifactsFetcher {
-	return &buildAPIArtifactsFetcher{
-		buildAPI: buildAPI,
-	}
-}
-
-func (f *buildAPIArtifactsFetcher) Fetch(outDir, buildID, target string, artifactNames ...string) error {
-	var chans []chan error
-	for _, name := range artifactNames {
-		ch := make(chan error)
-		chans = append(chans, ch)
-		go func(name string) {
-			defer close(ch)
-			filename := outDir + "/" + name
-			if err := downloadArtifactToFile(f.buildAPI, filename, name, buildID, target); err != nil {
-				ch <- err
-			}
-		}(name)
-	}
-	var merr error
-	for _, ch := range chans {
-		for err := range ch {
-			merr = multierror.Append(merr, err)
-		}
-	}
-	return merr
+	cvdCLI := cvd.NewCLI(f.execContext)
+	return cvdCLI.Fetch(buildID, target, outDir, fetchOpts)
 }
 
 const (
@@ -204,7 +162,6 @@ const (
 type startCVDParams struct {
 	InstanceNumbers  []uint32
 	MainArtifactsDir string
-	RuntimeDir       string
 	// OPTIONAL. If set, kernel relevant artifacts will be pulled from this dir.
 	KernelDir string
 	// OPTIONAL. If set, bootloader relevant artifacts will be pulled from this dir.
@@ -280,68 +237,6 @@ func (v *HostValidator) Validate() error {
 		return operator.NewInternalError("Nested virtualization is not enabled.", nil)
 	}
 	return nil
-}
-
-// Helper to update the passed builds with latest green BuildID if build is not nil and BuildId is empty.
-func updateBuildsWithLatestGreenBuildID(buildAPI artifacts.BuildAPI, builds []*apiv1.AndroidCIBuild) error {
-	var chans []chan error
-	for _, build := range builds {
-		ch := make(chan error)
-		chans = append(chans, ch)
-		go func(build *apiv1.AndroidCIBuild) {
-			defer close(ch)
-			if build != nil && build.BuildID == "" {
-				if err := updateBuildWithLatestGreenBuildID(buildAPI, build); err != nil {
-					ch <- err
-				}
-			}
-		}(build)
-	}
-	var merr error
-	for _, ch := range chans {
-		for err := range ch {
-			merr = multierror.Append(merr, err)
-		}
-	}
-	return merr
-}
-
-// Helper to update the passed `build` with latest green BuildID.
-func updateBuildWithLatestGreenBuildID(buildAPI artifacts.BuildAPI, build *apiv1.AndroidCIBuild) error {
-	buildID, err := buildAPI.GetLatestGreenBuildID(build.Branch, build.Target)
-	if err != nil {
-		return err
-	}
-	build.BuildID = buildID
-	return nil
-}
-
-// Download artifacts helper. Fails if file already exists.
-func downloadArtifactToFile(buildAPI artifacts.BuildAPI, filename, artifactName, buildID, target string) error {
-	exist, err := fileExist(target)
-	if err != nil {
-		return fmt.Errorf("download artifact %q failed: %w", filename, err)
-	}
-	if exist {
-		return fmt.Errorf("download artifact %q failed: file already exists", filename)
-	}
-	f, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("download artifact %q failed: %w", filename, err)
-	}
-	var downloadErr error
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Printf("download artifact: failed closing %q, error: %v", filename, err)
-		}
-		if downloadErr != nil {
-			if err := os.Remove(filename); err != nil {
-				log.Printf("download artifact: failed removing %q: %v", filename, err)
-			}
-		}
-	}()
-	downloadErr = buildAPI.DownloadArtifact(artifactName, buildID, target, f)
-	return downloadErr
 }
 
 func runAcloudSetup(execContext hoexec.ExecContext, artifactsRootDir, artifactsDir string) {

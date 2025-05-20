@@ -112,7 +112,7 @@ func main() {
 
 	imPaths := orchestrator.IMPaths{
 		RootDir:          *imRootDir,
-		ArtifactsRootDir: filepath.Join(*imRootDir, "artifacts"),
+		InstancesDir:     filepath.Join(*imRootDir, "instances"),
 		CVDBugReportsDir: filepath.Join(*imRootDir, "cvdbugreports"),
 		SnapshotsRootDir: filepath.Join(*imRootDir, "snapshots"),
 	}

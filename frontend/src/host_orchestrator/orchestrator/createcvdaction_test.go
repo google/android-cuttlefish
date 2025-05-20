@@ -82,12 +82,11 @@ func TestCreateCVDFailsDueInvalidHost(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	execContext := execCtxAlwaysSucceeds
-	paths := IMPaths{ArtifactsRootDir: dir + "/artifacts"}
 	om := NewMapOM()
 	opts := CreateCVDActionOpts{
 		Request:          &apiv1.CreateCVDRequest{CVD: &apiv1.CVD{BuildSource: androidCISource("1", "foo")}},
 		HostValidator:    &AlwaysFailsValidator{},
-		Paths:            paths,
+		Paths:            IMPaths{},
 		OperationManager: om,
 		ExecContext:      execContext,
 	}
