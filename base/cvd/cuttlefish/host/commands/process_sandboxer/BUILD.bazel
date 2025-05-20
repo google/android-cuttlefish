@@ -47,6 +47,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "poll_callback",
+    srcs = ["poll_callback.cpp"],
+    hdrs = ["poll_callback.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+    ],
+)
+
+clang_tidy_test(
+    name = "poll_callback_clang_tidy",
+    srcs = [":poll_callback"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "signal_fd",
     srcs = ["signal_fd.cpp"],
     hdrs = ["signal_fd.h"],
