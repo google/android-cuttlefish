@@ -22,8 +22,7 @@
 #include <string>
 #include <string_view>
 
-#include <absl/status/status.h>
-
+#include "absl/status/status.h"
 #include "sandboxed_api/sandbox2/policybuilder.h"
 
 namespace cuttlefish::process_sandboxer {
