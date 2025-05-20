@@ -515,3 +515,22 @@ clang_tidy_test(
     srcs = [":socket_vsock_proxy"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "tcp_connector",
+    srcs = ["tcp_connector.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "tcp_connector_clang_tidy",
+    srcs = [":tcp_connector"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
