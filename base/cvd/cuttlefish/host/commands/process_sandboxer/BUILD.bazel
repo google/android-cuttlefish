@@ -47,6 +47,30 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "pidfd",
+    srcs = ["pidfd.cpp"],
+    hdrs = ["pidfd.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/types:span",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "pidfd_clang_tidy",
+    srcs = [":pidfd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "poll_callback",
     srcs = ["poll_callback.cpp"],
     hdrs = ["poll_callback.h"],
