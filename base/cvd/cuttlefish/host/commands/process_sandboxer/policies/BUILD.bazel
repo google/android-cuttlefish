@@ -279,3 +279,20 @@ clang_tidy_test(
     srcs = [":metrics"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "mkenvimage_slim",
+    srcs = ["mkenvimage_slim.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "mkenvimage_slim_clang_tidy",
+    srcs = [":mkenvimage_slim"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
