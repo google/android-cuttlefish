@@ -3,6 +3,7 @@ load("@rules_flex//flex:flex.bzl", "flex_cc_library")
 package(
     default_visibility = [
         "@//:android_cuttlefish",
+        "@e2fsprogs//:__subpackages__",
     ],
 )
 

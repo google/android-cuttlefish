@@ -1,6 +1,7 @@
 package(
     default_visibility = [
         "//:android_cuttlefish",
+        "@e2fsprogs//:__subpackages__",
         "@selinux//:__subpackages__",
     ],
 )
