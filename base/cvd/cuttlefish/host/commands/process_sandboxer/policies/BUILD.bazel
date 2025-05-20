@@ -156,3 +156,21 @@ clang_tidy_test(
     srcs = [":control_env_proxy_server"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "cvd_internal_start",
+    srcs = ["cvd_internal_start.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "cvd_internal_start_clang_tidy",
+    srcs = [":cvd_internal_start"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
