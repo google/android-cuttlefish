@@ -1,0 +1,26 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "signal_fd",
+    srcs = ["signal_fd.cpp"],
+    hdrs = ["signal_fd.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "signal_fd_clang_tidy",
+    srcs = [":signal_fd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
