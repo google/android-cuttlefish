@@ -496,3 +496,22 @@ clang_tidy_test(
     srcs = [":simg2img"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "socket_vsock_proxy",
+    srcs = ["socket_vsock_proxy.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:unrestricted_networking",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "socket_vsock_proxy_clang_tidy",
+    srcs = [":socket_vsock_proxy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
