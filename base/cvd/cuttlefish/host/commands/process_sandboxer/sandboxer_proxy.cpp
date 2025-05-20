@@ -26,9 +26,9 @@
 #include <string>
 #include <string_view>
 
-#include <absl/status/status.h>
-#include <absl/status/statusor.h>
-#include <absl/strings/numbers.h>
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+#include "absl/strings/numbers.h"
 
 #include "host/commands/process_sandboxer/proxy_common.h"
 
