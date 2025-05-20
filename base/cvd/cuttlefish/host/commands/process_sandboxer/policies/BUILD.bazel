@@ -405,3 +405,21 @@ clang_tidy_test(
     srcs = [":operator_proxy"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "process_restarter",
+    srcs = ["process_restarter.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "process_restarer_clang_tidy",
+    srcs = [":process_restarter"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
