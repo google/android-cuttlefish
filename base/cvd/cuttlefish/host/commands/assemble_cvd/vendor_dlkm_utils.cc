@@ -364,7 +364,7 @@ Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
             << fs_size / 1024 << " KB";
 
   Command mkfs_cmd =
-      Command(HostBinaryPath("mkuserimg_mke2fs"))
+      Command(MkuserimgMke2fsBinary())
           // Arbitrary UUID/seed, just to keep output consistent between runs
           .AddParameter("--mke2fs_uuid")
           .AddParameter("cb09b942-ed4e-46a1-81dd-7d535bf6c4b1")

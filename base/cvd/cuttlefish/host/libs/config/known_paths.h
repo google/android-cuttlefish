@@ -40,6 +40,7 @@ std::string KernelLogMonitorBinary();
 std::string LogcatReceiverBinary();
 std::string MetricsBinary();
 std::string MkbootimgBinary();
+std::string MkuserimgMke2fsBinary();
 std::string ModemSimulatorBinary();
 std::string NetsimdBinary();
 std::string OpenwrtControlServerBinary();

@@ -25,3 +25,8 @@ cc_library(
         "-Wno-module-import-in-extern-c",
     ],
 )
+
+exports_files([
+    "mke2fs.conf",
+    "mkuserimg_mke2fs.py",
+])
