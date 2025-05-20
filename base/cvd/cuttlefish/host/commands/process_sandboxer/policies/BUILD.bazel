@@ -138,3 +138,21 @@ clang_tidy_test(
     srcs = [":cf_vhost_user_input"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "control_env_proxy_server",
+    srcs = ["control_env_proxy_server.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
+    ],
+)
+
+clang_tidy_test(
+    name = "control_env_proxy_server_clang_tidy",
+    srcs = [":control_env_proxy_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
