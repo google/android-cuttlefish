@@ -65,6 +65,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "proxy_common",
+    srcs = ["proxy_common.cpp"],
+    hdrs = ["proxy_common.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+clang_tidy_test(
+    name = "proxy_common_clang_tidy",
+    srcs = [":proxy_common"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "signal_fd",
     srcs = ["signal_fd.cpp"],
     hdrs = ["signal_fd.h"],
