@@ -5,7 +5,7 @@ set -e -x
 usage="Usage: $0 [-c CREDENTIAL_SOURCE] ENVIRONMENT_SPECIFICATION_FILE"
 
 ENV_FILE=""
-CREDENTIAL_SOURCE=""
+CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 while getopts "c:e:" opt; do
   case "${opt}" in
     c)
