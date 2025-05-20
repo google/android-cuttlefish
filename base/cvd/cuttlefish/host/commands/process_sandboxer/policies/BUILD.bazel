@@ -244,3 +244,20 @@ clang_tidy_test(
     srcs = [":log_tee"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "logcat_receiver",
+    srcs = ["logcat_receiver.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "logcat_receiver_clang_tidy",
+    srcs = [":logcat_receiver"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
