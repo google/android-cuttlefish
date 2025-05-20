@@ -22,8 +22,8 @@
 
 #include <cerrno>
 
-#include <sandboxed_api/sandbox2/policybuilder.h>
-#include <sandboxed_api/sandbox2/util/bpf_helper.h>
+#include "sandboxed_api/sandbox2/policybuilder.h"
+#include "sandboxed_api/sandbox2/util/bpf_helper.h"
 
 namespace cuttlefish::process_sandboxer {
 
