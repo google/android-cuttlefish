@@ -6,6 +6,28 @@ package(
 )
 
 cc_library(
+    name = "logs",
+    srcs = ["logs.cpp"],
+    hdrs = ["logs.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:log_entry",
+        "@abseil-cpp//absl/log:log_sink",
+        "@abseil-cpp//absl/log:log_sink_registry",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+clang_tidy_test(
+    name = "logs_clang_tidy",
+    srcs = [":logs"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "signal_fd",
     srcs = ["signal_fd.cpp"],
     hdrs = ["signal_fd.h"],

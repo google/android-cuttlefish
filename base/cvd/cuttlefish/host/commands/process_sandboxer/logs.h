@@ -16,13 +16,10 @@
 #ifndef ANDROID_DEVICE_GOOGLE_CUTTLEFISH_HOST_COMMANDS_PROCESS_SANDBOXER_LOGS_H
 #define ANDROID_DEVICE_GOOGLE_CUTTLEFISH_HOST_COMMANDS_PROCESS_SANDBOXER_LOGS_H
 
-#include <memory>
 #include <string>
 #include <vector>
 
-#include <absl/log/log_sink.h>
-#include <absl/status/status.h>
-#include <absl/status/statusor.h>
+#include "absl/status/status.h"
 
 namespace cuttlefish::process_sandboxer {
 
