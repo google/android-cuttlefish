@@ -534,3 +534,21 @@ clang_tidy_test(
     srcs = [":tcp_connector"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "tombstone_receiver",
+    srcs = ["tombstone_receiver.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+    ],
+)
+
+clang_tidy_test(
+    name = "tombstone_receiver_clang_tidy",
+    srcs = [":tombstone_receiver"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
