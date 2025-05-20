@@ -71,6 +71,23 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "policies_header",
+    hdrs = ["policies.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "policies_header_clang_tidy",
+    srcs = [":policies_header"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "poll_callback",
     srcs = ["poll_callback.cpp"],
     hdrs = ["poll_callback.h"],
