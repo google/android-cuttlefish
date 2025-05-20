@@ -500,3 +500,10 @@ git_repository(
     commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
     remote = "https://android.googlesource.com/platform/external/selinux",
 )
+
+git_repository(
+    name = "e2fsprogs",
+    build_file = "@//:BUILD.e2fsprogs.bazel",
+    commit = "ff64357f839071968a727f8b5a08b0ddaedc5bbb",
+    remote = "https://github.com/tytso/e2fsprogs",
+)
