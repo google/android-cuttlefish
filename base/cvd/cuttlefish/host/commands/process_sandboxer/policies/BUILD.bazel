@@ -210,3 +210,20 @@ clang_tidy_test(
     srcs = [":gnss_grpc_proxy"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "kernel_log_monitor",
+    srcs = ["kernel_log_monitor.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_log_monitor_clang_tidy",
+    srcs = [":kernel_log_monitor"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
