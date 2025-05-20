@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 
 #pragma once
 
+#include <inttypes.h>
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 
-int __android_get_control_from_env(const char* prefix, const char* name)
-        __attribute__((visibility("hidden")));
+int load_canned_fs_config(const char* fn);
+void canned_fs_config(const char* path, int dir, const char* target_out_path, unsigned* uid,
+                      unsigned* gid, unsigned* mode, uint64_t* capabilities);
 
 __END_DECLS
