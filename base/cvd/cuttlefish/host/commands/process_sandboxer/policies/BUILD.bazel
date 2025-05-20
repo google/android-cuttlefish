@@ -461,3 +461,20 @@ clang_tidy_test(
     srcs = [":screen_recording_server"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "secure_env",
+    srcs = ["secure_env.cpp"],
+    copts = COPTS + ALLOW_C,
+    alwayslink = True,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:policies_header",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "secure_env_clang_tidy",
+    srcs = [":secure_env"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
