@@ -72,7 +72,7 @@ func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
-var snapshotIDRegex = regexp.MustCompile(`^([a-z0-9\-]+)$`)
+var snapshotIDRegex = regexp.MustCompile(`^([a-z0-9\-_]+)$`)
 
 func (a *CreateSnapshotAction) validateRequest() error {
 	if a.req.SnapshotID != "" {

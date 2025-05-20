@@ -55,7 +55,7 @@ func TestSnapshot(t *testing.T) {
 	if _, err := adbH.ExecShellCommand(cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
-	snapshotID := "00000000-0000-0000-0000-000000000000"
+	snapshotID := "snapshot_00000000-0000-0000-0000-000000000000"
 	// Create a snapshot containing the temporary file.
 	createSnapshotRes, err := srv.CreateSnapshot(groupName, cvd.Name, &hoapi.CreateSnapshotRequest{SnapshotID: snapshotID})
 	if err != nil {
