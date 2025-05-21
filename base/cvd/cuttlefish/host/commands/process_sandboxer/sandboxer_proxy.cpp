@@ -30,7 +30,7 @@
 #include "absl/status/statusor.h"
 #include "absl/strings/numbers.h"
 
-#include "host/commands/process_sandboxer/proxy_common.h"
+#include "cuttlefish/host/commands/process_sandboxer/proxy_common.h"
 
 namespace cuttlefish::process_sandboxer {
 namespace {

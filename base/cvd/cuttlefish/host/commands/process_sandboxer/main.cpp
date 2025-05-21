@@ -40,10 +40,10 @@
 #include "sandboxed_api/util/fileops.h"
 #include "sandboxed_api/util/path.h"
 
-#include "host/commands/process_sandboxer/logs.h"
-#include "host/commands/process_sandboxer/pidfd.h"
-#include "host/commands/process_sandboxer/policies.h"
-#include "host/commands/process_sandboxer/sandbox_manager.h"
+#include "cuttlefish/host/commands/process_sandboxer/logs.h"
+#include "cuttlefish/host/commands/process_sandboxer/pidfd.h"
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
+#include "cuttlefish/host/commands/process_sandboxer/sandbox_manager.h"
 
 inline constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 

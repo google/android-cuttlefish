@@ -10,7 +10,6 @@ cc_library(
     srcs = ["credentialed_unix_server.cpp"],
     hdrs = ["credentialed_unix_server.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
@@ -29,7 +28,6 @@ cc_library(
     srcs = ["logs.cpp"],
     hdrs = ["logs.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:log_entry",
@@ -51,7 +49,6 @@ cc_library(
     srcs = ["pidfd.cpp"],
     hdrs = ["pidfd.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
@@ -74,7 +71,6 @@ cc_library(
     name = "policies_header",
     hdrs = ["policies.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/status",
         "@sandboxed_api//sandboxed_api/sandbox2",
@@ -92,7 +88,6 @@ cc_library(
     srcs = ["policies.cpp"],
     hdrs = ["policies.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/host/commands/process_sandboxer/policies:adb_connector",
         "//cuttlefish/host/commands/process_sandboxer/policies:assemble_cvd",
@@ -150,7 +145,6 @@ cc_library(
     srcs = ["poll_callback.cpp"],
     hdrs = ["poll_callback.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/status",
@@ -197,7 +191,6 @@ cc_library(
     srcs = ["proxy_common.cpp"],
     hdrs = ["proxy_common.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",
@@ -215,7 +208,6 @@ cc_library(
     srcs = ["sandbox_manager.cpp"],
     hdrs = ["sandbox_manager.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:credentialed_unix_server",
         "//cuttlefish/host/commands/process_sandboxer:pidfd",
@@ -270,7 +262,6 @@ cc_library(
     srcs = ["signal_fd.cpp"],
     hdrs = ["signal_fd.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@abseil-cpp//absl/status",
         "@abseil-cpp//absl/status:statusor",

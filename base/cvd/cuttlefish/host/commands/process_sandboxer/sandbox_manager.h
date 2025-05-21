@@ -30,9 +30,9 @@
 #include "sandboxed_api/sandbox2/policy.h"
 #include "sandboxed_api/util/fileops.h"
 
-#include "host/commands/process_sandboxer/credentialed_unix_server.h"
-#include "host/commands/process_sandboxer/policies.h"
-#include "host/commands/process_sandboxer/signal_fd.h"
+#include "cuttlefish/host/commands/process_sandboxer/credentialed_unix_server.h"
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
+#include "cuttlefish/host/commands/process_sandboxer/signal_fd.h"
 
 namespace cuttlefish::process_sandboxer {
 
