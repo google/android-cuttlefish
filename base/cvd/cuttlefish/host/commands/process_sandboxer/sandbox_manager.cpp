@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/process_sandboxer/sandbox_manager.h"
+#include "cuttlefish/host/commands/process_sandboxer/sandbox_manager.h"
 
 #include <poll.h>
 #include <signal.h>
@@ -63,12 +63,12 @@
 #include "sandboxed_api/util/path.h"
 #pragma clang diagnostic pop
 
-#include "host/commands/process_sandboxer/credentialed_unix_server.h"
-#include "host/commands/process_sandboxer/pidfd.h"
-#include "host/commands/process_sandboxer/policies.h"
-#include "host/commands/process_sandboxer/poll_callback.h"
-#include "host/commands/process_sandboxer/proxy_common.h"
-#include "host/commands/process_sandboxer/signal_fd.h"
+#include "cuttlefish/host/commands/process_sandboxer/credentialed_unix_server.h"
+#include "cuttlefish/host/commands/process_sandboxer/pidfd.h"
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
+#include "cuttlefish/host/commands/process_sandboxer/poll_callback.h"
+#include "cuttlefish/host/commands/process_sandboxer/proxy_common.h"
+#include "cuttlefish/host/commands/process_sandboxer/signal_fd.h"
 
 namespace cuttlefish::process_sandboxer {
 

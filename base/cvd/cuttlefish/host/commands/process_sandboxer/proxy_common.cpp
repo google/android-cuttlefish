@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/process_sandboxer/proxy_common.h"
+#include "cuttlefish/host/commands/process_sandboxer/proxy_common.h"
 
 #include <sys/socket.h>
 #include <sys/uio.h>

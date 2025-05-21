@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/process_sandboxer/policies.h"
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
 
 #include <stdlib.h>
 
@@ -34,7 +34,7 @@
 #include "sandboxed_api/util/fileops.h"
 #include "sandboxed_api/util/path.h"
 
-#include "host/commands/process_sandboxer/proxy_common.h"
+#include "cuttlefish/host/commands/process_sandboxer/proxy_common.h"
 
 namespace cuttlefish::process_sandboxer {
 

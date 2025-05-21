@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/process_sandboxer/policies.h"
+#include "cuttlefish/host/commands/process_sandboxer/policies.h"
 
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/util/path.h"
