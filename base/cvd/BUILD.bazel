@@ -88,3 +88,19 @@ alias(
     actual = "@crosvm//:minijail_sources",
     visibility = ["//visibility:public"],
 )
+
+# Create an alias so that crosvm's rutabaga_gfx crate has visibility into the
+# gfxstream repository.
+alias(
+    name = "gfxstream_backend",
+    actual = "@gfxstream//host:gfxstream_backend",
+    visibility = ["//visibility:public"],
+)
+
+# Useful for `rust_library()`s which can not directly depend on a `cc_shared_library()`.
+# TODO: remove after ag/33719949 and update alias above to reference directly.
+cc_import(
+    name = "gfxstream_backend_import",
+    shared_library = ":gfxstream_backend",
+    visibility = ["//visibility:public"],
+)

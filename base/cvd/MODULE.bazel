@@ -35,6 +35,7 @@ bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "rules_flex", version = "0.4")
+bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_python", version = "0.40.0")
 bazel_dep(name = "rules_rust", version = "0.60.0")
@@ -177,7 +178,7 @@ crosvm_bin.spec(
         "gdbstub",
         "gdbstub_arch",
         "geniezone",
-        # TODO: b/402274999 - add gfxstream
+        "gfxstream",
         "gpu",
         "gpu_display",
         "gunyah",
@@ -187,7 +188,6 @@ crosvm_bin.spec(
         "qcow",
         "usb",
     ],
-    # TODO: schuffelen - build gfxstream
     # TODO: schuffelen - fix the sandbox
     git = CROSVM_REMOTE,
     rev = CROSVM_REV,
@@ -197,6 +197,29 @@ crosvm_bin.annotation(
     crate = "crosvm",
     gen_all_binaries = True,
     patch_args = ["-p1"],
+    deps = [
+        "@@//:gfxstream_backend_import",
+    ],
+    rustc_flags = [
+        # Look for shared libraries in the same directory as the binary.
+        "-Clink-arg=-Wl,-rpath,$$ORIGIN",
+    ],
+)
+
+crosvm_bin.annotation(
+    crate = "rutabaga_gfx",
+    deps = [
+        "@@//:gfxstream_backend_import",
+    ],
+    rustc_flags = [
+        # Look for shared libraries in the same directory as this object.
+        "-Clink-arg=-Wl,-rpath,$$ORIGIN",
+    ],
+    build_script_env = {
+        # Disable the build script from trying to automatically locate
+        # Gfxstream as the dep is directly provided above.
+        "CARGO_FEATURE_GFXSTREAM_STUB": "blah",
+    },
 )
 
 crosvm_bin.annotation(
@@ -301,6 +324,12 @@ git_repository(
     build_file = "@//:BUILD.swiftshader.bazel",
     commit = "4c3426403b9c89253322265323ca658a2476faca",
     remote = "https://swiftshader.googlesource.com/SwiftShader.git",
+)
+
+git_repository(
+    name = "gfxstream",
+    commit = "620cd8d0e1e839228d1894da4508d08b8ac798bc",
+    remote = "https://github.com/google/gfxstream.git",
 )
 
 git_repository(

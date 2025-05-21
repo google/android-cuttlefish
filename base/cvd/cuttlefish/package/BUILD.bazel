@@ -39,6 +39,7 @@ package_files(
         "cuttlefish-common/bin/graphics_detector": "//cuttlefish/host/graphics_detector",
         "cuttlefish-common/bin/health": "//cuttlefish/host/commands/health",
         "cuttlefish-common/bin/kernel_log_monitor": "//cuttlefish/host/commands/kernel_log_monitor",
+        "cuttlefish-common/bin/libgfxstream_backend.so": "@gfxstream//host:gfxstream_backend",
         "cuttlefish-common/bin/libvk_lavapipe.so": "@mesa//:vk_lavapipe",
         "cuttlefish-common/bin/libvk_swiftshader.so": "@swiftshader//:vk_swiftshader",
         "cuttlefish-common/bin/log_tee": "//cuttlefish/host/commands/log_tee",
@@ -91,7 +92,8 @@ package_files(
         "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
         "cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/iccprofile_for_sim0.xml",
         "cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml": "//cuttlefish/host/commands/modem_simulator:etc/files/numeric_operator.xml",
-        # "cuttlefish-common/bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --gpu_mode=guest_swiftshader --enable_sandbox=false
+        # "cuttlefish-common/bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --enable_sandbox=false
+
     },
     package_file_symlink_to_package_file = {
         "cuttlefish-common/bin/resize.f2fs": "cuttlefish-common/bin/fsck.f2fs",
