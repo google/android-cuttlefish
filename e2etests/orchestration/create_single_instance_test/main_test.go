@@ -31,6 +31,19 @@ func TestCreateSingleInstance(t *testing.T) {
 	buildID := os.Getenv("BUILD_ID")
 	buildTarget := os.Getenv("BUILD_TARGET")
 	srv := hoclient.NewHostOrchestratorService(baseURL)
+	fetchReq := &hoapi.FetchArtifactsRequest{
+		AndroidCIBundle: &hoapi.AndroidCIBundle{
+			Build: &hoapi.AndroidCIBuild{
+				BuildID: buildID,
+				Target:  buildTarget,
+			},
+			Type: hoapi.MainBundleType,
+		},
+	}
+	_, err := srv.FetchArtifacts(fetchReq, &hoclient.AccessTokenBuildAPICreds{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	createReq := &hoapi.CreateCVDRequest{
 		CVD: &hoapi.CVD{
 			BuildSource: &hoapi.BuildSource{
