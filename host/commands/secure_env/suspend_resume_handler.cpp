@@ -91,11 +91,17 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
       CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.keymaster));
       CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.gatekeeper));
       CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.oemlock));
+      if (snapshot_sockets_.jcardsim.has_value()) {
+        CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.jcardsim.value()));
+      }
       // Wait for ACKs from worker threads.
       CF_EXPECT(ReadSuspendAck(snapshot_sockets_.rust));
       CF_EXPECT(ReadSuspendAck(snapshot_sockets_.keymaster));
       CF_EXPECT(ReadSuspendAck(snapshot_sockets_.gatekeeper));
       CF_EXPECT(ReadSuspendAck(snapshot_sockets_.oemlock));
+      if (snapshot_sockets_.jcardsim.has_value()) {
+        CF_EXPECT(ReadSuspendAck(snapshot_sockets_.jcardsim.value()));
+      }
       // Write response to run_cvd.
       auto response = LauncherResponse::kSuccess;
       const auto n_written =
@@ -110,6 +116,9 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
       CF_EXPECT(WriteResumeRequest(snapshot_sockets_.keymaster));
       CF_EXPECT(WriteResumeRequest(snapshot_sockets_.gatekeeper));
       CF_EXPECT(WriteResumeRequest(snapshot_sockets_.oemlock));
+      if (snapshot_sockets_.jcardsim.has_value()) {
+        CF_EXPECT(WriteResumeRequest(snapshot_sockets_.jcardsim.value()));
+      }
       // Write response to run_cvd.
       auto response = LauncherResponse::kSuccess;
       const auto n_written =

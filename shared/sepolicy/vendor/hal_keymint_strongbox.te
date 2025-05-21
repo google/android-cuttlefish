@@ -1,0 +1,15 @@
+type hal_keymint_strongbox, domain;
+hal_server_domain(hal_keymint_strongbox, hal_keymint)
+
+type hal_keymint_strongbox_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_keymint_strongbox)
+
+vndbinder_use(hal_keymint_strongbox)
+
+binder_call(hal_keymint_strongbox, secure_element)
+allow hal_keymint_strongbox secure_element_service:service_manager find;
+
+get_prop(hal_keymint_strongbox, vendor_security_patch_level_prop);
+get_prop(hal_keymint_strongbox, vendor_boot_security_patch_level_prop)
+get_prop(hal_keymint_strongbox, serialno_prop)
+

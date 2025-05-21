@@ -113,9 +113,12 @@ cc_library {
         "libcuttlefish_run_cvd_proto",
         "libprotobuf-cpp-full",
     ],
+    header_libs: ["jni_headers"],
     srcs: common_libsecure_srcs + [
         "confui_sign_server.cpp",
         "device_tpm.cpp",
+        "jcardsim_interface.cpp",
+        "jcardsim_responder.cpp",
         "oemlock/oemlock.cpp",
         "oemlock/oemlock_responder.cpp",
         "storage/insecure_json_storage.cpp",
@@ -154,6 +157,7 @@ cc_binary_host {
     static_libs: [
         "libgflags_cuttlefish",
     ],
+    header_libs: ["jni_headers"],
     target: {
         windows: {
             enabled: true,
@@ -198,6 +202,7 @@ cc_library {
     ],
     header_libs: [
         "cuttlefish_common_headers",
+        "jni_headers",
     ],
     target: {
         windows: {

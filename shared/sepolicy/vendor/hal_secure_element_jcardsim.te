@@ -1,0 +1,18 @@
+type hal_secure_element_jcardsim, domain;
+hal_server_domain(hal_secure_element_jcardsim, hal_secure_element)
+
+type hal_secure_element_jcardsim_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_secure_element_jcardsim)
+
+type secure_element_jcardsim_device, dev_type;
+
+allow hal_secure_element_jcardsim device:dir r_dir_perms;
+allow hal_secure_element_jcardsim secure_element_jcardsim_device:chr_file rw_file_perms;
+
+# Write to kernel log (/dev/kmsg)
+allow hal_secure_element_jcardsim kmsg_device:chr_file w_file_perms;
+allow hal_secure_element_jcardsim kmsg_device:chr_file getattr;
+
+get_prop(hal_secure_element_jcardsim, vendor_security_patch_level_prop);
+get_prop(hal_secure_element_jcardsim, vendor_boot_security_patch_level_prop)
+
