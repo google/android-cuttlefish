@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.9.0) unstable; urgency=medium
+cuttlefish-frontend (1.9.0) stable; urgency=medium
 
   * Skip powerbtn_test due flakiness. by @ser-io in https://github.com/google/android-cuttlefish/pull/1135
   * e2e orchestration jobs improvements by @ser-io in https://github.com/google/android-cuttlefish/pull/1133
