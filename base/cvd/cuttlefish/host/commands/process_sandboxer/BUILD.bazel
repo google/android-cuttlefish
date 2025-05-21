@@ -163,6 +163,35 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_binary(
+    name = "process_sandboxer",
+    srcs = ["main.cpp"],
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:logs",
+        "//cuttlefish/host/commands/process_sandboxer:pidfd",
+        "//cuttlefish/host/commands/process_sandboxer:policies",
+        "//cuttlefish/host/commands/process_sandboxer:sandbox_manager",
+        "@abseil-cpp//absl/base:log_severity",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:parse",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/log:globals",
+        "@abseil-cpp//absl/log:initialize",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "process_sandboxer_clang_tidy",
+    srcs = [":process_sandboxer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "proxy_common",
     srcs = ["proxy_common.cpp"],
