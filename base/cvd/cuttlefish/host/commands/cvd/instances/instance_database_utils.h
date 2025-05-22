@@ -18,15 +18,11 @@
 
 #include <string>
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home);
-
-std::string LocalDeviceNameRule(const std::string& group_name,
-                                const std::string& instance_name);
 
 // [A-Za-z0-9_]+, e.g. 0, tv, my_phone07, etc
 // Or, it can include "-" in the middle
@@ -45,38 +41,5 @@ struct DeviceName {
   std::string per_instance_name;
 };
 Result<DeviceName> BreakDeviceName(const std::string& device_name);
-
-/**
- * simply returns:
- *
- * "Only up to n must match" or
- * "Only up to n must match by field " + FieldName
- *
- */
-std::string GenerateTooManyInstancesErrorMsg(int n,
-                                             const std::string& field_name);
-
-template <typename RetSet, typename AnyContainer>
-RetSet Intersection(const RetSet& u, AnyContainer&& v) {
-  RetSet result;
-  if (u.empty() || v.empty()) {
-    return result;
-  }
-  for (auto const& e : v) {
-    if (Contains(u, e)) {
-      result.insert(e);
-    }
-  }
-  return result;
-}
-
-template <typename RetSet, typename AnyContainer, typename... Containers>
-RetSet Intersection(const RetSet& u, AnyContainer&& v, Containers&&... s) {
-  RetSet first = Intersection(u, std::forward<AnyContainer>(v));
-  if (first.empty()) {
-    return first;
-  }
-  return Intersection(first, std::forward<Containers>(s)...);
-}
 
 }  // namespace cuttlefish
