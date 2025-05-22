@@ -107,6 +107,7 @@ func CVDLogsDir(ctx hoexec.ExecContext, groupName, name string) (string, error) 
 type fetchCVDCommandArtifactsFetcher struct {
 	execContext         hoexec.ExecContext
 	buildAPICredentials BuildAPICredentials
+	buildAPIBaseURL     string
 }
 
 type ExtraCVDOptions struct {
@@ -120,10 +121,12 @@ type CVDBundleFetcher interface {
 	Fetch(outDir, buildID, target string, opts ExtraCVDOptions) error
 }
 
-func newFetchCVDCommandArtifactsFetcher(execContext hoexec.ExecContext, buildAPICredentials BuildAPICredentials) *fetchCVDCommandArtifactsFetcher {
+func newFetchCVDCommandArtifactsFetcher(
+	execContext hoexec.ExecContext, buildAPICredentials BuildAPICredentials, buildAPIBaseURL string) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
 		execContext:         execContext,
 		buildAPICredentials: buildAPICredentials,
+		buildAPIBaseURL:     buildAPIBaseURL,
 	}
 }
 
@@ -144,6 +147,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		}
 	}
 	fetchOpts := cvd.FetchOpts{
+		BuildAPIBaseURL:  f.buildAPIBaseURL,
 		Credentials:      creds,
 		KernelBuild:      opts.KernelBuild,
 		BootloaderBuild:  opts.BootloaderBuild,
