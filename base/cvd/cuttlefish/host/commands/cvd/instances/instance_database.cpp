@@ -28,7 +28,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/device_name.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
