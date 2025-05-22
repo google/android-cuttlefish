@@ -149,10 +149,19 @@ func (cli *CLI) exec(bin string, args ...string) ([]byte, error) {
 	return cli.runCmd(cli.buildCmd(bin, args...))
 }
 
-func (cli *CLI) Load(configPath string, creds FetchCredentials) (*Group, error) {
-	cmd := cli.buildCmd(CVDBin, "load", configPath)
-	if creds != nil {
-		creds.AddToCmd(cmd)
+type LoadOpts struct {
+	BuildAPIBaseURL string
+	Credentials     FetchCredentials
+}
+
+func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
+	args := []string{"load", configPath}
+	if opts.BuildAPIBaseURL != "" {
+		args = append(args, fmt.Sprintf("--override=fetch.api_base_url:%s", opts.BuildAPIBaseURL))
+	}
+	cmd := cli.buildCmd(CVDBin, args...)
+	if opts.Credentials != nil {
+		opts.Credentials.AddToCmd(cmd)
 	}
 
 	out, err := cli.runCmd(cmd)
@@ -318,6 +327,7 @@ type AndroidBuild struct {
 }
 
 type FetchOpts struct {
+	BuildAPIBaseURL  string
 	Credentials      FetchCredentials
 	KernelBuild      AndroidBuild
 	BootloaderBuild  AndroidBuild
@@ -362,6 +372,9 @@ func (cli *CLI) Fetch(buildID, buildTarget, targetDir string, opts FetchOpts) er
 				build.BuildID, build.BuildTarget)
 		}
 		args = append(args, fmt.Sprintf("--bootloader_build=%s/%s", build.BuildID, build.BuildTarget))
+	}
+	if opts.BuildAPIBaseURL != "" {
+		args = append(args, fmt.Sprintf("--api_base_url=%s", opts.BuildAPIBaseURL))
 	}
 	cmd := cli.buildCmd(FetchCVDBin, args...)
 	if opts.Credentials != nil {

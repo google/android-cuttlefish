@@ -35,8 +35,7 @@ import (
 )
 
 const (
-	defaultAndroidBuildURL = "https://androidbuildinternal.googleapis.com"
-	DefaultListenAddress   = "127.0.0.1"
+	DefaultListenAddress = "127.0.0.1"
 )
 
 func defaultCVDArtifactsDir() string {
@@ -88,7 +87,7 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 func main() {
 	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
-	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
+	abURL := flag.String("android_build_url", "", "URL to an Android Build API.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 	logFile := flag.String("log_file", "", "Path to file to write logs to.")
