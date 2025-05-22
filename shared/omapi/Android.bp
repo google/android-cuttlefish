@@ -1,0 +1,8 @@
+vintf_compatibility_matrix {
+    name: "secure_element_framework_matrix.xml",
+    stem: "compatibility_matrix.xml",
+    system_ext_specific: true,
+    srcs: [
+        "secure_element_framework_matrix.xml",
+    ],
+}

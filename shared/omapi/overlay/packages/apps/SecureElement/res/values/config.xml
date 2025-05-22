@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- To enable vendor stable service, set this to true and
+         make sure its vntf manifest entry is also configured. -->
+    <bool name="secure_element_vintf_enabled">true</bool>
+</resources>
+
