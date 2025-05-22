@@ -14,27 +14,14 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/device_name.h"
 
 #include <regex>
 #include <vector>
 
-#include <android-base/file.h>
 #include <android-base/strings.h>
 
-#include "cuttlefish/common/libs/utils/files.h"
-
 namespace cuttlefish {
-
-Result<std::string> GetCuttlefishConfigPath(const std::string& home) {
-  std::string home_realpath;
-  CF_EXPECT(DirectoryExists(home), "Invalid Home Directory");
-  CF_EXPECT(android::base::Realpath(home, &home_realpath));
-  static const char kSuffix[] = "/cuttlefish_assembly/cuttlefish_config.json";
-  std::string config_path = AbsolutePath(home_realpath + kSuffix);
-  CF_EXPECT(FileExists(config_path), "No config file exists");
-  return {config_path};
-}
 
 bool IsValidGroupName(const std::string& token) {
   std::regex regular_expr("[A-Za-z_][A-Za-z_0-9]*");

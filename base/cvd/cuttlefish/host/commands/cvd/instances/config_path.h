@@ -24,22 +24,4 @@ namespace cuttlefish {
 
 Result<std::string> GetCuttlefishConfigPath(const std::string& home);
 
-// [A-Za-z0-9_]+, e.g. 0, tv, my_phone07, etc
-// Or, it can include "-" in the middle
-// ([A-Za-z0-9_]+[-])*[A-Za-z0-9_]
-bool IsValidInstanceName(const std::string& token);
-
-// [A-Za-z_][A-Za-z0-9_]*, e.g. cool_group, cv0_d, cf, etc
-// but can't start with [0-9]
-bool IsValidGroupName(const std::string& token);
-
-// <valid group name>-<valid instance name>
-bool IsValidDeviceName(const std::string& token);
-
-struct DeviceName {
-  std::string group_name;
-  std::string per_instance_name;
-};
-Result<DeviceName> BreakDeviceName(const std::string& device_name);
-
 }  // namespace cuttlefish
