@@ -84,7 +84,10 @@ package_files(
     },
     package_file_symlink_to_package_file = {
         "cuttlefish-common/bin/aarch64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
+        "cuttlefish-common/bin/aarch64-linux-gnu/libvk_swiftshader.so": "cuttlefish-common/bin/libvk_swiftshader.so",
         "cuttlefish-common/bin/x86_64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
+        "cuttlefish-common/lib64/vulkan.lvp.so": "cuttlefish-common/bin/libvk_lavapipe.so",
+        "cuttlefish-common/lib64/vulkan.pastel.so": "cuttlefish-common/bin/libvk_swiftshader.so",
     },
     visibility = ["//:android_cuttlefish"],
 )
