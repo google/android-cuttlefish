@@ -98,7 +98,6 @@ cc_library(
     srcs = ["instance_database_utils.cpp"],
     hdrs = ["instance_database_utils.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
