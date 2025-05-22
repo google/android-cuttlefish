@@ -47,6 +47,7 @@ type CreateCVDActionOpts struct {
 	UUIDGen                  func() string
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	BuildAPICredentials      BuildAPICredentials
+	BuildAPIBaseURL          string
 }
 
 type CreateCVDAction struct {
@@ -59,6 +60,7 @@ type CreateCVDAction struct {
 	cvdBundleFetcher         CVDBundleFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
 	buildAPICredentials      BuildAPICredentials
+	buildAPIBaseURL          string
 
 	instanceCounter uint32
 }
@@ -73,6 +75,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 		buildAPICredentials:      opts.BuildAPICredentials,
+		buildAPIBaseURL:          opts.BuildAPIBaseURL,
 		execContext:              execCtx,
 		cvdCLI:                   cvd.NewCLI(execCtx),
 	}
@@ -138,7 +141,11 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 		}
 	}
 
-	group, err := a.cvdCLI.Load(configFile.Name(), creds)
+	opts := cvd.LoadOpts{
+		BuildAPIBaseURL: a.buildAPIBaseURL,
+		Credentials:     creds,
+	}
+	group, err := a.cvdCLI.Load(configFile.Name(), opts)
 	if err != nil {
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}

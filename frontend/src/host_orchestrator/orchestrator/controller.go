@@ -170,7 +170,8 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		AccessToken:   creds,
 		UserProjectID: userProjectID,
 	}
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials)
+	cvdBundleFetcher :=
+		newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials, h.Config.AndroidBuildServiceURL)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
@@ -206,7 +207,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		AccessToken:   creds,
 		UserProjectID: userProjectID,
 	}
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials, h.Config.AndroidBuildServiceURL)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -217,6 +218,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		UUIDGen:                  func() string { return uuid.New().String() },
 		UserArtifactsDirResolver: h.UADirResolver,
 		BuildAPICredentials:      buildAPICredentials,
+		BuildAPIBaseURL:          h.Config.AndroidBuildServiceURL,
 	}
 	return NewCreateCVDAction(opts).Run()
 }
