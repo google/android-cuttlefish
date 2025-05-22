@@ -32,7 +32,6 @@ cc_library(
     hdrs = ["flags_collector.h"],
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
-        "//cuttlefish/common/libs/utils:contains",
         "//libbase",
         "@tinyxml2",
     ],
