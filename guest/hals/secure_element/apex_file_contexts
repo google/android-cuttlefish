@@ -1,0 +1,3 @@
+(/.*)?                                                      u:object_r:vendor_file:s0
+/etc(/.*)?                                                  u:object_r:vendor_configs_file:s0
+/bin/hw/android\.hardware\.secure_element-service\.jcardsim  u:object_r:hal_secure_element_jcardsim_exec:s0
