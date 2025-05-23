@@ -54,8 +54,10 @@ type Controller struct {
 	Config                Config
 	OperationManager      OperationManager
 	WaitOperationDuration time.Duration
-	UserArtifactsManager  UserArtifactsManager
-	DebugVariablesManager *debug.VariablesManager
+	// TODO: Remove UserArtifactsManager after completing to implement UserArtifactsManagerV1.
+	UserArtifactsManager   UserArtifactsManager
+	UserArtifactsManagerV1 UserArtifactsManagerV1
+	DebugVariablesManager  *debug.VariablesManager
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
@@ -109,6 +111,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
+	router.Handle("/v1/userartifacts/{hash}",
+		httpHandler(&updateUserArtifactV1Handler{c.UserArtifactsManagerV1})).Methods("PUT")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -575,6 +579,54 @@ func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error
 		}
 	}()
 	return op, nil
+}
+
+type updateUserArtifactV1Handler struct {
+	m UserArtifactsManagerV1
+}
+
+func parseFormValueInt(r *http.Request, key string) (int64, error) {
+	valueRaw := r.FormValue(key)
+	value, err := strconv.ParseInt(valueRaw, 10, 64)
+	if err != nil {
+		return -1, operator.NewBadRequestError(fmt.Sprintf("Invalid %s value: %q", key, valueRaw), err)
+	}
+	return value, nil
+}
+
+func (h *updateUserArtifactV1Handler) Handle(r *http.Request) (interface{}, error) {
+	if err := r.ParseMultipartForm(0); err != nil {
+		if err == multipart.ErrMessageTooLarge {
+			return nil, &operator.AppError{
+				StatusCode: http.StatusInsufficientStorage,
+				Err:        err,
+			}
+		}
+		return nil, operator.NewBadRequestError("Invalid multipart form request", err)
+	}
+	defer r.MultipartForm.RemoveAll()
+	chunkOffset, err := parseFormValueInt(r, "chunk_offset")
+	if err != nil {
+		return nil, err
+	}
+	fileSize, err := parseFormValueInt(r, "file_size")
+	if err != nil {
+		return nil, err
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	chunk := UserArtifactChunkV1{
+		File:     file,
+		Name:     header.Filename,
+		Hash:     mux.Vars(r)["hash"],
+		Offset:   chunkOffset,
+		Size:     header.Size,
+		FileSize: fileSize,
+	}
+	return nil, h.m.UpdateArtifact(chunk)
 }
 
 type getDebugVariablesHandler struct {

@@ -263,6 +263,39 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 	}
 }
 
+type testUAMV1 struct{}
+
+func (testUAMV1) GetDirPath(_ string) string {
+	return ""
+}
+
+func (testUAMV1) UpdateArtifact(_ UserArtifactChunkV1) error {
+	return nil
+}
+
+func TestUpdateUserArtifactV1IsHandled(t *testing.T) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	fw, _ := writer.CreateFormField("chunk_offset")
+	io.Copy(fw, strings.NewReader("20"))
+	fw, _ = writer.CreateFormField("file_size")
+	io.Copy(fw, strings.NewReader("100"))
+	fw, _ = writer.CreateFormFile("file", "foo.txt")
+	io.Copy(fw, bytes.NewReader([]byte("lorem")))
+	writer.Close()
+
+	req, _ := http.NewRequest("PUT", "/v1/userartifacts/foo", bytes.NewReader(body.Bytes()))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	controller := Controller{UserArtifactsManagerV1: &testUAMV1{}}
+	rr := httptest.NewRecorder()
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestGetDebugVarzIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/_debug/varz", strings.NewReader("{}"))
