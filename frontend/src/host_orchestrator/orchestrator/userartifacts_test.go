@@ -97,7 +97,7 @@ func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
 		File:        strings.NewReader("lorem ipsum"),
 	}
 
-	err := am.UpdateArtifact("bar", chunk)
+	err := am.UpdateArtifactWithDir("bar", chunk)
 
 	if err == nil {
 		t.Error("expected error")
@@ -141,7 +141,7 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 	for i := 0; i < len(chunks); i++ {
 		go func(i int) {
 			defer wg.Done()
-			am.UpdateArtifact(upDir.Name, chunks[i])
+			am.UpdateArtifactWithDir(upDir.Name, chunks[i])
 		}(i)
 
 	}
