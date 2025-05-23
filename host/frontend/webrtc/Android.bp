@@ -105,7 +105,7 @@ cc_binary_host {
         "webrtc_signaling_headers",
     ],
     static_libs: [
-        "libabsl_host",
+        "absl_container_inlined_vector",
         "libaom",
         "libcap",
         "libcn-cbor",

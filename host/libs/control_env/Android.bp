@@ -30,8 +30,8 @@ cc_library {
         "libprotobuf-cpp-full",
     ],
     static_libs: [
+        "absl_flags_parse",
         "grpc_cli_libs",
-        "libabsl_host",
         "libgflags",
     ],
     cflags: [

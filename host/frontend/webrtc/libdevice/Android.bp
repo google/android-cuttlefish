@@ -43,7 +43,7 @@ cc_library {
         "webrtc_signaling_headers",
     ],
     static_libs: [
-        "libabsl_host",
+        "absl_container_inlined_vector",
         "libcap",
         "libcuttlefish_host_config",
         "libcuttlefish_screen_connector",

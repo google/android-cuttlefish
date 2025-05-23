@@ -70,7 +70,21 @@ cc_binary_host {
     ],
     shared_libs: ["sandboxed_api_sandbox2"],
     static_libs: [
-        "libabsl_host",
+        "absl_container_flat_hash_map",
+        "absl_container_flat_hash_set",
+        "absl_flags_flag",
+        "absl_flags_parse",
+        "absl_functional_bind_front",
+        "absl_log",
+        "absl_log_check",
+        "absl_log_initialize",
+        "absl_random",
+        "absl_random_bit_gen_ref",
+        "absl_status",
+        "absl_status_statusor",
+        "absl_strings_string_view",
+        "absl_types_optional",
+        "absl_types_span",
         "libcap",
         "libprocess_sandboxer_proxy_common",
     ],
@@ -88,7 +102,10 @@ cc_library_static {
     name: "libprocess_sandboxer_proxy_common",
     defaults: ["cuttlefish_buildhost_only"],
     srcs: ["proxy_common.cpp"],
-    static_libs: ["libabsl_host"],
+    static_libs: [
+        "absl_status",
+        "absl_status_statusor",
+    ],
     target: {
         darwin: {
             enabled: false,
@@ -106,7 +123,9 @@ cc_binary_host {
         "sandboxer_proxy.cpp",
     ],
     static_libs: [
-        "libabsl_host",
+        "absl_status",
+        "absl_status_statusor",
+        "absl_strings",
         "libprocess_sandboxer_proxy_common",
     ],
     target: {
