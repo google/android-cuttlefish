@@ -33,7 +33,7 @@
 namespace cuttlefish {
 namespace {
 
-Result<std::vector<FlagInfoPtr>> GetSupportedFlags(
+Result<std::vector<FlagInfo>> GetSupportedFlags(
     const std::string& artifacts_path, const std::string bin_name) {
   auto bin_path = fmt::format("{}/{}", artifacts_path, bin_name);
   Command command(bin_path);
@@ -60,12 +60,12 @@ HostToolTarget::HostToolTarget(const std::string& artifacts_path)
 
 Result<FlagInfo> HostToolTarget::GetFlagInfo(
     const std::string& bin_name, const std::string& flag_name) const {
-  std::vector<FlagInfoPtr> flags = CF_EXPECTF(
+  std::vector<FlagInfo> flags = CF_EXPECTF(
       GetSupportedFlags(artifacts_path_, bin_name),
       "Failed to obtain supported flags for the '{}' tool", bin_name);
-  for (auto& flag : flags) {
-    if (flag->Name() == flag_name) {
-      return *flag.release();
+  for (FlagInfo& flag : flags) {
+    if (flag.Name() == flag_name) {
+      return flag;
     }
   }
   return CF_ERRF("Flag '{}' not supported by the '{}' tool", flag_name,

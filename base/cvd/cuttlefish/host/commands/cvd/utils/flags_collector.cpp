@@ -16,12 +16,13 @@
 
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
-#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <android-base/logging.h>
 #include "tinyxml2.h"
-
-#include "cuttlefish/common/libs/utils/contains.h"
 
 using tinyxml2::XMLDocument;
 using tinyxml2::XMLElement;
@@ -40,7 +41,8 @@ namespace {
  * to retrieve the string value:
  *  xmlNodeListGetString(doc, grandchild, 1);
  */
-FlagInfoPtr ParseFlagNode(const XMLDocument& doc, XMLElement& flag) {
+std::optional<FlagInfo> ParseFlagNode(const XMLDocument& doc,
+                                      XMLElement& flag) {
   std::unordered_map<std::string, std::string> field_value_map;
   for (XMLElement* child = flag.FirstChildElement(); child != nullptr;
        child = child->NextSiblingElement()) {
@@ -55,24 +57,30 @@ FlagInfoPtr ParseFlagNode(const XMLDocument& doc, XMLElement& flag) {
     }
     field_value_map[field_name] = xml_node_text;
   }
-  if (field_value_map.empty()) {
-    return nullptr;
+
+  auto name_it = field_value_map.find("name");
+  if (name_it == field_value_map.end() || name_it->second.empty()) {
+    return {};
   }
-  return FlagInfo::Create(field_value_map);
+  auto type_it = field_value_map.find("type");
+  if (type_it == field_value_map.end() || type_it->second.empty()) {
+    return {};
+  }
+  return FlagInfo(name_it->second, type_it->second);
 }
 
-std::vector<FlagInfoPtr> ParseXml(const XMLDocument& doc, XMLElement* node) {
+std::vector<FlagInfo> ParseXml(const XMLDocument& doc, XMLElement* node) {
   if (!node) {
     return {};
   }
 
-  std::vector<FlagInfoPtr> flags;
+  std::vector<FlagInfo> flags;
   // if it is <flag> node
   if (node->Name() && node->Name() == std::string("flag")) {
-    auto flag_info = ParseFlagNode(doc, *node);
+    std::optional<FlagInfo> flag_info = ParseFlagNode(doc, *node);
     // we don't assume that a flag node is nested.
     if (flag_info) {
-      flags.push_back(std::move(flag_info));
+      flags.push_back(std::move(*flag_info));
       return flags;
     }
     return {};
@@ -105,40 +113,24 @@ std::unique_ptr<XMLDocument> BuildXmlDocFromString(const std::string& xml_str) {
   return doc;
 }
 
-std::optional<std::vector<FlagInfoPtr>> LoadFromXml(std::unique_ptr<XMLDocument> doc) {
-  std::vector<FlagInfoPtr> flags;
-  auto* root = doc->RootElement();
-  if (!root) {
-    LOG(ERROR) << "Failed to get the root element from XML doc.";
-    return std::nullopt;
-  }
-  flags = ParseXml(*doc, root);
-  return flags;
-}
-
 }  // namespace
 
-std::unique_ptr<FlagInfo> FlagInfo::Create(
-    const FlagInfoFieldMap& field_value_map) {
-  if (!Contains(field_value_map, "name") ||
-      field_value_map.at("name").empty()) {
-    return nullptr;
-  }
-  if (!Contains(field_value_map, "type") ||
-      field_value_map.at("type").empty()) {
-    return nullptr;
-  }
-  FlagInfo* new_flag_info = new FlagInfo(field_value_map);
-  return std::unique_ptr<FlagInfo>(new_flag_info);
-}
+FlagInfo::FlagInfo(std::string name, std::string type)
+    : name_(std::move(name)), type_(std::move(type)) {}
 
-std::optional<std::vector<FlagInfoPtr>> CollectFlagsFromHelpxml(
+std::optional<std::vector<FlagInfo>> CollectFlagsFromHelpxml(
     const std::string& xml_str) {
   auto helpxml_doc = BuildXmlDocFromString(xml_str);
   if (!helpxml_doc) {
     return std::nullopt;
   }
-  return LoadFromXml(std::move(helpxml_doc));
+  auto* root = helpxml_doc->RootElement();
+  if (!root) {
+    LOG(ERROR) << "Failed to get the root element from XML doc.";
+    return std::nullopt;
+  }
+  std::vector<FlagInfo> flags = ParseXml(*helpxml_doc, root);
+  return flags;
 }
 
 }  // namespace cuttlefish
