@@ -53,9 +53,9 @@ type UserArtifactsManager interface {
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
-	UpdateArtifact(dir string, chunk UserArtifactChunk) error
+	UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error
 	// Extract artifact
-	ExtractArtifact(dir, name string) error
+	ExtractArtifactWithDir(dir, name string) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -119,7 +119,7 @@ func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
 
-func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
+func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error {
 	dir = m.RootDir + "/" + dir
 	if ok, err := fileExist(dir); err != nil {
 		return err
@@ -151,7 +151,7 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 	return nil
 }
 
-func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
+func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) error {
 	dir = filepath.Join(m.RootDir, dir)
 	if ok, err := fileExist(dir); err != nil {
 		return err
