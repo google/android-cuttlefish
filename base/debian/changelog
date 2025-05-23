@@ -1,8 +1,18 @@
-cuttlefish-common (1.10.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.10.0) unstable; urgency=medium
 
-  * 
+  * Begin development of version 1.10 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1175
+  * Build and package adb by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1136
+  * Split `//cuttlefish/host/commands/cvd/instances:[data_viewer,run_cvd_proc_collector]` by @Databean in https://github.com/google/android-cuttlefish/pull/1169
+  * Extract `//cuttlefish/host/commands/assemble_cvd:[clean,misc_info]` and fix clang-tidy issues by @Databean in https://github.com/google/android-cuttlefish/pull/1179
+  * Package webRTC binary by @jemoreira in https://github.com/google/android-cuttlefish/pull/1108
+  * Extract `//cuttlefish/common/libs/fs:[epoll,shared_fd_stream]` by @Databean in https://github.com/google/android-cuttlefish/pull/1180
+  * Detect fastboot started triggered by GBL by @dimorinny in https://github.com/google/android-cuttlefish/pull/1176
+  * Start building `//cuttlefish/host/commands/process_sandboxer` by @Databean in https://github.com/google/android-cuttlefish/pull/1183
+  * Build the rest of `//cuttlefish/host/commands/process_sandboxer` by @Databean in https://github.com/google/android-cuttlefish/pull/1187
+  * Test git_main too by @jemoreira in https://github.com/google/android-cuttlefish/pull/1182
+  * Add e2fsprogs, selinux and dependent tools by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1190
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 16 May 2025 18:59:47 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 23 May 2025 14:32:30 -0700
 
 cuttlefish-common (1.9.0) stable; urgency=medium
 
