@@ -37,7 +37,7 @@
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/device_name.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"

@@ -29,7 +29,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_database_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 
