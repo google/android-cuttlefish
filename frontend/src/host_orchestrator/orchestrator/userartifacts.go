@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"archive/zip"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -48,14 +49,18 @@ type UserArtifactChunk struct {
 // Abstraction for managing user artifacts for launching CVDs.
 type UserArtifactsManager interface {
 	UserArtifactsDirResolver
+	// Update the artifact given the checksum.
+	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
+	// Returns artifact's file info given its checksum.
+	StatArtifact(checksum string) (os.FileInfo, error)
 	// Creates a new directory for uploading user artifacts in the future.
 	NewDir() (*apiv1.UploadDirectory, error)
 	// List existing directories
 	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
 	// Update artifact with the passed chunk.
-	UpdateArtifact(dir string, chunk UserArtifactChunk) error
+	UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error
 	// Extract artifact
-	ExtractArtifact(dir, name string) error
+	ExtractArtifactWithDir(dir, name string) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
@@ -76,6 +81,56 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) *UserArtifactsMa
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
 	}
+}
+
+func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	if err := createDir(m.RootDir); err != nil {
+		return err
+	}
+	filename := filepath.Join(m.RootDir, checksum)
+	if err := createUAFile(filename, m.Owner); err != nil {
+		return err
+	}
+	if err := writeChunk(filename, chunk); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (os.FileInfo, error) {
+	filename := filepath.Join(m.RootDir, checksum)
+	exist, err := fileExist(filename)
+	if err != nil {
+		return nil, err
+	}
+	if !exist {
+		return nil, operator.NewBadRequestError(fmt.Sprintf("user artifact with checksum %q does not exist", checksum), nil)
+	}
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("error closing file: %s", err)
+		}
+	}()
+	currentChecksum, err := sha256Checksum(f)
+	if err != nil {
+		return nil, err
+	}
+	if checksum != currentChecksum {
+		return nil, operator.NewNotFoundError(fmt.Sprintf("user artifact with checksum %q does not exist", checksum), nil)
+	}
+	return f.Stat()
+}
+
+func sha256Checksum(f *os.File) (string, error) {
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
 func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
@@ -119,7 +174,7 @@ func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
 	return m.RootDir + "/" + dir + "/" + filename
 }
 
-func (m *UserArtifactsManagerImpl) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
+func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error {
 	dir = m.RootDir + "/" + dir
 	if ok, err := fileExist(dir); err != nil {
 		return err
@@ -151,7 +206,7 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 	return nil
 }
 
-func (m *UserArtifactsManagerImpl) ExtractArtifact(dir, name string) error {
+func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) error {
 	dir = filepath.Join(m.RootDir, dir)
 	if ok, err := fileExist(dir); err != nil {
 		return err
