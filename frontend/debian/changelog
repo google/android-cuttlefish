@@ -1,8 +1,12 @@
-cuttlefish-frontend (1.10.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.10.0) unstable; urgency=medium
 
-  * 
+  * Fix run-cw-sharded-e2e-tests action. by @ser-io in https://github.com/google/android-cuttlefish/pull/1168
+  * Make orchestration e2e tests host ready. by @ser-io in https://github.com/google/android-cuttlefish/pull/1178
+  * Allow underscore (_) in snapshot id values. by @ser-io in https://github.com/google/android-cuttlefish/pull/1185
+  * Remove build-orchestrator job. by @ser-io in https://github.com/google/android-cuttlefish/pull/1184
+  * [HO] Cleanup internal download artifact logic. by @ser-io in https://github.com/google/android-cuttlefish/pull/1186
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 16 May 2025 19:00:02 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 23 May 2025 14:35:22 -0700
 
 cuttlefish-frontend (1.9.0) stable; urgency=medium
 
