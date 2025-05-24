@@ -197,7 +197,7 @@ func (testUAM) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
 	return &apiv1.ListUploadDirectoriesResponse{}, nil
 }
 
-func (testUAM) UpdateArtifact(dir string, chunk UserArtifactChunk) error {
+func (testUAM) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error {
 	return nil
 }
 
@@ -205,7 +205,7 @@ func (testUAM) GetDirPath(string) string {
 	return ""
 }
 
-func (testUAM) ExtractArtifact(string, string) error {
+func (testUAM) ExtractArtifactWithDir(string, string) error {
 	return nil
 }
 
