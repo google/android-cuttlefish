@@ -30,6 +30,7 @@ package_files(
         "cuttlefish-common/bin/echo_server": "//cuttlefish/host/commands/echo_server",
         "cuttlefish-common/bin/extract-ikconfig": "//cuttlefish/host/commands/extract_ikconfig:extract-ikconfig.sh",
         "cuttlefish-common/bin/extract-vmlinux": "//cuttlefish/host/commands/extract_vmlinux:extract-vmlinux.sh",
+        "cuttlefish-common/bin/fsck.f2fs": "@f2fs_tools//:fsck.f2fs",
         "cuttlefish-common/bin/fastboot": "//fastboot",
         "cuttlefish-common/bin/fec": "//fec",
         "cuttlefish-common/bin/generate_shader_embed": "//cuttlefish/host/graphics_detector/shaders:generate_shader_embed",
@@ -43,6 +44,7 @@ package_files(
         "cuttlefish-common/bin/logcat_receiver": "//cuttlefish/host/commands/logcat_receiver",
         "cuttlefish-common/bin/lpadd": "//liblp:lpadd",
         "cuttlefish-common/bin/lpmake": "//liblp:lpmake",
+        "cuttlefish-common/bin/make_f2fs": "@f2fs_tools//:make_f2fs",
         "cuttlefish-common/bin/metrics_launcher": "//cuttlefish/host/commands/metrics_launcher",
         "cuttlefish-common/bin/metrics": "//cuttlefish/host/commands/metrics",
         "cuttlefish-common/bin/mkbootfs": "//mkbootfs",
@@ -90,6 +92,7 @@ package_files(
         # "cuttlefish-common/bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --gpu_mode=guest_swiftshader --enable_sandbox=false
     },
     package_file_symlink_to_package_file = {
+        "cuttlefish-common/bin/resize.f2fs": "cuttlefish-common/bin/fsck.f2fs",
         "cuttlefish-common/bin/aarch64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
         "cuttlefish-common/bin/x86_64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
     },

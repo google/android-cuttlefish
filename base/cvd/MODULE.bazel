@@ -507,3 +507,10 @@ git_repository(
     commit = "ff64357f839071968a727f8b5a08b0ddaedc5bbb",
     remote = "https://github.com/tytso/e2fsprogs",
 )
+
+git_repository(
+    name = "f2fs_tools",
+    build_file = "@//:BUILD.f2fs_tools.bazel",
+    commit = "d8eac1f8699541416afdf93333772ef2e0509773",
+    remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
+)

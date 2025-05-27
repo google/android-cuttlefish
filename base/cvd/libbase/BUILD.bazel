@@ -4,6 +4,7 @@ package(
     default_visibility = [
         "//:android_cuttlefish",
         "@e2fsprogs//:__subpackages__",
+        "@f2fs_tools//:__subpackages__",
         "@wmediumd//:__subpackages__",
     ],
 )
