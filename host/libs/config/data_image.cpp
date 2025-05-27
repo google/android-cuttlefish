@@ -49,7 +49,7 @@ Result<void> ForceFsckImage(
   if (instance.userdata_format() == "f2fs") {
     fsck_path = HostBinaryPath("fsck.f2fs");
   } else if (instance.userdata_format() == "ext4") {
-    fsck_path = "/sbin/e2fsck";
+    fsck_path = HostBinaryPath("e2fsck");
   }
   int fsck_status = Execute({fsck_path, "-y", "-f", data_image});
   CF_EXPECTF(!(fsck_status &
@@ -78,7 +78,7 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
   if (instance.userdata_format() == "f2fs") {
     resize_path = HostBinaryPath("resize.f2fs");
   } else if (instance.userdata_format() == "ext4") {
-    resize_path = "/sbin/resize2fs";
+    resize_path = HostBinaryPath("resize2fs");
   }
   if (resize_path != "") {
     CF_EXPECT_EQ(Execute({resize_path, data_image}), 0,
