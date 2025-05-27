@@ -30,6 +30,12 @@ install_symlink_host {
 }
 
 install_symlink_host {
+    name: "mkuserimg_mke2fs.py",
+    installed_location: "bin/mkuserimg_mke2fs.py",
+    symlink_target: "mkuserimg_mke2fs",
+}
+
+install_symlink_host {
     name: "unpack_bootimg.py",
     installed_location: "bin/unpack_bootimg.py",
     symlink_target: "unpack_bootimg",
@@ -174,6 +180,7 @@ cvd_host_tools = [
     "mke2fs",
     "mkenvimage_slim",
     "mkuserimg_mke2fs",
+    "mkuserimg_mke2fs.py",
     "mmd",
     "modem_simulator",
     "ms-tpm-20-ref",
