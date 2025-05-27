@@ -483,3 +483,27 @@ cc_binary(
     ],
 )
 
+cc_binary(
+    name = "resize2fs",
+    srcs = [
+        "resize/extent.c",
+        "resize/main.c",
+        "resize/online.c",
+        "resize/resize2fs.c",
+        "resize/resize2fs.h",
+        "resize/resource_track.c",
+        "resize/sim_progress.c",
+    ],
+    includes = [
+        "resize",
+    ],
+    deps = [
+        "@//build_external/e2fsprogs:e2fsprogs_config",
+        ":e2fsprogs_version",
+        ":libext2fs",
+        ":libext2_com_err",
+        ":libext2_e2p",
+        ":libext2_uuid",
+        ":libext2_blkid",
+    ],
+)
