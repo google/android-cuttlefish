@@ -61,6 +61,7 @@ package_files(
         "cuttlefish-common/bin/powerwash_cvd": "//cuttlefish/host/commands/powerwash_cvd",
         "cuttlefish-common/bin/process_restarter": "//cuttlefish/host/commands/process_restarter",
         "cuttlefish-common/bin/record_cvd": "//cuttlefish/host/commands/record_cvd",
+        "cuttlefish-common/bin/resize2fs": "@e2fsprogs//:resize2fs",
         "cuttlefish-common/bin/restart_cvd": "//cuttlefish/host/commands/restart_cvd",
         "cuttlefish-common/bin/run_cvd": "//cuttlefish/host/commands/run_cvd",
         "cuttlefish-common/bin/screen_recording_server": "//cuttlefish/host/commands/screen_recording_server",
