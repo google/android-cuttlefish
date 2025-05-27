@@ -49,6 +49,58 @@ cc_library(
     ],
 )
 
+cc_binary(
+    name = "e2fsck",
+    srcs = [
+        "e2fsck/badblocks.c",
+        "e2fsck/dirinfo.c",
+        "e2fsck/dx_dirinfo.c",
+        "e2fsck/e2fsck.c",
+        "e2fsck/e2fsck.h",
+        "e2fsck/ea_refcount.c",
+        "e2fsck/ehandler.c",
+        "e2fsck/encrypted_files.c",
+        "e2fsck/extents.c",
+        "e2fsck/jfs_user.h",
+        "e2fsck/journal.c",
+        "e2fsck/logfile.c",
+        "e2fsck/message.c",
+        "e2fsck/pass1.c",
+        "e2fsck/pass1b.c",
+        "e2fsck/pass2.c",
+        "e2fsck/pass3.c",
+        "e2fsck/pass4.c",
+        "e2fsck/pass5.c",
+        "e2fsck/problem.c",
+        "e2fsck/problem.h",
+        "e2fsck/problemP.h",
+        "e2fsck/quota.c",
+        "e2fsck/readahead.c",
+        "e2fsck/recovery.c",
+        "e2fsck/region.c",
+        "e2fsck/rehash.c",
+        "e2fsck/revoke.c",
+        "e2fsck/sigcatcher.c",
+        "e2fsck/super.c",
+        "e2fsck/unix.c",
+        "e2fsck/util.c",
+    ],
+    includes = [
+        "e2fsck",
+    ],
+    deps = [
+        "@//build_external/e2fsprogs:e2fsprogs_config",
+        "@//build_external/e2fsprogs:libext2_quota_generated",
+        ":e2fsprogs_version",
+        ":libext2fs",
+        ":libext2_blkid",
+        ":libext2_com_err",
+        ":libext2_e2p",
+        ":libext2_quota",
+        ":libext2_uuid",
+    ],
+)
+
 libext2fs_headers = [
     "lib/ext2fs/bitops.h",
     "lib/ext2fs/compiler.h",
@@ -57,6 +109,7 @@ libext2fs_headers = [
     "lib/ext2fs/ext2_io.h",
     "lib/ext2fs/ext2_fs.h",
     "lib/ext2fs/ext3_extents.h",
+    "lib/ext2fs/fast_commit.h",
     "lib/ext2fs/fiemap.h",
     "lib/ext2fs/hashmap.h",
     "lib/ext2fs/jfs_compat.h",
@@ -329,6 +382,7 @@ libext2_quota_headers = [
     "lib/support/dqblk_v2.h",
     "lib/support/quotaio.h",
     "lib/support/quotaio_tree.h",
+    "lib/support/sort_r.h",
 ]
 
 cc_library(

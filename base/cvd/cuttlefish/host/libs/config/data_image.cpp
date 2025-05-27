@@ -62,7 +62,7 @@ Result<void> ForceFsckImage(
   if (instance.userdata_format() == "f2fs") {
     fsck_path = HostBinaryPath("fsck.f2fs");
   } else if (instance.userdata_format() == "ext4") {
-    fsck_path = "/sbin/e2fsck";
+    fsck_path = HostBinaryPath("e2fsck");
   }
   int fsck_status = Execute({fsck_path, "-y", "-f", data_image});
   CF_EXPECTF(!(fsck_status &
