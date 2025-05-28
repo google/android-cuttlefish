@@ -50,7 +50,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
 
     @Test
     public void testSnapshot() throws Exception {
-        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+        String snapshotId = UUID.randomUUID().toString();
         // Reboot to make sure device isn't dirty from previous tests.
         getDevice().reboot();
         // Snapshot the device
@@ -96,7 +96,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     // reboot and so it can be easy for change to one to break the other.
     @Test
     public void testSnapshotReboot() throws Exception {
-        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+        String snapshotId = UUID.randomUUID().toString();
         // Reboot to make sure device isn't dirty from previous tests.
         getDevice().reboot();
         // Snapshot the device.
@@ -116,7 +116,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     // Test powerwash after restoring
     @Test
     public void testSnapshotPowerwash() throws Exception {
-        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+        String snapshotId = UUID.randomUUID().toString();
         // Reboot to make sure device isn't dirty from previous tests.
         getDevice().reboot();
         // Snapshot the device.
@@ -140,7 +140,7 @@ public class SnapshotTest extends BaseHostJUnit4Test {
     // Test powerwash the device, then snapshot and restore
     @Test
     public void testPowerwashSnapshot() throws Exception {
-        String snapshotId = "snapshot_" + UUID.randomUUID().toString();
+        String snapshotId = UUID.randomUUID().toString();
         CLog.d("Powerwash attempt before restore");
         long start = System.currentTimeMillis();
         boolean success = new DeviceResetHandler(getInvocationContext()).resetDevice(getDevice());
