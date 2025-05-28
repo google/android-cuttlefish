@@ -33,6 +33,28 @@ jobs:
         version: "latest"
         install-go: false
         working-directory: ${{ matrix.dir }}
+  run-frontend-unit-tests:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y git golang
+    - name: Go version
+      run: go version
+    - name: Run go tests
+      shell: bash
+      run: |
+        go_projects=("host_orchestrator" "libhoclient" "liboperator" "operator")
+        for item in "${go_projects[@]}"; do
+          pushd "frontend/src/${item}"
+          go test ./...
+          popd
+        done
   run-cvd-unit-tests:
     runs-on: ubuntu-22.04-4core
     container:
