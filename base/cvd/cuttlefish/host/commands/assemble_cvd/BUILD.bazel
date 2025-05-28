@@ -34,7 +34,6 @@ cc_library(
         "disk/initialize_instance_composite_disk.cc",
         "disk/kernel_ramdisk_repacker.cpp",
         "disk_flags.cc",
-        "flag_feature.cpp",
         "flags.cc",
         "graphics_flags.cc",
         "network_flags.cpp",
@@ -42,7 +41,6 @@ cc_library(
     hdrs = [
         "disk/disk.h",
         "disk_flags.h",
-        "flag_feature.h",
         "flags.h",
         "graphics_flags.h",
         "network_flags.h",
@@ -132,6 +130,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:clean",
         "//cuttlefish/host/commands/assemble_cvd:display",
+        "//cuttlefish/host/commands/assemble_cvd:flag_feature",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_flag",
@@ -290,6 +289,27 @@ cc_library(
 clang_tidy_test(
     name = "display_clang_tidy",
     srcs = [":display"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "flag_feature",
+    srcs = ["flag_feature.cpp"],
+    hdrs = ["flag_feature.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/feature",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "flag_feature_clang_tidy",
+    srcs = [":flag_feature"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
