@@ -6,7 +6,7 @@ package(
 )
 
 cc_library(
-    name = "libassemble_cvd",
+    name = "flags_defaults",
     hdrs = [
         "flags_defaults.h",
     ],
@@ -20,8 +20,8 @@ cc_library(
 )
 
 clang_tidy_test(
-    name = "libassemble_cvd_clang_tidy",
-    srcs = [":libassemble_cvd"],
+    name = "flags_defaults_clang_tidy",
+    srcs = [":flags_defaults"],
     tags = [
         "clang-tidy",
         "clang_tidy",
@@ -91,7 +91,7 @@ cc_library(
     visibility = ["//visibility:private"],
     deps = [
         ":launch_cvd_cc_proto",
-        ":libassemble_cvd",
+        ":flags_defaults",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:archive",
@@ -150,7 +150,7 @@ cc_binary(
     copts = COPTS,
     deps = [
         ":assemble_cvd_not_main",
-        ":libassemble_cvd",
+        ":flags_defaults",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
