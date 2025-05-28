@@ -30,13 +30,11 @@ cc_library(
         "disk_flags.cc",
         "flags.cc",
         "graphics_flags.cc",
-        "network_flags.cpp",
     ],
     hdrs = [
         "disk_flags.h",
         "flags.h",
         "graphics_flags.h",
-        "network_flags.h",
     ],
     copts = COPTS + [
         "-Wno-ambiguous-macro",
@@ -71,6 +69,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
+        "//cuttlefish/host/commands/assemble_cvd:network_flags",
         "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
@@ -377,6 +376,25 @@ cc_library(
 clang_tidy_test(
     name = "misc_info_clang_tidy",
     srcs = [":misc_info"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "network_flags",
+    srcs = ["network_flags.cpp"],
+    hdrs = ["network_flags.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "network_flags_clang_tidy",
+    srcs = [":network_flags"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
