@@ -25,16 +25,15 @@
 #include <string>
 
 #include <android-base/logging.h>
+#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include "android-base/scopeguard.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/avb/avb.h"
 #include "host/libs/config/config_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -333,7 +332,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   }
 
   std::string ramdisk_path;
-  if (new_ramdisk.size()) {
+  if (!new_ramdisk.empty()) {
     ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
     if (!FileExists(ramdisk_path)) {
       RepackVendorRamdisk(new_ramdisk,

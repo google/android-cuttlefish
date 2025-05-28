@@ -27,7 +27,6 @@ clang_tidy_test(
 cc_library(
     name = "assemble_cvd_not_main",
     srcs = [
-        "boot_image_utils.cc",
         "disk/factory_reset_protected.cc",
         "disk/gem5_image_unpacker.cpp",
         "disk/generate_persistent_bootconfig.cpp",
@@ -41,14 +40,12 @@ cc_library(
         "flags.cc",
         "graphics_flags.cc",
         "kernel_module_parser.cc",
-        "misc_info.cc",
         "network_flags.cpp",
         "super_image_mixer.cc",
         "touchpad.cpp",
         "vendor_dlkm_utils.cc",
     ],
     hdrs = [
-        "boot_image_utils.h",
         "disk/disk.h",
         "disk_builder.h",
         "disk_flags.h",
@@ -57,7 +54,6 @@ cc_library(
         "flags.h",
         "graphics_flags.h",
         "kernel_module_parser.h",
-        "misc_info.h",
         "network_flags.h",
         "super_image_mixer.h",
         "touchpad.h",
@@ -87,6 +83,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
@@ -190,6 +187,30 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "boot_image_utils",
+    srcs = ["boot_image_utils.cc"],
+    hdrs = ["boot_image_utils.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "boot_image_utils_clang_tidy",
+    srcs = [":boot_image_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "bootconfig_args",
     srcs = ["bootconfig_args.cpp"],
     hdrs = ["bootconfig_args.h"],
@@ -210,7 +231,6 @@ clang_tidy_test(
     srcs = [":bootconfig_args"],
     tags = ["clang_tidy", "clang-tidy"],
 )
-
 
 cc_library(
     name = "clean",
