@@ -99,7 +99,7 @@ cc_test(
         ":modem_simulator_test_lib",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",

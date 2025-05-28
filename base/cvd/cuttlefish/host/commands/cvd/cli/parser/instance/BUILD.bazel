@@ -30,7 +30,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
-        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//libbase",
