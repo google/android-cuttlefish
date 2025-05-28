@@ -40,7 +40,6 @@ cc_library(
         "graphics_flags.cc",
         "kernel_module_parser.cc",
         "network_flags.cpp",
-        "super_image_mixer.cc",
         "vendor_dlkm_utils.cc",
     ],
     hdrs = [
@@ -52,7 +51,6 @@ cc_library(
         "graphics_flags.h",
         "kernel_module_parser.h",
         "network_flags.h",
-        "super_image_mixer.h",
         "vendor_dlkm_utils.h",
     ],
     copts = COPTS + [
@@ -85,6 +83,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
+        "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
         "//cuttlefish/host/libs/avb",
@@ -329,6 +328,36 @@ cc_library(
 clang_tidy_test(
     name = "misc_info_clang_tidy",
     srcs = [":misc_info"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "super_image_mixer",
+    srcs = ["super_image_mixer.cc"],
+    hdrs = ["super_image_mixer.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:archive",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:misc_info",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//libbase",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "super_image_mixer_clang_tidy",
+    srcs = [":super_image_mixer"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
