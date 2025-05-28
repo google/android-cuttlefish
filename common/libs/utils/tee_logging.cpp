@@ -173,10 +173,7 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
   char timestamp[32];
   strftime(timestamp, sizeof(timestamp), "%m-%d %H:%M:%S", &now);
 
-  static const char log_characters[] = "VDIWEFF";
-  static_assert(arraysize(log_characters) - 1 == FATAL + 1,
-                "Mismatch in size of log_characters and values in LogSeverity");
-  char severity_char = log_characters[severity];
+  char severity_char = android::base::kSeverityChars[severity];
   std::string line_prefix;
   if (file != nullptr) {
     line_prefix = StringPrintf("%s %c %s %5d %5" PRIu64 " %s:%u] ", tag ? tag : "nullptr",
