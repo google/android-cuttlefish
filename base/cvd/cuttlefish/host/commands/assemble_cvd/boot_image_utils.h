@@ -16,7 +16,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include "common/libs/utils/result.h"
 #include "host/libs/avb/avb.h"
@@ -27,7 +26,7 @@ Result<void> RepackBootImage(const Avb& avb,
                              const std::string& new_kernel_path,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
-                             const std::string& tmp_artifact_dir);
+                             const std::string& build_dir);
 bool RepackVendorBootImage(const std::string& new_ramdisk_path,
                            const std::string& vendor_boot_image_path,
                            const std::string& new_vendor_boot_image_path,
@@ -48,7 +47,7 @@ void RepackGem5BootImage(const std::string& initrd_path,
                          const std::string& unpack_dir,
                          const std::string& input_ramdisk_path);
 Result<std::string> ReadAndroidVersionFromBootImage(
-    const std::string& tmp_dir_parent, const std::string& boot_image_path);
+    const std::string& temp_dir_parent, const std::string& boot_image_path);
 
 void UnpackRamdisk(const std::string& original_ramdisk_path,
                    const std::string& ramdisk_stage_dir);
