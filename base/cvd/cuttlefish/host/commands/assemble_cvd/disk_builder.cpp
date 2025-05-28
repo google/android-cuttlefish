@@ -15,18 +15,15 @@
 
 #include "host/commands/assemble_cvd/disk_builder.h"
 
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
 
 #include <android-base/file.h>
 
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/image_aggregator/image_aggregator.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
 
 namespace cuttlefish {
 
@@ -48,12 +45,12 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk(
   return ret;
 }
 
-DiskBuilder& DiskBuilder::EntireDisk(std::string disk) & {
-  entire_disk_ = std::move(disk);
+DiskBuilder& DiskBuilder::EntireDisk(std::string path) & {
+  entire_disk_ = std::move(path);
   return *this;
 }
-DiskBuilder DiskBuilder::EntireDisk(std::string disk) && {
-  entire_disk_ = std::move(disk);
+DiskBuilder DiskBuilder::EntireDisk(std::string path) && {
+  entire_disk_ = std::move(path);
   return *this;
 }
 
