@@ -18,8 +18,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -51,9 +49,7 @@
 #include "common/libs/utils/known_paths.h"
 #include "common/libs/utils/network.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
-#include "cuttlefish/host/libs/config/config_flag.h"
 #include "host/commands/assemble_cvd/alloc.h"
-#include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/display.h"
@@ -66,13 +62,10 @@
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
-#include "host/libs/config/esp.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/config/secure_hals.h"
-#include "host/libs/config/touchpad.h"
 #include "host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -652,9 +645,9 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
       cur_boot_image = boot_image[instance_index];
     }
 
-    if (cur_kernel_path.size() > 0) {
+    if (!cur_kernel_path.empty()) {
       kernel_image_path = cur_kernel_path;
-    } else if (cur_boot_image.size() > 0) {
+    } else if (!cur_boot_image.empty()) {
       kernel_image_path = cur_boot_image;
     }
 
@@ -1396,7 +1389,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   CHECK(FLAGS_use_overlay || instance_nums.size() == 1)
       << "`--use_overlay=false` is incompatible with multiple instances";
-  CHECK(instance_nums.size() > 0) << "Require at least one instance.";
+  CHECK(!instance_nums.empty()) << "Requires at least one instance.";
   auto rootcanal_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_rootcanal_instance_num > 0) {
     rootcanal_instance_num = FLAGS_rootcanal_instance_num - 1;
@@ -1496,7 +1489,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto wmediumd_api_socket_path =
         env_config.PerEnvironmentUdsPath("wmediumd_api_server");
 
-    if (instance_nums.size()) {
+    if (!instance_nums.empty()) {
       mutable_env_config.set_wmediumd_mac_prefix(5554);
     }
     mutable_env_config.set_vhost_user_mac80211_hwsim(vhost_user_socket_path);
@@ -2312,7 +2305,7 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
     CF_EXPECT(guest_configs[0].target_arch == guest_configs[instance_index].target_arch,
               "all instance target_arch should be same");
   }
-  if (FLAGS_vm_manager == "") {
+  if (FLAGS_vm_manager.empty()) {
     if (IsHostCompatible(guest_configs[0].target_arch)) {
       FLAGS_vm_manager = ToString(VmmMode::kCrosvm);
     } else {
