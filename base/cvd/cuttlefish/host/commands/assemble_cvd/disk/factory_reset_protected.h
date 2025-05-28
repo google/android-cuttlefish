@@ -14,28 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#pragma once
 
-#include <string>
-
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
-#include "host/libs/config/data_image.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 Result<void> InitializeFactoryResetProtected(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.protected_vm()) {
-    return {};
-  }
-  auto frp = instance.factory_reset_protected_path();
-  if (FileExists(frp)) {
-    return {};
-  }
-  CF_EXPECT(CreateBlankImage(frp, 1 /* mb */, "none"),
-            "Failed to create \"" << frp << "\"");
-  return {};
-}
+    const CuttlefishConfig::InstanceSpecific&);
 
 }  // namespace cuttlefish

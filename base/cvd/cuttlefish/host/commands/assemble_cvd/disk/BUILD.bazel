@@ -8,7 +8,6 @@ package(
 cc_library(
     name = "disk",
     srcs = [
-        "factory_reset_protected.cc",
         "gem5_image_unpacker.cpp",
         "generate_persistent_bootconfig.cpp",
         "generate_persistent_vbmeta.cpp",
@@ -29,6 +28,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
+        "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -44,5 +44,25 @@ cc_library(
 clang_tidy_test(
     name = "disk_clang_tidy",
     srcs = [":disk"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "factory_reset_protected",
+    srcs = ["factory_reset_protected.cc"],
+    hdrs = ["factory_reset_protected.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "factory_reset_protected_clang_tidy",
+    srcs = [":factory_reset_protected"],
     tags = ["clang_tidy", "clang-tidy"],
 )
