@@ -5,39 +5,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
-    name = "flags_defaults",
-    hdrs = [
-        "flags_defaults.h",
-    ],
-    copts = COPTS + ["-Werror=sign-compare"],
-    strip_include_prefix = "//cuttlefish",
-    deps = [
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/host/libs/config:config_constants",
-        "//cuttlefish/host/libs/config:config_utils",
-    ],
-)
-
-clang_tidy_test(
-    name = "flags_defaults_clang_tidy",
-    srcs = [":flags_defaults"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-proto_library(
-    name = "launch_cvd_proto",
-    srcs = ["proto/launch_cvd.proto"],
-)
-
-cc_proto_library(
-    name = "launch_cvd_cc_proto",
-    deps = [":launch_cvd_proto"],
-)
-
 # Separate target so it can use strip_include_prefix
 cc_library(
     name = "assemble_cvd_not_main",
@@ -199,6 +166,39 @@ clang_tidy_test(
     name = "clean_clang_tidy",
     srcs = [":clean"],
     tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "flags_defaults",
+    hdrs = [
+        "flags_defaults.h",
+    ],
+    copts = COPTS + ["-Werror=sign-compare"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "flags_defaults_clang_tidy",
+    srcs = [":flags_defaults"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)
+
+proto_library(
+    name = "launch_cvd_proto",
+    srcs = ["proto/launch_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "launch_cvd_cc_proto",
+    deps = [":launch_cvd_proto"],
 )
 
 cc_library(
