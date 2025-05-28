@@ -42,8 +42,7 @@
 namespace cuttlefish {
 
 template <typename ProcessedFrameType>
-class ScreenConnector : public ScreenConnectorInfo,
-                        public ScreenConnectorFrameRenderer {
+class ScreenConnector : public ScreenConnectorFrameRenderer {
  public:
   static_assert(cuttlefish::is_movable<ProcessedFrameType>::value,
                 "ProcessedFrameType should be std::move-able.");

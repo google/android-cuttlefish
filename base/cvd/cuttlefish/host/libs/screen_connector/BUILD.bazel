@@ -7,6 +7,9 @@ package(
 
 cc_library(
     name = "screen_connector_common",
+    srcs = [
+        "screen_connector_common.cc",
+    ],
     hdrs = [
         "screen_connector_common.h",
     ],

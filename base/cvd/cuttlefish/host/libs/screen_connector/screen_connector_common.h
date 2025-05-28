@@ -16,13 +16,10 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <functional>
-
-#include <android-base/logging.h>
-
-#include "common/libs/utils/size_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include <type_traits>
 
 namespace cuttlefish {
 
@@ -35,67 +32,28 @@ struct is_movable {
 // this callback type is going directly to socket-based or wayland
 // ScreenConnector
 using GenerateProcessedFrameCallbackImpl =
-    std::function<void(std::uint32_t /*display_number*/,       //
-                       std::uint32_t /*frame_width*/,          //
-                       std::uint32_t /*frame_height*/,         //
-                       std::uint32_t /*frame_fourcc_format*/,  //
-                       std::uint32_t /*frame_stride_bytes*/,   //
-                       std::uint8_t* /*frame_pixels*/)>;
+    std::function<void(uint32_t /*display_number*/,       //
+                       uint32_t /*frame_width*/,          //
+                       uint32_t /*frame_height*/,         //
+                       uint32_t /*frame_fourcc_format*/,  //
+                       uint32_t /*frame_stride_bytes*/,   //
+                       uint8_t* /*frame_pixels*/)>;
 
-struct ScreenConnectorInfo {
-  // functions are intended to be inlined
-  static constexpr std::uint32_t BytesPerPixel() { return 4; }
-  static std::uint32_t ScreenCount() {
-    auto config = ChkAndGetConfig();
-    auto instance = config->ForDefaultInstance();
-    auto display_configs = instance.display_configs();
-    return static_cast<std::uint32_t>(display_configs.size());
-  }
-  static std::uint32_t ScreenHeight(std::uint32_t display_number) {
-    auto config = ChkAndGetConfig();
-    auto instance = config->ForDefaultInstance();
-    auto display_configs = instance.display_configs();
-    CHECK_GT(display_configs.size(), display_number);
-    return display_configs[display_number].height;
-  }
-  static std::uint32_t ScreenWidth(std::uint32_t display_number) {
-    auto config = ChkAndGetConfig();
-    auto instance = config->ForDefaultInstance();
-    auto display_configs = instance.display_configs();
-    CHECK_GE(display_configs.size(), display_number);
-    return display_configs[display_number].width;
-  }
-  static std::uint32_t ComputeScreenStrideBytes(const std::uint32_t w) {
-    return AlignToPowerOf2(w * BytesPerPixel(), 4);
-  }
-  static std::uint32_t ComputeScreenSizeInBytes(const std::uint32_t w,
-                                                const std::uint32_t h) {
-    return ComputeScreenStrideBytes(w) * h;
-  }
-  static std::uint32_t ScreenStrideBytes(const std::uint32_t display_number) {
-    return ComputeScreenStrideBytes(ScreenWidth(display_number));
-  }
-  static std::uint32_t ScreenSizeInBytes(const std::uint32_t display_number) {
-    return ComputeScreenStrideBytes(ScreenWidth(display_number)) *
-           ScreenHeight(display_number);
-  }
+namespace ScreenConnectorInfo {
 
- private:
-  static auto ChkAndGetConfig()
-      -> decltype(cuttlefish::CuttlefishConfig::Get()) {
-    auto config = cuttlefish::CuttlefishConfig::Get();
-    CHECK(config) << "Config is Missing";
-    return config;
-  }
-};
+uint32_t ScreenHeight(uint32_t display_number);
+uint32_t ScreenWidth(uint32_t display_number);
+uint32_t ComputeScreenStrideBytes(uint32_t w);
+uint32_t ComputeScreenSizeInBytes(uint32_t w, uint32_t h);
+
+}  // namespace ScreenConnectorInfo
 
 struct ScreenConnectorFrameRenderer {
-  virtual bool RenderConfirmationUi(std::uint32_t display_number,
-                                    std::uint32_t frame_width,
-                                    std::uint32_t frame_height,
-                                    std::uint32_t frame_fourcc_format,
-                                    std::uint32_t frame_stride_bytes,
-                                    std::uint8_t* frame_bytes) = 0;
+  virtual bool RenderConfirmationUi(uint32_t display_number,
+                                    uint32_t frame_width, uint32_t frame_height,
+                                    uint32_t frame_fourcc_format,
+                                    uint32_t frame_stride_bytes,
+                                    uint8_t* frame_bytes) = 0;
   virtual bool IsCallbackSet() const = 0;
   virtual ~ScreenConnectorFrameRenderer() = default;
 };
@@ -103,7 +61,7 @@ struct ScreenConnectorFrameRenderer {
 // this is inherited by the data type that represents the processed frame
 // being moved around.
 struct ScreenConnectorFrameInfo {
-  std::uint32_t display_number_;
+  uint32_t display_number_;
   bool is_success_;
 };
 
