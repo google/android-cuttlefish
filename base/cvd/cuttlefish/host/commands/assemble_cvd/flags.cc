@@ -59,6 +59,7 @@
 #include "host/commands/assemble_cvd/display.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/graphics_flags.h"
+#include "host/commands/assemble_cvd/guest_config.h"
 #include "host/commands/assemble_cvd/misc_info.h"
 #include "host/commands/assemble_cvd/network_flags.h"
 #include "host/commands/assemble_cvd/touchpad.h"

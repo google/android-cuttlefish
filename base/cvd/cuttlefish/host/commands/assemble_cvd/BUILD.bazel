@@ -66,6 +66,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
         "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
@@ -326,6 +327,17 @@ clang_tidy_test(
     tags = [
         "clang-tidy",
         "clang_tidy",
+    ],
+)
+
+cc_library(
+    name = "guest_config",
+    hdrs = ["guest_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:architecture",
+        "//cuttlefish/common/libs/utils:device_type",
     ],
 )
 
