@@ -35,7 +35,6 @@ cc_library(
         "disk/kernel_ramdisk_repacker.cpp",
         "disk_builder.cpp",
         "disk_flags.cc",
-        "display.cpp",
         "flag_feature.cpp",
         "flags.cc",
         "graphics_flags.cc",
@@ -48,7 +47,6 @@ cc_library(
         "disk/disk.h",
         "disk_builder.h",
         "disk_flags.h",
-        "display.h",
         "flag_feature.h",
         "flags.h",
         "graphics_flags.h",
@@ -83,6 +81,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
+        "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
@@ -136,6 +135,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:clean",
+        "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_flag",
@@ -250,6 +250,29 @@ cc_library(
 clang_tidy_test(
     name = "clean_clang_tidy",
     srcs = [":clean"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "display",
+    srcs = ["display.cpp"],
+    hdrs = ["display.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:display",
+        "//cuttlefish/host/libs/feature",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "display_clang_tidy",
+    srcs = [":display"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
