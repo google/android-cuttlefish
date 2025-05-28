@@ -20,7 +20,6 @@
 #include "common/libs/utils/result.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "host/commands/assemble_cvd/guest_config.h"
-#include "host/libs/config/config_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -33,7 +32,7 @@ Result<std::string> ConfigureGpuSettings(
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
     std::string& gpu_context_types_arg,
-    const std::string& gpu_hwui_renderer_arg,
+    const std::string& guest_hwui_renderer_arg,
     const std::string& guest_renderer_preload_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance);

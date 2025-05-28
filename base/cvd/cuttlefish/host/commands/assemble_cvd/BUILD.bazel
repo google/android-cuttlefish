@@ -29,12 +29,10 @@ cc_library(
     srcs = [
         "disk_flags.cc",
         "flags.cc",
-        "graphics_flags.cc",
     ],
     hdrs = [
         "disk_flags.h",
         "flags.h",
-        "graphics_flags.h",
     ],
     copts = COPTS + [
         "-Wno-ambiguous-macro",
@@ -67,6 +65,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/commands/assemble_cvd:graphics_flags",
         "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
@@ -339,6 +338,33 @@ cc_library(
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:device_type",
     ],
+)
+
+cc_library(
+    name = "graphics_flags",
+    srcs = ["graphics_flags.cc"],
+    hdrs = ["graphics_flags.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@fmt",
+        "@protobuf",
+    ],
+)
+
+clang_tidy_test(
+    name = "graphics_flags_clang_tidy",
+    srcs = [":graphics_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
