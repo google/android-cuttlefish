@@ -42,7 +42,6 @@ cc_library(
         "kernel_module_parser.cc",
         "network_flags.cpp",
         "super_image_mixer.cc",
-        "touchpad.cpp",
         "vendor_dlkm_utils.cc",
     ],
     hdrs = [
@@ -56,7 +55,6 @@ cc_library(
         "kernel_module_parser.h",
         "network_flags.h",
         "super_image_mixer.h",
-        "touchpad.h",
         "vendor_dlkm_utils.h",
     ],
     copts = COPTS + [
@@ -88,6 +86,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
+        "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/command_util",
@@ -137,6 +136,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:clean",
+        "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:custom_actions",
@@ -306,5 +306,27 @@ cc_library(
 clang_tidy_test(
     name = "misc_info_clang_tidy",
     srcs = [":misc_info"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "touchpad",
+    srcs = ["touchpad.cpp"],
+    hdrs = ["touchpad.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:touchpad",
+        "//cuttlefish/host/libs/feature",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "touchpad_clang_tidy",
+    srcs = [":touchpad"],
     tags = ["clang_tidy", "clang-tidy"],
 )
