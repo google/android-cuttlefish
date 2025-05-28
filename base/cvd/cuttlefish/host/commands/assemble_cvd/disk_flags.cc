@@ -34,6 +34,7 @@
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk/disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"

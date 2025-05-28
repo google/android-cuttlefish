@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/disk.h"
+#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 
 #include <string>
 

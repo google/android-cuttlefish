@@ -18,15 +18,12 @@
 
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/feature/feature.h"
 
 namespace cuttlefish {
-
-Result<void> RepackKernelRamdisk(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb);
 
 Result<void> GeneratePersistentBootconfig(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);

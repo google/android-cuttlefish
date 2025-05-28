@@ -12,7 +12,6 @@ cc_library(
         "generate_persistent_bootconfig.cpp",
         "generate_persistent_vbmeta.cpp",
         "initialize_instance_composite_disk.cc",
-        "kernel_ramdisk_repacker.cpp",
     ],
     hdrs = ["disk.h"],
     copts = COPTS,
@@ -29,6 +28,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
+        "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
@@ -64,5 +64,26 @@ cc_library(
 clang_tidy_test(
     name = "factory_reset_protected_clang_tidy",
     srcs = [":factory_reset_protected"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "kernel_ramdisk_repacker",
+    srcs = ["kernel_ramdisk_repacker.cpp"],
+    hdrs = ["kernel_ramdisk_repacker.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_ramdisk_repacker_clang_tidy",
+    srcs = [":kernel_ramdisk_repacker"],
     tags = ["clang_tidy", "clang-tidy"],
 )
