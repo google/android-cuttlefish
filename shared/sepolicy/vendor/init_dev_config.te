@@ -1,0 +1,4 @@
+starting_at_board_api(202604, `
+    # Allow setting APEX selection properties.
+    set_prop(init_dev_config, apexd_select_prop)
+')
