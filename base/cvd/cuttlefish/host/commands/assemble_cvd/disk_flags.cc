@@ -18,7 +18,6 @@
 
 #include <sys/statvfs.h>
 
-#include <fstream>
 #include <string>
 #include <vector>
 
@@ -29,25 +28,21 @@
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
 #include "common/libs/utils/result.h"
-#include "common/libs/utils/size_utils.h"
-#include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/bootconfig_args.h"
 #include "host/commands/assemble_cvd/disk/disk.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
-#include "host/commands/assemble_cvd/vendor_dlkm_utils.h"
 #include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
+#include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/feature/inject.h"
+#include "host/libs/image_aggregator/image_aggregator.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 DECLARE_string(system_image_dir);
@@ -173,12 +168,12 @@ Result<void> ResolveInstanceFiles() {
 
   // It is conflict (invalid) to pass both kernel_path/initramfs_path
   // and image file paths.
-  bool flags_kernel_initramfs_has_input = (FLAGS_kernel_path != "")
-                                          || (FLAGS_initramfs_path != "");
+  bool flags_kernel_initramfs_has_input = (!FLAGS_kernel_path.empty())
+                                          || (!FLAGS_initramfs_path.empty());
   bool flags_image_has_input =
-      (FLAGS_super_image != "") || (FLAGS_vendor_boot_image != "") ||
-      (FLAGS_vbmeta_vendor_dlkm_image != "") ||
-      (FLAGS_vbmeta_system_dlkm_image != "") || (FLAGS_boot_image != "");
+      (!FLAGS_super_image.empty()) || (!FLAGS_vendor_boot_image.empty()) ||
+      (!FLAGS_vbmeta_vendor_dlkm_image.empty()) ||
+      (!FLAGS_vbmeta_system_dlkm_image.empty()) || (!FLAGS_boot_image.empty());
   CF_EXPECT(!(flags_kernel_initramfs_has_input && flags_image_has_input),
              "Cannot pass both kernel_path/initramfs_path and image file paths");
 
@@ -1017,7 +1012,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     // Repacking a boot.img changes boot_image and vendor_boot_image paths
     const CuttlefishConfig& const_config = const_cast<const CuttlefishConfig&>(config);
     const CuttlefishConfig::InstanceSpecific const_instance = const_config.ForInstance(num);
-    if (cur_kernel_path.size() && config.vm_manager() != VmmMode::kGem5) {
+    if (!cur_kernel_path.empty() && config.vm_manager() != VmmMode::kGem5) {
       const std::string new_boot_image_path =
           const_instance.PerInstancePath("boot_repacked.img");
       // change the new flag value to corresponding instance
@@ -1031,11 +1026,11 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_data_image(data_image[instance_index]);
     }
 
-    if (cur_kernel_path.size() || cur_initramfs_path.size()) {
+    if (!cur_kernel_path.empty() || !cur_initramfs_path.empty()) {
       const std::string new_vendor_boot_image_path =
           const_instance.PerInstancePath("vendor_boot_repacked.img");
       // Repack the vendor boot images if kernels and/or ramdisks are passed in.
-      if (cur_initramfs_path.size()) {
+      if (!cur_initramfs_path.empty()) {
         // change the new flag value to corresponding instance
         instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
       }
@@ -1057,7 +1052,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     if (CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config,
                   const_instance.default_target_zip(),
                   const_instance.system_target_zip())) ||
-        cur_initramfs_path.size()) {
+        !cur_initramfs_path.empty()) {
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
       instance.set_new_super_image(new_super_image_path);
