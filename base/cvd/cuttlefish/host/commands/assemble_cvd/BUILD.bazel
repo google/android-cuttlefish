@@ -29,7 +29,6 @@ cc_library(
     srcs = [
         "boot_config.cc",
         "boot_image_utils.cc",
-        "bootconfig_args.cpp",
         "disk/factory_reset_protected.cc",
         "disk/gem5_image_unpacker.cpp",
         "disk/generate_persistent_bootconfig.cpp",
@@ -52,7 +51,6 @@ cc_library(
     hdrs = [
         "boot_config.h",
         "boot_image_utils.h",
-        "bootconfig_args.h",
         "disk/disk.h",
         "disk_builder.h",
         "disk_flags.h",
@@ -90,6 +88,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
+        "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
@@ -162,6 +161,29 @@ clang_tidy_test(
         "clang_tidy",
     ],
 )
+
+cc_library(
+    name = "bootconfig_args",
+    srcs = ["bootconfig_args.cpp"],
+    hdrs = ["bootconfig_args.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "bootconfig_args_clang_tidy",
+    srcs = [":bootconfig_args"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 
 cc_library(
     name = "clean",
