@@ -77,6 +77,7 @@ cc_binary_host {
         "absl_functional_bind_front",
         "absl_log",
         "absl_log_check",
+        "absl_log_die_if_null",
         "absl_log_initialize",
         "absl_random",
         "absl_random_bit_gen_ref",
