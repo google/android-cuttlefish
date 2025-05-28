@@ -5,11 +5,28 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cc_library(
+    name = "alloc",
+    srcs = ["alloc.cc"],
+    hdrs = ["alloc.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/allocd:allocd_utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "alloc_clang_tidy",
+    srcs = [":alloc"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 # Separate target so it can use strip_include_prefix
 cc_library(
     name = "assemble_cvd_not_main",
     srcs = [
-        "alloc.cc",
         "boot_config.cc",
         "boot_image_utils.cc",
         "bootconfig_args.cpp",
@@ -33,7 +50,6 @@ cc_library(
         "vendor_dlkm_utils.cc",
     ],
     hdrs = [
-        "alloc.h",
         "boot_config.h",
         "boot_image_utils.h",
         "bootconfig_args.h",
@@ -57,8 +73,6 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     visibility = ["//visibility:private"],
     deps = [
-        ":launch_cvd_cc_proto",
-        ":flags_defaults",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:archive",
@@ -75,9 +89,11 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:alloc",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
-        "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_constants",
