@@ -115,18 +115,18 @@ Result<void> RepackKernelRamdisk(
   // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
   // able to extract the ramdisk.img in a later stage and so this step must
   // not fail (..and the repacked kernel wouldn't be used anyway).
-  if (instance.kernel_path().size() && config.vm_manager() != VmmMode::kGem5) {
+  if (!instance.kernel_path().empty() && config.vm_manager() != VmmMode::kGem5) {
     CF_EXPECT(
         RepackBootImage(avb, instance.kernel_path(), instance.boot_image(),
                         instance.new_boot_image(), instance.instance_dir()),
         "Failed to regenerate the boot image with the new kernel");
   }
 
-  if (instance.kernel_path().size() || instance.initramfs_path().size()) {
+  if (!instance.kernel_path().empty() || !instance.initramfs_path().empty()) {
     const std::string new_vendor_boot_image_path =
         instance.new_vendor_boot_image();
     // Repack the vendor boot images if kernels and/or ramdisks are passed in.
-    if (instance.initramfs_path().size()) {
+    if (!instance.initramfs_path().empty()) {
       const auto superimg_build_dir = instance.instance_dir() + "/superimg";
       const auto ramdisk_repacked =
           instance.instance_dir() + "/ramdisk_repacked";

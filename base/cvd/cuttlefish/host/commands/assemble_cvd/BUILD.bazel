@@ -27,19 +27,12 @@ clang_tidy_test(
 cc_library(
     name = "assemble_cvd_not_main",
     srcs = [
-        "disk/factory_reset_protected.cc",
-        "disk/gem5_image_unpacker.cpp",
-        "disk/generate_persistent_bootconfig.cpp",
-        "disk/generate_persistent_vbmeta.cpp",
-        "disk/initialize_instance_composite_disk.cc",
-        "disk/kernel_ramdisk_repacker.cpp",
         "disk_flags.cc",
         "flags.cc",
         "graphics_flags.cc",
         "network_flags.cpp",
     ],
     hdrs = [
-        "disk/disk.h",
         "disk_flags.h",
         "flags.h",
         "graphics_flags.h",
@@ -67,6 +60,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd/disk",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",

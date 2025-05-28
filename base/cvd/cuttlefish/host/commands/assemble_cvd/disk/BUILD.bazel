@@ -1,0 +1,48 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "disk",
+    srcs = [
+        "factory_reset_protected.cc",
+        "gem5_image_unpacker.cpp",
+        "generate_persistent_bootconfig.cpp",
+        "generate_persistent_vbmeta.cpp",
+        "initialize_instance_composite_disk.cc",
+        "kernel_ramdisk_repacker.cpp",
+    ],
+    hdrs = ["disk.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:boot_config",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "disk_clang_tidy",
+    srcs = [":disk"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
