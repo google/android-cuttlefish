@@ -38,7 +38,6 @@ cc_library(
         "flag_feature.cpp",
         "flags.cc",
         "graphics_flags.cc",
-        "kernel_module_parser.cc",
         "network_flags.cpp",
         "vendor_dlkm_utils.cc",
     ],
@@ -49,7 +48,6 @@ cc_library(
         "flag_feature.h",
         "flags.h",
         "graphics_flags.h",
-        "kernel_module_parser.h",
         "network_flags.h",
         "vendor_dlkm_utils.h",
     ],
@@ -81,6 +79,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
         "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
@@ -296,6 +295,23 @@ clang_tidy_test(
         "clang-tidy",
         "clang_tidy",
     ],
+)
+
+cc_library(
+    name = "kernel_module_parser",
+    srcs = ["kernel_module_parser.cc"],
+    hdrs = ["kernel_module_parser.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_module_parser_clang_tidy",
+    srcs = [":kernel_module_parser"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 proto_library(
