@@ -16,27 +16,13 @@
 
 #pragma once
 
-#include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
-#include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
-#include "host/libs/avb/avb.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-Result<void> GeneratePersistentBootconfig(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
-
-Result<void> GeneratePersistentVbmeta(
-    const CuttlefishConfig::InstanceSpecific&,
-    AutoSetup<InitBootloaderEnvPartition>::Type&,
-    AutoSetup<GeneratePersistentBootconfig>::Type&);
-
-Result<void> InitializeInstanceCompositeDisk(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    AutoSetup<InitializeFactoryResetProtected>::Type&,
-    AutoSetup<GeneratePersistentVbmeta>::Type&);
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig&,
+                               AutoSetup<RepackKernelRamdisk>::Type&);
 
 }  // namespace cuttlefish
