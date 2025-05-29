@@ -28,6 +28,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:gem5_image_unpacker",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
         "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -87,6 +88,33 @@ cc_library(
 clang_tidy_test(
     name = "gem5_image_unpacker_clang_tidy",
     srcs = [":gem5_image_unpacker"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "generate_persistent_bootconfig",
+    srcs = ["generate_persistent_bootconfig.cpp"],
+    hdrs = ["generate_persistent_bootconfig.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/vm_manager",
+    ],
+)
+
+clang_tidy_test(
+    name = "generate_persistent_bootconfig_clang_tidy",
+    srcs = [":generate_persistent_bootconfig"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
