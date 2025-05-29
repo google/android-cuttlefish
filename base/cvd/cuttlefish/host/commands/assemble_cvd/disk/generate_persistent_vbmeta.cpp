@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/disk.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 
 #include <string>
 
@@ -22,6 +22,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {

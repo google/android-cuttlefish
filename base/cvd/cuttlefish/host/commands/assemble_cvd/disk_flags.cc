@@ -35,6 +35,8 @@
 #include "host/commands/assemble_cvd/disk/disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
