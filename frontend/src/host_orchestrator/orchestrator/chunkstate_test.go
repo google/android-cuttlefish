@@ -22,7 +22,7 @@ import (
 )
 
 func getChunkStateItemList(cs *ChunkState) []chunkStateItem {
-	var items []chunkStateItem
+	items := []chunkStateItem{}
 	cs.items.Ascend(func(item btree.Item) bool {
 		items = append(items, item.(chunkStateItem))
 		return true
@@ -58,7 +58,6 @@ func TestChunkStateUpdateSucceedsForSubranges(t *testing.T) {
 	cs.Update(65, 75)
 	items := getChunkStateItemList(cs)
 	expected := []chunkStateItem{
-		{offset: 0, isUpdated: false},
 		{offset: 30, isUpdated: true},
 		{offset: 80, isUpdated: false},
 	}
@@ -75,7 +74,6 @@ func TestChunkStateUpdateSucceedsForOverlappingRanges(t *testing.T) {
 	cs.Update(60, 80)
 	items := getChunkStateItemList(cs)
 	expected := []chunkStateItem{
-		{offset: 0, isUpdated: false},
 		{offset: 10, isUpdated: true},
 		{offset: 40, isUpdated: false},
 		{offset: 60, isUpdated: true},
@@ -98,7 +96,6 @@ func TestChunkStateUpdateSucceedsForSameStartOrEnd(t *testing.T) {
 	cs.Update(68, 70)
 	items := getChunkStateItemList(cs)
 	expected := []chunkStateItem{
-		{offset: 0, isUpdated: false},
 		{offset: 10, isUpdated: true},
 		{offset: 15, isUpdated: false},
 		{offset: 20, isUpdated: true},
@@ -122,7 +119,6 @@ func TestChunkStateUpdateSucceedsForMergingChunks(t *testing.T) {
 	cs.Update(40, 50)
 	items := getChunkStateItemList(cs)
 	expected := []chunkStateItem{
-		{offset: 0, isUpdated: false},
 		{offset: 10, isUpdated: true},
 		{offset: 60, isUpdated: false},
 	}
@@ -131,18 +127,22 @@ func TestChunkStateUpdateSucceedsForMergingChunks(t *testing.T) {
 	}
 }
 
-func TestChunkStateUpdateSucceedsForInvalidRanges(t *testing.T) {
-	cs := NewChunkState(100)	
+func TestChunkStateUpdateFailsForInvalidRanges(t *testing.T) {
+	cs := NewChunkState(100)
 	if err := cs.Update(-1, 10); err == nil {
-		t.Fatalf("expected an error");
+		t.Fatalf("expected an error")
 	}
 	if err := cs.Update(90, 101); err == nil {
-		t.Fatalf("expected an error");
+		t.Fatalf("expected an error")
+	}
+	if err := cs.Update(50, 50); err == nil {
+		t.Fatalf("expected an error")
+	}
+	if err := cs.Update(80, 40); err == nil {
+		t.Fatalf("expected an error")
 	}
 	items := getChunkStateItemList(cs)
-	expected := []chunkStateItem{
-		{offset: 0, isUpdated: false},
-	}
+	expected := []chunkStateItem{}
 	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
 		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
 	}
