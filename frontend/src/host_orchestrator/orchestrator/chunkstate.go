@@ -15,8 +15,8 @@
 package orchestrator
 
 import (
-	"sync"
 	"fmt"
+	"sync"
 
 	"github.com/google/btree"
 )
@@ -25,8 +25,10 @@ import (
 // artifact may need to calculate hash sum or not.
 type ChunkState struct {
 	fileSize int64
-	items    *btree.BTree
-	mutex    sync.RWMutex
+	// Items are stored with a sequence of alternating true/false isUpdated field and increasing
+	// offset field.
+	items *btree.BTree
+	mutex sync.RWMutex
 }
 
 type chunkStateItem struct {
@@ -46,22 +48,12 @@ func NewChunkState(fileSize int64) *ChunkState {
 		items:    btree.New(2),
 		mutex:    sync.RWMutex{},
 	}
-	cs.items.ReplaceOrInsert(chunkStateItem{offset: 0, isUpdated: false})
 	return &cs
 }
 
-func (cs *ChunkState) getItem(offset int64) *chunkStateItem {
-	entry := cs.items.Get(chunkStateItem{offset: offset})
-	if item, ok := entry.(chunkStateItem); ok {
-		return &item
-	} else {
-		return nil
-	}
-}
-
-func (cs *ChunkState) getPrevItem(offset int64) *chunkStateItem {
+func (cs *ChunkState) getItemOrPrev(offset int64) *chunkStateItem {
 	var record *chunkStateItem
-	cs.items.DescendLessOrEqual(chunkStateItem{offset: offset - 1}, func(item btree.Item) bool {
+	cs.items.DescendLessOrEqual(chunkStateItem{offset: offset}, func(item btree.Item) bool {
 		entry := item.(chunkStateItem)
 		record = &entry
 		return false
@@ -69,9 +61,9 @@ func (cs *ChunkState) getPrevItem(offset int64) *chunkStateItem {
 	return record
 }
 
-func (cs *ChunkState) getNextItem(offset int64) *chunkStateItem {
+func (cs *ChunkState) getItemOrNext(offset int64) *chunkStateItem {
 	var record *chunkStateItem
-	cs.items.AscendGreaterOrEqual(chunkStateItem{offset: offset + 1}, func(item btree.Item) bool {
+	cs.items.AscendGreaterOrEqual(chunkStateItem{offset: offset}, func(item btree.Item) bool {
 		entry := item.(chunkStateItem)
 		record = &entry
 		return false
@@ -86,42 +78,23 @@ func (cs *ChunkState) Update(start int64, end int64) error {
 	if end > cs.fileSize {
 		return fmt.Errorf("invalid end offset of the range")
 	}
+	if start >= end {
+		return fmt.Errorf("start offset should be less than end offset")
+	}
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
-	if item := cs.getItem(start); item != nil {
-		if !item.isUpdated {
-			cs.items.Delete(*item)
-			if item.offset == 0 {
-				cs.items.ReplaceOrInsert(chunkStateItem{offset: start, isUpdated: true})
-			}
-		}
-	} else if prev := cs.getPrevItem(start); prev != nil {
-		if !prev.isUpdated {
-			cs.items.ReplaceOrInsert(chunkStateItem{offset: start, isUpdated: true})
-		}
-	} else {
-		return fmt.Errorf("previous item should exist")
-	}
 
-	for next := cs.getNextItem(start); ; next = cs.getNextItem(start) {
-		if next == nil {
-			cs.items.ReplaceOrInsert(chunkStateItem{offset: end, isUpdated: false})
-			break
-		}
-		if next.offset < end {
-			cs.items.Delete(*next)
-		} else if next.offset == end {
-			if next.isUpdated {
-				cs.items.Delete(*next)
-			} else {
-				break
-			}
-		} else {
-			if next.isUpdated {
-				cs.items.ReplaceOrInsert(chunkStateItem{offset: end, isUpdated: false})
-			}
-			break
-		}
+	// Remove all current state between the start offset and the end offset.
+	for item := cs.getItemOrNext(start); item != nil && item.offset <= end; item = cs.getItemOrNext(start) {
+		cs.items.Delete(*item)
+	}
+	// State of the start offset is updated according to the state of the previous item.
+	if prev := cs.getItemOrPrev(start); prev == nil || !prev.isUpdated {
+		cs.items.ReplaceOrInsert(chunkStateItem{offset: start, isUpdated: true})
+	}
+	// State of the end offset is updated according to the state of the next item.
+	if next := cs.getItemOrNext(end); next == nil || next.isUpdated {
+		cs.items.ReplaceOrInsert(chunkStateItem{offset: end, isUpdated: false})
 	}
 	return nil
 }
