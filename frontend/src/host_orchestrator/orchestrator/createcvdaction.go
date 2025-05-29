@@ -122,9 +122,9 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 		return nil, err
 	}
 
-	var creds cvd.FetchCredentials
+	creds := cvd.FetchCredentials{}
 	if a.buildAPICredentials.AccessToken != "" {
-		creds = &cvd.FetchTokenFileCredentials{
+		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
 			AccessToken: a.buildAPICredentials.AccessToken,
 			ProjectId:   a.buildAPICredentials.UserProjectID,
 		}
@@ -136,7 +136,7 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 				log.Printf("fetch credentials: service account token check failed: %s", err)
 			} else if ok {
 				log.Println("fetch credentials: using gce service account credentials")
-				creds = &cvd.FetchGceCredentials{}
+				creds.UseGCEServiceAccountCredentials = true
 			}
 		}
 	}
