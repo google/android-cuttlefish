@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -30,7 +29,6 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
-	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 
 	"github.com/google/uuid"
@@ -47,7 +45,6 @@ const (
 type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
-	CVDUser                *user.User
 }
 
 type Controller struct {
@@ -173,8 +170,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 		AccessToken:   creds,
 		UserProjectID: userProjectID,
 	}
-	execCtx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
@@ -210,8 +206,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		AccessToken:   creds,
 		UserProjectID: userProjectID,
 	}
-	execCtx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(execCtx, buildAPICredentials)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -220,7 +215,6 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		ExecContext:              exec.CommandContext,
 		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
-		CVDUser:                  h.Config.CVDUser,
 		UserArtifactsDirResolver: h.UADirResolver,
 		BuildAPICredentials:      buildAPICredentials,
 	}
@@ -237,7 +231,6 @@ func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 		Group:       vars["group"],
 		Paths:       h.Config.Paths,
 		ExecContext: exec.CommandContext,
-		CVDUser:     h.Config.CVDUser,
 	}
 	return NewListCVDsAction(opts).Run()
 }
@@ -266,7 +259,6 @@ func (h *execCVDCommandHandler) Handle(r *http.Request) (interface{}, error) {
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
-		CVDUser:          h.Config.CVDUser,
 	}
 	return NewExecCVDCommandAction(opts).Run()
 }
@@ -295,7 +287,6 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
-		CVDUser:          h.Config.CVDUser,
 	}
 	return NewCreateSnapshotAction(opts).Run()
 }
@@ -324,7 +315,6 @@ func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
-		CVDUser:          h.Config.CVDUser,
 	}
 	return NewStartCVDAction(opts).Run()
 }
@@ -338,8 +328,7 @@ func (h *getCVDLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	group := vars["group"]
 	name := vars["name"]
-	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser)
-	logsDir, err := CVDLogsDir(ctx, group, name)
+	logsDir, err := CVDLogsDir(exec.CommandContext, group, name)
 	if err != nil {
 		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
 		appErr, ok := err.(*operator.AppError)
@@ -461,7 +450,7 @@ func (h *createCVDBugReportHandler) Handle(r *http.Request) (interface{}, error)
 		IncludeADBBugreport: includeADBBugreport,
 		Paths:               h.Config.Paths,
 		OperationManager:    h.OM,
-		ExecContext:         hoexec.NewAsUserExecContext(exec.CommandContext, h.Config.CVDUser),
+		ExecContext:         exec.CommandContext,
 		UUIDGen:             func() string { return uuid.New().String() },
 	}
 	return NewCreateCVDBugReportAction(opts).Run()

@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"log"
-	"os/user"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -63,7 +62,6 @@ type ExecCVDCommandActionOpts struct {
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
-	CVDUser          *user.User
 }
 
 type ExecCVDCommandAction struct {
@@ -80,7 +78,7 @@ func NewExecCVDCommandAction(opts ExecCVDCommandActionOpts) *ExecCVDCommandActio
 		selector: opts.Selector,
 		paths:    opts.Paths,
 		om:       opts.OperationManager,
-		cvdCLI:   cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
+		cvdCLI:   cvd.NewCLI(opts.ExecContext),
 	}
 }
 

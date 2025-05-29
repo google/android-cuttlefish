@@ -29,7 +29,7 @@ FROM with_cuttlefish_packages
 RUN useradd -m "testrunner"
 
 # TODO: Remove when `adb` is no longer in cvd-host_package.tar.gz.
-RUN usermod -a -G cvdartifacts,cvdnetwork testrunner
+RUN usermod -a -G httpcvd testrunner
 
 CMD [ "/usr/sbin/init" ]
 

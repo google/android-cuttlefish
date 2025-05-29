@@ -87,7 +87,6 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 
 func main() {
 	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
-	cvdUsername := flag.String("cvd_user", "", "User to execute cvd as.")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")
 	abURL := flag.String("android_build_url", defaultAndroidBuildURL, "URL to an Android Build API.")
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
@@ -117,18 +116,9 @@ func main() {
 		SnapshotsRootDir: filepath.Join(*imRootDir, "snapshots"),
 	}
 
-	var cvdUser *user.User
-	if *cvdUsername != "" {
-		var err error
-		cvdUser, err = user.Lookup(*cvdUsername)
-		if err != nil {
-			log.Fatalf("failed to get cvd user: %v", err)
-		}
-	}
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
 		RootDir: filepath.Join(*imRootDir, "user_artifacts"),
-		Owner:   cvdUser,
 	}
 	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	debugStaticVars := debug.StaticVariables{}
@@ -137,7 +127,6 @@ func main() {
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
 			AndroidBuildServiceURL: *abURL,
-			CVDUser:                cvdUser,
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,

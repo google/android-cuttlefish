@@ -19,25 +19,10 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
-	"os/user"
 	"strings"
 )
 
 type ExecContext = func(ctx context.Context, name string, args ...string) *exec.Cmd
-
-// Creates an execution context from another execution context.
-// If a non-nil user is provided the returned execution context executes commands as that user.
-func NewAsUserExecContext(execContext ExecContext, usr *user.User) ExecContext {
-	if usr != nil {
-		return func(ctx context.Context, name string, arg ...string) *exec.Cmd {
-			newArgs := []string{"-u", usr.Username}
-			newArgs = append(newArgs, name)
-			newArgs = append(newArgs, arg...)
-			return execContext(ctx, "sudo", newArgs...)
-		}
-	}
-	return execContext
-}
 
 // Executes a command with an execution context and return it standard output.
 // Standard error is included in the error message if it fails.
