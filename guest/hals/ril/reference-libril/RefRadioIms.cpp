@@ -72,4 +72,10 @@ ScopedAStatus RefRadioIms::updateImsCallStatus(
     respond()->updateImsCallStatusResponse(responseInfo(serial));
     return ok();
 }
+ScopedAStatus RefRadioIms::updateAllowedServices(
+        int32_t serial,
+        const std::vector<::aidl::android::hardware::radio::ims::ImsService>& imsServices) {
+    respond()->updateAllowedServicesResponse(responseInfo(serial));
+    return ok();
+}
 }  // namespace cf::ril
