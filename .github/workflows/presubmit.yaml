@@ -182,4 +182,31 @@ jobs:
     - name: Used disk space
       run: |
         df -h
+  docker-image-check:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install bazel
+      run: sudo bash tools/buildutils/installbazel.sh
+    - name: Run check
+      shell: bash
+      run: |
+        # TODO(b/420987840): Reuse deb packages created in `build-debian-package` job.
+        ./docker/image-builder.sh -d
+        docker images
+        sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
+        # Wait for HO service to start.
+        sleep 10s
+        res=$( curl -v http://localhost:2080/cvds )
+        echo "response: ${res}"
+        test "${res}" = '{"cvds":[]}'
+        # Run create_from_images_zip_test e2e tests
+        cd e2etests
+        bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
+
 
