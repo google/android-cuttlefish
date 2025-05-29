@@ -7,39 +7,12 @@ package(
     ],
 )
 
-cc_library(
+alias(
     name = "libsparse",
-    srcs = [
-        "backed_block.cpp",
-        "backed_block.h",
-        "defs.h",
-        "output_file.cpp",
-        "output_file.h",
-        "sparse.cpp",
-        "sparse_crc32.cpp",
-        "sparse_crc32.h",
-        "sparse_defs.h",
-        "sparse_err.cpp",
-        "sparse_file.h",
-        "sparse_format.h",
-        "sparse_read.cpp",
-    ],
-    hdrs = [
-        "include/sparse/sparse.h",
-    ],
-    copts = [
-        "-Wno-vla-cxx-extension",
-        "-Wno-c99-designator",
-    ],
-    includes = ["include"],
-    deps = [
-        "//libbase",
-        "@zlib",
-    ],
+    actual = "@android_system_core//:libsparse",
 )
 
-cc_binary(
+alias(
     name = "simg2img",
-    srcs = ["simg2img.cpp"],
-    deps = [":libsparse"],
+    actual = "@android_system_core//:simg2img",
 )
