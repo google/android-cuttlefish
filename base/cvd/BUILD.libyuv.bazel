@@ -6,8 +6,11 @@ cc_library(
             "source/*neon*.cc",
             "source/*sve*.cc",
             "source/*sme*.cc",
-        ],
-    ),
+        ]
+    ) + select({
+        "@platforms//cpu:arm64": glob(["source/*neon*.cc"]),
+        "//conditions:default": [],
+    }),
     hdrs = glob([
         "include/libyuv/*.h",
         "include/libyuv.h",
