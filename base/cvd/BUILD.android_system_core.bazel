@@ -3,6 +3,44 @@ package(
 )
 
 cc_library(
+    name = "liblp",
+    srcs = [
+        "fs_mgr/liblp/builder.cpp",
+        "fs_mgr/liblp/images.cpp",
+        "fs_mgr/liblp/images.h",
+        "fs_mgr/liblp/partition_opener.cpp",
+        "fs_mgr/liblp/property_fetcher.cpp",
+        "fs_mgr/liblp/reader.cpp",
+        "fs_mgr/liblp/reader.h",
+        "fs_mgr/liblp/super_layout_builder.cpp",
+        "fs_mgr/liblp/utility.cpp",
+        "fs_mgr/liblp/utility.h",
+        "fs_mgr/liblp/writer.cpp",
+        "fs_mgr/liblp/writer.h",
+    ],
+    hdrs = [
+        "fs_mgr/liblp/include/liblp/builder.h",
+        "fs_mgr/liblp/include/liblp/liblp.h",
+        "fs_mgr/liblp/include/liblp/metadata_format.h",
+        "fs_mgr/liblp/include/liblp/partition_opener.h",
+        "fs_mgr/liblp/include/liblp/property_fetcher.h",
+        "fs_mgr/liblp/include/liblp/super_layout_builder.h",
+    ],
+    copts = [
+        "-Ifs_mgr/liblp",
+    ],
+    includes = [
+        "fs_mgr/liblp/include",
+    ],
+    deps = [
+        "@@//libbase",
+        "@@//libext4_utils",
+        "@@//libsparse",
+        "@boringssl//:crypto"
+    ],
+)
+
+cc_library(
     name = "libsparse",
     srcs = [
         "libsparse/backed_block.cpp",
@@ -39,4 +77,3 @@ cc_binary(
     srcs = ["libsparse/simg2img.cpp"],
     deps = [":libsparse"],
 )
-

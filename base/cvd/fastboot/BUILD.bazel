@@ -63,8 +63,8 @@ cc_binary(
     deps = [
         "//libbase",
         "//libcutils",
-        "//liblp",
         "//libsparse",
+        "@android_system_core//:liblp",
         "@avb//:libavb",
         "@googletest//:gtest",
         "@libzip",
