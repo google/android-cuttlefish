@@ -1,0 +1,15 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "libffi_linux_x86",
+    hdrs = [
+        "ffi.h",
+        "fficonfig.h",
+        "ffitarget.h",
+    ],
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
+
