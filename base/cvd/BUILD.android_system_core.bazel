@@ -3,6 +3,36 @@ package(
 )
 
 cc_library(
+    name = "libcutils",
+    srcs = [
+        "libcutils/android_get_control_env.h",
+        "libcutils/android_get_control_file.cpp",
+        "libcutils/canned_fs_config.cpp",
+        "libcutils/fs_config.cpp",
+        "libcutils/fs_config.h",
+        "libcutils/include/cutils/android_get_control_file.h",
+        "libcutils/include/cutils/sockets.h",
+        "libcutils/socket_inaddr_any_server_unix.cpp",
+        "libcutils/socket_local_client_unix.cpp",
+        "libcutils/socket_local_server_unix.cpp",
+        "libcutils/socket_local_unix.h",
+        "libcutils/socket_network_client_unix.cpp",
+        "libcutils/sockets.cpp",
+        "libcutils/sockets_unix.cpp",
+    ],
+    hdrs = glob([
+        "libcutils/include/cutils/*.h",
+        "libcutils/include/private/*.h",
+    ]),
+    strip_include_prefix = "libcutils/include",
+    copts = ["-Ilibcutils"],
+    deps = [
+        "@@//android:log_header",
+        "@@//libbase",
+    ],
+)
+
+cc_library(
     name = "liblp",
     srcs = [
         "fs_mgr/liblp/builder.cpp",
