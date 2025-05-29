@@ -223,6 +223,12 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         fmt::format("192.168.98.{}", instance_id + 2);
   }
 
+  if (config.virtio_mac80211_hwsim()) {
+    bootconfig_args["androidboot.wifi_impl"] = "mac80211_hwsim_virtio";
+  } else {
+    bootconfig_args["androidboot.wifi_impl"] = "virt_wifi";
+  }
+
   if (!instance.vcpu_config_path().empty()) {
     auto vcpu_config_json =
         CF_EXPECT(LoadFromFile(instance.vcpu_config_path()));
