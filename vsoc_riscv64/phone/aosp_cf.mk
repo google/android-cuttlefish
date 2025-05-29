@@ -77,3 +77,5 @@ PRODUCT_VENDOR_PROPERTIES += \
 # Ignore all Android.mk files
 PRODUCT_IGNORE_ALL_ANDROIDMK := true
 PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
+
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/vsoc_riscv64/phone/android-info.txt

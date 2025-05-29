@@ -29,3 +29,5 @@ PRODUCT_ENFORCE_MAC80211_HWSIM := false
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/vsoc_riscv64_minidroid/android-info.txt
