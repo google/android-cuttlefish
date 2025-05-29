@@ -1,0 +1,22 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "lpadd",
+    srcs = ["partition_tools/lpadd.cc"],
+    deps = [
+        "@@//libbase",
+        "@android_system_core//:liblp",
+        "@android_system_core//:libsparse",
+    ],
+)
+
+cc_binary(
+    name = "lpmake",
+    srcs = ["partition_tools/lpmake.cc"],
+    deps = [
+        "@@//libbase",
+        "@android_system_core//:liblp",
+    ],
+)
