@@ -559,3 +559,10 @@ git_repository(
         "@//build_external/dosfstools:PATCH.vasprintf.patch",
     ],
 )
+
+git_repository(
+    name = "android_system_core",
+    build_file = "@//:BUILD.android_system_core.bazel",
+    commit = "a3b721a32242006b59cb12bd62c9133632af3a2d",
+    remote = "https://android.googlesource.com/platform/system/core",
+)

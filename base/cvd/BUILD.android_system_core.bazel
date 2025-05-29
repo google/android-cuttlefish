@@ -1,0 +1,42 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "libsparse",
+    srcs = [
+        "libsparse/backed_block.cpp",
+        "libsparse/backed_block.h",
+        "libsparse/defs.h",
+        "libsparse/output_file.cpp",
+        "libsparse/output_file.h",
+        "libsparse/sparse.cpp",
+        "libsparse/sparse_crc32.cpp",
+        "libsparse/sparse_crc32.h",
+        "libsparse/sparse_defs.h",
+        "libsparse/sparse_err.cpp",
+        "libsparse/sparse_file.h",
+        "libsparse/sparse_format.h",
+        "libsparse/sparse_read.cpp",
+    ],
+    hdrs = [
+        "libsparse/include/sparse/sparse.h",
+    ],
+    copts = [
+        "-Ilibsparse",
+        "-Wno-vla-cxx-extension",
+        "-Wno-c99-designator",
+    ],
+    includes = ["libsparse/include"],
+    deps = [
+        "@@//libbase",
+        "@zlib",
+    ],
+)
+
+cc_binary(
+    name = "simg2img",
+    srcs = ["libsparse/simg2img.cpp"],
+    deps = [":libsparse"],
+)
+

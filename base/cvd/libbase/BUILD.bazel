@@ -3,6 +3,7 @@ load("//:build_variables.bzl", "COPTS")
 package(
     default_visibility = [
         "//:android_cuttlefish",
+        "@android_system_core//:__subpackages__",
         "@e2fsprogs//:__subpackages__",
         "@f2fs_tools//:__subpackages__",
         "@wmediumd//:__subpackages__",
