@@ -17,15 +17,16 @@
 #pragma once
 
 #include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
-#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
+#include "host/commands/assemble_cvd/boot_config.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeInstanceCompositeDisk(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    AutoSetup<InitializeFactoryResetProtected>::Type&,
-    AutoSetup<GeneratePersistentVbmeta>::Type&);
+Result<void> GeneratePersistentVbmeta(
+    const CuttlefishConfig::InstanceSpecific&,
+    AutoSetup<InitBootloaderEnvPartition>::Type&,
+    AutoSetup<GeneratePersistentBootconfig>::Type&);
 
 }  // namespace cuttlefish
