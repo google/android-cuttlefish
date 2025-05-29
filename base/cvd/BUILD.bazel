@@ -60,17 +60,6 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-cc_library(
-    name = "libffi_linux_x86",
-    hdrs = [
-        "libffi/linux-x86/ffi.h",
-        "libffi/linux-x86/fficonfig.h",
-        "libffi/linux-x86/ffitarget.h",
-    ],
-    includes = ["libffi/linux-x86"],
-    visibility = ["//visibility:public"],
-)
-
 sh_binary(
     name = "gen_ffi_header",
     srcs = ["gen_ffi_header.sh"],

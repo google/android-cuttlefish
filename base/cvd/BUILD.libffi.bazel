@@ -24,13 +24,27 @@ SRCS_X86_64 = [
     "src/x86/win64.S",
 ]
 
+SRCS_ARM64 = [
+    "src/aarch64/ffi.c",
+    "src/aarch64/ffitarget.h",
+    "src/aarch64/internal.h",
+    "src/aarch64/sysv.S",
+]
+
 COPTS_X86_64 = [
     "-DHAVE_AS_X86_PCREL",
     "-DHAVE_AS_ASCII_PSEUDO_OP",
 ]
 
+COPTS_ARM64 = [
+]
+
 DEPS_X86_64 = [
-    "@//:libffi_linux_x86",
+    "@//libffi/linux-x86:libffi_linux_x86",
+]
+
+DEPS_ARM64 = [
+    "@//libffi/linux-arm64:libffi_linux_arm64",
 ]
 
 genrule(
@@ -59,6 +73,7 @@ cc_library(
     name = "libffi",
     srcs = COMMON_SRCS + select({
         "@platforms//cpu:x86_64": SRCS_X86_64,
+        "@platforms//cpu:arm64": SRCS_ARM64,
         "//conditions:default": [],
     }),
     copts = [
@@ -76,8 +91,10 @@ cc_library(
         "-Wno-unused-but-set-variable",
     ] + select({
         "@platforms//cpu:x86_64": COPTS_X86_64,
+        "@platforms//cpu:arm64": COPTS_ARM64,
     }),
     deps = [":libffi_include"] + select({
         "@platforms//cpu:x86_64": DEPS_X86_64,
+        "@platforms//cpu:arm64": DEPS_ARM64,
     }),
 )
