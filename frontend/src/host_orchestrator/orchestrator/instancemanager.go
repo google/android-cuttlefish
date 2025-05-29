@@ -133,9 +133,9 @@ func newFetchCVDCommandArtifactsFetcher(
 // The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
 // which translated to granting the necessary permissions to the cvd executor user.
 func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, opts ExtraCVDOptions) error {
-	var creds cvd.FetchCredentials
+	creds := cvd.FetchCredentials{}
 	if f.buildAPICredentials.AccessToken != "" {
-		creds = &cvd.FetchTokenFileCredentials{
+		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
 			AccessToken: f.buildAPICredentials.AccessToken,
 			ProjectId:   f.buildAPICredentials.UserProjectID,
 		}
@@ -143,7 +143,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		if ok, err := hasServiceAccountAccessToken(); err != nil {
 			log.Printf("service account token check failed: %s", err)
 		} else if ok {
-			creds = &cvd.FetchGceCredentials{}
+			creds.UseGCEServiceAccountCredentials = true
 		}
 	}
 	fetchOpts := cvd.FetchOpts{

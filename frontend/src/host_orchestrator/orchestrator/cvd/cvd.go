@@ -55,43 +55,17 @@ type Fleet struct {
 	Groups []*Group `json:"groups"`
 }
 
-// Credentials to be passed to cvd fetch or cvd load.
-// cvd supports multiple strategies to obtain these credentials, with
-// different command line flags used for each of them.
-type FetchCredentials interface {
-	// Adds command line flags and other setup like inheriting file descriptors
-	AddToCmd(cmd *exec.Cmd) error
+type FetchCredentials struct {
+	// If on GCE, indicates whether to use the credentials of the
+	// service account running the the machine.
+	UseGCEServiceAccountCredentials bool
+	// OAUTH2.0 Access token.
+	AccessTokenCredentials AccessTokenCredentials
 }
 
-// Build api credentials from a file (OAUTH2.0 access token).
-// Optionally includes the project id associated with the client
-type FetchTokenFileCredentials struct {
+type AccessTokenCredentials struct {
 	AccessToken string
 	ProjectId   string // optional
-}
-
-func (c *FetchTokenFileCredentials) AddToCmd(cmd *exec.Cmd) error {
-	file, err := createCredentialsFile(c.AccessToken)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	// This is necessary for the subprocess to inherit the file.
-	cmd.ExtraFiles = append(cmd.ExtraFiles, file)
-	// The actual fd number is not retained, the lowest available number is used instead.
-	fd := 3 + len(cmd.ExtraFiles) - 1
-	// TODO(b/401592023) Use --credential_filepath when cvd load supports it
-	cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
-	return nil
-}
-
-// Build api credentials from the GCE instance's service account
-type FetchGceCredentials struct{}
-
-func (c *FetchGceCredentials) AddToCmd(cmd *exec.Cmd) error {
-	// TODO(b/401592023) Use --use_gce_metadata when cvd load supports them
-	cmd.Args = append(cmd.Args, "--credential_source=gce")
-	return nil
 }
 
 // A filter allowing to select instances or groups by name.
@@ -159,9 +133,23 @@ func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
 	if opts.BuildAPIBaseURL != "" {
 		args = append(args, fmt.Sprintf("--override=fetch.api_base_url:%s", opts.BuildAPIBaseURL))
 	}
+
 	cmd := cli.buildCmd(CVDBin, args...)
-	if opts.Credentials != nil {
-		opts.Credentials.AddToCmd(cmd)
+
+	if opts.Credentials.UseGCEServiceAccountCredentials {
+		cmd.Args = append(cmd.Args, "--credential_source=gce")
+	} else if opts.Credentials.AccessTokenCredentials != (AccessTokenCredentials{}) {
+		file, err := createCredentialsFile(opts.Credentials.AccessTokenCredentials.AccessToken)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		// This is necessary for the subprocess to inherit the file.
+		cmd.ExtraFiles = append(cmd.ExtraFiles, file)
+		// The actual fd number is not retained, the lowest available number is used instead.
+		fd := 3 + len(cmd.ExtraFiles) - 1
+		// TODO(b/401592023) Use --credential_filepath when cvd load supports it
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
 	}
 
 	out, err := cli.runCmd(cmd)
@@ -376,10 +364,25 @@ func (cli *CLI) Fetch(buildID, buildTarget, targetDir string, opts FetchOpts) er
 	if opts.BuildAPIBaseURL != "" {
 		args = append(args, fmt.Sprintf("--api_base_url=%s", opts.BuildAPIBaseURL))
 	}
+
 	cmd := cli.buildCmd(FetchCVDBin, args...)
-	if opts.Credentials != nil {
-		opts.Credentials.AddToCmd(cmd)
+
+	if opts.Credentials.UseGCEServiceAccountCredentials {
+		cmd.Args = append(cmd.Args, "--credential_source=gce")
+	} else if opts.Credentials.AccessTokenCredentials != (AccessTokenCredentials{}) {
+		file, err := createCredentialsFile(opts.Credentials.AccessTokenCredentials.AccessToken)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		// This is necessary for the subprocess to inherit the file.
+		cmd.ExtraFiles = append(cmd.ExtraFiles, file)
+		// The actual fd number is not retained, the lowest available number is used instead.
+		fd := 3 + len(cmd.ExtraFiles) - 1
+		// TODO(b/401592023) Use --credential_filepath when cvd load supports it
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
 	}
+
 	if _, err := cli.runCmd(cmd); err != nil {
 		return fmt.Errorf("`fetch_cvd` failed: %w", err)
 	}
