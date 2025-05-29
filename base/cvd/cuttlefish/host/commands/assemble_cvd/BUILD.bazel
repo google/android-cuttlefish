@@ -191,6 +191,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:gem5_image_unpacker",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
         "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",

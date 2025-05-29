@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/disk.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 
 #include <memory>
 #include <string>
