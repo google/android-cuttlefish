@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"fmt"
-	"os/user"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -28,7 +27,6 @@ type ListCVDsActionOpts struct {
 	Group       string
 	Paths       IMPaths
 	ExecContext exec.ExecContext
-	CVDUser     *user.User
 }
 
 type ListCVDsAction struct {
@@ -41,7 +39,7 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 	return &ListCVDsAction{
 		group:  opts.Group,
 		paths:  opts.Paths,
-		cvdCLI: cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
+		cvdCLI: cvd.NewCLI(opts.ExecContext),
 	}
 }
 

@@ -17,7 +17,6 @@ package orchestrator
 import (
 	"fmt"
 	"log"
-	"os/user"
 	"path/filepath"
 	"regexp"
 
@@ -33,7 +32,6 @@ type CreateSnapshotActionOpts struct {
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
-	CVDUser          *user.User
 }
 
 type CreateSnapshotAction struct {
@@ -50,7 +48,7 @@ func NewCreateSnapshotAction(opts CreateSnapshotActionOpts) *CreateSnapshotActio
 		selector: opts.Selector,
 		paths:    opts.Paths,
 		om:       opts.OperationManager,
-		cvdCLI:   cvd.NewCLI(exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)),
+		cvdCLI:   cvd.NewCLI(opts.ExecContext),
 	}
 }
 

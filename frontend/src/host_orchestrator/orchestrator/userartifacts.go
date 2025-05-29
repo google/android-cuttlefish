@@ -22,7 +22,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/user"
 	"path/filepath"
 	"strings"
 
@@ -62,8 +61,6 @@ type UserArtifactsManager interface {
 type UserArtifactsManagerOpts struct {
 	// The root directory where to store the artifacts.
 	RootDir string
-	// Artifact owner. If nil, the owner will be the process's owner.
-	Owner *user.User
 }
 
 // An implementation of the UserArtifactsManager interface.
@@ -82,7 +79,7 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.RootDir); err != nil {
 		return nil, err
 	}
-	dir, err := createNewUADir(m.RootDir, m.Owner)
+	dir, err := createNewUADir(m.RootDir)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +124,7 @@ func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserA
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
 	filename := filepath.Join(dir, chunk.Name)
-	if err := createUAFile(filename, m.Owner); err != nil {
+	if err := createUAFile(filename); err != nil {
 		return err
 	}
 	if err := writeChunk(filename, chunk); err != nil {
@@ -165,11 +162,11 @@ func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) erro
 		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
 	}
 	if strings.HasSuffix(filename, ".tar.gz") {
-		if err := Untar(dir, filename, m.Owner); err != nil {
+		if err := Untar(dir, filename); err != nil {
 			return fmt.Errorf("failed extracting %q: %w", name, err)
 		}
 	} else if strings.HasSuffix(filename, ".zip") {
-		if err := Unzip(dir, filename, m.Owner); err != nil {
+		if err := Unzip(dir, filename); err != nil {
 			return fmt.Errorf("failed extracting %q: %w", name, err)
 		}
 	} else {
@@ -178,16 +175,15 @@ func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) erro
 	return nil
 }
 
-func Untar(dst string, src string, owner *user.User) error {
-	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
-	_, err := hoexec.Exec(ctx, "tar", "-xf", src, "-C", dst)
+func Untar(dst string, src string) error {
+	_, err := hoexec.Exec(exec.CommandContext, "tar", "-xf", src, "-C", dst)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func Unzip(dstDir string, src string, owner *user.User) error {
+func Unzip(dstDir string, src string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -199,7 +195,7 @@ func Unzip(dstDir string, src string, owner *user.User) error {
 			return err
 		}
 		defer rc.Close()
-		if err := createUAFile(dst, owner); err != nil {
+		if err := createUAFile(dst); err != nil {
 			return err
 		}
 		dstFile, err := os.OpenFile(dst, os.O_WRONLY, 0664)
@@ -225,8 +221,8 @@ func Unzip(dstDir string, src string, owner *user.User) error {
 	return nil
 }
 
-func createNewUADir(parent string, owner *user.User) (string, error) {
-	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
+func createNewUADir(parent string) (string, error) {
+	ctx := exec.CommandContext
 	stdout, err := hoexec.Exec(ctx, "mktemp", "--directory", "-p", parent)
 	if err != nil {
 		return "", err
@@ -239,8 +235,8 @@ func createNewUADir(parent string, owner *user.User) (string, error) {
 	return name, nil
 }
 
-func createUAFile(filename string, owner *user.User) error {
-	ctx := hoexec.NewAsUserExecContext(exec.CommandContext, owner)
+func createUAFile(filename string) error {
+	ctx := exec.CommandContext
 	_, err := hoexec.Exec(ctx, "touch", filename)
 	if err != nil {
 		return err

@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/user"
 	"sync/atomic"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
@@ -46,7 +45,6 @@ type CreateCVDActionOpts struct {
 	ExecContext              exec.ExecContext
 	CVDBundleFetcher         CVDBundleFetcher
 	UUIDGen                  func() string
-	CVDUser                  *user.User
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	BuildAPICredentials      BuildAPICredentials
 }
@@ -60,14 +58,13 @@ type CreateCVDAction struct {
 	cvdCLI                   *cvd.CLI
 	cvdBundleFetcher         CVDBundleFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
-	cvdUser                  *user.User
 	buildAPICredentials      BuildAPICredentials
 
 	instanceCounter uint32
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
-	execCtx := exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)
+	execCtx := opts.ExecContext
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
@@ -75,7 +72,6 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		om:                       opts.OperationManager,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
-		cvdUser:                  opts.CVDUser,
 		buildAPICredentials:      opts.BuildAPICredentials,
 		execContext:              execCtx,
 		cvdCLI:                   cvd.NewCLI(execCtx),

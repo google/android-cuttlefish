@@ -37,9 +37,7 @@ fi
 
 orchestrator_cvd_artifacts_dir=${orchestrator_cvd_artifacts_dir:-"/var/lib/cuttlefish-common"}
 
-# Run as the configured user or root if none was specified
-orchestrator_user="${orchestrator_user:-root}"
-
+USER="httpcvd"
 RUN_DIR="/run/cuttlefish"
 ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
 ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
@@ -51,13 +49,12 @@ set_config_expr() {
 
 prepare_run_dir() {
   mkdir -p "${RUN_DIR}"
-  chown "${orchestrator_user}":cvdnetwork "${RUN_DIR}"
-  chmod 775 "${RUN_DIR}"
+  chown "${USER}" "${RUN_DIR}"
 }
 
 start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
-  chown "${orchestrator_user}":cvdnetwork "${orchestrator_cvd_artifacts_dir}"
+  chown "${USER}:" "${orchestrator_cvd_artifacts_dir}"
 
   args=()
 
@@ -76,13 +73,10 @@ start_orchestrator() {
   if [[ -n "${orchestrator_listen_address}" ]]; then
     args+=("--listen_addr=${orchestrator_listen_address}")
   fi
-  if [[ -n "${orchestrator_cvd_user}" ]]; then
-    args+=("--cvd_user=${orchestrator_cvd_user}")
-  fi
 
   start-stop-daemon --start \
     --pidfile "${ORCHESTRATOR_PIDFILE}" \
-    --chuid "${orchestrator_user}":cvdnetwork \
+    --chuid "${USER}" \
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
