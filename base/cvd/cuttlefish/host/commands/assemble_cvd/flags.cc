@@ -784,6 +784,16 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
                                      << "\" for output audio stream count");
     }
 
+    Result<std::string> enforce_mac80211_hwsim = GetAndroidInfoConfig(
+        instance_android_info_txt, "enforce_mac80211_hwsim");
+    if (enforce_mac80211_hwsim.ok()) {
+      if (*enforce_mac80211_hwsim == "true") {
+        guest_config.enforce_mac80211_hwsim = true;
+      } else if (*enforce_mac80211_hwsim == "false") {
+        guest_config.enforce_mac80211_hwsim = false;
+      }
+    }
+
     guest_configs.push_back(guest_config);
   }
   return guest_configs;
@@ -1179,8 +1189,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
   // TODO(moelsherif): Handle this flag (set_metrics_binary) in the future
 
-  // TODO: schuffelen - make this a device-specific android-info.txt setting
-  tmp_config_obj.set_virtio_mac80211_hwsim(true);
+  std::optional<bool> guest_config_mac80211_hwsim =
+      guest_configs[0].enforce_mac80211_hwsim;
+  if (guest_config_mac80211_hwsim.has_value()) {
+    tmp_config_obj.set_virtio_mac80211_hwsim(*guest_config_mac80211_hwsim);
+  } else {
+#ifdef ENFORCE_MAC80211_HWSIM
+    tmp_config_obj.set_virtio_mac80211_hwsim(true);
+#else
+    tmp_config_obj.set_virtio_mac80211_hwsim(false);
+#endif
+  }
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
     LOG(FATAL) << "Either both ap_rootfs_image and ap_kernel_image should be "
