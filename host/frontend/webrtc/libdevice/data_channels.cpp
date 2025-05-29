@@ -288,30 +288,21 @@ class CameraChannelHandler : public DataChannelHandler {
   std::vector<char> receive_buffer_;
 };
 
-// TODO(b/297361564)
 class SensorsChannelHandler : public DataChannelHandler {
  public:
-  void OnFirstMessage() override {
-    observer()->OnSensorsChannelOpen(GetBinarySender());
-  }
   Result<void> OnMessageInner(const webrtc::DataBuffer &msg) override {
-    if (!first_msg_received_) {
-      first_msg_received_ = true;
-      return {};
-    }
     observer()->OnSensorsMessage(msg.data.cdata(), msg.size());
     return {};
   }
 
   void OnStateChangeInner(
       webrtc::DataChannelInterface::DataState state) override {
-    if (state == webrtc::DataChannelInterface::kClosed) {
+    if (state == webrtc::DataChannelInterface::kOpen) {
+      observer()->OnSensorsChannelOpen(GetBinarySender());
+    } else if (state == webrtc::DataChannelInterface::kClosed) {
       observer()->OnSensorsChannelClosed();
     }
   }
-
- private:
-  bool first_msg_received_ = false;
 };
 
 class LightsChannelHandler : public DataChannelHandler {
