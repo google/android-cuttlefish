@@ -8,7 +8,10 @@
 
 readonly COMMIT_TAG="@VCS_TAG@"
 readonly COMMIT_KEY=STABLE_HEAD_COMMIT
+readonly VERSION_TAG="@CF_VER_TAG@"
+readonly VERSION_KEY=STABLE_CF_COMMON_VERSION
 
 sed \
   -e "s|$COMMIT_TAG|$(grep --max-count=1 $COMMIT_KEY $1 | cut --fields=2 --delimiter=' ')|" \
+  -e "s|$VERSION_TAG|$(grep --max-count=1 $VERSION_KEY $1 | cut --fields=2 --delimiter=' ')|" \
   $2 > $3

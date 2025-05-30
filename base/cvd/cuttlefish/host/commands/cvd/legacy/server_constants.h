@@ -19,14 +19,6 @@
 #include <string>
 
 namespace cuttlefish {
-namespace cvd {
-
-// Major version uprevs are backwards incompatible.
-// Minor version uprevs are backwards compatible within major version.
-constexpr int kVersionMajor = 1;
-constexpr int kVersionMinor = 7;
-
-}  // namespace cvd
 
 // Pathname of the abstract cvd_server socket.
 std::string ServerSocketPath();
