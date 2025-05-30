@@ -243,7 +243,7 @@ func TestListUploadDirectoriesIsHandled(t *testing.T) {
 	}
 }
 
-func TestUploadUserArtifactIsHandled(t *testing.T) {
+func TestUploadUserArtifactLegacyWithoutChunkOffsetBytesIsHandled(t *testing.T) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	fw, _ := writer.CreateFormField("chunk_number")
@@ -256,6 +256,49 @@ func TestUploadUserArtifactIsHandled(t *testing.T) {
 	io.Copy(fw, bytes.NewReader([]byte("lorem")))
 	writer.Close()
 	req, _ := http.NewRequest("PUT", "/userartifacts/foo", bytes.NewReader(body.Bytes()))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	controller := Controller{UserArtifactsManager: &testUAM{}}
+	rr := httptest.NewRecorder()
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestUploadUserArtifactLegacyWithChunkOffsetBytesIsHandled(t *testing.T) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	fw, _ := writer.CreateFormField("chunk_offset_bytes")
+	io.Copy(fw, strings.NewReader("0"))
+	fw, _ = writer.CreateFormFile("file", "foo.txt")
+	io.Copy(fw, bytes.NewReader([]byte("lorem")))
+	writer.Close()
+	req, _ := http.NewRequest("PUT", "/userartifacts/foo", bytes.NewReader(body.Bytes()))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	controller := Controller{UserArtifactsManager: &testUAM{}}
+	rr := httptest.NewRecorder()
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestUploadUserArtifactIsHandled(t *testing.T) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	fw, _ := writer.CreateFormField("chunk_offset_bytes")
+	io.Copy(fw, strings.NewReader("20"))
+	fw, _ = writer.CreateFormField("file_size_bytes")
+	io.Copy(fw, strings.NewReader("100"))
+	fw, _ = writer.CreateFormFile("file", "foo.txt")
+	io.Copy(fw, bytes.NewReader([]byte("lorem")))
+	writer.Close()
+
+	req, _ := http.NewRequest("PUT", "/v1/userartifacts/foo", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	controller := Controller{UserArtifactsManager: &testUAM{}}
 	rr := httptest.NewRecorder()
