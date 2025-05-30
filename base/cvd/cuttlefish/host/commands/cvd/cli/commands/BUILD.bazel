@@ -689,7 +689,6 @@ cc_library(
     srcs = ["version.cpp"],
     hdrs = ["version.h"],
     deps = [
-        "//:libbuildversion",
         "//cuttlefish/common/libs/utils:proto",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -697,7 +696,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/config:host_tools_version",
+        "//cuttlefish/host/commands/cvd/version",
         "@fmt",
     ],
 )
