@@ -104,7 +104,7 @@ func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
 	}
 }
 
-func TestCreateArtifactsSucceeds(t *testing.T) {
+func TestCreateArtifactsLegacySucceeds(t *testing.T) {
 	wg := sync.WaitGroup{}
 	root := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, root)
@@ -134,6 +134,52 @@ func TestCreateArtifactsSucceeds(t *testing.T) {
 		ChunkTotal:     3,
 		ChunkSizeBytes: 4,
 		File:           strings.NewReader("sum"),
+	}
+	chunks := [3]UserArtifactChunk{chunk1, chunk2, chunk3}
+	wg.Add(3)
+
+	for i := 0; i < len(chunks); i++ {
+		go func(i int) {
+			defer wg.Done()
+			am.UpdateArtifactWithDir(upDir.Name, chunks[i])
+		}(i)
+
+	}
+
+	wg.Wait()
+	b, _ := ioutil.ReadFile(am.GetFilePath(upDir.Name, "xyzz"))
+	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
+		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestCreateArtifactsSucceeds(t *testing.T) {
+	wg := sync.WaitGroup{}
+	root := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, root)
+	opts := UserArtifactsManagerOpts{RootDir: root}
+	am := NewUserArtifactsManagerImpl(opts)
+	upDir, err := am.NewDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	chunk1 := UserArtifactChunk{
+		Name:             "xyzz",
+		File:             strings.NewReader("lore"),
+		UseChunkOffset:   true,
+		ChunkOffsetBytes: 0,
+	}
+	chunk2 := UserArtifactChunk{
+		Name:             "xyzz",
+		File:             strings.NewReader("m ip"),
+		UseChunkOffset:   true,
+		ChunkOffsetBytes: 0 + 4,
+	}
+	chunk3 := UserArtifactChunk{
+		Name:             "xyzz",
+		File:             strings.NewReader("sum"),
+		UseChunkOffset:   true,
+		ChunkOffsetBytes: 0 + 4 + 4,
 	}
 	chunks := [3]UserArtifactChunk{chunk1, chunk2, chunk3}
 	wg.Add(3)
