@@ -26,6 +26,10 @@ std::string GetBuildNumber() {
   return "@VCS_TAG@";
 }
 
+std::string GetCuttlefishCommonVersion() {
+  return "@CF_VER_TAG@";
+}
+
 } // namespace build
 } // namespace android
 

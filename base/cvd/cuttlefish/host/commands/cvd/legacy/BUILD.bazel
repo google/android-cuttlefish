@@ -23,7 +23,6 @@ cc_library(
     hdrs = [
         "client.h",
         "run_server.h",
-        "server_constants.h",
     ],
     deps = [
         ":cvd_server_cc_proto",
