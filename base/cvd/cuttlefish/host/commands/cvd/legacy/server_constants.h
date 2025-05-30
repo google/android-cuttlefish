@@ -28,7 +28,4 @@ constexpr int kVersionMinor = 7;
 
 }  // namespace cvd
 
-// Pathname of the abstract cvd_server socket.
-std::string ServerSocketPath();
-
 }  // namespace cuttlefish

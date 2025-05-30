@@ -18,6 +18,11 @@
 
 #include <unistd.h>
 
+#include <optional>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include <android-base/file.h>
 #include <google/protobuf/text_format.h>
 
@@ -185,6 +190,13 @@ Result<void> CvdClient::CheckStatus(const cvd::Status& status,
   return CF_ERRF("Received error response for \"{}\"\n{}\n\n{}\n{}", rpc,
                  "*** End of Client Stack Trace ***", status.message(),
                  "*** End of Server Stack Trace/Error ***");
+}
+
+std::string CvdClient::ServerSocketPath() {
+  std::stringstream socket_path;
+  socket_path << "cvd_server"
+              << "_" << getuid();
+  return socket_path.str();
 }
 
 CvdClient::CvdClient(const android::base::LogSeverity verbosity,

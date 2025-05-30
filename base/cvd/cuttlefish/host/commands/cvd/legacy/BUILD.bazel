@@ -19,7 +19,6 @@ cc_library(
     srcs = [
         "client.cpp",
         "run_server.cpp",
-        "server_constants.cpp",
     ],
     hdrs = [
         "client.h",
