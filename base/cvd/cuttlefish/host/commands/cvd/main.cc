@@ -37,10 +37,11 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/legacy/client.h"
+#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/commands/cvd/version/version.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "host/commands/cvd/metrics/cvd_metrics_api.h"
-#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 
 namespace cuttlefish {
 namespace {
@@ -159,6 +160,9 @@ void IncreaseFileLimit() {
 }
 
 Result<void> CvdMain(int argc, char** argv, char** envp) {
+  if (!isatty(0)) {
+    LOG(INFO) << GetVersionIds().ToString();
+  }
   CF_EXPECT(EnsureCvdDirectoriesExist());
 
   CF_EXPECT(KillOldServer());
@@ -277,7 +281,7 @@ int main(int argc, char** argv, char** envp) {
               << std::endl;
     // TODO(kwstephenkim): better coloring
     constexpr char kUserReminder[] =
-        R"(    If the error above is unclear, please copy the text into an issue at:)";
+        R"(    If the error above is unclear, please copy the text and `cvd version` output into an issue at:)";
     constexpr char kCuttlefishBugUrl[] = "http://go/cuttlefish-bug";
     std::cerr << std::endl << kUserReminder << std::endl;
     std::cerr << "        " << cuttlefish::ColoredUrl(kCuttlefishBugUrl)
