@@ -4,7 +4,7 @@ cuttlefish-frontend (1.11.0) UNRELEASED; urgency=medium
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 23 May 2025 16:18:22 -0700
 
-cuttlefish-frontend (1.10.0) unstable; urgency=medium
+cuttlefish-frontend (1.10.0) stable; urgency=medium
 
   * Fix run-cw-sharded-e2e-tests action. by @ser-io in https://github.com/google/android-cuttlefish/pull/1168
   * Make orchestration e2e tests host ready. by @ser-io in https://github.com/google/android-cuttlefish/pull/1178
