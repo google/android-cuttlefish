@@ -43,6 +43,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/commands/cvd/version",
         "//libbase",
         "//libsparse",
         "@fmt",
