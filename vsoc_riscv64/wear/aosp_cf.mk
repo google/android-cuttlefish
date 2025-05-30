@@ -79,3 +79,5 @@ PRODUCT_MODEL := Cuttlefish riscv64 wearable
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/vsoc_riscv64/wear/android-info.txt
