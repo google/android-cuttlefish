@@ -1,0 +1,17 @@
+FROM debian:stable AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update -y && apt upgrade -y
+RUN apt install -y devscripts
+
+FROM base AS with_bazel
+
+RUN --mount=source=.,target=/mnt,type=bind \
+  /mnt/tools/buildutils/installbazel.sh
+
+FROM with_bazel
+
+COPY ./tools/buildutils/cw/entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
