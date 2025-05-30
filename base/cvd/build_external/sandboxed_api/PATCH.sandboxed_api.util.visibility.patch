@@ -1,0 +1,12 @@
+diff --git a/sandboxed_api/util/BUILD b/sandboxed_api/util/BUILD
+index 185a711..468be43 100644
+--- a/sandboxed_api/util/BUILD
++++ b/sandboxed_api/util/BUILD
+@@ -17,6 +17,7 @@ load("//sandboxed_api/bazel:proto.bzl", "sapi_proto_library")
+ 
+ package(default_visibility = [
+     "//sandboxed_api:__subpackages__",
++    "//visibility:public",
+ ])
+ 
+ licenses(["notice"])

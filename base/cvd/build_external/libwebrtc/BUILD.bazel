@@ -34,14 +34,6 @@ cc_library(
         "third_party/libsrtp/crypto/include/crypto_types.h",
         "third_party/libsrtp/include/srtp.h",
         "third_party/libsrtp/include/srtp_priv.h",
-        "third_party/libyuv/include/libyuv.h",
-        "third_party/libyuv/include/libyuv/compare.h",
-        "third_party/libyuv/include/libyuv/convert.h",
-        "third_party/libyuv/include/libyuv/convert_argb.h",
-        "third_party/libyuv/include/libyuv/convert_from.h",
-        "third_party/libyuv/include/libyuv/planar_functions.h",
-        "third_party/libyuv/include/libyuv/rotate_argb.h",
-        "third_party/libyuv/include/libyuv/scale.h",
         "third_party/opus/src/include/opus.h",
         "third_party/opus/src/include/opus_multistream.h",
         "third_party/pffft/src/pffft.h",
@@ -50,11 +42,11 @@ cc_library(
     ],
     includes = ["."],
     linkopts = [
-        "-laom",
         "-lopus",
     ],
     deps = [
       "@libpffft",
       "@libsrtp2",
+      "@libyuv",
     ],
 )

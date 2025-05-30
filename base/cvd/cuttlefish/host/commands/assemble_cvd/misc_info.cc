@@ -153,7 +153,7 @@ Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents) {
   MiscInfo misc_info;
   for (auto& line : lines) {
     line = android::base::Trim(line);
-    if (line.size() == 0) {
+    if (line.empty()) {
       continue;
     }
     auto eq_pos = line.find('=');

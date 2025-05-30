@@ -1,0 +1,277 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "credentialed_unix_server",
+    srcs = ["credentialed_unix_server.cpp"],
+    hdrs = ["credentialed_unix_server.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "credentialed_unix_server_clang_tidy",
+    srcs = [":credentialed_unix_server"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "logs",
+    srcs = ["logs.cpp"],
+    hdrs = ["logs.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:log_entry",
+        "@abseil-cpp//absl/log:log_sink",
+        "@abseil-cpp//absl/log:log_sink_registry",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+clang_tidy_test(
+    name = "logs_clang_tidy",
+    srcs = [":logs"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "pidfd",
+    srcs = ["pidfd.cpp"],
+    hdrs = ["pidfd.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/types:span",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "pidfd_clang_tidy",
+    srcs = [":pidfd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "policies_header",
+    hdrs = ["policies.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+    ],
+)
+
+clang_tidy_test(
+    name = "policies_header_clang_tidy",
+    srcs = [":policies_header"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "policies",
+    srcs = ["policies.cpp"],
+    hdrs = ["policies.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer/policies:adb_connector",
+        "//cuttlefish/host/commands/process_sandboxer/policies:assemble_cvd",
+        "//cuttlefish/host/commands/process_sandboxer/policies:avbtool",
+        "//cuttlefish/host/commands/process_sandboxer/policies:baseline",
+        "//cuttlefish/host/commands/process_sandboxer/policies:casimir",
+        "//cuttlefish/host/commands/process_sandboxer/policies:casimir_control_server",
+        "//cuttlefish/host/commands/process_sandboxer/policies:cf_vhost_user_input",
+        "//cuttlefish/host/commands/process_sandboxer/policies:control_env_proxy_server",
+        "//cuttlefish/host/commands/process_sandboxer/policies:cvd_internal_start",
+        "//cuttlefish/host/commands/process_sandboxer/policies:echo_server",
+        "//cuttlefish/host/commands/process_sandboxer/policies:gnss_grpc_proxy",
+        "//cuttlefish/host/commands/process_sandboxer/policies:kernel_log_monitor",
+        "//cuttlefish/host/commands/process_sandboxer/policies:log_tee",
+        "//cuttlefish/host/commands/process_sandboxer/policies:logcat_receiver",
+        "//cuttlefish/host/commands/process_sandboxer/policies:metrics",
+        "//cuttlefish/host/commands/process_sandboxer/policies:mkenvimage_slim",
+        "//cuttlefish/host/commands/process_sandboxer/policies:modem_simulator",
+        "//cuttlefish/host/commands/process_sandboxer/policies:netsimd",
+        "//cuttlefish/host/commands/process_sandboxer/policies:newfs_msdos",
+        "//cuttlefish/host/commands/process_sandboxer/policies:no_policy",
+        "//cuttlefish/host/commands/process_sandboxer/policies:openwrt_control_server",
+        "//cuttlefish/host/commands/process_sandboxer/policies:operator_proxy",
+        "//cuttlefish/host/commands/process_sandboxer/policies:process_restarter",
+        "//cuttlefish/host/commands/process_sandboxer/policies:run_cvd",
+        "//cuttlefish/host/commands/process_sandboxer/policies:screen_recording_server",
+        "//cuttlefish/host/commands/process_sandboxer/policies:secure_env",
+        "//cuttlefish/host/commands/process_sandboxer/policies:simg2img",
+        "//cuttlefish/host/commands/process_sandboxer/policies:socket_vsock_proxy",
+        "//cuttlefish/host/commands/process_sandboxer/policies:tcp_connector",
+        "//cuttlefish/host/commands/process_sandboxer/policies:tombstone_receiver",
+        "//cuttlefish/host/commands/process_sandboxer/policies:vhost_device_vsock",
+        "//cuttlefish/host/commands/process_sandboxer/policies:webrtc",
+        "//cuttlefish/host/commands/process_sandboxer/policies:webrtc_operator",
+        "//cuttlefish/host/commands/process_sandboxer/policies:wmediumd",
+        "//cuttlefish/host/commands/process_sandboxer/policies:wmediumd_gen_config",
+        "//cuttlefish/host/commands/process_sandboxer:proxy_common",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "policies_clang_tidy",
+    srcs = [":policies"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "poll_callback",
+    srcs = ["poll_callback.cpp"],
+    hdrs = ["poll_callback.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+    ],
+)
+
+clang_tidy_test(
+    name = "poll_callback_clang_tidy",
+    srcs = [":poll_callback"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_binary(
+    name = "process_sandboxer",
+    srcs = ["main.cpp"],
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:logs",
+        "//cuttlefish/host/commands/process_sandboxer:pidfd",
+        "//cuttlefish/host/commands/process_sandboxer:policies",
+        "//cuttlefish/host/commands/process_sandboxer:sandbox_manager",
+        "@abseil-cpp//absl/base:log_severity",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:parse",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/log:globals",
+        "@abseil-cpp//absl/log:initialize",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "process_sandboxer_clang_tidy",
+    srcs = [":process_sandboxer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "proxy_common",
+    srcs = ["proxy_common.cpp"],
+    hdrs = ["proxy_common.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+    ],
+)
+
+clang_tidy_test(
+    name = "proxy_common_clang_tidy",
+    srcs = [":proxy_common"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "sandbox_manager",
+    srcs = ["sandbox_manager.cpp"],
+    hdrs = ["sandbox_manager.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:credentialed_unix_server",
+        "//cuttlefish/host/commands/process_sandboxer:pidfd",
+        "//cuttlefish/host/commands/process_sandboxer:policies",
+        "//cuttlefish/host/commands/process_sandboxer:poll_callback",
+        "//cuttlefish/host/commands/process_sandboxer:proxy_common",
+        "//cuttlefish/host/commands/process_sandboxer:signal_fd",
+        "@abseil-cpp//absl/functional:bind_front",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:vlog_is_on",
+        "@abseil-cpp//absl/memory",
+        "@abseil-cpp//absl/random",
+        "@abseil-cpp//absl/random:bit_gen_ref",
+        "@abseil-cpp//absl/random:distributions",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/time",
+        "@abseil-cpp//absl/types:span",
+        "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/util:file_base",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "sandbox_manager_clang_tidy",
+    srcs = [":sandbox_manager"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_binary(
+    name = "sandboxer_proxy",
+    srcs = ["sandboxer_proxy.cpp"],
+    deps = [
+        "//cuttlefish/host/commands/process_sandboxer:proxy_common",
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+clang_tidy_test(
+    name = "sandboxer_proxy_clang_tidy",
+    srcs = [":sandboxer_proxy"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "signal_fd",
+    srcs = ["signal_fd.cpp"],
+    hdrs = ["signal_fd.h"],
+    copts = COPTS,
+    deps = [
+        "@abseil-cpp//absl/status",
+        "@abseil-cpp//absl/status:statusor",
+        "@abseil-cpp//absl/strings",
+        "@sandboxed_api//sandboxed_api/util:fileops",
+    ],
+)
+
+clang_tidy_test(
+    name = "signal_fd_clang_tidy",
+    srcs = [":signal_fd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

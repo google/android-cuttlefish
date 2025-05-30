@@ -15,6 +15,11 @@
 
 #include "host/commands/assemble_cvd/display.h"
 
+#include <string>
+#include <vector>
+
+#include <fruit/fruit.h>
+
 #include "common/libs/utils/flag_parser.h"
 #include "host/libs/config/display.h"
 

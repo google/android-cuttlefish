@@ -6,18 +6,32 @@ package(
 )
 
 cc_library(
+    name = "epoll",
+    srcs = ["epoll.cpp"],
+    hdrs = ["epoll.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+clang_tidy_test(
+    name = "epoll_clang_tidy",
+    srcs = [":epoll"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "fs",
     srcs = [
-        "epoll.cpp",
         "shared_buf.cc",
         "shared_fd.cpp",
-        "shared_fd_stream.cpp",
     ],
     hdrs = [
-        "epoll.h",
         "shared_buf.h",
         "shared_fd.h",
-        "shared_fd_stream.h",
         "shared_select.h",
     ],
     copts = COPTS,
@@ -62,4 +76,21 @@ clang_tidy_test(
         "clang-tidy",
         "clang_tidy",
     ],
+)
+
+cc_library(
+    name = "shared_fd_stream",
+    srcs = ["shared_fd_stream.cpp"],
+    hdrs = ["shared_fd_stream.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+    ],
+)
+
+clang_tidy_test(
+    name = "shared_fd_stream_clang_tidy",
+    srcs = [":shared_fd_stream"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

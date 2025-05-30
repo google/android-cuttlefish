@@ -15,12 +15,12 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
 #include <string>
 #include <vector>
 
+#include <fruit/fruit.h>
+
 #include "cuttlefish/host/libs/config/config_flag.h"
-#include "host/libs/config/config_fragment.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/feature/feature.h"
 

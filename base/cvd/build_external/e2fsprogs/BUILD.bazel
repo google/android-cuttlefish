@@ -1,0 +1,80 @@
+package(
+    default_visibility = [
+        "@e2fsprogs//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "e2fsprogs_config",
+    hdrs = [
+        "lib/config.h",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib",
+)
+
+cc_library(
+    name = "libext2fs_generated",
+    hdrs = [
+        "lib/ext2fs/ext2_err.h",
+        "lib/ext2fs/ext2_types.h",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib",
+)
+
+cc_library(
+    name = "libext2fs_generated_private",
+    srcs = [
+        "lib/ext2fs/ext2_err.c",
+    ],
+    hdrs = [
+        "lib/ext2fs/crc32c_table.h",
+    ],
+    deps = [
+        ":libext2fs_generated",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib/ext2fs",
+)
+
+cc_library(
+    name = "libext2_blkid_generated",
+    hdrs = [
+        "lib/blkid/blkid.h",
+        "lib/blkid/blkid_types.h",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib",
+)
+
+cc_library(
+    name = "libext2_quota_generated",
+    hdrs = [
+        "lib/support/prof_err.h",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib",
+)
+
+cc_library(
+    name = "libext2_quota_generated_private",
+    srcs = [
+        "lib/support/prof_err.c",
+    ],
+    hdrs = [
+        "lib/support/prof_err.h",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib/support",
+)
+
+cc_library(
+    name = "libext2_uuid_generated",
+    hdrs = [
+        "lib/uuid/uuid.h",
+        "lib/uuid/uuid_types.h",
+    ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib",
+)
+
+cc_library(
+    name = "mke2fs_generated",
+    srcs = [
+        "misc/default_profile.c",
+    ],
+)

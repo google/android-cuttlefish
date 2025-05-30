@@ -33,18 +33,28 @@ jobs:
         version: "latest"
         install-go: false
         working-directory: ${{ matrix.dir }}
-  build-orchestrator:
+  run-frontend-unit-tests:
     runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.17.13'
-    - run: go version
-    - name: Vet Test Build
-      run: cd frontend/src/host_orchestrator && go vet ./... && go test ./... && go build ./...
+      run: apt install -y git golang
+    - name: Go version
+      run: go version
+    - name: Run go tests
+      shell: bash
+      run: |
+        go_projects=("host_orchestrator" "libhoclient" "liboperator" "operator")
+        for item in "${go_projects[@]}"; do
+          pushd "frontend/src/${item}"
+          go test ./...
+          popd
+        done
   run-cvd-unit-tests:
     runs-on: ubuntu-22.04-4core
     container:
@@ -55,7 +65,7 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool nasm
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Run unit tests
@@ -82,7 +92,7 @@ jobs:
     - name: setup apt
       run: apt update -y && apt upgrade -y
     - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler nasm
     - name: go version
       run: go version
     - name: checkout repository
@@ -130,57 +140,6 @@ jobs:
       with:
         name: android-cuttlefish-e2etest-image-tar
         path: android-cuttlefish-e2etest.tar
-  e2e-tests-orchestration:
-    runs-on: ubuntu-22.04-4core
-    steps:
-      # Do not reuse bazel cache among `e2e-tests-orchestration` runs.
-      #
-      # Current docker image bazel target: "@images//:orchestration_image_dev_tar" is based
-      # on an umbrella bash script and does not depend on smaller bazel targets, hence changes
-      # in cvd or host orchestrator code won't trigger building a new image.
-    - name: Free space
-      run: |
-        echo "disk space before cleanup:"
-        df -h
-        sudo rm -rf /usr/local/.ghcup
-        sudo rm -rf /usr/local/lib/android/sdk/ndk
-        sudo rm -rf /usr/local/share/boost
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/hostedtoolcache
-        sudo rm -rf /opt/ghc
-        sudo apt-get clean
-        echo "disk space after cleanup:"
-        df -h
-    - name: Check kvm
-      run: |
-        ls /dev/kvm
-    - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Install bazel
-      run: sudo bash tools/buildutils/installbazel.sh
-    - name: bazel version
-      run: bazel version
-    - name: Run orchestration e2e tests
-      run: |
-        cd e2etests
-        # Run orchestration e2e tests serially due lack of space in Github standard runners.
-        #
-        # Overall action timing breakdown:
-        #
-        # [614 / 616] Executing genrule @@images//docker/debs-builder-docker:debs_tar [for tool]; 608s linux-sandbox
-        # [615 / 616] Executing genrule @@images//docker:orchestration_image_dev_tar; 11s linux-sandbox
-        # //orchestration:create_fixed_build_id_and_target                         PASSED in 99.9s
-        # //orchestration:create_local_image                                       PASSED in 92.4s
-        #
-        # The tests are running under 2 min, it's ok for now to execute them serially. The action's
-        # bottleneck is building the debian packages: `@@images//docker/debs-builder-docker:debs_tar`.
-        bazel query 'kind(go_test, //orchestration/...) except attr(tags, host-ready, kind("go_test", //...))' | xargs bazel test --sandbox_writable_path=$HOME --test_output=errors --local_test_jobs=1 --test_timeout=480
-    - name: Upload test logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: testlogs
-        path: e2etests/bazel-testlogs
   e2e-tests-orchestration-runner-1:
     runs-on: ubuntu-24.04
     needs: [e2e-tests-orchestration-build-image]
@@ -245,4 +204,31 @@ jobs:
     - name: Used disk space
       run: |
         df -h
+  docker-image-check:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install bazel
+      run: sudo bash tools/buildutils/installbazel.sh
+    - name: Run check
+      shell: bash
+      run: |
+        # TODO(b/420987840): Reuse deb packages created in `build-debian-package` job.
+        ./docker/image-builder.sh -d
+        docker images
+        sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
+        # Wait for HO service to start.
+        sleep 10s
+        res=$( curl -v http://localhost:2080/cvds )
+        echo "response: ${res}"
+        test "${res}" = '{"cvds":[]}'
+        # Run create_from_images_zip_test e2e tests
+        cd e2etests
+        bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
+
 

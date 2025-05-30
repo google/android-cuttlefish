@@ -3,6 +3,8 @@ load("//:build_variables.bzl", "COPTS")
 package(
     default_visibility = [
         "//:android_cuttlefish",
+        "@e2fsprogs//:__subpackages__",
+        "@f2fs_tools//:__subpackages__",
         "@wmediumd//:__subpackages__",
     ],
 )
@@ -60,6 +62,7 @@ cc_library(
         "include/android-base/scopeguard.h",
         "include/android-base/stringprintf.h",
         "include/android-base/strings.h",
+        "include/android-base/thread_annotations.h",
         "include/android-base/threads.h",
         "include/android-base/unique_fd.h",
         "include/android-base/utf8.h",

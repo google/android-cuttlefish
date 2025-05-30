@@ -1,0 +1,147 @@
+load("//:build_variables.bzl", "COPTS")
+load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_library(
+    name = "factory_reset_protected",
+    srcs = ["factory_reset_protected.cc"],
+    hdrs = ["factory_reset_protected.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "factory_reset_protected_clang_tidy",
+    srcs = [":factory_reset_protected"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "gem5_image_unpacker",
+    srcs = ["gem5_image_unpacker.cpp"],
+    hdrs = ["gem5_image_unpacker.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/feature",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "gem5_image_unpacker_clang_tidy",
+    srcs = [":gem5_image_unpacker"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "generate_persistent_bootconfig",
+    srcs = ["generate_persistent_bootconfig.cpp"],
+    hdrs = ["generate_persistent_bootconfig.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/vm_manager",
+    ],
+)
+
+clang_tidy_test(
+    name = "generate_persistent_bootconfig_clang_tidy",
+    srcs = [":generate_persistent_bootconfig"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "generate_persistent_vbmeta",
+    srcs = ["generate_persistent_vbmeta.cpp"],
+    hdrs = ["generate_persistent_vbmeta.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
+        "//cuttlefish/host/commands/assemble_cvd:boot_config",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+    ],
+)
+
+clang_tidy_test(
+    name = "generate_persistent_vbmeta_clang_tidy",
+    srcs = [":generate_persistent_vbmeta"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "initialize_instance_composite_disk",
+    srcs = ["initialize_instance_composite_disk.cc"],
+    hdrs = ["initialize_instance_composite_disk.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_vbmeta",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/vm_manager",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "initialize_instance_composite_disk_clang_tidy",
+    srcs = [":initialize_instance_composite_disk"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "kernel_ramdisk_repacker",
+    srcs = ["kernel_ramdisk_repacker.cpp"],
+    hdrs = ["kernel_ramdisk_repacker.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_ramdisk_repacker_clang_tidy",
+    srcs = [":kernel_ramdisk_repacker"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

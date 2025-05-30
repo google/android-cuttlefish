@@ -17,6 +17,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -25,15 +26,10 @@ import (
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
 
+const baseURL = "http://0.0.0.0:2080"
+
 func TestPowerwash(t *testing.T) {
-	ctx, err := common.Setup()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
+	srv := hoclient.NewHostOrchestratorService(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -42,31 +38,22 @@ func TestPowerwash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dh, err := common.NewDockerHelper()
-	if err != nil {
-		t.Fatal(err)
-	}
-	cID := ctx.DockerContainerID
 	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	if err := dh.StartADBServer(cID, adbBin); err != nil {
+	adbH := &common.AdbHelper{Bin: adbBin}
+	if err := adbH.StartServer(); err != nil {
 		t.Fatal(err)
 	}
-	if err := dh.ConnectADB(cID, adbBin, cvd.ADBSerial); err != nil {
+	if err := adbH.Connect(cvd.ADBSerial); err != nil {
 		t.Fatal(err)
 	}
 	const tmpFile = "/data/local/tmp/foo"
 	// Create temporary file
-	if _, err := dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
+	if _, err := adbH.ExecShellCommand(cvd.ADBSerial, []string{"touch", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
 	// Verify temp file was created
-	_, err = dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile})
+	_, err = adbH.ExecShellCommand(cvd.ADBSerial, []string{"stat", tmpFile})
 	if err != nil {
-		t.Fatal(err)
-	}
-	// Make sure `powerwash_cvd` is not being used.
-	toolBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/powerwash_cvd", uploadDir)
-	if err := dh.RemoveHostTool(cID, toolBin); err != nil {
 		t.Fatal(err)
 	}
 
@@ -75,14 +62,10 @@ func TestPowerwash(t *testing.T) {
 	}
 
 	// Verifies temporary file does not exist.
-	_, err = dh.ExecADBShellCommand(cID, adbBin, cvd.ADBSerial, []string{"stat", tmpFile})
-	if err == nil {
-		t.Fatalf("temp file %q still exists after powerwash", tmpFile)
-	} else {
-		var exitCodeErr *common.DockerExecExitCodeError
-		if !errors.As(err, &exitCodeErr) {
-			t.Fatal(err)
-		}
+	_, err = adbH.ExecShellCommand(cvd.ADBSerial, []string{"stat", tmpFile})
+	var exitCodeErr *exec.ExitError
+	if !errors.As(err, &exitCodeErr) {
+		t.Fatal(err)
 	}
 }
 

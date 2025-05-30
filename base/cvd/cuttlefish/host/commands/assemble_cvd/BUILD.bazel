@@ -6,143 +6,21 @@ package(
 )
 
 cc_library(
-    name = "libassemble_cvd",
-    hdrs = [
-        "flags_defaults.h",
-    ],
-    copts = COPTS + ["-Werror=sign-compare"],
+    name = "alloc",
+    srcs = ["alloc.cc"],
+    hdrs = ["alloc.h"],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/host/libs/config:config_constants",
-        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/allocd:allocd_utils",
     ],
 )
 
 clang_tidy_test(
-    name = "libassemble_cvd_clang_tidy",
-    srcs = [":libassemble_cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-proto_library(
-    name = "launch_cvd_proto",
-    srcs = ["proto/launch_cvd.proto"],
-)
-
-cc_proto_library(
-    name = "launch_cvd_cc_proto",
-    deps = [":launch_cvd_proto"],
-)
-
-# Separate target so it can use strip_include_prefix
-cc_library(
-    name = "assemble_cvd_not_main",
-    srcs = [
-        "alloc.cc",
-        "boot_config.cc",
-        "boot_image_utils.cc",
-        "bootconfig_args.cpp",
-        "clean.cc",
-        "disk/factory_reset_protected.cc",
-        "disk/gem5_image_unpacker.cpp",
-        "disk/generate_persistent_bootconfig.cpp",
-        "disk/generate_persistent_vbmeta.cpp",
-        "disk/initialize_instance_composite_disk.cc",
-        "disk/kernel_ramdisk_repacker.cpp",
-        "disk_builder.cpp",
-        "disk_flags.cc",
-        "display.cpp",
-        "flag_feature.cpp",
-        "flags.cc",
-        "graphics_flags.cc",
-        "kernel_module_parser.cc",
-        "misc_info.cc",
-        "network_flags.cpp",
-        "super_image_mixer.cc",
-        "touchpad.cpp",
-        "vendor_dlkm_utils.cc",
-    ],
-    hdrs = [
-        "alloc.h",
-        "boot_config.h",
-        "boot_image_utils.h",
-        "bootconfig_args.h",
-        "clean.h",
-        "disk/disk.h",
-        "disk_builder.h",
-        "disk_flags.h",
-        "display.h",
-        "flag_feature.h",
-        "flags.h",
-        "graphics_flags.h",
-        "kernel_module_parser.h",
-        "misc_info.h",
-        "network_flags.h",
-        "super_image_mixer.h",
-        "touchpad.h",
-        "vendor_dlkm_utils.h",
-    ],
-    copts = COPTS + [
-        "-Wno-ambiguous-macro",
-    ],
-    strip_include_prefix = "//cuttlefish",
-    visibility = ["//visibility:private"],
-    deps = [
-        ":launch_cvd_cc_proto",
-        ":libassemble_cvd",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:architecture",
-        "//cuttlefish/common/libs/utils:archive",
-        "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/common/libs/utils:container",
-        "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:disk_usage",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:in_sandbox",
-        "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:network",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:size_utils",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
-        "//cuttlefish/host/libs/allocd:allocd_utils",
-        "//cuttlefish/host/libs/avb",
-        "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config:config_constants",
-        "//cuttlefish/host/libs/config:config_flag",
-        "//cuttlefish/host/libs/config:config_fragment",
-        "//cuttlefish/host/libs/config:config_utils",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:data_image",
-        "//cuttlefish/host/libs/config:display",
-        "//cuttlefish/host/libs/config:esp",
-        "//cuttlefish/host/libs/config:fetcher_config",
-        "//cuttlefish/host/libs/config:host_tools_version",
-        "//cuttlefish/host/libs/config:instance_nums",
-        "//cuttlefish/host/libs/config:kernel_args",
-        "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/host/libs/config:secure_hals",
-        "//cuttlefish/host/libs/config:touchpad",
-        "//cuttlefish/host/libs/config/adb",
-        "//cuttlefish/host/libs/config/fastboot",
-        "//cuttlefish/host/libs/feature",
-        "//cuttlefish/host/libs/feature:inject",
-        "//cuttlefish/host/libs/image_aggregator",
-        "//cuttlefish/host/libs/vhal_proxy_server",
-        "//cuttlefish/host/libs/vm_manager",
-        "//libbase",
-        "@fmt",
-        "@fruit",
-        "@gflags",
-        "@jsoncpp",
-        "@protobuf",
-    ],
+    name = "alloc_clang_tidy",
+    srcs = [":alloc"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_binary(
@@ -150,8 +28,6 @@ cc_binary(
     srcs = ["assemble_cvd.cc"],
     copts = COPTS,
     deps = [
-        ":assemble_cvd_not_main",
-        ":libassemble_cvd",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -159,6 +35,13 @@ cc_binary(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/assemble_cvd:clean",
+        "//cuttlefish/host/commands/assemble_cvd:disk_flags",
+        "//cuttlefish/host/commands/assemble_cvd:display",
+        "//cuttlefish/host/commands/assemble_cvd:flag_feature",
+        "//cuttlefish/host/commands/assemble_cvd:flags",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:custom_actions",
@@ -178,4 +61,467 @@ clang_tidy_test(
         "clang-tidy",
         "clang_tidy",
     ],
+)
+
+cc_library(
+    name = "boot_config",
+    srcs = ["boot_config.cc"],
+    hdrs = ["boot_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:kernel_args",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "boot_config_clang_tidy",
+    srcs = [":boot_config"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "boot_image_utils",
+    srcs = ["boot_image_utils.cc"],
+    hdrs = ["boot_image_utils.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "boot_image_utils_clang_tidy",
+    srcs = [":boot_image_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "bootconfig_args",
+    srcs = ["bootconfig_args.cpp"],
+    hdrs = ["bootconfig_args.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "bootconfig_args_clang_tidy",
+    srcs = [":bootconfig_args"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "clean",
+    srcs = ["clean.cc"],
+    hdrs = ["clean.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "clean_clang_tidy",
+    srcs = [":clean"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "disk_builder",
+    srcs = ["disk_builder.cpp"],
+    hdrs = ["disk_builder.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "disk_builder_clang_tidy",
+    srcs = [":disk_builder"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "disk_flags",
+    srcs = ["disk_flags.cc"],
+    hdrs = ["disk_flags.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
+        "//cuttlefish/host/commands/assemble_cvd/disk:gem5_image_unpacker",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_vbmeta",
+        "//cuttlefish/host/commands/assemble_cvd/disk:initialize_instance_composite_disk",
+        "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
+        "//cuttlefish/host/commands/assemble_cvd:boot_config",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/config:instance_nums",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "disk_flags_clang_tidy",
+    srcs = [":disk_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "display",
+    srcs = ["display.cpp"],
+    hdrs = ["display.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:display",
+        "//cuttlefish/host/libs/feature",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "display_clang_tidy",
+    srcs = [":display"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "flag_feature",
+    srcs = ["flag_feature.cpp"],
+    hdrs = ["flag_feature.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/feature",
+        "//libbase",
+        "@fruit",
+        "@gflags",
+    ],
+)
+
+clang_tidy_test(
+    name = "flag_feature_clang_tidy",
+    srcs = [":flag_feature"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "flags",
+    srcs = ["flags.cc"],
+    hdrs = ["flags.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:architecture",
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:container",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:network",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:alloc",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:disk_flags",
+        "//cuttlefish/host/commands/assemble_cvd:display",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:graphics_flags",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
+        "//cuttlefish/host/commands/assemble_cvd:misc_info",
+        "//cuttlefish/host/commands/assemble_cvd:network_flags",
+        "//cuttlefish/host/commands/assemble_cvd:touchpad",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:display",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:host_tools_version",
+        "//cuttlefish/host/libs/config:instance_nums",
+        "//cuttlefish/host/libs/config:secure_hals",
+        "//cuttlefish/host/libs/vhal_proxy_server",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fmt",
+        "@fruit",
+        "@gflags",
+        "@jsoncpp",
+        "@protobuf",
+    ],
+)
+
+clang_tidy_test(
+    name = "flags_clang_tidy",
+    srcs = [":flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "flags_defaults",
+    hdrs = [
+        "flags_defaults.h",
+    ],
+    copts = COPTS + ["-Werror=sign-compare"],
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:config_utils",
+    ],
+)
+
+clang_tidy_test(
+    name = "flags_defaults_clang_tidy",
+    srcs = [":flags_defaults"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
+)
+
+cc_library(
+    name = "guest_config",
+    hdrs = ["guest_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:architecture",
+        "//cuttlefish/common/libs/utils:device_type",
+    ],
+)
+
+cc_library(
+    name = "graphics_flags",
+    srcs = ["graphics_flags.cc"],
+    hdrs = ["graphics_flags.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@fmt",
+        "@protobuf",
+    ],
+)
+
+clang_tidy_test(
+    name = "graphics_flags_clang_tidy",
+    srcs = [":graphics_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "kernel_module_parser",
+    srcs = ["kernel_module_parser.cc"],
+    hdrs = ["kernel_module_parser.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+    ],
+)
+
+clang_tidy_test(
+    name = "kernel_module_parser_clang_tidy",
+    srcs = [":kernel_module_parser"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+proto_library(
+    name = "launch_cvd_proto",
+    srcs = ["proto/launch_cvd.proto"],
+)
+
+cc_proto_library(
+    name = "launch_cvd_cc_proto",
+    deps = [":launch_cvd_proto"],
+)
+
+cc_library(
+    name = "misc_info",
+    srcs = ["misc_info.cc"],
+    hdrs = ["misc_info.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "misc_info_clang_tidy",
+    srcs = [":misc_info"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "network_flags",
+    srcs = ["network_flags.cpp"],
+    hdrs = ["network_flags.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "network_flags_clang_tidy",
+    srcs = [":network_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "super_image_mixer",
+    srcs = ["super_image_mixer.cc"],
+    hdrs = ["super_image_mixer.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:archive",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:misc_info",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//libbase",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "super_image_mixer_clang_tidy",
+    srcs = [":super_image_mixer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "touchpad",
+    srcs = ["touchpad.cpp"],
+    hdrs = ["touchpad.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:touchpad",
+        "//cuttlefish/host/libs/feature",
+        "@fruit",
+    ],
+)
+
+clang_tidy_test(
+    name = "touchpad_clang_tidy",
+    srcs = [":touchpad"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "vendor_dlkm_utils",
+    srcs = ["vendor_dlkm_utils.cc"],
+    hdrs = ["vendor_dlkm_utils.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:disk_usage",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+clang_tidy_test(
+    name = "vendor_dlkm_utils_clang_tidy",
+    srcs = [":vendor_dlkm_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

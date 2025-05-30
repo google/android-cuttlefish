@@ -4,7 +4,7 @@ set -e -x
 
 BRANCH=""
 TARGET=""
-CREDENTIAL_SOURCE=""
+CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
 while getopts "c:b:t:" opt; do
   case "${opt}" in
@@ -54,10 +54,15 @@ trap collect_logs_and_cleanup EXIT
 # Make sure to run in a clean environment, without any devices running
 cvd reset -y
 
+credential_arg=""
+if [[ -n "$CREDENTIAL_SOURCE" ]]; then
+    credential_arg="--credential_source=${CREDENTIAL_SOURCE}"
+fi
+
 cvd fetch \
   --default_build="${BRANCH}/${TARGET}" \
   --target_directory="${workdir}" \
-  --credential_source="${CREDENTIAL_SOURCE}"
+  ${credential_arg}
 
 (
   cd "${workdir}"

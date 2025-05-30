@@ -15,13 +15,13 @@
  */
 #include "host/commands/assemble_cvd/flag_feature.h"
 
-#include <android-base/strings.h>
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
-#include <string.h>
 #include <string>
 #include <unordered_set>
 #include <vector>
+
+#include <android-base/strings.h>
+#include <fruit/fruit.h>
+#include <gflags/gflags.h>
 
 #include "host/libs/feature/feature.h"
 

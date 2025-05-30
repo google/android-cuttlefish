@@ -25,17 +25,25 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+const baseURL = "http://0.0.0.0:2080"
+
 func TestCreateSingleInstance(t *testing.T) {
-	ctx, err := common.Setup()
+	buildID := os.Getenv("BUILD_ID")
+	buildTarget := os.Getenv("BUILD_TARGET")
+	srv := hoclient.NewHostOrchestratorService(baseURL)
+	fetchReq := &hoapi.FetchArtifactsRequest{
+		AndroidCIBundle: &hoapi.AndroidCIBundle{
+			Build: &hoapi.AndroidCIBuild{
+				BuildID: buildID,
+				Target:  buildTarget,
+			},
+			Type: hoapi.MainBundleType,
+		},
+	}
+	_, err := srv.FetchArtifacts(fetchReq, &hoclient.AccessTokenBuildAPICreds{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		common.Cleanup(ctx)
-	})
-	buildID := os.Getenv("BUILD_ID")
-	buildTarget := os.Getenv("BUILD_TARGET")
-	srv := hoclient.NewHostOrchestratorService(ctx.ServiceURL)
 	createReq := &hoapi.CreateCVDRequest{
 		CVD: &hoapi.CVD{
 			BuildSource: &hoapi.BuildSource{
@@ -57,7 +65,7 @@ func TestCreateSingleInstance(t *testing.T) {
 	if createErr != nil {
 		t.Fatal(createErr)
 	}
-	if err := common.VerifyLogsEndpoint(ctx.ServiceURL, "cvd", "1"); err != nil {
+	if err := common.VerifyLogsEndpoint(baseURL, "cvd", "1"); err != nil {
 		t.Fatalf("failed verifying /logs endpoint: %s", err)
 	}
 	want := &hoapi.CreateCVDResponse{

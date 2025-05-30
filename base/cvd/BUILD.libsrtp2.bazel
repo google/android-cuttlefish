@@ -4,24 +4,6 @@ package(
     ],
 )
 
-genrule(
-    name = "libsrtp2_configure",
-    srcs = glob(
-        ["**"],
-    ),
-    outs = [
-        "crypto/include/config.h",
-    ],
-    cmd = " && ".join([
-        "INITIAL_WD=`pwd`",
-        "cd `dirname $(location configure)`",
-        "./configure",
-        "mkdir -p $$INITIAL_WD/$(RULEDIR)/crypto/include",
-        "cp ./crypto/include/config.h $$INITIAL_WD/$(RULEDIR)/crypto/include",
-    ]),
-    visibility = ["//visibility:private"],
-)
-
 cc_library(
     name = "libsrtp2",
     srcs = [
@@ -55,7 +37,6 @@ cc_library(
         "crypto/include/cipher.h",
         "crypto/include/cipher_priv.h",
         "crypto/include/cipher_types.h",
-        "crypto/include/config.h",
         "crypto/include/crypto_kernel.h",
         "crypto/include/crypto_types.h",
         "crypto/include/datatypes.h",
@@ -90,5 +71,8 @@ cc_library(
     includes = [
         "crypto/include",
         "include",
+    ],
+    deps = [
+        "@//build_external/libsrtp2_config",
     ],
 )

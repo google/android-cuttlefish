@@ -17,18 +17,14 @@
 #include "host/commands/assemble_cvd/bootconfig_args.h"
 
 #include <array>
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include <android-base/parseint.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
 #include "common/libs/utils/json.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -149,7 +145,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   }
 
   if (instance.enable_modem_simulator() &&
-      instance.modem_simulator_ports() != "") {
+      !instance.modem_simulator_ports().empty()) {
     bootconfig_args["androidboot.modem_simulator_ports"] =
         instance.modem_simulator_ports();
   }
@@ -225,6 +221,12 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     // The static ethernet IP address assigned for the guest.
     bootconfig_args["androidboot.auto_eth_guest_addr"] =
         fmt::format("192.168.98.{}", instance_id + 2);
+  }
+
+  if (config.virtio_mac80211_hwsim()) {
+    bootconfig_args["androidboot.wifi_impl"] = "mac80211_hwsim_virtio";
+  } else {
+    bootconfig_args["androidboot.wifi_impl"] = "virt_wifi";
   }
 
   if (!instance.vcpu_config_path().empty()) {

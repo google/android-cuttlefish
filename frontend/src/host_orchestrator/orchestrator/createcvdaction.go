@@ -20,17 +20,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/user"
-	"sync"
 	"sync/atomic"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/artifacts"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 type BuildAPICredentials struct {
@@ -48,11 +43,8 @@ type CreateCVDActionOpts struct {
 	Paths                    IMPaths
 	OperationManager         OperationManager
 	ExecContext              exec.ExecContext
-	BuildAPI                 artifacts.BuildAPI
-	ArtifactsFetcher         artifacts.Fetcher
-	CVDBundleFetcher         artifacts.CVDBundleFetcher
+	CVDBundleFetcher         CVDBundleFetcher
 	UUIDGen                  func() string
-	CVDUser                  *user.User
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	BuildAPICredentials      BuildAPICredentials
 }
@@ -64,37 +56,25 @@ type CreateCVDAction struct {
 	om                       OperationManager
 	execContext              exec.ExecContext
 	cvdCLI                   *cvd.CLI
-	buildAPI                 artifacts.BuildAPI
-	artifactsFetcher         artifacts.Fetcher
-	cvdBundleFetcher         artifacts.CVDBundleFetcher
+	cvdBundleFetcher         CVDBundleFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
-	artifactsMngr            *artifacts.Manager
-	cvdUser                  *user.User
 	buildAPICredentials      BuildAPICredentials
 
 	instanceCounter uint32
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
-	execCtx := exec.NewAsUserExecContext(opts.ExecContext, opts.CVDUser)
+	execCtx := opts.ExecContext
 	return &CreateCVDAction{
 		req:                      opts.Request,
 		hostValidator:            opts.HostValidator,
 		paths:                    opts.Paths,
 		om:                       opts.OperationManager,
-		buildAPI:                 opts.BuildAPI,
-		artifactsFetcher:         opts.ArtifactsFetcher,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
-		cvdUser:                  opts.CVDUser,
 		buildAPICredentials:      opts.BuildAPICredentials,
-
-		artifactsMngr: artifacts.NewManager(
-			opts.Paths.ArtifactsRootDir,
-			opts.UUIDGen,
-		),
-		execContext: execCtx,
-		cvdCLI:      cvd.NewCLI(execCtx),
+		execContext:              execCtx,
+		cvdCLI:                   cvd.NewCLI(execCtx),
 	}
 }
 
@@ -105,7 +85,7 @@ func (a *CreateCVDAction) Run() (apiv1.Operation, error) {
 	if err := a.hostValidator.Validate(); err != nil {
 		return apiv1.Operation{}, err
 	}
-	if err := createDir(a.paths.ArtifactsRootDir); err != nil {
+	if err := createDir(a.paths.InstancesDir); err != nil {
 		return apiv1.Operation{}, err
 	}
 	op := a.om.New()
@@ -189,76 +169,39 @@ const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 func (a *CreateCVDAction) launchFromAndroidCI(
 	buildSource *apiv1.AndroidCIBuildSource, instancesCount uint32, op apiv1.Operation) (*cvd.Group, error) {
-	var mainBuild *apiv1.AndroidCIBuild = defaultMainBuild()
-	var kernelBuild *apiv1.AndroidCIBuild
-	var bootloaderBuild *apiv1.AndroidCIBuild
-	var systemImgBuild *apiv1.AndroidCIBuild
-	if buildSource.MainBuild != nil {
-		*mainBuild = *buildSource.MainBuild
-	}
-	if buildSource.KernelBuild != nil {
-		kernelBuild = &apiv1.AndroidCIBuild{}
-		*kernelBuild = *buildSource.KernelBuild
-	}
-	if buildSource.BootloaderBuild != nil {
-		bootloaderBuild = &apiv1.AndroidCIBuild{}
-		*bootloaderBuild = *buildSource.BootloaderBuild
-	}
-	if buildSource.SystemImageBuild != nil {
-		systemImgBuild = &apiv1.AndroidCIBuild{}
-		*systemImgBuild = *buildSource.SystemImageBuild
-	}
-	if err := updateBuildsWithLatestGreenBuildID(a.buildAPI,
-		[]*apiv1.AndroidCIBuild{mainBuild, kernelBuild, bootloaderBuild, systemImgBuild}); err != nil {
+	targetDir, err := ioutil.TempDir(a.paths.InstancesDir, "ins*")
+	if err != nil {
 		return nil, err
 	}
-	var mainBuildDir, kernelBuildDir, bootloaderBuildDir string
-	var mainBuildErr, kernelBuildErr, bootloaderBuildErr error
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		var extraCVDOptions *artifacts.ExtraCVDOptions = nil
-		if systemImgBuild != nil {
-			extraCVDOptions = &artifacts.ExtraCVDOptions{
-				SystemImgBuildID: systemImgBuild.BuildID,
-				SystemImgTarget:  systemImgBuild.Target,
-			}
-		}
-		mainBuildDir, mainBuildErr = a.artifactsMngr.GetCVDBundle(
-			mainBuild.BuildID, mainBuild.Target, extraCVDOptions, a.cvdBundleFetcher)
-	}()
-	if kernelBuild != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			kernelBuildDir, kernelBuildErr = a.artifactsMngr.GetKernelBundle(
-				kernelBuild.BuildID, kernelBuild.Target, a.artifactsFetcher)
-		}()
+	// Let `cvd` create the directory.
+	if err := os.RemoveAll(targetDir); err != nil {
+		return nil, err
 	}
-	if bootloaderBuild != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			bootloaderBuildDir, bootloaderBuildErr = a.artifactsMngr.GetBootloaderBundle(
-				bootloaderBuild.BuildID, bootloaderBuild.Target, a.artifactsFetcher)
-		}()
+	opts := ExtraCVDOptions{}
+	if buildSource.KernelBuild != nil {
+		opts.KernelBuild.BuildID = buildSource.KernelBuild.BuildID
+		opts.KernelBuild.BuildTarget = buildSource.KernelBuild.Target
 	}
-	wg.Wait()
-	var merr error
-	for _, err := range []error{mainBuildErr, kernelBuildErr, bootloaderBuildErr} {
-		if err != nil {
-			merr = multierror.Append(merr, err)
-		}
+	if buildSource.BootloaderBuild != nil {
+		opts.BootloaderBuild.BuildID = buildSource.BootloaderBuild.BuildID
+		opts.BootloaderBuild.BuildTarget = buildSource.BootloaderBuild.Target
 	}
-	if merr != nil {
-		return nil, merr
+	if buildSource.SystemImageBuild != nil {
+		opts.SystemImageBuild.BuildID = buildSource.SystemImageBuild.BuildID
+		opts.SystemImageBuild.BuildTarget = buildSource.SystemImageBuild.Target
+	}
+	if err := a.cvdBundleFetcher.Fetch(targetDir, buildSource.MainBuild.BuildID, buildSource.MainBuild.Target, opts); err != nil {
+		return nil, err
 	}
 	startParams := startCVDParams{
 		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
-		MainArtifactsDir: mainBuildDir,
-		KernelDir:        kernelBuildDir,
-		BootloaderDir:    bootloaderBuildDir,
+		MainArtifactsDir: targetDir,
+	}
+	if buildSource.KernelBuild != nil {
+		startParams.KernelDir = targetDir
+	}
+	if buildSource.BootloaderBuild != nil {
+		startParams.BootloaderDir = targetDir
 	}
 	group, err := CreateCVD(a.execContext, startParams)
 	if err != nil {
@@ -266,7 +209,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	}
 	// TODO: Remove once `acloud CLI` gets deprecated.
 	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.ArtifactsRootDir, mainBuildDir)
+		go runAcloudSetup(a.execContext, a.paths.InstancesDir, targetDir)
 	}
 	return group, nil
 }

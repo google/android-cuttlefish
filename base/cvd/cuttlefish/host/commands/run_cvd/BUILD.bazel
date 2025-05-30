@@ -54,7 +54,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/commands/assemble_cvd:libassemble_cvd",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",

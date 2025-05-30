@@ -1,0 +1,45 @@
+package(
+    default_visibility = [
+        "//visibility:public",
+    ],
+)
+
+genrule(
+    name = "libvpx_make",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            "libvpx.a",
+        ],
+    ),
+    outs = [
+        "libvpx.a",
+    ],
+    cmd = " && ".join([
+        "INITIAL_WD=`pwd`",
+        "cd `dirname $(location configure)`",
+        "./configure",
+        "make",
+        "cp libvpx.a $$INITIAL_WD/$(RULEDIR)",
+    ]),
+    visibility = ["//visibility:private"],
+)
+
+cc_import(
+    name = "libvpx",
+    hdrs = [
+        "vpx/vp8.h",
+        "vpx/vp8cx.h",
+        "vpx/vp8dx.h",
+        "vpx/vpx_codec.h",
+        "vpx/vpx_decoder.h",
+        "vpx/vpx_encoder.h",
+        "vpx/vpx_ext_ratectrl.h",
+        "vpx/vpx_frame_buffer.h",
+        "vpx/vpx_image.h",
+        "vpx/vpx_integer.h",
+        "vpx/vpx_tpl.h",
+    ],
+    includes = ["."],
+    static_library = "libvpx.a",
+)

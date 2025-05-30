@@ -36,7 +36,7 @@ struct VbmetaArgs {
   std::vector<std::string> extra_arguments;
 };
 
-Result<MiscInfo> ParseMiscInfo(const std::string& file_contents);
+Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents);
 Result<void> WriteMiscInfo(const MiscInfo& misc_info,
                            const std::string& output_path);
 Result<MiscInfo> GetCombinedDynamicPartitions(

@@ -26,7 +26,6 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
 #include "common/libs/utils/size_utils.h"
@@ -36,7 +35,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/vm_manager.h"
 
 using cuttlefish::vm_manager::CrosvmManager;
 

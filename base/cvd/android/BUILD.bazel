@@ -1,5 +1,9 @@
 package(
-    default_visibility = ["//:android_cuttlefish"],
+    default_visibility = [
+        "//:android_cuttlefish",
+        "@e2fsprogs//:__subpackages__",
+        "@selinux//:__subpackages__",
+    ],
 )
 
 cc_library(

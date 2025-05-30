@@ -17,9 +17,7 @@
 
 #include <sys/stat.h>
 
-#include <algorithm>
 #include <array>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -293,15 +291,15 @@ Result<RebuildPaths> GetRebuildPaths(
   // path
   std::string default_target_zip = instance_config.default_target_zip();
   std::string system_target_zip = instance_config.system_target_zip();
-  if (default_target_zip == "" || default_target_zip == "unset") {
+  if (default_target_zip.empty() || default_target_zip == "unset") {
     default_target_zip =
         TargetFilesZip(fetcher_config, FileSource::DEFAULT_BUILD);
-    CF_EXPECT(default_target_zip != "",
+    CF_EXPECT(!default_target_zip.empty(),
               "Unable to find default target zip file.");
 
     system_target_zip =
         TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
-    CF_EXPECT(system_target_zip != "", "Unable to find system target zip file.");
+    CF_EXPECT(!system_target_zip.empty(), "Unable to find system target zip file.");
   }
   return RebuildPaths{
       .vendor_target_zip = default_target_zip,
@@ -366,10 +364,10 @@ Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
                                        const std::string& system_target_zip) {
   bool has_default_target_zip = false;
   bool has_system_target_zip = false;
-  if (default_target_zip != "" && default_target_zip != "unset") {
+  if (!default_target_zip.empty() && default_target_zip != "unset") {
     has_default_target_zip = true;
   }
-  if (system_target_zip != "" && system_target_zip != "unset") {
+  if (!system_target_zip.empty() && system_target_zip != "unset") {
     has_system_target_zip = true;
   }
   CF_EXPECT(has_default_target_zip == has_system_target_zip,

@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/disk.h"
+#include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 
 #include <vector>
 
 #include <gflags/gflags.h>
 
 #include "common/libs/utils/files.h"
+#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/image_aggregator/image_aggregator.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 
 DECLARE_bool(resume);
 

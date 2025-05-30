@@ -1,0 +1,122 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "fsck.f2fs",
+    srcs = [
+        "fsck/common.h",
+        "fsck/compress.h",
+        "fsck/defrag.c",
+        "fsck/dict.c",
+        "fsck/dict.h",
+        "fsck/dir.c",
+        "fsck/dqblk_v2.h",
+        "fsck/dump.c",
+        "fsck/f2fs.h",
+        "fsck/fsck.c",
+        "fsck/fsck.h",
+        "fsck/main.c",
+        "fsck/mkquota.c",
+        "fsck/mount.c",
+        "fsck/node.c",
+        "fsck/node.h",
+        "fsck/quotaio.c",
+        "fsck/quotaio.h",
+        "fsck/quotaio_tree.c",
+        "fsck/quotaio_tree.h",
+        "fsck/quotaio_v2.c",
+        "fsck/quotaio_v2.h",
+        "fsck/resize.c",
+        "fsck/segment.c",
+        "fsck/xattr.c",
+        "fsck/xattr.h",
+    ],
+    local_defines = [
+        "WITH_RESIZE",
+    ],
+    deps = [
+        ":libf2fs_format_utils",
+    ],
+)
+
+cc_library(
+    name = "libf2fs",
+    srcs = [
+        "lib/libf2fs.c",
+        "lib/libf2fs_io.c",
+        "lib/libf2fs_zoned.c",
+        "lib/nls_utf8.c",
+        "lib/utf8data.h",
+        "mkfs/f2fs_format.c",
+        "mkfs/f2fs_format_utils.h",
+    ],
+    includes = [
+        "include",
+        "lib",
+        "mkfs",
+    ],
+    hdrs = glob([
+        "include/*.h",
+    ]),
+    strip_include_prefix = "include",
+    defines = [
+        "F2FS_MAJOR_VERSION=1",
+        "F2FS_MINOR_VERSION=16",
+        "F2FS_TOOLS_DATE=\\\"2023-04-11\\\"",
+        "F2FS_TOOLS_VERSION=\\\"1.16.0\\\"",
+        "WITH_ANDROID",
+    ],
+    deps = [
+        "@//libbase",
+        "@//libsparse",
+        "@e2fsprogs//:libext2_uuid",
+    ],
+)
+
+cc_library(
+    name = "libf2fs_format_utils",
+    srcs = [
+        "mkfs/f2fs_format_utils.c",
+    ],
+    includes = [
+        "mkfs",
+    ],
+    hdrs = [
+        "mkfs/f2fs_format_utils.h",
+    ],
+    strip_include_prefix = "mkfs",
+    deps = [
+        ":libf2fs",
+    ],
+)
+
+cc_library(
+    name = "libf2fs_format_utils_blkdiscard",
+    srcs = [
+        "mkfs/f2fs_format_utils.c",
+    ],
+    includes = [
+        "mkfs",
+    ],
+    hdrs = [
+        "mkfs/f2fs_format_utils.h",
+    ],
+    strip_include_prefix = "mkfs",
+    local_defines = [
+        "WITH_BLKDISCARD",
+    ],
+    deps = [
+        ":libf2fs",
+    ],
+)
+
+cc_binary(
+    name = "make_f2fs",
+    srcs = [
+        "mkfs/f2fs_format_main.c",
+    ],
+    deps = [
+        ":libf2fs_format_utils_blkdiscard",
+    ],
+)

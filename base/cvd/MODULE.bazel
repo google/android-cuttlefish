@@ -10,6 +10,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.14.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
+bazel_dep(name = "brotli", version = "1.1.0")
 bazel_dep(name = "crc32c", version = "1.1.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
 bazel_dep(name = "fmt", version = "10.2.1")
@@ -28,14 +29,18 @@ bazel_dep(name = "libjpeg_turbo", version = "2.1.91")
 bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "libzip", version = "1.10.1")
+bazel_dep(name = "lz4", version = "1.9.4")
+bazel_dep(name = "pcre2", version = "10.45")
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "29.1")
 bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_python", version = "0.40.0")
 bazel_dep(name = "rules_rust", version = "0.60.0")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "toolchains_llvm", version = "1.2.0")
+bazel_dep(name = "sandboxed_api")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.3")
 
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
@@ -51,6 +56,17 @@ git_override(
     # to be merged.
     commit = "f5fbd4cee671d8d908f37c83abaf70fba5928fc7",
     remote = "https://github.com/mikael-s-persson/bazel-compile-commands-extractor",
+)
+
+git_override(
+    module_name = "sandboxed_api",
+    commit = "75b6c16e8e95314456795b34af06571879b18e1f",
+    remote = "https://github.com/google/sandboxed-api.git",
+    patch_strip = 1,
+    patches = [
+        # See cl/711879539
+        "@//build_external/sandboxed_api:PATCH.sandboxed_api.util.visibility.patch",
+    ],
 )
 
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
@@ -350,13 +366,6 @@ git_repository(
 )
 
 git_repository(
-    name = "librnnoise",
-    commit = "1cbdbcf1283499bbb2230a6b0f126eb9b236defd",
-    build_file = "@//:BUILD.librnnoise.bazel",
-    remote = "https://github.com/xiph/rnnoise",
-)
-
-git_repository(
     name = "libsrtp2",
     # This is quite old, but it's what libwebrtc depends on
     commit = "860492290f7d1f25e2bd45da6471bfd4cd4d7add",
@@ -376,6 +385,7 @@ git_repository(
     commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
     build_file = "@//:BUILD.libwebrtc.bazel",
     remote = "https://webrtc.googlesource.com/src/",
+    patches = ["@//build_external/libwebrtc:PATCH.third_party_libyuv.patch"],
 )
 
 git_repository(
@@ -454,4 +464,53 @@ git_repository(
     build_file = "@//:BUILD.libnl.bazel",
     commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
     remote = "https://android.googlesource.com/platform/external/libnl",
+)
+
+# Upstream uses autotools, for now use the Android copy
+git_repository(
+    name = "libusb",
+    build_file = "@//:BUILD.libusb.bazel",
+    commit = "7b5267099855d320f6013d667d113e3619f18bf5",
+    remote = "https://android.googlesource.com/platform/external/libusb",
+)
+
+# Android version is slightly forked from the chromium upstream
+git_repository(
+    name = "libopenscreen",
+    build_file = "@//:BUILD.libopenscreen.bazel",
+    commit = "3f982cf4871df8771c9d4abe6e9a6f8d829b2736",
+    remote = "https://android.googlesource.com/platform/external/openscreen",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/libopenscreen:PATCH.bazelignore.patch",
+    ],
+)
+
+git_repository(
+    name = "libvpx",
+    build_file = "@//:BUILD.libvpx.bazel",
+    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
+    remote = "https://chromium.googlesource.com/webm/libvpx",
+)
+
+# Android version is forked from github upstream
+git_repository(
+    name = "selinux",
+    build_file = "@//:BUILD.selinux.bazel",
+    commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
+    remote = "https://android.googlesource.com/platform/external/selinux",
+)
+
+git_repository(
+    name = "e2fsprogs",
+    build_file = "@//:BUILD.e2fsprogs.bazel",
+    commit = "ff64357f839071968a727f8b5a08b0ddaedc5bbb",
+    remote = "https://github.com/tytso/e2fsprogs",
+)
+
+git_repository(
+    name = "f2fs_tools",
+    build_file = "@//:BUILD.f2fs_tools.bazel",
+    commit = "d8eac1f8699541416afdf93333772ef2e0509773",
+    remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
 )
