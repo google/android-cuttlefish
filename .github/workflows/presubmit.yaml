@@ -204,8 +204,15 @@ jobs:
         sudo podman info
         sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
         mkdir -p -m 777 /tmp/cw_bazel
+        # Run create_with_gce_credentials_test
         sudo podman run --name tester -d --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests --add-host="metadata.google.internal:127.0.0.1" android-cuttlefish-e2etest:latest
         sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_credentials_test:create_with_gce_credentials_test_test
+        sudo podman rm -f tester
+        # Run verify_access_token_test
+        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+        sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
+        sudo podman exec -it tester sh -c 'echo "orchestrator_android_build_url=http://localhost:8090" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
+        sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/verify_access_token_test:verify_access_token_test_test
     - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v4
