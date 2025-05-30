@@ -1,3 +1,4 @@
 config=slim
+enforce_mac80211_hwsim=false
 gfxstream=supported
 gfxstream_gl_program_binary_link_status=supported
