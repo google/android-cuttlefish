@@ -1,4 +1,4 @@
-cuttlefish-common (1.10.0) unstable; urgency=medium
+cuttlefish-common (1.10.0) stable; urgency=medium
 
   * Begin development of version 1.10 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1175
   * Build and package adb by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1136
