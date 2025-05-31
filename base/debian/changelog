@@ -1,8 +1,16 @@
-cuttlefish-common (1.11.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.11.0) unstable; urgency=medium
 
-  * 
+  * Begin development of cuttlefish 1.11.0 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1198
+  * Refactor and split `cvd/instances/instance_database_utils` by @Databean in https://github.com/google/android-cuttlefish/pull/1192
+  * cvd/utils/flags_collector refactor by @Databean in https://github.com/google/android-cuttlefish/pull/1193
+  * Build and package fsck.f2fs and make_f2fs by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1199
+  * Build and package e2fsck by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1200
+  * Split `//cuttlefish/host/commands/assemble_cvd:assemble_cvd_not_main` by @Databean in https://github.com/google/android-cuttlefish/pull/1204
+  * Support arm64 while building libwebrtc by @k311093 in https://github.com/google/android-cuttlefish/pull/1208
+  * Prefer `enforce_mac80211_hwsim` configuration from android-info.txt by @Databean in https://github.com/google/android-cuttlefish/pull/1210
+  * Mark 1.10.0 as stable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1211
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 23 May 2025 16:18:10 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 30 May 2025 17:02:56 -0700
 
 cuttlefish-common (1.10.0) stable; urgency=medium
 
