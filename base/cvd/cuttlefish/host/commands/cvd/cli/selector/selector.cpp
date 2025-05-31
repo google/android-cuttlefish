@@ -16,8 +16,13 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 
+#include <iostream>
+#include <memory>
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <android-base/parseint.h>
 

@@ -20,10 +20,15 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iterator>
+#include <optional>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>

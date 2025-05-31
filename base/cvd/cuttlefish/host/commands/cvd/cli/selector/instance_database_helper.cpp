@@ -16,6 +16,10 @@
 #include "cuttlefish/host/commands/cvd/cli/selector/instance_database_helper.h"
 
 #include <cstdlib>
+#include <string>
+#include <optional>
+#include <utility>
+#include <vector>
 
 #include <android-base/file.h>
 

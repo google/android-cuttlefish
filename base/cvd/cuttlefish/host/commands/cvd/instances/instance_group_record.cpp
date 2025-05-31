@@ -17,7 +17,12 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 
 #include <algorithm>
+#include <functional>
+#include <iterator>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <android-base/parseint.h>
 

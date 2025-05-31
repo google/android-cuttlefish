@@ -23,6 +23,7 @@
 
 #include <sys/types.h>
 
+#include <string>
 #include <optional>
 
 #include "cuttlefish/host/commands/cvd/cli/types.h"

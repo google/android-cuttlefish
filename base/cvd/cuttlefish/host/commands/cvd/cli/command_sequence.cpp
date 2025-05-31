@@ -16,6 +16,11 @@
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 
 #include <memory>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 #include <android-base/strings.h>
 

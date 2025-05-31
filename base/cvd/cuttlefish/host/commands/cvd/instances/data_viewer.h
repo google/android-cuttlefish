@@ -20,6 +20,7 @@
 
 #include <functional>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <unordered_map>
 

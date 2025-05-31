@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/cvd.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>

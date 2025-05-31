@@ -18,6 +18,11 @@
 
 #include <unistd.h>
 
+#include <string>
+#include <vector>
+#include <optional>
+#include <utility>
+
 #include <android-base/file.h>
 #include <google/protobuf/text_format.h>
 
