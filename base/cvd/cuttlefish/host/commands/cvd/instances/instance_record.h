@@ -17,7 +17,9 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 #include <string>
+#include <utility>
 
 #include <json/json.h>
 

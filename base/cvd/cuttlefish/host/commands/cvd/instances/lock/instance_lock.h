@@ -15,8 +15,10 @@
  */
 #pragma once
 
+#include <optional>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 

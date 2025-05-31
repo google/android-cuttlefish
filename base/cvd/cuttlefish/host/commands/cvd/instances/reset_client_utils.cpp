@@ -19,7 +19,11 @@
 #include <signal.h>
 
 #include <iostream>  // std::endl
+#include <memory>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>

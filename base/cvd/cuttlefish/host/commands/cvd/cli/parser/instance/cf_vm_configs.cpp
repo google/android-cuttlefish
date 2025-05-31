@@ -17,11 +17,11 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <google/protobuf/util/json_util.h>
-#include "json/json.h"
 
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/common/libs/utils/result.h"

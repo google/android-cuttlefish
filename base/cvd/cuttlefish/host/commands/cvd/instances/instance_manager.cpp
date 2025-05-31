@@ -16,7 +16,11 @@
 
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
+#include <iostream>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>

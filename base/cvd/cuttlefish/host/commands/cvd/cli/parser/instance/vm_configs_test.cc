@@ -15,6 +15,8 @@
  */
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include <android-base/file.h>
 #include <gtest/gtest.h>

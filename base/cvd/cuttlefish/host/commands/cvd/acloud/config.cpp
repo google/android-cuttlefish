@@ -17,6 +17,8 @@
 #include "cuttlefish/host/commands/cvd/acloud/config.h"
 
 #include <fstream>
+#include <sstream>
+#include <string>
 
 #include <google/protobuf/text_format.h>
 

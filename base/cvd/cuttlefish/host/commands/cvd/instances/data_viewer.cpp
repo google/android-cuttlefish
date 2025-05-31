@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/cvd/instances/data_viewer.h"
 
+#include <string>
+#include <utility>
+
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {

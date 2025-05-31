@@ -16,10 +16,14 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 
 #include <chrono>
+#include <ctime>
 #include <iomanip>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <sstream>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include <fmt/format.h>

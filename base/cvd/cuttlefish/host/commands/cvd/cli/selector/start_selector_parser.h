@@ -20,6 +20,7 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"

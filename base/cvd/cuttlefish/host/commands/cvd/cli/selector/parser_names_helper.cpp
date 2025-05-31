@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/parser_names_helper.h"
 
+#include <utility>
+
 #include <android-base/strings.h>
 #include <gtest/gtest.h>
 
