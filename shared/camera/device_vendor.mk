@@ -26,7 +26,6 @@ else
 PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
 endif
 
-PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 
 # TODO(b/257379485): 3A is incrementally enabling cuttlefish build for native
