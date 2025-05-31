@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/legacy/server_constants.h"
+#pragma once
 
-#include <unistd.h>
-
-#include <sstream>
+#include <string>
 
 namespace cuttlefish {
 
-std::string ServerSocketPath() {
-  std::stringstream socket_path;
-  socket_path << "cvd_server"
-              << "_" << getuid();
-  return socket_path.str();
-}
+std::string GetVersionString();
 
 }  // namespace cuttlefish

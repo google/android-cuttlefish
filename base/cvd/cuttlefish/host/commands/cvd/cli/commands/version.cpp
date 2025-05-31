@@ -23,15 +23,12 @@
 
 #include <fmt/ostream.h>
 
-#include "build/version.h"
 #include "cuttlefish/common/libs/utils/proto.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
-#include "cuttlefish/host/commands/cvd/legacy/server_constants.h"
-#include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/config/host_tools_version.h"
+#include "cuttlefish/host/commands/cvd/version/version.h"
 
 namespace cuttlefish {
 namespace {
@@ -45,16 +42,7 @@ class CvdVersionHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-
-    fmt::print(std::cout, "major: {}\n", cvd::kVersionMajor);
-    fmt::print(std::cout, "minor: {}\n", cvd::kVersionMinor);
-
-    const std::string build = android::build::GetBuildNumber();
-    if (!build.empty()) {
-      fmt::print(std::cout, "build: {}\n", build);
-    }
-    fmt::print(std::cout, "crc32: {}\n", FileCrc(kServerExecPath));
-
+    fmt::print(std::cout, GetVersionString());
     return {};
   }
 

@@ -25,7 +25,6 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/unix_sockets.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "cuttlefish/host/commands/cvd/legacy/server_constants.h"
 
 namespace cuttlefish {
 
@@ -59,6 +58,8 @@ class CvdClient {
                                     const OverrideFd& new_control_fds = {},
                                     std::optional<SharedFD> extra_fd = {});
   Result<void> CheckStatus(const cvd::Status& status, const std::string& rpc);
+
+  static std::string ServerSocketPath();
 
   std::optional<UnixMessageSocket> server_;
   std::string server_socket_path_;

@@ -21,7 +21,10 @@ genrule(
     name = "build_version_header",
     srcs = ["build_version.h.in"],
     outs = ["build/version.h"],
-    cmd = "sed -e \"s|@VCS_TAG@|`cat bazel-out/*-status.txt | grep \"STABLE_HEAD_COMMIT\" | cut -f 2 -d ' '`|\" $< > $@",
+    tools= [
+        "replace_with_stamp_values.sh",
+    ],
+    cmd = "$(location replace_with_stamp_values.sh) bazel-out/stable-status.txt $< $@",
     stamp = 1,
 )
 
