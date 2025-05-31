@@ -1,8 +1,12 @@
-cuttlefish-frontend (1.11.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.11.0) unstable; urgency=medium
 
-  * 
+  * Adds `WithDir` suffix to relevant methods. by @ser-io in https://github.com/google/android-cuttlefish/pull/1194
+  * Construct chunkState for efficiently managing concurrent updated chunks by @0405ysj in https://github.com/google/android-cuttlefish/pull/1167
+  * Run frontend package unit tests in presubmit. by @ser-io in https://github.com/google/android-cuttlefish/pull/1202
+  * [HO] Remove ability to execute cvd commands as different user. by @ser-io in https://github.com/google/android-cuttlefish/pull/1209
+  * Adds docker image presubmit check. by @ser-io in https://github.com/google/android-cuttlefish/pull/1203
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 23 May 2025 16:18:22 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 30 May 2025 17:04:50 -0700
 
 cuttlefish-frontend (1.10.0) stable; urgency=medium
 
