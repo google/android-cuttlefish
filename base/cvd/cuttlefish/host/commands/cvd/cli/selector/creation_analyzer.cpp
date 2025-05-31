@@ -21,6 +21,9 @@
 #include <algorithm>
 #include <map>
 #include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
@@ -29,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/unique_resource_allocator.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {

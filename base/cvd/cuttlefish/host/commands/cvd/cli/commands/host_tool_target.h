@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"

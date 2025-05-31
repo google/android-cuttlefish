@@ -17,6 +17,8 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>

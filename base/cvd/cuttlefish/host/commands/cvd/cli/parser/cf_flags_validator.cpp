@@ -16,11 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 
+#include <sstream>
+
 #include <google/protobuf/util/json_util.h>
-#include "json/json.h"
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 
 namespace cuttlefish {

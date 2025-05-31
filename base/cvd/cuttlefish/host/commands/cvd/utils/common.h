@@ -19,6 +19,8 @@
 #include <sys/types.h>
 
 #include <sstream>
+#include <string>
+#include <string_view>
 
 #include <android-base/logging.h>
 

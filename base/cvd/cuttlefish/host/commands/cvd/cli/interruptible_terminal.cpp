@@ -18,6 +18,9 @@
 
 #include <errno.h>
 
+#include <optional>
+#include <string>
+
 #include <android-base/scopeguard.h>
 
 #include "cuttlefish/common/libs/fs/shared_select.h"

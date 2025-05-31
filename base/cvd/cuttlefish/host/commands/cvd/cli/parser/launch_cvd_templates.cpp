@@ -15,11 +15,13 @@
  */
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_templates.h"
 
+#include <map>
+#include <sstream>
 #include <string>
 #include <string_view>
 
 #include <google/protobuf/util/json_util.h>
-#include "json/json.h"
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"

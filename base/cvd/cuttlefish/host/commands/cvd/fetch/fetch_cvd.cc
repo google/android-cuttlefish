@@ -19,6 +19,8 @@
 #include <sys/stat.h>
 
 #include <chrono>
+#include <cstddef>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <memory>

@@ -17,6 +17,10 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 
 #include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 

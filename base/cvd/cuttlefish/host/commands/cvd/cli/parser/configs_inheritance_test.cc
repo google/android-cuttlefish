@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include <android-base/file.h>
+#include <string>
 
+#include <android-base/file.h>
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
@@ -39,18 +40,17 @@ TEST(FlagsInheritanceTest, MergeTwoIndependentJson) {
 
   const char* src_string = R""""(
 {
-    "instances" :
-    [
+    "instances": [
         {
-            "graphics":{
-                "displays":[
+            "graphics": {
+                "displays": [
                     {
                         "width": 720,
                         "height": 1280,
                         "dpi": 320
                     }
                 ]
-			}
+            }
         }
     ]
 }
@@ -101,15 +101,15 @@ TEST(FlagsInheritanceTest, MergeTwoOverlappedJson) {
             "vm": {
                 "memory_mb": 2048
             },
-            "graphics":{
-                "displays":[
+            "graphics": {
+                "displays": [
                     {
                         "width": 720,
                         "height": 1280,
                         "dpi": 320
                     }
                 ]
-			}
+            }
         }
     ]
 }

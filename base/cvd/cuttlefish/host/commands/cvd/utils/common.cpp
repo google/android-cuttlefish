@@ -18,6 +18,9 @@
 
 #include <mutex>
 #include <ostream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>

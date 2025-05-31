@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/device_selector_utils.h"
 
+#include <optional>
+#include <string>
+
 #include <android-base/parseint.h>
 
 #include "cuttlefish/common/libs/utils/result.h"

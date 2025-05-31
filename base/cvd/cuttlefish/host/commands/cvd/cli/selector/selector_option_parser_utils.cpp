@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 
+#include <string>
+#include <vector>
+
 #include <android-base/strings.h>
 
 namespace cuttlefish {

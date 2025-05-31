@@ -17,6 +17,9 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 
 #include <fstream>
+#include <memory>
+#include <string>
+#include <utility>
 
 #include <android-base/logging.h>
 #include <fmt/format.h>

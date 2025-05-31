@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 

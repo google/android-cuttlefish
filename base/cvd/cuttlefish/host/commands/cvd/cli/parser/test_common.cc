@@ -15,6 +15,8 @@
  */
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"

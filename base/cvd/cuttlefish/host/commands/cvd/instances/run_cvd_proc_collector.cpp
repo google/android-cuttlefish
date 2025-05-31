@@ -17,7 +17,13 @@
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 
 #include <cctype>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"

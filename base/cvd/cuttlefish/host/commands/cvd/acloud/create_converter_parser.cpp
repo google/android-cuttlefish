@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
 
+#include <optional>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/logging.h>

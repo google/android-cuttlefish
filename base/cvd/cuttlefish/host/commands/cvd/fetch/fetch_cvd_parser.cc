@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <optional>

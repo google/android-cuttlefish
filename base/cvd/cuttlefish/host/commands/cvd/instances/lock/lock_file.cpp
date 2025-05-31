@@ -20,6 +20,11 @@
 
 #include <algorithm>
 #include <cstring>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>

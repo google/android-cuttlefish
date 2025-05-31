@@ -20,6 +20,8 @@
 
 #include <optional>
 #include <regex>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>

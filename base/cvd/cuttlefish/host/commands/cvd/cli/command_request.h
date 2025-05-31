@@ -19,10 +19,10 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <iostream>  // TODO: schuffelen - replace many transitive dependencies
 #include <initializer_list>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"

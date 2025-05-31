@@ -18,17 +18,23 @@
 
 #include <unistd.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cstdio>
+#include <ostream>
 #include <set>
+#include <sstream>
+#include <stack>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
-#include "json/json.h"
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"

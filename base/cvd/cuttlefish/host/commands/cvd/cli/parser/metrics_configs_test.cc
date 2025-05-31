@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include <string>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "json/json.h"
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"

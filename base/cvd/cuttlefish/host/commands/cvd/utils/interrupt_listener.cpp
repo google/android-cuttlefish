@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>

@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "cuttlefish/host/commands/cvd/acloud/user_config.pb.h"
+#include <string>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/acloud/user_config.pb.h"
 
 namespace cuttlefish {
 
