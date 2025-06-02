@@ -51,6 +51,9 @@ func NewStartCVDAction(opts StartCVDActionOpts) *StartCVDAction {
 }
 
 func (a *StartCVDAction) Run() (apiv1.Operation, error) {
+	if err := ValidateStartCVDRequest(a.req); err != nil {
+		return apiv1.Operation{}, err
+	}
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}
