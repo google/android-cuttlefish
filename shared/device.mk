@@ -608,9 +608,11 @@ TARGET_BOARD_FASTBOOT_INFO_FILE = device/google/cuttlefish/shared/fastboot-info.
 PRODUCT_ENFORCE_SELINUX_TREBLE_LABELING := true
 
 # Install com.google.cf.disabled APEX to demonstrate init_dev_config
-PRODUCT_PACKAGES += \
-    com.google.cf.disabled \
-    com.google.cf.init_dev_config
-
-PRODUCT_VENDOR_PROPERTIES += \
-    ro.vendor.init_dev_config.path=/vendor/bin/init_dev_config
+LOCAL_ENABLE_INIT_DEV_CONFIG ?= true
+ifeq ($(LOCAL_ENABLE_INIT_DEV_CONFIG),true)
+    PRODUCT_PACKAGES += \
+        com.google.cf.disabled \
+        com.google.cf.init_dev_config
+    PRODUCT_VENDOR_PROPERTIES += \
+        ro.vendor.init_dev_config.path=/vendor/bin/init_dev_config
+endif
