@@ -15,10 +15,8 @@
 package orchestrator
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
-	"regexp"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -53,7 +51,7 @@ func NewCreateSnapshotAction(opts CreateSnapshotActionOpts) *CreateSnapshotActio
 }
 
 func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
-	if err := a.validateRequest(); err != nil {
+	if err := ValidateCreateSnapshotRequest(a.req); err != nil {
 		return apiv1.Operation{}, err
 	}
 	if err := createDir(a.paths.SnapshotsRootDir); err != nil {
@@ -68,18 +66,6 @@ func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
 		}
 	}(op)
 	return op, nil
-}
-
-var snapshotIDRegex = regexp.MustCompile(`^([a-z0-9\-_]+)$`)
-
-func (a *CreateSnapshotAction) validateRequest() error {
-	if a.req.SnapshotID != "" {
-		if !snapshotIDRegex.MatchString(a.req.SnapshotID) {
-			return operator.NewBadRequestError(
-				"invalid snapshot id value", fmt.Errorf("%s does not match %s", a.req.SnapshotID, snapshotIDRegex))
-		}
-	}
-	return nil
 }
 
 func (a *CreateSnapshotAction) createSnapshot(op apiv1.Operation) (*apiv1.CreateSnapshotResponse, error) {
