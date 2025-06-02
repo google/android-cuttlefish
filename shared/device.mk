@@ -39,11 +39,6 @@ DISABLE_RILD_OEM_HOOK := true
 # For customize cflags for libril share library building by soong.
 $(call soong_config_set,ril,disable_rild_oem_hook,true)
 
-# TODO(b/294888357) Remove this condition when OpenWRT is supported for RISC-V.
-ifndef PRODUCT_ENFORCE_MAC80211_HWSIM
-PRODUCT_ENFORCE_MAC80211_HWSIM := true
-endif
-
 PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
 
 PRODUCT_FS_COMPRESSION := 1
@@ -537,10 +532,6 @@ PRODUCT_VENDOR_PROPERTIES += ro.vendor.virtwifi.port=${DEVICE_VIRTWIFI_PORT}
 PRODUCT_PACKAGES += \
     CuttlefishTetheringOverlay \
     CuttlefishWifiOverlay
-
-ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
-$(call soong_config_append,cvdhost,enforce_mac80211_hwsim,true)
-endif
 
 # UWB HAL
 PRODUCT_PACKAGES += com.android.hardware.uwb

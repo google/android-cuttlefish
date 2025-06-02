@@ -109,13 +109,6 @@ soong_config_module_type {
 cf_cc_defaults {
     name: "cvd_cc_defaults",
     soong_config_variables: {
-        // PRODUCT_ENFORCE_MAC80211_HWSIM sets this
-        enforce_mac80211_hwsim: {
-            cflags: ["-DENFORCE_MAC80211_HWSIM=true"],
-            conditions_default: {
-                cflags: [],
-            },
-        },
         // TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE sets this from BoardConfig.mk
         // The only user is the page agnostic cf target
         default_userdata_fs_type: {

@@ -40,8 +40,6 @@ PRODUCT_PACKAGES += FakeSystemApp
 LOCAL_ENABLE_WIDEVINE := false
 $(call inherit-product, device/google/cuttlefish/shared/slim/device_vendor.mk)
 
-PRODUCT_ENFORCE_MAC80211_HWSIM := false
-
 #
 # Special settings for the target
 #
