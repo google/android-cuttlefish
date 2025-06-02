@@ -37,6 +37,8 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    env:
+      GOPROJECTS: ('host_orchestrator' 'libhoclient' 'liboperator' 'operator')
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -46,11 +48,20 @@ jobs:
       run: apt install -y git golang
     - name: Go version
       run: go version
+    - name: Run gofmt check
+      shell: bash
+      run: |
+        projects=${{ env.GOPROJECTS }}
+        for item in "${projects[@]}"; do
+          pushd "frontend/src/${item}"
+          gofmt -d -e . && test -z "$(gofmt -l .)"
+          popd
+        done
     - name: Run go tests
       shell: bash
       run: |
-        go_projects=("host_orchestrator" "libhoclient" "liboperator" "operator")
-        for item in "${go_projects[@]}"; do
+        projects=${{ env.GOPROJECTS }}
+        for item in "${projects[@]}"; do
           pushd "frontend/src/${item}"
           go test ./...
           popd
