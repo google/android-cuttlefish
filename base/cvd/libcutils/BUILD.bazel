@@ -8,31 +8,7 @@ package(
     ],
 )
 
-cc_library(
+alias(
     name = "libcutils",
-    srcs = [
-        "android_get_control_env.h",
-        "android_get_control_file.cpp",
-        "canned_fs_config.cpp",
-        "fs_config.cpp",
-        "fs_config.h",
-        "include/cutils/android_get_control_file.h",
-        "include/cutils/sockets.h",
-        "socket_inaddr_any_server_unix.cpp",
-        "socket_local_client_unix.cpp",
-        "socket_local_server_unix.cpp",
-        "socket_local_unix.h",
-        "socket_network_client_unix.cpp",
-        "sockets.cpp",
-        "sockets_unix.cpp",
-    ],
-    hdrs = glob([
-        "include/**/*.h",
-    ]),
-    strip_include_prefix = "include",
-    copts = COPTS,
-    deps = [
-        "//android:log_header",
-        "//libbase",
-    ],
+    actual = "@android_system_core//:libcutils",
 )
