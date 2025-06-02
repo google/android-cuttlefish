@@ -98,6 +98,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&waitOperationHandler{c.OperationManager, c.WaitOperationDuration})).Methods("POST")
 	router.Handle("/cvdbugreports/{uuid}", &downloadCVDBugReportHandler{c.Config}).Methods("GET")
 	router.Handle("/cvdbugreports/{uuid}", httpHandler(&deleteCVDBugReportHandler{c.Config})).Methods("DELETE")
+	router.Handle("/snapshots/{id}", httpHandler(&deleteSnapshotHandler{c.Config, c.OperationManager})).Methods("DELETE")
 	router.Handle("/userartifacts",
 		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/userartifacts",
@@ -482,6 +483,29 @@ func (h *deleteCVDBugReportHandler) Handle(r *http.Request) (interface{}, error)
 	dirName := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid)
 	err := os.RemoveAll(dirName)
 	return nil, err
+}
+
+type deleteSnapshotHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func (h *deleteSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if err := ValidateSnapshotID(id); err != nil {
+		return nil, operator.NewBadRequestError("invalid request", err)
+	}
+	op := h.OM.New()
+	go func() {
+		dir := filepath.Join(h.Config.Paths.SnapshotsRootDir, id)
+		result := &OperationResult{}
+		result.Error = os.RemoveAll(dir)
+		if err := h.OM.Complete(op.Name, result); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
 }
 
 type createUploadDirectoryHandler struct {
