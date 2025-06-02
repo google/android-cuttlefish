@@ -128,6 +128,12 @@ type OperationsClient interface {
 	WaitForOperation(name string, result any) error
 }
 
+// Manages snapshots.
+type SnapshotsClient interface {
+	// Create device snapshot.
+	DeleteSnapshot(id string) error
+}
+
 // A client to the host orchestrator service running in a remote host.
 type HostOrchestratorClient interface {
 	InstancesClient
@@ -135,6 +141,7 @@ type HostOrchestratorClient interface {
 	InstanceOperationsClient
 	InstanceConnectionsClient
 	OperationsClient
+	SnapshotsClient
 }
 
 const (
@@ -145,7 +152,7 @@ const (
 	HTTPHeaderCOInjectBuildAPICreds = "X-Cutf-Cloud-Orchestrator-Inject-BuildAPI-Creds"
 )
 
-func NewHostOrchestratorClient(url string) HostOrchestratorClient {
+func NewHostOrchestratorClient(url string) *HostOrchestratorClientImpl {
 	return &HostOrchestratorClientImpl{
 		HTTPHelper: HTTPHelper{
 			Client:       http.DefaultClient,
@@ -456,6 +463,16 @@ func (c *HostOrchestratorClientImpl) CreateSnapshot(groupName, instanceName stri
 		return nil, err
 	}
 	return res, nil
+}
+
+func (c *HostOrchestratorClientImpl) DeleteSnapshot(id string) error {
+	path := fmt.Sprintf("/snapshots/%s", id)
+	rb := c.HTTPHelper.NewDeleteRequest(path)
+	op := &hoapi.Operation{}
+	if err := rb.JSONResDo(op); err != nil {
+		return err
+	}
+	return c.WaitForOperation(op.Name, nil)
 }
 
 func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
