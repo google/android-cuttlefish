@@ -33,6 +33,6 @@ PRODUCT_MINIMIZE_JAVA_DEBUG_INFO := true
 TARGET_SYSTEM_PROP += device/google/cuttlefish/shared/wear/wearable-1024.prop
 
 # Use the low memory allocator outside of eng builds to save RSS.
-ifneq (,$(filter eng, $(TARGET_BUILD_VARIANT)))
+ifeq (,$(filter eng, $(TARGET_BUILD_VARIANT)))
     MALLOC_LOW_MEMORY := true
 endif
