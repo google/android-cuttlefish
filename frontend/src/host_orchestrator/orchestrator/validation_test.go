@@ -74,3 +74,35 @@ func TestValidateCreateSnapshotRequest(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateStartCVDRequest(t *testing.T) {
+	var inputs = []struct {
+		val   *apiv1.StartCVDRequest
+		fails bool
+	}{
+		{
+			&apiv1.StartCVDRequest{},
+			false,
+		},
+		{
+			&apiv1.StartCVDRequest{SnapshotID: "foo"},
+			false,
+		},
+		{
+			&apiv1.StartCVDRequest{SnapshotID: "~foo"},
+			true,
+		},
+	}
+
+	for _, i := range inputs {
+
+		err := ValidateStartCVDRequest(i.val)
+
+		if i.fails && err == nil {
+			t.Fatalf("expected error, got %s", err)
+		}
+		if !i.fails && err != nil {
+			t.Fatalf("expected <ni>, got %s", err)
+		}
+	}
+}
