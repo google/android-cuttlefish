@@ -14,6 +14,5 @@
 # limitations under the License.
 #
 
-PRODUCT_SOONG_NAMESPACES += external/mesa3d
 
 PRODUCT_PACKAGES += libGLES_mesa
