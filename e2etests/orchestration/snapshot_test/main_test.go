@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -102,6 +103,10 @@ func TestSnapshot(t *testing.T) {
 	if _, err = adbH.ExecShellCommand(cvd.ADBSerial, []string{"stat", tmpFile}); err != nil {
 		t.Fatal(err)
 	}
+
+	if err := deleteSnapshot(srv, snapshotID); err != nil {
+		t.Fatalf("failed to delete snapshot: %s", err)
+	}
 }
 
 func uploadArtifacts(srv hoclient.HostOrchestratorClient) (string, error) {
@@ -166,4 +171,28 @@ func getCVD(srv hoclient.HostOrchestratorClient) (*hoapi.CVD, error) {
 		return nil, errors.New("no cvds found")
 	}
 	return cvds[0], nil
+}
+
+func deleteSnapshot(client hoclient.SnapshotsClient, id string) error {
+	dir := fmt.Sprintf("/var/lib/cuttlefish-common/snapshots/%s", id)
+	if ok, _ := fileExist(dir); !ok {
+		return fmt.Errorf("snapshot dir %s does not exist", dir)
+	}
+	if err := client.DeleteSnapshot(id); err != nil {
+		return err
+	}
+	if ok, _ := fileExist(dir); ok {
+		return fmt.Errorf("snapshot dir %s was not deleted", dir)
+	}
+	return nil
+}
+
+func fileExist(name string) (bool, error) {
+	if _, err := os.Stat(name); err == nil {
+		return true, nil
+	} else if os.IsNotExist(err) {
+		return false, nil
+	} else {
+		return false, err
+	}
 }
