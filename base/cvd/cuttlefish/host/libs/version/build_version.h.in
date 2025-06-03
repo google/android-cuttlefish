@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef BUILD_VERSION_H
-#define BUILD_VERSION_H
+#pragma once
 
 #include <string>
 
-namespace android {
-namespace build {
+namespace cuttlefish {
 
-std::string GetBuildNumber() {
+std::string GetVcsId() {
   return "@VCS_TAG@";
 }
 
@@ -30,7 +28,4 @@ std::string GetCuttlefishCommonVersion() {
   return "@CF_VER_TAG@";
 }
 
-} // namespace build
-} // namespace android
-
-#endif  // BUILD_VERSION_H
+} // namespace cuttlefish

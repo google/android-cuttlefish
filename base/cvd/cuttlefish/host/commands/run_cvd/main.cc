@@ -102,7 +102,7 @@ class CuttlefishEnvironment : public DiagnosticInformation {
         // version scheme. Currently this only reports the Build Number of
         // run_cvd and it is possible for other host binaries to be from
         // different versions.
-        "Launcher Build ID: " + android::build::GetBuildNumber(),
+        "Launcher Build ID: " + GetVcsId(),
     };
   }
 
