@@ -135,6 +135,15 @@ DiskBuilder DiskBuilder::ResumeIfPossible(bool resume_if_possible) && {
   return *this;
 }
 
+DiskBuilder& DiskBuilder::ReadOnly(bool read_only) & {
+  read_only_ = read_only;
+  return *this;
+}
+DiskBuilder DiskBuilder::ReadOnly(bool read_only) && {
+  read_only_ = read_only;
+  return *this;
+}
+
 Result<std::string> DiskBuilder::TextConfig() {
   std::ostringstream disk_conf;
 
@@ -203,7 +212,8 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
     CF_EXPECT(!footer_path_.empty(), "No footer path");
     CreateCompositeDisk(partitions_, AbsolutePath(header_path_),
                         AbsolutePath(footer_path_),
-                        AbsolutePath(composite_disk_path_));
+                        AbsolutePath(composite_disk_path_),
+                        read_only_);
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.

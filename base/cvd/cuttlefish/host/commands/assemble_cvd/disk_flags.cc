@@ -305,19 +305,16 @@ std::vector<ImagePartition> chromeos_composite_disk_config(
       .label = "STATE",
       .image_file_path = AbsolutePath(instance.chromeos_state_image()),
       .type = kLinuxFilesystem,
-      .read_only = FLAGS_use_overlay,
   });
   partitions.emplace_back(ImagePartition{
       .label = "linux_esp",
       .image_file_path = AbsolutePath(instance.esp_image_path()),
       .type = kEfiSystemPartition,
-      .read_only = FLAGS_use_overlay,
   });
   partitions.emplace_back(ImagePartition{
       .label = "linux_root",
       .image_file_path = AbsolutePath(instance.chromeos_root_image()),
       .type = kLinuxFilesystem,
-      .read_only = FLAGS_use_overlay,
   });
 
   return partitions;
@@ -331,12 +328,10 @@ std::vector<ImagePartition> linux_composite_disk_config(
       .label = "linux_esp",
       .image_file_path = AbsolutePath(instance.esp_image_path()),
       .type = kEfiSystemPartition,
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "linux_root",
       .image_file_path = AbsolutePath(instance.linux_root_image()),
-      .read_only = FLAGS_use_overlay,
   });
 
   return partitions;
@@ -350,7 +345,6 @@ std::vector<ImagePartition> fuchsia_composite_disk_config(
       .label = "fuchsia_esp",
       .image_file_path = AbsolutePath(instance.esp_image_path()),
       .type = kEfiSystemPartition,
-      .read_only = FLAGS_use_overlay,
   });
 
   return partitions;
@@ -363,40 +357,33 @@ std::vector<ImagePartition> android_composite_disk_config(
   partitions.push_back(ImagePartition{
       .label = "misc",
       .image_file_path = AbsolutePath(instance.misc_image()),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_a",
       .image_file_path = AbsolutePath(instance.new_boot_image()),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "boot_b",
       .image_file_path = AbsolutePath(instance.new_boot_image()),
-      .read_only = FLAGS_use_overlay,
   });
   const auto init_boot_path = instance.init_boot_image();
   if (FileExists(init_boot_path)) {
     partitions.push_back(ImagePartition{
         .label = "init_boot_a",
         .image_file_path = AbsolutePath(init_boot_path),
-        .read_only = FLAGS_use_overlay,
     });
     partitions.push_back(ImagePartition{
         .label = "init_boot_b",
         .image_file_path = AbsolutePath(init_boot_path),
-        .read_only = FLAGS_use_overlay,
     });
   }
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_a",
       .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vendor_boot_b",
       .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
-      .read_only = FLAGS_use_overlay,
   });
   auto vbmeta_image = instance.new_vbmeta_image();
   if (!FileExists(vbmeta_image)) {
@@ -405,22 +392,18 @@ std::vector<ImagePartition> android_composite_disk_config(
   partitions.push_back(ImagePartition{
       .label = "vbmeta_a",
       .image_file_path = AbsolutePath(vbmeta_image),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_b",
       .image_file_path = AbsolutePath(vbmeta_image),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_a",
       .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "vbmeta_system_b",
       .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
-      .read_only = FLAGS_use_overlay,
   });
   auto vbmeta_vendor_dlkm_img = instance.new_vbmeta_vendor_dlkm_image();
   if (!FileExists(vbmeta_vendor_dlkm_img)) {
@@ -430,12 +413,10 @@ std::vector<ImagePartition> android_composite_disk_config(
     partitions.push_back(ImagePartition{
         .label = "vbmeta_vendor_dlkm_a",
         .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
-        .read_only = FLAGS_use_overlay,
     });
     partitions.push_back(ImagePartition{
         .label = "vbmeta_vendor_dlkm_b",
         .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
-        .read_only = FLAGS_use_overlay,
     });
   }
   auto vbmeta_system_dlkm_img = instance.new_vbmeta_system_dlkm_image();
@@ -446,12 +427,10 @@ std::vector<ImagePartition> android_composite_disk_config(
     partitions.push_back(ImagePartition{
         .label = "vbmeta_system_dlkm_a",
         .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
-        .read_only = FLAGS_use_overlay,
     });
     partitions.push_back(ImagePartition{
         .label = "vbmeta_system_dlkm_b",
         .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
-        .read_only = FLAGS_use_overlay,
     });
   }
   auto super_image = instance.new_super_image();
@@ -461,7 +440,6 @@ std::vector<ImagePartition> android_composite_disk_config(
   partitions.push_back(ImagePartition{
       .label = "super",
       .image_file_path = AbsolutePath(super_image),
-      .read_only = FLAGS_use_overlay,
   });
   auto data_image = instance.new_data_image();
   if (!FileExists(data_image)) {
@@ -470,12 +448,10 @@ std::vector<ImagePartition> android_composite_disk_config(
   partitions.push_back(ImagePartition{
       .label = "userdata",
       .image_file_path = AbsolutePath(data_image),
-      .read_only = FLAGS_use_overlay,
   });
   partitions.push_back(ImagePartition{
       .label = "metadata",
       .image_file_path = AbsolutePath(instance.metadata_image()),
-      .read_only = FLAGS_use_overlay,
   });
   const auto hibernation_partition_image =
       instance.hibernation_partition_image();
@@ -483,7 +459,6 @@ std::vector<ImagePartition> android_composite_disk_config(
     partitions.push_back(ImagePartition{
         .label = "hibernation",
         .image_file_path = AbsolutePath(hibernation_partition_image),
-        .read_only = FLAGS_use_overlay,
     });
   }
 
@@ -492,7 +467,6 @@ std::vector<ImagePartition> android_composite_disk_config(
     partitions.push_back(ImagePartition{
         .label = "vvmtruststore",
         .image_file_path = AbsolutePath(vvmtruststore_path),
-        .read_only = FLAGS_use_overlay,
     });
   }
 
@@ -504,7 +478,6 @@ std::vector<ImagePartition> android_composite_disk_config(
       partitions.push_back(ImagePartition{
           .label = i > 0 ? "custom_" + std::to_string(i) : "custom",
           .image_file_path = AbsolutePath(custom_partition_paths[i]),
-          .read_only = FLAGS_use_overlay,
       });
     }
   }
@@ -524,7 +497,6 @@ std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
           .label = "android_esp",
           .image_file_path = AbsolutePath(instance.esp_image_path()),
           .type = kEfiSystemPartition,
-          .read_only = FLAGS_use_overlay,
       });
 
   return partitions;
@@ -538,14 +510,12 @@ std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& con
     partitions.push_back(ImagePartition{
         .label = "ap_esp",
         .image_file_path = AbsolutePath(instance.ap_esp_image_path()),
-        .read_only = FLAGS_use_overlay,
     });
   }
 
   partitions.push_back(ImagePartition{
       .label = "ap_rootfs",
       .image_file_path = AbsolutePath(config.ap_rootfs_image()),
-      .read_only = FLAGS_use_overlay,
   });
 
   return partitions;
@@ -576,6 +546,7 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(instance.PerInstancePath("os_composite_disk_config.txt"))
+          .ReadOnly(FLAGS_use_overlay)
           .ResumeIfPossible(FLAGS_resume);
   if (instance.boot_flow() ==
       CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk) {
@@ -591,6 +562,7 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   return DiskBuilder()
+      .ReadOnly(FLAGS_use_overlay)
       .Partitions(GetApCompositeDiskConfig(config, instance))
       .VmManager(config.vm_manager())
       .CrosvmPath(instance.crosvm_binary())
