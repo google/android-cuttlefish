@@ -17,7 +17,7 @@ import (
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
 
-func DownloadHostBugReport(srv hoclient.HostOrchestratorService, group string) error {
+func DownloadHostBugReport(srv hoclient.HostOrchestratorClient, group string) error {
 	// `TEST_UNDECLARED_OUTPUTS_DIR` env var is defined by bazel
 	// https://bazel.build/reference/test-encyclopedia#initial-conditions
 	val, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
@@ -41,7 +41,7 @@ func DownloadHostBugReport(srv hoclient.HostOrchestratorService, group string) e
 	return nil
 }
 
-func UploadAndExtract(srv hoclient.HostOrchestratorService, remoteDir, src string) error {
+func UploadAndExtract(srv hoclient.HostOrchestratorClient, remoteDir, src string) error {
 	if err := srv.UploadFile(remoteDir, src); err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func VerifyLogsEndpoint(srvURL, group, name string) error {
 	return nil
 }
 
-func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorService, dir string) (*hoapi.CVD, error) {
+func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorClient, dir string) (*hoapi.CVD, error) {
 	config := `
   {
     "common": {

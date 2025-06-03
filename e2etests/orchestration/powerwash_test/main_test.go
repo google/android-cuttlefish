@@ -29,7 +29,7 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestPowerwash(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +69,7 @@ func TestPowerwash(t *testing.T) {
 	}
 }
 
-func createDevice(srv hoclient.HostOrchestratorService, dir string) (*hoapi.CVD, error) {
+func createDevice(srv hoclient.HostOrchestratorClient, dir string) (*hoapi.CVD, error) {
 	if err := common.UploadAndExtract(srv, dir, "../artifacts/images.zip"); err != nil {
 		return nil, err
 	}

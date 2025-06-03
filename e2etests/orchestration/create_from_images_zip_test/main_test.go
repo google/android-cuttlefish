@@ -28,7 +28,7 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestCreateInstance(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
