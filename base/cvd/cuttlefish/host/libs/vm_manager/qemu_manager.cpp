@@ -672,7 +672,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   CF_EXPECT(VmManager::kMaxDisks >= disk_num,
             "Provided too many disks (" << disk_num << "), maximum "
                                         << VmManager::kMaxDisks << "supported");
-  auto readonly = instance.protected_vm() ? ",readonly" : "";
   size_t i = 0;
   for (const auto& disk : instance.virtual_disk_paths()) {
     if (instance.vhost_user_block()) {
@@ -698,7 +697,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     } else {
       qemu_cmd.AddParameter("-drive");
       qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
-                            ",aio=threads", readonly);
+                            ",aio=threads");
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(
           "virtio-blk-pci-non-transitional,drive=drive-virtio-disk", i,

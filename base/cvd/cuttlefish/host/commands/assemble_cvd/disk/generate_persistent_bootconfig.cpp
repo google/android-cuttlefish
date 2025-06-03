@@ -38,9 +38,6 @@ namespace cuttlefish {
 Result<void> GeneratePersistentBootconfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.protected_vm()) {
-    return {};
-  }
   //  Cuttlefish for the time being won't be able to support OTA from a
   //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the
   //  device is stopped (via stop_cvd). This is rarely an issue since OTA

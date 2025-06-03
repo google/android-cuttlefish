@@ -1106,14 +1106,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gem5_debug_file(const std::s
   (*Dictionary())[kGem5DebugFile] = gem5_debug_file;
 }
 
-static constexpr char kProtectedVm[] = "protected_vm";
-void CuttlefishConfig::MutableInstanceSpecific::set_protected_vm(bool protected_vm) {
-  (*Dictionary())[kProtectedVm] = protected_vm;
-}
-bool CuttlefishConfig::InstanceSpecific::protected_vm() const {
-  return (*Dictionary())[kProtectedVm].asBool();
-}
-
 static constexpr char kMte[] = "mte";
 void CuttlefishConfig::MutableInstanceSpecific::set_mte(bool mte) {
   (*Dictionary())[kMte] = mte;

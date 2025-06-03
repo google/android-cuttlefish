@@ -26,9 +26,6 @@ namespace cuttlefish {
 
 Result<void> InitializeFactoryResetProtected(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.protected_vm()) {
-    return {};
-  }
   auto frp = instance.factory_reset_protected_path();
   if (FileExists(frp)) {
     return {};

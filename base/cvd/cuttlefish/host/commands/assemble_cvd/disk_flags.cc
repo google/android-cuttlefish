@@ -663,7 +663,7 @@ Result<void> InitializePflash(
 Result<void> InitializeSdCard(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!(instance.use_sdcard() && !instance.protected_vm())) {
+  if (!instance.use_sdcard()) {
     return {};
   }
   if (FileExists(instance.sdcard_path())) {
@@ -1120,13 +1120,11 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       }
     }
 
-    if (!instance.protected_vm()) {
-      os_disk_builder.OverlayPath(instance.PerInstancePath("overlay.img"));
-      CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
-      if (instance.ap_boot_flow() != APBootFlow::None) {
-        ap_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
-        CF_EXPECT(ap_disk_builder.BuildOverlayIfNecessary());
-      }
+    os_disk_builder.OverlayPath(instance.PerInstancePath("overlay.img"));
+    CF_EXPECT(os_disk_builder.BuildOverlayIfNecessary());
+    if (instance.ap_boot_flow() != APBootFlow::None) {
+      ap_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
+      CF_EXPECT(ap_disk_builder.BuildOverlayIfNecessary());
     }
   }
 
