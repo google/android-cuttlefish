@@ -21,9 +21,9 @@
 
 #include <fmt/format.h>
 
-#include "build/version.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
+#include "cuttlefish/host/libs/version/version.h"
 
 namespace cuttlefish {
 
