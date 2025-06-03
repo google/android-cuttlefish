@@ -197,16 +197,19 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   std::vector<std::string> cas_flags;
 
   std::string config_filepath = cas_downloader_flags.cas_config_filepath;
+  Json::Value config_flags;
   if (config_filepath.empty()) {
-    Json::Value config_flags = ConvertToConfigFlags(cas_downloader_flags);
-    cas_flags = CreateCasFlags(downloader_path, config_flags);
+    config_flags = ConvertToConfigFlags(cas_downloader_flags);
   } else {
     std::string config_contents = CF_EXPECT(ReadFileContents(config_filepath));
     Json::Value config = CF_EXPECT(ParseJson(config_contents));
     downloader_path = config[kKeyDownloaderPath].asString();
     prefer_uncompressed = config["prefer-uncompressed"].asBool();
-    cas_flags = CreateCasFlags(downloader_path, config[kKeyFlags]);
+    config_flags = config[kKeyFlags];
   }
+  CF_EXPECT(!downloader_path.empty(),
+            "No cas downloader path provided in flags or config");
+  cas_flags = CreateCasFlags(downloader_path, config_flags);
 
   CF_EXPECTF(FileExists(downloader_path),
              "CAS Downloader binary not found: '{}'", downloader_path);
