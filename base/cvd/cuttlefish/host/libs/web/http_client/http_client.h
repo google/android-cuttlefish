@@ -80,8 +80,6 @@ class HttpClient {
   virtual Result<HttpResponse<std::string>> PostToString(
       const std::string& url, const std::string& data,
       const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<std::string>> DeleteToString(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
 
   // Returns the json object contained in the response's body.
   //
@@ -98,8 +96,6 @@ class HttpClient {
       const std::string& url, const Json::Value& data,
       const std::vector<std::string>& headers = {}) = 0;
   virtual Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<Json::Value>> DeleteToJson(
       const std::string& url, const std::vector<std::string>& headers = {}) = 0;
 
   virtual Result<HttpResponse<std::string>> DownloadToFile(

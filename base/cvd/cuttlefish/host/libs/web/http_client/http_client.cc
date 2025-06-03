@@ -149,12 +149,6 @@ class CurlClient : public HttpClient {
     return DownloadToString(HttpMethod::kPost, url, headers, data_to_write);
   }
 
-  Result<HttpResponse<std::string>> DeleteToString(
-      const std::string& url,
-      const std::vector<std::string>& headers) override {
-    return DownloadToString(HttpMethod::kDelete, url, headers);
-  }
-
   Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
@@ -213,12 +207,6 @@ class CurlClient : public HttpClient {
   Result<HttpResponse<Json::Value>> DownloadToJson(
       const std::string& url, const std::vector<std::string>& headers) override {
     return DownloadToJson(HttpMethod::kGet, url, headers);
-  }
-
-  Result<HttpResponse<Json::Value>> DeleteToJson(
-      const std::string& url,
-      const std::vector<std::string>& headers) override {
-    return DownloadToJson(HttpMethod::kDelete, url, headers);
   }
 
   std::string UrlEscape(const std::string& text) override {
@@ -359,14 +347,6 @@ class ServerErrorRetryClient : public HttpClient {
     return CF_EXPECT(RetryImpl<std::string>(fn));
   }
 
-  Result<HttpResponse<std::string>> DeleteToString(
-      const std::string& url, const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() {
-      return inner_client_.DeleteToString(url, headers);
-    };
-    return CF_EXPECT(RetryImpl<std::string>(fn));
-  }
-
   Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const Json::Value& data,
       const std::vector<std::string>& headers) override {
@@ -409,13 +389,6 @@ class ServerErrorRetryClient : public HttpClient {
       return inner_client_.DownloadToCallback(cb, url, hdrs);
     };
     return CF_EXPECT(RetryImpl<void>(fn));
-  }
-
-  Result<HttpResponse<Json::Value>> DeleteToJson(
-      const std::string& url,
-      const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() { return inner_client_.DeleteToJson(url, headers); };
-    return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
   std::string UrlEscape(const std::string& text) override {
