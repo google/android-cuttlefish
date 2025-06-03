@@ -22,7 +22,7 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
-var snapshotIDRegex = regexp.MustCompile(`^([a-z0-9\-_]+)$`)
+var snapshotIDRegex = regexp.MustCompile(`^([-_a-z0-9]+)$`)
 
 func ValidateSnapshotID(v string) error {
 	if !snapshotIDRegex.MatchString(v) {
