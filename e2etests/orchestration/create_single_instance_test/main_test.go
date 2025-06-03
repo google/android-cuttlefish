@@ -30,7 +30,7 @@ const baseURL = "http://0.0.0.0:2080"
 func TestCreateSingleInstance(t *testing.T) {
 	buildID := os.Getenv("BUILD_ID")
 	buildTarget := os.Getenv("BUILD_TARGET")
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	fetchReq := &hoapi.FetchArtifactsRequest{
 		AndroidCIBundle: &hoapi.AndroidCIBundle{
 			Build: &hoapi.AndroidCIBuild{

@@ -36,7 +36,7 @@ const baseURL = "http://0.0.0.0:2080"
 // parameters, however the HO continues to support them for backwards
 // compatibility reasons.
 func TestUploadFileUseChunkNumber(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	dir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)

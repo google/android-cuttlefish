@@ -73,7 +73,7 @@ type CreateBugReportOpts struct {
 }
 
 // Manage cuttlefish instances.
-type InstancesService interface {
+type InstancesClient interface {
 	// Lists currently running devices.
 	ListCVDs() ([]*hoapi.CVD, error)
 	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
@@ -88,7 +88,7 @@ type InstancesService interface {
 }
 
 // Manage artifacts created by the user.
-type UserArtifactsService interface {
+type UserArtifactsClient interface {
 	// Creates a directory in the host where user artifacts can be uploaded to.
 	CreateUploadDir() (string, error)
 	// Uploads file into the given directory.
@@ -99,7 +99,7 @@ type UserArtifactsService interface {
 }
 
 // Operations that could be performend on a given instance.
-type InstanceOperationsService interface {
+type InstanceOperationsClient interface {
 	// Create cvd bugreport.
 	CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error
 	// Powerwash the device.
@@ -115,7 +115,7 @@ type InstanceOperationsService interface {
 }
 
 // Manage direct two-way communication channels with remote instances.
-type InstanceConnectionsService interface {
+type InstanceConnectionsClient interface {
 	// Creates a webRTC connection to a device running in this host.
 	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
 	// Connect to ADB WebSocket endpoint.
@@ -123,18 +123,18 @@ type InstanceConnectionsService interface {
 }
 
 // Manage the `operation` resource in the HO API used to track lengthy actions.
-type OperationsService interface {
+type OperationsClient interface {
 	// Wait for an operation, `result` will be populated with the relevant operation's result object.
 	WaitForOperation(name string, result any) error
 }
 
 // A client to the host orchestrator service running in a remote host.
-type HostOrchestratorService interface {
-	InstancesService
-	UserArtifactsService
-	InstanceOperationsService
-	InstanceConnectionsService
-	OperationsService
+type HostOrchestratorClient interface {
+	InstancesClient
+	UserArtifactsClient
+	InstanceOperationsClient
+	InstanceConnectionsClient
+	OperationsClient
 }
 
 const (
@@ -145,8 +145,8 @@ const (
 	HTTPHeaderCOInjectBuildAPICreds = "X-Cutf-Cloud-Orchestrator-Inject-BuildAPI-Creds"
 )
 
-func NewHostOrchestratorService(url string) HostOrchestratorService {
-	return &HostOrchestratorServiceImpl{
+func NewHostOrchestratorClient(url string) HostOrchestratorClient {
+	return &HostOrchestratorClientImpl{
 		HTTPHelper: HTTPHelper{
 			Client:       http.DefaultClient,
 			RootEndpoint: url,
@@ -154,12 +154,12 @@ func NewHostOrchestratorService(url string) HostOrchestratorService {
 	}
 }
 
-type HostOrchestratorServiceImpl struct {
+type HostOrchestratorClientImpl struct {
 	HTTPHelper HTTPHelper
 	ProxyURL   string
 }
 
-func (c *HostOrchestratorServiceImpl) getInfraConfig() (*opapi.InfraConfig, error) {
+func (c *HostOrchestratorClientImpl) getInfraConfig() (*opapi.InfraConfig, error) {
 	var res opapi.InfraConfig
 	if err := c.HTTPHelper.NewGetRequest("/infra_config").JSONResDo(&res); err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func (c *HostOrchestratorServiceImpl) getInfraConfig() (*opapi.InfraConfig, erro
 	return &res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error) {
+func (c *HostOrchestratorClientImpl) ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error) {
 	polledConn, err := c.createPolledConnection(device)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create polled connection: %w", err)
@@ -189,7 +189,7 @@ func (c *HostOrchestratorServiceImpl) ConnectWebRTC(device string, observer wcli
 	return conn, nil
 }
 
-func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*websocket.Conn, error) {
+func (c *HostOrchestratorClientImpl) ConnectADBWebSocket(device string) (*websocket.Conn, error) {
 	// Connect to the ADB proxy WebSocket endpoint for the device under the host.
 	//   wss://127.0.0.1:8080/v1/zones/local/hosts/.../devices/cvd-1-1/adb
 	dialer := websocket.Dialer{
@@ -232,7 +232,7 @@ func (c *HostOrchestratorServiceImpl) ConnectADBWebSocket(device string) (*webso
 	return wsConn, nil
 }
 
-func (c *HostOrchestratorServiceImpl) initHandling(connID string, iceServers []webrtc.ICEServer, logger io.Writer) wclient.Signaling {
+func (c *HostOrchestratorClientImpl) initHandling(connID string, iceServers []webrtc.ICEServer, logger io.Writer) wclient.Signaling {
 	sendCh := make(chan any)
 	recvCh := make(chan map[string]any)
 
@@ -257,7 +257,7 @@ const (
 	maxConsecutiveErrors = 10
 )
 
-func (c *HostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, connID string, stopCh chan bool, logger io.Writer) {
+func (c *HostOrchestratorClientImpl) webRTCPoll(sinkCh chan map[string]any, connID string, stopCh chan bool, logger io.Writer) {
 	start := 0
 	pollInterval := initialPollInterval
 	errCount := 0
@@ -302,7 +302,7 @@ func (c *HostOrchestratorServiceImpl) webRTCPoll(sinkCh chan map[string]any, con
 	}
 }
 
-func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID string, stopPollCh chan bool, logger io.Writer) {
+func (c *HostOrchestratorClientImpl) webRTCForward(srcCh chan any, connID string, stopPollCh chan bool, logger io.Writer) {
 	for {
 		msg, open := <-srcCh
 		if !open {
@@ -329,7 +329,7 @@ func (c *HostOrchestratorServiceImpl) webRTCForward(srcCh chan any, connID strin
 	}
 }
 
-func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*opapi.NewConnReply, error) {
+func (c *HostOrchestratorClientImpl) createPolledConnection(device string) (*opapi.NewConnReply, error) {
 	var res opapi.NewConnReply
 	rb := c.HTTPHelper.NewPostRequest("/polled_connections", &opapi.NewConnMsg{DeviceId: device})
 	if err := rb.JSONResDo(&res); err != nil {
@@ -338,7 +338,7 @@ func (c *HostOrchestratorServiceImpl) createPolledConnection(device string) (*op
 	return &res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) WaitForOperation(name string, res any) error {
+func (c *HostOrchestratorClientImpl) WaitForOperation(name string, res any) error {
 	retryOpts := RetryOptions{
 		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
 		RetryDelay:  5 * time.Second,
@@ -347,12 +347,12 @@ func (c *HostOrchestratorServiceImpl) WaitForOperation(name string, res any) err
 	return c.waitForOperation(name, res, retryOpts)
 }
 
-func (c *HostOrchestratorServiceImpl) waitForOperation(name string, res any, retryOpts RetryOptions) error {
+func (c *HostOrchestratorClientImpl) waitForOperation(name string, res any, retryOpts RetryOptions) error {
 	path := "/operations/" + name + "/:wait"
 	return c.HTTPHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
 
-func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error) {
+func (c *HostOrchestratorClientImpl) FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error) {
 	var op hoapi.Operation
 	rb := c.HTTPHelper.NewPostRequest("/artifacts", req)
 	creds.ApplyToHTTPRequest(rb)
@@ -367,7 +367,7 @@ func (c *HostOrchestratorServiceImpl) FetchArtifacts(req *hoapi.FetchArtifactsRe
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error) {
+func (c *HostOrchestratorClientImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error) {
 	op := &hoapi.Operation{}
 	rb := c.HTTPHelper.NewPostRequest("/cvds", req)
 	creds.ApplyToHTTPRequest(rb)
@@ -377,7 +377,7 @@ func (c *HostOrchestratorServiceImpl) CreateCVDOp(req *hoapi.CreateCVDRequest, c
 	return op, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error) {
+func (c *HostOrchestratorClientImpl) CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error) {
 	op, err := c.CreateCVDOp(req, creds)
 	if err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ func (c *HostOrchestratorServiceImpl) CreateCVD(req *hoapi.CreateCVDRequest, cre
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) DeleteCVD(id string) error {
+func (c *HostOrchestratorClientImpl) DeleteCVD(id string) error {
 	var op hoapi.Operation
 	rb := c.HTTPHelper.NewDeleteRequest("/cvds/" + id)
 	if err := rb.JSONResDo(&op); err != nil {
@@ -407,7 +407,7 @@ func (c *HostOrchestratorServiceImpl) DeleteCVD(id string) error {
 	return nil
 }
 
-func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
+func (c *HostOrchestratorClientImpl) ListCVDs() ([]*hoapi.CVD, error) {
 	var res hoapi.ListCVDsResponse
 	if err := c.HTTPHelper.NewGetRequest("/cvds").JSONResDo(&res); err != nil {
 		return nil, err
@@ -415,31 +415,31 @@ func (c *HostOrchestratorServiceImpl) ListCVDs() ([]*hoapi.CVD, error) {
 	return res.CVDs, nil
 }
 
-func (c *HostOrchestratorServiceImpl) Powerwash(groupName, instanceName string) error {
+func (c *HostOrchestratorClientImpl) Powerwash(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:powerwash", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorServiceImpl) Powerbtn(groupName, instanceName string) error {
+func (c *HostOrchestratorClientImpl) Powerbtn(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:powerbtn", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorServiceImpl) Stop(groupName, instanceName string) error {
+func (c *HostOrchestratorClientImpl) Stop(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorServiceImpl) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
+func (c *HostOrchestratorClientImpl) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:start", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, req)
 	return c.doEmptyResponseRequest(rb)
 }
 
-func (c *HostOrchestratorServiceImpl) CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error) {
+func (c *HostOrchestratorClientImpl) CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error) {
 	path := fmt.Sprintf("/cvds/%s/%s/snapshots", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, req)
 	op := &hoapi.Operation{}
@@ -458,7 +458,7 @@ func (c *HostOrchestratorServiceImpl) CreateSnapshot(groupName, instanceName str
 	return res, nil
 }
 
-func (c *HostOrchestratorServiceImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
+func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
 	op := &hoapi.Operation{}
 	if err := rb.JSONResDo(op); err != nil {
 		return err
@@ -470,7 +470,7 @@ func (c *HostOrchestratorServiceImpl) doEmptyResponseRequest(rb *HTTPRequestBuil
 	return nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
+func (c *HostOrchestratorClientImpl) CreateUploadDir() (string, error) {
 	uploadDir := &hoapi.UploadDirectory{}
 	if err := c.HTTPHelper.NewPostRequest("/userartifacts", nil).JSONResDo(uploadDir); err != nil {
 		return "", err
@@ -478,7 +478,7 @@ func (c *HostOrchestratorServiceImpl) CreateUploadDir() (string, error) {
 	return uploadDir.Name, nil
 }
 
-func (c *HostOrchestratorServiceImpl) UploadFile(uploadDir string, filename string) error {
+func (c *HostOrchestratorClientImpl) UploadFile(uploadDir string, filename string) error {
 	return c.UploadFileWithOptions(uploadDir, filename, DefaultUploadOptions())
 }
 
@@ -495,7 +495,7 @@ func DefaultUploadOptions() UploadOptions {
 	}
 }
 
-func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, filename string, uploadOpts UploadOptions) error {
+func (c *HostOrchestratorClientImpl) UploadFileWithOptions(uploadDir string, filename string, uploadOpts UploadOptions) error {
 	if uploadOpts.ChunkSizeBytes == 0 {
 		panic("ChunkSizeBytes value cannot be zero")
 	}
@@ -514,7 +514,7 @@ func (c *HostOrchestratorServiceImpl) UploadFileWithOptions(uploadDir string, fi
 	return uploader.Upload([]string{filename})
 }
 
-func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
+func (c *HostOrchestratorClientImpl) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
 	result := &hoapi.Operation{}
 	rb := c.HTTPHelper.NewPostRequest("/userartifacts/"+uploadDir+"/"+filename+"/:extract", nil)
 	if err := rb.JSONResDo(result); err != nil {
@@ -523,7 +523,7 @@ func (c *HostOrchestratorServiceImpl) ExtractFile(uploadDir string, filename str
 	return result, nil
 }
 
-func (c *HostOrchestratorServiceImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
+func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
 	op := &hoapi.Operation{}
 	path := "/cvds/" + group + "/:bugreport"
 	if opts.IncludeADBBugReport {

@@ -31,7 +31,7 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestBugReport(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +60,7 @@ func TestBugReport(t *testing.T) {
 	}
 }
 
-func createBugReport(srv hoclient.HostOrchestratorService, group string) (string, error) {
+func createBugReport(srv hoclient.HostOrchestratorClient, group string) (string, error) {
 	dir, err := os.MkdirTemp("", "bugreport_test")
 	if err != nil {
 		return "", err

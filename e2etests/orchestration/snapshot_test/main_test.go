@@ -32,7 +32,7 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestSnapshot(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	uploadDir, err := uploadArtifacts(srv)
 	if err != nil {
 		t.Fatal(err)
@@ -104,7 +104,7 @@ func TestSnapshot(t *testing.T) {
 	}
 }
 
-func uploadArtifacts(srv hoclient.HostOrchestratorService) (string, error) {
+func uploadArtifacts(srv hoclient.HostOrchestratorClient) (string, error) {
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		return "", err
@@ -118,7 +118,7 @@ func uploadArtifacts(srv hoclient.HostOrchestratorService) (string, error) {
 	return uploadDir, nil
 }
 
-func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir string) (*hoapi.CVD, error) {
+func createDevice(srv hoclient.HostOrchestratorClient, group_name, artifactsDir string) (*hoapi.CVD, error) {
 	config := `
   {
     "common": {
@@ -157,7 +157,7 @@ func createDevice(srv hoclient.HostOrchestratorService, group_name, artifactsDir
 	return res.CVDs[0], nil
 }
 
-func getCVD(srv hoclient.HostOrchestratorService) (*hoapi.CVD, error) {
+func getCVD(srv hoclient.HostOrchestratorClient) (*hoapi.CVD, error) {
 	cvds, err := srv.ListCVDs()
 	if err != nil {
 		return nil, err

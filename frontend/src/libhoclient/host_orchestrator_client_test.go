@@ -34,7 +34,7 @@ func TestUploadFileChunkSizeBytesIsZeroPanic(t *testing.T) {
 		}
 	}()
 
-	srv := NewHostOrchestratorService("https://test.com")
+	srv := NewHostOrchestratorClient("https://test.com")
 
 	srv.UploadFileWithOptions("dir", "baz", UploadOptions{ChunkSizeBytes: 0})
 }
@@ -54,7 +54,7 @@ func TestUploadFileExponentialBackoff(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	srv := NewHostOrchestratorService(ts.URL)
+	srv := NewHostOrchestratorClient(ts.URL)
 
 	err := srv.UploadFileWithOptions("dir", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
@@ -88,7 +88,7 @@ func TestUploadFileExponentialBackoffReachedElapsedTime(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	srv := NewHostOrchestratorService(ts.URL)
+	srv := NewHostOrchestratorClient(ts.URL)
 
 	err := srv.UploadFileWithOptions("dir", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
@@ -122,7 +122,7 @@ func TestCreateCVD(t *testing.T) {
 		}
 	}))
 	defer ts.Close()
-	srv := NewHostOrchestratorService(ts.URL)
+	srv := NewHostOrchestratorClient(ts.URL)
 	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
 
 	res, err := srv.CreateCVD(req, &AccessTokenBuildAPICreds{})
@@ -156,7 +156,7 @@ func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 		}
 	}))
 	defer ts.Close()
-	srv := NewHostOrchestratorService(ts.URL)
+	srv := NewHostOrchestratorClient(ts.URL)
 	req := &hoapi.CreateCVDRequest{EnvConfig: map[string]interface{}{}}
 
 	res, err := srv.CreateCVD(req, &AccessTokenBuildAPICreds{AccessToken: token, UserProjectID: projectID})

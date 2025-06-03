@@ -51,7 +51,7 @@ const envConfigStr = `
 //
 // No outgoing request is made against the Build API.
 func TestGCECredentials(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	envConfig := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(envConfigStr), &envConfig); err != nil {
 		t.Fatal(err)

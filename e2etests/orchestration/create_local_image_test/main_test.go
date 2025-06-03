@@ -34,7 +34,7 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestInstance(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
@@ -106,7 +106,7 @@ func TestInstance(t *testing.T) {
 	}
 }
 
-func uploadImages(srv hoclient.HostOrchestratorService, remoteDir, imgsZipSrc string) error {
+func uploadImages(srv hoclient.HostOrchestratorClient, remoteDir, imgsZipSrc string) error {
 	outDir := "/tmp/aosp_cf_x86_64_phone-img-12198634"
 	if err := runCmd("unzip", "-d", outDir, imgsZipSrc); err != nil {
 		return err

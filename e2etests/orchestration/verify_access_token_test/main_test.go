@@ -49,11 +49,11 @@ func TestVerifyAccessToken(t *testing.T) {
 	}
 	cases := []struct {
 		name string
-		f    func(srv hoclient.HostOrchestratorService, token string)
+		f    func(srv hoclient.HostOrchestratorClient, token string)
 	}{
 		{
 			name: "FetchArtifacts",
-			f: func(srv hoclient.HostOrchestratorService, token string) {
+			f: func(srv hoclient.HostOrchestratorClient, token string) {
 				r := &hoapi.FetchArtifactsRequest{
 					AndroidCIBundle: &hoapi.AndroidCIBundle{
 						Build: &hoapi.AndroidCIBuild{
@@ -68,7 +68,7 @@ func TestVerifyAccessToken(t *testing.T) {
 		},
 		{
 			name: "CreateCVDWithEnvConfig",
-			f: func(srv hoclient.HostOrchestratorService, token string) {
+			f: func(srv hoclient.HostOrchestratorClient, token string) {
 				config := `
                   {
                     "instances": [
@@ -94,7 +94,7 @@ func TestVerifyAccessToken(t *testing.T) {
 			},
 		},
 	}
-	srv := hoclient.NewHostOrchestratorService(baseURL)
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	for _, c := range cases {
 		state.ReceivedAccessToken = ""
 
