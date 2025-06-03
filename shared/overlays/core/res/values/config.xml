@@ -70,4 +70,10 @@
     <string name="config_oem_enabled_satellite_s2cell_file">/vendor/etc/telephony/sats2.dat</string>
     <!-- The absolute path to the satellite config file. -->
     <string name="satellite_access_config_file">/vendor/etc/telephony/satellite_access_config.json</string>
+	<!-- The package name of the app to handle oem-enabled satellite SOS messaging. -->
+    <string name="config_oem_enabled_satellite_sos_handover_app">com.google.android.apps.stargate;com.google.android.apps.stargate.questionnaire.QuestionnaireHomeActivity</string>
+    <!-- The intent action to handle oem-enabled satellite SOS messaging. -->
+    <string name="config_satellite_emergency_handover_intent_action">com.google.android.apps.stargate.ACTION_ESOS_QUESTIONNAIRE</string>
+    <!-- The intent action to handle esp loopback eSOS messaging. -->
+    <string name="config_satellite_test_with_esp_replies_intent_action">com.google.android.apps.stargate.ACTION_ESOS_QUESTIONNAIRE_TEST_WITH_ESP_REPLIES</string>
 </resources>
