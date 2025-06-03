@@ -72,59 +72,69 @@ type CreateBugReportOpts struct {
 	IncludeADBBugReport bool
 }
 
-// A client to the host orchestrator service running in a remote host.
-type HostOrchestratorService interface {
+// Manage cuttlefish instances.
+type InstancesService interface {
 	// Lists currently running devices.
 	ListCVDs() ([]*hoapi.CVD, error)
-
-	// Creates a directory in the host where user artifacts can be uploaded to.
-	CreateUploadDir() (string, error)
-
-	// Uploads file into the given directory.
-	UploadFile(uploadDir string, filename string) error
-	UploadFileWithOptions(uploadDir string, filename string, options UploadOptions) error
-
-	// Extracts a compressed file.
-	ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error)
-
+	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
+	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
+	FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error)
 	// Create a new device with artifacts from the build server or previously uploaded by the user.
 	// If not empty, the provided credentials will be used to download necessary artifacts from the build api.
 	CreateCVD(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.CreateCVDResponse, error)
 	CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error)
-
 	// Deletes an existing cvd instance.
 	DeleteCVD(id string) error
+}
 
-	// Calls cvd fetch in the remote host, the downloaded artifacts can be used to create a CVD later.
-	// If not empty, the provided credentials will be used by the host orchestrator to access the build api.
-	FetchArtifacts(req *hoapi.FetchArtifactsRequest, creds BuildAPICreds) (*hoapi.FetchArtifactsResponse, error)
+// Manage artifacts created by the user.
+type UserArtifactsService interface {
+	// Creates a directory in the host where user artifacts can be uploaded to.
+	CreateUploadDir() (string, error)
+	// Uploads file into the given directory.
+	UploadFile(uploadDir string, filename string) error
+	UploadFileWithOptions(uploadDir string, filename string, options UploadOptions) error
+	// Extracts a compressed file.
+	ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error)
+}
 
-	// Creates a webRTC connection to a device running in this host.
-	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
-
-	// Connect to ADB WebSocket endpoint.
-	ConnectADBWebSocket(device string) (*websocket.Conn, error)
-
-	// Wait for an operation, `result` will be populated with the relevant operation's result object.
-	WaitForOperation(name string, result any) error
-
+// Operations that could be performend on a given instance.
+type InstanceOperationsService interface {
 	// Create cvd bugreport.
 	CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error
-
 	// Powerwash the device.
 	Powerwash(groupName, instanceName string) error
-
 	// Stop the device.
 	Stop(groupName, instanceName string) error
-
 	// Press power button.
 	Powerbtn(groupName, instanceName string) error
-
 	// Start the device.
 	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
-
 	// Create device snapshot.
 	CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error)
+}
+
+// Manage direct two-way communication channels with remote instances.
+type InstanceConnectionsService interface {
+	// Creates a webRTC connection to a device running in this host.
+	ConnectWebRTC(device string, observer wclient.Observer, logger io.Writer, opts ConnectWebRTCOpts) (*wclient.Connection, error)
+	// Connect to ADB WebSocket endpoint.
+	ConnectADBWebSocket(device string) (*websocket.Conn, error)
+}
+
+// Manage the `operation` resource in the HO API used to track lengthy actions.
+type OperationsService interface {
+	// Wait for an operation, `result` will be populated with the relevant operation's result object.
+	WaitForOperation(name string, result any) error
+}
+
+// A client to the host orchestrator service running in a remote host.
+type HostOrchestratorService interface {
+	InstancesService
+	UserArtifactsService
+	InstanceOperationsService
+	InstanceConnectionsService
+	OperationsService
 }
 
 const (
