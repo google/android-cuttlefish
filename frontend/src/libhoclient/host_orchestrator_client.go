@@ -44,6 +44,20 @@ func (e *ApiCallError) Error() string {
 	return str
 }
 
+type StatusCodeError struct {
+	Code int
+}
+
+func (e *StatusCodeError) Error() string {
+	if e.Code >= 400 && e.Code <= 499 {
+		return fmt.Sprintf("client error: status code: %d", e.Code)
+	}
+	if e.Code >= 500 && e.Code <= 599 {
+		return fmt.Sprintf("server error: status code: %d", e.Code)
+	}
+	return fmt.Sprintf("status code: %d", e.Code)
+}
+
 type ConnectWebRTCOpts struct {
 	LocalICEConfig *wclient.ICEConfig
 }
@@ -556,6 +570,48 @@ func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBu
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		return &ApiCallError{ErrorMsg: res.Status}
+	}
+	return nil
+}
+
+// Gather services logs.
+type ServiceLogsClient interface {
+	PullHOLogs(dst io.Writer) error
+}
+
+// Implementation of `ServiceLogsClient` collecting logs via systemd-journal-gatewayd HTTP API.
+// https://www.freedesktop.org/software/systemd/man/latest/systemd-journal-gatewayd.service.html#Supported%20URLs
+type JournalGatewaydClient struct {
+	HTTPHelper HTTPHelper
+	ProxyURL   string
+}
+
+func NewJournalGatewaydClient(url string) *JournalGatewaydClient {
+	return &JournalGatewaydClient{
+		HTTPHelper: HTTPHelper{
+			Client:       http.DefaultClient,
+			RootEndpoint: url,
+		},
+	}
+}
+
+func (c *JournalGatewaydClient) PullHOLogs(dst io.Writer) error {
+	const srvName = "cuttlefish-host_orchestrator.service"
+	path := fmt.Sprintf("/_journal/entries?_SYSTEMD_UNIT=%s", srvName)
+	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+path, nil)
+	if err != nil {
+		return err
+	}
+	res, err := c.HTTPHelper.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
+	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return &StatusCodeError{Code: res.StatusCode}
 	}
 	return nil
 }
