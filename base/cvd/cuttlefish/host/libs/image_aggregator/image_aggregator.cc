@@ -122,7 +122,7 @@ struct __attribute__((packed)) GptEnd {
 static_assert(sizeof(GptEnd) % kSectorSize == 0);
 
 struct PartitionInfo {
-  MultipleImagePartition source;
+  ImagePartition source;
   std::uint64_t size;
   std::uint64_t offset;
 
@@ -233,15 +233,6 @@ void u16cpy(std::uint16_t* dest, std::uint16_t* src, std::size_t size) {
   }
 }
 
-MultipleImagePartition ToMultipleImagePartition(ImagePartition source) {
-  return MultipleImagePartition{
-      .label = source.label,
-      .image_file_paths = std::vector{source.image_file_path},
-      .type = source.type,
-      .read_only = source.read_only,
-  };
-}
-
 void SetRandomUuid(std::uint8_t uuid[16]) {
   // https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
   std::random_device dev;
@@ -265,7 +256,7 @@ private:
   std::vector<PartitionInfo> partitions_;
   std::uint64_t next_disk_offset_;
 
-  static const std::uint8_t* GetPartitionGUID(MultipleImagePartition source) {
+  static const std::uint8_t* GetPartitionGUID(ImagePartition source) {
     // Due to some endianness mismatch in e2fsprogs GUID vs GPT, the GUIDs are
     // rearranged to make the right GUIDs appear in gdisk
     switch (source.type) {
@@ -289,14 +280,7 @@ public:
   CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
 
   void AppendPartition(ImagePartition source) {
-    AppendPartition(ToMultipleImagePartition(source));
-  }
-
-  void AppendPartition(MultipleImagePartition source) {
-    uint64_t size = 0;
-    for (const auto& path : source.image_file_paths) {
-      size += ExpandedStorageSize(path);
-    }
+    uint64_t size = ExpandedStorageSize(source.image_file_path);
     auto aligned_size = AlignToPartitionSize(size);
     CHECK(size == aligned_size || source.read_only)
         << "read-write partition " << source.label
@@ -329,16 +313,13 @@ public:
     header->set_offset(0);
 
     for (auto& partition : partitions_) {
-      uint64_t size = 0;
-      for (const auto& path : partition.source.image_file_paths) {
-        ComponentDisk* component = disk.add_component_disks();
-        component->set_file_path(path);
-        component->set_offset(partition.offset + size);
-        component->set_read_write_capability(
-            partition.source.read_only ? ReadWriteCapability::READ_ONLY
-                                       : ReadWriteCapability::READ_WRITE);
-        size += ExpandedStorageSize(path);
-      }
+      ComponentDisk* component = disk.add_component_disks();
+      component->set_file_path(partition.source.image_file_path);
+      component->set_offset(partition.offset);
+      component->set_read_write_capability(
+          partition.source.read_only ? ReadWriteCapability::READ_ONLY
+                                     : ReadWriteCapability::READ_WRITE);
+      uint64_t size = ExpandedStorageSize(partition.source.image_file_path);
       CHECK(partition.size == size);
       // When partition's aligned size differs from its (unaligned) size
       // reading the disk within the guest os would fail due to the gap.
@@ -526,18 +507,7 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& footer_file,
                          const std::string& output_composite_path) {
   DeAndroidSparse(partitions);
-  std::vector<MultipleImagePartition> multiple_image_partitions;
-  for (const auto& partition : partitions) {
-    multiple_image_partitions.push_back(ToMultipleImagePartition(partition));
-  }
-  return CreateCompositeDisk(std::move(multiple_image_partitions), header_file,
-                             footer_file, output_composite_path);
-}
 
-void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path) {
   CompositeDiskBuilder builder;
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
