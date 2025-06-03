@@ -11,8 +11,6 @@ cc_library(
     hdrs = ["version.h"],
     copts = COPTS,
     deps = [
-        "//cuttlefish/host/commands/cvd/utils:common",
-        "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/version",
         "@fmt",
     ],

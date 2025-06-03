@@ -21,23 +21,20 @@
 
 #include <fmt/format.h>
 
-#include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/version/version.h"
 
 namespace cuttlefish {
 
 std::string GetVersionString() {
   std::stringstream result;
-  const std::string version = android::build::GetCuttlefishCommonVersion();
+  const std::string version = GetCuttlefishCommonVersion();
   if (!version.empty()) {
     result << fmt::format("version: {}\n", version);
   }
-  const std::string build = android::build::GetBuildNumber();
-  if (!build.empty()) {
-    result << fmt::format("build: {}\n", build);
+  const std::string version_control_id = GetVcsId();
+  if (!version_control_id.empty()) {
+    result << fmt::format("VCS ID: {}\n", version_control_id);
   }
-  result << fmt::format("crc32: {}\n", FileCrc(kServerExecPath));
   return result.str();
 }
 
