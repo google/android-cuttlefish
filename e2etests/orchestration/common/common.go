@@ -166,3 +166,25 @@ func runCmd(name string, args ...string) (string, error) {
 	}
 	return string(stdoutStderr), nil
 }
+
+func CollectHOLogs(baseURL string) error {
+	// `TEST_UNDECLARED_OUTPUTS_DIR` env var is defined by bazel
+	// https://bazel.build/reference/test-encyclopedia#initial-conditions
+	val, ok := os.LookupEnv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if !ok {
+		return errors.New("`TEST_UNDECLARED_OUTPUTS_DIR` was not found")
+	}
+	filename := filepath.Join(val, "host_orchestrator.log")
+	f, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	client := hoclient.NewJournalGatewaydClient(baseURL)
+	if err := client.PullHOLogs(f); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return nil
+}

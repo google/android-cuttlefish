@@ -18,6 +18,7 @@ import (
 	"archive/zip"
 	"errors"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -32,6 +33,11 @@ const baseURL = "http://0.0.0.0:2080"
 
 func TestBugReport(t *testing.T) {
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
+	t.Cleanup(func() {
+		if err := common.CollectHOLogs(baseURL); err != nil {
+			log.Printf("failed to collect HO logs: %s", err)
+		}
+	})
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)

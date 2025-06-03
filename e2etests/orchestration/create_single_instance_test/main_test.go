@@ -15,6 +15,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -28,9 +29,14 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestCreateSingleInstance(t *testing.T) {
+	srv := hoclient.NewHostOrchestratorClient(baseURL)
+	t.Cleanup(func() {
+		if err := common.CollectHOLogs(baseURL); err != nil {
+			log.Printf("failed to collect HO logs: %s", err)
+		}
+	})
 	buildID := os.Getenv("BUILD_ID")
 	buildTarget := os.Getenv("BUILD_TARGET")
-	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	fetchReq := &hoapi.FetchArtifactsRequest{
 		AndroidCIBundle: &hoapi.AndroidCIBundle{
 			Build: &hoapi.AndroidCIBuild{
