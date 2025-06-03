@@ -6,6 +6,27 @@ package(
 )
 
 cc_library(
+    name = "android_composite_disk_config",
+    srcs = ["android_composite_disk_config.cc"],
+    hdrs = ["android_composite_disk_config.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "android_composite_disk_config_clang_tidy",
+    srcs = [":android_composite_disk_config"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+
+cc_library(
     name = "factory_reset_protected",
     srcs = ["factory_reset_protected.cc"],
     hdrs = ["factory_reset_protected.h"],

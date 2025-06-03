@@ -188,6 +188,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:gem5_image_unpacker",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
@@ -202,8 +203,8 @@ cc_library(
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
-        "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/vm_manager",
