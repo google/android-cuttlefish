@@ -42,7 +42,7 @@ class CvdVersionHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-    fmt::print(std::cout, GetVersionString());
+    fmt::print(std::cout, GetVersionIds().ToPrettyString());
     return {};
   }
 

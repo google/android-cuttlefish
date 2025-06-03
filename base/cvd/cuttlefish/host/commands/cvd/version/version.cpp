@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/version/version.h"
 
-#include <sstream>
 #include <string>
 
 #include <fmt/format.h>
@@ -25,17 +24,23 @@
 
 namespace cuttlefish {
 
-std::string GetVersionString() {
-  std::stringstream result;
-  const std::string version = GetCuttlefishCommonVersion();
-  if (!version.empty()) {
-    result << fmt::format("version: {}\n", version);
-  }
-  const std::string version_control_id = GetVcsId();
-  if (!version_control_id.empty()) {
-    result << fmt::format("VCS ID: {}\n", version_control_id);
-  }
-  return result.str();
+VersionIdentifiers GetVersionIds() {
+  return VersionIdentifiers{
+      .package = GetCuttlefishCommonVersion(),
+      .version_control = GetVcsId(),
+  };
+}
+
+std::string VersionIdentifiers::ToString() const {
+  const auto version_ids = GetVersionIds();
+  return fmt::format("version: {} | VCS: {}", version_ids.package,
+                     version_ids.version_control);
+}
+
+std::string VersionIdentifiers::ToPrettyString() const {
+  const auto version_ids = GetVersionIds();
+  return fmt::format("version: {}\nVCS: {}\n", version_ids.package,
+                     version_ids.version_control);
 }
 
 }  // namespace cuttlefish

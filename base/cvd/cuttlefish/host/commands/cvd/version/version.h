@@ -20,6 +20,14 @@
 
 namespace cuttlefish {
 
-std::string GetVersionString();
+struct VersionIdentifiers {
+  std::string package;
+  std::string version_control;
+
+  std::string ToString() const;
+  std::string ToPrettyString() const;
+};
+
+VersionIdentifiers GetVersionIds();
 
 }  // namespace cuttlefish
