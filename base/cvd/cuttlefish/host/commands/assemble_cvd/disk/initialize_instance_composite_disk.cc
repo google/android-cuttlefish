@@ -97,6 +97,7 @@ Result<void> InitializeInstanceCompositeDisk(
   };
   auto persistent_disk_builder =
       DiskBuilder()
+          .ReadOnly(false)
           .Partitions(PersistentCompositeDiskConfig(instance))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
@@ -116,6 +117,7 @@ Result<void> InitializeInstanceCompositeDisk(
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
     auto persistent_ap_disk_builder =
         DiskBuilder()
+            .ReadOnly(false)
             .Partitions(PersistentAPCompositeDiskConfig(instance))
             .VmManager(config.vm_manager())
             .CrosvmPath(instance.crosvm_binary())

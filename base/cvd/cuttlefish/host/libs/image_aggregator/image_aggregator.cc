@@ -254,7 +254,8 @@ void SetRandomUuid(std::uint8_t uuid[16]) {
 class CompositeDiskBuilder {
 private:
   std::vector<PartitionInfo> partitions_;
-  std::uint64_t next_disk_offset_;
+  std::uint64_t next_disk_offset_ = sizeof(GptBeginning);
+  bool read_only_ = true;
 
   static const std::uint8_t* GetPartitionGUID(ImagePartition source) {
     // Due to some endianness mismatch in e2fsprogs GUID vs GPT, the GUIDs are
@@ -277,12 +278,12 @@ private:
   }
 
 public:
-  CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
+  CompositeDiskBuilder(bool read_only) : read_only_(read_only) {}
 
   void AppendPartition(ImagePartition source) {
     uint64_t size = ExpandedStorageSize(source.image_file_path);
     auto aligned_size = AlignToPartitionSize(size);
-    CHECK(size == aligned_size || source.read_only)
+    CHECK(size == aligned_size || read_only_)
         << "read-write partition " << source.label
         << " is not aligned to the size of " << (1 << PARTITION_SIZE_SHIFT);
     partitions_.push_back(PartitionInfo{
@@ -317,8 +318,8 @@ public:
       component->set_file_path(partition.source.image_file_path);
       component->set_offset(partition.offset);
       component->set_read_write_capability(
-          partition.source.read_only ? ReadWriteCapability::READ_ONLY
-                                     : ReadWriteCapability::READ_WRITE);
+          read_only_ ? ReadWriteCapability::READ_ONLY
+                     : ReadWriteCapability::READ_WRITE);
       uint64_t size = ExpandedStorageSize(partition.source.image_file_path);
       CHECK(partition.size == size);
       // When partition's aligned size differs from its (unaligned) size
@@ -470,7 +471,7 @@ uint64_t AlignToPartitionSize(uint64_t size) {
 void AggregateImage(const std::vector<ImagePartition>& partitions,
                     const std::string& output_path) {
   DeAndroidSparse(partitions);
-  CompositeDiskBuilder builder;
+  CompositeDiskBuilder builder(false);
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
   }
@@ -505,10 +506,11 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
 void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& header_file,
                          const std::string& footer_file,
-                         const std::string& output_composite_path) {
+                         const std::string& output_composite_path,
+                         bool read_only) {
   DeAndroidSparse(partitions);
 
-  CompositeDiskBuilder builder;
+  CompositeDiskBuilder builder(read_only);
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
   }

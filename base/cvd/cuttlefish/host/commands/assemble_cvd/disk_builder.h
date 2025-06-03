@@ -56,6 +56,9 @@ class DiskBuilder {
   DiskBuilder& ResumeIfPossible(bool resume_if_possible) &;
   DiskBuilder ResumeIfPossible(bool resume_if_possible) &&;
 
+  DiskBuilder& ReadOnly(bool read_only) &;
+  DiskBuilder ReadOnly(bool read_only) &&;
+
   Result<bool> WillRebuildCompositeDisk();
   /** Returns `true` if the file was actually rebuilt. */
   Result<bool> BuildCompositeDiskIfNecessary();
@@ -74,7 +77,8 @@ class DiskBuilder {
   std::string config_path_;
   std::string composite_disk_path_;
   std::string overlay_path_;
-  bool resume_if_possible_;
+  bool resume_if_possible_ = true;
+  bool read_only_ = true;
 };
 
 }  // namespace cuttlefish

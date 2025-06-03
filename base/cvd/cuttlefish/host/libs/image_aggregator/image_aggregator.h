@@ -34,8 +34,7 @@ enum ImagePartitionType {
 struct ImagePartition {
   std::string label;
   std::string image_file_path;
-  ImagePartitionType type;
-  bool read_only;
+  ImagePartitionType type = kLinuxFilesystem;
 };
 
 uint64_t AlignToPartitionSize(uint64_t size);
@@ -63,7 +62,8 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
 void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& header_file,
                          const std::string& footer_file,
-                         const std::string& output_composite_path);
+                         const std::string& output_composite_path,
+                         bool read_only);
 
 /**
  * Generate a qcow overlay backed by a given implementation file.
