@@ -68,8 +68,7 @@ class CvdLoginCommand : public CvdCommandHandler {
     CF_EXPECT(ConsumeFlags(flags, args), "Failed to parse arguments");
 
     CurlGlobalInit init;
-    std::unique_ptr<HttpClient> http_client =
-        HttpClient::CurlClient(NameResolver(), true);
+    std::unique_ptr<HttpClient> http_client = HttpClient::CurlClient(true);
     CF_EXPECT(http_client.get(), "Failed to create a http client");
 
     if (ssh) {

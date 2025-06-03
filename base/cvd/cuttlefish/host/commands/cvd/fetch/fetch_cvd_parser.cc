@@ -114,10 +114,6 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                          .Help("Retry period for pending builds given in "
                                "seconds. Set to 0 to not wait."));
   flags.emplace_back(
-      GflagsCompatFlag("external_dns_resolver",
-                       build_api_flags.external_dns_resolver)
-          .Help("Use an out-of-process mechanism to resolve DNS queries"));
-  flags.emplace_back(
       GflagsCompatFlag("api_base_url", build_api_flags.api_base_url)
           .Help("The base url for API requests to download artifacts from"));
   flags.emplace_back(

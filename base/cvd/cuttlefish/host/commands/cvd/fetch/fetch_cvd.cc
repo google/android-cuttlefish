@@ -351,11 +351,9 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
 }  // namespace
 
 Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
-  auto resolver =
-      flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
   const bool use_logging_debug_function = true;
   std::unique_ptr<HttpClient> curl =
-      HttpClient::CurlClient(resolver, use_logging_debug_function);
+      HttpClient::CurlClient(use_logging_debug_function);
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));
@@ -395,11 +393,9 @@ Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
 namespace {
 
 Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
-  auto resolver =
-      flags.external_dns_resolver ? GetEntDnsResolve : NameResolver();
   const bool use_logging_debug_function = true;
   std::unique_ptr<HttpClient> curl =
-      HttpClient::CurlClient(resolver, use_logging_debug_function);
+      HttpClient::CurlClient(use_logging_debug_function);
   std::unique_ptr<HttpClient> retrying_http_client =
       HttpClient::ServerErrorRetryClient(*curl, 10,
                                          std::chrono::milliseconds(5000));

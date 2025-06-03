@@ -40,12 +40,6 @@ inline constexpr char kDefaultCredentialSource[] = "";
 inline constexpr char kDefaultProjectID[] = "";
 inline constexpr std::chrono::seconds kDefaultWaitRetryPeriod =
     std::chrono::seconds(20);
-inline constexpr bool kDefaultExternalDnsResolver =
-#ifdef __BIONIC__
-    true;
-#else
-    false;
-#endif
 inline constexpr bool kDefaultEnableCaching = true;
 inline constexpr char kDefaultBuildString[] = "";
 inline constexpr bool kDefaultDownloadImgZip = true;
@@ -68,7 +62,6 @@ struct BuildApiFlags {
   std::string credential_source = kDefaultCredentialSource;
   std::string project_id = kDefaultProjectID;
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
-  bool external_dns_resolver = kDefaultExternalDnsResolver;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
   std::size_t max_cache_size_gb = kDefaultCacheSizeGb;

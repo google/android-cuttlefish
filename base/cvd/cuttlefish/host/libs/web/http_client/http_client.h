@@ -58,17 +58,11 @@ struct HttpResponse {
   long http_code;
 };
 
-using NameResolver =
-    std::function<Result<std::vector<std::string>>(const std::string&)>;
-
-Result<std::vector<std::string>> GetEntDnsResolve(const std::string& host);
-
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
 
   static std::unique_ptr<HttpClient> CurlClient(
-      NameResolver resolver = NameResolver(),
       bool use_logging_debug_function = false);
   static std::unique_ptr<HttpClient> ServerErrorRetryClient(
       HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
