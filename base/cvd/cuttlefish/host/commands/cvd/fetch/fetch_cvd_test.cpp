@@ -47,11 +47,15 @@ class FetchCvdTests : public ::testing::Test {
     // Create a fake cas client that outputs the command line when invoked.
     std::string script = fmt::format(
         R"(#!/bin/bash
-if [[ "$1" == "-help" ]]; then
-  echo "Usage of casdownloader:" >&2
-fi
+# leave evidence that the script executed
 rm -rf {CAS_OUTPUT_FILEPATH}
 echo $@ > {CAS_OUTPUT_FILEPATH}
+
+# handle command line flags
+if [[ "$1" == "-help" ]]; then
+  echo "Usage of casdownloader:" >&2
+  exit 0
+fi
 )",
         fmt::arg("CAS_OUTPUT_FILEPATH", cas_output_filepath_));
     cas_downloader_path_ = CreateTempFileWithText(
