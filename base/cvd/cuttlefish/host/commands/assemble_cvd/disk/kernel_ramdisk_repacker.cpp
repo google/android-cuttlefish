@@ -92,13 +92,6 @@ Result<void> RepackSuperAndVbmeta(
 Result<void> RepackKernelRamdisk(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb) {
-  if (instance.protected_vm()) {
-    // If we are booting a protected VM, for now, assume that image repacking
-    // isn't trusted. Repacking requires resigning the image and keys from an
-    // android host aren't trusted.
-    return {};
-  }
-
   CF_EXPECTF(FileHasContent(instance.boot_image()), "File not found: {}",
              instance.boot_image());
   // The init_boot partition is be optional for testing boot.img

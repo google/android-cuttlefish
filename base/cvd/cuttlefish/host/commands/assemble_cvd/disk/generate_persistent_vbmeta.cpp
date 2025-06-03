@@ -56,10 +56,8 @@ Result<void> GeneratePersistentVbmeta(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<InitBootloaderEnvPartition>::Type& /* dependency */,
     AutoSetup<GeneratePersistentBootconfig>::Type& /* dependency */) {
-  if (!instance.protected_vm()) {
-    CF_EXPECT(PrepareVBMetaImage(instance.vbmeta_path(),
-                                 instance.bootconfig_supported()));
-  }
+  CF_EXPECT(PrepareVBMetaImage(instance.vbmeta_path(),
+                               instance.bootconfig_supported()));
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
     CF_EXPECT(PrepareVBMetaImage(instance.ap_vbmeta_path(), false));
   }

@@ -562,10 +562,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                   environment.vhost_user_mac80211_hwsim());
   }
 
-  if (instance.protected_vm()) {
-    crosvm_cmd.Cmd().AddParameter("--protected-vm");
-  }
-
   if (!instance.crosvm_use_balloon()) {
     crosvm_cmd.Cmd().AddParameter("--no-balloon");
   }
@@ -619,9 +615,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
                                         << VmManager::kMaxDisks << "supported");
   size_t disk_i = 0;
   for (const auto& disk : instance.virtual_disk_paths()) {
-    if (instance.protected_vm()) {
-      crosvm_cmd.AddReadOnlyDisk(disk);
-    } else if (instance.vhost_user_block() && disk_i == 2) {
+    if (instance.vhost_user_block() && disk_i == 2) {
       // TODO: b/346855591 - Run on all devices
       auto block = CF_EXPECT(VhostUserBlockDevice(config, disk_i, disk));
       commands.emplace_back(std::move(block.device_cmd));

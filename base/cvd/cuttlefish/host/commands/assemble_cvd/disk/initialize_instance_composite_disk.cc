@@ -47,13 +47,11 @@ std::vector<ImagePartition> PersistentCompositeDiskConfig(
       .label = "vbmeta",
       .image_file_path = AbsolutePath(instance.vbmeta_path()),
   });
-  if (!instance.protected_vm()) {
-    partitions.push_back(ImagePartition{
-        .label = "frp",
-        .image_file_path =
-            AbsolutePath(instance.factory_reset_protected_path()),
-    });
-  }
+  partitions.push_back(ImagePartition{
+      .label = "frp",
+      .image_file_path =
+          AbsolutePath(instance.factory_reset_protected_path()),
+  });
   if (instance.bootconfig_supported()) {
     partitions.push_back(ImagePartition{
         .label = "bootconfig",

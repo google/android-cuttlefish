@@ -463,9 +463,6 @@ DEFINE_string(secure_hals, CF_DEFAULTS_SECURE_HALS,
 DEFINE_vec(use_sdcard, CF_DEFAULTS_USE_SDCARD?"true":"false",
             "Create blank SD-Card image and expose to guest");
 
-DEFINE_vec(protected_vm, fmt::format("{}", CF_DEFAULTS_PROTECTED_VM),
-           "Boot in Protected VM mode");
-
 DEFINE_vec(mte, fmt::format("{}", CF_DEFAULTS_MTE), "Enable MTE");
 
 DEFINE_vec(enable_audio, fmt::format("{}", CF_DEFAULTS_ENABLE_AUDIO),
@@ -1300,8 +1297,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       record_screen));
   std::vector<std::string> gem5_debug_file_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gem5_debug_file));
-  std::vector<bool> protected_vm_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      protected_vm));
   std::vector<bool> mte_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(mte));
   std::vector<bool> enable_kernel_log_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       enable_kernel_log));
@@ -1578,7 +1573,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_record_screen(record_screen_vec[instance_index]);
     instance.set_gem5_debug_file(gem5_debug_file_vec[instance_index]);
-    instance.set_protected_vm(protected_vm_vec[instance_index]);
     instance.set_mte(mte_vec[instance_index]);
     instance.set_enable_kernel_log(enable_kernel_log_vec[instance_index]);
     if (!boot_slot_vec[instance_index].empty()) {
@@ -1874,7 +1868,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     std::vector<std::string> virtual_disk_paths;
 
     bool os_overlay = true;
-    os_overlay &= !protected_vm_vec[instance_index];
     // Gem5 already uses CoW wrappers around disk images
     os_overlay &= vmm_mode != VmmMode::kGem5;
     os_overlay &= FLAGS_use_overlay;
@@ -1885,9 +1878,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       virtual_disk_paths.push_back(const_instance.os_composite_disk_path());
     }
 
-    bool persistent_disk = true;
-    persistent_disk &= !protected_vm_vec[instance_index];
-    persistent_disk &= vmm_mode != VmmMode::kGem5;
+    bool persistent_disk = vmm_mode != VmmMode::kGem5;
     if (persistent_disk) {
 #ifdef __APPLE__
       const std::string persistent_composite_img_base =
@@ -1906,9 +1897,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_use_sdcard(use_sdcard_vec[instance_index]);
 
-    bool sdcard = true;
-    sdcard &= use_sdcard_vec[instance_index];
-    sdcard &= !protected_vm_vec[instance_index];
+    bool sdcard = use_sdcard_vec[instance_index];
     if (sdcard) {
       if (tmp_config_obj.vm_manager() == VmmMode::kQemu) {
         virtual_disk_paths.push_back(const_instance.sdcard_overlay_path());

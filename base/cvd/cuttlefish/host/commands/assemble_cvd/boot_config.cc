@@ -148,9 +148,6 @@ Result<void> PrepareBootEnvImage(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::string& image_path,
     const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
-  if (instance.protected_vm()) {
-    return {};
-  }
   auto tmp_boot_env_image_path = image_path + ".tmp";
   auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
   auto kernel_cmdline =
