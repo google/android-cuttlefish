@@ -92,9 +92,11 @@ cc_library(
     ] + select({
         "@platforms//cpu:x86_64": COPTS_X86_64,
         "@platforms//cpu:arm64": COPTS_ARM64,
+        "//conditions:default": [],
     }),
     deps = [":libffi_include"] + select({
         "@platforms//cpu:x86_64": DEPS_X86_64,
         "@platforms//cpu:arm64": DEPS_ARM64,
+        "//conditions:default": [],
     }),
 )
