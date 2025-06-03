@@ -17,30 +17,6 @@ genrule(
     cmd = "echo $(COMPILATION_MODE) > $@",
 )
 
-genrule(
-    name = "build_version_header",
-    srcs = ["build_version.h.in"],
-    outs = ["build/version.h"],
-    tools= [
-        "replace_with_stamp_values.sh",
-    ],
-    cmd = "$(location replace_with_stamp_values.sh) bazel-out/stable-status.txt $< $@",
-    stamp = 1,
-)
-
-cc_library(
-    name = "libbuildversion",
-    srcs = [
-
-    ],
-    hdrs = [
-        ":build_version_header",
-    ],
-    deps = [
-
-    ],
-)
-
 filegroup(
     name = "clang_tidy_config",
     srcs = [

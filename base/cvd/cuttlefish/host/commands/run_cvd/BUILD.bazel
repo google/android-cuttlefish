@@ -42,7 +42,6 @@ cc_binary(
     copts = COPTS,
     deps = [
         ":reporting",
-        "//:libbuildversion",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -103,6 +102,7 @@ cc_binary(
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/process_monitor",
+        "//cuttlefish/host/libs/version",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@fruit",

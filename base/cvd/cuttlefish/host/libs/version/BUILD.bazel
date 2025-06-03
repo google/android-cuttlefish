@@ -1,0 +1,28 @@
+package_group(
+    name = "android_cuttlefish",
+    packages = [
+        "//...",
+    ],
+)
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+genrule(
+    name = "build_version_header",
+    srcs = ["build_version.h.in"],
+    outs = ["version.h"],
+    tools= [
+        "replace_with_stamp_values.sh",
+    ],
+    cmd = "$(location replace_with_stamp_values.sh) bazel-out/stable-status.txt $< $@",
+    stamp = 1,
+)
+
+cc_library(
+    name = "version",
+    hdrs = [
+        ":build_version_header",
+    ],
+)

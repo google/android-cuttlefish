@@ -27,7 +27,6 @@
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
-#include "build/version.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -80,6 +79,7 @@
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
