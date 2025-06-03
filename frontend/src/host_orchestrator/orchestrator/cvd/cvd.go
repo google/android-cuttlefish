@@ -99,6 +99,7 @@ func (cli *CLI) buildCmd(bin string, args ...string) *exec.Cmd {
 }
 
 func (cli *CLI) runCmd(cmd *exec.Cmd) ([]byte, error) {
+	log.Printf("runCmd: %s", cmd.String())
 	stdoutBuff := &bytes.Buffer{}
 	stdoutMw := io.MultiWriter(stdoutBuff, log.Writer())
 	cmd.Stdout = stdoutMw
