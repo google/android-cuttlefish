@@ -172,10 +172,6 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
     auto value = fetch_config.wait_retry_period_seconds();
     result.emplace_back(GenerateFlag("wait_retry_period", std::move(value)));
   }
-  if (fetch_config.has_external_dns_resolver()) {
-    auto value = fetch_config.external_dns_resolver();
-    result.emplace_back(GenerateFlag("external_dns_resolver", std::move(value)));
-  }
   if (fetch_config.has_keep_downloaded_archives()) {
     auto value = fetch_config.keep_downloaded_archives();
     result.emplace_back(GenerateFlag("keep_downloaded_archives", std::move(value)));

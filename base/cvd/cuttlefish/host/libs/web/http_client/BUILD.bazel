@@ -31,7 +31,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/web/http_client:http_client_util",
         "//libbase",
         "@curl",
