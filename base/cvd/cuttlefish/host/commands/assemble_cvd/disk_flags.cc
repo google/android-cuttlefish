@@ -32,12 +32,13 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
-#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
+#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
@@ -350,145 +351,9 @@ std::vector<ImagePartition> fuchsia_composite_disk_config(
   return partitions;
 }
 
-std::vector<ImagePartition> android_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  partitions.push_back(ImagePartition{
-      .label = "misc",
-      .image_file_path = AbsolutePath(instance.misc_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "boot_a",
-      .image_file_path = AbsolutePath(instance.new_boot_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "boot_b",
-      .image_file_path = AbsolutePath(instance.new_boot_image()),
-  });
-  const auto init_boot_path = instance.init_boot_image();
-  if (FileExists(init_boot_path)) {
-    partitions.push_back(ImagePartition{
-        .label = "init_boot_a",
-        .image_file_path = AbsolutePath(init_boot_path),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "init_boot_b",
-        .image_file_path = AbsolutePath(init_boot_path),
-    });
-  }
-  partitions.push_back(ImagePartition{
-      .label = "vendor_boot_a",
-      .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vendor_boot_b",
-      .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
-  });
-  auto vbmeta_image = instance.new_vbmeta_image();
-  if (!FileExists(vbmeta_image)) {
-    vbmeta_image = instance.vbmeta_image();
-  }
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_a",
-      .image_file_path = AbsolutePath(vbmeta_image),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_b",
-      .image_file_path = AbsolutePath(vbmeta_image),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_system_a",
-      .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_system_b",
-      .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
-  });
-  auto vbmeta_vendor_dlkm_img = instance.new_vbmeta_vendor_dlkm_image();
-  if (!FileExists(vbmeta_vendor_dlkm_img)) {
-    vbmeta_vendor_dlkm_img = instance.vbmeta_vendor_dlkm_image();
-  }
-  if (FileExists(vbmeta_vendor_dlkm_img)) {
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_vendor_dlkm_a",
-        .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_vendor_dlkm_b",
-        .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
-    });
-  }
-  auto vbmeta_system_dlkm_img = instance.new_vbmeta_system_dlkm_image();
-  if (!FileExists(vbmeta_system_dlkm_img)) {
-    vbmeta_system_dlkm_img = instance.vbmeta_system_dlkm_image();
-  }
-  if (FileExists(vbmeta_system_dlkm_img)) {
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_system_dlkm_a",
-        .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_system_dlkm_b",
-        .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
-    });
-  }
-  auto super_image = instance.new_super_image();
-  if (!FileExists(super_image)) {
-    super_image = instance.super_image();
-  }
-  partitions.push_back(ImagePartition{
-      .label = "super",
-      .image_file_path = AbsolutePath(super_image),
-  });
-  auto data_image = instance.new_data_image();
-  if (!FileExists(data_image)) {
-    data_image = instance.data_image();
-  }
-  partitions.push_back(ImagePartition{
-      .label = "userdata",
-      .image_file_path = AbsolutePath(data_image),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "metadata",
-      .image_file_path = AbsolutePath(instance.metadata_image()),
-  });
-  const auto hibernation_partition_image =
-      instance.hibernation_partition_image();
-  if (FileExists(hibernation_partition_image)) {
-    partitions.push_back(ImagePartition{
-        .label = "hibernation",
-        .image_file_path = AbsolutePath(hibernation_partition_image),
-    });
-  }
-
-  const auto vvmtruststore_path = instance.vvmtruststore_path();
-  if (!vvmtruststore_path.empty()) {
-    partitions.push_back(ImagePartition{
-        .label = "vvmtruststore",
-        .image_file_path = AbsolutePath(vvmtruststore_path),
-    });
-  }
-
-  const auto custom_partition_path = instance.custom_partition_path();
-  if (!custom_partition_path.empty()) {
-    auto custom_partition_paths =
-        android::base::Split(custom_partition_path, ";");
-    for (int i = 0; i < custom_partition_paths.size(); i++) {
-      partitions.push_back(ImagePartition{
-          .label = i > 0 ? "custom_" + std::to_string(i) : "custom",
-          .image_file_path = AbsolutePath(custom_partition_paths[i]),
-      });
-    }
-  }
-
-  return partitions;
-}
-
 std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions =
-      android_composite_disk_config(instance);
+  std::vector<ImagePartition> partitions = AndroidCompositeDiskConfig(instance);
   // Cuttlefish uboot EFI bootflow by default looks at the first partition
   // for EFI application. Thus we put "android_esp" at the beginning.
   partitions.insert(
@@ -525,7 +390,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   switch (instance.boot_flow()) {
     case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
-      return android_composite_disk_config(instance);
+      return AndroidCompositeDiskConfig(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
       return AndroidEfiLoaderCompositeDiskConfig(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
