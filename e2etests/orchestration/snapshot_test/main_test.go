@@ -33,6 +33,11 @@ const baseURL = "http://0.0.0.0:2080"
 
 func TestSnapshot(t *testing.T) {
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
+	t.Cleanup(func() {
+		if err := common.CollectHOLogs(baseURL); err != nil {
+			log.Printf("failed to collect HO logs: %s", err)
+		}
+	})
 	uploadDir, err := uploadArtifacts(srv)
 	if err != nil {
 		t.Fatal(err)

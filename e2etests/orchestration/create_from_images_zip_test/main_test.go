@@ -16,6 +16,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -29,6 +30,11 @@ const baseURL = "http://0.0.0.0:2080"
 
 func TestCreateInstance(t *testing.T) {
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
+	t.Cleanup(func() {
+		if err := common.CollectHOLogs(baseURL); err != nil {
+			log.Printf("failed to collect HO logs: %s", err)
+		}
+	})
 	uploadDir, err := srv.CreateUploadDir()
 	if err != nil {
 		t.Fatal(err)
