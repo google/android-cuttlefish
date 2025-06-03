@@ -689,6 +689,7 @@ cc_library(
     srcs = ["version.cpp"],
     hdrs = ["version.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:proto",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -698,6 +699,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/cvd/version",
         "@fmt",
+        "@jsoncpp",
     ],
 )
 

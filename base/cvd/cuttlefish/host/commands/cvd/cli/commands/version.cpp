@@ -21,8 +21,10 @@
 #include <string>
 #include <vector>
 
-#include <fmt/ostream.h>
+#include <fmt/format.h>
+#include <json/value.h>
 
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/proto.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -36,13 +38,37 @@ namespace {
 constexpr char kSummaryHelpText[] =
     R"(Prints version of cvd client and cvd server)";
 
+Result<bool> ProcessArguments(
+    const std::vector<std::string>& subcommand_arguments) {
+  std::vector<std::string> version_arguments = subcommand_arguments;
+  bool json_formatted = false;
+  std::vector<Flag> flags;
+  flags.emplace_back(GflagsCompatFlag("json", json_formatted)
+                         .Help("Output version information in JSON format."));
+
+  CF_EXPECTF(ConsumeFlags(flags, version_arguments),
+             "Failure processing arguments/flags: cvd version {}",
+             fmt::join(subcommand_arguments, " "));
+  return json_formatted;
+}
+
 class CvdVersionHandler : public CvdCommandHandler {
  public:
   CvdVersionHandler() = default;
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-    fmt::print(std::cout, GetVersionIds().ToPrettyString());
+    const bool json_formatted =
+        CF_EXPECT(ProcessArguments(request.SubcommandArguments()));
+    const VersionIdentifiers version_ids = GetVersionIds();
+    if (json_formatted) {
+      Json::Value json_output(Json::objectValue);
+      json_output["package_version"] = version_ids.package;
+      json_output["version_control_id"] = version_ids.version_control;
+      std::cout << json_output.toStyledString();
+    } else {
+      std::cout << version_ids.ToPrettyString();
+    }
     return {};
   }
 
