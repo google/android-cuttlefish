@@ -60,9 +60,6 @@ class AndroidBuildApi : public BuildApi {
       const std::string& artifact_name,
       const std::string& backup_artifact_name);
 
-  Result<std::string> GetBuildZipName(const Build& build,
-                                      const std::string& name);
-
  private:
   Result<std::vector<std::string>> Headers();
 

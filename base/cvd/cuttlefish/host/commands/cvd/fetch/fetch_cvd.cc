@@ -47,6 +47,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_zip_name.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
@@ -327,8 +328,7 @@ Result<std::vector<std::string>> FetchSystemImgZipImages(
     BuildApi& build_api, const Build& build,
     const std::string& target_directory, const bool keep_downloaded_archives) {
   LOG(INFO) << "Downloading system image zip for " << build;
-  const std::string system_img_zip_name =
-      CF_EXPECT(build_api.GetBuildZipName(build, "img"));
+  const std::string system_img_zip_name = GetBuildZipName(build, "img");
   std::string system_img_zip = CF_EXPECTF(
       build_api.DownloadFile(build, target_directory, system_img_zip_name),
       "Unable to download {}", system_img_zip_name);
@@ -549,8 +549,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
 
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << *builds.default_build;
-    std::string img_zip_name =
-        CF_EXPECT(build_api.GetBuildZipName(*builds.default_build, "img"));
+    std::string img_zip_name = GetBuildZipName(*builds.default_build, "img");
     std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.root, img_zip_name));
     trace.CompletePhase("Download image zip",
@@ -572,8 +571,8 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
 
   if (builds.system || flags.download_target_files_zip) {
     LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
-    std::string target_files_name = CF_EXPECT(
-        build_api.GetBuildZipName(*builds.default_build, "target_files"));
+    std::string target_files_name =
+        GetBuildZipName(*builds.default_build, "target_files");
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.default_target_files,
         target_files_name));
@@ -593,7 +592,7 @@ Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
                                FetcherConfig& config,
                                FetchTracer::Trace trace) {
   std::string target_files_name =
-      CF_EXPECT(build_api.GetBuildZipName(system_build, "target_files"));
+      GetBuildZipName(system_build, "target_files");
   std::string target_files = CF_EXPECT(build_api.DownloadFile(
       system_build, target_directories.system_target_files, target_files_name));
   trace.CompletePhase("Download Target Files", FileSize(target_files_name));
@@ -715,8 +714,7 @@ Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
                              const std::string& target_directory,
                              const bool keep_downloaded_archives,
                              FetcherConfig& config, FetchTracer::Trace trace) {
-  std::string boot_img_zip_name =
-      CF_EXPECT(build_api.GetBuildZipName(boot_build, "img"));
+  std::string boot_img_zip_name = GetBuildZipName(boot_build, "img");
   std::string downloaded_boot_filepath;
   std::optional<std::string> boot_filepath = GetFilepath(boot_build);
   if (boot_filepath) {

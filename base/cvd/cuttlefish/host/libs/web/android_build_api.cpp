@@ -484,19 +484,6 @@ Result<std::string> AndroidBuildApi::DownloadTargetFile(
   return {target_filepath};
 }
 
-/** Returns the name of one of the artifact target zip files.
- *
- * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
- * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
- */
-Result<std::string> AndroidBuildApi::GetBuildZipName(const Build& build,
-                                                     const std::string& name) {
-  std::string product =
-      std::visit([](auto&& arg) { return arg.product; }, build);
-  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  return product + "-" + name + "-" + id + ".zip";
-}
-
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
   auto target = std::visit([](auto&& arg) { return arg.target; }, build);
