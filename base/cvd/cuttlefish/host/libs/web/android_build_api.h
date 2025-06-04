@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"

@@ -15,46 +15,13 @@
 
 #pragma once
 
-#include <optional>
-#include <ostream>
 #include <string>
-#include <variant>
-#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
-
-struct DeviceBuild {
-  DeviceBuild(std::string id, std::string target,
-              std::optional<std::string> filepath);
-
-  std::string id;
-  std::string target;
-  std::string product;
-  std::optional<std::string> filepath;
-};
-
-std::ostream& operator<<(std::ostream&, const DeviceBuild&);
-
-struct DirectoryBuild {
-  // TODO(schuffelen): Support local builds other than "eng"
-  DirectoryBuild(std::vector<std::string> paths, std::string target,
-                 std::optional<std::string> filepath);
-
-  std::vector<std::string> paths;
-  std::string target;
-  std::string id;
-  std::string product;
-  std::optional<std::string> filepath;
-};
-
-std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
-
-using Build = std::variant<DeviceBuild, DirectoryBuild>;
-
-std::ostream& operator<<(std::ostream&, const Build&);
 
 class BuildApi {
  public:

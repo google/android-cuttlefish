@@ -20,6 +20,7 @@
 #include <string>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
