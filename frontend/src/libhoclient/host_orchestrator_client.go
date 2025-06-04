@@ -68,6 +68,12 @@ func (c *AccessTokenBuildAPICreds) ApplyToHTTPRequest(rb *HTTPRequestBuilder) {
 	}
 }
 
+type UseHostBuildAPICreds struct{}
+
+func (c *UseHostBuildAPICreds) ApplyToHTTPRequest(rb *HTTPRequestBuilder) {
+	rb.AddHeader("X-Cutf-Host-Orchestrator-Use-Host-BuildAPI-Creds", "true")
+}
+
 type CreateBugReportOpts struct {
 	IncludeADBBugReport bool
 }
