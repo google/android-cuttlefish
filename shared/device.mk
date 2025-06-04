@@ -33,6 +33,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.boot_security_patch=$(BOOT_SECURITY_PATCH)
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio, wifi and sensors
+PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/shared/config/recovery.fstab # for recovery.fstab
 
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
