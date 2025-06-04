@@ -105,9 +105,9 @@ func CVDLogsDir(ctx hoexec.ExecContext, groupName, name string) (string, error) 
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
-	execContext         hoexec.ExecContext
-	buildAPICredentials BuildAPICredentials
-	buildAPIBaseURL     string
+	execContext      hoexec.ExecContext
+	fetchCredentials cvd.FetchCredentials
+	buildAPIBaseURL  string
 }
 
 type ExtraCVDOptions struct {
@@ -122,33 +122,20 @@ type CVDBundleFetcher interface {
 }
 
 func newFetchCVDCommandArtifactsFetcher(
-	execContext hoexec.ExecContext, buildAPICredentials BuildAPICredentials, buildAPIBaseURL string) *fetchCVDCommandArtifactsFetcher {
+	execContext hoexec.ExecContext, fetchCredentials cvd.FetchCredentials, buildAPIBaseURL string) *fetchCVDCommandArtifactsFetcher {
 	return &fetchCVDCommandArtifactsFetcher{
-		execContext:         execContext,
-		buildAPICredentials: buildAPICredentials,
-		buildAPIBaseURL:     buildAPIBaseURL,
+		execContext:      execContext,
+		fetchCredentials: fetchCredentials,
+		buildAPIBaseURL:  buildAPIBaseURL,
 	}
 }
 
 // The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
 // which translated to granting the necessary permissions to the cvd executor user.
 func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir string, mainBuild cvd.AndroidBuild, opts ExtraCVDOptions) error {
-	creds := cvd.FetchCredentials{}
-	if f.buildAPICredentials.AccessToken != "" {
-		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
-			AccessToken: f.buildAPICredentials.AccessToken,
-			ProjectId:   f.buildAPICredentials.UserProjectID,
-		}
-	} else if isRunningOnGCE() {
-		if ok, err := hasServiceAccountAccessToken(); err != nil {
-			log.Printf("service account token check failed: %s", err)
-		} else if ok {
-			creds.UseGCEServiceAccountCredentials = true
-		}
-	}
 	fetchOpts := cvd.FetchOpts{
 		BuildAPIBaseURL:  f.buildAPIBaseURL,
-		Credentials:      creds,
+		Credentials:      f.fetchCredentials,
 		KernelBuild:      opts.KernelBuild,
 		BootloaderBuild:  opts.BootloaderBuild,
 		SystemImageBuild: opts.SystemImageBuild,

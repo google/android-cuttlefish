@@ -28,15 +28,6 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
-type BuildAPICredentials struct {
-	AccessToken string
-	// The credential for exchanging access tokens should be generated from a GCP project that
-	// has the Build API enabled. If it isn't, UserProjectID is required for successful API usage.
-	// The value of UserProjectID is expected to be the project ID of a GCP project that has the
-	// Build API enabled. This project ID can differ from the one used to generate OAuth credentials.
-	UserProjectID string
-}
-
 type CreateCVDActionOpts struct {
 	Request                  *apiv1.CreateCVDRequest
 	HostValidator            Validator
@@ -46,7 +37,7 @@ type CreateCVDActionOpts struct {
 	CVDBundleFetcher         CVDBundleFetcher
 	UUIDGen                  func() string
 	UserArtifactsDirResolver UserArtifactsDirResolver
-	BuildAPICredentials      BuildAPICredentials
+	FetchCredentials         cvd.FetchCredentials
 	BuildAPIBaseURL          string
 }
 
@@ -59,7 +50,7 @@ type CreateCVDAction struct {
 	cvdCLI                   *cvd.CLI
 	cvdBundleFetcher         CVDBundleFetcher
 	userArtifactsDirResolver UserArtifactsDirResolver
-	buildAPICredentials      BuildAPICredentials
+	fetchCredentials         cvd.FetchCredentials
 	buildAPIBaseURL          string
 
 	instanceCounter uint32
@@ -74,7 +65,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		om:                       opts.OperationManager,
 		cvdBundleFetcher:         opts.CVDBundleFetcher,
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
-		buildAPICredentials:      opts.BuildAPICredentials,
+		fetchCredentials:         opts.FetchCredentials,
 		buildAPIBaseURL:          opts.BuildAPIBaseURL,
 		execContext:              execCtx,
 		cvdCLI:                   cvd.NewCLI(execCtx),
@@ -121,29 +112,9 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
-
-	creds := cvd.FetchCredentials{}
-	if a.buildAPICredentials.AccessToken != "" {
-		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
-			AccessToken: a.buildAPICredentials.AccessToken,
-			ProjectId:   a.buildAPICredentials.UserProjectID,
-		}
-	} else {
-		log.Printf("fetch credentials: no access token provided by client")
-		if isRunningOnGCE() {
-			log.Println("fetch credentials: running on gce")
-			if ok, err := hasServiceAccountAccessToken(); err != nil {
-				log.Printf("fetch credentials: service account token check failed: %s", err)
-			} else if ok {
-				log.Println("fetch credentials: using gce service account credentials")
-				creds.UseGCEServiceAccountCredentials = true
-			}
-		}
-	}
-
 	opts := cvd.LoadOpts{
 		BuildAPIBaseURL: a.buildAPIBaseURL,
-		Credentials:     creds,
+		Credentials:     a.fetchCredentials,
 	}
 	group, err := a.cvdCLI.Load(configFile.Name(), opts)
 	if err != nil {
