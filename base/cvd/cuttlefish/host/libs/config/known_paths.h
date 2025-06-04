@@ -26,6 +26,7 @@ std::string CasimirBinary();
 std::string CasimirControlServerBinary();
 std::string ConsoleForwarderBinary();
 std::string ControlEnvProxyServerBinary();
+std::string CpioBinary();
 std::string DefaultKeyboardSpec();
 std::string DefaultMouseSpec();
 std::string DefaultMultiTouchpadSpecTemplate();

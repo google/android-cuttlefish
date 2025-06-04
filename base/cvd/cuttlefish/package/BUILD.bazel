@@ -13,6 +13,7 @@ package_files(
         "cuttlefish-common/bin/casimir_control_server": "//cuttlefish/host/commands/casimir_control_server",
         "cuttlefish-common/bin/console_forwarder": "//cuttlefish/host/commands/console_forwarder",
         "cuttlefish-common/bin/control_env_proxy_server": "//cuttlefish/host/commands/control_env_proxy_server",
+        "cuttlefish-common/bin/cpio": "@libarchive//cpio:cpio",
         "cuttlefish-common/bin/cuttlefish_example_action_server": "//cuttlefish/host/example_custom_actions:cuttlefish_example_action_server",
         "cuttlefish-common/bin/cvd_import_locations": "//cuttlefish/host/commands/cvd_import_locations",
         "cuttlefish-common/bin/cvd_internal_display": "//cuttlefish/host/commands/display:cvd_internal_display",
