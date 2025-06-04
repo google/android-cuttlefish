@@ -1667,8 +1667,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_mobile_mac(
   (*Dictionary())[kMobileMac] = mac;
 }
 
-// TODO(b/199103204): remove this as well when
-// PRODUCT_ENFORCE_MAC80211_HWSIM is removed
 static constexpr char kWifiTapName[] = "wifi_tap_name";
 std::string CuttlefishConfig::InstanceSpecific::wifi_tap_name() const {
   return (*Dictionary())[kWifiTapName].asString();
