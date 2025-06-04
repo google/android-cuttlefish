@@ -37,6 +37,7 @@ import (
 
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 const HeaderUserProject = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
+const HeaderUseHostBuildAPICreds = "X-Cutf-Host-Orchestrator-Use-Host-BuildAPI-Creds"
 
 const (
 	URLQueryKeyIncludeAdbBugReport = "include_adb_bugreport"
@@ -590,14 +591,26 @@ func okHandler() http.Handler {
 }
 
 func getFetchCredentials(r *http.Request) cvd.FetchCredentials {
-	creds := cvd.FetchCredentials{}
 	accessToken := r.Header.Get(HeaderBuildAPICreds)
 	if accessToken != "" {
-		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
-			AccessToken:   accessToken,
-			UserProjectID: r.Header.Get(HeaderUserProject),
+		return cvd.FetchCredentials{
+
+			AccessTokenCredentials: cvd.AccessTokenCredentials{
+				AccessToken:   accessToken,
+				UserProjectID: r.Header.Get(HeaderUserProject),
+			},
 		}
-	} else {
+	}
+
+	val := r.Header.Get(HeaderUseHostBuildAPICreds)
+	if val != "" {
+		log.Printf("header %q value: %q", HeaderUseHostBuildAPICreds, val)
+		log.Println("fetch credentials: using gce service account credentials")
+		return cvd.FetchCredentials{UseGCEServiceAccountCredentials: true}
+	}
+
+	// TODO: Remove this block after clients start using the new header.
+	{
 		log.Printf("fetch credentials: no access token provided by client")
 		if isRunningOnGCE() {
 			log.Println("fetch credentials: running on gce")
@@ -605,9 +618,10 @@ func getFetchCredentials(r *http.Request) cvd.FetchCredentials {
 				log.Printf("fetch credentials: service account token check failed: %s", err)
 			} else if ok {
 				log.Println("fetch credentials: using gce service account credentials")
-				creds.UseGCEServiceAccountCredentials = true
+				return cvd.FetchCredentials{UseGCEServiceAccountCredentials: true}
 			}
 		}
 	}
-	return creds
+
+	return cvd.FetchCredentials{}
 }
