@@ -246,3 +246,49 @@ cc_library(
         "@zlib",
     ],
 )
+
+cc_library(
+    name = "remote_zip",
+    srcs = ["remote_zip.cc"],
+    hdrs = ["remote_zip.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    features = ["-layering_check"], # libzip
+    linkopts = ["-llzma"], # libzip
+    linkstatic = True,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client",
+        "@libzip",
+    ],
+)
+
+clang_tidy_test(
+    name = "remote_zip_clang_tidy",
+    srcs = [":remote_zip"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "remote_zip_test",
+    srcs = ["remote_zip_test.cc"],
+    copts = COPTS,
+    features = ["-layering_check"], # libzip
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/web:remote_zip",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@libzip",
+    ],
+)
+
+clang_tidy_test(
+    name = "remote_zip_test_clang_tidy",
+    srcs = [":remote_zip_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
