@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -311,8 +312,21 @@ func (cli *CLI) PowerBtn(selector Selector) error {
 }
 
 type AndroidBuild struct {
-	BuildID     string
+	BuildID string
+	// Discarded if BuildID is set.
+	// When `Branch` field is set, the latest green build id will be used.
+	Branch      string
 	BuildTarget string
+}
+
+func (b *AndroidBuild) Validate() error {
+	if b.BuildID == "" && b.Branch == "" {
+		return errors.New("build id and branch are empty, use one of them")
+	}
+	if b.BuildTarget == "" {
+		return errors.New("build target is empty")
+	}
+	return nil
 }
 
 type FetchOpts struct {
@@ -323,44 +337,34 @@ type FetchOpts struct {
 	SystemImageBuild AndroidBuild
 }
 
-func (cli *CLI) Fetch(buildID, buildTarget, targetDir string, opts FetchOpts) error {
-	if buildID == "" {
-		return fmt.Errorf("default build id is required")
-	}
-	if buildTarget == "" {
-		return fmt.Errorf("default build target is required")
+func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) error {
+	if err := mainBuild.Validate(); err != nil {
+		return fmt.Errorf("invalid main build: %w", err)
 	}
 	args := []string{
 		fmt.Sprintf("--directory=%s", targetDir),
-		fmt.Sprintf("--default_build=%s/%s", buildID, buildTarget),
+		fmt.Sprintf("--default_build=%s", cliFormat(mainBuild)),
 	}
-	// TODO: Refactor validation of build objects.
 	if opts.SystemImageBuild != (AndroidBuild{}) {
 		build := opts.SystemImageBuild
-		if build.BuildID == "" || build.BuildTarget == "" {
-			return fmt.Errorf(
-				"system image build: either build id and build target are set or neither: id=%q, target=%q",
-				build.BuildID, build.BuildTarget)
+		if err := build.Validate(); err != nil {
+			return fmt.Errorf("invalid system image build: %w", err)
 		}
-		args = append(args, fmt.Sprintf("--system_build=%s/%s", build.BuildID, build.BuildTarget))
+		args = append(args, fmt.Sprintf("--system_build=%s", cliFormat(build)))
 	}
 	if opts.KernelBuild != (AndroidBuild{}) {
 		build := opts.KernelBuild
-		if build.BuildID == "" || build.BuildTarget == "" {
-			return fmt.Errorf(
-				"kernel build: either build id and build target are set or neither: id=%q, target=%q",
-				build.BuildID, build.BuildTarget)
+		if err := build.Validate(); err != nil {
+			return fmt.Errorf("invalid kernel build: %w", err)
 		}
-		args = append(args, fmt.Sprintf("--kernel_build=%s/%s", build.BuildID, build.BuildTarget))
+		args = append(args, fmt.Sprintf("--kernel_build=%s", cliFormat(build)))
 	}
 	if opts.BootloaderBuild != (AndroidBuild{}) {
 		build := opts.BootloaderBuild
-		if build.BuildID == "" || build.BuildTarget == "" {
-			return fmt.Errorf(
-				"bootloader build: either build id and build target are set or neither: id=%q, target=%q",
-				build.BuildID, build.BuildTarget)
+		if err := build.Validate(); err != nil {
+			return fmt.Errorf("invalid bootloader build: %w", err)
 		}
-		args = append(args, fmt.Sprintf("--bootloader_build=%s/%s", build.BuildID, build.BuildTarget))
+		args = append(args, fmt.Sprintf("--bootloader_build=%s", cliFormat(build)))
 	}
 	if opts.BuildAPIBaseURL != "" {
 		args = append(args, fmt.Sprintf("--api_base_url=%s", opts.BuildAPIBaseURL))
@@ -415,4 +419,12 @@ func createCredentialsFile(content string) (*os.File, error) {
 		}
 	}(p2)
 	return p1, nil
+}
+
+func cliFormat(b AndroidBuild) string {
+	build := b.BuildID
+	if build == "" {
+		build = b.Branch
+	}
+	return fmt.Sprintf("%s/%s", build, b.BuildTarget)
 }

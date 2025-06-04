@@ -187,6 +187,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	opts := ExtraCVDOptions{}
 	if buildSource.KernelBuild != nil {
 		opts.KernelBuild.BuildID = buildSource.KernelBuild.BuildID
+		opts.KernelBuild.Branch = buildSource.KernelBuild.Branch
 		opts.KernelBuild.BuildTarget = buildSource.KernelBuild.Target
 	}
 	if buildSource.BootloaderBuild != nil {
@@ -197,7 +198,12 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		opts.SystemImageBuild.BuildID = buildSource.SystemImageBuild.BuildID
 		opts.SystemImageBuild.BuildTarget = buildSource.SystemImageBuild.Target
 	}
-	if err := a.cvdBundleFetcher.Fetch(targetDir, buildSource.MainBuild.BuildID, buildSource.MainBuild.Target, opts); err != nil {
+	mainBuild := cvd.AndroidBuild{
+		BuildID:     buildSource.MainBuild.BuildID,
+		Branch:      buildSource.MainBuild.Branch,
+		BuildTarget: buildSource.MainBuild.Target,
+	}
+	if err := a.cvdBundleFetcher.Fetch(targetDir, mainBuild, opts); err != nil {
 		return nil, err
 	}
 	startParams := startCVDParams{
