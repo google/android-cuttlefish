@@ -68,6 +68,7 @@ cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_zip_name",
         "//cuttlefish/host/libs/web:caching_build_api",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:credential_source",

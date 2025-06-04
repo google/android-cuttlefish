@@ -151,10 +151,6 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
   return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                   paths.target_backup_artifact));
 }
-Result<std::string> CachingBuildApi::GetBuildZipName(const Build& build,
-                                                     const std::string& name) {
-  return CF_EXPECT(build_api_->GetBuildZipName(build, name));
-}
 
 std::unique_ptr<BuildApi> CreateBuildApi(
     std::unique_ptr<HttpClient> http_client,

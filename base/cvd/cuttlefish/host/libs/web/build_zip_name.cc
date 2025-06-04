@@ -13,30 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/host/libs/web/build_zip_name.h"
 
 #include <string>
+#include <variant>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 
-class BuildApi {
- public:
-  virtual ~BuildApi() = default;
-  virtual Result<Build> GetBuild(const BuildString& build_string,
-                                 const std::string& fallback_target) = 0;
-
-  virtual Result<std::string> DownloadFile(
-      const Build& build, const std::string& target_directory,
-      const std::string& artifact_name) = 0;
-
-  virtual Result<std::string> DownloadFileWithBackup(
-      const Build& build, const std::string& target_directory,
-      const std::string& artifact_name,
-      const std::string& backup_artifact_name) = 0;
-};
+std::string GetBuildZipName(const Build& build, const std::string& name) {
+  std::string product =
+      std::visit([](auto&& arg) { return arg.product; }, build);
+  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
+  return product + "-" + name + "-" + id + ".zip";
+}
 
 }  // namespace cuttlefish

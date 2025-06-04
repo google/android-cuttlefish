@@ -46,9 +46,6 @@ class CachingBuildApi : public BuildApi {
       const std::string& artifact_name,
       const std::string& backup_artifact_name) override;
 
-  Result<std::string> GetBuildZipName(const Build& build,
-                                      const std::string& name) override;
-
  private:
   Result<bool> CanCache(const std::string& target_directory);
 

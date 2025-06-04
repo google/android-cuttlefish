@@ -17,26 +17,15 @@
 
 #include <string>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 
-class BuildApi {
- public:
-  virtual ~BuildApi() = default;
-  virtual Result<Build> GetBuild(const BuildString& build_string,
-                                 const std::string& fallback_target) = 0;
-
-  virtual Result<std::string> DownloadFile(
-      const Build& build, const std::string& target_directory,
-      const std::string& artifact_name) = 0;
-
-  virtual Result<std::string> DownloadFileWithBackup(
-      const Build& build, const std::string& target_directory,
-      const std::string& artifact_name,
-      const std::string& backup_artifact_name) = 0;
-};
+/** Returns the name of one of the artifact target zip files.
+ *
+ * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
+ * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
+ */
+std::string GetBuildZipName(const Build& build, const std::string& name);
 
 }  // namespace cuttlefish
