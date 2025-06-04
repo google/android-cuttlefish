@@ -22,6 +22,7 @@ import (
 	"os"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
@@ -92,7 +93,12 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 	build := req.AndroidCIBundle.Build
 	switch t := req.AndroidCIBundle.Type; t {
 	case apiv1.MainBundleType:
-		err = a.cvdBundleFetcher.Fetch(dir, build.BuildID, build.Target, ExtraCVDOptions{})
+		build := cvd.AndroidBuild{
+			BuildID:     build.BuildID,
+			Branch:      build.Branch,
+			BuildTarget: build.Target,
+		}
+		err = a.cvdBundleFetcher.Fetch(dir, build, ExtraCVDOptions{})
 	case apiv1.KernelBundleType:
 	case apiv1.BootloaderBundleType:
 		// Do not fail due backwards compatibility. If artifact does not exist, the

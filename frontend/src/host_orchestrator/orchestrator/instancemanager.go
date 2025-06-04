@@ -118,7 +118,7 @@ type ExtraCVDOptions struct {
 
 type CVDBundleFetcher interface {
 	// Fetches artifacts to launch a Cuttlefish device
-	Fetch(outDir, buildID, target string, opts ExtraCVDOptions) error
+	Fetch(outDir string, mainBuild cvd.AndroidBuild, opts ExtraCVDOptions) error
 }
 
 func newFetchCVDCommandArtifactsFetcher(
@@ -132,7 +132,7 @@ func newFetchCVDCommandArtifactsFetcher(
 
 // The artifacts directory gets created during the execution of `fetch_cvd` granting access to the cvdnetwork group
 // which translated to granting the necessary permissions to the cvd executor user.
-func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, opts ExtraCVDOptions) error {
+func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir string, mainBuild cvd.AndroidBuild, opts ExtraCVDOptions) error {
 	creds := cvd.FetchCredentials{}
 	if f.buildAPICredentials.AccessToken != "" {
 		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
@@ -154,7 +154,7 @@ func (f *fetchCVDCommandArtifactsFetcher) Fetch(outDir, buildID, target string, 
 		SystemImageBuild: opts.SystemImageBuild,
 	}
 	cvdCLI := cvd.NewCLI(f.execContext)
-	return cvdCLI.Fetch(buildID, target, outDir, fetchOpts)
+	return cvdCLI.Fetch(mainBuild, outDir, fetchOpts)
 }
 
 const (
