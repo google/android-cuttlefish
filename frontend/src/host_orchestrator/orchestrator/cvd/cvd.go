@@ -66,7 +66,11 @@ type FetchCredentials struct {
 
 type AccessTokenCredentials struct {
 	AccessToken string
-	ProjectId   string // optional
+	// The credential for exchanging access tokens should be generated from a GCP project that
+	// has the Build API enabled. If it isn't, UserProjectID is required for successful API usage.
+	// The value of UserProjectID is expected to be the project ID of a GCP project that has the
+	// Build API enabled. This project ID can differ from the one used to generate OAuth credentials.
+	UserProjectID string // optional
 }
 
 // A filter allowing to select instances or groups by name.
