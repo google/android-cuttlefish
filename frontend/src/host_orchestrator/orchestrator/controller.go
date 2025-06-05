@@ -103,9 +103,11 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/userartifacts",
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
-		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
+		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, true})).Methods("PUT")
 	router.Handle("/userartifacts/{dir}/{name}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
+	router.Handle("/v1/userartifacts/{checksum}",
+		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, false})).Methods("PUT")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -501,12 +503,20 @@ func (h *listUploadDirectoriesHandler) Handle(r *http.Request) (interface{}, err
 }
 
 type createUpdateUserArtifactHandler struct {
-	m UserArtifactsManager
+	m        UserArtifactsManager
+	isLegacy bool
+}
+
+func parseFormValueInt(r *http.Request, key string) (int64, error) {
+	valueRaw := r.FormValue(key)
+	value, err := strconv.ParseInt(valueRaw, 10, 64)
+	if err != nil {
+		return -1, operator.NewBadRequestError(fmt.Sprintf("Invalid %s form field value: %q", key, valueRaw), err)
+	}
+	return value, nil
 }
 
 func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	dir := vars["name"]
 	if err := r.ParseMultipartForm(0); err != nil {
 		if err == multipart.ErrMessageTooLarge {
 			return nil, &operator.AppError{
@@ -521,48 +531,45 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, err
 	}
-	chunkOffsetBytesRaw := r.FormValue("chunk_offset_bytes")
-	if chunkOffsetBytesRaw != "" {
-		chunkOffsetBytes, err := strconv.ParseInt(chunkOffsetBytesRaw, 10, 64)
+	defer f.Close()
+	chunkOffsetBytes, err := parseFormValueInt(r, "chunk_offset_bytes")
+	if h.isLegacy {
 		if err != nil {
-			return nil, operator.NewBadRequestError(
-				fmt.Sprintf("Invalid chunk_offset_bytes form field value: %q", chunkOffsetBytesRaw), err)
+			log.Println("deprecated: use `chunk_offset_bytes`")
+			chunkNumberRaw := r.FormValue("chunk_number")
+			chunkNumber, err := strconv.Atoi(chunkNumberRaw)
+			if err != nil {
+				return nil, operator.NewBadRequestError(
+					fmt.Sprintf("Invalid chunk_number value: %q", chunkNumberRaw), err)
+			}
+			chunkSizeBytes, err := parseFormValueInt(r, "chunk_size_bytes")
+			if err != nil {
+				return nil, err
+			}
+			chunkOffsetBytes = int64(chunkNumber-1) * chunkSizeBytes
 		}
 		chunk := UserArtifactChunk{
-			Name:             fheader.Filename,
-			File:             f,
-			UseChunkOffset:   true,
-			ChunkOffsetBytes: chunkOffsetBytes,
+			Name:        fheader.Filename,
+			File:        f,
+			OffsetBytes: chunkOffsetBytes,
 		}
-		return nil, h.m.UpdateArtifactWithDir(dir, chunk)
+		return nil, h.m.UpdateArtifactWithDir(mux.Vars(r)["name"], chunk)
 	} else {
-		// Deprecated: clients should use `chunk_offset_bytes` only
-		chunkNumberRaw := r.FormValue("chunk_number")
-		chunkTotalRaw := r.FormValue("chunk_total")
-		chunkSizeBytesRaw := r.FormValue("chunk_size_bytes")
-		chunkNumber, err := strconv.Atoi(chunkNumberRaw)
 		if err != nil {
-			return nil, operator.NewBadRequestError(
-				fmt.Sprintf("Invalid chunk_number value: %q", chunkNumberRaw), err)
+			return nil, err
 		}
-		chunkTotal, err := strconv.Atoi(chunkTotalRaw)
+		fileSizeBytes, err := parseFormValueInt(r, "file_size_bytes")
 		if err != nil {
-			return nil, operator.NewBadRequestError(
-				fmt.Sprintf("Invalid chunk_total form field value: %q", chunkTotalRaw), err)
-		}
-		chunkSizeBytes, err := strconv.ParseInt(chunkSizeBytesRaw, 10, 64)
-		if err != nil {
-			return nil, operator.NewBadRequestError(
-				fmt.Sprintf("Invalid chunk_size_bytes form field value: %q", chunkSizeBytesRaw), err)
+			return nil, err
 		}
 		chunk := UserArtifactChunk{
-			Name:           fheader.Filename,
-			ChunkNumber:    chunkNumber,
-			ChunkTotal:     chunkTotal,
-			ChunkSizeBytes: chunkSizeBytes,
-			File:           f,
+			File:          f,
+			Name:          fheader.Filename,
+			OffsetBytes:   chunkOffsetBytes,
+			SizeBytes:     fheader.Size,
+			FileSizeBytes: fileSizeBytes,
 		}
-		return nil, h.m.UpdateArtifactWithDir(dir, chunk)
+		return nil, h.m.UpdateArtifact(mux.Vars(r)["checksum"], chunk)
 	}
 }
 
