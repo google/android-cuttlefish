@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <chrono>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -61,9 +60,6 @@ struct HttpResponse {
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
-
-  static std::unique_ptr<HttpClient> ServerErrorRetryClient(
-      HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
 
   virtual ~HttpClient();
 

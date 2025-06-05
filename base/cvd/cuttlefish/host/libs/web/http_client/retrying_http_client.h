@@ -13,10 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
+#include <chrono>
+#include <memory>
+
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
-HttpClient::~HttpClient() = default;
+std::unique_ptr<HttpClient> RetryingServerErrorHttpClient(
+    HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
 
 }  // namespace cuttlefish
