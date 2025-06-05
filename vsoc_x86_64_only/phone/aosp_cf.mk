@@ -67,6 +67,14 @@ PRODUCT_IGNORE_ALL_ANDROIDMK := true
 # TODO(b/342327756, b/342330305): Allow the following Android.mk files
 PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
 
+ifneq ($(CLANG_COVERAGE),true)
+ifneq ($(NATIVE_COVERAGE),true)
 ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_only_phone)
+ifeq (,$(TARGET_BUILD_APPS))
+ifeq (,$(UNBUNDLED_BUILD))
 PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
+endif
+endif
+endif
 endif
