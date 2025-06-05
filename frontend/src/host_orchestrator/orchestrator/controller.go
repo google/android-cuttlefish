@@ -466,10 +466,14 @@ type downloadCVDBugReportHandler struct {
 func (h *downloadCVDBugReportHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("handling request(%p) started %s %s", r, r.Method, r.URL.Path)
 	defer log.Printf("handling request(%p) ended", r)
-
 	vars := mux.Vars(r)
-	uuid := vars["uuid"]
-	filename := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid, BugReportZipFileName)
+	id := vars["uuid"]
+	if err := uuid.Validate(id); err != nil {
+		log.Printf("request %q failed with error: %v", r.Method+" "+r.URL.Path, err)
+		replyJSONErr(w, err)
+		return
+	}
+	filename := filepath.Join(h.Config.Paths.CVDBugReportsDir, id, BugReportZipFileName)
 	http.ServeFile(w, r, filename)
 }
 
@@ -479,8 +483,11 @@ type deleteCVDBugReportHandler struct {
 
 func (h *deleteCVDBugReportHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
-	uuid := vars["uuid"]
-	dirName := filepath.Join(h.Config.Paths.CVDBugReportsDir, uuid)
+	id := vars["uuid"]
+	if err := uuid.Validate(id); err != nil {
+		return nil, err
+	}
+	dirName := filepath.Join(h.Config.Paths.CVDBugReportsDir, id)
 	err := os.RemoveAll(dirName)
 	return nil, err
 }
