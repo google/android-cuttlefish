@@ -45,6 +45,7 @@
 #include "common/libs/utils/json.h"
 #include "common/libs/utils/result.h"
 #include "host/libs/web/http_client/http_client.h"
+#include "host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
 namespace {
@@ -371,9 +372,9 @@ RefreshTokenCredentialSource::Refresh() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   std::stringstream data;
-  data << "client_id=" << http_client_.UrlEscape(client_id_) << "&";
-  data << "client_secret=" << http_client_.UrlEscape(client_secret_) << "&";
-  data << "refresh_token=" << http_client_.UrlEscape(refresh_token_) << "&";
+  data << "client_id=" << UrlEscape(client_id_) << "&";
+  data << "client_secret=" << UrlEscape(client_secret_) << "&";
+  data << "refresh_token=" << UrlEscape(refresh_token_) << "&";
   data << "grant_type=refresh_token";
 
   static constexpr char kUrl[] = "https://oauth2.googleapis.com/token";
@@ -500,9 +501,9 @@ ServiceAccountOauthCredentialSource::Refresh() {
   static constexpr char URL[] = "https://oauth2.googleapis.com/token";
   static constexpr char GRANT[] = "urn:ietf:params:oauth:grant-type:jwt-bearer";
   std::stringstream content;
-  content << "grant_type=" << http_client_.UrlEscape(GRANT) << "&";
+  content << "grant_type=" << UrlEscape(GRANT) << "&";
   auto jwt = CF_EXPECT(CreateJwt(email_, scope_, private_key_.get()));
-  content << "assertion=" << http_client_.UrlEscape(jwt);
+  content << "assertion=" << UrlEscape(jwt);
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   auto response =

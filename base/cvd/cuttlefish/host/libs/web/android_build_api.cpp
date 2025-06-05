@@ -46,6 +46,7 @@
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
 namespace {
@@ -205,15 +206,15 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
 Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
   std::string url =
-      api_base_url_ + "/builds?branch=" + http_client->UrlEscape(branch) +
+      api_base_url_ + "/builds?branch=" + UrlEscape(branch) +
       "&buildAttemptStatus=complete" +
       "&buildType=submitted&maxResults=1&successful=true&target=" +
-      http_client->UrlEscape(target);
+      UrlEscape(target);
   if (!api_key_.empty()) {
-    url += "&key=" + http_client->UrlEscape(api_key_);
+    url += "&key=" + UrlEscape(api_key_);
   }
   if(!project_id_.empty()){
-    url += "&$userProject=" + http_client->UrlEscape(project_id_);
+    url += "&$userProject=" + UrlEscape(project_id_);
   }
   auto response =
       CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
@@ -242,15 +243,14 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
 }
 
 Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
-  std::string url = api_base_url_ + "/builds/" +
-                    http_client->UrlEscape(build.id) + "/" +
-                    http_client->UrlEscape(build.target);
+  std::string url = api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
+                    UrlEscape(build.target);
   std::vector<std::string> params;
   if (!api_key_.empty()) {
-    params.push_back("key=" + http_client->UrlEscape(api_key_));
+    params.push_back("key=" + UrlEscape(api_key_));
   }
   if(!project_id_.empty()){
-    params.push_back("$userProject=" + http_client->UrlEscape(project_id_));
+    params.push_back("$userProject=" + UrlEscape(project_id_));
   }
   if (!params.empty()) {
     url += "?" + android::base::Join(params, "&");
@@ -270,15 +270,14 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
 }
 
 Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
-  std::string url = api_base_url_ + "/builds/" +
-                    http_client->UrlEscape(build.id) + "/" +
-                    http_client->UrlEscape(build.target);
+  std::string url = api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
+                    UrlEscape(build.target);
   std::vector<std::string> params;
   if (!api_key_.empty()) {
-    params.push_back("key=" + http_client->UrlEscape(api_key_));
+    params.push_back("key=" + UrlEscape(api_key_));
   }
   if(!project_id_.empty()){
-    params.push_back("$userProject=" + http_client->UrlEscape(project_id_));
+    params.push_back("$userProject=" + UrlEscape(project_id_));
   }
   if (!params.empty()) {
     url += "?" + android::base::Join(params, "&");
@@ -304,22 +303,20 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
   std::string page_token = "";
   std::unordered_set<std::string> artifacts;
   do {
-    std::string url = api_base_url_ + "/builds/" +
-                      http_client->UrlEscape(build.id) + "/" +
-                      http_client->UrlEscape(build.target) +
+    std::string url = api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
+                      UrlEscape(build.target) +
                       "/attempts/latest/artifacts?maxResults=100";
     if (!artifact_filenames.empty()) {
-      url += "&nameRegexp=" +
-             http_client->UrlEscape(BuildNameRegexp(artifact_filenames));
+      url += "&nameRegexp=" + UrlEscape(BuildNameRegexp(artifact_filenames));
     }
     if (!page_token.empty()) {
-      url += "&pageToken=" + http_client->UrlEscape(page_token);
+      url += "&pageToken=" + UrlEscape(page_token);
     }
     if (!api_key_.empty()) {
-      url += "&key=" + http_client->UrlEscape(api_key_);
+      url += "&key=" + UrlEscape(api_key_);
     }
     if(!project_id_.empty()){
-      url += "&$userProject=" + http_client->UrlEscape(project_id_);
+      url += "&$userProject=" + UrlEscape(project_id_);
     }
     auto response =
         CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
@@ -369,15 +366,15 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
 Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     const DeviceBuild& build, const std::string& artifact) {
   std::string download_url_endpoint =
-      api_base_url_ + "/builds/" + http_client->UrlEscape(build.id) + "/" +
-      http_client->UrlEscape(build.target) + "/attempts/latest/artifacts/" +
-      http_client->UrlEscape(artifact) + "/url";
+      api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
+      UrlEscape(build.target) + "/attempts/latest/artifacts/" +
+      UrlEscape(artifact) + "/url";
   std::vector<std::string> params;
   if (!api_key_.empty()) {
-    params.push_back("key=" + http_client->UrlEscape(api_key_));
+    params.push_back("key=" + UrlEscape(api_key_));
   }
   if(!project_id_.empty()){
-    params.push_back("$userProject=" + http_client->UrlEscape(project_id_));
+    params.push_back("$userProject=" + UrlEscape(project_id_));
   }
   if (!params.empty()) {
     download_url_endpoint += "?" + android::base::Join(params, "&");

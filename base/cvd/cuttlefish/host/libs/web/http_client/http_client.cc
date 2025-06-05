@@ -197,13 +197,6 @@ class CurlClient : public HttpClient {
     return DownloadToJson(HttpMethod::kGet, url, headers);
   }
 
-  std::string UrlEscape(const std::string& text) override {
-    char* escaped_str = curl_easy_escape(curl_, text.c_str(), text.size());
-    std::string ret{escaped_str};
-    curl_free(escaped_str);
-    return ret;
-  }
-
  private:
   Result<HttpResponse<Json::Value>> DownloadToJson(
       HttpMethod method, const std::string& url,
@@ -354,10 +347,6 @@ class ServerErrorRetryClient : public HttpClient {
       return inner_client_.DownloadToCallback(cb, url, hdrs);
     };
     return CF_EXPECT(RetryImpl<void>(fn));
-  }
-
-  std::string UrlEscape(const std::string& text) override {
-    return inner_client_.UrlEscape(text);
   }
 
  private:
