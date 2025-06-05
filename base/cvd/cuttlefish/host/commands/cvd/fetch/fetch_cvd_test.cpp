@@ -14,7 +14,6 @@
 // limitations under the License.
 
 #include <fstream>
-#include <memory>
 #include <string>
 
 #include <android-base/file.h>
@@ -25,6 +24,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
@@ -81,15 +81,12 @@ fi
 using testing::IsFalse;
 using testing::IsTrue;
 
-class BuildApi;
-Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags);
-
 TEST_F(FetchCvdTests, CasDownloaderNotCalledIfNoFlags) {
   BuildApiFlags flags = {};
 
-  Result<std::unique_ptr<BuildApi>> build_api_res = GetBuildApi(flags);
+  Result<Downloaders> downloaders_res = Downloaders::Create(flags);
 
-  EXPECT_THAT(build_api_res, IsOk());
+  EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsFalse());
 }
 
@@ -97,9 +94,9 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetOnCommandLine) {
   BuildApiFlags flags = {};
   flags.cas_downloader_flags.downloader_path = cas_downloader_path_;
 
-  Result<std::unique_ptr<BuildApi>> build_api_res = GetBuildApi(flags);
+  Result<Downloaders> downloaders_res = Downloaders::Create(flags);
 
-  EXPECT_THAT(build_api_res, IsOk());
+  EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
 }
 
@@ -107,9 +104,9 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetInCasConfig) {
   BuildApiFlags flags = {};
   flags.cas_downloader_flags.cas_config_filepath = cas_config_filepath_;
 
-  Result<std::unique_ptr<BuildApi>> build_api_res = GetBuildApi(flags);
+  Result<Downloaders> downloaders_res = Downloaders::Create(flags);
 
-  EXPECT_THAT(build_api_res, IsOk());
+  EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
 }
 

@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 
-#include <memory>
 #include <string>
 #include <utility>
 
