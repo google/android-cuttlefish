@@ -17,6 +17,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
+        "//cuttlefish/host/libs/web/http_client:retrying_http_client",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:caching_build_api",
         "//cuttlefish/host/libs/web:credential_source",

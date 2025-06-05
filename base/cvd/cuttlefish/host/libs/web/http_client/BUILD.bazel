@@ -23,6 +23,7 @@ cc_library(
     name = "curl_http_client",
     srcs = ["curl_http_client.cc"],
     hdrs = ["curl_http_client.h"],
+    copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
@@ -94,6 +95,19 @@ clang_tidy_test(
     name = "http_client_util_test_clang_tidy",
     srcs = [":http_client_util_test"],
     tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "retrying_http_client",
+    srcs = ["retrying_http_client.cc"],
+    hdrs = ["retrying_http_client.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client",
+        "@jsoncpp",
+    ],
 )
 
 cc_library(
