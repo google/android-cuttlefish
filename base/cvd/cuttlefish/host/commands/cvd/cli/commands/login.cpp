@@ -29,6 +29,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
 
@@ -68,7 +69,7 @@ class CvdLoginCommand : public CvdCommandHandler {
     CF_EXPECT(ConsumeFlags(flags, args), "Failed to parse arguments");
 
     CurlGlobalInit init;
-    std::unique_ptr<HttpClient> http_client = HttpClient::CurlClient(true);
+    std::unique_ptr<HttpClient> http_client = CurlHttpClient(true);
     CF_EXPECT(http_client.get(), "Failed to create a http client");
 
     if (ssh) {
