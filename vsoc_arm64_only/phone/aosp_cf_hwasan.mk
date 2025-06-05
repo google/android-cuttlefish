@@ -23,14 +23,6 @@ ifeq ($(filter hwaddress,$(SANITIZE_TARGET)),)
   SANITIZE_TARGET := $(strip $(SANITIZE_TARGET) hwaddress)
 endif
 
-ifneq ($(CLANG_COVERAGE),true)
-ifneq ($(NATIVE_COVERAGE),true)
 ifeq ($(TARGET_PRODUCT),aosp_cf_arm64_only_phone_hwasan)
-ifeq (,$(TARGET_BUILD_APPS))
-ifeq (,$(UNBUNDLED_BUILD))
 PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
-endif
-endif
-endif
-endif
 endif

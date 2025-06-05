@@ -78,14 +78,6 @@ PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
 
 TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/vsoc_riscv64/phone/android-info.txt
 
-ifneq ($(CLANG_COVERAGE),true)
-ifneq ($(NATIVE_COVERAGE),true)
 ifeq ($(TARGET_PRODUCT),aosp_cf_riscv64_phone)
-ifeq (,$(TARGET_BUILD_APPS))
-ifeq (,$(UNBUNDLED_BUILD))
 PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
-endif
-endif
-endif
-endif
 endif

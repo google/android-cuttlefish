@@ -19,14 +19,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/fullmte.mk)
 
 PRODUCT_NAME := aosp_cf_arm64_phone_fullmte
 
-ifneq ($(CLANG_COVERAGE),true)
-ifneq ($(NATIVE_COVERAGE),true)
 ifeq ($(TARGET_PRODUCT),aosp_cf_arm64_phone_fullmte)
-ifeq (,$(TARGET_BUILD_APPS))
-ifeq (,$(UNBUNDLED_BUILD))
 PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
-endif
-endif
-endif
-endif
 endif
