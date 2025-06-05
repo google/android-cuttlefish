@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.12.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Jun 2025 16:13:20 -0700
+
 cuttlefish-frontend (1.11.0) stable; urgency=medium
 
   * Adds `WithDir` suffix to relevant methods. by @ser-io in https://github.com/google/android-cuttlefish/pull/1194
