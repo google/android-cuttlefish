@@ -15,26 +15,19 @@
 
 #pragma once
 
-#include <chrono>
-#include <memory>
 #include <string>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
-#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
+bool EnsureCacheDirectory(const std::string& cache_base_path);
+
 class CachingBuildApi : public BuildApi {
  public:
-  CachingBuildApi() = delete;
-  CachingBuildApi(CachingBuildApi&&) = delete;
-  ~CachingBuildApi() override = default;
-  CachingBuildApi(std::unique_ptr<BuildApi> build_api,
-                  std::string cache_base_path);
+  CachingBuildApi(BuildApi& build_api, std::string cache_base_path);
 
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target) override;
@@ -49,16 +42,8 @@ class CachingBuildApi : public BuildApi {
  private:
   Result<bool> CanCache(const std::string& target_directory);
 
-  std::unique_ptr<BuildApi> build_api_;
+  BuildApi& build_api_;
   std::string cache_base_path_;
 };
-
-std::unique_ptr<BuildApi> CreateBuildApi(
-    std::unique_ptr<HttpClient> http_client,
-    std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    std::chrono::seconds retry_period, std::string api_base_url,
-    std::string project_id, bool enable_caching, std::string cache_base_path,
-    std::unique_ptr<CasDownloader> cas_downloader = nullptr);
 
 }  // namespace cuttlefish
