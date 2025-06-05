@@ -98,6 +98,61 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "http_file",
+    srcs = ["http_file.cc"],
+    hdrs = ["http_file.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client",
+    ],
+)
+
+clang_tidy_test(
+    name = "http_file_clang_tidy",
+    srcs = [":http_file"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "http_json",
+    srcs = ["http_json.cc"],
+    hdrs = ["http_json.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "http_json_clang_tidy",
+    srcs = [":http_json"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "http_string",
+    srcs = ["http_string.cc"],
+    hdrs = ["http_string.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client"
+    ],
+)
+
+clang_tidy_test(
+    name = "http_string_clang_tidy",
+    srcs = [":http_string"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "retrying_http_client",
     srcs = ["retrying_http_client.cc"],
     hdrs = ["retrying_http_client.h"],
@@ -108,6 +163,12 @@ cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "@jsoncpp",
     ],
+)
+
+clang_tidy_test(
+    name = "retrying_http_client_clang_tidy",
+    srcs = [":retrying_http_client"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
