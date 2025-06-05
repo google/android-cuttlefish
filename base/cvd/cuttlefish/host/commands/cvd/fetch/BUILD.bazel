@@ -5,6 +5,20 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cc_library(
+    name = "fetch_tracer",
+    srcs = ["fetch_tracer.cpp"],
+    hdrs = ["fetch_tracer.h"],
+    copts = COPTS,
+    deps = ["@fmt"],
+)
+
+clang_tidy_test(
+    name = "fetch_tracer_clang_tidy",
+    srcs = [":fetch_tracer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 proto_library(
     name = "host_pkg_migration_proto",
     srcs = ["host_pkg_migration.proto"],
@@ -43,13 +57,11 @@ cc_library(
         "downloaders.cc",
         "fetch_cvd.cc",
         "fetch_cvd_parser.cc",
-        "fetch_tracer.cpp",
     ],
     hdrs = [
         "downloaders.h",
         "fetch_cvd.h",
         "fetch_cvd_parser.h",
-        "fetch_tracer.h",
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
@@ -60,6 +72,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:fetcher_config",
