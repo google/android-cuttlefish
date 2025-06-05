@@ -55,6 +55,7 @@ package_files(
         "cuttlefish-common/bin/mkenvimage_slim": "//cuttlefish/host/commands/mkenvimage_slim",
         "cuttlefish-common/bin/mkuserimg_mke2fs.py": "//libext4_utils:mkuserimg_mke2fs.py",
         "cuttlefish-common/bin/modem_simulator": "//cuttlefish/host/commands/modem_simulator",
+        "cuttlefish-common/bin/mtools": "@mtools//:mtools",
         "cuttlefish-common/bin/openwrt_control_server": "//cuttlefish/host/commands/openwrt_control_server",
         "cuttlefish-common/bin/operator_proxy": "//cuttlefish/host/frontend/operator_proxy",
         "cuttlefish-common/bin/powerbtn_cvd": "//cuttlefish/host/commands/powerbtn_cvd",
@@ -94,6 +95,8 @@ package_files(
         # "cuttlefish-common/bin/crosvm": "@crosvm_bin//:crosvm__crosvm", # TODO: b/402274999 - currently requires --gpu_mode=guest_swiftshader --enable_sandbox=false
     },
     package_file_symlink_to_package_file = {
+        "cuttlefish-common/bin/mcopy": "cuttlefish-common/bin/mtools",
+        "cuttlefish-common/bin/mmd": "cuttlefish-common/bin/mtools",
         "cuttlefish-common/bin/resize.f2fs": "cuttlefish-common/bin/fsck.f2fs",
         "cuttlefish-common/bin/aarch64-linux-gnu/gfxstream_graphics_detector": "cuttlefish-common/bin/graphics_detector",
         "cuttlefish-common/bin/aarch64-linux-gnu/libvk_swiftshader.so": "cuttlefish-common/bin/libvk_swiftshader.so",

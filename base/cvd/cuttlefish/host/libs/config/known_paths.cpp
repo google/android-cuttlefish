@@ -91,6 +91,8 @@ std::string KernelLogMonitorBinary() {
 
 std::string LogcatReceiverBinary() { return HostBinaryPath("logcat_receiver"); }
 
+std::string McopyBinary() { return HostBinaryPath("mcopy"); }
+
 std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
 std::string MkbootimgBinary() { return HostBinaryPath("mkbootimg.py"); }
@@ -98,6 +100,8 @@ std::string MkbootimgBinary() { return HostBinaryPath("mkbootimg.py"); }
 std::string MkuserimgMke2fsBinary() {
     return HostBinaryPath("mkuserimg_mke2fs.py");
 }
+
+std::string MmdBinary() { return HostBinaryPath("mmd"); }
 
 std::string ModemSimulatorBinary() { return HostBinaryPath("modem_simulator"); }
 

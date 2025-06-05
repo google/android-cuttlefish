@@ -1,0 +1,13 @@
+package(
+    default_visibility = [
+        "@mtools//:__subpackages__",
+    ],
+)
+
+cc_library(
+    name = "mtools_config",
+    hdrs = [
+        "config.h",
+    ],
+    strip_include_prefix = "//build_external/mtools",
+)
