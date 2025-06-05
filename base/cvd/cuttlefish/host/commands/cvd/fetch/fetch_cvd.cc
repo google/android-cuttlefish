@@ -28,7 +28,6 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <curl/curl.h>
 #include <sparse/sparse.h>
 
 #include "cuttlefish/common/libs/utils/archive.h"

@@ -53,6 +53,40 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "fetch_cvd",
+    srcs = ["fetch_cvd.cc"],
+    hdrs = ["fetch_cvd.h"],
+    copts = COPTS + [ "-Werror=sign-compare" ],
+    deps = [
+        "//cuttlefish/common/libs/utils:archive",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/fetch:downloaders",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
+        "//cuttlefish/host/commands/cvd/fetch:substitute",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:build_zip_name",
+        "//cuttlefish/host/libs/web:chrome_os_build_string",
+        "//cuttlefish/host/libs/web:luci_build_api",
+        "//libbase",
+        "//libsparse",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_cvd_clang_tidy",
+    srcs = [":fetch_cvd"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
@@ -137,57 +171,5 @@ cc_library(
 clang_tidy_test(
     name = "substitute_clang_tidy",
     srcs = [":substitute"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
-    name = "fetch",
-    srcs = [
-        "fetch_cvd.cc",
-    ],
-    hdrs = [
-        "fetch_cvd.h",
-    ],
-    copts = COPTS + [ "-Werror=sign-compare" ],
-    deps = [
-        "//cuttlefish/common/libs/utils:archive",
-        "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cache",
-        "//cuttlefish/host/commands/cvd/fetch:downloaders",
-        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
-        "//cuttlefish/host/commands/cvd/fetch:substitute",
-        "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/config:fetcher_config",
-        "//cuttlefish/host/libs/image_aggregator",
-        "//cuttlefish/host/libs/web/cas:cas_downloader",
-        "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
-        "//cuttlefish/host/libs/web:android_build",
-        "//cuttlefish/host/libs/web:android_build_api",
-        "//cuttlefish/host/libs/web:android_build_string",
-        "//cuttlefish/host/libs/web:build_api",
-        "//cuttlefish/host/libs/web:build_zip_name",
-        "//cuttlefish/host/libs/web:caching_build_api",
-        "//cuttlefish/host/libs/web:chrome_os_build_string",
-        "//cuttlefish/host/libs/web:credential_source",
-        "//cuttlefish/host/libs/web:luci_build_api",
-        "//cuttlefish/host/libs/web:oauth2_consent",
-        "//libbase",
-        "//libsparse",
-        "@curl",
-        "@fmt",
-        "@gflags",
-        "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "fetch_clang_tidy",
-    srcs = [":fetch"],
     tags = ["clang_tidy", "clang-tidy"],
 )
