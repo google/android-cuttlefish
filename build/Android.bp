@@ -24,6 +24,12 @@ install_symlink_host {
 }
 
 install_symlink_host {
+    name: "cpio",
+    installed_location: "bin/cpio",
+    symlink_target: "toybox",
+}
+
+install_symlink_host {
     name: "mkbootimg.py",
     installed_location: "bin/mkbootimg.py",
     symlink_target: "mkbootimg",
@@ -137,6 +143,7 @@ cvd_host_tools = [
     "common_crosvm",
     "console_forwarder",
     "control_env_proxy_server",
+    "cpio",
     "crosvm",
     "cvd_host_bugreport",
     "cvd_import_locations",

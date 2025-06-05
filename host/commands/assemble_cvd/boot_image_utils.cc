@@ -180,8 +180,7 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
   int cpio_status;
   do {
     LOG(ERROR) << "Running";
-    cpio_status = Command(HostBinaryPath("toybox"))
-                      .AddParameter("cpio")
+    cpio_status = Command(CpioBinary())
                       .AddParameter("-idu")
                       .SetWorkingDirectory(ramdisk_stage_dir)
                       .RedirectStdIO(Subprocess::StdIOChannel::kStdIn, input)
