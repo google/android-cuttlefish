@@ -51,6 +51,8 @@ type UserArtifactChunk struct {
 type UserArtifactsManager interface {
 	// Update artifact with the passed chunk
 	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
+	// Stat artifact whether artifact with given checksum exists or not.
+	StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error)
 
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
@@ -185,6 +187,15 @@ func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserA
 		return err
 	}
 	return nil
+}
+
+func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error) {
+	if exists, err := dirExists(filepath.Join(m.RootDir, checksum)); err != nil {
+		return nil, fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return nil, operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
+	}
+	return &apiv1.StatArtifactResponse{}, nil
 }
 
 func (m *UserArtifactsManagerImpl) getRWMutex(checksum string) *sync.RWMutex {

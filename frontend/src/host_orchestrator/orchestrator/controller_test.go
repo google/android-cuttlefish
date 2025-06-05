@@ -205,6 +205,10 @@ func (testUAM) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
 	return nil
 }
 
+func (testUAM) StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error) {
+	return &apiv1.StatArtifactResponse{}, nil
+}
+
 func (testUAM) GetDirPath(string, bool) string {
 	return ""
 }
