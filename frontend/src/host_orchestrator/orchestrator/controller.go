@@ -37,6 +37,7 @@ import (
 
 const HeaderBuildAPICreds = "X-Cutf-Host-Orchestrator-BuildAPI-Creds"
 const HeaderUserProject = "X-Cutf-Host-Orchestrator-BuildAPI-Creds-User-Project-ID"
+const HeaderUseHostBuildAPICreds = "X-Cutf-Host-Orchestrator-Use-Host-BuildAPI-Creds"
 
 const (
 	URLQueryKeyIncludeAdbBugReport = "include_adb_bugreport"
@@ -164,14 +165,9 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	creds := r.Header.Get(HeaderBuildAPICreds)
-	userProjectID := r.Header.Get(HeaderUserProject)
-	buildAPICredentials := BuildAPICredentials{
-		AccessToken:   creds,
-		UserProjectID: userProjectID,
-	}
+	creds := getFetchCredentials(r)
 	cvdBundleFetcher :=
-		newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials, h.Config.AndroidBuildServiceURL)
+		newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds, h.Config.AndroidBuildServiceURL)
 	opts := FetchArtifactsActionOpts{
 		Request:          &req,
 		Paths:            h.Config.Paths,
@@ -201,13 +197,8 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	creds := r.Header.Get(HeaderBuildAPICreds)
-	userProjectID := r.Header.Get(HeaderUserProject)
-	buildAPICredentials := BuildAPICredentials{
-		AccessToken:   creds,
-		UserProjectID: userProjectID,
-	}
-	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, buildAPICredentials, h.Config.AndroidBuildServiceURL)
+	creds := getFetchCredentials(r)
+	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds, h.Config.AndroidBuildServiceURL)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
 		HostValidator:            &HostValidator{ExecContext: exec.CommandContext},
@@ -217,7 +208,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		CVDBundleFetcher:         cvdBundleFetcher,
 		UUIDGen:                  func() string { return uuid.New().String() },
 		UserArtifactsDirResolver: h.UADirResolver,
-		BuildAPICredentials:      buildAPICredentials,
+		FetchCredentials:         creds,
 		BuildAPIBaseURL:          h.Config.AndroidBuildServiceURL,
 	}
 	return NewCreateCVDAction(opts).Run()
@@ -597,4 +588,40 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+}
+
+func getFetchCredentials(r *http.Request) cvd.FetchCredentials {
+	accessToken := r.Header.Get(HeaderBuildAPICreds)
+	if accessToken != "" {
+		return cvd.FetchCredentials{
+
+			AccessTokenCredentials: cvd.AccessTokenCredentials{
+				AccessToken:   accessToken,
+				UserProjectID: r.Header.Get(HeaderUserProject),
+			},
+		}
+	}
+
+	val := r.Header.Get(HeaderUseHostBuildAPICreds)
+	if val != "" {
+		log.Printf("header %q value: %q", HeaderUseHostBuildAPICreds, val)
+		log.Println("fetch credentials: using gce service account credentials")
+		return cvd.FetchCredentials{UseGCEServiceAccountCredentials: true}
+	}
+
+	// TODO: Remove this block after clients start using the new header.
+	{
+		log.Printf("fetch credentials: no access token provided by client")
+		if isRunningOnGCE() {
+			log.Println("fetch credentials: running on gce")
+			if ok, err := hasServiceAccountAccessToken(); err != nil {
+				log.Printf("fetch credentials: service account token check failed: %s", err)
+			} else if ok {
+				log.Println("fetch credentials: using gce service account credentials")
+				return cvd.FetchCredentials{UseGCEServiceAccountCredentials: true}
+			}
+		}
+	}
+
+	return cvd.FetchCredentials{}
 }
