@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -34,11 +33,9 @@ struct ChromeOsBuildArtifacts {
 
 class LuciBuildApi {
  public:
-  LuciBuildApi();
-  LuciBuildApi(std::unique_ptr<HttpClient> http_client,
-               std::unique_ptr<HttpClient> inner_http_client,
-               std::unique_ptr<CredentialSource> buildbucket_credential_source,
-               std::unique_ptr<CredentialSource> storage_credential_source);
+  LuciBuildApi(HttpClient& http_client,
+               CredentialSource* buildbucket_credential_source,
+               CredentialSource* storage_credential_source);
 
   Result<std::optional<ChromeOsBuildArtifacts>> GetBuildArtifacts(
       const ChromeOsBuildString&);
@@ -51,10 +48,9 @@ class LuciBuildApi {
   Result<std::vector<std::string>> BuildBucketHeaders();
   Result<std::vector<std::string>> CloudStorageHeaders();
 
-  std::unique_ptr<HttpClient> http_client_;
-  std::unique_ptr<HttpClient> inner_http_client_;
-  std::unique_ptr<CredentialSource> buildbucket_credential_source_;
-  std::unique_ptr<CredentialSource> storage_credential_source_;
+  HttpClient& http_client_;
+  CredentialSource* buildbucket_credential_source_;
+  CredentialSource* storage_credential_source_;
 };
 
 }  // namespace cuttlefish

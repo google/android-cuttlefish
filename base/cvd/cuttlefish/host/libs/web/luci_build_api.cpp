@@ -15,12 +15,10 @@
 
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 
-#include <memory>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -38,17 +36,12 @@
 
 namespace cuttlefish {
 
-LuciBuildApi::LuciBuildApi() : http_client_(HttpClient::CurlClient()) {}
-
-LuciBuildApi::LuciBuildApi(
-    std::unique_ptr<HttpClient> http_client,
-    std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> buildbucket_credential_source,
-    std::unique_ptr<CredentialSource> storage_credential_source)
-    : http_client_(std::move(http_client)),
-      inner_http_client_(std::move(inner_http_client)),
-      buildbucket_credential_source_(std::move(buildbucket_credential_source)),
-      storage_credential_source_(std::move(storage_credential_source)) {}
+LuciBuildApi::LuciBuildApi(HttpClient& http_client,
+                           CredentialSource* buildbucket_credential_source,
+                           CredentialSource* storage_credential_source)
+    : http_client_(http_client),
+      buildbucket_credential_source_(buildbucket_credential_source),
+      storage_credential_source_(storage_credential_source) {}
 
 Result<std::vector<std::string>> LuciBuildApi::BuildBucketHeaders() {
   std::vector<std::string> headers;
@@ -101,7 +94,7 @@ Result<std::optional<ChromeOsBuildArtifacts>> LuciBuildApi::GetBuildArtifacts(
   json_str << request;
   auto headers = CF_EXPECT(BuildBucketHeaders());
   auto response =
-      CF_EXPECT(http_client_->PostToString(url, json_str.str(), headers));
+      CF_EXPECT(http_client_.PostToString(url, json_str.str(), headers));
   if (!response.HttpSuccess()) {
     return {};
   }
@@ -156,7 +149,7 @@ Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
       UrlEscape(bucket), UrlEscape(object));
 
   auto headers = CF_EXPECT(CloudStorageHeaders());
-  CF_EXPECT(http_client_->DownloadToFile(url, target_path, headers));
+  CF_EXPECT(http_client_.DownloadToFile(url, target_path, headers));
   return {};
 }
 

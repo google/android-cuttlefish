@@ -16,7 +16,6 @@
 #pragma once
 
 #include <chrono>
-#include <memory>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -41,12 +40,10 @@ class AndroidBuildApi : public BuildApi {
   AndroidBuildApi() = delete;
   AndroidBuildApi(AndroidBuildApi&&) = delete;
   virtual ~AndroidBuildApi() = default;
-  AndroidBuildApi(std::unique_ptr<HttpClient> http_client,
-                  std::unique_ptr<HttpClient> inner_http_client,
-                  std::unique_ptr<CredentialSource> credential_source,
+  AndroidBuildApi(HttpClient& http_client, CredentialSource* credential_source,
                   std::string api_key, std::chrono::seconds retry_period,
                   std::string api_base_url, std::string project_id,
-                  std::unique_ptr<CasDownloader> cas_downloader = nullptr);
+                  CasDownloader* cas_downloader = nullptr);
 
   Result<Build> GetBuild(const BuildString& build_string,
                          const std::string& fallback_target);
@@ -106,14 +103,13 @@ class AndroidBuildApi : public BuildApi {
   Result<Build> GetBuild(const DirectoryBuildString& build_string,
                          const std::string& fallback_target);
 
-  std::unique_ptr<HttpClient> http_client;
-  std::unique_ptr<HttpClient> inner_http_client;
-  std::unique_ptr<CredentialSource> credential_source;
+  HttpClient& http_client;
+  CredentialSource* credential_source;
   std::string api_key_;
   std::chrono::seconds retry_period_;
   std::string api_base_url_;
   std::string project_id_;
-  std::unique_ptr<CasDownloader> cas_downloader_;
+  CasDownloader* cas_downloader_;
 };
 
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build);

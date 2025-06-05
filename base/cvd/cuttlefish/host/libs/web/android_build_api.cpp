@@ -111,20 +111,20 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
   return out;
 }
 
-AndroidBuildApi::AndroidBuildApi(
-    std::unique_ptr<HttpClient> http_client,
-    std::unique_ptr<HttpClient> inner_http_client,
-    std::unique_ptr<CredentialSource> credential_source, std::string api_key,
-    const std::chrono::seconds retry_period, std::string api_base_url,
-    std::string project_id, std::unique_ptr<CasDownloader> cas_downloader)
-    : http_client(std::move(http_client)),
-      inner_http_client(std::move(inner_http_client)),
-      credential_source(std::move(credential_source)),
+AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
+                                 CredentialSource* credential_source,
+                                 std::string api_key,
+                                 const std::chrono::seconds retry_period,
+                                 std::string api_base_url,
+                                 std::string project_id,
+                                 CasDownloader* cas_downloader)
+    : http_client(http_client),
+      credential_source(credential_source),
       api_key_(std::move(api_key)),
       retry_period_(retry_period),
       api_base_url_(std::move(api_base_url)),
       project_id_(std::move(project_id)),
-      cas_downloader_(std::move(cas_downloader)) {}
+      cas_downloader_(cas_downloader) {}
 
 Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string,
                                         const std::string& fallback_target) {
@@ -217,7 +217,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     url += "&$userProject=" + UrlEscape(project_id_);
   }
   auto response =
-      CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
+      CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(), "Error fetching the latest build of \""
                                         << target << "\" on \"" << branch
@@ -256,7 +256,7 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
     url += "?" + android::base::Join(params, "&");
   }
   auto response =
-      CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
+      CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching the status of \""
@@ -283,7 +283,7 @@ Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
     url += "?" + android::base::Join(params, "&");
   }
   auto response =
-      CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
+      CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching the product name of \""
@@ -319,7 +319,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
       url += "&$userProject=" + UrlEscape(project_id_);
     }
     auto response =
-        CF_EXPECT(http_client->DownloadToJson(url, CF_EXPECT(Headers())));
+        CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
     const auto& json = response.data;
     CF_EXPECT(response.HttpSuccess(),
               "Error fetching the artifacts of \""
@@ -380,7 +380,7 @@ Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     download_url_endpoint += "?" + android::base::Join(params, "&");
   }
   auto response = CF_EXPECT(
-      http_client->DownloadToJson(download_url_endpoint, CF_EXPECT(Headers())));
+      http_client.DownloadToJson(download_url_endpoint, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess() || response.HttpRedirect(),
             "Error fetching the url of \"" << artifact << "\" for \"" << build
@@ -399,7 +399,7 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
                                              const std::string& artifact,
                                              const std::string& path) {
   const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
-  auto response = CF_EXPECT(http_client->DownloadToFile(url, path));
+  auto response = CF_EXPECT(http_client.DownloadToFile(url, path));
   CF_EXPECTF(response.HttpSuccess(), "Failed to download file: {}",
              response.StatusDescription());
   return {};

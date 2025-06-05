@@ -349,71 +349,6 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
                           flags.credential_flags.service_account_filepath));
 }
 
-}  // namespace
-
-Result<std::unique_ptr<BuildApi>> GetBuildApi(const BuildApiFlags& flags) {
-  const bool use_logging_debug_function = true;
-  std::unique_ptr<HttpClient> curl =
-      HttpClient::CurlClient(use_logging_debug_function);
-  std::unique_ptr<HttpClient> retrying_http_client =
-      HttpClient::ServerErrorRetryClient(*curl, 10,
-                                         std::chrono::milliseconds(5000));
-
-  std::vector<std::string> scopes = {
-      kAndroidBuildApiScope,
-      "https://www.googleapis.com/auth/userinfo.email",
-  };
-  Result<std::unique_ptr<CredentialSource>> cvd_creds =
-      CredentialForScopes(*curl, scopes);
-
-  std::string oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
-
-  std::unique_ptr<CredentialSource> credential_source =
-      cvd_creds.ok() && cvd_creds->get()
-          ? std::move(*cvd_creds)
-          : CF_EXPECT(GetCredentialSourceFromFlags(*retrying_http_client, flags,
-                                                   oauth_filepath));
-
-  const auto cache_base_path = PerUserCacheDir();
-
-  std::unique_ptr<CasDownloader> cas_downloader = nullptr;
-  Result<std::unique_ptr<CasDownloader>> result =
-      CasDownloader::Create(flags.cas_downloader_flags,
-                            flags.credential_flags.service_account_filepath);
-  if (result.ok()) {
-    cas_downloader = std::move(result.value());
-  }
-  return CreateBuildApi(std::move(retrying_http_client), std::move(curl),
-                        std::move(credential_source), std::move(flags.api_key),
-                        flags.wait_retry_period, std::move(flags.api_base_url),
-                        std::move(flags.project_id), flags.enable_caching,
-                        std::move(cache_base_path), std::move(cas_downloader));
-}
-
-namespace {
-
-Result<LuciBuildApi> GetLuciBuildApi(const BuildApiFlags& flags) {
-  const bool use_logging_debug_function = true;
-  std::unique_ptr<HttpClient> curl =
-      HttpClient::CurlClient(use_logging_debug_function);
-  std::unique_ptr<HttpClient> retrying_http_client =
-      HttpClient::ServerErrorRetryClient(*curl, 10,
-                                         std::chrono::milliseconds(5000));
-  std::unique_ptr<CredentialSource> luci_credential_source =
-      CF_EXPECT(GetCredentialSourceFromFlags(
-          *retrying_http_client, flags,
-          StringFromEnv("HOME", ".") +
-              "/.config/chrome_infra/auth/tokens.json"));
-  std::unique_ptr<CredentialSource> gsutil_credential_source =
-      CF_EXPECT(GetCredentialSourceFromFlags(
-          *retrying_http_client, flags, StringFromEnv("HOME", ".") + "/.boto"));
-
-  return LuciBuildApi(std::move(retrying_http_client), std::move(curl),
-                      std::move(luci_credential_source),
-                      std::move(gsutil_credential_source));
-}
-
 Result<std::optional<Build>> GetBuildHelper(
     BuildApi& build_api, const std::optional<BuildString>& build_source,
     const std::string& fallback_target) {
@@ -924,23 +859,82 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
 #endif
   CurlGlobalInit curl_init;
 
-  std::unique_ptr<BuildApi> build_api =
-      CF_EXPECT(GetBuildApi(flags.build_api_flags));
-  LuciBuildApi luci_build_api =
-      CF_EXPECT(GetLuciBuildApi(flags.build_api_flags));
+  const bool use_logging_debug_function = true;
+  std::unique_ptr<HttpClient> curl =
+      HttpClient::CurlClient(use_logging_debug_function);
+  std::unique_ptr<HttpClient> retrying_http_client =
+      HttpClient::ServerErrorRetryClient(*curl, 10,
+                                         std::chrono::milliseconds(5000));
+
+  std::vector<std::string> scopes = {
+      kAndroidBuildApiScope,
+      "https://www.googleapis.com/auth/userinfo.email",
+  };
+  Result<std::unique_ptr<CredentialSource>> cvd_creds =
+      CredentialForScopes(*curl, scopes);
+
+  std::string oauth_filepath =
+      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
+
+  const BuildApiFlags& build_api_flags = flags.build_api_flags;
+
+  std::unique_ptr<CredentialSource> android_creds =
+      cvd_creds.ok() && cvd_creds->get()
+          ? std::move(*cvd_creds)
+          : CF_EXPECT(GetCredentialSourceFromFlags(
+                *retrying_http_client, build_api_flags, oauth_filepath));
+
+  std::unique_ptr<CasDownloader> cas_downloader = nullptr;
+  Result<std::unique_ptr<CasDownloader>> cas_downloader_result =
+      CasDownloader::Create(
+          build_api_flags.cas_downloader_flags,
+          build_api_flags.credential_flags.service_account_filepath);
+  if (cas_downloader_result.ok()) {
+    cas_downloader = std::move(cas_downloader_result.value());
+  }
+
+  AndroidBuildApi android_build_api(
+      *retrying_http_client, android_creds.get(), build_api_flags.api_key,
+      build_api_flags.wait_retry_period, build_api_flags.api_base_url,
+      build_api_flags.project_id, cas_downloader.get());
+
+  const std::string cache_base_path = PerUserCacheDir();
+  std::unique_ptr<CachingBuildApi> caching_build_api;
+  if (build_api_flags.enable_caching && EnsureCacheDirectory(cache_base_path)) {
+    caching_build_api =
+        std::make_unique<CachingBuildApi>(android_build_api, cache_base_path);
+  }
+
+  BuildApi& build_api = caching_build_api
+                            ? static_cast<BuildApi&>(*caching_build_api)
+                            : static_cast<BuildApi&>(android_build_api);
+
+  std::unique_ptr<CredentialSource> luci_credential_source =
+      CF_EXPECT(GetCredentialSourceFromFlags(
+          *retrying_http_client, build_api_flags,
+          StringFromEnv("HOME", ".") +
+              "/.config/chrome_infra/auth/tokens.json"));
+  std::unique_ptr<CredentialSource> gsutil_credential_source = CF_EXPECT(
+      GetCredentialSourceFromFlags(*retrying_http_client, build_api_flags,
+                                   StringFromEnv("HOME", ".") + "/.boto"));
+
+  LuciBuildApi luci_build_api(*retrying_http_client,
+                              luci_credential_source.get(),
+                              gsutil_credential_source.get());
+
   FetchTracer tracer;
   FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
-  CF_EXPECT(UpdateTargetsWithBuilds(*build_api, targets));
+  CF_EXPECT(UpdateTargetsWithBuilds(build_api, targets));
   std::optional<Build> fallback_host_build = std::nullopt;
   if (!targets.empty()) {
     fallback_host_build = targets[0].builds.default_build;
   }
   const auto host_target_build =
-      CF_EXPECT(GetHostBuild(*build_api, host_target, fallback_host_build));
+      CF_EXPECT(GetHostBuild(build_api, host_target, fallback_host_build));
   prefetch_trace.CompletePhase("GetBuilds");
 
   auto host_package_future = std::async(
-      std::launch::async, FetchHostPackage, std::ref(*build_api),
+      std::launch::async, FetchHostPackage, std::ref(build_api),
       std::cref(host_target_build), std::cref(host_target.host_tools_directory),
       std::cref(flags.keep_downloaded_archives),
       std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
@@ -948,7 +942,7 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
   for (const auto& target : targets) {
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
     FetcherConfig config;
-    CF_EXPECT(FetchTarget(*build_api, luci_build_api, target.builds,
+    CF_EXPECT(FetchTarget(build_api, luci_build_api, target.builds,
                           target.directories, target.download_flags,
                           flags.keep_downloaded_archives, config, tracer));
     CF_EXPECT(SaveConfig(config, target.directories.root));
