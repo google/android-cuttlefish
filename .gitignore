@@ -25,3 +25,4 @@ frontend/src/operator/webui/src/environments/version.ts
 
 /bazel-*
 /**/bazel-*
+MODULE.bazel.lock
