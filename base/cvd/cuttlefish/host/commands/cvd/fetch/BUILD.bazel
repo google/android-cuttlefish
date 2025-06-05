@@ -6,6 +6,53 @@ package(
 )
 
 cc_library(
+    name = "downloaders",
+    srcs = ["downloaders.cc"],
+    hdrs = ["downloaders.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:caching_build_api",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:luci_build_api",
+        "//cuttlefish/host/libs/web:oauth2_consent",
+    ],
+)
+
+clang_tidy_test(
+    name = "downloaders_clang_tidy",
+    srcs = [":downloaders"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "downloaders_test",
+    srcs = ["downloaders_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/fetch:downloaders",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//libbase",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "downloaders_test_clang_tidy",
+    srcs = [":downloaders_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
@@ -96,11 +143,9 @@ clang_tidy_test(
 cc_library(
     name = "fetch",
     srcs = [
-        "downloaders.cc",
         "fetch_cvd.cc",
     ],
     hdrs = [
-        "downloaders.h",
         "fetch_cvd.h",
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
@@ -112,6 +157,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/fetch:downloaders",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
@@ -143,30 +189,5 @@ cc_library(
 clang_tidy_test(
     name = "fetch_clang_tidy",
     srcs = [":fetch"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
-    name = "fetch_test",
-    srcs = [
-        "fetch_cvd_test.cpp",
-    ],
-    copts = COPTS + [ "-Icuttlefish" ],
-    deps = [
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:result_matchers",
-        "//cuttlefish/host/commands/cvd/fetch",
-        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//libbase",
-        "@fmt",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "fetch_test_clang_tidy",
-    srcs = [":fetch_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
