@@ -538,6 +538,9 @@ type createUpdateUserArtifactHandler struct {
 func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	dir := vars["name"]
+	if err := ValidateFileName(dir); err != nil {
+		return nil, operator.NewBadRequestError("invalid directory name", err)
+	}
 	if err := r.ParseMultipartForm(0); err != nil {
 		if err == multipart.ErrMessageTooLarge {
 			return nil, &operator.AppError{
@@ -605,7 +608,13 @@ type extractUserArtifactHandler struct {
 func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	dir := vars["dir"]
+	if err := ValidateFileName(dir); err != nil {
+		return nil, operator.NewBadRequestError("invalid directory name", err)
+	}
 	name := vars["name"]
+	if err := ValidateFileName(name); err != nil {
+		return nil, operator.NewBadRequestError("invalid artifact name", err)
+	}
 	op := h.om.New()
 	go func() {
 		err := h.uam.ExtractArtifactWithDir(dir, name)
