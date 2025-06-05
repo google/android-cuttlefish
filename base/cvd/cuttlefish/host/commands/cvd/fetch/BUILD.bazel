@@ -6,6 +6,48 @@ package(
 )
 
 cc_library(
+    name = "fetch_cvd_parser",
+    srcs = ["fetch_cvd_parser.cc"],
+    hdrs = ["fetch_cvd_parser.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/libs/web/cas:cas_downloader",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:chrome_os_build_string",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_cvd_parser_clang_tidy",
+    srcs = [":fetch_cvd_parser"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "fetch_cvd_parser_test",
+    srcs = ["fetch_cvd_parser_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "fetch_cvd_parser_test_clang_tidy",
+    srcs = [":fetch_cvd_parser_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "fetch_tracer",
     srcs = ["fetch_tracer.cpp"],
     hdrs = ["fetch_tracer.h"],
@@ -56,12 +98,10 @@ cc_library(
     srcs = [
         "downloaders.cc",
         "fetch_cvd.cc",
-        "fetch_cvd_parser.cc",
     ],
     hdrs = [
         "downloaders.h",
         "fetch_cvd.h",
-        "fetch_cvd_parser.h",
     ],
     copts = COPTS + [ "-Werror=sign-compare" ],
     deps = [
@@ -72,6 +112,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/utils",
@@ -108,7 +149,6 @@ clang_tidy_test(
 cc_test(
     name = "fetch_test",
     srcs = [
-        "fetch_cvd_parser_test.cpp",
         "fetch_cvd_test.cpp",
     ],
     copts = COPTS + [ "-Icuttlefish" ],
@@ -117,6 +157,7 @@ cc_test(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/fetch",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//libbase",
         "@fmt",
         "@googletest//:gtest",
