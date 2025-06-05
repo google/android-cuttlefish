@@ -36,10 +36,11 @@ cc_binary(
     deps = [
         ":libopenwrt_control_server",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//libbase",
+        "@fmt",
         "@gflags",
         "@grpc//:grpc",
         "@grpc//:grpc++",

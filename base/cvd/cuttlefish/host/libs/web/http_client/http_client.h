@@ -62,8 +62,6 @@ class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
 
-  static std::unique_ptr<HttpClient> CurlClient(
-      bool use_logging_debug_function = false);
   static std::unique_ptr<HttpClient> ServerErrorRetryClient(
       HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
 
