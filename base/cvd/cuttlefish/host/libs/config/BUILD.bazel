@@ -231,6 +231,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:known_paths",
         "//libbase",
     ],
 )

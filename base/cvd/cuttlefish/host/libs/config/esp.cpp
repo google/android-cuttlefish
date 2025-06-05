@@ -34,6 +34,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -152,8 +153,7 @@ bool CanGenerateEsp(Arch arch) {
 
 static bool MsdosMakeDirectories(const std::string& image_path,
                                  const std::vector<std::string>& directories) {
-  auto mmd = HostBinaryPath("mmd");
-  std::vector<std::string> command {mmd, "-i", image_path};
+  std::vector<std::string> command {MmdBinary(), "-i", image_path};
   command.insert(command.end(), directories.begin(), directories.end());
 
   const auto success = Execute(command);
@@ -165,9 +165,8 @@ static bool MsdosMakeDirectories(const std::string& image_path,
 
 static bool CopyToMsdos(const std::string& image, const std::string& path,
                         const std::string& destination) {
-  const auto mcopy = HostBinaryPath("mcopy");
   const auto success =
-      Execute({mcopy, "-o", "-i", image, "-s", path, destination});
+      Execute({McopyBinary(), "-o", "-i", image, "-s", path, destination});
   if (success != 0) {
     return false;
   }
