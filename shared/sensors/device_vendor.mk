@@ -21,6 +21,7 @@ ifneq ($(LOCAL_SENSOR_FILE_OVERRIDES),true)
         frameworks/native/data/etc/android.hardware.sensor.ambient_temperature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.ambient_temperature.xml \
         frameworks/native/data/etc/android.hardware.sensor.barometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.barometer.xml \
         frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml \
+	frameworks/native/data/etc/android.hardware.sensor.hinge_angle.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.hinge_angle.xml \
         frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
         frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml \
         frameworks/native/data/etc/android.hardware.sensor.relative_humidity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.relative_humidity.xml
@@ -32,11 +33,7 @@ PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/shared/sensors/multihal
 # Should check if the default feature list is okay with the implementation. Otherwise, it should set
 # LOCAL_SENSOR_FILE_OVERRIDES and copy feature files.
 ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
-    LOCAL_SENSOR_PRODUCT_PACKAGE := \
-        android.hardware.sensors-service.multihal \
-        android.hardware.sensors@2.1-impl.cuttlefish
-    PRODUCT_COPY_FILES += \
-        device/google/cuttlefish/shared/sensors/multihal/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf
+       LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_SENSOR_PRODUCT_PACKAGE)
