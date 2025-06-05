@@ -77,3 +77,12 @@ clang_tidy_test(
     srcs = [":http_client_util_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "url_escape",
+    srcs = ["url_escape.cc"],
+    hdrs = ["url_escape.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = ["@curl"],
+)

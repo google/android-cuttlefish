@@ -100,8 +100,6 @@ class HttpClient {
   virtual Result<HttpResponse<void>> DownloadToCallback(
       DataCallback callback, const std::string& url,
       const std::vector<std::string>& headers = {}) = 0;
-
-  virtual std::string UrlEscape(const std::string&) = 0;
 };
 
 }  // namespace cuttlefish

@@ -34,6 +34,7 @@
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
 
@@ -152,7 +153,7 @@ Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
 
   auto url = fmt::format(
       "https://storage.googleapis.com/storage/v1/b/{}/o/{}?alt=media",
-      http_client_->UrlEscape(bucket), http_client_->UrlEscape(object));
+      UrlEscape(bucket), UrlEscape(object));
 
   auto headers = CF_EXPECT(CloudStorageHeaders());
   CF_EXPECT(http_client_->DownloadToFile(url, target_path, headers));

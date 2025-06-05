@@ -31,8 +31,9 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/directories/xdg.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
 namespace {
@@ -136,10 +137,10 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   // https://developers.google.com/identity/protocols/oauth2/native-app
   std::stringstream consent;
   consent << "https://accounts.google.com/o/oauth2/v2/auth?";
-  consent << "client_id=" << http_client.UrlEscape(request.client_id) << "&";
-  consent << "redirect_uri=" << http_client.UrlEscape(redirect_uri) << "&";
+  consent << "client_id=" << UrlEscape(request.client_id) << "&";
+  consent << "redirect_uri=" << UrlEscape(redirect_uri) << "&";
   consent << "response_type=code&";
-  consent << "scope=" << http_client.UrlEscape(scopes_str) << "&";
+  consent << "scope=" << UrlEscape(scopes_str) << "&";
 
   std::string code;
 
