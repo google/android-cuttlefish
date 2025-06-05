@@ -176,6 +176,11 @@ symlinks: {
 }
 
 symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/socket_vsock_proxy"
+  link_name: "bin/socket_vsock_proxy"
+}
+
+symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/tcp_connector"
   link_name: "bin/tcp_connector"
 }
