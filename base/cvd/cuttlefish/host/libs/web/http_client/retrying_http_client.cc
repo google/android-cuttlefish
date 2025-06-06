@@ -38,15 +38,6 @@ class ServerErrorRetryClient : public HttpClient {
         retry_attempts_(retry_attempts),
         retry_delay_(retry_delay) {}
 
-  Result<HttpResponse<std::string>> DownloadToFile(
-      const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() {
-      return inner_client_.DownloadToFile(url, path, headers);
-    };
-    return CF_EXPECT(RetryImpl<std::string>(fn));
-  }
-
   Result<HttpResponse<void>> DownloadToCallback(
       HttpMethod method, DataCallback cb, const std::string& url,
       const std::vector<std::string>& hdrs,
