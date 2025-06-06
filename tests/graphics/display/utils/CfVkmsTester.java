@@ -366,7 +366,7 @@ public class CfVkmsTester implements Closeable {
         initialized = true;
     }
 
-    private boolean toggleSystemUi(boolean enable) throws Exception {
+    public boolean toggleSystemUi(boolean enable) throws Exception {
         String command =
             enable ? "start vendor.hwcomposer-3 && start" : "stop && stop vendor.hwcomposer-3";
         CommandResult result = executeCommand(command);
