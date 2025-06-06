@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/directories/xdg.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
@@ -175,9 +176,9 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   constexpr char kExchangeUrl[] = "https://oauth2.googleapis.com/token";
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
-  Json::Value token_json =
-      CF_EXPECT(http_client.PostToJson(kExchangeUrl, exchange.str(), headers))
-          .data;
+  Json::Value token_json = CF_EXPECT(HttpPostToJson(http_client, kExchangeUrl,
+                                                    exchange.str(), headers))
+                               .data;
 
   CF_EXPECT(!token_json.isMember("error"),
             "Response had \"error\" but had http success status. Received '"

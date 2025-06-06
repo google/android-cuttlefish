@@ -23,8 +23,6 @@
 
 namespace cuttlefish {
 
-HttpClient::~HttpClient() = default;
-
 Result<HttpResponse<std::string>> HttpGetToString(
     HttpClient& http_client, const std::string& url,
     const std::vector<std::string>& headers) {
