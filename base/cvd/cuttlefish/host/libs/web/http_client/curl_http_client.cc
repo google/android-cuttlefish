@@ -119,18 +119,6 @@ class CurlClient : public HttpClient {
   }
   ~CurlClient() { curl_easy_cleanup(curl_); }
 
-  Result<HttpResponse<std::string>> GetToString(
-      const std::string& url,
-      const std::vector<std::string>& headers) override {
-    return DownloadToString(HttpMethod::kGet, url, headers);
-  }
-
-  Result<HttpResponse<std::string>> PostToString(
-      const std::string& url, const std::string& data_to_write,
-      const std::vector<std::string>& headers) override {
-    return DownloadToString(HttpMethod::kPost, url, headers, data_to_write);
-  }
-
   Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const std::string& data_to_write,
       const std::vector<std::string>& headers) override {
