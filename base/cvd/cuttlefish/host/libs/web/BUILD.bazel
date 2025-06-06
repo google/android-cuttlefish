@@ -101,6 +101,7 @@ cc_library(
     strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
     ],
 )
