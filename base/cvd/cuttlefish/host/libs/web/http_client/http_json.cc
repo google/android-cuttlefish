@@ -25,8 +25,6 @@
 
 namespace cuttlefish {
 
-HttpClient::~HttpClient() = default;
-
 Result<HttpResponse<Json::Value>> HttpPostToJson(
     HttpClient& http_client, const std::string& url, const std::string& data,
     const std::vector<std::string>& headers) {

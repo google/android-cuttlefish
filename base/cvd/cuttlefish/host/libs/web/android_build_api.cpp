@@ -46,6 +46,8 @@
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_file.h"
+#include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
@@ -217,7 +219,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     url += "&$userProject=" + UrlEscape(project_id_);
   }
   auto response =
-      CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
+      CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(), "Error fetching the latest build of \""
                                         << target << "\" on \"" << branch
@@ -256,7 +258,7 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
     url += "?" + android::base::Join(params, "&");
   }
   auto response =
-      CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
+      CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching the status of \""
@@ -283,7 +285,7 @@ Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
     url += "?" + android::base::Join(params, "&");
   }
   auto response =
-      CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
+      CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching the product name of \""
@@ -319,7 +321,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
       url += "&$userProject=" + UrlEscape(project_id_);
     }
     auto response =
-        CF_EXPECT(http_client.DownloadToJson(url, CF_EXPECT(Headers())));
+        CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
     const auto& json = response.data;
     CF_EXPECT(response.HttpSuccess(),
               "Error fetching the artifacts of \""
@@ -380,7 +382,7 @@ Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     download_url_endpoint += "?" + android::base::Join(params, "&");
   }
   auto response = CF_EXPECT(
-      http_client.DownloadToJson(download_url_endpoint, CF_EXPECT(Headers())));
+      HttpGetToJson(http_client, download_url_endpoint, CF_EXPECT(Headers())));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess() || response.HttpRedirect(),
             "Error fetching the url of \"" << artifact << "\" for \"" << build
@@ -399,7 +401,7 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
                                              const std::string& artifact,
                                              const std::string& path) {
   const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
-  auto response = CF_EXPECT(http_client.DownloadToFile(url, path));
+  auto response = CF_EXPECT(HttpGetToFile(http_client, url, path));
   CF_EXPECTF(response.HttpSuccess(), "Failed to download file: {}",
              response.StatusDescription());
   return {};
