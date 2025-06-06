@@ -53,6 +53,10 @@ func NewNotFoundError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusNotFound, Err: e}
 }
 
+func NewConflictError(msg string, e error) error {
+	return &AppError{Msg: msg, StatusCode: http.StatusConflict, Err: e}
+}
+
 func NewServiceUnavailableError(msg string, e error) error {
 	return &AppError{Msg: msg, StatusCode: http.StatusServiceUnavailable, Err: e}
 }

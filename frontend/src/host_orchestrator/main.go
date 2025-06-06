@@ -117,9 +117,14 @@ func main() {
 
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		RootDir: filepath.Join(*imRootDir, "user_artifacts"),
+		LegacyRootDir: filepath.Join(*imRootDir, "user_artifacts"),
+		RootDir:       filepath.Join(*imRootDir, "userartifacts"),
 	}
-	uam := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
+	uam, err := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
+	if err != nil {
+		log.Fatalf("Unable to prepare UserArtifactsManager: %v", err)
+	}
+	defer os.RemoveAll(uam.UuidWorkDir)
 	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{

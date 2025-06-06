@@ -15,7 +15,9 @@
 package orchestrator
 
 import (
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,30 +28,46 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
 
+	"github.com/google/btree"
 	"github.com/google/go-cmp/cmp"
 )
 
+const (
+	testFileName = "foo.txt"
+	testFileData = "abcdefghijklmnopqrstuvwxyz"
+)
+
 func TestNewDir(t *testing.T) {
-	root := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, root)
-	opts := UserArtifactsManagerOpts{RootDir: root}
-	am := NewUserArtifactsManagerImpl(opts)
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	am, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	upDir, err := am.NewDir()
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(filepath.Join(root, upDir.Name)); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(am.LegacyRootDir, upDir.Name)); errors.Is(err, os.ErrNotExist) {
 		t.Errorf("upload dir %q does not exist", upDir.Name)
 	}
 }
 
 func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
-	root := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, root)
-	opts := UserArtifactsManagerOpts{RootDir: root}
-	am := NewUserArtifactsManagerImpl(opts)
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	am, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	res, _ := am.ListDirs()
 
@@ -60,10 +78,15 @@ func TestListDirsAndNoDirHasBeenCreated(t *testing.T) {
 }
 
 func TestListTokens(t *testing.T) {
-	root := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, root)
-	opts := UserArtifactsManagerOpts{RootDir: root}
-	am := NewUserArtifactsManagerImpl(opts)
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	am, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
 	am.NewDir()
 	am.NewDir()
 
@@ -72,7 +95,7 @@ func TestListTokens(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	entries, err := ioutil.ReadDir(root)
+	entries, err := ioutil.ReadDir(legacyRootDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,55 +108,58 @@ func TestListTokens(t *testing.T) {
 	}
 }
 
-func TestCreateArtifactDirectoryDoesNotExist(t *testing.T) {
-	root := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, root)
-	opts := UserArtifactsManagerOpts{RootDir: root}
-	am := NewUserArtifactsManagerImpl(opts)
+func TestUpdateArtifactWithDirFailsWhenDirectoryDoesNotExist(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	am, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
 	chunk := UserArtifactChunk{
 		Name:        "xyzz",
-		ChunkNumber: 1,
-		ChunkTotal:  11,
+		OffsetBytes: 0,
 		File:        strings.NewReader("lorem ipsum"),
 	}
 
-	err := am.UpdateArtifactWithDir("bar", chunk)
+	err = am.UpdateArtifactWithDir("bar", chunk)
 
 	if err == nil {
 		t.Error("expected error")
 	}
 }
 
-func TestCreateArtifactsLegacySucceeds(t *testing.T) {
+func TestUpdateArtifactWithDirSucceeds(t *testing.T) {
 	wg := sync.WaitGroup{}
-	root := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, root)
-	opts := UserArtifactsManagerOpts{RootDir: root}
-	am := NewUserArtifactsManagerImpl(opts)
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	am, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
 	upDir, err := am.NewDir()
 	if err != nil {
 		t.Fatal(err)
 	}
 	chunk1 := UserArtifactChunk{
-		Name:           "xyzz",
-		ChunkNumber:    1,
-		ChunkTotal:     3,
-		ChunkSizeBytes: 4,
-		File:           strings.NewReader("lore"),
+		Name:        "xyzz",
+		File:        strings.NewReader("lore"),
+		OffsetBytes: 0,
 	}
 	chunk2 := UserArtifactChunk{
-		Name:           "xyzz",
-		ChunkNumber:    2,
-		ChunkTotal:     3,
-		ChunkSizeBytes: 4,
-		File:           strings.NewReader("m ip"),
+		Name:        "xyzz",
+		File:        strings.NewReader("m ip"),
+		OffsetBytes: 0 + 4,
 	}
 	chunk3 := UserArtifactChunk{
-		Name:           "xyzz",
-		ChunkNumber:    3,
-		ChunkTotal:     3,
-		ChunkSizeBytes: 4,
-		File:           strings.NewReader("sum"),
+		Name:        "xyzz",
+		File:        strings.NewReader("sum"),
+		OffsetBytes: 0 + 4 + 4,
 	}
 	chunks := [3]UserArtifactChunk{chunk1, chunk2, chunk3}
 	wg.Add(3)
@@ -153,48 +179,357 @@ func TestCreateArtifactsLegacySucceeds(t *testing.T) {
 	}
 }
 
-func TestCreateArtifactsSucceeds(t *testing.T) {
-	wg := sync.WaitGroup{}
-	root := orchtesting.TempDir(t)
-	defer orchtesting.RemoveDir(t, root)
-	opts := UserArtifactsManagerOpts{RootDir: root}
-	am := NewUserArtifactsManagerImpl(opts)
-	upDir, err := am.NewDir()
+func getSha256Sum(data string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
+}
+
+func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
 	if err != nil {
 		t.Fatal(err)
 	}
-	chunk1 := UserArtifactChunk{
-		Name:             "xyzz",
-		File:             strings.NewReader("lore"),
-		UseChunkOffset:   true,
-		ChunkOffsetBytes: 0,
-	}
-	chunk2 := UserArtifactChunk{
-		Name:             "xyzz",
-		File:             strings.NewReader("m ip"),
-		UseChunkOffset:   true,
-		ChunkOffsetBytes: 0 + 4,
-	}
-	chunk3 := UserArtifactChunk{
-		Name:             "xyzz",
-		File:             strings.NewReader("sum"),
-		UseChunkOffset:   true,
-		ChunkOffsetBytes: 0 + 4 + 4,
-	}
-	chunks := [3]UserArtifactChunk{chunk1, chunk2, chunk3}
-	wg.Add(3)
 
-	for i := 0; i < len(chunks); i++ {
-		go func(i int) {
+	checksum := getSha256Sum(testFileData)
+	chunk := UserArtifactChunk{
+		Name:          testFileName,
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(testFileData)),
+		FileSizeBytes: int64(len(testFileData)),
+		File:          strings.NewReader(testFileData),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+	b, err := ioutil.ReadFile(filepath.Join(uam.GetDirPath(checksum, false), testFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(testFileData, string(b)); diff != "" {
+		t.Fatalf("artifact content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestUpdateArtifactFailsWithInvalidInput(t *testing.T) {
+	checksum := getSha256Sum(testFileData)
+	chunks := map[string]UserArtifactChunk{
+		"NegativeChunkOffset": {
+			Name:          testFileName,
+			OffsetBytes:   -1234,
+			SizeBytes:     int64(len(testFileData)),
+			FileSizeBytes: int64(len(testFileData)),
+			File:          strings.NewReader(testFileData),
+		},
+		"NegativeChunkSize": {
+			Name:          testFileName,
+			OffsetBytes:   0,
+			SizeBytes:     -1234,
+			FileSizeBytes: int64(len(testFileData)),
+			File:          strings.NewReader(testFileData),
+		},
+		"NegativeFileSize": {
+			Name:          testFileName,
+			OffsetBytes:   0,
+			SizeBytes:     int64(len(testFileData)),
+			FileSizeBytes: -1234,
+			File:          strings.NewReader(testFileData),
+		},
+		"ChunkSizeOverflow": {
+			Name:          testFileName,
+			OffsetBytes:   0,
+			SizeBytes:     int64(len(testFileData)) + 1234,
+			FileSizeBytes: int64(len(testFileData)),
+			File:          strings.NewReader(testFileData),
+		},
+	}
+	for name, chunk := range chunks {
+		t.Run(name, func(t *testing.T) {
+			legacyRootDir := orchtesting.TempDir(t)
+			defer orchtesting.RemoveDir(t, legacyRootDir)
+			rootDir := orchtesting.TempDir(t)
+			defer orchtesting.RemoveDir(t, rootDir)
+			opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+			uam, err := NewUserArtifactsManagerImpl(opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err := uam.UpdateArtifact(checksum, chunk); err == nil {
+				t.Fatal("Expected an error")
+			}
+		})
+	}
+}
+
+func TestUpdateArtifactAfterArtifactIsFullyUploadedFails(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checksum := getSha256Sum(testFileData)
+	chunk := UserArtifactChunk{
+		Name:          testFileName,
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(testFileData)),
+		FileSizeBytes: int64(len(testFileData)),
+		File:          strings.NewReader(testFileData),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func constructSeparatedChunks(name, data string) []UserArtifactChunk {
+	chunks := []UserArtifactChunk{}
+	for idxStart := 0; idxStart < len(data); {
+		idxEnd := idxStart*2 + 1
+		if idxEnd > len(data) {
+			idxEnd = len(data)
+		}
+		chunks = append(chunks, UserArtifactChunk{
+			Name:          name,
+			OffsetBytes:   int64(idxStart),
+			SizeBytes:     int64(idxEnd - idxStart),
+			FileSizeBytes: int64(len(data)),
+			File:          strings.NewReader(data[idxStart:idxEnd]),
+		})
+		idxStart = idxEnd
+	}
+	return chunks
+}
+
+func TestUpdateArtifactWithMultipleSerialChunkSucceeds(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checksum := getSha256Sum(testFileData)
+	chunks := constructSeparatedChunks(testFileName, testFileData)
+	for _, chunk := range chunks {
+		if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+			t.Fatal(err)
+		}
+	}
+	b, err := ioutil.ReadFile(filepath.Join(uam.GetDirPath(getSha256Sum(testFileData), false), testFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(testFileData, string(b)); diff != "" {
+		t.Fatalf("artifact content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	checksum := getSha256Sum(testFileData)
+	chunks := constructSeparatedChunks(testFileName, testFileData)
+	wg := sync.WaitGroup{}
+	wg.Add(len(chunks))
+	for _, chunk := range chunks {
+		go func(chunk UserArtifactChunk) {
 			defer wg.Done()
-			am.UpdateArtifactWithDir(upDir.Name, chunks[i])
-		}(i)
-
+			if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+				t.Error(err)
+			}
+		}(chunk)
 	}
-
 	wg.Wait()
-	b, _ := ioutil.ReadFile(am.GetFilePath(upDir.Name, "xyzz"))
-	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
-		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
+	b, err := ioutil.ReadFile(filepath.Join(uam.GetDirPath(getSha256Sum(testFileData), false), testFileName))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if diff := cmp.Diff(testFileData, string(b)); diff != "" {
+		t.Fatalf("artifact content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func getChunkStateItemList(cs *chunkState) []chunkStateItem {
+	items := []chunkStateItem{}
+	cs.items.Ascend(func(item btree.Item) bool {
+		items = append(items, item.(chunkStateItem))
+		return true
+	})
+	return items
+}
+
+func TestChunkStateUpdateSucceedsForSeparatedChunks(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(0, 10)
+	cs.Update(40, 50)
+	cs.Update(90, 100)
+	items := getChunkStateItemList(cs)
+	expected := []chunkStateItem{
+		{offset: 0, isUpdated: true},
+		{offset: 10, isUpdated: false},
+		{offset: 40, isUpdated: true},
+		{offset: 50, isUpdated: false},
+		{offset: 90, isUpdated: true},
+		{offset: 100, isUpdated: false},
+	}
+	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestChunkStateUpdateSucceedsForSubranges(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(40, 50)
+	cs.Update(60, 70)
+	cs.Update(30, 80)
+	cs.Update(50, 60)
+	cs.Update(65, 75)
+	items := getChunkStateItemList(cs)
+	expected := []chunkStateItem{
+		{offset: 30, isUpdated: true},
+		{offset: 80, isUpdated: false},
+	}
+	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestChunkStateUpdateSucceedsForOverlappingRanges(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(10, 30)
+	cs.Update(20, 40)
+	cs.Update(70, 90)
+	cs.Update(60, 80)
+	items := getChunkStateItemList(cs)
+	expected := []chunkStateItem{
+		{offset: 10, isUpdated: true},
+		{offset: 40, isUpdated: false},
+		{offset: 60, isUpdated: true},
+		{offset: 90, isUpdated: false},
+	}
+	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestChunkStateUpdateSucceedsForSameStartOrEnd(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(10, 15)
+	cs.Update(10, 12)
+	cs.Update(20, 22)
+	cs.Update(20, 25)
+	cs.Update(55, 60)
+	cs.Update(58, 60)
+	cs.Update(65, 70)
+	cs.Update(68, 70)
+	items := getChunkStateItemList(cs)
+	expected := []chunkStateItem{
+		{offset: 10, isUpdated: true},
+		{offset: 15, isUpdated: false},
+		{offset: 20, isUpdated: true},
+		{offset: 25, isUpdated: false},
+		{offset: 55, isUpdated: true},
+		{offset: 60, isUpdated: false},
+		{offset: 65, isUpdated: true},
+		{offset: 70, isUpdated: false},
+	}
+	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestChunkStateUpdateSucceedsForMergingChunks(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(10, 20)
+	cs.Update(30, 40)
+	cs.Update(50, 60)
+	cs.Update(20, 30)
+	cs.Update(40, 50)
+	items := getChunkStateItemList(cs)
+	expected := []chunkStateItem{
+		{offset: 10, isUpdated: true},
+		{offset: 60, isUpdated: false},
+	}
+	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestChunkStateUpdateFailsForInvalidRanges(t *testing.T) {
+	cs := NewChunkState(100)
+	if err := cs.Update(-1, 10); err == nil {
+		t.Fatalf("expected an error")
+	}
+	if err := cs.Update(90, 101); err == nil {
+		t.Fatalf("expected an error")
+	}
+	if err := cs.Update(50, 50); err == nil {
+		t.Fatalf("expected an error")
+	}
+	if err := cs.Update(80, 40); err == nil {
+		t.Fatalf("expected an error")
+	}
+	items := getChunkStateItemList(cs)
+	expected := []chunkStateItem{}
+	if diff := cmp.Diff(expected, items, cmp.AllowUnexported(chunkStateItem{})); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestChunkStateIsCompleted(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(0, 20)
+	cs.Update(80, 100)
+	cs.Update(20, 80)
+	if !cs.IsCompleted() {
+		t.Fatalf("expected as completed")
+	}
+}
+
+func TestChunkStateIsNotCompletedWithMissingStart(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(1, 100)
+	if cs.IsCompleted() {
+		t.Fatalf("expected as not completed")
+	}
+}
+
+func TestChunkStateIsNotCompletedWithMissingIntermediate(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(0, 20)
+	cs.Update(80, 100)
+	cs.Update(20, 79)
+	if cs.IsCompleted() {
+		t.Fatalf("expected as not completed")
+	}
+}
+
+func TestChunkStateIsNotCompletedWithMissingEnd(t *testing.T) {
+	cs := NewChunkState(100)
+	cs.Update(0, 99)
+	if cs.IsCompleted() {
+		t.Fatalf("expected as not completed")
 	}
 }
