@@ -35,6 +35,7 @@
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_json.h"
 
 using android::base::StartsWith;
 using google::protobuf::Empty;
@@ -165,7 +166,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
     auto auth_url = CF_EXPECT(LuciRpcAddress("auth"));
     auto auth_data = LuciRpcData(1, "login", {"root", "password"});
     auto auth_reply =
-        CF_EXPECT(http_client_.PostToJson(auth_url, auth_data, header_));
+        CF_EXPECT(HttpPostToJson(http_client_, auth_url, auth_data, header_));
     if (auth_reply.data["error"].isString()) {
       CF_EXPECT(!StartsWith(auth_reply.data["error"].asString(),
                             "Failed to parse json:"),
@@ -183,7 +184,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
                                      const std::vector<std::string>& params) {
     auto url = CF_EXPECT(LuciRpcAddress(subpath, auth_key_));
     auto data = LuciRpcData(method, params);
-    auto reply = CF_EXPECT(http_client_.PostToJson(url, data, header_));
+    auto reply = CF_EXPECT(HttpPostToJson(http_client_, url, data, header_));
     if (reply.data["error"].isString()) {
       CF_EXPECT(
           !StartsWith(reply.data["error"].asString(), "Failed to parse json:"),
