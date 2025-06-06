@@ -19,8 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -85,11 +85,8 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Restore the device from the snapshot.
-	req := &hoapi.StartCVDRequest{SnapshotID: createSnapshotRes.SnapshotID}
+	req := &hoapi.StartCVDRequest{SnapshotID: snapshotID}
 	if err := srv.Start(groupName, cvd.Name, req); err != nil {
-		if err := common.DownloadHostBugReport(srv, groupName); err != nil {
-			t.Errorf("failed creating bugreport: %s", err)
-		}
 		t.Fatal(err)
 	}
 	cvd, err = getCVD(srv)
@@ -109,8 +106,9 @@ func TestSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := deleteSnapshot(srv, snapshotID); err != nil {
-		t.Fatalf("failed to delete snapshot: %s", err)
+	// Verify delete snapshot logic.
+	if err := verifyDeleteSnapshot(srv, groupName, cvd.Name, snapshotID); err != nil {
+		t.Fatalf("delete snapshot check failed: %s", err)
 	}
 }
 
@@ -178,26 +176,26 @@ func getCVD(srv hoclient.HostOrchestratorClient) (*hoapi.CVD, error) {
 	return cvds[0], nil
 }
 
-func deleteSnapshot(client hoclient.SnapshotsClient, id string) error {
-	dir := fmt.Sprintf("/var/lib/cuttlefish-common/snapshots/%s", id)
-	if ok, _ := fileExist(dir); !ok {
-		return fmt.Errorf("snapshot dir %s does not exist", dir)
-	}
-	if err := client.DeleteSnapshot(id); err != nil {
+func verifyDeleteSnapshot(client hoclient.HostOrchestratorClient, group, name, snapshotID string) error {
+	// Delete snapshot
+	if err := client.DeleteSnapshot(snapshotID); err != nil {
 		return err
 	}
-	if ok, _ := fileExist(dir); ok {
-		return fmt.Errorf("snapshot dir %s was not deleted", dir)
+	// Verifies the snapshot was deleted by aiming to restore from snapshot again.
+	req := &hoapi.StartCVDRequest{SnapshotID: snapshotID}
+	if err := client.Start(group, name, req); err != nil {
+		var apiCallErr *hoclient.ApiCallError
+		if errors.As(err, &apiCallErr) {
+		} else {
+			return fmt.Errorf("invalid error type: %T, expected %T", err, apiCallErr)
+		}
+		if diff := cmp.Diff(404, apiCallErr.HTTPStatusCode); diff != "" {
+			return fmt.Errorf("http status code mismatch (-want +got):\n%s", diff)
+		}
+		part := fmt.Sprintf("%q not found", snapshotID)
+		if !strings.Contains(apiCallErr.ErrorMsg.Error, part) {
+			return fmt.Errorf("expected part %q in server error message %q", part, apiCallErr.ErrorMsg.Error)
+		}
 	}
 	return nil
-}
-
-func fileExist(name string) (bool, error) {
-	if _, err := os.Stat(name); err == nil {
-		return true, nil
-	} else if os.IsNotExist(err) {
-		return false, nil
-	} else {
-		return false, err
-	}
 }

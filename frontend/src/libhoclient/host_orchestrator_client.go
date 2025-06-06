@@ -32,6 +32,8 @@ import (
 
 type ApiCallError struct {
 	opapi.ErrorMsg
+
+	HTTPStatusCode int
 }
 
 func (e *ApiCallError) Error() string {
