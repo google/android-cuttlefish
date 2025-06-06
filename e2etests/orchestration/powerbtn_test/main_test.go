@@ -16,7 +16,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"strings"
 	"testing"
@@ -31,6 +30,10 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestPowerBtn(t *testing.T) {
+	adbH := common.NewAdbHelper()
+	if err := adbH.StartServer(); err != nil {
+		t.Fatal(err)
+	}
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	t.Cleanup(func() {
 		if err := common.CollectHOLogs(baseURL); err != nil {
@@ -46,11 +49,6 @@ func TestPowerBtn(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Monitor input devices events
-	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	adbH := &common.AdbHelper{Bin: adbBin}
-	if err := adbH.StartServer(); err != nil {
-		t.Fatal(err)
-	}
 	if err := adbH.Connect(cvd.ADBSerial); err != nil {
 		t.Fatal(err)
 	}
@@ -62,6 +60,9 @@ func TestPowerBtn(t *testing.T) {
 	cmd := adbH.BuildShellCommand(cvd.ADBSerial, []string{"getevent", "-l", "-c 2", "/dev/input/event0"})
 	stdoutBuff := &bytes.Buffer{}
 	cmd.Stdout = stdoutBuff
+	if err := adbH.WaitForDevice(cvd.ADBSerial); err != nil {
+		t.Fatal(err)
+	}
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}

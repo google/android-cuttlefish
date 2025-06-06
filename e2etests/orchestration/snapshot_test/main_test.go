@@ -33,6 +33,10 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestSnapshot(t *testing.T) {
+	adbH := common.NewAdbHelper()
+	if err := adbH.StartServer(); err != nil {
+		t.Fatal(err)
+	}
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	t.Cleanup(func() {
 		if err := common.CollectHOLogs(baseURL); err != nil {
@@ -46,11 +50,6 @@ func TestSnapshot(t *testing.T) {
 	const groupName = "cvd"
 	cvd, err := createDevice(srv, groupName, uploadDir)
 	if err != nil {
-		t.Fatal(err)
-	}
-	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	adbH := &common.AdbHelper{Bin: adbBin}
-	if err := adbH.StartServer(); err != nil {
 		t.Fatal(err)
 	}
 	if err := adbH.Connect(cvd.ADBSerial); err != nil {
