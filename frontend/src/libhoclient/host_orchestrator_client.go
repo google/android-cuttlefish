@@ -31,13 +31,11 @@ import (
 )
 
 type ApiCallError struct {
-	Code     int    `json:"code,omitempty"`
-	ErrorMsg string `json:"error,omitempty"`
-	Details  string `json:"details,omitempty"`
+	opapi.ErrorMsg
 }
 
 func (e *ApiCallError) Error() string {
-	str := fmt.Sprintf("api call error %d: %s", e.Code, e.ErrorMsg)
+	str := fmt.Sprintf("api call error: message: %s", e.ErrorMsg.Error)
 	if e.Details != "" {
 		str += fmt.Sprintf("\n\nDETAILS: %s", e.Details)
 	}
@@ -586,7 +584,7 @@ func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBu
 		return err
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return &ApiCallError{ErrorMsg: res.Status}
+		return &ApiCallError{ErrorMsg: opapi.ErrorMsg{Error: res.Status}}
 	}
 	return nil
 }
