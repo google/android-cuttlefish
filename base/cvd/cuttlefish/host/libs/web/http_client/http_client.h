@@ -20,7 +20,6 @@
 #include <type_traits>
 #include <vector>
 
-#include <json/json.h>
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
@@ -68,23 +67,6 @@ class HttpClient {
   typedef std::function<bool(char*, size_t)> DataCallback;
 
   virtual ~HttpClient();
-
-  // Returns the json object contained in the response's body.
-  //
-  // NOTE: In case of a parsing error a successful `result` will be returned
-  // with the relevant http status code and a json object with the next format:
-  // {
-  //   "error": "Failed to parse json",
-  //   "response: "<THE RESPONSE BODY>"
-  // }
-  virtual Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const std::string& data,
-      const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const Json::Value& data,
-      const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
 
   virtual Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
