@@ -15,9 +15,19 @@
 
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 
+#include <stdint.h>
+#include <stdlib.h>
+
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include <android-base/logging.h>
+
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd_stream.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
@@ -26,7 +36,55 @@ namespace cuttlefish {
 Result<HttpResponse<std::string>> HttpGetToFile(
     HttpClient& http_client, const std::string& url, const std::string& path,
     const std::vector<std::string>& headers) {
-  return http_client.DownloadToFile(url, path, headers);
+  LOG(DEBUG) << "Saving '" << url << "' to '" << path << "'";
+
+  std::string temp_path;
+  std::unique_ptr<SharedFDOstream> stream;
+  uint64_t total_dl = 0;
+  uint64_t last_log = 0;
+  auto callback = [path, &temp_path, &stream, &total_dl, &last_log](
+                      char* data, size_t size) -> bool {
+    // On a retry due to a server error, the download will be called from the
+    // beginning. The download should be initialized / reset at the nullptr /
+    // "beginning of download" case, which can come multiple times.
+    if (data == nullptr) {
+      if (!temp_path.empty()) {
+        RemoveFile(temp_path);
+      }
+      total_dl = 0;
+      last_log = 0;
+      Result<std::pair<SharedFD, std::string>> res = SharedFD::Mkostemp(path);
+      if (!res.ok()) {
+        LOG(ERROR) << "Can't make temp file: " << res.error().FormatForEnv();
+        return false;
+      }
+      temp_path = res->second;
+      stream = std::make_unique<SharedFDOstream>(res->first);
+      return !stream->fail();
+    }
+    total_dl += size;
+    if (total_dl / 2 >= last_log) {
+      LOG(DEBUG) << "Downloaded " << total_dl << " bytes";
+      last_log = total_dl;
+    }
+    stream->write(data, size);
+    return !stream->fail();
+  };
+  HttpResponse<void> http_response = CF_EXPECT(http_client.DownloadToCallback(
+      HttpMethod::kGet, callback, url, headers, ""));
+
+  LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
+             << "' to '" << path << "'.";
+
+  if (http_response.HttpSuccess()) {
+    CF_EXPECT(RenameFile(temp_path, path));
+  } else {
+    CF_EXPECTF(
+        RemoveFile(temp_path),
+        "Unable to remove temporary file \"{}\"\nMay require manual removal",
+        temp_path);
+  }
+  return HttpResponse<std::string>{path, http_response.http_code};
 }
 
 }  // namespace cuttlefish
