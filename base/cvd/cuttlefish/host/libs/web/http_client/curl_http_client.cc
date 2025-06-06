@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 
-#include <stdint.h>
 #include <stdio.h>
 
 #include <curl/curl.h>
@@ -31,9 +30,6 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/shared_fd_stream.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client_util.h"
@@ -158,45 +154,6 @@ class CurlClient : public HttpClient {
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
     return HttpResponse<void>{{}, http_code};
-  }
-
-  Result<HttpResponse<std::string>> DownloadToFile(
-      const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers) override {
-    LOG(DEBUG) << "Saving '" << url << "' to '" << path << "'";
-
-    auto [shared_fd, temp_path] = CF_EXPECT(SharedFD::Mkostemp(path));
-    SharedFDOstream stream(shared_fd);
-    uint64_t total_dl = 0;
-    uint64_t last_log = 0;
-    auto callback = [&stream, &total_dl, &last_log](char* data,
-                                                    size_t size) -> bool {
-      total_dl += size;
-      if (total_dl / 2 >= last_log) {
-        LOG(DEBUG) << "Downloaded " << total_dl << " bytes";
-        last_log = total_dl;
-      }
-      if (data == nullptr) {
-        return !stream.fail();
-      }
-      stream.write(data, size);
-      return !stream.fail();
-    };
-    HttpResponse<void> http_response = CF_EXPECT(
-        DownloadToCallback(HttpMethod::kGet, callback, url, headers, ""));
-
-    LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
-               << "' to '" << path << "'.";
-
-    if (http_response.HttpSuccess()) {
-      CF_EXPECT(RenameFile(temp_path, path));
-    } else {
-      CF_EXPECTF(
-          RemoveFile(temp_path),
-          "Unable to remove temporary file \"{}\"\nMay require manual removal",
-          temp_path);
-    }
-    return HttpResponse<std::string>{path, http_response.http_code};
   }
 
  private:

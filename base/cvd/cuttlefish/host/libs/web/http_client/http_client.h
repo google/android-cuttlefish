@@ -68,10 +68,6 @@ class HttpClient {
 
   virtual ~HttpClient();
 
-  virtual Result<HttpResponse<std::string>> DownloadToFile(
-      const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers = {}) = 0;
-
   // Returns response's status code.
   virtual Result<HttpResponse<void>> DownloadToCallback(
       HttpMethod, DataCallback callback, const std::string& url,
