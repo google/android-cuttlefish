@@ -83,12 +83,6 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
   return 0;
 }
 
-enum class HttpMethod {
-  kGet,
-  kPost,
-  kDelete,
-};
-
 size_t curl_to_function_cb(char* ptr, size_t, size_t nmemb, void* userdata) {
   HttpClient::DataCallback* callback = (HttpClient::DataCallback*)userdata;
   if (!(*callback)(ptr, nmemb)) {
@@ -152,9 +146,47 @@ class CurlClient : public HttpClient {
   }
 
   Result<HttpResponse<void>> DownloadToCallback(
-      DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers) override {
-    return DownloadToCallback(HttpMethod::kGet, callback, url, headers);
+      HttpMethod method, DataCallback callback, const std::string& url,
+      const std::vector<std::string>& headers,
+      const std::string& data_to_write) override {
+    std::lock_guard<std::mutex> lock(mutex_);
+    LOG(DEBUG) << "Downloading '" << url << "'";
+    CF_EXPECT(data_to_write.empty() || method == HttpMethod::kPost,
+              "data must be empty for non POST requests");
+    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
+    CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
+              "callback failure");
+    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
+    curl_easy_reset(curl_);
+    if (method == HttpMethod::kDelete) {
+      curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
+    }
+    curl_easy_setopt(curl_, CURLOPT_CAINFO,
+                     "/etc/ssl/certs/ca-certificates.crt");
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
+    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
+    if (method == HttpMethod::kPost) {
+      curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data_to_write.size());
+      curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data_to_write.c_str());
+    }
+    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
+    char error_buf[CURL_ERROR_SIZE];
+    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
+    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
+    // CURLOPT_VERBOSE must be set for CURLOPT_DEBUGFUNCTION be utilized
+    if (use_logging_debug_function_) {
+      curl_easy_setopt(curl_, CURLOPT_DEBUGFUNCTION, LoggingCurlDebugFunction);
+    }
+    CURLcode res = curl_easy_perform(curl_);
+    CF_EXPECT(res == CURLE_OK,
+              "curl_easy_perform() failed. "
+                  << "Code was \"" << res << "\". "
+                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+                  << "Error buffer was \"" << error_buf << "\".");
+    long http_code = 0;
+    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
+    return HttpResponse<void>{{}, http_code};
   }
 
   Result<HttpResponse<std::string>> DownloadToFile(
@@ -179,8 +211,8 @@ class CurlClient : public HttpClient {
       stream.write(data, size);
       return !stream.fail();
     };
-    HttpResponse<void> http_response =
-        CF_EXPECT(DownloadToCallback(callback, url, headers));
+    HttpResponse<void> http_response = CF_EXPECT(
+        DownloadToCallback(HttpMethod::kGet, callback, url, headers, ""));
 
     LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
                << "' to '" << path << "'.";
@@ -236,50 +268,6 @@ class CurlClient : public HttpClient {
     auto http_response = CF_EXPECT(
         DownloadToCallback(method, callback, url, headers, data_to_write));
     return HttpResponse<std::string>{stream.str(), http_response.http_code};
-  }
-
-  Result<HttpResponse<void>> DownloadToCallback(
-      HttpMethod method, DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers,
-      const std::string& data_to_write = "") {
-    std::lock_guard<std::mutex> lock(mutex_);
-    LOG(DEBUG) << "Downloading '" << url << "'";
-    CF_EXPECT(data_to_write.empty() || method == HttpMethod::kPost,
-              "data must be empty for non POST requests");
-    CF_EXPECT(curl_ != nullptr, "curl was not initialized");
-    CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
-              "callback failure");
-    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
-    curl_easy_reset(curl_);
-    if (method == HttpMethod::kDelete) {
-      curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
-    }
-    curl_easy_setopt(curl_, CURLOPT_CAINFO,
-                     "/etc/ssl/certs/ca-certificates.crt");
-    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
-    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    if (method == HttpMethod::kPost) {
-      curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data_to_write.size());
-      curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data_to_write.c_str());
-    }
-    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
-    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
-    char error_buf[CURL_ERROR_SIZE];
-    curl_easy_setopt(curl_, CURLOPT_ERRORBUFFER, error_buf);
-    curl_easy_setopt(curl_, CURLOPT_VERBOSE, 1L);
-    // CURLOPT_VERBOSE must be set for CURLOPT_DEBUGFUNCTION be utilized
-    if (use_logging_debug_function_) {
-      curl_easy_setopt(curl_, CURLOPT_DEBUGFUNCTION, LoggingCurlDebugFunction);
-    }
-    CURLcode res = curl_easy_perform(curl_);
-    CF_EXPECT(res == CURLE_OK,
-              "curl_easy_perform() failed. "
-                  << "Code was \"" << res << "\". "
-                  << "Strerror was \"" << curl_easy_strerror(res) << "\". "
-                  << "Error buffer was \"" << error_buf << "\".");
-    long http_code = 0;
-    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return HttpResponse<void>{{}, http_code};
   }
 
   CURL* curl_;

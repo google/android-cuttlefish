@@ -57,6 +57,12 @@ struct HttpResponse {
   long http_code;
 };
 
+enum class HttpMethod {
+  kGet,
+  kPost,
+  kDelete,
+};
+
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
@@ -92,8 +98,9 @@ class HttpClient {
 
   // Returns response's status code.
   virtual Result<HttpResponse<void>> DownloadToCallback(
-      DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers = {}) = 0;
+      HttpMethod, DataCallback callback, const std::string& url,
+      const std::vector<std::string>& headers = {},
+      const std::string& data_to_write = "") = 0;
 };
 
 }  // namespace cuttlefish

@@ -91,10 +91,11 @@ class ServerErrorRetryClient : public HttpClient {
   }
 
   Result<HttpResponse<void>> DownloadToCallback(
-      DataCallback cb, const std::string& url,
-      const std::vector<std::string>& hdrs) override {
+      HttpMethod method, DataCallback cb, const std::string& url,
+      const std::vector<std::string>& hdrs,
+      const std::string& to_write) override {
     auto fn = [&, this]() {
-      return inner_client_.DownloadToCallback(cb, url, hdrs);
+      return inner_client_.DownloadToCallback(method, cb, url, hdrs, to_write);
     };
     return CF_EXPECT(RetryImpl<void>(fn));
   }
