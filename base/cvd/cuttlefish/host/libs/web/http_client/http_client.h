@@ -69,12 +69,6 @@ class HttpClient {
 
   virtual ~HttpClient();
 
-  virtual Result<HttpResponse<std::string>> GetToString(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<std::string>> PostToString(
-      const std::string& url, const std::string& data,
-      const std::vector<std::string>& headers = {}) = 0;
-
   // Returns the json object contained in the response's body.
   //
   // NOTE: In case of a parsing error a successful `result` will be returned

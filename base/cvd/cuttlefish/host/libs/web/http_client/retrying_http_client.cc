@@ -40,21 +40,6 @@ class ServerErrorRetryClient : public HttpClient {
         retry_attempts_(retry_attempts),
         retry_delay_(retry_delay) {}
 
-  Result<HttpResponse<std::string>> GetToString(
-      const std::string& url, const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() { return inner_client_.GetToString(url, headers); };
-    return CF_EXPECT(RetryImpl<std::string>(fn));
-  }
-
-  Result<HttpResponse<std::string>> PostToString(
-      const std::string& url, const std::string& data,
-      const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() {
-      return inner_client_.PostToString(url, data, headers);
-    };
-    return CF_EXPECT(RetryImpl<std::string>(fn));
-  }
-
   Result<HttpResponse<Json::Value>> PostToJson(
       const std::string& url, const Json::Value& data,
       const std::vector<std::string>& headers) override {
