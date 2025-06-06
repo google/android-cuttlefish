@@ -16,7 +16,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os/exec"
 	"testing"
@@ -30,6 +29,10 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestPowerwash(t *testing.T) {
+	adbH := common.NewAdbHelper()
+	if err := adbH.StartServer(); err != nil {
+		t.Fatal(err)
+	}
 	srv := hoclient.NewHostOrchestratorClient(baseURL)
 	t.Cleanup(func() {
 		if err := common.CollectHOLogs(baseURL); err != nil {
@@ -44,8 +47,6 @@ func TestPowerwash(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	adbBin := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/bin/adb", uploadDir)
-	adbH := &common.AdbHelper{Bin: adbBin}
 	if err := adbH.StartServer(); err != nil {
 		t.Fatal(err)
 	}
