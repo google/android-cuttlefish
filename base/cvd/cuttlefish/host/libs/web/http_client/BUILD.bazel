@@ -29,13 +29,11 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:shared_fd_stream",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_client_util",
         "//libbase",
         "@curl",
-        "@jsoncpp",
     ],
 )
 
@@ -122,8 +120,11 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
+        "//libbase",
         "@jsoncpp",
     ],
 )
@@ -161,7 +162,6 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
-        "@jsoncpp",
     ],
 )
 
