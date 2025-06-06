@@ -28,7 +28,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:http_client_util",
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//libbase",
         "@curl",
     ],
@@ -56,39 +56,6 @@ cc_library(
 clang_tidy_test(
     name = "http_client_clang_tidy",
     srcs = [":http_client"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
-    name = "http_client_util",
-    srcs = ["http_client_util.cc"],
-    hdrs = ["http_client_util.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-)
-
-clang_tidy_test(
-    name = "http_client_util_clang_tidy",
-    srcs = [":http_client_util"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
-    name = "http_client_util_test",
-    srcs = ["http_client_util_test.cc"],
-    copts = COPTS,
-    includes = [""],
-    deps = [
-        "//cuttlefish/host/libs/web/http_client:http_client_util",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-        "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "http_client_util_test_clang_tidy",
-    srcs = [":http_client_util_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
@@ -173,10 +140,49 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "scrub_secrets",
+    srcs = ["scrub_secrets.cc"],
+    hdrs = ["scrub_secrets.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "scrub_secrets_clang_tidy",
+    srcs = [":scrub_secrets"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "scrub_secrets_test",
+    srcs = ["scrub_secrets_test.cc"],
+    copts = COPTS,
+    includes = [""],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
+clang_tidy_test(
+    name = "scrub_secrets_test_clang_tidy",
+    srcs = [":scrub_secrets_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "url_escape",
     srcs = ["url_escape.cc"],
     hdrs = ["url_escape.h"],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = ["@curl"],
+)
+
+clang_tidy_test(
+    name = "url_escape_clang_tidy",
+    srcs = [":url_escape"],
+    tags = ["clang_tidy", "clang-tidy"],
 )

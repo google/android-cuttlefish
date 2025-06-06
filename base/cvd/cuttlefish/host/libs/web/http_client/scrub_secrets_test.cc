@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/web/http_client/http_client_util.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 
 #include <gtest/gtest.h>
 
