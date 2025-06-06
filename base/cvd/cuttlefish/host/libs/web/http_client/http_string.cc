@@ -15,6 +15,9 @@
 
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
 
+#include <stdlib.h>
+
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -22,17 +25,38 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
+namespace {
+
+Result<HttpResponse<std::string>> Download(
+    HttpClient& http_client, HttpMethod method, const std::string& url,
+    const std::vector<std::string>& headers,
+    const std::string& data_to_write = "") {
+  std::stringstream stream;
+  auto callback = [&stream](char* data, size_t size) -> bool {
+    if (data == nullptr) {
+      stream = std::stringstream();
+      return true;
+    }
+    stream.write(data, size);
+    return true;
+  };
+  HttpResponse<void> http_response = CF_EXPECT(http_client.DownloadToCallback(
+      method, callback, url, headers, data_to_write));
+  return HttpResponse<std::string>{stream.str(), http_response.http_code};
+}
+
+}  // namespace
 
 Result<HttpResponse<std::string>> HttpGetToString(
     HttpClient& http_client, const std::string& url,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(http_client.GetToString(url, headers));
+  return CF_EXPECT(Download(http_client, HttpMethod::kGet, url, headers));
 }
 
 Result<HttpResponse<std::string>> HttpPostToString(
-    HttpClient& http_client, const std::string& url, const std::string& data,
+    HttpClient& client, const std::string& url, const std::string& data,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(http_client.PostToString(url, data, headers));
+  return CF_EXPECT(Download(client, HttpMethod::kPost, url, headers, data));
 }
 
 }  // namespace cuttlefish
