@@ -24,8 +24,6 @@
 #include <thread>
 #include <vector>
 
-#include <json/value.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
@@ -40,24 +38,6 @@ class ServerErrorRetryClient : public HttpClient {
         retry_attempts_(retry_attempts),
         retry_delay_(retry_delay) {}
 
-  Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const Json::Value& data,
-      const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() {
-      return inner_client_.PostToJson(url, data, headers);
-    };
-    return CF_EXPECT(RetryImpl<Json::Value>(fn));
-  }
-
-  Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const std::string& data,
-      const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() {
-      return inner_client_.PostToJson(url, data, headers);
-    };
-    return CF_EXPECT(RetryImpl<Json::Value>(fn));
-  }
-
   Result<HttpResponse<std::string>> DownloadToFile(
       const std::string& url, const std::string& path,
       const std::vector<std::string>& headers) override {
@@ -65,14 +45,6 @@ class ServerErrorRetryClient : public HttpClient {
       return inner_client_.DownloadToFile(url, path, headers);
     };
     return CF_EXPECT(RetryImpl<std::string>(fn));
-  }
-
-  Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers) override {
-    auto fn = [&, this]() {
-      return inner_client_.DownloadToJson(url, headers);
-    };
-    return CF_EXPECT(RetryImpl<Json::Value>(fn));
   }
 
   Result<HttpResponse<void>> DownloadToCallback(

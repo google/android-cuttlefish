@@ -25,18 +25,15 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <json/value.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd_stream.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client_util.h"
@@ -118,20 +115,6 @@ class CurlClient : public HttpClient {
     }
   }
   ~CurlClient() { curl_easy_cleanup(curl_); }
-
-  Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const std::string& data_to_write,
-      const std::vector<std::string>& headers) override {
-    return DownloadToJson(HttpMethod::kPost, url, headers, data_to_write);
-  }
-
-  Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const Json::Value& data_to_write,
-      const std::vector<std::string>& headers) override {
-    std::stringstream json_str;
-    json_str << data_to_write;
-    return DownloadToJson(HttpMethod::kPost, url, headers, json_str.str());
-  }
 
   Result<HttpResponse<void>> DownloadToCallback(
       HttpMethod method, DataCallback callback, const std::string& url,
@@ -216,48 +199,7 @@ class CurlClient : public HttpClient {
     return HttpResponse<std::string>{path, http_response.http_code};
   }
 
-  Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url,
-      const std::vector<std::string>& headers) override {
-    return DownloadToJson(HttpMethod::kGet, url, headers);
-  }
-
  private:
-  Result<HttpResponse<Json::Value>> DownloadToJson(
-      HttpMethod method, const std::string& url,
-      const std::vector<std::string>& headers,
-      const std::string& data_to_write = "") {
-    auto response =
-        CF_EXPECT(DownloadToString(method, url, headers, data_to_write));
-    auto result = ParseJson(response.data);
-    if (!result.ok()) {
-      Json::Value error_json;
-      LOG(ERROR) << "Could not parse json: " << result.error().FormatForEnv();
-      error_json["error"] = "Failed to parse json: " + result.error().Message();
-      error_json["response"] = response.data;
-      return HttpResponse<Json::Value>{error_json, response.http_code};
-    }
-    return HttpResponse<Json::Value>{*result, response.http_code};
-  }
-
-  Result<HttpResponse<std::string>> DownloadToString(
-      HttpMethod method, const std::string& url,
-      const std::vector<std::string>& headers,
-      const std::string& data_to_write = "") {
-    std::stringstream stream;
-    auto callback = [&stream](char* data, size_t size) -> bool {
-      if (data == nullptr) {
-        stream = std::stringstream();
-        return true;
-      }
-      stream.write(data, size);
-      return true;
-    };
-    auto http_response = CF_EXPECT(
-        DownloadToCallback(method, callback, url, headers, data_to_write));
-    return HttpResponse<std::string>{stream.str(), http_response.http_code};
-  }
-
   CURL* curl_;
   std::mutex mutex_;
   bool use_logging_debug_function_;

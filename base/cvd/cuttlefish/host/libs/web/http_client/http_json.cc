@@ -15,32 +15,54 @@
 
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 
+#include <sstream>
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <json/value.h>
 
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_string.h"
 
 namespace cuttlefish {
+namespace {
+
+HttpResponse<Json::Value> Parse(HttpResponse<std::string> response) {
+  Result<Json::Value> result = ParseJson(response.data);
+  if (!result.ok()) {
+    Json::Value error_json;
+    LOG(ERROR) << "Could not parse json: " << result.error().FormatForEnv();
+    error_json["error"] = "Failed to parse json: " + result.error().Message();
+    error_json["response"] = response.data;
+    return HttpResponse<Json::Value>{error_json, response.http_code};
+  }
+  return HttpResponse<Json::Value>{*result, response.http_code};
+}
+
+}  // namespace
 
 Result<HttpResponse<Json::Value>> HttpPostToJson(
     HttpClient& http_client, const std::string& url, const std::string& data,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(http_client.PostToJson(url, data, headers));
+  return Parse(CF_EXPECT(HttpPostToString(http_client, url, data, headers)));
 }
 
 Result<HttpResponse<Json::Value>> HttpPostToJson(
     HttpClient& http_client, const std::string& url, const Json::Value& data,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(http_client.PostToJson(url, data, headers));
+  std::stringstream json_str;
+  json_str << data;
+  return Parse(
+      CF_EXPECT(HttpPostToString(http_client, url, json_str.str(), headers)));
 }
 
 Result<HttpResponse<Json::Value>> HttpGetToJson(
     HttpClient& http_client, const std::string& url,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(http_client.DownloadToJson(url, headers));
+  return Parse(CF_EXPECT(HttpGetToString(http_client, url, headers)));
 }
 
 }  // namespace cuttlefish
