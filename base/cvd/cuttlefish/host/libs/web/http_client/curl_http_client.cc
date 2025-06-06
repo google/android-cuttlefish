@@ -32,7 +32,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/web/http_client/http_client_util.h"
+#include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
 
 namespace cuttlefish {
 namespace {
