@@ -132,26 +132,40 @@ func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorClient, dir stri
 }
 
 type AdbHelper struct {
-	Bin string
+	bin string
+}
+
+func NewAdbHelper() *AdbHelper {
+	return &AdbHelper{
+		bin: "/usr/lib/cuttlefish-common/bin/adb",
+	}
 }
 
 func (h *AdbHelper) StartServer() error {
-	_, err := runCmd(h.Bin, "start-server")
+	_, err := runCmd(h.bin, "start-server")
 	return err
 }
 
 func (h *AdbHelper) Connect(serial string) error {
-	_, err := runCmd(h.Bin, "connect", serial)
+	_, err := runCmd(h.bin, "connect", serial)
+	return err
+}
+
+func (h *AdbHelper) WaitForDevice(serial string) error {
+	_, err := runCmd(h.bin, "-s", serial, "wait-for-device")
 	return err
 }
 
 // Return combined stdout and stderr
 func (h *AdbHelper) ExecShellCommand(serial string, cmd []string) (string, error) {
-	return runCmd(h.Bin, append([]string{"-s", serial, "shell"}, cmd...)...)
+	if err := h.WaitForDevice(serial); err != nil {
+		return "", fmt.Errorf("`wait-for-device` failed: %w", err)
+	}
+	return runCmd(h.bin, append([]string{"-s", serial, "shell"}, cmd...)...)
 }
 
 func (h *AdbHelper) BuildShellCommand(serial string, cmd []string) *exec.Cmd {
-	return exec.Command(h.Bin, append([]string{"-s", serial, "shell"}, cmd...)...)
+	return exec.Command(h.bin, append([]string{"-s", serial, "shell"}, cmd...)...)
 }
 
 func runCmd(name string, args ...string) (string, error) {
