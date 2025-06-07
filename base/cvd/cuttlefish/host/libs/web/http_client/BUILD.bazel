@@ -41,6 +41,46 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "fake_http_client",
+    srcs = ["fake_http_client.cc"],
+    hdrs = ["fake_http_client.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    testonly = True,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client",
+    ],
+)
+
+clang_tidy_test(
+    name = "fake_http_client_clang_tidy",
+    srcs = [":fake_http_client"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "fake_http_client_test",
+    srcs = ["fake_http_client_test.cc"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web/http_client:fake_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "fake_http_client_test_clang_tidy",
+    srcs = [":fake_http_client_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "http_client",
     srcs = ["http_client.cc"],
     hdrs = ["http_client.h"],
