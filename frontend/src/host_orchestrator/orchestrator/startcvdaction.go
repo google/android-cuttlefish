@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 
@@ -54,10 +55,21 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 	if err := ValidateStartCVDRequest(a.req); err != nil {
 		return apiv1.Operation{}, err
 	}
+	opts := cvd.StartOptions{}
+	if a.req.SnapshotID != "" {
+		path := filepath.Join(a.paths.SnapshotsRootDir, a.req.SnapshotID)
+		if ok, err := fileExist(path); !ok {
+			if err != nil {
+				return apiv1.Operation{}, err
+			}
+			return apiv1.Operation{}, operator.NewNotFoundError(fmt.Sprintf("snapshot id %q not found", a.req.SnapshotID), nil)
+		}
+		opts.SnapshotPath = path
+	}
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}
-		result.Value, result.Error = a.exec(op)
+		result.Value, result.Error = a.exec(op, opts)
 		if err := a.om.Complete(op.Name, result); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}
@@ -65,13 +77,8 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
-func (a *StartCVDAction) exec(op apiv1.Operation) (*apiv1.EmptyResponse, error) {
-	startOpts := cvd.StartOptions{}
-	if a.req.SnapshotID != "" {
-		dir := filepath.Join(a.paths.SnapshotsRootDir, a.req.SnapshotID)
-		startOpts.SnapshotPath = dir
-	}
-	if err := a.cvdCLI.Start(a.selector, startOpts); err != nil {
+func (a *StartCVDAction) exec(op apiv1.Operation, opts cvd.StartOptions) (*apiv1.EmptyResponse, error) {
+	if err := a.cvdCLI.Start(a.selector, opts); err != nil {
 		return nil, operator.NewInternalError("cvd start failed", err)
 	}
 	return &apiv1.EmptyResponse{}, nil
