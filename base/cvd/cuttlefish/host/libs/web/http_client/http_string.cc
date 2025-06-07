@@ -27,10 +27,8 @@
 namespace cuttlefish {
 namespace {
 
-Result<HttpResponse<std::string>> Download(
-    HttpClient& http_client, HttpMethod method, const std::string& url,
-    const std::vector<std::string>& headers,
-    const std::string& data_to_write = "") {
+Result<HttpResponse<std::string>> Download(HttpClient& http_client,
+                                           HttpRequest request) {
   std::stringstream stream;
   auto callback = [&stream](char* data, size_t size) -> bool {
     if (data == nullptr) {
@@ -40,8 +38,8 @@ Result<HttpResponse<std::string>> Download(
     stream.write(data, size);
     return true;
   };
-  HttpResponse<void> http_response = CF_EXPECT(http_client.DownloadToCallback(
-      method, callback, url, headers, data_to_write));
+  HttpResponse<void> http_response =
+      CF_EXPECT(http_client.DownloadToCallback(request, callback));
   return HttpResponse<std::string>{stream.str(), http_response.http_code};
 }
 
@@ -50,13 +48,24 @@ Result<HttpResponse<std::string>> Download(
 Result<HttpResponse<std::string>> HttpGetToString(
     HttpClient& http_client, const std::string& url,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(Download(http_client, HttpMethod::kGet, url, headers));
+  HttpRequest request = {
+      .method = HttpMethod::kGet,
+      .url = url,
+      .headers = headers,
+  };
+  return CF_EXPECT(Download(http_client, request));
 }
 
 Result<HttpResponse<std::string>> HttpPostToString(
-    HttpClient& client, const std::string& url, const std::string& data,
+    HttpClient& http_client, const std::string& url, const std::string& data,
     const std::vector<std::string>& headers) {
-  return CF_EXPECT(Download(client, HttpMethod::kPost, url, headers, data));
+  HttpRequest request = {
+      .method = HttpMethod::kPost,
+      .url = url,
+      .headers = headers,
+      .data_to_write = data,
+  };
+  return CF_EXPECT(Download(http_client, request));
 }
 
 }  // namespace cuttlefish

@@ -18,11 +18,8 @@
 #include <stdio.h>
 
 #include <chrono>
-#include <functional>
 #include <memory>
-#include <string>
 #include <thread>
-#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -39,25 +36,13 @@ class ServerErrorRetryClient : public HttpClient {
         retry_delay_(retry_delay) {}
 
   Result<HttpResponse<void>> DownloadToCallback(
-      HttpMethod method, DataCallback cb, const std::string& url,
-      const std::vector<std::string>& hdrs,
-      const std::string& to_write) override {
-    auto fn = [&, this]() {
-      return inner_client_.DownloadToCallback(method, cb, url, hdrs, to_write);
-    };
-    return CF_EXPECT(RetryImpl<void>(fn));
-  }
-
- private:
-  template <typename T>
-  Result<HttpResponse<T>> RetryImpl(
-      std::function<Result<HttpResponse<T>>()> attempt_fn) {
-    HttpResponse<T> response;
+      HttpRequest request, DataCallback callback) override {
+    HttpResponse<void> response;
     for (int attempt = 0; attempt != retry_attempts_; ++attempt) {
       if (attempt != 0) {
         std::this_thread::sleep_for(retry_delay_);
       }
-      response = CF_EXPECT(attempt_fn());
+      response = CF_EXPECT(inner_client_.DownloadToCallback(request, callback));
       if (!response.HttpServerError()) {
         return response;
       }
