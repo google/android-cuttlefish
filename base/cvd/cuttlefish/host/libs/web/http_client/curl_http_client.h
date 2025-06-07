@@ -13,10 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
+#include <memory>
+
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
-HttpClient::~HttpClient() = default;
+std::unique_ptr<HttpClient> CurlHttpClient(
+    bool use_logging_debug_function = false);
 
 }  // namespace cuttlefish

@@ -13,10 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
+#include <string>
+#include <vector>
+
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 
-HttpClient::~HttpClient() = default;
+Result<HttpResponse<std::string>> HttpGetToString(
+    HttpClient&, const std::string& url,
+    const std::vector<std::string>& headers = {});
+Result<HttpResponse<std::string>> HttpPostToString(
+    HttpClient&, const std::string& url, const std::string& data,
+    const std::vector<std::string>& headers = {});
 
 }  // namespace cuttlefish

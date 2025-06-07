@@ -40,12 +40,13 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 
-#include "common/libs/utils/base64.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/web/http_client/http_client.h"
-#include "host/libs/web/http_client/url_escape.h"
+#include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_json.h"
+#include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
 namespace {
@@ -227,7 +228,7 @@ GceMetadataCredentialSource::Refresh() {
       "http://metadata.google.internal/computeMetadata/v1/instance/"
       "service-accounts/default/token";
   auto response = CF_EXPECT(
-      http_client_.DownloadToJson(kRefreshUrl, {"Metadata-Flavor: Google"}));
+      HttpGetToJson(http_client_, kRefreshUrl, {"Metadata-Flavor: Google"}));
   const auto& json = response.data;
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
@@ -378,7 +379,8 @@ RefreshTokenCredentialSource::Refresh() {
   data << "grant_type=refresh_token";
 
   static constexpr char kUrl[] = "https://oauth2.googleapis.com/token";
-  auto response = CF_EXPECT(http_client_.PostToJson(kUrl, data.str(), headers));
+  auto response =
+      CF_EXPECT(HttpPostToJson(http_client_, kUrl, data.str(), headers));
   CF_EXPECT(response.HttpSuccess(), response.data);
   auto& json = response.data;
 
@@ -507,7 +509,7 @@ ServiceAccountOauthCredentialSource::Refresh() {
   std::vector<std::string> headers = {
       "Content-Type: application/x-www-form-urlencoded"};
   auto response =
-      CF_EXPECT(http_client_.PostToJson(URL, content.str(), headers));
+      CF_EXPECT(HttpPostToJson(http_client_, URL, content.str(), headers));
   CF_EXPECT(response.HttpSuccess(),
             "Error fetching credentials. The server response was \""
                 << response.data << "\", and code was " << response.http_code);

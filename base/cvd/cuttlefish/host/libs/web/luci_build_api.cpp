@@ -32,6 +32,8 @@
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_file.h"
+#include "cuttlefish/host/libs/web/http_client/http_string.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
@@ -94,7 +96,7 @@ Result<std::optional<ChromeOsBuildArtifacts>> LuciBuildApi::GetBuildArtifacts(
   json_str << request;
   auto headers = CF_EXPECT(BuildBucketHeaders());
   auto response =
-      CF_EXPECT(http_client_.PostToString(url, json_str.str(), headers));
+      CF_EXPECT(HttpPostToString(http_client_, url, json_str.str(), headers));
   if (!response.HttpSuccess()) {
     return {};
   }
@@ -149,7 +151,7 @@ Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
       UrlEscape(bucket), UrlEscape(object));
 
   auto headers = CF_EXPECT(CloudStorageHeaders());
-  CF_EXPECT(http_client_.DownloadToFile(url, target_path, headers));
+  CF_EXPECT(HttpGetToFile(http_client_, url, target_path, headers));
   return {};
 }
 

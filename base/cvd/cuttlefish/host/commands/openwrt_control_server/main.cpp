@@ -23,17 +23,19 @@
 #include <string>
 
 #include <android-base/strings.h>
+#include <fmt/format.h>
 #include <gflags/gflags.h>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/web/http_client/http_client.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
+#include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_json.h"
 
 using android::base::StartsWith;
 using google::protobuf::Empty;
@@ -55,10 +57,11 @@ DEFINE_string(webrtc_device_id, "", "The device ID in WebRTC like cvd-1");
 DEFINE_string(launcher_log_path, "", "File path for launcher.log");
 DEFINE_string(openwrt_log_path, "", "File path for crosvm_openwrt.log");
 
+namespace cuttlefish {
+namespace {
+
 constexpr char kErrorMessageRpc[] = "Luci RPC request failed";
 constexpr char kErrorMessageRpcAuth[] = "Luci authentication request failed";
-
-namespace cuttlefish {
 
 static Status ErrorResultToStatus(const std::string_view prefix,
                                   const StackTraceError& error) {
@@ -163,7 +166,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
     auto auth_url = CF_EXPECT(LuciRpcAddress("auth"));
     auto auth_data = LuciRpcData(1, "login", {"root", "password"});
     auto auth_reply =
-        CF_EXPECT(http_client_.PostToJson(auth_url, auth_data, header_));
+        CF_EXPECT(HttpPostToJson(http_client_, auth_url, auth_data, header_));
     if (auth_reply.data["error"].isString()) {
       CF_EXPECT(!StartsWith(auth_reply.data["error"].asString(),
                             "Failed to parse json:"),
@@ -181,7 +184,7 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
                                      const std::vector<std::string>& params) {
     auto url = CF_EXPECT(LuciRpcAddress(subpath, auth_key_));
     auto data = LuciRpcData(method, params);
-    auto reply = CF_EXPECT(http_client_.PostToJson(url, data, header_));
+    auto reply = CF_EXPECT(HttpPostToJson(http_client_, url, data, header_));
     if (reply.data["error"].isString()) {
       CF_EXPECT(
           !StartsWith(reply.data["error"].asString(), "Failed to parse json:"),
@@ -217,12 +220,10 @@ class OpenwrtControlServiceImpl final : public OpenwrtControlService::Service {
   std::string auth_key_;
 };
 
-}  // namespace cuttlefish
-
 void RunServer() {
   std::string server_address("unix:" + FLAGS_grpc_uds_path);
-  auto http_client = cuttlefish::HttpClient::CurlClient();
-  cuttlefish::OpenwrtControlServiceImpl service(*http_client);
+  std::unique_ptr<HttpClient> http_client = CurlHttpClient();
+  OpenwrtControlServiceImpl service(*http_client);
 
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
@@ -241,9 +242,12 @@ void RunServer() {
   server->Wait();
 }
 
+}  // namespace
+}  // namespace cuttlefish
+
 int main(int argc, char** argv) {
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  RunServer();
+  cuttlefish::RunServer();
 
   return 0;
 }

@@ -15,13 +15,11 @@
 
 #pragma once
 
-#include <chrono>
 #include <functional>
 #include <string>
 #include <type_traits>
 #include <vector>
 
-#include <json/json.h>
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
@@ -58,48 +56,23 @@ struct HttpResponse {
   long http_code;
 };
 
+enum class HttpMethod {
+  kGet,
+  kPost,
+  kDelete,
+};
+
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
 
-  static std::unique_ptr<HttpClient> CurlClient(
-      bool use_logging_debug_function = false);
-  static std::unique_ptr<HttpClient> ServerErrorRetryClient(
-      HttpClient&, int retry_attempts, std::chrono::milliseconds retry_delay);
-
   virtual ~HttpClient();
-
-  virtual Result<HttpResponse<std::string>> GetToString(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<std::string>> PostToString(
-      const std::string& url, const std::string& data,
-      const std::vector<std::string>& headers = {}) = 0;
-
-  // Returns the json object contained in the response's body.
-  //
-  // NOTE: In case of a parsing error a successful `result` will be returned
-  // with the relevant http status code and a json object with the next format:
-  // {
-  //   "error": "Failed to parse json",
-  //   "response: "<THE RESPONSE BODY>"
-  // }
-  virtual Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const std::string& data,
-      const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<Json::Value>> PostToJson(
-      const std::string& url, const Json::Value& data,
-      const std::vector<std::string>& headers = {}) = 0;
-  virtual Result<HttpResponse<Json::Value>> DownloadToJson(
-      const std::string& url, const std::vector<std::string>& headers = {}) = 0;
-
-  virtual Result<HttpResponse<std::string>> DownloadToFile(
-      const std::string& url, const std::string& path,
-      const std::vector<std::string>& headers = {}) = 0;
 
   // Returns response's status code.
   virtual Result<HttpResponse<void>> DownloadToCallback(
-      DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers = {}) = 0;
+      HttpMethod, DataCallback callback, const std::string& url,
+      const std::vector<std::string>& headers = {},
+      const std::string& data_to_write = "") = 0;
 };
 
 }  // namespace cuttlefish
