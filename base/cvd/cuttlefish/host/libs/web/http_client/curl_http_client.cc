@@ -113,28 +113,29 @@ class CurlClient : public HttpClient {
   ~CurlClient() { curl_easy_cleanup(curl_); }
 
   Result<HttpResponse<void>> DownloadToCallback(
-      HttpMethod method, DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers,
-      const std::string& data_to_write) override {
+      HttpRequest request, DataCallback callback) override {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG(DEBUG) << "Downloading '" << url << "'";
-    CF_EXPECT(data_to_write.empty() || method == HttpMethod::kPost,
-              "data must be empty for non POST requests");
+    LOG(DEBUG) << "Downloading '" << request.url << "'";
+    CF_EXPECT(
+        request.data_to_write.empty() || request.method == HttpMethod::kPost,
+        "data must be empty for non POST requests");
     CF_EXPECT(curl_ != nullptr, "curl was not initialized");
     CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
               "callback failure");
-    auto curl_headers = CF_EXPECT(SlistFromStrings(headers));
+    auto curl_headers = CF_EXPECT(SlistFromStrings(request.headers));
     curl_easy_reset(curl_);
-    if (method == HttpMethod::kDelete) {
+    if (request.method == HttpMethod::kDelete) {
       curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
     }
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
                      "/etc/ssl/certs/ca-certificates.crt");
     curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
-    curl_easy_setopt(curl_, CURLOPT_URL, url.c_str());
-    if (method == HttpMethod::kPost) {
-      curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, data_to_write.size());
-      curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, data_to_write.c_str());
+    curl_easy_setopt(curl_, CURLOPT_URL, request.url.c_str());
+    if (request.method == HttpMethod::kPost) {
+      curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE,
+                       request.data_to_write.size());
+      curl_easy_setopt(curl_, CURLOPT_POSTFIELDS,
+                       request.data_to_write.c_str());
     }
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
     curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);

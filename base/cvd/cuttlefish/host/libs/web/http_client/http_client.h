@@ -62,6 +62,13 @@ enum class HttpMethod {
   kDelete,
 };
 
+struct HttpRequest {
+  HttpMethod method;
+  std::string url;
+  std::vector<std::string> headers;
+  std::string data_to_write;
+};
+
 class HttpClient {
  public:
   typedef std::function<bool(char*, size_t)> DataCallback;
@@ -70,9 +77,7 @@ class HttpClient {
 
   // Returns response's status code.
   virtual Result<HttpResponse<void>> DownloadToCallback(
-      HttpMethod, DataCallback callback, const std::string& url,
-      const std::vector<std::string>& headers = {},
-      const std::string& data_to_write = "") = 0;
+      HttpRequest, DataCallback callback) = 0;
 };
 
 }  // namespace cuttlefish

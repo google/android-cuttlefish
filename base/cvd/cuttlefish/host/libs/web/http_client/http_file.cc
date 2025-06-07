@@ -70,8 +70,15 @@ Result<HttpResponse<std::string>> HttpGetToFile(
     stream->write(data, size);
     return !stream->fail();
   };
-  HttpResponse<void> http_response = CF_EXPECT(http_client.DownloadToCallback(
-      HttpMethod::kGet, callback, url, headers, ""));
+
+  HttpRequest request = {
+      .method = HttpMethod::kGet,
+      .url = url,
+      .headers = headers,
+  };
+
+  HttpResponse<void> http_response =
+      CF_EXPECT(http_client.DownloadToCallback(request, callback));
 
   LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
              << "' to '" << path << "'.";
