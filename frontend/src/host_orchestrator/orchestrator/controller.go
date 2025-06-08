@@ -556,48 +556,35 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		return nil, err
 	}
 	chunkOffsetBytesRaw := r.FormValue("chunk_offset_bytes")
+	var chunkOffsetBytes int64
 	if chunkOffsetBytesRaw != "" {
-		chunkOffsetBytes, err := strconv.ParseInt(chunkOffsetBytesRaw, 10, 64)
+		chunkOffsetBytes, err = strconv.ParseInt(chunkOffsetBytesRaw, 10, 64)
 		if err != nil {
 			return nil, operator.NewBadRequestError(
 				fmt.Sprintf("Invalid chunk_offset_bytes form field value: %q", chunkOffsetBytesRaw), err)
 		}
-		chunk := UserArtifactChunk{
-			Name:             fheader.Filename,
-			File:             f,
-			UseChunkOffset:   true,
-			ChunkOffsetBytes: chunkOffsetBytes,
-		}
-		return nil, h.m.UpdateArtifactWithDir(dir, chunk)
 	} else {
-		// Deprecated: clients should use `chunk_offset_bytes` only
+		log.Println("deprecated: use `chunk_offset_bytes`")
 		chunkNumberRaw := r.FormValue("chunk_number")
-		chunkTotalRaw := r.FormValue("chunk_total")
 		chunkSizeBytesRaw := r.FormValue("chunk_size_bytes")
 		chunkNumber, err := strconv.Atoi(chunkNumberRaw)
 		if err != nil {
 			return nil, operator.NewBadRequestError(
 				fmt.Sprintf("Invalid chunk_number value: %q", chunkNumberRaw), err)
 		}
-		chunkTotal, err := strconv.Atoi(chunkTotalRaw)
-		if err != nil {
-			return nil, operator.NewBadRequestError(
-				fmt.Sprintf("Invalid chunk_total form field value: %q", chunkTotalRaw), err)
-		}
 		chunkSizeBytes, err := strconv.ParseInt(chunkSizeBytesRaw, 10, 64)
 		if err != nil {
 			return nil, operator.NewBadRequestError(
 				fmt.Sprintf("Invalid chunk_size_bytes form field value: %q", chunkSizeBytesRaw), err)
 		}
-		chunk := UserArtifactChunk{
-			Name:           fheader.Filename,
-			ChunkNumber:    chunkNumber,
-			ChunkTotal:     chunkTotal,
-			ChunkSizeBytes: chunkSizeBytes,
-			File:           f,
-		}
-		return nil, h.m.UpdateArtifactWithDir(dir, chunk)
+		chunkOffsetBytes = int64(chunkNumber-1) * chunkSizeBytes
 	}
+	chunk := UserArtifactChunk{
+		Name:        fheader.Filename,
+		File:        f,
+		OffsetBytes: chunkOffsetBytes,
+	}
+	return nil, h.m.UpdateArtifactWithDir(dir, chunk)
 }
 
 type extractUserArtifactHandler struct {
