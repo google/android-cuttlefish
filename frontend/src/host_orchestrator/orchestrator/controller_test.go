@@ -201,7 +201,11 @@ func (testUAM) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error 
 	return nil
 }
 
-func (testUAM) GetDirPath(string) string {
+func (testUAM) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
+	return nil
+}
+
+func (testUAM) GetDirPath(string, bool) string {
 	return ""
 }
 
