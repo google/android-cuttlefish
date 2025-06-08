@@ -8,7 +8,9 @@ service wpa_supplicant /apex/com.google.cf.wpa_supplicant/bin/hw/wpa_supplicant 
     interface aidl android.hardware.wifi.supplicant.ISupplicant/default
     class main
     socket wpa_wlan0 dgram 660 wifi wifi
-    user root
+    user wifi
+    group wifi net_raw net_admin
+    capabilities NET_RAW NET_ADMIN
     disabled
     oneshot
 
