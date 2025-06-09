@@ -369,3 +369,46 @@ func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
 		t.Fatalf("artifact content mismatch (-want +got):\n%s", diff)
 	}
 }
+
+func TestStatArtifactFailsArtifactNotFound(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := uam.StatArtifact("foo"); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestStatArtifactSucceeds(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum(testFileData)
+	chunk := UserArtifactChunk{
+		Name:          testFileName,
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(testFileData)),
+		FileSizeBytes: int64(len(testFileData)),
+		File:          strings.NewReader(testFileData),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := uam.StatArtifact(checksum); err != nil {
+		t.Fatal(err)
+	}
+}
