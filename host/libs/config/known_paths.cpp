@@ -93,9 +93,13 @@ std::string LogcatReceiverBinary() { return HostBinaryPath("logcat_receiver"); }
 
 std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
+std::string MkfsFat() { return HostBinaryPath("mkfs.fat"); }
+
 std::string ModemSimulatorBinary() { return HostBinaryPath("modem_simulator"); }
 
 std::string NetsimdBinary() { return HostBinaryPath("netsimd"); }
+
+std::string NewfsMsdos() { return HostBinaryPath("newfs_msdos"); }
 
 std::string OpenwrtControlServerBinary() {
   return HostBinaryPath("openwrt_control_server");

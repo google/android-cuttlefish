@@ -157,8 +157,8 @@ Result<void> CreateBlankImage(const std::string& image, int num_mb,
   LOG(DEBUG) << "Creating " << image;
 
   off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
-  // The newfs_msdos tool with the mandatory -C option will do the same
-  // as below to zero the image file, so we don't need to do it here
+  // MakeFatImage will do the same as below to zero the image files, so we
+  // don't need to do it here
   if (image_fmt != "sdcard") {
     auto fd = SharedFD::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666);
     CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
@@ -179,7 +179,7 @@ Result<void> CreateBlankImage(const std::string& image, int num_mb,
     // other OSes do by default when partitioning a drive
     off_t offset_size_bytes = 1 << 20;
     image_size_bytes -= offset_size_bytes;
-    CF_EXPECT(NewfsMsdos(image, num_mb, 1), "Failed to create SD-Card fs");
+    CF_EXPECT(MakeFatImage(image, num_mb, 1), "Failed to create SD-Card fs");
     // Write the MBR after the filesystem is formatted, as the formatting tools
     // don't consistently preserve the image contents
     MasterBootRecord mbr = {

@@ -26,6 +26,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/esp.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 
@@ -85,35 +86,61 @@ static constexpr std::array kGrubModulesX86{
 static constexpr char kGrubModulesPath[] = "/usr/lib/grub/";
 static constexpr char kGrubModulesX86Name[] = "i386-efi";
 
-bool NewfsMsdos(const std::string& data_image, int data_image_mb,
-                int offset_num_mb) {
-  off_t image_size_bytes = static_cast<off_t>(data_image_mb) << 20;
+Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
+                          int offset_num_mb) {
   off_t offset_size_bytes = static_cast<off_t>(offset_num_mb) << 20;
-  image_size_bytes -= offset_size_bytes;
-  off_t image_size_sectors = image_size_bytes / 512;
-  auto newfs_msdos_path = HostBinaryPath("newfs_msdos");
-  return Execute({newfs_msdos_path,
-                  "-F",
-                  "32",
-                  "-m",
-                  "0xf8",
-                  "-o",
-                  "0",
-                  "-c",
-                  "8",
-                  "-h",
-                  "255",
-                  "-u",
-                  "63",
-                  "-S",
-                  "512",
-                  "-s",
-                  std::to_string(image_size_sectors),
-                  "-C",
-                  std::to_string(data_image_mb) + "M",
-                  "-@",
-                  std::to_string(offset_size_bytes),
-                  data_image}) == 0;
+  off_t image_size_bytes = static_cast<off_t>(data_image_mb) << 20;
+
+  if (FileExists(MkfsFat())) {
+    auto fd = SharedFD::Open(data_image, O_CREAT | O_TRUNC | O_RDWR, 0666);
+    CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
+               "`truncate --size={}M '{}'` failed: {}", data_image_mb,
+               data_image, fd->StrError());
+
+    CF_EXPECT(Execute({MkfsFat(),
+                       "-F",
+                       "32",
+                       "-M",
+                       "0xf8",
+                       "-h",
+                       "0",
+                       "-s",
+                       "8",
+                       "-g",
+                       "255/63",
+                       "-S",
+                       "512",
+                       "--offset=" + std::to_string(offset_size_bytes),
+                       data_image}) == 0);
+  } else {
+    off_t image_size_sectors = image_size_bytes / 512;
+    image_size_bytes -= offset_size_bytes;
+
+    CF_EXPECT(Execute({NewfsMsdos(),
+                       "-F",
+                       "32",
+                       "-m",
+                       "0xf8",
+                       "-o",
+                       "0",
+                       "-c",
+                       "8",
+                       "-h",
+                       "255",
+                       "-u",
+                       "63",
+                       "-S",
+                       "512",
+                       "-s",
+                       std::to_string(image_size_sectors),
+                       "-C",
+                       std::to_string(data_image_mb) + "M",
+                       "-@",
+                       std::to_string(offset_size_bytes),
+                       data_image}) == 0);
+  }
+
+  return {};
 }
 
 bool CanGenerateEsp(Arch arch) {
@@ -216,7 +243,7 @@ class EspBuilder final {
     // newfs_msdos won't make a partition smaller than 257 mb
     // this should be enough for anybody..
     const auto tmp_esp_image = image_path_ + ".tmp";
-    if (!NewfsMsdos(tmp_esp_image, 257 /* mb */, 0 /* mb (offset) */)) {
+    if (!MakeFatImage(tmp_esp_image, 257 /* mb */, 0 /* mb (offset) */).ok()) {
       LOG(ERROR) << "Failed to create filesystem for " << tmp_esp_image;
       return false;
     }
