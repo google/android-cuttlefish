@@ -136,22 +136,15 @@ std::string GetFsType(const std::string& path) {
   return blkid_out.substr(type_begin, type_end - type_begin);
 }
 
-enum class DataImageAction { kNoAction, kCreateImage, kResizeImage };
+enum class DataImageAction { kNoAction, kResizeImage, kCreateBlankImage };
 
 static Result<DataImageAction> ChooseDataImageAction(
     const CuttlefishConfig::InstanceSpecific& instance) {
   if (instance.data_policy() == kDataPolicyAlwaysCreate) {
-    return DataImageAction::kCreateImage;
+    return DataImageAction::kCreateBlankImage;
   }
   if (!FileHasContent(instance.data_image())) {
-    if (instance.data_policy() == kDataPolicyUseExisting) {
-      return CF_ERR("A data image must exist to use -data_policy="
-                    << kDataPolicyUseExisting);
-    } else if (instance.data_policy() == kDataPolicyResizeUpTo) {
-      return CF_ERR(instance.data_image()
-                    << " does not exist, but resizing was requested");
-    }
-    return DataImageAction::kCreateImage;
+    return DataImageAction::kCreateBlankImage;
   }
   if (instance.data_policy() == kDataPolicyUseExisting) {
     return DataImageAction::kNoAction;
@@ -162,7 +155,7 @@ static Result<DataImageAction> ChooseDataImageAction(
               "Changing the fs format is incompatible with -data_policy="
                   << kDataPolicyResizeUpTo << " (\"" << current_fs_type
                   << "\" != \"" << instance.userdata_format() << "\")");
-    return DataImageAction::kCreateImage;
+    return DataImageAction::kCreateBlankImage;
   }
   if (instance.data_policy() == kDataPolicyResizeUpTo) {
     return DataImageAction::kResizeImage;
@@ -227,18 +220,16 @@ Result<void> InitializeDataImage(
     case DataImageAction::kNoAction:
       LOG(DEBUG) << instance.data_image() << " exists. Not creating it.";
       return {};
-    case DataImageAction::kCreateImage: {
+    case DataImageAction::kCreateBlankImage: {
       RemoveFile(instance.new_data_image());
       CF_EXPECT(instance.blank_data_image_mb() != 0,
                 "Expected `-blank_data_image_mb` to be set for "
                 "image creation.");
       CF_EXPECT(CreateBlankImage(instance.new_data_image(),
-                                 instance.blank_data_image_mb(),
-                                 instance.userdata_format()),
+                                 instance.blank_data_image_mb(), "none"),
                 "Failed to create a blank image at \""
                     << instance.new_data_image() << "\" with size "
-                    << instance.blank_data_image_mb() << " and format \""
-                    << instance.userdata_format() << "\"");
+                    << instance.blank_data_image_mb() << "\"");
       return {};
     }
     case DataImageAction::kResizeImage: {
