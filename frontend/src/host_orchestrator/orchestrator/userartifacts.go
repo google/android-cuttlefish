@@ -30,6 +30,7 @@ import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+	"github.com/google/btree"
 	"github.com/google/uuid"
 )
 
@@ -199,9 +200,9 @@ func (m *UserArtifactsManagerImpl) getRWMutex(checksum string) *sync.RWMutex {
 	return mu.(*sync.RWMutex)
 }
 
-func (m *UserArtifactsManagerImpl) getChunkState(checksum string, fileSize int64) *ChunkState {
+func (m *UserArtifactsManagerImpl) getChunkState(checksum string, fileSize int64) *chunkState {
 	cs, _ := m.chunkStates.LoadOrStore(checksum, NewChunkState(fileSize))
-	return cs.(*ChunkState)
+	return cs.(*chunkState)
 }
 
 func dirExists(dir string) (bool, error) {
@@ -411,4 +412,93 @@ func createUAFile(filename string) error {
 		return err
 	}
 	return nil
+}
+
+// Structure for managing the state of updated chunk for efficiently knowing whether the user
+// artifact may need to calculate hash sum or not.
+type chunkState struct {
+	fileSize int64
+	// Items are stored with a sequence of alternating true/false isUpdated field and increasing
+	// offset field.
+	items *btree.BTree
+	mutex sync.RWMutex
+}
+
+type chunkStateItem struct {
+	// Starting byte offset of the continuous range having same state whether updated or not.
+	offset int64
+	// State description whether given byte offset of the user artifact is updated or not.
+	isUpdated bool
+}
+
+func (i chunkStateItem) Less(item btree.Item) bool {
+	return i.offset < item.(chunkStateItem).offset
+}
+
+func NewChunkState(fileSize int64) *chunkState {
+	cs := chunkState{
+		fileSize: fileSize,
+		items:    btree.New(2),
+		mutex:    sync.RWMutex{},
+	}
+	return &cs
+}
+
+func (cs *chunkState) getItemOrPrev(offset int64) *chunkStateItem {
+	var record *chunkStateItem
+	cs.items.DescendLessOrEqual(chunkStateItem{offset: offset}, func(item btree.Item) bool {
+		entry := item.(chunkStateItem)
+		record = &entry
+		return false
+	})
+	return record
+}
+
+func (cs *chunkState) getItemOrNext(offset int64) *chunkStateItem {
+	var record *chunkStateItem
+	cs.items.AscendGreaterOrEqual(chunkStateItem{offset: offset}, func(item btree.Item) bool {
+		entry := item.(chunkStateItem)
+		record = &entry
+		return false
+	})
+	return record
+}
+
+func (cs *chunkState) Update(start int64, end int64) error {
+	if start < 0 {
+		return fmt.Errorf("invalid start offset of the range")
+	}
+	if end > cs.fileSize {
+		return fmt.Errorf("invalid end offset of the range")
+	}
+	if start >= end {
+		return fmt.Errorf("start offset should be less than end offset")
+	}
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
+	// Remove all current state between the start offset and the end offset.
+	for item := cs.getItemOrNext(start); item != nil && item.offset <= end; item = cs.getItemOrNext(start) {
+		cs.items.Delete(*item)
+	}
+	// State of the start offset is updated according to the state of the previous item.
+	if prev := cs.getItemOrPrev(start); prev == nil || !prev.isUpdated {
+		cs.items.ReplaceOrInsert(chunkStateItem{offset: start, isUpdated: true})
+	}
+	// State of the end offset is updated according to the state of the next item.
+	if next := cs.getItemOrNext(end); next == nil || next.isUpdated {
+		cs.items.ReplaceOrInsert(chunkStateItem{offset: end, isUpdated: false})
+	}
+	return nil
+}
+
+func (cs *chunkState) IsCompleted() bool {
+	cs.mutex.RLock()
+	defer cs.mutex.RUnlock()
+	if cs.items.Len() != 2 {
+		return false
+	}
+	first := chunkStateItem{offset: 0, isUpdated: true}
+	last := chunkStateItem{offset: cs.fileSize, isUpdated: false}
+	return cs.items.Min() == first && cs.items.Max() == last
 }
