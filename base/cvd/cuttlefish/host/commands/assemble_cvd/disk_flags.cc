@@ -939,25 +939,32 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
               "instance = \"" << instance.instance_name() << "\"");
 
     // Check if filling in the sparse image would run out of disk space.
-    auto existing_sizes = SparseFileSizes(instance.data_image());
-    CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
-              "Unable to determine size of \"" << instance.data_image()
-                                               << "\". Does this file exist?");
-    auto available_space = AvailableSpaceAtPath(instance.data_image());
-    if (available_space <
-        existing_sizes.sparse_size - existing_sizes.disk_size) {
-      // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a
-      // separate machine
-      return CF_ERR("Not enough space remaining in fs containing \""
-                    << instance.data_image() << "\", wanted "
-                    << (existing_sizes.sparse_size - existing_sizes.disk_size)
-                    << ", got " << available_space);
-    } else {
-      LOG(DEBUG) << "Available space: " << available_space;
-      LOG(DEBUG) << "Sparse size of \"" << instance.data_image()
-                 << "\": " << existing_sizes.sparse_size;
-      LOG(DEBUG) << "Disk size of \"" << instance.data_image()
-                 << "\": " << existing_sizes.disk_size;
+    std::string data_image = instance.data_image();
+    auto existing_sizes = SparseFileSizes(data_image);
+    if (existing_sizes.sparse_size == 0 && existing_sizes.disk_size == 0) {
+      data_image = instance.new_data_image();
+      existing_sizes = SparseFileSizes(data_image);
+      CF_EXPECT(existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0,
+                "Unable to determine size of \""
+                    << data_image << "\". Does this file exist?");
+    }
+    if (existing_sizes.sparse_size > 0 || existing_sizes.disk_size > 0) {
+      auto available_space = AvailableSpaceAtPath(data_image);
+      if (available_space <
+          existing_sizes.sparse_size - existing_sizes.disk_size) {
+        // TODO(schuffelen): Duplicate this check in run_cvd when it can run on
+        // a separate machine
+        return CF_ERR("Not enough space remaining in fs containing \""
+                      << data_image << "\", wanted "
+                      << (existing_sizes.sparse_size - existing_sizes.disk_size)
+                      << ", got " << available_space);
+      } else {
+        LOG(DEBUG) << "Available space: " << available_space;
+        LOG(DEBUG) << "Sparse size of \"" << data_image
+                   << "\": " << existing_sizes.sparse_size;
+        LOG(DEBUG) << "Disk size of \"" << data_image
+                   << "\": " << existing_sizes.disk_size;
+      }
     }
 
     auto os_disk_builder = OsCompositeDiskBuilder(config, instance);

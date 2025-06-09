@@ -141,7 +141,7 @@
 // Policy default parameters
 #define CF_DEFAULTS_DATA_POLICY "use_existing"
 #define CF_DEFAULTS_USERDATA_FORMAT USERDATA_FILE_SYSTEM_TYPE
-#define CF_DEFAULTS_BLANK_DATA_IMAGE_MB CF_DEFAULTS_DYNAMIC_INT
+#define CF_DEFAULTS_BLANK_DATA_IMAGE_MB "8192"
 
 // Graphics default parameters
 #define CF_DEFAULTS_HWCOMPOSER cuttlefish::kHwComposerAuto

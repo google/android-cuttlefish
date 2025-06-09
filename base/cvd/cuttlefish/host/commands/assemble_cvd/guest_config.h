@@ -40,6 +40,7 @@ struct GuestConfig {
   std::optional<std::string> domkey_mapping_config;
   int output_audio_streams_count = 1;
   std::optional<bool> enforce_mac80211_hwsim;
+  int blank_data_image_mb = 0;
 };
 
 }
