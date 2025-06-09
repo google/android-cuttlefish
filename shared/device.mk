@@ -193,8 +193,6 @@ PRODUCT_PACKAGES += \
     cuttlefish_overlay_frameworks_base_core \
     cuttlefish_overlay_nfc \
     cuttlefish_overlay_settings_provider \
-    cuttlefish_overlay_uwb \
-    cuttlefish_overlay_uwb_gsi \
 
 #
 # Satellite vendor service for CF
@@ -240,7 +238,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.ethernet.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.ethernet.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml \
-    frameworks/native/data/etc/android.hardware.uwb.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.uwb.xml \
     frameworks/native/data/etc/android.hardware.wifi.direct.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.direct.xml \
     frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
@@ -534,10 +531,6 @@ PRODUCT_PACKAGES += \
     CuttlefishTetheringOverlay \
     CuttlefishWifiOverlay
 
-# UWB HAL
-PRODUCT_PACKAGES += com.android.hardware.uwb
-PRODUCT_VENDOR_PROPERTIES += ro.vendor.uwb.dev=/dev/hvc9
-
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
 
@@ -577,10 +570,25 @@ PRODUCT_PACKAGES += \
     device_google_cuttlefish_shared_config_pci_ids
 $(call soong_config_set_bool,cuttlefish_config,use_pci_ids,true)
 
+ifneq ($(CF_VENDOR_NO_UWB), true)
+# Enable UWB
+PRODUCT_PACKAGES += \
+    cuttlefish_overlay_uwb \
+    cuttlefish_overlay_uwb_gsi
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.uwb.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.uwb.xml
+
+PRODUCT_PACKAGES += com.android.hardware.uwb
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.uwb.dev=/dev/hvc9
+endif
+
+ifneq ($(CF_VENDOR_NO_THREADNETWORK), true)
 # Thread Network AIDL HAL and Demo App
 PRODUCT_PACKAGES += \
     com.android.hardware.threadnetwork \
     ThreadNetworkDemoApp
+endif
 
 # Enable adb debugging
 PRODUCT_PACKAGES += set_adb
