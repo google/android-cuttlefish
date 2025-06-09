@@ -134,6 +134,8 @@ type ListUploadDirectoriesResponse struct {
 	Items []*UploadDirectory `json:"items"`
 }
 
+type StatArtifactResponse struct{}
+
 type CreateSnapshotRequest struct {
 	// [Optional]
 	// Value must match regex: "^([a-z0-9\\-]+)$".
