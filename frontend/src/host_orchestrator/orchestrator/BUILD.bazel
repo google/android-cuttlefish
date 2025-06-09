@@ -3,7 +3,6 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "orchestrator",
     srcs = [
-        "chunkstate.go",
         "controller.go",
         "createcvdaction.go",
         "createcvdbugreportaction.go",
@@ -34,7 +33,6 @@ go_library(
 go_test(
     name = "orchestrator_test",
     srcs = [
-        "chunkstate_test.go",
         "controller_test.go",
         "createcvdaction_test.go",
         "instancemanager_test.go",
