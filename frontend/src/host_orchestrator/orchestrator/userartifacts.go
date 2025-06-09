@@ -36,7 +36,7 @@ import (
 // Resolves the user artifacts full directory.
 type UserArtifactsDirResolver interface {
 	// Given a directory name returns its full path.
-	GetDirPath(name string, isLegacy bool) string
+	GetDirPath(name string) string
 }
 
 type UserArtifactChunk struct {
@@ -135,12 +135,8 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
 }
 
-func (m *UserArtifactsManagerImpl) GetDirPath(name string, isLegacy bool) string {
-	if isLegacy {
-		return filepath.Join(m.LegacyRootDir, name)
-	} else {
-		return filepath.Join(m.RootDir, name)
-	}
+func (m *UserArtifactsManagerImpl) GetDirPath(name string) string {
+	return filepath.Join(m.LegacyRootDir, name)
 }
 
 func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
@@ -165,7 +161,7 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArt
 		return fmt.Errorf("failed to update chunk: %w", err)
 	}
 	if mayMoveArtifact {
-		if err := m.moveArtifactIfNeeds(checksum, chunk); err != nil {
+		if err := m.moveArtifactIfNeeded(checksum, chunk); err != nil {
 			return fmt.Errorf("failed to move the user artifact from working directory: %w", err)
 		}
 	}
@@ -235,7 +231,8 @@ func writeChunk(filename string, chunk UserArtifactChunk) error {
 
 // Calculating the checksum of the user artifact is a heavy task. Instead, it records the state
 // of updated chunks to know whether it's ready to calculate checksum and move the user artifact or
-// not. This function returns the boolean value as true if it needs to calculate checksum afterwards.
+// not. This function returns the boolean value as true if the user artifact is fully updated so it
+// needs to calculate checksum later.
 func (m *UserArtifactsManagerImpl) writeChunkAndUpdateState(checksum string, chunk UserArtifactChunk) (bool, error) {
 	mu := m.getRWMutex(checksum)
 	// Reason for acquiring read lock is to allow updating multiple chunks concurrently, but to
@@ -289,7 +286,7 @@ func (m *UserArtifactsManagerImpl) validateChecksum(checksum string, chunk UserA
 	return checksum == fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (m *UserArtifactsManagerImpl) moveArtifactIfNeeds(checksum string, chunk UserArtifactChunk) error {
+func (m *UserArtifactsManagerImpl) moveArtifactIfNeeded(checksum string, chunk UserArtifactChunk) error {
 	mu := m.getRWMutex(checksum)
 	// Reason for acquiring write lock is to restrict writing new chunks while validating checksum
 	// or moving artifact.

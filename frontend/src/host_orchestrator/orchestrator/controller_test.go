@@ -209,7 +209,7 @@ func (testUAM) StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error
 	return &apiv1.StatArtifactResponse{}, nil
 }
 
-func (testUAM) GetDirPath(string, bool) string {
+func (testUAM) GetDirPath(string) string {
 	return ""
 }
 
