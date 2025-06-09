@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "common/libs/utils/architecture.h"
+#include "common/libs/utils/result.h"
 
 namespace cuttlefish {
 
@@ -87,8 +88,8 @@ class FuchsiaEspBuilder {
   std::optional<Arch> arch_;
 };
 
-bool NewfsMsdos(const std::string& data_image, int data_image_mb,
-                int offset_num_mb);
+Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
+                          int offset_num_mb);
 
 bool CanGenerateEsp(Arch arch);
 
