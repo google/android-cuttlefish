@@ -573,16 +573,22 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 			return nil, operator.NewBadRequestError("invalid directory name", err)
 		}
 		if err != nil {
-			log.Println("deprecated: use `chunk_offset_bytes`")
+			log.Println("use of deprecated `chunk_number`")
 			chunkNumberRaw := r.FormValue("chunk_number")
 			chunkNumber, err := strconv.Atoi(chunkNumberRaw)
 			if err != nil {
 				return nil, operator.NewBadRequestError(
-					fmt.Sprintf("Invalid chunk_number value: %q", chunkNumberRaw), err)
+					fmt.Sprintf("Invalid chunk_number form field value: %q", chunkNumberRaw), err)
+			}
+			if chunkNumber < 0 {
+				return nil, operator.NewBadRequestError(fmt.Sprintf("invalid value (chunk_number:%d)", chunkNumber), nil)
 			}
 			chunkSizeBytes, err := parseFormValueInt(r, "chunk_size_bytes")
 			if err != nil {
 				return nil, err
+			}
+			if chunkNumber < 0 {
+				return nil, operator.NewBadRequestError(fmt.Sprintf("invalid value (chunk_size_bytes:%d)", chunkSizeBytes), nil)
 			}
 			chunkOffsetBytes = int64(chunkNumber-1) * chunkSizeBytes
 		}

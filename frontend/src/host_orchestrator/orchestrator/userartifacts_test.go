@@ -204,7 +204,7 @@ func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
 		t.Fatal(err)
 	}
-	b, err := ioutil.ReadFile(filepath.Join(uam.GetDirPath(checksum, false), testFileName))
+	b, err := ioutil.ReadFile(filepath.Join(rootDir, getSha256Sum(testFileData), testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -328,7 +328,7 @@ func TestUpdateArtifactWithMultipleSerialChunkSucceeds(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	b, err := ioutil.ReadFile(filepath.Join(uam.GetDirPath(getSha256Sum(testFileData), false), testFileName))
+	b, err := ioutil.ReadFile(filepath.Join(rootDir, getSha256Sum(testFileData), testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -361,7 +361,7 @@ func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
 		}(chunk)
 	}
 	wg.Wait()
-	b, err := ioutil.ReadFile(filepath.Join(uam.GetDirPath(getSha256Sum(testFileData), false), testFileName))
+	b, err := ioutil.ReadFile(filepath.Join(rootDir, getSha256Sum(testFileData), testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
