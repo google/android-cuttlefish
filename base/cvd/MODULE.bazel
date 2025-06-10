@@ -555,3 +555,14 @@ git_repository(
     commit = "d8eac1f8699541416afdf93333772ef2e0509773",
     remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
 )
+
+git_repository(
+    name = "dosfstools",
+    build_file = "@//:BUILD.dosfstools.bazel",
+    commit = "289a48b9cb5b3c589391d28aa2515c325c932c7a",
+    remote = "https://github.com/dosfstools/dosfstools",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/dosfstools:PATCH.vasprintf.patch",
+    ],
+)

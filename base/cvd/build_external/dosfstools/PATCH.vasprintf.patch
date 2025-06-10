@@ -1,0 +1,35 @@
+Older distros don't have it, but newer distros do. Normally this would be
+handled by autoconf, but that's unnecessarily complicated to integrate
+into the bazel build, and fortunately it's only used by xasprintf.
+
+diff --git a/src/common.c b/src/common.c
+index aa3a02b..9ab7f09 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -117,8 +117,7 @@ int min(int a, int b)
+ }
+ 
+ 
+-#ifndef HAVE_VASPRINTF
+-static int vasprintf(char **strp, const char *fmt, va_list va)
++static int dosfstools_vasprintf(char **strp, const char *fmt, va_list va)
+ {
+     int length;
+     va_list vacopy;
+@@ -137,7 +136,6 @@ static int vasprintf(char **strp, const char *fmt, va_list va)
+ 
+     return vsnprintf(*strp, length + 1, fmt, va);
+ }
+-#endif
+ 
+ int xasprintf(char **strp, const char *fmt, ...)
+ {
+@@ -145,7 +143,7 @@ int xasprintf(char **strp, const char *fmt, ...)
+     int retval;
+ 
+     va_start(va, fmt);
+-    retval = vasprintf(strp, fmt, va);
++    retval = dosfstools_vasprintf(strp, fmt, va);
+     va_end(va);
+ 
+     if (retval < 0)
