@@ -195,6 +195,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_vbmeta",
         "//cuttlefish/host/commands/assemble_cvd/disk:initialize_instance_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
+        "//cuttlefish/host/commands/assemble_cvd/disk:pstore",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",

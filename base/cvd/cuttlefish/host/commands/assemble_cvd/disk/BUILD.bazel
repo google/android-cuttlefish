@@ -166,3 +166,23 @@ clang_tidy_test(
     srcs = [":kernel_ramdisk_repacker"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "pstore",
+    srcs = ["pstore.cc"],
+    hdrs = ["pstore.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "pstore_clang_tidy",
+    srcs = [":pstore"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
