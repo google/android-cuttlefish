@@ -65,6 +65,19 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "fuchsia_composite_disk",
+    srcs = ["fuchsia_composite_disk.cc"],
+    hdrs = ["fuchsia_composite_disk.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+    ],
+)
+
+cc_library(
     name = "gem5_image_unpacker",
     srcs = ["gem5_image_unpacker.cpp"],
     hdrs = ["gem5_image_unpacker.h"],

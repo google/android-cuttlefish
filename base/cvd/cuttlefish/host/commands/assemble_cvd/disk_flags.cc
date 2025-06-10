@@ -35,6 +35,7 @@
 #include "host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "host/commands/assemble_cvd/disk/fuchsia_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
@@ -303,19 +304,6 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-std::vector<ImagePartition> fuchsia_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  partitions.push_back(ImagePartition{
-      .label = "fuchsia_esp",
-      .image_file_path = AbsolutePath(instance.esp_image_path()),
-      .type = kEfiSystemPartition,
-  });
-
-  return partitions;
-}
-
 std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions = AndroidCompositeDiskConfig(instance);
@@ -365,7 +353,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
       return LinuxCompositeDiskConfig(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-      return fuchsia_composite_disk_config(instance);
+      return FuchsiaCompositeDiskConfig(instance);
   }
 }
 
