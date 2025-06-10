@@ -39,6 +39,7 @@
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "host/commands/assemble_cvd/disk/metadata_image.h"
 #include "host/commands/assemble_cvd/disk/pstore.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
@@ -460,22 +461,6 @@ Result<void> InitializeChromeOsState(
     return {};
   }
   CF_EXPECT(CreateBlankImage(instance.chromeos_state_image(), 8096, "ext4"));
-  return {};
-}
-
-Result<void> InitializeMetadataImage(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.metadata_image()) &&
-      FileSize(instance.metadata_image()) == instance.blank_metadata_image_mb()
-                                                 << 20) {
-    return {};
-  }
-
-  CF_EXPECT(CreateBlankImage(instance.metadata_image(),
-                             instance.blank_metadata_image_mb(), "none"),
-            "Failed to create \"" << instance.metadata_image()
-                                  << "\" with size "
-                                  << instance.blank_metadata_image_mb());
   return {};
 }
 
