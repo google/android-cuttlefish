@@ -21,6 +21,7 @@
 
 #include <android-base/expected.h>
 #include <android/native_window_jni.h>
+#define VULKAN_HPP_TYPESAFE_CONVERSION 1
 #define VULKAN_HPP_NAMESPACE vkhpp
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VULKAN_HPP_ENABLE_DYNAMIC_LOADER_TOOL 1
@@ -225,7 +226,7 @@ class SampleBase {
       vkhpp::Format depthAttachmentFormat = vkhpp::Format::eUndefined);
 
  private:
-  vkhpp::DynamicLoader mLoader;
+  vkhpp::detail::DynamicLoader mLoader;
   vkhpp::UniqueInstance mInstance;
   std::optional<vkhpp::UniqueDebugUtilsMessengerEXT> mDebugMessenger;
 

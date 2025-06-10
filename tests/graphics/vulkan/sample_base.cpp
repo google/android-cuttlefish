@@ -27,16 +27,17 @@ namespace {
 constexpr const bool kEnableValidationLayers = false;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-    VkDebugUtilsMessageTypeFlagsEXT,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*) {
-  if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+    vkhpp::DebugUtilsMessageSeverityFlagBitsEXT severity,
+    vkhpp::DebugUtilsMessageTypeFlagsEXT,
+    const vkhpp::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void*) {
+  if (severity == vkhpp::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose) {
     ALOGV("%s", pCallbackData->pMessage);
-  } else if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+  } else if (severity == vkhpp::DebugUtilsMessageSeverityFlagBitsEXT::eInfo) {
     ALOGI("%s", pCallbackData->pMessage);
-  } else if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+  } else if (severity ==
+             vkhpp::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
     ALOGW("%s", pCallbackData->pMessage);
-  } else if (severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+  } else if (severity == vkhpp::DebugUtilsMessageSeverityFlagBitsEXT::eError) {
     ALOGE("%s", pCallbackData->pMessage);
   }
   return VK_FALSE;
