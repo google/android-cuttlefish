@@ -39,6 +39,7 @@
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "host/commands/assemble_cvd/disk/pstore.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
@@ -497,17 +498,6 @@ Result<void> InitializeHwcomposerPmemImage(
   CF_EXPECT(
       CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */, "none"),
       "Failed creating \"" << instance.hwcomposer_pmem_path() << "\"");
-  return {};
-}
-
-Result<void> InitializePstore(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.pstore_path())) {
-    return {};
-  }
-
-  CF_EXPECT(CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none"),
-            "Failed to create \"" << instance.pstore_path() << "\"");
   return {};
 }
 
