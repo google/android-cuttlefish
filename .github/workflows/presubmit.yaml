@@ -66,6 +66,41 @@ jobs:
           go test ./...
           popd
         done
+  run-frontend-api-documentation-check:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    env:
+      GOPROJECTS: ('host_orchestrator')
+    steps:
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y git golang
+    - name: Setup git
+      run: |
+        git --version
+        # Fixes fatal: detected dubious ownership in repository at '/__w/android-cuttlefish/android-cuttlefish'
+        git config --global --add safe.directory /__w/android-cuttlefish/android-cuttlefish
+    - name: Go version
+      run: go version
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install swag
+      run: go install github.com/swaggo/swag/cmd/swag@latest
+    - name: Run swag check
+      shell: bash
+      run: |
+        $(go env GOPATH)/bin/swag --version
+        projects=${{ env.GOPROJECTS }}
+        for item in "${projects[@]}"; do
+          pushd "frontend/src/${item}"
+          $(go env GOPATH)/bin/swag fmt
+          git diff --exit-code
+          $(go env GOPATH)/bin/swag init
+          git diff --exit-code
+          popd
+        done
   run-cvd-unit-tests:
     runs-on: ubuntu-22.04-4core
     container:
