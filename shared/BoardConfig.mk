@@ -295,18 +295,6 @@ TARGET_USERIMAGES_SPARSE_EROFS_DISABLED ?= false
 TARGET_USERIMAGES_SPARSE_EXT_DISABLED ?= false
 TARGET_USERIMAGES_SPARSE_F2FS_DISABLED ?= false
 
-# Make the userdata partition 8G to accommodate ASAN, CTS and provide
-# enough space for other cases (such as remount, etc)
-BOARD_USERDATAIMAGE_PARTITION_SIZE := $(TARGET_USERDATAIMAGE_PARTITION_SIZE)
-BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := $(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE)
-$(call soong_config_append,cvdhost,default_userdata_fs_type,$(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE))
-ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
-TARGET_USERIMAGES_USE_F2FS := true
-endif
-ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),ext4)
-TARGET_USERIMAGES_USE_EXT4 := true
-endif
-
 # Enable goldfish's encoder.
 # TODO(b/113617962) Remove this if we decide to use
 # device/generic/opengl-transport to generate the encoder
