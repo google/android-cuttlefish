@@ -11,6 +11,7 @@ package_files(
         "cuttlefish-common/bin/assemble_cvd": "//cuttlefish/host/commands/assemble_cvd",
         "cuttlefish-common/bin/avbtool.py": "@avb//:avbtool.py",
         "cuttlefish-common/bin/casimir_control_server": "//cuttlefish/host/commands/casimir_control_server",
+        "cuttlefish-common/bin/cf_vhost_user_input": "//cuttlefish/host/commands/vhost_user_input:cf_vhost_user_input",
         "cuttlefish-common/bin/console_forwarder": "//cuttlefish/host/commands/console_forwarder",
         "cuttlefish-common/bin/control_env_proxy_server": "//cuttlefish/host/commands/control_env_proxy_server",
         "cuttlefish-common/bin/cpio": "@libarchive//cpio:cpio",
