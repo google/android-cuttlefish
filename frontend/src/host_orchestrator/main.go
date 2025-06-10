@@ -84,6 +84,14 @@ func newOperatorProxy(port int) *httputil.ReverseProxy {
 	return proxy
 }
 
+//	@Title		Cuttlefish Host Orchestrator API
+//	@Version	1.0
+
+//	@license.name	Apache 2.0
+//	@license.url	https://www.apache.org/licenses/LICENSE-2.0
+
+//	@BasePath	/
+
 func main() {
 	httpPort := flag.Int("http_port", 2080, "Port to listen on for HTTP requests.")
 	operatorPort := flag.Int("operator_http_port", 1080, "Port where the operator is listening.")

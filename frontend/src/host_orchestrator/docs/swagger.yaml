@@ -1,0 +1,134 @@
+basePath: /
+definitions:
+  v1.AndroidCIBuild:
+    properties:
+      branch:
+        description: The branch name. If omitted the passed `BuildID` will determine
+          the branch.
+        type: string
+      build_id:
+        description: |-
+          Uniquely identifies a branch's snapshot. If empty, the latest green snapshot of the used branch will
+          be used.
+        type: string
+      target:
+        description: A string to determine the specific product and flavor from the
+          set of builds.
+        type: string
+    type: object
+  v1.AndroidCIBuildSource:
+    properties:
+      bootloader_build:
+        allOf:
+        - $ref: '#/definitions/v1.AndroidCIBuild'
+        description: Uses this specific bootloader build target if set.
+      kernel_build:
+        allOf:
+        - $ref: '#/definitions/v1.AndroidCIBuild'
+        description: Uses this specific kernel build target if set.
+      main_build:
+        allOf:
+        - $ref: '#/definitions/v1.AndroidCIBuild'
+        description: Main build. If omitted, defaults to branch "aosp-main" and target
+          `aosp_cf_x86_64_phone-trunk_staging-userdebug`.
+      system_image_build:
+        allOf:
+        - $ref: '#/definitions/v1.AndroidCIBuild'
+        description: Uses this specific system image build target if set.
+    type: object
+  v1.BuildSource:
+    properties:
+      android_ci_build_source:
+        allOf:
+        - $ref: '#/definitions/v1.AndroidCIBuildSource'
+        description: A build from ci.android.com
+    type: object
+  v1.CVD:
+    properties:
+      adb_serial:
+        description: '[Output Only]'
+        type: string
+      build_source:
+        allOf:
+        - $ref: '#/definitions/v1.BuildSource'
+        description: '[Input Only]'
+      displays:
+        description: '[Output Only]'
+        items:
+          type: string
+        type: array
+      group:
+        description: '[Output Only] The group name the instance belongs to.'
+        type: string
+      name:
+        description: '[Output Only] Identifier within a group.'
+        type: string
+      status:
+        description: '[Output Only]'
+        type: string
+      webrtc_device_id:
+        description: '[Output Only]'
+        type: string
+    type: object
+  v1.CreateCVDRequest:
+    properties:
+      additional_instances_num:
+        description: |-
+          [DEPRECATED]. Use `EnvConfig` field.
+          Use to create multiple homogeneous instances.
+        type: integer
+      cvd:
+        allOf:
+        - $ref: '#/definitions/v1.CVD'
+        description: '[DEPRECATED]. Use `EnvConfig` field.'
+      env_config:
+        additionalProperties: true
+        description: |-
+          Environment canonical configuration.
+          Structure: https://android.googlesource.com/device/google/cuttlefish/+/8bbd3b9cd815f756f332791d45c4f492b663e493/host/commands/cvd/parser/README.md
+          Example: https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/host/cvd_test_configs/main_phone-main_watch.json;drc=b2e8f4f014abb7f9cb56c0ae199334aacb04542d
+          NOTE: Using this as a black box for now as its content is unstable. Use the test configs pointed
+          above as reference to build your config object.
+        type: object
+    type: object
+  v1.CreateCVDResponse:
+    properties:
+      cvds:
+        items:
+          $ref: '#/definitions/v1.CVD'
+        type: array
+    type: object
+info:
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  title: Cuttlefish Host Orchestrator API
+  version: "1.0"
+paths:
+  /cvds:
+    post:
+      consumes:
+      - application/json
+      description: Creates cuttlefish instances
+      parameters:
+      - description: CreateCVDRequest object instance
+        in: body
+        name: CreateCVDRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateCVDRequest'
+      - description: Use this header for forwarding EUC towards the Android Build
+          API
+        in: header
+        name: X-Cutf-Host-Orchestrator-BuildAPI-Creds
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.CreateCVDResponse'
+      summary: Creates cuttlefish instances
+swagger: "2.0"

@@ -200,6 +200,16 @@ func newCreateCVDHandler(c Config, om OperationManager, uadr UserArtifactsManage
 	}
 }
 
+// CreateCVD godoc
+//
+//	@Summary		Creates cuttlefish instances
+//	@Description	Creates cuttlefish instances
+//	@Accept			json
+//	@Produce		json
+//	@Param			CreateCVDRequest						body		apiv1.CreateCVDRequest	true	"CreateCVDRequest object instance"
+//	@Param			X-Cutf-Host-Orchestrator-BuildAPI-Creds	header		string					false	"Use this header for forwarding EUC towards the Android Build API"
+//	@Success		200										{object}	apiv1.CreateCVDResponse
+//	@Router			/cvds [post]
 func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	req := &apiv1.CreateCVDRequest{}
 	err := json.NewDecoder(r.Body).Decode(req)
