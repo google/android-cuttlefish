@@ -32,6 +32,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/disk/ap_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
@@ -51,7 +52,6 @@
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/instance_nums.h"
 #include "host/libs/feature/inject.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
 #include "host/libs/vm_manager/gem5_manager.h"
 
 DECLARE_string(system_image_dir);
@@ -299,25 +299,6 @@ Result<void> ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("vvmtruststore_path", vvmtruststore_path.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   return {};
-}
-
-std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  if (instance.ap_boot_flow() == APBootFlow::Grub) {
-    partitions.push_back(ImagePartition{
-        .label = "ap_esp",
-        .image_file_path = AbsolutePath(instance.ap_esp_image_path()),
-    });
-  }
-
-  partitions.push_back(ImagePartition{
-      .label = "ap_rootfs",
-      .image_file_path = AbsolutePath(config.ap_rootfs_image()),
-  });
-
-  return partitions;
 }
 
 DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,

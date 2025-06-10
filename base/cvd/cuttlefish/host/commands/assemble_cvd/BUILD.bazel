@@ -188,6 +188,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:gem5_image_unpacker",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
@@ -209,7 +210,6 @@ cc_library(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/feature:inject",
-        "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@fruit",
