@@ -78,6 +78,27 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "chromeos_state",
+    srcs = ["chromeos_state.cc"],
+    hdrs = ["chromeos_state.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "chromeos_state_clang_tidy",
+    srcs = [":chromeos_state"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+
+cc_library(
     name = "factory_reset_protected",
     srcs = ["factory_reset_protected.cc"],
     hdrs = ["factory_reset_protected.h"],

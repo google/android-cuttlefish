@@ -33,6 +33,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk/ap_composite_disk.h"
+#include "host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
@@ -345,18 +346,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> InitializeChromeOsState(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  using BootFlow = CuttlefishConfig::InstanceSpecific::BootFlow;
-  if (instance.boot_flow() != BootFlow::ChromeOs) {
-    return {};
-  } else if (FileExists(instance.chromeos_state_image())) {
-    return {};
-  }
-  CF_EXPECT(CreateBlankImage(instance.chromeos_state_image(), 8096, "ext4"));
-  return {};
 }
 
 Result<void> InitializeAccessKregistryImage(
