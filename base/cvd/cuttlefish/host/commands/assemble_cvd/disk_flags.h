@@ -16,13 +16,10 @@
 
 #pragma once
 
-#include <vector>
-
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
@@ -31,8 +28,6 @@ Result<void> ResolveInstanceFiles();
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config);
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config);
-std::vector<ImagePartition> GetOsCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance);
 DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
                                    const CuttlefishConfig::InstanceSpecific& instance);
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,

@@ -32,18 +32,14 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/disk/android_composite_disk_config.h"
-#include "host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
-#include "host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
-#include "host/commands/assemble_cvd/disk/fuchsia_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
-#include "host/commands/assemble_cvd/disk/linux_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/metadata_image.h"
+#include "host/commands/assemble_cvd/disk/os_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/pstore.h"
 #include "host/commands/assemble_cvd/disk/sd_card.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
@@ -322,24 +318,6 @@ std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& con
   });
 
   return partitions;
-}
-
-std::vector<ImagePartition> GetOsCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  switch (instance.boot_flow()) {
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
-      return AndroidCompositeDiskConfig(instance);
-    case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
-      return AndroidEfiLoaderCompositeDiskConfig(instance);
-    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
-      return ChromeOsCompositeDiskConfig(instance);
-    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk:
-      return {};
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-      return LinuxCompositeDiskConfig(instance);
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-      return FuchsiaCompositeDiskConfig(instance);
-  }
 }
 
 DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
