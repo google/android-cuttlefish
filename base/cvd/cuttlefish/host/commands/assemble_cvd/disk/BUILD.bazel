@@ -25,6 +25,24 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "chromeos_composite_disk",
+    srcs = ["chromeos_composite_disk.cc"],
+    hdrs = ["chromeos_composite_disk.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+    ],
+)
+
+clang_tidy_test(
+    name = "chromeos_composite_disk_clang_tidy",
+    srcs = [":chromeos_composite_disk"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
 
 cc_library(
     name = "factory_reset_protected",
