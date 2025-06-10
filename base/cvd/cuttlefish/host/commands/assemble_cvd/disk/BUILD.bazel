@@ -26,6 +26,20 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "android_efi_loader_composite_disk",
+    srcs = ["android_efi_loader_composite_disk.cc"],
+    hdrs = ["android_efi_loader_composite_disk.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+    ],
+)
+
+cc_library(
     name = "chromeos_composite_disk",
     srcs = ["chromeos_composite_disk.cc"],
     hdrs = ["chromeos_composite_disk.h"],

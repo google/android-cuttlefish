@@ -189,6 +189,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
+        "//cuttlefish/host/commands/assemble_cvd/disk:android_efi_loader_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:fuchsia_composite_disk",
