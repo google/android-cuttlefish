@@ -33,6 +33,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk/android_composite_disk_config.h"
+#include "host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/fuchsia_composite_disk.h"
@@ -302,22 +303,6 @@ Result<void> ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("vvmtruststore_path", vvmtruststore_path.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   return {};
-}
-
-std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions = AndroidCompositeDiskConfig(instance);
-  // Cuttlefish uboot EFI bootflow by default looks at the first partition
-  // for EFI application. Thus we put "android_esp" at the beginning.
-  partitions.insert(
-      partitions.begin(),
-      ImagePartition{
-          .label = "android_esp",
-          .image_file_path = AbsolutePath(instance.esp_image_path()),
-          .type = kEfiSystemPartition,
-      });
-
-  return partitions;
 }
 
 std::vector<ImagePartition> GetApCompositeDiskConfig(const CuttlefishConfig& config,
