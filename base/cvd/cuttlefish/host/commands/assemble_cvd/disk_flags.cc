@@ -33,6 +33,7 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk/android_composite_disk_config.h"
+#include "host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
@@ -301,29 +302,6 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-std::vector<ImagePartition> chromeos_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  partitions.emplace_back(ImagePartition{
-      .label = "STATE",
-      .image_file_path = AbsolutePath(instance.chromeos_state_image()),
-      .type = kLinuxFilesystem,
-  });
-  partitions.emplace_back(ImagePartition{
-      .label = "linux_esp",
-      .image_file_path = AbsolutePath(instance.esp_image_path()),
-      .type = kEfiSystemPartition,
-  });
-  partitions.emplace_back(ImagePartition{
-      .label = "linux_root",
-      .image_file_path = AbsolutePath(instance.chromeos_root_image()),
-      .type = kLinuxFilesystem,
-  });
-
-  return partitions;
-}
-
 std::vector<ImagePartition> linux_composite_disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
@@ -397,7 +375,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
     case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
       return AndroidEfiLoaderCompositeDiskConfig(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
-      return chromeos_composite_disk_config(instance);
+      return ChromeOsCompositeDiskConfig(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk:
       return {};
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
