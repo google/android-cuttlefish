@@ -1,0 +1,40 @@
+package(
+    default_visibility = ["@//:android_cuttlefish"],
+)
+
+cc_binary(
+    name = "mkfs.fat",
+    srcs = [
+        "src/blkdev/blkdev.c",
+        "src/blkdev/blkdev.h",
+        "src/blkdev/linux_version.c",
+        "src/blkdev/linux_version.h",
+        "src/charconv.c",
+        "src/charconv.h",
+        "src/common.c",
+        "src/common.h",
+        "src/device_info.c",
+        "src/device_info.h",
+        "src/endian_compat.h",
+        "src/fsck.fat.h",
+        "src/mkfs.fat.c",
+        "src/msdos_fs.h",
+    ],
+    includes = [
+        "src",
+        "src/blkdev",
+    ],
+    local_defines = [
+        "HAVE_DECL_GETMNTENT",
+        "HAVE_ENDIAN_H",
+        "HAVE_LINUX_FD_H",
+        "HAVE_LINUX_HDREG_H",
+        "HAVE_LINUX_LOOP_H",
+        "HAVE_LINUX_VERSION_H",
+        "HAVE_SYS_QUEUE_H",
+        "HAVE_SYS_SYSMACROS_H",
+    ],
+    deps = [
+        "@//build_external/dosfstools:dosfstools_version",
+    ],
+)

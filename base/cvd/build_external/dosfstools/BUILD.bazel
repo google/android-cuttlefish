@@ -1,0 +1,11 @@
+package(
+    default_visibility = ["@dosfstools//:__subpackages__"],
+)
+
+cc_library(
+    name = "dosfstools_version",
+    hdrs = [
+        "src/version.h",
+    ],
+    strip_include_prefix = "//build_external/dosfstools/src",
+)

@@ -99,6 +99,8 @@ std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
 std::string MkbootimgBinary() { return HostBinaryPath("mkbootimg.py"); }
 
+std::string MkfsFat() { return HostBinaryPath("mkfs.fat"); }
+
 std::string MkuserimgMke2fsBinary() {
     return HostBinaryPath("mkuserimg_mke2fs.py");
 }
@@ -108,6 +110,8 @@ std::string MmdBinary() { return HostBinaryPath("mmd"); }
 std::string ModemSimulatorBinary() { return HostBinaryPath("modem_simulator"); }
 
 std::string NetsimdBinary() { return HostBinaryPath("netsimd"); }
+
+std::string NewfsMsdos() { return HostBinaryPath("newfs_msdos"); }
 
 std::string OpenwrtControlServerBinary() {
   return HostBinaryPath("openwrt_control_server");
