@@ -40,6 +40,7 @@
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "host/commands/assemble_cvd/disk/linux_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/metadata_image.h"
 #include "host/commands/assemble_cvd/disk/pstore.h"
 #include "host/commands/assemble_cvd/disk/sd_card.h"
@@ -302,23 +303,6 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-std::vector<ImagePartition> linux_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::vector<ImagePartition> partitions;
-
-  partitions.push_back(ImagePartition{
-      .label = "linux_esp",
-      .image_file_path = AbsolutePath(instance.esp_image_path()),
-      .type = kEfiSystemPartition,
-  });
-  partitions.push_back(ImagePartition{
-      .label = "linux_root",
-      .image_file_path = AbsolutePath(instance.linux_root_image()),
-  });
-
-  return partitions;
-}
-
 std::vector<ImagePartition> fuchsia_composite_disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
@@ -379,7 +363,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
     case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk:
       return {};
     case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
-      return linux_composite_disk_config(instance);
+      return LinuxCompositeDiskConfig(instance);
     case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
       return fuchsia_composite_disk_config(instance);
   }

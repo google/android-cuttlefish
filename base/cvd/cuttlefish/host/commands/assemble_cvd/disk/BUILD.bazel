@@ -186,6 +186,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "linux_composite_disk",
+    srcs = ["linux_composite_disk.cc"],
+    hdrs = ["linux_composite_disk.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+    ],
+)
+
+clang_tidy_test(
+    name = "linux_composite_disk_clang_tidy",
+    srcs = [":linux_composite_disk"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "metadata_image",
     srcs = ["metadata_image.cc"],
     hdrs = ["metadata_image.h"],
