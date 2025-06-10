@@ -206,3 +206,24 @@ clang_tidy_test(
     srcs = [":pstore"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "sd_card",
+    srcs = ["sd_card.cc"],
+    hdrs = ["sd_card.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/image_aggregator",
+    ],
+)
+
+clang_tidy_test(
+    name = "sd_card_clang_tidy",
+    srcs = [":sd_card"],
+    tags = ["clang_tidy", "clang-tidy"],
+)

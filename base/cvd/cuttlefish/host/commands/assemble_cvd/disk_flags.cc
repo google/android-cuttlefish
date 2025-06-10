@@ -41,6 +41,7 @@
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk/metadata_image.h"
 #include "host/commands/assemble_cvd/disk/pstore.h"
+#include "host/commands/assemble_cvd/disk/sd_card.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
@@ -497,26 +498,6 @@ Result<void> InitializePflash(
   // Pad out bootloader space to 4MB
   CF_EXPECTF(CreateBlankImage(instance.pflash_path(), 4 - boot_size_mb, "none"),
              "Failed to create '{}'", instance.pflash_path());
-  return {};
-}
-
-Result<void> InitializeSdCard(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!instance.use_sdcard()) {
-    return {};
-  }
-  if (FileExists(instance.sdcard_path())) {
-    return {};
-  }
-  CF_EXPECT(CreateBlankImage(instance.sdcard_path(),
-                             instance.blank_sdcard_image_mb(), "sdcard"),
-            "Failed to create \"" << instance.sdcard_path() << "\"");
-  if (config.vm_manager() == VmmMode::kQemu) {
-    const std::string crosvm_path = instance.crosvm_binary();
-    CreateQcowOverlay(crosvm_path, instance.sdcard_path(),
-                      instance.sdcard_overlay_path());
-  }
   return {};
 }
 
