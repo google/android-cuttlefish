@@ -409,3 +409,23 @@ clang_tidy_test(
     srcs = [":sd_card"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "vbmeta_enforce_minimum_size",
+    srcs = ["vbmeta_enforce_minimum_size.cc"],
+    hdrs = ["vbmeta_enforce_minimum_size.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+clang_tidy_test(
+    name = "vbmeta_enforce_minimum_size_clang_tidy",
+    srcs = [":vbmeta_enforce_minimum_size"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
