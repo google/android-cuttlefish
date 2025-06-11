@@ -22,5 +22,5 @@
 # Disable adb authentication to allow test automation for CHD.
 ro.adb.secure=0
 
-# Allow 'adb root' on user build CHD
-ro.debuggable=1
+# Start adb automatically on user build CHD
+persist.sys.usb.config=mtp,adb
