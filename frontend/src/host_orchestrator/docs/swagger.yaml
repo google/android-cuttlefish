@@ -177,6 +177,16 @@ paths:
             $ref: '#/definitions/v1.Operation'
       summary: Fetches and stores artifacts from the Android Build API
   /cvds:
+    get:
+      description: List all cuttlefish instances
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.ListCVDsResponse'
+      summary: List all cuttlefish instances
     post:
       consumes:
       - application/json
@@ -203,11 +213,12 @@ paths:
       summary: Creates cuttlefish instances
   /cvds/{group}:
     get:
-      description: List cuttlefish instances
+      description: List cuttlefish instances in a group
       parameters:
       - description: Group Name
         in: path
         name: group
+        required: true
         type: string
       produces:
       - application/json
@@ -216,7 +227,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/v1.ListCVDsResponse'
-      summary: List cuttlefish instances
+      summary: List cuttlefish instances in a group
   /operations/{name}/result:
     get:
       description: The returned object varies depending on the type of the operation
