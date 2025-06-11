@@ -16,6 +16,7 @@
 #pragma once
 
 #include <deque>
+#include <functional>
 #include <string>
 #include <vector>
 

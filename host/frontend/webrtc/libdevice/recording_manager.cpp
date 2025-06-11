@@ -15,6 +15,7 @@
  */
 #include "host/frontend/webrtc/libdevice/recording_manager.h"
 
+#include <mutex>
 #include <thread>
 #include <vector>
 

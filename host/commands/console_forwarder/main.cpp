@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <deque>
+#include <mutex>
 #include <thread>
 #include <vector>
 

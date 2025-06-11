@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <vector>
 
