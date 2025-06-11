@@ -34,6 +34,7 @@
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk/access_kregistry.h"
 #include "host/commands/assemble_cvd/disk/ap_composite_disk.h"
+#include "host/commands/assemble_cvd/disk/bootloader_present.h"
 #include "host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
@@ -350,13 +351,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> BootloaderPresentCheck(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  CF_EXPECT(FileHasContent(instance.bootloader()),
-            "File not found: " << instance.bootloader());
-  return {};
 }
 
 static fruit::Component<> DiskChangesComponent(
