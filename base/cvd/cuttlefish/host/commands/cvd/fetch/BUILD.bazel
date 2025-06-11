@@ -105,6 +105,7 @@ cc_library(
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
+        "//cuttlefish/host/commands/cvd/fetch:host_package",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:vector_flags",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -177,6 +178,30 @@ cc_library(
 clang_tidy_test(
     name = "fetch_tracer_clang_tidy",
     srcs = [":fetch_tracer"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "host_package",
+    srcs = ["host_package.cc"],
+    hdrs = ["host_package.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:archive",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
+        "//cuttlefish/host/commands/cvd/fetch:substitute",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:build_api",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_package_clang_tidy",
+    srcs = [":host_package"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
