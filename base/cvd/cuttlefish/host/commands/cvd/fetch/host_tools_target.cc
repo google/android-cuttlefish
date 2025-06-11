@@ -13,17 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
 
 #include <string>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
 
-std::string GetFetchLogsFileName(const std::string& target_directory);
-
-Result<void> FetchCvdMain(const FetchFlags& flags);
+HostToolsTarget HostToolsTarget::Create(const FetchFlags& flags,
+                                        bool append_subdirectory) {
+  std::string host_directory = flags.target_directory;
+  if (append_subdirectory) {
+    host_directory = host_directory + "/" + kHostToolsSubdirectory;
+  }
+  return HostToolsTarget{
+      .build_string = flags.host_package_build,
+      .host_tools_directory = host_directory,
+  };
+}
 
 }  // namespace cuttlefish

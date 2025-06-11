@@ -41,6 +41,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
@@ -76,11 +77,6 @@ struct Target {
   Builds builds;
 };
 
-struct HostToolsTarget {
-  std::optional<BuildString> build_string;
-  std::string host_tools_directory;
-};
-
 bool ShouldAppendSubdirectory(const FetchFlags& flags) {
   return flags.vector_flags.NumberOfBuilds().value_or(1) > 1 ||
          !flags.vector_flags.target_subdirectory.empty();
@@ -99,18 +95,6 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
     };
   }
   return result;
-}
-
-HostToolsTarget GetHostToolsTarget(const FetchFlags& flags,
-                                   const bool append_subdirectory) {
-  std::string host_directory = flags.target_directory;
-  if (append_subdirectory) {
-    host_directory = host_directory + "/" + kHostToolsSubdirectory;
-  }
-  return HostToolsTarget{
-      .build_string = flags.host_package_build,
-      .host_tools_directory = host_directory,
-  };
 }
 
 Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
@@ -670,7 +654,8 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
 Result<void> FetchCvdMain(const FetchFlags& flags) {
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
-  HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
+  HostToolsTarget host_target =
+      HostToolsTarget::Create(flags, append_subdirectory);
   CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory, targets));
   CF_EXPECT(Fetch(flags, host_target, targets));
   return {};
