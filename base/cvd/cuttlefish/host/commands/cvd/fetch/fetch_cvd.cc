@@ -37,7 +37,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
-#include "cuttlefish/host/commands/cvd/fetch/substitute.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_package.h"
 #include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
@@ -287,33 +287,6 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
                                     kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
-  return {};
-}
-
-Result<void> FetchHostPackage(
-    BuildApi& build_api, const Build& build, const std::string& target_dir,
-    const bool keep_archives,
-    const std::vector<std::string>& host_substitutions,
-    FetchTracer::Trace trace) {
-  LOG(INFO) << "Preparing host package for " << build;
-  // This function is called asynchronously, so it may take a while to start.
-  // Complete a phase here to ensure that delay is not counted in the download
-  // time.
-  // The download time will still include time spent waiting for the mutex in
-  // the build_api though.
-  trace.CompletePhase("Async start delay");
-  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
-  std::string host_tools_filepath =
-      CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
-  trace.CompletePhase("Download", FileSize(host_tools_filepath));
-
-  CF_EXPECT(
-      ExtractArchiveContents(host_tools_filepath, target_dir, keep_archives));
-  trace.CompletePhase("Extract");
-
-  CF_EXPECT(HostPackageSubstitution(target_dir, host_substitutions));
-
-  trace.CompletePhase("Substitute");
   return {};
 }
 
