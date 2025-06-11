@@ -60,7 +60,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&fetchArtifactsHandler{Config: c.Config, OM: c.OperationManager})).Methods("POST")
 	router.Handle("/cvds",
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
-	router.Handle("/cvds", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
+	router.Handle("/cvds", httpHandler(&listCVDsHandlerAll{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
@@ -248,16 +248,35 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	return NewCreateCVDAction(opts).Run()
 }
 
+type listCVDsHandlerAll struct {
+	Config Config
+}
+
+// ListCVDs all godoc
+//
+//	@Summary		List all cuttlefish instances
+//	@Description	List all cuttlefish instances
+//	@Produce		json
+//	@Success		200	{object}	apiv1.ListCVDsResponse
+//	@Router			/cvds [get]
+func (h *listCVDsHandlerAll) Handle(r *http.Request) (interface{}, error) {
+	opts := ListCVDsActionOpts{
+		Paths:       h.Config.Paths,
+		ExecContext: exec.CommandContext,
+	}
+	return NewListCVDsAction(opts).Run()
+}
+
 type listCVDsHandler struct {
 	Config Config
 }
 
-// ListCVDs godoc
+// ListCVDs by group godoc
 //
-//	@Summary		List cuttlefish instances
-//	@Description	List cuttlefish instances
+//	@Summary		List cuttlefish instances in a group
+//	@Description	List cuttlefish instances in a group
 //	@Produce		json
-//	@Param			group	path		string	false	"Group Name"
+//	@Param			group	path		string	true	"Group Name"
 //	@Success		200		{object}	apiv1.ListCVDsResponse
 //	@Router			/cvds/{group} [get]
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
