@@ -12,8 +12,7 @@ definitions:
           be used.
         type: string
       target:
-        description: A string to determine the specific product and flavor from the
-          set of builds.
+        description: A string to determine the specific device product and flavor
         type: string
     type: object
   v1.AndroidCIBuildSource:

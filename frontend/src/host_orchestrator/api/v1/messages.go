@@ -68,7 +68,7 @@ type AndroidCIBuild struct {
 	// Uniquely identifies a branch's snapshot. If empty, the latest green snapshot of the used branch will
 	// be used.
 	BuildID string `json:"build_id"`
-	// A string to determine the specific product and flavor from the set of builds.
+	// A string to determine the specific device product and flavor
 	Target string `json:"target"`
 }
 
