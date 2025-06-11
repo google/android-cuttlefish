@@ -97,6 +97,13 @@ definitions:
           $ref: '#/definitions/v1.CVD'
         type: array
     type: object
+  v1.ListCVDsResponse:
+    properties:
+      cvds:
+        items:
+          $ref: '#/definitions/v1.CVD'
+        type: array
+    type: object
 info:
   contact: {}
   license:
@@ -130,4 +137,20 @@ paths:
           schema:
             $ref: '#/definitions/v1.CreateCVDResponse'
       summary: Creates cuttlefish instances
+  /cvds/{group}:
+    get:
+      description: List cuttlefish instances
+      parameters:
+      - description: Group Name
+        in: path
+        name: group
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.ListCVDsResponse'
+      summary: List cuttlefish instances
 swagger: "2.0"
