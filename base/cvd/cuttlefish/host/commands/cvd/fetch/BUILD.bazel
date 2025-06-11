@@ -28,6 +28,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "build_strings",
+    srcs = ["build_strings.cc"],
+    hdrs = ["build_strings.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/fetch:get_optional",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:chrome_os_build_string",
+    ],
+)
+
+clang_tidy_test(
+    name = "build_strings_clang_tidy",
+    srcs = [":build_strings"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "credential_flags",
     srcs = ["credential_flags.cc"],
     hdrs = ["credential_flags.h"],
@@ -156,6 +174,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/fetch:build_strings",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:download_flags",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
