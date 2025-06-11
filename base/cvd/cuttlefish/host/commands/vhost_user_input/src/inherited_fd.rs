@@ -154,120 +154,89 @@ mod test {
     }
 
     #[test]
-    fn happy_case() -> Result<()> {
-        let fixture = Fixture::setup(2)?;
-        let f0 = fixture.fds[0];
-        let f1 = fixture.fds[1];
+    fn all_in_one() -> Result<()> {
+        // Typically, all tests run in the same process in multiple threads, but init_once must be
+        // run only once. By having a single test we ensure that init_once is only run at a time
+        // predictable by all tests.
+        let mut fixture = Fixture::setup(6)?;
+
+        // access_without_init_once
+        {
+            let f0 = fixture.fds[0];
+            assert_eq!(Some(Error::NotInitialized), take_fd_ownership(f0).err());
+        }
 
         // SAFETY: assume files opened by Fixture are inherited ones
         unsafe {
             init_once()?;
         }
 
-        let f0_owned = take_fd_ownership(f0)?;
-        let f1_owned = take_fd_ownership(f1)?;
-        assert_eq!(f0, f0_owned.as_raw_fd());
-        assert_eq!(f1, f1_owned.as_raw_fd());
-
-        drop(f0_owned);
-        drop(f1_owned);
-        assert!(!is_fd_opened(f0));
-        assert!(!is_fd_opened(f1));
-        Ok(())
-    }
-
-    #[test]
-    fn access_non_inherited_fd() -> Result<()> {
-        let mut fixture = Fixture::setup(2)?;
-
-        // SAFETY: assume files opened by Fixture are inherited ones
-        unsafe {
-            init_once()?;
+        // access_non_inherited_fd
+        // this must run first to avoid it reusing a previously closed fd
+        {
+            let f_new = fixture.open_new_file()?;
+            assert_eq!(Some(Error::FileDescriptorNotInherited(f_new)), take_fd_ownership(f_new).err());
         }
 
-        let f = fixture.open_new_file()?;
-        assert_eq!(Some(Error::FileDescriptorNotInherited(f)), take_fd_ownership(f).err());
-        Ok(())
-    }
+        // happy_case
+        {
+            let f1 = fixture.fds[1];
+            let f2 = fixture.fds[2];
+            let f1_owned = take_fd_ownership(f1)?;
+            let f2_owned = take_fd_ownership(f2)?;
+            assert_eq!(f1, f1_owned.as_raw_fd());
+            assert_eq!(f2, f2_owned.as_raw_fd());
 
-    #[test]
-    fn call_init_once_multiple_times() -> Result<()> {
-        let _ = Fixture::setup(2)?;
-
-        // SAFETY: assume files opened by Fixture are inherited ones
-        unsafe {
-            init_once()?;
+            drop(f1_owned);
+            drop(f2_owned);
+            assert!(!is_fd_opened(f1));
+            assert!(!is_fd_opened(f2));
         }
 
-        // SAFETY: for testing
-        let res = unsafe { init_once() };
-        assert!(res.is_err());
-        Ok(())
-    }
+        // double_ownership
+        {
+            let f = fixture.fds[3];
 
-    #[test]
-    fn access_without_init_once() -> Result<()> {
-        let fixture = Fixture::setup(2)?;
+            let f_owned = take_fd_ownership(f)?;
+            let f_double_owned = take_fd_ownership(f);
+            assert_eq!(Some(Error::OwnershipTaken(f)), f_double_owned.err());
 
-        let f = fixture.fds[0];
-        assert_eq!(Some(Error::NotInitialized), take_fd_ownership(f).err());
-        Ok(())
-    }
-
-    #[test]
-    fn double_ownership() -> Result<()> {
-        let fixture = Fixture::setup(2)?;
-        let f = fixture.fds[0];
-
-        // SAFETY: assume files opened by Fixture are inherited ones
-        unsafe {
-            init_once()?;
+            // just to highlight that f_owned is kept alive when the second call to take_fd_ownership
+            // is made.
+            drop(f_owned);
         }
 
-        let f_owned = take_fd_ownership(f)?;
-        let f_double_owned = take_fd_ownership(f);
-        assert_eq!(Some(Error::OwnershipTaken(f)), f_double_owned.err());
+        // take_drop_retake
+        {
+            let f = fixture.fds[4];
 
-        // just to highlight that f_owned is kept alive when the second call to take_fd_ownership
-        // is made.
-        drop(f_owned);
-        Ok(())
-    }
+            let f_owned = take_fd_ownership(f)?;
+            drop(f_owned);
 
-    #[test]
-    fn take_drop_retake() -> Result<()> {
-        let fixture = Fixture::setup(2)?;
-        let f = fixture.fds[0];
-
-        // SAFETY: assume files opened by Fixture are inherited ones
-        unsafe {
-            init_once()?;
+            let f_double_owned = take_fd_ownership(f);
+            assert_eq!(Some(Error::OwnershipTaken(f)), f_double_owned.err());
         }
 
-        let f_owned = take_fd_ownership(f)?;
-        drop(f_owned);
+        // cloexec
+        {
+            let f = fixture.fds[5];
 
-        let f_double_owned = take_fd_ownership(f);
-        assert_eq!(Some(Error::OwnershipTaken(f)), f_double_owned.err());
-        Ok(())
-    }
+            // Intentionally cleaar cloexec to see if it is set by take_fd_ownership
+            fcntl(f, F_SETFD(FdFlag::empty()))?;
 
-    #[test]
-    fn cloexec() -> Result<()> {
-        let fixture = Fixture::setup(2)?;
-        let f = fixture.fds[0];
-
-        // SAFETY: assume files opened by Fixture are inherited ones
-        unsafe {
-            init_once()?;
+            let f_owned = take_fd_ownership(f)?;
+            let flags = fcntl(f_owned.as_raw_fd(), F_GETFD)?;
+            assert_eq!(flags, FdFlag::FD_CLOEXEC.bits());
         }
 
-        // Intentionally cleaar cloexec to see if it is set by take_fd_ownership
-        fcntl(f, F_SETFD(FdFlag::empty()))?;
+        // call_init_once_multiple_times
+        // this must be last
+        {
+            // SAFETY: for testing
+            let res = unsafe { init_once() };
+            assert!(res.is_err());
+        }
 
-        let f_owned = take_fd_ownership(f)?;
-        let flags = fcntl(f_owned.as_raw_fd(), F_GETFD)?;
-        assert_eq!(flags, FdFlag::FD_CLOEXEC.bits());
         Ok(())
     }
 }
