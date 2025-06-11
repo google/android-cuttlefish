@@ -39,6 +39,7 @@
 #include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
+#include "host/commands/assemble_cvd/disk/hwcomposer_pmem.h"
 #include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk/metadata_image.h"
@@ -347,17 +348,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> InitializeHwcomposerPmemImage(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.hwcomposer_pmem_path())) {
-    return {};
-  }
-  CF_EXPECT(
-      CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */, "none"),
-      "Failed creating \"" << instance.hwcomposer_pmem_path() << "\"");
-  return {};
 }
 
 Result<void> InitializePflash(

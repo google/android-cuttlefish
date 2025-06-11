@@ -227,6 +227,27 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "hwcomposer_pmem",
+    srcs = ["hwcomposer_pmem.cc"],
+    hdrs = ["hwcomposer_pmem.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "hwcomposer_pmem_clang_tidy",
+    srcs = [":hwcomposer_pmem"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+
+cc_library(
     name = "initialize_instance_composite_disk",
     srcs = ["initialize_instance_composite_disk.cc"],
     hdrs = ["initialize_instance_composite_disk.h"],
