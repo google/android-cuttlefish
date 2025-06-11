@@ -181,8 +181,8 @@ cc_library(
         "//cuttlefish/host/commands/cvd/fetch:extract_image_contents",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
-        "//cuttlefish/host/commands/cvd/fetch:get_optional",
         "//cuttlefish/host/commands/cvd/fetch:host_package",
+        "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
         "//cuttlefish/host/libs/config:fetcher_config",
@@ -301,6 +301,23 @@ proto_library(
 cc_proto_library(
     name = "host_pkg_migration_cc_proto",
     deps = [":host_pkg_migration_proto"],
+)
+
+cc_library(
+    name = "host_tools_target",
+    srcs = ["host_tools_target.cc"],
+    hdrs = ["host_tools_target.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/libs/web:android_build_string",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_tools_target_clang_tidy",
+    srcs = [":host_tools_target"],
+    tags = ["clang_tidy", "clang-tidy"],
 )
 
 cc_library(
