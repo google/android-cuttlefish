@@ -28,12 +28,12 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <sparse/sparse.h>
 
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
@@ -170,82 +170,6 @@ TargetDirectories GetTargetDirectories(
                            .default_target_files = base_directory + "/default",
                            .system_target_files = base_directory + "/system",
                            .chrome_os = base_directory + "/chromeos"};
-}
-
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
-bool ConvertToRawImageNoBinary(const std::string& image_path) {
-  std::string tmp_raw_image_path = image_path + ".raw";
-
-  // simg2img logic to convert sparse image to raw image.
-  struct sparse_file* s;
-  int out = open(tmp_raw_image_path.c_str(),
-                 O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0664);
-  int in = open(image_path.c_str(), O_RDONLY | O_BINARY);
-  if (in < 0) {
-    LOG(FATAL) << "Cannot open input file " << image_path;
-    return false;
-  }
-
-  s = sparse_file_import(in, true, false);
-  if (!s) {
-    LOG(FATAL) << "Failed to read sparse file " << image_path;
-    return false;
-  }
-
-  if (lseek(out, 0, SEEK_SET) == -1) {
-    LOG(FATAL) << "lseek failed " << tmp_raw_image_path;
-    return false;
-  }
-
-  if (sparse_file_write(s, out, false, false, false) < 0) {
-    LOG(FATAL) << "Cannot write output file " << image_path;
-    return false;
-  }
-  sparse_file_destroy(s);
-  close(in);
-  close(out);
-
-  // Replace the original sparse image with the raw image.
-  if (unlink(image_path.c_str()) != 0) {
-    PLOG(FATAL) << "Unable to delete original sparse image";
-  }
-
-  int success = rename(tmp_raw_image_path.c_str(), image_path.c_str());
-  if (success != 0) {
-    LOG(FATAL) << "Unable to rename raw image " << success;
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Converts any Android-Sparse image files in `image_files` to raw image files.
- *
- * Android-Sparse is a file format invented by Android that optimizes for
- * chunks of zeroes or repeated data. The Android build system can produce
- * sparse files to save on size of disk files after they are extracted from a
- * disk file, as the imag eflashing process also can handle Android-Sparse
- * images.
- *
- * crosvm has read-only support for Android-Sparse files, but QEMU does not
- * support them.
- */
-Result<void> DeAndroidSparse(const std::vector<std::string>& image_files) {
-  for (const auto& file : image_files) {
-    if (!CF_EXPECT(IsSparseImage(file))) {
-      continue;
-    }
-    if (ConvertToRawImageNoBinary(file)) {
-      LOG(DEBUG) << "De-sparsed '" << file << "'";
-    } else {
-      LOG(ERROR) << "Failed to de-sparse '" << file << "'";
-    }
-  }
-  return {};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -456,7 +380,7 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
                                       image_files, target_directories.root));
-    CF_EXPECT(DeAndroidSparse(image_files));
+    CF_EXPECT(DeAndroidSparse2(image_files));
     trace.CompletePhase("Desparse image files");
   }
 
@@ -563,7 +487,7 @@ Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::SYSTEM_BUILD, system_id, system_target, system_images,
         target_directories.root, kOverrideEntries));
-    DeAndroidSparse(system_images);
+    DeAndroidSparse2(system_images);
   }
   return {};
 }
@@ -584,7 +508,7 @@ Result<void> FetchKernelTarget(BuildApi& build_api, const Build& kernel_build,
   CF_EXPECT(config.AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_id,
                                     kernel_target, {kernel_filepath},
                                     target_directory));
-  DeAndroidSparse({kernel_filepath});
+  DeAndroidSparse2({kernel_filepath});
   trace.CompletePhase("Desparse bzImage");
 
   // Certain kernel builds do not have corresponding ramdisks.
@@ -596,7 +520,7 @@ Result<void> FetchKernelTarget(BuildApi& build_api, const Build& kernel_build,
     CF_EXPECT(config.AddFilesToConfig(
         FileSource::KERNEL_BUILD, kernel_id, kernel_target,
         {initramfs_img_result.value()}, target_directory));
-    DeAndroidSparse({initramfs_img_result.value()});
+    DeAndroidSparse2({initramfs_img_result.value()});
   }
   return {};
 }
@@ -644,7 +568,7 @@ Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
   CF_EXPECT(config.AddFilesToConfig(FileSource::BOOT_BUILD, boot_id,
                                     boot_target, boot_files, target_directory,
                                     kOverrideEntries));
-  DeAndroidSparse(boot_files);
+  DeAndroidSparse2(boot_files);
   trace.CompletePhase("Desparse");
   return {};
 }
@@ -667,7 +591,7 @@ Result<void> FetchBootloaderTarget(BuildApi& build_api,
   CF_EXPECT(config.AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_id,
                                     bootloader_target, {bootloader_filepath},
                                     target_directory, kOverrideEntries));
-  DeAndroidSparse({bootloader_filepath});
+  DeAndroidSparse2({bootloader_filepath});
   trace.CompletePhase("Desparse image");
   return {};
 }
@@ -697,7 +621,7 @@ Result<void> FetchAndroidEfiLoaderTarget(BuildApi& build_api,
       FileSource::ANDROID_EFI_LOADER_BUILD, android_efi_loader_id,
       android_efi_loader_target, {android_efi_loader_target_filepath},
       target_directory, kOverrideEntries));
-  DeAndroidSparse({android_efi_loader_target_filepath});
+  DeAndroidSparse2({android_efi_loader_target_filepath});
   trace.CompletePhase("Desparse image");
   return {};
 }
@@ -720,7 +644,7 @@ Result<void> FetchOtaToolsTarget(BuildApi& build_api,
   CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                     otatools_build_id, otatools_build_target,
                                     ota_tools_files, target_directories.root));
-  DeAndroidSparse(ota_tools_files);
+  DeAndroidSparse2(ota_tools_files);
   trace.CompletePhase("Desparse files");
   return {};
 }
