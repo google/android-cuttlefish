@@ -31,6 +31,9 @@ TARGET_USES_CF_RILD := false
 PRODUCT_PACKAGES += com.android.hardware.radio.minradio.virtual
 PRODUCT_PACKAGES += ConnectivityOverlayMinradio
 
+# Disable thread network
+CF_VENDOR_NO_THREADNETWORK := true
+
 #
 # All components inherited here go to system_ext image
 #
