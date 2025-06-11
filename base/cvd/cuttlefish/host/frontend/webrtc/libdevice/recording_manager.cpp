@@ -15,6 +15,8 @@
  */
 #include "host/frontend/webrtc/libdevice/recording_manager.h"
 
+#include <mutex>
+
 #include <android-base/logging.h>
 #include <rtc_base/time_utils.h>
 
