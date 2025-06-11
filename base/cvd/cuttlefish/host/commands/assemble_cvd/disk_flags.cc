@@ -32,6 +32,7 @@
 #include "common/libs/utils/result.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "host/commands/assemble_cvd/disk/access_kregistry.h"
 #include "host/commands/assemble_cvd/disk/ap_composite_disk.h"
 #include "host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
@@ -346,17 +347,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> InitializeAccessKregistryImage(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  auto access_kregistry = instance.access_kregistry_path();
-  if (FileExists(access_kregistry)) {
-    return {};
-  }
-  CF_EXPECT(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
-            "Failed to create \"" << access_kregistry << "\"");
-  return {};
 }
 
 Result<void> InitializeHwcomposerPmemImage(

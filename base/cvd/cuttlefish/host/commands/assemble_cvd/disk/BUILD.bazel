@@ -6,6 +6,26 @@ package(
 )
 
 cc_library(
+    name = "access_kregistry",
+    srcs = ["access_kregistry.cc"],
+    hdrs = ["access_kregistry.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "access_kregistry_clang_tidy",
+    srcs = [":access_kregistry"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "android_composite_disk_config",
     srcs = ["android_composite_disk_config.cc"],
     hdrs = ["android_composite_disk_config.h"],
