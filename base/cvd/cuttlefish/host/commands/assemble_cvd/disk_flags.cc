@@ -44,6 +44,7 @@
 #include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "host/commands/assemble_cvd/disk/metadata_image.h"
 #include "host/commands/assemble_cvd/disk/os_composite_disk.h"
+#include "host/commands/assemble_cvd/disk/pflash.h"
 #include "host/commands/assemble_cvd/disk/pstore.h"
 #include "host/commands/assemble_cvd/disk/sd_card.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
@@ -348,20 +349,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> InitializePflash(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.pflash_path())) {
-    return {};
-  }
-
-  auto boot_size_mb = FileSize(instance.bootloader()) / (1 << 20);
-
-  // Pad out bootloader space to 4MB
-  CF_EXPECTF(CreateBlankImage(instance.pflash_path(), 4 - boot_size_mb, "none"),
-             "Failed to create '{}'", instance.pflash_path());
-  return {};
 }
 
 Result<void> VbmetaEnforceMinimumSize(
