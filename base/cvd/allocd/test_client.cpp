@@ -34,8 +34,8 @@ DEFINE_bool(ifcreate, false, "Request a new Interface");
 DEFINE_bool(shutdown, false, "Shutdown Resource Allocation Server");
 DEFINE_bool(stop_session, false, "Remove all resources from session");
 DEFINE_string(ifdestroy, "", "Request an interface be destroyed");
-DEFINE_uint32(ifid, -1, "Global Resource ID");
-DEFINE_uint32(session, -1, "Session ID");
+DEFINE_uint64(ifid, -1, "Global Resource ID");
+DEFINE_uint64(session, -1, "Session ID");
 
 int main(int argc, char* argv[]) {
   cuttlefish::DefaultSubprocessLogging(argv);

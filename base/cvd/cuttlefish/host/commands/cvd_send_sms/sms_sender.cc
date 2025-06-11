@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <codecvt>
 #include <cstddef>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -33,7 +34,7 @@ SmsSender::SmsSender(SharedFD modem_simulator_client_fd)
     : modem_simulator_client_fd_(modem_simulator_client_fd) {}
 
 bool SmsSender::Send(const std::string& sms_body,
-                     const std::string& sender_number, uint32_t modem_id) {
+                     const std::string& sender_number, uint64_t modem_id) {
   if (!modem_simulator_client_fd_->IsOpen()) {
     LOG(ERROR) << "Failed to connect to remote modem simulator, error: "
                << modem_simulator_client_fd_->StrError();

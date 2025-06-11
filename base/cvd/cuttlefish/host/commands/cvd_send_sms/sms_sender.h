@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 #include "common/libs/fs/shared_fd.h"
@@ -27,7 +28,7 @@ class SmsSender {
 
   // Returns true if SMS was successfully sent, returns false otherwise.
   bool Send(const std::string& sms_body, const std::string& sender_number,
-            uint32_t modem_id = 0);
+            uint64_t modem_id = 0);
 
  private:
   SharedFD modem_simulator_client_fd_;

@@ -42,9 +42,9 @@ EXAMPLES
 
 DEFINE_string(sender_number, "+16501234567",
               "sender phone number in E.164 format");
-DEFINE_uint32(instance_number, 1,
+DEFINE_uint64(instance_number, 1,
               "number of the cvd instance to send the sms to, default is 1");
-DEFINE_uint32(modem_id, 0,
+DEFINE_uint64(modem_id, 0,
               "modem id needed for multisim devices, default is 0");
 
 namespace cuttlefish {
