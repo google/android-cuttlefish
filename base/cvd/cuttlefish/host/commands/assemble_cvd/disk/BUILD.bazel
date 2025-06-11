@@ -350,6 +350,26 @@ cc_library(
 )
 
 cc_library(
+    name = "pflash",
+    srcs = ["pflash.cc"],
+    hdrs = ["pflash.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+    ],
+)
+
+clang_tidy_test(
+    name = "pflash_clang_tidy",
+    srcs = [":pflash"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "pstore",
     srcs = ["pstore.cc"],
     hdrs = ["pstore.h"],
