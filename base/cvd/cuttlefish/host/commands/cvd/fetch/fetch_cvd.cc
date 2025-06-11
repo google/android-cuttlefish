@@ -34,6 +34,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
+#include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/extract_image_contents.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
@@ -67,11 +68,6 @@ struct BuildStrings {
   std::optional<BuildString> otatools_build;
   std::optional<BuildString> host_package_build;
   std::optional<ChromeOsBuildString> chrome_os_build;
-};
-
-struct DownloadFlags {
-  bool download_img_zip;
-  bool download_target_files_zip;
 };
 
 struct TargetDirectories {
@@ -130,16 +126,6 @@ BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
   return build_strings;
 }
 
-DownloadFlags GetDownloadFlags(const VectorFlags& flags, const int index) {
-  return DownloadFlags{
-      .download_img_zip = GetOptional(flags.download_img_zip, index)
-                              .value_or(kDefaultDownloadImgZip),
-      .download_target_files_zip =
-          GetOptional(flags.download_target_files_zip, index)
-              .value_or(kDefaultDownloadTargetFilesZip),
-  };
-}
-
 TargetDirectories GetTargetDirectories(
     const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories, const int index,
@@ -162,7 +148,7 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
   for (std::size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
         .build_strings = GetBuildStrings(flags.vector_flags, i),
-        .download_flags = GetDownloadFlags(flags.vector_flags, i),
+        .download_flags = DownloadFlags::Create(flags.vector_flags, i),
         .directories = GetTargetDirectories(
             flags.target_directory, flags.vector_flags.target_subdirectory, i,
             append_subdirectory),
