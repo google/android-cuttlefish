@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include <keymaster/serializable.h>
 
 #include "host/commands/secure_env/tpm_resource_manager.h"
