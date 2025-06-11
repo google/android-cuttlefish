@@ -110,36 +110,30 @@ bool ShouldAppendSubdirectory(const FetchFlags& flags) {
 }
 
 template <typename T>
-T AccessOrDefault(const std::vector<T>& vector, const std::size_t i,
-                  const T& default_value) {
-  if (i < vector.size()) {
-    return vector[i];
-  } else {
-    return default_value;
-  }
+std::optional<T> GetOptional(const std::vector<T>& vector, size_t i) {
+  return i < vector.size() ? std::optional(vector[i]) : std::nullopt;
+}
+
+template <typename T>
+std::optional<T> GetOptional(const std::vector<std::optional<T>>& vector,
+                             size_t i) {
+  return i < vector.size() ? vector[i] : std::nullopt;
 }
 
 BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
   auto build_strings = BuildStrings{
-      .default_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.default_build, index, std::nullopt),
-      .system_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.system_build, index, std::nullopt),
-      .kernel_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.kernel_build, index, std::nullopt),
-      .boot_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.boot_build, index, std::nullopt),
-      .bootloader_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.bootloader_build, index, std::nullopt),
-      .android_efi_loader_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.android_efi_loader_build, index, std::nullopt),
-      .otatools_build = AccessOrDefault<std::optional<BuildString>>(
-          flags.otatools_build, index, std::nullopt),
-      .chrome_os_build = AccessOrDefault<std::optional<ChromeOsBuildString>>(
-          flags.chrome_os_build, index, std::nullopt),
+      .default_build = GetOptional(flags.default_build, index),
+      .system_build = GetOptional(flags.system_build, index),
+      .kernel_build = GetOptional(flags.kernel_build, index),
+      .boot_build = GetOptional(flags.boot_build, index),
+      .bootloader_build = GetOptional(flags.bootloader_build, index),
+      .android_efi_loader_build =
+          GetOptional(flags.android_efi_loader_build, index),
+      .otatools_build = GetOptional(flags.otatools_build, index),
+      .chrome_os_build = GetOptional(flags.chrome_os_build, index),
   };
   auto possible_boot_artifact =
-      AccessOrDefault<std::string>(flags.boot_artifact, index, "");
+      GetOptional(flags.boot_artifact, index).value_or("");
   if (!possible_boot_artifact.empty() && build_strings.boot_build) {
     SetFilepath(*build_strings.boot_build, possible_boot_artifact);
   }
@@ -148,11 +142,11 @@ BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
 
 DownloadFlags GetDownloadFlags(const VectorFlags& flags, const int index) {
   return DownloadFlags{
-      .download_img_zip = AccessOrDefault<bool>(flags.download_img_zip, index,
-                                                kDefaultDownloadImgZip),
+      .download_img_zip = GetOptional(flags.download_img_zip, index)
+                              .value_or(kDefaultDownloadImgZip),
       .download_target_files_zip =
-          AccessOrDefault<bool>(flags.download_target_files_zip, index,
-                                kDefaultDownloadTargetFilesZip),
+          GetOptional(flags.download_target_files_zip, index)
+              .value_or(kDefaultDownloadTargetFilesZip),
   };
 }
 
@@ -162,9 +156,8 @@ TargetDirectories GetTargetDirectories(
     const bool append_subdirectory) {
   std::string base_directory = target_directory;
   if (append_subdirectory) {
-    base_directory +=
-        "/" + AccessOrDefault<std::string>(target_subdirectories, index,
-                                           "instance_" + std::to_string(index));
+    base_directory += "/" + GetOptional(target_subdirectories, index)
+                                .value_or("instance_" + std::to_string(index));
   }
   return TargetDirectories{.root = base_directory,
                            .otatools = base_directory + "/otatools/",
