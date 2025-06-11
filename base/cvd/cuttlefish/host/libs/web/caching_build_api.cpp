@@ -83,9 +83,8 @@ Result<bool> CachingBuildApi::CanCache(const std::string& target_directory) {
   return CF_EXPECT(CanHardLink(target_directory, cache_base_path_));
 }
 
-Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string,
-                                        const std::string& fallback_target) {
-  return CF_EXPECT(build_api_.GetBuild(build_string, fallback_target));
+Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
+  return CF_EXPECT(build_api_.GetBuild(build_string));
 }
 
 Result<std::string> CachingBuildApi::DownloadFile(

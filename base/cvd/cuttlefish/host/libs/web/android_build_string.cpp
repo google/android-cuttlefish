@@ -209,4 +209,26 @@ Flag GflagsCompatFlag(const std::string& name,
       });
 }
 
+namespace {
+struct WithFallbackTargetVisitor {
+  BuildString operator()(DeviceBuildString build_string,
+                         const std::string& fallback) {
+    if (!build_string.target) {
+      build_string.target = std::move(fallback);
+    }
+    return build_string;
+  }
+
+  BuildString operator()(DirectoryBuildString build_string,
+                         const std::string&) {
+    return build_string;
+  }
+};
+}  // namespace
+
+BuildString WithFallbackTarget(BuildString build_string, std::string fallback) {
+  std::variant<std::string> fallback_var(std::move(fallback));
+  return std::visit(WithFallbackTargetVisitor(), build_string, fallback_var);
+}
+
 }  // namespace cuttlefish
