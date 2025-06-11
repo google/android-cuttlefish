@@ -188,6 +188,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/disk:access_kregistry",
         "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_state",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
