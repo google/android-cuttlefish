@@ -26,8 +26,7 @@ namespace cuttlefish {
 class BuildApi {
  public:
   virtual ~BuildApi() = default;
-  virtual Result<Build> GetBuild(const BuildString& build_string,
-                                 const std::string& fallback_target) = 0;
+  virtual Result<Build> GetBuild(const BuildString& build_string) = 0;
 
   virtual Result<std::string> DownloadFile(
       const Build& build, const std::string& target_directory,
