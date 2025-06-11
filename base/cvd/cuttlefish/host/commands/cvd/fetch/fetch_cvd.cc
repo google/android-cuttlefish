@@ -40,9 +40,8 @@
 #include "cuttlefish/host/commands/cvd/fetch/extract_image_contents.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
-#include "cuttlefish/host/commands/cvd/fetch/get_optional.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
-#include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
+#include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -58,14 +57,6 @@ namespace {
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
-
-struct TargetDirectories {
-  std::string root;
-  std::string otatools;
-  std::string default_target_files;
-  std::string system_target_files;
-  std::string chrome_os;
-};
 
 struct Builds {
   std::optional<Build> default_build;
@@ -95,22 +86,6 @@ bool ShouldAppendSubdirectory(const FetchFlags& flags) {
          !flags.vector_flags.target_subdirectory.empty();
 }
 
-TargetDirectories GetTargetDirectories(
-    const std::string& target_directory,
-    const std::vector<std::string>& target_subdirectories, const int index,
-    const bool append_subdirectory) {
-  std::string base_directory = target_directory;
-  if (append_subdirectory) {
-    base_directory += "/" + GetOptional(target_subdirectories, index)
-                                .value_or("instance_" + std::to_string(index));
-  }
-  return TargetDirectories{.root = base_directory,
-                           .otatools = base_directory + "/otatools/",
-                           .default_target_files = base_directory + "/default",
-                           .system_target_files = base_directory + "/system",
-                           .chrome_os = base_directory + "/chromeos"};
-}
-
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
                                     const bool append_subdirectory) {
   std::vector<Target> result(flags.vector_flags.NumberOfBuilds().value_or(1));
@@ -118,7 +93,7 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
     result[i] = Target{
         .build_strings = BuildStrings::Create(flags.vector_flags, i),
         .download_flags = DownloadFlags::Create(flags.vector_flags, i),
-        .directories = GetTargetDirectories(
+        .directories = TargetDirectories::Create(
             flags.target_directory, flags.vector_flags.target_subdirectory, i,
             append_subdirectory),
     };
