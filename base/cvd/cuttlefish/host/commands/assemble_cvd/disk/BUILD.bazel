@@ -79,6 +79,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "bootloader_present",
+    srcs = ["bootloader_present.cc"],
+    hdrs = ["bootloader_present.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+clang_tidy_test(
+    name = "bootloader_present_clang_tidy",
+    srcs = [":bootloader_present"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "chromeos_composite_disk",
     srcs = ["chromeos_composite_disk.cc"],
     hdrs = ["chromeos_composite_disk.h"],
