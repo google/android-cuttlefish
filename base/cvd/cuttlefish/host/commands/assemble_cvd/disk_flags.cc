@@ -47,6 +47,7 @@
 #include "host/commands/assemble_cvd/disk/pflash.h"
 #include "host/commands/assemble_cvd/disk/pstore.h"
 #include "host/commands/assemble_cvd/disk/sd_card.h"
+#include "host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
@@ -349,23 +350,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-Result<void> VbmetaEnforceMinimumSize(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  // libavb expects to be able to read the maximum vbmeta size, so we must
-  // provide a partition which matches this or the read will fail
-  for (const auto& vbmeta_image :
-       {instance.vbmeta_image(), instance.new_vbmeta_image(),
-        instance.vbmeta_system_image(), instance.vbmeta_vendor_dlkm_image(),
-        instance.vbmeta_system_dlkm_image()}) {
-    // In some configurations of cuttlefish, the vendor dlkm vbmeta image does
-    // not exist
-    if (FileExists(vbmeta_image)) {
-      CF_EXPECT(EnforceVbMetaSize(vbmeta_image));
-    }
-  }
-  return {};
 }
 
 Result<void> BootloaderPresentCheck(
