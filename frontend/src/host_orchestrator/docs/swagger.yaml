@@ -153,4 +153,20 @@ paths:
           schema:
             $ref: '#/definitions/v1.ListCVDsResponse'
       summary: List cuttlefish instances
+  /operations/{name}/result:
+    get:
+      description: The returned object varies depending on the type of the operation
+      parameters:
+      - description: Operation name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The returned object varies depending on the type of the operation
+          schema: {}
+      summary: Get operation result
 swagger: "2.0"

@@ -405,6 +405,14 @@ type getOperationResultHandler struct {
 	om OperationManager
 }
 
+// GetOperationResult godoc
+//
+//	@Summary		Get operation result
+//	@Description	The returned object varies depending on the type of the operation
+//	@Produce		json
+//	@Param			name	path		string		true	"Operation name"
+//	@Success		200		{object}	interface{}	"The returned object varies depending on the type of the operation"
+//	@Router			/operations/{name}/result [get]
 func (h *getOperationResultHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	name := vars["name"]
