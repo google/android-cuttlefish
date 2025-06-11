@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_strings.h"
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 #include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
@@ -57,18 +58,6 @@ namespace {
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
-
-struct BuildStrings {
-  std::optional<BuildString> default_build;
-  std::optional<BuildString> system_build;
-  std::optional<BuildString> kernel_build;
-  std::optional<BuildString> boot_build;
-  std::optional<BuildString> bootloader_build;
-  std::optional<BuildString> android_efi_loader_build;
-  std::optional<BuildString> otatools_build;
-  std::optional<BuildString> host_package_build;
-  std::optional<ChromeOsBuildString> chrome_os_build;
-};
 
 struct TargetDirectories {
   std::string root;
@@ -106,26 +95,6 @@ bool ShouldAppendSubdirectory(const FetchFlags& flags) {
          !flags.vector_flags.target_subdirectory.empty();
 }
 
-BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
-  auto build_strings = BuildStrings{
-      .default_build = GetOptional(flags.default_build, index),
-      .system_build = GetOptional(flags.system_build, index),
-      .kernel_build = GetOptional(flags.kernel_build, index),
-      .boot_build = GetOptional(flags.boot_build, index),
-      .bootloader_build = GetOptional(flags.bootloader_build, index),
-      .android_efi_loader_build =
-          GetOptional(flags.android_efi_loader_build, index),
-      .otatools_build = GetOptional(flags.otatools_build, index),
-      .chrome_os_build = GetOptional(flags.chrome_os_build, index),
-  };
-  auto possible_boot_artifact =
-      GetOptional(flags.boot_artifact, index).value_or("");
-  if (!possible_boot_artifact.empty() && build_strings.boot_build) {
-    SetFilepath(*build_strings.boot_build, possible_boot_artifact);
-  }
-  return build_strings;
-}
-
 TargetDirectories GetTargetDirectories(
     const std::string& target_directory,
     const std::vector<std::string>& target_subdirectories, const int index,
@@ -147,7 +116,7 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
   std::vector<Target> result(flags.vector_flags.NumberOfBuilds().value_or(1));
   for (std::size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
-        .build_strings = GetBuildStrings(flags.vector_flags, i),
+        .build_strings = BuildStrings::Create(flags.vector_flags, i),
         .download_flags = DownloadFlags::Create(flags.vector_flags, i),
         .directories = GetTargetDirectories(
             flags.target_directory, flags.vector_flags.target_subdirectory, i,
