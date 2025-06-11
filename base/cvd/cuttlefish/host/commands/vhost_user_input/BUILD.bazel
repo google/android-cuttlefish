@@ -21,9 +21,8 @@ rust_binary(
     proc_macro_deps = all_crate_deps(proc_macro = True),
 )
 
-# TODO: b/416101929 - test failing and needs to be debugged
-#rust_test(
-#    name = "cf_vhost_user_input_test",
-#    crate = ":cf_vhost_user_input",
-#    deps = all_crate_deps(normal_dev = True),
-#)
+rust_test(
+    name = "cf_vhost_user_input_test",
+    crate = ":cf_vhost_user_input",
+    deps = all_crate_deps(normal_dev = True),
+)
