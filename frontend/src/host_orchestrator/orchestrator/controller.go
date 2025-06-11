@@ -242,6 +242,14 @@ type listCVDsHandler struct {
 	Config Config
 }
 
+// ListCVDs godoc
+//
+//	@Summary		List cuttlefish instances
+//	@Description	List cuttlefish instances
+//	@Produce		json
+//	@Param			group	path		string	false	"Group Name"
+//	@Success		200		{object}	apiv1.ListCVDsResponse
+//	@Router			/cvds/{group} [get]
 func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	opts := ListCVDsActionOpts{
