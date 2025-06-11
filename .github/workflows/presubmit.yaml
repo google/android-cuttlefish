@@ -98,7 +98,7 @@ jobs:
           $(go env GOPATH)/bin/swag fmt
           git diff --exit-code || ( echo "format error: see frontend/src/host_orchestrator/README.md" && false)
           $(go env GOPATH)/bin/swag init
-          git diff --exit-code
+          git diff --exit-code || ( echo "This change requires REST API documentation update: see frontend/src/host_orchestrator/README.md" && false)
           popd
         done
   run-cvd-unit-tests:
