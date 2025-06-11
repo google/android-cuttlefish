@@ -2,9 +2,8 @@
 
 ## Orchestration tests
 
-```
-bazel run //:gazelle
-```
+The orchestration e2e tests require an environment with `host orchestator` service
+and `cvd` installed.
 
 ```
 bazel test --local_test_jobs=1 orchestration/...
