@@ -44,6 +44,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "de_android_sparse",
+    srcs = ["de_android_sparse.cc"],
+    hdrs = ["de_android_sparse.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//libbase",
+        "//libsparse",
+    ],
+)
+
+clang_tidy_test(
+    name = "de_android_sparse_clang_tidy",
+    srcs = [":de_android_sparse"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "downloaders",
     srcs = ["downloaders.cc"],
     hdrs = ["downloaders.h"],
@@ -102,6 +121,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
@@ -118,7 +138,6 @@ cc_library(
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//cuttlefish/host/libs/web:luci_build_api",
         "//libbase",
-        "//libsparse",
     ],
 )
 
