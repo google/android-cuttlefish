@@ -133,10 +133,9 @@ Result<std::optional<Build>> GetBuildHelper(
   if (!build_source) {
     return std::nullopt;
   }
-  return CF_EXPECT(build_api.GetBuild(*build_source, fallback_target),
-                   "Unable to create build from ("
-                       << *build_source << ") and target (" << fallback_target
-                       << ")");
+  BuildString source = WithFallbackTarget(*build_source, fallback_target);
+  return CF_EXPECT(build_api.GetBuild(source),
+                   "Unable to create build from (" << source << ")");
 }
 
 Result<Builds> GetBuilds(BuildApi& build_api,

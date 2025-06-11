@@ -128,14 +128,12 @@ AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
       project_id_(std::move(project_id)),
       cas_downloader_(cas_downloader) {}
 
-Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string,
-                                        const std::string& fallback_target) {
-  auto proposed_build = DeviceBuild(
-      build_string.branch_or_id, build_string.target.value_or(fallback_target),
-      build_string.filepath);
+Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
+  CF_EXPECT(build_string.target.has_value());
+  DeviceBuild proposed_build = DeviceBuild(
+      build_string.branch_or_id, *build_string.target, build_string.filepath);
   auto latest_build_id =
-      CF_EXPECT(LatestBuildId(build_string.branch_or_id,
-                              build_string.target.value_or(fallback_target)));
+      CF_EXPECT(LatestBuildId(build_string.branch_or_id, *build_string.target));
   if (latest_build_id) {
     proposed_build.id = *latest_build_id;
     LOG(INFO) << "Latest build id for branch '" << build_string.branch_or_id
@@ -160,17 +158,14 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string,
 }
 
 Result<Build> AndroidBuildApi::GetBuild(
-    const DirectoryBuildString& build_string, const std::string&) {
+    const DirectoryBuildString& build_string) {
   return DirectoryBuild(build_string.paths, build_string.target,
                         build_string.filepath);
 }
 
-Result<Build> AndroidBuildApi::GetBuild(const BuildString& build_string,
-                                        const std::string& fallback_target) {
-  auto result =
-      std::visit([this, &fallback_target](
-                     auto&& arg) { return GetBuild(arg, fallback_target); },
-                 build_string);
+Result<Build> AndroidBuildApi::GetBuild(const BuildString& build_string) {
+  Result<Build> result =
+      std::visit([this](auto&& arg) { return GetBuild(arg); }, build_string);
   return CF_EXPECT(std::move(result));
 }
 
