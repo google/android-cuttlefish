@@ -112,6 +112,24 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "extract_image_contents",
+    srcs = ["extract_image_contents.cc"],
+    hdrs = ["extract_image_contents.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:archive",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+clang_tidy_test(
+    name = "extract_image_contents_clang_tidy",
+    srcs = [":extract_image_contents"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "fetch_cvd",
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
@@ -123,6 +141,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
+        "//cuttlefish/host/commands/cvd/fetch:extract_image_contents",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:host_package",
