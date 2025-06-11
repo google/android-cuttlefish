@@ -163,6 +163,16 @@ type fetchArtifactsHandler struct {
 	OM     OperationManager
 }
 
+// FetchArtifacts godoc
+//
+//	@Summary		Fetches and stores artifacts from the Android Build API
+//	@Description	Fetches and stores artifacts from the Android Build API
+//	@Accept			json
+//	@Produce		json
+//	@Param			FetchArtifactsRequest					body		apiv1.FetchArtifactsRequest	true	" "
+//	@Param			X-Cutf-Host-Orchestrator-BuildAPI-Creds	header		string						false	"Use this header for forwarding EUC towards the Android Build API"
+//	@Success		200										{object}	apiv1.Operation
+//	@Router			/artifacts [post]
 func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	req := apiv1.FetchArtifactsRequest{}
 	err := json.NewDecoder(r.Body).Decode(&req)

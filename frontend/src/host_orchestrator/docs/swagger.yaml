@@ -35,6 +35,29 @@ definitions:
         - $ref: '#/definitions/v1.AndroidCIBuild'
         description: Uses this specific system image build target if set.
     type: object
+  v1.AndroidCIBundle:
+    properties:
+      build:
+        allOf:
+        - $ref: '#/definitions/v1.AndroidCIBuild'
+        description: If omitted, defaults to branch "aosp-main" and target `aosp_cf_x86_64_phone-trunk_staging-userdebug`.
+      type:
+        allOf:
+        - $ref: '#/definitions/v1.ArtifactsBundleType'
+        description: If omitted, it defaults to the `main` bundle type.
+    type: object
+  v1.ArtifactsBundleType:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - MainBundleType
+    - KernelBundleType
+    - BootloaderBundleType
+    - SystemImageBundleType
   v1.BuildSource:
     properties:
       android_ci_build_source:
@@ -97,12 +120,28 @@ definitions:
           $ref: '#/definitions/v1.CVD'
         type: array
     type: object
+  v1.FetchArtifactsRequest:
+    properties:
+      android_ci_bundle:
+        $ref: '#/definitions/v1.AndroidCIBundle'
+    type: object
   v1.ListCVDsResponse:
     properties:
       cvds:
         items:
           $ref: '#/definitions/v1.CVD'
         type: array
+    type: object
+  v1.Operation:
+    properties:
+      done:
+        description: |-
+          If the value is `false`, it means the operation is still in progress.
+          If `true`, the operation is completed, and either `error` or `response` is
+          available.
+        type: boolean
+      name:
+        type: string
     type: object
 info:
   contact: {}
@@ -112,6 +151,31 @@ info:
   title: Cuttlefish Host Orchestrator API
   version: "1.0"
 paths:
+  /artifacts:
+    post:
+      consumes:
+      - application/json
+      description: Fetches and stores artifacts from the Android Build API
+      parameters:
+      - description: ' '
+        in: body
+        name: FetchArtifactsRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.FetchArtifactsRequest'
+      - description: Use this header for forwarding EUC towards the Android Build
+          API
+        in: header
+        name: X-Cutf-Host-Orchestrator-BuildAPI-Creds
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/v1.Operation'
+      summary: Fetches and stores artifacts from the Android Build API
   /cvds:
     post:
       consumes:
