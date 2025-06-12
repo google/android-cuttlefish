@@ -53,6 +53,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/libs/avb/avb.h"
+#include "host/libs/config/boot_flow.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/fetcher_config.h"
@@ -316,8 +317,7 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
           .ConfigPath(instance.PerInstancePath("os_composite_disk_config.txt"))
           .ReadOnly(FLAGS_use_overlay)
           .ResumeIfPossible(FLAGS_resume);
-  if (instance.boot_flow() ==
-      CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk) {
+  if (instance.boot_flow() == BootFlow::ChromeOsDisk) {
     return builder.EntireDisk(instance.chromeos_disk())
         .CompositeDiskPath(instance.chromeos_disk());
   }

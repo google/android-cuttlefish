@@ -125,6 +125,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
     ],
@@ -363,6 +364,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:fuchsia_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:linux_composite_disk",
+        "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
     ],

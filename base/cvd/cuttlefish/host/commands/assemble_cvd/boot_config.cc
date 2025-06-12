@@ -32,6 +32,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/bootconfig_args.h"
 #include "host/libs/avb/avb.h"
+#include "host/libs/config/boot_flow.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -87,8 +88,7 @@ void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
 }
 
 size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
-                        const CuttlefishConfig::InstanceSpecific::BootFlow& flow,
-                        const std::string& kernel_args,
+                        const BootFlow& flow, const std::string& kernel_args,
                         const std::string& env_path) {
   std::ostringstream env;
 
@@ -100,20 +100,20 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
   }
 
   switch (flow) {
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Android:
+    case BootFlow::Android:
       WriteAndroidEnvironment(env, instance);
       break;
-    case CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader:
+    case BootFlow::AndroidEfiLoader:
       WriteEFIEnvironment(instance, 1, env);
       break;
-    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOs:
+    case BootFlow::ChromeOs:
       WriteEFIEnvironment(instance, 2, env);
       break;
-    case CuttlefishConfig::InstanceSpecific::BootFlow::ChromeOsDisk:
+    case BootFlow::ChromeOsDisk:
       WriteEFIEnvironment(instance, 12, env);
       break;
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Fuchsia:
-    case CuttlefishConfig::InstanceSpecific::BootFlow::Linux:
+    case BootFlow::Fuchsia:
+    case BootFlow::Linux:
       WriteEFIEnvironment(instance, {}, env);
       break;
   }
@@ -146,8 +146,7 @@ std::unordered_map<std::string, std::string> ReplaceKernelBootArgs(
 Result<void> PrepareBootEnvImage(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::string& image_path,
-    const CuttlefishConfig::InstanceSpecific::BootFlow& flow) {
+    const std::string& image_path, const BootFlow& flow) {
   auto tmp_boot_env_image_path = image_path + ".tmp";
   auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
   auto kernel_cmdline =
@@ -218,8 +217,7 @@ Result<void> InitBootloaderEnvPartition(
   if (instance.ap_boot_flow() ==
       CuttlefishConfig::InstanceSpecific::APBootFlow::Grub) {
     CF_EXPECT(PrepareBootEnvImage(
-        config, instance, instance.ap_uboot_env_image_path(),
-        CuttlefishConfig::InstanceSpecific::BootFlow::Linux));
+        config, instance, instance.ap_uboot_env_image_path(), BootFlow::Linux));
   }
   CF_EXPECT(PrepareBootEnvImage(
       config, instance, instance.uboot_env_image_path(), instance.boot_flow()));

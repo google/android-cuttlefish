@@ -18,6 +18,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 
@@ -25,7 +26,6 @@ namespace cuttlefish {
 
 Result<void> InitializeChromeOsState(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  using BootFlow = CuttlefishConfig::InstanceSpecific::BootFlow;
   if (instance.boot_flow() != BootFlow::ChromeOs) {
     return {};
   } else if (FileExists(instance.chromeos_state_image())) {
