@@ -31,12 +31,12 @@
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
-using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 std::unordered_map<std::string, std::string>
 ServerLoopImpl::InitializeVmToControlSockPath(

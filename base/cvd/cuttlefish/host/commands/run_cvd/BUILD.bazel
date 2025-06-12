@@ -91,6 +91,7 @@ cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
+        "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:custom_actions",

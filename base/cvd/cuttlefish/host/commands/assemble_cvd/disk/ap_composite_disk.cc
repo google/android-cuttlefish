@@ -19,12 +19,11 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
-
-using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 std::vector<ImagePartition> GetApCompositeDiskConfig(
     const CuttlefishConfig& config,

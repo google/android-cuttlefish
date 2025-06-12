@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
@@ -532,21 +533,6 @@ class CuttlefishConfig {
 
     const Json::Value& mcu() const;
 
-    enum class APBootFlow {
-      // Not starting AP at all (for example not the 1st instance)
-      None,
-      // Generating ESP and using U-BOOT to boot AP
-      Grub,
-      // Using legacy way to boot AP in case we cannot generate ESP image.
-      // Currently we have only one case when we cannot do it. When users
-      // have ubuntu bionic which doesn't have monolith binaris in the
-      // grub-efi-arm64-bin (for arm64) and grub-efi-ia32-bin (x86) deb packages.
-      // TODO(b/260337906): check is it possible to add grub binaries into the AOSP
-      // to deliver the proper grub environment
-      // TODO(b/260338443): use grub-mkimage from grub-common in case we cannot overcome
-      // legal issues
-      LegacyDirect
-    };
     APBootFlow ap_boot_flow() const;
 
     bool crosvm_use_balloon() const;
@@ -809,7 +795,7 @@ class CuttlefishConfig {
     // TODO(b/288987294) Remove this when separating environment is done
     void set_start_wmediumd_instance(bool start);
     void set_mcu(const Json::Value &cfg);
-    void set_ap_boot_flow(InstanceSpecific::APBootFlow flow);
+    void set_ap_boot_flow(APBootFlow flow);
     void set_crosvm_use_balloon(const bool use_balloon);
     void set_crosvm_use_rng(const bool use_rng);
     void set_crosvm_simple_media_device(const bool simple_media_device);

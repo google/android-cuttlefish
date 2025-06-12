@@ -371,7 +371,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     for (const auto& instance : config.Instances()) {
       auto os_builder = OsCompositeDiskBuilder(config, instance);
       creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
-      if (instance.ap_boot_flow() != CuttlefishConfig::InstanceSpecific::APBootFlow::None) {
+      if (instance.ap_boot_flow() != APBootFlow::None) {
         auto ap_builder = ApCompositeDiskBuilder(config, instance);
         creating_os_disk |= CF_EXPECT(ap_builder.WillRebuildCompositeDisk());
       }

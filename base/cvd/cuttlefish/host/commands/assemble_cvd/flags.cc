@@ -59,6 +59,7 @@
 #include "host/commands/assemble_cvd/misc_info.h"
 #include "host/commands/assemble_cvd/network_flags.h"
 #include "host/commands/assemble_cvd/touchpad.h"
+#include "host/libs/config/ap_boot_flow.h"
 #include "host/libs/config/config_constants.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/display.h"
@@ -2028,17 +2029,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     if (!FLAGS_ap_rootfs_image.empty() && !FLAGS_ap_kernel_image.empty() &&
         const_instance.start_wmediumd_instance()) {
-      // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to boot
-      // 64 bit kernel using 32 bit u-boot / grub.
-      // Enable this code back after making sure it works across all popular environments
-      // if (CanGenerateEsp(guest_configs[0].target_arch)) {
-      //   instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::Grub);
+      // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to
+      // boot 64 bit kernel using 32 bit u-boot / grub. Enable this code back
+      // after making sure it works across all popular environments if
+      // (CanGenerateEsp(guest_configs[0].target_arch)) {
+      //   instance.set_ap_boot_flow(APBootFlow::Grub);
       // } else {
-      //   instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
+      //   instance.set_ap_boot_flow(APBootFlow::LegacyDirect);
       // }
-      instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::LegacyDirect);
+      instance.set_ap_boot_flow(APBootFlow::LegacyDirect);
     } else {
-      instance.set_ap_boot_flow(CuttlefishConfig::InstanceSpecific::APBootFlow::None);
+      instance.set_ap_boot_flow(APBootFlow::None);
     }
 
     is_first_instance = false;

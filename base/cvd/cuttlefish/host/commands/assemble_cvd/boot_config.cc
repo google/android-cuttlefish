@@ -32,6 +32,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/bootconfig_args.h"
 #include "host/libs/avb/avb.h"
+#include "host/libs/config/ap_boot_flow.h"
 #include "host/libs/config/boot_flow.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
@@ -214,8 +215,7 @@ Result<void> PrepareBootEnvImage(
 Result<void> InitBootloaderEnvPartition(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.ap_boot_flow() ==
-      CuttlefishConfig::InstanceSpecific::APBootFlow::Grub) {
+  if (instance.ap_boot_flow() == APBootFlow::Grub) {
     CF_EXPECT(PrepareBootEnvImage(
         config, instance, instance.ap_uboot_env_image_path(), BootFlow::Linux));
   }

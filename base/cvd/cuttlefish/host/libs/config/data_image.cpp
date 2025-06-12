@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -43,8 +44,6 @@
 #define F2FS_BLOCKSIZE "4096"
 
 namespace cuttlefish {
-
-using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 namespace {
 

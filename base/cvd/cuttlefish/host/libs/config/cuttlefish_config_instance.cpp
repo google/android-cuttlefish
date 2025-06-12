@@ -41,13 +41,12 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {
-
-using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 const char* kInstances = "instances";
 
