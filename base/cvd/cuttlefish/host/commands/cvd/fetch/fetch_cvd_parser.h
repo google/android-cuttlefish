@@ -27,7 +27,7 @@
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/web/cas/cas_downloader.h"
+#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 
 namespace cuttlefish {
