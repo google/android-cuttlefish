@@ -6,6 +6,22 @@ package(
 )
 
 cc_library(
+    name = "credential_flags",
+    srcs = ["credential_flags.cc"],
+    hdrs = ["credential_flags.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+    ],
+)
+
+clang_tidy_test(
+    name = "credential_flags_clang_tidy",
+    srcs = [":credential_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "downloaders",
     srcs = ["downloaders.cc"],
     hdrs = ["downloaders.h"],
@@ -98,6 +114,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_string",

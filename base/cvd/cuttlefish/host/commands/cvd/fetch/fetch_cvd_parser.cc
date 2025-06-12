@@ -111,18 +111,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                 " If the cache grows beyond this size it will be pruned after "
                 "the fetches complete."));
 
-  CredentialFlags& credential_flags = build_api_flags.credential_flags;
-  flags.emplace_back(
-      GflagsCompatFlag("use_gce_metadata", credential_flags.use_gce_metadata)
-          .Help("Enforce using GCE metadata credentials."));
-  flags.emplace_back(
-      GflagsCompatFlag("credential_filepath",
-                       credential_flags.credential_filepath)
-          .Help("Enforce reading credentials from the given filepath."));
-  flags.emplace_back(GflagsCompatFlag("service_account_filepath",
-                                      credential_flags.service_account_filepath)
-                         .Help("Enforce reading service account credentials "
-                               "from the given filepath."));
+  for (Flag flag : build_api_flags.credential_flags.Flags()) {
+    flags.emplace_back(std::move(flag));
+  }
 
   for (Flag flag : fetch_flags.build_api_flags.cas_downloader_flags.Flags()) {
     flags.emplace_back(std::move(flag));
