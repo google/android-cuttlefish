@@ -15,6 +15,7 @@
  */
 
 #include <signal.h>
+#include <stdlib.h>
 #include <wakelock/wakelock.h>
 
 int main() {
