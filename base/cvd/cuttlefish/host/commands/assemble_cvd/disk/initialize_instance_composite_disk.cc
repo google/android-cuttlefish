@@ -24,6 +24,7 @@
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "host/commands/assemble_cvd/disk_builder.h"
+#include "host/libs/config/ap_boot_flow.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/image_aggregator/image_aggregator.h"
 
@@ -111,7 +112,6 @@ Result<void> InitializeInstanceCompositeDisk(
     CF_EXPECT(persistent_disk_builder.BuildOverlayIfNecessary());
   }
 
-  using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
     auto persistent_ap_disk_builder =
         DiskBuilder()

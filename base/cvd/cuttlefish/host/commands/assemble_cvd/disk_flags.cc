@@ -53,6 +53,7 @@
 #include "host/commands/assemble_cvd/flags_defaults.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/libs/avb/avb.h"
+#include "host/libs/config/ap_boot_flow.h"
 #include "host/libs/config/boot_flow.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
@@ -169,7 +170,6 @@ DECLARE_bool(use_16k);
 
 namespace cuttlefish {
 
-using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 using vm_manager::Gem5Manager;
 
 Result<void> ResolveInstanceFiles() {

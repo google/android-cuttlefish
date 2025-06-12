@@ -30,6 +30,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -38,8 +39,6 @@
 
 namespace cuttlefish {
 namespace {
-
-using APBootFlow = CuttlefishConfig::InstanceSpecific::APBootFlow;
 
 // TODO(b/288987294) Remove dependency to InstanceSpecific config when moving
 // to run_env is completed.

@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -376,8 +377,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   };
   std::vector<OverlayFile> overlay_files{
       OverlayFile("overlay.img", instance_.os_composite_disk_path())};
-  if (instance_.ap_boot_flow() !=
-      CuttlefishConfig::InstanceSpecific::APBootFlow::None) {
+  if (instance_.ap_boot_flow() != APBootFlow::None) {
     overlay_files.emplace_back(
         OverlayFile("ap_overlay.img", instance_.ap_composite_disk_path()));
   }

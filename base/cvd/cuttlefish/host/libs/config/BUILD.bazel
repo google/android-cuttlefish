@@ -8,6 +8,19 @@ package(
 exports_files([".clang-tidy"])
 
 cc_library(
+    name = "ap_boot_flow",
+    hdrs = ["ap_boot_flow.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+)
+
+clang_tidy_test(
+    name = "ap_boot_flow_clang_tidy",
+    srcs = [":ap_boot_flow"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "boot_flow",
     hdrs = ["boot_flow.h"],
     copts = COPTS,
@@ -158,6 +171,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_fragment",
@@ -190,6 +204,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
