@@ -6,6 +6,28 @@ package(
 )
 
 cc_library(
+    name = "build_api_flags",
+    srcs = ["build_api_flags.cc"],
+    hdrs = ["build_api_flags.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cache",
+        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
+        "//cuttlefish/host/libs/web/cas:cas_flags",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "build_api_flags_clang_tidy",
+    srcs = [":build_api_flags"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "credential_flags",
     srcs = ["credential_flags.cc"],
     hdrs = ["credential_flags.h"],
@@ -113,10 +135,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cache",
-        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
-        "//cuttlefish/host/libs/web/cas:cas_flags",
-        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
         "//libbase",
