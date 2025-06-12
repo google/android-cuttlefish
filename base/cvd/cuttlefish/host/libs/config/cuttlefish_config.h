@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -473,15 +474,6 @@ class CuttlefishConfig {
     std::string ap_esp_grub_config() const;
 
     std::string audio_server_path() const;
-
-    enum class BootFlow {
-      Android,
-      AndroidEfiLoader,
-      ChromeOs,
-      ChromeOsDisk,
-      Linux,
-      Fuchsia
-    };
 
     BootFlow boot_flow() const;
 

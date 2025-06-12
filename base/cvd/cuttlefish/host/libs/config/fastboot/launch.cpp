@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -68,10 +69,8 @@ class FastbootProxy : public CommandSource, public KernelLogPipeConsumer {
   std::string Name() const override { return "FastbootProxy"; }
   bool Enabled() const override {
     const auto boot_flow = instance_.boot_flow();
-    const bool is_android_boot =
-        boot_flow == CuttlefishConfig::InstanceSpecific::BootFlow::Android ||
-        boot_flow ==
-            CuttlefishConfig::InstanceSpecific::BootFlow::AndroidEfiLoader;
+    const bool is_android_boot = boot_flow == BootFlow::Android ||
+                                 boot_flow == BootFlow::AndroidEfiLoader;
 
     return is_android_boot && fastboot_config_.ProxyFastboot();
   }

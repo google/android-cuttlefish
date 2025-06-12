@@ -41,6 +41,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -1606,7 +1607,7 @@ std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
   return AbsolutePath(PerInstanceInternalUdsPath("audio_server.sock"));
 }
 
-CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
+BootFlow CuttlefishConfig::InstanceSpecific::boot_flow() const {
   const bool android_efi_loader_flow_used = !android_efi_loader().empty();
 
   const bool chromeos_disk_flow_used = !chromeos_disk().empty();
@@ -1635,7 +1636,7 @@ CuttlefishConfig::InstanceSpecific::BootFlow CuttlefishConfig::InstanceSpecific:
   } else {
     return BootFlow::Android;
   }
- }
+}
 
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
   return (*Dictionary())[kMobileBridgeName].asString();
