@@ -10,7 +10,6 @@ cc_library(
     srcs = ["cas_downloader.cpp"],
     hdrs = ["cas_downloader.h"],
     copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
@@ -18,6 +17,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
         "@jsoncpp",
     ],
@@ -33,12 +33,13 @@ cc_test(
     name = "cas_downloader_test",
     srcs = ["cas_downloader_test.cpp"],
     copts = COPTS,
-    includes = [""],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
+        "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
         "@fmt",
         "@googletest//:gtest",
@@ -49,5 +50,23 @@ cc_test(
 clang_tidy_test(
     name = "cas_downloader_test_clang_tidy",
     srcs = [":cas_downloader_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "cas_flags",
+    srcs = ["cas_flags.cc"],
+    hdrs = ["cas_flags.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "cas_flags_clang_tidy",
+    srcs = [":cas_flags"],
     tags = ["clang_tidy", "clang-tidy"],
 )

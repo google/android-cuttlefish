@@ -24,6 +24,7 @@
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
 
@@ -38,33 +39,6 @@ inline constexpr char kFlagCasInstance[] = "cas-instance";
 inline constexpr char kFlagCasAddr[] = "cas-addr";
 inline constexpr char kFlagServiceAccountJson[] = "service-account-json";
 inline constexpr char kFlagUseAdc[] = "use-adc";
-
-inline constexpr int kDefaultMemoryLimit = 0;  // 0 for no limit.
-inline constexpr int kDefaultCasConcurrency = 500;
-inline constexpr int kDefaultRpcTimeout = 120;
-inline constexpr int kDefaultGetCapabilitiesTimeout = 5;
-inline constexpr int kDefaultGetTreeTimeout = 5;
-inline constexpr int kDefaultBatchReadBlobsTimeout = 180;
-inline constexpr int kDefaultBatchUpdateBlobsTimeout = 60;
-
-// Flags for the CAS downloader binary.
-struct CasDownloaderFlags {
-  std::string cas_config_filepath = "";
-  std::string downloader_path = "";
-  bool prefer_uncompressed = false;
-  std::string cache_dir = "";
-  int64_t cache_max_size = 0;  // Must be > 0 if cache_dir is set.
-  bool cache_lock = false;
-  bool use_hardlink = true;
-  int memory_limit = kDefaultMemoryLimit;
-  int cas_concurrency = kDefaultCasConcurrency;
-  int rpc_timeout = kDefaultRpcTimeout;
-  int get_capabilities_timeout = kDefaultGetCapabilitiesTimeout;
-  int get_tree_timeout = kDefaultGetTreeTimeout;
-  int batch_read_blobs_timeout = kDefaultBatchReadBlobsTimeout;
-  int batch_update_blobs_timeout = kDefaultBatchUpdateBlobsTimeout;
-  bool version = false;
-};
 
 // Identifies an artifact in CAS.
 // The digest of an artifact is unique in a CAS instance. To identify the CAS

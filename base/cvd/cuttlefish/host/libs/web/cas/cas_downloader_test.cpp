@@ -31,6 +31,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
 
