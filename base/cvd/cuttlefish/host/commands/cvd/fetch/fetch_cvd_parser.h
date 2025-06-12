@@ -15,30 +15,17 @@
 
 #pragma once
 
-#include <chrono>
-#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cache/cache.h"
-#include "cuttlefish/host/commands/cvd/fetch/credential_flags.h"
-#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 
 namespace cuttlefish {
 
-inline constexpr char kDefaultApiKey[] = "";
-inline constexpr char kDefaultCredentialSource[] = "";
-inline constexpr char kDefaultProjectID[] = "";
-inline constexpr std::chrono::seconds kDefaultWaitRetryPeriod =
-    std::chrono::seconds(20);
-inline constexpr bool kDefaultEnableCaching = true;
 inline constexpr char kDefaultBuildString[] = "";
 inline constexpr bool kDefaultDownloadImgZip = true;
 inline constexpr bool kDefaultDownloadTargetFilesZip = false;
@@ -47,18 +34,6 @@ inline constexpr bool kDefaultKeepDownloadedArchives = false;
 
 inline constexpr char kDefaultBuildTarget[] =
     "aosp_cf_x86_64_only_phone-userdebug";
-
-struct BuildApiFlags {
-  std::string api_key = kDefaultApiKey;
-  CredentialFlags credential_flags;
-  std::string credential_source = kDefaultCredentialSource;
-  std::string project_id = kDefaultProjectID;
-  std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
-  std::string api_base_url = kAndroidBuildServiceUrl;
-  bool enable_caching = kDefaultEnableCaching;
-  std::size_t max_cache_size_gb = kDefaultCacheSizeGb;
-  CasDownloaderFlags cas_downloader_flags;
-};
 
 struct VectorFlags {
   std::vector<std::optional<BuildString>> default_build;

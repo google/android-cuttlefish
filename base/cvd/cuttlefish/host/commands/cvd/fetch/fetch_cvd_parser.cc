@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
-#include <chrono>
 #include <cstddef>
 #include <iostream>
 #include <optional>
@@ -30,7 +29,6 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
 namespace {
@@ -46,19 +44,6 @@ constexpr char kUsageMessage[] =
     "{<filepath>} is used for certain artifacts to specify the file to "
     "download location in the build artifacts\n"
     "if <build_target> is not specified then the default build target is: ";
-
-Flag GflagsCompatFlagSeconds(const std::string& name,
-                             std::chrono::seconds& value) {
-  return GflagsCompatFlag(name)
-      .Getter([&value]() { return std::to_string(value.count()); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
-        int parsed_int;
-        CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
-                   "Failed to parse \"{}\" as an integer", match.value);
-        value = std::chrono::seconds(parsed_int);
-        return {};
-      });
-}
 
 std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                                  std::string& directory) {
@@ -86,36 +71,7 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
       GflagsCompatFlag("host_substitutions", fetch_flags.host_substitutions)
           .Help("list of executables to override with packaged versions."));
 
-  BuildApiFlags& build_api_flags = fetch_flags.build_api_flags;
-  flags.emplace_back(GflagsCompatFlag("api_key", build_api_flags.api_key)
-                         .Help("API key ofr the Android Build API"));
-  flags.emplace_back(
-      GflagsCompatFlag("credential_source", build_api_flags.credential_source)
-          .Help("Build API credential source"));
-  flags.emplace_back(
-      GflagsCompatFlag("project_id", build_api_flags.project_id)
-          .Help("Project ID used to access the Build API"));
-  flags.emplace_back(GflagsCompatFlagSeconds("wait_retry_period",
-                                             build_api_flags.wait_retry_period)
-                         .Help("Retry period for pending builds given in "
-                               "seconds. Set to 0 to not wait."));
-  flags.emplace_back(
-      GflagsCompatFlag("api_base_url", build_api_flags.api_base_url)
-          .Help("The base url for API requests to download artifacts from"));
-  flags.emplace_back(
-      GflagsCompatFlag("enable_caching", build_api_flags.enable_caching)
-          .Help("Whether to enable local fetch file caching or not"));
-  flags.emplace_back(
-      GflagsCompatFlag("max_cache_size_gb", build_api_flags.max_cache_size_gb)
-          .Help("Max allowed size(in gigabytes) of the local fetch file cache. "
-                " If the cache grows beyond this size it will be pruned after "
-                "the fetches complete."));
-
-  for (Flag flag : build_api_flags.credential_flags.Flags()) {
-    flags.emplace_back(std::move(flag));
-  }
-
-  for (Flag flag : fetch_flags.build_api_flags.cas_downloader_flags.Flags()) {
+  for (Flag flag : fetch_flags.build_api_flags.Flags()) {
     flags.emplace_back(std::move(flag));
   }
 
