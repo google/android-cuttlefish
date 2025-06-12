@@ -38,6 +38,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/substitute.h"
+#include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -103,7 +104,8 @@ struct HostToolsTarget {
 };
 
 bool ShouldAppendSubdirectory(const FetchFlags& flags) {
-  return flags.number_of_builds > 1 || !flags.target_subdirectory.empty();
+  return flags.vector_flags.NumberOfBuilds().value_or(1) > 1 ||
+         !flags.vector_flags.target_subdirectory.empty();
 }
 
 template <typename T>
@@ -248,14 +250,14 @@ Result<void> DeAndroidSparse(const std::vector<std::string>& image_files) {
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
                                     const bool append_subdirectory) {
-  std::vector<Target> result(flags.number_of_builds);
+  std::vector<Target> result(flags.vector_flags.NumberOfBuilds().value_or(1));
   for (std::size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
         .build_strings = GetBuildStrings(flags.vector_flags, i),
         .download_flags = GetDownloadFlags(flags.vector_flags, i),
-        .directories = GetTargetDirectories(flags.target_directory,
-                                            flags.target_subdirectory, i,
-                                            append_subdirectory),
+        .directories = GetTargetDirectories(
+            flags.target_directory, flags.vector_flags.target_subdirectory, i,
+            append_subdirectory),
     };
   }
   return result;

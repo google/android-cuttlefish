@@ -28,7 +28,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/web/android_build_string.h"
 
 namespace cuttlefish {
 namespace {
@@ -59,12 +58,6 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
                          .Help("Keep downloaded zip/tar."));
   flags.emplace_back(VerbosityFlag(fetch_flags.verbosity));
   flags.emplace_back(
-      GflagsCompatFlag("target_subdirectory", fetch_flags.target_subdirectory)
-          .Help("Target subdirectory to fetch files into.  Specifically aimed "
-                "at organizing builds when there are multiple fetches. "
-                "**Note**: directory separator automatically prepended, only "
-                "give the subdirectory name."));
-  flags.emplace_back(
       GflagsCompatFlag("host_package_build", fetch_flags.host_package_build)
           .Help("source for the host cvd tools"));
   flags.emplace_back(
@@ -75,42 +68,9 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
     flags.emplace_back(std::move(flag));
   }
 
-  VectorFlags& vector_flags = fetch_flags.vector_flags;
-  flags.emplace_back(
-      GflagsCompatFlag("default_build", vector_flags.default_build)
-          .Help("source for the cuttlefish build to use (vendor.img + host)"));
-  flags.emplace_back(GflagsCompatFlag("system_build", vector_flags.system_build)
-                         .Help("source for system.img and product.img"));
-  flags.emplace_back(GflagsCompatFlag("kernel_build", vector_flags.kernel_build)
-                         .Help("source for the kernel or gki target"));
-  flags.emplace_back(GflagsCompatFlag("boot_build", vector_flags.boot_build)
-                         .Help("source for the boot or gki target"));
-  flags.emplace_back(
-      GflagsCompatFlag("bootloader_build", vector_flags.bootloader_build)
-          .Help("source for the bootloader target"));
-  flags.emplace_back(GflagsCompatFlag("android_efi_loader_build",
-                                      vector_flags.android_efi_loader_build)
-                         .Help("source for the uefi app target"));
-  flags.emplace_back(
-      GflagsCompatFlag("otatools_build", vector_flags.otatools_build)
-          .Help("source for the host ota tools"));
-  flags.emplace_back(
-      GflagsCompatFlag("chrome_os_build", vector_flags.chrome_os_build)
-          .Help("source for a ChromeOS build. Formatted as as a numeric build "
-                "id, or '<project>/<bucket>/<builder>'"));
-
-  flags.emplace_back(
-      GflagsCompatFlag("boot_artifact", vector_flags.boot_artifact)
-          .Help("name of the boot image in boot_build"));
-  flags.emplace_back(GflagsCompatFlag("download_img_zip",
-                                      vector_flags.download_img_zip,
-                                      kDefaultDownloadImgZip)
-                         .Help("Whether to fetch the -img-*.zip file."));
-  flags.emplace_back(
-      GflagsCompatFlag("download_target_files_zip",
-                       vector_flags.download_target_files_zip,
-                       kDefaultDownloadTargetFilesZip)
-          .Help("Whether to fetch the -target_files-*.zip file."));
+  for (Flag flag : fetch_flags.vector_flags.Flags()) {
+    flags.emplace_back(std::move(flag));
+  }
 
   std::stringstream help_message;
   help_message << kUsageMessage << kDefaultBuildTarget;
@@ -120,32 +80,6 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
 
   flags.emplace_back(UnexpectedArgumentGuard());
   return flags;
-}
-
-Result<int> GetNumberOfBuilds(
-    const VectorFlags& flags,
-    const std::vector<std::string>& subdirectory_flag) {
-  std::optional<std::size_t> number_of_builds;
-  for (const auto& flag_size :
-       {flags.default_build.size(), flags.system_build.size(),
-        flags.kernel_build.size(), flags.boot_build.size(),
-        flags.bootloader_build.size(), flags.android_efi_loader_build.size(),
-        flags.otatools_build.size(), flags.chrome_os_build.size(),
-        flags.boot_artifact.size(), flags.download_img_zip.size(),
-        flags.download_target_files_zip.size(), subdirectory_flag.size()}) {
-    if (flag_size == 0) {
-      // a size zero flag vector means the flag was not given
-      continue;
-    }
-    if (number_of_builds) {
-      CF_EXPECT(
-          flag_size == *number_of_builds,
-          "Mismatched flag lengths: " << *number_of_builds << "," << flag_size);
-    }
-    number_of_builds = flag_size;
-  }
-  // if no flags had values there is 1 all-default build
-  return number_of_builds.value_or(1);
 }
 
 }  // namespace
@@ -195,8 +129,7 @@ Result<FetchFlags> FetchFlags::Parse(std::vector<std::string>& args) {
   CF_EXPECT_LE(number_of_set_credential_flags, 1,
                "At most a single credential flag may be set.");
 
-  fetch_flags.number_of_builds = CF_EXPECT(GetNumberOfBuilds(
-      fetch_flags.vector_flags, fetch_flags.target_subdirectory));
+  CF_EXPECT(fetch_flags.vector_flags.NumberOfBuilds());
 
   return {fetch_flags};
 }
