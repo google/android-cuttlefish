@@ -300,6 +300,17 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "guest_os",
+    srcs = ["guest_os.cc"],
+    hdrs = ["guest_os.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/host/libs/config:boot_flow",
+    ],
+)
+
+cc_library(
     name = "host_tools_version",
     srcs = ["host_tools_version.cpp"],
     hdrs = ["host_tools_version.h"],

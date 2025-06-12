@@ -42,6 +42,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/guest_os.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
@@ -112,8 +113,7 @@ class StreamerSockets : public virtual SetupFeature {
     const int touch_count = instance_.display_configs().size() +
                             instance_.touchpad_configs().size();
     if (touch_count > 0) {
-      if (instance_.guest_os() ==
-          CuttlefishConfig::InstanceSpecific::GuestOs::ChromeOs) {
+      if (GuestOsFromBootFlow(instance_.boot_flow()) == GuestOs::ChromeOs) {
         cmd.AddParameter("--multitouch=false");
       }
       std::vector<SharedFD> touch_connections =
