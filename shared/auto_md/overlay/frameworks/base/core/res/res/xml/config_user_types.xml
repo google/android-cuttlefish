@@ -17,5 +17,20 @@
 <!-- See frameworks/base/core/res/res/xml/config_user_types.xml -->
 <user-types>
     <full-type name="android.os.usertype.full.SECONDARY"
-                max-allowed="9" />
+        max-allowed="9" >
+        <default-restrictions />
+    </full-type>
+    <full-type name="android.os.usertype.full.GUEST"
+        max-allowed="3" >
+        <default-restrictions no_factory_reset="true" no_remove_user="true"
+                  no_modify_accounts="true" no_install_apps="true" no_install_unknown_sources="true"
+                  no_uninstall_apps="true"/>
+    </full-type>
+
+    <profile-type name="android.os.usertype.profile.CLONE"
+        enabled='0' >
+    </profile-type>
+    <profile-type name="android.os.usertype.profile.PRIVATE"
+        enabled='0' >
+    </profile-type>
 </user-types>
