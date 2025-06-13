@@ -662,7 +662,6 @@ class CuttlefishConfig {
     std::string new_super_image() const;
     std::string misc_image() const;
     std::string misc_info_txt() const;
-    std::string metadata_image() const;
     std::string vendor_boot_image() const;
     std::string new_vendor_boot_image() const;
     std::string vbmeta_image() const;
@@ -700,7 +699,6 @@ class CuttlefishConfig {
 
     std::string hibernation_partition_image() const;
 
-    int blank_metadata_image_mb() const;
     int blank_sdcard_image_mb() const;
     std::string bootloader() const;
     std::string initramfs_path() const;
@@ -926,7 +924,6 @@ class CuttlefishConfig {
     void set_fuchsia_multiboot_bin_path(const std::string& fuchsia_multiboot_bin_path);
     void set_fuchsia_root_image(const std::string& fuchsia_root_image);
     void set_custom_partition_path(const std::string& custom_partition_path);
-    void set_blank_metadata_image_mb(int blank_metadata_image_mb);
     void set_blank_sdcard_image_mb(int blank_sdcard_image_mb);
     void set_bootloader(const std::string& bootloader);
     void set_initramfs_path(const std::string& initramfs_path);

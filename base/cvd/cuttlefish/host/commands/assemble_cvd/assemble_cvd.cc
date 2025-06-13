@@ -268,7 +268,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("factory_reset_protected.img");
   preserving.insert("misc.img");
   preserving.insert("vmmtruststore.img");
-  preserving.insert("metadata.img");
+  preserving.insert(MetadataImage::Name());
   preserving.insert("persistent_vbmeta.img");
   preserving.insert("oemlock_secure");
   preserving.insert("oemlock_insecure");
@@ -369,8 +369,15 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // if any device needs to rebuild its composite disk,
     // then don't preserve any files and delete everything.
     for (const auto& instance : config.Instances()) {
-      auto os_builder = OsCompositeDiskBuilder(config, instance);
-      creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
+      Result<MetadataImage> metadata = MetadataImage::Reuse(instance);
+      if (metadata.ok()) {
+        DiskBuilder os_builder =
+            OsCompositeDiskBuilder(config, instance, *metadata);
+        creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
+      } else {
+        creating_os_disk = true;
+        break;
+      }
       if (instance.ap_boot_flow() != APBootFlow::None) {
         auto ap_builder = ApCompositeDiskBuilder(config, instance);
         creating_os_disk |= CF_EXPECT(ap_builder.WillRebuildCompositeDisk());

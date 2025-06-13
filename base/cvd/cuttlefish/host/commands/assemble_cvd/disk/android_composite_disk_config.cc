@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/android_composite_disk_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 
 #include <sys/statvfs.h>
 
@@ -22,14 +22,16 @@
 
 #include <android-base/strings.h>
 
-#include "common/libs/utils/files.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
 std::vector<ImagePartition> AndroidCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const MetadataImage& metadata_image) {
   std::vector<ImagePartition> partitions;
 
   partitions.push_back(ImagePartition{
@@ -127,10 +129,7 @@ std::vector<ImagePartition> AndroidCompositeDiskConfig(
       .label = "userdata",
       .image_file_path = AbsolutePath(data_image),
   });
-  partitions.push_back(ImagePartition{
-      .label = "metadata",
-      .image_file_path = AbsolutePath(instance.metadata_image()),
-  });
+  partitions.push_back(metadata_image.Partition());
   const auto hibernation_partition_image =
       instance.hibernation_partition_image();
   if (FileExists(hibernation_partition_image)) {
