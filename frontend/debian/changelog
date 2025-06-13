@@ -1,8 +1,26 @@
-cuttlefish-frontend (1.12.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.12.0) unstable; urgency=medium
 
-  * 
+  * Refactor ChunkState struct by @0405ysj in https://github.com/google/android-cuttlefish/pull/1205
+  * Adds `gofmt` check in presubmit. by @ser-io in https://github.com/google/android-cuttlefish/pull/1217
+  * Use `chunk_offset_bytes` form value by @ser-io in https://github.com/google/android-cuttlefish/pull/1147
+  * [HO] Fixes access token flow by @ser-io in https://github.com/google/android-cuttlefish/pull/1213
+  * Split HostOrchestratorService into smaller interfaces. by @ser-io in https://github.com/google/android-cuttlefish/pull/1222
+  * HO logs executed cvd commands. by @ser-io in https://github.com/google/android-cuttlefish/pull/1226
+  * Refactor snapshot id validation logic. by @ser-io in https://github.com/google/android-cuttlefish/pull/1218
+  * [HO] Fixes using latest green builds. by @ser-io in https://github.com/google/android-cuttlefish/pull/1232
+  * Delete snapshot directory. by @ser-io in https://github.com/google/android-cuttlefish/pull/1240
+  * Add HO service logs to e2e tests output. by @ser-io in https://github.com/google/android-cuttlefish/pull/1229
+  * More user input validation. by @ser-io in https://github.com/google/android-cuttlefish/pull/1241
+  * Introduce HO API PUT /v1/userartifacts/{checksum} by @0405ysj in https://github.com/google/android-cuttlefish/pull/1144
+  * Introduce HO API GET /v1/userartifacts/{checksum} by @0405ysj in https://github.com/google/android-cuttlefish/pull/1235
+  * Modifies how delete snapshot logic is verified. by @ser-io in https://github.com/google/android-cuttlefish/pull/1249
+  * Migrate ChunkState implementation under `userartifacts.go`. by @0405ysj in https://github.com/google/android-cuttlefish/pull/1236
+  * Enhance `adb` interactions in orchestration e2e tests. by @ser-io in https://github.com/google/android-cuttlefish/pull/1248
+  * Generate OpenAPI specs documentation for HO API. by @ser-io in https://github.com/google/android-cuttlefish/pull/1255
+  * Fixes bazel run //:gazelle for e2e orchestration rules. by @ser-io in https://github.com/google/android-cuttlefish/pull/1261
+  * HO API Documentation Update by @ser-io in https://github.com/google/android-cuttlefish/pull/1262
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Jun 2025 16:13:20 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Jun 2025 14:03:12 -0700
 
 cuttlefish-frontend (1.11.0) stable; urgency=medium
 
