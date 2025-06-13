@@ -172,6 +172,9 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArt
 	}
 	mayMoveArtifact, err := m.writeChunkAndUpdateState(checksum, chunk)
 	if err != nil {
+		if _, ok := err.(*operator.AppError); ok {
+			return err
+		}
 		return fmt.Errorf("failed to update chunk: %w", err)
 	}
 	if mayMoveArtifact {
