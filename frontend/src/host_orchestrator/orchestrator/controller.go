@@ -104,13 +104,15 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/userartifacts",
 		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/userartifacts/{name}",
-		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, true})).Methods("PUT")
-	router.Handle("/userartifacts/{dir}/{name}/:extract",
-		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/v1/userartifacts/{checksum}",
 		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, false})).Methods("PUT")
+	router.Handle("/userartifacts/{dir}/{name}/:extract",
+		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, false})).Methods("POST")
+	router.Handle("/v1/userartifacts/{checksum}",
+		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, true})).Methods("PUT")
 	router.Handle("/v1/userartifacts/{checksum}",
 		httpHandler(&statUserArtifactHandler{c.UserArtifactsManager})).Methods("GET")
+	router.Handle("/v1/userartifacts/{checksum}/:extract",
+		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, true})).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -591,8 +593,8 @@ func (h *listUploadDirectoriesHandler) Handle(r *http.Request) (interface{}, err
 }
 
 type createUpdateUserArtifactHandler struct {
-	m        UserArtifactsManager
-	isLegacy bool
+	m    UserArtifactsManager
+	isV1 bool
 }
 
 func parseFormValueInt(r *http.Request, key string) (int64, error) {
@@ -622,7 +624,23 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 	}
 	defer f.Close()
 	chunkOffsetBytes, err := parseFormValueInt(r, "chunk_offset_bytes")
-	if h.isLegacy {
+	if h.isV1 {
+		if err != nil {
+			return nil, err
+		}
+		fileSizeBytes, err := parseFormValueInt(r, "file_size_bytes")
+		if err != nil {
+			return nil, err
+		}
+		chunk := UserArtifactChunk{
+			File:          f,
+			Name:          fheader.Filename,
+			OffsetBytes:   chunkOffsetBytes,
+			SizeBytes:     fheader.Size,
+			FileSizeBytes: fileSizeBytes,
+		}
+		return nil, h.m.UpdateArtifact(vars["checksum"], chunk)
+	} else {
 		dir := vars["name"]
 		if err := ValidateFileName(dir); err != nil {
 			return nil, operator.NewBadRequestError("invalid directory name", err)
@@ -653,22 +671,6 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 			OffsetBytes: chunkOffsetBytes,
 		}
 		return nil, h.m.UpdateArtifactWithDir(dir, chunk)
-	} else {
-		if err != nil {
-			return nil, err
-		}
-		fileSizeBytes, err := parseFormValueInt(r, "file_size_bytes")
-		if err != nil {
-			return nil, err
-		}
-		chunk := UserArtifactChunk{
-			File:          f,
-			Name:          fheader.Filename,
-			OffsetBytes:   chunkOffsetBytes,
-			SizeBytes:     fheader.Size,
-			FileSizeBytes: fileSizeBytes,
-		}
-		return nil, h.m.UpdateArtifact(vars["checksum"], chunk)
 	}
 }
 
@@ -681,23 +683,29 @@ func (h *statUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 }
 
 type extractUserArtifactHandler struct {
-	om  OperationManager
-	uam UserArtifactsManager
+	om   OperationManager
+	uam  UserArtifactsManager
+	isV1 bool
 }
 
 func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
-	dir := vars["dir"]
-	if err := ValidateFileName(dir); err != nil {
-		return nil, operator.NewBadRequestError("invalid directory name", err)
-	}
-	name := vars["name"]
-	if err := ValidateFileName(name); err != nil {
-		return nil, operator.NewBadRequestError("invalid artifact name", err)
+	if !h.isV1 {
+		if err := ValidateFileName(vars["dir"]); err != nil {
+			return nil, operator.NewBadRequestError("invalid directory name", err)
+		}
+		if err := ValidateFileName(vars["name"]); err != nil {
+			return nil, operator.NewBadRequestError("invalid artifact name", err)
+		}
 	}
 	op := h.om.New()
 	go func() {
-		err := h.uam.ExtractArtifactWithDir(dir, name)
+		var err error
+		if h.isV1 {
+			err = h.uam.ExtractArtifact(vars["checksum"])
+		} else {
+			err = h.uam.ExtractArtifactWithDir(vars["dir"], vars["name"])
+		}
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}

@@ -333,6 +333,36 @@ func TestStatUserArtifactIsHandled(t *testing.T) {
 	}
 }
 
+func TestExtractUserArtifactLegacyIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/userartifacts/foo/bar/:extract", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestExtractUserArtifactIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/v1/userartifacts/foo/:extract", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestGetDebugVarzIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/_debug/varz", strings.NewReader("{}"))
