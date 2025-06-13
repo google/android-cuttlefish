@@ -54,6 +54,8 @@ type UserArtifactsManager interface {
 	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
 	// Stat artifact whether artifact with given checksum exists or not.
 	StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error)
+	// Extract artifact with the given checksum
+	ExtractArtifact(checksum string) error
 
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
@@ -66,6 +68,7 @@ type UserArtifactsManager interface {
 	// Deprecated: use `UpdateArtifact` instead
 	UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error
 	// Extract artifact
+	// Deprecated: use `ExtractArtifact` instead
 	ExtractArtifactWithDir(dir, name string) error
 }
 
@@ -201,6 +204,33 @@ func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (*apiv1.StatArt
 	return &apiv1.StatArtifactResponse{}, nil
 }
 
+func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
+	dir := filepath.Join(m.RootDir, fmt.Sprintf("%s_extracted", checksum))
+	if exists, err := dirExists(dir); err != nil {
+		return fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if exists {
+		return operator.NewConflictError(fmt.Sprintf("user artifact(checksum:%q) already extracted", checksum), nil)
+	}
+	file, err := m.getFilePath(checksum)
+	if err != nil {
+		return err
+	}
+	workDir, err := ioutil.TempDir(m.WorkDir, "")
+	if err != nil {
+		return err
+	}
+	if err := os.Chmod(workDir, 0755); err != nil {
+		return fmt.Errorf("failed to grant read permission at %q: %w", dir, err)
+	}
+	if err := extractFile(workDir, file); err != nil {
+		return err
+	}
+	if err := os.Rename(workDir, dir); err != nil {
+		return fmt.Errorf("failed to move the user artifact: %w", err)
+	}
+	return nil
+}
+
 func (m *UserArtifactsManagerImpl) getRWMutex(checksum string) *sync.RWMutex {
 	mu, _ := m.mutexes.LoadOrStore(checksum, &sync.RWMutex{})
 	return mu.(*sync.RWMutex)
@@ -310,6 +340,37 @@ func (m *UserArtifactsManagerImpl) moveArtifactIfNeeded(checksum string, chunk U
 	return nil
 }
 
+func (m *UserArtifactsManagerImpl) getFilePath(checksum string) (string, error) {
+	dir := filepath.Join(m.RootDir, checksum)
+	if exists, err := dirExists(dir); err != nil {
+		return "", fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return "", operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
+	}
+	if entries, err := ioutil.ReadDir(dir); err != nil {
+		return "", fmt.Errorf("failed to read directory where user artifact located: %w", err)
+	} else if len(entries) != 1 || entries[0].IsDir() {
+		return "", fmt.Errorf("directory where user artifact located should contain a single file only")
+	} else {
+		return filepath.Join(dir, entries[0].Name()), nil
+	}
+}
+
+func extractFile(dst string, src string) error {
+	if strings.HasSuffix(src, ".tar.gz") {
+		if err := untar(dst, src); err != nil {
+			return fmt.Errorf("failed to extract tar.gz file: %w", err)
+		}
+	} else if strings.HasSuffix(src, ".zip") {
+		if err := unzip(dst, src); err != nil {
+			return fmt.Errorf("failed to extract zip file: %w", err)
+		}
+	} else {
+		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", src), nil)
+	}
+	return nil
+}
+
 func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) error {
 	dir = filepath.Join(m.LegacyRootDir, dir)
 	if ok, err := fileExist(dir); err != nil {
@@ -323,21 +384,10 @@ func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) erro
 	} else if !ok {
 		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
 	}
-	if strings.HasSuffix(filename, ".tar.gz") {
-		if err := Untar(dir, filename); err != nil {
-			return fmt.Errorf("failed extracting %q: %w", name, err)
-		}
-	} else if strings.HasSuffix(filename, ".zip") {
-		if err := Unzip(dir, filename); err != nil {
-			return fmt.Errorf("failed extracting %q: %w", name, err)
-		}
-	} else {
-		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
-	}
-	return nil
+	return extractFile(dir, filename)
 }
 
-func Untar(dst string, src string) error {
+func untar(dst string, src string) error {
 	_, err := hoexec.Exec(exec.CommandContext, "tar", "-xf", src, "-C", dst)
 	if err != nil {
 		return err
@@ -345,7 +395,7 @@ func Untar(dst string, src string) error {
 	return nil
 }
 
-func Unzip(dstDir string, src string) error {
+func unzip(dstDir string, src string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err

@@ -209,6 +209,10 @@ func (testUAM) StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error
 	return &apiv1.StatArtifactResponse{}, nil
 }
 
+func (testUAM) ExtractArtifact(checksum string) error {
+	return nil
+}
+
 func (testUAM) GetDirPath(string) string {
 	return ""
 }
