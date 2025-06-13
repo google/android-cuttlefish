@@ -154,8 +154,6 @@ DEFINE_string(
     hibernation_image, CF_DEFAULTS_HIBERNATION_IMAGE,
     "Location of the hibernation path that will be used when hibernating.");
 
-DEFINE_string(blank_metadata_image_mb, CF_DEFAULTS_BLANK_METADATA_IMAGE_MB,
-              "The size of the blank metadata image to generate, MB.");
 DEFINE_string(
     blank_sdcard_image_mb, CF_DEFAULTS_BLANK_SDCARD_IMAGE_MB,
     "If enabled, the size of the blank sdcard image to generate, MB.");
@@ -308,8 +306,10 @@ Result<void> ResolveInstanceFiles() {
   return {};
 }
 
-DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
+DiskBuilder OsCompositeDiskBuilder(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const MetadataImage& metadata) {
   auto builder =
       DiskBuilder()
           .VmManager(config.vm_manager())
@@ -321,7 +321,7 @@ DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
     return builder.EntireDisk(instance.chromeos_disk())
         .CompositeDiskPath(instance.chromeos_disk());
   }
-  return builder.Partitions(GetOsCompositeDiskConfig(instance))
+  return builder.Partitions(GetOsCompositeDiskConfig(instance, metadata))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());
@@ -361,7 +361,6 @@ static fruit::Component<> DiskChangesComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(CuttlefishKeyAvbComponent)
-      .install(AutoSetup<InitializeMetadataImage>::Component)
       .install(AutoSetup<InitializeChromeOsState>::Component)
       .install(AutoSetup<RepackKernelRamdisk>::Component)
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
@@ -457,8 +456,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   std::vector<std::string> kernel_path =
       android::base::Split(FLAGS_kernel_path, ",");
 
-  std::vector<std::string> blank_metadata_image_mb =
-      android::base::Split(FLAGS_blank_metadata_image_mb, ",");
   std::vector<std::string> blank_sdcard_image_mb =
       android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
 
@@ -617,14 +614,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     instance.set_initramfs_path(cur_initramfs_path);
 
     using android::base::ParseInt;
-    if (instance_index >= blank_metadata_image_mb.size()) {
-      CF_EXPECTF(ParseInt(blank_metadata_image_mb[0], &value), "'{}'",
-                 blank_metadata_image_mb[0]);
-    } else {
-      CF_EXPECTF(ParseInt(blank_metadata_image_mb[instance_index], &value),
-                 "'{}'", blank_metadata_image_mb[value]);
-    }
-    instance.set_blank_metadata_image_mb(value);
 
     if (instance_index >= blank_sdcard_image_mb.size()) {
       CF_EXPECTF(ParseInt(blank_sdcard_image_mb[0], &value), "'{}'",
@@ -751,7 +740,10 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       }
     }
 
-    auto os_disk_builder = OsCompositeDiskBuilder(config, instance);
+    MetadataImage metadata = CF_EXPECT(MetadataImage::ReuseOrCreate(instance));
+
+    DiskBuilder os_disk_builder =
+        OsCompositeDiskBuilder(config, instance, metadata);
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
