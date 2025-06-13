@@ -209,6 +209,10 @@ func (testUAM) StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error
 	return &apiv1.StatArtifactResponse{}, nil
 }
 
+func (testUAM) ExtractArtifact(checksum string) error {
+	return nil
+}
+
 func (testUAM) GetDirPath(string) string {
 	return ""
 }
@@ -321,6 +325,36 @@ func TestStatUserArtifactIsHandled(t *testing.T) {
 	}
 	controller := Controller{UserArtifactsManager: &testUAM{}}
 	rr := httptest.NewRecorder()
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestExtractUserArtifactLegacyIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/userartifacts/foo/bar/:extract", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestExtractUserArtifactIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/v1/userartifacts/foo/:extract", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
 
 	makeRequest(rr, req, &controller)
 

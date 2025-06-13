@@ -54,6 +54,8 @@ type UserArtifactsManager interface {
 	UpdateArtifact(checksum string, chunk UserArtifactChunk) error
 	// Stat artifact whether artifact with given checksum exists or not.
 	StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error)
+	// Extract artifact with the given checksum
+	ExtractArtifact(checksum string) error
 
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
@@ -66,6 +68,7 @@ type UserArtifactsManager interface {
 	// Deprecated: use `UpdateArtifact` instead
 	UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error
 	// Extract artifact
+	// Deprecated: use `ExtractArtifact` instead
 	ExtractArtifactWithDir(dir, name string) error
 }
 
@@ -82,24 +85,30 @@ type UserArtifactsManagerOpts struct {
 // An implementation of the UserArtifactsManager interface.
 type UserArtifactsManagerImpl struct {
 	UserArtifactsManagerOpts
-	// The root directory where to store artifacts with legacy API calls.
-	commonWorkDir string
-	UuidWorkDir   string
-	mutexes       sync.Map
-	chunkStates   sync.Map
+	WorkDir     string
+	mutexes     sync.Map
+	chunkStates sync.Map
 }
 
 // Creates a new instance of UserArtifactsManagerImpl.
 func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) (*UserArtifactsManagerImpl, error) {
+	if err := createDir(opts.RootDir); err != nil {
+		return nil, fmt.Errorf("failed to create root directory for storing user artifacts: %w", err)
+	}
 	commonWorkDir := filepath.Join(opts.RootDir, "working")
-	UuidWorkDir := filepath.Join(commonWorkDir, uuid.New().String())
-	if err := os.RemoveAll(UuidWorkDir); err != nil {
-		return nil, err
+	if err := createDir(commonWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to create working directory for all Host Orchestrators: %w", err)
+	}
+	uuidWorkDir := filepath.Join(commonWorkDir, uuid.New().String())
+	if err := os.RemoveAll(uuidWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to clean working directory for this Host Orchestrator: %w", err)
+	}
+	if err := createDir(uuidWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to create working directory for this Host Orchestrator: %w", err)
 	}
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
-		commonWorkDir:            commonWorkDir,
-		UuidWorkDir:              UuidWorkDir,
+		WorkDir:                  uuidWorkDir,
 	}, nil
 }
 
@@ -107,9 +116,12 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.LegacyRootDir); err != nil {
 		return nil, err
 	}
-	dir, err := createNewUADir(m.LegacyRootDir)
+	dir, err := ioutil.TempDir(m.LegacyRootDir, "")
 	if err != nil {
 		return nil, err
+	}
+	if err := os.Chmod(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to grant read permission at %q: %w", dir, err)
 	}
 	log.Println("created new user artifact directory", dir)
 	return &apiv1.UploadDirectory{Name: filepath.Base(dir)}, nil
@@ -177,9 +189,6 @@ func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserA
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
 	filename := filepath.Join(dir, chunk.Name)
-	if err := createUAFile(filename); err != nil {
-		return err
-	}
 	if err := writeChunk(filename, chunk); err != nil {
 		return err
 	}
@@ -193,6 +202,33 @@ func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (*apiv1.StatArt
 		return nil, operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
 	}
 	return &apiv1.StatArtifactResponse{}, nil
+}
+
+func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
+	dir := filepath.Join(m.RootDir, fmt.Sprintf("%s_extracted", checksum))
+	if exists, err := dirExists(dir); err != nil {
+		return fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if exists {
+		return operator.NewConflictError(fmt.Sprintf("user artifact(checksum:%q) already extracted", checksum), nil)
+	}
+	file, err := m.getFilePath(checksum)
+	if err != nil {
+		return err
+	}
+	workDir, err := ioutil.TempDir(m.WorkDir, "")
+	if err != nil {
+		return err
+	}
+	if err := os.Chmod(workDir, 0755); err != nil {
+		return fmt.Errorf("failed to grant read permission at %q: %w", dir, err)
+	}
+	if err := extractFile(workDir, file); err != nil {
+		return err
+	}
+	if err := os.Rename(workDir, dir); err != nil {
+		return fmt.Errorf("failed to move the user artifact: %w", err)
+	}
+	return nil
 }
 
 func (m *UserArtifactsManagerImpl) getRWMutex(checksum string) *sync.RWMutex {
@@ -216,7 +252,7 @@ func dirExists(dir string) (bool, error) {
 }
 
 func writeChunk(filename string, chunk UserArtifactChunk) error {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0664)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to open or create working file: %w", err)
 	}
@@ -246,21 +282,11 @@ func (m *UserArtifactsManagerImpl) writeChunkAndUpdateState(checksum string, chu
 	} else if exists {
 		return false, operator.NewConflictError(fmt.Sprintf("user artifact(checksum:%q) already exists", checksum), nil)
 	}
-	if err := createDir(m.RootDir); err != nil {
-		return false, fmt.Errorf("failed to create root directory for storing user artifacts: %w", err)
-	}
-	if err := createDir(m.commonWorkDir); err != nil {
-		return false, fmt.Errorf("failed to create working directory for all Host Orchestrators: %w", err)
-	}
-	if err := createDir(m.UuidWorkDir); err != nil {
-		return false, fmt.Errorf("failed to create working directory for this Host Orchestrator: %w", err)
-	}
-	workDir := filepath.Join(m.UuidWorkDir, checksum)
+	workDir := filepath.Join(m.WorkDir, checksum)
 	if err := createDir(workDir); err != nil {
 		return false, fmt.Errorf("failed to create working directory: %w", err)
 	}
-	workFile := filepath.Join(workDir, chunk.Name)
-	if err := writeChunk(workFile, chunk); err != nil {
+	if err := writeChunk(filepath.Join(workDir, chunk.Name), chunk); err != nil {
 		return false, err
 	}
 	cs := m.getChunkState(checksum, chunk.FileSizeBytes)
@@ -269,7 +295,7 @@ func (m *UserArtifactsManagerImpl) writeChunkAndUpdateState(checksum string, chu
 }
 
 func (m *UserArtifactsManagerImpl) validateChecksum(checksum string, chunk UserArtifactChunk) (bool, error) {
-	workFile := filepath.Join(m.UuidWorkDir, checksum, chunk.Name)
+	workFile := filepath.Join(m.WorkDir, checksum, chunk.Name)
 	f, err := os.Open(workFile)
 	if err != nil {
 		return false, fmt.Errorf("failed to open working file: %w", err)
@@ -306,11 +332,42 @@ func (m *UserArtifactsManagerImpl) moveArtifactIfNeeded(checksum string, chunk U
 		// directory.
 		return nil
 	}
-	workDir := filepath.Join(m.UuidWorkDir, checksum)
+	workDir := filepath.Join(m.WorkDir, checksum)
 	if err := os.Rename(workDir, dir); err != nil {
 		return fmt.Errorf("failed to move the user artifact: %w", err)
 	}
 	m.chunkStates.Delete(checksum)
+	return nil
+}
+
+func (m *UserArtifactsManagerImpl) getFilePath(checksum string) (string, error) {
+	dir := filepath.Join(m.RootDir, checksum)
+	if exists, err := dirExists(dir); err != nil {
+		return "", fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return "", operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
+	}
+	if entries, err := ioutil.ReadDir(dir); err != nil {
+		return "", fmt.Errorf("failed to read directory where user artifact located: %w", err)
+	} else if len(entries) != 1 || entries[0].IsDir() {
+		return "", fmt.Errorf("directory where user artifact located should contain a single file only")
+	} else {
+		return filepath.Join(dir, entries[0].Name()), nil
+	}
+}
+
+func extractFile(dst string, src string) error {
+	if strings.HasSuffix(src, ".tar.gz") {
+		if err := untar(dst, src); err != nil {
+			return fmt.Errorf("failed to extract tar.gz file: %w", err)
+		}
+	} else if strings.HasSuffix(src, ".zip") {
+		if err := unzip(dst, src); err != nil {
+			return fmt.Errorf("failed to extract zip file: %w", err)
+		}
+	} else {
+		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", src), nil)
+	}
 	return nil
 }
 
@@ -327,21 +384,10 @@ func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) erro
 	} else if !ok {
 		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
 	}
-	if strings.HasSuffix(filename, ".tar.gz") {
-		if err := Untar(dir, filename); err != nil {
-			return fmt.Errorf("failed extracting %q: %w", name, err)
-		}
-	} else if strings.HasSuffix(filename, ".zip") {
-		if err := Unzip(dir, filename); err != nil {
-			return fmt.Errorf("failed extracting %q: %w", name, err)
-		}
-	} else {
-		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", name), nil)
-	}
-	return nil
+	return extractFile(dir, filename)
 }
 
-func Untar(dst string, src string) error {
+func untar(dst string, src string) error {
 	_, err := hoexec.Exec(exec.CommandContext, "tar", "-xf", src, "-C", dst)
 	if err != nil {
 		return err
@@ -349,7 +395,7 @@ func Untar(dst string, src string) error {
 	return nil
 }
 
-func Unzip(dstDir string, src string) error {
+func unzip(dstDir string, src string) error {
 	r, err := zip.OpenReader(src)
 	if err != nil {
 		return err
@@ -361,10 +407,7 @@ func Unzip(dstDir string, src string) error {
 			return err
 		}
 		defer rc.Close()
-		if err := createUAFile(dst); err != nil {
-			return err
-		}
-		dstFile, err := os.OpenFile(dst, os.O_WRONLY, 0664)
+		dstFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, 0755)
 		if err != nil {
 			return err
 		}
@@ -383,33 +426,6 @@ func Unzip(dstDir string, src string) error {
 		if err := extractTo(filepath.Join(dstDir, f.Name), f); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func createNewUADir(parent string) (string, error) {
-	ctx := exec.CommandContext
-	stdout, err := hoexec.Exec(ctx, "mktemp", "--directory", "-p", parent)
-	if err != nil {
-		return "", err
-	}
-	name := strings.TrimRight(stdout, "\n")
-	// Sets permission regardless of umask.
-	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
-		return "", err
-	}
-	return name, nil
-}
-
-func createUAFile(filename string) error {
-	ctx := exec.CommandContext
-	_, err := hoexec.Exec(ctx, "touch", filename)
-	if err != nil {
-		return err
-	}
-	// Sets permission regardless of umask.
-	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rw,o=r", filename); err != nil {
-		return err
 	}
 	return nil
 }
