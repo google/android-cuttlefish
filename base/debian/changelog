@@ -1,8 +1,41 @@
-cuttlefish-common (1.12.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.12.0) unstable; urgency=medium
 
-  * 
+  * Creates graphics symlinks using debian links file by @jmacnak in https://github.com/google/android-cuttlefish/pull/1177
+  * Fix missing std includes in `//cuttlefish/host/commands/cvd` by @Databean in https://github.com/google/android-cuttlefish/pull/1216
+  * Fix memory leak when running cvd fetch unit tests by @jemoreira in https://github.com/google/android-cuttlefish/pull/1219
+  * Support arm64 while building libffi by @k311093 in https://github.com/google/android-cuttlefish/pull/1207
+  * Steps to build android-cuttlefish debs packages inside a container. by @ser-io in https://github.com/google/android-cuttlefish/pull/1197
+  * Simplify composite disk creation a little by @Databean in https://github.com/google/android-cuttlefish/pull/1220
+  * Remove the external DNS resolver capability. by @Databean in https://github.com/google/android-cuttlefish/pull/1223
+  * Add missing default condition to build files' select by @jemoreira in https://github.com/google/android-cuttlefish/pull/1225
+  * Delete unused `HttpClient` functions by @Databean in https://github.com/google/android-cuttlefish/pull/1224
+  * Remove support for booting protected VMs in cuttlefish. by @Databean in https://github.com/google/android-cuttlefish/pull/1227
+  * Cleanup TODO comment about removing wifi_tap_name from CF config by @0405ysj in https://github.com/google/android-cuttlefish/pull/1228
+  * Update `zlib` version in `MODULE.bazel` by @Databean in https://github.com/google/android-cuttlefish/pull/1181
+  * Separate `disk/android_composite_disk_config.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1233
+  * Split `build_api.h` and extract class member `BuildApi::GetBuildZipName` by @Databean in https://github.com/google/android-cuttlefish/pull/1234
+  * Remove the MODULE.bazel.lock file by @cjreynol in https://github.com/google/android-cuttlefish/pull/1239
+  * Make UrlEscape a free function and not part of HttpClient by @Databean in https://github.com/google/android-cuttlefish/pull/1237
+  * Update `cvd version` to match `cuttlefish-common` version by @cjreynol in https://github.com/google/android-cuttlefish/pull/1214
+  * screen_connector_common.h refactoring by @Databean in https://github.com/google/android-cuttlefish/pull/1201
+  * Remove lifetime management from `*BuildApi` classes, and split up `cvd/fetch` targets by @Databean in https://github.com/google/android-cuttlefish/pull/1242
+  * Mark 1.11.0 stable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1244
+  * Build and package mtools (mmd, mcopy) by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1243
+  * Add missing dependency by @jemoreira in https://github.com/google/android-cuttlefish/pull/1246
+  * Build and package Gfxstream by @jmacnak in https://github.com/google/android-cuttlefish/pull/1221
+  * Build and package cpio by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1231
+  * Support android builds that don't include userdata. by @Databean in https://github.com/google/android-cuttlefish/pull/1251
+  * Split interface for HttpClient by @Databean in https://github.com/google/android-cuttlefish/pull/1247
+  * Add a `FakeHttpClient` implementation for tests, and its own test by @Databean in https://github.com/google/android-cuttlefish/pull/1254
+  * Support creating zip_t* archives based on remote files by @Databean in https://github.com/google/android-cuttlefish/pull/1258
+  * Split `assemble_cvd/disk_flags.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1259
+  * Package cf_vhost_user_input and fix its tests by @jemoreira in https://github.com/google/android-cuttlefish/pull/1263
+  * Add missing #includes by @jemoreira in https://github.com/google/android-cuttlefish/pull/1264
+  * Use DEFINE_uint64 instead of DEFINE_uint32 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1265
+  * Split fetch flags by @Databean in https://github.com/google/android-cuttlefish/pull/1266
+  * Extract enums from `CuttlefishConfig::InstanceSpecific` by @Databean in https://github.com/google/android-cuttlefish/pull/1267
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 05 Jun 2025 16:13:06 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Jun 2025 13:56:30 -0700
 
 cuttlefish-common (1.11.0) stable; urgency=medium
 
