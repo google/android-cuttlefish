@@ -460,14 +460,6 @@ std::string CuttlefishConfig::InstanceSpecific::hibernation_partition_image()
     const {
   return (*Dictionary())[kHibernationPartitionImage].asString();
 }
-static constexpr char kBlankMetadataImageMb[] = "blank_metadata_image_mb";
-int CuttlefishConfig::InstanceSpecific::blank_metadata_image_mb() const {
-  return (*Dictionary())[kBlankMetadataImageMb].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_blank_metadata_image_mb(
-    int blank_metadata_image_mb) {
-  (*Dictionary())[kBlankMetadataImageMb] = blank_metadata_image_mb;
-}
 static constexpr char kBlankSdcardImageMb[] = "blank_sdcard_image_mb";
 int CuttlefishConfig::InstanceSpecific::blank_sdcard_image_mb() const {
   return (*Dictionary())[kBlankSdcardImageMb].asInt();
@@ -1515,10 +1507,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath("launcher.log"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::metadata_image() const {
-  return AbsolutePath(PerInstancePath("metadata.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::misc_image() const {

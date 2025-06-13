@@ -16,12 +16,28 @@
 
 #pragma once
 
+#include <string>
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeMetadataImage(
-    const CuttlefishConfig::InstanceSpecific& instance);
+class MetadataImage {
+ public:
+  static Result<MetadataImage> ReuseOrCreate(
+      const CuttlefishConfig::InstanceSpecific&);
+  static Result<MetadataImage> Reuse(const CuttlefishConfig::InstanceSpecific&);
+
+  static std::string Name();
+
+  ImagePartition Partition() const;
+
+ private:
+  MetadataImage(std::string);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish
