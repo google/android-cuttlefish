@@ -82,24 +82,30 @@ type UserArtifactsManagerOpts struct {
 // An implementation of the UserArtifactsManager interface.
 type UserArtifactsManagerImpl struct {
 	UserArtifactsManagerOpts
-	// The root directory where to store artifacts with legacy API calls.
-	commonWorkDir string
-	UuidWorkDir   string
-	mutexes       sync.Map
-	chunkStates   sync.Map
+	WorkDir     string
+	mutexes     sync.Map
+	chunkStates sync.Map
 }
 
 // Creates a new instance of UserArtifactsManagerImpl.
 func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) (*UserArtifactsManagerImpl, error) {
+	if err := createDir(opts.RootDir); err != nil {
+		return nil, fmt.Errorf("failed to create root directory for storing user artifacts: %w", err)
+	}
 	commonWorkDir := filepath.Join(opts.RootDir, "working")
-	UuidWorkDir := filepath.Join(commonWorkDir, uuid.New().String())
-	if err := os.RemoveAll(UuidWorkDir); err != nil {
-		return nil, err
+	if err := createDir(commonWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to create working directory for all Host Orchestrators: %w", err)
+	}
+	uuidWorkDir := filepath.Join(commonWorkDir, uuid.New().String())
+	if err := os.RemoveAll(uuidWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to clean working directory for this Host Orchestrator: %w", err)
+	}
+	if err := createDir(uuidWorkDir); err != nil {
+		return nil, fmt.Errorf("failed to create working directory for this Host Orchestrator: %w", err)
 	}
 	return &UserArtifactsManagerImpl{
 		UserArtifactsManagerOpts: opts,
-		commonWorkDir:            commonWorkDir,
-		UuidWorkDir:              UuidWorkDir,
+		WorkDir:                  uuidWorkDir,
 	}, nil
 }
 
@@ -246,21 +252,11 @@ func (m *UserArtifactsManagerImpl) writeChunkAndUpdateState(checksum string, chu
 	} else if exists {
 		return false, operator.NewConflictError(fmt.Sprintf("user artifact(checksum:%q) already exists", checksum), nil)
 	}
-	if err := createDir(m.RootDir); err != nil {
-		return false, fmt.Errorf("failed to create root directory for storing user artifacts: %w", err)
-	}
-	if err := createDir(m.commonWorkDir); err != nil {
-		return false, fmt.Errorf("failed to create working directory for all Host Orchestrators: %w", err)
-	}
-	if err := createDir(m.UuidWorkDir); err != nil {
-		return false, fmt.Errorf("failed to create working directory for this Host Orchestrator: %w", err)
-	}
-	workDir := filepath.Join(m.UuidWorkDir, checksum)
+	workDir := filepath.Join(m.WorkDir, checksum)
 	if err := createDir(workDir); err != nil {
 		return false, fmt.Errorf("failed to create working directory: %w", err)
 	}
-	workFile := filepath.Join(workDir, chunk.Name)
-	if err := writeChunk(workFile, chunk); err != nil {
+	if err := writeChunk(filepath.Join(workDir, chunk.Name), chunk); err != nil {
 		return false, err
 	}
 	cs := m.getChunkState(checksum, chunk.FileSizeBytes)
@@ -269,7 +265,7 @@ func (m *UserArtifactsManagerImpl) writeChunkAndUpdateState(checksum string, chu
 }
 
 func (m *UserArtifactsManagerImpl) validateChecksum(checksum string, chunk UserArtifactChunk) (bool, error) {
-	workFile := filepath.Join(m.UuidWorkDir, checksum, chunk.Name)
+	workFile := filepath.Join(m.WorkDir, checksum, chunk.Name)
 	f, err := os.Open(workFile)
 	if err != nil {
 		return false, fmt.Errorf("failed to open working file: %w", err)
@@ -306,7 +302,7 @@ func (m *UserArtifactsManagerImpl) moveArtifactIfNeeded(checksum string, chunk U
 		// directory.
 		return nil
 	}
-	workDir := filepath.Join(m.UuidWorkDir, checksum)
+	workDir := filepath.Join(m.WorkDir, checksum)
 	if err := os.Rename(workDir, dir); err != nil {
 		return fmt.Errorf("failed to move the user artifact: %w", err)
 	}

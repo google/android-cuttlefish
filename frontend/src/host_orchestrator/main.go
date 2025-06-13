@@ -132,7 +132,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to prepare UserArtifactsManager: %v", err)
 	}
-	defer os.RemoveAll(uam.UuidWorkDir)
+	defer os.RemoveAll(uam.WorkDir)
 	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{
