@@ -248,6 +248,7 @@ func isIn(code int, codes []int) bool {
 
 type fileInfo struct {
 	Name        string
+	SizeBytes   int64
 	TotalChunks int
 }
 
@@ -265,9 +266,9 @@ type UploadOptions struct {
 }
 
 type FilesUploader struct {
-	HTTPHelper HTTPHelper
-	UploadDir  string
-	DumpOut    io.Writer
+	HTTPHelper     HTTPHelper
+	UploadEndpoint string
+	DumpOut        io.Writer
 	UploadOptions
 }
 
@@ -316,6 +317,7 @@ func (u *FilesUploader) getFilesInfos(files []string) ([]fileInfo, error) {
 		}
 		info := fileInfo{
 			Name:        name,
+			SizeBytes:   stat.Size(),
 			TotalChunks: int((stat.Size() + u.ChunkSizeBytes - 1) / u.ChunkSizeBytes),
 		}
 		infos = append(infos, info)
@@ -328,6 +330,7 @@ func (u *FilesUploader) sendJobs(ctx context.Context, jobsChan chan<- uploadChun
 		for i := 0; i < info.TotalChunks; i++ {
 			job := uploadChunkJob{
 				Filename:       info.Name,
+				FileSizeBytes:  info.SizeBytes,
 				ChunkNumber:    i + 1,
 				TotalChunks:    info.TotalChunks,
 				ChunkSizeBytes: u.ChunkSizeBytes,
@@ -347,7 +350,7 @@ func (u *FilesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 	wg := sync.WaitGroup{}
 	for i := 0; i < u.NumWorkers; i++ {
 		wg.Add(1)
-		w := newUploadChunkWorker(ctx, u.HTTPHelper, u.UploadDir, u.DumpOut, jobsChan, u.UploadOptions)
+		w := newUploadChunkWorker(ctx, u.HTTPHelper, u.UploadEndpoint, u.DumpOut, jobsChan, u.UploadOptions)
 		go func() {
 			defer wg.Done()
 			ch := w.Start()
@@ -364,7 +367,8 @@ func (u *FilesUploader) startWorkers(ctx context.Context, jobsChan <-chan upload
 }
 
 type uploadChunkJob struct {
-	Filename string
+	Filename      string
+	FileSizeBytes int64
 	// A number between 1 and `TotalChunks`. The n-th chunk represents a segment of data within the file with size
 	// `ChunkSizeBytes` starting the `(n-1) * ChunkSizeBytes`-th byte.
 	ChunkNumber    int
@@ -374,17 +378,17 @@ type uploadChunkJob struct {
 
 type uploadChunkWorker struct {
 	UploadOptions
-	ctx        context.Context
-	httpHelper HTTPHelper
-	uploadDir  string
-	dumpOut    io.Writer
-	jobsChan   <-chan uploadChunkJob
+	ctx            context.Context
+	httpHelper     HTTPHelper
+	uploadEndpoint string
+	dumpOut        io.Writer
+	jobsChan       <-chan uploadChunkJob
 }
 
 func newUploadChunkWorker(
 	ctx context.Context,
 	httpHelper HTTPHelper,
-	uploadDir string,
+	uploadEndpoint string,
 	dumpOut io.Writer,
 	jobsChan <-chan uploadChunkJob,
 	opts UploadOptions) *uploadChunkWorker {
@@ -392,12 +396,12 @@ func newUploadChunkWorker(
 		dumpOut = io.Discard
 	}
 	return &uploadChunkWorker{
-		ctx:           ctx,
-		httpHelper:    httpHelper,
-		uploadDir:     uploadDir,
-		dumpOut:       dumpOut,
-		jobsChan:      jobsChan,
-		UploadOptions: opts,
+		ctx:            ctx,
+		httpHelper:     httpHelper,
+		uploadEndpoint: uploadEndpoint,
+		dumpOut:        dumpOut,
+		jobsChan:       jobsChan,
+		UploadOptions:  opts,
 	}
 }
 
@@ -459,7 +463,7 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 	traceCtx := httptrace.WithClientTrace(ctx, clientTrace)
 	res, err := w.httpHelper.NewUploadFileRequest(
 		traceCtx,
-		"/userartifacts/"+w.uploadDir,
+		w.uploadEndpoint,
 		pipeReader,
 		writer.FormDataContentType()).
 		Do()
@@ -467,7 +471,8 @@ func (w *uploadChunkWorker) upload(job uploadChunkJob) error {
 		return err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode != 200 &&
+		res.StatusCode != 409 /* do not fail when chunk is already in the server */ {
 		const msg = "failed uploading file chunk with status code %q. " +
 			"File %q, chunk number: %d, chunk total: %d"
 		return fmt.Errorf(msg, res.Status, filepath.Base(job.Filename), job.ChunkNumber, job.TotalChunks)
@@ -486,6 +491,9 @@ func writeMultipartRequest(writer *multipart.Writer, job uploadChunkJob) error {
 		return err
 	}
 	if err := addFormField(writer, "chunk_offset_bytes", strconv.FormatInt(offset, 10)); err != nil {
+		return err
+	}
+	if err := addFormField(writer, "file_size_bytes", strconv.FormatInt(job.FileSizeBytes, 10)); err != nil {
 		return err
 	}
 	fw, err := writer.CreateFormFile("file", filepath.Base(job.Filename))
