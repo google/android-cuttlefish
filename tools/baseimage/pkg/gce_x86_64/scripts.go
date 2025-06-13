@@ -1,0 +1,126 @@
+// Copyright (C) 2025 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package gce_x86_64
+
+// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/tools/update_gce_kernel.sh;drc=7f601ad9132960b58ee3d7fe8f8b382d20720a22
+const ScriptUpdateKernel = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+sudo apt update
+sudo apt install -t bookworm -y linux-image-cloud-amd64
+sudo reboot
+`
+
+// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/tools/update_gce_kernel.sh;drc=7f601ad9132960b58ee3d7fe8f8b382d20720a22
+const ScriptRemoveOldKernel = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+dpkg --list | grep -v $(uname -r) | grep -E 'linux-image-[0-9]|linux-headers-[0-9]' | awk '{print $2" "$3}' | sort -k2,2 | awk '{print $1}' | xargs sudo apt-get -y purge
+sudo update-grub2
+`
+
+// https://cs.android.com/android/platform/superproject/+/android15-qpr2-release:device/google/cuttlefish/tools/create_base_image_gce.sh;drc=5480406e8fff1706a3901e2d7729b60ba8897aab
+// This script is based on existing create_base_image_gce.sh removing the part of
+// building and installing the cuttlefish debian packages.
+const ScriptCreateBaseImage = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+sudo apt-get update
+
+# Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
+echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
+
+# Resize
+sudo apt install -y cloud-utils
+sudo apt install -y cloud-guest-utils
+sudo apt install -y fdisk
+sudo growpart /dev/sdb 1 || /bin/true
+sudo e2fsck -f -y /dev/sdb1 || /bin/true
+sudo resize2fs /dev/sdb1
+
+# Install relevant packages
+sudo mkdir -p /mnt/image
+sudo mount /dev/sdb1 /mnt/image
+sudo mount -t sysfs none /mnt/image/sys
+sudo mount -t proc none /mnt/image/proc
+sudo mount --bind /boot/efi /mnt/image/boot/efi
+sudo mount --bind /dev/ /mnt/image/dev
+sudo mount --bind /dev/pts /mnt/image/dev/pts
+sudo mount --bind /run /mnt/image/run
+# resolv.conf is needed on Debian but not Ubuntu
+if [ ! -f /mnt/image/etc/resolv.conf ]; then
+  sudo cp /etc/resolv.conf /mnt/image/etc/
+fi
+sudo chroot /mnt/image /usr/bin/apt update
+
+# Install JDK.
+#
+# JDK it's not required to launch a CF device. It's required to run
+# some of Tradefed tests that are run from the CF host side like
+# some CF gfx tests, adb tests, etc.
+sudo chroot /mnt/image /usr/bin/wget -P /usr/java https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
+# https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz.sha256
+export JDK21_SHA256SUM=a2def047a73941e01a73739f92755f86b895811afb1f91243db214cff5bdac3f
+if ! echo "$JDK21_SHA256SUM /usr/java/openjdk-21.0.2_linux-x64_bin.tar.gz" | sudo chroot /mnt/image /usr/bin/sha256sum -c ; then
+  echo "** ERROR: KEY MISMATCH **"; popd >/dev/null; exit 1;
+fi
+sudo chroot /mnt/image /usr/bin/tar xvzf /usr/java/openjdk-21.0.2_linux-x64_bin.tar.gz -C /usr/java
+sudo chroot /mnt/image /usr/bin/rm /usr/java/openjdk-21.0.2_linux-x64_bin.tar.gz
+ENV_JAVA_HOME='/usr/java/jdk-21.0.2'
+echo "JAVA_HOME=$ENV_JAVA_HOME" | sudo chroot /mnt/image /usr/bin/tee -a /etc/environment >/dev/null
+echo "JAVA_HOME=$ENV_JAVA_HOME" | sudo chroot /mnt/image /usr/bin/tee -a /etc/profile >/dev/null
+echo 'PATH=$JAVA_HOME/bin:$PATH' | sudo chroot /mnt/image /usr/bin/tee -a /etc/profile >/dev/null
+echo "PATH=$ENV_JAVA_HOME/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games" | sudo chroot /mnt/image /usr/bin/tee -a /etc/environment >/dev/null
+
+# install tools dependencies
+sudo chroot /mnt/image /usr/bin/apt install -y unzip bzip2 lzop
+sudo chroot /mnt/image /usr/bin/apt install -y aapt
+sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
+
+sudo chroot /mnt/image /usr/bin/find /home -ls
+sudo chroot /mnt/image /usr/bin/apt install -t bookworm -y linux-image-cloud-amd64
+
+# update QEMU version to most recent backport
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -t bookworm
+
+# Install GPU driver dependencies
+# TODO(b/416292723): Uncomment when fixed
+# sudo cp install_nvidia.sh /mnt/image/
+# sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
+# sudo rm /mnt/image/install_nvidia.sh
+
+# Vulkan loader
+sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bookworm
+
+# Wayland-server needed to have Nvidia driver fail gracefully when attempting to
+# use the EGL API on GCE instances without a GPU.
+sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0 -t bookworm
+
+# Clean up the builder's version of resolv.conf
+sudo rm /mnt/image/etc/resolv.conf
+
+# Make sure the image has /var/empty, and allow unprivileged_userns_clone for
+# minijail process sandboxing
+sudo chroot /mnt/image /usr/bin/mkdir -p /var/empty
+sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
+kernel.unprivileged_userns_clone=1
+EOF
+
+# Skip unmounting:
+#  Sometimes systemd starts, making it hard to unmount
+#  In any case we'll unmount cleanly when the instance shuts down
+`
