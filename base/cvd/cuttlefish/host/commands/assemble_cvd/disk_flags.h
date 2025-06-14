@@ -16,10 +16,11 @@
 
 #pragma once
 
-#include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/disk_builder.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/fetcher_config.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
 
@@ -28,8 +29,9 @@ Result<void> ResolveInstanceFiles();
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config);
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config);
-DiskBuilder OsCompositeDiskBuilder(const CuttlefishConfig& config,
-                                   const CuttlefishConfig::InstanceSpecific& instance);
+DiskBuilder OsCompositeDiskBuilder(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&);
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
                                    const CuttlefishConfig::InstanceSpecific& instance);
 
