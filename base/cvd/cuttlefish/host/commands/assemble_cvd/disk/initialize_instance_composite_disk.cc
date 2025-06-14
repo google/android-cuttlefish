@@ -34,7 +34,8 @@ namespace cuttlefish {
 namespace {
 
 std::vector<ImagePartition> PersistentCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::optional<BootConfigPartition>& bootconfig_partition) {
   std::vector<ImagePartition> partitions;
 
   // Note that if the position of uboot_env changes, the environment for
@@ -53,11 +54,8 @@ std::vector<ImagePartition> PersistentCompositeDiskConfig(
       .image_file_path =
           AbsolutePath(instance.factory_reset_protected_path()),
   });
-  if (instance.bootconfig_supported()) {
-    partitions.push_back(ImagePartition{
-        .label = "bootconfig",
-        .image_file_path = AbsolutePath(instance.persistent_bootconfig_path()),
-    });
+  if (bootconfig_partition) {
+    partitions.push_back(bootconfig_partition->Partition());
   }
   return partitions;
 }
@@ -90,6 +88,7 @@ Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<InitializeFactoryResetProtected>::Type& /* dependency */,
+    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& bootconfig_partition,
     AutoSetup<GeneratePersistentVbmeta>::Type& /* dependency */) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
     return instance.PerInstancePath(path.c_str());
@@ -97,7 +96,8 @@ Result<void> InitializeInstanceCompositeDisk(
   auto persistent_disk_builder =
       DiskBuilder()
           .ReadOnly(false)
-          .Partitions(PersistentCompositeDiskConfig(instance))
+          .Partitions(
+              PersistentCompositeDiskConfig(instance, *bootconfig_partition))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("persistent_composite_disk_config.txt"))

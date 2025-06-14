@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 
 #include <string.h>
 #include <unistd.h>
 
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <regex>
 #include <string>
 
@@ -28,13 +29,13 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {
@@ -409,10 +410,10 @@ bool RepackVendorBootImageWithEmptyRamdisk(
       new_vendor_boot_image_path, unpack_dir, bootconfig_supported);
 }
 
-void RepackGem5BootImage(const std::string& initrd_path,
-                         const std::string& bootconfig_path,
-                         const std::string& unpack_dir,
-                         const std::string& input_ramdisk_path) {
+void RepackGem5BootImage(
+    const std::string& initrd_path,
+    const std::optional<BootConfigPartition>& bootconfig_partition,
+    const std::string& unpack_dir, const std::string& input_ramdisk_path) {
   // Simulate per-instance what the bootloader would usually do
   // Since on other devices this runs every time, just do it here every time
   std::ofstream final_rd(initrd_path,
@@ -438,9 +439,11 @@ void RepackGem5BootImage(const std::string& initrd_path,
   auto vb_size = vendor_boot_bootconfig.tellg();
   vendor_boot_bootconfig.seekg(0);
 
-  std::ifstream persistent_bootconfig(bootconfig_path,
-                                      std::ios_base::binary |
-                                      std::ios_base::ate);
+  std::ifstream persistent_bootconfig =
+      bootconfig_partition
+          ? std::ifstream(bootconfig_partition->Path(),
+                          std::ios_base::binary | std::ios_base::ate)
+          : std::ifstream();
 
   auto pb_size = persistent_bootconfig.tellg();
   persistent_bootconfig.seekg(0);

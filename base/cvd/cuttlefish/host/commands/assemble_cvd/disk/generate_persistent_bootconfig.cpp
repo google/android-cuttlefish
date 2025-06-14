@@ -17,25 +17,24 @@
 #include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 
 #include <memory>
+#include <optional>
 #include <string>
-#include <unordered_set>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/size_utils.h"
-#include "host/commands/assemble_cvd/bootconfig_args.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/data_image.h"
-#include "host/libs/config/known_paths.h"
-#include "host/libs/feature/feature.h"
-#include "host/libs/vm_manager/gem5_manager.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-Result<void> GeneratePersistentBootconfig(
+Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   //  Cuttlefish for the time being won't be able to support OTA from a
@@ -44,9 +43,11 @@ Result<void> GeneratePersistentBootconfig(
   //  testing run on cuttlefish is done within one launch cycle of the device.
   //  If this ever becomes an issue, this code will have to be rewritten.
   if (!instance.bootconfig_supported()) {
-    return {};
+    return std::nullopt;
   }
-  const auto bootconfig_path = instance.persistent_bootconfig_path();
+  const std::string bootconfig_path =
+      instance.PerInstanceInternalPath("bootconfig");
+
   if (!FileExists(bootconfig_path)) {
     CF_EXPECT(CreateBlankImage(bootconfig_path, 1 /* mb */, "none"),
               "Failed to create image at " << bootconfig_path);
@@ -87,7 +88,19 @@ Result<void> GeneratePersistentBootconfig(
     CF_EXPECT(avbtool->AddHashFooter(bootconfig_path, "bootconfig",
                                      bootconfig_size_bytes));
   }
-  return {};
+
+  return BootConfigPartition(std::move(bootconfig_path));
+}
+
+BootConfigPartition::BootConfigPartition(std::string path) : path_(path) {}
+
+const std::string& BootConfigPartition::Path() const { return path_; }
+
+ImagePartition BootConfigPartition::Partition() const {
+  return ImagePartition{
+      .label = "bootconfig",
+      .image_file_path = AbsolutePath(path_),
+  };
 }
 
 }  // namespace cuttlefish

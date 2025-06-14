@@ -15,10 +15,12 @@
  */
 #pragma once
 
+#include <optional>
 #include <string>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/avb/avb.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "cuttlefish/host/libs/avb/avb.h"
 
 namespace cuttlefish {
 
@@ -43,7 +45,7 @@ Result<void> UnpackBootImage(const std::string& boot_image_path,
 bool UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir);
 void RepackGem5BootImage(const std::string& initrd_path,
-                         const std::string& bootconfig_path,
+                         const std::optional<BootConfigPartition>&,
                          const std::string& unpack_dir,
                          const std::string& input_ramdisk_path);
 Result<std::string> ReadAndroidVersionFromBootImage(

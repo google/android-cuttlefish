@@ -27,6 +27,6 @@ namespace cuttlefish {
 Result<void> GeneratePersistentVbmeta(
     const CuttlefishConfig::InstanceSpecific&,
     AutoSetup<InitBootloaderEnvPartition>::Type&,
-    AutoSetup<GeneratePersistentBootconfig>::Type&);
+    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
 
 }  // namespace cuttlefish
