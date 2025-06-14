@@ -4,7 +4,7 @@
 
 set -o errexit
 
-URL=https://ci.android.com/builds/latest/branches/aosp-main-throttled/targets/aosp_cf_arm64_only_phone-trunk_staging-userdebug/view/BUILD_INFO
+URL=https://ci.android.com/builds/latest/branches/aosp-android-latest-release/targets/aosp_cf_arm64_only_phone-userdebug/view/BUILD_INFO
 RURL=$(curl -Ls -o /dev/null -w %{url_effective} ${URL})
 echo $RURL
 
