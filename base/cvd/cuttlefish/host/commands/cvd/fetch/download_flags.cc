@@ -13,17 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 
-#include <string>
-
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/get_optional.h"
 
 namespace cuttlefish {
 
-std::string GetFetchLogsFileName(const std::string& target_directory);
-
-Result<void> FetchCvdMain(const FetchFlags& flags);
+DownloadFlags DownloadFlags::Create(const VectorFlags& flags, const int index) {
+  return DownloadFlags{
+      .download_img_zip = GetOptional(flags.download_img_zip, index)
+                              .value_or(kDefaultDownloadImgZip),
+      .download_target_files_zip =
+          GetOptional(flags.download_target_files_zip, index)
+              .value_or(kDefaultDownloadTargetFilesZip),
+  };
+}
 
 }  // namespace cuttlefish

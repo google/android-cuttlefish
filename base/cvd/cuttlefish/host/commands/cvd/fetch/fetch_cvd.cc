@@ -33,14 +33,16 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_strings.h"
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
+#include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/extract_image_contents.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
-#include "cuttlefish/host/commands/cvd/fetch/get_optional.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
-#include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
+#include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
 #include "cuttlefish/host/libs/web/android_build.h"
@@ -56,31 +58,6 @@ namespace {
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
-
-struct BuildStrings {
-  std::optional<BuildString> default_build;
-  std::optional<BuildString> system_build;
-  std::optional<BuildString> kernel_build;
-  std::optional<BuildString> boot_build;
-  std::optional<BuildString> bootloader_build;
-  std::optional<BuildString> android_efi_loader_build;
-  std::optional<BuildString> otatools_build;
-  std::optional<BuildString> host_package_build;
-  std::optional<ChromeOsBuildString> chrome_os_build;
-};
-
-struct DownloadFlags {
-  bool download_img_zip;
-  bool download_target_files_zip;
-};
-
-struct TargetDirectories {
-  std::string root;
-  std::string otatools;
-  std::string default_target_files;
-  std::string system_target_files;
-  std::string chrome_os;
-};
 
 struct Builds {
   std::optional<Build> default_build;
@@ -100,60 +77,9 @@ struct Target {
   Builds builds;
 };
 
-struct HostToolsTarget {
-  std::optional<BuildString> build_string;
-  std::string host_tools_directory;
-};
-
 bool ShouldAppendSubdirectory(const FetchFlags& flags) {
   return flags.vector_flags.NumberOfBuilds().value_or(1) > 1 ||
          !flags.vector_flags.target_subdirectory.empty();
-}
-
-BuildStrings GetBuildStrings(const VectorFlags& flags, const int index) {
-  auto build_strings = BuildStrings{
-      .default_build = GetOptional(flags.default_build, index),
-      .system_build = GetOptional(flags.system_build, index),
-      .kernel_build = GetOptional(flags.kernel_build, index),
-      .boot_build = GetOptional(flags.boot_build, index),
-      .bootloader_build = GetOptional(flags.bootloader_build, index),
-      .android_efi_loader_build =
-          GetOptional(flags.android_efi_loader_build, index),
-      .otatools_build = GetOptional(flags.otatools_build, index),
-      .chrome_os_build = GetOptional(flags.chrome_os_build, index),
-  };
-  auto possible_boot_artifact =
-      GetOptional(flags.boot_artifact, index).value_or("");
-  if (!possible_boot_artifact.empty() && build_strings.boot_build) {
-    SetFilepath(*build_strings.boot_build, possible_boot_artifact);
-  }
-  return build_strings;
-}
-
-DownloadFlags GetDownloadFlags(const VectorFlags& flags, const int index) {
-  return DownloadFlags{
-      .download_img_zip = GetOptional(flags.download_img_zip, index)
-                              .value_or(kDefaultDownloadImgZip),
-      .download_target_files_zip =
-          GetOptional(flags.download_target_files_zip, index)
-              .value_or(kDefaultDownloadTargetFilesZip),
-  };
-}
-
-TargetDirectories GetTargetDirectories(
-    const std::string& target_directory,
-    const std::vector<std::string>& target_subdirectories, const int index,
-    const bool append_subdirectory) {
-  std::string base_directory = target_directory;
-  if (append_subdirectory) {
-    base_directory += "/" + GetOptional(target_subdirectories, index)
-                                .value_or("instance_" + std::to_string(index));
-  }
-  return TargetDirectories{.root = base_directory,
-                           .otatools = base_directory + "/otatools/",
-                           .default_target_files = base_directory + "/default",
-                           .system_target_files = base_directory + "/system",
-                           .chrome_os = base_directory + "/chromeos"};
 }
 
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
@@ -161,26 +87,14 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
   std::vector<Target> result(flags.vector_flags.NumberOfBuilds().value_or(1));
   for (std::size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
-        .build_strings = GetBuildStrings(flags.vector_flags, i),
-        .download_flags = GetDownloadFlags(flags.vector_flags, i),
-        .directories = GetTargetDirectories(
+        .build_strings = BuildStrings::Create(flags.vector_flags, i),
+        .download_flags = DownloadFlags::Create(flags.vector_flags, i),
+        .directories = TargetDirectories::Create(
             flags.target_directory, flags.vector_flags.target_subdirectory, i,
             append_subdirectory),
     };
   }
   return result;
-}
-
-HostToolsTarget GetHostToolsTarget(const FetchFlags& flags,
-                                   const bool append_subdirectory) {
-  std::string host_directory = flags.target_directory;
-  if (append_subdirectory) {
-    host_directory = host_directory + "/" + kHostToolsSubdirectory;
-  }
-  return HostToolsTarget{
-      .build_string = flags.host_package_build,
-      .host_tools_directory = host_directory,
-  };
 }
 
 Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
@@ -219,10 +133,9 @@ Result<std::optional<Build>> GetBuildHelper(
   if (!build_source) {
     return std::nullopt;
   }
-  return CF_EXPECT(build_api.GetBuild(*build_source, fallback_target),
-                   "Unable to create build from ("
-                       << *build_source << ") and target (" << fallback_target
-                       << ")");
+  BuildString source = WithFallbackTarget(*build_source, fallback_target);
+  return CF_EXPECT(build_api.GetBuild(source),
+                   "Unable to create build from (" << source << ")");
 }
 
 Result<Builds> GetBuilds(BuildApi& build_api,
@@ -740,7 +653,8 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
 Result<void> FetchCvdMain(const FetchFlags& flags) {
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
-  HostToolsTarget host_target = GetHostToolsTarget(flags, append_subdirectory);
+  HostToolsTarget host_target =
+      HostToolsTarget::Create(flags, append_subdirectory);
   CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory, targets));
   CF_EXPECT(Fetch(flags, host_target, targets));
   return {};

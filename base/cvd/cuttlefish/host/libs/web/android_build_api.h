@@ -45,17 +45,16 @@ class AndroidBuildApi : public BuildApi {
                   std::string api_base_url, std::string project_id,
                   CasDownloader* cas_downloader = nullptr);
 
-  Result<Build> GetBuild(const BuildString& build_string,
-                         const std::string& fallback_target);
+  Result<Build> GetBuild(const BuildString& build_string) override;
 
   Result<std::string> DownloadFile(const Build& build,
                                    const std::string& target_directory,
-                                   const std::string& artifact_name);
+                                   const std::string& artifact_name) override;
 
   Result<std::string> DownloadFileWithBackup(
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name,
-      const std::string& backup_artifact_name);
+      const std::string& backup_artifact_name) override;
 
  private:
   Result<std::vector<std::string>> Headers();
@@ -98,10 +97,8 @@ class AndroidBuildApi : public BuildApi {
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name);
 
-  Result<Build> GetBuild(const DeviceBuildString& build_string,
-                         const std::string& fallback_target);
-  Result<Build> GetBuild(const DirectoryBuildString& build_string,
-                         const std::string& fallback_target);
+  Result<Build> GetBuild(const DeviceBuildString& build_string);
+  Result<Build> GetBuild(const DirectoryBuildString& build_string);
 
   HttpClient& http_client;
   CredentialSource* credential_source;

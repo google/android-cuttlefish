@@ -67,4 +67,6 @@ Flag GflagsCompatFlag(const std::string& name,
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<BuildString>>& value);
 
+BuildString WithFallbackTarget(BuildString build_string, std::string fallback);
+
 }  // namespace cuttlefish

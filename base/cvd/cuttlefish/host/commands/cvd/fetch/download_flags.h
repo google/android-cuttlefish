@@ -15,15 +15,15 @@
 
 #pragma once
 
-#include <string>
-
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 
 namespace cuttlefish {
 
-std::string GetFetchLogsFileName(const std::string& target_directory);
+struct DownloadFlags {
+  static DownloadFlags Create(const VectorFlags& flags, int index);
 
-Result<void> FetchCvdMain(const FetchFlags& flags);
+  bool download_img_zip;
+  bool download_target_files_zip;
+};
 
 }  // namespace cuttlefish

@@ -29,8 +29,7 @@ class CachingBuildApi : public BuildApi {
  public:
   CachingBuildApi(BuildApi& build_api, std::string cache_base_path);
 
-  Result<Build> GetBuild(const BuildString& build_string,
-                         const std::string& fallback_target) override;
+  Result<Build> GetBuild(const BuildString& build_string) override;
   Result<std::string> DownloadFile(const Build& build,
                                    const std::string& target_directory,
                                    const std::string& artifact_name) override;

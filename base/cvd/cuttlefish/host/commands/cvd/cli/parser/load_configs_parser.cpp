@@ -45,7 +45,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/fetch_config_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/selector_parser.h"
-#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {

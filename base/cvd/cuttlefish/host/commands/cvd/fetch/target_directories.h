@@ -16,14 +16,21 @@
 #pragma once
 
 #include <string>
-
-#include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include <vector>
 
 namespace cuttlefish {
 
-std::string GetFetchLogsFileName(const std::string& target_directory);
+struct TargetDirectories {
+  static TargetDirectories Create(
+      const std::string& target_directory,
+      const std::vector<std::string>& target_subdirectories, int index,
+      bool append_subdirectory);
 
-Result<void> FetchCvdMain(const FetchFlags& flags);
+  std::string root;
+  std::string otatools;
+  std::string default_target_files;
+  std::string system_target_files;
+  std::string chrome_os;
+};
 
 }  // namespace cuttlefish
