@@ -30,6 +30,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/disk/access_kregistry.h"
@@ -386,11 +387,13 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(AutoSetup<InitializeHwcomposerPmemImage>::Component)
       .install(AutoSetup<InitializePstore>::Component)
       .install(AutoSetup<InitializeSdCard>::Component)
-      .install(AutoSetup<GeneratePersistentBootconfig>::Component)
+      .install(AutoSetup<BootConfigPartition::CreateIfNeeded>::Component)
       .install(AutoSetup<GeneratePersistentVbmeta>::Component)
       .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
       .install(AutoSetup<InitializeDataImage>::Component)
-      .install(AutoSetup<InitializePflash>::Component);
+      .install(AutoSetup<InitializePflash>::Component)
+      .addMultibinding<AutoSetup<BootConfigPartition::CreateIfNeeded>::Type,
+                       AutoSetup<BootConfigPartition::CreateIfNeeded>::Type>();
 }
 
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config) {
@@ -782,21 +785,27 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       ap_disk_builder.OverlayPath(instance.PerInstancePath("ap_overlay.img"));
       CF_EXPECT(ap_disk_builder.BuildOverlayIfNecessary());
     }
-  }
 
-  for (auto instance : config.Instances()) {
     // Check that the files exist
     for (const auto& file : instance.virtual_disk_paths()) {
       if (!file.empty()) {
         CF_EXPECT(FileHasContent(file), "File not found: \"" << file << "\"");
       }
     }
+
+    std::vector<AutoSetup<BootConfigPartition::CreateIfNeeded>::Type*>
+        bootconfig_binding = instance_injector.getMultibindings<
+            AutoSetup<BootConfigPartition::CreateIfNeeded>::Type>();
+    CF_EXPECT(!bootconfig_binding.empty());
+
+    const std::optional<BootConfigPartition>& bootconfig_partition =
+        **(bootconfig_binding[0]);
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
     if (config.vm_manager() == VmmMode::kGem5) {
       RepackGem5BootImage(instance.PerInstancePath("initrd.img"),
-                          instance.persistent_bootconfig_path(),
-                          config.assembly_dir(), instance.initramfs_path());
+                          bootconfig_partition, config.assembly_dir(),
+                          instance.initramfs_path());
     }
   }
 

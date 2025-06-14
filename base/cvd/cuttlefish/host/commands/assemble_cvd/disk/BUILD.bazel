@@ -211,9 +211,7 @@ cc_library(
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
-        "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/host/libs/feature",
-        "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/host/libs/image_aggregator",
     ],
 )
 
@@ -280,6 +278,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
+        "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_vbmeta",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/libs/config:ap_boot_flow",

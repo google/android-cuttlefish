@@ -16,12 +16,28 @@
 
 #pragma once
 
-#include "common/libs/utils/result.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include <optional>
+#include <string>
+
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-Result<void> GeneratePersistentBootconfig(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+class BootConfigPartition {
+ public:
+  static Result<std::optional<BootConfigPartition>> CreateIfNeeded(
+      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+
+  const std::string& Path() const;
+
+  ImagePartition Partition() const;
+
+ private:
+  BootConfigPartition(std::string path);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish

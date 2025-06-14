@@ -54,7 +54,7 @@ static bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
 Result<void> GeneratePersistentVbmeta(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<InitBootloaderEnvPartition>::Type& /* dependency */,
-    AutoSetup<GeneratePersistentBootconfig>::Type& /* dependency */) {
+    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& /* dependency */) {
   CF_EXPECT(PrepareVBMetaImage(instance.vbmeta_path(),
                                instance.bootconfig_supported()));
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
