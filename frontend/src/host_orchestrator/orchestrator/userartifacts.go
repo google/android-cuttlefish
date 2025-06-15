@@ -107,9 +107,12 @@ func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
 	if err := createDir(m.LegacyRootDir); err != nil {
 		return nil, err
 	}
-	dir, err := createNewUADir(m.LegacyRootDir)
+	dir, err := ioutil.TempDir(m.LegacyRootDir, "")
 	if err != nil {
 		return nil, err
+	}
+	if err := os.Chmod(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to grant read permission at %q: %w", dir, err)
 	}
 	log.Println("created new user artifact directory", dir)
 	return &apiv1.UploadDirectory{Name: filepath.Base(dir)}, nil
@@ -177,9 +180,6 @@ func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserA
 		return operator.NewBadRequestError("upload directory %q does not exist", err)
 	}
 	filename := filepath.Join(dir, chunk.Name)
-	if err := createUAFile(filename); err != nil {
-		return err
-	}
 	if err := writeChunk(filename, chunk); err != nil {
 		return err
 	}
@@ -216,7 +216,7 @@ func dirExists(dir string) (bool, error) {
 }
 
 func writeChunk(filename string, chunk UserArtifactChunk) error {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0664)
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to open or create working file: %w", err)
 	}
@@ -361,10 +361,7 @@ func Unzip(dstDir string, src string) error {
 			return err
 		}
 		defer rc.Close()
-		if err := createUAFile(dst); err != nil {
-			return err
-		}
-		dstFile, err := os.OpenFile(dst, os.O_WRONLY, 0664)
+		dstFile, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, 0755)
 		if err != nil {
 			return err
 		}
@@ -383,33 +380,6 @@ func Unzip(dstDir string, src string) error {
 		if err := extractTo(filepath.Join(dstDir, f.Name), f); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func createNewUADir(parent string) (string, error) {
-	ctx := exec.CommandContext
-	stdout, err := hoexec.Exec(ctx, "mktemp", "--directory", "-p", parent)
-	if err != nil {
-		return "", err
-	}
-	name := strings.TrimRight(stdout, "\n")
-	// Sets permission regardless of umask.
-	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rwx,o=r", name); err != nil {
-		return "", err
-	}
-	return name, nil
-}
-
-func createUAFile(filename string) error {
-	ctx := exec.CommandContext
-	_, err := hoexec.Exec(ctx, "touch", filename)
-	if err != nil {
-		return err
-	}
-	// Sets permission regardless of umask.
-	if _, err := hoexec.Exec(ctx, "chmod", "u=rwx,g=rw,o=r", filename); err != nil {
-		return err
 	}
 	return nil
 }
