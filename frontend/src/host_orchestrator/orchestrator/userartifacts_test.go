@@ -15,6 +15,7 @@
 package orchestrator
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -179,8 +180,8 @@ func TestUpdateArtifactWithDirSucceeds(t *testing.T) {
 	}
 }
 
-func getSha256Sum(data string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
+func getSha256Sum(data []byte) string {
+	return fmt.Sprintf("%x", sha256.Sum256(data))
 }
 
 func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
@@ -194,7 +195,7 @@ func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checksum := getSha256Sum(testFileData)
+	checksum := getSha256Sum([]byte(testFileData))
 	chunk := UserArtifactChunk{
 		Name:          testFileName,
 		OffsetBytes:   0,
@@ -205,7 +206,7 @@ func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
 		t.Fatal(err)
 	}
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, getSha256Sum(testFileData), testFileName))
+	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,7 +216,7 @@ func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 }
 
 func TestUpdateArtifactFailsWithInvalidInput(t *testing.T) {
-	checksum := getSha256Sum(testFileData)
+	checksum := getSha256Sum([]byte(testFileData))
 	chunks := map[string]UserArtifactChunk{
 		"NegativeChunkOffset": {
 			Name:          testFileName,
@@ -276,7 +277,7 @@ func TestUpdateArtifactAfterArtifactIsFullyUploadedFails(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checksum := getSha256Sum(testFileData)
+	checksum := getSha256Sum([]byte(testFileData))
 	chunk := UserArtifactChunk{
 		Name:          testFileName,
 		OffsetBytes:   0,
@@ -322,14 +323,14 @@ func TestUpdateArtifactWithMultipleSerialChunkSucceeds(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checksum := getSha256Sum(testFileData)
+	checksum := getSha256Sum([]byte(testFileData))
 	chunks := constructSeparatedChunks(testFileName, testFileData)
 	for _, chunk := range chunks {
 		if err := uam.UpdateArtifact(checksum, chunk); err != nil {
 			t.Fatal(err)
 		}
 	}
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, getSha256Sum(testFileData), testFileName))
+	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -349,7 +350,7 @@ func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	checksum := getSha256Sum(testFileData)
+	checksum := getSha256Sum([]byte(testFileData))
 	chunks := constructSeparatedChunks(testFileName, testFileData)
 	wg := sync.WaitGroup{}
 	wg.Add(len(chunks))
@@ -362,7 +363,7 @@ func TestUpdateArtifactWithMultipleParallelChunkSucceeds(t *testing.T) {
 		}(chunk)
 	}
 	wg.Wait()
-	b, err := ioutil.ReadFile(filepath.Join(rootDir, getSha256Sum(testFileData), testFileName))
+	b, err := ioutil.ReadFile(filepath.Join(rootDir, checksum, testFileName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -397,7 +398,7 @@ func TestStatArtifactSucceeds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	checksum := getSha256Sum(testFileData)
+	checksum := getSha256Sum([]byte(testFileData))
 	chunk := UserArtifactChunk{
 		Name:          testFileName,
 		OffsetBytes:   0,
@@ -411,6 +412,191 @@ func TestStatArtifactSucceeds(t *testing.T) {
 
 	if _, err := uam.StatArtifact(checksum); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func getContents(dir string) (map[string]string, error) {
+	contents := make(map[string]string)
+	walkFunc := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if relPath, err := filepath.Rel(dir, path); err != nil {
+			return err
+		} else if content, err := ioutil.ReadFile(path); err != nil {
+			return err
+		} else {
+			contents[relPath] = string(content)
+		}
+		return nil
+	}
+	if err := filepath.Walk(dir, walkFunc); err != nil {
+		return nil, err
+	}
+	return contents, nil
+}
+
+func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile("test_data/test.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum(data)
+	chunk := UserArtifactChunk{
+		Name:          "test.zip",
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(data)),
+		FileSizeBytes: int64(len(data)),
+		File:          bytes.NewReader(data),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := uam.ExtractArtifact(checksum); err != nil {
+		t.Fatal(err)
+	}
+	expected := map[string]string{
+		"alpha.txt":   "This is alpha.\n",
+		"bravo.txt":   "This is bravo.\n",
+		"charlie.txt": "This is charlie.\n",
+		"delta.txt":   "This is delta.\n",
+	}
+	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(expected, got); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile("test_data/test.tar.gz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum(data)
+	chunk := UserArtifactChunk{
+		Name:          "test.tar.gz",
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(data)),
+		FileSizeBytes: int64(len(data)),
+		File:          bytes.NewReader(data),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := uam.ExtractArtifact(checksum); err != nil {
+		t.Fatal(err)
+	}
+	expected := map[string]string{
+		"foo/alpha.txt":   "This is alpha.\n",
+		"foo/bravo.txt":   "This is bravo.\n",
+		"bar/charlie.txt": "This is charlie.\n",
+		"delta.txt":       "This is delta.\n",
+	}
+	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(expected, got); diff != "" {
+		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestExtractArtifactFailsWithInvalidFileFormat(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum([]byte(testFileData))
+	chunk := UserArtifactChunk{
+		Name:          testFileName,
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(testFileData)),
+		FileSizeBytes: int64(len(testFileData)),
+		File:          strings.NewReader(testFileData),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := uam.ExtractArtifact(checksum); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactAfterArtifactIsFullyExtractedFails(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile("test_data/test.tar.gz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum(data)
+	chunk := UserArtifactChunk{
+		Name:          "test.tar.gz",
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(data)),
+		FileSizeBytes: int64(len(data)),
+		File:          bytes.NewReader(data),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+	if err := uam.ExtractArtifact(checksum); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := uam.ExtractArtifact(checksum); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestExtractArtifactFailsArtifactNotFound(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := uam.ExtractArtifact("foo"); err == nil {
+		t.Fatal("Expected an error")
 	}
 }
 
