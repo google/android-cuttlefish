@@ -99,6 +99,7 @@ func main() {
 	imRootDir := flag.String("cvd_artifacts_dir", defaultCVDArtifactsDir(), "Directory where cvd will download android build artifacts to.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
 	logFile := flag.String("log_file", "", "Path to file to write logs to.")
+	buildAPICredsUseGCEMetadata := flag.Bool("build_api_credentials_use_gce_metadata", false, "Indicates whether to use the GCE metadata to get the Build API credentials")
 
 	flag.Parse()
 
@@ -139,6 +140,9 @@ func main() {
 		Config: orchestrator.Config{
 			Paths:                  imPaths,
 			AndroidBuildServiceURL: *abURL,
+			BuildAPICredentials: orchestrator.BuildAPICredentialsConfig{
+				UseGCEMetadata: *buildAPICredsUseGCEMetadata,
+			},
 		},
 		OperationManager:      om,
 		WaitOperationDuration: 2 * time.Minute,

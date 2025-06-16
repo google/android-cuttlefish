@@ -24,3 +24,7 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 # The port where the operator is to listen on.
 # Defaults to 1080.
 # operator_http_port=
+#
+# Indicates whether to use the GCE metadata to get the Build API credentials.
+# Defaults to false.
+# build_api_credentials_use_gce_metadata=
