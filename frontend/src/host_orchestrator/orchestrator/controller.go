@@ -45,6 +45,11 @@ const (
 type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
+	BuildAPICredentials    BuildAPICredentialsConfig
+}
+
+type BuildAPICredentialsConfig struct {
+	UseGCEMetadata bool
 }
 
 type Controller struct {
@@ -181,7 +186,7 @@ func (h *fetchArtifactsHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	creds := getFetchCredentials(r)
+	creds := getFetchCredentials(h.Config.BuildAPICredentials, r)
 	cvdBundleFetcher :=
 		newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds, h.Config.AndroidBuildServiceURL)
 	opts := FetchArtifactsActionOpts{
@@ -223,7 +228,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
 	}
-	creds := getFetchCredentials(r)
+	creds := getFetchCredentials(h.Config.BuildAPICredentials, r)
 	cvdBundleFetcher := newFetchCVDCommandArtifactsFetcher(exec.CommandContext, creds, h.Config.AndroidBuildServiceURL)
 	opts := CreateCVDActionOpts{
 		Request:                  req,
@@ -717,25 +722,35 @@ func okHandler() http.Handler {
 	})
 }
 
-func getFetchCredentials(r *http.Request) cvd.FetchCredentials {
-	creds := cvd.FetchCredentials{}
+func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.FetchCredentials {
 	accessToken := r.Header.Get(HeaderBuildAPICreds)
 	if accessToken != "" {
-		creds.AccessTokenCredentials = cvd.AccessTokenCredentials{
-			AccessToken:   accessToken,
-			UserProjectID: r.Header.Get(HeaderUserProject),
+		log.Println("fetch credentials: using end user credentials")
+		return cvd.FetchCredentials{
+			AccessTokenCredentials: cvd.AccessTokenCredentials{
+				AccessToken:   accessToken,
+				UserProjectID: r.Header.Get(HeaderUserProject),
+			},
 		}
-	} else {
-		log.Printf("fetch credentials: no access token provided by client")
-		if isRunningOnGCE() {
-			log.Println("fetch credentials: running on gce")
-			if ok, err := hasServiceAccountAccessToken(); err != nil {
-				log.Printf("fetch credentials: service account token check failed: %s", err)
-			} else if ok {
-				log.Println("fetch credentials: using gce service account credentials")
-				creds.UseGCEServiceAccountCredentials = true
+	}
+	if config.UseGCEMetadata {
+		log.Println("fetch credentials: using gce service account credentials")
+		return cvd.FetchCredentials{
+			UseGCEServiceAccountCredentials: true,
+		}
+	}
+	// TODO(b/425716010): Remove the following block, and use `config.UseGCEMetadata` instead
+	if isRunningOnGCE() {
+		log.Println("fetch credentials: running on gce")
+		if ok, err := hasServiceAccountAccessToken(); err != nil {
+			log.Printf("fetch credentials: service account token check failed: %s", err)
+		} else if ok {
+			log.Println("fetch credentials: using gce service account credentials")
+			return cvd.FetchCredentials{
+				UseGCEServiceAccountCredentials: true,
 			}
 		}
 	}
-	return creds
+	log.Println("fetch credentials: using no credentials")
+	return cvd.FetchCredentials{}
 }

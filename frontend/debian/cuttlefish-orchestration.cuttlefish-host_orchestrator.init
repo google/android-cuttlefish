@@ -73,6 +73,9 @@ start_orchestrator() {
   if [[ -n "${orchestrator_listen_address}" ]]; then
     args+=("--listen_addr=${orchestrator_listen_address}")
   fi
+  if [[ -n "${build_api_credentials_use_gce_metadata}" ]]; then
+    args+=("--build_api_credentials_use_gce_metadata=${build_api_credentials_use_gce_metadata}")
+  fi
 
   start-stop-daemon --start \
     --pidfile "${ORCHESTRATOR_PIDFILE}" \
