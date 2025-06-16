@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/web/remote_zip.h"
+#include "cuttlefish/host/libs/zip/remote_zip.h"
 
 #include <stdint.h>
 #include <stdlib.h>
