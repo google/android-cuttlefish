@@ -31,7 +31,7 @@ func TestCreateCVDInvalidRequestsEmptyFields(t *testing.T) {
 					AndroidCIBuildSource: &apiv1.AndroidCIBuildSource{
 						MainBuild: &apiv1.AndroidCIBuild{
 							BuildID: "1234",
-							Target:  "aosp_cf_x86_64_phone-trunk_staging-userdebug",
+							Target:  "aosp_cf_x86_64_only_phone-userdebug",
 						},
 					},
 				},
