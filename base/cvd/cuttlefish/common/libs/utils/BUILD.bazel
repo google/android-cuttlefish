@@ -29,6 +29,7 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//libbase",
