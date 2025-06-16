@@ -1,1 +1,3 @@
+build --build_tag_filters=-clang_tidy,-clang-tidy
 build --copt=-fdiagnostics-color=always
+build --test_summary=terse
