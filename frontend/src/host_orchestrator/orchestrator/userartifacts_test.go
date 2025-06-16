@@ -15,7 +15,10 @@
 package orchestrator
 
 import (
+	"archive/tar"
+	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -439,6 +442,34 @@ func getContents(dir string) (map[string]string, error) {
 	return contents, nil
 }
 
+func createZip(dir string, contents map[string]string) (string, error) {
+	zipFile, err := ioutil.TempFile(dir, "*.zip")
+	if err != nil {
+		return "", err
+	}
+	defer zipFile.Close()
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	for name, content := range contents {
+		header := zip.FileHeader{
+			Name: name,
+		}
+		writer, err := zipWriter.CreateHeader(&header)
+		if err != nil {
+			return "", err
+		}
+		if n, err := writer.Write([]byte(content)); err != nil {
+			return "", err
+		} else if n != len(content) {
+			return "", fmt.Errorf("Failed to write entire file: %s", name)
+		}
+	}
+
+	return zipFile.Name(), nil
+}
+
 func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	legacyRootDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, legacyRootDir)
@@ -449,13 +480,25 @@ func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile("test_data/test.zip")
+	zipContents := map[string]string{
+		"alpha.txt":   "This is alpha.\n",
+		"bravo.txt":   "This is bravo.\n",
+		"charlie.txt": "This is charlie.\n",
+		"delta.txt":   "This is delta.\n",
+	}
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	zipFile, err := createZip(tempDir, zipContents)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile(zipFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 	checksum := getSha256Sum(data)
 	chunk := UserArtifactChunk{
-		Name:          "test.zip",
+		Name:          filepath.Base(zipFile),
 		OffsetBytes:   0,
 		SizeBytes:     int64(len(data)),
 		FileSizeBytes: int64(len(data)),
@@ -468,17 +511,75 @@ func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	if err := uam.ExtractArtifact(checksum); err != nil {
 		t.Fatal(err)
 	}
-	expected := map[string]string{
-		"alpha.txt":   "This is alpha.\n",
-		"bravo.txt":   "This is bravo.\n",
-		"charlie.txt": "This is charlie.\n",
-		"delta.txt":   "This is delta.\n",
-	}
 	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
 		t.Fatal(err)
-	} else if diff := cmp.Diff(expected, got); diff != "" {
+	} else if diff := cmp.Diff(zipContents, got); diff != "" {
 		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func getSubdirs(path string) []string {
+	// Remove leading and trailing slashes
+	path = strings.Trim(path, "/")
+	if len(path) == 0 {
+		return []string{}
+	}
+	subdirs := []string{}
+	subdir := ""
+	for _, name := range strings.Split(path, "/") {
+		subdir += name + "/"
+		subdirs = append(subdirs, subdir)
+	}
+	return subdirs
+}
+
+func createTarGz(dir string, contents map[string]string) (string, error) {
+	tarFile, err := ioutil.TempFile(dir, "*.tar.gz")
+	if err != nil {
+		return "", err
+	}
+	defer tarFile.Close()
+
+	gzipWriter := gzip.NewWriter(tarFile)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	directories := map[string]struct{}{}
+
+	for name, content := range contents {
+		dir, _ := filepath.Split(name)
+		dirPaths := getSubdirs(dir)
+		for _, dp := range dirPaths {
+			if _, alreadyAdded := directories[dp]; alreadyAdded {
+				continue
+			}
+			directories[dp] = struct{}{}
+			header := tar.Header{
+				Name:     dp,
+				Mode:     0555,
+				Typeflag: tar.TypeDir,
+			}
+			if err := tarWriter.WriteHeader(&header); err != nil {
+				return "", err
+			}
+		}
+		header := tar.Header{
+			Name: name,
+			Size: int64(len(content)),
+			Mode: 0555,
+		}
+		if err := tarWriter.WriteHeader(&header); err != nil {
+			return "", err
+		}
+		if n, err := tarWriter.Write([]byte(content)); err != nil {
+			return "", err
+		} else if n != len(content) {
+			return "", fmt.Errorf("Failed to write entire file: %s", name)
+		}
+	}
+	return tarFile.Name(), nil
 }
 
 func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
@@ -491,13 +592,25 @@ func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile("test_data/test.tar.gz")
+	tarContents := map[string]string{
+		"foo/alpha.txt":   "This is alpha.\n",
+		"foo/bravo.txt":   "This is bravo.\n",
+		"bar/charlie.txt": "This is charlie.\n",
+		"delta.txt":       "This is delta.\n",
+	}
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	tarFile, err := createTarGz(tempDir, tarContents)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile(tarFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 	checksum := getSha256Sum(data)
 	chunk := UserArtifactChunk{
-		Name:          "test.tar.gz",
+		Name:          filepath.Base(tarFile),
 		OffsetBytes:   0,
 		SizeBytes:     int64(len(data)),
 		FileSizeBytes: int64(len(data)),
@@ -510,15 +623,9 @@ func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
 	if err := uam.ExtractArtifact(checksum); err != nil {
 		t.Fatal(err)
 	}
-	expected := map[string]string{
-		"foo/alpha.txt":   "This is alpha.\n",
-		"foo/bravo.txt":   "This is bravo.\n",
-		"bar/charlie.txt": "This is charlie.\n",
-		"delta.txt":       "This is delta.\n",
-	}
 	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
 		t.Fatal(err)
-	} else if diff := cmp.Diff(expected, got); diff != "" {
+	} else if diff := cmp.Diff(tarContents, got); diff != "" {
 		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -560,13 +667,19 @@ func TestExtractArtifactAfterArtifactIsFullyExtractedFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := ioutil.ReadFile("test_data/test.tar.gz")
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	archive, err := createTarGz(tempDir, map[string]string{"file": "content\n"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile(archive)
 	if err != nil {
 		t.Fatal(err)
 	}
 	checksum := getSha256Sum(data)
 	chunk := UserArtifactChunk{
-		Name:          "test.tar.gz",
+		Name:          filepath.Base(archive),
 		OffsetBytes:   0,
 		SizeBytes:     int64(len(data)),
 		FileSizeBytes: int64(len(data)),
