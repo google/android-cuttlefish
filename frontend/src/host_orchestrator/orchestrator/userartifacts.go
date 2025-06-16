@@ -15,20 +15,21 @@
 package orchestrator
 
 import (
+	"archive/tar"
 	"archive/zip"
+	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
-	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 	"github.com/google/btree"
 	"github.com/google/uuid"
@@ -388,11 +389,54 @@ func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) erro
 }
 
 func untar(dst string, src string) error {
-	_, err := hoexec.Exec(exec.CommandContext, "tar", "-xf", src, "-C", dst)
+	r, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	return nil
+	defer r.Close()
+	gzr, err := gzip.NewReader(r)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+	tr := tar.NewReader(gzr)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if header == nil {
+			continue
+		}
+		target := filepath.Join(dst, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				oldmask := syscall.Umask(0)
+				err := os.MkdirAll(target, 0774)
+				syscall.Umask(oldmask)
+				if err != nil {
+					return err
+				}
+			}
+		case tar.TypeReg:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				return err
+			}
+			f.Close()
+		case tar.TypeSymlink:
+			if err := os.Symlink(header.Linkname, target); err != nil {
+				return err
+			}
+		}
+	}
 }
 
 func unzip(dstDir string, src string) error {
