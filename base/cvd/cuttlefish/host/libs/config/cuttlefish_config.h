@@ -527,8 +527,6 @@ class CuttlefishConfig {
 
     std::string factory_reset_protected_path() const;
 
-    std::string persistent_bootconfig_path() const;
-
     // used for the persistent_composite_disk vbmeta
     std::string vbmeta_path() const;
 
