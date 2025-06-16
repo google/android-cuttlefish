@@ -27,6 +27,7 @@ filegroup(
         "//cuttlefish/host/commands/run_cvd/launch:.clang-tidy",
         "//cuttlefish/host/libs/config:.clang-tidy",
         "//cuttlefish/host/libs/web:.clang-tidy",
+        "//cuttlefish/host/libs/zip:.clang-tidy",
     ],
 )
 
