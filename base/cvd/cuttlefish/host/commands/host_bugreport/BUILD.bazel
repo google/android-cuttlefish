@@ -9,19 +9,18 @@ cc_binary(
     name = "cvd_internal_host_bugreport",
     srcs = ["main.cc"],
     copts = COPTS,
-    features = ["-layering_check"],  # Incompatible with libzip cmake build
-    linkopts = ["-llzma"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/zip:zip_cc",
         "//libbase",
         "@fmt",
         "@gflags",
-        "@libzip",
         "@zlib",
     ],
 )
