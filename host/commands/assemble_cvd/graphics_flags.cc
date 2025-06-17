@@ -392,20 +392,6 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
 
 #endif
 
-Result<std::string> GraphicsDetectorBinaryPath() {
-  const auto host_arch = HostArch();
-  switch (host_arch) {
-    case Arch::Arm64:
-      return HostBinaryPath("aarch64-linux-gnu/gfxstream_graphics_detector");
-    case Arch::X86:
-    case Arch::X86_64:
-      return HostBinaryPath("x86_64-linux-gnu/gfxstream_graphics_detector");
-    default:
-      break;
-  }
-  return CF_ERR("Graphics detector unavailable for host arch.");
-}
-
 bool IsAmdGpu(const gfxstream::proto::GraphicsAvailability& availability) {
   return (availability.has_egl() &&
           ((availability.egl().has_gles2_availability() &&
@@ -534,18 +520,9 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 #ifdef __APPLE__
   return {};
 #else
-  auto graphics_detector_binary_result = GraphicsDetectorBinaryPath();
-  if (!graphics_detector_binary_result.ok()) {
-    LOG(ERROR) << "Failed to run graphics detector, graphics detector path "
-               << " not available: "
-               << graphics_detector_binary_result.error().FormatForEnv()
-               << ". Assuming no availability.";
-    return {};
-  }
-
   TemporaryFile graphics_availability_file;
 
-  Command graphics_detector_cmd(graphics_detector_binary_result.value());
+  Command graphics_detector_cmd(HostBinaryPath("graphics_detector"));
   graphics_detector_cmd.AddParameter(graphics_availability_file.path);
 
   std::string graphics_detector_stdout;
