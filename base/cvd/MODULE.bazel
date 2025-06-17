@@ -526,6 +526,9 @@ git_repository(
     build_file = "@//:BUILD.libvpx.bazel",
     commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
     remote = "https://chromium.googlesource.com/webm/libvpx",
+    patch_strip = 1,
+    # Generate this file with `find . -type f | xargs sed -i -e 's|#include "./|#include "|' && git diff` on the libvpx source
+    patches = ["@//build_external/libvpx:PATCH.libvpx_config.patch"],
 )
 
 # Android version is forked from github upstream

@@ -1,0 +1,10 @@
+package(
+    default_visibility = [
+        "@libvpx//:__subpackages__",
+    ],
+)
+
+exports_files([
+    "genconfigs.sh",
+    "lint_config.sh",
+])
