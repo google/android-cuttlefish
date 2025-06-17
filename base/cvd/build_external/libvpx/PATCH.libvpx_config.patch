@@ -1,0 +1,5636 @@
+diff --git a/vp8/common/arm/loopfilter_arm.c b/vp8/common/arm/loopfilter_arm.c
+index 48a197204..a638caf8d 100644
+--- a/vp8/common/arm/loopfilter_arm.c
++++ b/vp8/common/arm/loopfilter_arm.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_config.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/arm/loopfilter_arm.h"
+ #include "vp8/common/loopfilter.h"
+ #include "vp8/common/onyxc_int.h"
+diff --git a/vp8/common/arm/neon/bilinearpredict_neon.c b/vp8/common/arm/neon/bilinearpredict_neon.c
+index 590956dde..900387f43 100644
+--- a/vp8/common/arm/neon/bilinearpredict_neon.c
++++ b/vp8/common/arm/neon/bilinearpredict_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_config.h"
++#include "vp8_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ 
+ static const uint8_t bifilter4_coeff[8][2] = { { 128, 0 }, { 112, 16 },
+diff --git a/vp8/common/arm/neon/copymem_neon.c b/vp8/common/arm/neon/copymem_neon.c
+index c89b47d62..6dfd1576e 100644
+--- a/vp8/common/arm/neon/copymem_neon.c
++++ b/vp8/common/arm/neon/copymem_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ void vp8_copy_mem8x4_neon(unsigned char *src, int src_stride,
+                           unsigned char *dst, int dst_stride) {
+diff --git a/vp8/common/arm/neon/dc_only_idct_add_neon.c b/vp8/common/arm/neon/dc_only_idct_add_neon.c
+index d12c3a839..f829278c1 100644
+--- a/vp8/common/arm/neon/dc_only_idct_add_neon.c
++++ b/vp8/common/arm/neon/dc_only_idct_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ void vp8_dc_only_idct_add_neon(int16_t input_dc, unsigned char *pred_ptr,
+                                int pred_stride, unsigned char *dst_ptr,
+diff --git a/vp8/common/arm/neon/dequant_idct_neon.c b/vp8/common/arm/neon/dequant_idct_neon.c
+index 5445f2965..2f93cc8d3 100644
+--- a/vp8/common/arm/neon/dequant_idct_neon.c
++++ b/vp8/common/arm/neon/dequant_idct_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ static const int16_t cospi8sqrt2minus1 = 20091;
+ // 35468 exceeds INT16_MAX and gets converted to a negative number. Because of
+diff --git a/vp8/common/arm/neon/dequantizeb_neon.c b/vp8/common/arm/neon/dequantizeb_neon.c
+index 791aaea2a..9399817b0 100644
+--- a/vp8/common/arm/neon/dequantizeb_neon.c
++++ b/vp8/common/arm/neon/dequantizeb_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/blockd.h"
+ 
+ void vp8_dequantize_b_neon(BLOCKD *d, short *DQC) {
+diff --git a/vp8/common/arm/neon/idct_blk_neon.c b/vp8/common/arm/neon/idct_blk_neon.c
+index 5c26ce67a..2eb17750c 100644
+--- a/vp8/common/arm/neon/idct_blk_neon.c
++++ b/vp8/common/arm/neon/idct_blk_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ static void idct_dequant_0_2x_neon(int16_t *q, int16_t dq, unsigned char *dst,
+                                    int stride) {
+diff --git a/vp8/common/arm/neon/iwalsh_neon.c b/vp8/common/arm/neon/iwalsh_neon.c
+index 91600bfc0..1e882b50f 100644
+--- a/vp8/common/arm/neon/iwalsh_neon.c
++++ b/vp8/common/arm/neon/iwalsh_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ void vp8_short_inv_walsh4x4_neon(int16_t *input, int16_t *mb_dqcoeff) {
+   int16x8_t q0s16, q1s16, q2s16, q3s16;
+diff --git a/vp8/common/arm/neon/loopfiltersimplehorizontaledge_neon.c b/vp8/common/arm/neon/loopfiltersimplehorizontaledge_neon.c
+index df983b23a..1c4310fdb 100644
+--- a/vp8/common/arm/neon/loopfiltersimplehorizontaledge_neon.c
++++ b/vp8/common/arm/neon/loopfiltersimplehorizontaledge_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_config.h"
++#include "vp8_rtcd.h"
+ 
+ static INLINE void vp8_loop_filter_simple_horizontal_edge_neon(
+     unsigned char *s, int p, const unsigned char *blimit) {
+diff --git a/vp8/common/arm/neon/loopfiltersimpleverticaledge_neon.c b/vp8/common/arm/neon/loopfiltersimpleverticaledge_neon.c
+index fbc83ae29..f42c8c42f 100644
+--- a/vp8/common/arm/neon/loopfiltersimpleverticaledge_neon.c
++++ b/vp8/common/arm/neon/loopfiltersimpleverticaledge_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_config.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/arm.h"
+ 
+ #ifdef VPX_INCOMPATIBLE_GCC
+diff --git a/vp8/common/arm/neon/mbloopfilter_neon.c b/vp8/common/arm/neon/mbloopfilter_neon.c
+index fafaf2d45..3b7085285 100644
+--- a/vp8/common/arm/neon/mbloopfilter_neon.c
++++ b/vp8/common/arm/neon/mbloopfilter_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp8/common/arm/loopfilter_arm.h"
+ 
+ static INLINE void vp8_mbloop_filter_neon(uint8x16_t qblimit,  // mblimit
+diff --git a/vp8/common/arm/neon/shortidct4x4llm_neon.c b/vp8/common/arm/neon/shortidct4x4llm_neon.c
+index 2724ca236..b293617b3 100644
+--- a/vp8/common/arm/neon/shortidct4x4llm_neon.c
++++ b/vp8/common/arm/neon/shortidct4x4llm_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ static const int16_t cospi8sqrt2minus1 = 20091;
+ // 35468 exceeds INT16_MAX and gets converted to a negative number. Because of
+diff --git a/vp8/common/arm/neon/sixtappredict_neon.c b/vp8/common/arm/neon/sixtappredict_neon.c
+index a54e81084..fb279bd22 100644
+--- a/vp8/common/arm/neon/sixtappredict_neon.c
++++ b/vp8/common/arm/neon/sixtappredict_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ #include <string.h>
+-#include "./vpx_config.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_config.h"
++#include "vp8_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_ports/mem.h"
+ 
+diff --git a/vp8/common/arm/neon/vp8_loopfilter_neon.c b/vp8/common/arm/neon/vp8_loopfilter_neon.c
+index ebc004a04..1f39e20c8 100644
+--- a/vp8/common/arm/neon/vp8_loopfilter_neon.c
++++ b/vp8/common/arm/neon/vp8_loopfilter_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp8/common/arm/loopfilter_arm.h"
+ #include "vpx_ports/arm.h"
+ 
+diff --git a/vp8/common/filter.c b/vp8/common/filter.c
+index 267498335..e599d192c 100644
+--- a/vp8/common/filter.c
++++ b/vp8/common/filter.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/filter.h"
+ 
+ DECLARE_ALIGNED(16, const short, vp8_bilinear_filters[8][2]) = {
+diff --git a/vp8/common/findnearmv.h b/vp8/common/findnearmv.h
+index d7db9544a..05c61e735 100644
+--- a/vp8/common/findnearmv.h
++++ b/vp8/common/findnearmv.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP8_COMMON_FINDNEARMV_H_
+ #define VPX_VP8_COMMON_FINDNEARMV_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "mv.h"
+ #include "blockd.h"
+ #include "modecont.h"
+diff --git a/vp8/common/idctllm.c b/vp8/common/idctllm.c
+index 2f5adc0b4..b882a272f 100644
+--- a/vp8/common/idctllm.c
++++ b/vp8/common/idctllm.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ /****************************************************************************
+  * Notes:
+diff --git a/vp8/common/invtrans.h b/vp8/common/invtrans.h
+index aed7bb060..c892cc606 100644
+--- a/vp8/common/invtrans.h
++++ b/vp8/common/invtrans.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP8_COMMON_INVTRANS_H_
+ #define VPX_VP8_COMMON_INVTRANS_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp8_rtcd.h"
+ #include "blockd.h"
+ #include "onyxc_int.h"
+diff --git a/vp8/common/loongarch/idct_lsx.c b/vp8/common/loongarch/idct_lsx.c
+index eee871eec..c60b7dc0b 100644
+--- a/vp8/common/loongarch/idct_lsx.c
++++ b/vp8/common/loongarch/idct_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/blockd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+diff --git a/vp8/common/loongarch/loopfilter_filters_lsx.c b/vp8/common/loongarch/loopfilter_filters_lsx.c
+index 79c3ea6db..363c45e66 100644
+--- a/vp8/common/loongarch/loopfilter_filters_lsx.c
++++ b/vp8/common/loongarch/loopfilter_filters_lsx.c
+@@ -9,7 +9,7 @@
+  * be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/loopfilter.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+diff --git a/vp8/common/loongarch/sixtap_filter_lsx.c b/vp8/common/loongarch/sixtap_filter_lsx.c
+index 986763341..84ff70c00 100644
+--- a/vp8/common/loongarch/sixtap_filter_lsx.c
++++ b/vp8/common/loongarch/sixtap_filter_lsx.c
+@@ -9,7 +9,7 @@
+  * be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/filter.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_util/loongson_intrinsics.h"
+diff --git a/vp8/common/mfqe.c b/vp8/common/mfqe.c
+index 1fe7363f1..5463e1122 100644
+--- a/vp8/common/mfqe.c
++++ b/vp8/common/mfqe.c
+@@ -16,8 +16,8 @@
+  * higher quality.
+  */
+ 
+-#include "./vp8_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vp8_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp8/common/common.h"
+ #include "vp8/common/postproc.h"
+ #include "vpx_dsp/variance.h"
+diff --git a/vp8/common/mips/mmi/copymem_mmi.c b/vp8/common/mips/mmi/copymem_mmi.c
+index 86a32aa9e..261be2299 100644
+--- a/vp8/common/mips/mmi/copymem_mmi.c
++++ b/vp8/common/mips/mmi/copymem_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+ 
+ #define COPY_MEM_16X2 \
+diff --git a/vp8/common/mips/mmi/dequantize_mmi.c b/vp8/common/mips/mmi/dequantize_mmi.c
+index b9330a666..2d210238f 100644
+--- a/vp8/common/mips/mmi/dequantize_mmi.c
++++ b/vp8/common/mips/mmi/dequantize_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/blockd.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+diff --git a/vp8/common/mips/mmi/idct_blk_mmi.c b/vp8/common/mips/mmi/idct_blk_mmi.c
+index 4fd6854c5..4ac92328e 100644
+--- a/vp8/common/mips/mmi/idct_blk_mmi.c
++++ b/vp8/common/mips/mmi/idct_blk_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_mem/vpx_mem.h"
+ 
+ void vp8_dequant_idct_add_y_block_mmi(int16_t *q, int16_t *dq, uint8_t *dst,
+diff --git a/vp8/common/mips/mmi/idctllm_mmi.c b/vp8/common/mips/mmi/idctllm_mmi.c
+index a35689dd3..86a026b55 100644
+--- a/vp8/common/mips/mmi/idctllm_mmi.c
++++ b/vp8/common/mips/mmi/idctllm_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+ 
+diff --git a/vp8/common/mips/mmi/loopfilter_filters_mmi.c b/vp8/common/mips/mmi/loopfilter_filters_mmi.c
+index a07a7e3b4..0d8de26ce 100644
+--- a/vp8/common/mips/mmi/loopfilter_filters_mmi.c
++++ b/vp8/common/mips/mmi/loopfilter_filters_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp8/common/loopfilter.h"
+ #include "vp8/common/onyxc_int.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+diff --git a/vp8/common/mips/msa/bilinear_filter_msa.c b/vp8/common/mips/msa/bilinear_filter_msa.c
+index c7fb1ed33..5c4a4fe00 100644
+--- a/vp8/common/mips/msa/bilinear_filter_msa.c
++++ b/vp8/common/mips/msa/bilinear_filter_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vp8/common/filter.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+diff --git a/vp8/common/mips/msa/copymem_msa.c b/vp8/common/mips/msa/copymem_msa.c
+index 357c99b8b..a9c90638d 100644
+--- a/vp8/common/mips/msa/copymem_msa.c
++++ b/vp8/common/mips/msa/copymem_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ 
+ static void copy_8x4_msa(uint8_t *src, int32_t src_stride, uint8_t *dst,
+diff --git a/vp8/common/mips/msa/idct_msa.c b/vp8/common/mips/msa/idct_msa.c
+index efad0c29f..059150108 100644
+--- a/vp8/common/mips/msa/idct_msa.c
++++ b/vp8/common/mips/msa/idct_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/blockd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ 
+diff --git a/vp8/common/mips/msa/loopfilter_filters_msa.c b/vp8/common/mips/msa/loopfilter_filters_msa.c
+index 98a4fc09a..58fb1fda1 100644
+--- a/vp8/common/mips/msa/loopfilter_filters_msa.c
++++ b/vp8/common/mips/msa/loopfilter_filters_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/loopfilter.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ 
+diff --git a/vp8/common/mips/msa/mfqe_msa.c b/vp8/common/mips/msa/mfqe_msa.c
+index 9aac95b2f..0c79cf550 100644
+--- a/vp8/common/mips/msa/mfqe_msa.c
++++ b/vp8/common/mips/msa/mfqe_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/postproc.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ 
+diff --git a/vp8/common/mips/msa/sixtap_filter_msa.c b/vp8/common/mips/msa/sixtap_filter_msa.c
+index 3a1bb7cd5..5019fbe9a 100644
+--- a/vp8/common/mips/msa/sixtap_filter_msa.c
++++ b/vp8/common/mips/msa/sixtap_filter_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vp8/common/filter.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+diff --git a/vp8/common/mips/msa/vp8_macros_msa.h b/vp8/common/mips/msa/vp8_macros_msa.h
+index cc85b9a1f..0434e7a1d 100644
+--- a/vp8/common/mips/msa/vp8_macros_msa.h
++++ b/vp8/common/mips/msa/vp8_macros_msa.h
+@@ -13,7 +13,7 @@
+ 
+ #include <msa.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #define LD_B(RTYPE, psrc) *((const RTYPE *)(psrc))
+diff --git a/vp8/common/reconintra.c b/vp8/common/reconintra.c
+index 8e2094da8..bb6541c12 100644
+--- a/vp8/common/reconintra.c
++++ b/vp8/common/reconintra.c
+@@ -8,9 +8,9 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_ports/vpx_once.h"
+ #include "blockd.h"
+diff --git a/vp8/common/reconintra4x4.c b/vp8/common/reconintra4x4.c
+index be936df5e..f414002b7 100644
+--- a/vp8/common/reconintra4x4.c
++++ b/vp8/common/reconintra4x4.c
+@@ -11,7 +11,7 @@
+ #include <string.h>
+ 
+ #include "vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp8_rtcd.h"
+ #include "blockd.h"
+ #include "reconintra4x4.h"
+diff --git a/vp8/common/rtcd.c b/vp8/common/rtcd.c
+index 102b7ccd5..b1b3bcd46 100644
+--- a/vp8/common/rtcd.c
++++ b/vp8/common/rtcd.c
+@@ -7,9 +7,9 @@
+  *  in the file PATENTS.  All contributing project authors may
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #define RTCD_C
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/vpx_once.h"
+ 
+ void vp8_rtcd(void) { once(setup_rtcd_internal); }
+diff --git a/vp8/common/setupintrarecon.h b/vp8/common/setupintrarecon.h
+index 903a536ae..b9c8e6431 100644
+--- a/vp8/common/setupintrarecon.h
++++ b/vp8/common/setupintrarecon.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP8_COMMON_SETUPINTRARECON_H_
+ #define VPX_VP8_COMMON_SETUPINTRARECON_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_scale/yv12config.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vp8/common/threading.h b/vp8/common/threading.h
+index 0de75cfde..99e011e12 100644
+--- a/vp8/common/threading.h
++++ b/vp8/common/threading.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP8_COMMON_THREADING_H_
+ #define VPX_VP8_COMMON_THREADING_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/vp8/common/x86/bilinear_filter_sse2.c b/vp8/common/x86/bilinear_filter_sse2.c
+index ff6cbbd68..4c4ec61d2 100644
+--- a/vp8/common/x86/bilinear_filter_sse2.c
++++ b/vp8/common/x86/bilinear_filter_sse2.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <xmmintrin.h>
+ 
+-#include "./vp8_rtcd.h"
+-#include "./vpx_config.h"
++#include "vp8_rtcd.h"
++#include "vpx_config.h"
+ #include "vp8/common/filter.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vp8/decoder/dboolhuff.h b/vp8/decoder/dboolhuff.h
+index 673b2fbd5..001cf4b28 100644
+--- a/vp8/decoder/dboolhuff.h
++++ b/vp8/decoder/dboolhuff.h
+@@ -14,7 +14,7 @@
+ #include <stddef.h>
+ #include <limits.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/compiler_attributes.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx/vp8dx.h"
+diff --git a/vp8/decoder/onyxd_if.c b/vp8/decoder/onyxd_if.c
+index 88f2de024..089a44c92 100644
+--- a/vp8/decoder/onyxd_if.c
++++ b/vp8/decoder/onyxd_if.c
+@@ -26,7 +26,7 @@
+ 
+ #include "vp8/common/quant_common.h"
+ #include "vp8/common/reconintra.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx_scale/vpx_scale.h"
+ #include "vp8/common/systemdependent.h"
+diff --git a/vp8/decoder/treereader.h b/vp8/decoder/treereader.h
+index 4bf938a74..8a4c122e1 100644
+--- a/vp8/decoder/treereader.h
++++ b/vp8/decoder/treereader.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP8_DECODER_TREEREADER_H_
+ #define VPX_VP8_DECODER_TREEREADER_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp8/common/treecoder.h"
+ #include "dboolhuff.h"
+ 
+diff --git a/vp8/encoder/arm/neon/denoising_neon.c b/vp8/encoder/arm/neon/denoising_neon.c
+index 67267b8f3..710e655f5 100644
+--- a/vp8/encoder/arm/neon/denoising_neon.c
++++ b/vp8/encoder/arm/neon/denoising_neon.c
+@@ -12,7 +12,7 @@
+ 
+ #include "vp8/encoder/denoising.h"
+ #include "vpx_mem/vpx_mem.h"
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ /*
+  * The filter function was modified to reduce the computational complexity.
+diff --git a/vp8/encoder/arm/neon/fastquantizeb_neon.c b/vp8/encoder/arm/neon/fastquantizeb_neon.c
+index 950c94334..f94f4efc3 100644
+--- a/vp8/encoder/arm/neon/fastquantizeb_neon.c
++++ b/vp8/encoder/arm/neon/fastquantizeb_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/encoder/block.h"
+ 
+ static const uint16_t inv_zig_zag[16] = { 1, 2, 6,  7,  3,  5,  8,  13,
+diff --git a/vp8/encoder/arm/neon/shortfdct_neon.c b/vp8/encoder/arm/neon/shortfdct_neon.c
+index 99dff6b52..6347afdde 100644
+--- a/vp8/encoder/arm/neon/shortfdct_neon.c
++++ b/vp8/encoder/arm/neon/shortfdct_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ void vp8_short_fdct4x4_neon(int16_t *input, int16_t *output, int pitch) {
+   int16x4_t d0s16, d1s16, d2s16, d3s16, d4s16, d5s16, d6s16, d7s16;
+diff --git a/vp8/encoder/arm/neon/vp8_shortwalsh4x4_neon.c b/vp8/encoder/arm/neon/vp8_shortwalsh4x4_neon.c
+index 02056f2f9..a5e26dcf7 100644
+--- a/vp8/encoder/arm/neon/vp8_shortwalsh4x4_neon.c
++++ b/vp8/encoder/arm/neon/vp8_shortwalsh4x4_neon.c
+@@ -10,11 +10,11 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/arm.h"
+ 
+ #ifdef VPX_INCOMPATIBLE_GCC
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ void vp8_short_walsh4x4_neon(int16_t *input, int16_t *output, int pitch) {
+   vp8_short_walsh4x4_c(input, output, pitch);
+ }
+diff --git a/vp8/encoder/copy_c.c b/vp8/encoder/copy_c.c
+index 474612524..b9e9d464c 100644
+--- a/vp8/encoder/copy_c.c
++++ b/vp8/encoder/copy_c.c
+@@ -10,7 +10,7 @@
+ 
+ #include <string.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ /* Copy 2 macroblocks to a buffer */
+diff --git a/vp8/encoder/dct.c b/vp8/encoder/dct.c
+index 7d214eafb..82fbbeb4b 100644
+--- a/vp8/encoder/dct.c
++++ b/vp8/encoder/dct.c
+@@ -10,7 +10,7 @@
+ 
+ #include <math.h>
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ 
+ void vp8_short_fdct4x4_c(short *input, short *output, int pitch) {
+   int i;
+diff --git a/vp8/encoder/encodeintra.c b/vp8/encoder/encodeintra.c
+index 7d448c0ea..13cb156e9 100644
+--- a/vp8/encoder/encodeintra.c
++++ b/vp8/encoder/encodeintra.c
+@@ -10,7 +10,7 @@
+ 
+ #include "vpx_config.h"
+ #include "vp8_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp8/encoder/quantize.h"
+ #include "vp8/common/reconintra.h"
+ #include "vp8/common/reconintra4x4.h"
+diff --git a/vp8/encoder/encodemb.c b/vp8/encoder/encodemb.c
+index 3fd8d5fab..e89f55a89 100644
+--- a/vp8/encoder/encodemb.c
++++ b/vp8/encoder/encodemb.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_config.h"
+ #include "vp8_rtcd.h"
+diff --git a/vp8/encoder/firstpass.c b/vp8/encoder/firstpass.c
+index 8a3861e6a..f0f47d669 100644
+--- a/vp8/encoder/firstpass.c
++++ b/vp8/encoder/firstpass.c
+@@ -13,7 +13,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "block.h"
+ #include "onyx_int.h"
+diff --git a/vp8/encoder/loongarch/dct_lsx.c b/vp8/encoder/loongarch/dct_lsx.c
+index a08d4d3f6..bf5670d0c 100644
+--- a/vp8/encoder/loongarch/dct_lsx.c
++++ b/vp8/encoder/loongarch/dct_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <stdint.h>
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+ #define LSX_TRANSPOSE4x4_H(_in0, _in1, _in2, _in3, _out0, _out1, _out2, _out3) \
+diff --git a/vp8/encoder/loongarch/encodeopt_lsx.c b/vp8/encoder/loongarch/encodeopt_lsx.c
+index 4ad4caba6..b82275efa 100644
+--- a/vp8/encoder/loongarch/encodeopt_lsx.c
++++ b/vp8/encoder/loongarch/encodeopt_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ #include "vp8/encoder/block.h"
+ 
+diff --git a/vp8/encoder/loongarch/vp8_quantize_lsx.c b/vp8/encoder/loongarch/vp8_quantize_lsx.c
+index 75889192a..6bcab5b22 100644
+--- a/vp8/encoder/loongarch/vp8_quantize_lsx.c
++++ b/vp8/encoder/loongarch/vp8_quantize_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <stdint.h>
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ #include "vp8/encoder/block.h"
+ 
+diff --git a/vp8/encoder/mcomp.c b/vp8/encoder/mcomp.c
+index 3ec85a170..9af175b0a 100644
+--- a/vp8/encoder/mcomp.c
++++ b/vp8/encoder/mcomp.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vp8_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "onyx_int.h"
+ #include "mcomp.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vp8/encoder/mips/mmi/dct_mmi.c b/vp8/encoder/mips/mmi/dct_mmi.c
+index 0fd25fcda..043dabf08 100644
+--- a/vp8/encoder/mips/mmi/dct_mmi.c
++++ b/vp8/encoder/mips/mmi/dct_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+ 
+diff --git a/vp8/encoder/mips/msa/dct_msa.c b/vp8/encoder/mips/msa/dct_msa.c
+index 308466755..d41184670 100644
+--- a/vp8/encoder/mips/msa/dct_msa.c
++++ b/vp8/encoder/mips/msa/dct_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ 
+ #define TRANSPOSE4x4_H(in0, in1, in2, in3, out0, out1, out2, out3) \
+diff --git a/vp8/encoder/mips/msa/denoising_msa.c b/vp8/encoder/mips/msa/denoising_msa.c
+index f8b653a9a..2d3193e45 100644
+--- a/vp8/encoder/mips/msa/denoising_msa.c
++++ b/vp8/encoder/mips/msa/denoising_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <stdlib.h>
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ #include "vp8/encoder/denoising.h"
+ 
+diff --git a/vp8/encoder/mips/msa/encodeopt_msa.c b/vp8/encoder/mips/msa/encodeopt_msa.c
+index 2bcddb623..5ab6e2858 100644
+--- a/vp8/encoder/mips/msa/encodeopt_msa.c
++++ b/vp8/encoder/mips/msa/encodeopt_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ #include "vp8/encoder/block.h"
+ 
+diff --git a/vp8/encoder/mips/msa/quantize_msa.c b/vp8/encoder/mips/msa/quantize_msa.c
+index 9f5fbd39c..4e475cb33 100644
+--- a/vp8/encoder/mips/msa/quantize_msa.c
++++ b/vp8/encoder/mips/msa/quantize_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ #include "vp8/encoder/block.h"
+ 
+diff --git a/vp8/encoder/mips/msa/temporal_filter_msa.c b/vp8/encoder/mips/msa/temporal_filter_msa.c
+index fb83f07bd..4fcc278dc 100644
+--- a/vp8/encoder/mips/msa/temporal_filter_msa.c
++++ b/vp8/encoder/mips/msa/temporal_filter_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/common/mips/msa/vp8_macros_msa.h"
+ 
+ static void temporal_filter_apply_16size_msa(
+diff --git a/vp8/encoder/onyx_if.c b/vp8/encoder/onyx_if.c
+index 17726fad2..b2438743c 100644
+--- a/vp8/encoder/onyx_if.c
++++ b/vp8/encoder/onyx_if.c
+@@ -10,8 +10,8 @@
+ 
+ #include "vpx_config.h"
+ #include "./vpx_scale_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vp8_rtcd.h"
++#include "vpx_dsp_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "bitstream.h"
+ #include "vp8/common/onyxc_int.h"
+ #include "vp8/common/blockd.h"
+diff --git a/vp8/encoder/pickinter.c b/vp8/encoder/pickinter.c
+index ca6c18f48..3842d6487 100644
+--- a/vp8/encoder/pickinter.c
++++ b/vp8/encoder/pickinter.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <limits.h>
+ #include "vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "onyx_int.h"
+ #include "modecosts.h"
+ #include "encodeintra.h"
+diff --git a/vp8/encoder/picklpf.c b/vp8/encoder/picklpf.c
+index 498738fd6..cc6ea1ed9 100644
+--- a/vp8/encoder/picklpf.c
++++ b/vp8/encoder/picklpf.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vp8/common/onyxc_int.h"
+ #include "onyx_int.h"
+diff --git a/vp8/encoder/rdopt.c b/vp8/encoder/rdopt.c
+index 671cccd11..ed7f09419 100644
+--- a/vp8/encoder/rdopt.c
++++ b/vp8/encoder/rdopt.c
+@@ -15,7 +15,7 @@
+ #include <assert.h>
+ #include "vpx_config.h"
+ #include "vp8_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "encodeframe.h"
+ #include "tokenize.h"
+ #include "treewriter.h"
+diff --git a/vp8/encoder/rdopt.h b/vp8/encoder/rdopt.h
+index cc3db8197..00d3c48f8 100644
+--- a/vp8/encoder/rdopt.h
++++ b/vp8/encoder/rdopt.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP8_ENCODER_RDOPT_H_
+ #define VPX_VP8_ENCODER_RDOPT_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/vp8/encoder/treewriter.h b/vp8/encoder/treewriter.h
+index 4e9ed6af1..00997a034 100644
+--- a/vp8/encoder/treewriter.h
++++ b/vp8/encoder/treewriter.h
+@@ -16,7 +16,7 @@
+ 
+ #include <stdint.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp8/common/treecoder.h"
+ 
+ #include "boolhuff.h" /* for now */
+diff --git a/vp8/encoder/vp8_quantize.c b/vp8/encoder/vp8_quantize.c
+index 8b9b22bab..74d28b2e2 100644
+--- a/vp8/encoder/vp8_quantize.c
++++ b/vp8/encoder/vp8_quantize.c
+@@ -10,7 +10,7 @@
+ 
+ #include <math.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/bitops.h"
+ #include "vpx_mem/vpx_mem.h"
+ 
+diff --git a/vp8/encoder/x86/quantize_sse4.c b/vp8/encoder/x86/quantize_sse4.c
+index 4c2d24cc2..f4c14b8a7 100644
+--- a/vp8/encoder/x86/quantize_sse4.c
++++ b/vp8/encoder/x86/quantize_sse4.c
+@@ -10,7 +10,7 @@
+ 
+ #include <smmintrin.h> /* SSE4.1 */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/encoder/block.h"
+ #include "vpx_ports/bitops.h" /* get_lsb */
+ #include "vpx_ports/compiler_attributes.h"
+diff --git a/vp8/encoder/x86/vp8_quantize_ssse3.c b/vp8/encoder/x86/vp8_quantize_ssse3.c
+index f6df146f0..69bb610b1 100644
+--- a/vp8/encoder/x86/vp8_quantize_ssse3.c
++++ b/vp8/encoder/x86/vp8_quantize_ssse3.c
+@@ -10,7 +10,7 @@
+ 
+ #include <tmmintrin.h> /* SSSE3 */
+ 
+-#include "./vp8_rtcd.h"
++#include "vp8_rtcd.h"
+ #include "vp8/encoder/block.h"
+ #include "vpx_ports/bitops.h" /* get_msb */
+ 
+diff --git a/vp8/vp8_cx_iface.c b/vp8/vp8_cx_iface.c
+index 38456d2b9..27c6ac1c0 100644
+--- a/vp8/vp8_cx_iface.c
++++ b/vp8/vp8_cx_iface.c
+@@ -13,9 +13,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vp8_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vp8_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx/vpx_encoder.h"
+ #include "vpx/internal/vpx_codec_internal.h"
+diff --git a/vp8/vp8_dx_iface.c b/vp8/vp8_dx_iface.c
+index fa7d7be40..ff9f3ea2d 100644
+--- a/vp8/vp8_dx_iface.c
++++ b/vp8/vp8_dx_iface.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include "./vp8_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vp8_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx/vpx_decoder.h"
+ #include "vpx/vp8dx.h"
+diff --git a/vp9/common/arm/neon/vp9_highbd_iht16x16_add_neon.c b/vp9/common/arm/neon/vp9_highbd_iht16x16_add_neon.c
+index b43d7fa4f..335bdba09 100644
+--- a/vp9/common/arm/neon/vp9_highbd_iht16x16_add_neon.c
++++ b/vp9/common/arm/neon/vp9_highbd_iht16x16_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_enums.h"
+ #include "vp9/common/arm/neon/vp9_iht_neon.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+diff --git a/vp9/common/arm/neon/vp9_highbd_iht4x4_add_neon.c b/vp9/common/arm/neon/vp9_highbd_iht4x4_add_neon.c
+index 52c4f1937..c5bd84359 100644
+--- a/vp9/common/arm/neon/vp9_highbd_iht4x4_add_neon.c
++++ b/vp9/common/arm/neon/vp9_highbd_iht4x4_add_neon.c
+@@ -12,7 +12,7 @@
+ #include <assert.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/arm/neon/vp9_iht_neon.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+diff --git a/vp9/common/arm/neon/vp9_highbd_iht8x8_add_neon.c b/vp9/common/arm/neon/vp9_highbd_iht8x8_add_neon.c
+index 2232c6841..1d224d0d8 100644
+--- a/vp9/common/arm/neon/vp9_highbd_iht8x8_add_neon.c
++++ b/vp9/common/arm/neon/vp9_highbd_iht8x8_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_enums.h"
+ #include "vp9/common/arm/neon/vp9_iht_neon.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+diff --git a/vp9/common/arm/neon/vp9_iht16x16_add_neon.c b/vp9/common/arm/neon/vp9_iht16x16_add_neon.c
+index db72ff116..f52620ff7 100644
+--- a/vp9/common/arm/neon/vp9_iht16x16_add_neon.c
++++ b/vp9/common/arm/neon/vp9_iht16x16_add_neon.c
+@@ -12,7 +12,7 @@
+ #include <assert.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/arm/neon/vp9_iht_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+diff --git a/vp9/common/arm/neon/vp9_iht4x4_add_neon.c b/vp9/common/arm/neon/vp9_iht4x4_add_neon.c
+index 4f0a90f21..599ea299f 100644
+--- a/vp9/common/arm/neon/vp9_iht4x4_add_neon.c
++++ b/vp9/common/arm/neon/vp9_iht4x4_add_neon.c
+@@ -12,7 +12,7 @@
+ #include <assert.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/arm/neon/vp9_iht_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+diff --git a/vp9/common/arm/neon/vp9_iht8x8_add_neon.c b/vp9/common/arm/neon/vp9_iht8x8_add_neon.c
+index 46ee632e0..fa81b2498 100644
+--- a/vp9/common/arm/neon/vp9_iht8x8_add_neon.c
++++ b/vp9/common/arm/neon/vp9_iht8x8_add_neon.c
+@@ -12,7 +12,7 @@
+ #include <assert.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/arm/neon/vp9_iht_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+diff --git a/vp9/common/arm/neon/vp9_iht_neon.h b/vp9/common/arm/neon/vp9_iht_neon.h
+index c64822e27..7d7b93116 100644
+--- a/vp9/common/arm/neon/vp9_iht_neon.h
++++ b/vp9/common/arm/neon/vp9_iht_neon.h
+@@ -14,7 +14,7 @@
+ #include <arm_neon.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vp9/common/mips/dspr2/vp9_itrans16_dspr2.c b/vp9/common/mips/dspr2/vp9_itrans16_dspr2.c
+index e68d01e9f..8a7c47d97 100644
+--- a/vp9/common/mips/dspr2/vp9_itrans16_dspr2.c
++++ b/vp9/common/mips/dspr2/vp9_itrans16_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/vp9_blockd.h"
+diff --git a/vp9/common/mips/dspr2/vp9_itrans4_dspr2.c b/vp9/common/mips/dspr2/vp9_itrans4_dspr2.c
+index f6b29265e..2fad93758 100644
+--- a/vp9/common/mips/dspr2/vp9_itrans4_dspr2.c
++++ b/vp9/common/mips/dspr2/vp9_itrans4_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/vp9_blockd.h"
+diff --git a/vp9/common/mips/dspr2/vp9_itrans8_dspr2.c b/vp9/common/mips/dspr2/vp9_itrans8_dspr2.c
+index b945e307e..0209d438c 100644
+--- a/vp9/common/mips/dspr2/vp9_itrans8_dspr2.c
++++ b/vp9/common/mips/dspr2/vp9_itrans8_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/vp9_blockd.h"
+diff --git a/vp9/common/vp9_alloccommon.c b/vp9/common/vp9_alloccommon.c
+index 9e73e40ea..ebebceb6b 100644
+--- a/vp9/common/vp9_alloccommon.c
++++ b/vp9/common/vp9_alloccommon.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_mem/vpx_mem.h"
+ 
+ #include "vp9/common/vp9_alloccommon.h"
+diff --git a/vp9/common/vp9_blockd.h b/vp9/common/vp9_blockd.h
+index aa13d8a0d..5e7d43b25 100644
+--- a/vp9/common/vp9_blockd.h
++++ b/vp9/common/vp9_blockd.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_COMMON_VP9_BLOCKD_H_
+ #define VPX_VP9_COMMON_VP9_BLOCKD_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vp9/common/vp9_common.h b/vp9/common/vp9_common.h
+index d63bad93d..4e61354bb 100644
+--- a/vp9/common/vp9_common.h
++++ b/vp9/common/vp9_common.h
+@@ -15,7 +15,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vp9/common/vp9_entropymv.h b/vp9/common/vp9_entropymv.h
+index ee9d37973..0fe8acc9b 100644
+--- a/vp9/common/vp9_entropymv.h
++++ b/vp9/common/vp9_entropymv.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_COMMON_VP9_ENTROPYMV_H_
+ #define VPX_VP9_COMMON_VP9_ENTROPYMV_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/prob.h"
+ 
+diff --git a/vp9/common/vp9_enums.h b/vp9/common/vp9_enums.h
+index b33a3a297..cde6bb805 100644
+--- a/vp9/common/vp9_enums.h
++++ b/vp9/common/vp9_enums.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_COMMON_VP9_ENUMS_H_
+ #define VPX_VP9_COMMON_VP9_ENUMS_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vp9/common/vp9_filter.h b/vp9/common/vp9_filter.h
+index 0382c88e7..afd54aeed 100644
+--- a/vp9/common/vp9_filter.h
++++ b/vp9/common/vp9_filter.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_COMMON_VP9_FILTER_H_
+ #define VPX_VP9_COMMON_VP9_FILTER_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_filter.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vp9/common/vp9_idct.c b/vp9/common/vp9_idct.c
+index 71be0f310..3afbab10c 100644
+--- a/vp9/common/vp9_idct.c
++++ b/vp9/common/vp9_idct.c
+@@ -11,7 +11,7 @@
+ #include <math.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_blockd.h"
+ #include "vp9/common/vp9_idct.h"
+ #include "vpx_dsp/inv_txfm.h"
+diff --git a/vp9/common/vp9_idct.h b/vp9/common/vp9_idct.h
+index 94eeaf599..e20726865 100644
+--- a/vp9/common/vp9_idct.h
++++ b/vp9/common/vp9_idct.h
+@@ -13,7 +13,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_common.h"
+ #include "vp9/common/vp9_enums.h"
+ #include "vpx_dsp/inv_txfm.h"
+diff --git a/vp9/common/vp9_loopfilter.c b/vp9/common/vp9_loopfilter.c
+index 1a9d45ae7..328508442 100644
+--- a/vp9/common/vp9_loopfilter.c
++++ b/vp9/common/vp9_loopfilter.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_loopfilter.h"
+ #include "vp9/common/vp9_onyxc_int.h"
+ #include "vp9/common/vp9_reconinter.h"
+diff --git a/vp9/common/vp9_loopfilter.h b/vp9/common/vp9_loopfilter.h
+index 39648a72c..6f190aeb5 100644
+--- a/vp9/common/vp9_loopfilter.h
++++ b/vp9/common/vp9_loopfilter.h
+@@ -12,7 +12,7 @@
+ #define VPX_VP9_COMMON_VP9_LOOPFILTER_H_
+ 
+ #include "vpx_ports/mem.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vp9/common/vp9_blockd.h"
+ #include "vp9/common/vp9_seg_common.h"
+diff --git a/vp9/common/vp9_mfqe.c b/vp9/common/vp9_mfqe.c
+index cf60fa40f..58a2ab7ef 100644
+--- a/vp9/common/vp9_mfqe.c
++++ b/vp9/common/vp9_mfqe.c
+@@ -8,9 +8,9 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ 
+ #include "vp9/common/vp9_onyxc_int.h"
+diff --git a/vp9/common/vp9_onyxc_int.h b/vp9/common/vp9_onyxc_int.h
+index 4c8fcf698..e47ffb40d 100644
+--- a/vp9/common/vp9_onyxc_int.h
++++ b/vp9/common/vp9_onyxc_int.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_COMMON_VP9_ONYXC_INT_H_
+ #define VPX_VP9_COMMON_VP9_ONYXC_INT_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/internal/vpx_codec_internal.h"
+ #include "./vp9_rtcd.h"
+ #include "vp9/common/vp9_alloccommon.h"
+diff --git a/vp9/common/vp9_postproc.c b/vp9/common/vp9_postproc.c
+index 96519f005..3fa735b02 100644
+--- a/vp9/common/vp9_postproc.c
++++ b/vp9/common/vp9_postproc.c
+@@ -12,8 +12,8 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "./vp9_rtcd.h"
+ 
+diff --git a/vp9/common/vp9_reconinter.c b/vp9/common/vp9_reconinter.c
+index 0a60b853d..0827f1b9d 100644
+--- a/vp9/common/vp9_reconinter.c
++++ b/vp9/common/vp9_reconinter.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ 
+ #include "./vpx_scale_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vp9/common/vp9_blockd.h"
+ #include "vp9/common/vp9_reconinter.h"
+diff --git a/vp9/common/vp9_reconintra.c b/vp9/common/vp9_reconintra.c
+index 3e5ed616d..62b05853a 100644
+--- a/vp9/common/vp9_reconintra.c
++++ b/vp9/common/vp9_reconintra.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #if CONFIG_VP9_HIGHBITDEPTH
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vp9/common/vp9_rtcd.c b/vp9/common/vp9_rtcd.c
+index 1a93b97e5..f1e024344 100644
+--- a/vp9/common/vp9_rtcd.c
++++ b/vp9/common/vp9_rtcd.c
+@@ -7,7 +7,7 @@
+  *  in the file PATENTS.  All contributing project authors may
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #define RTCD_C
+ #include "./vp9_rtcd.h"
+ #include "vpx_ports/vpx_once.h"
+diff --git a/vp9/common/vp9_scale.c b/vp9/common/vp9_scale.c
+index 8aedd6622..104a92763 100644
+--- a/vp9/common/vp9_scale.c
++++ b/vp9/common/vp9_scale.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_filter.h"
+ #include "vp9/common/vp9_scale.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vp9/common/vp9_thread_common.c b/vp9/common/vp9_thread_common.c
+index 24adbcbff..0a7ddb052 100644
+--- a/vp9/common/vp9_thread_common.c
++++ b/vp9/common/vp9_thread_common.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ #include <limits.h>
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_util/vpx_pthread.h"
+diff --git a/vp9/common/vp9_thread_common.h b/vp9/common/vp9_thread_common.h
+index 96c705d0d..4a9519fae 100644
+--- a/vp9/common/vp9_thread_common.h
++++ b/vp9/common/vp9_thread_common.h
+@@ -10,7 +10,7 @@
+ 
+ #ifndef VPX_VP9_COMMON_VP9_THREAD_COMMON_H_
+ #define VPX_VP9_COMMON_VP9_THREAD_COMMON_H_
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/common/vp9_loopfilter.h"
+ #include "vpx_util/vpx_pthread.h"
+ #include "vpx_util/vpx_thread.h"
+diff --git a/vp9/decoder/vp9_decodeframe.c b/vp9/decoder/vp9_decodeframe.c
+index 45ef99adf..2ed9afb7b 100644
+--- a/vp9/decoder/vp9_decodeframe.c
++++ b/vp9/decoder/vp9_decodeframe.c
+@@ -12,7 +12,7 @@
+ #include <stdlib.h>  // qsort()
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ 
+ #include "vpx_dsp/bitreader_buffer.h"
+diff --git a/vp9/decoder/vp9_decoder.c b/vp9/decoder/vp9_decoder.c
+index 5c77df500..c10280213 100644
+--- a/vp9/decoder/vp9_decoder.c
++++ b/vp9/decoder/vp9_decoder.c
+@@ -13,7 +13,7 @@
+ #include <stdio.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ 
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vp9/decoder/vp9_decoder.h b/vp9/decoder/vp9_decoder.h
+index b3ee4eab5..00bf00bd2 100644
+--- a/vp9/decoder/vp9_decoder.h
++++ b/vp9/decoder/vp9_decoder.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_DECODER_VP9_DECODER_H_
+ #define VPX_VP9_DECODER_VP9_DECODER_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_codec.h"
+ #include "vpx_dsp/bitreader.h"
+diff --git a/vp9/encoder/arm/neon/vp9_dct_neon.c b/vp9/encoder/arm/neon/vp9_dct_neon.c
+index 997b5477e..89238df19 100644
+--- a/vp9/encoder/arm/neon/vp9_dct_neon.c
++++ b/vp9/encoder/arm/neon/vp9_dct_neon.c
+@@ -10,9 +10,9 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vp9/encoder/arm/neon/vp9_denoiser_neon.c b/vp9/encoder/arm/neon/vp9_denoiser_neon.c
+index d631cd437..b5bda7ca5 100644
+--- a/vp9/encoder/arm/neon/vp9_denoiser_neon.c
++++ b/vp9/encoder/arm/neon/vp9_denoiser_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+diff --git a/vp9/encoder/arm/neon/vp9_frame_scale_neon.c b/vp9/encoder/arm/neon/vp9_frame_scale_neon.c
+index bc8dd4a34..ff09ea53e 100644
+--- a/vp9/encoder/arm/neon/vp9_frame_scale_neon.c
++++ b/vp9/encoder/arm/neon/vp9_frame_scale_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vp9/common/vp9_blockd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vp9/encoder/arm/neon/vp9_highbd_temporal_filter_neon.c b/vp9/encoder/arm/neon/vp9_highbd_temporal_filter_neon.c
+index c3aef3c86..40d503899 100644
+--- a/vp9/encoder/arm/neon/vp9_highbd_temporal_filter_neon.c
++++ b/vp9/encoder/arm/neon/vp9_highbd_temporal_filter_neon.c
+@@ -12,7 +12,7 @@
+ #include <arm_neon.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vp9/encoder/vp9_encoder.h"
+ #include "vp9/encoder/vp9_temporal_filter.h"
+diff --git a/vp9/encoder/arm/neon/vp9_quantize_neon.c b/vp9/encoder/arm/neon/vp9_quantize_neon.c
+index 96d061436..264d5f382 100644
+--- a/vp9/encoder/arm/neon/vp9_quantize_neon.c
++++ b/vp9/encoder/arm/neon/vp9_quantize_neon.c
+@@ -13,7 +13,7 @@
+ #include <math.h>
+ #include <stdint.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_mem/vpx_mem.h"
+ 
+ #include "vp9/common/vp9_quant_common.h"
+diff --git a/vp9/encoder/arm/neon/vp9_temporal_filter_neon.c b/vp9/encoder/arm/neon/vp9_temporal_filter_neon.c
+index a651a15d9..ca5ecc872 100644
+--- a/vp9/encoder/arm/neon/vp9_temporal_filter_neon.c
++++ b/vp9/encoder/arm/neon/vp9_temporal_filter_neon.c
+@@ -12,7 +12,7 @@
+ #include <arm_neon.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vp9/encoder/vp9_encoder.h"
+ #include "vp9/encoder/vp9_temporal_filter.h"
+diff --git a/vp9/encoder/mips/msa/vp9_error_msa.c b/vp9/encoder/mips/msa/vp9_error_msa.c
+index 61786d8f6..32ee52ecc 100644
+--- a/vp9/encoder/mips/msa/vp9_error_msa.c
++++ b/vp9/encoder/mips/msa/vp9_error_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+diff --git a/vp9/encoder/ppc/vp9_quantize_vsx.c b/vp9/encoder/ppc/vp9_quantize_vsx.c
+index 4d3155847..d16c3a023 100644
+--- a/vp9/encoder/ppc/vp9_quantize_vsx.c
++++ b/vp9/encoder/ppc/vp9_quantize_vsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "./vp9_rtcd.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+diff --git a/vp9/encoder/vp9_dct.c b/vp9/encoder/vp9_dct.c
+index 2f42c6afc..328da03ef 100644
+--- a/vp9/encoder/vp9_dct.c
++++ b/vp9/encoder/vp9_dct.c
+@@ -12,8 +12,8 @@
+ #include <math.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vp9/common/vp9_blockd.h"
+ #include "vp9/common/vp9_idct.h"
+diff --git a/vp9/encoder/vp9_denoiser.c b/vp9/encoder/vp9_denoiser.c
+index e5dffa90a..370b1d676 100644
+--- a/vp9/encoder/vp9_denoiser.c
++++ b/vp9/encoder/vp9_denoiser.c
+@@ -12,7 +12,7 @@
+ #include <limits.h>
+ #include <math.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_scale/yv12config.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vp9/encoder/vp9_encodeframe.c b/vp9/encoder/vp9_encodeframe.c
+index 937f22e83..499d2806e 100644
+--- a/vp9/encoder/vp9_encodeframe.c
++++ b/vp9/encoder/vp9_encodeframe.c
+@@ -14,8 +14,8 @@
+ #include <stdio.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vp9/encoder/vp9_encodemb.c b/vp9/encoder/vp9_encodemb.c
+index eded9f5c4..bd391802a 100644
+--- a/vp9/encoder/vp9_encodemb.c
++++ b/vp9/encoder/vp9_encodemb.c
+@@ -9,8 +9,8 @@
+  */
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/quantize.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vp9/encoder/vp9_encodemb.h b/vp9/encoder/vp9_encodemb.h
+index 1391446be..ffa27278a 100644
+--- a/vp9/encoder/vp9_encodemb.h
++++ b/vp9/encoder/vp9_encodemb.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_ENCODER_VP9_ENCODEMB_H_
+ #define VPX_VP9_ENCODER_VP9_ENCODEMB_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/encoder/vp9_block.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vp9/encoder/vp9_encoder.c b/vp9/encoder/vp9_encoder.c
+index 59179faa0..4543a3f4d 100644
+--- a/vp9/encoder/vp9_encoder.c
++++ b/vp9/encoder/vp9_encoder.c
+@@ -16,8 +16,8 @@
+ #include <string.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx/vpx_codec.h"
+ #include "vpx/vpx_ext_ratectrl.h"
+diff --git a/vp9/encoder/vp9_encoder.h b/vp9/encoder/vp9_encoder.h
+index 8afea3ad5..100baffa8 100644
+--- a/vp9/encoder/vp9_encoder.h
++++ b/vp9/encoder/vp9_encoder.h
+@@ -13,8 +13,8 @@
+ 
+ #include <stdio.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/internal/vpx_codec_internal.h"
+ #include "vpx/vpx_ext_ratectrl.h"
+ #include "vpx/vp8cx.h"
+diff --git a/vp9/encoder/vp9_firstpass.c b/vp9/encoder/vp9_firstpass.c
+index a41eca927..8443099e0 100644
+--- a/vp9/encoder/vp9_firstpass.c
++++ b/vp9/encoder/vp9_firstpass.c
+@@ -13,7 +13,7 @@
+ #include <stdint.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vp9/encoder/vp9_frame_scale.c b/vp9/encoder/vp9_frame_scale.c
+index c74d52324..6fe0989cc 100644
+--- a/vp9/encoder/vp9_frame_scale.c
++++ b/vp9/encoder/vp9_frame_scale.c
+@@ -9,8 +9,8 @@
+  */
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vp9/common/vp9_blockd.h"
+ #include "vp9/encoder/vp9_encoder.h"
+diff --git a/vp9/encoder/vp9_lookahead.c b/vp9/encoder/vp9_lookahead.c
+index b6be4f88a..5b2ba55d5 100644
+--- a/vp9/encoder/vp9_lookahead.c
++++ b/vp9/encoder/vp9_lookahead.c
+@@ -11,7 +11,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vp9/common/vp9_common.h"
+ 
+diff --git a/vp9/encoder/vp9_mbgraph.c b/vp9/encoder/vp9_mbgraph.c
+index 2f20a8fe6..82f2b96b1 100644
+--- a/vp9/encoder/vp9_mbgraph.c
++++ b/vp9/encoder/vp9_mbgraph.c
+@@ -11,7 +11,7 @@
+ #include <limits.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vp9/encoder/vp9_mcomp.c b/vp9/encoder/vp9_mcomp.c
+index cbe1c4029..d76990ea8 100644
+--- a/vp9/encoder/vp9_mcomp.c
++++ b/vp9/encoder/vp9_mcomp.c
+@@ -13,8 +13,8 @@
+ #include <math.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vp9/encoder/vp9_noise_estimate.c b/vp9/encoder/vp9_noise_estimate.c
+index 4ee6e51ba..d580db0f5 100644
+--- a/vp9/encoder/vp9_noise_estimate.c
++++ b/vp9/encoder/vp9_noise_estimate.c
+@@ -12,7 +12,7 @@
+ #include <limits.h>
+ #include <math.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_scale/yv12config.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vp9/encoder/vp9_pickmode.c b/vp9/encoder/vp9_pickmode.c
+index d561b5062..328fb6c9f 100644
+--- a/vp9/encoder/vp9_pickmode.c
++++ b/vp9/encoder/vp9_pickmode.c
+@@ -14,7 +14,7 @@
+ #include <stdio.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_codec.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vp9/encoder/vp9_quantize.c b/vp9/encoder/vp9_quantize.c
+index d37e020b0..397209c4e 100644
+--- a/vp9/encoder/vp9_quantize.c
++++ b/vp9/encoder/vp9_quantize.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ #include <math.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_ports/bitops.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vp9/encoder/vp9_quantize.h b/vp9/encoder/vp9_quantize.h
+index f626f0656..d1ec14a64 100644
+--- a/vp9/encoder/vp9_quantize.h
++++ b/vp9/encoder/vp9_quantize.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VP9_ENCODER_VP9_QUANTIZE_H_
+ #define VPX_VP9_ENCODER_VP9_QUANTIZE_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vp9/encoder/vp9_block.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vp9/encoder/vp9_ratectrl.c b/vp9/encoder/vp9_ratectrl.c
+index e95bcc83e..5f0f0c2e8 100644
+--- a/vp9/encoder/vp9_ratectrl.c
++++ b/vp9/encoder/vp9_ratectrl.c
+@@ -16,7 +16,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vp9/encoder/vp9_rdopt.c b/vp9/encoder/vp9_rdopt.c
+index 260aa0a54..342ead195 100644
+--- a/vp9/encoder/vp9_rdopt.c
++++ b/vp9/encoder/vp9_rdopt.c
+@@ -12,7 +12,7 @@
+ #include <math.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vp9/encoder/vp9_resize.c b/vp9/encoder/vp9_resize.c
+index 352d8f127..44c9246e0 100644
+--- a/vp9/encoder/vp9_resize.c
++++ b/vp9/encoder/vp9_resize.c
+@@ -15,7 +15,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #if CONFIG_VP9_HIGHBITDEPTH
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #endif  // CONFIG_VP9_HIGHBITDEPTH
+diff --git a/vp9/encoder/vp9_temporal_filter_constants.h b/vp9/encoder/vp9_temporal_filter_constants.h
+index 8776dfc06..de1663c17 100644
+--- a/vp9/encoder/vp9_temporal_filter_constants.h
++++ b/vp9/encoder/vp9_temporal_filter_constants.h
+@@ -10,7 +10,7 @@
+ 
+ #ifndef VPX_VP9_ENCODER_TEMPORAL_FILTER_CONSTANTS_H_
+ #define VPX_VP9_ENCODER_TEMPORAL_FILTER_CONSTANTS_H_
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ // Division using multiplication and shifting. The C implementation does:
+ // modifier *= 3;
+diff --git a/vp9/encoder/vp9_tpl_model.c b/vp9/encoder/vp9_tpl_model.c
+index c40d71e3b..800f55721 100644
+--- a/vp9/encoder/vp9_tpl_model.c
++++ b/vp9/encoder/vp9_tpl_model.c
+@@ -10,7 +10,7 @@
+ 
+ #include <math.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #if CONFIG_NON_GREEDY_MV
+ #include "vp9/common/vp9_mvref_common.h"
+ #endif
+diff --git a/vp9/encoder/x86/highbd_temporal_filter_sse4.c b/vp9/encoder/x86/highbd_temporal_filter_sse4.c
+index 97f182c66..15666adf6 100644
+--- a/vp9/encoder/x86/highbd_temporal_filter_sse4.c
++++ b/vp9/encoder/x86/highbd_temporal_filter_sse4.c
+@@ -12,7 +12,7 @@
+ #include <smmintrin.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vp9/encoder/vp9_encoder.h"
+ #include "vp9/encoder/vp9_temporal_filter.h"
+diff --git a/vp9/encoder/x86/temporal_filter_sse4.c b/vp9/encoder/x86/temporal_filter_sse4.c
+index 7571bfcca..c902a7246 100644
+--- a/vp9/encoder/x86/temporal_filter_sse4.c
++++ b/vp9/encoder/x86/temporal_filter_sse4.c
+@@ -12,7 +12,7 @@
+ #include <smmintrin.h>
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vp9/encoder/vp9_encoder.h"
+ #include "vp9/encoder/vp9_temporal_filter.h"
+diff --git a/vp9/encoder/x86/vp9_dct_intrin_sse2.c b/vp9/encoder/x86/vp9_dct_intrin_sse2.c
+index e9943447f..74e9bded5 100644
+--- a/vp9/encoder/x86/vp9_dct_intrin_sse2.c
++++ b/vp9/encoder/x86/vp9_dct_intrin_sse2.c
+@@ -12,7 +12,7 @@
+ #include <emmintrin.h>  // SSE2
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/x86/bitdepth_conversion_sse2.h"
+ #include "vpx_dsp/x86/fwd_txfm_sse2.h"
+diff --git a/vp9/encoder/x86/vp9_denoiser_sse2.c b/vp9/encoder/x86/vp9_denoiser_sse2.c
+index 5930bf491..34eb6bf99 100644
+--- a/vp9/encoder/x86/vp9_denoiser_sse2.c
++++ b/vp9/encoder/x86/vp9_denoiser_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vp9_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+diff --git a/vp9/encoder/x86/vp9_frame_scale_ssse3.c b/vp9/encoder/x86/vp9_frame_scale_ssse3.c
+index 628dc4fea..4043ce275 100644
+--- a/vp9/encoder/x86/vp9_frame_scale_ssse3.c
++++ b/vp9/encoder/x86/vp9_frame_scale_ssse3.c
+@@ -11,7 +11,7 @@
+ #include <tmmintrin.h>  // SSSE3
+ 
+ #include "./vp9_rtcd.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx_dsp/x86/convolve_ssse3.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+diff --git a/vp9/vp9_cx_iface.c b/vp9/vp9_cx_iface.c
+index 55a2d0b7c..f1f0afc4f 100644
+--- a/vp9/vp9_cx_iface.c
++++ b/vp9/vp9_cx_iface.c
+@@ -13,7 +13,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_encoder.h"
+ #include "vpx/vpx_ext_ratectrl.h"
+ #include "vpx_dsp/psnr.h"
+diff --git a/vp9/vp9_dx_iface.c b/vp9/vp9_dx_iface.c
+index 7567910b9..b1fbf420b 100644
+--- a/vp9/vp9_dx_iface.c
++++ b/vp9/vp9_dx_iface.c
+@@ -11,7 +11,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vpx_version.h"
+ 
+ #include "vpx/internal/vpx_codec_internal.h"
+diff --git a/vpx_dsp/add_noise.c b/vpx_dsp/add_noise.c
+index 6839e9792..1a3bc712d 100644
+--- a/vpx_dsp/add_noise.c
++++ b/vpx_dsp/add_noise.c
+@@ -11,8 +11,8 @@
+ #include <math.h>
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/postproc.h"
+diff --git a/vpx_dsp/arm/avg_neon.c b/vpx_dsp/arm/avg_neon.c
+index 1b17a326b..411384771 100644
+--- a/vpx_dsp/arm/avg_neon.c
++++ b/vpx_dsp/arm/avg_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+diff --git a/vpx_dsp/arm/avg_pred_neon.c b/vpx_dsp/arm/avg_pred_neon.c
+index 5afdece0a..e0fb5aa9c 100644
+--- a/vpx_dsp/arm/avg_pred_neon.c
++++ b/vpx_dsp/arm/avg_pred_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ 
+ void vpx_comp_avg_pred_neon(uint8_t *comp, const uint8_t *pred, int width,
+diff --git a/vpx_dsp/arm/deblock_neon.c b/vpx_dsp/arm/deblock_neon.c
+index 7efce3273..e71193373 100644
+--- a/vpx_dsp/arm/deblock_neon.c
++++ b/vpx_dsp/arm/deblock_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+ 
+diff --git a/vpx_dsp/arm/fdct16x16_neon.c b/vpx_dsp/arm/fdct16x16_neon.c
+index fde71ff30..3c7274574 100644
+--- a/vpx_dsp/arm/fdct16x16_neon.c
++++ b/vpx_dsp/arm/fdct16x16_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/fdct32x32_neon.c b/vpx_dsp/arm/fdct32x32_neon.c
+index a91730ce8..4224416ef 100644
+--- a/vpx_dsp/arm/fdct32x32_neon.c
++++ b/vpx_dsp/arm/fdct32x32_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/fdct32x32_neon.h b/vpx_dsp/arm/fdct32x32_neon.h
+index 3b9e64c6d..2bb6ec82e 100644
+--- a/vpx_dsp/arm/fdct32x32_neon.h
++++ b/vpx_dsp/arm/fdct32x32_neon.h
+@@ -13,8 +13,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/fdct4x4_neon.c b/vpx_dsp/arm/fdct4x4_neon.c
+index 4bc968ecb..153804b40 100644
+--- a/vpx_dsp/arm/fdct4x4_neon.c
++++ b/vpx_dsp/arm/fdct4x4_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+diff --git a/vpx_dsp/arm/fdct8x8_neon.c b/vpx_dsp/arm/fdct8x8_neon.c
+index 75ee6f223..2f8273640 100644
+--- a/vpx_dsp/arm/fdct8x8_neon.c
++++ b/vpx_dsp/arm/fdct8x8_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+diff --git a/vpx_dsp/arm/fdct_partial_neon.c b/vpx_dsp/arm/fdct_partial_neon.c
+index df0da543c..e3e713a08 100644
+--- a/vpx_dsp/arm/fdct_partial_neon.c
++++ b/vpx_dsp/arm/fdct_partial_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+ 
+diff --git a/vpx_dsp/arm/hadamard_neon.c b/vpx_dsp/arm/hadamard_neon.c
+index f5a044be4..1ac2b6398 100644
+--- a/vpx_dsp/arm/hadamard_neon.c
++++ b/vpx_dsp/arm/hadamard_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_avg_neon.c b/vpx_dsp/arm/highbd_avg_neon.c
+index 4265596c8..d397fe140 100644
+--- a/vpx_dsp/arm/highbd_avg_neon.c
++++ b/vpx_dsp/arm/highbd_avg_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+diff --git a/vpx_dsp/arm/highbd_avg_pred_neon.c b/vpx_dsp/arm/highbd_avg_pred_neon.c
+index 3063acbb3..24ba569e4 100644
+--- a/vpx_dsp/arm/highbd_avg_pred_neon.c
++++ b/vpx_dsp/arm/highbd_avg_pred_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ void vpx_highbd_comp_avg_pred_neon(uint16_t *comp_pred, const uint16_t *pred,
+                                    int width, int height, const uint16_t *ref,
+diff --git a/vpx_dsp/arm/highbd_hadamard_neon.c b/vpx_dsp/arm/highbd_hadamard_neon.c
+index 7be88f6bc..8ee2fc657 100644
+--- a/vpx_dsp/arm/highbd_hadamard_neon.c
++++ b/vpx_dsp/arm/highbd_hadamard_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/highbd_idct16x16_add_neon.c b/vpx_dsp/arm/highbd_idct16x16_add_neon.c
+index 654ab42ca..4e551928e 100644
+--- a/vpx_dsp/arm/highbd_idct16x16_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct16x16_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+diff --git a/vpx_dsp/arm/highbd_idct32x32_1024_add_neon.c b/vpx_dsp/arm/highbd_idct32x32_1024_add_neon.c
+index 5b36f7336..1db398bed 100644
+--- a/vpx_dsp/arm/highbd_idct32x32_1024_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct32x32_1024_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+ #include "vpx_dsp/txfm_common.h"
+diff --git a/vpx_dsp/arm/highbd_idct32x32_135_add_neon.c b/vpx_dsp/arm/highbd_idct32x32_135_add_neon.c
+index 6750c1a42..46b0e4ff2 100644
+--- a/vpx_dsp/arm/highbd_idct32x32_135_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct32x32_135_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/highbd_idct32x32_34_add_neon.c b/vpx_dsp/arm/highbd_idct32x32_34_add_neon.c
+index f05932cec..9303bdafc 100644
+--- a/vpx_dsp/arm/highbd_idct32x32_34_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct32x32_34_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/highbd_idct32x32_add_neon.c b/vpx_dsp/arm/highbd_idct32x32_add_neon.c
+index c1354c0c1..96be01745 100644
+--- a/vpx_dsp/arm/highbd_idct32x32_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct32x32_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+diff --git a/vpx_dsp/arm/highbd_idct4x4_add_neon.c b/vpx_dsp/arm/highbd_idct4x4_add_neon.c
+index 7be1dad1d..8a43b5874 100644
+--- a/vpx_dsp/arm/highbd_idct4x4_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct4x4_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+diff --git a/vpx_dsp/arm/highbd_idct8x8_add_neon.c b/vpx_dsp/arm/highbd_idct8x8_add_neon.c
+index bed3227ca..970781ec9 100644
+--- a/vpx_dsp/arm/highbd_idct8x8_add_neon.c
++++ b/vpx_dsp/arm/highbd_idct8x8_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/highbd_idct_neon.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/highbd_idct_neon.h b/vpx_dsp/arm/highbd_idct_neon.h
+index 518ef4336..98f47d37f 100644
+--- a/vpx_dsp/arm/highbd_idct_neon.h
++++ b/vpx_dsp/arm/highbd_idct_neon.h
+@@ -13,7 +13,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+diff --git a/vpx_dsp/arm/highbd_intrapred_neon.c b/vpx_dsp/arm/highbd_intrapred_neon.c
+index 235cb5b99..2dbe43d2e 100644
+--- a/vpx_dsp/arm/highbd_intrapred_neon.c
++++ b/vpx_dsp/arm/highbd_intrapred_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "sum_neon.h"
+ #include "vpx/vpx_integer.h"
+ 
+diff --git a/vpx_dsp/arm/highbd_loopfilter_neon.c b/vpx_dsp/arm/highbd_loopfilter_neon.c
+index 8d6e8acc4..d86eb5e2e 100644
+--- a/vpx_dsp/arm/highbd_loopfilter_neon.c
++++ b/vpx_dsp/arm/highbd_loopfilter_neon.c
+@@ -9,8 +9,8 @@
+  */
+ 
+ #include <arm_neon.h>
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+ 
+ static INLINE void load_thresh(const uint8_t *blimit, const uint8_t *limit,
+diff --git a/vpx_dsp/arm/highbd_quantize_neon.c b/vpx_dsp/arm/highbd_quantize_neon.c
+index c2ad34a69..d0d85c26e 100644
+--- a/vpx_dsp/arm/highbd_quantize_neon.c
++++ b/vpx_dsp/arm/highbd_quantize_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vp9/common/vp9_scan.h"
+ #include "vp9/encoder/vp9_block.h"
+diff --git a/vpx_dsp/arm/highbd_sad4d_neon.c b/vpx_dsp/arm/highbd_sad4d_neon.c
+index a6684b053..f5c8233b3 100644
+--- a/vpx_dsp/arm/highbd_sad4d_neon.c
++++ b/vpx_dsp/arm/highbd_sad4d_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_sad_neon.c b/vpx_dsp/arm/highbd_sad_neon.c
+index b99bac66c..696aac1ef 100644
+--- a/vpx_dsp/arm/highbd_sad_neon.c
++++ b/vpx_dsp/arm/highbd_sad_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_sse_neon.c b/vpx_dsp/arm/highbd_sse_neon.c
+index 91dfebf90..88da83895 100644
+--- a/vpx_dsp/arm/highbd_sse_neon.c
++++ b/vpx_dsp/arm/highbd_sse_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <stdint.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+ 
+ static INLINE void highbd_sse_8x1_init_neon(const uint16_t *src,
+diff --git a/vpx_dsp/arm/highbd_subpel_variance_neon.c b/vpx_dsp/arm/highbd_subpel_variance_neon.c
+index f8b94620d..b75e014ce 100644
+--- a/vpx_dsp/arm/highbd_subpel_variance_neon.c
++++ b/vpx_dsp/arm/highbd_subpel_variance_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_variance_neon.c b/vpx_dsp/arm/highbd_variance_neon.c
+index 309ae7fd3..3b3aec231 100644
+--- a/vpx_dsp/arm/highbd_variance_neon.c
++++ b/vpx_dsp/arm/highbd_variance_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_variance_neon_dotprod.c b/vpx_dsp/arm/highbd_variance_neon_dotprod.c
+index 1a8872017..14a3356cc 100644
+--- a/vpx_dsp/arm/highbd_variance_neon_dotprod.c
++++ b/vpx_dsp/arm/highbd_variance_neon_dotprod.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_variance_sve.c b/vpx_dsp/arm/highbd_variance_sve.c
+index cebe06b09..2a8eb746a 100644
+--- a/vpx_dsp/arm/highbd_variance_sve.c
++++ b/vpx_dsp/arm/highbd_variance_sve.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+diff --git a/vpx_dsp/arm/highbd_vpx_convolve8_neon.c b/vpx_dsp/arm/highbd_vpx_convolve8_neon.c
+index cc6307f92..02bb62bba 100644
+--- a/vpx_dsp/arm/highbd_vpx_convolve8_neon.c
++++ b/vpx_dsp/arm/highbd_vpx_convolve8_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/highbd_convolve8_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/highbd_vpx_convolve8_sve.c b/vpx_dsp/arm/highbd_vpx_convolve8_sve.c
+index f909e06a1..431a4ed01 100644
+--- a/vpx_dsp/arm/highbd_vpx_convolve8_sve.c
++++ b/vpx_dsp/arm/highbd_vpx_convolve8_sve.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/highbd_convolve8_sve.h"
+diff --git a/vpx_dsp/arm/highbd_vpx_convolve8_sve2.c b/vpx_dsp/arm/highbd_vpx_convolve8_sve2.c
+index bf0ee9606..af95043e9 100644
+--- a/vpx_dsp/arm/highbd_vpx_convolve8_sve2.c
++++ b/vpx_dsp/arm/highbd_vpx_convolve8_sve2.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/highbd_convolve8_neon.h"
+diff --git a/vpx_dsp/arm/highbd_vpx_convolve_avg_neon.c b/vpx_dsp/arm/highbd_vpx_convolve_avg_neon.c
+index 765a054f8..131ecc15e 100644
+--- a/vpx_dsp/arm/highbd_vpx_convolve_avg_neon.c
++++ b/vpx_dsp/arm/highbd_vpx_convolve_avg_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ void vpx_highbd_convolve_avg_neon(const uint16_t *src, ptrdiff_t src_stride,
+diff --git a/vpx_dsp/arm/highbd_vpx_convolve_copy_neon.c b/vpx_dsp/arm/highbd_vpx_convolve_copy_neon.c
+index 775108208..38a4a166a 100644
+--- a/vpx_dsp/arm/highbd_vpx_convolve_copy_neon.c
++++ b/vpx_dsp/arm/highbd_vpx_convolve_copy_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ void vpx_highbd_convolve_copy_neon(const uint16_t *src, ptrdiff_t src_stride,
+diff --git a/vpx_dsp/arm/idct16x16_1_add_neon.c b/vpx_dsp/arm/idct16x16_1_add_neon.c
+index bf5192a68..b797a34c2 100644
+--- a/vpx_dsp/arm/idct16x16_1_add_neon.c
++++ b/vpx_dsp/arm/idct16x16_1_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+diff --git a/vpx_dsp/arm/idct16x16_add_neon.c b/vpx_dsp/arm/idct16x16_add_neon.c
+index fc7f4a774..978df95a2 100644
+--- a/vpx_dsp/arm/idct16x16_add_neon.c
++++ b/vpx_dsp/arm/idct16x16_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/txfm_common.h"
+diff --git a/vpx_dsp/arm/idct32x32_135_add_neon.c b/vpx_dsp/arm/idct32x32_135_add_neon.c
+index 057731ad9..0fd0b2418 100644
+--- a/vpx_dsp/arm/idct32x32_135_add_neon.c
++++ b/vpx_dsp/arm/idct32x32_135_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/idct32x32_1_add_neon.c b/vpx_dsp/arm/idct32x32_1_add_neon.c
+index 8920b9336..5bfeddbf7 100644
+--- a/vpx_dsp/arm/idct32x32_1_add_neon.c
++++ b/vpx_dsp/arm/idct32x32_1_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+diff --git a/vpx_dsp/arm/idct32x32_34_add_neon.c b/vpx_dsp/arm/idct32x32_34_add_neon.c
+index f570547e4..d2304ed86 100644
+--- a/vpx_dsp/arm/idct32x32_34_add_neon.c
++++ b/vpx_dsp/arm/idct32x32_34_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/idct32x32_add_neon.c b/vpx_dsp/arm/idct32x32_add_neon.c
+index 9f4589ea9..f495f4cfc 100644
+--- a/vpx_dsp/arm/idct32x32_add_neon.c
++++ b/vpx_dsp/arm/idct32x32_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/idct4x4_1_add_neon.c b/vpx_dsp/arm/idct4x4_1_add_neon.c
+index a14b89543..036ce73d1 100644
+--- a/vpx_dsp/arm/idct4x4_1_add_neon.c
++++ b/vpx_dsp/arm/idct4x4_1_add_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+diff --git a/vpx_dsp/arm/idct4x4_add_neon.c b/vpx_dsp/arm/idct4x4_add_neon.c
+index 8192ee4cf..10dce33a1 100644
+--- a/vpx_dsp/arm/idct4x4_add_neon.c
++++ b/vpx_dsp/arm/idct4x4_add_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/txfm_common.h"
+diff --git a/vpx_dsp/arm/idct8x8_1_add_neon.c b/vpx_dsp/arm/idct8x8_1_add_neon.c
+index ce9b45958..ea1bf0fa9 100644
+--- a/vpx_dsp/arm/idct8x8_1_add_neon.c
++++ b/vpx_dsp/arm/idct8x8_1_add_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+ static INLINE uint8x8_t create_dcd(const int16_t dc) {
+diff --git a/vpx_dsp/arm/idct8x8_add_neon.c b/vpx_dsp/arm/idct8x8_add_neon.c
+index 7471387e4..8e080fcf3 100644
+--- a/vpx_dsp/arm/idct8x8_add_neon.c
++++ b/vpx_dsp/arm/idct8x8_add_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/idct_neon.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/idct_neon.h b/vpx_dsp/arm/idct_neon.h
+index c02311326..40bd532d5 100644
+--- a/vpx_dsp/arm/idct_neon.h
++++ b/vpx_dsp/arm/idct_neon.h
+@@ -13,7 +13,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/arm/intrapred_neon.c b/vpx_dsp/arm/intrapred_neon.c
+index 4f909e493..b661ff5da 100644
+--- a/vpx_dsp/arm/intrapred_neon.c
++++ b/vpx_dsp/arm/intrapred_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "mem_neon.h"
+ #include "sum_neon.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vpx_dsp/arm/loopfilter_neon.c b/vpx_dsp/arm/loopfilter_neon.c
+index 579096d78..eef0470ac 100644
+--- a/vpx_dsp/arm/loopfilter_neon.c
++++ b/vpx_dsp/arm/loopfilter_neon.c
+@@ -9,8 +9,8 @@
+  */
+ 
+ #include <arm_neon.h>
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+ 
+ // For all the static inline functions, the functions ending with '_8' process
+diff --git a/vpx_dsp/arm/mem_neon.h b/vpx_dsp/arm/mem_neon.h
+index 268c4bd96..a1510c4ff 100644
+--- a/vpx_dsp/arm/mem_neon.h
++++ b/vpx_dsp/arm/mem_neon.h
+@@ -15,7 +15,7 @@
+ #include <assert.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ 
+diff --git a/vpx_dsp/arm/quantize_neon.c b/vpx_dsp/arm/quantize_neon.c
+index e2351fa2c..b7ce5098f 100644
+--- a/vpx_dsp/arm/quantize_neon.c
++++ b/vpx_dsp/arm/quantize_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vp9/common/vp9_scan.h"
+ #include "vp9/encoder/vp9_block.h"
+diff --git a/vpx_dsp/arm/sad4d_neon.c b/vpx_dsp/arm/sad4d_neon.c
+index 713eec7a9..cdaf473a3 100644
+--- a/vpx_dsp/arm/sad4d_neon.c
++++ b/vpx_dsp/arm/sad4d_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ 
+ #include <assert.h>
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+diff --git a/vpx_dsp/arm/sad4d_neon_dotprod.c b/vpx_dsp/arm/sad4d_neon_dotprod.c
+index 933fc48b8..d90d84384 100644
+--- a/vpx_dsp/arm/sad4d_neon_dotprod.c
++++ b/vpx_dsp/arm/sad4d_neon_dotprod.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+diff --git a/vpx_dsp/arm/sad_neon.c b/vpx_dsp/arm/sad_neon.c
+index 4dd87ddc0..934f947b3 100644
+--- a/vpx_dsp/arm/sad_neon.c
++++ b/vpx_dsp/arm/sad_neon.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/sad_neon_dotprod.c b/vpx_dsp/arm/sad_neon_dotprod.c
+index fbc0b8d75..f0b2507a6 100644
+--- a/vpx_dsp/arm/sad_neon_dotprod.c
++++ b/vpx_dsp/arm/sad_neon_dotprod.c
+@@ -10,8 +10,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/sse_neon.c b/vpx_dsp/arm/sse_neon.c
+index 2dd57e596..0fbcbec86 100644
+--- a/vpx_dsp/arm/sse_neon.c
++++ b/vpx_dsp/arm/sse_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <stdint.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+ 
+diff --git a/vpx_dsp/arm/sse_neon_dotprod.c b/vpx_dsp/arm/sse_neon_dotprod.c
+index 877777391..10cb786f6 100644
+--- a/vpx_dsp/arm/sse_neon_dotprod.c
++++ b/vpx_dsp/arm/sse_neon_dotprod.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+ 
+diff --git a/vpx_dsp/arm/subpel_variance_neon.c b/vpx_dsp/arm/subpel_variance_neon.c
+index d92f1615d..bbc2675a3 100644
+--- a/vpx_dsp/arm/subpel_variance_neon.c
++++ b/vpx_dsp/arm/subpel_variance_neon.c
+@@ -9,8 +9,8 @@
+  */
+ 
+ #include <arm_neon.h>
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ 
+diff --git a/vpx_dsp/arm/subtract_neon.c b/vpx_dsp/arm/subtract_neon.c
+index 2c008e48a..cb6e14b39 100644
+--- a/vpx_dsp/arm/subtract_neon.c
++++ b/vpx_dsp/arm/subtract_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ 
+diff --git a/vpx_dsp/arm/sum_neon.h b/vpx_dsp/arm/sum_neon.h
+index 11821dc10..feb31c7c8 100644
+--- a/vpx_dsp/arm/sum_neon.h
++++ b/vpx_dsp/arm/sum_neon.h
+@@ -13,7 +13,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ static INLINE uint16_t horizontal_add_uint8x4(const uint8x8_t a) {
+diff --git a/vpx_dsp/arm/sum_squares_neon.c b/vpx_dsp/arm/sum_squares_neon.c
+index 074afe325..4a80eef35 100644
+--- a/vpx_dsp/arm/sum_squares_neon.c
++++ b/vpx_dsp/arm/sum_squares_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+ 
+ uint64_t vpx_sum_squares_2d_i16_neon(const int16_t *src, int stride, int size) {
+diff --git a/vpx_dsp/arm/sum_squares_sve.c b/vpx_dsp/arm/sum_squares_sve.c
+index a18cbbd73..1106d02c7 100644
+--- a/vpx_dsp/arm/sum_squares_sve.c
++++ b/vpx_dsp/arm/sum_squares_sve.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/sum_neon.h"
+ #include "vpx_dsp/arm/vpx_neon_sve_bridge.h"
+diff --git a/vpx_dsp/arm/transpose_neon.h b/vpx_dsp/arm/transpose_neon.h
+index c989a6721..0c2cfea9d 100644
+--- a/vpx_dsp/arm/transpose_neon.h
++++ b/vpx_dsp/arm/transpose_neon.h
+@@ -13,7 +13,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ // Transpose 64 bit elements as follows:
+ // a0: 00 01 02 03 04 05 06 07
+diff --git a/vpx_dsp/arm/variance_neon.c b/vpx_dsp/arm/variance_neon.c
+index efb2c1d8d..93aef1dd7 100644
+--- a/vpx_dsp/arm/variance_neon.c
++++ b/vpx_dsp/arm/variance_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/variance_neon_dotprod.c b/vpx_dsp/arm/variance_neon_dotprod.c
+index ab843e9fc..4f6930a01 100644
+--- a/vpx_dsp/arm/variance_neon_dotprod.c
++++ b/vpx_dsp/arm/variance_neon_dotprod.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
+-#include "./vpx_config.h"
++#include "vpx_dsp_rtcd.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+diff --git a/vpx_dsp/arm/vpx_convolve8_neon.c b/vpx_dsp/arm/vpx_convolve8_neon.c
+index 037ea1142..004a1113d 100644
+--- a/vpx_dsp/arm/vpx_convolve8_neon.c
++++ b/vpx_dsp/arm/vpx_convolve8_neon.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/vpx_convolve8_neon.h b/vpx_dsp/arm/vpx_convolve8_neon.h
+index 10cc761cc..930138293 100644
+--- a/vpx_dsp/arm/vpx_convolve8_neon.h
++++ b/vpx_dsp/arm/vpx_convolve8_neon.h
+@@ -13,8 +13,8 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_filter.h"
+ 
+ static INLINE int16x4_t convolve8_4(const int16x4_t s0, const int16x4_t s1,
+diff --git a/vpx_dsp/arm/vpx_convolve8_neon_asm.c b/vpx_dsp/arm/vpx_convolve8_neon_asm.c
+index c4177c538..e749a138d 100644
+--- a/vpx_dsp/arm/vpx_convolve8_neon_asm.c
++++ b/vpx_dsp/arm/vpx_convolve8_neon_asm.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_filter.h"
+ #include "vpx_dsp/arm/vpx_convolve8_neon_asm.h"
+ 
+diff --git a/vpx_dsp/arm/vpx_convolve8_neon_dotprod.c b/vpx_dsp/arm/vpx_convolve8_neon_dotprod.c
+index b05a49d3f..2eac48257 100644
+--- a/vpx_dsp/arm/vpx_convolve8_neon_dotprod.c
++++ b/vpx_dsp/arm/vpx_convolve8_neon_dotprod.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/vpx_convolve8_neon_i8mm.c b/vpx_dsp/arm/vpx_convolve8_neon_i8mm.c
+index e58200413..85726796b 100644
+--- a/vpx_dsp/arm/vpx_convolve8_neon_i8mm.c
++++ b/vpx_dsp/arm/vpx_convolve8_neon_i8mm.c
+@@ -11,8 +11,8 @@
+ #include <arm_neon.h>
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/arm/vpx_convolve_avg_neon.c b/vpx_dsp/arm/vpx_convolve_avg_neon.c
+index 8e3ee599f..44470ad7a 100644
+--- a/vpx_dsp/arm/vpx_convolve_avg_neon.c
++++ b/vpx_dsp/arm/vpx_convolve_avg_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <arm_neon.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ void vpx_convolve_avg_neon(const uint8_t *src, ptrdiff_t src_stride,
+diff --git a/vpx_dsp/arm/vpx_convolve_copy_neon.c b/vpx_dsp/arm/vpx_convolve_copy_neon.c
+index bea7c9843..ce894baf7 100644
+--- a/vpx_dsp/arm/vpx_convolve_copy_neon.c
++++ b/vpx_dsp/arm/vpx_convolve_copy_neon.c
+@@ -11,7 +11,7 @@
+ #include <arm_neon.h>
+ #include <string.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ void vpx_convolve_copy_neon(const uint8_t *src, ptrdiff_t src_stride,
+diff --git a/vpx_dsp/arm/vpx_convolve_neon.c b/vpx_dsp/arm/vpx_convolve_neon.c
+index de5fa2947..d2c0eeece 100644
+--- a/vpx_dsp/arm/vpx_convolve_neon.c
++++ b/vpx_dsp/arm/vpx_convolve_neon.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/vpx_filter.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/arm/vpx_scaled_convolve8_neon.c b/vpx_dsp/arm/vpx_scaled_convolve8_neon.c
+index f40b6a907..891710107 100644
+--- a/vpx_dsp/arm/vpx_scaled_convolve8_neon.c
++++ b/vpx_dsp/arm/vpx_scaled_convolve8_neon.c
+@@ -12,8 +12,8 @@
+ #include <assert.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/arm/mem_neon.h"
+ #include "vpx_dsp/arm/transpose_neon.h"
+diff --git a/vpx_dsp/avg.c b/vpx_dsp/avg.c
+index a8dcab7da..3789dd1d1 100644
+--- a/vpx_dsp/avg.c
++++ b/vpx_dsp/avg.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ 
+ unsigned int vpx_avg_8x8_c(const uint8_t *s, int p) {
+diff --git a/vpx_dsp/bitreader.c b/vpx_dsp/bitreader.c
+index 90cbbba53..d9f7eeb51 100644
+--- a/vpx_dsp/bitreader.c
++++ b/vpx_dsp/bitreader.c
+@@ -9,7 +9,7 @@
+  */
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/bitreader.h"
+ #include "vpx_dsp/prob.h"
+diff --git a/vpx_dsp/bitreader.h b/vpx_dsp/bitreader.h
+index a5927ea2a..c08678b26 100644
+--- a/vpx_dsp/bitreader.h
++++ b/vpx_dsp/bitreader.h
+@@ -15,7 +15,7 @@
+ #include <stdio.h>
+ #include <limits.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx/vp8dx.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vpx_dsp/bitreader_buffer.c b/vpx_dsp/bitreader_buffer.c
+index f59f1f7cb..5ed7a18fd 100644
+--- a/vpx_dsp/bitreader_buffer.c
++++ b/vpx_dsp/bitreader_buffer.c
+@@ -7,7 +7,7 @@
+  *  in the file PATENTS.  All contributing project authors may
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./bitreader_buffer.h"
+ 
+ size_t vpx_rb_bytes_read(struct vpx_read_bit_buffer *rb) {
+diff --git a/vpx_dsp/bitwriter_buffer.c b/vpx_dsp/bitwriter_buffer.c
+index b3a2490f2..9105a8901 100644
+--- a/vpx_dsp/bitwriter_buffer.c
++++ b/vpx_dsp/bitwriter_buffer.c
+@@ -12,7 +12,7 @@
+ #include <limits.h>
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./bitwriter_buffer.h"
+ 
+ void vpx_wb_init(struct vpx_write_bit_buffer *wb, uint8_t *bit_buffer,
+diff --git a/vpx_dsp/deblock.c b/vpx_dsp/deblock.c
+index 455b73bbc..e856497c7 100644
+--- a/vpx_dsp/deblock.c
++++ b/vpx_dsp/deblock.c
+@@ -9,7 +9,7 @@
+  */
+ #include <assert.h>
+ #include <stdlib.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ const int16_t vpx_rv[] = {
+diff --git a/vpx_dsp/fastssim.c b/vpx_dsp/fastssim.c
+index 4d32a02a5..3fb5eac74 100644
+--- a/vpx_dsp/fastssim.c
++++ b/vpx_dsp/fastssim.c
+@@ -14,8 +14,8 @@
+ #include <math.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ssim.h"
+ #include "vpx_ports/system_state.h"
+ 
+diff --git a/vpx_dsp/fwd_txfm.c b/vpx_dsp/fwd_txfm.c
+index ef66de024..6d044930b 100644
+--- a/vpx_dsp/fwd_txfm.c
++++ b/vpx_dsp/fwd_txfm.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/fwd_txfm.h"
+ 
+ void vpx_fdct4x4_c(const int16_t *input, tran_low_t *output, int stride) {
+diff --git a/vpx_dsp/intrapred.c b/vpx_dsp/intrapred.c
+index 400e632e9..aa27daefc 100644
+--- a/vpx_dsp/intrapred.c
++++ b/vpx_dsp/intrapred.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vpx_dsp/inv_txfm.c b/vpx_dsp/inv_txfm.c
+index 97655b3a9..a32d89418 100644
+--- a/vpx_dsp/inv_txfm.c
++++ b/vpx_dsp/inv_txfm.c
+@@ -12,7 +12,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+ void vpx_iwht4x4_16_add_c(const tran_low_t *input, uint8_t *dest, int stride) {
+diff --git a/vpx_dsp/inv_txfm.h b/vpx_dsp/inv_txfm.h
+index 6eedbeac3..c2f6232b2 100644
+--- a/vpx_dsp/inv_txfm.h
++++ b/vpx_dsp/inv_txfm.h
+@@ -13,7 +13,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_ports/mem.h"
+ 
+diff --git a/vpx_dsp/loongarch/avg_lsx.c b/vpx_dsp/loongarch/avg_lsx.c
+index 750c9de29..045d1ec51 100644
+--- a/vpx_dsp/loongarch/avg_lsx.c
++++ b/vpx_dsp/loongarch/avg_lsx.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/bitdepth_conversion_lsx.h"
+ 
+ void vpx_hadamard_8x8_lsx(const int16_t *src, ptrdiff_t src_stride,
+diff --git a/vpx_dsp/loongarch/avg_pred_lsx.c b/vpx_dsp/loongarch/avg_pred_lsx.c
+index 482626080..a609dbbc7 100644
+--- a/vpx_dsp/loongarch/avg_pred_lsx.c
++++ b/vpx_dsp/loongarch/avg_pred_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+diff --git a/vpx_dsp/loongarch/bitdepth_conversion_lsx.h b/vpx_dsp/loongarch/bitdepth_conversion_lsx.h
+index b0db1e99c..a37bf6e0b 100644
+--- a/vpx_dsp/loongarch/bitdepth_conversion_lsx.h
++++ b/vpx_dsp/loongarch/bitdepth_conversion_lsx.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_DSP_LOONGARCH_BITDEPTH_CONVERSION_LSX_H_
+ #define VPX_VPX_DSP_LOONGARCH_BITDEPTH_CONVERSION_LSX_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_util/loongson_intrinsics.h"
+diff --git a/vpx_dsp/loongarch/fwd_dct32x32_lsx.c b/vpx_dsp/loongarch/fwd_dct32x32_lsx.c
+index 9bb387721..ab73b3a1a 100644
+--- a/vpx_dsp/loongarch/fwd_dct32x32_lsx.c
++++ b/vpx_dsp/loongarch/fwd_dct32x32_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/fwd_txfm_lsx.h"
+ #include "vpx_dsp/fwd_txfm.h"
+ 
+diff --git a/vpx_dsp/loongarch/fwd_txfm_lsx.c b/vpx_dsp/loongarch/fwd_txfm_lsx.c
+index 508532b9d..1a1bd29b0 100644
+--- a/vpx_dsp/loongarch/fwd_txfm_lsx.c
++++ b/vpx_dsp/loongarch/fwd_txfm_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/fwd_txfm_lsx.h"
+ 
+ #define LSX_TRANSPOSE4x4_H(_in0, _in1, _in2, _in3, _out0, _out1, _out2, _out3) \
+diff --git a/vpx_dsp/loongarch/idct32x32_lsx.c b/vpx_dsp/loongarch/idct32x32_lsx.c
+index ec07f57d9..6dde08c0a 100644
+--- a/vpx_dsp/loongarch/idct32x32_lsx.c
++++ b/vpx_dsp/loongarch/idct32x32_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/fwd_txfm_lsx.h"
+ 
+ #define UNPCK_UB_SH(_in, _out0, _out1)   \
+diff --git a/vpx_dsp/loongarch/intrapred_lsx.c b/vpx_dsp/loongarch/intrapred_lsx.c
+index f99021179..15cb36c2e 100644
+--- a/vpx_dsp/loongarch/intrapred_lsx.c
++++ b/vpx_dsp/loongarch/intrapred_lsx.c
+@@ -9,7 +9,7 @@
+  * be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+ static inline void intra_predict_dc_8x8_lsx(const uint8_t *src_top,
+diff --git a/vpx_dsp/loongarch/loopfilter_16_lsx.c b/vpx_dsp/loongarch/loopfilter_16_lsx.c
+index 0503df996..1de7387fc 100644
+--- a/vpx_dsp/loongarch/loopfilter_16_lsx.c
++++ b/vpx_dsp/loongarch/loopfilter_16_lsx.c
+@@ -9,7 +9,7 @@
+  * be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/loopfilter_lsx.h"
+ #include "vpx_ports/mem.h"
+ 
+diff --git a/vpx_dsp/loongarch/loopfilter_4_lsx.c b/vpx_dsp/loongarch/loopfilter_4_lsx.c
+index 9300b5c5a..e2c84f813 100644
+--- a/vpx_dsp/loongarch/loopfilter_4_lsx.c
++++ b/vpx_dsp/loongarch/loopfilter_4_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/loopfilter_lsx.h"
+ 
+ void vpx_lpf_horizontal_4_lsx(uint8_t *src, int32_t pitch,
+diff --git a/vpx_dsp/loongarch/loopfilter_8_lsx.c b/vpx_dsp/loongarch/loopfilter_8_lsx.c
+index 00219ba71..4189e6094 100644
+--- a/vpx_dsp/loongarch/loopfilter_8_lsx.c
++++ b/vpx_dsp/loongarch/loopfilter_8_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/loopfilter_lsx.h"
+ 
+ void vpx_lpf_horizontal_8_lsx(uint8_t *dst, int32_t stride,
+diff --git a/vpx_dsp/loongarch/quantize_lsx.c b/vpx_dsp/loongarch/quantize_lsx.c
+index 9bb1691e2..770404b18 100644
+--- a/vpx_dsp/loongarch/quantize_lsx.c
++++ b/vpx_dsp/loongarch/quantize_lsx.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ #include "vp9/common/vp9_scan.h"
+ #include "vp9/encoder/vp9_block.h"
+diff --git a/vpx_dsp/loongarch/sad_lsx.c b/vpx_dsp/loongarch/sad_lsx.c
+index b6fbedb0d..cdde99668 100644
+--- a/vpx_dsp/loongarch/sad_lsx.c
++++ b/vpx_dsp/loongarch/sad_lsx.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+ static INLINE __m128i sad_ub2_uh(__m128i in0, __m128i in1, __m128i ref0,
+diff --git a/vpx_dsp/loongarch/sub_pixel_variance_lsx.c b/vpx_dsp/loongarch/sub_pixel_variance_lsx.c
+index 700793531..3b9659c8f 100644
+--- a/vpx_dsp/loongarch/sub_pixel_variance_lsx.c
++++ b/vpx_dsp/loongarch/sub_pixel_variance_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_dsp/loongarch/variance_lsx.h"
+ #include "vpx_dsp/variance.h"
+diff --git a/vpx_dsp/loongarch/subtract_lsx.c b/vpx_dsp/loongarch/subtract_lsx.c
+index 943a5c5a9..49af3ac7d 100644
+--- a/vpx_dsp/loongarch/subtract_lsx.c
++++ b/vpx_dsp/loongarch/subtract_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+ static void sub_blk_4x4_lsx(const uint8_t *src_ptr, int32_t src_stride,
+diff --git a/vpx_dsp/loongarch/variance_lsx.c b/vpx_dsp/loongarch/variance_lsx.c
+index 8fad342c7..9904fecf3 100644
+--- a/vpx_dsp/loongarch/variance_lsx.c
++++ b/vpx_dsp/loongarch/variance_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/variance_lsx.h"
+ 
+ #define VARIANCE_WxH(sse, diff, shift) \
+diff --git a/vpx_dsp/loongarch/vpx_convolve8_avg_horiz_lsx.c b/vpx_dsp/loongarch/vpx_convolve8_avg_horiz_lsx.c
+index 1c5922881..a754a4fa8 100644
+--- a/vpx_dsp/loongarch/vpx_convolve8_avg_horiz_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve8_avg_horiz_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/vpx_convolve_lsx.h"
+ 
+ static const uint8_t mc_filt_mask_arr[16 * 3] = {
+diff --git a/vpx_dsp/loongarch/vpx_convolve8_avg_lsx.c b/vpx_dsp/loongarch/vpx_convolve8_avg_lsx.c
+index d1abf622a..0f8de623f 100644
+--- a/vpx_dsp/loongarch/vpx_convolve8_avg_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve8_avg_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/vpx_convolve_lsx.h"
+ 
+ static const uint8_t mc_filt_mask_arr[16 * 3] = {
+diff --git a/vpx_dsp/loongarch/vpx_convolve8_avg_vert_lsx.c b/vpx_dsp/loongarch/vpx_convolve8_avg_vert_lsx.c
+index 5c6413df4..98e284201 100644
+--- a/vpx_dsp/loongarch/vpx_convolve8_avg_vert_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve8_avg_vert_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/vpx_convolve_lsx.h"
+ 
+ static void common_vt_8t_and_aver_dst_4w_lsx(const uint8_t *src,
+diff --git a/vpx_dsp/loongarch/vpx_convolve8_horiz_lsx.c b/vpx_dsp/loongarch/vpx_convolve8_horiz_lsx.c
+index 2c6459a97..92ba9a242 100644
+--- a/vpx_dsp/loongarch/vpx_convolve8_horiz_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve8_horiz_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/vpx_convolve_lsx.h"
+ 
+ static const uint8_t mc_filt_mask_arr[16 * 3] = {
+diff --git a/vpx_dsp/loongarch/vpx_convolve8_lsx.c b/vpx_dsp/loongarch/vpx_convolve8_lsx.c
+index 9f5cd6cfe..5cd5294ca 100644
+--- a/vpx_dsp/loongarch/vpx_convolve8_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve8_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/vpx_convolve_lsx.h"
+ 
+ static const uint8_t mc_filt_mask_arr[16 * 3] = {
+diff --git a/vpx_dsp/loongarch/vpx_convolve8_vert_lsx.c b/vpx_dsp/loongarch/vpx_convolve8_vert_lsx.c
+index 6022e43c8..5e27d774b 100644
+--- a/vpx_dsp/loongarch/vpx_convolve8_vert_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve8_vert_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/loongarch/vpx_convolve_lsx.h"
+ 
+ static void common_vt_8t_4w_lsx(const uint8_t *src, int32_t src_stride,
+diff --git a/vpx_dsp/loongarch/vpx_convolve_avg_lsx.c b/vpx_dsp/loongarch/vpx_convolve_avg_lsx.c
+index 1dad29eee..38bac1474 100644
+--- a/vpx_dsp/loongarch/vpx_convolve_avg_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve_avg_lsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+ static void avg_width4_lsx(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+diff --git a/vpx_dsp/loongarch/vpx_convolve_copy_lsx.c b/vpx_dsp/loongarch/vpx_convolve_copy_lsx.c
+index 53dc7097e..8b44f0db0 100644
+--- a/vpx_dsp/loongarch/vpx_convolve_copy_lsx.c
++++ b/vpx_dsp/loongarch/vpx_convolve_copy_lsx.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <string.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+ static void copy_width8_lsx(const uint8_t *src, int32_t src_stride,
+diff --git a/vpx_dsp/loongarch/vpx_convolve_lsx.h b/vpx_dsp/loongarch/vpx_convolve_lsx.h
+index d886b0019..ef0463726 100644
+--- a/vpx_dsp/loongarch/vpx_convolve_lsx.h
++++ b/vpx_dsp/loongarch/vpx_convolve_lsx.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_DSP_LOONGARCH_VPX_CONVOLVE_LSX_H_
+ #define VPX_VPX_DSP_LOONGARCH_VPX_CONVOLVE_LSX_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/vpx_filter.h"
+ #include "vpx_util/loongson_intrinsics.h"
+ 
+diff --git a/vpx_dsp/loopfilter.c b/vpx_dsp/loopfilter.c
+index d6504aab1..7e74024b7 100644
+--- a/vpx_dsp/loopfilter.c
++++ b/vpx_dsp/loopfilter.c
+@@ -10,8 +10,8 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_ports/mem.h"
+ 
+diff --git a/vpx_dsp/mips/add_noise_msa.c b/vpx_dsp/mips/add_noise_msa.c
+index 97541411e..93d43118a 100644
+--- a/vpx_dsp/mips/add_noise_msa.c
++++ b/vpx_dsp/mips/add_noise_msa.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ void vpx_plane_add_noise_msa(uint8_t *start_ptr, const int8_t *noise,
+diff --git a/vpx_dsp/mips/avg_msa.c b/vpx_dsp/mips/avg_msa.c
+index 3fd18dec5..d74e4b156 100644
+--- a/vpx_dsp/mips/avg_msa.c
++++ b/vpx_dsp/mips/avg_msa.c
+@@ -9,8 +9,8 @@
+  */
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ uint32_t vpx_avg_8x8_msa(const uint8_t *src, int32_t src_stride) {
+diff --git a/vpx_dsp/mips/common_dspr2.h b/vpx_dsp/mips/common_dspr2.h
+index 87a5bbab5..eda797bc3 100644
+--- a/vpx_dsp/mips/common_dspr2.h
++++ b/vpx_dsp/mips/common_dspr2.h
+@@ -12,7 +12,7 @@
+ #define VPX_VPX_DSP_MIPS_COMMON_DSPR2_H_
+ 
+ #include <assert.h>
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vpx_dsp/mips/convolve2_avg_dspr2.c b/vpx_dsp/mips/convolve2_avg_dspr2.c
+index 18e7d5375..144bb3e39 100644
+--- a/vpx_dsp/mips/convolve2_avg_dspr2.c
++++ b/vpx_dsp/mips/convolve2_avg_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/mips/convolve2_avg_horiz_dspr2.c b/vpx_dsp/mips/convolve2_avg_horiz_dspr2.c
+index 7dcb662d7..325199788 100644
+--- a/vpx_dsp/mips/convolve2_avg_horiz_dspr2.c
++++ b/vpx_dsp/mips/convolve2_avg_horiz_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/mips/convolve2_dspr2.c b/vpx_dsp/mips/convolve2_dspr2.c
+index e355ba3a0..8d2ea61ce 100644
+--- a/vpx_dsp/mips/convolve2_dspr2.c
++++ b/vpx_dsp/mips/convolve2_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vpx_dsp/mips/convolve2_horiz_dspr2.c b/vpx_dsp/mips/convolve2_horiz_dspr2.c
+index 9e65a8f50..940012993 100644
+--- a/vpx_dsp/mips/convolve2_horiz_dspr2.c
++++ b/vpx_dsp/mips/convolve2_horiz_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/mips/convolve2_vert_dspr2.c b/vpx_dsp/mips/convolve2_vert_dspr2.c
+index a3e967b40..8ac4c83f4 100644
+--- a/vpx_dsp/mips/convolve2_vert_dspr2.c
++++ b/vpx_dsp/mips/convolve2_vert_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/mips/convolve8_avg_dspr2.c b/vpx_dsp/mips/convolve8_avg_dspr2.c
+index cc458c861..147b1e376 100644
+--- a/vpx_dsp/mips/convolve8_avg_dspr2.c
++++ b/vpx_dsp/mips/convolve8_avg_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/mips/convolve8_avg_horiz_dspr2.c b/vpx_dsp/mips/convolve8_avg_horiz_dspr2.c
+index 7a9aa49d8..b72ad769e 100644
+--- a/vpx_dsp/mips/convolve8_avg_horiz_dspr2.c
++++ b/vpx_dsp/mips/convolve8_avg_horiz_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/mips/convolve8_dspr2.c b/vpx_dsp/mips/convolve8_dspr2.c
+index 1e7052f6c..753311a99 100644
+--- a/vpx_dsp/mips/convolve8_dspr2.c
++++ b/vpx_dsp/mips/convolve8_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vpx_dsp/mips/convolve8_horiz_dspr2.c b/vpx_dsp/mips/convolve8_horiz_dspr2.c
+index 09d6f36e5..c7e485a8b 100644
+--- a/vpx_dsp/mips/convolve8_horiz_dspr2.c
++++ b/vpx_dsp/mips/convolve8_horiz_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vpx_dsp/mips/convolve8_vert_dspr2.c b/vpx_dsp/mips/convolve8_vert_dspr2.c
+index fd977b533..5ff0279d7 100644
+--- a/vpx_dsp/mips/convolve8_vert_dspr2.c
++++ b/vpx_dsp/mips/convolve8_vert_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/convolve_common_dspr2.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vpx_dsp/mips/convolve_common_dspr2.h b/vpx_dsp/mips/convolve_common_dspr2.h
+index 14b65bc65..c25c8a48d 100644
+--- a/vpx_dsp/mips/convolve_common_dspr2.h
++++ b/vpx_dsp/mips/convolve_common_dspr2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/mips/common_dspr2.h"
+ 
+diff --git a/vpx_dsp/mips/deblock_msa.c b/vpx_dsp/mips/deblock_msa.c
+index 4e93ff594..7ee64acbb 100644
+--- a/vpx_dsp/mips/deblock_msa.c
++++ b/vpx_dsp/mips/deblock_msa.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ extern const int16_t vpx_rv[];
+diff --git a/vpx_dsp/mips/fwd_dct32x32_msa.c b/vpx_dsp/mips/fwd_dct32x32_msa.c
+index 36583e2d2..6e7334fe1 100644
+--- a/vpx_dsp/mips/fwd_dct32x32_msa.c
++++ b/vpx_dsp/mips/fwd_dct32x32_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/fwd_txfm_msa.h"
+ 
+ static void fdct8x32_1d_column_load_butterfly(const int16_t *input,
+diff --git a/vpx_dsp/mips/fwd_txfm_msa.c b/vpx_dsp/mips/fwd_txfm_msa.c
+index 5a6dfcef2..dd35e497b 100644
+--- a/vpx_dsp/mips/fwd_txfm_msa.c
++++ b/vpx_dsp/mips/fwd_txfm_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/fwd_txfm_msa.h"
+ 
+ void vpx_fdct8x8_1_msa(const int16_t *input, tran_low_t *out, int32_t stride) {
+diff --git a/vpx_dsp/mips/idct16x16_msa.c b/vpx_dsp/mips/idct16x16_msa.c
+index 7ca61a28e..5562d6e06 100644
+--- a/vpx_dsp/mips/idct16x16_msa.c
++++ b/vpx_dsp/mips/idct16x16_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_msa.h"
+ 
+ void vpx_idct16_1d_rows_msa(const int16_t *input, int16_t *output) {
+diff --git a/vpx_dsp/mips/idct32x32_msa.c b/vpx_dsp/mips/idct32x32_msa.c
+index 053948183..bea9cb1d3 100644
+--- a/vpx_dsp/mips/idct32x32_msa.c
++++ b/vpx_dsp/mips/idct32x32_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_msa.h"
+ 
+ static void idct32x8_row_transpose_store(const int16_t *input,
+diff --git a/vpx_dsp/mips/idct4x4_msa.c b/vpx_dsp/mips/idct4x4_msa.c
+index 56ffec3cb..22499ddd2 100644
+--- a/vpx_dsp/mips/idct4x4_msa.c
++++ b/vpx_dsp/mips/idct4x4_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_msa.h"
+ 
+ void vpx_iwht4x4_16_add_msa(const int16_t *input, uint8_t *dst,
+diff --git a/vpx_dsp/mips/idct8x8_msa.c b/vpx_dsp/mips/idct8x8_msa.c
+index a383ff206..97818e98e 100644
+--- a/vpx_dsp/mips/idct8x8_msa.c
++++ b/vpx_dsp/mips/idct8x8_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_msa.h"
+ 
+ void vpx_idct8x8_64_add_msa(const int16_t *input, uint8_t *dst,
+diff --git a/vpx_dsp/mips/intrapred_msa.c b/vpx_dsp/mips/intrapred_msa.c
+index b5ee94303..aa5de8686 100644
+--- a/vpx_dsp/mips/intrapred_msa.c
++++ b/vpx_dsp/mips/intrapred_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ #define IPRED_SUBS_UH2_UH(in0, in1, out0, out1) \
+diff --git a/vpx_dsp/mips/inv_txfm_dspr2.h b/vpx_dsp/mips/inv_txfm_dspr2.h
+index cbea22f20..e023c7b62 100644
+--- a/vpx_dsp/mips/inv_txfm_dspr2.h
++++ b/vpx_dsp/mips/inv_txfm_dspr2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/inv_txfm.h"
+ #include "vpx_dsp/mips/common_dspr2.h"
+diff --git a/vpx_dsp/mips/itrans16_dspr2.c b/vpx_dsp/mips/itrans16_dspr2.c
+index 44ba65c7a..01f67c561 100644
+--- a/vpx_dsp/mips/itrans16_dspr2.c
++++ b/vpx_dsp/mips/itrans16_dspr2.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_dspr2.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+diff --git a/vpx_dsp/mips/itrans32_cols_dspr2.c b/vpx_dsp/mips/itrans32_cols_dspr2.c
+index 3f043b48b..a936b1072 100644
+--- a/vpx_dsp/mips/itrans32_cols_dspr2.c
++++ b/vpx_dsp/mips/itrans32_cols_dspr2.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/mips/inv_txfm_dspr2.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+diff --git a/vpx_dsp/mips/itrans32_dspr2.c b/vpx_dsp/mips/itrans32_dspr2.c
+index 3c0468c00..30cda8fab 100644
+--- a/vpx_dsp/mips/itrans32_dspr2.c
++++ b/vpx_dsp/mips/itrans32_dspr2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/mips/inv_txfm_dspr2.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+diff --git a/vpx_dsp/mips/itrans4_dspr2.c b/vpx_dsp/mips/itrans4_dspr2.c
+index e214b538d..0f4f1908c 100644
+--- a/vpx_dsp/mips/itrans4_dspr2.c
++++ b/vpx_dsp/mips/itrans4_dspr2.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_dspr2.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+diff --git a/vpx_dsp/mips/itrans8_dspr2.c b/vpx_dsp/mips/itrans8_dspr2.c
+index d4d246965..d4dd277b7 100644
+--- a/vpx_dsp/mips/itrans8_dspr2.c
++++ b/vpx_dsp/mips/itrans8_dspr2.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/inv_txfm_dspr2.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+diff --git a/vpx_dsp/mips/loopfilter_16_msa.c b/vpx_dsp/mips/loopfilter_16_msa.c
+index b1731f234..b2621e7d9 100644
+--- a/vpx_dsp/mips/loopfilter_16_msa.c
++++ b/vpx_dsp/mips/loopfilter_16_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/loopfilter_msa.h"
+ #include "vpx_ports/mem.h"
+ 
+diff --git a/vpx_dsp/mips/loopfilter_4_msa.c b/vpx_dsp/mips/loopfilter_4_msa.c
+index 0eff2b6ca..89d225e1a 100644
+--- a/vpx_dsp/mips/loopfilter_4_msa.c
++++ b/vpx_dsp/mips/loopfilter_4_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/loopfilter_msa.h"
+ 
+ void vpx_lpf_horizontal_4_msa(uint8_t *src, int32_t pitch,
+diff --git a/vpx_dsp/mips/loopfilter_8_msa.c b/vpx_dsp/mips/loopfilter_8_msa.c
+index 703fcce8a..9961ca053 100644
+--- a/vpx_dsp/mips/loopfilter_8_msa.c
++++ b/vpx_dsp/mips/loopfilter_8_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/loopfilter_msa.h"
+ 
+ void vpx_lpf_horizontal_8_msa(uint8_t *src, int32_t pitch,
+diff --git a/vpx_dsp/mips/loopfilter_filters_dspr2.c b/vpx_dsp/mips/loopfilter_filters_dspr2.c
+index f1743679a..6d9656947 100644
+--- a/vpx_dsp/mips/loopfilter_filters_dspr2.c
++++ b/vpx_dsp/mips/loopfilter_filters_dspr2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/mips/common_dspr2.h"
+ #include "vpx_dsp/mips/loopfilter_filters_dspr2.h"
+diff --git a/vpx_dsp/mips/loopfilter_filters_dspr2.h b/vpx_dsp/mips/loopfilter_filters_dspr2.h
+index ec339be86..0b0f46c17 100644
+--- a/vpx_dsp/mips/loopfilter_filters_dspr2.h
++++ b/vpx_dsp/mips/loopfilter_filters_dspr2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/mips/loopfilter_macros_dspr2.h b/vpx_dsp/mips/loopfilter_macros_dspr2.h
+index 9af0b4236..03bcbea07 100644
+--- a/vpx_dsp/mips/loopfilter_macros_dspr2.h
++++ b/vpx_dsp/mips/loopfilter_macros_dspr2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_mem/vpx_mem.h"
+ 
+diff --git a/vpx_dsp/mips/loopfilter_masks_dspr2.h b/vpx_dsp/mips/loopfilter_masks_dspr2.h
+index 24c492bea..8d9ac35e5 100644
+--- a/vpx_dsp/mips/loopfilter_masks_dspr2.h
++++ b/vpx_dsp/mips/loopfilter_masks_dspr2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_mem/vpx_mem.h"
+ 
+diff --git a/vpx_dsp/mips/loopfilter_mb_dspr2.c b/vpx_dsp/mips/loopfilter_mb_dspr2.c
+index e42479257..50eb3f5a1 100644
+--- a/vpx_dsp/mips/loopfilter_mb_dspr2.c
++++ b/vpx_dsp/mips/loopfilter_mb_dspr2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/mips/common_dspr2.h"
+ #include "vpx_dsp/mips/loopfilter_filters_dspr2.h"
+diff --git a/vpx_dsp/mips/loopfilter_mb_horiz_dspr2.c b/vpx_dsp/mips/loopfilter_mb_horiz_dspr2.c
+index 9c1f5143f..cc85cbf07 100644
+--- a/vpx_dsp/mips/loopfilter_mb_horiz_dspr2.c
++++ b/vpx_dsp/mips/loopfilter_mb_horiz_dspr2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/mips/common_dspr2.h"
+ #include "vpx_dsp/mips/loopfilter_filters_dspr2.h"
+diff --git a/vpx_dsp/mips/loopfilter_mb_vert_dspr2.c b/vpx_dsp/mips/loopfilter_mb_vert_dspr2.c
+index 96e8d8858..c78cc64c7 100644
+--- a/vpx_dsp/mips/loopfilter_mb_vert_dspr2.c
++++ b/vpx_dsp/mips/loopfilter_mb_vert_dspr2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/mips/common_dspr2.h"
+ #include "vpx_dsp/mips/loopfilter_filters_dspr2.h"
+diff --git a/vpx_dsp/mips/macros_msa.h b/vpx_dsp/mips/macros_msa.h
+index 53462b59f..ba0e43d70 100644
+--- a/vpx_dsp/mips/macros_msa.h
++++ b/vpx_dsp/mips/macros_msa.h
+@@ -13,7 +13,7 @@
+ 
+ #include <msa.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #define LD_V(RTYPE, psrc) *((const RTYPE *)(psrc))
+diff --git a/vpx_dsp/mips/sad_mmi.c b/vpx_dsp/mips/sad_mmi.c
+index 7f5882bca..74d52655a 100644
+--- a/vpx_dsp/mips/sad_mmi.c
++++ b/vpx_dsp/mips/sad_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/mips/sad_msa.c b/vpx_dsp/mips/sad_msa.c
+index b0f8ff1fd..59c0143e4 100644
+--- a/vpx_dsp/mips/sad_msa.c
++++ b/vpx_dsp/mips/sad_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ #define SAD_INSVE_W4(RTYPE, in0, in1, in2, in3, out)       \
+diff --git a/vpx_dsp/mips/sub_pixel_variance_msa.c b/vpx_dsp/mips/sub_pixel_variance_msa.c
+index 572fcabfc..fee14b406 100644
+--- a/vpx_dsp/mips/sub_pixel_variance_msa.c
++++ b/vpx_dsp/mips/sub_pixel_variance_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ #include "vpx_dsp/variance.h"
+diff --git a/vpx_dsp/mips/subtract_mmi.c b/vpx_dsp/mips/subtract_mmi.c
+index 8bd7e6977..1d8b979c1 100644
+--- a/vpx_dsp/mips/subtract_mmi.c
++++ b/vpx_dsp/mips/subtract_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_ports/asmdefs_mmi.h"
+diff --git a/vpx_dsp/mips/subtract_msa.c b/vpx_dsp/mips/subtract_msa.c
+index 391a7ebf6..5009c222d 100644
+--- a/vpx_dsp/mips/subtract_msa.c
++++ b/vpx_dsp/mips/subtract_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ static void sub_blk_4x4_msa(const uint8_t *src_ptr, int32_t src_stride,
+diff --git a/vpx_dsp/mips/sum_squares_msa.c b/vpx_dsp/mips/sum_squares_msa.c
+index d4563dc41..e2ed516d9 100644
+--- a/vpx_dsp/mips/sum_squares_msa.c
++++ b/vpx_dsp/mips/sum_squares_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "./macros_msa.h"
+ 
+ uint64_t vpx_sum_squares_2d_i16_msa(const int16_t *src, int src_stride,
+diff --git a/vpx_dsp/mips/variance_mmi.c b/vpx_dsp/mips/variance_mmi.c
+index c2adcfa01..c29bd3efc 100644
+--- a/vpx_dsp/mips/variance_mmi.c
++++ b/vpx_dsp/mips/variance_mmi.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/variance.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vpx_dsp/mips/variance_msa.c b/vpx_dsp/mips/variance_msa.c
+index 444b086a6..d9a7e2302 100644
+--- a/vpx_dsp/mips/variance_msa.c
++++ b/vpx_dsp/mips/variance_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ #define CALC_MSE_B(src, ref, var)                                   \
+diff --git a/vpx_dsp/mips/vpx_convolve8_avg_horiz_msa.c b/vpx_dsp/mips/vpx_convolve8_avg_horiz_msa.c
+index 5b5a1cbc3..613cc7610 100644
+--- a/vpx_dsp/mips/vpx_convolve8_avg_horiz_msa.c
++++ b/vpx_dsp/mips/vpx_convolve8_avg_horiz_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/vpx_convolve_msa.h"
+ 
+ static void common_hz_8t_and_aver_dst_4x4_msa(const uint8_t *src,
+diff --git a/vpx_dsp/mips/vpx_convolve8_avg_msa.c b/vpx_dsp/mips/vpx_convolve8_avg_msa.c
+index ba816192a..26df2faef 100644
+--- a/vpx_dsp/mips/vpx_convolve8_avg_msa.c
++++ b/vpx_dsp/mips/vpx_convolve8_avg_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/vpx_convolve_msa.h"
+ 
+ static void common_hv_8ht_8vt_and_aver_dst_4w_msa(
+diff --git a/vpx_dsp/mips/vpx_convolve8_avg_vert_msa.c b/vpx_dsp/mips/vpx_convolve8_avg_vert_msa.c
+index e6a790dfc..d00cec552 100644
+--- a/vpx_dsp/mips/vpx_convolve8_avg_vert_msa.c
++++ b/vpx_dsp/mips/vpx_convolve8_avg_vert_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/vpx_convolve_msa.h"
+ 
+ static void common_vt_8t_and_aver_dst_4w_msa(const uint8_t *src,
+diff --git a/vpx_dsp/mips/vpx_convolve8_horiz_msa.c b/vpx_dsp/mips/vpx_convolve8_horiz_msa.c
+index 792c0f709..2be8b08fe 100644
+--- a/vpx_dsp/mips/vpx_convolve8_horiz_msa.c
++++ b/vpx_dsp/mips/vpx_convolve8_horiz_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/vpx_convolve_msa.h"
+ 
+ static void common_hz_8t_4x4_msa(const uint8_t *src, int32_t src_stride,
+diff --git a/vpx_dsp/mips/vpx_convolve8_mmi.c b/vpx_dsp/mips/vpx_convolve8_mmi.c
+index cb7bca558..7fb45520b 100644
+--- a/vpx_dsp/mips/vpx_convolve8_mmi.c
++++ b/vpx_dsp/mips/vpx_convolve8_mmi.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vpx_dsp/mips/vpx_convolve8_msa.c b/vpx_dsp/mips/vpx_convolve8_msa.c
+index c94216758..6505b5381 100644
+--- a/vpx_dsp/mips/vpx_convolve8_msa.c
++++ b/vpx_dsp/mips/vpx_convolve8_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/vpx_convolve_msa.h"
+ 
+ const uint8_t mc_filt_mask_arr[16 * 3] = {
+diff --git a/vpx_dsp/mips/vpx_convolve8_vert_msa.c b/vpx_dsp/mips/vpx_convolve8_vert_msa.c
+index 195228689..84d11cb05 100644
+--- a/vpx_dsp/mips/vpx_convolve8_vert_msa.c
++++ b/vpx_dsp/mips/vpx_convolve8_vert_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/vpx_convolve_msa.h"
+ 
+ static void common_vt_8t_4w_msa(const uint8_t *src, int32_t src_stride,
+diff --git a/vpx_dsp/mips/vpx_convolve_avg_msa.c b/vpx_dsp/mips/vpx_convolve_avg_msa.c
+index ce649935d..d291ccef0 100644
+--- a/vpx_dsp/mips/vpx_convolve_avg_msa.c
++++ b/vpx_dsp/mips/vpx_convolve_avg_msa.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ static void avg_width4_msa(const uint8_t *src, int32_t src_stride, uint8_t *dst,
+diff --git a/vpx_dsp/mips/vpx_convolve_copy_msa.c b/vpx_dsp/mips/vpx_convolve_copy_msa.c
+index c2ab33a2f..10026929d 100644
+--- a/vpx_dsp/mips/vpx_convolve_copy_msa.c
++++ b/vpx_dsp/mips/vpx_convolve_copy_msa.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <string.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/mips/macros_msa.h"
+ 
+ static void copy_width8_msa(const uint8_t *src, int32_t src_stride,
+diff --git a/vpx_dsp/ppc/bitdepth_conversion_vsx.h b/vpx_dsp/ppc/bitdepth_conversion_vsx.h
+index 7ac873f9f..fac2bf68d 100644
+--- a/vpx_dsp/ppc/bitdepth_conversion_vsx.h
++++ b/vpx_dsp/ppc/bitdepth_conversion_vsx.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_DSP_PPC_BITDEPTH_CONVERSION_VSX_H_
+ #define VPX_VPX_DSP_PPC_BITDEPTH_CONVERSION_VSX_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+diff --git a/vpx_dsp/ppc/deblock_vsx.c b/vpx_dsp/ppc/deblock_vsx.c
+index 212991169..78cff7dbf 100644
+--- a/vpx_dsp/ppc/deblock_vsx.c
++++ b/vpx_dsp/ppc/deblock_vsx.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+ extern const int16_t vpx_rv[];
+diff --git a/vpx_dsp/ppc/fdct32x32_vsx.c b/vpx_dsp/ppc/fdct32x32_vsx.c
+index 328b0e313..134255500 100644
+--- a/vpx_dsp/ppc/fdct32x32_vsx.c
++++ b/vpx_dsp/ppc/fdct32x32_vsx.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/ppc/transpose_vsx.h"
+ #include "vpx_dsp/ppc/txfm_common_vsx.h"
+diff --git a/vpx_dsp/ppc/hadamard_vsx.c b/vpx_dsp/ppc/hadamard_vsx.c
+index e279b3047..381ffc284 100644
+--- a/vpx_dsp/ppc/hadamard_vsx.c
++++ b/vpx_dsp/ppc/hadamard_vsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ #include "vpx_dsp/ppc/transpose_vsx.h"
+ #include "vpx_dsp/ppc/bitdepth_conversion_vsx.h"
+diff --git a/vpx_dsp/ppc/intrapred_vsx.c b/vpx_dsp/ppc/intrapred_vsx.c
+index a4c8322ff..b9730e4ab 100644
+--- a/vpx_dsp/ppc/intrapred_vsx.c
++++ b/vpx_dsp/ppc/intrapred_vsx.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+ void vpx_v_predictor_16x16_vsx(uint8_t *dst, ptrdiff_t stride,
+diff --git a/vpx_dsp/ppc/inv_txfm_vsx.c b/vpx_dsp/ppc/inv_txfm_vsx.c
+index e99412eca..a6050412b 100644
+--- a/vpx_dsp/ppc/inv_txfm_vsx.c
++++ b/vpx_dsp/ppc/inv_txfm_vsx.c
+@@ -16,7 +16,7 @@
+ #include "vpx_dsp/ppc/types_vsx.h"
+ #include "vpx_dsp/ppc/inv_txfm_vsx.h"
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/inv_txfm.h"
+ 
+ static const int16x8_t cospi1_v = { 16364, 16364, 16364, 16364,
+diff --git a/vpx_dsp/ppc/quantize_vsx.c b/vpx_dsp/ppc/quantize_vsx.c
+index ab71f6e23..887167535 100644
+--- a/vpx_dsp/ppc/quantize_vsx.c
++++ b/vpx_dsp/ppc/quantize_vsx.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+ // Negate 16-bit integers in a when the corresponding signed 16-bit
+diff --git a/vpx_dsp/ppc/sad_vsx.c b/vpx_dsp/ppc/sad_vsx.c
+index a08ae1241..b190d6a03 100644
+--- a/vpx_dsp/ppc/sad_vsx.c
++++ b/vpx_dsp/ppc/sad_vsx.c
+@@ -10,7 +10,7 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+diff --git a/vpx_dsp/ppc/subtract_vsx.c b/vpx_dsp/ppc/subtract_vsx.c
+index 76ad302da..ab769ad1c 100644
+--- a/vpx_dsp/ppc/subtract_vsx.c
++++ b/vpx_dsp/ppc/subtract_vsx.c
+@@ -10,8 +10,8 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+diff --git a/vpx_dsp/ppc/transpose_vsx.h b/vpx_dsp/ppc/transpose_vsx.h
+index 4883b734a..bf63b14d4 100644
+--- a/vpx_dsp/ppc/transpose_vsx.h
++++ b/vpx_dsp/ppc/transpose_vsx.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_DSP_PPC_TRANSPOSE_VSX_H_
+ #define VPX_VPX_DSP_PPC_TRANSPOSE_VSX_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+ static INLINE void vpx_transpose_s16_8x8(int16x8_t v[8]) {
+diff --git a/vpx_dsp/ppc/variance_vsx.c b/vpx_dsp/ppc/variance_vsx.c
+index 6c6bc9a30..30a393747 100644
+--- a/vpx_dsp/ppc/variance_vsx.c
++++ b/vpx_dsp/ppc/variance_vsx.c
+@@ -10,8 +10,8 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ 
+ uint32_t vpx_get4x4sse_cs_vsx(const uint8_t *src_ptr, int src_stride,
+diff --git a/vpx_dsp/ppc/vpx_convolve_vsx.c b/vpx_dsp/ppc/vpx_convolve_vsx.c
+index 2dc66055c..62f2e8a2e 100644
+--- a/vpx_dsp/ppc/vpx_convolve_vsx.c
++++ b/vpx_dsp/ppc/vpx_convolve_vsx.c
+@@ -10,7 +10,7 @@
+ #include <assert.h>
+ #include <string.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/ppc/types_vsx.h"
+ #include "vpx_dsp/vpx_filter.h"
+diff --git a/vpx_dsp/prob.h b/vpx_dsp/prob.h
+index 7a71c0041..978583b58 100644
+--- a/vpx_dsp/prob.h
++++ b/vpx_dsp/prob.h
+@@ -13,7 +13,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vpx_dsp_common.h"
+ 
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/psnr.c b/vpx_dsp/psnr.c
+index 4ee4130a2..e53318b45 100644
+--- a/vpx_dsp/psnr.c
++++ b/vpx_dsp/psnr.c
+@@ -10,7 +10,7 @@
+ 
+ #include <math.h>
+ #include <assert.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/psnr.h"
+ #include "vpx_scale/yv12config.h"
+ 
+diff --git a/vpx_dsp/psnrhvs.c b/vpx_dsp/psnrhvs.c
+index d7ec1a429..a60150d89 100644
+--- a/vpx_dsp/psnrhvs.c
++++ b/vpx_dsp/psnrhvs.c
+@@ -15,8 +15,8 @@
+ #include <stdlib.h>
+ #include <math.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ssim.h"
+ #include "vpx_ports/system_state.h"
+ #include "vpx_dsp/psnr.h"
+diff --git a/vpx_dsp/quantize.c b/vpx_dsp/quantize.c
+index fac9136f8..a81e93c3e 100644
+--- a/vpx_dsp/quantize.c
++++ b/vpx_dsp/quantize.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/quantize.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vpx_dsp/quantize.h b/vpx_dsp/quantize.h
+index 8e138445e..f1b719ab3 100644
+--- a/vpx_dsp/quantize.h
++++ b/vpx_dsp/quantize.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_DSP_QUANTIZE_H_
+ #define VPX_VPX_DSP_QUANTIZE_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vpx_dsp/sad.c b/vpx_dsp/sad.c
+index 2a4c81d58..a0b9801bc 100644
+--- a/vpx_dsp/sad.c
++++ b/vpx_dsp/sad.c
+@@ -10,8 +10,8 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/sse.c b/vpx_dsp/sse.c
+index c9d751859..6f094b28b 100644
+--- a/vpx_dsp/sse.c
++++ b/vpx_dsp/sse.c
+@@ -15,8 +15,8 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/ssim.c b/vpx_dsp/ssim.c
+index 4a31f3d22..9a7c0311d 100644
+--- a/vpx_dsp/ssim.c
++++ b/vpx_dsp/ssim.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ #include <math.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/ssim.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_ports/system_state.h"
+diff --git a/vpx_dsp/ssim.h b/vpx_dsp/ssim.h
+index c382237fc..98e5619d9 100644
+--- a/vpx_dsp/ssim.h
++++ b/vpx_dsp/ssim.h
+@@ -17,7 +17,7 @@
+ extern "C" {
+ #endif
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_scale/yv12config.h"
+ 
+ // metrics used for calculating ssim, ssim2, dssim, and ssimc
+diff --git a/vpx_dsp/subtract.c b/vpx_dsp/subtract.c
+index 45c819e67..66f7543e7 100644
+--- a/vpx_dsp/subtract.c
++++ b/vpx_dsp/subtract.c
+@@ -10,8 +10,8 @@
+ 
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/sum_squares.c b/vpx_dsp/sum_squares.c
+index b80cd588e..07f61091f 100644
+--- a/vpx_dsp/sum_squares.c
++++ b/vpx_dsp/sum_squares.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ uint64_t vpx_sum_squares_2d_i16_c(const int16_t *src, int stride, int size) {
+   int r, c;
+diff --git a/vpx_dsp/variance.c b/vpx_dsp/variance.c
+index 1c476542f..10f16d4b7 100644
+--- a/vpx_dsp/variance.c
++++ b/vpx_dsp/variance.c
+@@ -8,8 +8,8 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_ports/mem.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vpx_dsp/variance.h b/vpx_dsp/variance.h
+index ccdb2f90b..cd390563d 100644
+--- a/vpx_dsp/variance.h
++++ b/vpx_dsp/variance.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_DSP_VARIANCE_H_
+ #define VPX_VPX_DSP_VARIANCE_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ 
+diff --git a/vpx_dsp/vpx_convolve.c b/vpx_dsp/vpx_convolve.c
+index e55a963f9..f252482bf 100644
+--- a/vpx_dsp/vpx_convolve.c
++++ b/vpx_dsp/vpx_convolve.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_convolve.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+diff --git a/vpx_dsp/vpx_convolve.h b/vpx_dsp/vpx_convolve.h
+index d5793e17a..27f97f833 100644
+--- a/vpx_dsp/vpx_convolve.h
++++ b/vpx_dsp/vpx_convolve.h
+@@ -10,7 +10,7 @@
+ #ifndef VPX_VPX_DSP_VPX_CONVOLVE_H_
+ #define VPX_VPX_DSP_VPX_CONVOLVE_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #ifdef __cplusplus
+diff --git a/vpx_dsp/vpx_dsp_common.h b/vpx_dsp/vpx_dsp_common.h
+index 528f33f94..12ac92e15 100644
+--- a/vpx_dsp/vpx_dsp_common.h
++++ b/vpx_dsp/vpx_dsp_common.h
+@@ -13,7 +13,7 @@
+ 
+ #include <limits.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/mem.h"
+ 
+diff --git a/vpx_dsp/vpx_dsp_rtcd.c b/vpx_dsp/vpx_dsp_rtcd.c
+index 2b8c656af..574bc4888 100644
+--- a/vpx_dsp/vpx_dsp_rtcd.c
++++ b/vpx_dsp/vpx_dsp_rtcd.c
+@@ -7,9 +7,9 @@
+  *  in the file PATENTS.  All contributing project authors may
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #define RTCD_C
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/vpx_once.h"
+ 
+ void vpx_dsp_rtcd(void) { once(setup_rtcd_internal); }
+diff --git a/vpx_dsp/x86/avg_intrin_avx2.c b/vpx_dsp/x86/avg_intrin_avx2.c
+index 61e4e73c5..3f4e19a15 100644
+--- a/vpx_dsp/x86/avg_intrin_avx2.c
++++ b/vpx_dsp/x86/avg_intrin_avx2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <immintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/bitdepth_conversion_avx2.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/x86/avg_intrin_sse2.c b/vpx_dsp/x86/avg_intrin_sse2.c
+index 4447dfab7..a808395d9 100644
+--- a/vpx_dsp/x86/avg_intrin_sse2.c
++++ b/vpx_dsp/x86/avg_intrin_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/bitdepth_conversion_sse2.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/x86/avg_pred_avx2.c b/vpx_dsp/x86/avg_pred_avx2.c
+index f4357998c..6379761a6 100644
+--- a/vpx_dsp/x86/avg_pred_avx2.c
++++ b/vpx_dsp/x86/avg_pred_avx2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <immintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ void vpx_comp_avg_pred_avx2(uint8_t *comp_pred, const uint8_t *pred, int width,
+                             int height, const uint8_t *ref, int ref_stride) {
+diff --git a/vpx_dsp/x86/avg_pred_sse2.c b/vpx_dsp/x86/avg_pred_sse2.c
+index c6e70f744..02ffb9923 100644
+--- a/vpx_dsp/x86/avg_pred_sse2.c
++++ b/vpx_dsp/x86/avg_pred_sse2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <emmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+ 
+diff --git a/vpx_dsp/x86/bitdepth_conversion_avx2.h b/vpx_dsp/x86/bitdepth_conversion_avx2.h
+index c02b47a3e..3e727eccd 100644
+--- a/vpx_dsp/x86/bitdepth_conversion_avx2.h
++++ b/vpx_dsp/x86/bitdepth_conversion_avx2.h
+@@ -12,7 +12,7 @@
+ 
+ #include <immintrin.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ 
+diff --git a/vpx_dsp/x86/bitdepth_conversion_sse2.h b/vpx_dsp/x86/bitdepth_conversion_sse2.h
+index 74dde656b..ce1846746 100644
+--- a/vpx_dsp/x86/bitdepth_conversion_sse2.h
++++ b/vpx_dsp/x86/bitdepth_conversion_sse2.h
+@@ -12,7 +12,7 @@
+ 
+ #include <xmmintrin.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ 
+diff --git a/vpx_dsp/x86/convolve.h b/vpx_dsp/x86/convolve.h
+index c33960055..ce49e662b 100644
+--- a/vpx_dsp/x86/convolve.h
++++ b/vpx_dsp/x86/convolve.h
+@@ -12,7 +12,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_ports/compiler_attributes.h"
+ 
+diff --git a/vpx_dsp/x86/convolve_avx2.h b/vpx_dsp/x86/convolve_avx2.h
+index ebee964b1..779a6d76c 100644
+--- a/vpx_dsp/x86/convolve_avx2.h
++++ b/vpx_dsp/x86/convolve_avx2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <immintrin.h>  // AVX2
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #if defined(__clang__)
+ #if (__clang_major__ > 0 && __clang_major__ < 3) ||            \
+diff --git a/vpx_dsp/x86/convolve_sse2.h b/vpx_dsp/x86/convolve_sse2.h
+index 844354639..3a3ae5498 100644
+--- a/vpx_dsp/x86/convolve_sse2.h
++++ b/vpx_dsp/x86/convolve_sse2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ // Interprets the input register as 16-bit words 7 6 5 4 3 2 1 0, then returns
+ // values at index 2 and 3 to return 3 2 3 2 3 2 3 2 as 16-bit words
+diff --git a/vpx_dsp/x86/convolve_ssse3.h b/vpx_dsp/x86/convolve_ssse3.h
+index 8a4b16513..543cafe2a 100644
+--- a/vpx_dsp/x86/convolve_ssse3.h
++++ b/vpx_dsp/x86/convolve_ssse3.h
+@@ -14,7 +14,7 @@
+ #include <assert.h>
+ #include <tmmintrin.h>  // SSSE3
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ static INLINE void shuffle_filter_ssse3(const int16_t *const filter,
+                                         __m128i *const f) {
+diff --git a/vpx_dsp/x86/fwd_dct32x32_impl_avx2.h b/vpx_dsp/x86/fwd_dct32x32_impl_avx2.h
+index f3a802029..7cccee04d 100644
+--- a/vpx_dsp/x86/fwd_dct32x32_impl_avx2.h
++++ b/vpx_dsp/x86/fwd_dct32x32_impl_avx2.h
+@@ -10,7 +10,7 @@
+ 
+ #include <immintrin.h>  // AVX2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+ #define pair256_set_epi16(a, b)                                            \
+diff --git a/vpx_dsp/x86/fwd_txfm_avx2.c b/vpx_dsp/x86/fwd_txfm_avx2.c
+index 1eb6f4116..f43b4cff6 100644
+--- a/vpx_dsp/x86/fwd_txfm_avx2.c
++++ b/vpx_dsp/x86/fwd_txfm_avx2.c
+@@ -9,8 +9,8 @@
+  */
+ 
+ #include <immintrin.h>  // AVX2
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_dsp/txfm_common.h"
+ #define ADD256_EPI16 _mm256_add_epi16
+diff --git a/vpx_dsp/x86/fwd_txfm_impl_sse2.h b/vpx_dsp/x86/fwd_txfm_impl_sse2.h
+index d546f02a1..34bd17a42 100644
+--- a/vpx_dsp/x86/fwd_txfm_impl_sse2.h
++++ b/vpx_dsp/x86/fwd_txfm_impl_sse2.h
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ #include "vpx_dsp/x86/fwd_txfm_sse2.h"
+ #include "vpx_dsp/x86/txfm_common_sse2.h"
+diff --git a/vpx_dsp/x86/fwd_txfm_sse2.c b/vpx_dsp/x86/fwd_txfm_sse2.c
+index e14b99197..445826b9a 100644
+--- a/vpx_dsp/x86/fwd_txfm_sse2.c
++++ b/vpx_dsp/x86/fwd_txfm_sse2.c
+@@ -10,8 +10,8 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_dsp/x86/fwd_txfm_sse2.h"
+ 
+diff --git a/vpx_dsp/x86/highbd_convolve_avx2.c b/vpx_dsp/x86/highbd_convolve_avx2.c
+index 01a52ec8b..c47c06235 100644
+--- a/vpx_dsp/x86/highbd_convolve_avx2.c
++++ b/vpx_dsp/x86/highbd_convolve_avx2.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <immintrin.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/convolve.h"
+ #include "vpx_dsp/x86/convolve_avx2.h"
+ 
+diff --git a/vpx_dsp/x86/highbd_idct16x16_add_sse2.c b/vpx_dsp/x86/highbd_idct16x16_add_sse2.c
+index f4f7235d1..5c39915d8 100644
+--- a/vpx_dsp/x86/highbd_idct16x16_add_sse2.c
++++ b/vpx_dsp/x86/highbd_idct16x16_add_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct16x16_add_sse4.c b/vpx_dsp/x86/highbd_idct16x16_add_sse4.c
+index 7898ee12c..b1caa5da2 100644
+--- a/vpx_dsp/x86/highbd_idct16x16_add_sse4.c
++++ b/vpx_dsp/x86/highbd_idct16x16_add_sse4.c
+@@ -10,7 +10,7 @@
+ 
+ #include <smmintrin.h>  // SSE4.1
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse4.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct32x32_add_sse2.c b/vpx_dsp/x86/highbd_idct32x32_add_sse2.c
+index c710e8995..083147cbf 100644
+--- a/vpx_dsp/x86/highbd_idct32x32_add_sse2.c
++++ b/vpx_dsp/x86/highbd_idct32x32_add_sse2.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct32x32_add_sse4.c b/vpx_dsp/x86/highbd_idct32x32_add_sse4.c
+index 2d0a53ac0..efcec48f7 100644
+--- a/vpx_dsp/x86/highbd_idct32x32_add_sse4.c
++++ b/vpx_dsp/x86/highbd_idct32x32_add_sse4.c
+@@ -10,7 +10,7 @@
+ 
+ #include <smmintrin.h>  // SSE4.1
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse4.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct4x4_add_sse2.c b/vpx_dsp/x86/highbd_idct4x4_add_sse2.c
+index b9c8884f9..a208675f2 100644
+--- a/vpx_dsp/x86/highbd_idct4x4_add_sse2.c
++++ b/vpx_dsp/x86/highbd_idct4x4_add_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct4x4_add_sse4.c b/vpx_dsp/x86/highbd_idct4x4_add_sse4.c
+index fe74d272a..d2b5cbf0a 100644
+--- a/vpx_dsp/x86/highbd_idct4x4_add_sse4.c
++++ b/vpx_dsp/x86/highbd_idct4x4_add_sse4.c
+@@ -10,7 +10,7 @@
+ 
+ #include <smmintrin.h>  // SSE4.1
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse4.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct8x8_add_sse2.c b/vpx_dsp/x86/highbd_idct8x8_add_sse2.c
+index bb7a510e1..bd643fc3c 100644
+--- a/vpx_dsp/x86/highbd_idct8x8_add_sse2.c
++++ b/vpx_dsp/x86/highbd_idct8x8_add_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_idct8x8_add_sse4.c b/vpx_dsp/x86/highbd_idct8x8_add_sse4.c
+index 8b2e3d241..348fb7489 100644
+--- a/vpx_dsp/x86/highbd_idct8x8_add_sse4.c
++++ b/vpx_dsp/x86/highbd_idct8x8_add_sse4.c
+@@ -10,7 +10,7 @@
+ 
+ #include <smmintrin.h>  // SSE4.1
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse4.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_intrapred_intrin_sse2.c b/vpx_dsp/x86/highbd_intrapred_intrin_sse2.c
+index 43634aea3..db758e216 100644
+--- a/vpx_dsp/x86/highbd_intrapred_intrin_sse2.c
++++ b/vpx_dsp/x86/highbd_intrapred_intrin_sse2.c
+@@ -10,8 +10,8 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ // -----------------------------------------------------------------------------
+diff --git a/vpx_dsp/x86/highbd_intrapred_intrin_ssse3.c b/vpx_dsp/x86/highbd_intrapred_intrin_ssse3.c
+index d673fac49..a916a39a5 100644
+--- a/vpx_dsp/x86/highbd_intrapred_intrin_ssse3.c
++++ b/vpx_dsp/x86/highbd_intrapred_intrin_ssse3.c
+@@ -10,8 +10,8 @@
+ 
+ #include <tmmintrin.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ // -----------------------------------------------------------------------------
+diff --git a/vpx_dsp/x86/highbd_inv_txfm_sse2.h b/vpx_dsp/x86/highbd_inv_txfm_sse2.h
+index 1d07391b0..96386c2df 100644
+--- a/vpx_dsp/x86/highbd_inv_txfm_sse2.h
++++ b/vpx_dsp/x86/highbd_inv_txfm_sse2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/inv_txfm.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/highbd_inv_txfm_sse4.h b/vpx_dsp/x86/highbd_inv_txfm_sse4.h
+index f446bb13f..90b7f5677 100644
+--- a/vpx_dsp/x86/highbd_inv_txfm_sse4.h
++++ b/vpx_dsp/x86/highbd_inv_txfm_sse4.h
+@@ -13,7 +13,7 @@
+ 
+ #include <smmintrin.h>  // SSE4.1
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_dsp/x86/highbd_inv_txfm_sse2.h"
+ 
+ static INLINE __m128i multiplication_round_shift_sse4_1(
+diff --git a/vpx_dsp/x86/highbd_loopfilter_sse2.c b/vpx_dsp/x86/highbd_loopfilter_sse2.c
+index 9f45623de..b3f3f40da 100644
+--- a/vpx_dsp/x86/highbd_loopfilter_sse2.c
++++ b/vpx_dsp/x86/highbd_loopfilter_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ 
+ static INLINE __m128i signed_char_clamp_bd_sse2(__m128i value, int bd) {
+diff --git a/vpx_dsp/x86/highbd_quantize_intrin_avx2.c b/vpx_dsp/x86/highbd_quantize_intrin_avx2.c
+index 35ca55404..492860e87 100644
+--- a/vpx_dsp/x86/highbd_quantize_intrin_avx2.c
++++ b/vpx_dsp/x86/highbd_quantize_intrin_avx2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <immintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vp9/common/vp9_scan.h"
+ #include "vp9/encoder/vp9_block.h"
+ 
+diff --git a/vpx_dsp/x86/highbd_quantize_intrin_sse2.c b/vpx_dsp/x86/highbd_quantize_intrin_sse2.c
+index adae60756..3b810a70d 100644
+--- a/vpx_dsp/x86/highbd_quantize_intrin_sse2.c
++++ b/vpx_dsp/x86/highbd_quantize_intrin_sse2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <emmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_dsp_common.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_ports/mem.h"
+diff --git a/vpx_dsp/x86/highbd_sad4d_avx2.c b/vpx_dsp/x86/highbd_sad4d_avx2.c
+index e483fdce7..6bce2927a 100644
+--- a/vpx_dsp/x86/highbd_sad4d_avx2.c
++++ b/vpx_dsp/x86/highbd_sad4d_avx2.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ #include <immintrin.h>  // AVX2
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ static VPX_FORCE_INLINE void calc_final_4(const __m256i *const sums /*[4]*/,
+diff --git a/vpx_dsp/x86/highbd_sad_avx2.c b/vpx_dsp/x86/highbd_sad_avx2.c
+index 78f8eb8bf..0c4642036 100644
+--- a/vpx_dsp/x86/highbd_sad_avx2.c
++++ b/vpx_dsp/x86/highbd_sad_avx2.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ #include <immintrin.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ static VPX_FORCE_INLINE unsigned int calc_final(const __m256i sums_32) {
+diff --git a/vpx_dsp/x86/highbd_variance_sse2.c b/vpx_dsp/x86/highbd_variance_sse2.c
+index 381e0ad19..4f509c48d 100644
+--- a/vpx_dsp/x86/highbd_variance_sse2.c
++++ b/vpx_dsp/x86/highbd_variance_sse2.c
+@@ -9,8 +9,8 @@
+  */
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ 
+ typedef uint32_t (*high_variance_fn_t)(const uint16_t *src, int src_stride,
+diff --git a/vpx_dsp/x86/inv_txfm_avx2.c b/vpx_dsp/x86/inv_txfm_avx2.c
+index 752435d24..d89590cfb 100644
+--- a/vpx_dsp/x86/inv_txfm_avx2.c
++++ b/vpx_dsp/x86/inv_txfm_avx2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <immintrin.h>  // AVX2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/txfm_common.h"
+ 
+ #define PAIR256_SET_EPI16(a, b)                                            \
+diff --git a/vpx_dsp/x86/inv_txfm_sse2.c b/vpx_dsp/x86/inv_txfm_sse2.c
+index f42b3df84..2f3c3c6c2 100644
+--- a/vpx_dsp/x86/inv_txfm_sse2.c
++++ b/vpx_dsp/x86/inv_txfm_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+ #include "vpx_dsp/x86/txfm_common_sse2.h"
+diff --git a/vpx_dsp/x86/inv_txfm_sse2.h b/vpx_dsp/x86/inv_txfm_sse2.h
+index b4bbd186d..35c4ebcf0 100644
+--- a/vpx_dsp/x86/inv_txfm_sse2.h
++++ b/vpx_dsp/x86/inv_txfm_sse2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/inv_txfm.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/inv_txfm_ssse3.c b/vpx_dsp/x86/inv_txfm_ssse3.c
+index 6e99469b6..234e55194 100644
+--- a/vpx_dsp/x86/inv_txfm_ssse3.c
++++ b/vpx_dsp/x86/inv_txfm_ssse3.c
+@@ -10,7 +10,7 @@
+ 
+ #include <tmmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/inv_txfm_ssse3.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+diff --git a/vpx_dsp/x86/inv_txfm_ssse3.h b/vpx_dsp/x86/inv_txfm_ssse3.h
+index e9f0f6903..9285661b8 100644
+--- a/vpx_dsp/x86/inv_txfm_ssse3.h
++++ b/vpx_dsp/x86/inv_txfm_ssse3.h
+@@ -13,7 +13,7 @@
+ 
+ #include <tmmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/inv_txfm_sse2.h"
+ #include "vpx_dsp/x86/transpose_sse2.h"
+ #include "vpx_dsp/x86/txfm_common_sse2.h"
+diff --git a/vpx_dsp/x86/loopfilter_avx2.c b/vpx_dsp/x86/loopfilter_avx2.c
+index a58fb6553..f131a5a1d 100644
+--- a/vpx_dsp/x86/loopfilter_avx2.c
++++ b/vpx_dsp/x86/loopfilter_avx2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <immintrin.h> /* AVX2 */
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ 
+ void vpx_lpf_horizontal_16_avx2(unsigned char *s, int pitch,
+diff --git a/vpx_dsp/x86/loopfilter_sse2.c b/vpx_dsp/x86/loopfilter_sse2.c
+index 6ea34cdd1..e6b80275b 100644
+--- a/vpx_dsp/x86/loopfilter_sse2.c
++++ b/vpx_dsp/x86/loopfilter_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_ports/emmintrin_compat.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+diff --git a/vpx_dsp/x86/mem_sse2.h b/vpx_dsp/x86/mem_sse2.h
+index 031f361a4..5343f4e38 100644
+--- a/vpx_dsp/x86/mem_sse2.h
++++ b/vpx_dsp/x86/mem_sse2.h
+@@ -14,7 +14,7 @@
+ #include <emmintrin.h>  // SSE2
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ static INLINE void storeu_int32(void *dst, int32_t v) {
+   memcpy(dst, &v, sizeof(v));
+diff --git a/vpx_dsp/x86/post_proc_sse2.c b/vpx_dsp/x86/post_proc_sse2.c
+index 119fa7cd1..929f26535 100644
+--- a/vpx_dsp/x86/post_proc_sse2.c
++++ b/vpx_dsp/x86/post_proc_sse2.c
+@@ -13,7 +13,7 @@
+ 
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+ 
+diff --git a/vpx_dsp/x86/quantize_avx.c b/vpx_dsp/x86/quantize_avx.c
+index 5ff5abc11..ca16c4bcf 100644
+--- a/vpx_dsp/x86/quantize_avx.c
++++ b/vpx_dsp/x86/quantize_avx.c
+@@ -14,7 +14,7 @@
+ #endif
+ #include <immintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/bitdepth_conversion_sse2.h"
+ #include "vpx_dsp/x86/quantize_sse2.h"
+diff --git a/vpx_dsp/x86/quantize_avx2.c b/vpx_dsp/x86/quantize_avx2.c
+index d4872f6bc..8fd6affd8 100644
+--- a/vpx_dsp/x86/quantize_avx2.c
++++ b/vpx_dsp/x86/quantize_avx2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <immintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vp9/common/vp9_scan.h"
+ #include "vp9/encoder/vp9_block.h"
+diff --git a/vpx_dsp/x86/quantize_sse2.c b/vpx_dsp/x86/quantize_sse2.c
+index 64838eaa7..3adb01b01 100644
+--- a/vpx_dsp/x86/quantize_sse2.c
++++ b/vpx_dsp/x86/quantize_sse2.c
+@@ -12,7 +12,7 @@
+ #include <emmintrin.h>
+ #include <xmmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/bitdepth_conversion_sse2.h"
+ #include "vpx_dsp/x86/quantize_sse2.h"
+diff --git a/vpx_dsp/x86/quantize_sse2.h b/vpx_dsp/x86/quantize_sse2.h
+index 82c755a0c..afc1b1bab 100644
+--- a/vpx_dsp/x86/quantize_sse2.h
++++ b/vpx_dsp/x86/quantize_sse2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <emmintrin.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vp9/encoder/vp9_block.h"
+ 
+diff --git a/vpx_dsp/x86/quantize_ssse3.c b/vpx_dsp/x86/quantize_ssse3.c
+index 2c6d851a1..d8b781d2d 100644
+--- a/vpx_dsp/x86/quantize_ssse3.c
++++ b/vpx_dsp/x86/quantize_ssse3.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <tmmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/bitdepth_conversion_sse2.h"
+ #include "vpx_dsp/x86/quantize_sse2.h"
+diff --git a/vpx_dsp/x86/quantize_ssse3.h b/vpx_dsp/x86/quantize_ssse3.h
+index e8d2a0577..72bfcca2a 100644
+--- a/vpx_dsp/x86/quantize_ssse3.h
++++ b/vpx_dsp/x86/quantize_ssse3.h
+@@ -13,7 +13,7 @@
+ 
+ #include <emmintrin.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/quantize_sse2.h"
+ 
+diff --git a/vpx_dsp/x86/sad4d_avx2.c b/vpx_dsp/x86/sad4d_avx2.c
+index cf7111983..8bfe9423a 100644
+--- a/vpx_dsp/x86/sad4d_avx2.c
++++ b/vpx_dsp/x86/sad4d_avx2.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ #include <immintrin.h>  // AVX2
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ // Note with sums[4] some versions of Visual Studio may fail due to parameter
+diff --git a/vpx_dsp/x86/sad4d_avx512.c b/vpx_dsp/x86/sad4d_avx512.c
+index cfd23fedd..8ba59864d 100644
+--- a/vpx_dsp/x86/sad4d_avx512.c
++++ b/vpx_dsp/x86/sad4d_avx512.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ #include <immintrin.h>  // AVX512
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ void vpx_sad64x64x4d_avx512(const uint8_t *src_ptr, int src_stride,
+diff --git a/vpx_dsp/x86/sad_avx2.c b/vpx_dsp/x86/sad_avx2.c
+index e00494d76..63e7e523b 100644
+--- a/vpx_dsp/x86/sad_avx2.c
++++ b/vpx_dsp/x86/sad_avx2.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ #include <immintrin.h>
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ 
+ static INLINE unsigned int sad64xh_avx2(const uint8_t *src_ptr, int src_stride,
+diff --git a/vpx_dsp/x86/sse_avx2.c b/vpx_dsp/x86/sse_avx2.c
+index dfe45b611..4b3e2384c 100644
+--- a/vpx_dsp/x86/sse_avx2.c
++++ b/vpx_dsp/x86/sse_avx2.c
+@@ -12,8 +12,8 @@
+ #include <smmintrin.h>
+ #include <stdint.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_ports/mem.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+diff --git a/vpx_dsp/x86/sse_sse4.c b/vpx_dsp/x86/sse_sse4.c
+index 4a7585c57..c194777b5 100644
+--- a/vpx_dsp/x86/sse_sse4.c
++++ b/vpx_dsp/x86/sse_sse4.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <smmintrin.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ #include "vpx_ports/mem.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vpx_dsp/x86/subtract_avx2.c b/vpx_dsp/x86/subtract_avx2.c
+index 4849581ed..87027941f 100644
+--- a/vpx_dsp/x86/subtract_avx2.c
++++ b/vpx_dsp/x86/subtract_avx2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <immintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ 
+ static VPX_FORCE_INLINE void subtract32_avx2(int16_t *diff_ptr,
+diff --git a/vpx_dsp/x86/sum_squares_sse2.c b/vpx_dsp/x86/sum_squares_sse2.c
+index df6514b2c..85c6aa631 100644
+--- a/vpx_dsp/x86/sum_squares_sse2.c
++++ b/vpx_dsp/x86/sum_squares_sse2.c
+@@ -11,7 +11,7 @@
+ #include <assert.h>
+ #include <emmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+ 
+ uint64_t vpx_sum_squares_2d_i16_sse2(const int16_t *src, int stride, int size) {
+diff --git a/vpx_dsp/x86/transpose_sse2.h b/vpx_dsp/x86/transpose_sse2.h
+index b4f1190d7..1f412ce81 100644
+--- a/vpx_dsp/x86/transpose_sse2.h
++++ b/vpx_dsp/x86/transpose_sse2.h
+@@ -13,7 +13,7 @@
+ 
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ static INLINE __m128i transpose_8bit_4x4(const __m128i *const in) {
+   // Unpack 8 bit elements. Goes from:
+diff --git a/vpx_dsp/x86/variance_avx2.c b/vpx_dsp/x86/variance_avx2.c
+index 8305b9f20..20e3e544a 100644
+--- a/vpx_dsp/x86/variance_avx2.c
++++ b/vpx_dsp/x86/variance_avx2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <immintrin.h>  // AVX2
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ 
+ /* clang-format off */
+ DECLARE_ALIGNED(32, static const uint8_t, bilinear_filters_avx2[512]) = {
+diff --git a/vpx_dsp/x86/variance_sse2.c b/vpx_dsp/x86/variance_sse2.c
+index d6eb12da1..06d3f3273 100644
+--- a/vpx_dsp/x86/variance_sse2.c
++++ b/vpx_dsp/x86/variance_sse2.c
+@@ -11,8 +11,8 @@
+ #include <assert.h>
+ #include <emmintrin.h>  // SSE2
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_ports/mem.h"
+ #include "vpx_dsp/x86/mem_sse2.h"
+ 
+diff --git a/vpx_dsp/x86/vpx_subpixel_4t_intrin_sse2.c b/vpx_dsp/x86/vpx_subpixel_4t_intrin_sse2.c
+index 21a35ae3c..4c84e7ffd 100644
+--- a/vpx_dsp/x86/vpx_subpixel_4t_intrin_sse2.c
++++ b/vpx_dsp/x86/vpx_subpixel_4t_intrin_sse2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <emmintrin.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_dsp/x86/convolve.h"
+ #include "vpx_dsp/x86/convolve_sse2.h"
+diff --git a/vpx_dsp/x86/vpx_subpixel_8t_intrin_avx2.c b/vpx_dsp/x86/vpx_subpixel_8t_intrin_avx2.c
+index 526c28382..86830269e 100644
+--- a/vpx_dsp/x86/vpx_subpixel_8t_intrin_avx2.c
++++ b/vpx_dsp/x86/vpx_subpixel_8t_intrin_avx2.c
+@@ -11,7 +11,7 @@
+ #include <immintrin.h>
+ #include <stdio.h>
+ 
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/x86/convolve.h"
+ #include "vpx_dsp/x86/convolve_avx2.h"
+ #include "vpx_dsp/x86/convolve_sse2.h"
+diff --git a/vpx_dsp/x86/vpx_subpixel_8t_intrin_ssse3.c b/vpx_dsp/x86/vpx_subpixel_8t_intrin_ssse3.c
+index 4ea2752d3..75bcaacfb 100644
+--- a/vpx_dsp/x86/vpx_subpixel_8t_intrin_ssse3.c
++++ b/vpx_dsp/x86/vpx_subpixel_8t_intrin_ssse3.c
+@@ -12,8 +12,8 @@
+ 
+ #include <string.h>
+ 
+-#include "./vpx_config.h"
+-#include "./vpx_dsp_rtcd.h"
++#include "vpx_config.h"
++#include "vpx_dsp_rtcd.h"
+ #include "vpx_dsp/vpx_filter.h"
+ #include "vpx_dsp/x86/convolve.h"
+ #include "vpx_dsp/x86/convolve_sse2.h"
+diff --git a/vpx_mem/include/vpx_mem_intrnl.h b/vpx_mem/include/vpx_mem_intrnl.h
+index 563113024..703c9c1a1 100644
+--- a/vpx_mem/include/vpx_mem_intrnl.h
++++ b/vpx_mem/include/vpx_mem_intrnl.h
+@@ -10,7 +10,7 @@
+ 
+ #ifndef VPX_VPX_MEM_INCLUDE_VPX_MEM_INTRNL_H_
+ #define VPX_VPX_MEM_INCLUDE_VPX_MEM_INTRNL_H_
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #define ADDRESS_STORAGE_SIZE sizeof(size_t)
+ 
+diff --git a/vpx_ports/aarch32_cpudetect.c b/vpx_ports/aarch32_cpudetect.c
+index 20f688e17..a31d3a99c 100644
+--- a/vpx_ports/aarch32_cpudetect.c
++++ b/vpx_ports/aarch32_cpudetect.c
+@@ -9,7 +9,7 @@
+  */
+ // Feature detection code for Armv7-A / AArch32.
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "arm_cpudetect.h"
+ 
+ #if !CONFIG_RUNTIME_CPU_DETECT
+diff --git a/vpx_ports/aarch64_cpudetect.c b/vpx_ports/aarch64_cpudetect.c
+index df8e1e244..5bdbb6ed8 100644
+--- a/vpx_ports/aarch64_cpudetect.c
++++ b/vpx_ports/aarch64_cpudetect.c
+@@ -8,7 +8,7 @@
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/arm.h"
+ #include "vpx_ports/arm_cpudetect.h"
+ 
+diff --git a/vpx_ports/asmdefs_mmi.h b/vpx_ports/asmdefs_mmi.h
+index 400a51cc3..03ce39550 100644
+--- a/vpx_ports/asmdefs_mmi.h
++++ b/vpx_ports/asmdefs_mmi.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_PORTS_ASMDEFS_MMI_H_
+ #define VPX_VPX_PORTS_ASMDEFS_MMI_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #if HAVE_MMI
+diff --git a/vpx_ports/loongarch_cpudetect.c b/vpx_ports/loongarch_cpudetect.c
+index 7b4322d35..1b007e4cf 100644
+--- a/vpx_ports/loongarch_cpudetect.c
++++ b/vpx_ports/loongarch_cpudetect.c
+@@ -10,7 +10,7 @@
+  * be found in the AUTHORS file in the root of the source tree.
+  */
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/loongarch.h"
+ 
+ #define LOONGARCH_CFG2 0x02
+diff --git a/vpx_ports/mips_cpudetect.c b/vpx_ports/mips_cpudetect.c
+index e0eca2d48..50dd1084c 100644
+--- a/vpx_ports/mips_cpudetect.c
++++ b/vpx_ports/mips_cpudetect.c
+@@ -9,7 +9,7 @@
+  */
+ #include <stdio.h>
+ #include <string.h>
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/mips.h"
+ 
+ #if CONFIG_RUNTIME_CPU_DETECT
+diff --git a/vpx_ports/ppc.h b/vpx_ports/ppc.h
+index a11f4e873..d9f5fd7fa 100644
+--- a/vpx_ports/ppc.h
++++ b/vpx_ports/ppc.h
+@@ -12,7 +12,7 @@
+ #define VPX_VPX_PORTS_PPC_H_
+ #include <stdlib.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/vpx_ports/ppc_cpudetect.c b/vpx_ports/ppc_cpudetect.c
+index 374a0271c..cc2953c04 100644
+--- a/vpx_ports/ppc_cpudetect.c
++++ b/vpx_ports/ppc_cpudetect.c
+@@ -14,7 +14,7 @@
+ #include <asm/cputable.h>
+ #include <linux/auxvec.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_ports/ppc.h"
+ 
+ #if CONFIG_RUNTIME_CPU_DETECT
+diff --git a/vpx_ports/system_state.h b/vpx_ports/system_state.h
+index 32ebd0ed8..181818ab3 100644
+--- a/vpx_ports/system_state.h
++++ b/vpx_ports/system_state.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_PORTS_SYSTEM_STATE_H_
+ #define VPX_VPX_PORTS_SYSTEM_STATE_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/vpx_ports/vpx_timer.h b/vpx_ports/vpx_timer.h
+index 4934d5296..5aa75c3b5 100644
+--- a/vpx_ports/vpx_timer.h
++++ b/vpx_ports/vpx_timer.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_PORTS_VPX_TIMER_H_
+ #define VPX_VPX_PORTS_VPX_TIMER_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx/vpx_integer.h"
+ 
+diff --git a/vpx_scale/generic/yv12extend.c b/vpx_scale/generic/yv12extend.c
+index e23180650..9fb299996 100644
+--- a/vpx_scale/generic/yv12extend.c
++++ b/vpx_scale/generic/yv12extend.c
+@@ -9,7 +9,7 @@
+  */
+ 
+ #include <assert.h>
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx/vpx_integer.h"
+ #include "vpx_mem/vpx_mem.h"
+diff --git a/vpx_scale/mips/dspr2/yv12extend_dspr2.c b/vpx_scale/mips/dspr2/yv12extend_dspr2.c
+index d3d1b07f4..4efac6555 100644
+--- a/vpx_scale/mips/dspr2/yv12extend_dspr2.c
++++ b/vpx_scale/mips/dspr2/yv12extend_dspr2.c
+@@ -10,7 +10,7 @@
+ 
+ #include <assert.h>
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx_scale/yv12config.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_scale/vpx_scale.h"
+diff --git a/vpx_scale/vpx_scale_rtcd.c b/vpx_scale/vpx_scale_rtcd.c
+index 706b0770c..e45a43541 100644
+--- a/vpx_scale/vpx_scale_rtcd.c
++++ b/vpx_scale/vpx_scale_rtcd.c
+@@ -7,7 +7,7 @@
+  *  in the file PATENTS.  All contributing project authors may
+  *  be found in the AUTHORS file in the root of the source tree.
+  */
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #define RTCD_C
+ #include "./vpx_scale_rtcd.h"
+ #include "vpx_ports/vpx_once.h"
+diff --git a/vpx_scale/yv12config.h b/vpx_scale/yv12config.h
+index 2cf18217f..900920ced 100644
+--- a/vpx_scale/yv12config.h
++++ b/vpx_scale/yv12config.h
+@@ -15,7 +15,7 @@
+ extern "C" {
+ #endif
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_codec.h"
+ #include "vpx/vpx_frame_buffer.h"
+ #include "vpx/vpx_integer.h"
+diff --git a/vpx_util/endian_inl.h b/vpx_util/endian_inl.h
+index 1b6ef56c6..df844d9f3 100644
+--- a/vpx_util/endian_inl.h
++++ b/vpx_util/endian_inl.h
+@@ -13,7 +13,7 @@
+ #define VPX_VPX_UTIL_ENDIAN_INL_H_
+ 
+ #include <stdlib.h>
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "vpx/vpx_integer.h"
+ 
+ #if defined(__GNUC__)
+diff --git a/vpx_util/vpx_atomics.h b/vpx_util/vpx_atomics.h
+index 23ad56685..f4baff485 100644
+--- a/vpx_util/vpx_atomics.h
++++ b/vpx_util/vpx_atomics.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_UTIL_VPX_ATOMICS_H_
+ #define VPX_VPX_UTIL_VPX_ATOMICS_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #ifdef __cplusplus
+ extern "C" {
+diff --git a/vpx_util/vpx_debug_util.h b/vpx_util/vpx_debug_util.h
+index df1a1aab2..8e9fd9b00 100644
+--- a/vpx_util/vpx_debug_util.h
++++ b/vpx_util/vpx_debug_util.h
+@@ -11,7 +11,7 @@
+ #ifndef VPX_VPX_UTIL_VPX_DEBUG_UTIL_H_
+ #define VPX_VPX_UTIL_VPX_DEBUG_UTIL_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #include "vpx_dsp/prob.h"
+ 
+diff --git a/vpx_util/vpx_pthread.h b/vpx_util/vpx_pthread.h
+index cdd18d0f3..3d08cfe50 100644
+--- a/vpx_util/vpx_pthread.h
++++ b/vpx_util/vpx_pthread.h
+@@ -12,7 +12,7 @@
+ #ifndef VPX_VPX_UTIL_VPX_PTHREAD_H_
+ #define VPX_VPX_UTIL_VPX_PTHREAD_H_
+ 
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ 
+ #if CONFIG_MULTITHREAD
+ 
+diff --git a/vpx_util/vpx_thread.c b/vpx_util/vpx_thread.c
+index 0d0e2f576..83c91ae99 100644
+--- a/vpx_util/vpx_thread.c
++++ b/vpx_util/vpx_thread.c
+@@ -20,7 +20,7 @@
+ 
+ #include <assert.h>
+ #include <string.h>  // for memset()
+-#include "./vpx_config.h"
++#include "vpx_config.h"
+ #include "./vpx_thread.h"
+ #include "vpx_mem/vpx_mem.h"
+ #include "vpx_util/vpx_pthread.h"
