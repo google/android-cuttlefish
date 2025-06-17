@@ -52,3 +52,25 @@ clang_tidy_test(
     srcs = [":remote_zip_test"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "zip_cc",
+    srcs = ["zip_cc.cc"],
+    hdrs = ["zip_cc.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    features = ["-layering_check"], # libzip
+    linkopts = ["-llzma"], # libzip
+    linkstatic = True, # libzip
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@libzip",
+        "@zlib",
+    ],
+)
+
+clang_tidy_test(
+    name = "zip_cc_clang_tidy",
+    srcs = [":zip_cc"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
