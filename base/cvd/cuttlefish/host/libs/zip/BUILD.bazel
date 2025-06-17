@@ -74,3 +74,19 @@ clang_tidy_test(
     srcs = [":zip_cc"],
     tags = ["clang_tidy", "clang-tidy"],
 )
+
+cc_library(
+    name = "zip_source_string",
+    srcs = ["zip_source_string.cc"],
+    hdrs = ["zip_source_string.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:zip_cc",
+    ],
+)
+
+clang_tidy_test(
+    name = "zip_source_string_clang_tidy",
+    srcs = [":zip_source_string"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
