@@ -17,19 +17,19 @@
 
 #include <stdint.h>
 
-#include <zip.h>
-
-#include <memory>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
-Result<std::unique_ptr<zip_t, void (*)(zip_t*)>> ZipFromUrl(
-    HttpClient&, const std::string&, uint64_t size,
-    std::vector<std::string> headers);
-
+/* Creates a read-only zip archive that downloads files on-demand from a remote
+ * URL. It assumes the remote web server supports HTTP range requests and
+ * requires knowing the size of the remote file. `headers` are passed through
+ * when making HTTP requests to the `HttpClient`. */
+Result<Zip> ZipFromUrl(HttpClient&, const std::string& url, uint64_t size,
+                       std::vector<std::string> headers);
 }
