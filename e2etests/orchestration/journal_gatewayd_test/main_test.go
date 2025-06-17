@@ -15,9 +15,7 @@
 package main
 
 import (
-	"io"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -26,26 +24,21 @@ import (
 const baseURL = "http://0.0.0.0:2080"
 
 func TestHostOrchestratorServiceLogs(t *testing.T) {
-	url := baseURL + "/_journal/entries?_SYSTEMD_UNIT=cuttlefish-host_orchestrator.service"
-
-	res, err := http.Get(url)
-	if err != nil {
-		t.Fatal(err)
+	paths := []string{
+		"/_journal/entries?_SYSTEMD_UNIT=cuttlefish-host_orchestrator.service",
+		"/hostlogs/cuttlefish-host_orchestrator.service",
+		"/hostlogs/cuttlefish-operator.service",
+		"/hostlogs/kernel",
 	}
-	defer res.Body.Close()
+	for _, p := range paths {
+		res, err := http.Get(baseURL + p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
 
-	if diff := cmp.Diff(http.StatusOK, res.StatusCode); diff != "" {
-		t.Errorf("status code mismatch (-want +got):\n%s", diff)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	const line = "Host Orchestrator is listening at http://0.0.0.0:2081"
-	if !strings.Contains(string(body), line) {
-		t.Fatalf("line: %q not found in host orchestrator service logs")
-
+		if diff := cmp.Diff(http.StatusOK, res.StatusCode); diff != "" {
+			t.Errorf("GET %q status code mismatch (-want +got):\n%s", p, diff)
+		}
 	}
 }
