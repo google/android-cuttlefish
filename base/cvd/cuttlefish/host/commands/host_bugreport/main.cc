@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 
-#include <fstream>
 #include <string>
 
 #include <android-base/file.h>
@@ -24,15 +23,16 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
-#include <zip.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/known_paths.h"
-#include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/tee_logging.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
 
 DEFINE_string(output, "host_bugreport.zip", "Where to write the output");
 DEFINE_bool(include_adb_bugreport, false, "Includes device's `adb bugreport`.");
@@ -40,27 +40,26 @@ DEFINE_bool(include_adb_bugreport, false, "Includes device's `adb bugreport`.");
 namespace cuttlefish {
 namespace {
 
-void SaveFile(zip_t* archive, const std::string& zip_path,
+void SaveFile(Zip& archive, const std::string& zip_path,
               const std::string& file_path) {
   if (!FileExists(file_path)) {
     LOG(ERROR) << "Tried to add file '" << file_path << "', does not exist.";
     return;
   }
-  zip_source_t* source =
-      zip_source_file(archive, file_path.c_str(), 0, ZIP_LENGTH_TO_END);
-  if (source == nullptr) {
-    LOG(ERROR) << "Error in creating zip source file: "
-               << zip_strerror(archive);
+  Result<ZipSource> source = ZipSource::FromFile(file_path);
+  if (!source.ok()) {
+    LOG(ERROR) << "Failed to open '" << file_path << ":\n"
+               << source.error().FormatForEnv(/* color = */ false);
     return;
   }
-  zip_int64_t index = zip_file_add(archive, zip_path.c_str(), source, 0);
-  if (index == -1) {
-    LOG(ERROR) << "Error in adding zip source file: " << zip_strerror(archive);
-    zip_source_free(source);
+  Result<void> add_res = archive.AddFile(zip_path, std::move(*source));
+  if (!add_res.ok()) {
+    LOG(ERROR) << "Failed to add '" << file_path << "' to zip at '" << zip_path
+               << "': " << add_res.error().FormatForEnv(/* color = */ false);
   }
 }
 
-void AddNetsimdLogs(zip_t* archive) {
+void AddNetsimdLogs(Zip& archive) {
   // The temp directory name depends on whether the `USER` environment variable
   // is defined.
   // https://source.corp.google.com/h/googleplex-android/platform/superproject/main/+/main:tools/netsim/rust/common/src/system/mod.rs;l=37-57;drc=360ddb57df49472a40275b125bb56af2a65395c7
@@ -136,29 +135,20 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Unable to find the config";
 
-  auto out_path = FLAGS_output.c_str();
-  int err = 0;
-  std::unique_ptr<zip_t, decltype(&zip_discard)> archive(
-      zip_open(out_path, ZIP_CREATE | ZIP_TRUNCATE, &err), &zip_discard);
-  if (!archive) {
-    zip_error_t error;
-    zip_error_init_with_code(&error, err);
-    std::string msg =
-        "zip_open failed: " + std::string(zip_error_strerror(&error));
-    zip_error_fini(&error);
-    return CF_ERR(msg);
-  }
+  ZipSource output_file = CF_EXPECT(ZipSource::FromFile(FLAGS_output));
 
-  SaveFile(archive.get(), "cuttlefish_assembly/assemble_cvd.log",
+  Zip archive = CF_EXPECT(Zip::CreateFromSource(std::move(output_file)));
+
+  SaveFile(archive, "cuttlefish_assembly/assemble_cvd.log",
            config->AssemblyPath("assemble_cvd.log"));
-  SaveFile(archive.get(), "cuttlefish_assembly/cuttlefish_config.json",
+  SaveFile(archive, "cuttlefish_assembly/cuttlefish_config.json",
            config->AssemblyPath("cuttlefish_config.json"));
 
   for (const auto& instance : config->Instances()) {
     auto save = [&archive, instance](const std::string& path) {
       const auto& zip_name = instance.instance_name() + "/" + path;
       const auto& file_name = instance.PerInstancePath(path.c_str());
-      SaveFile(archive.get(), zip_name, file_name);
+      SaveFile(archive, zip_name, file_name);
     };
     save("cuttlefish_config.json");
     save("disk_config.txt");
@@ -214,8 +204,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
         if (names.ok()) {
           for (const auto& name : names.value()) {
             std::string filename = device_br_dir + "/" + name;
-            SaveFile(archive.get(), android::base::Basename(filename),
-                     filename);
+            SaveFile(archive, android::base::Basename(filename), filename);
           }
         } else {
           LOG(ERROR) << "Cannot read from device bugreport directory: "
@@ -229,19 +218,18 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     }
   }
 
-  AddNetsimdLogs(archive.get());
+  AddNetsimdLogs(archive);
 
   LOG(INFO) << "Building cvd bugreport completed";
 
-  SaveFile(archive.get(), "cvd_bugreport_builder.log", log_filename);
+  SaveFile(archive, "cvd_bugreport_builder.log", log_filename);
 
-  int result = zip_close(archive.get());
-  if (result == 0) {
-    archive.release();  // zip_close frees on success
+  Result<void> finalized = Zip::Finalize(std::move(archive));
+  if (finalized.ok()) {
     LOG(INFO) << "Saved to \"" << FLAGS_output << "\"";
   } else {
-    LOG(ERROR) << "Error in writing '" << FLAGS_output
-               << "': " << zip_strerror(archive.get());
+    LOG(ERROR) << "Error in writing '" << FLAGS_output << "': \n"
+               << finalized.error().FormatForEnv();
   }
 
   if (!RemoveFile(log_filename)) {
