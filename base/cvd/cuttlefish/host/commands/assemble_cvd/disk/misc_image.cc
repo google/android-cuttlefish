@@ -28,20 +28,22 @@ namespace cuttlefish {
 
 Result<MiscImage> MiscImage::Reuse(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  CF_EXPECT(FileHasContent(instance.misc_image()));
+  std::string path = instance.PerInstancePath(Name());
+  CF_EXPECT(FileHasContent(path));
 
   LOG(DEBUG) << "misc partition image already exists";
 
-  return MiscImage(instance.misc_image());
+  return MiscImage(path);
 }
 
 Result<MiscImage> MiscImage::ReuseOrCreate(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  LOG(DEBUG) << "misc partition image: creating empty at \""
-             << instance.misc_image() << "\"";
-  CF_EXPECT(CreateBlankImage(instance.misc_image(), 1 /* mb */, "none"),
+  std::string path = instance.PerInstancePath(Name());
+
+  LOG(DEBUG) << "misc partition image: creating empty at '" << path << "'";
+  CF_EXPECT(CreateBlankImage(path, 1 /* mb */, "none"),
             "Failed to create misc image");
-  return MiscImage(instance.misc_image());
+  return MiscImage(path);
 }
 
 MiscImage::MiscImage(std::string path) : path_(std::move(path)) {}
