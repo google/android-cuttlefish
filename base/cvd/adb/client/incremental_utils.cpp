@@ -30,15 +30,14 @@
 #include <android-base/endian.h>
 #include <android-base/mapped_file.h>
 #include <android-base/strings.h>
-#include <zip.h>
+#include <ziparchive/zip_archive.h>
+#include <ziparchive/zip_writer.h>
 
 #include "adb_io.h"
 #include "adb_trace.h"
 #include "sysdeps.h"
 
 using namespace std::literals;
-using unique_zip_source_t = std::unique_ptr<zip_source_t, decltype(&zip_source_free)>;
-using unique_zip_t = std::unique_ptr<zip_t, decltype(&zip_close)>;
 
 namespace incremental {
 
@@ -130,7 +129,7 @@ static inline bool skip_bytes_with_size(borrowed_fd fd, std::string* error) {
     }
     int32_t size = int32_t(le32toh(*le_size));
     if (size < 0) {
-        *error = std::format("Invalid size {}", size);
+        *error = std::format("Invalid sze {}", size);
         return false;
     }
     if (adb_lseek(fd, size, SEEK_CUR) < 0) {
@@ -305,39 +304,73 @@ static std::vector<int32_t> ZipPriorityBlocks(off64_t signerBlockOffset, Size fi
     return zipPriorityBlocks;
 }
 
-static std::optional<std::pair<unique_zip_source_t, std::unique_ptr<android::base::MappedFile>>> openZipArchive(
+[[maybe_unused]] static ZipArchiveHandle openZipArchiveFd(borrowed_fd fd) {
+    bool transferFdOwnership = false;
+#ifdef _WIN32
+    //
+    // Need to create a special CRT FD here as the current one is not compatible with
+    // normal read()/write() calls that libziparchive uses.
+    // To make this work we have to create a copy of the file handle, as CRT doesn't care
+    // and closes it together with the new descriptor.
+    //
+    // Note: don't move this into a helper function, it's better to be hard to reuse because
+    //       the code is ugly and won't work unless it's a last resort.
+    //
+    auto handle = adb_get_os_handle(fd);
+    HANDLE dupedHandle;
+    if (!::DuplicateHandle(::GetCurrentProcess(), handle, ::GetCurrentProcess(), &dupedHandle, 0,
+                           false, DUPLICATE_SAME_ACCESS)) {
+        D("%s failed at DuplicateHandle: %d", __func__, (int)::GetLastError());
+        return {};
+    }
+    int osfd = _open_osfhandle((intptr_t)dupedHandle, _O_RDONLY | _O_BINARY);
+    if (osfd < 0) {
+        D("%s failed at _open_osfhandle: %d", __func__, errno);
+        ::CloseHandle(handle);
+        return {};
+    }
+    transferFdOwnership = true;
+#else
+    int osfd = fd.get();
+#endif
+    ZipArchiveHandle zip;
+    if (OpenArchiveFd(osfd, "apk_fd", &zip, transferFdOwnership) != 0) {
+        D("%s failed at OpenArchiveFd: %d", __func__, errno);
+#ifdef _WIN32
+        // "_close()" is a secret WinCRT name for the regular close() function.
+        _close(osfd);
+#endif
+        return {};
+    }
+    return zip;
+}
+
+static std::pair<ZipArchiveHandle, std::unique_ptr<android::base::MappedFile>> openZipArchive(
         borrowed_fd fd, Size fileSize) {
+#ifndef __LP64__
+    if (fileSize >= INT_MAX) {
+        return {openZipArchiveFd(fd), nullptr};
+    }
+#endif
     auto mapping =
             android::base::MappedFile::FromOsHandle(adb_get_os_handle(fd), 0, fileSize, PROT_READ);
     if (!mapping) {
         D("%s failed at FromOsHandle: %d", __func__, errno);
         return {};
     }
-    zip_error_t error;
-    zip_error_init(&error);
-    unique_zip_source_t zip_source(
-        zip_source_buffer_create(mapping->data(), mapping->size(), 0, &error),
-        zip_source_free);
-    if (!zip_source) {
-        D("%s failed at zip_source_buffer_create: %s", __func__, zip_error_strerror(&error));
-        zip_error_fini(&error);
+    ZipArchiveHandle zip;
+    if (OpenArchiveFromMemory(mapping->data(), mapping->size(), "apk_mapping", &zip) != 0) {
+        D("%s failed at OpenArchiveFromMemory: %d", __func__, errno);
         return {};
     }
-    zip_error_fini(&error);
-    zip_source_keep(zip_source.get());
-    return std::make_pair(std::move(zip_source), std::move(mapping));
+    return {zip, std::move(mapping)};
 }
 
 static std::vector<int32_t> InstallationPriorityBlocks(borrowed_fd fd, Size fileSize) {
     static constexpr std::array<std::string_view, 3> additional_matches = {
             "resources.arsc"sv, "AndroidManifest.xml"sv, "classes.dex"sv};
-    auto le_val = openZipArchive(fd, fileSize);
-    if (!le_val.has_value()) {
-        return {};
-    }
-
-    auto [zip_source, _] = std::move(le_val).value();
-    if (!zip_source) {
+    auto [zip, _] = openZipArchive(fd, fileSize);
+    if (!zip) {
         return {};
     }
 
@@ -349,91 +382,41 @@ static std::vector<int32_t> InstallationPriorityBlocks(borrowed_fd fd, Size file
                            [entry_name](std::string_view i) { return i == entry_name; });
     };
 
-    zip_file_attributes_t attributes;
-    zip_file_attributes_init(&attributes);
-    if (zip_source_get_file_attributes(zip_source.get(), &attributes) < 0) {
-        auto error = zip_source_error(zip_source.get());
-        D("%s failed at zip_stat: %s", __func__, zip_error_strerror(error));
-        zip_error_fini(error);
-        return {};
-    }
-    if (!(attributes.valid & ZIP_FILE_ATTRIBUTES_GENERAL_PURPOSE_BIT_FLAGS) ||
-        !(attributes.general_purpose_bit_mask & 0x8)) {
-        D("%s failed at zip stat validity check", __func__);
-        return {};
-    }
-
-    zip_error_t error;
-    zip_error_init(&error);
-    unique_zip_t zip(zip_open_from_source(zip_source.get(), ZIP_RDONLY, &error), zip_close);
-    if (!zip) {
-        D("%s failed at zip_open_from_source: %s", __func__, zip_error_strerror(&error));
-        zip_error_fini(&error);
-        return {};
-    }
-
-    auto num_entries = zip_get_num_entries(zip.get(), 0);
-    if (num_entries < 0) {
-        D("%s failed at zip_get_num_entries", __func__);
+    void* cookie = nullptr;
+    if (StartIteration(zip, &cookie, std::move(matcher)) != 0) {
+        D("%s failed at StartIteration: %d", __func__, errno);
         return {};
     }
 
     std::vector<int32_t> installationPriorityBlocks;
-    for (auto i = 0; i < num_entries; i++) {
-        zip_stat_t zipstat;
-        if (zip_stat_index(zip.get(), i, 0, &zipstat)) {
-            auto error = zip_get_error(zip.get());
-            D("%s failed at zip_stat_index: %s", __func__, zip_error_strerror(error));
-            zip_error_fini(error);
-            return {};
-        }
-
-        if (!(zipstat.valid & ZIP_STAT_NAME) ||
-            !(zipstat.valid & ZIP_STAT_SIZE) ||
-            !(zipstat.valid & ZIP_STAT_COMP_METHOD) ||
-            !(zipstat.valid & ZIP_STAT_COMP_SIZE)) {
-            D("%s failed at zip stat validity check", __func__);
-            return {};
-        }
-
-        if (!matcher(zipstat.name)) {
-            continue;
-        }
-
-        auto zip_file = zip_fopen_index(zip.get(), i, 0);
-        if (!zip_file) {
-            auto error = zip_get_error(zip.get());
-            D("%s failed at zip_fopen_index: %s", __func__, zip_error_strerror(error));
-            zip_error_fini(error);
-            return {};
-        }
-        auto offset = zip_source_tell(zip_source.get());
-        zip_fclose(zip_file);
-
-        if (strcmp(zipstat.name, "classes.dex") == 0) {
+    ZipEntry64 entry;
+    std::string_view entryName;
+    while (Next(cookie, &entry, &entryName) == 0) {
+        if (entryName == "classes.dex"sv) {
             // Only the head is needed for installation
-            int32_t startBlockIndex = offsetToBlockIndex(offset);
+            int32_t startBlockIndex = offsetToBlockIndex(entry.offset);
             appendBlocks(startBlockIndex, 2, &installationPriorityBlocks);
-            D("\tadding to priority blocks: '%.*s' (%d)", (int)strlen(zipstat.name),
-              zipstat.name, 2);
+            D("\tadding to priority blocks: '%.*s' (%d)", (int)entryName.size(), entryName.data(),
+              2);
         } else {
             // Full entries are needed for installation
-            off64_t entryStartOffset = offset;
+            off64_t entryStartOffset = entry.offset;
             off64_t entryEndOffset =
                     entryStartOffset +
-                    (zipstat.comp_method == ZIP_CM_STORE ? zipstat.size
-                                                         : zipstat.comp_size) +
-                    (attributes.general_purpose_bit_flags & 0x8u ? 16 /* sizeof(DataDescriptor) */
-                                                                 : 0);
+                    (entry.method == kCompressStored ? entry.uncompressed_length
+                                                     : entry.compressed_length) +
+                    (entry.has_data_descriptor ? 16 /* sizeof(DataDescriptor) */ : 0);
             int32_t startBlockIndex = offsetToBlockIndex(entryStartOffset);
             int32_t endBlockIndex = offsetToBlockIndex(entryEndOffset);
             int32_t numNewBlocks = endBlockIndex - startBlockIndex + 1;
             appendBlocks(startBlockIndex, numNewBlocks, &installationPriorityBlocks);
-            D("\tadding to priority blocks: '%.*s' (%d)", (int)strlen(zipstat.name),
-              zipstat.name, numNewBlocks);
+            D("\tadding to priority blocks: '%.*s' (%d)", (int)entryName.size(), entryName.data(),
+              numNewBlocks);
         }
     }
 
+    EndIteration(cookie);
+    CloseArchive(zip);
     return installationPriorityBlocks;
 }
 
