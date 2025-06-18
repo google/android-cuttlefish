@@ -32,7 +32,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/zip_builder.h"
 
 DEFINE_string(output, "host_bugreport.zip", "Where to write the output");
 DEFINE_bool(include_adb_bugreport, false, "Includes device's `adb bugreport`.");
@@ -40,26 +40,14 @@ DEFINE_bool(include_adb_bugreport, false, "Includes device's `adb bugreport`.");
 namespace cuttlefish {
 namespace {
 
-void SaveFile(Zip& archive, const std::string& zip_path,
-              const std::string& file_path) {
-  if (!FileExists(file_path)) {
-    LOG(ERROR) << "Tried to add file '" << file_path << "', does not exist.";
-    return;
-  }
-  Result<ZipSource> source = ZipSource::FromFile(file_path);
-  if (!source.ok()) {
-    LOG(ERROR) << "Failed to open '" << file_path << ":\n"
-               << source.error().FormatForEnv(/* color = */ false);
-    return;
-  }
-  Result<void> add_res = archive.AddFile(zip_path, std::move(*source));
-  if (!add_res.ok()) {
-    LOG(ERROR) << "Failed to add '" << file_path << "' to zip at '" << zip_path
-               << "': " << add_res.error().FormatForEnv(/* color = */ false);
+template <typename T>
+void LogError(Result<T> res) {
+  if (!res.ok()) {
+    LOG(ERROR) << res.error().FormatForEnv(/* color = */ false);
   }
 }
 
-void AddNetsimdLogs(Zip& archive) {
+void AddNetsimdLogs(ZipBuilder& archive) {
   // The temp directory name depends on whether the `USER` environment variable
   // is defined.
   // https://source.corp.google.com/h/googleplex-android/platform/superproject/main/+/main:tools/netsim/rust/common/src/system/mod.rs;l=37-57;drc=360ddb57df49472a40275b125bb56af2a65395c7
@@ -78,7 +66,7 @@ void AddNetsimdLogs(Zip& archive) {
     return;
   }
   for (const auto& name : names.value()) {
-    SaveFile(archive, "netsimd/" + name, dir + "/" + name);
+    LogError(archive.AddFileAt(dir + "/" + name, "netsimd/" + name));
   }
 }
 
@@ -135,20 +123,18 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Unable to find the config";
 
-  ZipSource output_file = CF_EXPECT(ZipSource::FromFile(FLAGS_output));
+  ZipBuilder archive = CF_EXPECT(ZipBuilder::TargetingFile(FLAGS_output));
 
-  Zip archive = CF_EXPECT(Zip::CreateFromSource(std::move(output_file)));
-
-  SaveFile(archive, "cuttlefish_assembly/assemble_cvd.log",
-           config->AssemblyPath("assemble_cvd.log"));
-  SaveFile(archive, "cuttlefish_assembly/cuttlefish_config.json",
-           config->AssemblyPath("cuttlefish_config.json"));
+  LogError(archive.AddFileAt(config->AssemblyPath("assemble_cvd.log"),
+                             "cuttlefish_assembly/assemble_cvd.log"));
+  LogError(archive.AddFileAt(config->AssemblyPath("cuttlefish_config.json"),
+                             "cuttlefish_assembly/cuttlefish_config.json"));
 
   for (const auto& instance : config->Instances()) {
     auto save = [&archive, instance](const std::string& path) {
       const auto& zip_name = instance.instance_name() + "/" + path;
       const auto& file_name = instance.PerInstancePath(path.c_str());
-      SaveFile(archive, zip_name, file_name);
+      LogError(archive.AddFileAt(file_name, zip_name));
     };
     save("cuttlefish_config.json");
     save("disk_config.txt");
@@ -204,7 +190,8 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
         if (names.ok()) {
           for (const auto& name : names.value()) {
             std::string filename = device_br_dir + "/" + name;
-            SaveFile(archive, android::base::Basename(filename), filename);
+            LogError(
+                archive.AddFileAt(filename, android::base::Basename(filename)));
           }
         } else {
           LOG(ERROR) << "Cannot read from device bugreport directory: "
@@ -222,15 +209,9 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   LOG(INFO) << "Building cvd bugreport completed";
 
-  SaveFile(archive, "cvd_bugreport_builder.log", log_filename);
+  LogError(archive.AddFileAt(log_filename, "cvd_bugreport_builder.log"));
 
-  Result<void> finalized = Zip::Finalize(std::move(archive));
-  if (finalized.ok()) {
-    LOG(INFO) << "Saved to \"" << FLAGS_output << "\"";
-  } else {
-    LOG(ERROR) << "Error in writing '" << FLAGS_output << "': \n"
-               << finalized.error().FormatForEnv();
-  }
+  LogError(ZipBuilder::Finalize(std::move(archive)));
 
   if (!RemoveFile(log_filename)) {
     LOG(INFO) << "Failed to remove host bug report log file: " << log_filename;
