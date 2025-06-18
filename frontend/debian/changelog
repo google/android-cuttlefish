@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.12.0) unstable; urgency=medium
+cuttlefish-frontend (1.12.0) stable; urgency=medium
 
   * Refactor ChunkState struct by @0405ysj in https://github.com/google/android-cuttlefish/pull/1205
   * Adds `gofmt` check in presubmit. by @ser-io in https://github.com/google/android-cuttlefish/pull/1217
@@ -20,7 +20,7 @@ cuttlefish-frontend (1.12.0) unstable; urgency=medium
   * Fixes bazel run //:gazelle for e2e orchestration rules. by @ser-io in https://github.com/google/android-cuttlefish/pull/1261
   * HO API Documentation Update by @ser-io in https://github.com/google/android-cuttlefish/pull/1262
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Jun 2025 14:03:12 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Wed, 18 Jun 2025 16:36:09 -0700
 
 cuttlefish-frontend (1.11.0) stable; urgency=medium
 
