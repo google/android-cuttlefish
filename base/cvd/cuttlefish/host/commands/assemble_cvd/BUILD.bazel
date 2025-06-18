@@ -204,6 +204,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:initialize_instance_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
+        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:os_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:pflash",
         "//cuttlefish/host/commands/assemble_cvd/disk:pstore",

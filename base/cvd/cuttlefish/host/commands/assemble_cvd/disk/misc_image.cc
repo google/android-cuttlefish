@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <string>
+#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeDataImage(const CuttlefishConfig::InstanceSpecific&);
+Result<void> InitializeMiscImage(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (FileHasContent(instance.misc_image())) {
+    LOG(DEBUG) << "misc partition image already exists";
+    return {};
+  }
 
-Result<void> InitializeEspImage(const CuttlefishConfig&,
-                                const CuttlefishConfig::InstanceSpecific&);
+  LOG(DEBUG) << "misc partition image: creating empty at \""
+             << instance.misc_image() << "\"";
+  CF_EXPECT(CreateBlankImage(instance.misc_image(), 1 /* mb */, "none"),
+            "Failed to create misc image");
+  return {};
+}
 
-Result<void> CreateBlankImage(const std::string& image, int num_mb,
-                              const std::string& image_fmt);
-
-} // namespace cuttlefish
+}  // namespace cuttlefish

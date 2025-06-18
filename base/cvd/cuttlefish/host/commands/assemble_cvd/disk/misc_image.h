@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <string>
+#pragma once
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeDataImage(const CuttlefishConfig::InstanceSpecific&);
+Result<void> InitializeMiscImage(
+    const CuttlefishConfig::InstanceSpecific& instance);
 
-Result<void> InitializeEspImage(const CuttlefishConfig&,
-                                const CuttlefishConfig::InstanceSpecific&);
-
-Result<void> CreateBlankImage(const std::string& image, int num_mb,
-                              const std::string& image_fmt);
-
-} // namespace cuttlefish
+}  // namespace cuttlefish
