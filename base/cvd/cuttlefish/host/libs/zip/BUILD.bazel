@@ -52,6 +52,25 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "zip_builder",
+    srcs = ["zip_builder.cc"],
+    hdrs = ["zip_builder.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:zip_cc",
+    ],
+)
+
+clang_tidy_test(
+    name = "zip_builder_clang_tidy",
+    srcs = [":zip_builder"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "zip_cc",
     srcs = ["zip_cc.cc"],
     hdrs = ["zip_cc.h"],
