@@ -31,11 +31,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: "~/.cache/bazel"
-        key: ${{ runner.os }}-bazel-${{ github.ref_name }}-${{ github.sha }}
+        key: ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-bazel-${{ github.ref_name }}-
-          ${{ runner.os }}-bazel-main-
-          ${{ runner.os }}-bazel-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-main-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-
     - name: build base debian package
       run: cd android-cuttlefish/base && debuild -i -us -uc -b
 
