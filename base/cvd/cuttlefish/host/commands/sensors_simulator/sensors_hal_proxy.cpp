@@ -25,6 +25,15 @@ namespace {
 static constexpr char END_OF_MSG = '\n';
 static constexpr uint32_t kIntervalMs = 1000;
 
+/*
+  Aligned with Goldfish sensor flags defined in
+  `device/generic/goldfish/hals/sensors/sensor_list.cpp`.
+*/
+SensorsMask continous_mode_sensors =
+    (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
+    (1 << kPressureId) | (1 << kUncalibGyroscopeId) |
+    (1 << kUncalibAccelerationId);
+
 Result<std::string> SensorIdToName(int id) {
   switch (id) {
     case kAccelerationId:
@@ -152,10 +161,12 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
   data_reporter_thread_ = std::thread([this, host_enabled_sensors] {
     while (running_) {
       if (hal_activated_) {
+        SensorsMask host_update_sensors =
+            host_enabled_sensors & continous_mode_sensors;
         auto sensors_data =
-            sensors_simulator_.GetSensorsData(host_enabled_sensors);
+            sensors_simulator_.GetSensorsData(host_update_sensors);
         auto result =
-            UpdateSensorsHal(sensors_data, channel_, host_enabled_sensors);
+            UpdateSensorsHal(sensors_data, channel_, host_update_sensors);
         if (!result.ok()) {
           running_ = false;
           LOG(ERROR) << result.error().FormatForEnv();
