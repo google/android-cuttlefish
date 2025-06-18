@@ -18,6 +18,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -31,7 +32,8 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config);
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&);
+    const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&,
+    const MiscImage&);
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
                                    const CuttlefishConfig::InstanceSpecific& instance);
 

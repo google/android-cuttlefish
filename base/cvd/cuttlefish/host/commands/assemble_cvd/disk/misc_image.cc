@@ -16,25 +16,43 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 
+#include <android-base/logging.h>
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeMiscImage(
+Result<MiscImage> MiscImage::Reuse(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileHasContent(instance.misc_image())) {
-    LOG(DEBUG) << "misc partition image already exists";
-    return {};
-  }
+  CF_EXPECT(FileHasContent(instance.misc_image()));
 
+  LOG(DEBUG) << "misc partition image already exists";
+
+  return MiscImage(instance.misc_image());
+}
+
+Result<MiscImage> MiscImage::ReuseOrCreate(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   LOG(DEBUG) << "misc partition image: creating empty at \""
              << instance.misc_image() << "\"";
   CF_EXPECT(CreateBlankImage(instance.misc_image(), 1 /* mb */, "none"),
             "Failed to create misc image");
-  return {};
+  return MiscImage(instance.misc_image());
+}
+
+MiscImage::MiscImage(std::string path) : path_(std::move(path)) {}
+
+std::string MiscImage::Name() { return "misc.img"; }
+
+ImagePartition MiscImage::Partition() const {
+  return ImagePartition{
+      .label = "misc",
+      .image_file_path = path_,
+  };
 }
 
 }  // namespace cuttlefish

@@ -310,7 +310,7 @@ Result<void> ResolveInstanceFiles() {
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const MetadataImage& metadata) {
+    const MetadataImage& metadata, const MiscImage& misc) {
   auto builder =
       DiskBuilder()
           .VmManager(config.vm_manager())
@@ -322,7 +322,7 @@ DiskBuilder OsCompositeDiskBuilder(
     return builder.EntireDisk(instance.chromeos_disk())
         .CompositeDiskPath(instance.chromeos_disk());
   }
-  return builder.Partitions(GetOsCompositeDiskConfig(instance, metadata))
+  return builder.Partitions(GetOsCompositeDiskConfig(instance, metadata, misc))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());
@@ -367,7 +367,6 @@ static fruit::Component<> DiskChangesComponent(
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
       .install(AutoSetup<BootloaderPresentCheck>::Component)
       .install(AutoSetup<Gem5ImageUnpacker>::Component)
-      .install(AutoSetup<InitializeMiscImage>::Component)
       // Create esp if necessary
       .install(AutoSetup<InitializeEspImage>::Component)
       .install(SuperImageRebuilderComponent);
@@ -744,9 +743,10 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     }
 
     MetadataImage metadata = CF_EXPECT(MetadataImage::ReuseOrCreate(instance));
+    MiscImage misc = CF_EXPECT(MiscImage::ReuseOrCreate(instance));
 
     DiskBuilder os_disk_builder =
-        OsCompositeDiskBuilder(config, instance, metadata);
+        OsCompositeDiskBuilder(config, instance, metadata, misc);
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
