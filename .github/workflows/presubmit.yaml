@@ -114,6 +114,14 @@ jobs:
       run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool nasm
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
+    - name: Mount Bazel cache
+      uses: actions/cache@v4
+      with:
+        path: "~/.cache/bazel"
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-main-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-
     - name: Run unit tests
       run: cd base/cvd && bazel test --sandbox_writable_path=$HOME --test_output=errors ...
     - name: Upload test logs
@@ -147,6 +155,14 @@ jobs:
         path: "android-cuttlefish"
     - name: install bazel
       run: bash android-cuttlefish/tools/buildutils/installbazel.sh
+    - name: Mount Bazel cache
+      uses: actions/cache@v4
+      with:
+        path: "~/.cache/bazel"
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-main-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
@@ -273,6 +289,14 @@ jobs:
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Install bazel
       run: sudo bash tools/buildutils/installbazel.sh
+    - name: Mount Bazel cache
+      uses: actions/cache@v4
+      with:
+        path: "~/.cache/bazel"
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-main-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-
     - name: Run check
       shell: bash
       run: |
