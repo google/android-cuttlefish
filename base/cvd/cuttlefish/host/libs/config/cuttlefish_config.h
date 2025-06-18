@@ -660,7 +660,6 @@ class CuttlefishConfig {
     std::string new_data_image() const;
     std::string super_image() const;
     std::string new_super_image() const;
-    std::string misc_image() const;
     std::string misc_info_txt() const;
     std::string vendor_boot_image() const;
     std::string new_vendor_boot_image() const;
