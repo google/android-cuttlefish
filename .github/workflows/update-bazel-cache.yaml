@@ -1,0 +1,41 @@
+name: Update Bazel Cache
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-bazel-cache:
+    runs-on: ubuntu-22.04-4core
+    container:
+      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
+    steps:
+    - name: Check for dockerenv file
+      run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
+    - name: setup apt
+      run: apt update -y && apt upgrade -y
+    - name: install debuild dependencies
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler nasm
+    - name: go version
+      run: go version
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      with:
+        path: "android-cuttlefish"
+    - name: install bazel
+      run: bash android-cuttlefish/tools/buildutils/installbazel.sh
+    - name: install package build dependencies
+      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
+    - name: Mount Bazel cache
+      uses: actions/cache@v4
+      with:
+        path: "~/.cache/bazel"
+        key: ${{ runner.os }}-bazel-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-bazel-${{ github.ref_name }}-
+          ${{ runner.os }}-bazel-main-
+          ${{ runner.os }}-bazel-
+    - name: build base debian package
+      run: cd android-cuttlefish/base && debuild -i -us -uc -b
+
