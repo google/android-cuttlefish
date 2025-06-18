@@ -34,6 +34,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
+        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//libbase",
@@ -56,6 +57,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
+        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
     ],
@@ -369,6 +371,8 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//libbase",
     ],
 )
 
@@ -391,6 +395,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:fuchsia_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:linux_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
+        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
