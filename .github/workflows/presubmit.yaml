@@ -127,12 +127,6 @@ jobs:
     container:
       image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
     steps:
-    - name: Common bazel setup
-      uses: bazel-contrib/setup-bazel@f3f50ea6791b9b0f4c4eeabba4507422426462f5 #aka 0.9.1
-      with:
-        bazelisk-cache: true # Avoid downloading Bazel every time.
-        disk-cache: ${{ github.workflow }} # Store build cache per workflow.
-        repository-cache: true # Share repository cache between workflows.
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
     - name: setup apt
@@ -149,6 +143,15 @@ jobs:
       run: bash android-cuttlefish/tools/buildutils/installbazel.sh
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
+    - name: Mount Bazel cache
+      uses: actions/cache@v4
+      with:
+        path: "~/.cache/bazel"
+        key: ${{ runner.os }}-bazel-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-bazel-${{ github.ref_name }}-
+          ${{ runner.os }}-bazel-main-
+          ${{ runner.os }}-bazel-
     - name: build base debian package
       run: cd android-cuttlefish/base && debuild -i -us -uc -b
     - name: install base debian package
