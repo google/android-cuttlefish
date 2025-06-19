@@ -24,16 +24,33 @@ clang_tidy_test(
 )
 
 cc_library(
+    name = "device_selector_utils",
+    srcs = ["device_selector_utils.cpp"],
+    hdrs = ["device_selector_utils.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "device_selector_utils_clang_tidy",
+    srcs = [":device_selector_utils"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "parser",
     srcs = [
         "creation_analyzer.cpp",
-        "device_selector_utils.cpp",
         "selector_option_parser_utils.cpp",
         "start_selector_parser.cpp",
     ],
     hdrs = [
         "creation_analyzer.h",
-        "device_selector_utils.h",
         "selector_option_parser_utils.h",
         "start_selector_parser.h",
     ],
@@ -45,6 +62,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:unique_resource_allocator",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances/lock",
@@ -71,7 +89,7 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
-        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
         "//cuttlefish/host/commands/cvd/cli:utils",
