@@ -17,7 +17,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/zip:zip_builder",
+        "//cuttlefish/host/libs/zip:zip_file",
         "//libbase",
         "@fmt",
         "@gflags",

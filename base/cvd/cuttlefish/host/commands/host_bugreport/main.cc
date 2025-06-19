@@ -32,7 +32,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/zip/zip_builder.h"
+#include "cuttlefish/host/libs/zip/zip_file.h"
 
 DEFINE_string(output, "host_bugreport.zip", "Where to write the output");
 DEFINE_bool(include_adb_bugreport, false, "Includes device's `adb bugreport`.");
@@ -47,7 +47,7 @@ void LogError(Result<T> res) {
   }
 }
 
-void AddNetsimdLogs(ZipBuilder& archive) {
+void AddNetsimdLogs(WritableZip& archive) {
   // The temp directory name depends on whether the `USER` environment variable
   // is defined.
   // https://source.corp.google.com/h/googleplex-android/platform/superproject/main/+/main:tools/netsim/rust/common/src/system/mod.rs;l=37-57;drc=360ddb57df49472a40275b125bb56af2a65395c7
@@ -66,7 +66,7 @@ void AddNetsimdLogs(ZipBuilder& archive) {
     return;
   }
   for (const auto& name : names.value()) {
-    LogError(archive.AddFileAt(dir + "/" + name, "netsimd/" + name));
+    LogError(AddFileAt(archive, dir + "/" + name, "netsimd/" + name));
   }
 }
 
@@ -123,18 +123,18 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Unable to find the config";
 
-  ZipBuilder archive = CF_EXPECT(ZipBuilder::TargetingFile(FLAGS_output));
+  WritableZip archive = CF_EXPECT(ZipOpenReadWrite(FLAGS_output));
 
-  LogError(archive.AddFileAt(config->AssemblyPath("assemble_cvd.log"),
-                             "cuttlefish_assembly/assemble_cvd.log"));
-  LogError(archive.AddFileAt(config->AssemblyPath("cuttlefish_config.json"),
-                             "cuttlefish_assembly/cuttlefish_config.json"));
+  LogError(AddFileAt(archive, config->AssemblyPath("assemble_cvd.log"),
+                     "cuttlefish_assembly/assemble_cvd.log"));
+  LogError(AddFileAt(archive, config->AssemblyPath("cuttlefish_config.json"),
+                     "cuttlefish_assembly/cuttlefish_config.json"));
 
   for (const auto& instance : config->Instances()) {
     auto save = [&archive, instance](const std::string& path) {
       const auto& zip_name = instance.instance_name() + "/" + path;
       const auto& file_name = instance.PerInstancePath(path.c_str());
-      LogError(archive.AddFileAt(file_name, zip_name));
+      LogError(AddFileAt(archive, file_name, zip_name));
     };
     save("cuttlefish_config.json");
     save("disk_config.txt");
@@ -190,8 +190,8 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
         if (names.ok()) {
           for (const auto& name : names.value()) {
             std::string filename = device_br_dir + "/" + name;
-            LogError(
-                archive.AddFileAt(filename, android::base::Basename(filename)));
+            LogError(AddFileAt(archive, filename,
+                               android::base::Basename(filename)));
           }
         } else {
           LOG(ERROR) << "Cannot read from device bugreport directory: "
@@ -209,9 +209,9 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   LOG(INFO) << "Building cvd bugreport completed";
 
-  LogError(archive.AddFileAt(log_filename, "cvd_bugreport_builder.log"));
+  LogError(AddFileAt(archive, log_filename, "cvd_bugreport_builder.log"));
 
-  LogError(ZipBuilder::Finalize(std::move(archive)));
+  LogError(WritableZip::Finalize(std::move(archive)));
 
   if (!RemoveFile(log_filename)) {
     LOG(INFO) << "Failed to remove host bug report log file: " << log_filename;

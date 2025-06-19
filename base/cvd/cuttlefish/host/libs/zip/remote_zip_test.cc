@@ -34,7 +34,7 @@
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
-#include "cuttlefish/host/libs/zip/zip_source_string.h"
+#include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
 namespace {
@@ -50,10 +50,7 @@ class HttpCallback {
     WritableZip zip = CF_EXPECT(WritableZip::FromSource(std::move(source)));
 
     for (const auto& [path, data] : contents) {
-      WritableZipSource file =
-          CF_EXPECT(WritableZipSource::BorrowData(data.data(), data.size()));
-
-      CF_EXPECT(zip.AddFile(path, std::move(file)));
+      CF_EXPECT(AddStringAt(zip, data, path));
     }
 
     source = CF_EXPECT(WritableZipSource::FromZip(std::move(zip)));
