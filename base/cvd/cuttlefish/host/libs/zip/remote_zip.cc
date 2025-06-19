@@ -96,15 +96,17 @@ class RemoteZip : public SeekableZipSourceCallback {
 
 }  // namespace
 
-Result<Zip> ZipFromUrl(HttpClient& http_client_, const std::string& url,
-                       uint64_t size, std::vector<std::string> headers) {
+Result<ReadableZip> ZipFromUrl(HttpClient& http_client_, const std::string& url,
+                               uint64_t size,
+                               std::vector<std::string> headers) {
   std::unique_ptr<RemoteZip> callbacks =
       std::make_unique<RemoteZip>(http_client_, url, size, std::move(headers));
   CF_EXPECT(callbacks.get());
 
-  ZipSource source = CF_EXPECT(ZipSource::FromCallbacks(std::move(callbacks)));
+  SeekableZipSource source =
+      CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
 
-  return CF_EXPECT(Zip::OpenFromSource(std::move(source)));
+  return CF_EXPECT(ReadableZip::FromSource(std::move(source)));
 }
 
 }  // namespace cuttlefish

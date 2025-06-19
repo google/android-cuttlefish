@@ -30,6 +30,6 @@ namespace cuttlefish {
  * URL. It assumes the remote web server supports HTTP range requests and
  * requires knowing the size of the remote file. `headers` are passed through
  * when making HTTP requests to the `HttpClient`. */
-Result<Zip> ZipFromUrl(HttpClient&, const std::string& url, uint64_t size,
-                       std::vector<std::string> headers);
+Result<ReadableZip> ZipFromUrl(HttpClient&, const std::string& url,
+                               uint64_t size, std::vector<std::string> headers);
 }
