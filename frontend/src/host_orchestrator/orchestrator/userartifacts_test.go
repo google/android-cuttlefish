@@ -439,7 +439,7 @@ func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
 		t.Fatal(err)
 	} else if diff := cmp.Diff(zipContents, got); diff != "" {
-		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+		t.Fatalf("content mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -487,7 +487,7 @@ func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
 	if got, err := getContents(filepath.Join(rootDir, fmt.Sprintf("%s_extracted", checksum))); err != nil {
 		t.Fatal(err)
 	} else if diff := cmp.Diff(tarContents, got); diff != "" {
-		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
+		t.Fatalf("content mismatch (-want +got):\n%s", diff)
 	}
 }
 
