@@ -6,7 +6,33 @@ on:
       - main
 
 jobs:
-  update-bazel-cache:
+  update-cvd-test-bazel-cache:
+    runs-on: ubuntu-22.04-4core
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Setup apt
+      run: apt update -y && apt upgrade -y
+    - name: Install dependencies
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool nasm
+    - name: Install bazel
+      run: bash tools/buildutils/installbazel.sh
+    - name: Load cache config
+      run: cat .github/workflows/cache-config.env >> $GITHUB_ENV
+    - name: Mount Bazel cache
+      uses: actions/cache@v4
+      with:
+        path: "~/bazel-disk-cache"
+        key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-main-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-
+    - name: Run unit tests
+      run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
+  update-debian-package-bazel-cache:
     runs-on: ubuntu-22.04-4core
     container:
       image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
@@ -25,17 +51,18 @@ jobs:
         path: "android-cuttlefish"
     - name: install bazel
       run: bash android-cuttlefish/tools/buildutils/installbazel.sh
-    - name: install package build dependencies
-      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
+    - name: Load cache config
+      run: cat android-cuttlefish/.github/workflows/cache-config.env >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache@v4
       with:
-        path: "~/.cache/bazel"
-        key: ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-${{ github.sha }}
+        path: "~/bazel-disk-cache"
+        key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-bazel-${{ github.ref_name }}-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-main-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-main-
+          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-
+    - name: install package build dependencies
+      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
-      run: cd android-cuttlefish/base && debuild -i -us -uc -b
-
+      run: cd android-cuttlefish/base && debuild -e BAZEL_DISK_CACHE_DIR=$HOME/bazel-disk-cache -i -us -uc -b
