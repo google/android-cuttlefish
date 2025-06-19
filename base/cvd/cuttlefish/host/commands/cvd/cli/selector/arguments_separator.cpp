@@ -21,6 +21,7 @@
 
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 
 namespace cuttlefish {
