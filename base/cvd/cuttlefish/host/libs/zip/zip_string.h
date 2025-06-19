@@ -25,4 +25,7 @@ namespace cuttlefish {
 Result<std::string> ReadToString(ReadableZipSource&);
 Result<std::string> ReadToString(ZipSourceReader&);
 
+Result<void> AddStringAt(WritableZip&, const std::string& data,
+                         const std::string& zip_path);
+
 }  // namespace cuttlefish

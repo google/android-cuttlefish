@@ -38,7 +38,7 @@ cc_test(
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip:zip_cc",
-        "//cuttlefish/host/libs/zip:zip_source_string",
+        "//cuttlefish/host/libs/zip:zip_string",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -48,25 +48,6 @@ cc_test(
 clang_tidy_test(
     name = "remote_zip_test_clang_tidy",
     srcs = [":remote_zip_test"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
-    name = "zip_builder",
-    srcs = ["zip_builder.cc"],
-    hdrs = ["zip_builder.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-    deps = [
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/zip:zip_cc",
-    ],
-)
-
-clang_tidy_test(
-    name = "zip_builder_clang_tidy",
-    srcs = [":zip_builder"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
@@ -93,9 +74,28 @@ clang_tidy_test(
 )
 
 cc_library(
-    name = "zip_source_string",
-    srcs = ["zip_source_string.cc"],
-    hdrs = ["zip_source_string.h"],
+    name = "zip_file",
+    srcs = ["zip_file.cc"],
+    hdrs = ["zip_file.h"],
+    copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:zip_cc",
+    ],
+)
+
+clang_tidy_test(
+    name = "zip_file_clang_tidy",
+    srcs = [":zip_file"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "zip_string",
+    srcs = ["zip_string.cc"],
+    hdrs = ["zip_string.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_cc",
@@ -103,7 +103,7 @@ cc_library(
 )
 
 clang_tidy_test(
-    name = "zip_source_string_clang_tidy",
-    srcs = [":zip_source_string"],
+    name = "zip_string_clang_tidy",
+    srcs = [":zip_string"],
     tags = ["clang_tidy", "clang-tidy"],
 )
