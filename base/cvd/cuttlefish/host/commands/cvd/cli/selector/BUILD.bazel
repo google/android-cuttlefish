@@ -1,4 +1,3 @@
-load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -20,7 +19,6 @@ cf_cc_library(
         "creation_analyzer.h",
         "device_selector_utils.h",
         "selector_common_parser.h",
-        "selector_constants.h",
         "selector_option_parser_utils.h",
         "start_selector_parser.h",
     ],
@@ -31,6 +29,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:unique_resource_allocator",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/instances:device_name",
@@ -47,9 +46,9 @@ cf_cc_library(
     srcs = ["selector.cpp"],
     hdrs = ["selector.h"],
     deps = [
-        ":parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
         "//cuttlefish/host/commands/cvd/cli:utils",
@@ -57,6 +56,11 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
     ],
+)
+
+cf_cc_library(
+    name = "selector_constants",
+    hdrs = ["selector_constants.h"],
 )
 
 cf_cc_test(
@@ -75,16 +79,16 @@ cf_cc_test(
         "parser_names_helper.h",
         "parser_names_test.cpp",
     ],
-    copts = COPTS + ["-Icuttlefish"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result_matchers",
-        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
+        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/libs/config:config_constants",
