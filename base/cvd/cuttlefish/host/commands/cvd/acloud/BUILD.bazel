@@ -29,7 +29,6 @@ cf_cc_library(
     ],
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
-        ":user_config_cc_proto",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -37,6 +36,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/acloud:user_config_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
