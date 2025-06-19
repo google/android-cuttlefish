@@ -6,21 +6,38 @@ package(
 )
 
 cc_library(
+    name = "arguments_separator",
+    srcs = ["arguments_separator.cpp"],
+    hdrs = ["arguments_separator.h"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "arguments_separator_clang_tidy",
+    srcs = [":arguments_separator"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
     name = "parser",
     srcs = [
-        "arguments_separator.cpp",
         "creation_analyzer.cpp",
         "device_selector_utils.cpp",
         "selector_option_parser_utils.cpp",
         "start_selector_parser.cpp",
     ],
     hdrs = [
-        "arguments_separator.h",
         "creation_analyzer.h",
         "device_selector_utils.h",
         "selector_option_parser_utils.h",
         "start_selector_parser.h",
     ],
+    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
