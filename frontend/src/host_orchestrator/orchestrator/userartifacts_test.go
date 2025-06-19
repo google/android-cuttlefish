@@ -183,10 +183,6 @@ func TestUpdateArtifactWithDirSucceeds(t *testing.T) {
 	}
 }
 
-func getSha256Sum(data []byte) string {
-	return fmt.Sprintf("%x", sha256.Sum256(data))
-}
-
 func TestUpdateArtifactWithSingleChunkSucceeds(t *testing.T) {
 	legacyRootDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, legacyRootDir)
@@ -296,25 +292,6 @@ func TestUpdateArtifactAfterArtifactIsFullyUploadedFails(t *testing.T) {
 	}
 }
 
-func constructSeparatedChunks(name, data string) []UserArtifactChunk {
-	chunks := []UserArtifactChunk{}
-	for idxStart := 0; idxStart < len(data); {
-		idxEnd := idxStart*2 + 1
-		if idxEnd > len(data) {
-			idxEnd = len(data)
-		}
-		chunks = append(chunks, UserArtifactChunk{
-			Name:          name,
-			OffsetBytes:   int64(idxStart),
-			SizeBytes:     int64(idxEnd - idxStart),
-			FileSizeBytes: int64(len(data)),
-			File:          strings.NewReader(data[idxStart:idxEnd]),
-		})
-		idxStart = idxEnd
-	}
-	return chunks
-}
-
 func TestUpdateArtifactWithMultipleSerialChunkSucceeds(t *testing.T) {
 	legacyRootDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, legacyRootDir)
@@ -418,58 +395,6 @@ func TestStatArtifactSucceeds(t *testing.T) {
 	}
 }
 
-func getContents(dir string) (map[string]string, error) {
-	contents := make(map[string]string)
-	walkFunc := func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if relPath, err := filepath.Rel(dir, path); err != nil {
-			return err
-		} else if content, err := ioutil.ReadFile(path); err != nil {
-			return err
-		} else {
-			contents[relPath] = string(content)
-		}
-		return nil
-	}
-	if err := filepath.Walk(dir, walkFunc); err != nil {
-		return nil, err
-	}
-	return contents, nil
-}
-
-func createZip(dir string, contents map[string]string) (string, error) {
-	zipFile, err := ioutil.TempFile(dir, "*.zip")
-	if err != nil {
-		return "", err
-	}
-	defer zipFile.Close()
-
-	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
-
-	for name, content := range contents {
-		header := zip.FileHeader{
-			Name: name,
-		}
-		writer, err := zipWriter.CreateHeader(&header)
-		if err != nil {
-			return "", err
-		}
-		if n, err := writer.Write([]byte(content)); err != nil {
-			return "", err
-		} else if n != len(content) {
-			return "", fmt.Errorf("Failed to write entire file: %s", name)
-		}
-	}
-
-	return zipFile.Name(), nil
-}
-
 func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	legacyRootDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, legacyRootDir)
@@ -516,70 +441,6 @@ func TestExtractArtifactSucceedsWithZipFormat(t *testing.T) {
 	} else if diff := cmp.Diff(zipContents, got); diff != "" {
 		t.Fatalf("chunk state mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func getSubdirs(path string) []string {
-	// Remove leading and trailing slashes
-	path = strings.Trim(path, "/")
-	if len(path) == 0 {
-		return []string{}
-	}
-	subdirs := []string{}
-	subdir := ""
-	for _, name := range strings.Split(path, "/") {
-		subdir += name + "/"
-		subdirs = append(subdirs, subdir)
-	}
-	return subdirs
-}
-
-func createTarGz(dir string, contents map[string]string) (string, error) {
-	tarFile, err := ioutil.TempFile(dir, "*.tar.gz")
-	if err != nil {
-		return "", err
-	}
-	defer tarFile.Close()
-
-	gzipWriter := gzip.NewWriter(tarFile)
-	defer gzipWriter.Close()
-
-	tarWriter := tar.NewWriter(gzipWriter)
-	defer tarWriter.Close()
-
-	directories := map[string]struct{}{}
-
-	for name, content := range contents {
-		dir, _ := filepath.Split(name)
-		dirPaths := getSubdirs(dir)
-		for _, dp := range dirPaths {
-			if _, alreadyAdded := directories[dp]; alreadyAdded {
-				continue
-			}
-			directories[dp] = struct{}{}
-			header := tar.Header{
-				Name:     dp,
-				Mode:     0555,
-				Typeflag: tar.TypeDir,
-			}
-			if err := tarWriter.WriteHeader(&header); err != nil {
-				return "", err
-			}
-		}
-		header := tar.Header{
-			Name: name,
-			Size: int64(len(content)),
-			Mode: 0555,
-		}
-		if err := tarWriter.WriteHeader(&header); err != nil {
-			return "", err
-		}
-		if n, err := tarWriter.Write([]byte(content)); err != nil {
-			return "", err
-		} else if n != len(content) {
-			return "", fmt.Errorf("Failed to write entire file: %s", name)
-		}
-	}
-	return tarFile.Name(), nil
 }
 
 func TestExtractArtifactSucceedsWithTarGzFormat(t *testing.T) {
@@ -711,15 +572,6 @@ func TestExtractArtifactFailsArtifactNotFound(t *testing.T) {
 	if err := uam.ExtractArtifact("foo"); err == nil {
 		t.Fatal("Expected an error")
 	}
-}
-
-func getChunkStateItemList(cs *chunkState) []chunkStateItem {
-	items := []chunkStateItem{}
-	cs.items.Ascend(func(item btree.Item) bool {
-		items = append(items, item.(chunkStateItem))
-		return true
-	})
-	return items
 }
 
 func TestChunkStateUpdateSucceedsForSeparatedChunks(t *testing.T) {
@@ -874,4 +726,152 @@ func TestChunkStateIsNotCompletedWithMissingEnd(t *testing.T) {
 	if cs.IsCompleted() {
 		t.Fatalf("expected as not completed")
 	}
+}
+
+func getSha256Sum(data []byte) string {
+	return fmt.Sprintf("%x", sha256.Sum256(data))
+}
+
+func constructSeparatedChunks(name, data string) []UserArtifactChunk {
+	chunks := []UserArtifactChunk{}
+	for idxStart := 0; idxStart < len(data); {
+		idxEnd := idxStart*2 + 1
+		if idxEnd > len(data) {
+			idxEnd = len(data)
+		}
+		chunks = append(chunks, UserArtifactChunk{
+			Name:          name,
+			OffsetBytes:   int64(idxStart),
+			SizeBytes:     int64(idxEnd - idxStart),
+			FileSizeBytes: int64(len(data)),
+			File:          strings.NewReader(data[idxStart:idxEnd]),
+		})
+		idxStart = idxEnd
+	}
+	return chunks
+}
+
+func getContents(dir string) (map[string]string, error) {
+	contents := make(map[string]string)
+	walkFunc := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if relPath, err := filepath.Rel(dir, path); err != nil {
+			return err
+		} else if content, err := ioutil.ReadFile(path); err != nil {
+			return err
+		} else {
+			contents[relPath] = string(content)
+		}
+		return nil
+	}
+	if err := filepath.Walk(dir, walkFunc); err != nil {
+		return nil, err
+	}
+	return contents, nil
+}
+
+func createZip(dir string, contents map[string]string) (string, error) {
+	zipFile, err := ioutil.TempFile(dir, "*.zip")
+	if err != nil {
+		return "", err
+	}
+	defer zipFile.Close()
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	for name, content := range contents {
+		header := zip.FileHeader{
+			Name: name,
+		}
+		writer, err := zipWriter.CreateHeader(&header)
+		if err != nil {
+			return "", err
+		}
+		if n, err := writer.Write([]byte(content)); err != nil {
+			return "", err
+		} else if n != len(content) {
+			return "", fmt.Errorf("Failed to write entire file: %s", name)
+		}
+	}
+
+	return zipFile.Name(), nil
+}
+
+func getSubdirs(path string) []string {
+	// Remove leading and trailing slashes
+	path = strings.Trim(path, "/")
+	if len(path) == 0 {
+		return []string{}
+	}
+	subdirs := []string{}
+	subdir := ""
+	for _, name := range strings.Split(path, "/") {
+		subdir += name + "/"
+		subdirs = append(subdirs, subdir)
+	}
+	return subdirs
+}
+
+func createTarGz(dir string, contents map[string]string) (string, error) {
+	tarFile, err := ioutil.TempFile(dir, "*.tar.gz")
+	if err != nil {
+		return "", err
+	}
+	defer tarFile.Close()
+
+	gzipWriter := gzip.NewWriter(tarFile)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	directories := map[string]struct{}{}
+
+	for name, content := range contents {
+		dir, _ := filepath.Split(name)
+		dirPaths := getSubdirs(dir)
+		for _, dp := range dirPaths {
+			if _, alreadyAdded := directories[dp]; alreadyAdded {
+				continue
+			}
+			directories[dp] = struct{}{}
+			header := tar.Header{
+				Name:     dp,
+				Mode:     0555,
+				Typeflag: tar.TypeDir,
+			}
+			if err := tarWriter.WriteHeader(&header); err != nil {
+				return "", err
+			}
+		}
+		header := tar.Header{
+			Name: name,
+			Size: int64(len(content)),
+			Mode: 0555,
+		}
+		if err := tarWriter.WriteHeader(&header); err != nil {
+			return "", err
+		}
+		if n, err := tarWriter.Write([]byte(content)); err != nil {
+			return "", err
+		} else if n != len(content) {
+			return "", fmt.Errorf("Failed to write entire file: %s", name)
+		}
+	}
+	return tarFile.Name(), nil
+}
+
+func getChunkStateItemList(cs *chunkState) []chunkStateItem {
+	items := []chunkStateItem{}
+	cs.items.Ascend(func(item btree.Item) bool {
+		items = append(items, item.(chunkStateItem))
+		return true
+	})
+	return items
 }
