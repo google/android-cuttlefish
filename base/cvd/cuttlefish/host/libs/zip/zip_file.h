@@ -13,33 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/zip/zip_source_string.h"
+#pragma once
 
-#include <stdint.h>
-
-#include <sstream>
 #include <string>
-#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
-Result<std::string> ReadToString(ReadableZipSource& source) {
-  ZipSourceReader reader = CF_EXPECT(source.Reader());
-  return CF_EXPECT(ReadToString(reader));
-}
+Result<ReadableZip> ZipOpenRead(const std::string& fs_path);
+Result<WritableZip> ZipOpenReadWrite(const std::string& fs_path);
 
-Result<std::string> ReadToString(ZipSourceReader& reader) {
-  std::stringstream out;
-
-  std::vector<char> buf(1 << 16);
-  uint64_t data_read;
-  while ((data_read = CF_EXPECT(reader.Read(buf.data(), buf.size()))) > 0) {
-    out.write(buf.data(), data_read);
-  }
-  return out.str();
-}
+Result<void> AddFile(WritableZip& zip, const std::string& fs_path);
+Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
+                       const std::string& zip_path);
 
 }  // namespace cuttlefish
