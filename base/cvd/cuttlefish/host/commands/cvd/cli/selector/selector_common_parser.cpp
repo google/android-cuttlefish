@@ -27,6 +27,7 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_constants.h"
 #include "cuttlefish/host/commands/cvd/instances/device_name.h"
 
