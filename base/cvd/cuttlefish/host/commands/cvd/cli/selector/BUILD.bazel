@@ -5,16 +5,25 @@ package(
 )
 
 cf_cc_library(
+    name = "arguments_separator",
+    srcs = ["arguments_separator.cpp"],
+    hdrs = ["arguments_separator.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "parser",
     srcs = [
-        "arguments_separator.cpp",
         "creation_analyzer.cpp",
         "device_selector_utils.cpp",
         "selector_option_parser_utils.cpp",
         "start_selector_parser.cpp",
     ],
     hdrs = [
-        "arguments_separator.h",
         "creation_analyzer.h",
         "device_selector_utils.h",
         "selector_option_parser_utils.h",

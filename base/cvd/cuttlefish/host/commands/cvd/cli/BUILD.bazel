@@ -24,7 +24,7 @@ cf_cc_library(
     deps = [
         ":types",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:arguments_separator",
         "//libbase",
     ],
 )
