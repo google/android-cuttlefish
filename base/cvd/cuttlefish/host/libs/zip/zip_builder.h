@@ -27,9 +27,9 @@ namespace cuttlefish {
 
 class ZipBuilder {
  public:
-  static Result<ZipBuilder> AppendingTo(Zip existing);
+  static Result<ZipBuilder> AppendingTo(WritableZip existing);
   static Result<ZipBuilder> TargetingFile(const std::string& fs_path);
-  static Result<ZipBuilder> TargetingSource(ZipSource);
+  static Result<ZipBuilder> TargetingSource(WritableZipSource);
 
   Result<void> AddFile(const std::string& fs_path);
   Result<void> AddFileAt(const std::string& fs_path,
@@ -40,15 +40,15 @@ class ZipBuilder {
                          const std::string& zip_path);
   Result<void> AddDataAt(const void* data, size_t size,
                          const std::string& zip_path);
-  Result<void> AddDataAt(ZipSource source, const std::string& zip_path);
+  Result<void> AddDataAt(ReadableZipSource source, const std::string& zip_path);
 
-  static Zip ToRaw(ZipBuilder);
+  static WritableZip ToRaw(ZipBuilder);
   static Result<void> Finalize(ZipBuilder);
 
  private:
-  ZipBuilder(Zip archive);
+  ZipBuilder(WritableZip archive);
 
-  Zip archive_;
+  WritableZip archive_;
 };
 
 }  // namespace cuttlefish
