@@ -12,7 +12,7 @@ cf_cc_library(
         ":types",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//libbase",
     ],
 )
