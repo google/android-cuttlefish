@@ -84,6 +84,20 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "instance_database_test",
+    srcs = ["instance_database_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli/selector:instance_database_helper",
+        "//cuttlefish/host/commands/cvd/instances",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
@@ -135,7 +149,6 @@ cf_cc_library(
 cf_cc_test(
     name = "selector_test",
     srcs = [
-        "instance_database_test.cpp",
         "instance_record_test.cpp",
         "parser_ids_helper.cpp",
         "parser_ids_helper.h",
