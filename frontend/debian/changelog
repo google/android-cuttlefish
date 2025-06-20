@@ -1,8 +1,15 @@
-cuttlefish-frontend (1.13.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.13.0) unstable; urgency=medium
 
-  * 
+  * Create gce x86_64 image script. by @ser-io in https://github.com/google/android-cuttlefish/pull/1268
+  * Introduce HO REST API `POST /v1/userartifacts/{checksum}/:extract` by @0405ysj in https://github.com/google/android-cuttlefish/pull/1253
+  * Use archive/tar Golang package package rather than external `tar` tool. by @ser-io in https://github.com/google/android-cuttlefish/pull/1274
+  * Don't use test files by @jemoreira in https://github.com/google/android-cuttlefish/pull/1277
+  * Restrict logs api by @ser-io in https://github.com/google/android-cuttlefish/pull/1279
+  * Refactor userartifacts_test.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/1296
+  * [libhoclient] upload artifacts by @ser-io in https://github.com/google/android-cuttlefish/pull/1250
+  * Use host credentials by @ser-io in https://github.com/google/android-cuttlefish/pull/1230
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Jun 2025 14:40:21 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 20 Jun 2025 15:10:44 -0700
 
 cuttlefish-frontend (1.12.0) stable; urgency=medium
 
