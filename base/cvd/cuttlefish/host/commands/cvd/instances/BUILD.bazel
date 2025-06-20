@@ -1,3 +1,4 @@
+load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
@@ -70,6 +71,26 @@ clang_tidy_test(
         "clang_tidy",
     ],
 )
+
+cc_test(
+    name = "group_record_test",
+    srcs = ["group_record_test.cpp"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "group_record_test_clang_tidy",
+    srcs = [":group_record_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 
 cc_library(
     name = "instances",
