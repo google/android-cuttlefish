@@ -264,6 +264,7 @@ jobs:
         df -h
   docker-image-check:
     runs-on: ubuntu-22.04
+    needs: [build-debian-package]
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@v1.3.1
@@ -271,13 +272,17 @@ jobs:
         tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Install bazel
-      run: sudo bash tools/buildutils/installbazel.sh
+    - name: Download cuttlefish debs
+      uses: actions/download-artifact@v4
+      with:
+        name: debs
+        github-token: ${{ github.token }}
     - name: Run check
       shell: bash
       run: |
+        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
         # TODO(b/420987840): Reuse deb packages created in `build-debian-package` job.
-        ./docker/image-builder.sh -d
+        ./docker/image-builder.sh -m prebuilt
         docker images
         sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
         # Wait for HO service to start.
