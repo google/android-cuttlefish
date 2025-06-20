@@ -71,6 +71,20 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "instance_database_helper",
+    srcs = ["instance_database_helper.cpp"],
+    hdrs = ["instance_database_helper.h"],
+    testonly = True,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
     hdrs = ["selector.h"],
@@ -121,8 +135,6 @@ cf_cc_library(
 cf_cc_test(
     name = "selector_test",
     srcs = [
-        "instance_database_helper.cpp",
-        "instance_database_helper.h",
         "instance_database_test.cpp",
         "instance_record_test.cpp",
         "parser_ids_helper.cpp",
@@ -139,6 +151,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/host/commands/cvd/cli/selector:instance_database_helper",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
