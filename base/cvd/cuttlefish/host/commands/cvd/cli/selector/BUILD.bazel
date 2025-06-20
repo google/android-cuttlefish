@@ -31,11 +31,9 @@ cf_cc_library(
     name = "parser",
     srcs = [
         "creation_analyzer.cpp",
-        "start_selector_parser.cpp",
     ],
     hdrs = [
         "creation_analyzer.h",
-        "start_selector_parser.h",
     ],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
@@ -47,6 +45,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_option_parser_utils",
+        "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/instances:device_name",
@@ -132,6 +131,7 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
+        "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
@@ -139,5 +139,23 @@ cf_cc_test(
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "start_selector_parser",
+    srcs = ["start_selector_parser.cpp"],
+    hdrs = ["start_selector_parser.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_option_parser_utils",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:instance_nums",
+        "//libbase",
     ],
 )
