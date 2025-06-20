@@ -22,7 +22,11 @@
 
 namespace cuttlefish {
 
-Result<std::string> ReadToString(ZipSource&);
-Result<std::string> ReadToString(ZipSourceReader&);
+Result<ReadableZip> ZipOpenRead(const std::string& fs_path);
+Result<WritableZip> ZipOpenReadWrite(const std::string& fs_path);
+
+Result<void> AddFile(WritableZip& zip, const std::string& fs_path);
+Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
+                       const std::string& zip_path);
 
 }  // namespace cuttlefish
