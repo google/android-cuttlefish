@@ -1,8 +1,23 @@
-cuttlefish-common (1.13.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.13.0) unstable; urgency=medium
 
-  * 
+  * Build and package mkfs.fat (dosfstools) by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1256
+  * Being development of v1.13 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1270
+  * Split a few things out of `cvd/fetch/fetch_cvd.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1260
+  * Create a type to represent bootconfig creation by @Databean in https://github.com/google/android-cuttlefish/pull/1272
+  * Create a type to represent the metadata image. by @Databean in https://github.com/google/android-cuttlefish/pull/1271
+  * Split out more parts of `fetch_cvd.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1273
+  * Add reasonable defaults to `base/cvd/.bazelrc` by @Databean in https://github.com/google/android-cuttlefish/pull/1276
+  * Swap from remaining `aosp-main` builds by @cjreynol in https://github.com/google/android-cuttlefish/pull/1257
+  * Add workflow for build cache for bazel in postsubmit by @k311093 in https://github.com/google/android-cuttlefish/pull/1284
+  * Add runner's architecture in bazel cache name by @k311093 in https://github.com/google/android-cuttlefish/pull/1285
+  * Add C++ wrapper classes for libzip by @Databean in https://github.com/google/android-cuttlefish/pull/1278
+  * Build libcbor bazel instead of cmake by @jemoreira in https://github.com/google/android-cuttlefish/pull/1292
+  * Mark 1.12.0 as stable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1295
+  * Add option to set bazel disk cache dir while building base package by @k311093 in https://github.com/google/android-cuttlefish/pull/1302
+  * Change to use bazel disk cache instead of local cache by @k311093 in https://github.com/google/android-cuttlefish/pull/1301
+  * Use deb package artifact from build-debian-package in docker-image-check by @k311093 in https://github.com/google/android-cuttlefish/pull/1304
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Jun 2025 14:40:12 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 20 Jun 2025 15:06:23 -0700
 
 cuttlefish-common (1.12.0) stable; urgency=medium
 
