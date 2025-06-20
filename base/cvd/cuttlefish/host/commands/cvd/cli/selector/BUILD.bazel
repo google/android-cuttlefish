@@ -46,6 +46,18 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "group_record_test",
+    srcs = ["group_record_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
@@ -97,7 +109,6 @@ cf_cc_library(
 cf_cc_test(
     name = "selector_test",
     srcs = [
-        "group_record_test.cpp",
         "host_tool_target_test.cpp",
         "instance_database_helper.cpp",
         "instance_database_helper.h",
