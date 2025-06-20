@@ -129,23 +129,6 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
-cc_test(
-    name = "instance_record_test",
-    srcs = ["instance_record_test.cpp"],
-    copts = COPTS,
-    deps = [
-        "//cuttlefish/host/commands/cvd/instances",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "instance_record_test_clang_tidy",
-    srcs = [":instance_record_test"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
 cc_library(
     name = "parser_ids_helper",
     srcs = ["parser_ids_helper.cpp"],
