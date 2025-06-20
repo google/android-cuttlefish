@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2025 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
-#include <vector>
-
-#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-std::vector<ImagePartition> AndroidCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&,
-    const MiscImage&);
+class MiscImage {
+ public:
+  static Result<MiscImage> Reuse(const CuttlefishConfig::InstanceSpecific&);
+  static Result<MiscImage> ReuseOrCreate(
+      const CuttlefishConfig::InstanceSpecific&);
+
+  static std::string Name();
+
+  ImagePartition Partition() const;
+
+ private:
+  MiscImage(std::string);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish

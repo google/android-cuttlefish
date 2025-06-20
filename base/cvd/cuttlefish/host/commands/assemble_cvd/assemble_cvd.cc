@@ -22,29 +22,31 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/in_sandbox.h"
-#include "common/libs/utils/known_paths.h"
-#include "common/libs/utils/tee_logging.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/assemble_cvd/clean.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/display.h"
+#include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
+#include "cuttlefish/host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
-#include "host/commands/assemble_cvd/clean.h"
-#include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/commands/assemble_cvd/display.h"
-#include "host/commands/assemble_cvd/flag_feature.h"
-#include "host/commands/assemble_cvd/flags.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/assemble_cvd/touchpad.h"
-#include "host/libs/command_util/snapshot_utils.h"
-#include "host/libs/config/adb/adb.h"
-#include "host/libs/config/custom_actions.h"
-#include "host/libs/config/fastboot/fastboot.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/config/custom_actions.h"
+#include "cuttlefish/host/libs/config/fastboot/fastboot.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/feature/inject.h"
 
 using cuttlefish::StringFromEnv;
 
@@ -266,7 +268,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("pflash.img");
   preserving.insert("uboot_env.img");
   preserving.insert("factory_reset_protected.img");
-  preserving.insert("misc.img");
+  preserving.insert(MiscImage::Name());
   preserving.insert("vmmtruststore.img");
   preserving.insert(MetadataImage::Name());
   preserving.insert("persistent_vbmeta.img");
@@ -370,9 +372,10 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // then don't preserve any files and delete everything.
     for (const auto& instance : config.Instances()) {
       Result<MetadataImage> metadata = MetadataImage::Reuse(instance);
-      if (metadata.ok()) {
+      Result<MiscImage> misc = MiscImage::Reuse(instance);
+      if (metadata.ok() && misc.ok()) {
         DiskBuilder os_builder =
-            OsCompositeDiskBuilder(config, instance, *metadata);
+            OsCompositeDiskBuilder(config, instance, *metadata, *misc);
         creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
       } else {
         creating_os_disk = true;

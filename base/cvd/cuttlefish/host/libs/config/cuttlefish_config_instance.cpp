@@ -1509,10 +1509,6 @@ std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return AbsolutePath(PerInstanceLogPath("launcher.log"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::misc_image() const {
-  return AbsolutePath(PerInstancePath("misc.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }

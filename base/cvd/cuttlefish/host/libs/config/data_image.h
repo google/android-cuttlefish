@@ -30,6 +30,4 @@ Result<void> InitializeEspImage(const CuttlefishConfig&,
 Result<void> CreateBlankImage(const std::string& image, int num_mb,
                               const std::string& image_fmt);
 
-Result<void> InitializeMiscImage(const CuttlefishConfig::InstanceSpecific&);
-
 } // namespace cuttlefish

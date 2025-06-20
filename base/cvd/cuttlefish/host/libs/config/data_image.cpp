@@ -248,20 +248,6 @@ Result<void> InitializeDataImage(
   }
 }
 
-Result<void> InitializeMiscImage(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileHasContent(instance.misc_image())) {
-    LOG(DEBUG) << "misc partition image already exists";
-    return {};
-  }
-
-  LOG(DEBUG) << "misc partition image: creating empty at \""
-             << instance.misc_image() << "\"";
-  CF_EXPECT(CreateBlankImage(instance.misc_image(), 1 /* mb */, "none"),
-            "Failed to create misc image");
-  return {};
-}
-
 static bool EspRequiredForBootFlow(BootFlow flow) {
   return flow == BootFlow::AndroidEfiLoader || flow == BootFlow::ChromeOs ||
          flow == BootFlow::Linux || flow == BootFlow::Fuchsia;

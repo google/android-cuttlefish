@@ -21,6 +21,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
@@ -28,9 +29,9 @@ namespace cuttlefish {
 
 std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
-    const MetadataImage& metadata) {
+    const MetadataImage& metadata, const MiscImage& misc) {
   std::vector<ImagePartition> partitions =
-      AndroidCompositeDiskConfig(instance, metadata);
+      AndroidCompositeDiskConfig(instance, metadata, misc);
   // Cuttlefish uboot EFI bootflow by default looks at the first partition
   // for EFI application. Thus we put "android_esp" at the beginning.
   partitions.insert(

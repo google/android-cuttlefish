@@ -28,40 +28,40 @@
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/ap_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/bootloader_present.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
-#include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/disk/access_kregistry.h"
-#include "host/commands/assemble_cvd/disk/ap_composite_disk.h"
-#include "host/commands/assemble_cvd/disk/bootloader_present.h"
-#include "host/commands/assemble_cvd/disk/chromeos_state.h"
-#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
-#include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
-#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
-#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
-#include "host/commands/assemble_cvd/disk/hwcomposer_pmem.h"
-#include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
-#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
-#include "host/commands/assemble_cvd/disk/metadata_image.h"
-#include "host/commands/assemble_cvd/disk/os_composite_disk.h"
-#include "host/commands/assemble_cvd/disk/pflash.h"
-#include "host/commands/assemble_cvd/disk/pstore.h"
-#include "host/commands/assemble_cvd/disk/sd_card.h"
-#include "host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
-#include "host/commands/assemble_cvd/disk_builder.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/assemble_cvd/super_image_mixer.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/ap_boot_flow.h"
-#include "host/libs/config/boot_flow.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/data_image.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/config/instance_nums.h"
-#include "host/libs/feature/inject.h"
-#include "host/libs/vm_manager/gem5_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/hwcomposer_pmem.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/pflash.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/pstore.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 
 DECLARE_string(system_image_dir);
 
@@ -310,7 +310,7 @@ Result<void> ResolveInstanceFiles() {
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const MetadataImage& metadata) {
+    const MetadataImage& metadata, const MiscImage& misc) {
   auto builder =
       DiskBuilder()
           .VmManager(config.vm_manager())
@@ -322,7 +322,7 @@ DiskBuilder OsCompositeDiskBuilder(
     return builder.EntireDisk(instance.chromeos_disk())
         .CompositeDiskPath(instance.chromeos_disk());
   }
-  return builder.Partitions(GetOsCompositeDiskConfig(instance, metadata))
+  return builder.Partitions(GetOsCompositeDiskConfig(instance, metadata, misc))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());
@@ -367,7 +367,6 @@ static fruit::Component<> DiskChangesComponent(
       .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
       .install(AutoSetup<BootloaderPresentCheck>::Component)
       .install(AutoSetup<Gem5ImageUnpacker>::Component)
-      .install(AutoSetup<InitializeMiscImage>::Component)
       // Create esp if necessary
       .install(AutoSetup<InitializeEspImage>::Component)
       .install(SuperImageRebuilderComponent);
@@ -744,9 +743,10 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     }
 
     MetadataImage metadata = CF_EXPECT(MetadataImage::ReuseOrCreate(instance));
+    MiscImage misc = CF_EXPECT(MiscImage::ReuseOrCreate(instance));
 
     DiskBuilder os_disk_builder =
-        OsCompositeDiskBuilder(config, instance, metadata);
+        OsCompositeDiskBuilder(config, instance, metadata, misc);
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
