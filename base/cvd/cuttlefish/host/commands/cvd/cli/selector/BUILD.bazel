@@ -58,6 +58,18 @@ cf_cc_test(
     ],
 )
 
+cf_cc_test(
+    name = "host_tool_target_test",
+    srcs = ["host_tool_target_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
@@ -109,7 +121,6 @@ cf_cc_library(
 cf_cc_test(
     name = "selector_test",
     srcs = [
-        "host_tool_target_test.cpp",
         "instance_database_helper.cpp",
         "instance_database_helper.h",
         "instance_database_test.cpp",
