@@ -302,6 +302,7 @@ Result<void> ZipSourceReader::SeekFromStart(int64_t offset) {
 }
 
 Result<Zip> Zip::CreateFromSource(ZipSource source) {
+  CF_EXPECT(source.impl_.get());
   zip_source_t* source_raw = CF_EXPECT(source.impl_->raw_.get());
 
   ManagedZipError error = NewZipError();
@@ -315,8 +316,7 @@ Result<Zip> Zip::CreateFromSource(ZipSource source) {
     return CF_ERR(ZipErrorString(error.get()));
   }
 
-  return Zip(
-      std::unique_ptr<Impl>(new Impl(std::move(zip_ret), std::move(source))));
+  return Zip(std::make_unique<Impl>(std::move(zip_ret), std::move(source)));
 }
 
 Result<Zip> Zip::OpenFromSource(ZipSource source) {
@@ -332,8 +332,7 @@ Result<Zip> Zip::OpenFromSource(ZipSource source) {
     return CF_ERR(ZipErrorString(error.get()));
   }
 
-  return Zip(
-      std::unique_ptr<Impl>(new Impl(std::move(zip_ret), std::move(source))));
+  return Zip(std::make_unique<Impl>(std::move(zip_ret), std::move(source)));
 }
 
 Zip::Zip(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
@@ -397,7 +396,7 @@ Result<void> Zip::Finalize(Zip zip_cc) {
 
   CF_EXPECT_EQ(zip_close(raw_zip), 0, ZipErrorString(raw_zip));
 
-  zip_cc.impl_.release();  // Deleted by zip_close
+  zip_cc.impl_->raw_.release();  // Deleted by zip_close
 
   return {};
 }
