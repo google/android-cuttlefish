@@ -185,6 +185,43 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_test(
+    name = "parser_ids_test",
+    srcs = ["parser_ids_test.cpp"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/selector:parser_ids_helper",
+        "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "parser_ids_test_clang_tidy",
+    srcs = [":parser_ids_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "parser_names_helper",
+    srcs = ["parser_names_helper.cpp"],
+    hdrs = ["parser_names_helper.h"],
+    copts = COPTS,
+    testonly = True,
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "parser_names_helper_clang_tidy",
+    srcs = [":parser_names_helper"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
@@ -263,9 +300,6 @@ clang_tidy_test(
 cc_test(
     name = "selector_test",
     srcs = [
-        "parser_ids_test.cpp",
-        "parser_names_helper.cpp",
-        "parser_names_helper.h",
         "parser_names_test.cpp",
     ],
     copts = COPTS,
