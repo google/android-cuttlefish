@@ -34,6 +34,8 @@ endif
 
 PRODUCT_PACKAGES += com.google.cf.bt
 
+$(call soong_config_set_bool,cuttlefish_config,bt_lpp_service_instance_enabled, $(RELEASE_BLUETOOTH_LPP_SERVICE_INSTANCE))
+
 else # BOARD_HAVE_BLUETOOTH == true
 
 PRODUCT_COPY_FILES += \
