@@ -86,16 +86,6 @@ cf_cc_test(
     ],
 )
 
-cf_cc_test(
-    name = "instance_record_test",
-    srcs = ["instance_record_test.cpp"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/instances",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
 cf_cc_library(
     name = "parser_ids_helper",
     srcs = ["parser_ids_helper.cpp"],
