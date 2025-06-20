@@ -46,12 +46,10 @@ cc_library(
     name = "parser",
     srcs = [
         "creation_analyzer.cpp",
-        "selector_option_parser_utils.cpp",
         "start_selector_parser.cpp",
     ],
     hdrs = [
         "creation_analyzer.h",
-        "selector_option_parser_utils.h",
         "start_selector_parser.h",
     ],
     copts = COPTS,
@@ -64,6 +62,7 @@ cc_library(
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_option_parser_utils",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
@@ -136,6 +135,23 @@ cc_library(
 clang_tidy_test(
     name = "selector_constants_clang_tidy",
     srcs = [":selector_constants"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_library(
+    name = "selector_option_parser_utils",
+    srcs = ["selector_option_parser_utils.cpp"],
+    hdrs = ["selector_option_parser_utils.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "selector_option_parser_utils_clang_tidy",
+    srcs = [":selector_option_parser_utils"],
     tags = ["clang_tidy", "clang-tidy"],
 )
 
