@@ -75,6 +75,15 @@ RUN apt install -y --no-install-recommends \
     cuttlefish-base cuttlefish-user cuttlefish-orchestration
 
 
+FROM runner-base AS runner-prebuilt
+
+COPY cuttlefish-*.deb /root/debian/
+RUN apt install -y --no-install-recommends -f \
+    /root/debian/cuttlefish-base_*.deb \
+    /root/debian/cuttlefish-user_*.deb \
+    /root/debian/cuttlefish-orchestration_*.deb
+
+
 FROM runner-${BUILD_OPTION} AS runner
 
 RUN echo "num_cvd_accounts=100" >> /etc/default/cuttlefish-host-resources

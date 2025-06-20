@@ -8,23 +8,25 @@ script_location=`realpath -s $(dirname ${BASH_SOURCE[0]})`
 android_cuttlefish_root_dir=$(realpath -s $script_location/..)
 
 usage() {
-  echo "usage: $0 [-t <tag>] [-d]"
+  echo "usage: $0 [-t <tag>] [-m <mode>]"
   echo "  -t: name or name:tag of docker image (default cuttlefish-orchestration)"
-  echo "  -d: build dev image instead of prod image"
-  echo "      Dev image builds host packages from the local source"
-  echo "      Prod image downloads and installs host packages"
+  echo "  -m: set mode for build image (default: prod)"
+  echo "      dev - Builds host packages from the local source"
+  echo "      prod - Downloads and installs host packages"
+  echo "      prebuilt - Use *.deb files under repo dir as prebuilt of host packages"
+
 }
 
 name=cuttlefish-orchestration
 build_option=prod
-while getopts ":hdt:" opt; do
+while getopts ":hm:t:" opt; do
   case "${opt}" in
     h)
       usage
       exit 0
       ;;
-    d)
-      build_option=dev
+    m)
+      build_option="${OPTARG}"
       ;;
     t)
       name="${OPTARG}"
