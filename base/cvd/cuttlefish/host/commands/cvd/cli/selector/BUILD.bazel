@@ -87,6 +87,25 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_test(
+    name = "host_tool_target_test",
+    srcs = ["host_tool_target_test.cpp"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "host_tool_target_test_clang_tidy",
+    srcs = [":host_tool_target_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
@@ -165,7 +184,6 @@ clang_tidy_test(
 cc_test(
     name = "selector_test",
     srcs = [
-        "host_tool_target_test.cpp",
         "instance_database_helper.cpp",
         "instance_database_helper.h",
         "instance_database_test.cpp",
