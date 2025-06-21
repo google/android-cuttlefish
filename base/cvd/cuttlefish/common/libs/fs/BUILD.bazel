@@ -1,29 +1,20 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "epoll",
     srcs = ["epoll.cpp"],
     hdrs = ["epoll.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
     ],
 )
 
-clang_tidy_test(
-    name = "epoll_clang_tidy",
-    srcs = [":epoll"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "fs",
     srcs = [
         "shared_buf.cc",
@@ -34,9 +25,7 @@ cc_library(
         "shared_fd.h",
         "shared_select.h",
     ],
-    copts = COPTS,
     linkopts = ["-lrt"],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
@@ -45,22 +34,11 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "fs_clang_tidy",
-    srcs = [":fs"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "fs_test",
     srcs = [
         "shared_fd_test.cpp",
     ],
-    copts = COPTS,
-    includes = [""],
     deps = [
         ":fs",
         "//libbase",
@@ -69,28 +47,11 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "fs_test_clang_tidy",
-    srcs = [":fs_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "shared_fd_stream",
     srcs = ["shared_fd_stream.cpp"],
     hdrs = ["shared_fd_stream.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
     ],
-)
-
-clang_tidy_test(
-    name = "shared_fd_stream_clang_tidy",
-    srcs = [":shared_fd_stream"],
-    tags = ["clang_tidy", "clang-tidy"],
 )
