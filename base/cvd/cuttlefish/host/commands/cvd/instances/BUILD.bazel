@@ -91,6 +91,48 @@ clang_tidy_test(
     tags = ["clang_tidy", "clang-tidy"],
 )
 
+cc_library(
+    name = "instance_database_helper",
+    srcs = ["instance_database_helper.cpp"],
+    hdrs = ["instance_database_helper.h"],
+    copts = COPTS,
+    testonly = True,
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//libbase",
+    ],
+)
+
+clang_tidy_test(
+    name = "instance_database_helper_clang_tidy",
+    srcs = [":instance_database_helper"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
+cc_test(
+    name = "instance_database_test",
+    srcs = ["instance_database_test.cpp"],
+    copts = COPTS,
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:instance_database_helper",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+clang_tidy_test(
+    name = "instance_database_test_clang_tidy",
+    srcs = [":instance_database_test"],
+    tags = ["clang_tidy", "clang-tidy"],
+)
+
 cc_test(
     name = "instance_record_test",
     srcs = ["instance_record_test.cpp"],
