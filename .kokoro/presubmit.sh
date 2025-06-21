@@ -10,7 +10,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o 
 REPO_DIR="$(realpath "$(dirname "$0")"/..)"
 TOOL_DIR="${REPO_DIR}/tools"
 
-"${TOOL_DIR}/buildutils/build_packages.sh"
+"${TOOL_DIR}/buildutils/build_packages.sh" -e BAZEL_REMOTE_CACHE=https://storage.googleapis.com/android-cuttlefish-cache
 
 # Add test user to the kokoro group so it has access to the source dir
 "${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro

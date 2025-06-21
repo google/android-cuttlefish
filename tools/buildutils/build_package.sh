@@ -17,7 +17,7 @@
 set -o errexit -o nounset -o pipefail
 
 function print_usage() {
-  >&2 echo "usage: $0 /path/to/pkgdir"
+  >&2 echo "usage: $0 /path/to/pkgdir [debuild options]"
 }
 
 if [[ $# -eq 0 ]]; then
@@ -27,10 +27,11 @@ if [[ $# -eq 0 ]]; then
 fi
 
 readonly PKGDIR="$1"
+shift
 
 pushd "${PKGDIR}"
 echo "Installing package dependencies"
 sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
 echo "Building packages"
-debuild --prepend-path /usr/local/bin -i -uc -us -b
+debuild $@ --prepend-path /usr/local/bin -i -uc -us -b
 popd
