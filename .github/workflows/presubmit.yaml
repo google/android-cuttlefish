@@ -117,7 +117,7 @@ jobs:
     - name: Load cache config
       run: cat .config/cache-config.env >> $GITHUB_ENV
     - name: Mount Bazel cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v4
       with:
         path: "~/bazel-disk-cache"
         key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-${{ github.sha }}
@@ -155,7 +155,7 @@ jobs:
     - name: Load cache config
       run: cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
     - name: Mount Bazel cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache@v4
       with:
         path: "~/bazel-disk-cache"
         key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-${{ github.sha }}
