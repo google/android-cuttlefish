@@ -29,5 +29,5 @@ BUILD_PACKAGE="$(dirname $0)/build_package.sh"
 command -v bazel &> /dev/null || sudo "${INSTALL_BAZEL}"
 install_debuild_dependencies
 
-"${BUILD_PACKAGE}" "${REPO_DIR}/base"
-"${BUILD_PACKAGE}" "${REPO_DIR}/frontend"
+"${BUILD_PACKAGE}" "${REPO_DIR}/base" $@
+"${BUILD_PACKAGE}" "${REPO_DIR}/frontend" $@
