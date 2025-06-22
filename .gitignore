@@ -10,6 +10,7 @@
 
 cuttlefish-*_*.*.*.tar.xz
 
+!/.config/
 !/.github/
 !/.kokoro/
 !/.clang-format

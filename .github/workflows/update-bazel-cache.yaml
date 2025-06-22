@@ -20,7 +20,7 @@ jobs:
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Load cache config
-      run: cat .github/workflows/cache-config.env >> $GITHUB_ENV
+      run: cat .config/cache-config.env >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache@v4
       with:
@@ -52,7 +52,7 @@ jobs:
     - name: install bazel
       run: bash android-cuttlefish/tools/buildutils/installbazel.sh
     - name: Load cache config
-      run: cat android-cuttlefish/.github/workflows/cache-config.env >> $GITHUB_ENV
+      run: cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache@v4
       with:
