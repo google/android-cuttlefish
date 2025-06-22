@@ -17,7 +17,7 @@
 set -o errexit -o nounset -o pipefail
 
 function print_usage() {
-  >&2 echo "usage: $0 /path/to/pkgdir"
+  >&2 echo "usage: $0 /path/to/pkgdir [-r <remote_cache>] [-c <cache_version>]"
 }
 
 if [[ $# -eq 0 ]]; then
@@ -27,10 +27,32 @@ if [[ $# -eq 0 ]]; then
 fi
 
 readonly PKGDIR="$1"
+shift
+
+while getopts ":r:c:" opt; do
+  case "${opt}" in
+    r)
+      remote_cache_arg="-e BAZEL_REMOTE_CACHE=${OPTARG}"
+      ;;
+    c)
+      cache_version_arg="-e BAZEL_CACHE_VERSION=${OPTARG}"
+      ;;
+    \?)
+      echo "Invalid option: ${OPTARG}" >&2
+      print_usage
+      exit 1
+      ;;
+    :)
+      echo "Invalid option: ${OPTARG} requires an argument" >&2
+      print_usage
+      exit 1
+      ;;
+  esac
+done
 
 pushd "${PKGDIR}"
 echo "Installing package dependencies"
 sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
 echo "Building packages"
-debuild --prepend-path /usr/local/bin -i -uc -us -b
+debuild ${remote_cache_arg} ${cache_version_arg} --prepend-path /usr/local/bin -i -uc -us -b
 popd
