@@ -56,8 +56,8 @@ endif
 cuttlefish_common := debian/cuttlefish-base/usr/lib/cuttlefish-common
 
 disk_cache_arg :=
-ifneq ($(strip $(BAZEL_DISK_CACHE_DIR)),)
-  disk_cache_arg := --disk_cache="$(BAZEL_DISK_CACHE_DIR)"
+ifneq ($(strip ${BAZEL_DISK_CACHE_DIR}),)
+  disk_cache_arg := --disk_cache="${BAZEL_DISK_CACHE_DIR}"
 endif
 
 %:
