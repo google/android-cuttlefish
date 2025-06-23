@@ -7,7 +7,7 @@ package, but can also be compiled and run on its own.
 ## Compiling and running
 
 ```sh
-bazel run cuttlefish:cvd -- reset -y
+bazel run cuttlefish/package:cvd -- reset -y
 ```
 
 ## Running the unit tests
