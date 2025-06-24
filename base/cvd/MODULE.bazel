@@ -7,7 +7,7 @@
 
 bazel_dep(name = "abseil-cpp", version = "20250127.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.14.0")
-bazel_dep(name = "aspect_rules_lint", version = "1.0.8", dev_dependency = True)
+bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.7.1", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "brotli", version = "1.1.0")
@@ -145,14 +145,6 @@ vhost_user_input_crates.from_cargo(
     host_tools_repo = "rust_host_tools_nightly",
 )
 use_repo(vhost_user_input_crates, "vhost_user_input_crates")
-
-git_override(
-    module_name = "aspect_rules_lint",
-    # While waiting for https://github.com/aspect-build/rules_lint/pull/472 to
-    # be merged.
-    commit = "62e8aa0e9935bb7db76ead9cc2c1804e4dd740b9",
-    remote = "https://github.com/Databean/rules_lint.git",
-)
 
 # note that this won't use the same source checkout as the git_repository directive below
 #
