@@ -1,4 +1,3 @@
-load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -248,8 +247,6 @@ cf_cc_test(
 cf_cc_library(
     name = "proto",
     hdrs = ["proto.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@fmt",
         "@protobuf",
@@ -319,28 +316,18 @@ cf_cc_library(
 cf_cc_library(
     name = "size_utils",
     hdrs = ["size_utils.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
 )
 
-cc_library(
+cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
+    clang_tidy_enabled = False, # TODO: b/414665224 - fix and enable linting
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
     ],
 )
-
-# TODO: b/414665224 - fix and enable linting
-# clang_tidy_test(
-#     name = "socket2socket_proxy_clang_tidy",
-#     srcs = [":socket2socket_proxy"],
-#     tags = ["clang_tidy", "clang-tidy"],
-# )
 
 cf_cc_library(
     name = "subprocess",
@@ -439,25 +426,17 @@ cf_cc_library(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "vsock_connection",
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
+    clang_tidy_enabled = False, # TODO: b/403278821 - fix warnings and re-enable after migration work
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
         "@jsoncpp",
     ],
 )
-
-# TODO: b/403278821 - fix warnings and re-enable after migration work
-# clang_tidy_test(
-#     name = "vsock_connection_clang_tidy",
-#     srcs = [":vsock_connection"],
-#     tags = ["clang_tidy", "clang-tidy"],
-# )
 
 cf_cc_library(
     name = "wait_for_unix_socket",

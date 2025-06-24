@@ -18,8 +18,8 @@ load("//tools/lint:linters.bzl", "clang_tidy_test")
 COPTS = BUILD_VAR_COPTS
 
 def _cf_cc_binary_implementation(name, clang_tidy_enabled, copts, **kwargs):
-    if not clang_tidy_enabled and "deprecation" not in kwargs:
-        kwargs["deprecation"] = "Target '" + name + "' not covered by clang-tidy"
+    if not clang_tidy_enabled and not kwargs["deprecation"]:
+        kwargs["deprecation"] = "Not covered by clang-tidy"
     native.cc_binary(
         name = name,
         copts = (copts or []) + COPTS,
@@ -43,8 +43,8 @@ cf_cc_binary = macro(
 )
 
 def _cf_cc_library_implementation(name, clang_tidy_enabled, copts, strip_include_prefix, **kwargs):
-    if not clang_tidy_enabled and "deprecation" not in kwargs:
-        kwargs["deprecation"] = "Target '" + name + "' not covered by clang-tidy"
+    if not clang_tidy_enabled and not kwargs["deprecation"]:
+        kwargs["deprecation"] = "Not covered by clang-tidy"
     native.cc_library(
         name = name,
         copts = (copts or []) + COPTS,
@@ -70,14 +70,14 @@ cf_cc_library = macro(
 )
 
 def _cf_cc_test_implementation(name, clang_tidy_enabled, copts, **kwargs):
-    if not clang_tidy_enabled and "deprecation" not in kwargs:
-        kwargs["deprecation"] = "Target '" + name + "' not covered by clang-tidy"
+    if not clang_tidy_enabled and not kwargs["deprecation"]:
+        kwargs["deprecation"] = "Not covered by clang-tidy"
     native.cc_test(
         name = name,
         copts = (copts or []) + COPTS,
         **kwargs,
     )
-    if clang_tidy_enabled: 
+    if clang_tidy_enabled:
         clang_tidy_test(
             name = name + "_clang_tidy",
             srcs = [":" + name],
