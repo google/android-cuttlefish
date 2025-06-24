@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//:build_variables.bzl", "COPTS")
+load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
+
+COPTS = BUILD_VAR_COPTS
 
 def _cf_cc_binary_implementation(name, copts, **kwargs):
     native.cc_binary(

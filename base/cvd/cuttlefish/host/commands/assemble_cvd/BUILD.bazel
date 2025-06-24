@@ -1,4 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
+load("//cuttlefish/bazel:rules.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
