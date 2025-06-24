@@ -51,6 +51,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/use_16k.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/avb/avb.h"
@@ -165,7 +166,6 @@ DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
 DECLARE_bool(use_overlay);
-DECLARE_bool(use_16k);
 
 namespace cuttlefish {
 
@@ -174,7 +174,9 @@ using vm_manager::Gem5Manager;
 Result<void> ResolveInstanceFiles() {
   CF_EXPECT(!FLAGS_system_image_dir.empty(),
             "--system_image_dir must be specified.");
-  if (FLAGS_use_16k) {
+
+  Use16kFlag use_16k = Use16kFlag::FromGlobalGflags();
+  if (use_16k.Use16k()) {
     CF_EXPECT(FLAGS_kernel_path.empty(),
               "--use_16k is not compatible with --kernel_path");
     CF_EXPECT(FLAGS_initramfs_path.empty(),
@@ -243,7 +245,7 @@ Result<void> ResolveInstanceFiles() {
         comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
     default_hibernation_image +=
         comma_str + cur_system_image_dir + "/hibernation_swap.img";
-    if (FLAGS_use_16k) {
+    if (use_16k.Use16k()) {
       const auto kernel_16k = cur_system_image_dir + "/kernel_16k";
       const auto ramdisk_16k = cur_system_image_dir + "/ramdisk_16k.img";
       default_16k_kernel_image += comma_str + kernel_16k;
@@ -263,7 +265,7 @@ Result<void> ResolveInstanceFiles() {
       }
     }
   }
-  if (FLAGS_use_16k) {
+  if (use_16k.Use16k()) {
     LOG(INFO) << "Using 16k kernel: " << default_16k_kernel_image;
     LOG(INFO) << "Using 16k ramdisk: " << default_16k_ramdisk_image;
 
