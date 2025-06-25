@@ -1,6 +1,7 @@
 name: Update Bazel Cache
 
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -32,6 +33,11 @@ jobs:
           ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-
     - name: Run unit tests
       run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
+    - name: Clean up Bazel Cache before saving
+      if: always()
+      run: |
+        find ~/bazel-disk-cache -type f -mtime +7 -delete
+        find ~/bazel-disk-cache -type d -empty -delete
   update-debian-package-bazel-cache:
     runs-on: ubuntu-22.04-4core
     container:
@@ -66,3 +72,8 @@ jobs:
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
       run: cd android-cuttlefish/base && debuild -e BAZEL_DISK_CACHE_DIR=$HOME/bazel-disk-cache -i -us -uc -b
+    - name: Clean up Bazel Cache before saving
+      if: always()
+      run: |
+        find ~/bazel-disk-cache -type f -mtime +7 -delete
+        find ~/bazel-disk-cache -type d -empty -delete
