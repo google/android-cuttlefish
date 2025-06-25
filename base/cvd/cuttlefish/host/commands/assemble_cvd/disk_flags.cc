@@ -51,6 +51,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_16k.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
@@ -63,8 +64,6 @@
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
-
-DECLARE_string(system_image_dir);
 
 DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
               "Location of cuttlefish boot image. If empty it is assumed to be "
@@ -172,8 +171,8 @@ namespace cuttlefish {
 using vm_manager::Gem5Manager;
 
 Result<void> ResolveInstanceFiles() {
-  CF_EXPECT(!FLAGS_system_image_dir.empty(),
-            "--system_image_dir must be specified.");
+  SystemImageDirFlag system_image_dir =
+      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
   Use16kFlag use_16k = Use16kFlag::FromGlobalGflags();
   if (use_16k.Use16k()) {
@@ -194,8 +193,6 @@ Result<void> ResolveInstanceFiles() {
   CF_EXPECT(!(flags_kernel_initramfs_has_input && flags_image_has_input),
              "Cannot pass both kernel_path/initramfs_path and image file paths");
 
-  std::vector<std::string> system_image_dir =
-      android::base::Split(FLAGS_system_image_dir, ",");
   std::string default_boot_image = "";
   std::string default_init_boot_image = "";
   std::string default_data_image = "";
@@ -211,22 +208,18 @@ Result<void> ResolveInstanceFiles() {
   std::string default_hibernation_image = "";
   std::string vvmtruststore_path = "";
 
-  std::string cur_system_image_dir;
   std::string comma_str = "";
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   auto default_vvmtruststore_file_name =
       android::base::Split(FLAGS_default_vvmtruststore_file_name, ",");
-  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
-    if (instance_index < system_image_dir.size()) {
-      cur_system_image_dir = system_image_dir[instance_index];
-    } else {
-      // legacy variable or out of boundary. Vectorize by copy [0] to all instances
-      cur_system_image_dir = system_image_dir[0];
-    }
+  for (int instance_index = 0; instance_index < instance_nums.size();
+       instance_index++) {
     if (instance_index > 0) {
       comma_str = ",";
     }
+    std::string cur_system_image_dir =
+        system_image_dir.ForIndex(instance_index);
 
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.

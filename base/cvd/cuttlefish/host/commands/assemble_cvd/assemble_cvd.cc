@@ -553,6 +553,12 @@ Result<void> VerifyConditionsOnSnapshotRestore(
 
 fruit::Component<> FlagsComponent() {
   return fruit::createComponent()
+      .registerProvider([]() {
+        Result<SystemImageDirFlag> system_image_dir =
+            SystemImageDirFlag::FromGlobalGflags();
+        CHECK(system_image_dir.ok()) << system_image_dir.error().FormatForEnv();
+        return std::move(*system_image_dir);
+      })
       .install(AdbConfigComponent)
       .install(AdbConfigFlagComponent)
       .install(AdbConfigFragmentComponent)
