@@ -102,10 +102,14 @@ jobs:
           popd
         done
   run-cvd-unit-tests:
-    runs-on: ubuntu-22.04-4core
+    runs-on: ubuntu-22.04
     container:
       image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Setup apt
@@ -134,10 +138,14 @@ jobs:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
   build-debian-package:
-    runs-on: ubuntu-22.04-4core
+    runs-on: ubuntu-22.04
     container:
       image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
     steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        tool-cache: true
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
     - name: setup apt
