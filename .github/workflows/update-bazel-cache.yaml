@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 */3 * * *'
 
 jobs:
   update-cvd-test-bazel-cache:
@@ -25,11 +27,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: "~/bazel-disk-cache"
-        key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-${{ github.sha }}
+        key: ${{ format('{0}-{1}-bazel-disk-cache-{2}-unit-test-{3}-{4}', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name, github.sha) }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-main-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-
+          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-unit-test-{3}-', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-unit-test-main-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-unit-test-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
     - name: Run unit tests
       run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
   update-debian-package-bazel-cache:
@@ -57,11 +59,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: "~/bazel-disk-cache"
-        key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-${{ github.sha }}
+        key: ${{ format('{0}-{1}-bazel-disk-cache-{2}-debian-package-{3}-{4}', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name, github.sha) }}
         restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-main-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-
+          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-debian-package-{3}-', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-debian-package-main-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-debian-package-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
