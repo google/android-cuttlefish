@@ -136,7 +136,7 @@ jobs:
   build-debian-package:
     runs-on: ubuntu-22.04-4core
     container:
-      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
+      image: debian@sha256:defe49aa5a875725310dff6b398aa7b49b595121adf9ddabc6f69274ffcceca3 # debian:bookworm-20250610 (amd64)
     steps:
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
