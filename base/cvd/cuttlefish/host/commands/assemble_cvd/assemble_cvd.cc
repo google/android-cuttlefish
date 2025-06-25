@@ -38,6 +38,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -551,14 +552,9 @@ Result<void> VerifyConditionsOnSnapshotRestore(
   return {};
 }
 
-fruit::Component<> FlagsComponent() {
+fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
   return fruit::createComponent()
-      .registerProvider([]() {
-        Result<SystemImageDirFlag> system_image_dir =
-            SystemImageDirFlag::FromGlobalGflags();
-        CHECK(system_image_dir.ok()) << system_image_dir.error().FormatForEnv();
-        return std::move(*system_image_dir);
-      })
+      .bindInstance(*system_image_dir)
       .install(AdbConfigComponent)
       .install(AdbConfigFlagComponent)
       .install(AdbConfigFragmentComponent)
@@ -625,7 +621,10 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
     CF_EXPECT(help_flag.Parse(args), "Failed to process help flag");
   }
 
-  fruit::Injector<> injector(FlagsComponent);
+  SystemImageDirFlag system_image_dir =
+      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
+
+  fruit::Injector<> injector(FlagsComponent, &system_image_dir);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
     CF_EXPECT(late_injected->LateInject(injector));
@@ -653,8 +652,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  auto guest_configs =
-      CF_EXPECT(GetGuestConfigAndSetDefaults(), "Failed to parse arguments");
+  auto guest_configs = CF_EXPECT(GetGuestConfigAndSetDefaults(system_image_dir),
+                                 "Failed to parse arguments");
 
   auto config =
       CF_EXPECT(InitFilesystemAndCreateConfig(std::move(fetcher_config),

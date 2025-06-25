@@ -591,7 +591,7 @@ Result<std::string> GetAndroidInfoConfig(
 }
 
 #ifdef __ANDROID__
-Result<std::vector<GuestConfig>> ReadGuestConfig() {
+Result<std::vector<GuestConfig>> ReadGuestConfig(const SystemImageDir&) {
   std::vector<GuestConfig> rets;
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
@@ -606,10 +606,8 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
   return rets;
 }
 #else
-Result<std::vector<GuestConfig>> ReadGuestConfig() {
-  SystemImageDirFlag system_image_dir =
-      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
-
+Result<std::vector<GuestConfig>> ReadGuestConfig(
+    const SystemImageDirFlag& system_image_dir) {
   std::vector<GuestConfig> guest_configs;
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
@@ -2141,6 +2139,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 }
 
 Result<void> SetDefaultFlagsForQemu(
+    const SystemImageDirFlag& system_image_dir,
     const std::vector<GuestConfig>& guest_configs,
     std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
@@ -2153,9 +2152,6 @@ Result<void> SetDefaultFlagsForQemu(
   std::string default_bootloader = "";
   std::string default_android_efi_loader = "";
   std::string default_start_webrtc = "";
-
-  SystemImageDirFlag system_image_dir =
-      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
@@ -2212,6 +2208,7 @@ Result<void> SetDefaultFlagsForQemu(
 }
 
 Result<void> SetDefaultFlagsForCrosvm(
+    const SystemImageDirFlag& system_image_dir,
     const std::vector<GuestConfig>& guest_configs,
     std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
@@ -2227,8 +2224,6 @@ Result<void> SetDefaultFlagsForCrosvm(
       EnsureDirectoryExists(kCrosvmVarEmptyDir).ok() &&
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
 
-  SystemImageDirFlag system_image_dir =
-      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
   std::string default_android_efi_loader = "";
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
@@ -2336,13 +2331,17 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
   }
 }
 
-Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
+Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
+    const SystemImageDirFlag& system_image_dir) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
-  CF_EXPECT(ResolveInstanceFiles(), "Failed to resolve instance files");
 
-  std::vector<GuestConfig> guest_configs = CF_EXPECT(ReadGuestConfig());
+  CF_EXPECT(ResolveInstanceFiles(system_image_dir),
+            "Failed to resolve instance files");
+
+  std::vector<GuestConfig> guest_configs =
+      CF_EXPECT(ReadGuestConfig(system_image_dir));
 
   // TODO(weihsu), b/250988697:
   // assume all instances are using same VM manager/app/arch,
@@ -2373,9 +2372,11 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults() {
   auto name_to_default_value = CurrentFlagsToDefaultValue();
 
   if (vmm == VmmMode::kQemu) {
-    CF_EXPECT(SetDefaultFlagsForQemu(guest_configs, name_to_default_value));
+    CF_EXPECT(SetDefaultFlagsForQemu(system_image_dir, guest_configs,
+                                     name_to_default_value));
   } else if (vmm == VmmMode::kCrosvm) {
-    CF_EXPECT(SetDefaultFlagsForCrosvm(guest_configs, name_to_default_value));
+    CF_EXPECT(SetDefaultFlagsForCrosvm(system_image_dir, guest_configs,
+                                       name_to_default_value));
   } else if (vmm == VmmMode::kGem5) {
     // TODO: Get the other architectures working
     if (guest_configs[0].target_arch != Arch::Arm64) {

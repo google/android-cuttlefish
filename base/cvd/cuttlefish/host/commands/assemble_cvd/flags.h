@@ -19,14 +19,16 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/guest_config.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/fetcher_config.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
 
-Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults();
+Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
+    const SystemImageDirFlag&);
 // Must be called after ParseCommandLineFlags.
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir,

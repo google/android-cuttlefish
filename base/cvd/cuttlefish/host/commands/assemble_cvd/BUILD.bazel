@@ -37,6 +37,7 @@ cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd:clean",
         "//cuttlefish/host/commands/assemble_cvd:disk_flags",
         "//cuttlefish/host/commands/assemble_cvd:display",
