@@ -15,15 +15,23 @@
  */
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
 
+#include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <zlib.h>
 
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <android-base/file.h>
+#include <android-base/strings.h>
+#include <fmt/core.h>
+#include <json/value.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -32,6 +40,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/directories/xdg.h"
+#include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
@@ -46,11 +55,11 @@ Result<std::string> AuthorizationCodeFromUrl(const std::string_view url) {
   std::string_view code = url;
 
   static constexpr std::string_view kCodeEq = "code=";
-  std::size_t code_eq_pos = code.find(kCodeEq);
+  size_t code_eq_pos = code.find(kCodeEq);
   CF_EXPECTF(code_eq_pos != std::string_view::npos, "No '{}'", kCodeEq);
   code.remove_prefix(code_eq_pos + kCodeEq.size());
 
-  std::size_t code_end_pos = code.find("&");
+  size_t code_end_pos = code.find("&");
   if (code_end_pos != std::string::npos) {
     code = code.substr(0, code_end_pos);
   }

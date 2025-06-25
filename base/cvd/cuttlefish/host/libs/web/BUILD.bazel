@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -7,30 +6,20 @@ package(
 
 exports_files([".clang-tidy"])
 
-cc_library(
+cf_cc_library(
     name = "android_build",
     srcs = ["android_build.cc"],
     hdrs = ["android_build.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//libbase",
     ],
 )
 
-clang_tidy_test(
-    name = "android_build_clang_tidy",
-    srcs = [":android_build"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "android_build_api",
     srcs = ["android_build_api.cpp"],
     hdrs = ["android_build_api.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
@@ -50,18 +39,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "android_build_api_clang_tidy",
-    srcs = [":android_build_api"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "android_build_string",
     srcs = ["android_build_string.cpp"],
     hdrs = ["android_build_string.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
@@ -70,16 +51,9 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "android_build_string_clang_tidy",
-    srcs = [":android_build_string"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
+cf_cc_test(
     name = "android_build_string_test",
     srcs = ["android_build_string_tests.cpp"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
@@ -90,17 +64,9 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "android_build_string_test_clang_tidy",
-    srcs = [":android_build_string_test"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "build_api",
     hdrs = ["build_api.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web:android_build",
@@ -108,29 +74,19 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "build_api_clang_tidy",
-    srcs = [":build_api"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "build_zip_name",
     srcs = ["build_zip_name.cc"],
     hdrs = ["build_zip_name.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/host/libs/web:android_build",
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "caching_build_api",
     srcs = ["caching_build_api.cpp"],
     hdrs = ["caching_build_api.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -146,18 +102,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "caching_build_api_clang_tidy",
-    srcs = [":caching_build_api"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "chrome_os_build_string",
     srcs = ["chrome_os_build_string.cpp"],
     hdrs = ["chrome_os_build_string.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
@@ -166,18 +114,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "chrome_os_build_string_clang_tidy",
-    srcs = [":chrome_os_build_string"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "credential_source",
     srcs = ["credential_source.cc"],
     hdrs = ["credential_source.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:files",
@@ -192,18 +132,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "credential_source_clang_tidy",
-    srcs = [":credential_source"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "luci_build_api",
     srcs = ["luci_build_api.cpp"],
     hdrs = ["luci_build_api.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
@@ -219,18 +151,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "luci_build_api_clang_tidy",
-    srcs = [":luci_build_api"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "oauth2_consent",
     srcs = ["oauth2_consent.cpp"],
     hdrs = ["oauth2_consent.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -243,6 +167,8 @@ cc_library(
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//cuttlefish/host/libs/web:credential_source",
         "//libbase",
+        "@fmt",
+        "@jsoncpp",
         "@zlib",
     ],
 )
