@@ -1,6 +1,7 @@
 name: Update Bazel Cache
 
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -26,10 +27,6 @@ jobs:
       with:
         path: "~/bazel-disk-cache"
         key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ github.ref_name }}-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-main-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-
     - name: Run unit tests
       run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
   update-debian-package-bazel-cache:
@@ -58,10 +55,6 @@ jobs:
       with:
         path: "~/bazel-disk-cache"
         key: ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ github.ref_name }}-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-main-
-          ${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
