@@ -1,30 +1,20 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "curl_global_init",
     srcs = ["curl_global_init.cpp"],
     hdrs = ["curl_global_init.h"],
-    strip_include_prefix = "//cuttlefish",
     deps = ["@curl"],
 )
 
-clang_tidy_test(
-    name = "curl_global_init_clang_tidy",
-    srcs = [":curl_global_init"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "curl_http_client",
     srcs = ["curl_http_client.cc"],
     hdrs = ["curl_http_client.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
@@ -34,18 +24,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "curl_http_client_clang_tidy",
-    srcs = [":curl_http_client"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "fake_http_client",
     srcs = ["fake_http_client.cc"],
     hdrs = ["fake_http_client.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     testonly = True,
     deps = [
         "//cuttlefish/common/libs/utils:result",
@@ -53,16 +35,9 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "fake_http_client_clang_tidy",
-    srcs = [":fake_http_client"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
+cf_cc_test(
     name = "fake_http_client_test",
     srcs = ["fake_http_client_test.cc"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
@@ -74,18 +49,10 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "fake_http_client_test_clang_tidy",
-    srcs = [":fake_http_client_test"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "http_client",
     srcs = ["http_client.cc"],
     hdrs = ["http_client.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "@fmt",
@@ -93,18 +60,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "http_client_clang_tidy",
-    srcs = [":http_client"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "http_file",
     srcs = ["http_file.cc"],
     hdrs = ["http_file.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:shared_fd_stream",
@@ -115,18 +74,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "http_file_clang_tidy",
-    srcs = [":http_file"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "http_json",
     srcs = ["http_json.cc"],
     hdrs = ["http_json.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
@@ -137,67 +88,35 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "http_json_clang_tidy",
-    srcs = [":http_json"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "http_string",
     srcs = ["http_string.cc"],
     hdrs = ["http_string.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client"
     ],
 )
 
-clang_tidy_test(
-    name = "http_string_clang_tidy",
-    srcs = [":http_string"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "retrying_http_client",
     srcs = ["retrying_http_client.cc"],
     hdrs = ["retrying_http_client.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
     ],
 )
 
-clang_tidy_test(
-    name = "retrying_http_client_clang_tidy",
-    srcs = [":retrying_http_client"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "scrub_secrets",
     srcs = ["scrub_secrets.cc"],
     hdrs = ["scrub_secrets.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
 )
 
-clang_tidy_test(
-    name = "scrub_secrets_clang_tidy",
-    srcs = [":scrub_secrets"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_test(
+cf_cc_test(
     name = "scrub_secrets_test",
     srcs = ["scrub_secrets_test.cc"],
-    copts = COPTS,
-    includes = [""],
     deps = [
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "@googletest//:gtest",
@@ -206,23 +125,9 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "scrub_secrets_test_clang_tidy",
-    srcs = [":scrub_secrets_test"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "url_escape",
     srcs = ["url_escape.cc"],
     hdrs = ["url_escape.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = ["@curl"],
-)
-
-clang_tidy_test(
-    name = "url_escape_clang_tidy",
-    srcs = [":url_escape"],
-    tags = ["clang_tidy", "clang-tidy"],
 )
