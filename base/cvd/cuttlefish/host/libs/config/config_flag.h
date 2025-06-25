@@ -15,23 +15,17 @@
  */
 #pragma once
 
-#include <string>
-
 #include <fruit/fruit.h>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-// TODO(schuffelen): Move this to a more central location?
-class SystemImageDirFlag : public FlagFeature {
- public:
-  virtual const std::string& Path() = 0;
-};
-
 class ConfigFlag : public FlagFeature {};
 
-fruit::Component<SystemImageDirFlag, ConfigFlag> ConfigFlagComponent();
+fruit::Component<fruit::Required<SystemImageDirFlag>, ConfigFlag>
+ConfigFlagComponent();
 
 fruit::Component<ConfigFlag> ConfigFlagPlaceholder();
 

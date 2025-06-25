@@ -37,39 +37,40 @@
 #include <json/json.h>
 #include <json/writer.h>
 
-#include "common/libs/utils/architecture.h"
-#include "common/libs/utils/base64.h"
-#include "common/libs/utils/container.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/in_sandbox.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/known_paths.h"
-#include "common/libs/utils/network.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/container.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/common/libs/utils/network.h"
+#include "cuttlefish/host/commands/assemble_cvd/alloc.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/display.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
+#include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
-#include "host/commands/assemble_cvd/alloc.h"
-#include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/commands/assemble_cvd/display.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/assemble_cvd/graphics_flags.h"
-#include "host/commands/assemble_cvd/guest_config.h"
-#include "host/commands/assemble_cvd/misc_info.h"
-#include "host/commands/assemble_cvd/network_flags.h"
-#include "host/commands/assemble_cvd/touchpad.h"
-#include "host/libs/config/ap_boot_flow.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/display.h"
-#include "host/libs/config/host_tools_version.h"
-#include "host/libs/config/instance_nums.h"
-#include "host/libs/config/secure_hals.h"
-#include "host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
-#include "host/libs/vm_manager/gem5_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
-#include "host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/display.h"
+#include "cuttlefish/host/libs/config/host_tools_version.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
+#include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
+#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 #define DEFINE_vec DEFINE_string
 #define DEFINE_proto DEFINE_string
@@ -541,7 +542,6 @@ DEFINE_vec(enable_tap_devices, "true",
 
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
-DECLARE_string(system_image_dir);
 DECLARE_string(snapshot_path);
 
 DEFINE_vec(vcpu_config_path, CF_DEFAULTS_VCPU_CONFIG_PATH,
@@ -607,13 +607,14 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
 }
 #else
 Result<std::vector<GuestConfig>> ReadGuestConfig() {
+  SystemImageDirFlag system_image_dir =
+      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
+
   std::vector<GuestConfig> guest_configs;
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
   std::vector<std::string> kernel_path =
       android::base::Split(FLAGS_kernel_path, ",");
-  std::vector<std::string> system_image_dir =
-      android::base::Split(FLAGS_system_image_dir, ",");
   std::string kernel_image_path = "";
   std::string cur_boot_image;
   std::string cur_kernel_path;
@@ -704,15 +705,8 @@ Result<std::vector<GuestConfig>> ReadGuestConfig() {
       unlink(ikconfig_path.c_str());
     }
 
-    std::string instance_android_info_txt;
-    if (instance_index >= system_image_dir.size()) {
-      // in case this is the same image being launhced multiple times
-      // the same flag is used for all instances
-      instance_android_info_txt = system_image_dir[0] + "/android-info.txt";
-    } else {
-      instance_android_info_txt =
-          system_image_dir[instance_index] + "/android-info.txt";
-    }
+    std::string instance_android_info_txt =
+        system_image_dir.ForIndex(instance_index) + "/android-info.txt";
 
     auto res_device_type =
         GetAndroidInfoConfig(instance_android_info_txt, "device_type");
@@ -2156,25 +2150,19 @@ Result<void> SetDefaultFlagsForQemu(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
   std::vector<bool> start_webrtc_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
-  std::vector<std::string> system_image_dir =
-      CF_EXPECT(GET_FLAG_STR_VALUE(system_image_dir));
-  std::string curr_bootloader = "";
-  std::string curr_android_efi_loader = "";
   std::string default_bootloader = "";
   std::string default_android_efi_loader = "";
   std::string default_start_webrtc = "";
 
+  SystemImageDirFlag system_image_dir =
+      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
+
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    if (instance_index >= system_image_dir.size()) {
-      curr_bootloader = system_image_dir[0];
-      curr_android_efi_loader = system_image_dir[0];
-    } else {
-      curr_bootloader = system_image_dir[instance_index];
-      curr_android_efi_loader = system_image_dir[instance_index];
-    }
-    curr_bootloader += "/bootloader";
-    curr_android_efi_loader += "/android_efi_loader.efi";
+    std::string curr_bootloader =
+        system_image_dir.ForIndex(instance_index) + "/bootloader";
+    std::string curr_android_efi_loader =
+        system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
 
     // /bootloader isn't presented in the output folder by default and can be
     // only fetched by --bootloader in fetch_cvd, so pick it only in case
@@ -2239,24 +2227,17 @@ Result<void> SetDefaultFlagsForCrosvm(
       EnsureDirectoryExists(kCrosvmVarEmptyDir).ok() &&
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
 
-  std::vector<std::string> system_image_dir =
-      CF_EXPECT(GET_FLAG_STR_VALUE(system_image_dir));
-  std::string curr_android_efi_loader = "";
-  std::string curr_bootloader = "";
+  SystemImageDirFlag system_image_dir =
+      CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
   std::string default_android_efi_loader = "";
   std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    if (instance_index >= system_image_dir.size()) {
-      curr_bootloader = system_image_dir[0];
-      curr_android_efi_loader = system_image_dir[0];
-    } else {
-      curr_bootloader = system_image_dir[instance_index];
-      curr_android_efi_loader = system_image_dir[instance_index];
-    }
-    curr_bootloader += "/bootloader";
-    curr_android_efi_loader += "/android_efi_loader.efi";
+    std::string curr_bootloader =
+        system_image_dir.ForIndex(instance_index) + "/bootloader";
+    std::string curr_android_efi_loader =
+        system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
 
     // /bootloader isn't presented in the output folder by default and can be
     // only fetched by --bootloader in fetch_cvd, so pick it only in case
