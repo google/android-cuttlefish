@@ -27,19 +27,19 @@
 
 namespace cuttlefish {
 
-ZipBuilder::ZipBuilder(Zip archive) : archive_(std::move(archive)) {}
+ZipBuilder::ZipBuilder(WritableZip archive) : archive_(std::move(archive)) {}
 
-Result<ZipBuilder> ZipBuilder::AppendingTo(Zip existing) {
+Result<ZipBuilder> ZipBuilder::AppendingTo(WritableZip existing) {
   return ZipBuilder(std::move(existing));
 }
 
 Result<ZipBuilder> ZipBuilder::TargetingFile(const std::string& fs_path) {
-  ZipSource source = CF_EXPECT(ZipSource::FromFile(fs_path));
+  WritableZipSource source = CF_EXPECT(WritableZipSource::FromFile(fs_path));
   return CF_EXPECT(ZipBuilder::TargetingSource(std::move(source)));
 }
 
-Result<ZipBuilder> ZipBuilder::TargetingSource(ZipSource source) {
-  Zip zip = CF_EXPECT(Zip::CreateFromSource(std::move(source)));
+Result<ZipBuilder> ZipBuilder::TargetingSource(WritableZipSource source) {
+  WritableZip zip = CF_EXPECT(WritableZip::FromSource(std::move(source)));
   return CF_EXPECT(ZipBuilder::AppendingTo(std::move(zip)));
 }
 
@@ -51,7 +51,7 @@ Result<void> ZipBuilder::AddFile(const std::string& fs_path) {
 Result<void> ZipBuilder::AddFileAt(const std::string& fs_path,
                                    const std::string& zip_path) {
   CF_EXPECTF(FileExists(fs_path), "No file in the filesystem at '{}'", fs_path);
-  ZipSource source = CF_EXPECT(ZipSource::FromFile(fs_path));
+  ReadableZipSource source = CF_EXPECT(WritableZipSource::FromFile(fs_path));
   CF_EXPECT(AddDataAt(std::move(source), zip_path));
   return {};
 }
@@ -70,23 +70,24 @@ Result<void> ZipBuilder::AddDataAt(const std::vector<char>& data,
 
 Result<void> ZipBuilder::AddDataAt(const void* data, size_t size,
                                    const std::string& zip_path) {
-  ZipSource source = CF_EXPECT(ZipSource::FromData(data, size));
+  ReadableZipSource source =
+      CF_EXPECT(WritableZipSource::BorrowData(data, size));
   CF_EXPECT(AddDataAt(std::move(source), zip_path));
   return {};
 }
 
-Result<void> ZipBuilder::AddDataAt(ZipSource source,
+Result<void> ZipBuilder::AddDataAt(ReadableZipSource source,
                                    const std::string& zip_path) {
   CF_EXPECT(archive_.AddFile(zip_path, std::move(source)));
   return {};
 }
 
-Zip ZipBuilder::ToRaw(ZipBuilder builder) {
+WritableZip ZipBuilder::ToRaw(ZipBuilder builder) {
   return std::move(builder.archive_);
 }
 
 Result<void> ZipBuilder::Finalize(ZipBuilder builder) {
-  CF_EXPECT(Zip::Finalize(std::move(builder.archive_)));
+  CF_EXPECT(WritableZip::Finalize(std::move(builder.archive_)));
   return {};
 }
 

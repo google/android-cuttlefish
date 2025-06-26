@@ -34,7 +34,7 @@
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
-#include "cuttlefish/host/libs/zip/zip_source_string.h"
+#include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
 namespace {
@@ -45,16 +45,15 @@ class HttpCallback {
       const std::map<std::string, std::string>& contents) {
     std::string data(4096, '\0');
 
-    ZipSource source = CF_EXPECT(ZipSource::FromData(data.data(), data.size()));
-    Zip zip = CF_EXPECT(Zip::CreateFromSource(std::move(source)));
+    WritableZipSource source =
+        CF_EXPECT(WritableZipSource::BorrowData(data.data(), data.size()));
+    WritableZip zip = CF_EXPECT(WritableZip::FromSource(std::move(source)));
 
     for (const auto& [path, data] : contents) {
-      ZipSource file = CF_EXPECT(ZipSource::FromData(data.data(), data.size()));
-
-      CF_EXPECT(zip.AddFile(path, std::move(file)));
+      CF_EXPECT(AddStringAt(zip, data, path));
     }
 
-    source = CF_EXPECT(ZipSource::FromZip(std::move(zip)));
+    source = CF_EXPECT(WritableZipSource::FromZip(std::move(zip)));
 
     return HttpCallback(CF_EXPECT(ReadToString(source)));
   }
@@ -105,14 +104,14 @@ TEST(RemoteZipTest, TwoFiles) {
 
   http_client.SetResponse(std::move(*callback));
 
-  Result<Zip> remote_zip = ZipFromUrl(http_client, "url", size, {});
+  Result<ReadableZip> remote_zip = ZipFromUrl(http_client, "url", size, {});
   ASSERT_THAT(remote_zip, IsOk());
 
-  Result<ZipSource> file_a(remote_zip->GetFile("a.txt"));
+  Result<SeekableZipSource> file_a(remote_zip->GetFile("a.txt"));
   ASSERT_THAT(file_a, IsOk());
   ASSERT_THAT(ReadToString(*file_a), IsOkAndValue("abc"));
 
-  Result<ZipSource> file_b(remote_zip->GetFile("b.txt"));
+  Result<SeekableZipSource> file_b(remote_zip->GetFile("b.txt"));
   ASSERT_THAT(file_b, IsOk());
   ASSERT_THAT(ReadToString(*file_b), IsOkAndValue("def"));
 }

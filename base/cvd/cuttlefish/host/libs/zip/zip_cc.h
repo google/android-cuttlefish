@@ -26,17 +26,23 @@
 
 namespace cuttlefish {
 
-/* Callback interface to provide file data to libzip. */
-class SeekableZipSourceCallback {
+class ReadableZipSourceCallback {
  public:
-  virtual ~SeekableZipSourceCallback() = default;
+  virtual ~ReadableZipSourceCallback() = default;
 
   virtual bool Close() = 0;
   virtual bool Open() = 0;
   virtual int64_t Read(char* data, uint64_t len) = 0;
+  virtual uint64_t Size() = 0;
+};
+
+/* Callback interface to provide file data to libzip. */
+class SeekableZipSourceCallback : public ReadableZipSourceCallback {
+ public:
+  virtual ~SeekableZipSourceCallback() = default;
+
   virtual bool SetOffset(int64_t offset) = 0;
   virtual int64_t Offset() = 0;
-  virtual uint64_t Size() = 0;
 };
 
 enum class ZipCompression {
@@ -56,101 +62,155 @@ struct ZipStat {
   std::optional<ZipCompression> compression_method;
 };
 
-/* A read-only or read-write storage for data.
- *
- * Can be used to provide data to libzip with the `From` methods, and can also
- * be created to retrieve data out of libzip using `Zip::GetFile`.
- *
- * No methods to write data directly are implemented, but data can be written
- * using `Zip::CreateFromSource` and `AddFile`.
- */
-class ZipSource {
+class ReadableZipSource {
  public:
-  friend class Zip;
+  friend class ReadableZip;
+  friend class SeekableZipSource;
+  friend class WritableZip;
+  friend class WritableZipSource;
   friend class ZipSourceReader;
+  friend class SeekingZipSourceReader;
 
-  /* Read-only data access based on calling callback methods. */
-  static Result<ZipSource> FromCallbacks(
-      std::unique_ptr<SeekableZipSourceCallback>);
-  /* Read-write data access based on a copy of `data` up to `size`. Does not
-   * hold a reference to `data`. */
-  static Result<ZipSource> FromData(const void* data, size_t size);
-  /* Read-write data access to a file on disk. */
-  static Result<ZipSource> FromFile(const std::string& path);
-  /* Read-write data access to an in-memory buffer based on serializing a zip
-   * archive. */
-  static Result<ZipSource> FromZip(class Zip);
+  static Result<ReadableZipSource> FromCallbacks(
+      std::unique_ptr<ReadableZipSourceCallback>);
 
-  ZipSource(ZipSource&&);
-  ~ZipSource();
-  ZipSource& operator=(ZipSource&&);
+  // Can be safely called with a subclass type.
+  ReadableZipSource(ReadableZipSource&&);
+  virtual ~ReadableZipSource();
+  // Can be safely called with a subclass type.
+  ReadableZipSource& operator=(ReadableZipSource&&);
 
   Result<ZipStat> Stat();
 
   /* Returns a RAII instance that puts this instance in an "open for reading"
-   * state. Can fail. */
+   * state. Can fail. Should not outlive this instance. */
   Result<class ZipSourceReader> Reader();
 
  private:
   struct Impl;  // For pimpl: to avoid exposing libzip headers
 
-  ZipSource(std::unique_ptr<Impl>);
+  ReadableZipSource(std::unique_ptr<Impl>);
 
   std::unique_ptr<Impl> impl_;
 };
 
-/* A `ZipSource` in an "open for reading" state. */
+class SeekableZipSource : public ReadableZipSource {
+ public:
+  friend class ReadableZip;
+  friend class WritableZipSource;
+
+  static Result<SeekableZipSource> FromCallbacks(
+      std::unique_ptr<SeekableZipSourceCallback>);
+
+  SeekableZipSource(SeekableZipSource&&);
+  ~SeekableZipSource() override;
+  SeekableZipSource& operator=(SeekableZipSource&&);
+
+  /* Returns a RAII instance that puts this instance in an "open for reading"
+   * state. Can fail. Should not outlive this instance. */
+  Result<class SeekingZipSourceReader> Reader();
+
+ private:
+  SeekableZipSource(std::unique_ptr<Impl>);
+};
+
+class WritableZipSource : public SeekableZipSource {
+ public:
+  friend class ReadableZip;
+  /* References `data`, may not update it on write but `data` should outlive the
+   * returned instance. */
+  static Result<WritableZipSource> BorrowData(const void* data, size_t size);
+  static Result<WritableZipSource> FromFile(const std::string& path);
+  /* Data access to an in-memory buffer based on serializing a zip archive. */
+  static Result<WritableZipSource> FromZip(class WritableZip);
+
+  WritableZipSource(WritableZipSource&&);
+  virtual ~WritableZipSource();
+  WritableZipSource& operator=(WritableZipSource&&);
+
+ private:
+  WritableZipSource(std::unique_ptr<Impl>);
+};
+
+/* A `ReadableZipSource` in an "open for reading" state. */
 class ZipSourceReader {
  public:
-  friend class ZipSource;
+  friend class ReadableZipSource;
+  friend class SeekingZipSourceReader;
 
   ZipSourceReader(ZipSourceReader&&);
-  ~ZipSourceReader();
+  virtual ~ZipSourceReader();
   ZipSourceReader& operator=(ZipSourceReader&&);
 
   /* Returns a failed Result on error, or a successful result with bytes read or
    * 0 on EOF. */
   Result<uint64_t> Read(void* data, uint64_t length);
 
+ private:
+  ZipSourceReader(ReadableZipSource*);
+
+  ReadableZipSource* source_;
+};
+
+/* A `SeekableZipSource` in an "open for reading" state. */
+class SeekingZipSourceReader : public ZipSourceReader {
+ public:
+  friend class SeekableZipSource;
+
+  SeekingZipSourceReader(SeekingZipSourceReader&&);
+  ~SeekingZipSourceReader() override;
+  SeekingZipSourceReader& operator=(SeekingZipSourceReader&&);
+
   Result<void> SeekFromStart(int64_t offset);
 
  private:
-  ZipSourceReader(ZipSource*);
-
-  ZipSource* source_;
+  SeekingZipSourceReader(SeekableZipSource*);
 };
 
-class Zip {
+class ReadableZip {
  public:
-  friend class ZipSource;
+  friend class WritableZip;
+  friend class WritableZipSource;
 
-  static Result<Zip> CreateFromSource(ZipSource);
-  static Result<Zip> OpenFromSource(ZipSource);
+  static Result<ReadableZip> FromSource(SeekableZipSource);
 
-  Zip(Zip&&);
-  ~Zip();
+  ReadableZip(ReadableZip&&);
+  virtual ~ReadableZip();
+  ReadableZip& operator=(ReadableZip&&);
 
   /* Counts members, including un-finalized ones from AddFile. */
   Result<uint64_t> NumEntries();
 
-  /* Mutates the archive to add a file. Reading the contents of the sources that
-   * are added is deferred until `Finalize` time. */
-  Result<void> AddFile(const std::string& name, ZipSource);
-  /* Returns a read-only zip source to decompress and extract a file from the
-   * archive. */
-  Result<ZipSource> GetFile(const std::string& name);
-  Result<ZipSource> GetFile(uint64_t index);
-
-  /* Performs transfers from the input `ZipSource`s to the output `ZipSource`
-   * and does the archive encoding. */
-  static Result<void> Finalize(Zip);
+  /* Decompresses and extract a file from the archive. */
+  Result<SeekableZipSource> GetFile(const std::string& name);
+  Result<SeekableZipSource> GetFile(uint64_t index);
 
  private:
   struct Impl;  // For pimpl: to avoid exposing libzip headers
 
-  Zip(std::unique_ptr<Impl>);
+  ReadableZip(std::unique_ptr<Impl>);
 
   std::unique_ptr<Impl> impl_;
+};
+
+class WritableZip : public ReadableZip {
+ public:
+  static Result<WritableZip> FromSource(WritableZipSource);
+
+  WritableZip(WritableZip&&);
+  ~WritableZip() override;
+  WritableZip& operator=(WritableZip&&);
+
+  /* Mutates the archive to add a file. Reading the contents of the sources that
+   * are added is deferred until `Finalize` time. */
+  Result<void> AddFile(const std::string& name, ReadableZipSource);
+
+  /* Performs transfers from the input `ZipSource`s to the output `ZipSource`
+   * and does the archive encoding. */
+  static Result<void> Finalize(WritableZip);
+
+ private:
+  WritableZip(std::unique_ptr<Impl>);
 };
 
 }  // namespace cuttlefish
