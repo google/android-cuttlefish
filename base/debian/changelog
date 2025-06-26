@@ -1,3 +1,9 @@
+cuttlefish-common (1.13.1) stable; urgency=medium
+
+  * Bump version on aspect_rules_lint by @3405691582 in https://github.com/google/android-cuttlefish/pull/1319
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 26 Jun 2025 11:54:47 -0700
+
 cuttlefish-common (1.13.0) stable; urgency=medium
 
   * Build and package mkfs.fat (dosfstools) by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1256
