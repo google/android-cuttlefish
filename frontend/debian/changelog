@@ -1,3 +1,7 @@
+cuttlefish-frontend (1.13.1) stable; urgency=medium
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 26 Jun 2025 11:56:01 -0700
+
 cuttlefish-frontend (1.13.0) stable; urgency=medium
 
   * Create gce x86_64 image script. by @ser-io in https://github.com/google/android-cuttlefish/pull/1268
