@@ -29,6 +29,9 @@ fi
 readonly PKGDIR="$1"
 shift
 
+remote_cache_arg=""
+cache_version_arg=""
+
 while getopts ":r:c:" opt; do
   case "${opt}" in
     r)
