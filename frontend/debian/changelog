@@ -4,7 +4,7 @@ cuttlefish-frontend (1.14.0) UNRELEASED; urgency=medium
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 20 Jun 2025 15:41:54 -0700
 
-cuttlefish-frontend (1.13.0) unstable; urgency=medium
+cuttlefish-frontend (1.13.0) stable; urgency=medium
 
   * Create gce x86_64 image script. by @ser-io in https://github.com/google/android-cuttlefish/pull/1268
   * Introduce HO REST API `POST /v1/userartifacts/{checksum}/:extract` by @0405ysj in https://github.com/google/android-cuttlefish/pull/1253
