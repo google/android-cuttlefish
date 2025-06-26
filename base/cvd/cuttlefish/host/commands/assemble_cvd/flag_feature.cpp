@@ -41,16 +41,6 @@ class ParseGflagsImpl : public ParseGflags {
     return {static_cast<FlagFeature*>(&config_)};
   }
   Result<void> Process(std::vector<std::string>& args) override {
-    std::string process_name = "assemble_cvd";
-    std::vector<char*> pseudo_argv = {process_name.data()};
-    for (auto& arg : args) {
-      pseudo_argv.push_back(arg.data());
-    }
-    int argc = pseudo_argv.size();
-    auto argv = pseudo_argv.data();
-    gflags::AllowCommandLineReparsing();  // Support future non-gflags flags
-    gflags::ParseCommandLineNonHelpFlags(&argc, &argv,
-                                         /* remove_flags */ false);
     return {};
   }
   bool WriteGflagsCompatHelpXml(std::ostream& out) const override {
