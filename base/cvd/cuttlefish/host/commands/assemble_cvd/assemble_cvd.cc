@@ -621,6 +621,19 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
     CF_EXPECT(help_flag.Parse(args), "Failed to process help flag");
   }
 
+  {
+    std::string process_name = "assemble_cvd";
+    std::vector<char*> pseudo_argv = {process_name.data()};
+    for (auto& arg : args) {
+      pseudo_argv.push_back(arg.data());
+    }
+    int argc = pseudo_argv.size();
+    auto argv = pseudo_argv.data();
+    gflags::AllowCommandLineReparsing();  // Support future non-gflags flags
+    gflags::ParseCommandLineNonHelpFlags(&argc, &argv,
+                                         /* remove_flags */ false);
+  }
+
   SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
