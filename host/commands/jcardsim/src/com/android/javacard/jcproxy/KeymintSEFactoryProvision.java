@@ -1,0 +1,174 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.javacard.jcproxy;
+
+import com.licel.jcardsim.smartcardio.CardSimulator;
+
+/** This class provisions the keymint applet with UDS_Pub, UDS Cert chain and SE factory lock. */
+public class KeymintSEFactoryProvision extends KeymintProvision {
+
+    private static final byte INS_SE_FACTORY_PROVISIONING_LOCK_CMD = (byte) 0x0A;
+    private static final byte INS_PROVISION_RKP_DEVICE_UNIQUE_KEYPAIR_CMD = (byte) 0x0D;
+    private static final byte INS_PROVISION_RKP_UDS_CERT_CHAIN_CMD = (byte) 0x0E;
+
+    private static final String UDS_PUBX =
+            "f784f4aef280cae0e63863833965d74c3d75137a3bcd1acaa14b1da16aa213f5";
+
+    private static final String UDS_PUBY =
+            "f5ee9092eb8f67b1d0a26e021a83125b688e50653566a1ee866222e600615486";
+
+    private static final String UDS_PRIV =
+            "fc06ed57e903d9fe3f32340fd3690a4de80b08cd171c5fe5d3aa34d2090bb21a";
+
+    private static final String UDS_COSE_KEY =
+            "81" + // array(1)
+                    "A6" + // map(6)
+                    "01" + // unsigned(1)
+                    "02" + // unsigned(2)
+                    "03" + // unsigned(3)
+                    "26" + // negative(6) -7
+                    "20" + // negative(0) -1
+                    "01" + // unsigned(1)
+                    "21" + // negative(1) -2
+                    "5820" + // bytes(32)
+                    UDS_PUBX + "22" + // negative(2) -3
+                    "5820" + // bytes(32)
+                    UDS_PUBY + "23" + // negative(3) -4
+                    "5820" + // bytes(32)
+                    UDS_PRIV;
+
+    private static final String ROOT_CERT =
+            "308202AD30820253A0030201020214777638737F38E69ED9755E"
+                    + "67AB0F0E3DE3B494B3300A06082A8648CE3D0403023081"
+                    + "A3310B30090603550406130255533113301106035504080C0A"
+                    + "43616C69666F726E69613114301206035504070C0B53616E"
+                    + "6672616E7369636F310F300D060355040A0C06476F6F676C65"
+                    + "31193017060355040B0C10416E64726F6964205365637572"
+                    + "697479311C301A06035504030C13476F6F676C652063612073"
+                    + "74726F6E67626F78311F301D06092A864886F70D01090116"
+                    + "10736861776E40676F6F676C652E636F6D301E170D32313031"
+                    + "32383036353733385A170D3431303132333036353733385A"
+                    + "3081A3310B3009060355040613025553311330110603550408"
+                    + "0C0A43616C69666F726E69613114301206035504070C0B53"
+                    + "616E6672616E7369636F310F300D060355040A0C06476F6F67"
+                    + "6C6531193017060355040B0C10416E64726F696420536563"
+                    + "7572697479311C301A06035504030C13476F6F676C65206361"
+                    + "207374726F6E67626F78311F301D06092A864886F70D0109"
+                    + "011610736861776E40676F6F676C652E636F6D305930130607"
+                    + "2A8648CE3D020106082A8648CE3D030107034200049CC81A"
+                    + "CFC88AB92F1F87B6B1348E75381D3AEDCDF08F91550D1A6D6F"
+                    + "F0702D554A30B9BEAB30C7B3A22DFCCC840AC9BFB9315AB7"
+                    + "8CA07221DD27ACFECD341182A3633061301D0603551D0E0416"
+                    + "0414816CE65A30F8E2AF7FEF042350DC4EA448E20562301F"
+                    + "0603551D23041830168014816CE65A30F8E2AF7FEF042350DC"
+                    + "4EA448E20562300F0603551D130101FF040530030101FF30"
+                    + "0E0603551D0F0101FF040403020186300A06082A8648CE3D04"
+                    + "03020348003045022100AF64E6A36CAED33802A11E0E98A1"
+                    + "91A892E6F8791A9F83D1B32374D33DB54FC4022074BAEB9D57"
+                    + "3509802063B70B15B6E5C172A68A4E9E5783D863A73C1A7D"
+                    + "2085C6";
+
+    private static final String INTERMEDIATE_CERT =
+            "308202943082023BA00302010202021000300A06082A8648CE3D0403023081A3"
+                    + "310B30090603550406130255533113301106035504080C0A43616C69666F726E6961"
+                    + "3114301206035504070C0B53616E6672616E7369636F310F300D060355040A0C0647"
+                    + "6F6F676C6531193017060355040B0C10416E64726F6964205365637572697479311C"
+                    + "301A06035504030C13476F6F676C65206361207374726F6E67626F78311F301D0609"
+                    + "2A864886F70D0109011610736861776E40676F6F676C652E636F6D301E170D323130"
+                    + "3132383037313030395A170D3331303132363037313030395A30819A310B30090603"
+                    + "550406130255533113301106035504080C0A43616C69666F726E6961310F300D0603"
+                    + "55040A0C06476F6F676C6531193017060355040B0C10416E64726F69642053656375"
+                    + "726974793129302706035504030C20476F6F676C6520496E7465726D656469617465"
+                    + "204341207374726F6E67626F78311F301D06092A864886F70D010901161073686177"
+                    + "6E40676F6F676C652E636F6D3059301306072A8648CE3D020106082A8648CE3D0301"
+                    + "0703420004FBC58D573F533E6E6210D1667A00F58AD9A8618F99CFAE32F5B9ABA458"
+                    + "1FA94701395DF518824E16441ADFFCF4A0BD93424A92413B2B8704C08837DB4C24E0"
+                    + "18A3663064301D0603551D0E04160414F9DA0574A2355B00A292087E7287B457F301"
+                    + "0446301F0603551D23041830168014816CE65A30F8E2AF7FEF042350DC4EA448E205"
+                    + "6230120603551D130101FF040830060101FF020100300E0603551D0F0101FF040403"
+                    + "020186300A06082A8648CE3D040302034700304402202EBB46D440AB55B3B6B61B54"
+                    + "E63EED5430B7B7721056342D0BDB5C7FEE519A85022017242ADFF533AF40A86DD058"
+                    + "0C78FB86EF07A671CC55FC6A0B842888A2CA19E0";
+
+    private static final String UDS_CERT =
+            "308202B230820259A00302010202021000300A06082A8648CE3D0"
+                    + "4030230819A310B300906035504061302555331133011"
+                    + "06035504080C0A43616C69666F726E6961310F300D060355040"
+                    + "A0C06476F6F676C6531193017060355040B0C10416E6472"
+                    + "6F69642053656375726974793129302706035504030C20476F6"
+                    + "F676C6520496E7465726D65646961746520434120737472"
+                    + "6F6E67626F78311F301D06092A864886F70D010901161073686"
+                    + "1776E40676F6F676C652E636F6D301E170D323130313238"
+                    + "3037323331335A170D3331303132363037323331335A3081C13"
+                    + "10B30090603550406130255533113301106035504080C0A"
+                    + "43616C69666F726E69613114301206035504070C0B53616E667"
+                    + "2616E7369636F310F300D060355040A0C06476F6F676C65"
+                    + "31193017060355040B0C10416E64726F6964205365637572697"
+                    + "479313A303806035504030C31476F6F676C6520496E7465"
+                    + "726D65646961746520434132207374726F6E67626F78206B657"
+                    + "9206174746573746174696F6E311F301D06092A864886F7"
+                    + "0D0109011610736861776E40676F6F676C652E636F6D3059301"
+                    + "306072A8648CE3D020106082A8648CE3D03010703420004"
+                    + "F784F4AEF280CAE0E63863833965D74C3D75137A3BCD1ACAA14"
+                    + "B1DA16AA213F5F5EE9092EB8F67B1D0A26E021A83125B68"
+                    + "8E50653566A1EE866222E600615486A3663064301D0603551D0"
+                    + "E041604144063499CC2D2EB8671088E2207064B82AE9F7A"
+                    + "86301F0603551D23041830168014F9DA0574A2355B00A292087"
+                    + "E7287B457F301044630120603551D130101FF0408300601"
+                    + "01FF020100300E0603551D0F0101FF040403020186300A06082"
+                    + "A8648CE3D0403020347003044022044BA43FA885180BD70"
+                    + "37FDEBE3060B78A57012721722A7B7D8103E80F96E06B602205"
+                    + "170A9591CEDAD9F8B23BAA14491FA40D2F514E0FE5ABDAB"
+                    + "519AED8A63913720";
+
+    private static final String UDS_CERT_CHAIN =
+            "590811" // bytes(2065)
+                    + "A1" // map(1)
+                    + "66" // text(6)
+                    + "476F6F676C65" // "Google"
+                    + "83" // array(3)
+                    + "5902B1" // bytes(689)
+                    + ROOT_CERT
+                    + "590298" // bytes(664)
+                    + INTERMEDIATE_CERT
+                    + "5902B6" // bytes(694)
+                    + UDS_CERT;
+
+    KeymintSEFactoryProvision(CardSimulator simulator) {
+        super(simulator);
+    }
+
+    public void provision() {
+        provisionUdsKeyPair();
+        provisionUdsCertChain();
+        doSeFactoryProvisionLock();
+    }
+
+    public void provisionUdsKeyPair() {
+        byte[] apdu = ByteArrayConverter.hexStringToByteArray(UDS_COSE_KEY);
+        transmit(INS_PROVISION_RKP_DEVICE_UNIQUE_KEYPAIR_CMD, apdu);
+    }
+
+    public void provisionUdsCertChain() {
+        byte[] apdu = ByteArrayConverter.hexStringToByteArray(UDS_CERT_CHAIN);
+        transmit(INS_PROVISION_RKP_UDS_CERT_CHAIN_CMD, apdu);
+    }
+
+    public void doSeFactoryProvisionLock() {
+        transmit(INS_SE_FACTORY_PROVISIONING_LOCK_CMD, null);
+    }
+}
