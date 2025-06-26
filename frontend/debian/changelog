@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.13.0) unstable; urgency=medium
+cuttlefish-frontend (1.13.0) stable; urgency=medium
 
   * Create gce x86_64 image script. by @ser-io in https://github.com/google/android-cuttlefish/pull/1268
   * Introduce HO REST API `POST /v1/userartifacts/{checksum}/:extract` by @0405ysj in https://github.com/google/android-cuttlefish/pull/1253
