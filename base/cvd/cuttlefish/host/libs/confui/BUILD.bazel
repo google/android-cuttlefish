@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -41,7 +40,7 @@ genrule(
     tools = ["generate_font_cc.sh"],
 )
 
-cc_library(
+cf_cc_library(
     name = "host_confui",
     srcs = [
         "confui_cbor.cc",
@@ -72,8 +71,6 @@ cc_library(
         "sign.h",
         "sign_utils.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/concurrency",
         "//cuttlefish/common/libs/confui",
@@ -94,14 +91,5 @@ cc_library(
         "@fruit",
         "@libcbor//:cbor",
         "@libdrm//:libdrm_fourcc",
-    ],
-)
-
-clang_tidy_test(
-    name = "host_confui_clang_tidy",
-    srcs = [":host_confui"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
