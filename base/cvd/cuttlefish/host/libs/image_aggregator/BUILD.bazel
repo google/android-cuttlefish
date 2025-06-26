@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "COPTS")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -16,7 +15,7 @@ cc_proto_library(
 )
 
 
-cc_library(
+cf_cc_library(
     name = "image_aggregator",
     srcs = [
         "image_aggregator.cc",
@@ -29,7 +28,6 @@ cc_library(
     copts = COPTS + [
         "-Wno-packed-non-pod",
     ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":cdisk_spec_cc_proto",
         "//cuttlefish/common/libs/fs",
@@ -47,10 +45,4 @@ cc_library(
         "@protobuf",
         "@zlib",
     ],
-)
-
-clang_tidy_test(
-    name = "image_aggregator_clang_tidy",
-    srcs = [":image_aggregator"],
-    tags = ["clang_tidy", "clang-tidy"],
 )
