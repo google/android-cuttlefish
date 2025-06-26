@@ -1,16 +1,13 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "access_kregistry",
     srcs = ["access_kregistry.cc"],
     hdrs = ["access_kregistry.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -19,18 +16,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "access_kregistry_clang_tidy",
-    srcs = [":access_kregistry"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "android_composite_disk_config",
     srcs = ["android_composite_disk_config.cc"],
     hdrs = ["android_composite_disk_config.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
@@ -41,18 +30,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "android_composite_disk_config_clang_tidy",
-    srcs = [":android_composite_disk_config"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "android_efi_loader_composite_disk",
     srcs = ["android_efi_loader_composite_disk.cc"],
     hdrs = ["android_efi_loader_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
@@ -63,12 +44,10 @@ cc_library(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "ap_composite_disk",
     srcs = ["ap_composite_disk.cc"],
     hdrs = ["ap_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:ap_boot_flow",
@@ -78,18 +57,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "ap_composite_disk_clang_tidy",
-    srcs = [":ap_composite_disk"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "bootloader_present",
     srcs = ["bootloader_present.cc"],
     hdrs = ["bootloader_present.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -97,18 +68,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "bootloader_present_clang_tidy",
-    srcs = [":bootloader_present"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "chromeos_composite_disk",
     srcs = ["chromeos_composite_disk.cc"],
     hdrs = ["chromeos_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -116,18 +79,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "chromeos_composite_disk_clang_tidy",
-    srcs = [":chromeos_composite_disk"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "chromeos_state",
     srcs = ["chromeos_state.cc"],
     hdrs = ["chromeos_state.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -137,19 +92,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "chromeos_state_clang_tidy",
-    srcs = [":chromeos_state"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-
-cc_library(
+cf_cc_library(
     name = "factory_reset_protected",
     srcs = ["factory_reset_protected.cc"],
     hdrs = ["factory_reset_protected.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -158,18 +104,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "factory_reset_protected_clang_tidy",
-    srcs = [":factory_reset_protected"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "fuchsia_composite_disk",
     srcs = ["fuchsia_composite_disk.cc"],
     hdrs = ["fuchsia_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -177,12 +115,10 @@ cc_library(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "gem5_image_unpacker",
     srcs = ["gem5_image_unpacker.cpp"],
     hdrs = ["gem5_image_unpacker.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -194,18 +130,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "gem5_image_unpacker_clang_tidy",
-    srcs = [":gem5_image_unpacker"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "generate_persistent_bootconfig",
     srcs = ["generate_persistent_bootconfig.cpp"],
     hdrs = ["generate_persistent_bootconfig.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -219,18 +147,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "generate_persistent_bootconfig_clang_tidy",
-    srcs = [":generate_persistent_bootconfig"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "generate_persistent_vbmeta",
     srcs = ["generate_persistent_vbmeta.cpp"],
     hdrs = ["generate_persistent_vbmeta.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -245,18 +165,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "generate_persistent_vbmeta_clang_tidy",
-    srcs = [":generate_persistent_vbmeta"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "hwcomposer_pmem",
     srcs = ["hwcomposer_pmem.cc"],
     hdrs = ["hwcomposer_pmem.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -265,19 +177,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "hwcomposer_pmem_clang_tidy",
-    srcs = [":hwcomposer_pmem"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-
-cc_library(
+cf_cc_library(
     name = "initialize_instance_composite_disk",
     srcs = ["initialize_instance_composite_disk.cc"],
     hdrs = ["initialize_instance_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -293,18 +196,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "initialize_instance_composite_disk_clang_tidy",
-    srcs = [":initialize_instance_composite_disk"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "kernel_ramdisk_repacker",
     srcs = ["kernel_ramdisk_repacker.cpp"],
     hdrs = ["kernel_ramdisk_repacker.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
@@ -314,18 +209,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "kernel_ramdisk_repacker_clang_tidy",
-    srcs = [":kernel_ramdisk_repacker"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "linux_composite_disk",
     srcs = ["linux_composite_disk.cc"],
     hdrs = ["linux_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -333,18 +220,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "linux_composite_disk_clang_tidy",
-    srcs = [":linux_composite_disk"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "metadata_image",
     srcs = ["metadata_image.cc"],
     hdrs = ["metadata_image.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -354,18 +233,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "metadata_image_clang_tidy",
-    srcs = [":metadata_image"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "misc_image",
     srcs = ["misc_image.cc"],
     hdrs = ["misc_image.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -376,18 +247,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "misc_image_clang_tidy",
-    srcs = [":misc_image"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "os_composite_disk",
     srcs = ["os_composite_disk.cc"],
     hdrs = ["os_composite_disk.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_efi_loader_composite_disk",
@@ -402,12 +265,10 @@ cc_library(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "pflash",
     srcs = ["pflash.cc"],
     hdrs = ["pflash.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -416,18 +277,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "pflash_clang_tidy",
-    srcs = [":pflash"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "pstore",
     srcs = ["pstore.cc"],
     hdrs = ["pstore.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -436,18 +289,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "pstore_clang_tidy",
-    srcs = [":pstore"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "sd_card",
     srcs = ["sd_card.cc"],
     hdrs = ["sd_card.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -457,28 +302,14 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "sd_card_clang_tidy",
-    srcs = [":sd_card"],
-    tags = ["clang_tidy", "clang-tidy"],
-)
-
-cc_library(
+cf_cc_library(
     name = "vbmeta_enforce_minimum_size",
     srcs = ["vbmeta_enforce_minimum_size.cc"],
     hdrs = ["vbmeta_enforce_minimum_size.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
     ],
-)
-
-clang_tidy_test(
-    name = "vbmeta_enforce_minimum_size_clang_tidy",
-    srcs = [":vbmeta_enforce_minimum_size"],
-    tags = ["clang_tidy", "clang-tidy"],
 )
