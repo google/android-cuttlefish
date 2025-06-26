@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "audio_connector",
     srcs = [
         "buffers.cpp",
@@ -18,20 +17,9 @@ cc_library(
         "server.h",
         "shm_layout.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:cf_endian",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "audio_connector_clang_tidy",
-    srcs = [":audio_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
