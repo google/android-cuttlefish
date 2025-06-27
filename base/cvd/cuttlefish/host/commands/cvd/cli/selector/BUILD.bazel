@@ -1,11 +1,11 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "parser",
     srcs = [
         "arguments_separator.cpp",
@@ -42,16 +42,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "parser_clang_tidy",
-    srcs = [":parser"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "selector",
     srcs = ["selector.cpp"],
     hdrs = ["selector.h"],
@@ -68,16 +59,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "selector_clang_tidy",
-    srcs = [":selector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "selector_test",
     srcs = [
         "group_record_test.cpp",
@@ -109,14 +91,5 @@ cc_test(
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "selector_test_clang_tidy",
-    srcs = [":selector_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "libsensors_simulator",
     srcs = [
         "sensors_simulator.cpp",
@@ -13,8 +12,6 @@ cc_library(
     hdrs = [
         "sensors_simulator.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/sensors",
         "//libbase",
@@ -22,16 +19,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "libsensors_simulator_clang_tidy",
-    srcs = [":libsensors_simulator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "libsensors_hal_proxy",
     srcs = [
         "sensors_hal_proxy.cpp",
@@ -39,8 +27,6 @@ cc_library(
     hdrs = [
         "sensors_hal_proxy.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":libsensors_simulator",
         "//cuttlefish/common/libs/sensors",
@@ -52,21 +38,11 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "libsensors_hal_proxy_clang_tidy",
-    srcs = [":libsensors_hal_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_binary(
+cf_cc_binary(
     name = "sensors_simulator",
     srcs = [
         "main.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":libsensors_hal_proxy",
         ":libsensors_simulator",
@@ -76,14 +52,5 @@ cc_binary(
         "//libbase",
         "@gflags",
         "@libeigen",
-    ],
-)
-
-clang_tidy_test(
-    name = "sensors_simulator_clang_tidy",
-    srcs = [":sensors_simulator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

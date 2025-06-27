@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "process_monitor",
     srcs = [
         "process_monitor.cc",
@@ -13,8 +12,6 @@ cc_library(
     hdrs = [
         "process_monitor.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:contains",
@@ -24,14 +21,5 @@ cc_library(
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "process_monitor_clang_tidy",
-    srcs = [":process_monitor"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

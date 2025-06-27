@@ -1,16 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "powerbtn_cvd",
     srcs = [
         "powerbtn_cvd.cc",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -19,14 +17,5 @@ cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",
-    ],
-)
-
-clang_tidy_test(
-    name = "powerbtn_cvd_clang_tidy",
-    srcs = [":powerbtn_cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

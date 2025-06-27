@@ -1,16 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "cvd_send_id_disclosure",
     srcs = [
         "main.cc",
     ],
-    copts = COPTS,
     deps = [
         ":libcvd_id_disclosure_builder",
         "//cuttlefish/common/libs/fs",
@@ -20,16 +18,7 @@ cc_binary(
     ],
 )
 
-clang_tidy_test(
-    name = "cvd_send_id_disclosure_clang_tidy",
-    srcs = [":cvd_send_id_disclosure"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "libcvd_id_disclosure_builder",
     srcs = [
         "cellular_identifier_disclosure_command_builder.cc",
@@ -37,40 +26,19 @@ cc_library(
     hdrs = [
         "cellular_identifier_disclosure_command_builder.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@fmt",
     ],
 )
 
-clang_tidy_test(
-    name = "libcvd_id_disclosure_builder_clang_tidy",
-    srcs = [":libcvd_id_disclosure_builder"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "cvd_send_id_disclosure_test",
     srcs = [
         "unittest/cellular_identifier_disclosure_command_builder_test.cc",
     ],
-    copts = COPTS,
     deps = [
         ":libcvd_id_disclosure_builder",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "cvd_id_disclosure_test_clang_tidy",
-    srcs = [":cvd_send_id_disclosure_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

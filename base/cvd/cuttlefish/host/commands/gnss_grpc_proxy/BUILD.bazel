@@ -1,17 +1,15 @@
 load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "gnss_grpc_proxy",
     srcs = [
         "gnss_grpc_proxy.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":libcvd_gnss_grpc_proxy",
         "//cuttlefish/common/libs/fs",
@@ -22,15 +20,6 @@ cc_binary(
         "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
-    ],
-)
-
-clang_tidy_test(
-    name = "gnss_grpc_proxy_clang_tidy",
-    srcs = [":gnss_grpc_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
 

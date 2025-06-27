@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -7,7 +6,7 @@ package(
 
 exports_files(glob(["etc/**"]))
 
-cc_library(
+cf_cc_library(
     name = "modem_simulator_lib",
     srcs = [
         "call_service.cpp",
@@ -46,12 +45,12 @@ cc_library(
         "sup_service.h",
         "thread_looper.h",
     ],
+    clang_tidy_enabled = False,  # TODO(b/405163202): Enable back once migration is completed.
     copts = [
         "-Wall",
         "-Werror",
         "-Wno-unused-const-variable",
     ],
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -62,12 +61,11 @@ cc_library(
     ],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "modem_simulator",
     srcs = [
         "main.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":modem_simulator_lib",
         "//cuttlefish/common/libs/fs",
@@ -79,14 +77,14 @@ cc_binary(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "modem_simulator_test_lib",
     hdrs = [
         "unittest/iccfile.txt",
     ],
 )
 
-cc_test(
+cf_cc_test(
     name = "modem_simulator_test",
     srcs = [
         "unittest/command_parser_test.cpp",
@@ -105,24 +103,4 @@ cc_test(
         "@gflags",
         "@googletest//:gtest",
     ],
-)
-
-clang_tidy_test(
-    name = "modem_simulator_clang_tidy",
-    srcs = [":modem_simulator"],
-    tags = ["clang-tidy"],
-)
-
-# TODO(b/405163202): Enable back once migration is completed.
-#
-# clang_tidy_test(
-#     name = "modem_simulator_lib_clang_tidy",
-#     srcs = [":modem_simulator_lib"],
-#     tags = [ "clang-tidy"],
-# )
-
-clang_tidy_test(
-    name = "modem_simulator_test_clang_tidy",
-    srcs = [":modem_simulator_test"],
-    tags = ["clang-tidy"],
 )

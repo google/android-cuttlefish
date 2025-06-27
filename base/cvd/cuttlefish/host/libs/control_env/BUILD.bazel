@@ -1,18 +1,15 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "control_env",
     srcs = [
         "grpc_service_handler.cc",
     ],
     hdrs = ["grpc_service_handler.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
@@ -22,14 +19,5 @@ cc_library(
         "@grpc//test/cpp/util:grpc_cli_utils",
         "@grpc//test/cpp/util:test_config",
         "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "control_env_clang_tidy",
-    srcs = [":control_env"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

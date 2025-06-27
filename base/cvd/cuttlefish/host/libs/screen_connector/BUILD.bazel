@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "screen_connector_common",
     srcs = [
         "screen_connector_common.cc",
@@ -13,8 +12,6 @@ cc_library(
     hdrs = [
         "screen_connector_common.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -22,25 +19,14 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "screen_connector_common_clang_tidy",
-    srcs = [":screen_connector_common"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "video_frame_buffer",
     hdrs = [
         "video_frame_buffer.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
 )
 
-cc_library(
+cf_cc_library(
     name = "screen_connector",
     srcs = [
         "composition_manager.cpp",
@@ -57,8 +43,6 @@ cc_library(
         "screen_connector_queue.h",
         "wayland_screen_connector.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":screen_connector_common",
         ":video_frame_buffer",
@@ -76,14 +60,5 @@ cc_library(
         "@fruit",
         "@libdrm//:libdrm_fourcc",
         "@libyuv",
-    ],
-)
-
-clang_tidy_test(
-    name = "screen_connector_clang_tidy",
-    srcs = [":screen_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

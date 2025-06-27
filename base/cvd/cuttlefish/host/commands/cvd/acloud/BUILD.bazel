@@ -1,5 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -15,7 +15,7 @@ cc_proto_library(
     deps = [":user_config_proto"],
 )
 
-cc_library(
+cf_cc_library(
     name = "acloud",
     srcs = [
         "config.cpp",
@@ -47,14 +47,5 @@ cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
         "@protobuf",
-    ],
-)
-
-clang_tidy_test(
-    name = "acloud_clang_tidy",
-    srcs = [":acloud"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

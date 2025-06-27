@@ -1,16 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "allocd_client",
     srcs = [
         "test/client.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":allocd_utils",
         "//cuttlefish/common/libs/fs",
@@ -21,16 +19,7 @@ cc_binary(
     ],
 )
 
-clang_tidy_test(
-    name = "allocd_client_clang_tidy",
-    srcs = [":allocd_client"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "allocd_utils",
     srcs = [
         "utils.cpp",
@@ -39,21 +28,10 @@ cc_library(
         "request.h",
         "utils.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "allocd_utils_clang_tidy",
-    srcs = [":allocd_utils"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

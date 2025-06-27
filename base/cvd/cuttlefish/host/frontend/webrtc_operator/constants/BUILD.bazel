@@ -1,12 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "webrtc_signaling_headers",
     hdrs = ["signaling_constants.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
 )

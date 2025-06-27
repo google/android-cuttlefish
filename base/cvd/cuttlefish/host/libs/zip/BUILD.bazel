@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -7,12 +6,10 @@ package(
 
 exports_files([".clang-tidy"])
 
-cc_library(
+cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
@@ -21,19 +18,9 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "remote_zip_clang_tidy",
-    srcs = [":remote_zip"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "remote_zip_test",
     srcs = ["remote_zip_test.cc"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
@@ -48,24 +35,13 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "remote_zip_test_clang_tidy",
-    srcs = [":remote_zip_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "zip_cc",
     srcs = ["zip_cc.cc"],
     hdrs = ["zip_cc.h"],
-    copts = COPTS,
     features = ["-layering_check"],  # libzip
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "@libzip",
@@ -73,21 +49,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "zip_cc_clang_tidy",
-    srcs = [":zip_cc"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "zip_file",
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -95,30 +60,12 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "zip_file_clang_tidy",
-    srcs = [":zip_file"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "zip_string",
     srcs = ["zip_string.cc"],
     hdrs = ["zip_string.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_cc",
-    ],
-)
-
-clang_tidy_test(
-    name = "zip_string_clang_tidy",
-    srcs = [":zip_string"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

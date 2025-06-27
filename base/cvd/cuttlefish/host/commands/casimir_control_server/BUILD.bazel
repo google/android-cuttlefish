@@ -1,17 +1,15 @@
 load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "casimir_control_server",
     srcs = [
         "main.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":libcasimir",
         ":libcasimir_control_server",
@@ -27,16 +25,7 @@ cc_binary(
     ],
 )
 
-clang_tidy_test(
-    name = "casimir_control_server_clang_tidy",
-    srcs = [":casimir_control_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "libcasimir",
     srcs = [
         "casimir_controller.cpp",
@@ -51,21 +40,10 @@ cc_library(
         "packet_runtime.h",
         "rf_packets.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
-    ],
-)
-
-clang_tidy_test(
-    name = "libcasimir_clang_tidy",
-    srcs = [":libcasimir"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
 

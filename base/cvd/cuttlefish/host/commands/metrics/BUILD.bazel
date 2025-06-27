@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "metrics",
     srcs = [
         "events.cc",
@@ -14,7 +13,6 @@ cc_binary(
         "host_receiver.h",
         "metrics.cc",
     ],
-    copts = COPTS,
     deps = [
         ":libmetrics_utils",
         "//cuttlefish/common/libs/fs",
@@ -35,16 +33,7 @@ cc_binary(
     ],
 )
 
-clang_tidy_test(
-    name = "metrics_clang_tidy",
-    srcs = [":metrics"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "libmetrics_utils",
     srcs = [
         "utils.cc",
@@ -52,7 +41,6 @@ cc_library(
     hdrs = [
         "utils.h",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
@@ -63,21 +51,11 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "libmetrics_utils_clang_tidy",
-    srcs = [":libmetrics_utils"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "metrics_test",
     srcs = [
         "unittest/utils_tests.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":libmetrics_utils",
         "@googletest//:gtest",

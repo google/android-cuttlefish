@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "snapshot_util_cvd",
     srcs = [
         "main.cc",
@@ -14,7 +13,6 @@ cc_binary(
         "snapshot_taker.cc",
         "snapshot_taker.h",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -31,14 +29,5 @@ cc_binary(
         "@fmt",
         "@gflags",
         "@protobuf",
-    ],
-)
-
-clang_tidy_test(
-    name = "snapshot_util_cvd_clang_tidy",
-    srcs = [":snapshot_util_cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

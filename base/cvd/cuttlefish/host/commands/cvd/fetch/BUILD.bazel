@@ -1,15 +1,14 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "build_api_flags",
     srcs = ["build_api_flags.cc"],
     hdrs = ["build_api_flags.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
@@ -21,16 +20,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "build_api_flags_clang_tidy",
-    srcs = [":build_api_flags"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "build_strings",
     srcs = ["build_strings.cc"],
     hdrs = ["build_strings.h"],
@@ -42,39 +32,19 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "build_strings_clang_tidy",
-    srcs = [":build_strings"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "credential_flags",
     srcs = ["credential_flags.cc"],
     hdrs = ["credential_flags.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
     ],
 )
 
-clang_tidy_test(
-    name = "credential_flags_clang_tidy",
-    srcs = [":credential_flags"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "de_android_sparse",
     srcs = ["de_android_sparse.cc"],
     hdrs = ["de_android_sparse.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator",
@@ -83,40 +53,20 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "de_android_sparse_clang_tidy",
-    srcs = [":de_android_sparse"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "download_flags",
     srcs = ["download_flags.cc"],
     hdrs = ["download_flags.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:get_optional",
     ],
 )
 
-clang_tidy_test(
-    name = "download_flags_clang_tidy",
-    srcs = [":download_flags"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "downloaders",
     srcs = ["downloaders.cc"],
     hdrs = ["downloaders.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
@@ -133,16 +83,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "downloaders_clang_tidy",
-    srcs = [":downloaders"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "downloaders_test",
     srcs = ["downloaders_test.cpp"],
     deps = [
@@ -158,20 +99,10 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "downloaders_test_clang_tidy",
-    srcs = [":downloaders_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "extract_image_contents",
     srcs = ["extract_image_contents.cc"],
     hdrs = ["extract_image_contents.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
@@ -179,16 +110,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "extract_image_contents_clang_tidy",
-    srcs = [":extract_image_contents"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "fetch_cvd",
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
@@ -222,20 +144,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "fetch_cvd_clang_tidy",
-    srcs = [":fetch_cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "fetch_cvd_parser",
     srcs = ["fetch_cvd_parser.cc"],
     hdrs = ["fetch_cvd_parser.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -246,16 +158,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "fetch_cvd_parser_clang_tidy",
-    srcs = [":fetch_cvd_parser"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "fetch_cvd_parser_test",
     srcs = ["fetch_cvd_parser_test.cpp"],
     deps = [
@@ -267,52 +170,22 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "fetch_cvd_parser_test_clang_tidy",
-    srcs = [":fetch_cvd_parser_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "fetch_tracer",
     srcs = ["fetch_tracer.cpp"],
     hdrs = ["fetch_tracer.h"],
-    copts = COPTS,
     deps = ["@fmt"],
 )
 
-clang_tidy_test(
-    name = "fetch_tracer_clang_tidy",
-    srcs = [":fetch_tracer"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "get_optional",
     hdrs = ["get_optional.h"],
-    copts = COPTS,
 )
 
-clang_tidy_test(
-    name = "get_optional_clang_tidy",
-    srcs = [":get_optional"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "host_package",
     srcs = ["host_package.cc"],
     hdrs = ["host_package.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
@@ -326,15 +199,6 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "host_package_clang_tidy",
-    srcs = [":host_package"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
 proto_library(
     name = "host_pkg_migration_proto",
     srcs = ["host_pkg_migration.proto"],
@@ -345,31 +209,20 @@ cc_proto_library(
     deps = [":host_pkg_migration_proto"],
 )
 
-cc_library(
+cf_cc_library(
     name = "host_tools_target",
     srcs = ["host_tools_target.cc"],
     hdrs = ["host_tools_target.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/web:android_build_string",
     ],
 )
 
-clang_tidy_test(
-    name = "host_tools_target_clang_tidy",
-    srcs = [":host_tools_target"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "substitute",
     srcs = ["substitute.cc"],
     hdrs = ["substitute.h"],
-    copts = COPTS,
     deps = [
         ":host_pkg_migration_cc_proto",
         "//cuttlefish/common/libs/utils:environment",
@@ -381,52 +234,23 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "substitute_clang_tidy",
-    srcs = [":substitute"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "target_directories",
     srcs = ["target_directories.cc"],
     hdrs = ["target_directories.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/commands/cvd/fetch:get_optional",
     ],
 )
 
-clang_tidy_test(
-    name = "target_directories_clang_tidy",
-    srcs = [":target_directories"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "vector_flags",
     srcs = ["vector_flags.cc"],
     hdrs = ["vector_flags.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
-    ],
-)
-
-clang_tidy_test(
-    name = "vector_flags_clang_tidy",
-    srcs = [":vector_flags"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

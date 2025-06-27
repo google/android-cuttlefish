@@ -1,4 +1,4 @@
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -14,7 +14,7 @@ cc_proto_library(
     deps = [":cvd_server_proto"],
 )
 
-cc_library(
+cf_cc_library(
     name = "legacy",
     srcs = [
         "client.cpp",
@@ -40,14 +40,5 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "@protobuf",
-    ],
-)
-
-clang_tidy_test(
-    name = "legacy_clang_tidy",
-    srcs = [":legacy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

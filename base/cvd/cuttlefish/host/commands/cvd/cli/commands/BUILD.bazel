@@ -1,4 +1,4 @@
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -18,7 +18,7 @@ exports_files([
     "load_configs.h",
 ])
 
-cc_library(
+cf_cc_library(
     name = "acloud_common",
     srcs = ["acloud_common.cpp"],
     hdrs = ["acloud_common.h"],
@@ -31,16 +31,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "acloud_common_clang_tidy",
-    srcs = [":acloud_common"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "acloud_mixsuperimage",
     srcs = ["acloud_mixsuperimage.cpp"],
     hdrs = ["acloud_mixsuperimage.h"],
@@ -57,16 +48,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "acloud_mixsuperimage_clang_tidy",
-    srcs = [":acloud_mixsuperimage"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "acloud_translator",
     srcs = ["acloud_translator.cpp"],
     hdrs = ["acloud_translator.h"],
@@ -80,16 +62,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "acloud_translator_clang_tidy",
-    srcs = [":acloud_translator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "bugreport",
     srcs = ["bugreport.cpp"],
     hdrs = ["bugreport.h"],
@@ -111,16 +84,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "bugreport_clang_tidy",
-    srcs = [":bugreport"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "cache",
     srcs = ["cache.cpp"],
     hdrs = ["cache.h"],
@@ -138,16 +102,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "cache_clang_tidy",
-    srcs = [":cache"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "clear",
     srcs = ["clear.cpp"],
     hdrs = ["clear.h"],
@@ -161,16 +116,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "clear_clang_tidy",
-    srcs = [":clear"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "command_handler",
     srcs = ["command_handler.cpp"],
     hdrs = ["command_handler.h"],
@@ -182,16 +128,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "command_handler_clang_tidy",
-    srcs = [":command_handler"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
@@ -212,16 +149,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "display_clang_tidy",
-    srcs = [":display"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "env",
     srcs = ["env.cpp"],
     hdrs = ["env.h"],
@@ -241,16 +169,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "env_clang_tidy",
-    srcs = [":env"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "fetch",
     srcs = ["fetch.cpp"],
     hdrs = ["fetch.h"],
@@ -270,16 +189,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "fetch_clang_tidy",
-    srcs = [":fetch"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "fleet",
     srcs = ["fleet.cpp"],
     hdrs = ["fleet.h"],
@@ -294,16 +204,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "fleet_clang_tidy",
-    srcs = [":fleet"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "host_tool_target",
     srcs = ["host_tool_target.cpp"],
     hdrs = ["host_tool_target.h"],
@@ -317,16 +218,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "host_tool_target_clang_tidy",
-    srcs = [":host_tool_target"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "lint",
     srcs = ["lint.cpp"],
     hdrs = ["lint.h"],
@@ -340,16 +232,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "lint_clang_tidy",
-    srcs = [":lint"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "login",
     srcs = ["login.cpp"],
     hdrs = ["login.h"],
@@ -369,16 +252,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "login_clang_tidy",
-    srcs = [":login"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "noop",
     srcs = ["noop.cpp"],
     hdrs = ["noop.h"],
@@ -391,16 +265,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "noop_clang_tidy",
-    srcs = [":noop"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "power_btn",
     srcs = ["power_btn.cpp"],
     hdrs = ["power_btn.h"],
@@ -416,16 +281,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "power_btn_clang_tidy",
-    srcs = [":power_btn"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "powerwash",
     srcs = ["powerwash.cpp"],
     hdrs = ["powerwash.h"],
@@ -442,16 +298,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "powerwash_clang_tidy",
-    srcs = [":powerwash"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "remove",
     srcs = ["remove.cpp"],
     hdrs = ["remove.h"],
@@ -468,16 +315,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "remove_clang_tidy",
-    srcs = [":remove"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "reset",
     srcs = ["reset.cpp"],
     hdrs = ["reset.h"],
@@ -495,16 +333,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "reset_clang_tidy",
-    srcs = [":reset"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "restart",
     srcs = ["restart.cpp"],
     hdrs = ["restart.h"],
@@ -521,16 +350,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "restart_clang_tidy",
-    srcs = [":restart"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "snapshot",
     srcs = ["snapshot.cpp"],
     hdrs = ["snapshot.h"],
@@ -550,16 +370,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "snapshot_clang_tidy",
-    srcs = [":snapshot"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "start",
     srcs = ["start.cpp"],
     hdrs = ["start.h"],
@@ -590,16 +401,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "start_clang_tidy",
-    srcs = [":start"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "status",
     srcs = ["status.cpp"],
     hdrs = ["status.h"],
@@ -619,16 +421,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "status_clang_tidy",
-    srcs = [":status"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "stop",
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
@@ -651,16 +444,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "stop_clang_tidy",
-    srcs = [":stop"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "try_acloud",
     srcs = ["try_acloud.cpp"],
     hdrs = ["try_acloud.h"],
@@ -677,16 +461,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "try_acloud_clang_tidy",
-    srcs = [":try_acloud"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "version",
     srcs = ["version.cpp"],
     hdrs = ["version.h"],
@@ -702,14 +477,5 @@ cc_library(
         "//cuttlefish/host/commands/cvd/version",
         "@fmt",
         "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "version_clang_tidy",
-    srcs = [":version"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

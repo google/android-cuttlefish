@@ -1,14 +1,12 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "cvd_internal_host_bugreport",
     srcs = ["main.cc"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
@@ -22,14 +20,5 @@ cc_binary(
         "@fmt",
         "@gflags",
         "@zlib",
-    ],
-)
-
-clang_tidy_test(
-    name = "cvd_internal_host_bugreport_clang_tidy",
-    srcs = [":cvd_internal_host_bugreport"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

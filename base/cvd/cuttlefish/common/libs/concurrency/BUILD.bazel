@@ -1,26 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "concurrency",
     hdrs = [
         "multiplexer.h",
         "semaphore.h",
         "thread_safe_queue.h",
-    ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-)
-
-clang_tidy_test(
-    name = "concurrency_clang_tidy",
-    srcs = [":concurrency"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

@@ -13,7 +13,6 @@ cc_library(
     hdrs = [
         "include/teeui/localization/ConfirmationUITranslations.h",
     ],
-    copts = COPTS,
     strip_include_prefix = "//teeui/libteeui/prebuilt/localization/include",
     deps = [
     ],

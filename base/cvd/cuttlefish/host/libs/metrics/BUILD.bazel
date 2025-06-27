@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "metrics",
     srcs = [
         "metrics_receiver.cc",
@@ -13,8 +12,6 @@ cc_library(
     hdrs = [
         "metrics_receiver.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":metrics_headers",
         "//cuttlefish/common/libs/fs",
@@ -28,30 +25,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "metrics_clang_tidy",
-    srcs = [":metrics"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "metrics_headers",
     hdrs = [
         "metrics_configs.h",
         "metrics_defs.h",
-    ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-)
-
-clang_tidy_test(
-    name = "metrics_headers_clang_tidy",
-    srcs = [":metrics_headers"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

@@ -1,50 +1,27 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "oemlock",
     srcs = ["oemlock.cpp"],
     hdrs = ["oemlock.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env/storage",
     ],
 )
 
-clang_tidy_test(
-    name = "oemlock_clang_tidy",
-    srcs = [":oemlock"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "oemlock_responder",
     srcs = ["oemlock_responder.cpp"],
     hdrs = ["oemlock_responder.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/security:oemlock",
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env/oemlock",
-    ],
-)
-
-clang_tidy_test(
-    name = "oemlock_responder_clang_tidy",
-    srcs = [":oemlock_responder"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

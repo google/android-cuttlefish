@@ -1,5 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -7,7 +7,7 @@ package(
 
 ALLOW_C = ["-Wno-module-import-in-extern-c"]
 
-cc_library(
+cf_cc_library(
     name = "adb_connector",
     srcs = ["adb_connector.cpp"],
     copts = COPTS + ALLOW_C,
@@ -20,16 +20,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "adb_connector_clang_tidy",
-    srcs = [":adb_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "assemble_cvd",
     srcs = ["assemble_cvd.cpp"],
     copts = COPTS + ALLOW_C,
@@ -42,16 +33,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "assemble_cvd_clang_tidy",
-    srcs = [":assemble_cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "avbtool",
     srcs = ["avbtool.cpp"],
     copts = COPTS + ALLOW_C,
@@ -65,16 +47,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "avbtool_clang_tidy",
-    srcs = [":avbtool"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "baseline",
     srcs = ["baseline.cpp"],
     copts = COPTS + ALLOW_C,
@@ -87,16 +60,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "baseline_clang_tidy",
-    srcs = [":baseline"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "casimir",
     srcs = ["casimir.cpp"],
     copts = COPTS + ALLOW_C,
@@ -108,16 +72,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "casimir_clang_tidy",
-    srcs = [":casimir"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "casimir_control_server",
     srcs = ["casimir_control_server.cpp"],
     copts = COPTS + ALLOW_C,
@@ -129,16 +84,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "casimir_control_server_clang_tidy",
-    srcs = [":casimir_control_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "cf_vhost_user_input",
     srcs = ["cf_vhost_user_input.cpp"],
     copts = COPTS + ALLOW_C,
@@ -151,16 +97,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "cf_vhost_user_input_clang_tidy",
-    srcs = [":cf_vhost_user_input"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "control_env_proxy_server",
     srcs = ["control_env_proxy_server.cpp"],
     copts = COPTS + ALLOW_C,
@@ -172,16 +109,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "control_env_proxy_server_clang_tidy",
-    srcs = [":control_env_proxy_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "cvd_internal_start",
     srcs = ["cvd_internal_start.cpp"],
     copts = COPTS + ALLOW_C,
@@ -193,16 +121,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "cvd_internal_start_clang_tidy",
-    srcs = [":cvd_internal_start"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "echo_server",
     srcs = ["echo_server.cpp"],
     copts = COPTS + ALLOW_C,
@@ -214,16 +133,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "echo_server_clang_tidy",
-    srcs = [":echo_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "gnss_grpc_proxy",
     srcs = ["gnss_grpc_proxy.cpp"],
     copts = COPTS + ALLOW_C,
@@ -235,16 +145,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "gnss_grpc_proxy_clang_tidy",
-    srcs = [":gnss_grpc_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "kernel_log_monitor",
     srcs = ["kernel_log_monitor.cpp"],
     copts = COPTS + ALLOW_C,
@@ -255,16 +156,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "kernel_log_monitor_clang_tidy",
-    srcs = [":kernel_log_monitor"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "log_tee",
     srcs = ["log_tee.cpp"],
     copts = COPTS + ALLOW_C,
@@ -275,16 +167,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "log_tee_clang_tidy",
-    srcs = [":log_tee"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "logcat_receiver",
     srcs = ["logcat_receiver.cpp"],
     copts = COPTS + ALLOW_C,
@@ -295,16 +178,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "logcat_receiver_clang_tidy",
-    srcs = [":logcat_receiver"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "metrics",
     srcs = ["metrics.cpp"],
     copts = COPTS + ALLOW_C,
@@ -316,16 +190,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "metrics_clang_tidy",
-    srcs = [":metrics"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "mkenvimage_slim",
     srcs = ["mkenvimage_slim.cpp"],
     copts = COPTS + ALLOW_C,
@@ -336,16 +201,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "mkenvimage_slim_clang_tidy",
-    srcs = [":mkenvimage_slim"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "modem_simulator",
     srcs = ["modem_simulator.cpp"],
     copts = COPTS + ALLOW_C,
@@ -358,16 +214,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "modem_simulator_clang_tidy",
-    srcs = [":modem_simulator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "netsimd",
     srcs = ["netsimd.cpp"],
     copts = COPTS + ALLOW_C,
@@ -381,16 +228,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "netsimd_clang_tidy",
-    srcs = [":netsimd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "newfs_msdos",
     srcs = ["newfs_msdos.cpp"],
     copts = COPTS + ALLOW_C,
@@ -401,16 +239,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "newfs_msdos_clang_tidy",
-    srcs = [":newfs_msdos"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "no_policy",
     srcs = ["no_policy.cpp"],
     copts = COPTS + ALLOW_C,
@@ -420,16 +249,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "no_policy_clang_tidy",
-    srcs = [":no_policy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "openwrt_control_server",
     srcs = ["openwrt_control_server.cpp"],
     copts = COPTS + ALLOW_C,
@@ -442,16 +262,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "openwrt_control_server_clang_tidy",
-    srcs = [":openwrt_control_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "operator_proxy",
     srcs = ["operator_proxy.cpp"],
     copts = COPTS + ALLOW_C,
@@ -463,16 +274,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "operator_proxy_clang_tidy",
-    srcs = [":operator_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "process_restarter",
     srcs = ["process_restarter.cpp"],
     copts = COPTS + ALLOW_C,
@@ -484,16 +286,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "process_restarer_clang_tidy",
-    srcs = [":process_restarter"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "run_cvd",
     srcs = ["run_cvd.cpp"],
     copts = COPTS + ALLOW_C,
@@ -507,16 +300,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "run_cvd_clang_tidy",
-    srcs = [":run_cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "screen_recording_server",
     srcs = ["screen_recording_server.cpp"],
     copts = COPTS + ALLOW_C,
@@ -528,16 +312,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "screen_recording_server_clang_tidy",
-    srcs = [":screen_recording_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "secure_env",
     srcs = ["secure_env.cpp"],
     copts = COPTS + ALLOW_C,
@@ -548,16 +323,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "secure_env_clang_tidy",
-    srcs = [":secure_env"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "simg2img",
     srcs = ["simg2img.cpp"],
     copts = COPTS + ALLOW_C,
@@ -569,16 +335,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "simg2img_clang_tidy",
-    srcs = [":simg2img"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "socket_vsock_proxy",
     srcs = ["socket_vsock_proxy.cpp"],
     copts = COPTS + ALLOW_C,
@@ -591,16 +348,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "socket_vsock_proxy_clang_tidy",
-    srcs = [":socket_vsock_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "tcp_connector",
     srcs = ["tcp_connector.cpp"],
     copts = COPTS + ALLOW_C,
@@ -613,16 +361,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "tcp_connector_clang_tidy",
-    srcs = [":tcp_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "tombstone_receiver",
     srcs = ["tombstone_receiver.cpp"],
     copts = COPTS + ALLOW_C,
@@ -634,16 +373,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "tombstone_receiver_clang_tidy",
-    srcs = [":tombstone_receiver"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "vhost_device_vsock",
     srcs = ["vhost_device_vsock.cpp"],
     copts = COPTS + ALLOW_C,
@@ -655,16 +385,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "vhost_device_vsock_clang_tidy",
-    srcs = [":vhost_device_vsock"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "webrtc",
     srcs = ["webrtc.cpp"],
     copts = COPTS + ALLOW_C,
@@ -678,16 +399,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "webrtc_clang_tidy",
-    srcs = [":webrtc"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "webrtc_operator",
     srcs = ["webrtc_operator.cpp"],
     copts = COPTS + ALLOW_C,
@@ -701,16 +413,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "webrtc_operator_clang_tidy",
-    srcs = [":webrtc"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "wmediumd",
     srcs = ["wmediumd.cpp"],
     copts = COPTS + ALLOW_C,
@@ -723,16 +426,7 @@ cc_library(
     alwayslink = True,
 )
 
-clang_tidy_test(
-    name = "wmediumd_clang_tidy",
-    srcs = [":wmediumd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "wmediumd_gen_config",
     srcs = ["wmediumd_gen_config.cpp"],
     copts = COPTS + ALLOW_C,
@@ -744,13 +438,4 @@ cc_library(
         "@sandboxed_api//sandboxed_api/util:file_base",
     ],
     alwayslink = True,
-)
-
-clang_tidy_test(
-    name = "wmediumd_gen_config_clang_tidy",
-    srcs = [":wmediumd_gen_config"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
 )

@@ -1,15 +1,13 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "cas_downloader",
     srcs = ["cas_downloader.cpp"],
     hdrs = ["cas_downloader.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
@@ -23,19 +21,9 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "cas_downloader_clang_tidy",
-    srcs = [":cas_downloader"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "cas_downloader_test",
     srcs = ["cas_downloader_test.cpp"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -50,32 +38,13 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "cas_downloader_test_clang_tidy",
-    srcs = [":cas_downloader_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "cas_flags",
     srcs = ["cas_flags.cc"],
     hdrs = ["cas_flags.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "cas_flags_clang_tidy",
-    srcs = [":cas_flags"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

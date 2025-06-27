@@ -1,5 +1,5 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -15,7 +15,7 @@ cc_proto_library(
     deps = [":load_config_proto"],
 )
 
-cc_library(
+cf_cc_library(
     name = "configs_common",
     srcs = ["cf_configs_common.cpp"],
     hdrs = ["cf_configs_common.h"],
@@ -29,16 +29,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "configs_common_clang_tidy",
-    srcs = [":configs_common"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "parser",
     srcs = [
         "cf_configs_instances.cpp",
@@ -79,16 +70,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "parser_clang_tidy",
-    srcs = [":parser"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "parser_test",
     srcs = [
         "configs_inheritance_test.cc",
@@ -113,33 +95,14 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "parser_test_clang_tidy",
-    srcs = [":parser_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "test_common",
     testonly = True,
     srcs = ["test_common.cc"],
     hdrs = ["test_common.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/parser",
         "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "test_common_clang_tidy",
-    srcs = [":test_common"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

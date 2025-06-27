@@ -1,6 +1,5 @@
 load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -27,12 +26,11 @@ cc_grpc_library(
     ],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "openwrt_control_server",
     srcs = [
         "main.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":libopenwrt_control_server",
         "//cuttlefish/common/libs/utils:files",
@@ -47,14 +45,5 @@ cc_binary(
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
         "@protobuf//:empty_cc_proto",
-    ],
-)
-
-clang_tidy_test(
-    name = "openwrt_control_server_clang_tidy",
-    srcs = [":openwrt_control_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
