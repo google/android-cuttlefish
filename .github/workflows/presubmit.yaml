@@ -304,7 +304,7 @@ jobs:
       shell: bash
       run: |
         tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
-        ./docker/image-builder.sh -m prebuilt
+        ./docker/image-builder.sh -m dev
         docker images
         sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
         # Wait for HO service to start.

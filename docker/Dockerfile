@@ -5,24 +5,6 @@
 ARG BUILD_OPTION=prod
 
 
-FROM debian:12 AS host-package-builder
-
-USER root
-WORKDIR /root
-RUN set -x
-RUN apt update
-RUN apt install -y --no-install-recommends \
-    apt-utils \
-    curl \
-    devscripts \
-    equivs \
-    sudo
-
-# Build CF debian packages
-COPY . /root/android-cuttlefish
-RUN ["/bin/bash", "-c", "/root/android-cuttlefish/tools/buildutils/build_packages.sh"]
-
-
 FROM debian:12 AS runner-base
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
@@ -54,8 +36,7 @@ RUN chmod +x /root/run_services.sh
 
 FROM runner-base AS runner-dev
 
-# Install CF debian packages.
-COPY --from=host-package-builder /root/android-cuttlefish/cuttlefish-*.deb /root/debian/
+COPY cuttlefish-*.deb /root/debian/
 RUN apt install -y --no-install-recommends -f \
     /root/debian/cuttlefish-base_*.deb \
     /root/debian/cuttlefish-user_*.deb \
@@ -73,15 +54,6 @@ RUN echo "deb https://artifacts.codelinaro.org/linaro-372-googlelt-gigabyte-ampe
 RUN apt update
 RUN apt install -y --no-install-recommends \
     cuttlefish-base cuttlefish-user cuttlefish-orchestration
-
-
-FROM runner-base AS runner-prebuilt
-
-COPY cuttlefish-*.deb /root/debian/
-RUN apt install -y --no-install-recommends -f \
-    /root/debian/cuttlefish-base_*.deb \
-    /root/debian/cuttlefish-user_*.deb \
-    /root/debian/cuttlefish-orchestration_*.deb
 
 
 FROM runner-${BUILD_OPTION} AS runner
