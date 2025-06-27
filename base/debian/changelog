@@ -1,8 +1,36 @@
-cuttlefish-common (1.14.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.14.0) unstable; urgency=medium
 
-  * 
+  * Being development of version 1.14 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1307
+  * sensors_hal_proxy: Only report continous mode sensors by @chihchiachen in https://github.com/google/android-cuttlefish/pull/1298
+  * Fix memory leak in zip_cc.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1308
+  * Remove build_package() function from build_packages.sh by @k311093 in https://github.com/google/android-cuttlefish/pull/1315
+  * Bump version on `aspect_rules_lint`. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1319
+  * Create a type to represent misc.img creation by @Databean in https://github.com/google/android-cuttlefish/pull/1282
+  * Update README to match refactor. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1317
+  * Use bazel cache mechanism for GitHub workflow, Kokoro by @k311093 in https://github.com/google/android-cuttlefish/pull/1313
+  * Build macros by @Databean in https://github.com/google/android-cuttlefish/pull/1310
+  * Bring nasm into bazel, since libvpx requires it. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1316
+  * Use build macros in //cuttlefish/host/libs/web/http_client by @Databean in https://github.com/google/android-cuttlefish/pull/1328
+  * Add types to represent the `--system_image_dir` and `--use_16k` flags. by @Databean in https://github.com/google/android-cuttlefish/pull/1320
+  * Remove gflags parsing from the `ParseGflags` feature by @Databean in https://github.com/google/android-cuttlefish/pull/1330
+  * Create bazel cache from scratch at regular intervals by @k311093 in https://github.com/google/android-cuttlefish/pull/1324
+  * Add default value for remote_cache_arg and cache_version_arg by @k311093 in https://github.com/google/android-cuttlefish/pull/1332
+  * Add github.event_name at bazel cache key while creating cache by @k311093 in https://github.com/google/android-cuttlefish/pull/1333
+  * Remove TODO that was fixed by @k311093 in https://github.com/google/android-cuttlefish/pull/1334
+  * Remove build-only deps for nasm. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1325
+  * libzip C++ wrapper: More types, minus ZipBuilder by @Databean in https://github.com/google/android-cuttlefish/pull/1300
+  * Separate flag defines for `cvd_internal_start` and `assemble_cvd` by @cjreynol in https://github.com/google/android-cuttlefish/pull/1331
+  * Use build macros in `//cuttlefish/host/libs/web` by @Databean in https://github.com/google/android-cuttlefish/pull/1329
+  * Use build macros in `//cuttlefish/host/commands/assemble_cvd/disk` by @Databean in https://github.com/google/android-cuttlefish/pull/1338
+  * Use build macros in part of `//cuttlefish/host/libs/...` by @Databean in https://github.com/google/android-cuttlefish/pull/1339
+  * Docker image doesn't support building deb packages inside anymore. by @0405ysj in https://github.com/google/android-cuttlefish/pull/1341
+  * Use nasm with bazel deps while building libvpx by @k311093 in https://github.com/google/android-cuttlefish/pull/1340
+  * Migrate from `cc_*` to `cf_cc_*` by @Databean in https://github.com/google/android-cuttlefish/pull/1344
+  * Import ag/34252503 by @Databean in https://github.com/google/android-cuttlefish/pull/1345
+  * Validate build files in presubmit by @Databean in https://github.com/google/android-cuttlefish/pull/1346
+  * Import ag/33519567 and ag/34111965 by @Databean in https://github.com/google/android-cuttlefish/pull/1347
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 20 Jun 2025 15:41:47 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 27 Jun 2025 16:28:45 -0700
 
 cuttlefish-common (1.13.0) stable; urgency=medium
 
