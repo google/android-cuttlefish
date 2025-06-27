@@ -1,0 +1,3 @@
+service vendor.secure_element /apex/com.android.hardware.secure_element/bin/hw/android.hardware.secure_element-service.jcardsim
+    class early_hal
+    user secure_element
