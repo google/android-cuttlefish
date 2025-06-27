@@ -14,6 +14,61 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  buildozer:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Install go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.23.1'
+    - name: Install buildozer
+      run: go install github.com/bazelbuild/buildtools/buildozer@latest
+    - name: Validate formatting
+      working-directory: base/cvd
+      if: '!cancelled()'
+      run: |
+        if [[ $(buildozer '//...:__pkg__' format 2>&1) ]]; then
+          echo "Please format BUILD.bazel files with \"buildozer '//...:__pkg__' format\"";
+          exit 1;
+        fi
+    - name: Validate no cc_binary targets under //cuttlefish
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer print '//cuttlefish/...:%cc_binary') ]]; then
+          buildozer print '//cuttlefish/...:%cc_binary'
+          echo "Please use cf_cc_binary rather than cc_binary";
+          exit 1;
+        fi
+    - name: Validate no cc_library targets under //cuttlefish
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer print '//cuttlefish/...:%cc_library') ]]; then
+          buildozer print '//cuttlefish/...:%cc_library'
+          echo "Please use cf_cc_library rather than cc_library";
+          exit 1;
+        fi
+    - name: Validate no cc_test targets under //cuttlefish
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer print '//cuttlefish/...:%cc_test') ]]; then
+          buildozer print '//cuttlefish/...:%cc_test'
+          echo "Please use cf_cc_test rather than cc_test";
+          exit 1;
+        fi;
+    - name: Validate no unused loads
+      if: '!cancelled()'
+      working-directory: base/cvd
+      run: |
+        if [[ $(buildozer -stdout=true '//...:__pkg__' 'fix unusedLoads') ]]; then
+          buildozer '//...:__pkg__' 'fix unusedLoads'
+          echo "Please remove unused 'load' statements with \"buildozer '//...:__pkg__' 'fix unusedLoads'\"";
+          exit 1;
+        fi
   staticcheck:
     runs-on: ubuntu-22.04
     strategy:
