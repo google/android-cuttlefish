@@ -18,20 +18,24 @@ jobs:
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
-      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
+      run: apt install -y git clang libcurl4-openssl-dev clang-tidy libtinfo5 xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool yq
     - name: Install bazel
       run: bash tools/buildutils/installbazel.sh
     - name: Load cache config
-      run: cat .config/cache-config.env >> $GITHUB_ENV
+      run: |
+        cat .config/cache-config.env >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq .jobs[\"run-cvd-unit-tests\"] .github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+    - name: Generate cache key prefix
+      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache@v4
       with:
         path: "~/bazel-disk-cache"
-        key: ${{ format('{0}-{1}-bazel-disk-cache-{2}-unit-test-{3}-{4}-{5}', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name, github.sha, github.event_name) }}
+        key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
         restore-keys: |
-          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-unit-test-{3}-', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name) || '' }}
-          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-unit-test-main-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
-          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-unit-test-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}
     - name: Run unit tests
       run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
   update-debian-package-bazel-cache:
@@ -42,9 +46,11 @@ jobs:
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
     - name: setup apt
-      run: apt update -y && apt upgrade -y
-    - name: install debuild dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler nasm
+      run: |
+        echo 'deb http://deb.debian.org/debian bullseye-backports main' | tee /etc/apt/sources.list.d/backports.list
+        apt update -y && apt upgrade -y
+    - name: install dependencies
+      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler yq
     - name: go version
       run: go version
     - name: checkout repository
@@ -54,16 +60,20 @@ jobs:
     - name: install bazel
       run: bash android-cuttlefish/tools/buildutils/installbazel.sh
     - name: Load cache config
-      run: cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
+      run: |
+        cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq .jobs[\"build-debian-package\"] android-cuttlefish/.github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+    - name: Generate cache key prefix
+      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache@v4
       with:
         path: "~/bazel-disk-cache"
-        key: ${{ format('{0}-{1}-bazel-disk-cache-{2}-debian-package-{3}-{4}-{5}', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name, github.sha, github.event_name) }}
+        key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
         restore-keys: |
-          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-debian-package-{3}-', runner.os, runner.arch, env.CACHE_VERSION, github.ref_name) || '' }}
-          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-debian-package-main-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
-          ${{ github.event_name == 'push' && format('{0}-{1}-bazel-disk-cache-{2}-debian-package-', runner.os, runner.arch, env.CACHE_VERSION) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
+          ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}
     - name: install package build dependencies
       run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
     - name: build base debian package
