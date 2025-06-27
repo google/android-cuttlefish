@@ -64,7 +64,8 @@ class VmManager {
   // - /dev/hvc14 = MCU control
   // - /dev/hvc15 = MCU UART
   // - /dev/hvc16 = Ti50 TPM FIFO
-  static const int kDefaultNumHvcs = 17;
+  // - /dev/hvc17 = jcardsimulator
+  static const int kDefaultNumHvcs = 18;
 
   // This is the number of virtual disks (block devices) that should be
   // configured by the VmManager. Related to the description above regarding

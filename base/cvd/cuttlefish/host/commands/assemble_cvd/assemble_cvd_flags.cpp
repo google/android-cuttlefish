@@ -424,6 +424,10 @@ DEFINE_vec(enable_audio, fmt::format("{}", CF_DEFAULTS_ENABLE_AUDIO),
 DEFINE_vec(enable_usb, fmt::format("{}", CF_DEFAULTS_ENABLE_USB),
            "Whether to allow USB passthrough on the device");
 
+DEFINE_vec(enable_jcard_simulator,
+           fmt::format("{}", CF_DEFAULTS_ENABLE_JCARD_SIMULATOR),
+           "Whether to allow host jcard simulator on the device");
+
 DEFINE_vec(camera_server_port, std::to_string(CF_DEFAULTS_CAMERA_SERVER_PORT),
               "camera vsock port");
 

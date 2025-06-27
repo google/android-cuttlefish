@@ -191,6 +191,8 @@ DECLARE_vec(mte);
 
 DECLARE_vec(enable_audio);
 
+DECLARE_vec(enable_jcard_simulator);
+
 DECLARE_vec(enable_usb);
 
 DECLARE_vec(camera_server_port);

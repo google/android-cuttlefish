@@ -656,6 +656,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
+  if (instance.enable_jcard_simulator()) {
+    // /dev/hvc17 = keymint (jcardsim implementation)
+    add_hvc(instance.PerInstanceInternalPath("jcardsim_fifo_vm"));
+  } else {
+    add_hvc_sink();
+  }
+
   auto disk_num = instance.virtual_disk_paths().size();
 
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
