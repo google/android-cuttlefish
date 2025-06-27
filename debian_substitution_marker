@@ -55,6 +55,11 @@ symlinks {
   link_name: "bin/cvd_send_id_disclosure"
 }
 
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_update_location"
+  link_name: "bin/cvd_update_location"
+}
+
 symlinks {
   target: "/usr/lib/cuttlefish-common/bin/cvd_update_security_algorithm"
   link_name: "bin/cvd_update_security_algorithm"
