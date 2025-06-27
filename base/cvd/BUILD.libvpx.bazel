@@ -20,7 +20,7 @@ genrule(
         "AS_PATH=$$(dirname $$(realpath $(location @nasm)))",
         "cd `dirname $(location configure)`",
         "env PATH=$$AS_PATH:$$PATH ./configure",
-        "make",
+        "env PATH=$$AS_PATH:$$PATH make",
         "cp libvpx.a $$INITIAL_WD/$(RULEDIR)",
     ]),
     visibility = ["//visibility:private"],
