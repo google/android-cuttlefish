@@ -206,6 +206,21 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
           ? "com.android.hardware.gatekeeper.nonsecure"
           : "com.android.hardware.gatekeeper.cf_remote";
 
+  // jcardsimulator
+  if (secure_hals.count(SecureHal::kGuestStrongboxInsecure)) {
+    bootconfig_args
+        ["androidboot.vendor.apex.com.android.hardware.secure_element"] =
+            "com.android.hardware.secure_element_jcardsim";
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.strongbox"] =
+        "com.android.hardware.strongbox";
+  } else {
+    bootconfig_args
+        ["androidboot.vendor.apex.com.android.hardware.secure_element"] =
+            "com.android.hardware.secure_element";
+    bootconfig_args["androidboot.vendor.apex.com.android.hardware.strongbox"] =
+        "none";
+  }
+
   bootconfig_args
       ["androidboot.vendor.apex.com.android.hardware.graphics.composer"] =
           instance.hwcomposer() == kHwComposerDrm

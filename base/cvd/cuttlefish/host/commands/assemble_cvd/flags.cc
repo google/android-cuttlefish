@@ -895,6 +895,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(vhost_user_vsock));
   std::vector<std::string> ril_dns_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(ril_dns));
+  std::vector<bool> enable_jcard_simulator_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_jcard_simulator));
 
   // At this time, FLAGS_enable_sandbox comes from SetDefaultFlagsForCrosvm
   std::vector<bool> enable_sandbox_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
@@ -1170,6 +1172,25 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_audio_output_streams_count(
         guest_configs[instance_index].output_audio_streams_count);
+
+    // jcardsim
+    instance.set_enable_jcard_simulator(
+        enable_jcard_simulator_vec[instance_index]);
+
+    if (enable_jcard_simulator_vec[instance_index]) {
+      const auto& secure_hals = CF_EXPECT(tmp_config_obj.secure_hals());
+      if (0 == secure_hals.count(SecureHal::kGuestStrongboxInsecure)) {
+        // When the enable_jcard_simulator flag is enabled, include the keymint
+        // and secure_element hals, which interact with jcard simulator.
+        static constexpr char kDefaultSecure[] =
+            "oemlock,guest_keymint_insecure,guest_gatekeeper_insecure,guest_"
+            "strongbox_insecure";
+
+        auto secure_hals = CF_EXPECT(ParseSecureHals(kDefaultSecure));
+        CF_EXPECT(ValidateSecureHals(secure_hals));
+        tmp_config_obj.set_secure_hals(secure_hals);
+      }
+    }
 
     if (vhost_user_vsock_vec[instance_index] == kVhostUserVsockModeAuto) {
       std::set<Arch> default_on_arch = {Arch::Arm64};

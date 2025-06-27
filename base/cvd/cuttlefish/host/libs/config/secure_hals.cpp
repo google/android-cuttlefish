@@ -51,6 +51,7 @@ NoDestructor<std::unordered_map<std::string_view, SecureHal>> kMapping([] {
       {"oemlock", SecureHal::kHostOemlockSecure},
       {"host_oemlock_secure", SecureHal::kHostOemlockSecure},
       {"host_secure_oemlock", SecureHal::kHostOemlockSecure},
+      {"guest_strongbox_insecure", SecureHal::kGuestStrongboxInsecure},
   };
 }());
 
@@ -115,6 +116,8 @@ std::string ToString(SecureHal hal_in) {
       return "host_oemlock_insecure";
     case SecureHal::kHostOemlockSecure:
       return "host_oemlock_secure";
+    case SecureHal::kGuestStrongboxInsecure:
+      return "guest_strongbox_insecure";
   }
 }
 
