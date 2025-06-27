@@ -1,6 +1,6 @@
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
-load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -20,11 +20,11 @@ cc_proto_library(
 cc_grpc_library(
     name = "libcontrol_env_proxy_server",
     srcs = [":control_env_proxy_server_proto"],
+    grpc_only = True,
     deps = [
         ":control_env_proxy_server_cc_proto",
         "@grpc//:grpc++",
     ],
-    grpc_only = True,
 )
 
 cc_binary(
@@ -38,15 +38,18 @@ cc_binary(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/control_env",
         "@gflags",
-        "@jsoncpp",
-        "@grpc//:grpc",
+        "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
+        "@jsoncpp",
     ],
 )
 
 clang_tidy_test(
     name = "control_env_proxy_server_clang_tidy",
     srcs = [":control_env_proxy_server"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

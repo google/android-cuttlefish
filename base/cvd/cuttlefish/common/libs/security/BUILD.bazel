@@ -8,23 +8,26 @@ package(
 cc_library(
     name = "confui_sign",
     srcs = [
-      "confui_sign.cpp",
+        "confui_sign.cpp",
     ],
     hdrs = [
-      "confui_sign.h",
+        "confui_sign.h",
     ],
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-      "//cuttlefish/common/libs/fs",
-      "//libbase",
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
     ],
 )
 
 clang_tidy_test(
     name = "confui_sign_clang_tidy",
     srcs = [":confui_sign"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -37,5 +40,8 @@ cc_library(
 clang_tidy_test(
     name = "oemlock_clang_tidy",
     srcs = [":oemlock"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

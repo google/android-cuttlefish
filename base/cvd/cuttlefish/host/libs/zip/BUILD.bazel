@@ -24,7 +24,10 @@ cc_library(
 clang_tidy_test(
     name = "remote_zip_clang_tidy",
     srcs = [":remote_zip"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_test(
@@ -48,7 +51,10 @@ cc_test(
 clang_tidy_test(
     name = "remote_zip_test_clang_tidy",
     srcs = [":remote_zip_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -56,10 +62,10 @@ cc_library(
     srcs = ["zip_cc.cc"],
     hdrs = ["zip_cc.h"],
     copts = COPTS,
+    features = ["-layering_check"],  # libzip
+    linkopts = ["-llzma"],  # libzip
+    linkstatic = True,  # libzip
     strip_include_prefix = "//cuttlefish",
-    features = ["-layering_check"], # libzip
-    linkopts = ["-llzma"], # libzip
-    linkstatic = True, # libzip
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "@libzip",
@@ -70,7 +76,10 @@ cc_library(
 clang_tidy_test(
     name = "zip_cc_clang_tidy",
     srcs = [":zip_cc"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -89,7 +98,10 @@ cc_library(
 clang_tidy_test(
     name = "zip_file_clang_tidy",
     srcs = [":zip_file"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -105,5 +117,8 @@ cc_library(
 clang_tidy_test(
     name = "zip_string_clang_tidy",
     srcs = [":zip_string"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

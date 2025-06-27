@@ -33,5 +33,8 @@ cc_binary(
 clang_tidy_test(
     name = "socket_vsock_proxy_clang_tidy",
     srcs = [":socket_vsock_proxy"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

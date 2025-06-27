@@ -54,7 +54,7 @@ cc_library(
         "@fmt",
         "@fruit",
         "@jsoncpp",
-        "@vulkan_headers//:vulkan_headers",
+        "@vulkan_headers",
         "@vulkan_headers//:vulkan_hpp",
     ],
 )
@@ -62,5 +62,8 @@ cc_library(
 clang_tidy_test(
     name = "vm_manager_clang_tidy",
     srcs = [":vm_manager"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

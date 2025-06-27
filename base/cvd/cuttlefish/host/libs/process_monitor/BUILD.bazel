@@ -30,5 +30,8 @@ cc_library(
 clang_tidy_test(
     name = "process_monitor_clang_tidy",
     srcs = [":process_monitor"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

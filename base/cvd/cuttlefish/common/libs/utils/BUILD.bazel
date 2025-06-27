@@ -110,12 +110,12 @@ cf_cc_library(
 
 cf_cc_library(
     name = "files_test_helper",
+    testonly = 1,
     srcs = ["files_test_helper.cpp"],
     hdrs = ["files_test_helper.h"],
-    testonly = 1,
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "@googletest//:gtest"
+        "@googletest//:gtest",
     ],
 )
 
@@ -148,6 +148,9 @@ cf_cc_library(
 cf_cc_test(
     name = "flag_parser_test",
     srcs = ["flag_parser_test.cpp"],
+    # `layering_check` conflicts with the combination of the clang prebuilt and
+    # the cmake build rules used for @libxml2.
+    features = ["-layering_check"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -156,11 +159,8 @@ cf_cc_test(
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-        "@libxml2//:libxml2",
+        "@libxml2",
     ],
-    # `layering_check` conflicts with the combination of the clang prebuilt and
-    # the cmake build rules used for @libxml2.
-    features = ["-layering_check"],
 )
 
 cf_cc_library(
@@ -169,7 +169,7 @@ cf_cc_library(
     hdrs = ["flags_validator.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-    ]
+    ],
 )
 
 cf_cc_library(
@@ -225,8 +225,8 @@ cf_cc_library(
     hdrs = ["proc_file_utils.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
         "//libbase",
         "@fmt",
     ],
@@ -237,8 +237,8 @@ cf_cc_test(
     srcs = ["proc_file_utils_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:proc_file_utils",
+        "//cuttlefish/common/libs/utils:result",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -284,10 +284,10 @@ cf_cc_test(
 
 cf_cc_library(
     name = "result_matchers",
+    testonly = 1,
     hdrs = [
         "result_matchers.h",
     ],
-    testonly = 1,
     deps = [
         ":result",
         "//libbase",
@@ -322,7 +322,7 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    clang_tidy_enabled = False, # TODO: b/414665224 - fix and enable linting
+    clang_tidy_enabled = False,  # TODO: b/414665224 - fix and enable linting
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
@@ -348,7 +348,7 @@ cf_cc_library(
     hdrs = ["tcp_socket.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//libbase"
+        "//libbase",
     ],
 )
 
@@ -430,7 +430,7 @@ cf_cc_library(
     name = "vsock_connection",
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
-    clang_tidy_enabled = False, # TODO: b/403278821 - fix warnings and re-enable after migration work
+    clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",

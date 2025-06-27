@@ -5,6 +5,7 @@ package(
 cc_binary(
     name = "fec",
     srcs = [
+        "libcrypto_utils/include/crypto_utils/android_pubkey.h",
         "libfec/avb_utils.cpp",
         "libfec/avb_utils.h",
         "libfec/fec_open.cpp",
@@ -14,18 +15,11 @@ cc_binary(
         "libfec/fec_verity.cpp",
         "libfec/include/fec/ecc.h",
         "libfec/include/fec/io.h",
-        "libcrypto_utils/include/crypto_utils/android_pubkey.h",
         "libutils/include/utils/Compat.h",
         "squashfs_utils/squashfs_utils.h",
         "verity/fec/image.cpp",
         "verity/fec/image.h",
         "verity/fec/main.cpp",
-    ],
-    includes = [
-        "libcrypto_utils/include",
-        "libfec/include",
-        "libutils/include",
-        "squashfs_utils",
     ],
     copts = [
         "-DFEC_NO_KLOG",
@@ -33,12 +27,18 @@ cc_binary(
         "-Wno-private-header",
         "-Wno-vla-cxx-extension",
     ],
+    includes = [
+        "libcrypto_utils/include",
+        "libfec/include",
+        "libutils/include",
+        "squashfs_utils",
+    ],
     deps = [
-        "@avb//:libavb",
-        "@boringssl//:crypto",
-        "@fec_rs//:libfec_rs",
         "//libbase",
         "//libext4_utils",
         "//libsparse",
+        "@avb//:libavb",
+        "@boringssl//:crypto",
+        "@fec_rs//:libfec_rs",
     ],
 )

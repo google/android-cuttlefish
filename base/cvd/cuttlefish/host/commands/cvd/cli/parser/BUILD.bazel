@@ -32,7 +32,10 @@ cc_library(
 clang_tidy_test(
     name = "configs_common_clang_tidy",
     srcs = [":configs_common"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -65,9 +68,9 @@ cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "@fmt",
@@ -79,7 +82,10 @@ cc_library(
 clang_tidy_test(
     name = "parser_clang_tidy",
     srcs = [":parser"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_test(
@@ -89,7 +95,7 @@ cc_test(
         "flags_parser_test.cc",
         "metrics_configs_test.cc",
     ],
-    copts = COPTS + [ "-Icuttlefish" ],
+    copts = COPTS + ["-Icuttlefish"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:result",
@@ -110,14 +116,17 @@ cc_test(
 clang_tidy_test(
     name = "parser_test_clang_tidy",
     srcs = [":parser_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
     name = "test_common",
+    testonly = True,
     srcs = ["test_common.cc"],
     hdrs = ["test_common.h"],
-    testonly = True,
     copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
@@ -129,5 +138,8 @@ cc_library(
 clang_tidy_test(
     name = "test_common_clang_tidy",
     srcs = [":test_common"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

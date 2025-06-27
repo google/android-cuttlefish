@@ -28,5 +28,8 @@ cc_binary(
 clang_tidy_test(
     name = "cvd_internal_status_clang_tidy",
     srcs = [":cvd_internal_status"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

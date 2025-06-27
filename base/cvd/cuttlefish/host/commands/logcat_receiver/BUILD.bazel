@@ -7,6 +7,10 @@ package(
 
 cc_binary(
     name = "logcat_receiver",
+    srcs = [
+        "main.cpp",
+    ],
+    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -14,14 +18,13 @@ cc_binary(
         "//libbase",
         "@gflags",
     ],
-    srcs = [
-        "main.cpp",
-    ],
-    copts = COPTS,
 )
 
 clang_tidy_test(
     name = "logcat_receiver_clang_tidy",
     srcs = [":logcat_receiver"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

@@ -13,10 +13,10 @@ cc_binary(
         "diagnose_usb/diagnose_usb.cpp",
         "diagnose_usb/include/diagnose_usb.h",
         "fastboot.cpp",
+        "fastboot.h",
         "fastboot_driver.cpp",
         "fastboot_driver.h",
         "fastboot_driver_interface.h",
-        "fastboot.h",
         "filesystem.cpp",
         "filesystem.h",
         "fs.cpp",
@@ -43,32 +43,32 @@ cc_binary(
         "util.h",
         "vendor_boot_img_utils.cpp",
         "vendor_boot_img_utils.h",
-        "version/platform_tools_version.h",
         "version/build/version.h",
-    ],
-    includes = [
-        "diagnose_usb/include",
-        "libstorage_literals",
-        "version",
-    ],
-    local_defines = [
-        "ANDROID_BASE_UNIQUE_FD_DISABLE_IMPLICIT_CONVERSION"
+        "version/platform_tools_version.h",
     ],
     copts = COPTS + [
         "-Wno-inconsistent-missing-override",
         "-Wno-module-import-in-extern-c",
     ],
+    features = ["-layering_check"],  # Incompatible with libzip cmake build
+    includes = [
+        "diagnose_usb/include",
+        "libstorage_literals",
+        "version",
+    ],
+    linkopts = ["-llzma"],
+    local_defines = [
+        "ANDROID_BASE_UNIQUE_FD_DISABLE_IMPLICIT_CONVERSION",
+    ],
     deps = [
+        "//libbase",
+        "//libcutils",
+        "//liblp",
+        "//libsparse",
         "@avb//:libavb",
         "@googletest//:gtest",
         "@libzip",
         "@mkbootimg//:bootimg_header",
         "@zlib",
-        "//libbase",
-        "//libcutils",
-        "//liblp:liblp",
-        "//libsparse:libsparse",
     ],
-    linkopts = ["-llzma"],
-    features = ["-layering_check"], # Incompatible with libzip cmake build
 )

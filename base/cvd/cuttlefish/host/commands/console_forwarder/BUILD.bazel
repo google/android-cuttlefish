@@ -18,11 +18,14 @@ cc_binary(
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
-    ]
+    ],
 )
 
 clang_tidy_test(
     name = "console_forwarder_clang_tidy",
     srcs = [":console_forwarder"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

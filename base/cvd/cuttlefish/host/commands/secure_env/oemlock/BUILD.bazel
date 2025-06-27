@@ -20,7 +20,10 @@ cc_library(
 clang_tidy_test(
     name = "oemlock_clang_tidy",
     srcs = [":oemlock"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -40,5 +43,8 @@ cc_library(
 clang_tidy_test(
     name = "oemlock_responder_clang_tidy",
     srcs = [":oemlock_responder"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

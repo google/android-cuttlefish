@@ -9,8 +9,8 @@ cc_library(
     name = "insecure_json_storage",
     srcs = ["insecure_json_storage.cpp"],
     hdrs = ["insecure_json_storage.h"],
-    strip_include_prefix = "//cuttlefish",
     copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:files",
@@ -25,15 +25,18 @@ cc_library(
 clang_tidy_test(
     name = "insecure_json_storage_clang_tidy",
     srcs = [":insecure_json_storage"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
     name = "storage",
     srcs = ["storage.cpp"],
     hdrs = ["storage.h"],
-    strip_include_prefix = "//cuttlefish",
     copts = COPTS,
+    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:result",
     ],
@@ -42,5 +45,8 @@ cc_library(
 clang_tidy_test(
     name = "storage_clang_tidy",
     srcs = [":storage"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

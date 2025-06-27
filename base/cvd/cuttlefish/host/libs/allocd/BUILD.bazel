@@ -18,13 +18,16 @@ cc_binary(
         "//libbase",
         "@gflags",
         "@jsoncpp",
-    ]
+    ],
 )
 
 clang_tidy_test(
     name = "allocd_client_clang_tidy",
     srcs = [":allocd_client"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -49,5 +52,8 @@ cc_library(
 clang_tidy_test(
     name = "allocd_utils_clang_tidy",
     srcs = [":allocd_utils"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

@@ -21,11 +21,14 @@ cc_binary(
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
-    ]
+    ],
 )
 
 clang_tidy_test(
     name = "cvd_internal_display_clang_tidy",
     srcs = [":cvd_internal_display"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

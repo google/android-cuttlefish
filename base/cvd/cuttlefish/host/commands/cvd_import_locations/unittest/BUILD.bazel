@@ -23,5 +23,8 @@ cc_test(
 clang_tidy_test(
     name = "cvd_import_locations_unittests_clang_tidy",
     srcs = [":cvd_import_locations_unittests"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

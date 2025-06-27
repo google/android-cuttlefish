@@ -20,7 +20,10 @@ cc_library(
 clang_tidy_test(
     name = "alloc_clang_tidy",
     srcs = [":alloc"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_binary(
@@ -35,9 +38,6 @@ cc_binary(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
-        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
-        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:clean",
         "//cuttlefish/host/commands/assemble_cvd:disk_flags",
@@ -46,13 +46,16 @@ cc_binary(
         "//cuttlefish/host/commands/assemble_cvd:flags",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
+        "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
+        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/command_util",
-        "//cuttlefish/host/libs/config/adb",
-        "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config/adb",
+        "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/feature:inject",
         "//libbase",
         "@gflags",
@@ -95,7 +98,10 @@ cc_library(
 clang_tidy_test(
     name = "boot_config_clang_tidy",
     srcs = [":boot_config"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -120,7 +126,10 @@ cc_library(
 clang_tidy_test(
     name = "boot_image_utils_clang_tidy",
     srcs = [":boot_image_utils"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -142,7 +151,10 @@ cc_library(
 clang_tidy_test(
     name = "bootconfig_args_clang_tidy",
     srcs = [":bootconfig_args"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -163,7 +175,10 @@ cc_library(
 clang_tidy_test(
     name = "clean_clang_tidy",
     srcs = [":clean"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -184,7 +199,10 @@ cc_library(
 clang_tidy_test(
     name = "disk_builder_clang_tidy",
     srcs = [":disk_builder"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -197,6 +215,11 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:boot_config",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
         "//cuttlefish/host/commands/assemble_cvd/disk:access_kregistry",
         "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:bootloader_present",
@@ -217,11 +240,6 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:vbmeta_enforce_minimum_size",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd/flags:use_16k",
-        "//cuttlefish/host/commands/assemble_cvd:boot_config",
-        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
-        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
-        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
-        "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
@@ -240,7 +258,10 @@ cc_library(
 clang_tidy_test(
     name = "disk_flags_clang_tidy",
     srcs = [":disk_flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -263,7 +284,10 @@ cc_library(
 clang_tidy_test(
     name = "display_clang_tidy",
     srcs = [":display"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -284,7 +308,10 @@ cc_library(
 clang_tidy_test(
     name = "flag_feature_clang_tidy",
     srcs = [":flag_feature"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -305,7 +332,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
@@ -318,6 +344,7 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
         "//cuttlefish/host/commands/assemble_cvd:network_flags",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -340,7 +367,10 @@ cc_library(
 clang_tidy_test(
     name = "flags_clang_tidy",
     srcs = [":flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -401,7 +431,10 @@ cc_library(
 clang_tidy_test(
     name = "graphics_flags_clang_tidy",
     srcs = [":graphics_flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -418,7 +451,10 @@ cc_library(
 clang_tidy_test(
     name = "kernel_module_parser_clang_tidy",
     srcs = [":kernel_module_parser"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 proto_library(
@@ -451,7 +487,10 @@ cc_library(
 clang_tidy_test(
     name = "misc_info_clang_tidy",
     srcs = [":misc_info"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -470,7 +509,10 @@ cc_library(
 clang_tidy_test(
     name = "network_flags_clang_tidy",
     srcs = [":network_flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -500,7 +542,10 @@ cc_library(
 clang_tidy_test(
     name = "super_image_mixer_clang_tidy",
     srcs = [":super_image_mixer"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -522,7 +567,10 @@ cc_library(
 clang_tidy_test(
     name = "touchpad_clang_tidy",
     srcs = [":touchpad"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -534,8 +582,8 @@ cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:disk_usage",
+        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
@@ -550,7 +598,10 @@ cc_library(
 clang_tidy_test(
     name = "vendor_dlkm_utils_clang_tidy",
     srcs = [":vendor_dlkm_utils"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -568,8 +619,8 @@ cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:display",
-        "@gflags",
         "@fmt",
+        "@gflags",
     ],
     # required for the gflags `DEFINE`s when included in other targets
     alwayslink = 1,
@@ -578,5 +629,8 @@ cc_library(
 clang_tidy_test(
     name = "assemble_cvd_flags_clang_tidy",
     srcs = [":assemble_cvd_flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

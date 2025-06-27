@@ -26,9 +26,9 @@ cf_cc_library(
 
 cf_cc_library(
     name = "fake_http_client",
+    testonly = True,
     srcs = ["fake_http_client.cc"],
     hdrs = ["fake_http_client.h"],
-    testonly = True,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
@@ -41,8 +41,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
-        "//cuttlefish/host/libs/web/http_client:http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -94,7 +94,7 @@ cf_cc_library(
     hdrs = ["http_string.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/web/http_client"
+        "//cuttlefish/host/libs/web/http_client",
     ],
 )
 

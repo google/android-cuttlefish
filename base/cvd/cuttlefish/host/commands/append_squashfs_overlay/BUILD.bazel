@@ -10,8 +10,8 @@ rust_binary(
     srcs = [
         "src/main.rs",
     ],
-    deps = all_crate_deps(normal = True),
     aliases = aliases(),
+    deps = all_crate_deps(normal = True),
 )
 
 rust_test(

@@ -14,7 +14,7 @@ cc_library(
         "instance_lock.h",
         "lock_file.h",
     ],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",

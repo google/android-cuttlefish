@@ -16,12 +16,14 @@ cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/control_env",
         "//libbase",
-
     ],
 )
 
 clang_tidy_test(
     name = "cvd_internal_env_clang_tidy",
     srcs = [":cvd_internal_env"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

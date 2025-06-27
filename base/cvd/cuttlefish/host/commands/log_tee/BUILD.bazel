@@ -23,5 +23,8 @@ cc_binary(
 clang_tidy_test(
     name = "log_tee_clang_tidy",
     srcs = [":log_tee"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

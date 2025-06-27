@@ -1,6 +1,6 @@
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
-load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -13,13 +13,13 @@ cc_binary(
     ],
     copts = COPTS,
     deps = [
-        "//libbase",
+        ":libcvd_gnss_grpc_proxy",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
-        ":libcvd_gnss_grpc_proxy",
+        "//libbase",
         "@gflags",
-        "@grpc//:grpc",
+        "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
     ],
@@ -28,7 +28,10 @@ cc_binary(
 clang_tidy_test(
     name = "gnss_grpc_proxy_clang_tidy",
     srcs = [":gnss_grpc_proxy"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 proto_library(
@@ -44,9 +47,9 @@ cc_proto_library(
 cc_grpc_library(
     name = "libcvd_gnss_grpc_proxy",
     srcs = [":gnss_grpc_proxy_proto"],
+    grpc_only = True,
     deps = [
         ":gnss_grpc_proxy_cc_proto",
         "@grpc//:grpc++",
     ],
-    grpc_only = True,
 )

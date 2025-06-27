@@ -12,18 +12,18 @@ cc_library(
         "helpers.h",
     ],
     hdrs = [
-        "include/ext4_utils/ext4_extents.h",
         "include/ext4_utils/ext4.h",
+        "include/ext4_utils/ext4_extents.h",
         "include/ext4_utils/ext4_kernel_headers.h",
         "include/ext4_utils/ext4_sb.h",
         "include/ext4_utils/ext4_utils.h",
         "include/ext4_utils/jbd2.h",
         "include/ext4_utils/xattr.h",
     ],
-    strip_include_prefix = "include",
     copts = COPTS + [
         "-Wno-module-import-in-extern-c",
     ],
+    strip_include_prefix = "include",
 )
 
 exports_files([

@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "COPTS")
+load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -13,7 +13,6 @@ cc_proto_library(
     name = "cdisk_spec_cc_proto",
     deps = [":cdisk_spec_proto"],
 )
-
 
 cf_cc_library(
     name = "image_aggregator",

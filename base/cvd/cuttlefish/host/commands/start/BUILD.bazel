@@ -19,6 +19,9 @@ cc_binary(
         "validate_metrics_confirmation.h",
     ],
     copts = COPTS,
+    # `layering_check` conflicts with the combination of the clang prebuilt and
+    # the cmake build rules used for @libxml2.
+    features = ["-layering_check"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
@@ -31,17 +34,17 @@ cc_binary(
         "//libbase",
         "@gflags",
         "@jsoncpp",
-        "@libxml2//:libxml2",
+        "@libxml2",
     ],
-    # `layering_check` conflicts with the combination of the clang prebuilt and
-    # the cmake build rules used for @libxml2.
-    features = ["-layering_check"],
 )
 
 clang_tidy_test(
     name = "cvd_internal_start_clang_tidy",
     srcs = [":cvd_internal_start"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -65,5 +68,8 @@ cc_library(
 clang_tidy_test(
     name = "start_flags_clang_tidy",
     srcs = [":start_flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

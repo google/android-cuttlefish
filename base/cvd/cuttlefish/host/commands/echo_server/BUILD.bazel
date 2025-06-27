@@ -1,6 +1,6 @@
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
-load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -19,11 +19,11 @@ cc_proto_library(
 cc_grpc_library(
     name = "libecho_server",
     srcs = [":echo_server_proto"],
+    grpc_only = True,
     deps = [
         ":echo_server_cc_proto",
         "@grpc//:grpc++",
     ],
-    grpc_only = True,
 )
 
 cc_binary(
@@ -35,7 +35,7 @@ cc_binary(
     deps = [
         ":libecho_server",
         "@gflags",
-        "@grpc//:grpc",
+        "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
     ],
@@ -44,5 +44,8 @@ cc_binary(
 clang_tidy_test(
     name = "echo_server_clang_tidy",
     srcs = [":echo_server"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

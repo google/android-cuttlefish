@@ -11,7 +11,7 @@ cc_library(
         "webrtc/modules/audio_processing/debug.pb.h",
     ],
     includes = [
-      "webrtc",
+        "webrtc",
     ],
 )
 
@@ -45,8 +45,8 @@ cc_library(
         "-lopus",
     ],
     deps = [
-      "@libpffft",
-      "@libsrtp2",
-      "@libyuv",
+        "@libpffft",
+        "@libsrtp2",
+        "@libyuv",
     ],
 )

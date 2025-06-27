@@ -9,7 +9,7 @@ cc_library(
     name = "cache",
     srcs = ["cache.cpp"],
     hdrs = ["cache.h"],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:disk_usage",
         "//cuttlefish/common/libs/utils:files",
@@ -23,5 +23,8 @@ cc_library(
 clang_tidy_test(
     name = "cache_clang_tidy",
     srcs = [":cache"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
