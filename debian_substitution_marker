@@ -15,6 +15,11 @@ symlinks {
   link_name: "bin/allocd_client"
 }
 
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/casimir_control_server"
+  link_name: "bin/casimir_control_server"
+}
+
 symlinks {
   target: "/usr/lib/cuttlefish-common/bin/console_forwarder"
   link_name: "bin/console_forwarder"
