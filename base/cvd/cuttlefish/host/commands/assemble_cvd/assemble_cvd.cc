@@ -265,6 +265,7 @@ Result<std::set<std::string>> PreservingOnResume(
     preserving.insert("crosvm_openwrt.log");
     preserving.insert("crosvm_openwrt_boot.log");
     preserving.insert("metrics.log");
+    preserving.insert("userdata.img");
   }
   if (InSandbox()) {
     preserving.insert("launcher.log");  // Created before `assemble_cvd` runs
