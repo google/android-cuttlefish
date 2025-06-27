@@ -49,6 +49,8 @@ Result<MonitorCommand> SecureEnv(
       instance.PerInstanceInternalPath("oemlock_fifo_vm.out"),
       instance.PerInstanceInternalPath("keymint_fifo_vm.in"),
       instance.PerInstanceInternalPath("keymint_fifo_vm.out"),
+      instance.PerInstanceInternalPath("jcardsim_fifo_vm.in"),
+      instance.PerInstanceInternalPath("jcardsim_fifo_vm.out"),
   };
   std::vector<SharedFD> fifos;
   for (const auto& path : fifo_paths) {
@@ -62,6 +64,8 @@ Result<MonitorCommand> SecureEnv(
   command.AddParameter("-oemlock_fd_in=", fifos[5]);
   command.AddParameter("-keymint_fd_out=", fifos[6]);
   command.AddParameter("-keymint_fd_in=", fifos[7]);
+  command.AddParameter("-jcardsim_fd_out=", fifos[8]);
+  command.AddParameter("-jcardsim_fd_in=", fifos[9]);
 
   const auto& secure_hals = CF_EXPECT(config.secure_hals());
   bool secure_keymint = secure_hals.count(SecureHal::kHostKeymintSecure) > 0;
@@ -77,6 +81,10 @@ Result<MonitorCommand> SecureEnv(
 
   command.AddParameter("-kernel_events_fd=",
                        kernel_log_pipe_provider.KernelLogPipe());
+
+  bool enable_jcard_simulator =
+      secure_hals.count(SecureHal::kGuestStrongboxInsecure) > 0;
+  command.AddParameter("--enable_jcard_simulator=", enable_jcard_simulator);
 
   return command;
 }
