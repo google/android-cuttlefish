@@ -177,6 +177,77 @@ func TestUploadArtifactReceive409WhenUploadingChunks(t *testing.T) {
 	}
 }
 
+func TestExtractArtifactReceive404WhenArtifactDoesNotExist(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeErr(w, http.StatusNotFound)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	if _, err := client.ExtractArtifact(testFile); err == nil {
+		t.Fatal("Expected error")
+	}
+}
+
+func TestExtractArtifactSucceeds(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeOK(w, hoapi.StatArtifactResponse{})
+		case "POST /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d/:extract":
+			writeOK(w, hoapi.Operation{Name: "foo"})
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	expected := &hoapi.Operation{Name: "foo"}
+	if op, err := client.ExtractArtifact(testFile); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(expected, op); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestExtractArtifactReceive409WhenArtifactIsAlreadyExtracted(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeOK(w, hoapi.StatArtifactResponse{})
+		case "POST /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d/:extract":
+			writeErr(w, http.StatusConflict)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	op, err := client.ExtractArtifact(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if op != nil {
+		t.Fatal("unexpected operation: " + op.Name)
+	}
+}
+
 func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
 	token := "foo"

@@ -108,6 +108,11 @@ type UserArtifactsClient interface {
 	// Upload artifact into the artifacts repository.
 	// Artifacts are identified by their SHA256 checksum in the artifacts repository
 	UploadArtifact(filename string) error
+	// Extract artifact into the artifacts repository.
+	// Artifacts are identified by their SHA256 checksum in the artifacts repository
+	// Returning *hoapi.Operation as nil when there's an error or there's no operation for
+	// extracting given artifact since it's already extracted before.
+	ExtractArtifact(filename string) (*hoapi.Operation, error)
 	// Creates a directory in the host where user artifacts can be uploaded to.
 	CreateUploadDir() (string, error)
 	// Uploads file into the given directory.
@@ -588,6 +593,26 @@ func (c *HostOrchestratorClientImpl) ExtractFile(uploadDir string, filename stri
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) (*hoapi.Operation, error) {
+	checksum, err := sha256Checksum(filename)
+	if err != nil {
+		return nil, err
+	}
+	res := &hoapi.StatArtifactResponse{}
+	if err := c.HTTPHelper.NewGetRequest("/v1/userartifacts/" + checksum).JSONResDo(res); err != nil {
+		return nil, err
+	}
+	op := &hoapi.Operation{}
+	if err := c.HTTPHelper.NewPostRequest("/v1/userartifacts/"+checksum+"/:extract", nil).JSONResDo(op); err != nil {
+		if apiCallError, ok := err.(*ApiCallError); ok && apiCallError.HTTPStatusCode == http.StatusConflict {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return op, nil
 }
 
 func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
