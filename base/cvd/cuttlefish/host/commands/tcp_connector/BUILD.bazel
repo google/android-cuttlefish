@@ -1,5 +1,4 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
