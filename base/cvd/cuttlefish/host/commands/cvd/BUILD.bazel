@@ -7,9 +7,9 @@ package(
 
 cc_library(
     name = "libcvd",
-    srcs = ["cvd.cpp" ],
+    srcs = ["cvd.cpp"],
     hdrs = ["cvd.h"],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -28,12 +28,15 @@ cc_library(
 clang_tidy_test(
     name = "libcvd_clang_tidy",
     srcs = [":libcvd"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_binary(
     name = "cvd",
-    srcs = ["main.cc" ],
+    srcs = ["main.cc"],
     copts = COPTS,
     deps = [
         ":libcvd",
@@ -54,5 +57,8 @@ cc_binary(
 clang_tidy_test(
     name = "cvd_clang_tidy",
     srcs = [":cvd"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

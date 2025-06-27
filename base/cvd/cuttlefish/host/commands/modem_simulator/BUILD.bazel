@@ -124,5 +124,5 @@ clang_tidy_test(
 clang_tidy_test(
     name = "modem_simulator_test_clang_tidy",
     srcs = [":modem_simulator_test"],
-    tags = [ "clang-tidy"],
+    tags = ["clang-tidy"],
 )

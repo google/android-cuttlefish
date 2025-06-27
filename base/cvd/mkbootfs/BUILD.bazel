@@ -7,11 +7,11 @@ cc_binary(
     srcs = [
         "mkbootfs.cpp",
     ],
+    copts = ["-std=gnu++17"],
     includes = ["include"],
     deps = [
         "//android:log_header",
         "//libbase",
         "//libcutils",
     ],
-    copts = ["-std=gnu++17"],
 )

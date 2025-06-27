@@ -17,7 +17,10 @@ cc_library(
 clang_tidy_test(
     name = "ap_boot_flow_clang_tidy",
     srcs = [":ap_boot_flow"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -30,7 +33,10 @@ cc_library(
 clang_tidy_test(
     name = "boot_flow_clang_tidy",
     srcs = [":boot_flow"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -232,8 +238,8 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -341,8 +347,8 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
@@ -485,8 +491,8 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",

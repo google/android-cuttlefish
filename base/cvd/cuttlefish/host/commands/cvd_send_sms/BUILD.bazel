@@ -22,7 +22,10 @@ cc_binary(
 clang_tidy_test(
     name = "cvd_send_sms_clang_tidy",
     srcs = [":cvd_send_sms"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -49,7 +52,10 @@ cc_library(
 clang_tidy_test(
     name = "libcvd_send_sms_clang_tidy",
     srcs = [":libcvd_send_sms"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_test(
@@ -71,5 +77,8 @@ cc_test(
 clang_tidy_test(
     name = "libcvd_send_sms_test_clang_tidy",
     srcs = [":libcvd_send_sms_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

@@ -1,6 +1,6 @@
-package(default_visibility = ["//visibility:public"])
-
 load(":cc_toolchain_macro.bzl", "linux_local_clang")
+
+package(default_visibility = ["//visibility:public"])
 
 filegroup(name = "empty")
 

@@ -27,5 +27,8 @@ cc_library(
 clang_tidy_test(
     name = "transport_clang_tidy",
     srcs = [":transport"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

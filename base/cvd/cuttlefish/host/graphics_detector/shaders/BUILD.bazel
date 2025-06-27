@@ -6,7 +6,7 @@ package(
 
 cc_binary(
     name = "generate_shader_embed",
-    srcs = ["generate_shader_embed.cpp"]
+    srcs = ["generate_shader_embed.cpp"],
 )
 
 cc_library(

@@ -32,9 +32,9 @@ cc_library(
         "//cuttlefish/common/libs/utils:unique_resource_allocator",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/instances:device_name",
+        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:instance_nums",
@@ -45,7 +45,10 @@ cc_library(
 clang_tidy_test(
     name = "parser_clang_tidy",
     srcs = [":parser"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -68,7 +71,10 @@ cc_library(
 clang_tidy_test(
     name = "selector_clang_tidy",
     srcs = [":selector"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_test(
@@ -87,18 +93,18 @@ cc_test(
         "parser_names_helper.h",
         "parser_names_test.cpp",
     ],
-    copts = COPTS + [ "-Icuttlefish" ],
+    copts = COPTS + ["-Icuttlefish"],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result_matchers",
-        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
-        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
-        "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
         "@googletest//:gtest",
@@ -109,5 +115,8 @@ cc_test(
 clang_tidy_test(
     name = "selector_test_clang_tidy",
     srcs = [":selector_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

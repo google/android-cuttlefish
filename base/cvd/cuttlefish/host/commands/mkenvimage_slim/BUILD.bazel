@@ -26,5 +26,8 @@ cc_binary(
 clang_tidy_test(
     name = "mkenvimage_slim_clang_tidy",
     srcs = [":mkenvimage_slim"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

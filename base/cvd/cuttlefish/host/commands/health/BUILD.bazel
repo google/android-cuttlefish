@@ -12,8 +12,8 @@ cc_binary(
     ],
     copts = COPTS,
     deps = [
-        "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@gflags",
     ],
@@ -22,5 +22,8 @@ cc_binary(
 clang_tidy_test(
     name = "health_clang_tidy",
     srcs = [":health"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

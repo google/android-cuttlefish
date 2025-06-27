@@ -14,9 +14,9 @@ cc_library(
     copts = COPTS,
     strip_include_prefix = "//cuttlefish",
     deps = [
-        "//libbase",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
+        "//libbase",
         "@grpc//:grpc++",
         "@grpc//test/cpp/util:grpc_cli_libs",
         "@grpc//test/cpp/util:grpc_cli_utils",
@@ -28,5 +28,8 @@ cc_library(
 clang_tidy_test(
     name = "control_env_clang_tidy",
     srcs = [":control_env"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

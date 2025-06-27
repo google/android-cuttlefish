@@ -27,7 +27,7 @@ cc_library(
         "converter.h",
         "create_converter_parser.h",
     ],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         ":user_config_cc_proto",
         "//cuttlefish/common/libs/fs",
@@ -37,12 +37,12 @@ cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:users",
-        "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli:utils",
-        "//cuttlefish/host/commands/cvd/instances/lock",
+        "//cuttlefish/host/commands/cvd/cli/selector:parser",
         "//cuttlefish/host/commands/cvd/instances:device_name",
+        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
@@ -53,5 +53,8 @@ cc_library(
 clang_tidy_test(
     name = "acloud_clang_tidy",
     srcs = [":acloud"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

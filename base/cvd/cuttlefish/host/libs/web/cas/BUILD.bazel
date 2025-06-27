@@ -26,7 +26,10 @@ cc_library(
 clang_tidy_test(
     name = "cas_downloader_clang_tidy",
     srcs = [":cas_downloader"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_test(
@@ -50,7 +53,10 @@ cc_test(
 clang_tidy_test(
     name = "cas_downloader_test_clang_tidy",
     srcs = [":cas_downloader_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -68,5 +74,8 @@ cc_library(
 clang_tidy_test(
     name = "cas_flags_clang_tidy",
     srcs = [":cas_flags"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

@@ -25,13 +25,13 @@ cf_cc_binary(
 
 cf_cc_library(
     name = "kernel_log_monitor_utils",
-    hdrs = [
-        "kernel_log_server.h",
-        "utils.h",
-    ],
     srcs = [
         "kernel_log_server.cc",
         "utils.cc",
+    ],
+    hdrs = [
+        "kernel_log_server.h",
+        "utils.h",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",

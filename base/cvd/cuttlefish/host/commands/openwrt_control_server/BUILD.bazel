@@ -1,6 +1,6 @@
+load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//:build_variables.bzl", "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
-load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -9,7 +9,7 @@ package(
 proto_library(
     name = "openwrt_control_proto",
     srcs = ["openwrt_control.proto"],
-    deps = ["@protobuf//:empty_proto"]
+    deps = ["@protobuf//:empty_proto"],
 )
 
 cc_proto_library(
@@ -20,11 +20,11 @@ cc_proto_library(
 cc_grpc_library(
     name = "libopenwrt_control_server",
     srcs = [":openwrt_control_proto"],
+    grpc_only = True,
     deps = [
         ":openwrt_control_server_cc_proto",
         "@grpc//:grpc++",
     ],
-    grpc_only = True,
 )
 
 cc_binary(
@@ -43,7 +43,7 @@ cc_binary(
         "//libbase",
         "@fmt",
         "@gflags",
-        "@grpc//:grpc",
+        "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",
         "@protobuf//:empty_cc_proto",
@@ -53,5 +53,8 @@ cc_binary(
 clang_tidy_test(
     name = "openwrt_control_server_clang_tidy",
     srcs = [":openwrt_control_server"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

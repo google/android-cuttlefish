@@ -1,5 +1,5 @@
-load("@vhost_user_input_crates//:defs.bzl", "aliases", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
+load("@vhost_user_input_crates//:defs.bzl", "aliases", "all_crate_deps")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -16,9 +16,9 @@ rust_binary(
         "src/vhu_input.rs",
         "src/vio_input.rs",
     ],
-    deps = all_crate_deps(normal = True),
     aliases = aliases(),
     proc_macro_deps = all_crate_deps(proc_macro = True),
+    deps = all_crate_deps(normal = True),
 )
 
 rust_test(

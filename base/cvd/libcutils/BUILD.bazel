@@ -29,8 +29,8 @@ cc_library(
     hdrs = glob([
         "include/**/*.h",
     ]),
-    strip_include_prefix = "include",
     copts = COPTS,
+    strip_include_prefix = "include",
     deps = [
         "//android:log_header",
         "//libbase",

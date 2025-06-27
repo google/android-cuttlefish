@@ -29,10 +29,10 @@ cc_library(
     hdrs = [
         "lib/ext2fs/crc32c_table.h",
     ],
+    strip_include_prefix = "//build_external/e2fsprogs/lib/ext2fs",
     deps = [
         ":libext2fs_generated",
     ],
-    strip_include_prefix = "//build_external/e2fsprogs/lib/ext2fs",
 )
 
 cc_library(

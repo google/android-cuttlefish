@@ -7,8 +7,8 @@ package(
 
 exports_files(
     [
-    "custom_action_config.json",
-    ]
+        "custom_action_config.json",
+    ],
 )
 
 cc_binary(
@@ -27,5 +27,8 @@ cc_binary(
 clang_tidy_test(
     name = "cuttlefish_example_action_server_clang_tidy",
     srcs = [":cuttlefish_example_action_server"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

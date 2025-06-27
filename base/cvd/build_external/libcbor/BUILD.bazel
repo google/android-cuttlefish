@@ -7,9 +7,8 @@ package(
 cc_library(
     name = "libcbor_config",
     hdrs = [
-        "cbor/configuration.h",
         "cbor/cbor_export.h",
+        "cbor/configuration.h",
     ],
     strip_include_prefix = "//build_external/libcbor",
 )
-

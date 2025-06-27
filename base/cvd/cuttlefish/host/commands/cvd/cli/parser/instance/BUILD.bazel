@@ -29,8 +29,8 @@ cc_library(
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//libbase",
@@ -48,7 +48,7 @@ cc_test(
         "graphics_configs_test.cc",
         "vm_configs_test.cc",
     ],
-    copts = COPTS + [ "-Icuttlefish" ],
+    copts = COPTS + ["-Icuttlefish"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -71,5 +71,8 @@ cc_test(
 clang_tidy_test(
     name = "instance_test_clang_tidy",
     srcs = [":instance_test"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

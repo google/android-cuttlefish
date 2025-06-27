@@ -31,7 +31,10 @@ cc_library(
 clang_tidy_test(
     name = "metrics_clang_tidy",
     srcs = [":metrics"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -47,5 +50,8 @@ cc_library(
 clang_tidy_test(
     name = "metrics_headers_clang_tidy",
     srcs = [":metrics_headers"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

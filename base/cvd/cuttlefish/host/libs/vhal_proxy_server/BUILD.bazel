@@ -17,5 +17,8 @@ cc_library(
 clang_tidy_test(
     name = "vhal_proxy_server_clang_tidy",
     srcs = [":vhal_proxy_server"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

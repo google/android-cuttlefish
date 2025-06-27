@@ -9,7 +9,7 @@ cc_library(
     name = "common",
     srcs = ["common.cpp"],
     hdrs = ["common.h"],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
@@ -23,14 +23,17 @@ cc_library(
 clang_tidy_test(
     name = "common_clang_tidy",
     srcs = [":common"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
     name = "flags_collector",
     srcs = ["flags_collector.cpp"],
     hdrs = ["flags_collector.h"],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//libbase",
         "@tinyxml2",
@@ -40,14 +43,17 @@ cc_library(
 clang_tidy_test(
     name = "flags_collector_clang_tidy",
     srcs = [":flags_collector"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
     name = "interrupt_listener",
     srcs = ["interrupt_listener.cpp"],
     hdrs = ["interrupt_listener.h"],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:signals",
@@ -58,14 +64,17 @@ cc_library(
 clang_tidy_test(
     name = "interrupt_listener_clang_tidy",
     srcs = [":interrupt_listener"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
     name = "subprocess_waiter",
     srcs = ["subprocess_waiter.cpp"],
     hdrs = ["subprocess_waiter.h"],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -75,7 +84,10 @@ cc_library(
 clang_tidy_test(
     name = "subprocess_waiter_clang_tidy",
     srcs = [":subprocess_waiter"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -86,7 +98,7 @@ cc_library(
         "interrupt_listener.h",
         "subprocess_waiter.h",
     ],
-    copts = COPTS + [ "-Werror=sign-compare" ],
+    copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -102,5 +114,8 @@ cc_library(
 clang_tidy_test(
     name = "utils_clang_tidy",
     srcs = [":utils"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

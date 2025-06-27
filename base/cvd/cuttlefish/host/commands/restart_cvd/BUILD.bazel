@@ -24,5 +24,8 @@ cc_binary(
 clang_tidy_test(
     name = "restart_cvd_clang_tidy",
     srcs = [":restart_cvd"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )

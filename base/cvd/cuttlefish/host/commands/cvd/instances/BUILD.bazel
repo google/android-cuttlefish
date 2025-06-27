@@ -39,17 +39,20 @@ cc_library(
     srcs = ["data_viewer.cpp"],
     hdrs = ["data_viewer.h"],
     deps = [
-        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:signals",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
     ],
 )
 
 clang_tidy_test(
     name = "data_viewer_clang_tidy",
     srcs = [":data_viewer"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
 
 cc_library(
@@ -107,11 +110,11 @@ cc_library(
         "//cuttlefish/host/commands/cvd/cli:utils",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/selector:parser",
-        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/instances:data_viewer",
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
+        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/command_util",
@@ -144,9 +147,9 @@ cc_library(
         "//cuttlefish/common/libs/utils:proc_file_utils",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
+        "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "@fmt",
@@ -181,5 +184,8 @@ cc_library(
 clang_tidy_test(
     name = "run_cvd_proc_collector_clang_tidy",
     srcs = [":run_cvd_proc_collector"],
-    tags = ["clang_tidy", "clang-tidy"],
+    tags = [
+        "clang-tidy",
+        "clang_tidy",
+    ],
 )
