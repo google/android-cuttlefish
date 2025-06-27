@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -16,12 +15,10 @@ cc_proto_library(
     deps = [":webrtc_commands_proto"],
 )
 
-cc_library(
+cf_cc_library(
     name = "libcuttlefish_webrtc_command_channel",
     srcs = ["webrtc_command_channel.cpp"],
     hdrs = ["webrtc_command_channel.h"],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/transport",
@@ -29,7 +26,7 @@ cc_library(
     ],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "webRTC",
     srcs = [
         "adb_handler.cpp",
@@ -60,7 +57,6 @@ cc_binary(
         "sensors_handler.cpp",
         "sensors_handler.h",
     ],
-    copts = COPTS,
     deps = [
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
@@ -99,14 +95,5 @@ cc_binary(
         "@libwebrtc",
         "@libwebsockets",
         "@libyuv",
-    ],
-)
-
-clang_tidy_test(
-    name = "webRTC_clang_tidy",
-    srcs = [":webRTC"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

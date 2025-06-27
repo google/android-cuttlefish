@@ -1,3 +1,5 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
 package_group(
     name = "android_cuttlefish",
     packages = [
@@ -20,7 +22,7 @@ genrule(
     ],
 )
 
-cc_library(
+cf_cc_library(
     name = "version",
     hdrs = [
         ":build_version_header",

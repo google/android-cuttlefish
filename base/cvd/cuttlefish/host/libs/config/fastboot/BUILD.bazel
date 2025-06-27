@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "fastboot",
     srcs = [
         "config.cpp",
@@ -16,8 +15,6 @@ cc_library(
     hdrs = [
         "fastboot.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
@@ -33,14 +30,5 @@ cc_library(
         "@fruit",
         "@gflags",
         "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "fastboot_clang_tidy",
-    srcs = [":fastboot"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -7,12 +6,11 @@ package(
 
 exports_files([".clang-tidy"])
 
-cc_binary(
+cf_cc_binary(
     name = "mkenvimage_slim",
     srcs = [
         "mkenvimage_slim.cc",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -20,14 +18,5 @@ cc_binary(
         "//libbase",
         "@gflags",
         "@zlib",
-    ],
-)
-
-clang_tidy_test(
-    name = "mkenvimage_slim_clang_tidy",
-    srcs = [":mkenvimage_slim"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

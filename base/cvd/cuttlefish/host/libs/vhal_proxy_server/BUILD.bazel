@@ -1,24 +1,12 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "vhal_proxy_server",
     hdrs = [
         "vhal_proxy_server_eth_addr.h",
-    ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
-)
-
-clang_tidy_test(
-    name = "vhal_proxy_server_clang_tidy",
-    srcs = [":vhal_proxy_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

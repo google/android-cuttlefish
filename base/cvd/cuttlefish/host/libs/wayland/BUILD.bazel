@@ -1,10 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "cuttlefish_wayland_server",
     srcs = [
         "wayland_compositor.cpp",
@@ -30,8 +30,6 @@ cc_library(
         "wayland_utils.h",
         "wayland_virtio_gpu_metadata.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",

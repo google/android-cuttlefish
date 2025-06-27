@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "cvd_internal_start",
     srcs = [
         "filesystem_explorer.cc",
@@ -18,7 +17,6 @@ cc_binary(
         "validate_metrics_confirmation.cpp",
         "validate_metrics_confirmation.h",
     ],
-    copts = COPTS,
     # `layering_check` conflicts with the combination of the clang prebuilt and
     # the cmake build rules used for @libxml2.
     features = ["-layering_check"],
@@ -38,16 +36,7 @@ cc_binary(
     ],
 )
 
-clang_tidy_test(
-    name = "cvd_internal_start_clang_tidy",
-    srcs = [":cvd_internal_start"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "start_flags",
     srcs = [
         "start_flags.cpp",
@@ -55,21 +44,10 @@ cc_library(
     hdrs = [
         "start_flags.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "@gflags",
     ],
     # required for the gflags `DEFINE`s when included in other targets
     alwayslink = 1,
-)
-
-clang_tidy_test(
-    name = "start_flags_clang_tidy",
-    srcs = [":start_flags"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
 )

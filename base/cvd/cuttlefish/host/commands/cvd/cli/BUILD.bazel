@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "command_request",
     srcs = ["command_request.cpp"],
     hdrs = ["command_request.h"],
@@ -18,16 +17,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "command_request_clang_tidy",
-    srcs = [":command_request"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "frontline_parser",
     srcs = ["frontline_parser.cpp"],
     hdrs = ["frontline_parser.h"],
@@ -39,19 +29,9 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "frontline_parser_clang_tidy",
-    srcs = [":frontline_parser"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "frontline_parser_test",
     srcs = ["frontline_parser_test.cpp"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
@@ -60,16 +40,7 @@ cc_test(
     ],
 )
 
-clang_tidy_test(
-    name = "frontline_parser_test_clang_tidy",
-    srcs = [":frontline_parser_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "interruptible_terminal",
     srcs = ["interruptible_terminal.cpp"],
     hdrs = ["interruptible_terminal.h"],
@@ -80,17 +51,8 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "interruptible_terminal_clang_tidy",
-    srcs = [":interruptible_terminal"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
 # Commands that may invoke other commands
-cc_library(
+cf_cc_library(
     name = "nesting_commands",
     srcs = [
         "command_sequence.cpp",
@@ -162,30 +124,12 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "nesting_commands_clang_tidy",
-    srcs = [":nesting_commands"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "types",
     hdrs = ["types.h"],
 )
 
-clang_tidy_test(
-    name = "types_clang_tidy",
-    srcs = [":types"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "utils",
     srcs = ["utils.cpp"],
     hdrs = ["utils.h"],
@@ -201,14 +145,5 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",
         "@fmt",
-    ],
-)
-
-clang_tidy_test(
-    name = "utils_clang_tidy",
-    srcs = [":utils"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

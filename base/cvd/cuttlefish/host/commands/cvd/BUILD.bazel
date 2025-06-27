@@ -1,11 +1,11 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "libcvd",
     srcs = ["cvd.cpp"],
     hdrs = ["cvd.h"],
@@ -25,19 +25,9 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "libcvd_clang_tidy",
-    srcs = [":libcvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_binary(
+cf_cc_binary(
     name = "cvd",
     srcs = ["main.cc"],
-    copts = COPTS,
     deps = [
         ":libcvd",
         "//cuttlefish/common/libs/utils:environment",
@@ -51,14 +41,5 @@ cc_binary(
         "//libsparse",
         "@fmt",
         "@protobuf",
-    ],
-)
-
-clang_tidy_test(
-    name = "cvd_clang_tidy",
-    srcs = [":cvd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

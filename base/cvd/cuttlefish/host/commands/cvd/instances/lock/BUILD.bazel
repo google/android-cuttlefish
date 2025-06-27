@@ -1,10 +1,11 @@
 load("//:build_variables.bzl", "COPTS")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "lock",
     srcs = [
         "instance_lock.cpp",

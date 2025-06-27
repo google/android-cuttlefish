@@ -1,11 +1,11 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "instance",
     srcs = [
         "cf_boot_configs.cpp",
@@ -40,7 +40,7 @@ cc_library(
     ],
 )
 
-cc_test(
+cf_cc_test(
     name = "instance_test",
     srcs = [
         "boot_configs_test.cc",
@@ -65,14 +65,5 @@ cc_test(
         "@jsoncpp",
         "@protobuf",
         "@protobuf//:differencer",
-    ],
-)
-
-clang_tidy_test(
-    name = "instance_test_clang_tidy",
-    srcs = [":instance_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

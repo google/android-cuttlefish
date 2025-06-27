@@ -1,30 +1,19 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_test(
+cf_cc_test(
     name = "cvd_import_locations_unittests",
     srcs = [
         "gpx_parser_test.cc",
         "kml_parser_test.cc",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/libs/location",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "cvd_import_locations_unittests_clang_tidy",
-    srcs = [":cvd_import_locations_unittests"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

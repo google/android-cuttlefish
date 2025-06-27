@@ -1,16 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "metrics_protos",
     hdrs = [
         "cf_metrics_protos.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         ":metrics_cf_log_proto",
         ":metrics_cf_metrics_event_proto",

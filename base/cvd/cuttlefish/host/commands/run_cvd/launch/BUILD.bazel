@@ -1,5 +1,4 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -7,10 +6,9 @@ package(
 
 exports_files([".clang-tidy"])
 
-cc_library(
+cf_cc_library(
     name = "auto_cmd",
     hdrs = ["auto_cmd.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:type_name",
@@ -20,20 +18,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "auto_cmd_clang_tidy",
-    srcs = [":auto_cmd"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "automotive_proxy",
     srcs = ["automotive_proxy.cpp"],
     hdrs = ["automotive_proxy.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -42,20 +30,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "automotive_proxy_clang_tidy",
-    srcs = [":automotive_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "bluetooth_connector",
     srcs = ["bluetooth_connector.cpp"],
     hdrs = ["bluetooth_connector.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -65,20 +43,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "bluetooth_connector_clang_tidy",
-    srcs = [":bluetooth_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "casimir",
     srcs = ["casimir.cpp"],
     hdrs = ["casimir.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -90,20 +58,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "casimir_clang_tidy",
-    srcs = [":casimir"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "casimir_control_server",
     srcs = ["casimir_control_server.cpp"],
     hdrs = ["casimir_control_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -114,20 +72,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "casimir_control_server_clang_tidy",
-    srcs = [":casimir_control_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "console_forwarder",
     srcs = ["console_forwarder.cpp"],
     hdrs = ["console_forwarder.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -138,20 +86,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "console_forwarder_clang_tidy",
-    srcs = [":console_forwarder"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "control_env_proxy_server",
     srcs = ["control_env_proxy_server.cpp"],
     hdrs = ["control_env_proxy_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -163,20 +101,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "control_env_proxy_server_clang_tidy",
-    srcs = [":control_env_proxy_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "echo_server",
     srcs = ["echo_server.cpp"],
     hdrs = ["echo_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/commands/run_cvd/launch:grpc_socket_creator",
         "//cuttlefish/host/libs/config:known_paths",
@@ -184,20 +112,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "echo_server_clang_tidy",
-    srcs = [":echo_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "gnss_grpc_proxy",
     srcs = ["gnss_grpc_proxy.cpp"],
     hdrs = ["gnss_grpc_proxy.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:in_sandbox",
@@ -209,40 +127,20 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "gnss_grpc_proxy_clang_tidy",
-    srcs = [":gnss_grpc_proxy"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "grpc_socket_creator",
     srcs = ["grpc_socket_creator.cpp"],
     hdrs = ["grpc_socket_creator.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "@fruit",
     ],
 )
 
-clang_tidy_test(
-    name = "grpc_socket_creator_clang_tidy",
-    srcs = [":grpc_socket_creator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "kernel_log_monitor",
     srcs = ["kernel_log_monitor.cpp"],
     hdrs = ["kernel_log_monitor.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -257,20 +155,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "kernel_log_monitor_clang_tidy",
-    srcs = [":kernel_log_monitor"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "log_tee_creator",
     srcs = ["log_tee_creator.cpp"],
     hdrs = ["log_tee_creator.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -281,20 +169,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "log_tee_creator_clang_tidy",
-    srcs = [":log_tee_creator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "logcat_receiver",
     srcs = ["logcat_receiver.cpp"],
     hdrs = ["logcat_receiver.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -305,20 +183,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "logcat_receiver_clang_tidy",
-    srcs = [":logcat_receiver"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "mcu",
     srcs = ["mcu.cpp"],
     hdrs = ["mcu.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -334,20 +202,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "mcu_clang_tidy",
-    srcs = [":mcu"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "metrics",
     srcs = ["metrics.cpp"],
     hdrs = ["metrics.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -356,20 +214,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "metrics_clang_tidy",
-    srcs = [":metrics"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "modem",
     srcs = ["modem.cpp"],
     hdrs = ["modem.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -381,20 +229,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "modem_clang_tidy",
-    srcs = [":modem"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "netsim_server",
     srcs = ["netsim_server.cpp"],
     hdrs = ["netsim_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -408,20 +246,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "netsim_server_clang_tidy",
-    srcs = [":netsim_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "nfc_connector",
     srcs = ["nfc_connector.cpp"],
     hdrs = ["nfc_connector.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -432,20 +260,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "nfc_connector_clang_tidy",
-    srcs = [":nfc_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "open_wrt",
     srcs = ["open_wrt.cpp"],
     hdrs = ["open_wrt.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
@@ -462,20 +280,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "open_wrt_clang_tidy",
-    srcs = [":open_wrt"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "openwrt_control_server",
     srcs = ["openwrt_control_server.cpp"],
     hdrs = ["openwrt_control_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -488,20 +296,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "openwrt_control_server_clang_tidy",
-    srcs = [":openwrt_control_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "pica",
     srcs = ["pica.cpp"],
     hdrs = ["pica.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -512,20 +310,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "pica_clang_tidy",
-    srcs = [":pica"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "root_canal",
     srcs = ["root_canal.cpp"],
     hdrs = ["root_canal.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -537,20 +325,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "root_canal_clang_tidy",
-    srcs = [":root_canal"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "screen_recording_server",
     srcs = ["screen_recording_server.cpp"],
     hdrs = ["screen_recording_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -560,20 +338,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "screen_recording_server_clang_tidy",
-    srcs = [":screen_recording_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "secure_env",
     srcs = ["secure_env.cpp"],
     hdrs = ["secure_env.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -585,20 +353,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "secure_env_clang_tidy",
-    srcs = [":secure_env"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "sensors_simulator",
     srcs = ["sensors_simulator.cpp"],
     hdrs = ["sensors_simulator.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -610,20 +368,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "sensors_simulator_clang_tidy",
-    srcs = [":sensors_simulator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "sensors_socket_pair",
     srcs = ["sensors_socket_pair.cpp"],
     hdrs = ["sensors_socket_pair.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -631,20 +379,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "sensors_socket_pair_clang_tidy",
-    srcs = [":sensors_socket_pair"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "snapshot_control_files",
     srcs = ["snapshot_control_files.cpp"],
     hdrs = ["snapshot_control_files.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -654,20 +392,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "snapshot_control_files_clang_tidy",
-    srcs = [":snapshot_control_files"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "streamer",
     srcs = ["streamer.cpp"],
     hdrs = ["streamer.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -689,20 +417,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "streamer_clang_tidy",
-    srcs = [":streamer"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "ti50_emulator",
     srcs = ["ti50_emulator.cpp"],
     hdrs = ["ti50_emulator.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -719,20 +437,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "ti50_emulator_clang_tidy",
-    srcs = [":ti50_emulator"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "tombstone_receiver",
     srcs = ["tombstone_receiver.cpp"],
     hdrs = ["tombstone_receiver.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -745,20 +453,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "tombstone_receiver_clang_tidy",
-    srcs = [":tombstone_receiver"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "uwb_connector",
     srcs = ["uwb_connector.cpp"],
     hdrs = ["uwb_connector.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -769,20 +467,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "uwb_connector_clang_tidy",
-    srcs = [":uwb_connector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "vhal_proxy_server",
     srcs = ["vhal_proxy_server.cpp"],
     hdrs = ["vhal_proxy_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -794,20 +482,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "vhal_proxy_server_clang_tidy",
-    srcs = [":vhal_proxy_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "vhost_device_vsock",
     srcs = ["vhost_device_vsock.cpp"],
     hdrs = ["vhost_device_vsock.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
@@ -825,20 +503,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "vhost_device_vsock_clang_tidy",
-    srcs = [":vhost_device_vsock"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "vhost_input_devices",
     srcs = ["vhost_input_devices.cpp"],
     hdrs = ["input_connections_provider.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
@@ -855,20 +523,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "vhost_input_devices_clang_tidy",
-    srcs = [":vhost_input_devices"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "webrtc_controller",
     srcs = ["webrtc_controller.cpp"],
     hdrs = ["webrtc_controller.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
@@ -882,20 +540,10 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "webrtc_controller_clang_tidy",
-    srcs = [":webrtc_controller"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "wmediumd_server",
     srcs = ["wmediumd_server.cpp"],
     hdrs = ["wmediumd_server.h"],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -907,14 +555,5 @@ cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
         "@fruit",
-    ],
-)
-
-clang_tidy_test(
-    name = "wmediumd_server_clang_tidy",
-    srcs = [":wmediumd_server"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

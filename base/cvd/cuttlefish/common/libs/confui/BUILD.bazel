@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "confui",
     srcs = [
         "packet.cpp",
@@ -21,22 +20,11 @@ cc_library(
         "protocol_types.h",
         "utils.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//libbase",
         "//teeui/libteeui",
         "@boringssl//:crypto",
-    ],
-)
-
-clang_tidy_test(
-    name = "confui_clang_tidy",
-    srcs = [":confui"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

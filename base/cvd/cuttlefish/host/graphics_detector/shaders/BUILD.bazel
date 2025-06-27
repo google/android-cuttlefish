@@ -1,13 +1,15 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "generate_shader_embed",
     srcs = ["generate_shader_embed.cpp"],
 )
 
-cc_library(
+cf_cc_library(
     name = "graphics_detector_shaders",
     textual_hdrs = glob(["*.inl"]),
 )

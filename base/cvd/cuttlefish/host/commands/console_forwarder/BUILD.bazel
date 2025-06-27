@@ -1,16 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "console_forwarder",
     srcs = [
         "main.cpp",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
@@ -18,14 +16,5 @@ cc_binary(
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
-    ],
-)
-
-clang_tidy_test(
-    name = "console_forwarder_clang_tidy",
-    srcs = [":console_forwarder"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

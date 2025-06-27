@@ -1,16 +1,14 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "cvd_update_security_algorithm",
     srcs = [
         "main.cc",
     ],
-    copts = COPTS,
     deps = [
         ":libcvd_update_security_algorithm_builder",
         "//cuttlefish/common/libs/fs",
@@ -20,16 +18,7 @@ cc_binary(
     ],
 )
 
-clang_tidy_test(
-    name = "cvd_update_security_algorithm_clang_tidy",
-    srcs = [":cvd_update_security_algorithm"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "libcvd_update_security_algorithm_builder",
     srcs = [
         "update_security_algorithm_command_builder.cc",
@@ -37,40 +26,19 @@ cc_library(
     hdrs = [
         "update_security_algorithm_command_builder.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "@fmt",
     ],
 )
 
-clang_tidy_test(
-    name = "libcvd_update_security_algorithm_builder_clang_tidy",
-    srcs = [":libcvd_update_security_algorithm_builder"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "cvd_update_security_algorithm_test",
     srcs = [
         "unittest/update_security_algorithm_command_builder_test.cc",
     ],
-    copts = COPTS,
     deps = [
         ":libcvd_update_security_algorithm_builder",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "cvd_id_disclosure_test_clang_tidy",
-    srcs = [":cvd_update_security_algorithm_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

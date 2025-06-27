@@ -1,10 +1,10 @@
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "config_path",
     srcs = ["config_path.cpp"],
     hdrs = ["config_path.h"],
@@ -12,15 +12,6 @@ cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "config_path_clang_tidy",
-    srcs = [":config_path"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
 
@@ -34,7 +25,7 @@ cc_proto_library(
     deps = [":cvd_persistent_data_proto"],
 )
 
-cc_library(
+cf_cc_library(
     name = "data_viewer",
     srcs = ["data_viewer.cpp"],
     hdrs = ["data_viewer.h"],
@@ -46,16 +37,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "data_viewer_clang_tidy",
-    srcs = [":data_viewer"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "device_name",
     srcs = ["device_name.cpp"],
     hdrs = ["device_name.h"],
@@ -65,16 +47,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "device_name_clang_tidy",
-    srcs = [":device_name"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "instances",
     srcs = [
         "instance_database.cpp",
@@ -127,16 +100,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "instances_clang_tidy",
-    srcs = [":instances"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "reset_client_utils",
     srcs = ["reset_client_utils.cpp"],
     hdrs = ["reset_client_utils.h"],
@@ -156,16 +120,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "reset_client_utils_clang_tidy",
-    srcs = [":reset_client_utils"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "run_cvd_proc_collector",
     srcs = ["run_cvd_proc_collector.cpp"],
     hdrs = ["run_cvd_proc_collector.h"],
@@ -178,14 +133,5 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "run_cvd_proc_collector_clang_tidy",
-    srcs = [":run_cvd_proc_collector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

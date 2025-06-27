@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "vm_manager",
     srcs = [
         "crosvm_builder.cpp",
@@ -31,8 +30,6 @@ cc_library(
         "vhost_user.h",
         "vm_manager.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:architecture",
@@ -56,14 +53,5 @@ cc_library(
         "@jsoncpp",
         "@vulkan_headers",
         "@vulkan_headers//:vulkan_hpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "vm_manager_clang_tidy",
-    srcs = [":vm_manager"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

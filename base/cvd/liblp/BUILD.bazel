@@ -47,7 +47,6 @@ cc_library(
 cc_binary(
     name = "lpadd",
     srcs = ["partition_tools/lpadd.cc"],
-    copts = COPTS,
     deps = [
         ":liblp",
         "//libbase",
@@ -58,7 +57,6 @@ cc_binary(
 cc_binary(
     name = "lpmake",
     srcs = ["partition_tools/lpmake.cc"],
-    copts = COPTS,
     deps = [
         ":liblp",
         "//libbase",

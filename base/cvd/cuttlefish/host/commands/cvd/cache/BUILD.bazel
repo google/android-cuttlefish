@@ -1,11 +1,11 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "cache",
     srcs = ["cache.cpp"],
     hdrs = ["cache.h"],
@@ -17,14 +17,5 @@ cc_library(
         "//libbase",
         "@fmt",
         "@jsoncpp",
-    ],
-)
-
-clang_tidy_test(
-    name = "cache_clang_tidy",
-    srcs = [":cache"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

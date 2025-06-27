@@ -1,11 +1,10 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "adb",
     srcs = [
         "config.cpp",
@@ -17,8 +16,6 @@ cc_library(
     hdrs = [
         "adb.h",
     ],
-    copts = COPTS,
-    strip_include_prefix = "//cuttlefish",
     deps = [
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -37,21 +34,11 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "adb_clang_tidy",
-    srcs = [":adb"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_test(
+cf_cc_test(
     name = "adb_test",
     srcs = [
         "test.cpp",
     ],
-    copts = COPTS,
     deps = [
         ":adb",
         "//cuttlefish/host/libs/config:config_flag",
@@ -59,14 +46,5 @@ cc_test(
         "@fruit",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-    ],
-)
-
-clang_tidy_test(
-    name = "adb_test_clang_tidy",
-    srcs = [":adb_test"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

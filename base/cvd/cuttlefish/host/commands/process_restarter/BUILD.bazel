@@ -1,18 +1,16 @@
-load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_binary(
+cf_cc_binary(
     name = "process_restarter",
     srcs = [
         "main.cc",
         "parser.cc",
         "parser.h",
     ],
-    copts = COPTS,
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -21,14 +19,5 @@ cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "process_restarter_clang_tidy",
-    srcs = [":process_restarter"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )

@@ -1,11 +1,11 @@
 load("//:build_variables.bzl", "COPTS")
-load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-cc_library(
+cf_cc_library(
     name = "common",
     srcs = ["common.cpp"],
     hdrs = ["common.h"],
@@ -20,16 +20,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "common_clang_tidy",
-    srcs = [":common"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "flags_collector",
     srcs = ["flags_collector.cpp"],
     hdrs = ["flags_collector.h"],
@@ -40,16 +31,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "flags_collector_clang_tidy",
-    srcs = [":flags_collector"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "interrupt_listener",
     srcs = ["interrupt_listener.cpp"],
     hdrs = ["interrupt_listener.h"],
@@ -61,16 +43,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "interrupt_listener_clang_tidy",
-    srcs = [":interrupt_listener"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "subprocess_waiter",
     srcs = ["subprocess_waiter.cpp"],
     hdrs = ["subprocess_waiter.h"],
@@ -81,16 +54,7 @@ cc_library(
     ],
 )
 
-clang_tidy_test(
-    name = "subprocess_waiter_clang_tidy",
-    srcs = [":subprocess_waiter"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
-    ],
-)
-
-cc_library(
+cf_cc_library(
     name = "utils",
     hdrs = [
         "common.h",
@@ -108,14 +72,5 @@ cc_library(
         "//cuttlefish/host/commands/cvd/utils:interrupt_listener",
         "//cuttlefish/host/commands/cvd/utils:subprocess_waiter",
         "//libbase",
-    ],
-)
-
-clang_tidy_test(
-    name = "utils_clang_tidy",
-    srcs = [":utils"],
-    tags = [
-        "clang-tidy",
-        "clang_tidy",
     ],
 )
