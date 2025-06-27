@@ -11,9 +11,8 @@ usage() {
   echo "usage: $0 [-t <tag>] [-m <mode>]"
   echo "  -t: name or name:tag of docker image (default cuttlefish-orchestration)"
   echo "  -m: set mode for build image (default: prod)"
-  echo "      dev - Builds host packages from the local source"
   echo "      prod - Downloads and installs host packages"
-  echo "      prebuilt - Use *.deb files under repo dir as prebuilt of host packages"
+  echo "      dev  - Use *.deb files under repo dir as prebuilt of host packages"
 
 }
 

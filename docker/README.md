@@ -29,8 +29,8 @@ Please run below command to build manually.
 
 ```bash
 cd /path/to/android-cuttlefish
-cd docker
-./image-builder.sh -m dev
+tools/buildutils/build_packages.sh
+docker/image-builder.sh -m dev
 ```
 
 You can validate if the docker image is successfully built by checking
