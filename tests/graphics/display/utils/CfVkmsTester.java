@@ -16,20 +16,14 @@
 
 package com.android.cuttlefish.tests;
 
-import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Manages setup and configuration of Virtual KMS (VKMS) for display emulation
@@ -157,6 +151,38 @@ public class CfVkmsTester implements Closeable {
 
         public int getValue() {
             return value;
+        }
+    }
+
+    private enum PixelFormat {
+        NONE("-*"),
+        ALL("+*"),
+        AR24("+AR24"); // More formats can be added as needed.
+
+        private final String code;
+
+        private PixelFormat(String code) {
+            this.code = code;
+        }
+
+        public static String toStringFromSet(EnumSet<PixelFormat> formats) {
+            if (formats == null || formats.isEmpty()) {
+                return NONE.code;
+            }
+
+            if (formats.contains(ALL)) {
+                return ALL.code;
+            }
+
+            // Start by adding NONE to clear any prior formats.
+            StringBuilder sb = new StringBuilder(NONE.code);
+            for (PixelFormat format : formats) {
+                if (format == NONE) {
+                    continue;
+                }
+                sb.append(format.code);
+            }
+            return sb.toString();
         }
     }
 
@@ -462,20 +488,24 @@ public class CfVkmsTester implements Closeable {
 
             // Set plane type
             PlaneType type;
+            EnumSet<PixelFormat> formats;
             switch (j) {
                 case 0:
                     type = PlaneType.CURSOR;
+                    formats = EnumSet.of(PixelFormat.AR24);
                     break;
                 case 1:
                     type = PlaneType.PRIMARY;
+                    formats = EnumSet.of(PixelFormat.ALL);
                     break;
                 default:
                     type = PlaneType.OVERLAY;
+                    formats = EnumSet.of(PixelFormat.ALL);
                     break;
             }
 
             setPlaneType(latestPlaneId, type);
-            setPlaneFormat(latestPlaneId);
+            setPlaneFormat(latestPlaneId, formats);
             linkToCrtc(DrmResource.PLANE, latestPlaneId, connectorIndex);
 
             latestPlaneId++;
@@ -559,11 +589,10 @@ public class CfVkmsTester implements Closeable {
         return true;
     }
 
-    private boolean setPlaneFormat(int index) throws Exception {
+    private boolean setPlaneFormat(int index, EnumSet<PixelFormat> formats) throws Exception {
         String planeDir = VKMS_BASE_DIR + "/" + DrmResource.PLANE.getBasePath() + index;
         String formatPath = planeDir + "/supported_formats";
-        // TODO: This is now hardcoded to all formats. Extend this later.
-        String command = "echo +* > " + formatPath;
+        String command = "echo " + PixelFormat.toStringFromSet(formats) + " > " + formatPath;
 
         CommandResult result = executeCommand(command);
         if (result.getStatus() != CommandStatus.SUCCESS) {
