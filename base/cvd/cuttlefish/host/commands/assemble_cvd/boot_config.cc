@@ -40,8 +40,6 @@
 
 using cuttlefish::vm_manager::CrosvmManager;
 
-DECLARE_string(vm_manager);
-
 namespace cuttlefish {
 namespace {
 
