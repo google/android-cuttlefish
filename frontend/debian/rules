@@ -20,8 +20,8 @@ GEN_SSL_CERT_OUT_DIR := ./.sslcert
 
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -buildmode=pie -ldflags="-w"
-	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -buildmode=pie -ldflags="-w"
+	$(GOUTIL) $(ORCHESTRATOR_SOURCE_DIR) build -v -buildmode=pie -buildvcs=false -ldflags="-w"
+	$(GOUTIL) $(OPERATOR_SOURCE_DIR) build -v -buildmode=pie -buildvcs=false -ldflags="-w"
 	$(BUILD_WEBUI)
 	$(GEN_SSL_CERT) -o $(GEN_SSL_CERT_OUT_DIR)
 
