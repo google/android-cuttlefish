@@ -1,0 +1,10 @@
+<compatibility-matrix version="1.0" type="framework">
+  <hal format="aidl">
+        <name>android.se.omapi</name>
+        <version>1</version>
+        <interface>
+            <name>ISecureElementService</name>
+            <instance>default</instance>
+        </interface>
+  </hal>
+</compatibility-matrix>
