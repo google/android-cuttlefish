@@ -20,15 +20,14 @@
 
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/files.h"
-#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
-#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
-#include "host/commands/assemble_cvd/disk_builder.h"
-#include "host/libs/config/ap_boot_flow.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
-
-DECLARE_bool(resume);
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 namespace {
