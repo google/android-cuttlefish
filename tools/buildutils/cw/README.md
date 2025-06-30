@@ -21,17 +21,17 @@ The run container command must be run at the root of the `android-cuttlefish` re
 ### base
 
 ```
-docker run -v=.:/mnt/build -w /mnt/build android-cuttlefish-build:latest base
+docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build:latest base
 ```
 
 Persist bazel cache among executions.
 
 ```
-docker run -v=$HOME/.cache/bazel:/root/.cache/bazel  -v=.:/mnt/build -w /mnt/build  android-cuttlefish-build:latest base
+docker run -v=$HOME/.cache/bazel:/root/.cache/bazel  -v=$PWD:/mnt/build -w /mnt/build  android-cuttlefish-build:latest base
 ```
 
 ### frontend
 
 ```
-docker run -v=.:/mnt/build -w /mnt/build android-cuttlefish-build:latest frontend
+docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build:latest frontend
 ```
