@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 
 #include <string>
 #include <utility>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
-#include "host/libs/config/data_image.h"
 
 namespace cuttlefish {
 
+std::string FactoryResetProtectedImage::FileName() {
+  return "factory_reset_protected.img";
+}
+
 Result<FactoryResetProtectedImage> FactoryResetProtectedImage::Create(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  FactoryResetProtectedImage frp(instance.factory_reset_protected_path());
+  FactoryResetProtectedImage frp(instance.PerInstanceInternalPath(FileName()));
   if (FileExists(frp.path_)) {
     return frp;
   }

@@ -33,6 +33,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/assemble_cvd:flags",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
+        "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",

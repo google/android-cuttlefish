@@ -26,6 +26,8 @@ namespace cuttlefish {
 
 class FactoryResetProtectedImage {
  public:
+  static std::string FileName();
+
   static Result<FactoryResetProtectedImage> Create(
       const CuttlefishConfig::InstanceSpecific&);
 

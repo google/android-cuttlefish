@@ -525,8 +525,6 @@ class CuttlefishConfig {
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
 
-    std::string factory_reset_protected_path() const;
-
     // used for the persistent_composite_disk vbmeta
     std::string vbmeta_path() const;
 
