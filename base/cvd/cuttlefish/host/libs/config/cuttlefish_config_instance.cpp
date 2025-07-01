@@ -2091,10 +2091,6 @@ int CuttlefishConfig::InstanceSpecific::audio_output_streams_count() const {
   return (*Dictionary())[kAudioOutputStreamsCount].asInt();
 }
 
-std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() const {
-  return PerInstanceInternalPath("factory_reset_protected.img");
-}
-
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
     const std::string& file_name) const {
   return (instance_dir() + "/") + file_name;

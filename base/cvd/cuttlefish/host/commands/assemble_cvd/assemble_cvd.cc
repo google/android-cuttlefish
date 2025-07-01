@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
@@ -249,7 +250,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("persistent_composite_overlay.img");
   preserving.insert("pflash.img");
   preserving.insert("uboot_env.img");
-  preserving.insert("factory_reset_protected.img");
+  preserving.insert(FactoryResetProtectedImage::FileName());
   preserving.insert(MiscImage::Name());
   preserving.insert("vmmtruststore.img");
   preserving.insert(MetadataImage::Name());
