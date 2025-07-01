@@ -1,3 +1,4 @@
+load("@rules_proto_grpc_go//:defs.bzl", "go_proto_compile")
 load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
@@ -8,6 +9,14 @@ package(
 proto_library(
     name = "load_config_proto",
     srcs = ["load_config.proto"],
+)
+
+# This will generate a build artifact in bazel-bin. To update ./golang/,
+# you must build this target and copy the artifact generated back to
+# ./golang/load_config.pb.go.
+go_proto_compile(
+    name = "load_config_go_proto",
+    protos = [":load_config_proto"],
 )
 
 cc_proto_library(
