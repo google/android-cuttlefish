@@ -307,16 +307,17 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, SharedFD log) {
+    fruit::Injector<>& injector, SharedFD log,
+    const SystemImageDirFlag& system_image_dir) {
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config = CF_EXPECT(
-        InitializeCuttlefishConfiguration(FLAGS_instance_dir, guest_configs,
-                                          injector, fetcher_config),
-        "cuttlefish configuration initialization failed");
+    auto config = CF_EXPECT(InitializeCuttlefishConfiguration(
+                                FLAGS_instance_dir, guest_configs, injector,
+                                fetcher_config, system_image_dir),
+                            "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
     if (!snapshot_path.empty()) {
@@ -650,10 +651,10 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   auto guest_configs = CF_EXPECT(GetGuestConfigAndSetDefaults(system_image_dir),
                                  "Failed to parse arguments");
 
-  auto config =
-      CF_EXPECT(InitFilesystemAndCreateConfig(std::move(fetcher_config),
-                                              guest_configs, injector, log),
-                "Failed to create config");
+  auto config = CF_EXPECT(
+      InitFilesystemAndCreateConfig(std::move(fetcher_config), guest_configs,
+                                    injector, log, system_image_dir),
+      "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;

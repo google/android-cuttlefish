@@ -242,7 +242,6 @@ DECLARE_bool(resume);
 
 DECLARE_string(boot_image);
 DECLARE_string(init_boot_image);
-DECLARE_string(data_image);
 DECLARE_string(super_image);
 DECLARE_string(misc_info_txt);
 DECLARE_string(vendor_boot_image);

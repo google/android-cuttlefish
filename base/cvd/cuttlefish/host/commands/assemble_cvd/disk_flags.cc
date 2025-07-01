@@ -92,7 +92,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
 
   std::string default_boot_image = "";
   std::string default_init_boot_image = "";
-  std::string default_data_image = "";
   std::string default_super_image = "";
   std::string default_misc_info_txt = "";
   std::string default_vendor_boot_image = "";
@@ -121,8 +120,8 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.
     default_boot_image += comma_str + cur_system_image_dir + "/boot.img";
-    default_init_boot_image += comma_str + cur_system_image_dir + "/init_boot.img";
-    default_data_image += comma_str + cur_system_image_dir + "/userdata.img";
+    default_init_boot_image +=
+        comma_str + cur_system_image_dir + "/init_boot.img";
     default_super_image += comma_str + cur_system_image_dir + "/super.img";
     default_misc_info_txt +=
         comma_str + cur_system_image_dir + "/misc_info.txt";
@@ -170,8 +169,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("init_boot_image",
                                default_init_boot_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -286,13 +283,13 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
                        AutoSetup<BootConfigPartition::CreateIfNeeded>::Type>();
 }
 
-Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config) {
+Result<void> DiskImageFlagsVectorization(
+    CuttlefishConfig& config, const FetcherConfig& fetcher_config,
+    const SystemImageDirFlag& system_image_dir) {
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
   std::vector<std::string> init_boot_image =
       android::base::Split(FLAGS_init_boot_image, ",");
-  std::vector<std::string> data_image =
-      android::base::Split(FLAGS_data_image, ",");
   std::vector<std::string> super_image =
       android::base::Split(FLAGS_super_image, ",");
   std::vector<std::string> misc_info =
@@ -423,11 +420,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       cur_super_image = super_image[instance_index];
     }
     instance.set_super_image(cur_super_image);
-    if (instance_index >= data_image.size()) {
-      instance.set_data_image(data_image[0]);
-    } else {
-      instance.set_data_image(data_image[instance_index]);
-    }
     if (instance_index >= android_efi_loader.size()) {
       instance.set_android_efi_loader(android_efi_loader[0]);
     } else {
@@ -528,12 +520,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       instance.set_new_boot_image(new_boot_image_path.c_str());
     }
 
+    instance.set_data_image(system_image_dir.ForIndex(instance_index) +
+                            "/userdata.img");
     instance.set_new_data_image(const_instance.PerInstancePath("userdata.img"));
-    if (instance_index >= data_image.size()) {
-      instance.set_data_image(data_image[0]);
-    } else {
-      instance.set_data_image(data_image[instance_index]);
-    }
 
     if (!cur_kernel_path.empty() || !cur_initramfs_path.empty()) {
       const std::string new_vendor_boot_image_path =

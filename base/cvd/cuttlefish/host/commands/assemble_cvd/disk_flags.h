@@ -30,7 +30,9 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir);
 
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config);
-Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const FetcherConfig& fetcher_config);
+Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config,
+                                         const FetcherConfig& fetcher_config,
+                                         const SystemImageDirFlag&);
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&,

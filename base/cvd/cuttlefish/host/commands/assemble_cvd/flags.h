@@ -31,9 +31,9 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
     const SystemImageDirFlag&);
 // Must be called after ParseCommandLineFlags.
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
-    const std::string& root_dir,
-    const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, const FetcherConfig& fetcher_config);
+    const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
+    fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
+    const SystemImageDirFlag&);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 
