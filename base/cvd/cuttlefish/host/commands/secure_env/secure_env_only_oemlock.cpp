@@ -64,6 +64,10 @@ DEFINE_string(gatekeeper_impl, "tpm",
 DEFINE_string(oemlock_impl, "tpm",
               "The oemlock implementation. \"tpm\" or \"software\"");
 
+DEFINE_int32(jcardsim_fd_in, -1, "A pipe for jcardsim communication");
+DEFINE_int32(jcardsim_fd_out, -1, "A pipe for jcardsim communication");
+DEFINE_bool(enable_jcard_simulator, false, "Whether to enable jcardsimulator.");
+
 namespace cuttlefish {
 namespace {
 
