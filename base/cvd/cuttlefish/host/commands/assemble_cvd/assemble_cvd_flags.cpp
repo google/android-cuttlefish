@@ -520,10 +520,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
 DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(
-    init_boot_image, CF_DEFAULTS_INIT_BOOT_IMAGE,
-    "Location of cuttlefish init boot image. If empty it is assumed to "
-    "be init_boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
               "Location of the super partition image.");
 DEFINE_string(misc_info_txt, "", "Location of the misc_info.txt file.");
