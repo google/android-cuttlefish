@@ -50,6 +50,10 @@ TARGET_USERDATAIMAGE_PARTITION_SIZE ?= 8589934592
 
 TARGET_VULKAN_SUPPORT ?= true
 
+ifneq ($(RELEASE_ADBD_OPEN_VSOCK_PORT),)
+PRODUCT_SYSTEM_PROPERTIES += service.adb.listen_addrs=vsock:8382,vsock:5555
+endif
+
 # Enable Virtual A/B
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/vabc_features.mk)
 PRODUCT_VIRTUAL_AB_COMPRESSION_METHOD := lz4
