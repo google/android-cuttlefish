@@ -200,16 +200,6 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   return root;
 }
 
-Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
-    const EnvironmentSpecification& config) {
-  std::vector<std::string> system_image_paths;
-  for (const auto& instance : config.instances()) {
-    CF_EXPECT(instance.disk().has_default_build());
-    system_image_paths.emplace_back(instance.disk().default_build());
-  }
-  return system_image_paths;
-}
-
 std::optional<std::string> GetConfiguredSystemHostPath(
     const EnvironmentSpecification& config) {
   if (config.common().has_host_package()) {
@@ -236,9 +226,8 @@ Result<Json::Value> GetOverriddenConfig(
 
 Result<LoadDirectories> GenerateLoadDirectories(
     const std::string& parent_directory,
-    std::vector<std::string>& system_image_path_configs,
-    std::optional<std::string> system_host_path, const int num_instances) {
-  CF_EXPECT_GT(num_instances, 0, "No instances in config to load");
+    const EnvironmentSpecification& config) {
+  CF_EXPECT(!config.instances().empty(), "No instances in config to load");
   auto result = LoadDirectories{
       .target_directory = parent_directory + "/artifacts",
       .launch_home_directory = parent_directory + "/home",
@@ -246,25 +235,33 @@ Result<LoadDirectories> GenerateLoadDirectories(
 
   std::vector<std::string> system_image_directories;
   int num_remote = 0;
-  for (int i = 0; i < num_instances; i++) {
-    const std::string instance_build_path = system_image_path_configs[i];
-    CF_EXPECT_EQ((int)system_image_path_configs.size(), num_instances,
-                 "Number of instances is inconsistent");
-
+  for (int i = 0; i < config.instances().size(); i++) {
     auto target_subdirectory = std::to_string(i);
     result.target_subdirectories.emplace_back(target_subdirectory);
-    if (IsLocalBuild(instance_build_path)) {
-      system_image_directories.emplace_back(instance_build_path);
+    auto instance = config.instances().Get(i);
+    if (!instance.disk().default_builds().empty()) {
+      for (const auto& instance_build_path : instance.disk().default_builds()) {
+        CF_EXPECT(IsLocalBuild(instance_build_path), "Instance build path is not local");
+        system_image_directories.emplace_back(instance_build_path);
+      }
     } else {
-      const std::string dir =
-          result.target_directory + "/" + target_subdirectory;
-      system_image_directories.emplace_back(dir);
-      num_remote++;
+      CF_EXPECT(instance.disk().has_default_build());
+      const std::string instance_build_path = instance.disk().default_build();
+      if (IsLocalBuild(instance_build_path)) {
+        system_image_directories.emplace_back(instance_build_path);
+      } else {
+        const std::string dir =
+            result.target_directory + "/" + target_subdirectory;
+        system_image_directories.emplace_back(dir);
+        num_remote++;
+      }
     }
     LOG(INFO) << "Instance " << i << " directory is "
               << system_image_directories.back();
   }
 
+  std::optional<std::string> system_host_path =
+      GetConfiguredSystemHostPath(config);
   CF_EXPECT(system_host_path || num_remote > 0,
             "Host tools path must be provided when using only local artifacts");
 
@@ -381,14 +378,8 @@ Result<CvdFlags> GetCvdFlags(const LoadFlags& flags) {
 
   auto launch = CF_EXPECT(ValidateCfConfigs(json_configs));
 
-  std::vector<std::string> system_image_path_configs =
-      CF_EXPECT(GetConfiguredSystemImagePaths(launch));
-  std::optional<std::string> host_package_dir =
-      GetConfiguredSystemHostPath(launch);
-
   const auto load_directories = CF_EXPECT(
-      GenerateLoadDirectories(flags.base_dir, system_image_path_configs,
-                              host_package_dir, launch.instances().size()));
+      GenerateLoadDirectories(flags.base_dir, launch));
 
   return CF_EXPECT(ParseCvdConfigs(launch, load_directories),
                    "Parsing json configs failed");

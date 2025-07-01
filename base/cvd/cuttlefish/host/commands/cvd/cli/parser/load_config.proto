@@ -96,6 +96,7 @@ message Disk {
   optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;
   optional string otatools = 6;
+  repeated string default_builds = 7;
 }
 
 message Super {
