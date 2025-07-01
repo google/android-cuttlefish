@@ -18,6 +18,12 @@ syntax = "proto3";
 
 package cuttlefish.cvd.config;
 
+/*
+ * TODO: If this proto changes, then the generated proto code should too.
+ * We should check they are kept in sync.
+ */
+option go_package = "github.com/google/android_cuttlefish/base/cvd/cuttlefish/host/commands/cvd/cli/parser/golang/";
+
 message EnvironmentSpecification {
   repeated Instance instances = 1;
   optional Fetch fetch = 2;
