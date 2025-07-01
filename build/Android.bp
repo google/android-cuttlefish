@@ -54,6 +54,7 @@ bootstrap_go_package {
         "blueprint",
         "soong",
         "soong-android",
+        "soong-cc",
     ],
     srcs: [
         "cvd-host-package.go",
