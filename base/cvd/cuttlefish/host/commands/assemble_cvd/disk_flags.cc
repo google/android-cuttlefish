@@ -270,7 +270,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*instance)
       .install(AutoSetup<InitializeAccessKregistryImage>::Component)
       .install(AutoSetup<InitBootloaderEnvPartition>::Component)
-      .install(AutoSetup<InitializeFactoryResetProtected>::Component)
+      .install(AutoSetup<FactoryResetProtectedImage::Create>::Component)
       .install(AutoSetup<InitializeHwcomposerPmemImage>::Component)
       .install(AutoSetup<InitializePstore>::Component)
       .install(AutoSetup<InitializeSdCard>::Component)

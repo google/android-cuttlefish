@@ -34,7 +34,8 @@ namespace {
 
 std::vector<ImagePartition> PersistentCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::optional<BootConfigPartition>& bootconfig_partition) {
+    const std::optional<BootConfigPartition>& bootconfig_partition,
+    const FactoryResetProtectedImage& frp) {
   std::vector<ImagePartition> partitions;
 
   // Note that if the position of uboot_env changes, the environment for
@@ -48,11 +49,7 @@ std::vector<ImagePartition> PersistentCompositeDiskConfig(
       .label = "vbmeta",
       .image_file_path = AbsolutePath(instance.vbmeta_path()),
   });
-  partitions.push_back(ImagePartition{
-      .label = "frp",
-      .image_file_path =
-          AbsolutePath(instance.factory_reset_protected_path()),
-  });
+  partitions.push_back(frp.Partition());
   if (bootconfig_partition) {
     partitions.push_back(bootconfig_partition->Partition());
   }
@@ -86,7 +83,7 @@ bool IsVmManagerQemu(const CuttlefishConfig& config) {
 Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSetup<InitializeFactoryResetProtected>::Type& /* dependency */,
+    AutoSetup<FactoryResetProtectedImage::Create>::Type& frp,
     AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& bootconfig_partition,
     AutoSetup<GeneratePersistentVbmeta>::Type& /* dependency */) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
@@ -95,8 +92,8 @@ Result<void> InitializeInstanceCompositeDisk(
   auto persistent_disk_builder =
       DiskBuilder()
           .ReadOnly(false)
-          .Partitions(
-              PersistentCompositeDiskConfig(instance, *bootconfig_partition))
+          .Partitions(PersistentCompositeDiskConfig(
+              instance, *bootconfig_partition, *frp))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("persistent_composite_disk_config.txt"))
