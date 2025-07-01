@@ -118,16 +118,17 @@ func main() {
 	}
 
 	imPaths := orchestrator.IMPaths{
-		RootDir:          *imRootDir,
-		InstancesDir:     filepath.Join(*imRootDir, "instances"),
-		CVDBugReportsDir: filepath.Join(*imRootDir, "cvdbugreports"),
-		SnapshotsRootDir: filepath.Join(*imRootDir, "snapshots"),
+		RootDir:              *imRootDir,
+		InstancesDir:         filepath.Join(*imRootDir, "instances"),
+		CVDBugReportsDir:     filepath.Join(*imRootDir, "cvdbugreports"),
+		SnapshotsRootDir:     filepath.Join(*imRootDir, "snapshots"),
+		UserArtifactsRootDir: filepath.Join(*imRootDir, "userartifacts"),
 	}
 
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
 		LegacyRootDir: filepath.Join(*imRootDir, "user_artifacts"),
-		RootDir:       filepath.Join(*imRootDir, "userartifacts"),
+		RootDir:       imPaths.UserArtifactsRootDir,
 	}
 	uam, err := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	if err != nil {

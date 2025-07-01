@@ -42,10 +42,11 @@ func (s EmptyFieldError) Error() string {
 }
 
 type IMPaths struct {
-	RootDir          string
-	InstancesDir     string
-	CVDBugReportsDir string
-	SnapshotsRootDir string
+	RootDir              string
+	InstancesDir         string
+	CVDBugReportsDir     string
+	SnapshotsRootDir     string
+	UserArtifactsRootDir string
 }
 
 func CvdGroupToAPIObject(group *cvd.Group) []*apiv1.CVD {
