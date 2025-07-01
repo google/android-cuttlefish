@@ -19,6 +19,22 @@ package(
 )
 
 cf_cc_library(
+    name = "display_proto",
+    srcs = ["display_proto.cc"],
+    hdrs = ["display_proto.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "@fmt",
+        "@protobuf",
+    ],
+)
+
+cf_cc_library(
     name = "system_image_dir",
     srcs = ["system_image_dir.cc"],
     hdrs = ["system_image_dir.h"],
