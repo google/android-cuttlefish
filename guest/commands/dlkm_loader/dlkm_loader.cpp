@@ -21,6 +21,14 @@
 int main(int, char **argv) {
   android::base::InitLogging(argv, android::base::KernelLogger);
   LOG(INFO) << "dlkm loader successfully initialized";
+
+  Modprobe m_sys({"/system/lib/modules"}, "modules.load");
+  if (!m_sys.LoadWithAliases("rust_binder.ko", false)) {
+    LOG(WARNING) << "Unable to load Rust binder.";
+    // Continue anyways, Rust binder is experimental and will fall back to
+    // C binder automatically.
+  }
+
   Modprobe m({"/vendor/lib/modules"}, "modules.load");
   // We should continue loading kernel modules even if some modules fail to
   // load. If we abort loading early, the unloaded modules can cause more
