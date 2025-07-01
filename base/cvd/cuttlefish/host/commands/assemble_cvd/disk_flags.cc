@@ -54,7 +54,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_16k.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
@@ -91,7 +90,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
              "Cannot pass both kernel_path/initramfs_path and image file paths");
 
   std::string default_boot_image = "";
-  std::string default_init_boot_image = "";
   std::string default_super_image = "";
   std::string default_misc_info_txt = "";
   std::string default_vendor_boot_image = "";
@@ -120,8 +118,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.
     default_boot_image += comma_str + cur_system_image_dir + "/boot.img";
-    default_init_boot_image +=
-        comma_str + cur_system_image_dir + "/init_boot.img";
     default_super_image += comma_str + cur_system_image_dir + "/super.img";
     default_misc_info_txt +=
         comma_str + cur_system_image_dir + "/misc_info.txt";
@@ -166,9 +162,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("init_boot_image",
-                               default_init_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -288,8 +281,6 @@ Result<void> DiskImageFlagsVectorization(
     const SystemImageDirFlag& system_image_dir) {
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
-  std::vector<std::string> init_boot_image =
-      android::base::Split(FLAGS_init_boot_image, ",");
   std::vector<std::string> super_image =
       android::base::Split(FLAGS_super_image, ",");
   std::vector<std::string> misc_info =
@@ -374,11 +365,8 @@ Result<void> DiskImageFlagsVectorization(
     instance.set_boot_image(cur_boot_image);
     instance.set_new_boot_image(cur_boot_image);
 
-    if (instance_index >= init_boot_image.size()) {
-      instance.set_init_boot_image(init_boot_image[0]);
-    } else {
-      instance.set_init_boot_image(init_boot_image[instance_index]);
-    }
+    instance.set_init_boot_image(system_image_dir.ForIndex(instance_index) +
+                                 "/init_boot.img");
     if (instance_index >= vendor_boot_image.size()) {
       cur_vendor_boot_image = vendor_boot_image[0];
     } else {
