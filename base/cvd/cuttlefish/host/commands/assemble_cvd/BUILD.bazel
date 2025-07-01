@@ -228,10 +228,10 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:graphics_flags",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
-        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd:misc_info",
         "//cuttlefish/host/commands/assemble_cvd:network_flags",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
+        "//cuttlefish/host/commands/assemble_cvd/flags:display_proto",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:config_constants",
@@ -248,7 +248,6 @@ cf_cc_library(
         "@fruit",
         "@gflags",
         "@jsoncpp",
-        "@protobuf",
     ],
 )
 
