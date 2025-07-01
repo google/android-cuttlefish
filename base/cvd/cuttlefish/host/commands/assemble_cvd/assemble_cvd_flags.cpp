@@ -27,12 +27,6 @@
 #include "host/libs/config/display.h"
 
 #define DEFINE_vec DEFINE_string
-#define DEFINE_proto DEFINE_string
-
-DEFINE_proto(displays_textproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
-              "Text Proto input for multi-vd multi-displays");
-DEFINE_proto(displays_binproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
-              "Binary Proto input for multi-vd multi-displays");
 
 DEFINE_vec(cpus, std::to_string(CF_DEFAULTS_CPUS),
               "Virtual CPU count.");

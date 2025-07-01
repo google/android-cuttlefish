@@ -19,10 +19,6 @@
 #include <gflags/gflags.h>
 
 #define DECLARE_vec DECLARE_string
-#define DECLARE_proto DECLARE_string
-
-DECLARE_proto(displays_textproto);
-DECLARE_proto(displays_binproto);
 
 DECLARE_vec(cpus);
 DECLARE_vec(data_policy);

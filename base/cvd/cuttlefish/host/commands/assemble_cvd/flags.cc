@@ -872,11 +872,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> data_policy_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(data_policy));
 
-  // multi-dv multi-display proto input
-  std::vector<std::vector<CuttlefishConfig::DisplayConfig>> instances_display_configs;
-  if (!FLAGS_displays_textproto.empty() || !FLAGS_displays_binproto.empty()) {
-    instances_display_configs = CF_EXPECT(ParseDisplaysProto());
-  }
+  // multi-virtual-device multi-display proto input
+  DisplaysProtoFlag instances_display_configs =
+      CF_EXPECT(DisplaysProtoFlag::FromGlobalGflags());
 
   std::vector<bool> use_balloon_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(crosvm_use_balloon));
@@ -1205,10 +1203,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     std::vector<CuttlefishConfig::DisplayConfig> display_configs;
     // assume displays proto input has higher priority than original display inputs
-    if (!FLAGS_displays_textproto.empty() || !FLAGS_displays_binproto.empty()) {
-      if (instance_index < instances_display_configs.size()) {
-        display_configs = instances_display_configs[instance_index];
-      } // else display_configs is an empty vector
+    if (instances_display_configs.Config()) {
+      if (instance_index < instances_display_configs.Config()->size()) {
+        display_configs = (*instances_display_configs.Config())[instance_index];
+      }  // else display_configs is an empty vector
     } else if (binding_displays_configs) {
       display_configs = *binding_displays_configs;
     }
