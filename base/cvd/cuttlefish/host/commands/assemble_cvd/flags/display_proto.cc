@@ -16,17 +16,23 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <fmt/format.h>
+#include <gflags/gflags.h>
 #include <google/protobuf/text_format.h>
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+
+DEFINE_string(displays_textproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
+              "Text Proto input for multi-vd multi-displays");
+DEFINE_string(displays_binproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
+              "Binary Proto input for multi-vd multi-displays");
 
 namespace cuttlefish {
 namespace {
@@ -53,8 +59,6 @@ Result<ProtoType> ParseBinProtoFlagHelper(const std::string& flag_value,
                                                    << flag_value);
   return proto_result;
 }
-
-}  // namespace
 
 Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
 ParseDisplaysProto() {
@@ -107,6 +111,25 @@ ParseDisplaysProto() {
   }
 
   return result;
+}
+
+}  // namespace
+
+Result<DisplaysProtoFlag> DisplaysProtoFlag::FromGlobalGflags() {
+  if (FLAGS_displays_binproto.empty() && FLAGS_displays_textproto.empty()) {
+    return DisplaysProtoFlag(std::nullopt);
+  }
+  return DisplaysProtoFlag(CF_EXPECT(ParseDisplaysProto()));
+}
+
+DisplaysProtoFlag::DisplaysProtoFlag(
+    std::optional<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
+        config)
+    : config_(std::move(config)) {}
+
+const std::optional<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>&
+DisplaysProtoFlag::Config() const {
+  return config_;
 }
 
 }  // namespace cuttlefish

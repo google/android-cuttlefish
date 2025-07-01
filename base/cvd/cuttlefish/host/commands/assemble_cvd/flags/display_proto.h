@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
@@ -22,7 +23,21 @@
 
 namespace cuttlefish {
 
-Result<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
-ParseDisplaysProto();
+class DisplaysProtoFlag {
+ public:
+  static Result<DisplaysProtoFlag> FromGlobalGflags();
+
+  // An empty value implies the flag is not used, while a present empty list
+  // implies the user has explicitly requested an empty display list.
+  const std::optional<
+      std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>&
+  Config() const;
+
+ private:
+  explicit DisplaysProtoFlag(
+      std::optional<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>);
+  std::optional<std::vector<std::vector<CuttlefishConfig::DisplayConfig>>>
+      config_;
+};
 
 }  // namespace cuttlefish
