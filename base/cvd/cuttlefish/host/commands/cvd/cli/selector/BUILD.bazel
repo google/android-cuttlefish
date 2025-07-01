@@ -27,8 +27,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
-        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//libbase",
     ],
@@ -60,9 +60,9 @@ cf_cc_test(
 
 cf_cc_library(
     name = "parser_ids_helper",
+    testonly = True,
     srcs = ["parser_ids_helper.cpp"],
     hdrs = ["parser_ids_helper.h"],
-    testonly = True,
     deps = [
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/libs/config:config_constants",
@@ -85,9 +85,9 @@ cf_cc_test(
 
 cf_cc_library(
     name = "parser_names_helper",
+    testonly = True,
     srcs = ["parser_names_helper.cpp"],
     hdrs = ["parser_names_helper.h"],
-    testonly = True,
     deps = [
         "//cuttlefish/host/commands/cvd/cli:types",
         "//libbase",
@@ -115,10 +115,10 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
-        "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:interruptible_terminal",
         "//cuttlefish/host/commands/cvd/cli:utils",
+        "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
@@ -133,8 +133,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/selector:selector_constants",
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//libbase",
     ],
@@ -164,10 +164,10 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/selector:device_selector_utils",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_option_parser_utils",
-        "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:instance_nums",
         "//libbase",
