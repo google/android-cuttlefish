@@ -26,7 +26,7 @@ namespace cuttlefish {
 
 Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    AutoSetup<InitializeFactoryResetProtected>::Type&,
+    AutoSetup<FactoryResetProtectedImage::Create>::Type&,
     AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& bootconfig_partition,
     AutoSetup<GeneratePersistentVbmeta>::Type&);
 

@@ -17,22 +17,35 @@
 #include "host/commands/assemble_cvd/disk/factory_reset_protected.h"
 
 #include <string>
+#include <utility>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "host/libs/config/data_image.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeFactoryResetProtected(
+Result<FactoryResetProtectedImage> FactoryResetProtectedImage::Create(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  auto frp = instance.factory_reset_protected_path();
-  if (FileExists(frp)) {
-    return {};
+  FactoryResetProtectedImage frp(instance.factory_reset_protected_path());
+  if (FileExists(frp.path_)) {
+    return frp;
   }
-  CF_EXPECT(CreateBlankImage(frp, 1 /* mb */, "none"),
-            "Failed to create \"" << frp << "\"");
-  return {};
+  CF_EXPECTF(CreateBlankImage(frp.path_, 1 /* mb */, "none"),
+             "Failed to create '{}'", frp.path_);
+  return frp;
+}
+
+FactoryResetProtectedImage::FactoryResetProtectedImage(std::string path)
+    : path_(std::move(path)) {}
+
+ImagePartition FactoryResetProtectedImage::Partition() const {
+  return ImagePartition{
+      .label = "frp",
+      .image_file_path = AbsolutePath(path_),
+  };
 }
 
 }  // namespace cuttlefish

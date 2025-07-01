@@ -16,12 +16,25 @@
 
 #pragma once
 
-#include "common/libs/utils/result.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include <string>
+
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeFactoryResetProtected(
-    const CuttlefishConfig::InstanceSpecific&);
+class FactoryResetProtectedImage {
+ public:
+  static Result<FactoryResetProtectedImage> Create(
+      const CuttlefishConfig::InstanceSpecific&);
+
+  ImagePartition Partition() const;
+
+ private:
+  explicit FactoryResetProtectedImage(std::string);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish
