@@ -26,7 +26,12 @@
 namespace cuttlefish {
 
 void FakeHttpClient::SetResponse(std::string data, std::string url) {
-  auto handler = [data = std::move(data)](const HttpRequest&) { return data; };
+  HttpResponse<std::string> res = {
+      .data = data,
+      .http_code = 200,
+      .headers = {},
+  };
+  auto handler = [res = std::move(res)](const HttpRequest&) { return res; };
   SetResponse(std::move(handler), std::move(url));
 }
 
@@ -62,9 +67,10 @@ Result<HttpResponse<void>> FakeHttpClient::DownloadToCallback(
     response.http_code = 404;
     return response;
   }
-  response.http_code = 200;
-  std::string data = (*handler)(request);
-  CF_EXPECT(callback(data.data(), data.size()));
+  HttpResponse<std::string> handler_res = (*handler)(request);
+  CF_EXPECT(callback(handler_res.data.data(), handler_res.data.size()));
+  response.http_code = handler_res.http_code;
+  response.headers = std::move(handler_res.headers);
   return response;
 }
 

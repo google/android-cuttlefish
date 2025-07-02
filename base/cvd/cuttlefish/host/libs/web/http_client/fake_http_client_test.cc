@@ -72,7 +72,9 @@ TEST(FakeHttpClientTest, ChoosesUrl) {
 TEST(FakeHttpClientTest, InvokesCallback) {
   FakeHttpClient http_client;
 
-  http_client.SetResponse([](const HttpRequest& req) { return req.url; });
+  http_client.SetResponse([](const HttpRequest& req) {
+    return HttpResponse<std::string>{.data = req.url, .http_code = 200};
+  });
 
   Result<HttpResponse<std::string>> res =
       HttpGetToString(http_client, "https://www.google.com");

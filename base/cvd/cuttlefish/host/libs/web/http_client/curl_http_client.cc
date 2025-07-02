@@ -19,12 +19,14 @@
 
 #include <curl/curl.h>
 #include <curl/easy.h>
+#include <curl/header.h>
 
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -123,20 +125,28 @@ class CurlClient : public HttpClient {
     CF_EXPECT(callback(nullptr, 0) /* Signal start of data */,
               "callback failure");
     auto curl_headers = CF_EXPECT(SlistFromStrings(request.headers));
+
     curl_easy_reset(curl_);
-    if (request.method == HttpMethod::kDelete) {
-      curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
+    switch (request.method) {
+      case HttpMethod::kDelete:
+        curl_easy_setopt(curl_, CURLOPT_CUSTOMREQUEST, "DELETE");
+        break;
+      case HttpMethod::kPost:
+        curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE,
+                         request.data_to_write.size());
+        curl_easy_setopt(curl_, CURLOPT_POSTFIELDS,
+                         request.data_to_write.c_str());
+        break;
+      case HttpMethod::kHead:
+        curl_easy_setopt(curl_, CURLOPT_NOBODY, 1L);
+        break;
+      default:
+        break;
     }
     curl_easy_setopt(curl_, CURLOPT_CAINFO,
                      "/etc/ssl/certs/ca-certificates.crt");
     curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, curl_headers.get());
     curl_easy_setopt(curl_, CURLOPT_URL, request.url.c_str());
-    if (request.method == HttpMethod::kPost) {
-      curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE,
-                       request.data_to_write.size());
-      curl_easy_setopt(curl_, CURLOPT_POSTFIELDS,
-                       request.data_to_write.c_str());
-    }
     curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, curl_to_function_cb);
     curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &callback);
     char error_buf[CURL_ERROR_SIZE];
@@ -154,7 +164,19 @@ class CurlClient : public HttpClient {
                   << "Error buffer was \"" << error_buf << "\".");
     long http_code = 0;
     curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &http_code);
-    return HttpResponse<void>{{}, http_code};
+
+    std::vector<HttpHeader> headers;
+    curl_header* raw_header = nullptr;
+    while ((raw_header = curl_easy_nextheader(curl_, CURLH_HEADER, 0,
+                                              raw_header)) != nullptr) {
+      headers.emplace_back(HttpHeader{
+          .name = raw_header->name,
+          .value = raw_header->value,
+      });
+    }
+
+    return HttpResponse<void>{
+        .data = {}, .http_code = http_code, .headers = std::move(headers)};
   }
 
  private:

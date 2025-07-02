@@ -28,7 +28,7 @@ namespace cuttlefish {
 
 class FakeHttpClient : public HttpClient {
  public:
-  using Handler = std::function<std::string(const HttpRequest&)>;
+  using Handler = std::function<HttpResponse<std::string>(const HttpRequest&)>;
 
   // The longest string that is a complete substring of `url` is used to match
   // requests.

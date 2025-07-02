@@ -17,6 +17,7 @@
 
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -37,9 +38,13 @@ HttpResponse<Json::Value> Parse(HttpResponse<std::string> response) {
     LOG(ERROR) << "Could not parse json: " << result.error().FormatForEnv();
     error_json["error"] = "Failed to parse json: " + result.error().Message();
     error_json["response"] = response.data;
-    return HttpResponse<Json::Value>{error_json, response.http_code};
+    return HttpResponse<Json::Value>{.data = error_json,
+                                     .http_code = response.http_code,
+                                     .headers = std::move(response.headers)};
   }
-  return HttpResponse<Json::Value>{*result, response.http_code};
+  return HttpResponse<Json::Value>{.data = *result,
+                                   .http_code = response.http_code,
+                                   .headers = std::move(response.headers)};
 }
 
 }  // namespace

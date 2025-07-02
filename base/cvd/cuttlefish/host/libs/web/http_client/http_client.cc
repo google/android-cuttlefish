@@ -15,8 +15,40 @@
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 
+#include <ctype.h>
+#include <stddef.h>
+
+#include <optional>
+#include <string_view>
+#include <vector>
+
 namespace cuttlefish {
+namespace {
+
+bool EqualsCaseInsensitive(const std::string_view a, const std::string_view b) {
+  if (a.size() != b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < a.size(); i++) {
+    if (tolower(a[i]) != tolower(b[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+}  // namespace
 
 HttpClient::~HttpClient() = default;
+
+std::optional<std::string_view> HeaderValue(
+    const std::vector<HttpHeader>& headers, std::string_view header_name) {
+  for (const HttpHeader& header : headers) {
+    if (EqualsCaseInsensitive(header.name, header_name)) {
+      return header.value;
+    }
+  }
+  return std::nullopt;
+}
 
 }  // namespace cuttlefish

@@ -74,7 +74,7 @@ Result<HttpResponse<std::string>> HttpGetToFile(
   HttpRequest request = {
       .method = HttpMethod::kGet,
       .url = url,
-      .headers = headers,
+      .headers = std::move(headers),
   };
 
   HttpResponse<void> http_response =
@@ -91,7 +91,11 @@ Result<HttpResponse<std::string>> HttpGetToFile(
         "Unable to remove temporary file \"{}\"\nMay require manual removal",
         temp_path);
   }
-  return HttpResponse<std::string>{path, http_response.http_code};
+  return HttpResponse<std::string>{
+      .data = path,
+      .http_code = http_response.http_code,
+      .headers = std::move(http_response.headers),
+  };
 }
 
 }  // namespace cuttlefish
