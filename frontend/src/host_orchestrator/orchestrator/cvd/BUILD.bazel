@@ -7,7 +7,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//orchestrator/exec",
-    ]
+    ],
 )
 
 go_test(
@@ -17,7 +17,7 @@ go_test(
     ],
     embed = [":cvd"],
     deps = [
-        "@com_github_google_go_cmp//cmp",
         "//orchestrator/exec",
+        "@com_github_google_go_cmp//cmp",
     ],
 )
