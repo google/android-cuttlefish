@@ -6,4 +6,3 @@ go_library(
     importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec",
     visibility = ["//visibility:public"],
 )
-
