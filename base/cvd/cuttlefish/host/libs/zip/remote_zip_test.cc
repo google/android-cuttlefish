@@ -58,7 +58,7 @@ class HttpCallback {
     return HttpCallback(CF_EXPECT(ReadToString(source)));
   }
 
-  std::string operator()(const HttpRequest& request) {
+  HttpResponse<std::string> operator()(const HttpRequest& request) {
     static constexpr std::string_view kPrefix = "Range: bytes=";
     std::string range;
     for (const std::string& header : request.headers) {
@@ -81,10 +81,22 @@ class HttpCallback {
     if (end > data_.size()) {
       end = data_.size();
     }
-    return data_.substr(start, end - start);
+    return HttpResponse<std::string>{
+        .data = data_.substr(start, end - start),
+        .http_code = 200,
+        .headers =
+            std::vector<HttpHeader>{
+                HttpHeader{
+                    .name = "content-length",
+                    .value = std::to_string(end - start),
+                },
+                HttpHeader{
+                    .name = "accepts-ranges",
+                    .value = "bytes",
+                },
+            },
+    };
   }
-
-  size_t Size() { return data_.size(); }
 
  private:
   HttpCallback(std::string data) : data_(std::move(data)) {}
@@ -100,11 +112,10 @@ TEST(RemoteZipTest, TwoFiles) {
 
   Result<HttpCallback> callback = HttpCallback::Create(zip_contents);
   ASSERT_THAT(callback, IsOk());
-  size_t size = callback->Size();
 
   http_client.SetResponse(std::move(*callback));
 
-  Result<ReadableZip> remote_zip = ZipFromUrl(http_client, "url", size, {});
+  Result<ReadableZip> remote_zip = ZipFromUrl(http_client, "url", {});
   ASSERT_THAT(remote_zip, IsOk());
 
   Result<SeekableZipSource> file_a(remote_zip->GetFile("a.txt"));
