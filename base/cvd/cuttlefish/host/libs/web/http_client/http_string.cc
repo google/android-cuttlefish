@@ -19,6 +19,7 @@
 
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
@@ -40,7 +41,11 @@ Result<HttpResponse<std::string>> Download(HttpClient& http_client,
   };
   HttpResponse<void> http_response =
       CF_EXPECT(http_client.DownloadToCallback(request, callback));
-  return HttpResponse<std::string>{stream.str(), http_response.http_code};
+  return HttpResponse<std::string>{
+      .data = stream.str(),
+      .http_code = http_response.http_code,
+      .headers = std::move(http_response.headers),
+  };
 }
 
 }  // namespace

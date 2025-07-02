@@ -21,10 +21,12 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include <fmt/core.h>
+#include "absl/strings/numbers.h"
+#include "fmt/core.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -94,13 +96,39 @@ class RemoteZip : public SeekableZipSourceCallback {
   std::vector<std::string> headers_;
 };
 
+Result<uint64_t> GetSizeIfSupportsRangeRequests(
+    HttpClient& http_client_, const std::string& url,
+    const std::vector<std::string>& headers) {
+  HttpRequest request = {
+      .method = HttpMethod::kHead,
+      .url = url,
+      .headers = headers,
+  };
+  auto empty_cb = [](char*, size_t) { return true; };
+  HttpResponse<void> http_response =
+      CF_EXPECT(http_client_.DownloadToCallback(request, empty_cb));
+  std::string_view ranges_header =
+      CF_EXPECT(HeaderValue(http_response.headers, "accepts-ranges"));
+  CF_EXPECT_NE(ranges_header.find("bytes"), std::string_view::npos);
+
+  std::string_view content_length_str =
+      CF_EXPECT(HeaderValue(http_response.headers, "content-length"));
+
+  uint64_t content_length;
+  CF_EXPECT(absl::SimpleAtoi(content_length_str, &content_length));
+
+  return content_length;
+}
+
 }  // namespace
 
-Result<ReadableZip> ZipFromUrl(HttpClient& http_client_, const std::string& url,
-                               uint64_t size,
+Result<ReadableZip> ZipFromUrl(HttpClient& http_client, const std::string& url,
                                std::vector<std::string> headers) {
+  uint64_t size =
+      CF_EXPECT(GetSizeIfSupportsRangeRequests(http_client, url, headers));
+
   std::unique_ptr<RemoteZip> callbacks =
-      std::make_unique<RemoteZip>(http_client_, url, size, std::move(headers));
+      std::make_unique<RemoteZip>(http_client, url, size, std::move(headers));
   CF_EXPECT(callbacks.get());
 
   SeekableZipSource source =

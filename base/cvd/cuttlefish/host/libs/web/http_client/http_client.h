@@ -16,7 +16,9 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -27,6 +29,11 @@
 namespace cuttlefish {
 
 struct HttpVoidResponse {};
+
+struct HttpHeader {
+  std::string name;
+  std::string value;
+};
 
 template <typename T>
 struct HttpResponse {
@@ -54,12 +61,17 @@ struct HttpResponse {
 
   typename std::conditional<std::is_void_v<T>, HttpVoidResponse, T>::type data;
   long http_code;
+  std::vector<HttpHeader> headers;
 };
+
+std::optional<std::string_view> HeaderValue(
+    const std::vector<HttpHeader>& headers, std::string_view header_name);
 
 enum class HttpMethod {
   kGet,
   kPost,
   kDelete,
+  kHead,
 };
 
 struct HttpRequest {
