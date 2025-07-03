@@ -110,8 +110,6 @@ type UserArtifactsClient interface {
 	UploadArtifact(filename string) error
 	// Extract artifact into the artifacts repository.
 	// Artifacts are identified by their SHA256 checksum in the artifacts repository
-	// Returning *hoapi.Operation as nil when there's an error or there's no operation for
-	// extracting given artifact since it's already extracted before.
 	ExtractArtifact(filename string) (*hoapi.Operation, error)
 	// Creates a directory in the host where user artifacts can be uploaded to.
 	CreateUploadDir() (string, error)
@@ -606,11 +604,7 @@ func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) (*hoapi.Op
 	}
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewPostRequest("/v1/userartifacts/"+checksum+"/:extract", nil).JSONResDo(op); err != nil {
-		if apiCallError, ok := err.(*ApiCallError); ok && apiCallError.HTTPStatusCode == http.StatusConflict {
-			return nil, nil
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 	return op, nil
 }
