@@ -53,6 +53,12 @@ while getopts ":r:c:" opt; do
   esac
 done
 
+# To build frontend package in docker instance, this configuration setting is
+# required not to get an error.
+if [ -f "/.dockerenv" ] && [ "${PKGDIR}" = "frontend" ]; then
+  git config --global --add safe.directory ${PWD}
+fi
+
 pushd "${PKGDIR}"
 echo "Installing package dependencies"
 sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
