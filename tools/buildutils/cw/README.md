@@ -6,13 +6,15 @@
 
 The build image command must be run at the root of the `android-cuttlefish` repo directory.
 
+Enabling Docker [BuildKit](https://docs.docker.com/build/buildkit/) is required
+on Docker version below 23.0 to build this image.
+
 ```
 docker build \
   --file "tools/buildutils/cw/Containerfile" \
   --tag "android-cuttlefish-build:latest" \
   .
 ```
-
 
 ## Build the package
 
