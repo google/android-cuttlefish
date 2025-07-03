@@ -25,11 +25,16 @@ Please refer to
 
 ## Build docker image manually
 
-Please run below command to build manually.
+To build docker image, building host debian packages for docker image is
+required. Please refer to
+[tools/buildutils/cw/README.md](../tools/buildutils/cw/README.md) for building
+host debian packages including `base` and `frontend`.
+
+After retrieving host debian packages, please run below command to build
+manually.
 
 ```bash
 cd /path/to/android-cuttlefish
-tools/buildutils/build_packages.sh
 docker/image-builder.sh -m dev
 ```
 
