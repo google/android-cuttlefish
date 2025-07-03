@@ -39,6 +39,10 @@ type AndroidCIBundle struct {
 }
 
 // Prefix for specifying user artifact path while creating CVD with CreateCVDRequest.EnvConfig.
+const EnvConfigUserArtifactsVarV1 = "@userartifacts"
+
+// Prefix for specifying legacy user artifact path while creating CVD with CreateCVDRequest.EnvConfig.
+// Deprecated: use `EnvConfigUserArtifactsVarV1` instead
 const EnvConfigUserArtifactsVar = "@user_artifacts"
 
 // Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.

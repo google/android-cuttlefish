@@ -15,17 +15,21 @@
 package orchestrator
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"sync/atomic"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
+	"github.com/hashicorp/go-multierror"
 )
 
 type CreateCVDActionOpts struct {
@@ -104,11 +108,24 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("environment config:\n%s", string(data))
-	data = bytes.ReplaceAll(data,
-		[]byte(apiv1.EnvConfigUserArtifactsVar+"/"),
-		[]byte(a.userArtifactsDirResolver.GetDirPath("")+"/"))
-	configFile, err := createTempFile("cvdload*.json", data, 0640)
+	config := string(data)
+	log.Printf("environment config:\n%s", config)
+	regex, err := regexp.Compile("\"" + apiv1.EnvConfigUserArtifactsVarV1 + "/[0-9a-zA-Z_,]+\"")
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile regex: %w", err)
+	}
+	var errs *multierror.Error
+	config = regex.ReplaceAllStringFunc(config, func(base string) string {
+		checksums := strings.Split(strings.TrimPrefix(strings.Trim(base, "\""), apiv1.EnvConfigUserArtifactsVarV1), ",")
+		dir, err := a.prepareUserArtifactSymlinkDirectory(checksums)
+		errs = multierror.Append(errs, err)
+		return fmt.Sprintf("\"%s\"", dir)
+	})
+	if err := errs.ErrorOrNil(); err != nil {
+		return nil, fmt.Errorf("failed to replace config around user artifact: %w", err)
+	}
+	config = strings.ReplaceAll(config, apiv1.EnvConfigUserArtifactsVar+"/", a.userArtifactsDirResolver.GetDirPath("")+"/")
+	configFile, err := createTempFile("cvdload*.json", config, 0640)
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +138,31 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 		return nil, operator.NewInternalError(ErrMsgLaunchCVDFailed, err)
 	}
 	return &apiv1.CreateCVDResponse{CVDs: CvdGroupToAPIObject(group)}, nil
+}
+
+func (a *CreateCVDAction) prepareUserArtifactSymlinkDirectory(checksums []string) (string, error) {
+	dstDir, err := ioutil.TempDir("", "cvduserartifacts*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create directory storing links of given artifacts: %w", err)
+	}
+	for _, checksum := range checksums {
+		srcDir := filepath.Join(a.paths.UserArtifactsRootDir, checksum+"_extracted")
+		if exists, err := dirExists(srcDir); err != nil || !exists {
+			srcDir = filepath.Join(a.paths.UserArtifactsRootDir, checksum)
+		}
+		entries, err := ioutil.ReadDir(srcDir)
+		if err != nil {
+			return "", fmt.Errorf("failed to read directory: %w", err)
+		}
+		for _, entry := range entries {
+			src := filepath.Join(srcDir, entry.Name())
+			dst := filepath.Join(dstDir, entry.Name())
+			if err := os.Symlink(src, dst); err != nil {
+				return "", fmt.Errorf("failed to create symlink of artifacts: %w", err)
+			}
+		}
+	}
+	return dstDir, nil
 }
 
 func (a *CreateCVDAction) launchCVDResult(op apiv1.Operation) *OperationResult {
@@ -224,7 +266,7 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 }
 
 // See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
-func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, error) {
+func createTempFile(pattern string, data string, mode os.FileMode) (*os.File, error) {
 	file, err := ioutil.TempFile("", pattern)
 	if err != nil {
 		return nil, err
@@ -232,7 +274,7 @@ func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, er
 	if err := file.Chmod(mode); err != nil {
 		return nil, err
 	}
-	_, err = file.Write(data)
+	_, err = file.WriteString(data)
 	if closeErr := file.Close(); closeErr != nil && err == nil {
 		err = closeErr
 	}
