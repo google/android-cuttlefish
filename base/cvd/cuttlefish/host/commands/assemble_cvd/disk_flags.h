@@ -29,14 +29,15 @@ namespace cuttlefish {
 Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir);
 
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                                    const CuttlefishConfig& config);
+                                    const CuttlefishConfig& config,
+                                    const SystemImageDirFlag&);
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config,
                                          const FetcherConfig& fetcher_config,
                                          const SystemImageDirFlag&);
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&,
-    const MiscImage&);
+    const MiscImage&, const SystemImageDirFlag&);
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
                                    const CuttlefishConfig::InstanceSpecific& instance);
 

@@ -695,8 +695,6 @@ class CuttlefishConfig {
 
     std::string custom_partition_path() const;
 
-    std::string hibernation_partition_image() const;
-
     int blank_sdcard_image_mb() const;
     std::string bootloader() const;
     std::string initramfs_path() const;
@@ -932,8 +930,6 @@ class CuttlefishConfig {
     void set_bootconfig_supported(bool bootconfig_supported);
     void set_filename_encryption_mode(const std::string& filename_encryption_mode);
     void set_external_network_mode(ExternalNetworkMode network_mode);
-    void set_hibernation_partition_image(
-        const std::string& hibernation_partition_image);
 
     // Whether we should start vhal_proxy_server for the guest-side VHAL to
     // connect to.

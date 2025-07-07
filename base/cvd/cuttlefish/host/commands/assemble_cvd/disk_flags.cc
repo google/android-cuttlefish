@@ -90,7 +90,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
   std::string default_vbmeta_system_dlkm_image = "";
   std::string default_16k_kernel_image = "";
   std::string default_16k_ramdisk_image = "";
-  std::string default_hibernation_image = "";
   std::string vvmtruststore_path = "";
 
   std::string comma_str = "";
@@ -119,8 +118,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
         comma_str + cur_system_image_dir + "/vbmeta_vendor_dlkm.img";
     default_vbmeta_system_dlkm_image +=
         comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
-    default_hibernation_image +=
-        comma_str + cur_system_image_dir + "/hibernation_swap.img";
 
     if (instance_index < default_vvmtruststore_file_name.size()) {
       if (default_vvmtruststore_file_name[instance_index].empty()) {
@@ -151,9 +148,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
   SetCommandLineOptionWithMode("vbmeta_system_dlkm_image",
                                default_vbmeta_system_dlkm_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("hibernation_image",
-                               default_hibernation_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vvmtruststore_path", vvmtruststore_path.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   return {};
@@ -162,7 +156,8 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const MetadataImage& metadata, const MiscImage& misc) {
+    const MetadataImage& metadata, const MiscImage& misc,
+    const SystemImageDirFlag& system_image_dir) {
   auto builder =
       DiskBuilder()
           .VmManager(config.vm_manager())
@@ -174,7 +169,9 @@ DiskBuilder OsCompositeDiskBuilder(
     return builder.EntireDisk(instance.chromeos_disk())
         .CompositeDiskPath(instance.chromeos_disk());
   }
-  return builder.Partitions(GetOsCompositeDiskConfig(instance, metadata, misc))
+  return builder
+      .Partitions(
+          GetOsCompositeDiskConfig(instance, metadata, misc, system_image_dir))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());
@@ -298,8 +295,6 @@ Result<void> DiskImageFlagsVectorization(
 
   std::vector<std::string> custom_partition_path =
       android::base::Split(FLAGS_custom_partition_path, ",");
-  std::vector<std::string> hibernation_image =
-      android::base::Split(FLAGS_hibernation_image, ",");
 
   std::vector<std::string> bootloader =
       android::base::Split(FLAGS_bootloader, ",");
@@ -433,12 +428,6 @@ Result<void> DiskImageFlagsVectorization(
     } else {
       instance.set_custom_partition_path(custom_partition_path[instance_index]);
     }
-    if (instance_index >= hibernation_image.size()) {
-      instance.set_hibernation_partition_image(hibernation_image[0]);
-    } else {
-      instance.set_hibernation_partition_image(
-          hibernation_image[instance_index]);
-    }
     if (instance_index >= bootloader.size()) {
       instance.set_bootloader(bootloader[0]);
     } else {
@@ -527,8 +516,9 @@ Result<void> DiskImageFlagsVectorization(
   return {};
 }
 
-Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                                    const CuttlefishConfig& config) {
+Result<void> CreateDynamicDiskFiles(
+    const FetcherConfig& fetcher_config, const CuttlefishConfig& config,
+    const SystemImageDirFlag& system_image_dir) {
   for (const auto& instance : config.Instances()) {
     // TODO(schuffelen): Unify this with the other injector created in
     // assemble_cvd.cpp
@@ -584,8 +574,8 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     MetadataImage metadata = CF_EXPECT(MetadataImage::ReuseOrCreate(instance));
     MiscImage misc = CF_EXPECT(MiscImage::ReuseOrCreate(instance));
 
-    DiskBuilder os_disk_builder =
-        OsCompositeDiskBuilder(config, instance, metadata, misc);
+    DiskBuilder os_disk_builder = OsCompositeDiskBuilder(
+        config, instance, metadata, misc, system_image_dir);
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);

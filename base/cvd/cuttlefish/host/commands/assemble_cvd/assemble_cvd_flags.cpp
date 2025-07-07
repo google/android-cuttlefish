@@ -595,9 +595,5 @@ DEFINE_string(
     "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\"");
 
 DEFINE_string(
-    hibernation_image, CF_DEFAULTS_HIBERNATION_IMAGE,
-    "Location of the hibernation path that will be used when hibernating.");
-
-DEFINE_string(
     blank_sdcard_image_mb, CF_DEFAULTS_BLANK_SDCARD_IMAGE_MB,
     "If enabled, the size of the blank sdcard image to generate, MB.");
