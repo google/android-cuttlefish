@@ -25,9 +25,9 @@ use crate::vio_input::{trim_to_event_size_multiple, VirtioInputConfig};
 
 const VIRTIO_INPUT_NUM_QUEUES: usize = 2;
 const VIRTIO_INPUT_MAX_QUEUE_SIZE: usize = 256;
-const FEATURES: u64 = 1 << VIRTIO_F_VERSION_1
-    | 1 << VIRTIO_F_NOTIFY_ON_EMPTY
-    | 1 << VIRTIO_RING_F_EVENT_IDX
+const FEATURES: u64 = (1 << VIRTIO_F_VERSION_1)
+    | (1 << VIRTIO_F_NOTIFY_ON_EMPTY)
+    | (1 << VIRTIO_RING_F_EVENT_IDX)
     | VhostUserVirtioFeatures::PROTOCOL_FEATURES.bits();
 
 const EVENT_QUEUE: u16 = 0;
