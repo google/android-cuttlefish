@@ -53,7 +53,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/use_16k.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
@@ -70,14 +69,6 @@ namespace cuttlefish {
 using vm_manager::Gem5Manager;
 
 Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
-  Use16kFlag use_16k = Use16kFlag::FromGlobalGflags();
-  if (use_16k.Use16k()) {
-    CF_EXPECT(FLAGS_kernel_path.empty(),
-              "--use_16k is not compatible with --kernel_path");
-    CF_EXPECT(FLAGS_initramfs_path.empty(),
-              "--use_16k is not compatible with --initramfs_path");
-  }
-
   // It is conflict (invalid) to pass both kernel_path/initramfs_path
   // and image file paths.
   bool flags_kernel_initramfs_has_input = (!FLAGS_kernel_path.empty())
@@ -130,16 +121,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
         comma_str + cur_system_image_dir + "/vbmeta_system_dlkm.img";
     default_hibernation_image +=
         comma_str + cur_system_image_dir + "/hibernation_swap.img";
-    if (use_16k.Use16k()) {
-      const auto kernel_16k = cur_system_image_dir + "/kernel_16k";
-      const auto ramdisk_16k = cur_system_image_dir + "/ramdisk_16k.img";
-      default_16k_kernel_image += comma_str + kernel_16k;
-      default_16k_ramdisk_image += comma_str + ramdisk_16k;
-      CF_EXPECT(FileExists(kernel_16k),
-                kernel_16k + " missing for launching 16k cuttlefish");
-      CF_EXPECT(FileExists(ramdisk_16k),
-                ramdisk_16k + " missing for launching 16k cuttlefish");
-    }
 
     if (instance_index < default_vvmtruststore_file_name.size()) {
       if (default_vvmtruststore_file_name[instance_index].empty()) {
@@ -149,17 +130,6 @@ Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir) {
                               default_vvmtruststore_file_name[instance_index];
       }
     }
-  }
-  if (use_16k.Use16k()) {
-    LOG(INFO) << "Using 16k kernel: " << default_16k_kernel_image;
-    LOG(INFO) << "Using 16k ramdisk: " << default_16k_ramdisk_image;
-
-    SetCommandLineOptionWithMode("kernel_path",
-                                 default_16k_kernel_image.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
-    SetCommandLineOptionWithMode("initramfs_path",
-                                 default_16k_ramdisk_image.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);

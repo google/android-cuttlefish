@@ -45,12 +45,3 @@ cf_cc_library(
         "@gflags",
     ],
 )
-
-cf_cc_library(
-    name = "use_16k",
-    srcs = ["use_16k.cc"],
-    hdrs = ["use_16k.h"],
-    deps = [
-        "@gflags",
-    ],
-)

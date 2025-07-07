@@ -161,7 +161,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:sd_card",
         "//cuttlefish/host/commands/assemble_cvd/disk:vbmeta_enforce_minimum_size",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
-        "//cuttlefish/host/commands/assemble_cvd/flags:use_16k",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
