@@ -1,4 +1,4 @@
-cuttlefish-common (1.14.0) unstable; urgency=medium
+cuttlefish-common (1.14.0) stable; urgency=medium
 
   * Being development of version 1.14 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1307
   * sensors_hal_proxy: Only report continous mode sensors by @chihchiachen in https://github.com/google/android-cuttlefish/pull/1298

@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.14.0) unstable; urgency=medium
+cuttlefish-frontend (1.14.0) stable; urgency=medium
 
   * Implement HO golang client API `ExtractArtifact(filename string)` by @0405ysj in https://github.com/google/android-cuttlefish/pull/1323
 
