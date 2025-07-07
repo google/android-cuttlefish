@@ -346,7 +346,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: e2e-tests-orchestration-runner-special-testlogs
-        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/_main/bazel-out/k8-fastbuild/testlogs
+        path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/bazel-out/k8-fastbuild/testlogs
     - name: Used disk space
       run: |
         df -h
