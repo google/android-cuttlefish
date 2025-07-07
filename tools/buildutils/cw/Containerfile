@@ -5,8 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y && apt upgrade -y
 RUN apt install -y sudo devscripts
 
-RUN --mount=source=.,target=/mnt,type=bind \
-  /mnt/tools/buildutils/installbazel.sh
+COPY ./tools/buildutils/installbazel.sh /installbazel.sh
+RUN /installbazel.sh && rm /installbazel.sh
 
 COPY ./tools/buildutils/build_package.sh /build_package.sh
 
