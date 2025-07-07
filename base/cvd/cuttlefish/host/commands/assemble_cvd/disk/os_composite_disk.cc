@@ -25,6 +25,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/linux_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
@@ -33,12 +34,15 @@ namespace cuttlefish {
 
 std::vector<ImagePartition> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
-    const MetadataImage& metadata, const MiscImage& misc) {
+    const MetadataImage& metadata, const MiscImage& misc,
+    const SystemImageDirFlag& system_image_dir) {
   switch (instance.boot_flow()) {
     case BootFlow::Android:
-      return AndroidCompositeDiskConfig(instance, metadata, misc);
+      return AndroidCompositeDiskConfig(instance, metadata, misc,
+                                        system_image_dir);
     case BootFlow::AndroidEfiLoader:
-      return AndroidEfiLoaderCompositeDiskConfig(instance, metadata, misc);
+      return AndroidEfiLoaderCompositeDiskConfig(instance, metadata, misc,
+                                                 system_image_dir);
     case BootFlow::ChromeOs:
       return ChromeOsCompositeDiskConfig(instance);
     case BootFlow::ChromeOsDisk:

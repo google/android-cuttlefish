@@ -450,16 +450,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_custom_partition_path(
 std::string CuttlefishConfig::InstanceSpecific::custom_partition_path() const {
   return (*Dictionary())[kCustomPartitionPath].asString();
 }
-static constexpr char kHibernationPartitionImage[] =
-    "hibernation_partition_image";
-void CuttlefishConfig::MutableInstanceSpecific::set_hibernation_partition_image(
-    const std::string& hibernation_partition_image) {
-  (*Dictionary())[kHibernationPartitionImage] = hibernation_partition_image;
-}
-std::string CuttlefishConfig::InstanceSpecific::hibernation_partition_image()
-    const {
-  return (*Dictionary())[kHibernationPartitionImage].asString();
-}
 static constexpr char kBlankSdcardImageMb[] = "blank_sdcard_image_mb";
 int CuttlefishConfig::InstanceSpecific::blank_sdcard_image_mb() const {
   return (*Dictionary())[kBlankSdcardImageMb].asInt();

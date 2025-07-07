@@ -270,6 +270,4 @@ DECLARE_string(fuchsia_root_image);
 
 DECLARE_string(custom_partition_path);
 
-DECLARE_string(hibernation_image);
-
 DECLARE_string(blank_sdcard_image_mb);

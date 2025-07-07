@@ -18,6 +18,8 @@
 
 #include <sys/statvfs.h>
 
+#include <optional>
+#include <string>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -25,14 +27,31 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
+namespace {
+
+std::optional<ImagePartition> HibernationImage(
+    const SystemImageDirFlag& system_image_dir,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::string path = AbsolutePath(system_image_dir.ForIndex(instance.index()) +
+                                  "/hibernation_swap.img");
+  ImagePartition image = ImagePartition{
+      .label = "hibernation",
+      .image_file_path = path,
+  };
+  return FileExists(path) ? std::optional<ImagePartition>(image) : std::nullopt;
+}
+
+}  // namespace
 
 std::vector<ImagePartition> AndroidCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
-    const MetadataImage& metadata_image, const MiscImage& misc_image) {
+    const MetadataImage& metadata_image, const MiscImage& misc_image,
+    const SystemImageDirFlag& system_image_dir) {
   std::vector<ImagePartition> partitions;
 
   partitions.push_back(misc_image.Partition());
@@ -127,14 +146,13 @@ std::vector<ImagePartition> AndroidCompositeDiskConfig(
       .label = "userdata",
       .image_file_path = AbsolutePath(data_image),
   });
+
   partitions.push_back(metadata_image.Partition());
-  const auto hibernation_partition_image =
-      instance.hibernation_partition_image();
-  if (FileExists(hibernation_partition_image)) {
-    partitions.push_back(ImagePartition{
-        .label = "hibernation",
-        .image_file_path = AbsolutePath(hibernation_partition_image),
-    });
+
+  std::optional<ImagePartition> hibernation_partition =
+      HibernationImage(system_image_dir, instance);
+  if (hibernation_partition) {
+    partitions.push_back(std::move(*hibernation_partition));
   }
 
   const auto vvmtruststore_path = instance.vvmtruststore_path();
