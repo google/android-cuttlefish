@@ -1,0 +1,31 @@
+diff --git a/build_variables.bzl b/build_variables.bzl
+index 113342840..94e0a8377 100644
+--- a/build_variables.bzl
++++ b/build_variables.bzl
+@@ -9,7 +9,13 @@ GFXSTREAM_HOST_COPTS = [
+     ],
+     "//conditions:default": [
+         "-fno-exceptions",
+-    ],
++        "-Wno-thread-safety-analysis",
++        "-Wno-thread-safety-attributes",
++        "-Wno-unused-but-set-variable",
++        "-Wno-unused-const-variable",
++        "-Wno-unused-function",
++        "-Wno-unused-private-field",
++      ],
+ })
+ GFXSTREAM_HOST_VK_DEFINES = [
+     "VK_GFXSTREAM_STRUCTURE_TYPE_EXT",
+diff --git a/common/base/BUILD.bazel b/common/base/BUILD.bazel
+index c6cffabd8..9fe05e501 100644
+--- a/common/base/BUILD.bazel
++++ b/common/base/BUILD.bazel
+@@ -81,6 +81,7 @@ cc_library(
+         ],
+         exclude = ["include/gfxstream/testing/**"],
+     ),
++    copts = ["-Wno-thread-safety-attributes"],
+     defines = select({
+         "@platforms//os:windows": [
+             "WIN32_LEAN_AND_MEAN",

@@ -1,0 +1,5 @@
+package(
+    default_visibility = [
+        "@gfxstream//:__subpackages__",
+    ],
+)
