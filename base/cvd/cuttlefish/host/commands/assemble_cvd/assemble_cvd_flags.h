@@ -39,7 +39,6 @@ DECLARE_string(y_res);
 DECLARE_string(dpi);
 DECLARE_string(refresh_rate_hz);
 DECLARE_string(overlays);
-DECLARE_vec(initramfs_path);
 DECLARE_string(extra_kernel_cmdline);
 DECLARE_string(extra_bootconfig_args);
 DECLARE_vec(guest_enforce_security);

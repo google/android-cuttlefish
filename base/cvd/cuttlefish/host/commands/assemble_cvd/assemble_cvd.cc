@@ -40,6 +40,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -310,17 +311,18 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, SharedFD log,
-    const KernelPathFlag& kernel_path,
+    const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config = CF_EXPECT(InitializeCuttlefishConfiguration(
-                                FLAGS_instance_dir, guest_configs, injector,
-                                fetcher_config, kernel_path, system_image_dir),
-                            "cuttlefish configuration initialization failed");
+    auto config = CF_EXPECT(
+        InitializeCuttlefishConfiguration(
+            FLAGS_instance_dir, guest_configs, injector, fetcher_config,
+            initramfs_path, kernel_path, system_image_dir),
+        "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
     if (!snapshot_path.empty()) {
@@ -506,17 +508,6 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
   return config;
 }
 
-const std::string kKernelDefaultPath = "kernel";
-const std::string kInitramfsImg = "initramfs.img";
-static void ExtractKernelParamsFromFetcherConfig(
-    const FetcherConfig& fetcher_config) {
-  std::string discovered_ramdisk =
-      fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
-
-  SetCommandLineOptionWithMode("initramfs_path", discovered_ramdisk.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-}
-
 Result<void> VerifyConditionsOnSnapshotRestore(
     const std::string& snapshot_path) {
   if (snapshot_path.empty()) {
@@ -580,9 +571,6 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   FetcherConfig fetcher_config = FindFetcherConfig(input_files);
 
-  // set gflags defaults to point to kernel/RD from fetcher config
-  ExtractKernelParamsFromFetcherConfig(fetcher_config);
-
   auto args = ArgsToVec(argc - 1, argv + 1);
 
   bool help = false;
@@ -615,6 +603,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
                                          /* remove_flags */ false);
   }
 
+  InitramfsPathFlag initramfs_path =
+      InitramfsPathFlag::FromGlobalGflags(fetcher_config);
   KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_config);
 
   SystemImageDirFlag system_image_dir =
@@ -649,13 +639,15 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // them in place, and either errors out on unknown flags or accepts any flags.
 
   auto guest_configs =
-      CF_EXPECT(GetGuestConfigAndSetDefaults(kernel_path, system_image_dir),
+      CF_EXPECT(GetGuestConfigAndSetDefaults(initramfs_path, kernel_path,
+                                             system_image_dir),
                 "Failed to parse arguments");
 
-  auto config = CF_EXPECT(InitFilesystemAndCreateConfig(
-                              std::move(fetcher_config), guest_configs,
-                              injector, log, kernel_path, system_image_dir),
-                          "Failed to create config");
+  auto config =
+      CF_EXPECT(InitFilesystemAndCreateConfig(
+                    std::move(fetcher_config), guest_configs, injector, log,
+                    initramfs_path, kernel_path, system_image_dir),
+                "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
