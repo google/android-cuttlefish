@@ -115,6 +115,9 @@ cc_binary(
     local_defines = [
         "SYSCONFDIR=\\\"/etc\\\"",
     ],
+    copts = [
+        "-Wno-unused-but-set-variable",
+    ],
     deps = [
         "@//build_external/mtools:mtools_config",
     ],
