@@ -8,6 +8,4 @@ RUN apt install -y sudo devscripts
 COPY ./tools/buildutils/installbazel.sh /installbazel.sh
 RUN /installbazel.sh && rm /installbazel.sh
 
-COPY ./tools/buildutils/build_package.sh /build_package.sh
-
-ENTRYPOINT ["/build_package.sh"]
+ENTRYPOINT ["tools/buildutils/cw/entrypoint.sh"]
