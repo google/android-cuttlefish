@@ -20,19 +20,22 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
 
-Result<void> ResolveInstanceFiles(const SystemImageDirFlag& system_image_dir);
+Result<void> ResolveInstanceFiles(const KernelPathFlag& kernel_path,
+                                  const SystemImageDirFlag& system_image_dir);
 
 Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config,
                                     const SystemImageDirFlag&);
 Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config,
                                          const FetcherConfig& fetcher_config,
+                                         const KernelPathFlag&,
                                          const SystemImageDirFlag&);
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
