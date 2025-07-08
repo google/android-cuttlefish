@@ -21,11 +21,11 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/shared_fd_flag.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/shared_fd_flag.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 namespace cuttlefish {
 

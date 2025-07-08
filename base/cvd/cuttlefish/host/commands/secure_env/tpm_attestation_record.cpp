@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/tpm_attestation_record.h"
+#include "cuttlefish/host/commands/secure_env/tpm_attestation_record.h"
 
 #include <keymaster/contexts/soft_attestation_cert.h>
 #include <keymaster/km_openssl/attestation_record.h>

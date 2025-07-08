@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
+#include "cuttlefish/host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
 
 #include <string>
 

@@ -24,7 +24,7 @@
 #include <optional>
 #include <sstream>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "request.h"
 
 namespace cuttlefish {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/common/libs/utils/proc_file_utils.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -31,10 +31,10 @@
 #include <android-base/strings.h>
 #include <fmt/core.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

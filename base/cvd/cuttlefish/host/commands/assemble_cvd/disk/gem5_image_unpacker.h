@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/feature/feature.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/utils/shared_fd_flag.h"
+#include "cuttlefish/common/libs/utils/shared_fd_flag.h"
 
 #include <unistd.h>
 
@@ -26,8 +26,8 @@
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 
 namespace cuttlefish {
 

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/confui/protocol_types.h"
+#include "cuttlefish/common/libs/confui/protocol_types.h"
 
 #include <cstdint>
 #include <map>
@@ -21,9 +21,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/libs/confui/packet.h"
-#include "common/libs/confui/utils.h"
-#include "common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/confui/packet.h"
+#include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/utils/contains.h"
 
 namespace cuttlefish {
 namespace confui {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/gem5_manager.h"
+#include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -33,12 +33,12 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/feature/command_source.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
 
 namespace cuttlefish {
 namespace vm_manager {

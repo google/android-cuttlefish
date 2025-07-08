@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/socket2socket_proxy.h"
+#include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 
 #include <poll.h>
 #include <sys/types.h>

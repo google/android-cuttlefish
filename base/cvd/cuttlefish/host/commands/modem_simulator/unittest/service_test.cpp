@@ -20,13 +20,13 @@
 #include <filesystem>
 #include <fstream>
 
-#include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/files.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/commands/modem_simulator/channel_monitor.h"
-#include "host/commands/modem_simulator/device_config.h"
-#include "host/commands/modem_simulator/modem_simulator.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/modem_simulator/channel_monitor.h"
+#include "cuttlefish/host/commands/modem_simulator/device_config.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 namespace fs = std::filesystem;
 
 static const char *myiccfile =

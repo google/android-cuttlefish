@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/confui/packet_types.h"
+#include "cuttlefish/common/libs/confui/packet_types.h"
 
 #include <sstream>
 

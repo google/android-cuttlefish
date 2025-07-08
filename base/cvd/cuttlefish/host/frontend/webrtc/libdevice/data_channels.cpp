@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libdevice/data_channels.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/data_channels.h"
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/json.h"
-#include "host/frontend/webrtc/libcommon/utils.h"
-#include "host/frontend/webrtc/libdevice/keyboard.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/keyboard.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

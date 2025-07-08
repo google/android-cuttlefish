@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

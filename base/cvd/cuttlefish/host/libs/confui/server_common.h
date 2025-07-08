@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/confui.h"
 
 namespace cuttlefish {
 namespace confui {

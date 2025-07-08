@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/users.h"
+#include "cuttlefish/common/libs/utils/users.h"
 
 #include <grp.h>
 #include <pwd.h>
@@ -31,8 +31,8 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {

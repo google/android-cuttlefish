@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/utils/files_test_helper.h"
+#include "cuttlefish/common/libs/utils/files_test_helper.h"
 
 namespace cuttlefish {
 

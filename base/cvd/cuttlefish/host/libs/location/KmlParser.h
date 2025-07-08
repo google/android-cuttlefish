@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "host/libs/location/GpsFix.h"
+#include "cuttlefish/host/libs/location/GpsFix.h"
 
 class KmlParser {
  public:

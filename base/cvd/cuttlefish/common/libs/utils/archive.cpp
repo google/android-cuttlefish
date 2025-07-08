@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/archive.h"
+#include "cuttlefish/common/libs/utils/archive.h"
 
 #include <unistd.h>
 
@@ -25,8 +25,8 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace {

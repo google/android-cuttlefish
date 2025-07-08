@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/assemble_cvd/clean.h"
+#include "cuttlefish/host/commands/assemble_cvd/clean.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -25,10 +25,10 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/in_sandbox.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 namespace {

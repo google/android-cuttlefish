@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/base64.h"
 
 #include <cstddef>
 #include <cstdint>

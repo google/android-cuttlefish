@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 bool FileExists(const std::string& path, bool follow_symlinks = true);

@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/feature/feature.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

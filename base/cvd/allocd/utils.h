@@ -22,8 +22,8 @@
 #include <optional>
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/logging.h"
 #include "request.h"
 
 namespace cuttlefish {

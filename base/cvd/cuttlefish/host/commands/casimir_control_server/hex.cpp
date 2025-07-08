@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/commands/casimir_control_server/hex.h"
+#include "cuttlefish/host/commands/casimir_control_server/hex.h"
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 
 #ifdef __linux__
 #include <sys/prctl.h>
@@ -38,13 +38,13 @@
 #include <android-base/logging.h>
 #include "android-base/strings.h"
 
-#include "common/libs/transport/channel.h"
-#include "common/libs/transport/channel_sharedfd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/transport/channel.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {

@@ -29,12 +29,12 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {

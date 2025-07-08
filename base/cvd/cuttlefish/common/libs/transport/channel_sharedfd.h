@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/transport/channel.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/transport/channel.h"
 
 namespace cuttlefish {
 namespace transport {

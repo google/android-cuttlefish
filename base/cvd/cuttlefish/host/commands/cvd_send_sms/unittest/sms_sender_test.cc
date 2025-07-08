@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd_send_sms/sms_sender.h"
+#include "cuttlefish/host/commands/cvd_send_sms/sms_sender.h"
 
 #include <sstream>
 
@@ -21,7 +21,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 namespace {

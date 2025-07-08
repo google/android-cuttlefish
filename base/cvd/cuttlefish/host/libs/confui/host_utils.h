@@ -26,10 +26,10 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/confui/confui.h"
-#include "common/libs/utils/contains.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 namespace cuttlefish {
 namespace confui {

@@ -18,10 +18,10 @@
 #include <memory>
 #include <utility>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/audio_connector/buffers.h"
-#include "host/libs/audio_connector/commands.h"
-#include "host/libs/audio_connector/shm_layout.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/audio_connector/buffers.h"
+#include "cuttlefish/host/libs/audio_connector/commands.h"
+#include "cuttlefish/host/libs/audio_connector/shm_layout.h"
 
 namespace cuttlefish {
 

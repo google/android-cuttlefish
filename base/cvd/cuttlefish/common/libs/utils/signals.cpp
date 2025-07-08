@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/signals.h"
+#include "cuttlefish/common/libs/utils/signals.h"
 
 #include <errno.h>
 #include <signal.h>

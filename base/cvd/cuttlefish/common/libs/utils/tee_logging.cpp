@@ -38,10 +38,10 @@
 #include <android-base/strings.h>
 #include <android-base/threads.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 using android::base::FATAL;
 using android::base::GetThreadId;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/location/KmlParser.h"
+#include "cuttlefish/host/libs/location/KmlParser.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -24,7 +24,7 @@
 
 #include <libxml/parser.h>
 
-#include "host/libs/location/StringParse.h"
+#include "cuttlefish/host/libs/location/StringParse.h"
 
 // Coordinates can be nested arbitrarily deep within a Placemark, depending
 // on the type of object (Point, LineString, Polygon) the Placemark contains

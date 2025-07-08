@@ -29,10 +29,10 @@
 #include <api/peer_connection_interface.h>
 #include <pc/video_track_source.h>
 
-#include "common/libs/utils/result.h"
-#include "host/frontend/webrtc/libcommon/connection_controller.h"
-#include "host/frontend/webrtc/libdevice/data_channels.h"
-#include "host/frontend/webrtc/libdevice/connection_observer.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/connection_controller.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/connection_observer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/data_channels.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

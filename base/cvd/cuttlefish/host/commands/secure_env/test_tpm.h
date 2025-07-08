@@ -16,7 +16,7 @@
 
 #include <tss2/tss2_esys.h>
 
-#include "host/commands/secure_env/in_process_tpm.h"
+#include "cuttlefish/host/commands/secure_env/in_process_tpm.h"
 
 namespace cuttlefish {
 

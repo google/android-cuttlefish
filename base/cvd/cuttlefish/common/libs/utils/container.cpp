@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/container.h"
+#include "cuttlefish/common/libs/utils/container.h"
 
 #include <cstdlib>
 #include <string>
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/sensors_simulator/sensors_simulator.h"
+#include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 
 #include <cmath>
 

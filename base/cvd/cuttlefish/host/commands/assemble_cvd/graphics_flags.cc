@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/graphics_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 
 #include <ostream>
 
@@ -23,12 +23,12 @@
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 #ifdef __APPLE__
 #define CF_UNUSED_ON_MACOS [[maybe_unused]]

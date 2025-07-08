@@ -25,14 +25,14 @@
 
 #include "cuttlefish/common/frontend/socket_vsock_proxy/client.h"
 #include "cuttlefish/common/frontend/socket_vsock_proxy/server.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/socket2socket_proxy.h"
-#include "common/libs/utils/tee_logging.h"
-#include "host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 constexpr int TCP_SERVER_START_RETRIES_COUNT = 10;
 constexpr std::chrono::milliseconds TCP_SERVER_RETRIES_DELAY(1250);

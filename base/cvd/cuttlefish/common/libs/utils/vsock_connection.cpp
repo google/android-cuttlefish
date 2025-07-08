@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/vsock_connection.h"
+#include "cuttlefish/common/libs/utils/vsock_connection.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,8 +34,8 @@
 #include <android-base/logging.h>
 #include <json/json.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 
 namespace cuttlefish {
 

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libcommon/connection_controller.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/connection_controller.h"
 
 #include <vector>
 
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/json.h"
-#include "host/frontend/webrtc/libcommon/utils.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

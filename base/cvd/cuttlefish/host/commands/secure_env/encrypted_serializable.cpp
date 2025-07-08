@@ -19,10 +19,10 @@
 //
 #include <android-base/logging.h>
 
-#include "host/commands/secure_env/tpm_auth.h"
-#include "host/commands/secure_env/tpm_encrypt_decrypt.h"
-#include "host/commands/secure_env/tpm_random_source.h"
-#include "host/commands/secure_env/tpm_serialize.h"
+#include "cuttlefish/host/commands/secure_env/tpm_auth.h"
+#include "cuttlefish/host/commands/secure_env/tpm_encrypt_decrypt.h"
+#include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
+#include "cuttlefish/host/commands/secure_env/tpm_serialize.h"
 
 namespace cuttlefish {
 

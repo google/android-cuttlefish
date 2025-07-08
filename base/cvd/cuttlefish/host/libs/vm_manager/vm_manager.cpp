@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 #include <iomanip>
 #include <memory>
@@ -26,13 +26,13 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/feature/command_source.h"
-#include "host/libs/feature/inject.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/gem5_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
+#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace vm_manager {

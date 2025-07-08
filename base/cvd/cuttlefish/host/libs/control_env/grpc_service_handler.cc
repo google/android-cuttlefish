@@ -29,8 +29,8 @@
 #include "test/cpp/util/grpc_tool.h"
 #include "test/cpp/util/test_config.h"
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 using android::base::EndsWith;
 using android::base::Split;

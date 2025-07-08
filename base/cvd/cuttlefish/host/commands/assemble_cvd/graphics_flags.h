@@ -17,10 +17,10 @@
 
 #include <string>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
-#include "host/commands/assemble_cvd/guest_config.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

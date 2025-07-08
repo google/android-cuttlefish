@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/storage/tpm_storage.h"
+#include "cuttlefish/host/commands/secure_env/storage/tpm_storage.h"
 
 #include <android-base/logging.h>
 #include <tss2/tss2_rc.h>
 
-#include "host/commands/secure_env/json_serializable.h"
-#include "host/commands/secure_env/tpm_random_source.h"
+#include "cuttlefish/host/commands/secure_env/json_serializable.h"
+#include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
 
 namespace cuttlefish {
 namespace secure_env {

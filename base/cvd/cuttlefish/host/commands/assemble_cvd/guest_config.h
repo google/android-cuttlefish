@@ -18,8 +18,8 @@
 #include <optional>
 #include <string>
 
-#include "common/libs/utils/architecture.h"
-#include "common/libs/utils/device_type.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
 
 namespace cuttlefish {
 

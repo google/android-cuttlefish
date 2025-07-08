@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/session.h"
+#include "cuttlefish/host/libs/confui/session.h"
 
-#include "host/libs/confui/secure_input.h"
+#include "cuttlefish/host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
 namespace confui {

@@ -22,17 +22,17 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/transport/channel_sharedfd.h"
-#include "host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/commands/secure_env/oemlock/oemlock.h"
-#include "host/commands/secure_env/oemlock/oemlock_responder.h"
-#include "host/commands/secure_env/storage/insecure_json_storage.h"
-#include "host/commands/secure_env/suspend_resume_handler.h"
-#include "host/commands/secure_env/worker_thread_loop_body.h"
-#include "host/libs/config/known_paths.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/commands/secure_env/oemlock/oemlock.h"
+#include "cuttlefish/host/commands/secure_env/oemlock/oemlock_responder.h"
+#include "cuttlefish/host/commands/secure_env/storage/insecure_json_storage.h"
+#include "cuttlefish/host/commands/secure_env/suspend_resume_handler.h"
+#include "cuttlefish/host/commands/secure_env/worker_thread_loop_body.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(confui_server_fd, -1, "A named socket to serve confirmation UI");
 DEFINE_int32(snapshot_control_fd, -1,

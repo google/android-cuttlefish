@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/confui/protocol.h"
+#include "cuttlefish/common/libs/confui/protocol.h"
 
 #include <sstream>
 #include <vector>
 
 #include <android-base/strings.h>
 
-#include "common/libs/confui/packet.h"
-#include "common/libs/confui/utils.h"
-#include "common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/confui/packet.h"
+#include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
 namespace confui {

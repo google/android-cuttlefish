@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/vm_manager/crosvm_cpu.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_cpu.h"
 
 #include <string>
 #include <vector>
@@ -22,8 +22,8 @@
 #include <fmt/format.h>
 #include <json/value.h>
 
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {

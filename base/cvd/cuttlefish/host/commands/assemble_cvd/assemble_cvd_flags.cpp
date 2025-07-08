@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 
 #include <string>
 
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/known_paths.h"
-#include "host/commands/assemble_cvd/flags_defaults.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/display.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/display.h"
 
 #define DEFINE_vec DEFINE_string
 

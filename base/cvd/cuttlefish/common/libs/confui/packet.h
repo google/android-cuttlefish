@@ -26,10 +26,10 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/confui/packet_types.h"
-#include "common/libs/confui/utils.h"
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/confui/packet_types.h"
+#include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 /**
  * @file packet.h

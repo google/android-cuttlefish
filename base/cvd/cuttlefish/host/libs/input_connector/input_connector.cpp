@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "host/libs/input_connector/input_connector.h"
+#include "cuttlefish/host/libs/input_connector/input_connector.h"
 
 #include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/input_connector/input_connection.h"
-#include "host/libs/input_connector/input_devices.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/input_connector/input_connection.h"
+#include "cuttlefish/host/libs/input_connector/input_devices.h"
 
 namespace cuttlefish {
 

@@ -18,7 +18,7 @@
 
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/base64.h"
 #include "launch_cvd.pb.h"
 
 namespace cuttlefish {

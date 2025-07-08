@@ -27,10 +27,10 @@
 #include <sysinfoapi.h>
 #endif
 
-#include "host/commands/secure_env/primary_key_builder.h"
-#include "host/commands/secure_env/tpm_auth.h"
-#include "host/commands/secure_env/tpm_hmac.h"
-#include "host/commands/secure_env/tpm_random_source.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/tpm_auth.h"
+#include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
+#include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
 
 namespace cuttlefish {
 

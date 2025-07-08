@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/libs/allocd/utils.h"
+#include "cuttlefish/host/libs/allocd/utils.h"
 
 #include <cstdint>
 #include <optional>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/allocd/request.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/allocd/request.h"
 
 namespace cuttlefish {
 

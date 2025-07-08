@@ -23,9 +23,9 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(fifo_in, -1, "A pipe for incoming communication");
 DEFINE_int32(fifo_out, -1, "A pipe for outgoing communication");

@@ -29,17 +29,17 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/disk_usage.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/kernel_module_parser.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/disk_usage.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 

@@ -21,7 +21,7 @@
 
 #include <tss2/tss2_tcti.h>
 
-#include "host/commands/secure_env/tpm.h"
+#include "cuttlefish/host/commands/secure_env/tpm.h"
 
 namespace cuttlefish {
 

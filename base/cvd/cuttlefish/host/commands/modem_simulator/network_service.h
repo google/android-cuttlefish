@@ -18,11 +18,11 @@
 #include <atomic>
 #include <ctime>
 
-#include "host/commands/modem_simulator/data_service.h"
-#include "host/commands/modem_simulator/misc_service.h"
-#include "host/commands/modem_simulator/modem_service.h"
-#include "host/commands/modem_simulator/network_service_constants.h"
-#include "host/commands/modem_simulator/sim_service.h"
+#include "cuttlefish/host/commands/modem_simulator/data_service.h"
+#include "cuttlefish/host/commands/modem_simulator/misc_service.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_service.h"
+#include "cuttlefish/host/commands/modem_simulator/network_service_constants.h"
+#include "cuttlefish/host/commands/modem_simulator/sim_service.h"
 
 namespace cuttlefish {
 

@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/modem_simulator/sms_service.h"
+#include "cuttlefish/host/commands/modem_simulator/sms_service.h"
 
 #include <android-base/logging.h>
 
-#include "host/commands/modem_simulator/pdu_parser.h"
+#include "cuttlefish/host/commands/modem_simulator/pdu_parser.h"
 
 namespace cuttlefish {
 

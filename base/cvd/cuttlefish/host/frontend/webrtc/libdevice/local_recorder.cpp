@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libdevice/local_recorder.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/local_recorder.h"
 
 #include <atomic>
 #include <chrono>

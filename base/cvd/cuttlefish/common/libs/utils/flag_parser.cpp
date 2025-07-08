@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -40,8 +40,8 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/tee_logging.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 
 namespace cuttlefish {
 

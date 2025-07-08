@@ -24,10 +24,10 @@
 #include <utility>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/input_connector/event_buffer.h"
-#include "host/libs/input_connector/input_connection.h"
-#include "host/libs/input_connector/input_connector.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/input_connector/event_buffer.h"
+#include "cuttlefish/host/libs/input_connector/input_connection.h"
+#include "cuttlefish/host/libs/input_connector/input_connector.h"
 
 namespace cuttlefish {
 

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/commands/casimir_control_server/casimir_controller.h"
+#include "cuttlefish/host/commands/casimir_control_server/casimir_controller.h"
 
 #include <fcntl.h>
 #include <chrono>
 #include <cstdint>
 
-#include "host/commands/casimir_control_server/crc.h"
+#include "cuttlefish/host/commands/casimir_control_server/crc.h"
 
 #include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
 

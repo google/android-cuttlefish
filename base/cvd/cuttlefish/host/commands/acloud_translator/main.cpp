@@ -19,8 +19,8 @@
 
 #include "android-base/logging.h"
 
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 

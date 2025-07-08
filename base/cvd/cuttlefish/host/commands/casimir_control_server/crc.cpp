@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "host/commands/casimir_control_server/crc.h"
+#include "cuttlefish/host/commands/casimir_control_server/crc.h"
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

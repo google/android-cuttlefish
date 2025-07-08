@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 //
 
-#include "host/frontend/webrtc/libdevice/server_connection.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/server_connection.h"
 
 #include <atomic>
 #include <mutex>
@@ -22,8 +22,8 @@
 #include <android-base/logging.h>
 #include <json/json.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

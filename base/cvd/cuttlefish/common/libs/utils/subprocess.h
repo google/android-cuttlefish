@@ -35,7 +35,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 

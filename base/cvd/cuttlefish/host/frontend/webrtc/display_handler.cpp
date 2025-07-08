@@ -22,9 +22,9 @@
 #include <drm/drm_fourcc.h>
 #include <libyuv.h>
 
-#include "host/frontend/webrtc/libdevice/streamer.h"
-#include "host/libs/screen_connector/composition_manager.h"
-#include "host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
+#include "cuttlefish/host/libs/screen_connector/composition_manager.h"
+#include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 

@@ -20,7 +20,7 @@
 #include <android-base/expected.h>
 #include <gmock/gmock.h>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

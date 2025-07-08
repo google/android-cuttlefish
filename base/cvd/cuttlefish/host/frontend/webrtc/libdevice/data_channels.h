@@ -21,7 +21,7 @@
 
 #include <api/data_channel_interface.h>
 
-#include "host/frontend/webrtc/libdevice/connection_observer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/connection_observer.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

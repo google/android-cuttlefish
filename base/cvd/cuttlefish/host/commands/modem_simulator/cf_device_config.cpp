@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "host/commands/modem_simulator/device_config.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/commands/modem_simulator/device_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 // this file provide cuttlefish hooks
 namespace cuttlefish {

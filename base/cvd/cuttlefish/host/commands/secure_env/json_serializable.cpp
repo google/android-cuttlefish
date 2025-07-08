@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/json_serializable.h"
+#include "cuttlefish/host/commands/secure_env/json_serializable.h"
 
 #include <fstream>
 
 #include <android-base/logging.h>
 #include <keymaster/serializable.h>
 
-#include "host/commands/secure_env/encrypted_serializable.h"
-#include "host/commands/secure_env/hmac_serializable.h"
-#include "host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/encrypted_serializable.h"
+#include "cuttlefish/host/commands/secure_env/hmac_serializable.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
 
 namespace cuttlefish {
 

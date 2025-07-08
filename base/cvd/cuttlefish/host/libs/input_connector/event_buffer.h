@@ -21,7 +21,7 @@
 
 #include <vector>
 
-#include "common/libs/utils/cf_endian.h"
+#include "cuttlefish/common/libs/utils/cf_endian.h"
 
 namespace cuttlefish {
 

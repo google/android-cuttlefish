@@ -26,9 +26,9 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <json/json.h>
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/control_env_proxy_server/control_env_proxy.grpc.pb.h"
-#include "host/libs/control_env/grpc_service_handler.h"
+#include "cuttlefish/host/libs/control_env/grpc_service_handler.h"
 
 using controlenvproxyserver::CallUnaryMethodReply;
 using controlenvproxyserver::CallUnaryMethodRequest;

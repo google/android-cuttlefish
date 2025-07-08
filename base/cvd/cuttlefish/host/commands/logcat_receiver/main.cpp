@@ -19,10 +19,10 @@
 #include <gflags/gflags.h>
 #include <android-base/logging.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "

@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/worker_thread_loop_body.h"
+#include "cuttlefish/host/commands/secure_env/worker_thread_loop_body.h"
 
-#include "common/libs/fs/shared_select.h"
-#include "host/commands/secure_env/suspend_resume_handler.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/commands/secure_env/suspend_resume_handler.h"
 
 namespace cuttlefish {
 namespace secure_env_impl {

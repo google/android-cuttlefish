@@ -18,7 +18,7 @@
 #include <keymaster/android_keymaster_utils.h>
 #include <tss2/tss2_esys.h>
 
-#include "host/commands/secure_env/tpm_auth.h"
+#include "cuttlefish/host/commands/secure_env/tpm_auth.h"
 
 namespace cuttlefish {
 

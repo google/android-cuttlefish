@@ -22,7 +22,7 @@
 
 #include <Eigen/Dense>
 
-#include "common/libs/sensors/sensors.h"
+#include "cuttlefish/common/libs/sensors/sensors.h"
 
 namespace cuttlefish {
 namespace sensors {

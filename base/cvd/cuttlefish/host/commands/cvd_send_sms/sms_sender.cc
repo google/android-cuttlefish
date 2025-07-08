@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/cvd_send_sms/sms_sender.h"
+#include "cuttlefish/host/commands/cvd_send_sms/sms_sender.h"
 
 #include <algorithm>
 #include <codecvt>
@@ -25,8 +25,8 @@
 #include <vector>
 
 #include "android-base/logging.h"
-#include "common/libs/fs/shared_buf.h"
-#include "host/commands/cvd_send_sms/pdu_format_builder.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/host/commands/cvd_send_sms/pdu_format_builder.h"
 
 namespace cuttlefish {
 

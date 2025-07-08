@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libdevice/streamer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 
 #include <android-base/logging.h>
 #include <json/json.h>
@@ -32,17 +32,17 @@
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/frontend/webrtc/libcommon/audio_device.h"
-#include "host/frontend/webrtc/libcommon/peer_connection_utils.h"
-#include "host/frontend/webrtc/libcommon/port_range_socket_factory.h"
-#include "host/frontend/webrtc/libcommon/utils.h"
-#include "host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
-#include "host/frontend/webrtc/libdevice/audio_track_source_impl.h"
-#include "host/frontend/webrtc/libdevice/camera_streamer.h"
-#include "host/frontend/webrtc/libdevice/client_handler.h"
-#include "host/frontend/webrtc/libdevice/video_track_source_impl.h"
-#include "host/frontend/webrtc_operator/constants/signaling_constants.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/audio_device.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/peer_connection_utils.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/port_range_socket_factory.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/audio_track_source_impl.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/camera_streamer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/client_handler.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/video_track_source_impl.h"
+#include "cuttlefish/host/frontend/webrtc_operator/constants/signaling_constants.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

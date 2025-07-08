@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "common/libs/fs/shared_fd_stream.h"
+#include "cuttlefish/common/libs/fs/shared_fd_stream.h"
 
 #include <cstdio>
 #include <streambuf>
 
-#include "common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
 

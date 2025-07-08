@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/oemlock/oemlock_responder.h"
+#include "cuttlefish/host/commands/secure_env/oemlock/oemlock_responder.h"
 
-#include "common/libs/security/oemlock.h"
+#include "cuttlefish/common/libs/security/oemlock.h"
 
 namespace cuttlefish {
 namespace oemlock {

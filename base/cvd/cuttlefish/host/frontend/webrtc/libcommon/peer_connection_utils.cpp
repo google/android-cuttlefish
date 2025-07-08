@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libcommon/peer_connection_utils.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/peer_connection_utils.h"
 
 #include <api/audio_codecs/builtin_audio_decoder_factory.h>
 #include <api/audio_codecs/builtin_audio_encoder_factory.h>
@@ -23,8 +23,8 @@
 #include <api/video_codecs/builtin_video_decoder_factory.h>
 #include <api/video_codecs/builtin_video_encoder_factory.h>
 
-#include "host/frontend/webrtc/libcommon/audio_device.h"
-#include "host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/audio_device.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

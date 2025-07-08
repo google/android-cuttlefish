@@ -15,9 +15,9 @@
  */
 #pragma once
 
-#include "common/libs/utils/environment.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/config_utils.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 
 #define CF_DEFAULTS_DYNAMIC_STRING ""
 #define CF_DEFAULTS_DYNAMIC_INT 0

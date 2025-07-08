@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/audio_connector/commands.h"
+#include "cuttlefish/host/libs/audio_connector/commands.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -21,7 +21,7 @@
 
 #include <android-base/logging.h>
 
-#include "host/libs/audio_connector/shm_layout.h"
+#include "cuttlefish/host/libs/audio_connector/shm_layout.h"
 
 namespace cuttlefish {
 

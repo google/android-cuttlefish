@@ -13,15 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/assemble_cvd/display.h"
+#include "cuttlefish/host/commands/assemble_cvd/display.h"
 
 #include <string>
 #include <vector>
 
 #include <fruit/fruit.h>
 
-#include "common/libs/utils/flag_parser.h"
-#include "host/libs/config/display.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/libs/config/display.h"
 
 namespace cuttlefish {
 namespace {

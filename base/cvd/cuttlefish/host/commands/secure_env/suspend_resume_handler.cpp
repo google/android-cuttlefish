@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/suspend_resume_handler.h"
+#include "cuttlefish/host/commands/secure_env/suspend_resume_handler.h"
 
 #include <android-base/logging.h>
 
-#include "host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/command_util/util.h"
 
 namespace cuttlefish {
 namespace {

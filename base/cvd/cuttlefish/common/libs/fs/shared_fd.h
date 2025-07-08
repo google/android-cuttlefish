@@ -54,7 +54,7 @@
 #include <linux/vm_sockets.h>
 #endif
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 /**
  * Classes to to enable safe access to files.

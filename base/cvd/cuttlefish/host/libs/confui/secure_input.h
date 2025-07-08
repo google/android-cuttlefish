@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/confui.h"
 
 /** ConfUiUserSelectionMessage with a security flag
  *

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 
 #include <sstream>
 #include <string>
@@ -21,9 +21,9 @@
 
 #include <android-base/file.h>
 
-#include "common/libs/utils/files.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 

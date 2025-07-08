@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/frontend/webrtc/libdevice/recording_manager.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/recording_manager.h"
 
 #include <mutex>
 
 #include <android-base/logging.h>
 #include <rtc_base/time_utils.h>
 
-#include "host/frontend/webrtc/libdevice/local_recorder.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/local_recorder.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

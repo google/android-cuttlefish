@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/wayland/wayland_shell.h"
+#include "cuttlefish/host/libs/wayland/wayland_shell.h"
 
 #include <android-base/logging.h>
 

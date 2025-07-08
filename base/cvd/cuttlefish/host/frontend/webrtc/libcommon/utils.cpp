@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/frontend/webrtc/libcommon/utils.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
 
 #include <functional>
 
 #include <json/json.h>
 
-#include "common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/json.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

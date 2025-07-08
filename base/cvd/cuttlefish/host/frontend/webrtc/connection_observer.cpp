@@ -32,20 +32,20 @@
 #include <android-base/parsedouble.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/frontend/webrtc/adb_handler.h"
 #include "cuttlefish/host/frontend/webrtc/bluetooth_handler.h"
 #include "cuttlefish/host/frontend/webrtc/gpx_locations_handler.h"
 #include "cuttlefish/host/frontend/webrtc/kml_locations_handler.h"
-#include "host/frontend/webrtc/libdevice/camera_controller.h"
-#include "host/frontend/webrtc/libdevice/lights_observer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/camera_controller.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/lights_observer.h"
 #include "cuttlefish/host/frontend/webrtc/location_handler.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/input_connector/input_connector.h"
-#include "host/libs/vm_manager/crosvm_display_controller.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/input_connector/input_connector.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
 
 namespace cuttlefish {
 

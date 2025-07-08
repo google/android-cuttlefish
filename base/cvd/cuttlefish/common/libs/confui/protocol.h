@@ -22,9 +22,9 @@
 
 #include <teeui/common_message_types.h>  // /system/teeui/libteeui/.../include
 
-#include "common/libs/confui/packet_types.h"
-#include "common/libs/confui/protocol_types.h"
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/confui/packet_types.h"
+#include "cuttlefish/common/libs/confui/protocol_types.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 namespace confui {

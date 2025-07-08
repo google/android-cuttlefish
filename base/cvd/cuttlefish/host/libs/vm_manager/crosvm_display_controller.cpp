@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/crosvm_display_controller.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
 
 #include <android-base/logging.h>
 #include <cstddef>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace vm_manager {

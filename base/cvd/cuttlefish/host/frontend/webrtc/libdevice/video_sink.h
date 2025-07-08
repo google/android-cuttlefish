@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

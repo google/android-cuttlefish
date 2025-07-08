@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/libs/input_connector/input_devices.h"
+#include "cuttlefish/host/libs/input_connector/input_devices.h"
 
 #include <linux/input.h>
 
-#include "host/libs/input_connector/event_buffer.h"
+#include "cuttlefish/host/libs/input_connector/event_buffer.h"
 
 namespace cuttlefish {
 

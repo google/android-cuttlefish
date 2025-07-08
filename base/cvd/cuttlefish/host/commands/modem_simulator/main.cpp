@@ -20,12 +20,12 @@
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/tee_logging.h"
-#include "host/commands/modem_simulator/modem_simulator.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 // we can start multiple modems simultaneously; each modem
 // will listen to one server fd for incoming sms/phone call

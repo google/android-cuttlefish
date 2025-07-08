@@ -16,7 +16,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "host/commands/secure_env/secure_env_windows_lib.h"
+#include "cuttlefish/host/commands/secure_env/secure_env_windows_lib.h"
 
 DEFINE_string(keymaster_pipe, "", "Keymaster pipe path");
 DEFINE_string(gatekeeper_pipe, "", "Gatekeeper pipe path");

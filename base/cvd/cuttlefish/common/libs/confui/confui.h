@@ -23,5 +23,5 @@
  * header file(s)
  *
  */
-#include "common/libs/confui/protocol.h"
-#include "common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/confui/protocol.h"
+#include "cuttlefish/common/libs/confui/utils.h"

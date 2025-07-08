@@ -21,7 +21,7 @@
 
 #include <wayland-server-core.h>
 
-#include "host/libs/wayland/wayland_surfaces.h"
+#include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
 
 namespace wayland {
 

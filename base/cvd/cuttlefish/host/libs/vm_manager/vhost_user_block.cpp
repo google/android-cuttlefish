@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -31,11 +31,11 @@
 #include <android-base/strings.h>
 #include <vulkan/vulkan.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/crosvm_builder.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 
 namespace cuttlefish {
 namespace vm_manager {

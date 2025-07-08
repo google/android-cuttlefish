@@ -17,7 +17,7 @@
 
 #include <keymaster/android_keymaster.h>
 
-#include "common/libs/security/keymaster_channel.h"
+#include "cuttlefish/common/libs/security/keymaster_channel.h"
 
 namespace cuttlefish {
 

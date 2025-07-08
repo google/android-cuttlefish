@@ -19,7 +19,7 @@
 #include <thread>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 class ModemServiceTest;
 

@@ -21,8 +21,8 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/location/GnssClient.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/location/GnssClient.h"
 
 namespace cuttlefish::webrtc_streaming {
 

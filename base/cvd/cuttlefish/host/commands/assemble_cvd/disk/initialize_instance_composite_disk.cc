@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 
 #include <vector>
 

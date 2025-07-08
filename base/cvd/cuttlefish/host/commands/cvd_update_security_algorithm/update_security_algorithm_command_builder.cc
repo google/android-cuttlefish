@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
+#include "cuttlefish/host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
 
 #include <string>
 

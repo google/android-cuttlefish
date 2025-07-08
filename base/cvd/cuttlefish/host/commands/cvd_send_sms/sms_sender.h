@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 

@@ -21,8 +21,8 @@
 
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/proc_file_utils.h"
 
 namespace cuttlefish {
 

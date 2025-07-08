@@ -28,11 +28,11 @@
 #include <fruit/fruit.h>
 #include <teeui/utils.h>  // $(croot)/system/teeui/libteeui/.../include
 
-#include "common/libs/confui/confui.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/confui/layouts/layout.h"
-#include "host/libs/confui/server_common.h"
-#include "host/libs/screen_connector/screen_connector_common.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/confui/layouts/layout.h"
+#include "cuttlefish/host/libs/confui/server_common.h"
+#include "cuttlefish/host/libs/screen_connector/screen_connector_common.h"
 
 namespace cuttlefish {
 namespace confui {

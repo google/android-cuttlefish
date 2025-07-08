@@ -30,11 +30,11 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/tee_logging.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/metrics/metrics_configs.h"
-#include "host/libs/metrics/metrics_defs.h"
-#include "host/libs/msg_queue/msg_queue.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/metrics/metrics_configs.h"
+#include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/msg_queue/msg_queue.h"
 
 using cuttlefish::MetricsExitCodes;
 

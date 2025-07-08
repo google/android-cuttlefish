@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/secure_env/encrypted_serializable.h"
+#include "cuttlefish/host/commands/secure_env/encrypted_serializable.h"
 
 #include <gtest/gtest.h>
 #include <keymaster/serializable.h>
 #include <string.h>
 
-#include "host/commands/secure_env/primary_key_builder.h"
-#include "host/commands/secure_env/test_tpm.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/test_tpm.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 

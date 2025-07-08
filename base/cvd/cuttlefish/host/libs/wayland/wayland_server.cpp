@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#include "host/libs/wayland/wayland_server.h"
+#include "cuttlefish/host/libs/wayland/wayland_server.h"
 
 #include <android-base/logging.h>
 
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 
-#include "host/libs/wayland/wayland_compositor.h"
-#include "host/libs/wayland/wayland_dmabuf.h"
-#include "host/libs/wayland/wayland_seat.h"
-#include "host/libs/wayland/wayland_shell.h"
-#include "host/libs/wayland/wayland_subcompositor.h"
-#include "host/libs/wayland/wayland_surface.h"
-#include "host/libs/wayland/wayland_utils.h"
-#include "host/libs/wayland/wayland_virtio_gpu_metadata.h"
+#include "cuttlefish/host/libs/wayland/wayland_compositor.h"
+#include "cuttlefish/host/libs/wayland/wayland_dmabuf.h"
+#include "cuttlefish/host/libs/wayland/wayland_seat.h"
+#include "cuttlefish/host/libs/wayland/wayland_shell.h"
+#include "cuttlefish/host/libs/wayland/wayland_subcompositor.h"
+#include "cuttlefish/host/libs/wayland/wayland_surface.h"
+#include "cuttlefish/host/libs/wayland/wayland_utils.h"
+#include "cuttlefish/host/libs/wayland/wayland_virtio_gpu_metadata.h"
 
 namespace wayland {
 namespace internal {

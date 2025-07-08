@@ -24,8 +24,8 @@
 #include <string>
 #include <thread>
 
-#include "host/libs/wayland/wayland_server_callbacks.h"
-#include "host/libs/wayland/wayland_surfaces.h"
+#include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"
+#include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
 
 namespace wayland {
 

@@ -20,9 +20,9 @@
 #include <map>
 #include <optional>
 
-#include "host/commands/modem_simulator/channel_monitor.h"
-#include "host/commands/modem_simulator/command_parser.h"
-#include "host/commands/modem_simulator/thread_looper.h"
+#include "cuttlefish/host/commands/modem_simulator/channel_monitor.h"
+#include "cuttlefish/host/commands/modem_simulator/command_parser.h"
+#include "cuttlefish/host/commands/modem_simulator/thread_looper.h"
 
 namespace cuttlefish {
 

@@ -24,15 +24,15 @@
 #include <fmt/core.h>
 #include <google/protobuf/text_format.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/parse.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/snapshot_taker.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {

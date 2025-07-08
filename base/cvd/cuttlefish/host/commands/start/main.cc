@@ -25,22 +25,22 @@
 #include <android-base/parseint.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/start/filesystem_explorer.h"
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
 #include "cuttlefish/host/commands/start/start_flags.h"
 #include "cuttlefish/host/commands/start/validate_metrics_confirmation.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/config/host_tools_version.h"
-#include "host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/host_tools_version.h"
+#include "cuttlefish/host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
 namespace {

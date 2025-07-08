@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/input_connector/event_buffer.h"
+#include "cuttlefish/host/libs/input_connector/event_buffer.h"
 
 #include <cstdint>
 #include <cstdlib>

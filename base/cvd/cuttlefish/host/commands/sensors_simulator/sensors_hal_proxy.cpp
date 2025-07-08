@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/sensors_simulator/sensors_hal_proxy.h"
+#include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
 
 #include <android-base/logging.h>
 

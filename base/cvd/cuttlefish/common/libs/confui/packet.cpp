@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/confui/packet.h"
+#include "cuttlefish/common/libs/confui/packet.h"
 
 #include <algorithm>
 #include <cstdint>

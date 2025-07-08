@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/transport/channel.h"
+#include "cuttlefish/common/libs/transport/channel.h"
 
 namespace cuttlefish {
 namespace transport {

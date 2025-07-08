@@ -27,11 +27,11 @@
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 using google::protobuf::Empty;
 using grpc::Server;

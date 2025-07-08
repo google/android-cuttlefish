@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 #include <string>
 
@@ -22,7 +22,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/result_matchers.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
 
 namespace cuttlefish {
 namespace {

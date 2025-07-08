@@ -28,10 +28,10 @@
 #include <host/commands/kernel_log_monitor/kernel_log_server.h>
 #include <host/commands/kernel_log_monitor/utils.h>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/frontend/adb_connector/adb_connection_maintainer.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_string(addresses, "", "Comma-separated list of addresses to "
                              "'adb connect' to");

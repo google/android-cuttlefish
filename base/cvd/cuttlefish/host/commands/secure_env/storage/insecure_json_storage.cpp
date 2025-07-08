@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/storage/insecure_json_storage.h"
+#include "cuttlefish/host/commands/secure_env/storage/insecure_json_storage.h"
 
 #include <fstream>
 
 #include <android-base/file.h>
 #include <json/json.h>
 
-#include "common/libs/utils/base64.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
 
 namespace cuttlefish {
 namespace secure_env {

@@ -21,9 +21,9 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 // Messages are always 128 bytes.
 static constexpr std::size_t kMessageSize = 128;

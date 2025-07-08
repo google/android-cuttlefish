@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 
 #include <string>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
-#include "host/libs/config/ap_boot_flow.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 

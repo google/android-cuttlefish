@@ -16,14 +16,14 @@
 
 #define LOG_TAG "ClientHandler"
 
-#include "host/frontend/webrtc/libdevice/client_handler.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/client_handler.h"
 
 #include <netdb.h>
 #include <openssl/rand.h>
 
 #include <android-base/logging.h>
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

@@ -22,8 +22,8 @@
 
 #include <fruit/fruit.h>
 
-#include "host/libs/confui/host_server.h"
-#include "host/libs/input_connector/input_connector.h"
+#include "cuttlefish/host/libs/confui/host_server.h"
+#include "cuttlefish/host/libs/input_connector/input_connector.h"
 
 namespace cuttlefish {
 namespace confui {

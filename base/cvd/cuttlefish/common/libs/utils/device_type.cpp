@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/device_type.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
 
 #include <string_view>
 

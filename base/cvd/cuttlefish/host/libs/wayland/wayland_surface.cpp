@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "host/libs/wayland/wayland_surface.h"
+#include "cuttlefish/host/libs/wayland/wayland_surface.h"
 
 #include <android-base/logging.h>
 #include <drm/drm_fourcc.h>
 #include <wayland-server-protocol.h>
 
-#include "host/libs/wayland/wayland_surfaces.h"
+#include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
 
 namespace wayland {
 namespace {

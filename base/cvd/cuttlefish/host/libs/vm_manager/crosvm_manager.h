@@ -19,10 +19,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/feature/command_source.h"
-#include "host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 namespace vm_manager {
