@@ -20,11 +20,11 @@
 #include <android-base/logging.h>
 
 #include "cuttlefish/host/commands/metrics/events.h"
-#include "host/commands/metrics/proto/cf_metrics_protos.h"
-#include "host/libs/metrics/metrics_configs.h"
-#include "host/libs/metrics/metrics_defs.h"
-#include "host/libs/metrics/metrics_receiver.h"
-#include "host/libs/msg_queue/msg_queue.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/libs/metrics/metrics_configs.h"
+#include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/metrics/metrics_receiver.h"
+#include "cuttlefish/host/libs/msg_queue/msg_queue.h"
 
 namespace cuttlefish {
 

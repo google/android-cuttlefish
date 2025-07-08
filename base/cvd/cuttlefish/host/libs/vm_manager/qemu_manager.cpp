@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/qemu_manager.h"
+#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 
 #include <string.h>
 #include <sys/socket.h>
@@ -35,15 +35,15 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
-#include "common/libs/utils/architecture.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "common/libs/utils/wait_for_unix_socket.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/feature/command_source.h"
-#include "host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 
 // This is the QEMU default, but set it explicitly just in case it
 // changes upstream

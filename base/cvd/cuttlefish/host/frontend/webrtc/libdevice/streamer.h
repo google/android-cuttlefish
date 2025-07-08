@@ -24,15 +24,15 @@
 #include <utility>
 #include <vector>
 
-#include "host/libs/config/custom_actions.h"
+#include "cuttlefish/host/libs/config/custom_actions.h"
 
-#include "host/frontend/webrtc/libcommon/audio_source.h"
-#include "host/frontend/webrtc/libdevice/audio_sink.h"
-#include "host/frontend/webrtc/libdevice/camera_controller.h"
-#include "host/frontend/webrtc/libdevice/connection_observer.h"
-#include "host/frontend/webrtc/libdevice/recording_manager.h"
-#include "host/frontend/webrtc/libdevice/server_connection.h"
-#include "host/frontend/webrtc/libdevice/video_sink.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/audio_source.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/audio_sink.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/camera_controller.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/connection_observer.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/recording_manager.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/server_connection.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

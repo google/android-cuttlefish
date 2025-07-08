@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 #include <sys/types.h>
 
@@ -26,8 +26,8 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 

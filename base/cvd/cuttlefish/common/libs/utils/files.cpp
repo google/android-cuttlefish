@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 #ifdef __linux__
 #include <linux/fiemap.h>
@@ -62,13 +62,13 @@
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/in_sandbox.h"
-#include "common/libs/utils/inotify.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/users.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/inotify.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/users.h"
 
 #ifdef __APPLE__
 #define off64_t off_t

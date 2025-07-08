@@ -17,8 +17,8 @@
 
 #include <keymaster/keymaster_enforcement.h>
 
-#include "host/commands/secure_env/tpm_gatekeeper.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/tpm_gatekeeper.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 

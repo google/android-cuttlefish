@@ -18,11 +18,11 @@
 
 #include <cstdint>
 
-#include "common/libs/concurrency/multiplexer.h"
-#include "common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/concurrency/multiplexer.h"
+#include "cuttlefish/common/libs/confui/confui.h"
 
-#include "host/libs/confui/host_mode_ctrl.h"
-#include "host/libs/screen_connector/screen_connector_queue.h"
+#include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
+#include "cuttlefish/host/libs/screen_connector/screen_connector_queue.h"
 
 namespace cuttlefish {
 template <typename ProcessedFrameType>

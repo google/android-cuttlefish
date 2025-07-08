@@ -23,11 +23,11 @@
 #include <thread>
 
 #include "cuttlefish/host/frontend/webrtc/cvd_video_frame_buffer.h"
-#include "host/frontend/webrtc/libdevice/video_sink.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
-#include "host/libs/screen_connector/ring_buffer_manager.h"
-#include "host/libs/screen_connector/screen_connector.h"
-#include "host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
+#include "cuttlefish/host/libs/screen_connector/screen_connector.h"
+#include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 class CompositionManager;

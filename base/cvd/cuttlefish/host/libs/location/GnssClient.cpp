@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/location/GnssClient.h"
+#include "cuttlefish/host/libs/location/GnssClient.h"
 
 #include <memory>
 
@@ -22,7 +22,7 @@
 #include <grpcpp/channel.h>
 #include <grpcpp/support/status.h>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 using gnss_grpc_proxy::GnssGrpcProxy;
 using gnss_grpc_proxy::GpsCoordinates;

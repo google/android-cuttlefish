@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/assemble_cvd/super_image_mixer.h"
+#include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 
 #include <sys/stat.h>
 
@@ -27,17 +27,17 @@
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
-#include "common/libs/utils/archive.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/misc_info.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/utils/archive.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {

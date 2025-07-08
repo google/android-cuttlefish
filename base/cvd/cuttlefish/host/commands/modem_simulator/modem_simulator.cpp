@@ -13,20 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/modem_simulator/modem_simulator.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
 
 #include <android-base/logging.h>
 
 #include <memory>
 
-#include "host/commands/modem_simulator/call_service.h"
-#include "host/commands/modem_simulator/data_service.h"
-#include "host/commands/modem_simulator/misc_service.h"
-#include "host/commands/modem_simulator/network_service.h"
-#include "host/commands/modem_simulator/sim_service.h"
-#include "host/commands/modem_simulator/sms_service.h"
-#include "host/commands/modem_simulator/stk_service.h"
-#include "host/commands/modem_simulator/sup_service.h"
+#include "cuttlefish/host/commands/modem_simulator/call_service.h"
+#include "cuttlefish/host/commands/modem_simulator/data_service.h"
+#include "cuttlefish/host/commands/modem_simulator/misc_service.h"
+#include "cuttlefish/host/commands/modem_simulator/network_service.h"
+#include "cuttlefish/host/commands/modem_simulator/sim_service.h"
+#include "cuttlefish/host/commands/modem_simulator/sms_service.h"
+#include "cuttlefish/host/commands/modem_simulator/stk_service.h"
+#include "cuttlefish/host/commands/modem_simulator/sup_service.h"
 
 namespace cuttlefish {
 

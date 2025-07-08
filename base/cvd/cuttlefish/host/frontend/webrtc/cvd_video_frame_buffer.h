@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 
 namespace cuttlefish {
 

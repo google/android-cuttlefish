@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/host_virtual_input.h"
+#include "cuttlefish/host/libs/confui/host_virtual_input.h"
 
 #include <android-base/logging.h>
 

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/files.h"
 
 #include <fstream>
 #include <string>
@@ -22,9 +22,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/files_test_helper.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/result_matchers.h"
+#include "cuttlefish/common/libs/utils/files_test_helper.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
 
 namespace cuttlefish {
 

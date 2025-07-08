@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace transport {

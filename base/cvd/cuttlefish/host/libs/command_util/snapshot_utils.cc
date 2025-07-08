@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 
 #include <unistd.h>
 #include <utime.h>
@@ -28,11 +28,11 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 namespace {

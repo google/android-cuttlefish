@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/network_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>

@@ -19,10 +19,10 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to read the configs from");

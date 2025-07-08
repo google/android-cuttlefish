@@ -15,7 +15,7 @@
  */
 
 #pragma once
-#include "common/libs/utils/vsock_connection.h"
+#include "cuttlefish/common/libs/utils/vsock_connection.h"
 
 #include <atomic>
 #include <mutex>

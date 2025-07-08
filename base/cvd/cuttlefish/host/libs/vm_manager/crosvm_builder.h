@@ -20,9 +20,9 @@
 
 #include <json/value.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/vm_manager/pci.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/vm_manager/pci.h"
 
 namespace cuttlefish {
 

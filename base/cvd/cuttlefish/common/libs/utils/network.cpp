@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/network.h"
+#include "cuttlefish/common/libs/utils/network.h"
 
 #ifdef __linux__
 #include <linux/if_ether.h>
@@ -43,9 +43,9 @@
 #include <android-base/strings.h>
 #include <fmt/ranges.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace {

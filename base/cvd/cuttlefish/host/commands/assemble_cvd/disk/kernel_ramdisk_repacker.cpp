@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 
 #include <string>
 
-#include "common/libs/utils/files.h"
-#include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/vendor_dlkm_utils.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace {

@@ -22,8 +22,8 @@
 #include <grpc/grpc.h>
 #include <grpcpp/create_channel.h>
 
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/location/GnssClient.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/location/GnssClient.h"
 
 DEFINE_int32(instance_num, 1, "Which instance to read the configs from");
 DEFINE_double(latitude, 37.8000064, "location latitude");

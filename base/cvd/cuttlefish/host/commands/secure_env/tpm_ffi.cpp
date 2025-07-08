@@ -17,8 +17,8 @@
 
 #include <android-base/logging.h>
 
-#include "host/commands/secure_env/tpm_hmac.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 using cuttlefish::TpmResourceManager;
 

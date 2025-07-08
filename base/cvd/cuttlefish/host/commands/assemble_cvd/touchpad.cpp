@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/assemble_cvd/touchpad.h"
+#include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 
-#include "common/libs/utils/flag_parser.h"
-#include "host/libs/config/touchpad.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/host/libs/config/touchpad.h"
 
 namespace cuttlefish {
 namespace {

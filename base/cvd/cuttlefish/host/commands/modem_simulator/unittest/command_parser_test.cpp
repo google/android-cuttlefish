@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/modem_simulator/command_parser.h"
+#include "cuttlefish/host/commands/modem_simulator/command_parser.h"
 
 #include <gtest/gtest.h>
 

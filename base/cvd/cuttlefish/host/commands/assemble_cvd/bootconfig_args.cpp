@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/bootconfig_args.h"
+#include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
 
 #include <array>
 #include <string>
@@ -22,12 +22,12 @@
 
 #include <android-base/parseint.h>
 
-#include "common/libs/utils/json.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/libs/vm_manager/qemu_manager.h"
-#include "host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 

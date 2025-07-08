@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "host/commands/secure_env/storage/storage.h"
+#include "cuttlefish/host/commands/secure_env/storage/storage.h"
 
 #include <memory>
 #include <optional>
@@ -26,8 +26,8 @@
 #include <tss2/tss2_tpm2_types.h>
 #include <json/json.h>
 
-#include "common/libs/utils/result.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 namespace secure_env {

@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/modem_simulator/sim_service.h"
+#include "cuttlefish/host/commands/modem_simulator/sim_service.h"
 
 #include <android-base/logging.h>
 #include <tinyxml2.h>
 
-#include "common/libs/utils/files.h"
-#include "host/commands/modem_simulator/device_config.h"
-#include "host/commands/modem_simulator/network_service.h"
-#include "host/commands/modem_simulator/pdu_parser.h"
-#include "host/commands/modem_simulator/nvram_config.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/modem_simulator/device_config.h"
+#include "cuttlefish/host/commands/modem_simulator/network_service.h"
+#include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
+#include "cuttlefish/host/commands/modem_simulator/pdu_parser.h"
 
 namespace cuttlefish {
 

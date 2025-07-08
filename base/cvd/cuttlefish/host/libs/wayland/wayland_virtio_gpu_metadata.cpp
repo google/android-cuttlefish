@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/wayland/wayland_compositor.h"
+#include "cuttlefish/host/libs/wayland/wayland_compositor.h"
 
 #include <android-base/logging.h>
 
@@ -22,8 +22,8 @@
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 
-#include "host/libs/wayland/wayland_surface.h"
-#include "host/libs/wayland/wayland_utils.h"
+#include "cuttlefish/host/libs/wayland/wayland_surface.h"
+#include "cuttlefish/host/libs/wayland/wayland_utils.h"
 
 namespace wayland {
 namespace {

@@ -19,12 +19,12 @@
 #include <atomic>
 #include <thread>
 
-#include "common/libs/sensors/sensors.h"
-#include "common/libs/transport/channel_sharedfd.h"
-#include "common/libs/utils/device_type.h"
+#include "cuttlefish/common/libs/sensors/sensors.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/commands/sensors_simulator/sensors_simulator.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 
 namespace cuttlefish {
 namespace sensors {

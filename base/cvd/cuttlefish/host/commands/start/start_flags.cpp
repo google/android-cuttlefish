@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/start/start_flags.h"
+#include "cuttlefish/host/commands/start/start_flags.h"
 
 #include <gflags/gflags.h>
 
-#include "host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 
 DEFINE_int32(num_instances, CF_DEFAULTS_NUM_INSTANCES,
              "Number of Android guests to launch");

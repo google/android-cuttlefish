@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "host/commands/modem_simulator/modem_service.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 
 #include <ctime>
 

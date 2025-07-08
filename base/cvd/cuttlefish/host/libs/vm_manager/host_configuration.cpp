@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/host_configuration.h"
+#include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 
 #include <string>
 #include <utility>
@@ -23,7 +23,7 @@
 #include <android-base/logging.h>
 #include <sys/utsname.h>
 
-#include "common/libs/utils/users.h"
+#include "cuttlefish/common/libs/utils/users.h"
 
 namespace cuttlefish {
 namespace vm_manager {

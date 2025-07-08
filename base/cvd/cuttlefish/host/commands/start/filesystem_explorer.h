@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
 

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
+#include "cuttlefish/host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
 
 #include <gtest/gtest.h>
 

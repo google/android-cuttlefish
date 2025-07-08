@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/assemble_cvd/flag_feature.h"
+#include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 
 #include <string>
 #include <unordered_set>
@@ -23,7 +23,7 @@
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
-#include "host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

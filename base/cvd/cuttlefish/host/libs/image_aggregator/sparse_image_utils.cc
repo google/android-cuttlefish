@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -25,12 +25,12 @@
 #include <string>
 #include <string_view>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/config/config_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/known_paths.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace {

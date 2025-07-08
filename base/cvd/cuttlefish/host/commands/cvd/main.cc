@@ -41,7 +41,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
-// #include "host/commands/cvd/metrics/cvd_metrics_api.h"
+// #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
 
 namespace cuttlefish {
 namespace {

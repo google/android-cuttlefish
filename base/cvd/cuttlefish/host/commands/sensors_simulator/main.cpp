@@ -20,11 +20,11 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/transport/channel_sharedfd.h"
-#include "common/libs/utils/device_type.h"
-#include "host/commands/sensors_simulator/sensors_hal_proxy.h"
-#include "host/commands/sensors_simulator/sensors_simulator.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
+#include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(sensors_in_fd, -1, "Sensors virtio-console from host to guest");
 DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");

@@ -18,9 +18,9 @@
 #include "gatekeeper/gatekeeper.h"
 #include "tss2/tss2_esys.h"
 
-#include "host/commands/secure_env/gatekeeper_storage.h"
-#include "host/commands/secure_env/storage/storage.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/gatekeeper_storage.h"
+#include "cuttlefish/host/commands/secure_env/storage/storage.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 

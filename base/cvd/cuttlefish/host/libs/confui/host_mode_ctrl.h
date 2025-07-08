@@ -24,8 +24,8 @@
 
 #include <fruit/fruit.h>
 
-#include "common/libs/confui/confui.h"
-#include "host/libs/confui/host_utils.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/host/libs/confui/host_utils.h"
 
 namespace cuttlefish {
 /**

@@ -17,7 +17,7 @@
 
 #include <gatekeeper/gatekeeper.h>
 
-#include "common/libs/security/gatekeeper_channel.h"
+#include "cuttlefish/common/libs/security/gatekeeper_channel.h"
 
 namespace cuttlefish {
 

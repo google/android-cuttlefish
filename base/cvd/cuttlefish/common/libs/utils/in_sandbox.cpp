@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/in_sandbox.h"
 
 #include <unistd.h>
 

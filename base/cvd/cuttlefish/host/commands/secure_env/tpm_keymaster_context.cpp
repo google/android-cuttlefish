@@ -29,12 +29,12 @@
 #include <keymaster/operation.h>
 #include <keymaster/wrapped_key.h>
 
-#include "host/commands/secure_env/primary_key_builder.h"
-#include "host/commands/secure_env/tpm_attestation_record.h"
-#include "host/commands/secure_env/tpm_hmac.h"
-#include "host/commands/secure_env/tpm_key_blob_maker.h"
-#include "host/commands/secure_env/tpm_random_source.h"
-#include "host/commands/secure_env/tpm_remote_provisioning_context.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/tpm_attestation_record.h"
+#include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
+#include "cuttlefish/host/commands/secure_env/tpm_key_blob_maker.h"
+#include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
+#include "cuttlefish/host/commands/secure_env/tpm_remote_provisioning_context.h"
 
 namespace cuttlefish {
 

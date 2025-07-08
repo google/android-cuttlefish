@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/unix_sockets.h"
+#include "cuttlefish/common/libs/utils/unix_sockets.h"
 
 #include <string>
 #include <utility>
@@ -23,8 +23,8 @@
 #include <android-base/result.h>
 #include <gtest/gtest.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 

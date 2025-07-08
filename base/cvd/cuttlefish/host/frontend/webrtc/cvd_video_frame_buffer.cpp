@@ -19,7 +19,7 @@
 #include <map>
 #include <mutex>
 #include <vector>
-#include "common/libs/utils/size_utils.h"
+#include "cuttlefish/common/libs/utils/size_utils.h"
 
 namespace cuttlefish {
 

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/device_tpm.h"
+#include "cuttlefish/host/commands/secure_env/device_tpm.h"
 
 #include <android-base/logging.h>
 #include <tss2/tss2_rc.h>

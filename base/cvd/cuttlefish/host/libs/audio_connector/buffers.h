@@ -17,7 +17,7 @@
 #include <atomic>
 #include <functional>
 
-#include "host/libs/audio_connector/shm_layout.h"
+#include "cuttlefish/host/libs/audio_connector/shm_layout.h"
 
 namespace cuttlefish {
 

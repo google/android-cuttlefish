@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/audio_connector/buffers.h"
+#include "cuttlefish/host/libs/audio_connector/buffers.h"
 
 #include <android-base/logging.h>
 

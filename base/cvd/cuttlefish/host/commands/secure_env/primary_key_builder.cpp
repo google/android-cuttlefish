@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
 
 #include <android-base/logging.h>
 #include <tss2/tss2_mu.h>

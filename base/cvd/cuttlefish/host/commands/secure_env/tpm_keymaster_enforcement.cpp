@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/tpm_keymaster_enforcement.h"
+#include "cuttlefish/host/commands/secure_env/tpm_keymaster_enforcement.h"
 
 #include <android-base/endian.h>
 #include <android-base/logging.h>
@@ -22,10 +22,10 @@
 #include <sysinfoapi.h>
 #endif
 
-#include "host/commands/secure_env/primary_key_builder.h"
-#include "host/commands/secure_env/tpm_hmac.h"
-#include "host/commands/secure_env/tpm_key_blob_maker.h"
-#include "host/commands/secure_env/tpm_random_source.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
+#include "cuttlefish/host/commands/secure_env/tpm_key_blob_maker.h"
+#include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
 
 namespace cuttlefish {
 

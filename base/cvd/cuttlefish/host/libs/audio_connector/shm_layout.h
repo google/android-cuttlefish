@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "common/libs/utils/cf_endian.h"
+#include "cuttlefish/common/libs/utils/cf_endian.h"
 
 namespace cuttlefish {
 // TODO (b/175151042): get these from the kernel headers when available

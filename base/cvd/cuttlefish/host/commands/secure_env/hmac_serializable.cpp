@@ -19,8 +19,8 @@
 #include <optional>
 #include <vector>
 
-#include "host/commands/secure_env/tpm_auth.h"
-#include "host/commands/secure_env/tpm_hmac.h"
+#include "cuttlefish/host/commands/secure_env/tpm_auth.h"
+#include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
 
 namespace cuttlefish {
 

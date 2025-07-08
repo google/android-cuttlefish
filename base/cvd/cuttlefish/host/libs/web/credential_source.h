@@ -18,8 +18,8 @@
 #include <memory>
 #include <string>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/web/http_client/http_client.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish {
 

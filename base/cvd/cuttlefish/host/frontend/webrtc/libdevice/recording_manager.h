@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "host/frontend/webrtc/libdevice/local_recorder.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/local_recorder.h"
 
 #include <map>
 #include <memory>

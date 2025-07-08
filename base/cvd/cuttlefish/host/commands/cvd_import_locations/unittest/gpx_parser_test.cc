@@ -17,9 +17,9 @@
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 #include <fstream>
-#include "host/libs/location/GpsFix.h"
-#include "host/libs/location/GpxParser.h"
-#include "host/libs/location/StringParse.h"
+#include "cuttlefish/host/libs/location/GpsFix.h"
+#include "cuttlefish/host/libs/location/GpxParser.h"
+#include "cuttlefish/host/libs/location/StringParse.h"
 
 namespace cuttlefish {
 

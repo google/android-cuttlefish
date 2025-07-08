@@ -28,7 +28,7 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/contains.h"
 
 namespace cuttlefish {
 

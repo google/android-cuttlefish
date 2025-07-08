@@ -33,7 +33,7 @@
 #include <string>
 
 #include "alloc_utils.h"
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "json/forwards.h"
 #include "json/value.h"
 #include "json/writer.h"

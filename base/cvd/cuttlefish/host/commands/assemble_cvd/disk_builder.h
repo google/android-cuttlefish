@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/result.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 

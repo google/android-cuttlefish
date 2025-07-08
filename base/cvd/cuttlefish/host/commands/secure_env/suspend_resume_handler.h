@@ -17,9 +17,9 @@
 
 #include <thread>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
-#include "host/libs/command_util/runner/defs.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/command_util/runner/defs.h"
 
 namespace cuttlefish {
 

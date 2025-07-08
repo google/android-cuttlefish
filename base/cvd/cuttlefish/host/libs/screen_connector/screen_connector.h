@@ -27,17 +27,17 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
-#include "common/libs/confui/confui.h"
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/size_utils.h"
-#include "host/libs/config/config_constants.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/confui/host_mode_ctrl.h"
-#include "host/libs/confui/host_utils.h"
-#include "host/libs/screen_connector/screen_connector_common.h"
-#include "host/libs/screen_connector/screen_connector_multiplexer.h"
-#include "host/libs/screen_connector/screen_connector_queue.h"
-#include "host/libs/screen_connector/wayland_screen_connector.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
+#include "cuttlefish/host/libs/confui/host_utils.h"
+#include "cuttlefish/host/libs/screen_connector/screen_connector_common.h"
+#include "cuttlefish/host/libs/screen_connector/screen_connector_multiplexer.h"
+#include "cuttlefish/host/libs/screen_connector/screen_connector_queue.h"
+#include "cuttlefish/host/libs/screen_connector/wayland_screen_connector.h"
 
 namespace cuttlefish {
 

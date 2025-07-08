@@ -15,22 +15,22 @@
 
 #include <windows.h>
 
-#include "host/commands/secure_env/secure_env_windows_lib.h"
+#include "cuttlefish/host/commands/secure_env/secure_env_windows_lib.h"
 
 #include <thread>
 
 #include <android-base/logging.h>
 #include <keymaster/android_keymaster.h>
 #include <keymaster/contexts/pure_soft_keymaster_context.h>
-#include "common/libs/security/gatekeeper_channel_windows.h"
-#include "common/libs/security/keymaster_channel_windows.h"
-#include "host/commands/secure_env/gatekeeper_responder.h"
-#include "host/commands/secure_env/keymaster_responder.h"
-#include "host/commands/secure_env/soft_gatekeeper.h"
-#include "host/commands/secure_env/tpm_gatekeeper.h"
-#include "host/commands/secure_env/tpm_keymaster_context.h"
-#include "host/commands/secure_env/tpm_keymaster_enforcement.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/common/libs/security/gatekeeper_channel_windows.h"
+#include "cuttlefish/common/libs/security/keymaster_channel_windows.h"
+#include "cuttlefish/host/commands/secure_env/gatekeeper_responder.h"
+#include "cuttlefish/host/commands/secure_env/keymaster_responder.h"
+#include "cuttlefish/host/commands/secure_env/soft_gatekeeper.h"
+#include "cuttlefish/host/commands/secure_env/tpm_gatekeeper.h"
+#include "cuttlefish/host/commands/secure_env/tpm_keymaster_context.h"
+#include "cuttlefish/host/commands/secure_env/tpm_keymaster_enforcement.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace secure_env {
 namespace {

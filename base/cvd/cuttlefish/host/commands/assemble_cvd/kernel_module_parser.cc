@@ -16,7 +16,7 @@
 #include "kernel_module_parser.h"
 
 #include <fcntl.h>
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 static constexpr std::string_view SIGNATURE_FOOTER =
     "~Module signature appended~\n";

@@ -13,20 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/vm_manager/crosvm_builder.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 
 #include <android-base/logging.h>
 
 #include <string>
 #include <vector>
 
-#include "common/libs/utils/json.h"
-#include "common/libs/utils/network.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/libs/command_util/snapshot_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/known_paths.h"
-#include "host/libs/vm_manager/crosvm_cpu.h"
+#include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/network.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/command_util/snapshot_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_cpu.h"
 
 namespace cuttlefish {
 namespace {

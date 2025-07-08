@@ -21,9 +21,9 @@
 #include <thread>
 #include <vector>
 
-#include "host/frontend/webrtc/libdevice/audio_sink.h"
-#include "host/frontend/webrtc/libcommon/audio_source.h"
-#include "host/libs/audio_connector/server.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/audio_source.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/audio_sink.h"
+#include "cuttlefish/host/libs/audio_connector/server.h"
 
 namespace cuttlefish {
 class AudioHandler : public AudioServerExecutor {

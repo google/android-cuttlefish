@@ -18,7 +18,7 @@
  * GUID Partition Table and Composite Disk generation code.
  */
 
-#include "host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -37,15 +37,15 @@
 #include <sparse/sparse.h>
 #include <zlib.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/cf_endian.h"
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/size_utils.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/cf_endian.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
-#include "host/libs/config/mbr.h"
-#include "host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
 
 namespace cuttlefish {
 namespace {

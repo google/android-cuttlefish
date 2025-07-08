@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 #include <libxml/parser.h>
 
-#include "common/libs/utils/result_matchers.h"
+#include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "gmock/gmock-matchers.h"
 
 namespace cuttlefish {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/disk_usage.h"
+#include "cuttlefish/common/libs/utils/disk_usage.h"
 
 #include <cstddef>
 #include <string>
@@ -22,8 +22,8 @@
 
 #include <android-base/parseint.h>
 
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 namespace {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/screen_connector/ring_buffer_manager.h"
+#include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +22,7 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 

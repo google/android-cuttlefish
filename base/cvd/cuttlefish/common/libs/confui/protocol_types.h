@@ -22,11 +22,11 @@
 
 #include <teeui/common_message_types.h>  // /system/teeui/libteeui/.../include
 
-#include "common/libs/confui/packet.h"
-#include "common/libs/confui/packet_types.h"
+#include "cuttlefish/common/libs/confui/packet.h"
+#include "cuttlefish/common/libs/confui/packet_types.h"
 
-#include "common/libs/confui/utils.h"
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/confui/utils.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 namespace confui {

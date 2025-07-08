@@ -22,7 +22,7 @@
 
 #include <android-base/endian.h>
 
-#include "host/commands/secure_env/tpm_commands.h"
+#include "cuttlefish/host/commands/secure_env/tpm_commands.h"
 
 extern "C" {
 #ifndef _WIN32

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/alloc.h"
+#include "cuttlefish/host/commands/assemble_cvd/alloc.h"
 
 #include <iomanip>
 #include <sstream>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/allocd/request.h"
-#include "host/libs/allocd/utils.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/allocd/request.h"
+#include "cuttlefish/host/libs/allocd/utils.h"
 
 namespace cuttlefish {
 

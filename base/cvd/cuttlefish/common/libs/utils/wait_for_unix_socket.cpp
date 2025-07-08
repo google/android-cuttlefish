@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/wait_for_unix_socket.h"
+#include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 
 #include <chrono>
 #include <regex>
 #include <string>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
 

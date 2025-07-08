@@ -16,9 +16,9 @@
 
 #include <fruit/fruit.h>
 
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/fetcher_config.h"
-#include "host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

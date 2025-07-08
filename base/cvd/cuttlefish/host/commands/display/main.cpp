@@ -25,13 +25,13 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "common/libs/utils/flag_parser.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
-#include "host/libs/command_util/util.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/display.h"
-#include "host/libs/vm_manager/crosvm_display_controller.h"
+#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/display.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
 
 namespace cuttlefish {
 namespace {

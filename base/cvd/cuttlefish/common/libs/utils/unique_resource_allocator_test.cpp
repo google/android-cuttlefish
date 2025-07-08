@@ -18,8 +18,8 @@
 
 #include <gtest/gtest.h>
 
-#include "common/libs/utils/contains.h"
-#include "common/libs/utils/unique_resource_allocator.h"
+#include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/unique_resource_allocator.h"
 
 namespace cuttlefish {
 //

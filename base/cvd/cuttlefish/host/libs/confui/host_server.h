@@ -29,17 +29,17 @@
 #include <fruit/fruit.h>
 #include <teeui/utils.h>
 
-#include "common/libs/concurrency/multiplexer.h"
-#include "common/libs/concurrency/semaphore.h"
-#include "common/libs/concurrency/thread_safe_queue.h"
-#include "common/libs/confui/confui.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/libs/config/logging.h"
-#include "host/libs/confui/host_mode_ctrl.h"
-#include "host/libs/confui/host_renderer.h"
-#include "host/libs/confui/server_common.h"
-#include "host/libs/confui/session.h"
+#include "cuttlefish/common/libs/concurrency/multiplexer.h"
+#include "cuttlefish/common/libs/concurrency/semaphore.h"
+#include "cuttlefish/common/libs/concurrency/thread_safe_queue.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
+#include "cuttlefish/host/libs/confui/host_renderer.h"
+#include "cuttlefish/host/libs/confui/server_common.h"
+#include "cuttlefish/host/libs/confui/session.h"
 
 namespace cuttlefish {
 namespace confui {

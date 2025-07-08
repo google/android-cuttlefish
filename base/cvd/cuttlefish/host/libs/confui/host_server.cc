@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/host_server.h"
+#include "cuttlefish/host/libs/confui/host_server.h"
 
 #include <functional>
 #include <memory>
 #include <optional>
 #include <tuple>
 
-#include "common/libs/confui/confui.h"
-#include "common/libs/fs/shared_buf.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "common/libs/concurrency/thread_safe_queue.h"
-#include "host/libs/confui/host_utils.h"
-#include "host/libs/confui/secure_input.h"
+#include "cuttlefish/common/libs/concurrency/thread_safe_queue.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/confui/host_utils.h"
+#include "cuttlefish/host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
 namespace confui {

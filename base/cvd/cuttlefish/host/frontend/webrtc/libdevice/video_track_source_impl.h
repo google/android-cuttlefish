@@ -19,7 +19,7 @@
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
-#include "host/frontend/webrtc/libdevice/video_sink.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/video_sink.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

@@ -24,9 +24,9 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/tee_logging.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 DEFINE_string(process_name, "", "The process to credit log messages to");
 DEFINE_int32(log_fd_in, -1, "The file descriptor to read logs from.");

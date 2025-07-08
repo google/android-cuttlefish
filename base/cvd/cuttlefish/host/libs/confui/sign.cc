@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/sign.h"
+#include "cuttlefish/host/libs/confui/sign.h"
 
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
@@ -23,12 +23,12 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/confui/confui.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/confui_sign.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/confui/sign_utils.h"
+#include "cuttlefish/common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/security/confui_sign.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/confui/sign_utils.h"
 
 namespace cuttlefish {
 namespace confui {

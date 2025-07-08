@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/tpm_random_source.h"
+#include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
 
 #include <android-base/logging.h>
 #include "tpm_resource_manager.h"

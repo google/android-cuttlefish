@@ -17,9 +17,9 @@
 
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/confui_sign.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/security/confui_sign.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 class ConfUiSignServer {

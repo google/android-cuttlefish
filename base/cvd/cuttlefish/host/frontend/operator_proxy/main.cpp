@@ -19,9 +19,9 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/socket2socket_proxy.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(server_port, 8443, "The port for the proxy server");
 DEFINE_int32(operator_port, 1443, "The port of the operator server to proxy");

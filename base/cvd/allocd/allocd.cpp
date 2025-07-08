@@ -34,8 +34,8 @@
 #include <thread>
 
 #include "alloc_utils.h"
-#include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/logging.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/logging.h"
 #include "request.h"
 #include "resource_manager.h"
 

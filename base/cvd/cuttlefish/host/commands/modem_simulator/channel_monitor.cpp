@@ -14,16 +14,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/modem_simulator/channel_monitor.h"
+#include "cuttlefish/host/commands/modem_simulator/channel_monitor.h"
 
 #include <algorithm>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_select.h"
-#include "host/commands/modem_simulator/modem_simulator.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
 
 namespace cuttlefish {
 

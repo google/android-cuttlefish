@@ -18,7 +18,7 @@
 #include <fruit/fruit.h>
 
 #include "cuttlefish/host/libs/config/config_flag.h"
-#include "host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

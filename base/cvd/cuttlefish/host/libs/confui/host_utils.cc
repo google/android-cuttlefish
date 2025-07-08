@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/host_utils.h"
+#include "cuttlefish/host/libs/confui/host_utils.h"
 
 namespace cuttlefish {
 namespace confui {

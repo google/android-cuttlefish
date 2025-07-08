@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/server_common.h"
+#include "cuttlefish/host/libs/confui/server_common.h"
 namespace cuttlefish {
 namespace confui {
 FsmInput ToFsmInput(const ConfUiMessage& msg) {

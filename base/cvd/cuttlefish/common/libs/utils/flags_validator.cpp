@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include "common/libs/utils/flags_validator.h"
+#include "cuttlefish/common/libs/utils/flags_validator.h"
 
 namespace cuttlefish {
 Result<void> ValidateSetupWizardMode(const std::string& setupwizard_mode) {

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 
 #include <android-base/file.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/feature/feature.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 

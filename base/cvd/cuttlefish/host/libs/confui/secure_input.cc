@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/secure_input.h"
+#include "cuttlefish/host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
 namespace confui {

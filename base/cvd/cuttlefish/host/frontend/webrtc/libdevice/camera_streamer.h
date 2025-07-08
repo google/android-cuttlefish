@@ -20,8 +20,8 @@
 #include <api/video/video_sink_interface.h>
 #include <json/json.h>
 
-#include "common/libs/utils/vsock_connection.h"
-#include "host/frontend/webrtc/libdevice/camera_controller.h"
+#include "cuttlefish/common/libs/utils/vsock_connection.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/camera_controller.h"
 
 #include <atomic>
 #include <mutex>

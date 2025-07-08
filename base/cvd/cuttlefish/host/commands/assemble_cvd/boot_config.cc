@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/boot_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 
 #include <fstream>
 #include <sstream>
@@ -26,17 +26,17 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/files.h"
-#include "common/libs/utils/result.h"
-#include "common/libs/utils/size_utils.h"
-#include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/bootconfig_args.h"
-#include "host/libs/avb/avb.h"
-#include "host/libs/config/ap_boot_flow.h"
-#include "host/libs/config/boot_flow.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/kernel_args.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
+#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/boot_flow.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/kernel_args.h"
+#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
 
 using cuttlefish::vm_manager::CrosvmManager;
 

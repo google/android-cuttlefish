@@ -15,7 +15,7 @@
  *
  */
 
-#include "host/commands/secure_env/oemlock/oemlock.h"
+#include "cuttlefish/host/commands/secure_env/oemlock/oemlock.h"
 
 namespace cuttlefish {
 namespace oemlock {

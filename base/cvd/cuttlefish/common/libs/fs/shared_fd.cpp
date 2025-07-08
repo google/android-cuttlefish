@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -41,10 +41,10 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_select.h"
-#include "common/libs/utils/known_paths.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/utils/known_paths.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 

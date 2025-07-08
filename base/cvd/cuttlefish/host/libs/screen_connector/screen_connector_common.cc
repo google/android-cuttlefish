@@ -22,8 +22,8 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/size_utils.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/common/libs/utils/size_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 

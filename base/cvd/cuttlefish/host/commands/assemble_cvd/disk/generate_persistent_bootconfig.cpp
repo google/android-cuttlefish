@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 
 #include <memory>
 #include <optional>

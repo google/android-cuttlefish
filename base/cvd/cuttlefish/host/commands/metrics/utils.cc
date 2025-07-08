@@ -32,8 +32,8 @@
 #include <curl/curl.h>
 #include <gflags/gflags.h>
 
-#include "common/libs/utils/tee_logging.h"
-#include "host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/libs/metrics/metrics_defs.h"
 
 namespace cuttlefish::metrics {
 

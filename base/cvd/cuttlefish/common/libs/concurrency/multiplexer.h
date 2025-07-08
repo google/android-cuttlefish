@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/libs/concurrency/semaphore.h"
+#include "cuttlefish/common/libs/concurrency/semaphore.h"
 
 namespace cuttlefish {
 template <typename T, typename Queue>

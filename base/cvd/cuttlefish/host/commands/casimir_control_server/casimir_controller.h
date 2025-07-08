@@ -18,11 +18,11 @@
 
 #include <vector>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
-#include "host/commands/casimir_control_server/rf_packets.h"
+#include "cuttlefish/host/commands/casimir_control_server/rf_packets.h"
 
 namespace cuttlefish {
 

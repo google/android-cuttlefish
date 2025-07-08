@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 
 #include <poll.h>
 #include <vector>
 
-#include "common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {
 namespace transport {

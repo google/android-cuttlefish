@@ -21,8 +21,8 @@
 #include <thread>
 #include <unordered_map>
 
-#include "common/libs/sensors/sensors.h"
-#include "common/libs/transport/channel_sharedfd.h"
+#include "cuttlefish/common/libs/sensors/sensors.h"
+#include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

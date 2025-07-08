@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/fs/epoll.h"
+#include "cuttlefish/common/libs/fs/epoll.h"
 
 #include <sys/epoll.h>
 
@@ -25,8 +25,8 @@
 #include <shared_mutex>
 #include <string>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

@@ -24,8 +24,8 @@
 
 #include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
 
-#include "common/libs/utils/result.h"
-#include "host/libs/location/GpsFix.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/location/GpsFix.h"
 
 namespace cuttlefish {
 

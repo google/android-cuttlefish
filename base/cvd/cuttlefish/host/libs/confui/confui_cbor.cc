@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/confui_cbor.h"
+#include "cuttlefish/host/libs/confui/confui_cbor.h"
 
 #include "cbor.h"
 
-#include "common/libs/confui/confui.h"
+#include "cuttlefish/common/libs/confui/confui.h"
 
 namespace cuttlefish {
 namespace confui {

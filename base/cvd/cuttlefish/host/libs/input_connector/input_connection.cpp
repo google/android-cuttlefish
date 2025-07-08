@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/libs/input_connector/input_connection.h"
+#include "cuttlefish/host/libs/input_connector/input_connection.h"
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/utils/result.h"
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 

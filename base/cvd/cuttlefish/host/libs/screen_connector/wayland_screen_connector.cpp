@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "host/libs/screen_connector/wayland_screen_connector.h"
+#include "cuttlefish/host/libs/screen_connector/wayland_screen_connector.h"
 
 #include <fcntl.h>
 #include <unistd.h>
 
 #include <android-base/logging.h>
 
-#include "host/libs/wayland/wayland_server.h"
+#include "cuttlefish/host/libs/wayland/wayland_server.h"
 
 namespace cuttlefish {
 

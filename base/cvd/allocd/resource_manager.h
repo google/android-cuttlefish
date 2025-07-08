@@ -26,7 +26,7 @@
 #include <set>
 
 #include "alloc_utils.h"
-#include "common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "request.h"
 #include "resource.h"
 #include "utils.h"

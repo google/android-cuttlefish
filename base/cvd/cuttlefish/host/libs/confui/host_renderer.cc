@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "host/libs/confui/host_renderer.h"
+#include "cuttlefish/host/libs/confui/host_renderer.h"
 
 #include <drm/drm_fourcc.h>
 
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/confui/host_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/confui/host_utils.h"
 
 namespace cuttlefish {
 namespace confui {

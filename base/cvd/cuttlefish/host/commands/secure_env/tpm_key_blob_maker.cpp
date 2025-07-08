@@ -21,10 +21,10 @@
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_rc.h>
 
-#include "host/commands/secure_env/composite_serialization.h"
-#include "host/commands/secure_env/encrypted_serializable.h"
-#include "host/commands/secure_env/hmac_serializable.h"
-#include "host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/composite_serialization.h"
+#include "cuttlefish/host/commands/secure_env/encrypted_serializable.h"
+#include "cuttlefish/host/commands/secure_env/hmac_serializable.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
 
 namespace cuttlefish {
 

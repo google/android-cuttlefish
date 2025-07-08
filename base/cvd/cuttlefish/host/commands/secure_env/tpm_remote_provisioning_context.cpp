@@ -26,8 +26,8 @@
 #include <openssl/hkdf.h>
 #include <openssl/rand.h>
 
-#include "host/commands/secure_env/primary_key_builder.h"
-#include "host/commands/secure_env/tpm_hmac.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
 #include "tpm_remote_provisioning_context.h"
 #include "tpm_resource_manager.h"
 

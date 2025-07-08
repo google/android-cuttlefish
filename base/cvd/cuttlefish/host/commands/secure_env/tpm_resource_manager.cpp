@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 #include <mutex>
 

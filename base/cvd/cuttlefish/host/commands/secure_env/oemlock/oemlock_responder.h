@@ -17,9 +17,9 @@
 
 #include <mutex>
 
-#include "common/libs/transport/channel.h"
-#include "common/libs/utils/result.h"
-#include "host/commands/secure_env/oemlock/oemlock.h"
+#include "cuttlefish/common/libs/transport/channel.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/secure_env/oemlock/oemlock.h"
 
 namespace cuttlefish {
 namespace oemlock {

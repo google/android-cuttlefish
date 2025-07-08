@@ -18,7 +18,7 @@
 
 #include <keymaster/remote_provisioning_context.h>
 
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 #include "keymaster/cppcose/cppcose.h"
 
 namespace cuttlefish {

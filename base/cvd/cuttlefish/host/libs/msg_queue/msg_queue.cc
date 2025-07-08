@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/msg_queue/msg_queue.h"
+#include "cuttlefish/host/libs/msg_queue/msg_queue.h"
 
 #include <stdbool.h>
 #include <stdio.h>

@@ -19,8 +19,8 @@
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
 
-#include "host/commands/secure_env/primary_key_builder.h"
-#include "host/commands/secure_env/tpm_resource_manager.h"
+#include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
+#include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
 

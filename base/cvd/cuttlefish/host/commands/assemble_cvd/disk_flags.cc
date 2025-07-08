@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/assemble_cvd/disk_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
 
 #include <sys/statvfs.h>
 
