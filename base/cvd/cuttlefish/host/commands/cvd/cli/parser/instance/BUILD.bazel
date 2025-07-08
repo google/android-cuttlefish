@@ -1,4 +1,3 @@
-load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -48,7 +47,6 @@ cf_cc_test(
         "graphics_configs_test.cc",
         "vm_configs_test.cc",
     ],
-    copts = COPTS + ["-Icuttlefish"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flag_parser",

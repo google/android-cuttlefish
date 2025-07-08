@@ -1,5 +1,4 @@
 load("@rules_proto_grpc_go//:defs.bzl", "go_proto_compile")
-load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
@@ -86,7 +85,6 @@ cf_cc_test(
         "flags_parser_test.cc",
         "metrics_configs_test.cc",
     ],
-    copts = COPTS + ["-Icuttlefish"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:result",
