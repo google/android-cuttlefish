@@ -17,9 +17,9 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include <common/libs/fs/shared_buf.h>
-#include <host/libs/config/logging.h>
+#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"
 #include "cuttlefish/host/libs/location/GpxParser.h"
 #include "cuttlefish/host/libs/location/KmlParser.h"

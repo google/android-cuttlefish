@@ -42,13 +42,12 @@ cf_cc_binary = macro(
     implementation = _cf_cc_binary_implementation,
 )
 
-def _cf_cc_library_implementation(name, clang_tidy_enabled, copts, strip_include_prefix, **kwargs):
+def _cf_cc_library_implementation(name, clang_tidy_enabled, copts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     native.cc_library(
         name = name,
         copts = (copts or []) + COPTS,
-        strip_include_prefix = strip_include_prefix or "//cuttlefish",
         **kwargs,
     )
     if clang_tidy_enabled:
@@ -64,7 +63,6 @@ cf_cc_library = macro(
     attrs = {
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
-        "strip_include_prefix": attr.string(configurable = False, default = ""),
     },
     implementation = _cf_cc_library_implementation,
 )

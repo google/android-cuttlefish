@@ -28,10 +28,10 @@
 #include <gflags/gflags.h>
 #include <android-base/logging.h>
 
-#include <common/libs/fs/shared_fd.h>
-#include <common/libs/fs/shared_select.h>
-#include <host/libs/config/cuttlefish_config.h>
-#include <host/libs/config/logging.h>
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(console_in_fd,
              -1,

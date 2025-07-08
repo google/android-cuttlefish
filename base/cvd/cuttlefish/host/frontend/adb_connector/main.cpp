@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <unistd.h>
+
 #include <algorithm>
 #include <iterator>
 #include <limits>
@@ -24,11 +26,9 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include <unistd.h>
-#include <host/commands/kernel_log_monitor/kernel_log_server.h>
-#include <host/commands/kernel_log_monitor/utils.h>
-
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/host/frontend/adb_connector/adb_connection_maintainer.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"

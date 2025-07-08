@@ -18,10 +18,10 @@
 
 #include <android-base/logging.h>
 
-#include <common/libs/fs/shared_select.h>
-#include <host/commands/kernel_log_monitor/kernel_log_server.h>
-#include <host/commands/kernel_log_monitor/utils.h>
-#include <host/libs/config/cuttlefish_config.h>
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 using namespace android;
 

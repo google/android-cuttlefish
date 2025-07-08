@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
+#include <signal.h>
+
 #include <chrono>
 #include <ctime>
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <string>
+#include <thread>
+#include <vector>
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+#include <gflags/gflags.h>
 #include <grpc/grpc.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
@@ -29,27 +38,12 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/server_posix.h>
 
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
-
-#include <signal.h>
-
-#include <chrono>
-#include <deque>
-#include <mutex>
-#include <sstream>
-#include <thread>
-#include <vector>
-
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
-
-#include <common/libs/fs/shared_buf.h>
-#include <common/libs/fs/shared_fd.h>
-#include <common/libs/fs/shared_select.h>
-#include <host/libs/config/cuttlefish_config.h>
-#include <host/libs/config/logging.h>
-#include <queue>
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 using gnss_grpc_proxy::GnssGrpcProxy;
 using gnss_grpc_proxy::SendGpsReply;

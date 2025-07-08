@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <common/libs/utils/flag_parser.h>
+#include "cuttlefish/common/libs/utils/flag_parser.h"
 
 #include <map>
 #include <optional>
@@ -24,11 +24,11 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <libxml/parser.h>
 
 #include "cuttlefish/common/libs/utils/result_matchers.h"
-#include "gmock/gmock-matchers.h"
 
 namespace cuttlefish {
 
