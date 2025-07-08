@@ -52,6 +52,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
@@ -69,12 +70,13 @@ namespace cuttlefish {
 
 using vm_manager::Gem5Manager;
 
-Result<void> ResolveInstanceFiles(const KernelPathFlag& kernel_path,
+Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
+                                  const KernelPathFlag& kernel_path,
                                   const SystemImageDirFlag& system_image_dir) {
   // It is conflict (invalid) to pass both kernel_path/initramfs_path
   // and image file paths.
   bool flags_kernel_initramfs_has_input =
-      (!kernel_path.HasValue()) || (!FLAGS_initramfs_path.empty());
+      (!kernel_path.HasValue()) || (!initramfs_path.HasValue());
   bool flags_image_has_input =
       (!FLAGS_super_image.empty()) || (!FLAGS_vendor_boot_image.empty()) ||
       (!FLAGS_vbmeta_vendor_dlkm_image.empty()) ||
@@ -247,7 +249,7 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
 
 Result<void> DiskImageFlagsVectorization(
     CuttlefishConfig& config, const FetcherConfig& fetcher_config,
-    const KernelPathFlag& kernel_path,
+    const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
@@ -301,13 +303,10 @@ Result<void> DiskImageFlagsVectorization(
 
   std::vector<std::string> bootloader =
       android::base::Split(FLAGS_bootloader, ",");
-  std::vector<std::string> initramfs_path =
-      android::base::Split(FLAGS_initramfs_path, ",");
 
   std::vector<std::string> blank_sdcard_image_mb =
       android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
 
-  std::string cur_initramfs_path;
   std::string cur_boot_image;
   std::string cur_vendor_boot_image;
   std::string cur_super_image;
@@ -434,12 +433,8 @@ Result<void> DiskImageFlagsVectorization(
       instance.set_bootloader(bootloader[instance_index]);
     }
     instance.set_kernel_path(kernel_path.KernelPathForIndex(instance_index));
-    if (instance_index >= initramfs_path.size()) {
-      cur_initramfs_path = initramfs_path[0];
-    } else {
-      cur_initramfs_path = initramfs_path[instance_index];
-    }
-    instance.set_initramfs_path(cur_initramfs_path);
+    instance.set_initramfs_path(
+        initramfs_path.InitramfsPathForIndex(instance_index));
 
     using android::base::ParseInt;
 
@@ -467,12 +462,14 @@ Result<void> DiskImageFlagsVectorization(
                             "/userdata.img");
     instance.set_new_data_image(const_instance.PerInstancePath("userdata.img"));
 
-    if (!kernel_path.KernelPathForIndex(instance_index).empty() ||
-        !cur_initramfs_path.empty()) {
+    bool has_kernel = !kernel_path.KernelPathForIndex(instance_index).empty();
+    bool has_initramfs =
+        !initramfs_path.InitramfsPathForIndex(instance_index).empty();
+    if (has_kernel || has_initramfs) {
       const std::string new_vendor_boot_image_path =
           const_instance.PerInstancePath("vendor_boot_repacked.img");
       // Repack the vendor boot images if kernels and/or ramdisks are passed in.
-      if (!cur_initramfs_path.empty()) {
+      if (has_initramfs) {
         // change the new flag value to corresponding instance
         instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
       }
@@ -491,10 +488,10 @@ Result<void> DiskImageFlagsVectorization(
 
     // We will need to rebuild vendor_dlkm if custom ramdisk is specified, as a
     // result super image would need to be rebuilt as well.
-    if (CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config,
-                  const_instance.default_target_zip(),
-                  const_instance.system_target_zip())) ||
-        !cur_initramfs_path.empty()) {
+    if (CF_EXPECT(SuperImageNeedsRebuilding(
+            fetcher_config, const_instance.default_target_zip(),
+            const_instance.system_target_zip())) ||
+        has_initramfs) {
       const std::string new_super_image_path =
           const_instance.PerInstancePath("super.img");
       instance.set_new_super_image(new_super_image_path);

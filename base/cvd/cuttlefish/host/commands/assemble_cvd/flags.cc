@@ -53,6 +53,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
@@ -593,7 +594,7 @@ std::string DefaultBootloaderArchDir(Arch arch) {
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
-    const KernelPathFlag& kernel_path,
+    const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   CuttlefishConfig tmp_config_obj;
   // If a snapshot path is provided, do not read all flags to set up the config.
@@ -1602,7 +1603,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
             "The set of flags is incompatible with snapshot");
 
   CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config,
-                                        kernel_path, system_image_dir));
+                                        initramfs_path, kernel_path,
+                                        system_image_dir));
 
   return tmp_config_obj;
 }
@@ -1801,13 +1803,13 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
 }
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
-    const KernelPathFlag& kernel_path,
+    const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
 
-  CF_EXPECT(ResolveInstanceFiles(kernel_path, system_image_dir),
+  CF_EXPECT(ResolveInstanceFiles(initramfs_path, kernel_path, system_image_dir),
             "Failed to resolve instance files");
 
   std::vector<GuestConfig> guest_configs =

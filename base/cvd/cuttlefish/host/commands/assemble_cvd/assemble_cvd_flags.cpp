@@ -58,8 +58,6 @@ DEFINE_string(refresh_rate_hz, "60", "Screen refresh rate in Hertz");
 DEFINE_string(overlays, "",
               "List of displays to overlay. Format is: 'vm_index:display_index "
               "vm_index2:display_index2 [...]'");
-DEFINE_vec(initramfs_path, CF_DEFAULTS_INITRAMFS_PATH,
-              "Path to the initramfs");
 DEFINE_string(extra_kernel_cmdline, CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
               "Additional flags to put on the kernel command line");
 DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
