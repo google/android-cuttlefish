@@ -57,6 +57,9 @@ type UserArtifactsManager interface {
 	StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error)
 	// Extract artifact with the given checksum
 	ExtractArtifact(checksum string) error
+	// Prepare image directory containing symlinks of user artifacts under multiple directories
+	// named with different checksum each.
+	PrepareImageDirectory(checksums []string) (*apiv1.PrepareImageDirectoryResponse, error)
 
 	UserArtifactsDirResolver
 	// Creates a new directory for uploading user artifacts in the future.
@@ -233,6 +236,34 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
 		return fmt.Errorf("failed to move the user artifact: %w", err)
 	}
 	return nil
+}
+
+func (m *UserArtifactsManagerImpl) PrepareImageDirectory(checksums []string) (*apiv1.PrepareImageDirectoryResponse, error) {
+	dirs, err := m.getDirNames(checksums)
+	if err != nil {
+		return nil, err
+	}
+	imgDirName, err := imageDirName(dirs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get checksum from directory names: %w", err)
+	}
+	dstDir := filepath.Join(m.RootDir, imgDirName)
+	if exists, err := dirExists(dstDir); err != nil {
+		return nil, fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if exists {
+		return nil, operator.NewConflictError("image directory with same set of user artifacts already exists", nil)
+	}
+	workDir, err := ioutil.TempDir(m.WorkDir, "")
+	if err != nil {
+		return nil, err
+	}
+	if err := m.gatherSymlinks(workDir, dirs); err != nil {
+		return nil, fmt.Errorf("failed to gather symlinks: %w", err)
+	}
+	if err := os.Rename(workDir, dstDir); err != nil {
+		return nil, fmt.Errorf("failed to move the image directory: %w", err)
+	}
+	return &apiv1.PrepareImageDirectoryResponse{Dir: imgDirName}, nil
 }
 
 func (m *UserArtifactsManagerImpl) getRWMutex(checksum string) *sync.RWMutex {
@@ -472,6 +503,53 @@ func unzip(dstDir string, src string) error {
 		}
 		if err := extractTo(filepath.Join(dstDir, f.Name), f); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+func (m *UserArtifactsManagerImpl) getDirNames(checksums []string) ([]string, error) {
+	var dirs []string
+	for _, checksum := range checksums {
+		extractedDirName := fmt.Sprintf("%s_extracted", checksum)
+		if exists, err := dirExists(filepath.Join(m.RootDir, extractedDirName)); err != nil {
+			return nil, fmt.Errorf("failed to check existence of directory: %w", err)
+		} else if exists {
+			dirs = append(dirs, extractedDirName)
+			continue
+		}
+		if exists, err := dirExists(filepath.Join(m.RootDir, checksum)); err != nil {
+			return nil, fmt.Errorf("failed to check existence of directory: %w", err)
+		} else if exists {
+			dirs = append(dirs, checksum)
+			continue
+		}
+		return nil, operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
+	}
+	return dirs, nil
+}
+
+func imageDirName(dirnames []string) (string, error) {
+	h := sha256.New()
+	if _, err := h.Write([]byte(strings.Join(dirnames, ""))); err != nil {
+		return "", fmt.Errorf("failed to write hash: %w", err)
+	}
+	return fmt.Sprintf("%x_imagedir", h.Sum(nil)), nil
+}
+
+func (m *UserArtifactsManagerImpl) gatherSymlinks(workDir string, dirnames []string) error {
+	for _, dirname := range dirnames {
+		artifactDir := filepath.Join(m.RootDir, dirname)
+		entries, err := ioutil.ReadDir(artifactDir)
+		if err != nil {
+			return fmt.Errorf("failed to read directory: %w", err)
+		}
+		for _, entry := range entries {
+			src := filepath.Join(artifactDir, entry.Name())
+			dst := filepath.Join(workDir, entry.Name())
+			if err := os.Symlink(src, dst); err != nil {
+				return fmt.Errorf("failed to create symlink of the user artifact: %w", err)
+			}
 		}
 	}
 	return nil

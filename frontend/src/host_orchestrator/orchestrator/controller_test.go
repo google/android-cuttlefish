@@ -213,6 +213,10 @@ func (testUAM) ExtractArtifact(checksum string) error {
 	return nil
 }
 
+func (testUAM) PrepareImageDirectory(checksums []string) (*apiv1.PrepareImageDirectoryResponse, error) {
+	return nil, nil
+}
+
 func (testUAM) GetDirPath(string) string {
 	return ""
 }
