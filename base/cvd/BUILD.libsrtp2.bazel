@@ -56,15 +56,6 @@ cc_library(
         "include/srtp_priv.h",
         "include/ut_sim.h",
     ],
-    copts = [
-        "-fPIC",
-        "-Wall ",
-        "-pedantic",
-        "-Wstrict-prototypes",
-        "-O4",
-        "-funroll-loops",
-        "-c",
-    ],
     defines = [
         "HAVE_CONFIG_H",
     ],
