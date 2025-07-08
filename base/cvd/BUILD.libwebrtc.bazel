@@ -3215,6 +3215,8 @@ cc_library(
         "-Wundef",
         "-Wno-unreachable-code-break",
         "-Wno-c++11-narrowing-const-reference",
+        "-Wno-thread-safety-reference-return",
+        "-Wno-format",
     ] + select({
         "@platforms//cpu:arm": [
             "-mfpu=neon",
