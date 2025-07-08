@@ -20,6 +20,7 @@
 #include <fruit/fruit.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -28,12 +29,12 @@
 namespace cuttlefish {
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
-    const SystemImageDirFlag&);
+    const KernelPathFlag&, const SystemImageDirFlag&);
 // Must be called after ParseCommandLineFlags.
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
-    const SystemImageDirFlag&);
+    const KernelPathFlag& kernel_path, const SystemImageDirFlag&);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 

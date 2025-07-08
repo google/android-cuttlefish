@@ -53,6 +53,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
@@ -115,7 +116,8 @@ Result<std::string> GetAndroidInfoConfig(
 }
 
 #ifdef __ANDROID__
-Result<std::vector<GuestConfig>> ReadGuestConfig(const SystemImageDir&) {
+Result<std::vector<GuestConfig>> ReadGuestConfig(const KernelPathFlag&,
+                                                 const SystemImageDir&) {
   std::vector<GuestConfig> rets;
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
@@ -131,15 +133,13 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(const SystemImageDir&) {
 }
 #else
 Result<std::vector<GuestConfig>> ReadGuestConfig(
+    const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   std::vector<GuestConfig> guest_configs;
   std::vector<std::string> boot_image =
       android::base::Split(FLAGS_boot_image, ",");
-  std::vector<std::string> kernel_path =
-      android::base::Split(FLAGS_kernel_path, ",");
   std::string kernel_image_path = "";
   std::string cur_boot_image;
-  std::string cur_kernel_path;
 
   std::string current_path = StringFromEnv("PATH", "");
   std::string bin_folder = DefaultHostArtifactsPath("bin");
@@ -154,18 +154,14 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     // for the ikconfig header in the image before extracting the config list.
     // This code is liable to break if the boot image ever includes the
     // ikconfig header outside the kernel.
-    cur_kernel_path = "";
-    if (instance_index < kernel_path.size()) {
-      cur_kernel_path = kernel_path[instance_index];
-    }
 
     cur_boot_image = "";
     if (instance_index < boot_image.size()) {
       cur_boot_image = boot_image[instance_index];
     }
 
-    if (!cur_kernel_path.empty()) {
-      kernel_image_path = cur_kernel_path;
+    if (!kernel_path.KernelPathForIndex(instance_index).empty()) {
+      kernel_image_path = kernel_path.KernelPathForIndex(instance_index);
     } else if (!cur_boot_image.empty()) {
       kernel_image_path = cur_boot_image;
     }
@@ -597,6 +593,7 @@ std::string DefaultBootloaderArchDir(Arch arch) {
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
+    const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   CuttlefishConfig tmp_config_obj;
   // If a snapshot path is provided, do not read all flags to set up the config.
@@ -1605,7 +1602,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
             "The set of flags is incompatible with snapshot");
 
   CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config,
-                                        system_image_dir));
+                                        kernel_path, system_image_dir));
 
   return tmp_config_obj;
 }
@@ -1804,16 +1801,17 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
 }
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
+    const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
 
-  CF_EXPECT(ResolveInstanceFiles(system_image_dir),
+  CF_EXPECT(ResolveInstanceFiles(kernel_path, system_image_dir),
             "Failed to resolve instance files");
 
   std::vector<GuestConfig> guest_configs =
-      CF_EXPECT(ReadGuestConfig(system_image_dir));
+      CF_EXPECT(ReadGuestConfig(kernel_path, system_image_dir));
 
   // TODO(weihsu), b/250988697:
   // assume all instances are using same VM manager/app/arch,

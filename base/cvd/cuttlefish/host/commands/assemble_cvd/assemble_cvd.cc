@@ -40,6 +40,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
@@ -309,6 +310,7 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, SharedFD log,
+    const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   {
     // The config object is created here, but only exists in memory until the
@@ -317,7 +319,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // disk.
     auto config = CF_EXPECT(InitializeCuttlefishConfiguration(
                                 FLAGS_instance_dir, guest_configs, injector,
-                                fetcher_config, system_image_dir),
+                                fetcher_config, kernel_path, system_image_dir),
                             "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
@@ -508,13 +510,8 @@ const std::string kKernelDefaultPath = "kernel";
 const std::string kInitramfsImg = "initramfs.img";
 static void ExtractKernelParamsFromFetcherConfig(
     const FetcherConfig& fetcher_config) {
-  std::string discovered_kernel =
-      fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string discovered_ramdisk =
       fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
-
-  SetCommandLineOptionWithMode("kernel_path", discovered_kernel.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   SetCommandLineOptionWithMode("initramfs_path", discovered_ramdisk.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -618,6 +615,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
                                          /* remove_flags */ false);
   }
 
+  KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_config);
+
   SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
@@ -649,13 +648,14 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  auto guest_configs = CF_EXPECT(GetGuestConfigAndSetDefaults(system_image_dir),
-                                 "Failed to parse arguments");
+  auto guest_configs =
+      CF_EXPECT(GetGuestConfigAndSetDefaults(kernel_path, system_image_dir),
+                "Failed to parse arguments");
 
-  auto config = CF_EXPECT(
-      InitFilesystemAndCreateConfig(std::move(fetcher_config), guest_configs,
-                                    injector, log, system_image_dir),
-      "Failed to create config");
+  auto config = CF_EXPECT(InitFilesystemAndCreateConfig(
+                              std::move(fetcher_config), guest_configs,
+                              injector, log, kernel_path, system_image_dir),
+                          "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
