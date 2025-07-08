@@ -1,0 +1,836 @@
+commit 3683847ab3d60808a606d29843ad26840c8b32d6
+Author: Jason Macnak <natsu@google.com>
+Date:   Tue Jun 3 11:12:09 2025 -0700
+
+    Move `copts` and `defines` to a common build_variables.bzl
+
+diff --git a/build_variables.bzl b/build_variables.bzl
+new file mode 100644
+index 000000000..113342840
+--- /dev/null
++++ b/build_variables.bzl
+@@ -0,0 +1,36 @@
++
++"""
++Common build configuration definitions.
++"""
++GFXSTREAM_HOST_COPTS = [
++] + select({
++    "@platforms//os:windows": [
++        "/EHs-c-",
++    ],
++    "//conditions:default": [
++        "-fno-exceptions",
++    ],
++})
++GFXSTREAM_HOST_VK_DEFINES = [
++    "VK_GFXSTREAM_STRUCTURE_TYPE_EXT",
++    "VK_GOOGLE_gfxstream",
++] + select({
++    "@platforms//os:macos": [
++        "VK_USE_PLATFORM_METAL_EXT",
++        "VK_USE_PLATFORM_MACOS_MVK",
++    ],
++    "@platforms//os:windows": [
++        "VK_USE_PLATFORM_WIN32_KHR",
++    ],
++    "//conditions:default": [],
++})
++GFXSTREAM_HOST_DEFINES = GFXSTREAM_HOST_VK_DEFINES + [
++    "BUILDING_EMUGL_COMMON_SHARED",
++    "EMUGL_BUILD",
++    "GFXSTREAM_ENABLE_HOST_GLES=1",
++] + select({
++    "@platforms//os:windows": [
++        "WIN32_LEAN_AND_MEAN",
++    ],
++    "//conditions:default": [],
++})
+diff --git a/guest/OpenglCodecCommon/BUILD.bazel b/guest/OpenglCodecCommon/BUILD.bazel
+index 7a8ac73ec..77e826bc1 100644
+--- a/guest/OpenglCodecCommon/BUILD.bazel
++++ b/guest/OpenglCodecCommon/BUILD.bazel
+@@ -28,9 +28,9 @@ cc_library(
+         "//common/etc:gfxstream_etc",
+         "//common/logging:gfxstream_common_logging",
+         "//guest/android-emu:gfxstream_guest_base",
+-        "//third_party/opengl:gfxstream_gles_headers",
+         "//third_party/opengl:gfxstream_gles2_headers",
+         "//third_party/opengl:gfxstream_gles3_headers",
++        "//third_party/opengl:gfxstream_gles_headers",
+         "@mesa//:mesa_gfxstream_guest_iostream",
+     ],
+ )
+diff --git a/guest/egl/BUILD.bazel b/guest/egl/BUILD.bazel
+index 30562af48..dd56fa1c4 100644
+--- a/guest/egl/BUILD.bazel
++++ b/guest/egl/BUILD.bazel
+@@ -40,8 +40,8 @@ cc_library(
+         "//guest/android-emu:gfxstream_guest_base",
+         "//guest/qemupipe:gfxstream_guest_qemupipe",
+         "//third_party/android:gfxstream_thirdparty_android_headers",
+-        "//third_party/opengl:gfxstream_gles_headers",
+         "//third_party/opengl:gfxstream_gles3_headers",
++        "//third_party/opengl:gfxstream_gles_headers",
+         "@drm//:libdrm",
+         "@mesa//:mesa_gfxstream_guest_android",
+         "@mesa//:mesa_gfxstream_guest_platform",
+diff --git a/host/BUILD.bazel b/host/BUILD.bazel
+index 31ca8a8bf..d1f5a70d7 100644
+--- a/host/BUILD.bazel
++++ b/host/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test", "objc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -32,7 +33,8 @@ cc_library(
+         "include/render-utils/vm_operations.h",
+         "include/render-utils/window_operations.h",
+     ],
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     visibility = ["//visibility:public"],
+     deps = [
+@@ -59,7 +61,8 @@ cc_library(
+         "SyncThread.h",
+         "VsyncThread.h",
+     ],
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["."],
+     deps = [
+         ":gfxstream_backend_headers",
+@@ -89,14 +92,10 @@ objc_library(
+         "NativeSubWindow.h",
+         "NativeSubWindow_cocoa.mm",
+     ],
+-    copts = [
+-        "-fno-exceptions",
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-deprecated-declarations",
+     ],
+-    defines = [
+-        "EMUGL_BUILD",
+-        "GFXSTREAM_ENABLE_HOST_GLES=1",
+-    ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     sdk_frameworks = [
+         "AppKit",
+         "QuartzCore",
+@@ -185,21 +184,11 @@ cc_library(
+         "VsyncThread.h",
+         "virtgpu_gfxstream_protocol.h",
+     ],
+-    copts = [
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-return-type-c-linkage",
+         "-Wno-extern-c-compat",
+-        "-fno-exceptions",
+     ],
+-    defines = [
+-        "QEMU_NEXT",
+-        "EMUGL_BUILD",
+-        "GFXSTREAM_ENABLE_HOST_GLES=1",
+-    ] + select({
+-        "@platforms//os:windows": [
+-            "WIN32_LEAN_AND_MEAN",
+-        ],
+-        "//conditions:default": [],
+-    }),
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = [
+         ".",
+         "gl",
+@@ -250,16 +239,11 @@ cc_library(
+         "render_api.cpp",
+         "virtio-gpu-gfxstream-renderer.cpp",
+     ],
+-    copts = [
+-        "-fno-exceptions",
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+         "-Wno-return-type-c-linkage",
+     ],
+-    defines = [
+-        "EMUGL_BUILD",
+-        "BUILDING_EMUGL_COMMON_SHARED",
+-        "WIN32_LEAN_AND_MEAN",
+-    ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     linkstatic = True,
+     visibility = ["//visibility:public"],
+     deps = [
+@@ -283,7 +267,8 @@ cc_binary(
+         "render_api.cpp",
+         "virtio-gpu-gfxstream-renderer.cpp",
+     ],
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     linkshared = True,
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/host/address_space/BUILD.bazel b/host/address_space/BUILD.bazel
+index 56e762e33..6db554cfb 100644
+--- a/host/address_space/BUILD.bazel
++++ b/host/address_space/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -14,7 +15,8 @@ cc_library(
+         "sub_allocator.cpp",
+     ],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     strip_include_prefix = "include",
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/backend/BUILD.bazel b/host/backend/BUILD.bazel
+index b49127361..dae86353b 100644
+--- a/host/backend/BUILD.bazel
++++ b/host/backend/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -25,6 +26,8 @@ cc_library(
+         "window_operations.cpp",
+     ],
+     hdrs = glob(["include/**/*.h"]),
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/compressed_textures/BUILD.bazel b/host/compressed_textures/BUILD.bazel
+index 01f6b3716..134538046 100644
+--- a/host/compressed_textures/BUILD.bazel
++++ b/host/compressed_textures/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -11,7 +12,8 @@ cc_library(
+         "AstcCpuDecompressorNoOp.cpp",
+     ],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     strip_include_prefix = "include",
+     deps = [
+         "//common/etc:gfxstream_etc",
+@@ -23,7 +25,7 @@ cc_test(
+     srcs = [
+         "AstcCpuDecompressor_unittest.cpp",
+     ],
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
+     deps = [
+         ":gfxstream_host_compressed_textures",
+         "@com_google_googletest//:gtest",
+diff --git a/host/decoder_common/BUILD.bazel b/host/decoder_common/BUILD.bazel
+index d8b5cab82..585e759cf 100644
+--- a/host/decoder_common/BUILD.bazel
++++ b/host/decoder_common/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -20,7 +21,8 @@ cc_library(
+     hdrs = glob([
+         "include/**/*.h",
+     ]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = [
+         ".",
+         "include",
+diff --git a/host/features/BUILD.bazel b/host/features/BUILD.bazel
+index 8cae30284..eadb474fa 100644
+--- a/host/features/BUILD.bazel
++++ b/host/features/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -9,6 +10,7 @@ cc_library(
+     name = "gfxstream_host_features",
+     srcs = ["Features.cpp"],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+ )
+diff --git a/host/gl/BUILD.bazel b/host/gl/BUILD.bazel
+index 046e396b1..583209771 100644
+--- a/host/gl/BUILD.bazel
++++ b/host/gl/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library", "objc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -13,8 +14,8 @@ cc_library(
+         "gles1_dec/gles1_server_context.cpp",
+     ],
+     hdrs = glob(["gles1_dec/*.h"]),
+-    copts = ["-fno-exceptions"],
+-    defines = ["EMUGL_BUILD"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     deps = [
+         ":gfxstream_glsnapshot",
+         "//common/base:gfxstream_common_base",
+@@ -32,7 +33,8 @@ cc_library(
+ cc_library(
+     name = "gl_common_headers",
+     hdrs = glob(["glestranslator/GLcommon/include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["glestranslator/GLcommon/include"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+@@ -56,8 +58,10 @@ objc_library(
+         "glestranslator/EGL/MacNative.m",
+         "glestranslator/EGL/MacPixelFormatsAttribs.m",
+     ] + glob(["glestranslator/EGL/*.h"]),
+-    copts = ["-Wno-deprecated-declarations"],
+-    defines = ["EMUGL_BUILD"],
++    copts = GFXSTREAM_HOST_COPTS + [
++        "-Wno-deprecated-declarations",
++    ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     sdk_frameworks = [
+         "IOSurface",
+         "AppKit",
+@@ -129,13 +133,12 @@ cc_library(
+         ],
+         "//conditions:default": [],
+     }),
+-    copts = [
+-        "-fno-exceptions",
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+         "-Wno-inconsistent-missing-override",
+         "-Wno-return-type-c-linkage",
+     ],
+-    defines = ["EMUGL_BUILD"],
++    defines = GFXSTREAM_HOST_DEFINES,
+     textual_hdrs = [
+         "glestranslator/EGL/ClientAPIExts.in",
+     ],
+@@ -189,14 +192,10 @@ cc_library(
+         "glestranslator/GLcommon/TextureUtils.cpp",
+         "glestranslator/GLcommon/rgtc.cpp",
+     ],
+-    copts = [
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+-        "-fno-exceptions",
+-    ],
+-    defines = [
+-        "EMUGL_BUILD",
+-        "BUILDING_EMUGL_COMMON_SHARED",
+     ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     deps = [
+         ":gl_common_headers",
+         "//common/base:gfxstream_common_base",
+@@ -223,8 +222,8 @@ cc_library(
+         "gles2_dec/gles2_server_context.cpp",
+     ],
+     hdrs = glob(["gles2_dec/*.h"]),
+-    copts = ["-fno-exceptions"],
+-    defines = ["EMUGL_BUILD"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     deps = [
+         ":gfxstream_glsnapshot",
+         "//common/base:gfxstream_common_base",
+@@ -244,11 +243,10 @@ cc_library(
+     name = "gfxstream_glsnapshot",
+     srcs = ["glsnapshot/GLSnapshot.cpp"],
+     hdrs = ["glsnapshot/GLSnapshot.h"],
+-    copts = [
+-        "-fno-exceptions",
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+     ],
+-    defines = ["EMUGL_BUILD"],
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["glsnapshot"],
+     deps = [
+         "//host/decoder_common:gfxstream_host_decoder_common",
+@@ -283,9 +281,8 @@ cc_library(
+         "TextureResize.h",
+         "YUVConverter.h",
+     ],
+-    defines = [
+-        "GFXSTREAM_ENABLE_HOST_GLES",
+-    ],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["."],
+     deps = [
+         ":gfxstream_glsnapshot",
+@@ -354,14 +351,10 @@ cc_library(
+         "TextureResize.h",
+         "YUVConverter.h",
+     ],
+-    copts = [
+-        "-fno-exceptions",
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+     ],
+-    defines = [
+-        "GFXSTREAM_ENABLE_HOST_GLES",
+-        "EMUGL_BUILD",
+-    ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = [
+         ".",
+     ],
+diff --git a/host/gl/OpenGLESDispatch/BUILD.bazel b/host/gl/OpenGLESDispatch/BUILD.bazel
+index f2681305f..8b98ca19b 100644
+--- a/host/gl/OpenGLESDispatch/BUILD.bazel
++++ b/host/gl/OpenGLESDispatch/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -15,7 +16,8 @@ cc_library(
+         "include/OpenGLESDispatch/OpenGLDispatchLoader.h",
+         "include/OpenGLESDispatch/StaticDispatch.h",
+     ],
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     textual_hdrs = [
+         "include/OpenGLESDispatch/gldefs.h",
+@@ -71,11 +73,10 @@ cc_library(
+         "gles1_stubbed_in_translator_namespace.cpp",
+         "gles2_stubbed_in_translator_namespace.cpp",
+     ],
+-    copts = [
+-        "-fno-exceptions",
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+     ],
+-    defines = ["EMUGL_BUILD"],
++    defines = GFXSTREAM_HOST_DEFINES,
+     deps = [
+         ":gfxstream_host_openglesdispatch_headers",
+         "//host/decoder_common:gfxstream_host_decoder_common",
+diff --git a/host/gl/glestranslator/GLES_CM/BUILD.bazel b/host/gl/glestranslator/GLES_CM/BUILD.bazel
+index ae13dca67..544a205a8 100644
+--- a/host/gl/glestranslator/GLES_CM/BUILD.bazel
++++ b/host/gl/glestranslator/GLES_CM/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -14,9 +15,10 @@ cc_library(
+         "GLEScmUtils.cpp",
+         "GLEScmValidate.cpp",
+     ] + glob(["*.h"]),
+-    copts = [
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+     ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     deps = [
+         "//common/base:gfxstream_common_base",
+         "//common/logging:gfxstream_common_logging",
+diff --git a/host/gl/glestranslator/GLES_V2/BUILD.bazel b/host/gl/glestranslator/GLES_V2/BUILD.bazel
+index 169858fb0..f919abea4 100644
+--- a/host/gl/glestranslator/GLES_V2/BUILD.bazel
++++ b/host/gl/glestranslator/GLES_V2/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -24,13 +25,11 @@ cc_library(
+         "GLESv31Imp.cpp",
+         "GLESv32Imp.cpp",
+     ],
+-    copts = [
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-extern-c-compat",
+         "-Wno-inconsistent-missing-override",
+     ],
+-    defines = [
+-        "BUILDING_EMUGL_COMMON_SHARED",
+-    ],
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["."],
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/health/BUILD.bazel b/host/health/BUILD.bazel
+index 212b29675..eed84b2c7 100644
+--- a/host/health/BUILD.bazel
++++ b/host/health/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -9,7 +10,8 @@ cc_library(
+     name = "gfxstream_host_health",
+     srcs = ["HealthMonitor.cpp"],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/iostream/BUILD.bazel b/host/iostream/BUILD.bazel
+index 0e03386a6..70a35e883 100644
+--- a/host/iostream/BUILD.bazel
++++ b/host/iostream/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -8,7 +9,8 @@ package(
+ cc_library(
+     name = "gfxstream_host_iostream",
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     deps = [
+         "//common/logging:gfxstream_common_logging",
+diff --git a/host/library/BUILD.bazel b/host/library/BUILD.bazel
+index db643e30a..ab37ca754 100644
+--- a/host/library/BUILD.bazel
++++ b/host/library/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -9,7 +10,8 @@ cc_library(
+     name = "gfxstream_host_library",
+     srcs = ["SharedLibrary.cpp"],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/metrics/BUILD.bazel b/host/metrics/BUILD.bazel
+index 7a9e2986d..624047f7f 100644
+--- a/host/metrics/BUILD.bazel
++++ b/host/metrics/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -9,7 +10,8 @@ cc_library(
+     name = "gfxstream_host_metrics",
+     srcs = ["Metrics.cpp"],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/renderControl_dec/BUILD.bazel b/host/renderControl_dec/BUILD.bazel
+index 4d4d713b1..32cdb8509 100644
+--- a/host/renderControl_dec/BUILD.bazel
++++ b/host/renderControl_dec/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -18,6 +19,8 @@ cc_library(
+         "renderControl_server_proc.h",
+         "renderControl_types.h",
+     ],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["."],
+     deps = [
+         "//common/logging:gfxstream_common_logging",
+diff --git a/host/renderdoc/BUILD.bazel b/host/renderdoc/BUILD.bazel
+index 0a6dd8de2..4de9dab5c 100644
+--- a/host/renderdoc/BUILD.bazel
++++ b/host/renderdoc/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -8,6 +9,8 @@ package(
+ cc_library(
+     name = "gfxstream_host_renderdoc",
+     hdrs = glob(["include/**/*.h"]),
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     deps = [
+         "//common/logging:gfxstream_common_logging",
+diff --git a/host/snapshot/BUILD.bazel b/host/snapshot/BUILD.bazel
+index c0f0d0494..d77cec667 100644
+--- a/host/snapshot/BUILD.bazel
++++ b/host/snapshot/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -10,6 +11,8 @@ cc_library(
+     hdrs = [
+         "include/snapshot/LazySnapshotObj.h",
+     ],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     strip_include_prefix = "include",
+     deps = [
+         "//host:gfxstream_backend_headers",
+diff --git a/host/testlibs/oswindow/BUILD.bazel b/host/testlibs/oswindow/BUILD.bazel
+index 8b7be0d92..a4297aa4e 100644
+--- a/host/testlibs/oswindow/BUILD.bazel
++++ b/host/testlibs/oswindow/BUILD.bazel
+@@ -13,6 +13,7 @@
+ # limitations under the License.
+ 
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -51,6 +52,8 @@ cc_library(
+         "//conditions:default": [
+         ],
+     }),
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     strip_include_prefix = "include",
+     deps = [
+         "//common/logging:gfxstream_common_logging",
+diff --git a/host/testlibs/support/BUILD.bazel b/host/testlibs/support/BUILD.bazel
+index 7beb02427..dc0aa2018 100644
+--- a/host/testlibs/support/BUILD.bazel
++++ b/host/testlibs/support/BUILD.bazel
+@@ -13,6 +13,7 @@
+ # limitations under the License.
+ 
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -33,6 +34,8 @@ cc_library(
+         "ShaderUtils.cpp",
+     ],
+     hdrs = glob(["include/**/*.h"]),
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     strip_include_prefix = "include",
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/tracing/BUILD.bazel b/host/tracing/BUILD.bazel
+index 58c5a1061..a07fc1d62 100644
+--- a/host/tracing/BUILD.bazel
++++ b/host/tracing/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -9,7 +10,8 @@ cc_library(
+     name = "gfxstream_host_tracing",
+     srcs = ["Tracing.cpp"],
+     hdrs = glob(["include/**/*.h"]),
+-    copts = ["-fno-exceptions"],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["include"],
+     strip_include_prefix = "include",
+ )
+diff --git a/host/vulkan/BUILD.bazel b/host/vulkan/BUILD.bazel
+index 61be4f1c2..25976264d 100644
+--- a/host/vulkan/BUILD.bazel
++++ b/host/vulkan/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -7,6 +8,8 @@ package(
+ 
+ cc_library(
+     name = "gfxstream_vulkan_headers",
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["."],
+     textual_hdrs = [
+         "vk_android_native_buffer_gfxstream.h",
+@@ -34,6 +37,8 @@ cc_library(
+         "VulkanStream.h",
+         "vk_fn_info.h",
+     ],
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["."],
+     deps = [
+         ":gfxstream_vulkan_headers",
+@@ -123,25 +128,12 @@ cc_library(
+         "VulkanStream.h",
+         "vk_fn_info.h",
+     ],
+-    copts = [
++    copts = GFXSTREAM_HOST_COPTS + [
+         "-Wno-return-type-c-linkage",
+         "-Wno-extern-c-compat",
+         "-Wno-unused-variable",
+     ],
+-    defines = [
+-        "VK_GFXSTREAM_STRUCTURE_TYPE_EXT",
+-        "EMUGL_BUILD",
+-        "BUILDING_EMUGL_COMMON_SHARED",
+-        "GFXSTREAM_ENABLE_HOST_GLES=1",
+-    ] + select({
+-        "@platforms//os:macos": [
+-            "VK_USE_PLATFORM_METAL_EXT",
+-            "VK_USE_PLATFORM_MACOS_MVK",
+-        ],
+-        "@platforms//os:windows": ["VK_USE_PLATFORM_WIN32_KHR"],
+-        "@platforms//os:linux": [],
+-        "//conditions:default": [],
+-    }),
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = [
+         ".",
+         "cereal",
+diff --git a/host/vulkan/cereal/BUILD.bazel b/host/vulkan/cereal/BUILD.bazel
+index a1259255f..366bc4a8a 100644
+--- a/host/vulkan/cereal/BUILD.bazel
++++ b/host/vulkan/cereal/BUILD.bazel
+@@ -1,25 +1,11 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+     default_visibility = ["//:gfxstream"],
+ )
+ 
+-VKCEREAL_DEFINES = [
+-    "VK_GFXSTREAM_STRUCTURE_TYPE_EXT",
+-    "VK_GOOGLE_gfxstream",
+-] + select({
+-    "@platforms//os:macos": [
+-        "VK_USE_PLATFORM_METAL_EXT",
+-        "VK_USE_PLATFORM_MACOS_MVK",
+-    ],
+-    "@platforms//os:windows": [
+-        "VK_USE_PLATFORM_WIN32_KHR",
+-    ],
+-    "@platforms//os:linux": [],
+-    "//conditions:default": [],
+-})
+-
+ cc_library(
+     name = "gfxstream_vulkan_cereal_headers",
+     hdrs = [
+@@ -30,7 +16,8 @@ cc_library(
+         "common/goldfish_vk_transform.h",
+         "common/vk_struct_id.h",
+     ],
+-    defines = VKCEREAL_DEFINES,
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["common"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+@@ -60,7 +47,8 @@ cc_library(
+         "common/goldfish_vk_transform.h",
+         "common/vk_struct_id.h",
+     ],
+-    defines = VKCEREAL_DEFINES,
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     includes = ["common"],
+     deps = [
+         "//common/base:gfxstream_common_base",
+diff --git a/host/vulkan/emulated_textures/BUILD.bazel b/host/vulkan/emulated_textures/BUILD.bazel
+index 49184ac58..3828a0271 100644
+--- a/host/vulkan/emulated_textures/BUILD.bazel
++++ b/host/vulkan/emulated_textures/BUILD.bazel
+@@ -1,4 +1,5 @@
+ load("@rules_cc//cc:defs.bzl", "cc_library")
++load("//:build_variables.bzl", "GFXSTREAM_HOST_COPTS", "GFXSTREAM_HOST_DEFINES")
+ 
+ package(
+     default_applicable_licenses = ["//:gfxstream_license"],
+@@ -18,20 +19,8 @@ cc_library(
+         "CompressedImageInfo.h",
+         "GpuDecompressionPipeline.h",
+     ],
+-    defines = [
+-        "VK_GFXSTREAM_STRUCTURE_TYPE_EXT",
+-        "VK_GOOGLE_gfxstream",
+-    ] + select({
+-        "@platforms//os:macos": [
+-            "VK_USE_PLATFORM_METAL_EXT",
+-            "VK_USE_PLATFORM_MACOS_MVK",
+-        ],
+-        "@platforms//os:windows": [
+-            "VK_USE_PLATFORM_WIN32_KHR",
+-        ],
+-        "@platforms//os:linux": [],
+-        "//conditions:default": [],
+-    }),
++    copts = GFXSTREAM_HOST_COPTS,
++    defines = GFXSTREAM_HOST_DEFINES,
+     textual_hdrs = glob([
+         "**/*.inl",
+     ]),
