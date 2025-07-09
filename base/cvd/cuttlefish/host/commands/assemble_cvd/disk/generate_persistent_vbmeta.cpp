@@ -18,17 +18,16 @@
 
 #include <string>
 
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
-#include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
+namespace {
 
-static bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
+Result<void> PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
   std::unique_ptr<Avb> avbtool = GetDefaultAvb();
   std::vector<ChainPartition> chained_partitions = {ChainPartition{
       .name = "uboot_env",
@@ -42,14 +41,11 @@ static bool PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
         .key_path = TestPubKeyRsa4096(),
     });
   }
-  Result<void> result =
-      avbtool->MakeVbMetaImage(path, chained_partitions, {}, {});
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
-    return false;
-  }
-  return true;
+  CF_EXPECT(avbtool->MakeVbMetaImage(path, chained_partitions, {}, {}));
+  return {};
 }
+
+}  // namespace
 
 Result<void> GeneratePersistentVbmeta(
     const CuttlefishConfig::InstanceSpecific& instance,
