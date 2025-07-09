@@ -33,7 +33,6 @@ PRODUCT_VENDOR_PROPERTIES += \
     ro.vendor.boot_security_patch=$(BOOT_SECURITY_PATCH)
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio, wifi and sensors
-PRODUCT_SOONG_NAMESPACES += device/google/cuttlefish/shared/config/recovery.fstab # for recovery.fstab
 
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
@@ -263,7 +262,6 @@ PRODUCT_PACKAGES += \
     fstab.cf.f2fs.hctr2 \
     fstab.cf.f2fs.hctr2.vendor_ramdisk \
     fstab.cf.f2fs.cts \
-    fstab.cf.f2fs.cts.recovery \
     fstab.cf.f2fs.cts.vendor_ramdisk \
     fstab.cf.ext4.hctr2 \
     fstab.cf.ext4.hctr2.vendor_ramdisk \
