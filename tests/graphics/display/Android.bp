@@ -99,6 +99,36 @@ java_test_host {
 }
 
 java_test_host {
+    name: "CfVkmsCursorTest",
+    team: "trendy_team_desktop_display",
+    defaults: [
+        "cuttlefish_host_test_utils_defaults",
+    ],
+    srcs: [
+        "CfVkmsCursorTest.java",
+    ],
+    static_libs: [
+        "CfVkmsTestUtils",
+    ],
+    test_options: {
+        unit_test: false,
+    },
+    test_suites: [
+        "device-tests",
+    ],
+    libs: [
+        "compatibility-host-util",
+        "cts-tradefed",
+        "tradefed",
+    ],
+    plugins: [
+        "auto_annotation_plugin",
+        "auto_value_plugin",
+    ],
+    test_config_template: "display_config_template.xml",
+}
+
+java_test_host {
     name: "CfVkmsDisplaysTest",
     defaults: [
         "cuttlefish_host_test_utils_defaults",
