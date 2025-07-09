@@ -35,7 +35,8 @@ namespace {
 std::vector<ImagePartition> PersistentCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<BootConfigPartition>& bootconfig_partition,
-    const FactoryResetProtectedImage& frp) {
+    const FactoryResetProtectedImage& frp,
+    const PersistentVbmeta& persistent_vbmeta) {
   std::vector<ImagePartition> partitions;
 
   // Note that if the position of uboot_env changes, the environment for
@@ -45,10 +46,7 @@ std::vector<ImagePartition> PersistentCompositeDiskConfig(
       .label = "uboot_env",
       .image_file_path = AbsolutePath(instance.uboot_env_image_path()),
   });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta",
-      .image_file_path = AbsolutePath(instance.vbmeta_path()),
-  });
+  partitions.push_back(persistent_vbmeta.Partition());
   partitions.push_back(frp.Partition());
   if (bootconfig_partition) {
     partitions.push_back(bootconfig_partition->Partition());
@@ -57,7 +55,8 @@ std::vector<ImagePartition> PersistentCompositeDiskConfig(
 }
 
 std::vector<ImagePartition> PersistentAPCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const ApPersistentVbmeta& ap_persistent_vbmeta) {
   std::vector<ImagePartition> partitions;
 
   // Note that if the position of uboot_env changes, the environment for
@@ -67,10 +66,7 @@ std::vector<ImagePartition> PersistentAPCompositeDiskConfig(
       .label = "uboot_env",
       .image_file_path = AbsolutePath(instance.ap_uboot_env_image_path()),
   });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta",
-      .image_file_path = AbsolutePath(instance.ap_vbmeta_path()),
-  });
+  partitions.push_back(ap_persistent_vbmeta.Partition());
 
   return partitions;
 }
@@ -85,7 +81,8 @@ Result<void> InitializeInstanceCompositeDisk(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<FactoryResetProtectedImage::Create>::Type& frp,
     AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& bootconfig_partition,
-    AutoSetup<GeneratePersistentVbmeta>::Type& /* dependency */) {
+    AutoSetup<PersistentVbmeta::Create>::Type& persistent_vbmeta,
+    AutoSetup<ApPersistentVbmeta::Create>::Type& ap_persistent_vbmeta) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
     return instance.PerInstancePath(path.c_str());
   };
@@ -93,7 +90,7 @@ Result<void> InitializeInstanceCompositeDisk(
       DiskBuilder()
           .ReadOnly(false)
           .Partitions(PersistentCompositeDiskConfig(
-              instance, *bootconfig_partition, *frp))
+              instance, *bootconfig_partition, *frp, *persistent_vbmeta))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("persistent_composite_disk_config.txt"))
@@ -112,7 +109,8 @@ Result<void> InitializeInstanceCompositeDisk(
     auto persistent_ap_disk_builder =
         DiskBuilder()
             .ReadOnly(false)
-            .Partitions(PersistentAPCompositeDiskConfig(instance))
+            .Partitions(PersistentAPCompositeDiskConfig(
+                instance, CF_EXPECT(*ap_persistent_vbmeta)))
             .VmManager(config.vm_manager())
             .CrosvmPath(instance.crosvm_binary())
             .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))

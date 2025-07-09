@@ -16,17 +16,45 @@
 
 #pragma once
 
+#include <string>
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-Result<void> GeneratePersistentVbmeta(
-    const CuttlefishConfig::InstanceSpecific&,
-    AutoSetup<InitBootloaderEnvPartition>::Type&,
-    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
+class PersistentVbmeta {
+ public:
+  static Result<PersistentVbmeta> Create(
+      const CuttlefishConfig::InstanceSpecific&,
+      AutoSetup<InitBootloaderEnvPartition>::Type&,
+      AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
+
+  ImagePartition Partition() const;
+
+ private:
+  explicit PersistentVbmeta(std::string);
+
+  std::string path_;
+};
+
+class ApPersistentVbmeta {
+ public:
+  static Result<std::optional<ApPersistentVbmeta>> Create(
+      const CuttlefishConfig::InstanceSpecific&,
+      AutoSetup<InitBootloaderEnvPartition>::Type&,
+      AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
+
+  ImagePartition Partition() const;
+
+ private:
+  explicit ApPersistentVbmeta(std::string);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish
