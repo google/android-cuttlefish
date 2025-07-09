@@ -1548,14 +1548,6 @@ std::string CuttlefishConfig::InstanceSpecific::ap_composite_disk_path()
   return AbsolutePath(PerInstancePath("ap_composite.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::vbmeta_path() const {
-  return AbsolutePath(PerInstancePath("persistent_vbmeta.img"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::ap_vbmeta_path() const {
-  return AbsolutePath(PerInstancePath("ap_vbmeta.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("uboot_env.img"));
 }

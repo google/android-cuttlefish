@@ -18,11 +18,13 @@
 
 #include <string>
 
-#include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
+#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 namespace {
@@ -47,16 +49,50 @@ Result<void> PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
 
 }  // namespace
 
-Result<void> GeneratePersistentVbmeta(
+Result<PersistentVbmeta> PersistentVbmeta::Create(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<InitBootloaderEnvPartition>::Type& /* dependency */,
     AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& /* dependency */) {
-  CF_EXPECT(PrepareVBMetaImage(instance.vbmeta_path(),
-                               instance.bootconfig_supported()));
+  std::string path =
+      AbsolutePath(instance.PerInstancePath("persistent_vbmeta.img"));
+
+  CF_EXPECT(PrepareVBMetaImage(path, instance.bootconfig_supported()));
+
+  return PersistentVbmeta(std::move(path));
+}
+
+PersistentVbmeta::PersistentVbmeta(std::string path) : path_(std::move(path)) {}
+
+ImagePartition PersistentVbmeta::Partition() const {
+  return ImagePartition{
+      .label = "vbmeta",
+      .image_file_path = path_,
+  };
+}
+
+Result<std::optional<ApPersistentVbmeta>> ApPersistentVbmeta::Create(
+    const CuttlefishConfig::InstanceSpecific& instance,
+    AutoSetup<InitBootloaderEnvPartition>::Type& /* dependency */,
+    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& /* dependency */) {
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
-    CF_EXPECT(PrepareVBMetaImage(instance.ap_vbmeta_path(), false));
+    std::string path = AbsolutePath(instance.PerInstancePath("ap_vbmeta.img"));
+
+    CF_EXPECT(PrepareVBMetaImage(path, false));
+
+    return ApPersistentVbmeta(std::move(path));
+  } else {
+    return std::nullopt;
   }
-  return {};
+}
+
+ApPersistentVbmeta::ApPersistentVbmeta(std::string path)
+    : path_(std::move(path)) {}
+
+ImagePartition ApPersistentVbmeta::Partition() const {
+  return ImagePartition{
+      .label = "vbmeta",
+      .image_file_path = path_,
+  };
 }
 
 }  // namespace cuttlefish

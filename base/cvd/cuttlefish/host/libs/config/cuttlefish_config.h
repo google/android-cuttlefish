@@ -525,11 +525,6 @@ class CuttlefishConfig {
     // Wifi MAC address inside the guest
     int wifi_mac_prefix() const;
 
-    // used for the persistent_composite_disk vbmeta
-    std::string vbmeta_path() const;
-
-    std::string ap_vbmeta_path() const;
-
     std::string id() const;
 
     std::string gem5_binary_dir() const;
