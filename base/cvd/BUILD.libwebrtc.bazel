@@ -3182,8 +3182,11 @@ cc_library(
         "@platforms//cpu:arm": [
             "common_audio/fir_filter_neon.h",
             "common_audio/signal_processing/include/spl_inl_armv7.h",
+            "common_audio/third_party/ooura/fft_size_128/ooura_fft_tables_neon_sse2.h",
         ],
         "@platforms//cpu:arm64": [
+            "common_audio/fir_filter_neon.h",
+            "common_audio/third_party/ooura/fft_size_128/ooura_fft_tables_neon_sse2.h",
         ],
         "@platforms//cpu:x86_32": [
             "common_audio/third_party/ooura/fft_size_128/ooura_fft_tables_neon_sse2.h",
