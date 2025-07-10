@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 fontfile="$1"
 varname="$2"
 
