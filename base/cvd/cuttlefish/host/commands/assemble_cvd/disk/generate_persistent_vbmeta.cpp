@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 
+#include <optional>
 #include <string>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -50,9 +51,9 @@ Result<void> PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
 }  // namespace
 
 Result<PersistentVbmeta> PersistentVbmeta::Create(
-    const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSetup<BootloaderEnvPartition::Create>::Type& /* dependency */,
-    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& /* dependency */) {
+    const std::optional<BootConfigPartition>& /* dependency */,
+    const BootloaderEnvPartition& /* dependency */,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::string path =
       AbsolutePath(instance.PerInstancePath("persistent_vbmeta.img"));
 
@@ -71,9 +72,9 @@ ImagePartition PersistentVbmeta::Partition() const {
 }
 
 Result<std::optional<ApPersistentVbmeta>> ApPersistentVbmeta::Create(
-    const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSetup<ApBootloaderEnvPartition::Create>::Type& /* dependency */,
-    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& /* dependency */) {
+    const ApBootloaderEnvPartition& /* dependency */,
+    const std::optional<BootConfigPartition>& /* dependency */,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   if (instance.ap_boot_flow() == APBootFlow::Grub) {
     std::string path = AbsolutePath(instance.PerInstancePath("ap_vbmeta.img"));
 

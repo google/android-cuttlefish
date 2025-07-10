@@ -78,19 +78,20 @@ bool IsVmManagerQemu(const CuttlefishConfig& config) {
 }  // namespace
 
 Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
+    const std::optional<BootConfigPartition>& bootconfig_partition,
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSetup<FactoryResetProtectedImage::Create>::Type& frp,
-    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& bootconfig_partition,
-    AutoSetup<PersistentVbmeta::Create>::Type& persistent_vbmeta) {
+    const FactoryResetProtectedImage& frp,
+    const PersistentVbmeta& persistent_vbmeta) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
     return instance.PerInstancePath(path);
   };
+  CF_EXPECT(bootconfig_partition.has_value());
   auto persistent_disk_builder =
       DiskBuilder()
           .ReadOnly(false)
           .Partitions(PersistentCompositeDiskConfig(
-              instance, *bootconfig_partition, *frp, *persistent_vbmeta))
+              instance, *bootconfig_partition, frp, persistent_vbmeta))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("persistent_composite_disk_config.txt"))
@@ -110,20 +111,21 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
 }
 
 Result<std::optional<ApCompositeDisk>> ApCompositeDisk::Create(
+    const std::optional<ApPersistentVbmeta>& ap_persistent_vbmeta,
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance,
-    AutoSetup<ApPersistentVbmeta::Create>::Type& ap_persistent_vbmeta) {
+    const CuttlefishConfig::InstanceSpecific& instance) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
     return instance.PerInstancePath(path);
   };
   if (instance.ap_boot_flow() != APBootFlow::Grub) {
     return std::nullopt;
   }
+  CF_EXPECT(ap_persistent_vbmeta.has_value());
   auto persistent_ap_disk_builder =
       DiskBuilder()
           .ReadOnly(false)
-          .Partitions(PersistentAPCompositeDiskConfig(
-              instance, CF_EXPECT(*ap_persistent_vbmeta)))
+          .Partitions(
+              PersistentAPCompositeDiskConfig(instance, *ap_persistent_vbmeta))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("ap_persistent_composite_disk_config.txt"))
