@@ -30,6 +30,10 @@ std::string AutomotiveProxyBinary() {
 
 std::string AvbToolBinary() { return HostBinaryPath("avbtool.py"); }
 
+std::string BlkidBinary() { return HostBinaryPath("blkid"); }
+
+std::string BsdtarBinary() { return HostBinaryPath("bsdtar"); }
+
 std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
 std::string CasimirControlServerBinary() {
@@ -93,11 +97,15 @@ std::string KernelLogMonitorBinary() {
 
 std::string LogcatReceiverBinary() { return HostBinaryPath("logcat_receiver"); }
 
+std::string Makef2fsBinary() { return HostBinaryPath("make_f2fs"); }
+
 std::string McopyBinary() { return HostBinaryPath("mcopy"); }
 
 std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
 std::string MkbootimgBinary() { return HostBinaryPath("mkbootimg.py"); }
+
+std::string Mke2fsBinary() { return HostBinaryPath("mke2fs"); }
 
 std::string MkfsFat() { return HostBinaryPath("mkfs.fat"); }
 
