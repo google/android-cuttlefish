@@ -118,6 +118,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&statUserArtifactHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, true})).Methods("POST")
+	router.Handle("/v1/userartifacts/:prepare_img_dir",
+		httpHandler(&prepareImageDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -706,6 +708,18 @@ func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error
 		}
 	}()
 	return op, nil
+}
+
+type prepareImageDirectoryHandler struct {
+	m UserArtifactsManager
+}
+
+func (h *prepareImageDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.PrepareImageDirectoryRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, operator.NewBadRequestError("malformed JSON in request", err)
+	}
+	return h.m.PrepareImageDirectory(req.Checksums)
 }
 
 type getDebugVariablesHandler struct {

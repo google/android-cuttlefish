@@ -136,6 +136,15 @@ type ListUploadDirectoriesResponse struct {
 
 type StatArtifactResponse struct{}
 
+type PrepareImageDirectoryRequest struct {
+	Checksums []string `json:"checksums"`
+}
+
+type PrepareImageDirectoryResponse struct {
+	// [Output Only]
+	Dir string `json:"dir"`
+}
+
 type CreateSnapshotRequest struct {
 	// [Optional]
 	// Value must match regex: "^([a-z0-9\\-]+)$".

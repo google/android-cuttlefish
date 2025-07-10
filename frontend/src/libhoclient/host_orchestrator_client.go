@@ -111,6 +111,9 @@ type UserArtifactsClient interface {
 	// Extract artifact into the artifacts repository.
 	// Artifacts are identified by their SHA256 checksum in the artifacts repository
 	ExtractArtifact(filename string) (*hoapi.Operation, error)
+	// Prepare image directory containing multiple user artifacts.
+	PrepareImageDirectory(filenames []string) (string, error)
+
 	// Creates a directory in the host where user artifacts can be uploaded to.
 	CreateUploadDir() (string, error)
 	// Uploads file into the given directory.
@@ -607,6 +610,27 @@ func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) (*hoapi.Op
 		return nil, err
 	}
 	return op, nil
+}
+
+func (c *HostOrchestratorClientImpl) PrepareImageDirectory(filenames []string) (string, error) {
+	var checksums []string
+	for _, filename := range filenames {
+		checksum, err := sha256Checksum(filename)
+		if err != nil {
+			return "", err
+		}
+		statRes := &hoapi.StatArtifactResponse{}
+		if err := c.HTTPHelper.NewGetRequest("/v1/userartifacts/" + checksum).JSONResDo(statRes); err != nil {
+			return "", err
+		}
+		checksums = append(checksums, checksum)
+	}
+	req := hoapi.PrepareImageDirectoryRequest{Checksums: checksums}
+	res := &hoapi.PrepareImageDirectoryResponse{}
+	if err := c.HTTPHelper.NewPostRequest("/v1/userartifacts/:prepare_img_dir", req).JSONResDo(res); err != nil {
+		return "", err
+	}
+	return res.Dir, nil
 }
 
 func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {

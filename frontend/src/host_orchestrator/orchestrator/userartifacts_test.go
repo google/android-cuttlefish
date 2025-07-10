@@ -574,6 +574,138 @@ func TestExtractArtifactFailsArtifactNotFound(t *testing.T) {
 	}
 }
 
+func TestPrepareImageDirectorySucceeds(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := map[string]string{testFileName: testFileData}
+	checksum := getSha256Sum([]byte(testFileData))
+	chunk := UserArtifactChunk{
+		Name:          testFileName,
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(testFileData)),
+		FileSizeBytes: int64(len(testFileData)),
+		File:          strings.NewReader(testFileData),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := uam.PrepareImageDirectory([]string{checksum})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := getContents(filepath.Join(rootDir, res.Dir)); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(contents, got); diff != "" {
+		t.Fatalf("content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestPrepareImageDirectorySucceedsWithExtractedArtifact(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	zipContents := map[string]string{
+		"alpha.txt":   "This is alpha.\n",
+		"bravo.txt":   "This is bravo.\n",
+		"charlie.txt": "This is charlie.\n",
+		"delta.txt":   "This is delta.\n",
+	}
+	tempDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, tempDir)
+	zipFile, err := createZip(tempDir, zipContents)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := ioutil.ReadFile(zipFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum(data)
+	chunk := UserArtifactChunk{
+		Name:          filepath.Base(zipFile),
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(data)),
+		FileSizeBytes: int64(len(data)),
+		File:          bytes.NewReader(data),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+	if err := uam.ExtractArtifact(checksum); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := uam.PrepareImageDirectory([]string{checksum})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := getContents(filepath.Join(rootDir, res.Dir)); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(zipContents, got); diff != "" {
+		t.Fatalf("content mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestPrepareImageDirectoryAfterImageDirectoryIsAlreadyPreparedFails(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	checksum := getSha256Sum([]byte(testFileData))
+	chunk := UserArtifactChunk{
+		Name:          testFileName,
+		OffsetBytes:   0,
+		SizeBytes:     int64(len(testFileData)),
+		FileSizeBytes: int64(len(testFileData)),
+		File:          strings.NewReader(testFileData),
+	}
+	if err := uam.UpdateArtifact(checksum, chunk); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := uam.PrepareImageDirectory([]string{checksum}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := uam.PrepareImageDirectory([]string{checksum}); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
+func TestPrepareImageDirectoryFailsArtifactNotFound(t *testing.T) {
+	legacyRootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, legacyRootDir)
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := UserArtifactsManagerOpts{LegacyRootDir: legacyRootDir, RootDir: rootDir}
+	uam, err := NewUserArtifactsManagerImpl(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := uam.PrepareImageDirectory([]string{"foo"}); err == nil {
+		t.Fatal("Expected an error")
+	}
+}
+
 func TestChunkStateUpdateSucceedsForSeparatedChunks(t *testing.T) {
 	cs := NewChunkState(100)
 	cs.Update(0, 10)

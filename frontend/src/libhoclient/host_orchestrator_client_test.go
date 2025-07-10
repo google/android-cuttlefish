@@ -222,6 +222,50 @@ func TestExtractArtifactSucceeds(t *testing.T) {
 	}
 }
 
+func TestPrepareImageDirectoryReceive404WhenArtifactDoesNotExist(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeErr(w, http.StatusNotFound)
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	if _, err := client.PrepareImageDirectory([]string{testFile}); err == nil {
+		t.Fatal("Expected error")
+	}
+}
+
+func TestPrepareImageDirectorySucceeds(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+	testFile := createTempFile(t, tempDir, "waldo", []byte("waldo"))
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "GET /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d":
+			writeOK(w, hoapi.StatArtifactResponse{})
+		case "POST /v1/userartifacts/:prepare_img_dir":
+			writeOK(w, hoapi.PrepareImageDirectoryResponse{Dir: "foo"})
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	if got, err := client.PrepareImageDirectory([]string{testFile}); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff("foo", got); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
 	token := "foo"
