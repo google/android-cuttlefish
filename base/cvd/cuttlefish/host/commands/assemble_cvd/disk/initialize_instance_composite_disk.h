@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
@@ -24,11 +26,26 @@
 
 namespace cuttlefish {
 
-Result<void> InitializeInstanceCompositeDisk(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-    AutoSetup<FactoryResetProtectedImage::Create>::Type&,
-    AutoSetup<BootConfigPartition::CreateIfNeeded>::Type& bootconfig_partition,
-    AutoSetup<PersistentVbmeta::Create>::Type&,
-    AutoSetup<ApPersistentVbmeta::Create>::Type&);
+class InstanceCompositeDisk {
+ public:
+  static Result<InstanceCompositeDisk> Create(
+      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
+      AutoSetup<FactoryResetProtectedImage::Create>::Type&,
+      AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&,
+      AutoSetup<PersistentVbmeta::Create>::Type&);
+
+ private:
+  InstanceCompositeDisk() = default;
+};
+
+class ApCompositeDisk {
+ public:
+  static Result<std::optional<ApCompositeDisk>> Create(
+      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
+      AutoSetup<ApPersistentVbmeta::Create>::Type&);
+
+ private:
+  ApCompositeDisk() = default;
+};
 
 }  // namespace cuttlefish
