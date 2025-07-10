@@ -241,7 +241,8 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .install(AutoSetup<BootConfigPartition::CreateIfNeeded>::Component)
       .install(AutoSetup<PersistentVbmeta::Create>::Component)
       .install(AutoSetup<ApPersistentVbmeta::Create>::Component)
-      .install(AutoSetup<InitializeInstanceCompositeDisk>::Component)
+      .install(AutoSetup<InstanceCompositeDisk::Create>::Component)
+      .install(AutoSetup<ApCompositeDisk::Create>::Component)
       .install(AutoSetup<InitializeDataImage>::Component)
       .install(AutoSetup<InitializePflash>::Component)
       .addMultibinding<AutoSetup<BootConfigPartition::CreateIfNeeded>::Type,
