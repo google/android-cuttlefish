@@ -1,3 +1,4 @@
 build --build_tag_filters=-clang_tidy,-clang-tidy
 build --copt=-fdiagnostics-color=always
 build --test_summary=terse
+build --output_filter='^//((?!(external/libarchive|external/libevent|external/rules_flex|external/rules_m4):).)*$'
