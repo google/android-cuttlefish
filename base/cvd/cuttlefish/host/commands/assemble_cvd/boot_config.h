@@ -15,14 +15,27 @@
  */
 #pragma once
 
-#include <fruit/fruit.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-Result<void> InitBootloaderEnvPartition(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+class BootloaderEnvPartition {
+ public:
+  static Result<BootloaderEnvPartition> Create(
+      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+
+ private:
+  BootloaderEnvPartition() = default;
+};
+
+class ApBootloaderEnvPartition {
+ public:
+  static Result<std::optional<ApBootloaderEnvPartition>> Create(
+      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+
+ private:
+  ApBootloaderEnvPartition() = default;
+};
 
 } // namespace cuttlefish

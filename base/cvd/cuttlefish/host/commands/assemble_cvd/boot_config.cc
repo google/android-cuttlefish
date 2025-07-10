@@ -210,16 +210,24 @@ Result<void> PrepareBootEnvImage(
 
 }  // namespace
 
-Result<void> InitBootloaderEnvPartition(
+Result<BootloaderEnvPartition> BootloaderEnvPartition::Create(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.ap_boot_flow() == APBootFlow::Grub) {
-    CF_EXPECT(PrepareBootEnvImage(
-        config, instance, instance.ap_uboot_env_image_path(), BootFlow::Linux));
-  }
   CF_EXPECT(PrepareBootEnvImage(
       config, instance, instance.uboot_env_image_path(), instance.boot_flow()));
-  return {};
+  return BootloaderEnvPartition();
+}
+
+Result<std::optional<ApBootloaderEnvPartition>>
+ApBootloaderEnvPartition::Create(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.ap_boot_flow() != APBootFlow::Grub) {
+    return std::nullopt;
+  }
+  CF_EXPECT(PrepareBootEnvImage(
+      config, instance, instance.ap_uboot_env_image_path(), BootFlow::Linux));
+  return ApBootloaderEnvPartition();
 }
 
 } // namespace cuttlefish

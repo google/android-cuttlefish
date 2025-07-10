@@ -31,7 +31,7 @@ class PersistentVbmeta {
  public:
   static Result<PersistentVbmeta> Create(
       const CuttlefishConfig::InstanceSpecific&,
-      AutoSetup<InitBootloaderEnvPartition>::Type&,
+      AutoSetup<BootloaderEnvPartition::Create>::Type&,
       AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
 
   ImagePartition Partition() const;
@@ -46,7 +46,7 @@ class ApPersistentVbmeta {
  public:
   static Result<std::optional<ApPersistentVbmeta>> Create(
       const CuttlefishConfig::InstanceSpecific&,
-      AutoSetup<InitBootloaderEnvPartition>::Type&,
+      AutoSetup<ApBootloaderEnvPartition::Create>::Type&,
       AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
 
   ImagePartition Partition() const;

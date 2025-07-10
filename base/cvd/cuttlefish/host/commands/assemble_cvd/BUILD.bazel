@@ -69,7 +69,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:kernel_args",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
-        "@fruit",
         "@gflags",
     ],
 )
