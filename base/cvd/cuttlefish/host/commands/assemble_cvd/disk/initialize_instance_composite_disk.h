@@ -29,10 +29,9 @@ namespace cuttlefish {
 class InstanceCompositeDisk {
  public:
   static Result<InstanceCompositeDisk> Create(
-      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-      AutoSetup<FactoryResetProtectedImage::Create>::Type&,
-      AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&,
-      AutoSetup<PersistentVbmeta::Create>::Type&);
+      const std::optional<BootConfigPartition>&, const CuttlefishConfig&,
+      const CuttlefishConfig::InstanceSpecific&,
+      const FactoryResetProtectedImage&, const PersistentVbmeta&);
 
  private:
   InstanceCompositeDisk() = default;
@@ -41,8 +40,8 @@ class InstanceCompositeDisk {
 class ApCompositeDisk {
  public:
   static Result<std::optional<ApCompositeDisk>> Create(
-      const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&,
-      AutoSetup<ApPersistentVbmeta::Create>::Type&);
+      const std::optional<ApPersistentVbmeta>&, const CuttlefishConfig&,
+      const CuttlefishConfig::InstanceSpecific&);
 
  private:
   ApCompositeDisk() = default;

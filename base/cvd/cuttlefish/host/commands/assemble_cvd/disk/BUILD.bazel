@@ -164,7 +164,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
-        "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/image_aggregator",
     ],
 )

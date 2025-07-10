@@ -22,7 +22,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
@@ -30,9 +29,8 @@ namespace cuttlefish {
 class PersistentVbmeta {
  public:
   static Result<PersistentVbmeta> Create(
-      const CuttlefishConfig::InstanceSpecific&,
-      AutoSetup<BootloaderEnvPartition::Create>::Type&,
-      AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
+      const std::optional<BootConfigPartition>&, const BootloaderEnvPartition&,
+      const CuttlefishConfig::InstanceSpecific&);
 
   ImagePartition Partition() const;
 
@@ -45,9 +43,9 @@ class PersistentVbmeta {
 class ApPersistentVbmeta {
  public:
   static Result<std::optional<ApPersistentVbmeta>> Create(
-      const CuttlefishConfig::InstanceSpecific&,
-      AutoSetup<ApBootloaderEnvPartition::Create>::Type&,
-      AutoSetup<BootConfigPartition::CreateIfNeeded>::Type&);
+      const ApBootloaderEnvPartition&,
+      const std::optional<BootConfigPartition>&,
+      const CuttlefishConfig::InstanceSpecific&);
 
   ImagePartition Partition() const;
 

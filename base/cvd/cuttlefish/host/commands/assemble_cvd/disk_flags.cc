@@ -233,21 +233,11 @@ static fruit::Component<> DiskChangesPerInstanceComponent(
       .bindInstance(*config)
       .bindInstance(*instance)
       .install(AutoSetup<InitializeAccessKregistryImage>::Component)
-      .install(AutoSetup<BootloaderEnvPartition::Create>::Component)
-      .install(AutoSetup<ApBootloaderEnvPartition::Create>::Component)
-      .install(AutoSetup<FactoryResetProtectedImage::Create>::Component)
       .install(AutoSetup<InitializeHwcomposerPmemImage>::Component)
       .install(AutoSetup<InitializePstore>::Component)
       .install(AutoSetup<InitializeSdCard>::Component)
-      .install(AutoSetup<BootConfigPartition::CreateIfNeeded>::Component)
-      .install(AutoSetup<PersistentVbmeta::Create>::Component)
-      .install(AutoSetup<ApPersistentVbmeta::Create>::Component)
-      .install(AutoSetup<InstanceCompositeDisk::Create>::Component)
-      .install(AutoSetup<ApCompositeDisk::Create>::Component)
       .install(AutoSetup<InitializeDataImage>::Component)
-      .install(AutoSetup<InitializePflash>::Component)
-      .addMultibinding<AutoSetup<BootConfigPartition::CreateIfNeeded>::Type,
-                       AutoSetup<BootConfigPartition::CreateIfNeeded>::Type>();
+      .install(AutoSetup<InitializePflash>::Component);
 }
 
 Result<void> DiskImageFlagsVectorization(
@@ -575,6 +565,36 @@ Result<void> CreateDynamicDiskFiles(
         config, instance, metadata, misc, system_image_dir);
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
+    BootloaderEnvPartition bootloader_env_partition =
+        CF_EXPECT(BootloaderEnvPartition::Create(config, instance));
+
+    std::optional<ApBootloaderEnvPartition> ap_bootloader_env_partition =
+        CF_EXPECT(ApBootloaderEnvPartition::Create(config, instance));
+
+    FactoryResetProtectedImage factory_reset_protected =
+        CF_EXPECT(FactoryResetProtectedImage::Create(instance));
+
+    std::optional<BootConfigPartition> boot_config =
+        CF_EXPECT(BootConfigPartition::CreateIfNeeded(config, instance));
+
+    PersistentVbmeta persistent_vbmeta = CF_EXPECT(PersistentVbmeta::Create(
+        boot_config, bootloader_env_partition, instance));
+
+    std::optional<ApPersistentVbmeta> ap_persistent_vbmeta =
+        ap_bootloader_env_partition.has_value()
+            ? CF_EXPECT(ApPersistentVbmeta::Create(*ap_bootloader_env_partition,
+                                                   boot_config, instance))
+            : std::nullopt;
+
+    FactoryResetProtectedImage factory_reset_protected_image =
+        CF_EXPECT(FactoryResetProtectedImage::Create(instance));
+
+    // TODO: schuffelen - do something with these types
+    CF_EXPECT(InstanceCompositeDisk::Create(boot_config, config, instance,
+                                            factory_reset_protected,
+                                            persistent_vbmeta));
+    CF_EXPECT(ApCompositeDisk::Create(ap_persistent_vbmeta, config, instance));
+
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
     if (instance.ap_boot_flow() != APBootFlow::None) {
       CF_EXPECT(ap_disk_builder.BuildCompositeDiskIfNecessary());
@@ -611,19 +631,11 @@ Result<void> CreateDynamicDiskFiles(
       }
     }
 
-    std::vector<AutoSetup<BootConfigPartition::CreateIfNeeded>::Type*>
-        bootconfig_binding = instance_injector.getMultibindings<
-            AutoSetup<BootConfigPartition::CreateIfNeeded>::Type>();
-    CF_EXPECT(!bootconfig_binding.empty());
-
-    const std::optional<BootConfigPartition>& bootconfig_partition =
-        **(bootconfig_binding[0]);
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
     if (config.vm_manager() == VmmMode::kGem5) {
-      RepackGem5BootImage(instance.PerInstancePath("initrd.img"),
-                          bootconfig_partition, config.assembly_dir(),
-                          instance.initramfs_path());
+      RepackGem5BootImage(instance.PerInstancePath("initrd.img"), boot_config,
+                          config.assembly_dir(), instance.initramfs_path());
     }
   }
 
