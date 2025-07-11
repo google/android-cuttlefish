@@ -67,7 +67,7 @@ class RemoteZip : public SeekableZipSourceCallback {
     };
     std::vector<std::string> headers = headers_;
     headers.push_back(
-        fmt::format("Range: bytes={}-{}", offset_, offset_ + zip_len));
+        fmt::format("Range: bytes={}-{}", offset_, offset_ + zip_len - 1));
     HttpRequest request = {
         .method = HttpMethod::kGet,
         .url = url_,
@@ -79,6 +79,7 @@ class RemoteZip : public SeekableZipSourceCallback {
       errno = EIO;
       return -1;
     }
+    offset_ += already_read;
     return already_read;
   }
   bool SetOffset(int64_t offset) override {
@@ -92,7 +93,7 @@ class RemoteZip : public SeekableZipSourceCallback {
   HttpClient& http_client_;
   std::string url_;
   uint64_t offset_ = 0;
-  uint64_t size_ = 0;  // TODO: schuffelen - get this from a HEAD request
+  uint64_t size_ = 0;
   std::vector<std::string> headers_;
 };
 
@@ -108,7 +109,7 @@ Result<uint64_t> GetSizeIfSupportsRangeRequests(
   HttpResponse<void> http_response =
       CF_EXPECT(http_client_.DownloadToCallback(request, empty_cb));
   std::string_view ranges_header =
-      CF_EXPECT(HeaderValue(http_response.headers, "accepts-ranges"));
+      CF_EXPECT(HeaderValue(http_response.headers, "accept-ranges"));
   CF_EXPECT_NE(ranges_header.find("bytes"), std::string_view::npos);
 
   std::string_view content_length_str =
