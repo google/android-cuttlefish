@@ -40,6 +40,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
@@ -233,10 +234,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
                 << target << "\" on \"" << branch << "\", but received "
                 << json["builds"].size() << ". Full response:\n"
                 << json);
-  CF_EXPECT(json["builds"][0].isMember("buildId"),
-            "\"buildId\" member missing from response.  Full response:\n"
-                << json);
-  return json["builds"][0]["buildId"].asString();
+  return CF_EXPECT(GetValue<std::string>(json["builds"][0], { "buildId" }));
 }
 
 Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
@@ -263,7 +261,7 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
             "Response had \"error\" but had http success status. Received \""
                 << json << "\"");
 
-  return json["buildAttemptStatus"].asString();
+  return CF_EXPECT(GetValue<std::string>(json, { "buildAttemptStatus" }));
 }
 
 Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
@@ -290,8 +288,7 @@ Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
             "Response had \"error\" but had http success status. Received \""
                 << json << "\"");
 
-  CF_EXPECT(json.isMember("target"), "Build was missing target field.");
-  return json["target"]["product"].asString();
+  return CF_EXPECT(GetValue<std::string>(json, { "target", "product" }));
 }
 
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
@@ -387,9 +384,7 @@ Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
   CF_EXPECT(!json.isMember("error"),
             "Response had \"error\" but had http success status. "
                 << "Received \"" << json << "\"");
-  CF_EXPECT(json.isMember("signedUrl"),
-            "URL endpoint did not have json path: " << json);
-  return json["signedUrl"].asString();
+  return CF_EXPECT(GetValue<std::string>(json, { "signedUrl" }));
 }
 
 Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
