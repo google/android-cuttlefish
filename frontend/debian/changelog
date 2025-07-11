@@ -1,8 +1,15 @@
-cuttlefish-frontend (1.15.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.15.0) unstable; urgency=medium
 
-  * 
+  * Update documentation on tools/buildutils/cw/README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/1343
+  * Export generated Go code for load_config.proto. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1358
+  * Downgrade go for the load_config proto module. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1367
+  * Fixes testlogs path value. by @ser-io in https://github.com/google/android-cuttlefish/pull/1368
+  * Increase timeout. by @ser-io in https://github.com/google/android-cuttlefish/pull/1369
+  * Update docker/README.md to follow build step within container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/1366
+  * ExtractArtifact doesn't deal with http 409 status in HO client API level by @0405ysj in https://github.com/google/android-cuttlefish/pull/1365
+  * Set /mnt/build as safe directory in git configuration at Containerfile by @0405ysj in https://github.com/google/android-cuttlefish/pull/1361
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 27 Jun 2025 16:43:02 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 11 Jul 2025 16:38:56 -0700
 
 cuttlefish-frontend (1.14.0) unstable; urgency=medium
 
