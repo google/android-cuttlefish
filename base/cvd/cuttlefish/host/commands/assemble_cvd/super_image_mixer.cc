@@ -323,41 +323,30 @@ Result<void> RebuildSuperImage(const RebuildPaths& paths) {
   return {};
 }
 
-class SuperImageRebuilderImpl : public SuperImageRebuilder {
- public:
-  INJECT(SuperImageRebuilderImpl(
-      const FetcherConfig& fetcher_config,
-      const CuttlefishConfig::InstanceSpecific& instance))
-      : fetcher_config_(fetcher_config), instance_(instance) {}
+}  // namespace
 
-  std::string Name() const override { return "SuperImageRebuilderImpl"; }
-
- private:
-  std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
-  Result<void> ResultSetup() override {
-    if (CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config_,
-                                            instance_.default_target_zip(),
-                                            instance_.system_target_zip()))) {
-      const RebuildPaths paths =
-          CF_EXPECT(GetRebuildPaths(fetcher_config_, instance_));
-      LOG(INFO) << "The super.img is being rebuilt with provided vendor and "
-                   "system target files.";
-      LOG(INFO) << "Vendor target files at: " << paths.vendor_target_zip;
-      LOG(INFO) << "System target files at: " << paths.system_target_zip;
-      CF_EXPECT(RebuildSuperImage(paths));
-      LOG(INFO) << "Rebuild complete.";
-      LOG(INFO) << "Combined target files at: " << paths.combined_target_zip;
-      LOG(INFO) << "New super.img at: " << paths.super_image_output;
-      LOG(INFO) << "New vbmeta.img at: " << paths.vbmeta_image_output;
-    }
+Result<void> RebuildSuperImageIfNecessary(
+    const FetcherConfig& fetcher_config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (!CF_EXPECT(SuperImageNeedsRebuilding(fetcher_config,
+                                           instance.default_target_zip(),
+                                           instance.system_target_zip()))) {
     return {};
   }
+  const RebuildPaths paths =
+      CF_EXPECT(GetRebuildPaths(fetcher_config, instance));
+  LOG(INFO) << "The super.img is being rebuilt with provided vendor and "
+               "system target files.";
+  LOG(INFO) << "Vendor target files at: " << paths.vendor_target_zip;
+  LOG(INFO) << "System target files at: " << paths.system_target_zip;
+  CF_EXPECT(RebuildSuperImage(paths));
+  LOG(INFO) << "Rebuild complete.";
+  LOG(INFO) << "Combined target files at: " << paths.combined_target_zip;
+  LOG(INFO) << "New super.img at: " << paths.super_image_output;
+  LOG(INFO) << "New vbmeta.img at: " << paths.vbmeta_image_output;
 
-  const FetcherConfig& fetcher_config_;
-  const CuttlefishConfig::InstanceSpecific& instance_;
-};
-
-}  // namespace
+  return {};
+}
 
 Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
                                        const std::string& default_target_zip,
@@ -389,15 +378,6 @@ Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
     }
   }
   return has_default_build && has_system_build;
-}
-
-fruit::Component<fruit::Required<const FetcherConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 SuperImageRebuilder>
-SuperImageRebuilderComponent() {
-  return fruit::createComponent()
-      .bind<SuperImageRebuilder, SuperImageRebuilderImpl>()
-      .addMultibinding<SetupFeature, SuperImageRebuilder>();
 }
 
 }  // namespace cuttlefish
