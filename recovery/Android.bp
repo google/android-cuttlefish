@@ -34,4 +34,5 @@ cc_library {
         "libbase",
         "librecovery_ui",
     ],
+    recovery: true,
 }
