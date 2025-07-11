@@ -238,6 +238,7 @@ cf_cc_library(
     hdrs = ["login.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:command_request",

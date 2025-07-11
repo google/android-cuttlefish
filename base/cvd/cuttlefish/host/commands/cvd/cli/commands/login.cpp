@@ -23,6 +23,7 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -89,7 +90,13 @@ class CvdLoginCommand : public CvdCommandHandler {
   bool ShouldInterceptHelp() const override { return true; }
 
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return kHelpMessage;
+    std::string google_appendix;
+    if (DirectoryExists("/google")) {
+      google_appendix =
+          "\nIf running on corp, use the wrapper script in "
+          "google3/cloud/android/login";
+    }
+    return kHelpMessage + google_appendix;
   }
 };
 
