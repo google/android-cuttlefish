@@ -102,10 +102,10 @@ class ProxyPair {
     LOG(DEBUG) << label << ": Proxy thread completed";
   }
 
-  bool started_;
+  bool started_ = false;
   SharedFD stop_fd_;
-  std::atomic<bool> c2t_running_;
-  std::atomic<bool> t2c_running_;
+  std::atomic<bool> c2t_running_ = false;
+  std::atomic<bool> t2c_running_ = false;
   std::thread c2t_;
   std::thread t2c_;
 };
