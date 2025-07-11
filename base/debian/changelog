@@ -1,8 +1,36 @@
-cuttlefish-common (1.15.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.15.0) unstable; urgency=medium
 
-  * 
+  * Begin development of version 1.15 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1349
+  * Build libsparse and simg2img from @android_system_core by @Databean in https://github.com/google/android-cuttlefish/pull/1351
+  * Clean up stray `DECLARE_*` flags in assemble_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/1352
+  * Create a `DisplaysProtoFlag` class encapsulating the FLAGS_displays_* globals by @Databean in https://github.com/google/android-cuttlefish/pull/1353
+  * Split `//cuttlefish/host/commands/cvd/cli/selector` by @Databean in https://github.com/google/android-cuttlefish/pull/1309
+  * Add hash for workflow task at bazel cache key by @k311093 in https://github.com/google/android-cuttlefish/pull/1342
+  * Remove the userdata.img flag from assemble_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/1354
+  * Add new secure_env flags to account for https://github.com/google/android-cuttlefish/pull/1347 by @Databean in https://github.com/google/android-cuttlefish/pull/1355
+  * Create a type to represent the factory-reset-protected partition by @Databean in https://github.com/google/android-cuttlefish/pull/1360
+  * Remove the `init_boot` flag. by @Databean in https://github.com/google/android-cuttlefish/pull/1359
+  * Just a buildozer format run. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1363
+  * Delete the `--use_16k` flag. by @Databean in https://github.com/google/android-cuttlefish/pull/1370
+  * Remove the `--hibernation_image` flag by @Databean in https://github.com/google/android-cuttlefish/pull/1373
+  * Create a KernelPathFlag type to resolve ordering dependencies by @Databean in https://github.com/google/android-cuttlefish/pull/1374
+  * Add and use @android_system_core//:liblp, @android_system_extras//:[lpadd,lpmake] by @Databean in https://github.com/google/android-cuttlefish/pull/1376
+  * Create a InitramfsPathFlag type to resolve ordering dependencies by @Databean in https://github.com/google/android-cuttlefish/pull/1377
+  * Remove `strip_include_prefix` from `base/cvd/cuttlefish` and use workspace-relative include paths by @Databean in https://github.com/google/android-cuttlefish/pull/1378
+  * Request remote zip file sizes. by @Databean in https://github.com/google/android-cuttlefish/pull/1362
+  * Build libvpx with bazel instead of make by @jemoreira in https://github.com/google/android-cuttlefish/pull/1318
+  * Remove libzip usage from adb by @Databean in https://github.com/google/android-cuttlefish/pull/1293
+  * Introduce types for persistent_vbmeta.img and ap_vbmeta.img by @Databean in https://github.com/google/android-cuttlefish/pull/1379
+  * Create types for InstanceCompositeDisk and ApCompositeDisk by @Databean in https://github.com/google/android-cuttlefish/pull/1383
+  * Create types for `BootloaderEnvPartition` and `ApBootloaderEnvPartition` by @Databean in https://github.com/google/android-cuttlefish/pull/1384
+  * Set pipefail in generate_font_cc.sh. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1382
+  * Warning fixes by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1380
+  * Fix some mistakes in remote_zip.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1385
+  * Delete DiskChangesPerInstanceComponent by @Databean in https://github.com/google/android-cuttlefish/pull/1386
+  * Ensure ProxyPair's fields are always initialized by @jemoreira in https://github.com/google/android-cuttlefish/pull/1389
+  * Store the correct webrtc_device_id on the database by @jemoreira in https://github.com/google/android-cuttlefish/pull/1388
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 27 Jun 2025 16:42:54 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 11 Jul 2025 16:34:40 -0700
 
 cuttlefish-common (1.14.0) unstable; urgency=medium
 
