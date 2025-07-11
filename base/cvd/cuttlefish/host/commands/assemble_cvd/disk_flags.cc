@@ -225,21 +225,6 @@ static fruit::Component<> DiskChangesComponent(
       .install(SuperImageRebuilderComponent);
 }
 
-static fruit::Component<> DiskChangesPerInstanceComponent(
-    const FetcherConfig* fetcher, const CuttlefishConfig* config,
-    const CuttlefishConfig::InstanceSpecific* instance) {
-  return fruit::createComponent()
-      .bindInstance(*fetcher)
-      .bindInstance(*config)
-      .bindInstance(*instance)
-      .install(AutoSetup<InitializeAccessKregistryImage>::Component)
-      .install(AutoSetup<InitializeHwcomposerPmemImage>::Component)
-      .install(AutoSetup<InitializePstore>::Component)
-      .install(AutoSetup<InitializeSdCard>::Component)
-      .install(AutoSetup<InitializeDataImage>::Component)
-      .install(AutoSetup<InitializePflash>::Component);
-}
-
 Result<void> DiskImageFlagsVectorization(
     CuttlefishConfig& config, const FetcherConfig& fetcher_config,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
@@ -517,17 +502,13 @@ Result<void> CreateDynamicDiskFiles(
 
     const auto& features = injector.getMultibindings<SetupFeature>();
     CF_EXPECT(SetupFeature::RunSetup(features));
-    fruit::Injector<> instance_injector(DiskChangesPerInstanceComponent,
-                                        &fetcher_config, &config, &instance);
-    for (auto& late_injected :
-         instance_injector.getMultibindings<LateInjected>()) {
-      CF_EXPECT(late_injected->LateInject(instance_injector));
-    }
 
-    const auto& instance_features =
-        instance_injector.getMultibindings<SetupFeature>();
-    CF_EXPECT(SetupFeature::RunSetup(instance_features),
-              "instance = \"" << instance.instance_name() << "\"");
+    CF_EXPECT(InitializeAccessKregistryImage(instance));
+    CF_EXPECT(InitializeHwcomposerPmemImage(instance));
+    CF_EXPECT(InitializePstore(instance));
+    CF_EXPECT(InitializeSdCard(config, instance));
+    CF_EXPECT(InitializeDataImage(instance));
+    CF_EXPECT(InitializePflash(instance));
 
     // Check if filling in the sparse image would run out of disk space.
     std::string data_image = instance.data_image();
