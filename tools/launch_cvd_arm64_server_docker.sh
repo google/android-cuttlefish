@@ -88,7 +88,7 @@ else
 fi
 
 if [[ $vendor_boot_image != "" ]]; then
-  scp $vendor_boot_image $server:~/$cvd_home_dir/vendor_boot.img
+  rsync -aSvch $vendor_boot_image $server:~/$cvd_home_dir/vendor_boot.img --info=progress2
 fi
 
 # upload cvd-host_package.tar.gz into ARM server
