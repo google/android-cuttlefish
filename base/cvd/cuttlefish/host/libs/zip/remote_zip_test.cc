@@ -75,6 +75,8 @@ class HttpCallback {
             !absl::SimpleAtoi(range_parts[1], &end)) {
           start = 0;
           end = data_.size();
+        } else {
+          end++;  // our `end` is exclusive, but HTTP ranges are inclusive
         }
       }
     }
@@ -91,7 +93,7 @@ class HttpCallback {
                     .value = std::to_string(end - start),
                 },
                 HttpHeader{
-                    .name = "accepts-ranges",
+                    .name = "accept-ranges",
                     .value = "bytes",
                 },
             },
