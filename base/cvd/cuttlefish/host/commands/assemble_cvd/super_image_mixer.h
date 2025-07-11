@@ -14,20 +14,16 @@
 // limitations under the License.
 #pragma once
 
-#include <fruit/fruit.h>
+#include <string>
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
-#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-class SuperImageRebuilder : public SetupFeature {};
+Result<void> RebuildSuperImageIfNecessary(
+    const FetcherConfig&, const CuttlefishConfig::InstanceSpecific&);
 
-fruit::Component<fruit::Required<const FetcherConfig,
-                                 const CuttlefishConfig::InstanceSpecific>,
-                 SuperImageRebuilder>
-SuperImageRebuilderComponent();
 Result<bool> SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
                                        const std::string& default_target_zip,
                                        const std::string& system_target_zip);
