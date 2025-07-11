@@ -125,34 +125,44 @@ Result<std::vector<std::string>> ExtractWebRTCDeviceIds(
   return android::base::Split(flag_value, ",");
 }
 
-std::vector<std::string> GenerateUniqueWebRTCDeviceIds(
-    const LocalInstanceGroup& group) {
-  std::vector<std::string> ids;
-  ids.reserve(group.Instances().size());
-  for (const auto& instance : group.Instances()) {
-    // Including the instance id is enough to guarantee uniqueness
-    ids.emplace_back(fmt::format("{}-{}-{}", group.GroupName(), instance.name(),
-                                 instance.id()));
+// Some webrtc device ids could be empty (for example, when not specified in the
+// load proto). Replace the empty ones with generated ones.
+Result<std::vector<std::string>> ReplaceEmptyWebRTCDeviceIds(
+    const LocalInstanceGroup& group, std::vector<std::string> webrtc_ids) {
+  // Ensure the number of ids matches the number of instances.
+  while (webrtc_ids.size() < group.Instances().size()) {
+    webrtc_ids.push_back("");
   }
-  return ids;
+  CF_EXPECT_EQ(webrtc_ids.size(), group.Instances().size(),
+               "Specified more webrtc device ids than instances");
+  std::set<std::string> used_ids;
+  for (const auto& webrtc_id : webrtc_ids) {
+    if (!webrtc_id.empty()) {
+      used_ids.insert(webrtc_id);
+    }
+  }
+  for (int i = 0; i < webrtc_ids.size(); ++i) {
+    if (webrtc_ids[i].empty()) {
+      std::string generated_id =
+          fmt::format("{}-{}-{}", group.GroupName(),
+                      group.Instances()[i].name(), group.Instances()[i].id());
+      webrtc_ids[i] = generated_id;
+      // In the unlikely case that a provided device id matches one of the
+      // generated ones append _{n} to the generated one, with n starting at 1
+      // and growing as much as necessary to avoid a collision.
+      for (int j = 1; used_ids.find(webrtc_ids[i]) != used_ids.end(); ++j) {
+        webrtc_ids[i] = fmt::format("{}_{}", generated_id, j);
+      }
+      used_ids.insert(webrtc_ids[i]);
+    }
+  }
+  return webrtc_ids;
 }
 
 Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
                                    LocalInstanceGroup& group) {
-  std::vector<std::string> webrtc_ids = CF_EXPECT(ExtractWebRTCDeviceIds(args));
-  std::vector<std::string> generated_webrtc_ids =
-      GenerateUniqueWebRTCDeviceIds(group);
-  if (webrtc_ids.empty()) {
-    webrtc_ids = generated_webrtc_ids;
-  }
-  CF_EXPECT_EQ(
-      webrtc_ids.size(), (std::size_t)group.Instances().size(),
-      "The number of webrtc device ids doesn't match the number of instances");
-  for (size_t i = 0; i < webrtc_ids.size(); ++i) {
-    if (webrtc_ids[i].empty()) {
-      webrtc_ids[i] = generated_webrtc_ids[i];
-    }
-  }
+  std::vector<std::string> webrtc_ids = CF_EXPECT(ReplaceEmptyWebRTCDeviceIds(
+      group, CF_EXPECT(ExtractWebRTCDeviceIds(args))));
   args.push_back("--webrtc_device_id=" + android::base::Join(webrtc_ids, ","));
 
   for (size_t i = 0; i < webrtc_ids.size(); ++i) {
