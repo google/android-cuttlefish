@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 
@@ -31,7 +30,11 @@ std::string DeviceId(const Instance& instance) {
   if (instance.streaming().has_device_id()) {
     return instance.streaming().device_id();
   } else {
-    return CF_DEFAULTS_WEBRTC_DEVICE_ID;
+    // Leave it empty when not specified in the config so that cvd start has a
+    // chance to pick a good default. Unlike other flags, webrtc_device_id is
+    // always set by the user or cvd and never relies on the default value on
+    // cvd_internal_start.
+    return "";
   }
 }
 
