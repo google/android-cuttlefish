@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.16.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 11 Jul 2025 17:13:27 -0700
+
 cuttlefish-frontend (1.15.0) unstable; urgency=medium
 
   * Update documentation on tools/buildutils/cw/README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/1343
