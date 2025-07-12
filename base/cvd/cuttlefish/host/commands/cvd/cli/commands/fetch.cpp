@@ -65,6 +65,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
 
   Result<void> result = FetchCvdMain(flags);
   if (flags.build_api_flags.enable_caching) {
+    LOG(DEBUG) << "Running automatic cache cleanup";
     const std::string cache_directory = PerUserCacheDir();
     const PruneResult prune_result = CF_EXPECTF(
         PruneCache(cache_directory, flags.build_api_flags.max_cache_size_gb),

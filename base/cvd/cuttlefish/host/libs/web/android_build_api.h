@@ -25,6 +25,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
@@ -102,10 +103,8 @@ class AndroidBuildApi : public BuildApi {
 
   HttpClient& http_client;
   CredentialSource* credential_source;
-  std::string api_key_;
+  AndroidBuildUrl android_build_url_;
   std::chrono::seconds retry_period_;
-  std::string api_base_url_;
-  std::string project_id_;
   CasDownloader* cas_downloader_;
 };
 
