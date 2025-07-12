@@ -28,13 +28,13 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_json",
-        "//cuttlefish/host/libs/web/http_client:url_escape",
         "//libbase",
         "@jsoncpp",
     ],
@@ -62,6 +62,17 @@ cf_cc_test(
         "//cuttlefish/host/libs/web:android_build_string",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "android_build_url",
+    srcs = ["android_build_url.cpp"],
+    hdrs = ["android_build_url.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client:url_escape",
+        "@fmt",
     ],
 )
 
