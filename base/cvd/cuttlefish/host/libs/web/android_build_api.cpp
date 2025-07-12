@@ -227,9 +227,28 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
       android_build_url_->GetBuildStatusUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
-  const Json::Value json = CF_EXPECT(GetResponseJson(response),
-                                     "Error fetching build status for build:\n"
-                                         << build);
+
+  std::string no_auth_error_message;
+  if (credential_source == nullptr && response.http_code == 404) {
+    // In LatestBuildId we currently cannot distinguish between the cases:
+    //    - user provided a build ID (not an error)
+    //    - user provided a branch with a typo
+    //    - user provided a branch without the necessary authentication
+    //    (for example, internal branches)
+    // This message is a best attempt at helping the user in third case
+    no_auth_error_message =
+        "\n\nThis fetch was run unauthenticated, which could be the "
+        "problem.\nTry `cvd help login`";
+  }
+  const Json::Value json = CF_EXPECT(
+      GetResponseJson(response),
+      "Error fetching build status for build:\n"
+          << build
+          << "\n\nIf you specified a branch and it appears in the build id "
+             "field of this error, there was a problem retrieving the latest "
+             "build id.\n\nIs there a typo in the branch or target name?"
+          << no_auth_error_message);
+
   return CF_EXPECT(GetValue<std::string>(json, { "buildAttemptStatus" }));
 }
 
