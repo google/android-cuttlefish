@@ -65,6 +65,23 @@ struct CloseDir {
   void operator()(DIR* dir) { closedir(dir); }
 };
 
+Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
+                                    const bool allow_redirect = false) {
+  //  debug information in error responses floods stderr with too much text
+  //  logged at a level that still ends up in the log file
+  LOG(DEBUG) << "API response data:\n" << response.data;
+  const bool allowed_response_code =
+      response.HttpSuccess() || (allow_redirect && response.HttpRedirect());
+  CF_EXPECTF(std::move(allowed_response_code),
+             "Error response from Android Build API - {}:{}\nCheck log file "
+             "for full response",
+             response.http_code, response.StatusDescription());
+  CF_EXPECT(!response.data.isMember("error"),
+            "Response was successful, but contains error information.  Check "
+            "log file for full response.");
+  return response.data;
+}
+
 }  // namespace
 
 DeviceBuild::DeviceBuild(std::string id, std::string target,
@@ -191,24 +208,19 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
       android_build_url_.GetLatestBuildIdUrl(branch, target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
-  const auto& json = response.data;
-  CF_EXPECT(response.HttpSuccess(), "Error fetching the latest build of \""
-                                        << target << "\" on \"" << branch
-                                        << "\". The server response was \""
-                                        << json << "\", and code was "
-                                        << response.http_code);
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. Received \""
-                << json << "\"");
 
+  const Json::Value& json = CF_EXPECTF(GetResponseJson(response),
+                                       "Error fetching last known good build "
+                                       "id for:\nbranch \"{}\", target \"{}\"",
+                                       branch, target);
   if (!json.isMember("builds")) {
     return std::nullopt;
   }
-  CF_EXPECT(json["builds"].size() == 1,
-            "Expected to receive 1 build for \""
-                << target << "\" on \"" << branch << "\", but received "
-                << json["builds"].size() << ". Full response:\n"
-                << json);
+
+  CF_EXPECTF(json["builds"].size() == 1,
+             "Expected to find 1 build for branch \"{}\" and target \"{}\", "
+             "but found {}",
+             branch, target, json["builds"].size());
   return CF_EXPECT(GetValue<std::string>(json["builds"][0], { "buildId" }));
 }
 
@@ -217,15 +229,9 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
       android_build_url_.GetBuildStatusUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
-  const auto& json = response.data;
-  CF_EXPECT(response.HttpSuccess(),
-            "Error fetching the status of \""
-                << build << "\". The server response was \"" << json
-                << "\", and code was " << response.http_code);
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. Received \""
-                << json << "\"");
-
+  const Json::Value& json = CF_EXPECT(GetResponseJson(response),
+                                      "Error fetching build status for build:\n"
+                                          << build);
   return CF_EXPECT(GetValue<std::string>(json, { "buildAttemptStatus" }));
 }
 
@@ -234,15 +240,9 @@ Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
       android_build_url_.GetBuildStatusUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
-  const auto& json = response.data;
-  CF_EXPECT(response.HttpSuccess(),
-            "Error fetching the product name of \""
-                << build << "\". The server response was \"" << json
-                << "\", and code was " << response.http_code);
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. Received \""
-                << json << "\"");
-
+  const Json::Value& json = CF_EXPECT(GetResponseJson(response),
+                                      "Error fetching product name for build:\n"
+                                          << build);
   return CF_EXPECT(GetValue<std::string>(json, { "target", "product" }));
 }
 
@@ -251,28 +251,27 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const std::vector<std::string>& artifact_filenames) {
   std::string page_token = "";
   std::unordered_set<std::string> artifacts;
+
   do {
     const std::string url = android_build_url_.GetArtifactUrl(
         build.id, build.target, artifact_filenames, page_token);
     auto response =
         CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
-    const auto& json = response.data;
-    CF_EXPECT(response.HttpSuccess(),
-              "Error fetching the artifacts of \""
-                  << build << "\". The server response was \"" << json
-                  << "\", and code was " << response.http_code);
-    CF_EXPECT(!json.isMember("error"),
-              "Response had \"error\" but had http success status. Received \""
-                  << json << "\"");
+
+    const Json::Value& json = CF_EXPECT(GetResponseJson(response),
+                                        "Error fetching artifacts list for:\n"
+                                            << build);
+    for (const auto& artifact_json : json["artifacts"]) {
+      artifacts.emplace(artifact_json["name"].asString());
+    }
+
     if (json.isMember("nextPageToken")) {
       page_token = json["nextPageToken"].asString();
     } else {
       page_token = "";
     }
-    for (const auto& artifact_json : json["artifacts"]) {
-      artifacts.emplace(artifact_json["name"].asString());
-    }
   } while (!page_token.empty());
+
   return artifacts;
 }
 
@@ -306,15 +305,10 @@ Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
                                                 artifact);
   auto response = CF_EXPECT(
       HttpGetToJson(http_client, download_url_endpoint, CF_EXPECT(Headers())));
-  const auto& json = response.data;
-  CF_EXPECT(response.HttpSuccess() || response.HttpRedirect(),
-            "Error fetching the url of \"" << artifact << "\" for \"" << build
-                                           << "\". The server response was \""
-                                           << json << "\", and code was "
-                                           << response.http_code);
-  CF_EXPECT(!json.isMember("error"),
-            "Response had \"error\" but had http success status. "
-                << "Received \"" << json << "\"");
+  const Json::Value& json =
+      CF_EXPECTF(GetResponseJson(response, /* allow redirect response */ true),
+                 "Error fetching download URL for \"{}\" from build ID \"{}\"",
+                 artifact, build.id);
   return CF_EXPECT(GetValue<std::string>(json, { "signedUrl" }));
 }
 
