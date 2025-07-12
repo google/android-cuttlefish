@@ -222,7 +222,7 @@ static fruit::Component<> DiskChangesComponent(
       .install(AutoSetup<Gem5ImageUnpacker>::Component)
       // Create esp if necessary
       .install(AutoSetup<InitializeEspImage>::Component)
-      .install(SuperImageRebuilderComponent);
+      .install(AutoSetup<RebuildSuperImageIfNecessary>::Component);
 }
 
 Result<void> DiskImageFlagsVectorization(
