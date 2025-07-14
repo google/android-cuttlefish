@@ -22,6 +22,9 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_url.h"
+#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
@@ -49,6 +52,7 @@ struct Downloaders::Impl {
   std::unique_ptr<HttpClient> curl_;
   std::unique_ptr<HttpClient> retrying_http_client_;
   std::unique_ptr<CredentialSource> android_creds_;
+  std::unique_ptr<AndroidBuildUrl> android_build_url_;
   std::unique_ptr<CasDownloader> cas_downloader_;
   std::unique_ptr<AndroidBuildApi> android_build_api_;
   std::unique_ptr<CachingBuildApi> caching_build_api_;
@@ -86,6 +90,9 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags) {
           : CF_EXPECT(GetCredentialSourceFromFlags(*impl->retrying_http_client_,
                                                    flags, oauth_filepath));
 
+  impl->android_build_url_ = std::make_unique<AndroidBuildUrl>(
+      flags.api_base_url, flags.api_key, flags.project_id);
+
   Result<std::unique_ptr<CasDownloader>> cas_downloader_result =
       CasDownloader::Create(flags.cas_downloader_flags,
                             flags.credential_flags.service_account_filepath);
@@ -94,8 +101,8 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags) {
   }
 
   impl->android_build_api_ = std::make_unique<AndroidBuildApi>(
-      *impl->retrying_http_client_, impl->android_creds_.get(), flags.api_key,
-      flags.wait_retry_period, flags.api_base_url, flags.project_id,
+      *impl->retrying_http_client_, impl->android_creds_.get(),
+      impl->android_build_url_.get(), flags.wait_retry_period,
       impl->cas_downloader_.get());
 
   const std::string cache_base_path = PerUserCacheDir();
