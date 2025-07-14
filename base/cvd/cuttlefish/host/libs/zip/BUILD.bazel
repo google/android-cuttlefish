@@ -7,12 +7,36 @@ package(
 exports_files([".clang-tidy"])
 
 cf_cc_library(
+    name = "buffered_zip_source",
+    srcs = ["buffered_zip_source.cc"],
+    hdrs = ["buffered_zip_source.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:zip_cc",
+    ],
+)
+
+cf_cc_test(
+    name = "buffered_zip_source_test",
+    srcs = ["buffered_zip_source_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/zip:buffered_zip_source",
+        "//cuttlefish/host/libs/zip:zip_cc",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip:zip_cc",
         "@abseil-cpp//absl/strings",
         "@fmt",

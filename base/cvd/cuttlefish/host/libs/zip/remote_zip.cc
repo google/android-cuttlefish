@@ -30,6 +30,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
@@ -135,7 +136,10 @@ Result<ReadableZip> ZipFromUrl(HttpClient& http_client, const std::string& url,
   SeekableZipSource source =
       CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
 
-  return CF_EXPECT(ReadableZip::FromSource(std::move(source)));
+  SeekableZipSource buffered =
+      CF_EXPECT(BufferZipSource(std::move(source), 1 << 16));
+
+  return CF_EXPECT(ReadableZip::FromSource(std::move(buffered)));
 }
 
 }  // namespace cuttlefish
