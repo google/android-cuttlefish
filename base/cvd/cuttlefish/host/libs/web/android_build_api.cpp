@@ -44,12 +44,12 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
-#include "cuttlefish/host/libs/web/http_client/url_escape.h"
 
 namespace cuttlefish {
 namespace {
@@ -59,21 +59,6 @@ bool StatusIsTerminal(const std::string& status) {
       "abandoned", "complete", "error", "ABANDONED", "COMPLETE", "ERROR",
   };
   return terminal_statuses.count(status) > 0;
-}
-
-std::string BuildNameRegexp(
-    const std::vector<std::string>& artifact_filenames) {
-  // surrounding with \Q and \E treats the text literally to avoid
-  // characters being treated as regex
-  auto it = artifact_filenames.begin();
-  std::string name_regex = "^\\Q" + *it + "\\E$";
-  std::string result = name_regex;
-  ++it;
-  for (const auto end = artifact_filenames.end(); it != end; ++it) {
-    name_regex = "^\\Q" + *it + "\\E$";
-    result += "|" + name_regex;
-  }
-  return result;
 }
 
 struct CloseDir {
@@ -123,10 +108,9 @@ AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  CasDownloader* cas_downloader)
     : http_client(http_client),
       credential_source(credential_source),
-      api_key_(std::move(api_key)),
+      android_build_url_(std::move(api_base_url), std::move(api_key),
+                         std::move(project_id)),
       retry_period_(retry_period),
-      api_base_url_(std::move(api_base_url)),
-      project_id_(std::move(project_id)),
       cas_downloader_(cas_downloader) {}
 
 Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
@@ -203,17 +187,8 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
 
 Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
     const std::string& branch, const std::string& target) {
-  std::string url =
-      api_base_url_ + "/builds?branch=" + UrlEscape(branch) +
-      "&buildAttemptStatus=complete" +
-      "&buildType=submitted&maxResults=1&successful=true&target=" +
-      UrlEscape(target);
-  if (!api_key_.empty()) {
-    url += "&key=" + UrlEscape(api_key_);
-  }
-  if(!project_id_.empty()){
-    url += "&$userProject=" + UrlEscape(project_id_);
-  }
+  const std::string url =
+      android_build_url_.GetLatestBuildIdUrl(branch, target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
   const auto& json = response.data;
@@ -238,18 +213,8 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
 }
 
 Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
-  std::string url = api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
-                    UrlEscape(build.target);
-  std::vector<std::string> params;
-  if (!api_key_.empty()) {
-    params.push_back("key=" + UrlEscape(api_key_));
-  }
-  if(!project_id_.empty()){
-    params.push_back("$userProject=" + UrlEscape(project_id_));
-  }
-  if (!params.empty()) {
-    url += "?" + android::base::Join(params, "&");
-  }
+  const std::string url =
+      android_build_url_.GetBuildStatusUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
   const auto& json = response.data;
@@ -265,18 +230,8 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
 }
 
 Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
-  std::string url = api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
-                    UrlEscape(build.target);
-  std::vector<std::string> params;
-  if (!api_key_.empty()) {
-    params.push_back("key=" + UrlEscape(api_key_));
-  }
-  if(!project_id_.empty()){
-    params.push_back("$userProject=" + UrlEscape(project_id_));
-  }
-  if (!params.empty()) {
-    url += "?" + android::base::Join(params, "&");
-  }
+  const std::string url =
+      android_build_url_.GetProductNameUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
   const auto& json = response.data;
@@ -297,21 +252,8 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
   std::string page_token = "";
   std::unordered_set<std::string> artifacts;
   do {
-    std::string url = api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
-                      UrlEscape(build.target) +
-                      "/attempts/latest/artifacts?maxResults=100";
-    if (!artifact_filenames.empty()) {
-      url += "&nameRegexp=" + UrlEscape(BuildNameRegexp(artifact_filenames));
-    }
-    if (!page_token.empty()) {
-      url += "&pageToken=" + UrlEscape(page_token);
-    }
-    if (!api_key_.empty()) {
-      url += "&key=" + UrlEscape(api_key_);
-    }
-    if(!project_id_.empty()){
-      url += "&$userProject=" + UrlEscape(project_id_);
-    }
+    const std::string url = android_build_url_.GetArtifactUrl(
+        build.id, build.target, artifact_filenames, page_token);
     auto response =
         CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
     const auto& json = response.data;
@@ -360,20 +302,9 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
 
 Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
     const DeviceBuild& build, const std::string& artifact) {
-  std::string download_url_endpoint =
-      api_base_url_ + "/builds/" + UrlEscape(build.id) + "/" +
-      UrlEscape(build.target) + "/attempts/latest/artifacts/" +
-      UrlEscape(artifact) + "/url";
-  std::vector<std::string> params;
-  if (!api_key_.empty()) {
-    params.push_back("key=" + UrlEscape(api_key_));
-  }
-  if(!project_id_.empty()){
-    params.push_back("$userProject=" + UrlEscape(project_id_));
-  }
-  if (!params.empty()) {
-    download_url_endpoint += "?" + android::base::Join(params, "&");
-  }
+  const std::string download_url_endpoint =
+      android_build_url_.GetArtifactDownloadUrl(build.id, build.target,
+                                                artifact);
   auto response = CF_EXPECT(
       HttpGetToJson(http_client, download_url_endpoint, CF_EXPECT(Headers())));
   const auto& json = response.data;
