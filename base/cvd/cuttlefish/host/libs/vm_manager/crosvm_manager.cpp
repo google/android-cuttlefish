@@ -83,19 +83,6 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "pastel"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-    bootconfig_args = {
-        {"androidboot.cpuvulkan.version", "0"},
-        {"androidboot.hardware.gralloc", "minigbm"},
-        {"androidboot.hardware.hwcomposer", "ranchu"},
-        {"androidboot.hardware.hwcomposer.mode", "client"},
-        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
-        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
-         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
-        {"androidboot.hardware.egl", "mesa"},
-        // No "hardware" Vulkan support, yet
-        {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
-    };
   } else if (instance.gpu_mode() == kGpuModeGfxstream ||
              instance.gpu_mode() == kGpuModeGfxstreamGuestAngle ||
              instance.gpu_mode() ==
@@ -461,10 +448,6 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string, "backend=2D",
                              gpu_common_string);
-  } else if (gpu_mode == kGpuModeDrmVirgl) {
-    crosvm_cmd->AddParameter("--gpu=", gpu_displays_string,
-                             "backend=virglrenderer,context-types=virgl2",
-                             gpu_common_3d_string);
   } else if (gpu_mode == kGpuModeGfxstream) {
     crosvm_cmd->AddParameter(
         "--gpu=", gpu_displays_string,

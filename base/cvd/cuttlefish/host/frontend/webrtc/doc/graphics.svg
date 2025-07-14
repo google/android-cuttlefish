@@ -32,7 +32,6 @@
 <ellipse fill="none" stroke="black" cx="167" cy="-377" rx="104.78" ry="18"/>
 <text text-anchor="start" x="94.5" y="-374.3" font-family="Times,serif" font-size="14.00"> </text>
 <text text-anchor="start" x="98.5" y="-374.3" font-family="Times,serif" font-size="14.00" fill="blue">gfxstream</text>
-<text text-anchor="start" x="153.5" y="-374.3" font-family="Times,serif" font-size="14.00"> / virglrenderer </text>
 </g>
 <!-- vmm -->
 <g id="node7" class="node">

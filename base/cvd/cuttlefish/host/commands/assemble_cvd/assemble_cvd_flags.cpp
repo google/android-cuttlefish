@@ -76,7 +76,7 @@ DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
 DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
               "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
-           "What gpu configuration to use, one of {auto, custom, drm_virgl, "
+           "What gpu configuration to use, one of {auto, custom, "
            "gfxstream, gfxstream_guest_angle, "
            "gfxstream_guest_angle_host_swiftshader, "
            "gfxstream_guest_angle_host_lavapipe, guest_swiftshader}");

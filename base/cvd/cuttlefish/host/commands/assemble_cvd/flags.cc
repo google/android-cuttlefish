@@ -273,11 +273,6 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
         GetAndroidInfoConfig(instance_android_info_txt, "vhost_user_vsock");
     guest_config.vhost_user_vsock = res_vhost_user_vsock.value_or("") == "true";
 
-    auto res_prefer_drm_virgl_when_supported = GetAndroidInfoConfig(
-        instance_android_info_txt, "prefer_drm_virgl_when_supported");
-    guest_config.prefer_drm_virgl_when_supported =
-        res_prefer_drm_virgl_when_supported.value_or("") == "true";
-
     auto res_ti50_emulator =
         GetAndroidInfoConfig(instance_android_info_txt, "ti50_emulator");
     guest_config.ti50_emulator = res_ti50_emulator.value_or("");
@@ -1325,17 +1320,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);
-    if (!hwcomposer_vec[instance_index].empty()) {
-      if (hwcomposer_vec[instance_index] == kHwComposerRanchu) {
-        CF_EXPECT(gpu_mode != kGpuModeDrmVirgl,
-                  "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
-      }
-    }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == kGpuModeDrmVirgl) {
-        instance.set_hwcomposer(kHwComposerDrm);
-      } else if (gpu_mode == kGpuModeNone) {
+      if (gpu_mode == kGpuModeNone) {
         instance.set_hwcomposer(kHwComposerNone);
       } else {
         instance.set_hwcomposer(kHwComposerRanchu);

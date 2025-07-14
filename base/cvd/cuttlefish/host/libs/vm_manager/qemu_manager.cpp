@@ -145,20 +145,6 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.1
         {"androidboot.opengles.version", "196609"},
     };
-  } else if (gpu_mode == kGpuModeDrmVirgl) {
-    bootconfig_args = {
-        {"androidboot.cpuvulkan.version", "0"},
-        {"androidboot.hardware.gralloc", "minigbm"},
-        {"androidboot.hardware.hwcomposer", "ranchu"},
-        {"androidboot.hardware.hwcomposer.mode", "client"},
-        {"androidboot.hardware.hwcomposer.display_finder_mode", "drm"},
-        {"androidboot.hardware.hwcomposer.display_framebuffer_format",
-         instance.guest_uses_bgra_framebuffers() ? "bgra" : "rgba"},
-        {"androidboot.hardware.egl", "mesa"},
-        // No "hardware" Vulkan support, yet
-        // OpenGL ES 3.0
-        {"androidboot.opengles.version", "196608"},
-    };
   } else if (gpu_mode == kGpuModeGfxstream ||
              gpu_mode == kGpuModeGfxstreamGuestAngle ||
              gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
@@ -446,17 +432,10 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
   auto gpu_mode = instance.gpu_mode();
-  if (gpu_mode == kGpuModeDrmVirgl) {
-    qemu_cmd.AddParameter("-display");
-    qemu_cmd.AddParameter("egl-headless");
-
-    qemu_cmd.AddParameter("-vnc");
-    qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
-  } else if (gpu_mode == kGpuModeGuestSwiftshader ||
-             gpu_mode == kGpuModeGfxstream ||
-             gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+  if (gpu_mode == kGpuModeGuestSwiftshader || gpu_mode == kGpuModeGfxstream ||
+      gpu_mode == kGpuModeGfxstreamGuestAngle ||
+      gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
+      gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -474,8 +453,6 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     std::string gpu_device;
     if (gpu_mode == kGpuModeGuestSwiftshader || qemu_version.first < 6) {
       gpu_device = "virtio-gpu-pci";
-    } else if (gpu_mode == kGpuModeDrmVirgl) {
-      gpu_device = "virtio-gpu-gl-pci";
     } else if (gpu_mode == kGpuModeGfxstream) {
       gpu_device =
           "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"

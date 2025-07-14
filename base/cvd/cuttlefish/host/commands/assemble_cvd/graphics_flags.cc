@@ -52,9 +52,6 @@ enum class RenderingMode {
 
 CF_UNUSED_ON_MACOS
 Result<RenderingMode> GetRenderingMode(const std::string& mode) {
-  if (mode == std::string(kGpuModeDrmVirgl)) {
-    return RenderingMode::kVirglRenderer;
-  }
   if (mode == std::string(kGpuModeGfxstream)) {
     return RenderingMode::kGfxstream;
   }
@@ -262,8 +259,7 @@ Result<std::string> SelectGpuMode(
     const std::string& gpu_mode_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-  if (gpu_mode_arg != kGpuModeAuto && gpu_mode_arg != kGpuModeDrmVirgl &&
-      gpu_mode_arg != kGpuModeCustom && gpu_mode_arg != kGpuModeGfxstream &&
+  if (gpu_mode_arg != kGpuModeCustom && gpu_mode_arg != kGpuModeGfxstream &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngle &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostSwiftShader &&
       gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostLavapipe &&
@@ -291,9 +287,6 @@ Result<std::string> SelectGpuMode(
       if (vmm == VmmMode::kQemu && !UseQemuPrebuilt()) {
         LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
         return kGpuModeGuestSwiftshader;
-      } else if (guest_config.prefer_drm_virgl_when_supported) {
-        LOG(INFO) << "GPU mode from guest config: drm_virgl";
-        return kGpuModeDrmVirgl;
       } else if (!guest_config.gfxstream_supported) {
         LOG(INFO) << "GPU auto mode: guest does not support gfxstream, "
                      "enabling --gpu_mode=guest_swiftshader";
@@ -311,8 +304,7 @@ Result<std::string> SelectGpuMode(
   }
 
   if (gpu_mode_arg == kGpuModeGfxstream ||
-      gpu_mode_arg == kGpuModeGfxstreamGuestAngle ||
-      gpu_mode_arg == kGpuModeDrmVirgl) {
+      gpu_mode_arg == kGpuModeGfxstreamGuestAngle) {
     if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
       LOG(ERROR) << "--gpu_mode=" << gpu_mode_arg
                  << " was requested but the prerequisites for accelerated "
@@ -601,7 +593,7 @@ Result<std::string> ConfigureGpuSettings(
   (void)guest_config;
   CF_EXPECT(gpu_mode_arg == kGpuModeAuto ||
             gpu_mode_arg == kGpuModeGuestSwiftshader ||
-            gpu_mode_arg == kGpuModeDrmVirgl || gpu_mode_arg == kGpuModeNone);
+            gpu_mode_arg == kGpuModeNone);
   std::string gpu_mode = gpu_mode_arg;
   if (gpu_mode == kGpuModeAuto) {
     gpu_mode = kGpuModeGuestSwiftshader;

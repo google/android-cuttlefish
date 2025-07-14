@@ -33,7 +33,6 @@ struct GuestConfig {
   bool gfxstream_gl_program_binary_link_status_supported = false;
   bool vhost_user_vsock = false;
   bool supports_bgra_framebuffers = false;
-  bool prefer_drm_virgl_when_supported = false;
   bool mouse_supported = false;
   std::string ti50_emulator;
   std::optional<std::string> custom_keyboard_config;

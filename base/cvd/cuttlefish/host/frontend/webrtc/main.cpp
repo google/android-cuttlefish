@@ -354,9 +354,6 @@ int CuttlefishMain() {
   std::string user_friendly_gpu_mode;
   if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
-  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
-    user_friendly_gpu_mode =
-        "VirglRenderer (Accelerated Rendering using Host OpenGL)";
   } else if (instance.gpu_mode() == kGpuModeGfxstream) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host OpenGL and Vulkan)";

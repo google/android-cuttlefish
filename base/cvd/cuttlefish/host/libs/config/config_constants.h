@@ -68,7 +68,6 @@ inline constexpr char kVhostUserVsockModeFalse[] = "false";
 
 inline constexpr char kGpuModeAuto[] = "auto";
 inline constexpr char kGpuModeCustom[] = "custom";
-inline constexpr char kGpuModeDrmVirgl[] = "drm_virgl";
 inline constexpr char kGpuModeGfxstream[] = "gfxstream";
 inline constexpr char kGpuModeGfxstreamGuestAngle[] = "gfxstream_guest_angle";
 inline constexpr char kGpuModeGfxstreamGuestAngleHostSwiftShader[] =
