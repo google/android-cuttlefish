@@ -42,8 +42,8 @@ class AndroidBuildApi : public BuildApi {
   AndroidBuildApi(AndroidBuildApi&&) = delete;
   virtual ~AndroidBuildApi() = default;
   AndroidBuildApi(HttpClient& http_client, CredentialSource* credential_source,
-                  std::string api_key, std::chrono::seconds retry_period,
-                  std::string api_base_url, std::string project_id,
+                  AndroidBuildUrl* android_build_url,
+                  std::chrono::seconds retry_period,
                   CasDownloader* cas_downloader = nullptr);
 
   Result<Build> GetBuild(const BuildString& build_string) override;
@@ -103,7 +103,7 @@ class AndroidBuildApi : public BuildApi {
 
   HttpClient& http_client;
   CredentialSource* credential_source;
-  AndroidBuildUrl android_build_url_;
+  AndroidBuildUrl* android_build_url_;
   std::chrono::seconds retry_period_;
   CasDownloader* cas_downloader_;
 };
