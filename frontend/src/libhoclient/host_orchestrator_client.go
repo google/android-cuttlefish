@@ -120,6 +120,12 @@ type UserArtifactsClient interface {
 	ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error)
 }
 
+// Manage image directories created by the user.
+type ImageDirectoriesClient interface {
+	// Create an empty image directory.
+	CreateImageDirectory() (*hoapi.Operation, error)
+}
+
 // Operations that could be performend on a given instance.
 type InstanceOperationsClient interface {
 	// Create cvd bugreport.
@@ -160,6 +166,7 @@ type SnapshotsClient interface {
 type HostOrchestratorClient interface {
 	InstancesClient
 	UserArtifactsClient
+	ImageDirectoriesClient
 	InstanceOperationsClient
 	InstanceConnectionsClient
 	OperationsClient
@@ -604,6 +611,14 @@ func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) (*hoapi.Op
 	}
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewPostRequest("/v1/userartifacts/"+checksum+"/:extract", nil).JSONResDo(op); err != nil {
+		return nil, err
+	}
+	return op, nil
+}
+
+func (c *HostOrchestratorClientImpl) CreateImageDirectory() (*hoapi.Operation, error) {
+	op := &hoapi.Operation{}
+	if err := c.HTTPHelper.NewPostRequest("/cvd_imgs_dirs", nil).JSONResDo(op); err != nil {
 		return nil, err
 	}
 	return op, nil
