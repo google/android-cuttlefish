@@ -222,6 +222,26 @@ func TestExtractArtifactSucceeds(t *testing.T) {
 	}
 }
 
+func TestCreateImageDirectorySucceeds(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "POST /cvd_imgs_dirs":
+			writeOK(w, hoapi.Operation{Name: "foo"})
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	expected := &hoapi.Operation{Name: "foo"}
+	if op, err := client.CreateImageDirectory(); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(expected, op); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
 	token := "foo"
