@@ -53,11 +53,12 @@ type BuildAPICredentialsConfig struct {
 }
 
 type Controller struct {
-	Config                Config
-	OperationManager      OperationManager
-	WaitOperationDuration time.Duration
-	UserArtifactsManager  UserArtifactsManager
-	DebugVariablesManager *debug.VariablesManager
+	Config                  Config
+	OperationManager        OperationManager
+	WaitOperationDuration   time.Duration
+	UserArtifactsManager    UserArtifactsManager
+	ImageDirectoriesManager ImageDirectoriesManager
+	DebugVariablesManager   *debug.VariablesManager
 }
 
 func (c *Controller) AddRoutes(router *mux.Router) {
@@ -118,6 +119,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(&statUserArtifactHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, true})).Methods("POST")
+	router.Handle("/cvd_imgs_dirs", httpHandler(&createImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -702,6 +704,25 @@ func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error
 			err = h.uam.ExtractArtifactWithDir(vars["dir"], vars["name"])
 		}
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
+}
+
+type createImageDirectoryHandler struct {
+	idm ImageDirectoriesManager
+	om  OperationManager
+}
+
+func (h *createImageDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	op := h.om.New()
+	go func() {
+		result := &OperationResult{}
+		dir, err := h.idm.CreateImageDirectory()
+		result.Value = &apiv1.CreateImageDirectoryResponse{ID: dir}
+		result.Error = err
+		if err := h.om.Complete(op.Name, result); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}
 	}()

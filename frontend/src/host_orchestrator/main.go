@@ -134,6 +134,10 @@ func main() {
 		log.Fatalf("Unable to prepare UserArtifactsManager: %v", err)
 	}
 	defer os.RemoveAll(uam.WorkDir)
+	idmOpts := orchestrator.ImageDirectoriesManagerOpts{
+		RootDir: filepath.Join(*imRootDir, "image_dirs"),
+	}
+	idm := orchestrator.NewImageDirectoriesManagerImpl(idmOpts)
 	debugStaticVars := debug.StaticVariables{}
 	debugVarsManager := debug.NewVariablesManager(debugStaticVars)
 	imController := orchestrator.Controller{
@@ -144,10 +148,11 @@ func main() {
 				UseGCEMetadata: *buildAPICredsUseGCEMetadata,
 			},
 		},
-		OperationManager:      om,
-		WaitOperationDuration: 2 * time.Minute,
-		UserArtifactsManager:  uam,
-		DebugVariablesManager: debugVarsManager,
+		OperationManager:        om,
+		WaitOperationDuration:   2 * time.Minute,
+		UserArtifactsManager:    uam,
+		ImageDirectoriesManager: idm,
+		DebugVariablesManager:   debugVarsManager,
 	}
 	proxy := newOperatorProxy(*operatorPort)
 

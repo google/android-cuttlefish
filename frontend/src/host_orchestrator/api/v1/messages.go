@@ -136,6 +136,11 @@ type ListUploadDirectoriesResponse struct {
 
 type StatArtifactResponse struct{}
 
+type CreateImageDirectoryResponse struct {
+	// [Output Only] Identifier of created image directory.
+	ID string `json:"name"`
+}
+
 type CreateSnapshotRequest struct {
 	// [Optional]
 	// Value must match regex: "^([a-z0-9\\-]+)$".

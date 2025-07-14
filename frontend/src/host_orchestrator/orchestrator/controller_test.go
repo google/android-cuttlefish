@@ -221,6 +221,12 @@ func (testUAM) ExtractArtifactWithDir(string, string) error {
 	return nil
 }
 
+type testIDM struct{}
+
+func (testIDM) CreateImageDirectory() (string, error) {
+	return "", nil
+}
+
 func TestCreateUploadDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/userartifacts", strings.NewReader("{}"))
@@ -355,6 +361,21 @@ func TestExtractUserArtifactIsHandled(t *testing.T) {
 		t.Fatal(err)
 	}
 	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestCreateImageDirectoryIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("POST", "/cvd_imgs_dirs", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{ImageDirectoriesManager: &testIDM{}, OperationManager: NewMapOM()}
 
 	makeRequest(rr, req, &controller)
 
