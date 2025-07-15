@@ -75,6 +75,30 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "zip_copy",
+    srcs = ["zip_copy.cc"],
+    hdrs = ["zip_copy.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:zip_cc",
+    ],
+)
+
+cf_cc_test(
+    name = "zip_copy_test",
+    srcs = ["zip_copy_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip:zip_copy",
+        "//cuttlefish/host/libs/zip:zip_string",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "zip_file",
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
