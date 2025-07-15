@@ -1,0 +1,20 @@
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+# html client files
+exports_files([
+    "client.html",
+    "controls.css",
+    "custom.css",
+    "style.css",
+    "js/adb.js",
+    "js/app.js",
+    "js/cf_webrtc.js",
+    "js/controls.js",
+    "js/keyboard.js",
+    "js/location.js",
+    "js/mouse.js",
+    "js/rootcanal.js",
+    "js/touch.js",
+])
