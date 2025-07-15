@@ -153,10 +153,6 @@ func (m *UserArtifactsManagerImpl) GetDirPath(name string) string {
 	return filepath.Join(m.LegacyRootDir, name)
 }
 
-func (m *UserArtifactsManagerImpl) GetFilePath(dir, filename string) string {
-	return filepath.Join(m.LegacyRootDir, dir, filename)
-}
-
 func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
 	if chunk.OffsetBytes < 0 {
 		return operator.NewBadRequestError(fmt.Sprintf("invalid value (chunk_offset:%d)", chunk.OffsetBytes), nil)
