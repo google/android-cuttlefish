@@ -282,6 +282,9 @@ func createImageMain(project, zone string) error {
 	if err := uploadBashScript(project, zone, insName, "create_base_image.sh", gce_x86_64.ScriptCreateBaseImage); err != nil {
 		return fmt.Errorf("error uploading update kernel script: %v", err)
 	}
+	if err := uploadBashScript(project, zone, insName, "install_nvidia.sh", gce_x86_64.ScriptInstallNvidia); err != nil {
+		return fmt.Errorf("error uploading install nvidia script: %v", err)
+	}
 	// Execute Scripts
 	if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, insName, "--command", "./update_kernel.sh"); err != nil {
 		return err

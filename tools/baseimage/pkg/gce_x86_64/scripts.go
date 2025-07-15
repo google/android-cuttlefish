@@ -90,7 +90,13 @@ sudo chroot /mnt/image /usr/bin/apt install -y aapt
 sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
-sudo chroot /mnt/image /usr/bin/apt install -t bookworm -y linux-image-cloud-amd64
+
+# Install image from backports which has matching headers
+echo "deb http://deb.debian.org/debian bookworm-backports main" | \
+  sudo chroot /mnt/image /usr/bin/tee -a /etc/apt/sources.list >/dev/null
+
+sudo chroot /mnt/image /usr/bin/apt-get update
+sudo chroot /mnt/image /usr/bin/apt install -t bookworm-backports -y linux-image-cloud-amd64
 
 # update QEMU version to most recent backport
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bookworm
@@ -98,10 +104,9 @@ sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -t bookworm
 
 # Install GPU driver dependencies
-# TODO(b/416292723): Uncomment when fixed
-# sudo cp install_nvidia.sh /mnt/image/
-# sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
-# sudo rm /mnt/image/install_nvidia.sh
+sudo cp install_nvidia.sh /mnt/image/
+sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
+sudo rm /mnt/image/install_nvidia.sh
 
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bookworm
@@ -123,4 +128,40 @@ EOF
 # Skip unmounting:
 #  Sometimes systemd starts, making it hard to unmount
 #  In any case we'll unmount cleanly when the instance shuts down
+`
+
+const ScriptInstallNvidia = `#!/usr/bin/env bash
+set -x
+set -o errexit
+
+arch=$(uname -m)
+nvidia_arch=${arch}
+[ "${arch}" = "x86_64" ] && arch=amd64
+[ "${arch}" = "aarch64" ] && arch=arm64
+
+# NVIDIA driver needs dkms which requires /dev/fd
+if [ ! -d /dev/fd ]; then
+  ln -s /proc/self/fd /dev/fd
+fi
+
+# Using "Depends:" is more reliable than "Version:", because it works for
+# backported ("bpo") kernels as well. NOTE: "Package" can be used instead
+# if we don't install the metapackage ("linux-image-cloud-${arch}") but a
+# specific version in the future
+kmodver=$(dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
+          cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+
+apt-get install -y wget
+
+# Install headers from backports, to match the linux-image:
+apt-get install -y -t bookworm-backports $(echo linux-headers-${kmodver})
+# Dependencies for nvidia-installer
+apt-get install -y dkms libglvnd-dev libc6-dev pkg-config
+
+nvidia_version=570.158.01
+
+wget -q https://us.download.nvidia.com/tesla/${nvidia_version}/NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
+chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
+./NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run -x
+NVIDIA-Linux-${nvidia_arch}-${nvidia_version}/nvidia-installer --silent --no-install-compat32-libs --no-backup --no-wine-files --install-libglvnd --dkms -k "${kmodver}"
 `
