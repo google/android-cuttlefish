@@ -29,4 +29,7 @@ Result<void> AddFile(WritableZip& zip, const std::string& fs_path);
 Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
                        const std::string& zip_path);
 
+Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
+                         const std::string& host_path);
+
 }  // namespace cuttlefish
