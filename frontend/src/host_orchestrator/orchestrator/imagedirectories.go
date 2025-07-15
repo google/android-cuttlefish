@@ -16,14 +16,20 @@ package orchestrator
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 
+	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 	"github.com/google/uuid"
 )
 
 type ImageDirectoriesManager interface {
 	// Create an empty image directory.
 	CreateImageDirectory() (string, error)
+	// Update image directory with creating or modifying symlinks of all files
+	// under specified directory.
+	UpdateImageDirectory(imageDirName, dir string) error
 }
 
 // Options for creating instances of ImageDirectoriesManager implementations.
@@ -50,4 +56,36 @@ func (m *ImageDirectoriesManagerImpl) CreateImageDirectory() (string, error) {
 		return "", fmt.Errorf("failed to create an image directory: %w", err)
 	}
 	return dirname, nil
+}
+
+func (m *ImageDirectoriesManagerImpl) UpdateImageDirectory(imageDirName, dir string) error {
+	if exists, err := dirExists(dir); err != nil {
+		return fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return operator.NewNotFoundError(fmt.Sprintf("directory(dir:%q) not found", dir), nil)
+	}
+	imageDir := filepath.Join(m.RootDir, imageDirName)
+	if exists, err := dirExists(imageDir); err != nil {
+		return fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return operator.NewNotFoundError(fmt.Sprintf("image directory(dir:%q) not found", imageDirName), nil)
+	}
+	entries, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("failed to read directory: %w", err)
+	}
+	for _, entry := range entries {
+		symlink := filepath.Join(imageDir, entry.Name())
+		if exists, err := fileExist(symlink); err != nil {
+			return fmt.Errorf("failed to check existence of file: %w", err)
+		} else if exists {
+			if err := os.Remove(symlink); err != nil {
+				return fmt.Errorf("failed to remove previous symlink: %w", err)
+			}
+		}
+		if err := os.Symlink(filepath.Join(dir, entry.Name()), symlink); err != nil {
+			return fmt.Errorf("failed to create symlink: %w", err)
+		}
+	}
+	return nil
 }

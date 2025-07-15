@@ -227,6 +227,10 @@ func (testIDM) CreateImageDirectory() (string, error) {
 	return "", nil
 }
 
+func (testIDM) UpdateImageDirectory(imageDirName, dir string) error {
+	return nil
+}
+
 func TestCreateUploadDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("POST", "/userartifacts", strings.NewReader("{}"))

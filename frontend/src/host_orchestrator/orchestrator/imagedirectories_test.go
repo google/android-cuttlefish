@@ -15,11 +15,13 @@
 package orchestrator
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
 	orchtesting "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/testing"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestCreateImageDirectory(t *testing.T) {
@@ -34,5 +36,101 @@ func TestCreateImageDirectory(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(rootDir, dir)); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestUpdateImageDirectorySucceeds(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+	imageDir, err := idm.CreateImageDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, srcDir)
+	src := filepath.Join(srcDir, "foo.txt")
+	f, err := os.Create(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := ioutil.WriteFile(src, []byte("hello_world"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := ioutil.ReadFile(filepath.Join(rootDir, imageDir, "foo.txt")); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff("hello_world", string(output)); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestUpdateImageDirectorySucceedsWithModification(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+	imageDir, err := idm.CreateImageDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, srcDir)
+	src := filepath.Join(srcDir, "foo.txt")
+	f, err := os.Create(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := ioutil.WriteFile(src, []byte("hello_world"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(src, []byte("hello_world_again"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := ioutil.ReadFile(filepath.Join(rootDir, imageDir, "foo.txt")); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff("hello_world_again", string(output)); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestUpdateImageDirectoryFailsWhenImageDirectoryDoesNotExist(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+	srcDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, srcDir)
+
+	if err := idm.UpdateImageDirectory("foo", srcDir); err == nil {
+		t.Error("expected error")
+	}
+}
+
+func TestUpdateImageDirectoryFailsWhenSrcDirectoryDoesNotExist(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+	imageDir, err := idm.CreateImageDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := idm.UpdateImageDirectory(imageDir, "foo"); err == nil {
+		t.Error("expected error")
 	}
 }
