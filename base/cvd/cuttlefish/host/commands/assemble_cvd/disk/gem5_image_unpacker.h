@@ -16,13 +16,11 @@
 
 #pragma once
 
-#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-Result<void> Gem5ImageUnpacker(const CuttlefishConfig&,
-                               AutoSetup<RepackKernelRamdisk>::Type&);
+// Requires KernelRamdiskRepacker
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig&);
 
 }  // namespace cuttlefish
