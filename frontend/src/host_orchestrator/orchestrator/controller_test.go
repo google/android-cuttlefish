@@ -213,6 +213,14 @@ func (testUAM) ExtractArtifact(checksum string) error {
 	return nil
 }
 
+func (testUAM) UpdatedArtifactPath(checksum string) string {
+	return ""
+}
+
+func (testUAM) ExtractedArtifactPath(checksum string) string {
+	return ""
+}
+
 func (testUAM) GetDirPath(string) string {
 	return ""
 }

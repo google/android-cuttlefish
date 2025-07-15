@@ -37,7 +37,13 @@ import (
 
 // Resolves the user artifacts full directory.
 type UserArtifactsDirResolver interface {
+	// Retrieve the full path where the updated artifact located
+	UpdatedArtifactPath(checksum string) string
+	// Retrieve the full path where the extracted artifact located
+	ExtractedArtifactPath(checksum string) string
+
 	// Given a directory name returns its full path.
+	// Deprecated: use `UpdatedArtifactPath` instead
 	GetDirPath(name string) string
 }
 
@@ -149,6 +155,14 @@ func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesRespo
 	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
 }
 
+func (m *UserArtifactsManagerImpl) UpdatedArtifactPath(checksum string) string {
+	return filepath.Join(m.RootDir, checksum)
+}
+
+func (m *UserArtifactsManagerImpl) ExtractedArtifactPath(checksum string) string {
+	return filepath.Join(m.RootDir, fmt.Sprintf("%s_extracted", checksum))
+}
+
 func (m *UserArtifactsManagerImpl) GetDirPath(name string) string {
 	return filepath.Join(m.LegacyRootDir, name)
 }
@@ -196,7 +210,7 @@ func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserA
 }
 
 func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (*apiv1.StatArtifactResponse, error) {
-	if exists, err := dirExists(filepath.Join(m.RootDir, checksum)); err != nil {
+	if exists, err := dirExists(m.UpdatedArtifactPath(checksum)); err != nil {
 		return nil, fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if !exists {
 		return nil, operator.NewNotFoundError(fmt.Sprintf("user artifact(checksum:%q) not found", checksum), nil)
@@ -205,7 +219,7 @@ func (m *UserArtifactsManagerImpl) StatArtifact(checksum string) (*apiv1.StatArt
 }
 
 func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
-	dir := filepath.Join(m.RootDir, fmt.Sprintf("%s_extracted", checksum))
+	dir := m.ExtractedArtifactPath(checksum)
 	if exists, err := dirExists(dir); err != nil {
 		return fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if exists {
@@ -277,7 +291,7 @@ func (m *UserArtifactsManagerImpl) writeChunkAndUpdateState(checksum string, chu
 	// chunks are being updated.
 	mu.RLock()
 	defer mu.RUnlock()
-	if exists, err := dirExists(filepath.Join(m.RootDir, checksum)); err != nil {
+	if exists, err := dirExists(m.UpdatedArtifactPath(checksum)); err != nil {
 		return false, fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if exists {
 		return false, operator.NewConflictError(fmt.Sprintf("user artifact(checksum:%q) already exists", checksum), nil)
@@ -319,7 +333,7 @@ func (m *UserArtifactsManagerImpl) moveArtifactIfNeeded(checksum string, chunk U
 	// or moving artifact.
 	mu.Lock()
 	defer mu.Unlock()
-	dir := filepath.Join(m.RootDir, checksum)
+	dir := m.UpdatedArtifactPath(checksum)
 	if exists, err := dirExists(dir); err != nil {
 		return fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if exists {
@@ -341,7 +355,7 @@ func (m *UserArtifactsManagerImpl) moveArtifactIfNeeded(checksum string, chunk U
 }
 
 func (m *UserArtifactsManagerImpl) getFilePath(checksum string) (string, error) {
-	dir := filepath.Join(m.RootDir, checksum)
+	dir := m.UpdatedArtifactPath(checksum)
 	if exists, err := dirExists(dir); err != nil {
 		return "", fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if !exists {
