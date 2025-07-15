@@ -33,12 +33,13 @@ kmodver=$(dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
           cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 
 apt-get install -y wget
-# Install headers from backports, to match the linux-image
-apt-get install -y -t bookworm $(echo linux-headers-${kmodver})
+
+# Install headers from backports, to match the linux-image:
+apt-get install -y -t bookworm-backports $(echo linux-headers-${kmodver})
 # Dependencies for nvidia-installer
 apt-get install -y dkms libglvnd-dev libc6-dev pkg-config
 
-nvidia_version=525.85.12
+nvidia_version=570.158.01
 
 wget -q https://us.download.nvidia.com/tesla/${nvidia_version}/NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
 chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
