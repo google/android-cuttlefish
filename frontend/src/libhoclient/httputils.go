@@ -61,23 +61,11 @@ func (h *HTTPHelper) NewDeleteRequest(path string) *HTTPRequestBuilder {
 }
 
 func (h *HTTPHelper) NewPostRequest(path string, jsonBody any) *HTTPRequestBuilder {
-	body := []byte{}
-	var err error
-	if jsonBody != nil {
-		if body, err = json.Marshal(jsonBody); err != nil {
-			return &HTTPRequestBuilder{helper: h, request: nil, err: err}
-		}
-	}
-	var req *http.Request
-	if req, err = http.NewRequest(http.MethodPost, h.RootEndpoint+path, bytes.NewBuffer(body)); err != nil {
-		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
-	}
-	req.Header.Set("Content-Type", "application/json")
-	return &HTTPRequestBuilder{
-		helper:  h,
-		request: req,
-		err:     err,
-	}
+	return h.newRequestWithJson(http.MethodPost, path, jsonBody)
+}
+
+func (h *HTTPHelper) NewPutRequest(path string, jsonBody any) *HTTPRequestBuilder {
+	return h.newRequestWithJson(http.MethodPut, path, jsonBody)
 }
 
 func (h *HTTPHelper) NewUploadFileRequest(ctx context.Context, path string, body io.Reader, contentType string) *HTTPRequestBuilder {
@@ -89,7 +77,27 @@ func (h *HTTPHelper) NewUploadFileRequest(ctx context.Context, path string, body
 	return &HTTPRequestBuilder{
 		helper:  h,
 		request: req,
-		err:     err,
+		err:     nil,
+	}
+}
+
+func (h *HTTPHelper) newRequestWithJson(method, path string, jsonBody any) *HTTPRequestBuilder {
+	body := []byte{}
+	var err error
+	if jsonBody != nil {
+		if body, err = json.Marshal(jsonBody); err != nil {
+			return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+		}
+	}
+	var req *http.Request
+	if req, err = http.NewRequest(method, h.RootEndpoint+path, bytes.NewBuffer(body)); err != nil {
+		return &HTTPRequestBuilder{helper: h, request: nil, err: err}
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return &HTTPRequestBuilder{
+		helper:  h,
+		request: req,
+		err:     nil,
 	}
 }
 
