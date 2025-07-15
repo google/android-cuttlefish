@@ -177,7 +177,7 @@ func TestUpdateArtifactWithDirSucceeds(t *testing.T) {
 	}
 
 	wg.Wait()
-	b, _ := ioutil.ReadFile(am.GetFilePath(upDir.Name, "xyzz"))
+	b, _ := ioutil.ReadFile(filepath.Join(legacyRootDir, upDir.Name, "xyzz"))
 	if diff := cmp.Diff("lorem ipsum", string(b)); diff != "" {
 		t.Errorf("aritfact content mismatch (-want +got):\n%s", diff)
 	}
