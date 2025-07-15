@@ -141,6 +141,10 @@ type CreateImageDirectoryResponse struct {
 	ID string `json:"name"`
 }
 
+type UpdateImageDirectoryRequest struct {
+	UserArtifactChecksum string `json:"user_artifact_checksum"`
+}
+
 type CreateSnapshotRequest struct {
 	// [Optional]
 	// Value must match regex: "^([a-z0-9\\-]+)$".

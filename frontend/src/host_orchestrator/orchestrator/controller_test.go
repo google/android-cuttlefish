@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -388,6 +389,26 @@ func TestCreateImageDirectoryIsHandled(t *testing.T) {
 		t.Fatal(err)
 	}
 	controller := Controller{ImageDirectoriesManager: &testIDM{}, OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestUpdateImageDirectoryIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	body, err := json.Marshal(apiv1.UpdateImageDirectoryRequest{UserArtifactChecksum: "aaa"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequest("PUT", "/cvd_imgs_dirs/foo", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	controller := Controller{ImageDirectoriesManager: &testIDM{}, OperationManager: NewMapOM(), UserArtifactsManager: &testUAM{}}
 
 	makeRequest(rr, req, &controller)
 

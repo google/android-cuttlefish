@@ -120,6 +120,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, true})).Methods("POST")
 	router.Handle("/cvd_imgs_dirs", httpHandler(&createImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("POST")
+	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -723,6 +724,33 @@ func (h *createImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 		result.Value = &apiv1.CreateImageDirectoryResponse{ID: dir}
 		result.Error = err
 		if err := h.om.Complete(op.Name, result); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
+}
+
+type updateImageDirectoryHandler struct {
+	idm  ImageDirectoriesManager
+	om   OperationManager
+	uadr UserArtifactsDirResolver
+}
+
+func (h *updateImageDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.UpdateImageDirectoryRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		return nil, operator.NewBadRequestError("Malformed JSON in request", err)
+	}
+	dir := h.uadr.ExtractedArtifactPath(req.UserArtifactChecksum)
+	if exists, err := dirExists(dir); err != nil {
+		return nil, fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		dir = h.uadr.UpdatedArtifactPath(req.UserArtifactChecksum)
+	}
+	op := h.om.New()
+	go func() {
+		err := h.idm.UpdateImageDirectory(mux.Vars(r)["id"], dir)
+		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}
 	}()
