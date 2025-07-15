@@ -25,7 +25,6 @@
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
-#include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -63,7 +62,6 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
-#include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
@@ -205,24 +203,6 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   }
   // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
-}
-
-static fruit::Component<> DiskChangesComponent(
-    const FetcherConfig* fetcher, const CuttlefishConfig* config,
-    const CuttlefishConfig::InstanceSpecific* instance) {
-  return fruit::createComponent()
-      .bindInstance(*fetcher)
-      .bindInstance(*config)
-      .bindInstance(*instance)
-      .install(CuttlefishKeyAvbComponent)
-      .install(AutoSetup<InitializeChromeOsState>::Component)
-      .install(AutoSetup<RepackKernelRamdisk>::Component)
-      .install(AutoSetup<VbmetaEnforceMinimumSize>::Component)
-      .install(AutoSetup<BootloaderPresentCheck>::Component)
-      .install(AutoSetup<Gem5ImageUnpacker>::Component)
-      // Create esp if necessary
-      .install(AutoSetup<InitializeEspImage>::Component)
-      .install(AutoSetup<RebuildSuperImageIfNecessary>::Component);
 }
 
 Result<void> DiskImageFlagsVectorization(
@@ -492,16 +472,16 @@ Result<void> CreateDynamicDiskFiles(
     const FetcherConfig& fetcher_config, const CuttlefishConfig& config,
     const SystemImageDirFlag& system_image_dir) {
   for (const auto& instance : config.Instances()) {
-    // TODO(schuffelen): Unify this with the other injector created in
-    // assemble_cvd.cpp
-    fruit::Injector<> injector(DiskChangesComponent, &fetcher_config, &config,
-                               &instance);
-    for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
-      CF_EXPECT(late_injected->LateInject(injector));
-    }
+    std::unique_ptr<Avb> avb = GetDefaultAvb();
+    CF_EXPECT(avb.get());
 
-    const auto& features = injector.getMultibindings<SetupFeature>();
-    CF_EXPECT(SetupFeature::RunSetup(features));
+    CF_EXPECT(InitializeChromeOsState(instance));
+    CF_EXPECT(RepackKernelRamdisk(config, instance, *avb));
+    CF_EXPECT(VbmetaEnforceMinimumSize(instance));
+    CF_EXPECT(BootloaderPresentCheck(instance));
+    CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk
+    CF_EXPECT(InitializeEspImage(config, instance));
+    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
 
     CF_EXPECT(InitializeAccessKregistryImage(instance));
     CF_EXPECT(InitializeHwcomposerPmemImage(instance));

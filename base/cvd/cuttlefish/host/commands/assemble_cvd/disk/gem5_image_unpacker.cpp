@@ -21,15 +21,11 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
 
-Result<void> Gem5ImageUnpacker(
-    const CuttlefishConfig& config,
-    AutoSetup<RepackKernelRamdisk>::Type& /* dependency */) {
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config) {
   if (config.vm_manager() != VmmMode::kGem5) {
     return {};
   }
