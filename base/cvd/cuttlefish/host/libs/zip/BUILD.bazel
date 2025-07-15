@@ -106,6 +106,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip:zip_copy",
     ],
 )
 
