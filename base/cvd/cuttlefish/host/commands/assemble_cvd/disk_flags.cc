@@ -84,7 +84,6 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
 
   std::string default_boot_image = "";
   std::string default_super_image = "";
-  std::string default_misc_info_txt = "";
   std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
   std::string default_vbmeta_system_image = "";
@@ -111,8 +110,6 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
     // be placed in --system_image_dir location.
     default_boot_image += comma_str + cur_system_image_dir + "/boot.img";
     default_super_image += comma_str + cur_system_image_dir + "/super.img";
-    default_misc_info_txt +=
-        comma_str + cur_system_image_dir + "/misc_info.txt";
     default_vendor_boot_image += comma_str + cur_system_image_dir + "/vendor_boot.img";
     default_vbmeta_image += comma_str + cur_system_image_dir + "/vbmeta.img";
     default_vbmeta_system_image += comma_str + cur_system_image_dir + "/vbmeta_system.img";
@@ -133,8 +130,6 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("misc_info_txt", default_misc_info_txt.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vendor_boot_image",
                                default_vendor_boot_image.c_str(),
@@ -213,8 +208,6 @@ Result<void> DiskImageFlagsVectorization(
       android::base::Split(FLAGS_boot_image, ",");
   std::vector<std::string> super_image =
       android::base::Split(FLAGS_super_image, ",");
-  std::vector<std::string> misc_info =
-      android::base::Split(FLAGS_misc_info_txt, ",");
   std::vector<std::string> vendor_boot_image =
       android::base::Split(FLAGS_vendor_boot_image, ",");
   std::vector<std::string> vbmeta_image =
@@ -274,11 +267,6 @@ Result<void> DiskImageFlagsVectorization(
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   for (const auto& num : instance_nums) {
     auto instance = config.ForInstance(num);
-    if (instance_index >= misc_info.size()) {
-      instance.set_misc_info_txt(misc_info[0]);
-    } else {
-      instance.set_misc_info_txt(misc_info[instance_index]);
-    }
     if (instance_index >= boot_image.size()) {
       cur_boot_image = boot_image[0];
     } else {
