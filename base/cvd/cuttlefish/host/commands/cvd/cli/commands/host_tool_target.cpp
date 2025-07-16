@@ -111,7 +111,7 @@ Result<std::string> HostToolTarget::GetBinName(
       return bin_name;
     }
   }
-  return CF_ERRF("'{}' does not contain any of '[{}]'.", artifacts_path_,
+  return CF_ERRF("'{}/bin/' does not contain any of '[{}]'.", artifacts_path_,
                  android::base::Join(alternatives, ", "));
 }
 
