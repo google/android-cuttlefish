@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.15.0) unstable; urgency=medium
+cuttlefish-frontend (1.15.0) stable; urgency=medium
 
   * Update documentation on tools/buildutils/cw/README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/1343
   * Export generated Go code for load_config.proto. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1358
