@@ -15,6 +15,7 @@
 //! This crate implements the KeyMint HAL service in Rust, communicating with a Rust
 //! trusted application (TA) running on the Cuttlefish host.
 
+use kmr_hal::{register_binder_services, HalServiceError};
 use kmr_hal_nonsecure::{attestation_id_info, get_boot_info};
 use log::{debug, error, info};
 use std::ops::DerefMut;
@@ -27,15 +28,6 @@ static DEVICE_FILE_NAME: &str = "/dev/hvc11";
 
 /// Name of KeyMint binder device instance.
 static SERVICE_INSTANCE: &str = "default";
-
-static KM_SERVICE_NAME: &str = "android.hardware.security.keymint.IKeyMintDevice";
-static RPC_SERVICE_NAME: &str = "android.hardware.security.keymint.IRemotelyProvisionedComponent";
-static CLOCK_SERVICE_NAME: &str = "android.hardware.security.secureclock.ISecureClock";
-static SECRET_SERVICE_NAME: &str = "android.hardware.security.sharedsecret.ISharedSecret";
-
-/// Local error type for failures in the HAL service.
-#[derive(Debug, Clone)]
-struct HalServiceError(String);
 
 /// Read-write file used for communication with host TA.
 #[derive(Debug)]
@@ -121,31 +113,7 @@ fn inner_main() -> Result<(), HalServiceError> {
     // checked that it is not negative.
     let channel = Arc::new(Mutex::new(FileChannel(unsafe { std::fs::File::from_raw_fd(fd) })));
 
-    let km_service = kmr_hal::keymint::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", KM_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, km_service.as_binder()).map_err(|e| {
-        HalServiceError(format!("Failed to register service {} because of {:?}.", service_name, e))
-    })?;
-
-    let rpc_service = kmr_hal::rpc::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", RPC_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, rpc_service.as_binder()).map_err(|e| {
-        HalServiceError(format!("Failed to register service {} because of {:?}.", service_name, e))
-    })?;
-
-    let clock_service = kmr_hal::secureclock::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", CLOCK_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, clock_service.as_binder()).map_err(|e| {
-        HalServiceError(format!("Failed to register service {} because of {:?}.", service_name, e))
-    })?;
-
-    let secret_service = kmr_hal::sharedsecret::Device::new_as_binder(channel.clone());
-    let service_name = format!("{}/{}", SECRET_SERVICE_NAME, SERVICE_INSTANCE);
-    binder::add_service(&service_name, secret_service.as_binder()).map_err(|e| {
-        HalServiceError(format!("Failed to register service {} because of {:?}.", service_name, e))
-    })?;
-
-    info!("Successfully registered KeyMint HAL services.");
+    register_binder_services(&channel, SERVICE_INSTANCE)?;
 
     // Let the TA know information about the boot environment. In a real device this
     // is communicated directly from the bootloader to the TA, but here we retrieve
