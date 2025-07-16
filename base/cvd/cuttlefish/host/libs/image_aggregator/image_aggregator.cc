@@ -39,12 +39,11 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/cf_endian.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
+#include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
 
 namespace cuttlefish {
@@ -129,24 +128,6 @@ struct PartitionInfo {
   std::uint64_t AlignedSize() const { return AlignToPartitionSize(size); }
 };
 
-struct __attribute__((packed)) QCowHeader {
-  Be32 magic;
-  Be32 version;
-  Be64 backing_file_offset;
-  Be32 backing_file_size;
-  Be32 cluster_bits;
-  Be64 size;
-  Be32 crypt_method;
-  Be32 l1_size;
-  Be64 l1_table_offset;
-  Be64 refcount_table_offset;
-  Be32 refcount_table_clusters;
-  Be32 nb_snapshots;
-  Be64 snapshots_offset;
-};
-
-static_assert(sizeof(QCowHeader) == 72);
-
 /*
  * Returns the expanded file size of `file_path`. Note that the raw size of
  * files doesn't match how large they may appear inside a VM.
@@ -196,13 +177,13 @@ std::uint64_t ExpandedStorageSize(const std::string& file_path) {
   }
 
   // Qcow2 image
-  if (android::base::StartsWith(magic, QCOW2_MAGIC)) {
-    QCowHeader header;
-    if (!android::base::ReadFully(fd, &header, sizeof(QCowHeader))) {
-      PLOG(FATAL) << "Fail to read(qcow2 header): " << file_path;
-      return 0;
-    }
-    return header.size.as_uint64_t();
+  if (android::base::StartsWith(magic, Qcow2Image::MagicHeader())) {
+    Result<Qcow2Image> image = Qcow2Image::OpenExisting(file_path);
+    CHECK(image.ok()) << image.error().FormatForEnv();
+
+    Result<uint64_t> size = image->Size();
+    CHECK(size.ok()) << size.error().FormatForEnv();
+    return *size;
   }
 
   // Android-Sparse
@@ -531,30 +512,6 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
   composite << CDISK_MAGIC;
   composite_proto.SerializeToOstream(&composite);
   composite.flush();
-}
-
-void CreateQcowOverlay(const std::string& crosvm_path,
-                       const std::string& backing_file,
-                       const std::string& output_overlay_path) {
-  Command cmd(crosvm_path);
-  cmd.AddParameter("create_qcow2");
-  cmd.AddParameter("--backing-file");
-  cmd.AddParameter(backing_file);
-  cmd.AddParameter(output_overlay_path);
-
-  std::string stdout_str;
-  std::string stderr_str;
-  int success =
-      RunWithManagedStdio(std::move(cmd), nullptr, &stdout_str, &stderr_str);
-
-  if (success != 0) {
-    LOG(ERROR) << "Failed to run `" << crosvm_path
-               << " create_qcow2 --backing-file " << backing_file << " "
-               << output_overlay_path << "`";
-    LOG(ERROR) << "stdout:\n###\n" << stdout_str << "\n###";
-    LOG(ERROR) << "stderr:\n###\n" << stderr_str << "\n###";
-    LOG(FATAL) << "Return code: \"" << success << "\"";
-  }
 }
 
 } // namespace cuttlefish

@@ -24,6 +24,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 
 namespace cuttlefish {
 
@@ -254,7 +255,8 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
   }
 
   CF_EXPECT(!crosvm_path_.empty(), "crosvm binary missing");
-  CreateQcowOverlay(crosvm_path_, composite_disk_path_, overlay_path_);
+  CF_EXPECT(
+      Qcow2Image::Create(crosvm_path_, composite_disk_path_, overlay_path_));
 
   return true;
 #endif

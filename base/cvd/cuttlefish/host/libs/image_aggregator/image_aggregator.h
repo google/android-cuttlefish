@@ -64,22 +64,4 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& footer_file,
                          const std::string& output_composite_path,
                          bool read_only);
-
-/**
- * Generate a qcow overlay backed by a given implementation file.
- *
- * qcow, or "QEMU Copy-On-Write" is a file format containing a list of disk
- * offsets and file contents. This can be combined with a backing file, to
- * represent an original disk file plus disk updates over that file. The qcow
- * files can be swapped out and replaced without affecting the original. qcow
- * is supported by QEMU and crosvm.
- *
- * The crosvm binary at `crosvm_path` is used to generate an overlay file at
- * `output_overlay_path` that functions as an overlay on the file at
- * `backing_file`.
- */
-void CreateQcowOverlay(const std::string& crosvm_path,
-                       const std::string& backing_file,
-                       const std::string& output_overlay_path);
-
 }
