@@ -259,6 +259,22 @@ crosvm_bin.from_specs(
 
 use_repo(crosvm_bin, "crosvm_bin")
 
+pica_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+pica_crates.spec(
+    package = "pdl-compiler",
+    version = "0.3.3",
+)
+pica_crates.annotation(crate = "pdl-compiler", gen_all_binaries = True)
+pica_crates.from_cargo(
+    name = "pica_crates",
+    manifests = ["@pica//:Cargo.toml"],
+    # Needed because it shares the extension with crosvm
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools_repo = "rust_host_tools_nightly",
+)
+
+use_repo(pica_crates, "pica_crates")
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Upstream mtools is in subversion, which bazel doesn't support
@@ -274,7 +290,7 @@ git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "g
 git_repository(
     name = "fruit",
     build_file = "@//:BUILD.fruit.bazel",
-    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f", # 2025-02-02
+    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
     remote = "https://github.com/google/fruit.git",
 )
 
@@ -295,7 +311,7 @@ git_repository(
 git_repository(
     name = "vulkan_headers",
     build_file = "@//:BUILD.vulkan_headers.bazel",
-    commit = "952f776f6573aafbb62ea717d871cd1d6816c387", # v1.4.309
+    commit = "952f776f6573aafbb62ea717d871cd1d6816c387",  # v1.4.309
     remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
 )
 
@@ -309,7 +325,7 @@ git_repository(
 git_repository(
     name = "libffi",
     build_file = "@//:BUILD.libffi.bazel",
-    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616", # v3.3
+    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
     remote = "https://github.com/libffi/libffi.git",
 )
 
@@ -321,7 +337,7 @@ git_repository(
 
 git_repository(
     name = "spirv_tools",
-    commit = "dd4b663e13c07fea4fbb3f70c1c91c86731099f7", # v2024.2
+    commit = "dd4b663e13c07fea4fbb3f70c1c91c86731099f7",  # v2024.2
     remote = "https://github.com/KhronosGroup/SPIRV-Tools.git",
 )
 
@@ -366,7 +382,7 @@ git_repository(
 git_repository(
     name = "expat",
     build_file = "@//:BUILD.expat.bazel",
-    commit = "2691aff4304a6d7e053199c205620136481b9dd1", # 2.6.4
+    commit = "2691aff4304a6d7e053199c205620136481b9dd1",  # 2.6.4
     remote = "https://github.com/libexpat/libexpat/",
 )
 
@@ -387,20 +403,20 @@ git_repository(
 git_repository(
     name = "libwebsockets",
     build_file = "@//:BUILD.libwebsockets.bazel",
-    commit = "9075f01e1670e64435f4ea501667982fc911ad6b", # v4.3-stable
+    commit = "9075f01e1670e64435f4ea501667982fc911ad6b",  # v4.3-stable
     remote = "https://github.com/warmcat/libwebsockets",
 )
 
 git_repository(
     name = "libcbor",
-    commit = "ae000f44e8d2a69e1f72a738f7c0b6b4b7cc4fbf", # v0.12.0
+    commit = "ae000f44e8d2a69e1f72a738f7c0b6b4b7cc4fbf",  # v0.12.0
     build_file = "@//:BUILD.libcbor.bazel",
     remote = "https://github.com/PJK/libcbor",
 )
 
 git_repository(
     name = "libwebm",
-    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb", # libwebm-1.0.0.31
+    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb",  # libwebm-1.0.0.31
     build_file = "@//:BUILD.libwebm.bazel",
     remote = "https://github.com/webmproject/libwebm",
 )
@@ -445,21 +461,21 @@ git_repository(
 git_repository(
     name = "mako",
     build_file = "@//:BUILD.mako.bazel",
-    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc", # 1.3.0
+    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc",  # 1.3.0
     remote = "https://github.com/sqlalchemy/mako",
 )
 
 git_repository(
     name = "markupsafe",
     build_file = "@//:BUILD.markupsafe.bazel",
-    commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a", # 2.0.1
+    commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a",  # 2.0.1
     remote = "https://github.com/pallets/markupsafe",
 )
 
 git_repository(
     name = "pyyaml",
     build_file = "@//:BUILD.pyyaml.bazel",
-    commit = "41309b0bcb4559edb1d691d47199035ef539d785", # 6.0.2
+    commit = "41309b0bcb4559edb1d691d47199035ef539d785",  # 6.0.2
     remote = "https://github.com/yaml/pyyaml.git",
 )
 
@@ -529,7 +545,7 @@ git_repository(
 git_repository(
     name = "libvpx",
     build_file = "@//:BUILD.libvpx.bazel",
-    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb", # v1.15.1
+    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb",  # v1.15.1
     remote = "https://chromium.googlesource.com/webm/libvpx",
     patch_strip = 1,
     # Generate this file with `find . -type f | xargs sed -i -e 's|#include "./|#include "|' && git diff` on the libvpx source
@@ -581,4 +597,11 @@ git_repository(
     build_file = "@//:BUILD.android_system_extras.bazel",
     commit = "fc2494a2abd7ab21774d03deb09c1362bbb0bba8",
     remote = "https://android.googlesource.com/platform/system/extras",
+)
+
+git_repository(
+    name = "pica",
+    build_file = "@//:BUILD.pica.bazel",
+    commit = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # v0.1.12
+    remote = "https://github.com/google/pica/",
 )
