@@ -21,6 +21,7 @@
 #include <string>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 
 namespace cuttlefish {
 
@@ -31,7 +32,7 @@ namespace cuttlefish {
  * files can be swapped out and replaced without affecting the original. qcow
  * is supported by QEMU and crosvm.
  */
-class Qcow2Image {
+class Qcow2Image : public DiskImage {
  public:
   /**
    * Generate a qcow overlay backed by a given implementation file.
@@ -42,21 +43,27 @@ class Qcow2Image {
    */
   static Result<Qcow2Image> Create(const std::string& crosvm_path,
                                    const std::string& backing_file,
-                                   const std::string& output_overlay_path);
-  static Result<Qcow2Image> OpenExisting(const std::string& path);
+                                   std::string output_overlay_path);
+  static Result<Qcow2Image> OpenExisting(std::string path);
 
   Qcow2Image(Qcow2Image&&);
-  ~Qcow2Image();
+  ~Qcow2Image() override;
   Qcow2Image& operator=(Qcow2Image&&);
 
-  static std::string MagicHeader();
+  /** "QCOW magic string", used to identify the file type.
+   *
+   * Valid qcow2 files start with this prefix.
+   *
+   * https://gitlab.com/qemu-project/qemu/-/blob/master/docs/interop/qcow2.rst
+   */
+  static std::string MagicString();
 
-  Result<uint64_t> Size() const;
+  Result<uint64_t> VirtualSizeBytes() const override;
 
  private:
   struct Impl;
 
-  explicit Qcow2Image(std::unique_ptr<Impl>);
+  Qcow2Image(std::unique_ptr<Impl>);
 
   std::unique_ptr<Impl> impl_;
 };
