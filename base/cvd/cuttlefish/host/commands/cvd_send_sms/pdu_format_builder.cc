@@ -61,7 +61,7 @@ static std::string Gsm7bitEncode(const std::string& input) {
   for (; iter.hasNext(); iter.next()) {
     UChar uchar = iter.current();
     char dest[5];
-    UErrorCode uerror_code;
+    UErrorCode uerror_code = U_ZERO_ERROR;
     u_strToUTF8(dest, 5, NULL, &uchar, 1, &uerror_code);
     if (U_FAILURE(uerror_code)) {
       LOG(ERROR) << "u_strToUTF8 failed with error: "
