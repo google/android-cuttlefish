@@ -142,7 +142,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Install swag
-      run: go install github.com/swaggo/swag/cmd/swag@latest
+      run: go install github.com/swaggo/swag/cmd/swag@v1.16.5
     - name: Run swag check
       shell: bash
       run: |
