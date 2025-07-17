@@ -53,6 +53,7 @@ definitions:
     - 1
     - 2
     - 3
+    format: int64
     type: integer
     x-enum-varnames:
     - MainBundleType
