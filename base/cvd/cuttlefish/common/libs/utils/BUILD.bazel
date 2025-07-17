@@ -322,7 +322,6 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
-    clang_tidy_enabled = False,  # TODO: b/414665224 - fix and enable linting
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
