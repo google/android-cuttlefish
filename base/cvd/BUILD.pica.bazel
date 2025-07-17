@@ -1,3 +1,4 @@
+load("@pica_crates//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
 
 genrule(
@@ -14,45 +15,23 @@ rust_library(
         ":libpica_uci_packets",
     ],
     crate_name = "pica",
-    proc_macro_deps = [
-        "@pica_crates//:num-derive",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        "@pica_crates//:anyhow",
-        "@pica_crates//:bytes",
-        "@pica_crates//:futures",
-        "@pica_crates//:glam",
-        "@pica_crates//:hex",
-        "@pica_crates//:log",
-        "@pica_crates//:num-traits",
-        "@pica_crates//:pdl-runtime",
-        "@pica_crates//:serde",
-        "@pica_crates//:thiserror",
-        "@pica_crates//:tokio",
-    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
     rustc_env = {
         # HACK: If PWD were execroot, this would be roughly
         # $(dirname $(execpath :libpica_uci_packets)).
         # However, it is not, so use .. here (to counteract src/)
         "OUT_DIR": "..",
     },
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(normal = True),
 )
 
 rust_binary(
     name = "pica",
     srcs = ["src/bin/main.rs"],
-    proc_macro_deps = [
-        "@pica_crates//:num-derive",
-    ],
+    proc_macro_deps = all_crate_deps(proc_macro = True),
     visibility = ["//visibility:public"],
-    deps = [
+    deps = all_crate_deps(normal = True) + [
         ":libpica",
-        "@pica_crates//:anyhow",
-        "@pica_crates//:clap",
-        "@pica_crates//:env_logger",
-        "@pica_crates//:futures",
-        "@pica_crates//:log",
-        "@pica_crates//:tokio",
     ],
 )
