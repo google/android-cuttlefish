@@ -14,6 +14,7 @@
 
 #include "sample_base.h"
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
