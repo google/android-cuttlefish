@@ -15,11 +15,11 @@
 package orchestrator
 
 import (
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"sync/atomic"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
@@ -104,11 +104,15 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("environment config:\n%s", string(data))
-	data = bytes.ReplaceAll(data,
-		[]byte(apiv1.EnvConfigUserArtifactsVar+"/"),
-		[]byte(a.userArtifactsDirResolver.GetDirPath("")+"/"))
-	configFile, err := createTempFile("cvdload*.json", data, 0640)
+	config := string(data)
+	log.Printf("environment config:\n%s", config)
+	config = strings.ReplaceAll(config,
+		apiv1.EnvConfigImageDirectoriesVar+"/",
+		a.paths.ImageDirectoriesDir+"/")
+	config = strings.ReplaceAll(config,
+		apiv1.EnvConfigUserArtifactsVar+"/",
+		a.userArtifactsDirResolver.GetDirPath("")+"/")
+	configFile, err := createTempFile("cvdload*.json", config, 0640)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +228,7 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 }
 
 // See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
-func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, error) {
+func createTempFile(pattern string, data string, mode os.FileMode) (*os.File, error) {
 	file, err := ioutil.TempFile("", pattern)
 	if err != nil {
 		return nil, err
@@ -232,7 +236,7 @@ func createTempFile(pattern string, data []byte, mode os.FileMode) (*os.File, er
 	if err := file.Chmod(mode); err != nil {
 		return nil, err
 	}
-	_, err = file.Write(data)
+	_, err = file.WriteString(data)
 	if closeErr := file.Close(); closeErr != nil && err == nil {
 		err = closeErr
 	}

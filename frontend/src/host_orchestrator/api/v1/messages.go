@@ -38,7 +38,11 @@ type AndroidCIBundle struct {
 	Type ArtifactsBundleType `json:"type"`
 }
 
+// Prefix for specifying image directory ID while creating CVD with CreateCVDRequest.EnvConfig.
+const EnvConfigImageDirectoriesVar = "@image_dirs"
+
 // Prefix for specifying user artifact path while creating CVD with CreateCVDRequest.EnvConfig.
+// [DEPRECATED]. Use `EnvConfigImageDirectoriesVar` instead.
 const EnvConfigUserArtifactsVar = "@user_artifacts"
 
 // Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.

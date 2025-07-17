@@ -118,10 +118,11 @@ func main() {
 	}
 
 	imPaths := orchestrator.IMPaths{
-		RootDir:          *imRootDir,
-		InstancesDir:     filepath.Join(*imRootDir, "instances"),
-		CVDBugReportsDir: filepath.Join(*imRootDir, "cvdbugreports"),
-		SnapshotsRootDir: filepath.Join(*imRootDir, "snapshots"),
+		RootDir:             *imRootDir,
+		InstancesDir:        filepath.Join(*imRootDir, "instances"),
+		CVDBugReportsDir:    filepath.Join(*imRootDir, "cvdbugreports"),
+		SnapshotsRootDir:    filepath.Join(*imRootDir, "snapshots"),
+		ImageDirectoriesDir: filepath.Join(*imRootDir, "image_dirs"),
 	}
 
 	om := orchestrator.NewMapOM()
@@ -135,7 +136,7 @@ func main() {
 	}
 	defer os.RemoveAll(uam.WorkDir)
 	idmOpts := orchestrator.ImageDirectoriesManagerOpts{
-		RootDir: filepath.Join(*imRootDir, "image_dirs"),
+		RootDir: imPaths.ImageDirectoriesDir,
 	}
 	idm := orchestrator.NewImageDirectoriesManagerImpl(idmOpts)
 	debugStaticVars := debug.StaticVariables{}
