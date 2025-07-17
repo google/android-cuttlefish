@@ -55,14 +55,13 @@ static std::string Gsm7bitEncode(const std::string& input) {
   icu::UCharCharacterIterator iter(unicode_str.getTerminatedBuffer(),
                                    unicode_str.length());
   size_t octets_size = unicode_str.length() - (unicode_str.length() / 8);
-  std::vector<std::byte> octets;
-  octets.reserve(octets_size);
+  std::vector<std::byte> octets(octets_size);
   auto octets_index = octets.begin();
   int bits_to_write_in_prev_octet = 0;
   for (; iter.hasNext(); iter.next()) {
     UChar uchar = iter.current();
     char dest[5];
-    UErrorCode uerror_code;
+    UErrorCode uerror_code = U_ZERO_ERROR;
     u_strToUTF8(dest, 5, NULL, &uchar, 1, &uerror_code);
     if (U_FAILURE(uerror_code)) {
       LOG(ERROR) << "u_strToUTF8 failed with error: "

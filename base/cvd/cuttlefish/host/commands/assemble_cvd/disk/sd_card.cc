@@ -20,7 +20,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 
 namespace cuttlefish {
 
@@ -38,8 +38,8 @@ Result<void> InitializeSdCard(
             "Failed to create \"" << instance.sdcard_path() << "\"");
   if (config.vm_manager() == VmmMode::kQemu) {
     const std::string crosvm_path = instance.crosvm_binary();
-    CreateQcowOverlay(crosvm_path, instance.sdcard_path(),
-                      instance.sdcard_overlay_path());
+    CF_EXPECT(Qcow2Image::Create(crosvm_path, instance.sdcard_path(),
+                                 instance.sdcard_overlay_path()));
   }
   return {};
 }

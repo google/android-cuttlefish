@@ -21,6 +21,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/zip_copy.h"
 
 namespace cuttlefish {
 
@@ -43,6 +44,14 @@ Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
   CF_EXPECTF(FileExists(fs_path), "No file in the filesystem at '{}'", fs_path);
   ReadableZipSource source = CF_EXPECT(WritableZipSource::FromFile(fs_path));
   CF_EXPECT(zip.AddFile(zip_path, std::move(source)));
+  return {};
+}
+
+Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
+                         const std::string& host_path) {
+  ReadableZipSource source = CF_EXPECT(zip.GetFile(zip_path));
+  WritableZipSource dest = CF_EXPECT(WritableZipSource::FromFile(host_path));
+  CF_EXPECT(Copy(source, dest));
   return {};
 }
 

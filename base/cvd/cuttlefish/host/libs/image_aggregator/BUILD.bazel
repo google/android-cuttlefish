@@ -28,9 +28,7 @@ cf_cc_library(
         "-Wno-packed-non-pod",
     ],
     deps = [
-        ":cdisk_spec_cc_proto",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
@@ -39,9 +37,26 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:mbr",
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//libbase",
         "//libsparse",
         "@protobuf",
         "@zlib",
+    ],
+)
+
+cf_cc_library(
+    name = "qcow2",
+    srcs = ["qcow2.cc"],
+    hdrs = ["qcow2.h"],
+    copts = COPTS + [
+        "-Wno-packed-non-pod",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:cf_endian",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
     ],
 )

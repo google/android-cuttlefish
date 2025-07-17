@@ -332,6 +332,15 @@ WritableZipSource& WritableZipSource::operator=(WritableZipSource&&) = default;
 WritableZipSource::WritableZipSource(std::unique_ptr<Impl> impl)
     : SeekableZipSource(std::move(impl)) {}
 
+Result<ZipSourceWriter> WritableZipSource::Writer() {
+  CF_EXPECT(impl_.get());
+  zip_source_t* raw = CF_EXPECT(impl_->raw_.get());
+
+  CF_EXPECT_EQ(zip_source_begin_write(raw), 0, ZipErrorString(raw));
+
+  return ZipSourceWriter(this);
+}
+
 ZipSourceReader::ZipSourceReader(ReadableZipSource* source) : source_(source) {}
 
 ZipSourceReader::ZipSourceReader(ZipSourceReader&& other)
@@ -370,6 +379,7 @@ SeekingZipSourceReader& SeekingZipSourceReader::operator=(
 
 Result<void> SeekingZipSourceReader::SeekFromStart(int64_t offset) {
   CF_EXPECT_NE(source_, nullptr);
+  CF_EXPECT(source_->impl_.get());
   zip_source_t* raw_source = CF_EXPECT(source_->impl_->raw_.get());
 
   CF_EXPECT_EQ(zip_source_seek(raw_source, offset, SEEK_SET), 0,
@@ -380,6 +390,57 @@ Result<void> SeekingZipSourceReader::SeekFromStart(int64_t offset) {
 
 SeekingZipSourceReader::SeekingZipSourceReader(SeekableZipSource* ptr)
     : ZipSourceReader(ptr) {}
+
+ZipSourceWriter::ZipSourceWriter(WritableZipSource* source) : source_(source) {}
+
+ZipSourceWriter::ZipSourceWriter(ZipSourceWriter&& other)
+    : source_(other.source_) {
+  other.source_ = nullptr;
+}
+
+ZipSourceWriter& ZipSourceWriter::operator=(ZipSourceWriter&& other) {
+  source_ = other.source_;
+  other.source_ = nullptr;
+  return *this;
+}
+
+ZipSourceWriter::~ZipSourceWriter() {
+  if (source_ && source_->impl_ && source_->impl_->raw_) {
+    zip_source_rollback_write(source_->impl_->raw_.get());
+  }
+}
+
+Result<uint64_t> ZipSourceWriter::Write(void* data, uint64_t length) {
+  CF_EXPECT_NE(data, nullptr);
+  CF_EXPECT_NE(source_, nullptr);
+  CF_EXPECT(source_->impl_.get());
+  zip_source_t* raw_source = CF_EXPECT(source_->impl_->raw_.get());
+
+  int64_t written = zip_source_write(raw_source, data, length);
+  CF_EXPECT_GE(written, 0, ZipErrorString(raw_source));
+  return static_cast<uint64_t>(written);
+}
+
+Result<void> ZipSourceWriter::SeekFromStart(int64_t offset) {
+  CF_EXPECT_NE(source_, nullptr);
+  CF_EXPECT(source_->impl_.get());
+  zip_source_t* raw_source = CF_EXPECT(source_->impl_->raw_.get());
+
+  CF_EXPECT_EQ(zip_source_seek_write(raw_source, offset, SEEK_SET), 0,
+               ZipErrorString(raw_source));
+
+  return {};
+}
+
+Result<void> ZipSourceWriter::Finalize(ZipSourceWriter writer) {
+  CF_EXPECT_NE(writer.source_, nullptr);
+  CF_EXPECT(writer.source_->impl_.get());
+  zip_source_t* raw = CF_EXPECT(writer.source_->impl_->raw_.get());
+
+  CF_EXPECT_EQ(zip_source_commit_write(raw), 0, ZipErrorString(raw));
+
+  return {};
+}
 
 Result<ReadableZip> ReadableZip::FromSource(SeekableZipSource source) {
   zip_source_t* source_raw = CF_EXPECT(source.impl_->raw_.get());

@@ -15,21 +15,11 @@
 
 #pragma once
 
-#include <string>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
-Result<ReadableZip> ZipOpenRead(const std::string& fs_path);
-Result<WritableZip> ZipOpenReadWrite(const std::string& fs_path);
-
-Result<void> AddFile(WritableZip& zip, const std::string& fs_path);
-Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
-                       const std::string& zip_path);
-
-Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
-                         const std::string& host_path);
+Result<void> Copy(ReadableZipSource& input, WritableZipSource& output);
 
 }  // namespace cuttlefish

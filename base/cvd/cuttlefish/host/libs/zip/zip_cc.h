@@ -70,6 +70,7 @@ class ReadableZipSource {
   friend class WritableZipSource;
   friend class ZipSourceReader;
   friend class SeekingZipSourceReader;
+  friend class ZipSourceWriter;
 
   static Result<ReadableZipSource> FromCallbacks(
       std::unique_ptr<ReadableZipSourceCallback>);
@@ -128,6 +129,11 @@ class WritableZipSource : public SeekableZipSource {
   virtual ~WritableZipSource();
   WritableZipSource& operator=(WritableZipSource&&);
 
+  /* Returns a RAII instance that puts this instance in an "open for writing"
+   * state. Can fail. Should not outlive this instance. Cannot be used at the
+   * same time as the `Reader()` method from superclasses. */
+  Result<class ZipSourceWriter> Writer();
+
  private:
   WritableZipSource(std::unique_ptr<Impl>);
 };
@@ -165,6 +171,29 @@ class SeekingZipSourceReader : public ZipSourceReader {
 
  private:
   SeekingZipSourceReader(SeekableZipSource*);
+};
+
+/* A `WritableZipSource` in an "open for writing" state. */
+class ZipSourceWriter {
+ public:
+  friend class WritableZipSource;
+
+  ZipSourceWriter(ZipSourceWriter&&);
+  ~ZipSourceWriter();
+  ZipSourceWriter& operator=(ZipSourceWriter&&);
+
+  /* Writes are not committed until `Finalize` is called. Returns number of
+   * bytes written. */
+  Result<uint64_t> Write(void* data, uint64_t length);
+  Result<void> SeekFromStart(int64_t offset);
+
+  /* Commits writes and closes the writer. */
+  static Result<void> Finalize(ZipSourceWriter);
+
+ private:
+  ZipSourceWriter(WritableZipSource*);
+
+  WritableZipSource* source_;
 };
 
 class ReadableZip {

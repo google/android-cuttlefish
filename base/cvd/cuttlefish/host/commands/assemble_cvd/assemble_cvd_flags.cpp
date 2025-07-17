@@ -518,7 +518,6 @@ DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
               "boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
               "Location of the super partition image.");
-DEFINE_string(misc_info_txt, "", "Location of the misc_info.txt file.");
 DEFINE_string(
     vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
     "Location of cuttlefish vendor boot image. If empty it is assumed to "
