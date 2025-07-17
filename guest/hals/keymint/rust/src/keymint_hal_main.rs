@@ -16,9 +16,7 @@
 //! trusted application (TA) running on the Cuttlefish host.
 
 use kmr_hal::{register_binder_services, HalServiceError};
-use kmr_hal_nonsecure::{attestation_id_info, get_boot_info};
-use log::{debug, error, info};
-use std::ops::DerefMut;
+use log::{error, info};
 use std::os::unix::io::FromRawFd;
 use std::panic;
 use std::sync::{Arc, Mutex};
@@ -115,27 +113,8 @@ fn inner_main() -> Result<(), HalServiceError> {
 
     register_binder_services(&channel, SERVICE_INSTANCE)?;
 
-    // Let the TA know information about the boot environment. In a real device this
-    // is communicated directly from the bootloader to the TA, but here we retrieve
-    // the information from system properties and send from the HAL service.
-    // TODO: investigate Cuttlefish bootloader info propagation
-    // https://android.googlesource.com/platform/external/u-boot/+/2114f87e56d262220c4dc5e00c3321e99e12204b/boot/android_bootloader_keymint.c
-    let boot_req = get_boot_info();
-    debug!("boot/HAL->TA: boot info is {:?}", boot_req);
-    kmr_hal::send_boot_info(channel.lock().unwrap().deref_mut(), boot_req)
-        .map_err(|e| HalServiceError(format!("Failed to send boot info: {:?}", e)))?;
-
     // Let the TA know information about the userspace environment.
-    if let Err(e) = kmr_hal::send_hal_info(channel.lock().unwrap().deref_mut()) {
-        error!("Failed to send HAL info: {:?}", e);
-    }
-
-    // Let the TA know about attestation IDs. (In a real device these would be pre-provisioned into
-    // the TA.)
-    let attest_ids = attestation_id_info();
-    if let Err(e) = kmr_hal::send_attest_ids(channel.lock().unwrap().deref_mut(), attest_ids) {
-        error!("Failed to send attestation ID info: {:?}", e);
-    }
+    kmr_hal_nonsecure::send_boot_info_and_attestation_id_info(&channel)?;
 
     info!("Joining thread pool now.");
     binder::ProcessState::join_thread_pool();
