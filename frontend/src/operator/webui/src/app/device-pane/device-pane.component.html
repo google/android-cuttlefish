@@ -8,21 +8,45 @@
   >
 </div>
 <div>
-  <ul class="devices">
-    <section class="device-list">
-      <li *ngFor="let device of devices | async">
-        <mat-slide-toggle
-          color="primary"
-          [checked]="displaysService.isVisibleDevice(device.device_id)"
-          (change)="displaysService.toggleVisibility(device.device_id)"
-          >{{ device.device_id }}</mat-slide-toggle
-        >
-        <button mat-icon-button class="menu" title="menu">
-          <mat-icon>more_vert</mat-icon>
-        </button>
+  <section class="device-list">
+    <ul class="groups">
+      <li *ngFor="let group of deviceGroups | async">
+        <div class="group-name"> {{ group.displayName }} </div>
+        <ul class="devices">
+          <li class="device-entry" *ngFor="let device of group.devices" >
+            <mat-slide-toggle
+            color="primary"
+            [checked]="displaysService.isVisibleDevice(device.device_id)"
+            (change)="displaysService.toggleVisibility(device.device_id)"
+              >
+              {{ device.name }} ( {{ device.device_id }} )
+            </mat-slide-toggle>
+            <button mat-icon-button class="menu" title="menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </li>
+        </ul>
       </li>
-    </section>
-  </ul>
+      <ng-container *ngIf="legacyDevices | async as devices">
+        <li *ngIf="devices.length > 0">
+          <div class="group-name"> Ungrouped </div>
+          <ul class="devices">
+            <li *ngFor="let device of devices" class="device-entry" >
+              <mat-slide-toggle
+                color="primary"
+                [checked]="displaysService.isVisibleDevice(device.device_id)"
+                (change)="displaysService.toggleVisibility(device.device_id)"
+                >{{ device.device_id }}/{{ device.group_name }}</mat-slide-toggle
+              >
+              <button mat-icon-button class="menu" title="menu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+            </li>
+          </ul>
+        </li>
+      </ng-container>
+    </ul>
+  </section>
 </div>
 <div>
   <button mat-raised-button class="show-all" (click)="showAll()">

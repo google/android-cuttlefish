@@ -4,7 +4,11 @@ import {Observable, Subject, BehaviorSubject} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {DomSanitizer} from '@angular/platform-browser';
 import {DeviceInfo} from './device-info-interface';
-import {DeviceItem} from './device-item.interface';
+import {DeviceItem, DeviceGroup} from './device-item.interface';
+
+function isLegacyDevice(device: DeviceItem) : boolean {
+  return !device || !device.owner || !device.group_name || !device.name;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -28,6 +32,10 @@ export class DeviceService {
     shareReplay(1)
   );
 
+  private deviceGroups = this.devices.pipe(map(this.groupsFromDeviceList))
+
+  private legacyDevices = this.devices.pipe(map(this.legacyFromDeviceList));
+
   private allDeviceFromServer = this.httpClient
     .get<DeviceItem[]>('./devices')
     .pipe(map(this.sortDevices));
@@ -36,6 +44,35 @@ export class DeviceService {
     return this.httpClient
       .get<DeviceItem[]>(`./devices?groupId=${groupId}`)
       .pipe(map(this.sortDevices));
+  }
+
+  private groupsFromDeviceList(devices: DeviceItem[]) {
+    devices = devices.filter(d => !isLegacyDevice(d));
+    const ownersCount = new Set(devices.map(d => d.owner)).size;
+    let groupsByDisplayName = new Map<string, DeviceGroup>();
+    for (const device of devices) {
+      const groupDisplayName = ownersCount > 1 ?
+          device.owner + ':' + device.group_name :
+          device.group_name;
+      let group = groupsByDisplayName.get(groupDisplayName);
+      if (!group) {
+        group = {
+          owner: device.owner,
+          name: device.group_name,
+          displayName: groupDisplayName,
+          devices: []
+        };
+        groupsByDisplayName.set(groupDisplayName, group);
+      }
+      group.devices.push(device);
+    }
+    return [...groupsByDisplayName.values()].sort(
+        (g1, g2) => g1.displayName.localeCompare(
+            g2.displayName, undefined, {numeric: true}));
+  }
+
+  private legacyFromDeviceList(devices: DeviceItem[]) {
+    return devices.filter(isLegacyDevice)
   }
 
   private sortDevices(devices: DeviceItem[]) {
@@ -52,7 +89,15 @@ export class DeviceService {
     this.groupIdSubject.next(groupId);
   }
 
-  getDevices() {
+  getLegacyDevices() {
+    return this.legacyDevices;
+  }
+
+  getDeviceGroups() {
+    return this.deviceGroups;
+  }
+
+  getAllDevices() {
     return this.devices;
   }
 
