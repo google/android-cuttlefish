@@ -206,11 +206,6 @@ symlinks: {
 }
 
 symlinks: {
-  target: "/usr/lib/cuttlefish-common/bin/webRTC"
-  link_name: "bin/webRTC"
-}
-
-symlinks: {
   target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
   link_name: "etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
 }
