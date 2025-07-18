@@ -1,0 +1,97 @@
+From 665c76256a01aded0bd3b326a5f329e897ebbc60 Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Fri, 18 Jul 2025 23:19:24 +0000
+Subject: [PATCH 2/2] Use pdlc from pdl-compiler crate.
+
+pdlc might not be installed on the host system.
+---
+ BUILD         | 9 ++++++---
+ MODULE.bazel  | 3 +++
+ packets/BUILD | 9 ++++++---
+ 3 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/BUILD b/BUILD
+index cc326d8..c2c25fe 100644
+--- a/BUILD
++++ b/BUILD
+@@ -34,24 +34,27 @@ cc_proto_library(
+ 
+ genrule(
+     name = "lmp_packets_rs",
+-    cmd = "pdlc --output-format rust_legacy $(location rust/lmp_packets.pdl) > $(location lmp_packets.rs)",
++    cmd = "$(execpath @crates//:pdl-compiler__pdlc) --output-format rust_legacy $(location rust/lmp_packets.pdl) > $(location lmp_packets.rs)",
+     outs = ["lmp_packets.rs"],
+     srcs = ["rust/lmp_packets.pdl"],
++    tools = ["@crates//:pdl-compiler__pdlc"],
+ )
+ 
+ genrule(
+     name = "llcp_packets_rs",
+-    cmd = "pdlc --output-format rust_legacy $(location rust/llcp_packets.pdl) > $(location llcp_packets.rs)",
++    cmd = "$(execpath @crates//:pdl-compiler__pdlc) --output-format rust_legacy $(location rust/llcp_packets.pdl) > $(location llcp_packets.rs)",
+     outs = ["llcp_packets.rs"],
+     srcs = ["rust/llcp_packets.pdl"],
++    tools = ["@crates//:pdl-compiler__pdlc"],
+ )
+ 
+ genrule(
+     name = "hci_packets_rs",
+-    cmd = "pdlc --output-format rust_legacy $(location //packets:hci_packets.pdl) > $(location hci_packets.rs)",
++    cmd = "$(execpath @crates//:pdl-compiler__pdlc) --output-format rust_legacy $(location //packets:hci_packets.pdl) > $(location hci_packets.rs)",
+     outs = ["hci_packets.rs"],
+     srcs = ["//packets:hci_packets.pdl"],
+     visibility = ["//visibility:public"],
++    tools = ["@crates//:pdl-compiler__pdlc"],
+ )
+ 
+ rust_static_library(
+diff --git a/MODULE.bazel b/MODULE.bazel
+index 185542e..a497468 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -43,5 +43,8 @@ crate.spec(package = "rand", version = "0.8.3")
+ crate.spec(package = "thiserror", version = "1.0.23")
+ crate.spec(package = "bytes", version = "1.0.1")
+ 
++crate.spec(package = "pdl-compiler", version = "0.3.3")
++crate.annotation(crate = "pdl-compiler", gen_all_binaries = True)
++
+ crate.from_specs()
+ use_repo(crate, "crates")
+diff --git a/packets/BUILD b/packets/BUILD
+index 58285d6..14d1db5 100644
+--- a/packets/BUILD
++++ b/packets/BUILD
+@@ -7,23 +7,26 @@ exports_files(["hci_packets.pdl"])
+ 
+ genrule(
+     name = "hci_packets_json",
+-    cmd = "pdlc $(location hci_packets.pdl) > $(location hci_packets.json)",
++    cmd = "$(execpath @crates//:pdl-compiler__pdlc) $(location hci_packets.pdl) > $(location hci_packets.json)",
+     outs = ["hci_packets.json"],
+     srcs = ["hci_packets.pdl"],
++    tools = ["@crates//:pdl-compiler__pdlc"],
+ )
+ 
+ genrule(
+     name = "bredr_bb_packets_json",
+-    cmd = "pdlc $(location bredr_bb.pdl) > $(location bredr_bb_packets.json)",
++    cmd = "$(execpath @crates//:pdl-compiler__pdlc) $(location bredr_bb.pdl) > $(location bredr_bb_packets.json)",
+     outs = ["bredr_bb_packets.json"],
+     srcs = ["bredr_bb.pdl"],
++    tools = ["@crates//:pdl-compiler__pdlc"],
+ )
+ 
+ genrule(
+     name = "link_layer_packets_json",
+-    cmd = "pdlc $(location link_layer_packets.pdl) > $(location link_layer_packets.json)",
++    cmd = "$(execpath @crates//:pdl-compiler__pdlc) $(location link_layer_packets.pdl) > $(location link_layer_packets.json)",
+     outs = ["link_layer_packets.json"],
+     srcs = ["link_layer_packets.pdl"],
++    tools = ["@crates//:pdl-compiler__pdlc"],
+ )
+ 
+ run_binary(
+-- 
+2.50.0.727.gbf7dc18ff4-goog
+

@@ -35,6 +35,7 @@ bazel_dep(name = "nasm", version = "2.16.03.bcr.1")
 bazel_dep(name = "pcre2", version = "10.45")
 bazel_dep(name = "platforms", version = "0.0.11")
 bazel_dep(name = "protobuf", version = "29.1")
+bazel_dep(name = "rootcanal")
 bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_license", version = "1.0.0")
@@ -70,6 +71,21 @@ git_override(
     patches = [
         # See cl/711879539
         "@//build_external/sandboxed_api:PATCH.sandboxed_api.util.visibility.patch",
+    ],
+)
+
+git_override(
+    module_name = "rootcanal",
+    # Waiting on it to be registered on BCR:
+    #   https://github.com/bazelbuild/bazel-central-registry/issues/5249
+    commit = "095db64fda743eec1e01a9e6a1d58fc7fa8ba32a",  # v1.11.1
+    remote = "https://github.com/google/rootcanal.git",
+    init_submodules = True,
+    patch_strip = 1,
+    patches = [
+        # https://github.com/bazelbuild/bazel/issues/26578
+        "@//build_external/rootcanal:0001-Use-our-local_repository.patch",
+        "@//build_external/rootcanal:0002-Use-pdlc-from-pdl-compiler-crate.patch",
     ],
 )
 
