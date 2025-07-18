@@ -8,6 +8,7 @@ package(
 proto_library(
     name = "load_config_proto",
     srcs = ["load_config.proto"],
+    visibility = ["//visibility:public"],
 )
 
 # This will generate a build artifact in bazel-bin. To update ./golang/,
