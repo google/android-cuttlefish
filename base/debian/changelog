@@ -1,6 +1,25 @@
-cuttlefish-common (1.16.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.16.0) unstable; urgency=medium
 
-  * 
+  * `Make the config proto build target public` by @cjreynol in https://github.com/google/android-cuttlefish/pull/1416
+  * `Temporary workaround: use a presubmit build in place of git_main testing to fix kokoro` by @Databean in https://github.com/google/android-cuttlefish/pull/1418
+  * `Return success after taking screenshot` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1417
+  * `Add pica` by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1409
+  * `Add link layer proxy commands for root canal.` by @rohillah96 in https://github.com/google/android-cuttlefish/pull/1415
+  * `Re-enable clang-tidy tests for socket2socket_proxy` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1410
+  * `Cvd send sms` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1408
+  * `Include nvidia in baseimage generation` by @jmacnak in https://github.com/google/android-cuttlefish/pull/1401
+  * `Remove the misc_info_txt flag` by @Databean in https://github.com/google/android-cuttlefish/pull/1406
+  * `Support extracting files with libzip` by @Databean in https://github.com/google/android-cuttlefish/pull/1399
+  * `Extract qcow2 code from a free function into a new type.` by @Databean in https://github.com/google/android-cuttlefish/pull/1405
+  * `Log the right path in GetBinName.` by @3405691582 in https://github.com/google/android-cuttlefish/pull/1403
+  * `Mark 1.15.0 as stable` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1404
+  * `Run the bazel cache update cron jobs only for the upstream repository` by @Databean in https://github.com/google/android-cuttlefish/pull/1398
+  * `Delete DiskChangesComponent` by @Databean in https://github.com/google/android-cuttlefish/pull/1400
+  * `Improve cvd fetch error messages` by @cjreynol in https://github.com/google/android-cuttlefish/pull/1392
+  * `Warning fixes` by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1380
+  * `Add webrtc html client to cvd package` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1396
+  * `Add a buffering layer for SeekableZipSource.` by @Databean in https://github.com/google/android-cuttlefish/pull/1395
+  * `Use AutoSetup for super_image_mixer.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1387
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 11 Jul 2025 17:13:20 -0700
 
