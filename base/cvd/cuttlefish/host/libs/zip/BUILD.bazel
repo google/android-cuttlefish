@@ -30,6 +30,33 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "cached_zip_source",
+    srcs = ["cached_zip_source.cc"],
+    hdrs = ["cached_zip_source.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:lazily_loaded_file",
+        "//cuttlefish/host/libs/zip:zip_cc",
+        "//libbase",
+    ],
+)
+
+cf_cc_test(
+    name = "cached_zip_source_test",
+    srcs = ["cached_zip_source_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/zip:cached_zip_source",
+        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip:zip_string",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "disjoint_range_set",
     srcs = ["disjoint_range_set.cc"],
     hdrs = ["disjoint_range_set.h"],
