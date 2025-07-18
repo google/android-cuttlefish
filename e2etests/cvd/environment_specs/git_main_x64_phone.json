@@ -3,7 +3,7 @@
     {
       "name": "ins-1",
       "disk": {
-        "default_build": "@ab\/git_main\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
+        "default_build": "@ab\/P100770646\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
       },
       "vm": {
         "cpus": 4,
@@ -28,6 +28,6 @@
     "enable": true
   },
   "common": {
-    "host_package": "@ab\/git_main\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
+    "host_package": "@ab\/P100770646\/aosp_cf_x86_64_only_phone-trunk_staging-userdebug"
   }
 }
