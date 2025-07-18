@@ -1,0 +1,126 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+# From PLATFORM_INC in TPMCmd/Makefile.am
+PLATFORM_INC = [
+    "TPMCmd/Platform/include",
+    "TPMCmd/Platform/include/prototypes",
+]
+
+# From SIMULATOR_INC in TPMCmd/Makefile.am
+SIMULATOR_INC = [
+    "TPMCmd/Simulator/include",
+    "TPMCmd/Simulator/include/prototypes",
+]
+
+# From TPM_INC in TPMCmd/Makefile.am
+TPM_INC = [
+    "TPMCmd/tpm/include",
+    "TPMCmd/tpm/include/platform_interface",
+    "TPMCmd/tpm/include/platform_interface/prototypes",
+    "TPMCmd/tpm/include/private",
+    "TPMCmd/tpm/include/private/prototypes",
+    "TPMCmd/tpm/include/public",
+    "TPMCmd/tpm/cryptolibs",
+    "TPMCmd/tpm/cryptolibs/common/include",
+    "TPMCmd/tpm/cryptolibs/Ossl/include",
+    "TPMCmd/tpm/cryptolibs/TpmBigNum/include",
+    "TPMCmd/TpmConfiguration",
+]
+
+# From configure.ac
+DEFINES = [
+    "HASH_LIB=Ossl",
+    "SYM_LIB=Ossl",
+    "MATH_LIB=TpmBigNum",
+    "BN_MATH_LIB=Ossl",
+]
+
+# From configure.ac
+COMPILER_FLAGS = [
+    "-std=gnu11",
+    "-Werror",
+    "-Wall",
+    "-Wformat-security",
+    "-fstack-protector-all",
+    "-fPIC",
+]
+
+# From configure.ac
+LINK_FLAGS = [
+    "-Wl,--no-undefined",
+    "-Wl,-z,noexecstack",
+    "-Wl,-z,now",
+    "-Wl,-z,relro",
+]
+
+# Use the provided configuration, plus patches in build_external/ms-tpm-20-ref.
+cc_library(
+    name = "tpm_configuration",
+    srcs = glob(["TPMCmd/TpmConfiguration/**/*.h"]),
+    includes = ["TPMCmd/TpmConfiguration"],
+)
+
+# From PLATFORM_H in bootstrap
+cc_library(
+    name = "platform_headers",
+    srcs = glob(["TPMCmd/Platform/**/*.h"]),
+    includes = PLATFORM_INC,
+    deps = [":tpm_configuration"],
+)
+
+# From SIMULATOR_H in bootstrap
+cc_library(
+    name = "simulator_headers",
+    srcs = glob(["TPMCmd/Simulator/**/*.h"]),
+    includes = SIMULATOR_INC,
+)
+
+# From TPM_H in bootstrap; added .inl files
+cc_library(
+    name = "tpm_headers",
+    srcs = glob([
+        "TPMCmd/tpm/**/*.h",
+        "TPMCmd/tpm/**/*.inl",
+    ]),
+    includes = TPM_INC,
+)
+
+cc_library(
+    name = "platform",
+    srcs = glob(["TPMCmd/Platform/**/*.c"]),
+    copts = COMPILER_FLAGS,
+    defines = DEFINES,
+    deps = [
+        ":platform_headers",
+        ":tpm_headers",
+    ],
+)
+
+cc_library(
+    name = "tpm",
+    srcs = glob(["TPMCmd/tpm/**/*.c"]),
+    copts = COMPILER_FLAGS,
+    defines = DEFINES,
+    deps = [
+        ":platform_headers",
+        ":tpm_headers",
+        "@boringssl//:crypto",
+        "@boringssl//:ssl",
+    ],
+)
+
+cc_binary(
+    name = "simulator",
+    srcs = glob(["TPMCmd/Simulator/**/*.c"]),
+    copts = COMPILER_FLAGS,
+    defines = DEFINES,
+    linkopts = LINK_FLAGS,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":platform",
+        ":simulator_headers",
+        ":tpm",
+        "@boringssl//:crypto",
+    ],
+)
