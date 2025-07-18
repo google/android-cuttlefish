@@ -89,12 +89,38 @@ class RootCanal : public CommandSource {
     test_vsock_proxy.AddParameter("--client_tcp_port=",
                                   config_.rootcanal_test_port());
 
+    // Add command for forwarding the link layer port to a vsock server.
+    Command link_vsock_proxy(SocketVsockProxyBinary());
+    link_vsock_proxy.AddParameter("--server_type=vsock");
+    link_vsock_proxy.AddParameter("--server_vsock_id=",
+                                  instance_.vsock_guest_cid());
+    link_vsock_proxy.AddParameter("--server_vsock_port=",
+                                  config_.rootcanal_link_port());
+    link_vsock_proxy.AddParameter("--client_type=tcp");
+    link_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
+    link_vsock_proxy.AddParameter("--client_tcp_port=",
+                                  config_.rootcanal_link_port());
+
+    // Add command for forwarding the link layer ble port to a vsock server.
+    Command link_ble_vsock_proxy(SocketVsockProxyBinary());
+    link_ble_vsock_proxy.AddParameter("--server_type=vsock");
+    link_ble_vsock_proxy.AddParameter("--server_vsock_id=",
+                                      instance_.vsock_guest_cid());
+    link_ble_vsock_proxy.AddParameter("--server_vsock_port=",
+                                      config_.rootcanal_link_ble_port());
+    link_ble_vsock_proxy.AddParameter("--client_type=tcp");
+    link_ble_vsock_proxy.AddParameter("--client_tcp_host=127.0.0.1");
+    link_ble_vsock_proxy.AddParameter("--client_tcp_port=",
+                                      config_.rootcanal_link_ble_port());
+
     std::vector<MonitorCommand> commands;
     commands.emplace_back(
         CF_EXPECT(log_tee_.CreateFullLogTee(rootcanal, "rootcanal")));
     commands.emplace_back(std::move(rootcanal));
     commands.emplace_back(std::move(hci_vsock_proxy));
     commands.emplace_back(std::move(test_vsock_proxy));
+    commands.emplace_back(std::move(link_vsock_proxy));
+    commands.emplace_back(std::move(link_ble_vsock_proxy));
     return commands;
   }
 
