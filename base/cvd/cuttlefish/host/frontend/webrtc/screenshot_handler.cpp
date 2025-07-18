@@ -191,7 +191,7 @@ Result<void> ScreenshotHandler::Screenshot(std::uint32_t display_number,
   } else {
     return CF_ERR("Unsupport file format: " << screenshot_path);
   }
-  return CF_ERR("Not implemented");
+  return {};
 }
 
 void ScreenshotHandler::OnFrame(std::uint32_t display_number,
