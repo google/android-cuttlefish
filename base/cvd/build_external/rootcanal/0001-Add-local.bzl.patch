@@ -1,0 +1,90 @@
+From 2ce473c20354551133146385848066ffadef7457 Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Fri, 18 Jul 2025 23:07:15 +0000
+Subject: [PATCH 1/3] Add local.bzl.
+
+Originally from
+https://cs.android.com/android/kernel/superproject/+/common-android-mainline:build/kernel/kleaf/impl/local_repository.bzl
+hence licence header is kept.
+
+This replaces @bazel_tools//cuttlefish/bazel:local.bzl to address
+https://github.com/bazelbuild/bazel/issues/26578
+---
+ local.bzl | 65 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 65 insertions(+)
+ create mode 100644 local.bzl
+
+diff --git a/local.bzl b/local.bzl
+new file mode 100644
+index 0000000..40e5686
+--- /dev/null
++++ b/local.bzl
+@@ -0,0 +1,65 @@
++# Copyright (C) 2023 The Android Open Source Project
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#       http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++"""
++Drop-in replacement for `{new_,}local_repository` such that
++paths are resolved against the module it is called from.
++"""
++
++def _common_attrs():
++    return {
++        "path": attr.string(
++            doc = "the path relative to the module where it is called",
++            mandatory = True,
++        ),
++    }
++
++def _get_module_dir(repository_ctx):
++    """Returns the root dir of the repository that contains Kleaf tools.
++
++    That is, where this extension should exist."""
++    mylabel = Label(":local.bzl")
++    mypath = str(repository_ctx.path(mylabel))
++    package_path = mypath.removesuffix(mylabel.name).removesuffix("/")
++    module_dir = package_path.removesuffix(mylabel.package).removesuffix("/")
++    return repository_ctx.path(module_dir)
++
++def _local_repository_impl(repository_ctx):
++
++    module_dir = _get_module_dir(repository_ctx)
++    target = module_dir.get_child(repository_ctx.attr.path)
++
++    for child in target.readdir():
++        repository_ctx.symlink(child, repository_ctx.path(child.basename))
++
++local_repository = repository_rule(
++    attrs = _common_attrs(),
++    implementation = _local_repository_impl,
++)
++
++def _new_local_repository_impl(repository_ctx):
++    _local_repository_impl(repository_ctx)
++
++    repository_ctx.symlink(
++        repository_ctx.path(repository_ctx.attr.build_file),
++        repository_ctx.path("BUILD.bazel"),
++    )
++    repository_ctx.file(repository_ctx.path("REPO.bazel"), "")
++
++new_local_repository = repository_rule(
++    attrs = _common_attrs() | {
++        "build_file": attr.label(doc = "build file. Path is calculated with `repository_ctx.path(build_file)`"),
++    },
++    implementation = _new_local_repository_impl,
++)
+-- 
+2.50.0.727.gbf7dc18ff4-goog
+
