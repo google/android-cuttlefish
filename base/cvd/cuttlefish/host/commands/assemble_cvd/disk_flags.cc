@@ -463,7 +463,9 @@ Result<void> CreateDynamicDiskFiles(
     std::unique_ptr<Avb> avb = GetDefaultAvb();
     CF_EXPECT(avb.get());
 
-    CF_EXPECT(InitializeChromeOsState(instance));
+    std::optional<ChromeOsStateImage> chrome_os_state =
+        CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
+
     CF_EXPECT(RepackKernelRamdisk(config, instance, *avb));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));

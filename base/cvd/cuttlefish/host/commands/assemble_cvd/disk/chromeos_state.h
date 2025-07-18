@@ -16,12 +16,24 @@
 
 #pragma once
 
+#include <optional>
+#include <string>
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-Result<void> InitializeChromeOsState(
-    const CuttlefishConfig::InstanceSpecific& instance);
+class ChromeOsStateImage {
+ public:
+  static Result<std::optional<ChromeOsStateImage>> CreateIfNecessary(
+      const CuttlefishConfig::InstanceSpecific&);
+
+  const std::string& FilePath() const;
+ private:
+  ChromeOsStateImage(std::string);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish
