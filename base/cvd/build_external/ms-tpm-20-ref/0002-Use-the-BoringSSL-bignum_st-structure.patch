@@ -1,0 +1,96 @@
+From 5ce566293ce6af677b158039ce3e3268c4f60cc4 Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Fri, 18 Jul 2025 19:17:10 +0000
+Subject: [PATCH 2/3] Use the BoringSSL bignum_st structure
+
+Original author is joerichey@google.com.
+
+Original patch comments:
+
+The BoringSSl structure has width instead of top. I belive this is roughly
+equiavlent, but we should verify this somehow.
+---
+ TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c     | 12 +++++------
+ .../Ossl/include/Ossl/BnToOsslMath.h          | 21 -------------------
+ 2 files changed, 6 insertions(+), 27 deletions(-)
+
+diff --git a/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c b/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c
+index 92ad417..5d9b53d 100644
+--- a/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c
++++ b/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c
+@@ -45,10 +45,10 @@ BOOL OsslToTpmBn(bigNum bn, BIGNUM* osslBn)
+     {
+         int i;
+         //
+-        GOTO_ERROR_UNLESS((unsigned)osslBn->top <= BnGetAllocated(bn));
+-        for(i = 0; i < osslBn->top; i++)
++        GOTO_ERROR_UNLESS((unsigned)osslBn->width <= BnGetAllocated(bn));
++        for(i = 0; i < osslBn->width; i++)
+             bn->d[i] = osslBn->d[i];
+-        BnSetTop(bn, osslBn->top);
++        BnSetTop(bn, osslBn->width);
+     }
+     return TRUE;
+ Error:
+@@ -67,7 +67,7 @@ BIGNUM* BigInitialized(BIGNUM* toInit, bigConst initializer)
+         return NULL;
+     toInit->d     = (BN_ULONG*)&initializer->d[0];
+     toInit->dmax  = (int)initializer->allocated;
+-    toInit->top   = (int)initializer->size;
++    toInit->width = (int)initializer->size;
+     toInit->neg   = 0;
+     toInit->flags = 0;
+     return toInit;
+@@ -96,7 +96,7 @@ static void BIGNUM_print(const char* label, const BIGNUM* a, BOOL eol)
+     }
+     if(a->neg)
+         printf("-");
+-    for(i = a->top, d = &a->d[i - 1]; i > 0; i--)
++    for(i = a->width, d = &a->d[i - 1]; i > 0; i--)
+     {
+         int      j;
+         BN_ULONG l = *d--;
+@@ -149,7 +149,7 @@ BOOL BnMathLibraryCompatibilityCheck(void)
+     // Convert the test data to an OpenSSL BIGNUM
+     BN_bin2bn(test, sizeof(test), osslTemp);
+     // Make sure the values are consistent
+-    GOTO_ERROR_UNLESS(osslTemp->top == (int)tpmTemp->size);
++    GOTO_ERROR_UNLESS(osslTemp->width == (int)tpmTemp->size);
+     for(i = 0; i < tpmTemp->size; i++)
+         GOTO_ERROR_UNLESS(osslTemp->d[i] == tpmTemp->d[i]);
+     OSSL_LEAVE();
+diff --git a/TPMCmd/tpm/cryptolibs/Ossl/include/Ossl/BnToOsslMath.h b/TPMCmd/tpm/cryptolibs/Ossl/include/Ossl/BnToOsslMath.h
+index 6c73a45..c9583bd 100644
+--- a/TPMCmd/tpm/cryptolibs/Ossl/include/Ossl/BnToOsslMath.h
++++ b/TPMCmd/tpm/cryptolibs/Ossl/include/Ossl/BnToOsslMath.h
+@@ -17,27 +17,6 @@
+ #include <openssl/ec.h>
+ #include <openssl/bn.h>
+ 
+-#if OPENSSL_VERSION_NUMBER >= 0x30100000L
+-// Check the bignum_st definition against the one below and either update the
+-// version check or provide the new definition for this version.
+-#  error Untested OpenSSL version
+-#elif OPENSSL_VERSION_NUMBER >= 0x10100000L
+-// from crypto/bn/bn_lcl.h (OpenSSL 1.x) or crypto/bn/bn_local.h (OpenSSL 3.0)
+-struct bignum_st
+-{
+-    BN_ULONG* d;   /* Pointer to an array of 'BN_BITS2' bit
+-                                    * chunks. */
+-    int       top; /* Index of last used d +1. */
+-                   /* The next are internal book keeping for bn_expand. */
+-    int dmax;      /* Size of the d array. */
+-    int neg;       /* one if the number is negative */
+-    int flags;
+-};
+-#else
+-#  define EC_POINT_get_affine_coordinates EC_POINT_get_affine_coordinates_GFp
+-#  define EC_POINT_set_affine_coordinates EC_POINT_set_affine_coordinates_GFp
+-#endif  // OPENSSL_VERSION_NUMBER
+-
+ //** Macros and Defines
+ 
+ // Make sure that the library is using the correct size for a crypt word
+-- 
+2.50.0.727.gbf7dc18ff4-goog
+
