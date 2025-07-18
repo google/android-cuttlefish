@@ -54,7 +54,7 @@ struct Qcow2Image::Impl {
 
 Result<Qcow2Image> Qcow2Image::Create(const std::string& crosvm_path,
                                       const std::string& backing_file,
-                                      const std::string& output_overlay_path) {
+                                      std::string output_overlay_path) {
   Command create_cmd = Command(crosvm_path)
                            .AddParameter("create_qcow2")
                            .AddParameter("--backing-file")
@@ -74,10 +74,10 @@ Result<Qcow2Image> Qcow2Image::Create(const std::string& crosvm_path,
                    << "stderr:\n###\n"
                    << stderr_str << "\n###");
 
-  return CF_EXPECT(OpenExisting(output_overlay_path));
+  return CF_EXPECT(OpenExisting(std::move(output_overlay_path)));
 }
 
-Result<Qcow2Image> Qcow2Image::OpenExisting(const std::string& path) {
+Result<Qcow2Image> Qcow2Image::OpenExisting(std::string path) {
   SharedFD fd = SharedFD::Open(path, O_CLOEXEC, O_RDONLY);
   CF_EXPECT(fd->IsOpen(), fd->StrError());
 
@@ -87,19 +87,24 @@ Result<Qcow2Image> Qcow2Image::OpenExisting(const std::string& path) {
   CF_EXPECT_EQ(ReadExactBinary(fd, &impl->header_), sizeof(QcowHeader));
 
   std::string magic(reinterpret_cast<char*>(&impl->header_),
-                    MagicHeader().size());
-  CF_EXPECT_EQ(magic, MagicHeader());
+                    MagicString().size());
+  CF_EXPECT_EQ(magic, MagicString());
 
   return Qcow2Image(std::move(impl));
 }
 
-std::string Qcow2Image::MagicHeader() { return "QFI\xfb"; }
+std::string Qcow2Image::MagicString() { return "QFI\xfb"; }
 
-Qcow2Image::Qcow2Image(Qcow2Image&&) = default;
+Qcow2Image::Qcow2Image(Qcow2Image&& other) {
+  impl_ = std::move(other.impl_);
+}
 Qcow2Image::~Qcow2Image() = default;
-Qcow2Image& Qcow2Image::operator=(Qcow2Image&&) = default;
+Qcow2Image& Qcow2Image::operator=(Qcow2Image&& other) {
+  impl_ = std::move(other.impl_);
+  return *this;
+}
 
-Result<uint64_t> Qcow2Image::Size() const {
+Result<uint64_t> Qcow2Image::VirtualSizeBytes() const {
   CF_EXPECT(impl_.get());
 
   return impl_->header_.size.as_uint64_t();

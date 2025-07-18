@@ -177,11 +177,11 @@ std::uint64_t ExpandedStorageSize(const std::string& file_path) {
   }
 
   // Qcow2 image
-  if (android::base::StartsWith(magic, Qcow2Image::MagicHeader())) {
+  if (android::base::StartsWith(magic, Qcow2Image::MagicString())) {
     Result<Qcow2Image> image = Qcow2Image::OpenExisting(file_path);
     CHECK(image.ok()) << image.error().FormatForEnv();
 
-    Result<uint64_t> size = image->Size();
+    Result<uint64_t> size = image->VirtualSizeBytes();
     CHECK(size.ok()) << size.error().FormatForEnv();
     return *size;
   }

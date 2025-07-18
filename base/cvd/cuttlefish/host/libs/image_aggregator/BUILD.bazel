@@ -15,6 +15,14 @@ cc_proto_library(
 )
 
 cf_cc_library(
+    name = "disk_image",
+    hdrs = ["disk_image.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+cf_cc_library(
     name = "image_aggregator",
     srcs = [
         "image_aggregator.cc",
@@ -58,5 +66,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
     ],
 )
