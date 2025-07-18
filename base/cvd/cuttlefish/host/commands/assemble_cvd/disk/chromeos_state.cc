@@ -16,6 +16,9 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 
+#include <optional>
+#include <string>
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
@@ -24,15 +27,26 @@
 
 namespace cuttlefish {
 
-Result<void> InitializeChromeOsState(
+static constexpr char kImageName[] = "chromeos_state.img";
+static constexpr int kImageSizeMb = 8096;
+static constexpr char kFilesystemFormat[] = "ext4";
+
+Result<std::optional<ChromeOsStateImage>> ChromeOsStateImage::CreateIfNecessary(
     const CuttlefishConfig::InstanceSpecific& instance) {
   if (instance.boot_flow() != BootFlow::ChromeOs) {
-    return {};
-  } else if (FileExists(instance.chromeos_state_image())) {
-    return {};
+    return std::nullopt;
   }
-  CF_EXPECT(CreateBlankImage(instance.chromeos_state_image(), 8096, "ext4"));
-  return {};
+  std::string path = AbsolutePath(instance.PerInstancePath(kImageName));
+  if (!FileExists(path)) {
+    CF_EXPECT(CreateBlankImage(path, kImageSizeMb,kFilesystemFormat));
+  }
+  return ChromeOsStateImage(std::move(path));
+}
+
+ChromeOsStateImage::ChromeOsStateImage(std::string path) : path_(path) {}
+
+const std::string& ChromeOsStateImage::FilePath() const {
+  return path_;
 }
 
 }  // namespace cuttlefish
