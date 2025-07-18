@@ -1,6 +1,10 @@
-cuttlefish-frontend (1.16.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.16.0) unstable; urgency=medium
 
-  * 
+  * `Use a fixed version of swagger for presubmit tests` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1412
+  * `Fix swagger test failure` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1411
+  * `Introduce HO API PUT /cvd_imgs_dirs/{id}` by @0405ysj in https://github.com/google/android-cuttlefish/pull/1397
+  * `Cherrypick recent dependabot updates.` by @3405691582 in https://github.com/google/android-cuttlefish/pull/1381
+  * `Introduce ImageDirectoriesManager in Host Orchestrator` by @0405ysj in https://github.com/google/android-cuttlefish/pull/1393
 
  -- Jorge Moreira <jemoreira@google.com>  Fri, 11 Jul 2025 17:13:27 -0700
 
