@@ -44,6 +44,9 @@ PRODUCT_PACKAGES += \
     UserDictionaryProvider \
     init.zygote32.rc \
 
+# Allowlist for system packages included in aosp_system.mk
+PRODUCT_PACKAGES += preinstalled-packages-aosp-system.xml
+
 PRODUCT_HOST_PACKAGES += \
     fsck.f2fs \
 
