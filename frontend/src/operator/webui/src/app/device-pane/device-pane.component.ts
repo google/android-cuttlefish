@@ -2,8 +2,8 @@ import {Component, inject} from '@angular/core';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
 import {filter, first, mergeMap} from 'rxjs/operators';
-import {GroupService} from '../group.service';
 import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
+import {DeviceItem} from '../device-item.interface';
 
 @Component({
   standalone: false,
@@ -14,12 +14,11 @@ import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 export class DevicePaneComponent {
   private deviceService = inject(DeviceService);
   displaysService = inject(DisplaysService);
-  private groupService = inject(GroupService);
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
 
-  groups = this.groupService.getGroups();
-  devices = this.deviceService.getDevices();
+  legacyDevices = this.deviceService.getLegacyDevices();
+  deviceGroups = this.deviceService.getDeviceGroups();
 
   ngOnInit(): void {
     this.router.events
@@ -32,21 +31,26 @@ export class DevicePaneComponent {
       );
 
     this.deviceService.refresh();
-    this.groupService.refresh();
   }
 
   onRefresh(): void {
     this.deviceService.refresh();
-    this.groupService.refresh();
   }
 
   showAll(): void {
-    this.devices.pipe(first()).subscribe(devices => {
-      devices.forEach(device => {
-        if (!this.displaysService.isVisibleDevice(device.device_id)) {
-          this.displaysService.toggleVisibility(device.device_id);
-        }
-      });
+    let show = (device: DeviceItem) => {
+      console.log(device);
+      if (!this.displaysService.isVisibleDevice(device.device_id)) {
+        this.displaysService.toggleVisibility(device.device_id);
+      }
+    };
+    this.deviceGroups.pipe(first()).subscribe(groups => {
+      for (const group of groups) {
+        group.devices.forEach(show);
+      }
+    });
+    this.legacyDevices.pipe(first()).subscribe(devices => {
+      devices.forEach(show);
     });
   }
 }

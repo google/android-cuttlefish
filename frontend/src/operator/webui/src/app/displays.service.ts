@@ -9,7 +9,7 @@ import {DeviceService} from './device.service';
 export class DisplaysService {
   private deviceService = inject(DeviceService);
 
-  private devices = this.deviceService.getDevices();
+  private devices = this.deviceService.getAllDevices();
 
   private visibleDeviceIds: string[] = [];
   private visibleDevicesChanged = new Subject<void>();

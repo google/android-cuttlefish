@@ -10,21 +10,33 @@
   cursor: pointer;
 }
 
-.devices {
-  margin: 0 0 2em 0;
-  list-style-type: none;
-  padding: 0;
+.device-list {
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  ul.groups {
+    margin: 1em;
+  }
+
+  ul.devices {
+    margin: 1em 0 2.5em;
+  }
 
   li {
-    display: flex;
     justify-content: space-between;
     font-size: 60%;
     cursor: pointer;
+  }
+
+  li.device-entry {
+    display: flex;
     position: relative;
     left: 0;
     margin: 0.1em;
     padding: 0.2em;
-    height: 1.6em;
+    height: 8em;
   }
 
   mat-slide-toggle {
@@ -34,6 +46,11 @@
   button {
     display: inline-block;
     color: #073042;
+  }
+
+  .group-name {
+    font-size: large;
+    padding-left: 0.4em;
   }
 }
 
