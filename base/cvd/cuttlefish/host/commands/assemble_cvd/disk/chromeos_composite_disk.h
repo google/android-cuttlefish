@@ -18,12 +18,14 @@
 
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
 std::vector<ImagePartition> ChromeOsCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance);
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const ChromeOsStateImage&);
 
 }  // namespace cuttlefish

@@ -16,11 +16,15 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
 
+#include <optional>
 #include <vector>
+
+#include <android-base/logging.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/fuchsia_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/linux_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
@@ -34,6 +38,7 @@ namespace cuttlefish {
 
 std::vector<ImagePartition> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
+    const std::optional<ChromeOsStateImage>& chrome_os_state,
     const MetadataImage& metadata, const MiscImage& misc,
     const SystemImageDirFlag& system_image_dir) {
   switch (instance.boot_flow()) {
@@ -44,7 +49,8 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
       return AndroidEfiLoaderCompositeDiskConfig(instance, metadata, misc,
                                                  system_image_dir);
     case BootFlow::ChromeOs:
-      return ChromeOsCompositeDiskConfig(instance);
+      CHECK(chrome_os_state.has_value());
+      return ChromeOsCompositeDiskConfig(instance, *chrome_os_state);
     case BootFlow::ChromeOsDisk:
       return {};
     case BootFlow::Linux:
