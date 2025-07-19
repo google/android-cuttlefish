@@ -18,6 +18,7 @@
 
 #include <optional>
 #include <string>
+#include <utility>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -40,6 +41,16 @@ Result<std::optional<ChromeOsStateImage>> ChromeOsStateImage::CreateIfNecessary(
   if (!FileExists(path)) {
     CF_EXPECT(CreateBlankImage(path, kImageSizeMb,kFilesystemFormat));
   }
+  return ChromeOsStateImage(std::move(path));
+}
+
+Result<std::optional<ChromeOsStateImage>> ChromeOsStateImage::Reuse(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  if (instance.boot_flow() != BootFlow::ChromeOs) {
+    return std::nullopt;
+  }
+  std::string path = AbsolutePath(instance.PerInstancePath(kImageName));
+  CF_EXPECT(FileExists(path));
   return ChromeOsStateImage(std::move(path));
 }
 

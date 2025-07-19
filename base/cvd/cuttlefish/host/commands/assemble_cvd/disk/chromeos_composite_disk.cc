@@ -19,18 +19,20 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
 std::vector<ImagePartition> ChromeOsCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const ChromeOsStateImage& chrome_os_state) {
   std::vector<ImagePartition> partitions;
 
   partitions.emplace_back(ImagePartition{
       .label = "STATE",
-      .image_file_path = AbsolutePath(instance.chromeos_state_image()),
+      .image_file_path = chrome_os_state.FilePath(),
       .type = kLinuxFilesystem,
   });
   partitions.emplace_back(ImagePartition{

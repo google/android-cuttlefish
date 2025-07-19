@@ -28,6 +28,8 @@ class ChromeOsStateImage {
  public:
   static Result<std::optional<ChromeOsStateImage>> CreateIfNecessary(
       const CuttlefishConfig::InstanceSpecific&);
+  static Result<std::optional<ChromeOsStateImage>> Reuse(
+      const CuttlefishConfig::InstanceSpecific&);
 
   const std::string& FilePath() const;
  private:

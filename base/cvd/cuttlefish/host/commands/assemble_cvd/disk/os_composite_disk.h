@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -27,7 +29,8 @@
 namespace cuttlefish {
 
 std::vector<ImagePartition> GetOsCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::optional<ChromeOsStateImage>&, const MetadataImage&,
     const MiscImage&, const SystemImageDirFlag&);
 
 }  // namespace cuttlefish

@@ -153,6 +153,7 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
 DiskBuilder OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
+    const std::optional<ChromeOsStateImage>& chrome_os_state,
     const MetadataImage& metadata, const MiscImage& misc,
     const SystemImageDirFlag& system_image_dir) {
   auto builder =
@@ -167,8 +168,8 @@ DiskBuilder OsCompositeDiskBuilder(
         .CompositeDiskPath(instance.chromeos_disk());
   }
   return builder
-      .Partitions(
-          GetOsCompositeDiskConfig(instance, metadata, misc, system_image_dir))
+      .Partitions(GetOsCompositeDiskConfig(instance, chrome_os_state, metadata,
+                                           misc, system_image_dir))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());
@@ -513,7 +514,7 @@ Result<void> CreateDynamicDiskFiles(
     MiscImage misc = CF_EXPECT(MiscImage::ReuseOrCreate(instance));
 
     DiskBuilder os_disk_builder = OsCompositeDiskBuilder(
-        config, instance, metadata, misc, system_image_dir);
+        config, instance, chrome_os_state, metadata, misc, system_image_dir);
     const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     BootloaderEnvPartition bootloader_env_partition =
