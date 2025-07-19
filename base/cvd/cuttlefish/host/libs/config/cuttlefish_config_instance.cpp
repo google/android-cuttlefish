@@ -1548,10 +1548,6 @@ std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const 
   return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::chromeos_state_image() const {
-  return AbsolutePath(PerInstancePath("chromeos_state.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::esp_image_path() const {
   return AbsolutePath(PerInstancePath("esp.img"));
 }

@@ -362,9 +362,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     for (const auto& instance : config.Instances()) {
       Result<MetadataImage> metadata = MetadataImage::Reuse(instance);
       Result<MiscImage> misc = MiscImage::Reuse(instance);
-      if (metadata.ok() && misc.ok()) {
-        DiskBuilder os_builder = OsCompositeDiskBuilder(
-            config, instance, *metadata, *misc, system_image_dir);
+      Result<std::optional<ChromeOsStateImage>> chrome_os_state =
+          CF_EXPECT(ChromeOsStateImage::Reuse(instance));
+      if (chrome_os_state.ok() && metadata.ok() && misc.ok()) {
+        DiskBuilder os_builder =
+            OsCompositeDiskBuilder(config, instance, *chrome_os_state,
+                                   *metadata, *misc, system_image_dir);
         creating_os_disk |= CF_EXPECT(os_builder.WillRebuildCompositeDisk());
       } else {
         creating_os_disk = true;

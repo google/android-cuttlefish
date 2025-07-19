@@ -468,8 +468,6 @@ class CuttlefishConfig {
 
     std::string esp_image_path() const;
 
-    std::string chromeos_state_image() const;
-
     std::string otheros_esp_grub_config() const;
 
     std::string ap_esp_grub_config() const;
