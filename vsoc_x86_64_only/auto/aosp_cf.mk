@@ -77,3 +77,7 @@ PRODUCT_MODEL := Cuttlefish x86_64 auto 64-bit only
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_auto)
+    PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
