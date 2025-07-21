@@ -216,19 +216,6 @@ func (p *DevicePool) GetDevice(id string) *Device {
 	return p.devices[id]
 }
 
-// List the registered groups' ids
-func (p *DevicePool) GroupIds() []string {
-	set := make(map[string]bool)
-	for _, d := range p.GetDeviceDescList() {
-		set[d.GroupName] = true
-	}
-	ret := make([]string, 0, len(set))
-	for k := range set {
-		ret = append(ret, k)
-	}
-	return ret
-}
-
 // List the registered devices' ids
 func (p *DevicePool) DeviceIds() []string {
 	p.devicesMtx.Lock()
@@ -240,23 +227,23 @@ func (p *DevicePool) DeviceIds() []string {
 	return ret
 }
 
-func (p *DevicePool) GetDeviceDescList() []*apiv1.DeviceDescriptor {
+type DeviceDescriptorFilter struct {
+	groupId string
+	owner   string
+}
+
+func (p *DevicePool) DeviceDescriptors(filter DeviceDescriptorFilter) []*apiv1.DeviceDescriptor {
 	p.devicesMtx.Lock()
 	defer p.devicesMtx.Unlock()
 	ret := make([]*apiv1.DeviceDescriptor, 0)
 	for _, device := range p.devices {
-		ret = append(ret, &device.Descriptor)
-	}
-	return ret
-}
-
-func (p *DevicePool) GetDeviceDescByGroupId(groupId string) []*apiv1.DeviceDescriptor {
-	ret := make([]*apiv1.DeviceDescriptor, 0)
-	devs := p.GetDeviceDescList()
-	for _, d := range devs {
-		if d.GroupName == groupId {
-			ret = append(ret, d)
+		if filter.groupId != "" && device.Descriptor.GroupName != filter.groupId {
+			continue
 		}
+		if filter.owner != "" && device.Descriptor.Owner != filter.owner {
+			continue
+		}
+		ret = append(ret, &device.Descriptor)
 	}
 	return ret
 }

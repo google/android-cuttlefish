@@ -1,10 +1,10 @@
 import {Injectable, inject} from '@angular/core';
 import {combineLatestWith, map, mergeMap, shareReplay} from 'rxjs/operators';
 import {Observable, Subject, BehaviorSubject} from 'rxjs';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {DomSanitizer} from '@angular/platform-browser';
 import {DeviceInfo} from './device-info-interface';
-import {DeviceItem, DeviceGroup} from './device-item.interface';
+import {DeviceItem, DeviceGroup, DeviceFilter} from './device-item.interface';
 
 function isLegacyDevice(device: DeviceItem) : boolean {
   return !device || !device.owner || !device.group_name || !device.name;
@@ -19,16 +19,11 @@ export class DeviceService {
 
   private refreshSubject = new BehaviorSubject<void>(undefined);
 
-  private groupIdSubject = new Subject<string | null>();
+  private filterSubject = new Subject<DeviceFilter>();
 
-  private devices = this.groupIdSubject.pipe(
+  private devices = this.filterSubject.pipe(
     combineLatestWith(this.refreshSubject),
-    mergeMap(([groupId, _]) => {
-      if (groupId === null) {
-        return this.allDeviceFromServer;
-      }
-      return this.getDevicesByGroupIdFromServer(groupId);
-    }),
+    mergeMap(([filter, _]) => this.fetchDevices(filter)),
     shareReplay(1)
   );
 
@@ -36,13 +31,16 @@ export class DeviceService {
 
   private legacyDevices = this.devices.pipe(map(this.legacyFromDeviceList));
 
-  private allDeviceFromServer = this.httpClient
-    .get<DeviceItem[]>('./devices')
-    .pipe(map(this.sortDevices));
-
-  private getDevicesByGroupIdFromServer(groupId: string) {
+  private fetchDevices(filter: DeviceFilter) {
+    let params = new HttpParams();
+    if (filter.groupId !== null) {
+      params = params.set("groupId", filter.groupId);
+    }
+    if (filter.owner !== null) {
+      params = params.set("owner", filter.owner);
+    }
     return this.httpClient
-      .get<DeviceItem[]>(`./devices?groupId=${groupId}`)
+      .get<DeviceItem[]>(`./devices`, {params: params})
       .pipe(map(this.sortDevices));
   }
 
@@ -85,8 +83,8 @@ export class DeviceService {
     this.refreshSubject.next();
   }
 
-  setGroupId(groupId: string | null) {
-    this.groupIdSubject.next(groupId);
+  setDeviceFilter(filter: DeviceFilter) {
+    this.filterSubject.next(filter);
   }
 
   getLegacyDevices() {
