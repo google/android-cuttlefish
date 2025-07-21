@@ -337,6 +337,7 @@ endif
 LOCAL_ENABLE_WIDEVINE ?= true
 ifeq ($(LOCAL_ENABLE_WIDEVINE),true)
 -include vendor/widevine/libwvdrmengine/apex/device/device.mk
+-include vendor/widevine/libwvdrmengine/apex/device/device-rikers.mk
 endif
 
 #
