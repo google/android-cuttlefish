@@ -1596,6 +1596,15 @@ void CuttlefishConfig::MutableInstanceSpecific::set_use_allocd(
   (*Dictionary())[kUseAllocd] = use_allocd;
 }
 
+static constexpr char kUseCvdalloc[] = "use_cvdalloc";
+bool CuttlefishConfig::InstanceSpecific::use_cvdalloc() const {
+  return (*Dictionary())[kUseCvdalloc].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_use_cvdalloc(
+    bool use_cvdalloc) {
+  (*Dictionary())[kUseCvdalloc] = use_cvdalloc;
+}
+
 static constexpr char kSessionId[] = "session_id";
 uint32_t CuttlefishConfig::InstanceSpecific::session_id() const {
   return (*Dictionary())[kSessionId].asUInt();
