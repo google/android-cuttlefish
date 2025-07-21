@@ -366,11 +366,10 @@ git_repository(
 
 git_repository(
     name = "gfxstream",
-    commit = "620cd8d0e1e839228d1894da4508d08b8ac798bc",
+    commit = "c7ceec935723db8c6b296b04bc71eb6f6eb27607",
     remote = "https://github.com/google/gfxstream.git",
     patch_strip = 1,
     patches = [
-        "@//build_external/gfxstream:PATCH.gfxstream.3683847.patch",
         "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
     ],
 )
