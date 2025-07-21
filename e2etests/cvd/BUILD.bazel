@@ -3,7 +3,7 @@ load("boot_tests.bzl", "cvd_command_boot_test", "cvd_load_boot_test", "launch_cv
 # cvd fetch + launch_cvd tests
 launch_cvd_boot_test(
     name = "fetch_and_launch_git_main_x64_phone",
-    branch = "P100770646",
+    branch = "git_main",
     target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 )
 
