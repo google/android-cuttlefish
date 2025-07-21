@@ -55,6 +55,7 @@
 #define CF_DEFAULTS_SETUPWIZARD_MODE "DISABLED"
 #define CF_DEFAULTS_SMT false
 #define CF_DEFAULTS_USE_ALLOCD false
+#define CF_DEFAULTS_USE_CVDALLOC false
 #define CF_DEFAULTS_USE_SDCARD true
 #define CF_DEFAULTS_UUID \
   cuttlefish::ForCurrentInstance(cuttlefish::kDefaultUuidPrefix)
