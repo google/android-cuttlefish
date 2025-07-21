@@ -12,3 +12,8 @@ export interface DeviceGroup {
   displayName: string;
   devices: DeviceItem[];
 }
+
+export interface DeviceFilter {
+  owner: string | null;
+  groupId: string | null;
+}

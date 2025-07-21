@@ -22,13 +22,13 @@ export class DevicePaneComponent {
 
   ngOnInit(): void {
     this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        mergeMap(() => this.activatedRoute.queryParams)
-      )
-      .subscribe(params =>
-        this.deviceService.setGroupId(params['groupId'] ?? null)
-      );
+        .pipe(
+            filter(event => event instanceof NavigationEnd),
+            mergeMap(() => this.activatedRoute.queryParams))
+        .subscribe(params => this.deviceService.setDeviceFilter({
+          owner: params['owner'] ?? null,
+          groupId: params['groupId'] ?? null
+        }));
 
     this.deviceService.refresh();
   }
