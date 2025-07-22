@@ -231,6 +231,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:graphics_flags",
         "//cuttlefish/host/commands/assemble_cvd:guest_config",
         "//cuttlefish/host/commands/assemble_cvd:network_flags",
+        "//cuttlefish/host/commands/assemble_cvd:resolve_instance_files",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/commands/assemble_cvd/flags:display_proto",
         "//cuttlefish/host/commands/assemble_cvd/flags:initramfs_path",
@@ -349,6 +350,22 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+    ],
+)
+
+cf_cc_library(
+    name = "resolve_instance_files",
+    srcs = ["resolve_instance_files.cc"],
+    hdrs = ["resolve_instance_files.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd/flags:initramfs_path",
+        "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/libs/config:instance_nums",
+        "//libbase",
+        "@gflags",
     ],
 )
 
