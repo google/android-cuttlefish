@@ -26,7 +26,6 @@
 #include <string>
 
 #include <android-base/logging.h>
-#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -187,18 +186,6 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                       .Start()
                       .Wait();
   } while (cpio_status == 0);
-}
-
-bool GetAvbMetadataFromBootImage(const std::string& boot_image_path,
-                                 const std::string& unpack_dir) {
-  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
-  Result<void> result =
-      avbtool->WriteInfoImage(boot_image_path, unpack_dir + "/boot_params");
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
-    return false;
-  }
-  return true;
 }
 
 Result<void> UnpackBootImage(const std::string& boot_image_path,
@@ -488,24 +475,13 @@ void RepackGem5BootImage(
 // the os version field in the boot image header.
 // https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 Result<std::string> ReadAndroidVersionFromBootImage(
-    const std::string& temp_dir_parent, const std::string& boot_image_path) {
-  std::string tmp_dir = temp_dir_parent + "/XXXXXXX";
-  if (!mkdtemp(tmp_dir.data())) {
-    return CF_ERR("boot image unpack dir could not be created");
-  }
-  android::base::ScopeGuard delete_dir([tmp_dir]() {
-    Result<void> remove_res = RecursivelyRemoveDirectory(tmp_dir);
-    if (!remove_res.ok()) {
-      LOG(ERROR) << "Failed to delete temp dir '" << tmp_dir << '"';
-      LOG(ERROR) << remove_res.error().FormatForEnv();
-    }
-  });
+    const std::string& boot_image_path) {
+  std::unique_ptr<Avb> avb = GetDefaultAvb();
+  CF_EXPECT(avb.get());
 
-  CF_EXPECTF(GetAvbMetadataFromBootImage(boot_image_path, tmp_dir),
-             "'{}' boot image unpack into '{}' failed", boot_image_path,
-             tmp_dir);
-
-  std::string boot_params = ReadFile(tmp_dir + "/boot_params");
+  std::string boot_params =
+      CF_EXPECTF(avb->InfoImage(boot_image_path),
+                 "Failed to get avb boot data from '{}'", boot_image_path);
 
   std::string os_version =
       ExtractValue(boot_params, "Prop: com.android.build.boot.os_version -> ");

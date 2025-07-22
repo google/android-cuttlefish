@@ -17,7 +17,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "@fruit",
     ],

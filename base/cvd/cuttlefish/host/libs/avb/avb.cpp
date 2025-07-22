@@ -28,7 +28,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -88,26 +87,21 @@ Result<void> Avb::AddHashFooter(const std::string& image_path,
   return {};
 }
 
-Command Avb::GenerateInfoImage(const std::string& image_path,
-                               const SharedFD& output_path) const {
-  Command command(avbtool_path_);
-  command.AddParameter(kInfoImage);
-  command.AddParameter("--image");
-  command.AddParameter(image_path);
-  command.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_path);
-  return command;
-}
+Result<std::string> Avb::InfoImage(const std::string& image_path) const {
+  Command avbtool_cmd = Command(avbtool_path_)
+                            .AddParameter(kInfoImage)
+                            .AddParameter("--image")
+                            .AddParameter(image_path);
 
-Result<void> Avb::WriteInfoImage(const std::string& image_path,
-                                 const std::string& output_path) const {
-  auto output_file = SharedFD::Creat(output_path, 0666);
-  CF_EXPECTF(output_file->IsOpen(), "Unable to create {} with error - {}",
-             output_path, output_file->StrError());
-  auto command = GenerateInfoImage(image_path, output_file);
-  int exit_code = command.Start().Wait();
-  CF_EXPECTF(exit_code == 0, "Failure running {} {}. Exited with status {}",
-             command.Executable(), kInfoImage, exit_code);
-  return {};
+  std::string standard_out, standard_err;
+  int exit_code = RunWithManagedStdio(std::move(avbtool_cmd), nullptr,
+                                      &standard_out, &standard_err);
+  CF_EXPECTF(exit_code == 0,
+             "Failed to run avbtool {} on '{}': code = {}, stdout = '{}', "
+             "stderr = '{}'",
+             kInfoImage, image_path, exit_code, standard_out, standard_err);
+
+  return standard_out;
 }
 
 Command Avb::GenerateMakeVbMetaImage(
