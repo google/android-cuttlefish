@@ -255,6 +255,8 @@ cf_cc_library(
     srcs = ["os_composite_disk.cc"],
     hdrs = ["os_composite_disk.h"],
     deps = [
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_efi_loader_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_composite_disk",
