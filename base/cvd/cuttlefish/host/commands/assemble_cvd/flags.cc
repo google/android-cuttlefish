@@ -116,23 +116,6 @@ Result<std::string> GetAndroidInfoConfig(
   return android_info_map[key];
 }
 
-#ifdef __ANDROID__
-Result<std::vector<GuestConfig>> ReadGuestConfig(const KernelPathFlag&,
-                                                 const SystemImageDir&) {
-  std::vector<GuestConfig> rets;
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  for (int instance_index = 0; instance_index < instance_nums.size(); instance_index++) {
-    // QEMU isn't on Android, so always follow host arch
-    GuestConfig ret{};
-    ret.target_arch = HostArch();
-    ret.bootconfig_supported = true;
-    ret.android_version_number = "0";
-    rets.push_back(ret);
-  }
-  return rets;
-}
-#else
 Result<std::vector<GuestConfig>> ReadGuestConfig(
     const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
@@ -317,8 +300,6 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
   }
   return guest_configs;
 }
-
-#endif  // #ifdef __ANDROID__
 
 Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     const CuttlefishConfig& tmp_config_obj,
