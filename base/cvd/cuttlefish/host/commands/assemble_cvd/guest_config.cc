@@ -31,6 +31,7 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
@@ -53,11 +54,9 @@ Result<std::string> GetAndroidInfoConfig(
 }  // namespace
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
-    const KernelPathFlag& kernel_path,
+    const BootImageFlag& boot_image, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   std::vector<GuestConfig> guest_configs;
-  std::vector<std::string> boot_image =
-      android::base::Split(FLAGS_boot_image, ",");
   std::string kernel_image_path = "";
   std::string cur_boot_image;
 
@@ -75,11 +74,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     // for the ikconfig header in the image before extracting the config list.
     // This code is liable to break if the boot image ever includes the
     // ikconfig header outside the kernel.
-
-    cur_boot_image = "";
-    if (instance_index < boot_image.size()) {
-      cur_boot_image = boot_image[instance_index];
-    }
+    std::string cur_boot_image = boot_image.BootImageForIndex(instance_index);
 
     if (!kernel_path.KernelPathForIndex(instance_index).empty()) {
       kernel_image_path = kernel_path.KernelPathForIndex(instance_index);

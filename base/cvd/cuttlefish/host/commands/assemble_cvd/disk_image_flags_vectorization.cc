@@ -26,6 +26,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -38,10 +39,9 @@ namespace cuttlefish {
 
 Result<void> DiskImageFlagsVectorization(
     CuttlefishConfig& config, const FetcherConfig& fetcher_config,
-    const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
+    const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
+    const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
-  std::vector<std::string> boot_image =
-      android::base::Split(FLAGS_boot_image, ",");
   std::vector<std::string> super_image =
       android::base::Split(FLAGS_super_image, ",");
   std::vector<std::string> vendor_boot_image =
@@ -103,11 +103,7 @@ Result<void> DiskImageFlagsVectorization(
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   for (const auto& num : instance_nums) {
     auto instance = config.ForInstance(num);
-    if (instance_index >= boot_image.size()) {
-      cur_boot_image = boot_image[0];
-    } else {
-      cur_boot_image = boot_image[instance_index];
-    }
+    std::string cur_boot_image = boot_image.BootImageForIndex(instance_index);
     instance.set_boot_image(cur_boot_image);
     instance.set_new_boot_image(cur_boot_image);
 

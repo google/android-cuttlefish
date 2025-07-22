@@ -13,20 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
-#include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include <stddef.h>
+
+#include <string>
+#include <vector>
+
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
 namespace cuttlefish {
 
-Result<void> ResolveInstanceFiles(const BootImageFlag&,
-                                  const InitramfsPathFlag&,
-                                  const KernelPathFlag& kernel_path,
-                                  const SystemImageDirFlag& system_image_dir);
+/* Android kernel path flag, --kernel_path */
+class BootImageFlag {
+ public:
+  static BootImageFlag FromGlobalGflags(const SystemImageDirFlag&);
+
+  std::string BootImageForIndex(size_t index) const;
+
+  bool IsDefault() const;
+
+ private:
+  BootImageFlag(const SystemImageDirFlag&, std::vector<std::string>);
+
+  const SystemImageDirFlag& system_image_dir_;
+  std::vector<std::string> boot_images_;
+};
 
 }  // namespace cuttlefish
