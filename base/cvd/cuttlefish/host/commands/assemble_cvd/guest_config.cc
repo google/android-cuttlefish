@@ -88,9 +88,9 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     }
 
     GuestConfig guest_config;
-    guest_config.android_version_number = CF_EXPECT(
-        ReadAndroidVersionFromBootImage(FLAGS_early_tmp_dir, cur_boot_image),
-        "Failed to read guest's android version");
+    guest_config.android_version_number =
+        CF_EXPECT(ReadAndroidVersionFromBootImage(cur_boot_image),
+                  "Failed to read guest's android version");
 
     if (InSandbox()) {
       // TODO: b/359309462 - real sandboxing for extract-ikconfig

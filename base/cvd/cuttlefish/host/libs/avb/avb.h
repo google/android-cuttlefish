@@ -56,8 +56,7 @@ class Avb {
   Result<void> AddHashFooter(const std::string& image_path,
                              const std::string& partition_name,
                              const off_t partition_size_bytes) const;
-  Result<void> WriteInfoImage(const std::string& image_path,
-                              const std::string& output_path) const;
+  Result<std::string> InfoImage(const std::string& image_path) const;
   Result<void> MakeVbMetaImage(
       const std::string& output_path,
       const std::vector<ChainPartition>& chained_partitions,
