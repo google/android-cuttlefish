@@ -27,4 +27,4 @@ Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                                     const CuttlefishConfig& config,
                                     const SystemImageDirFlag&);
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
