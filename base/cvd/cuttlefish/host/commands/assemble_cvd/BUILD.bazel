@@ -27,7 +27,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:clean",
-        "//cuttlefish/host/commands/assemble_cvd:disk_flags",
+        "//cuttlefish/host/commands/assemble_cvd:create_dynamic_disk_files",
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flag_feature",
         "//cuttlefish/host/commands/assemble_cvd:flags",
@@ -120,23 +120,9 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "disk_builder",
-    srcs = ["disk_builder.cpp"],
-    hdrs = ["disk_builder.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/image_aggregator",
-        "//cuttlefish/host/libs/image_aggregator:qcow2",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
-    name = "disk_flags",
-    srcs = ["disk_flags.cc"],
-    hdrs = ["disk_flags.h"],
+    name = "create_dynamic_disk_files",
+    srcs = ["create_dynamic_disk_files.cc"],
+    hdrs = ["create_dynamic_disk_files.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
@@ -174,9 +160,22 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/feature:inject",
-        "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "disk_builder",
+    srcs = ["disk_builder.cpp"],
+    hdrs = ["disk_builder.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:qcow2",
+        "//libbase",
     ],
 )
 

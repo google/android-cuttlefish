@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 
 #include <sys/statvfs.h>
 
@@ -56,14 +56,11 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
-#include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 
 namespace cuttlefish {
 
-using vm_manager::Gem5Manager;
-
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
-  struct statvfs vfs {};
+  struct statvfs vfs{};
   if (statvfs(path.c_str(), &vfs) != 0) {
     int error_num = errno;
     LOG(ERROR) << "Could not find space available at " << path << ", error was "
@@ -132,7 +129,8 @@ Result<void> CreateDynamicDiskFiles(
 
     DiskBuilder os_disk_builder = OsCompositeDiskBuilder(
         config, instance, chrome_os_state, metadata, misc, system_image_dir);
-    const auto os_built_composite = CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
+    const auto os_built_composite =
+        CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
     BootloaderEnvPartition bootloader_env_partition =
         CF_EXPECT(BootloaderEnvPartition::Create(config, instance));
@@ -211,4 +209,4 @@ Result<void> CreateDynamicDiskFiles(
   return {};
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish
