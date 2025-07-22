@@ -38,7 +38,5 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config,
                                          const InitramfsPathFlag&,
                                          const KernelPathFlag&,
                                          const SystemImageDirFlag&);
-DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
-                                   const CuttlefishConfig::InstanceSpecific& instance);
 
 } // namespace cuttlefish

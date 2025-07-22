@@ -16,14 +16,12 @@
 
 #pragma once
 
-#include <vector>
-
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
 
-std::vector<ImagePartition> GetApCompositeDiskConfig(
+DiskBuilder ApCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance);
 

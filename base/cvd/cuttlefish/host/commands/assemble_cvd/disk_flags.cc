@@ -149,20 +149,6 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
   return {};
 }
 
-DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  return DiskBuilder()
-      .ReadOnly(FLAGS_use_overlay)
-      .Partitions(GetApCompositeDiskConfig(config, instance))
-      .VmManager(config.vm_manager())
-      .CrosvmPath(instance.crosvm_binary())
-      .ConfigPath(instance.PerInstancePath("ap_composite_disk_config.txt"))
-      .HeaderPath(instance.PerInstancePath("ap_composite_gpt_header.img"))
-      .FooterPath(instance.PerInstancePath("ap_composite_gpt_footer.img"))
-      .CompositeDiskPath(instance.ap_composite_disk_path())
-      .ResumeIfPossible(FLAGS_resume);
-}
-
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
   struct statvfs vfs {};
   if (statvfs(path.c_str(), &vfs) != 0) {

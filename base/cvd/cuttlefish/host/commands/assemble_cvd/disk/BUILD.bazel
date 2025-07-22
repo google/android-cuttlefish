@@ -52,6 +52,8 @@ cf_cc_library(
     hdrs = ["ap_composite_disk.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
