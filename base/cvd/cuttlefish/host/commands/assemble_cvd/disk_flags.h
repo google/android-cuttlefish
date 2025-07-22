@@ -17,9 +17,6 @@
 #pragma once
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -41,11 +38,6 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config,
                                          const InitramfsPathFlag&,
                                          const KernelPathFlag&,
                                          const SystemImageDirFlag&);
-DiskBuilder OsCompositeDiskBuilder(
-    const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance,
-    const std::optional<ChromeOsStateImage>&, const MetadataImage&,
-    const MiscImage&, const SystemImageDirFlag&);
 DiskBuilder ApCompositeDiskBuilder(const CuttlefishConfig& config,
                                    const CuttlefishConfig::InstanceSpecific& instance);
 

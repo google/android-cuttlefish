@@ -36,6 +36,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"

@@ -21,6 +21,7 @@
 
 #include <android-base/logging.h>
 
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
@@ -29,12 +30,14 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/linux_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
+namespace {
 
 std::vector<ImagePartition> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
@@ -58,6 +61,33 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
     case BootFlow::Fuchsia:
       return FuchsiaCompositeDiskConfig(instance);
   }
+}
+
+}  // namespace
+
+DiskBuilder OsCompositeDiskBuilder(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::optional<ChromeOsStateImage>& chrome_os_state,
+    const MetadataImage& metadata, const MiscImage& misc,
+    const SystemImageDirFlag& system_image_dir) {
+  auto builder =
+      DiskBuilder()
+          .VmManager(config.vm_manager())
+          .CrosvmPath(instance.crosvm_binary())
+          .ConfigPath(instance.PerInstancePath("os_composite_disk_config.txt"))
+          .ReadOnly(FLAGS_use_overlay)
+          .ResumeIfPossible(FLAGS_resume);
+  if (instance.boot_flow() == BootFlow::ChromeOsDisk) {
+    return builder.EntireDisk(instance.chromeos_disk())
+        .CompositeDiskPath(instance.chromeos_disk());
+  }
+  return builder
+      .Partitions(GetOsCompositeDiskConfig(instance, chrome_os_state, metadata,
+                                           misc, system_image_dir))
+      .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
+      .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
+      .CompositeDiskPath(instance.os_composite_disk_path());
 }
 
 }  // namespace cuttlefish
