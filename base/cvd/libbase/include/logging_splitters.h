@@ -19,6 +19,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <time.h>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/stringprintf.h>
