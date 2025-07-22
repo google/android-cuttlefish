@@ -38,9 +38,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 #
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
-# Nested virtualization support
-$(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
-
 #
 # Special settings for the target
 #
