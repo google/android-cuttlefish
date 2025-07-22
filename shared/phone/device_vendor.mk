@@ -73,7 +73,3 @@ TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/phone/android-info.txt
 # Storage: for factory reset protection feature
 PRODUCT_VENDOR_PROPERTIES += \
     ro.frp.pst=/dev/block/by-name/frp
-
-# Cuttlefish doesn't support protected VMs, run AppSearch in non-protected mode
-PRODUCT_PRODUCT_PROPERTIES += ro.appsearch.feature.enable_isolated_storage=true
-PRODUCT_PRODUCT_PROPERTIES += ro.enable.nonprotected_appsearch_vm=true
