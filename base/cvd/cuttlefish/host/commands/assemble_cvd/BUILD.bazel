@@ -181,6 +181,24 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "disk_image_flags_vectorization",
+    srcs = ["disk_image_flags_vectorization.cc"],
+    hdrs = ["disk_image_flags_vectorization.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
+        "//cuttlefish/host/commands/assemble_cvd/flags:initramfs_path",
+        "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:instance_nums",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
@@ -225,7 +243,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
-        "//cuttlefish/host/commands/assemble_cvd:disk_flags",
+        "//cuttlefish/host/commands/assemble_cvd:disk_image_flags_vectorization",
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:graphics_flags",

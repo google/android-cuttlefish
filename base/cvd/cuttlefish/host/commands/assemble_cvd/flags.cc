@@ -47,7 +47,7 @@
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/commands/assemble_cvd/alloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_image_flags_vectorization.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
