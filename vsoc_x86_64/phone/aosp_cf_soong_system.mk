@@ -18,3 +18,7 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/phone/aosp_cf.mk)
 PRODUCT_NAME := aosp_cf_x86_64_phone_soong_system
 
 USE_SOONG_DEFINED_SYSTEM_IMAGE := true
+
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_phone_soong_system)
+    PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
