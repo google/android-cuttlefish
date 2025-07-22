@@ -54,6 +54,7 @@ DEFINE_bool(multitouch, true,
 DEFINE_string(touch_fds, "",
               "A list of fds to listen on for touch connections.");
 DEFINE_int32(mouse_fd, -1, "An fd to listen on for mouse connections.");
+DEFINE_int32(gamepad_fd, -1, "An fd to listen on for gamepad connections.");
 DEFINE_int32(rotary_fd, -1, "An fd to listen on for rotary connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(switches_fd, -1, "An fd to listen on for switch connections.");
@@ -218,6 +219,10 @@ int CuttlefishMain() {
     inputs_builder.WithMouse(SharedFD::Dup(FLAGS_mouse_fd));
     close(FLAGS_mouse_fd);
   }
+  if (FLAGS_gamepad_fd >= 0) {
+    inputs_builder.WithGamepad(SharedFD::Dup(FLAGS_gamepad_fd));
+    close(FLAGS_gamepad_fd);
+  }
   if (FLAGS_keyboard_fd >= 0) {
     inputs_builder.WithKeyboard(SharedFD::Dup(FLAGS_keyboard_fd));
     close(FLAGS_keyboard_fd);
@@ -286,6 +291,7 @@ int CuttlefishMain() {
         ServerConfig::Security::kInsecure;
   }
   streamer_config.enable_mouse = instance.enable_mouse();
+  streamer_config.enable_gamepad = instance.enable_gamepad();
 
   KernelLogEventsHandler kernel_logs_event_handler(kernel_log_events_client);
 

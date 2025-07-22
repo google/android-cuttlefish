@@ -24,6 +24,7 @@ cc_library {
         "camera_streamer.cpp",
         "client_handler.cpp",
         "data_channels.cpp",
+        "gamepad.cpp",
         "keyboard.cpp",
         "lights_observer.cpp",
         "local_recorder.cpp",

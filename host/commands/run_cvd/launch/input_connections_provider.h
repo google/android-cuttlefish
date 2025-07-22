@@ -31,6 +31,7 @@ class InputConnectionsProvider : public virtual SetupFeature {
 
   virtual SharedFD RotaryDeviceConnection() const = 0;
   virtual SharedFD MouseConnection() const = 0;
+  virtual SharedFD GamepadConnection() const = 0;
   virtual SharedFD KeyboardConnection() const = 0;
   virtual SharedFD SwitchesConnection() const = 0;
   virtual std::vector<SharedFD> TouchscreenConnections() const = 0;
