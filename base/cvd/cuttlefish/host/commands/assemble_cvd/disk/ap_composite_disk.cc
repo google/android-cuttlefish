@@ -19,11 +19,14 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
+namespace {
 
 std::vector<ImagePartition> GetApCompositeDiskConfig(
     const CuttlefishConfig& config,
@@ -43,6 +46,23 @@ std::vector<ImagePartition> GetApCompositeDiskConfig(
   });
 
   return partitions;
+}
+
+}  // namespace
+
+DiskBuilder ApCompositeDiskBuilder(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  return DiskBuilder()
+      .ReadOnly(FLAGS_use_overlay)
+      .Partitions(GetApCompositeDiskConfig(config, instance))
+      .VmManager(config.vm_manager())
+      .CrosvmPath(instance.crosvm_binary())
+      .ConfigPath(instance.PerInstancePath("ap_composite_disk_config.txt"))
+      .HeaderPath(instance.PerInstancePath("ap_composite_gpt_header.img"))
+      .FooterPath(instance.PerInstancePath("ap_composite_gpt_footer.img"))
+      .CompositeDiskPath(instance.ap_composite_disk_path())
+      .ResumeIfPossible(FLAGS_resume);
 }
 
 }  // namespace cuttlefish
