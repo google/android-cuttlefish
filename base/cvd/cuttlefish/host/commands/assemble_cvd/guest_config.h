@@ -17,9 +17,12 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
 namespace cuttlefish {
 
@@ -43,4 +46,7 @@ struct GuestConfig {
   int blank_data_image_mb = 0;
 };
 
+Result<std::vector<GuestConfig>> ReadGuestConfig(
+    const KernelPathFlag& kernel_path,
+    const SystemImageDirFlag& system_image_dir);
 }
