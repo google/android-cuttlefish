@@ -513,9 +513,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "images have been updated since the first launch."
             "If the device starts from a snapshot, this will be always true.");
 
-DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
-              "Location of cuttlefish boot image. If empty it is assumed to be "
-              "boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
               "Location of the super partition image.");
 DEFINE_string(

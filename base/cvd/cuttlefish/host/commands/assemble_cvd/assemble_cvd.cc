@@ -42,6 +42,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -312,7 +313,7 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, SharedFD log,
+    fruit::Injector<>& injector, SharedFD log, const BootImageFlag& boot_image,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   {
@@ -323,7 +324,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     auto config = CF_EXPECT(
         InitializeCuttlefishConfiguration(
             FLAGS_instance_dir, guest_configs, injector, fetcher_config,
-            initramfs_path, kernel_path, system_image_dir),
+            boot_image, initramfs_path, kernel_path, system_image_dir),
         "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
@@ -615,6 +616,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
+  BootImageFlag boot_image = BootImageFlag::FromGlobalGflags(system_image_dir);
+
   fruit::Injector<> injector(FlagsComponent, &system_image_dir);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
@@ -644,14 +647,14 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // them in place, and either errors out on unknown flags or accepts any flags.
 
   auto guest_configs =
-      CF_EXPECT(GetGuestConfigAndSetDefaults(initramfs_path, kernel_path,
-                                             system_image_dir),
+      CF_EXPECT(GetGuestConfigAndSetDefaults(boot_image, initramfs_path,
+                                             kernel_path, system_image_dir),
                 "Failed to parse arguments");
 
   auto config =
       CF_EXPECT(InitFilesystemAndCreateConfig(
                     std::move(fetcher_config), guest_configs, injector, log,
-                    initramfs_path, kernel_path, system_image_dir),
+                    boot_image, initramfs_path, kernel_path, system_image_dir),
                 "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";

@@ -20,6 +20,7 @@
 #include <fruit/fruit.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -30,13 +31,14 @@
 namespace cuttlefish {
 
 Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
-    const InitramfsPathFlag&, const KernelPathFlag&, const SystemImageDirFlag&);
+    const BootImageFlag& boot_image, const InitramfsPathFlag&,
+    const KernelPathFlag&, const SystemImageDirFlag&);
 // Must be called after ParseCommandLineFlags.
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
-    const InitramfsPathFlag&, const KernelPathFlag& kernel_path,
-    const SystemImageDirFlag&);
+    const BootImageFlag&, const InitramfsPathFlag&,
+    const KernelPathFlag& kernel_path, const SystemImageDirFlag&);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 
