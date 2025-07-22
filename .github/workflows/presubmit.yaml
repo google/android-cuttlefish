@@ -195,14 +195,12 @@ jobs:
   build-debian-package:
     runs-on: ubuntu-22.04-4core
     container:
-      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     steps:
     - name: Check for dockerenv file
       run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
     - name: setup apt
-      run: |
-        echo 'deb http://deb.debian.org/debian bullseye-backports main' | tee /etc/apt/sources.list.d/backports.list
-        apt update -y && apt upgrade -y
+      run: apt update -y && apt upgrade -y
     - name: install dependencies
       run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler yq
     - name: go version

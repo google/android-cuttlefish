@@ -18,7 +18,7 @@ jobs:
   document-cvd:
     runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
@@ -44,7 +44,7 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:823849b88ae7e9b6ceb605fbdf51566499c234a9cfca8da1e4f22234fd65a09c # debian:bullseye-20250317 (amd64)
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
