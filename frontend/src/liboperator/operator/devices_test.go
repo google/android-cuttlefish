@@ -198,30 +198,6 @@ func TestListDevices(t *testing.T) {
 	}
 }
 
-func MakeInfo(groupId string) map[string]interface{} {
-	return map[string]interface{}{
-		"group_id": groupId,
-	}
-}
-
-func TestListDevicesByGroupId(t *testing.T) {
-	p := NewDevicePool()
-
-	p.Register("1", nil, 0, MakeInfo("foo"))
-	p.Register("2", nil, 0, MakeInfo("foo"))
-	p.Register("3", nil, 0, MakeInfo("bar"))
-	p.Register("4", nil, 0, MakeInfo("bar"))
-	p.Register("5", nil, 0, MakeInfo("bar"))
-
-	if deviceCnt := len(p.DeviceDescriptors(DeviceDescriptorFilter{groupId: "foo"})); deviceCnt != 2 {
-		t.Error("List of devices in group foo should have size of 2, but have ", deviceCnt)
-	}
-
-	if deviceCnt := len(p.DeviceDescriptors(DeviceDescriptorFilter{groupId: "bar"})); deviceCnt != 3 {
-		t.Error("List of devices in group bar should have size of 3, but have ", deviceCnt)
-	}
-}
-
 func TestListDevicesByPreRegistrationData(t *testing.T) {
 	p := NewDevicePool()
 	register := func(id string, desc *apiv1.DeviceDescriptor) {
@@ -303,7 +279,7 @@ func TestListDevicesByPreRegistrationData(t *testing.T) {
 
 func TestListDevicesEmpty(t *testing.T) {
 	p := NewDevicePool()
-	p.Register("d", nil, 0, MakeInfo("foo"))
+	p.Register("d", nil, 0, map[string]interface{}{})
 	p.Unregister("d")
 
 	if deviceCnt := len(p.DeviceDescriptors(DeviceDescriptorFilter{})); deviceCnt != 0 {
@@ -313,35 +289,4 @@ func TestListDevicesEmpty(t *testing.T) {
 	if deviceCnt := len(p.DeviceDescriptors(DeviceDescriptorFilter{groupId: "foo"})); deviceCnt != 0 {
 		t.Error("List of devices in group foo should have size of 0, but have ", deviceCnt)
 	}
-}
-
-func TestGroupIdFromPrivateData(t *testing.T) {
-	info := MakeInfo("foo")
-	groupId := groupIdFromPrivateData(info)
-
-	if groupId != "foo" {
-		t.Error("info should have group_id as foo")
-	}
-
-}
-
-func TestDefaultGroup(t *testing.T) {
-	p := NewDevicePool()
-	p.Register("d1", nil, 0, MakeInfo("foo"))
-	p.Register("d2", nil, 0, map[string]interface{}{})
-	p.Register("d3", nil, 0, "")
-	p.Register("d4", nil, 0, MakeInfo(""))
-
-	if len(p.devices) != 4 {
-		t.Error("Error listing after 4 device registrations - expected 4 but ", len(p.devices))
-	}
-
-	if defaultDeviceCount := len(p.DeviceDescriptors(DeviceDescriptorFilter{groupId: DEFAULT_GROUP_ID})); defaultDeviceCount != 3 {
-		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
-	}
-
-	if defaultDeviceCount := len(p.DeviceDescriptors(DeviceDescriptorFilter{groupId: DEFAULT_GROUP_ID})); defaultDeviceCount != 3 {
-		t.Error("Error after 3 device in default group - expected 3 but ", defaultDeviceCount)
-	}
-
 }
