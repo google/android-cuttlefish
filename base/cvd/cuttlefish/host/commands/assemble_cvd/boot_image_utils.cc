@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -188,24 +189,19 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
   } while (cpio_status == 0);
 }
 
-Result<void> UnpackBootImage(const std::string& boot_image_path,
-                             const std::string& unpack_dir) {
-  SharedFD output_file = SharedFD::Creat(unpack_dir + "/boot_params", 0666);
-  CF_EXPECTF(output_file->IsOpen(),
-             "Unable to create intermediate boot params file: '{}'",
-             output_file->StrError());
+Result<std::string> UnpackBootImage(const std::string& boot_image_path,
+                                    const std::string& unpack_dir) {
+  Command unpack_cmd = Command(UnpackBootimgBinary())
+                           .AddParameter("--boot_img")
+                           .AddParameter(boot_image_path)
+                           .AddParameter("--out")
+                           .AddParameter(unpack_dir);
 
-  auto unpack_cmd =
-      Command(UnpackBootimgBinary())
-          .AddParameter("--boot_img")
-          .AddParameter(boot_image_path)
-          .AddParameter("--out")
-          .AddParameter(unpack_dir)
-          .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
+  std::string unpacked = CF_EXPECT(RunAndCaptureStdout(std::move(unpack_cmd)));
 
-  CF_EXPECT_EQ(unpack_cmd.Start().Wait(), 0, "Unable to run unpack_bootimg.");
+  LOG(DEBUG) << "Unpacked boot image:\n" << unpacked;
 
-  return {};
+  return unpacked;
 }
 
 bool UnpackVendorBootImageIfNotUnpacked(
@@ -276,9 +272,9 @@ Result<void> RepackBootImage(const Avb& avb,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
                              const std::string& build_dir) {
-  CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
+  std::string boot_params =
+      CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
 
-  std::string boot_params = ReadFile(build_dir + "/boot_params");
   auto kernel_cmdline = ExtractValue(boot_params, "command line args: ");
   LOG(DEBUG) << "Cmdline from boot image is " << kernel_cmdline;
 
