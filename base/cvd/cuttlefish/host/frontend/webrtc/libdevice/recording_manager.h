@@ -18,6 +18,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/local_recorder.h"
 
+#include <condition_variable>
 #include <map>
 #include <memory>
 #include <mutex>
