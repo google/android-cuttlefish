@@ -267,7 +267,7 @@ Result<void> MaybeConfigureMemOverridesLibrary(const CuttlefishConfig& config,
         << "Enabling libmem_overrides.so preload to work around b/277618912.";
 
     const std::string mem_override_lib_path =
-        HostBinaryPath("aarch64-linux-gnu/libmem_overrides.so");
+        HostBinaryPath("prebuilts/libmem_overrides.so");
     CF_EXPECT(FileExists(mem_override_lib_path),
               "Failed to find " << mem_override_lib_path);
 
@@ -281,10 +281,9 @@ Result<std::string> CrosvmPathForVhostUserGpu(const CuttlefishConfig& config) {
   const auto& instance = config.ForDefaultInstance();
   switch (HostArch()) {
     case Arch::Arm64:
-      return HostBinaryPath("aarch64-linux-gnu/crosvm");
     case Arch::X86:
     case Arch::X86_64:
-      return instance.crosvm_binary();
+      return HostBinaryPath("prebuilts/crosvm");
     default:
       break;
   }
