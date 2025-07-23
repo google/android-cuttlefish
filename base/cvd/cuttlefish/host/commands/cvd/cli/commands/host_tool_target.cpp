@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 

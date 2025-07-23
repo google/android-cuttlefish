@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fstream>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -25,12 +24,12 @@
 #include <android-base/parseint.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/start/filesystem_explorer.h"
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 #include "cuttlefish/host/commands/start/override_bool_arg.h"

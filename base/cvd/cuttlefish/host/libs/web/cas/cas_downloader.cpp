@@ -34,6 +34,7 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {

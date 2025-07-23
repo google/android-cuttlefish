@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/acloud/config.h"
 #include "cuttlefish/host/commands/cvd/acloud/converter.h"
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"

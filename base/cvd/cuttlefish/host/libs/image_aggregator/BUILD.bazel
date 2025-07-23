@@ -66,6 +66,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
     ],
 )

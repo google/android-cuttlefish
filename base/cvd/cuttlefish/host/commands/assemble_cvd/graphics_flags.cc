@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
