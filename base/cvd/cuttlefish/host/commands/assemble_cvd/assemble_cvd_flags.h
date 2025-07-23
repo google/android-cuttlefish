@@ -116,8 +116,6 @@ DECLARE_bool(webrtc_sig_server_secure);
 
 DECLARE_bool(verify_sig_server_certificate);
 
-DECLARE_string(group_id);
-
 DECLARE_vec(webrtc_device_id);
 
 DECLARE_vec(uuid);

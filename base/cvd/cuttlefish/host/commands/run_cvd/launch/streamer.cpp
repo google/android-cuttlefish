@@ -260,8 +260,6 @@ class WebRtcServer : public virtual CommandSource,
 
     Command webrtc(WebRtcBinary(), KillSubprocessFallback(stopper));
 
-    webrtc.AddParameter("-group_id=", instance_.group_id());
-
     webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
     // Currently there is no way to ensure the signaling server will already

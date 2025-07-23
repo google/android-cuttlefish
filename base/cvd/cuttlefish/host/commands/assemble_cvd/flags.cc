@@ -1237,8 +1237,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "Error in looking up num to webrtc_device_id_flag_map");
     instance.set_webrtc_device_id(num_to_webrtc_device_id_flag_map[num]);
 
-    instance.set_group_id(FLAGS_group_id);
-
     if (!is_first_instance || !start_webrtc_vec[instance_index]) {
       // Only the first instance starts the signaling server or proxy
       instance.set_start_webrtc_signaling_server(false);
