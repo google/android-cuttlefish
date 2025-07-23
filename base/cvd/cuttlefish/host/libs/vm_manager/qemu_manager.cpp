@@ -25,7 +25,6 @@
 #include <unistd.h>
 
 #include <cstdlib>
-#include <iomanip>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -39,6 +38,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

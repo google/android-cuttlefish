@@ -35,6 +35,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/legacy/run_server.h"

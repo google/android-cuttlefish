@@ -35,6 +35,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/acloud/config.h"
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"

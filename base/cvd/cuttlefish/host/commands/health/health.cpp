@@ -20,8 +20,9 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 //
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 std::string GetControlSocketPath(const cuttlefish::CuttlefishConfig& config) {
   return config.ForDefaultInstance().CrosvmSocketPath();

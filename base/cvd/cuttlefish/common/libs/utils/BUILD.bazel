@@ -20,6 +20,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//libbase",
     ],
 )
@@ -74,6 +75,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//libbase",
     ],
 )
@@ -204,6 +206,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//libbase",
         "@fmt",
     ],
@@ -342,6 +345,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "subprocess_managed_stdio",
+    srcs = ["subprocess_managed_stdio.cc"],
+    hdrs = ["subprocess_managed_stdio.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "tcp_socket",
     srcs = ["tcp_socket.cpp"],
     hdrs = ["tcp_socket.h"],
@@ -445,5 +459,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
     ],
 )

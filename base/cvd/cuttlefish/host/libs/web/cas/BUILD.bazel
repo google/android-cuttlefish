@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
         "@jsoncpp",

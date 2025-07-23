@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-#include <cstdint>
 #include <cstdlib>
 
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/host/libs/command_util/runner/defs.h"
-#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
