@@ -41,8 +41,6 @@ type Device struct {
 	clientCount int
 }
 
-const DEFAULT_GROUP_ID = "default"
-
 func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *Device {
 	url, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	if err != nil {
@@ -56,14 +54,12 @@ func newDevice(id string, conn *JSONUnix, port int, privateData interface{}) *De
 		w.Header().Add("x-cutf-proxy", "op-device")
 		w.WriteHeader(http.StatusBadGateway)
 	}
-	groupId := groupIdFromPrivateData(privateData)
 	return &Device{
 		conn:        conn,
 		Proxy:       proxy,
 		privateData: privateData,
 		Descriptor: apiv1.DeviceDescriptor{
-			DeviceId:  id,
-			GroupName: groupId,
+			DeviceId: id,
 		},
 		clients:     make(map[int]Client),
 		clientCount: 0,
@@ -134,20 +130,6 @@ func NewDevicePool() *DevicePool {
 		preDevices: make(map[string]*preDevice),
 		devices:    make(map[string]*Device),
 	}
-}
-
-func groupIdFromPrivateData(privateData interface{}) string {
-	deviceInfo, ok := privateData.(map[string]interface{})
-	if !ok {
-		return DEFAULT_GROUP_ID
-	}
-
-	groupId, ok := deviceInfo["group_id"].(string)
-	if !ok || len(groupId) == 0 {
-		return DEFAULT_GROUP_ID
-	}
-
-	return groupId
 }
 
 // PreRegister accepts a channel of boolean which it closes if the pre-registration is cancelled or
