@@ -17,13 +17,6 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-prebuilt_etc {
-    name: "tablet_excluded_hardware.prebuilt.xml",
-    src: "tablet_excluded_hardware.xml",
-    relative_install_path: "permissions",
-    soc_specific: true,
-}
-
 prebuilt_etc_host {
     name: "cvd_config_tablet.json",
     src: "config_tablet.json",
