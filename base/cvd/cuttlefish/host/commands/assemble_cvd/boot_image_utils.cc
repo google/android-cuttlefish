@@ -201,24 +201,25 @@ bool GetAvbMetadataFromBootImage(const std::string& boot_image_path,
   return true;
 }
 
-Result<void> UnpackBootImage(const std::string& boot_image_path,
-                             const std::string& unpack_dir) {
-  SharedFD output_file = SharedFD::Creat(unpack_dir + "/boot_params", 0666);
-  CF_EXPECTF(output_file->IsOpen(),
-             "Unable to create intermediate boot params file: '{}'",
-             output_file->StrError());
+Result<std::string> UnpackBootImage(const std::string& boot_image_path,
+                                    const std::string& unpack_dir) {
+  Command unpack_cmd = Command(UnpackBootimgBinary())
+                           .AddParameter("--boot_img")
+                           .AddParameter(boot_image_path)
+                           .AddParameter("--out")
+                           .AddParameter(unpack_dir);
 
-  auto unpack_cmd =
-      Command(UnpackBootimgBinary())
-          .AddParameter("--boot_img")
-          .AddParameter(boot_image_path)
-          .AddParameter("--out")
-          .AddParameter(unpack_dir)
-          .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
+  std::string standard_out;
+  std::string standard_err;
 
-  CF_EXPECT_EQ(unpack_cmd.Start().Wait(), 0, "Unable to run unpack_bootimg.");
+  int exit_code = RunWithManagedStdio(std::move(unpack_cmd), nullptr,
+                                      &standard_out, &standard_err);
+  CF_EXPECTF(exit_code == 0,
+             "{} failed on '{}': exit code {}, stdout = '{}', stderr = '{}'",
+             UnpackBootimgBinary(), boot_image_path, exit_code, standard_out,
+             standard_err);
 
-  return {};
+  return standard_out;
 }
 
 bool UnpackVendorBootImageIfNotUnpacked(
@@ -289,9 +290,9 @@ Result<void> RepackBootImage(const Avb& avb,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
                              const std::string& build_dir) {
-  CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
+  std::string boot_params =
+      CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
 
-  std::string boot_params = ReadFile(build_dir + "/boot_params");
   auto kernel_cmdline = ExtractValue(boot_params, "command line args: ");
   LOG(DEBUG) << "Cmdline from boot image is " << kernel_cmdline;
 
