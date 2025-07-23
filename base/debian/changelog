@@ -4,7 +4,7 @@ cuttlefish-common (1.17.0) UNRELEASED; urgency=medium
 
  -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Jul 2025 18:54:49 -0700
 
-cuttlefish-common (1.16.0) unstable; urgency=medium
+cuttlefish-common (1.16.0) stable; urgency=medium
 
   * `Make the config proto build target public` by @cjreynol in https://github.com/google/android-cuttlefish/pull/1416
   * `Temporary workaround: use a presubmit build in place of git_main testing to fix kokoro` by @Databean in https://github.com/google/android-cuttlefish/pull/1418
