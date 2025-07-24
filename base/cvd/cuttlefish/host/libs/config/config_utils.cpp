@@ -33,7 +33,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
@@ -177,10 +176,8 @@ bool HostSupportsQemuCli() {
   static bool supported =
 #ifdef __linux__
       InSandbox() ||
-      RunWithManagedStdio(
-          Command("/usr/lib/cuttlefish-common/bin/capability_query.py")
-              .AddParameter("qemu_cli"),
-          nullptr, nullptr, nullptr) == 0;
+      Execute({"/usr/lib/cuttlefish-common/bin/capability_query.py",
+               "qemu_cli"}) == 0;
 #else
       true;
 #endif

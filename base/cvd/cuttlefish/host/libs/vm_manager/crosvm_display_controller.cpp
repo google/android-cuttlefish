@@ -105,16 +105,15 @@ Result<int> CrosvmDisplayController::RunCrosvmDisplayCommand(
   }
   command.AddParameter(crosvm_control_path);
 
-  std::string err;
-  auto ret = RunWithManagedStdio(std::move(command), NULL, stdout_str, &err);
-  if (ret != 0) {
-    LOG(ERROR) << "Failed to run crosvm display command: ret code: " << ret
-               << "\n"
-               << err << std::endl;
-    return CF_ERRF("Failed to run crosvm display command: ret code: {}", ret);
+  Result<std::string> res = RunAndCaptureStdout(std::move(command));
+  if (res.ok()) {
+    return 0;
+  } else {
+    LOG(ERROR) << "Failed to run crosvm display command:\n"
+               << res.error().FormatForEnv();
+    CF_EXPECT(std::move(res));
+    return 0;
   }
-
-  return 0;
 }
 
 }  // namespace vm_manager

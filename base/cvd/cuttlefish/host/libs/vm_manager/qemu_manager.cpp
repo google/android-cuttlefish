@@ -92,16 +92,8 @@ Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
   Command qemu_version_cmd(qemu_binary);
   qemu_version_cmd.AddParameter("-version");
 
-  std::string qemu_version_input, qemu_version_output, qemu_version_error;
-  cuttlefish::SubprocessOptions options;
-  options.Verbose(false);
-  int qemu_version_ret = cuttlefish::RunWithManagedStdio(
-      std::move(qemu_version_cmd), &qemu_version_input, &qemu_version_output,
-      &qemu_version_error, std::move(options));
-  CF_EXPECT(qemu_version_ret == 0,
-            qemu_binary << " -version returned unexpected response "
-                        << qemu_version_output << ". Stderr was "
-                        << qemu_version_error);
+  std::string qemu_version_output =
+      CF_EXPECT(RunAndCaptureStdout(std::move(qemu_version_cmd)));
 
   // Snip around the extra text we don't care about
   qemu_version_output.erase(0, std::string("QEMU emulator version ").length());

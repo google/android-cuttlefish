@@ -116,17 +116,20 @@ int main(int argc, char** argv) {
     }
   }
 
-  cuttlefish::Command command(instance.crosvm_binary());
-  command.AddParameter("battery");
-  command.AddParameter("goldfish");
-  command.AddParameter(key);
-  command.AddParameter(value);
-  command.AddParameter(GetControlSocketPath(*config));
+  cuttlefish::Command command =
+      cuttlefish::Command(instance.crosvm_binary())
+          .AddParameter("battery")
+          .AddParameter("goldfish")
+          .AddParameter(key)
+          .AddParameter(value)
+          .AddParameter(GetControlSocketPath(*config));
 
-  std::string output, error;
-  auto ret = RunWithManagedStdio(std::move(command), NULL, &output, &error);
-  if (ret != 0) {
-    LOG(ERROR) << "goldfish battery returned: " << ret << "\n" << output << "\n" << error;
+  cuttlefish::Result<std::string> res =
+      cuttlefish::RunAndCaptureStdout(std::move(command));
+  if (res.ok()) {
+    return 0;
+  } else {
+    LOG(ERROR) << "goldfish battery failed: " << res.error().FormatForEnv();
+    return 1;
   }
-  return ret;
 }
