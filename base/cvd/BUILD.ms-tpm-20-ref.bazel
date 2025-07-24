@@ -102,9 +102,41 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "simulator_lib",
+    srcs = [
+        "TPMCmd/Simulator/src/TPMCmdp.c",
+        "TPMCmd/Simulator/src/TcpServer.c",
+    ],
+    copts = [
+        "-std=gnu11",
+        "-Werror",
+        "-Wall",
+        "-Wformat-security",
+        "-fstack-protector-all",
+        "-fPIC",
+    ],
+    defines = [
+        "HASH_LIB=Ossl",
+        "SYM_LIB=Ossl",
+        "MATH_LIB=TpmBigNum",
+        "BN_MATH_LIB=Ossl",
+    ],
+    visibility = [
+        "@//cuttlefish/host/commands/secure_env:__subpackages__",
+    ],
+    deps = [
+        ":simulator_headers",
+        ":platform_headers",
+        ":tpm_headers",
+    ],
+)
+
 cc_binary(
     name = "simulator",
-    srcs = glob(["TPMCmd/Simulator/**/*.c"]),
+    srcs = [
+        "TPMCmd/Simulator/src/TPMCmds.c",
+    ],
     copts = [
         "-std=gnu11",
         "-Werror",
@@ -129,6 +161,7 @@ cc_binary(
     deps = [
         ":platform",
         ":simulator_headers",
+        ":simulator_lib",
         ":tpm",
         "@boringssl//:crypto",
     ],
