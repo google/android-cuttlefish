@@ -76,7 +76,7 @@ class InputConnectorBuilder {
   void WithSwitches(SharedFD conn);
   void WithRotary(SharedFD conn);
   void WithMouse(SharedFD conn);
-  void WithGamepad(SharedFD server);
+  void WithGamepad(SharedFD conn);
   // This object becomes invalid after calling Build(), the rvalue reference
   // makes it explicit that it shouldn't be used after.
   std::unique_ptr<InputConnector> Build() &&;
