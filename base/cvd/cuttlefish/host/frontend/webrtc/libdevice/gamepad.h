@@ -19,5 +19,9 @@
 #include <cinttypes>
 #include <string>
 
+namespace cuttlefish {
+
 uint16_t JsIndexToLinux(const int32_t& key_code);
+
+}
 

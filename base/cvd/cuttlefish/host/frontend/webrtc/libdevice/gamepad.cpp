@@ -20,6 +20,8 @@
 
 #include <array>
 
+namespace cuttlefish {
+
 // This map represents the association between the index code from Javascript
 // Gamepad API and the linux input event code.
 // The Javascript Gamepad API index code is defined in:
@@ -38,3 +40,4 @@ uint16_t JsIndexToLinux(const int32_t& index_code) {
   return kJsIndexToLinuxMapping[index_code];
 }
 
+}
