@@ -69,14 +69,9 @@ Result<std::vector<std::string>> ExtractFiles(
   for (const auto& extract : to_extract) {
     bsdtar_cmd.AddParameter(extract);
   }
-  bsdtar_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                           Subprocess::StdIOChannel::kStdErr);
-  std::string bsdtar_output;
-  int bsdtar_ret = RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, nullptr,
-                                       &bsdtar_output);
+  std::string bsdtar_output =
+      CF_EXPECT(RunAndCaptureStdout(std::move(bsdtar_cmd)));
   LOG(DEBUG) << bsdtar_output;
-  CF_EXPECTF(bsdtar_ret == 0, "bsdtar extraction failed on '{}', '''{}'''",
-             archive, bsdtar_output);
 
   std::vector<std::string> outputs = android::base::Split(bsdtar_output, "\n");
   for (std::string& output : outputs) {
@@ -135,29 +130,31 @@ std::string ExtractArchiveToMemory(const std::string& archive_filepath,
   bsdtar_cmd.AddParameter(archive_filepath);
   bsdtar_cmd.AddParameter("-O");
   bsdtar_cmd.AddParameter(archive_member);
-  std::string stdout_str;
-  auto ret =
-      RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, &stdout_str, nullptr);
-  if (ret != 0) {
+  Result<std::string> stdout_str = RunAndCaptureStdout(std::move(bsdtar_cmd));
+
+  if (!stdout_str.ok()) {
     LOG(ERROR) << "Could not extract \"" << archive_member << "\" from \""
-               << archive_filepath << "\" to memory.";
+               << archive_filepath
+               << "\" to memory: " << stdout_str.error().FormatForEnv();
     return "";
   }
-  return stdout_str;
+  return *stdout_str;
 }
 
 std::vector<std::string> ArchiveContents(const std::string& archive) {
   Command bsdtar_cmd("/usr/bin/bsdtar");
   bsdtar_cmd.AddParameter("-tf");
   bsdtar_cmd.AddParameter(archive);
-  std::string bsdtar_input, bsdtar_output;
-  auto bsdtar_ret = RunWithManagedStdio(std::move(bsdtar_cmd), &bsdtar_input,
-                                        &bsdtar_output, nullptr);
-  if (bsdtar_ret != 0) {
-    LOG(ERROR) << "`bsdtar -tf \"" << archive << "\"` returned " << bsdtar_ret;
+
+  Result<std::string> bsdtar_output =
+      RunAndCaptureStdout(std::move(bsdtar_cmd));
+  if (bsdtar_output.ok()) {
+    return android::base::Split(*bsdtar_output, "\n");
+  } else {
+    LOG(ERROR) << "`bsdtar -tf '" << archive
+               << "'`failed: " << bsdtar_output.error().FormatForEnv();
+    return {};
   }
-  return bsdtar_ret == 0 ? android::base::Split(bsdtar_output, "\n")
-                         : std::vector<std::string>();
 }
 
 } // namespace cuttlefish
