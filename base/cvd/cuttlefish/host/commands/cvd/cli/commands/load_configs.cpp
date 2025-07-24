@@ -49,7 +49,7 @@ constexpr char kSummaryHelpText[] =
     R"(Loads the given JSON configuration file and launches devices based on the options provided)";
 
 constexpr char kDetailedHelpText[] = R"(
-Warning: This command is deprecated, use cvd start --config_file instead.
+Warning: This command is deprecated, use cvd create --config_file instead.
 
 Usage:
 cvd load <config_filepath> [--override=<key>:<value>]
