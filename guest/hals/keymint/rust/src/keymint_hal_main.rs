@@ -15,7 +15,7 @@
 //! This crate implements the KeyMint HAL service in Rust, communicating with a Rust
 //! trusted application (TA) running on the Cuttlefish host.
 
-use kmr_hal::{register_binder_services, HalServiceError};
+use kmr_hal::{register_binder_services, HalServiceError, ALL_HALS};
 use log::{error, info};
 use std::os::unix::io::FromRawFd;
 use std::panic;
@@ -111,7 +111,7 @@ fn inner_main() -> Result<(), HalServiceError> {
     // checked that it is not negative.
     let channel = Arc::new(Mutex::new(FileChannel(unsafe { std::fs::File::from_raw_fd(fd) })));
 
-    register_binder_services(&channel, SERVICE_INSTANCE)?;
+    register_binder_services(&channel, ALL_HALS, SERVICE_INSTANCE)?;
 
     // Let the TA know information about the userspace environment.
     kmr_hal_nonsecure::send_boot_info_and_attestation_id_info(&channel)?;
