@@ -80,16 +80,9 @@ Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
     Command lsof("/usr/bin/lsof");
     lsof.AddParameter(/*"format"*/ "-F", /*"connection state"*/ "TST");
     lsof.AddParameter(path);
-    std::string lsof_out;
-    std::string lsof_err;
-    int rval =
-        RunWithManagedStdio(std::move(lsof), nullptr, &lsof_out, &lsof_err);
-    if (rval != 0) {
-      return CF_ERR("Failed to run `lsof`, stderr: " << lsof_err);
-    }
+    std::string lsof_out = CF_EXPECT(RunAndCaptureStdout(std::move(lsof)));
 
     LOG(DEBUG) << "lsof stdout:|" << lsof_out << "|";
-    LOG(DEBUG) << "lsof stderr:|" << lsof_err << "|";
 
     std::smatch socket_state_match;
     if (std::regex_search(lsof_out, socket_state_match, socket_state_regex)) {

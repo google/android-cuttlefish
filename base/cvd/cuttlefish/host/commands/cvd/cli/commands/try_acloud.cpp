@@ -32,7 +32,6 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/acloud/config.h"
 #include "cuttlefish/host/commands/cvd/acloud/converter.h"
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
@@ -61,12 +60,7 @@ constexpr char kDetailedHelpText[] =
    
     - Or `cvdr` for remote instance management.)";
 
-bool CheckIfCvdrExist() {
-  auto cmd = Command("which").AddParameter(kCvdrBinName);
-  int ret = RunWithManagedStdio(std::move(cmd), nullptr, nullptr, nullptr,
-                                SubprocessOptions());
-  return ret == 0;
-}
+bool CheckIfCvdrExist() { return Execute({"which", kCvdrBinName}) == 0; }
 
 }  // namespace
 

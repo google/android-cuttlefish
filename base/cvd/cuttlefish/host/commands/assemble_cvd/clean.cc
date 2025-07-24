@@ -104,6 +104,7 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
   if (!InSandbox() && (!prior_dirs.empty() || !prior_files.empty())) {
     Command lsof("lsof");
     lsof.AddParameter("-t");
+    lsof.AddParameter("-Q");  // ignore failed search terms
     for (const auto& prior_dir : prior_dirs) {
       lsof.AddParameter("+D").AddParameter(prior_dir);
     }
@@ -111,18 +112,16 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
       lsof.AddParameter(prior_file);
     }
 
-    std::string lsof_out;
-    std::string lsof_err;
-    int rval =
-        RunWithManagedStdio(std::move(lsof), nullptr, &lsof_out, &lsof_err);
-    if (rval != 0 && !lsof_err.empty()) {
-      LOG(ERROR) << "Failed to run `lsof`, received message: " << lsof_err;
+    Result<std::string> lsof_out = RunAndCaptureStdout(std::move(lsof));
+    if (lsof_out.ok()) {
+      std::vector<std::string> pids = android::base::Split(*lsof_out, "\n");
+      CF_EXPECTF(
+          lsof_out->empty(),
+          "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
+          fmt::join(pids, ", "));
+    } else {
+      LOG(ERROR) << "Failed to run `lsof`: " << lsof_out.error().FormatForEnv();
     }
-    auto pids = android::base::Split(lsof_out, "\n");
-    CF_EXPECTF(
-        lsof_out.empty(),
-        "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
-        fmt::join(pids, ", "));
   }
 
   for (const auto& path : paths) {

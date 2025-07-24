@@ -35,18 +35,12 @@ Result<void> PowerbtnCvdMain() {
       CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
   auto instance = config->ForInstance(FLAGS_instance_num);
 
-  Command command(instance.crosvm_binary());
-  command.AddParameter("powerbtn");
-  command.AddParameter(instance.CrosvmSocketPath());
+  Command command = Command(instance.crosvm_binary())
+                        .AddParameter("powerbtn")
+                        .AddParameter(instance.CrosvmSocketPath());
 
   LOG(INFO) << "Pressing power button";
-  std::string output;
-  std::string error;
-  auto ret = RunWithManagedStdio(std::move(command), NULL, &output, &error);
-  CF_EXPECT_EQ(ret, 0,
-               "crosvm powerbtn returned: " << ret << "\n"
-                                            << output << "\n"
-                                            << error);
+  CF_EXPECT(RunAndCaptureStdout(std::move(command)));
   return {};
 }
 
