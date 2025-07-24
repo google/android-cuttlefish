@@ -43,6 +43,8 @@ class InputConnector {
     virtual Result<void> SendMouseMoveEvent(int x, int y) = 0;
     virtual Result<void> SendMouseButtonEvent(int button, bool down) = 0;
     virtual Result<void> SendMouseWheelEvent(int pixels) = 0;
+    virtual Result<void> SendGamepadKeyEvent(int button, bool down) = 0;
+    virtual Result<void> SendGamepadMotionEvent(int code, int value) = 0;
     virtual Result<void> SendTouchEvent(const std::string& display, int x,
                                         int y, bool down) = 0;
     virtual Result<void> SendMultiTouchEvent(
@@ -74,6 +76,7 @@ class InputConnectorBuilder {
   void WithSwitches(SharedFD conn);
   void WithRotary(SharedFD conn);
   void WithMouse(SharedFD conn);
+  void WithGamepad(SharedFD server);
   // This object becomes invalid after calling Build(), the rvalue reference
   // makes it explicit that it shouldn't be used after.
   std::unique_ptr<InputConnector> Build() &&;

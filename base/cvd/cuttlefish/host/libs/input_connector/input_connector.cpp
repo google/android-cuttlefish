@@ -38,6 +38,7 @@ struct InputDevices {
   std::optional<SwitchesDevice> switches;
   std::optional<RotaryDevice> rotary;
   std::optional<MouseDevice> mouse;
+  std::optional<GamepadDevice> gamepad;
 };
 
 class EventSinkImpl : public InputConnector::EventSink {
@@ -48,6 +49,8 @@ class EventSinkImpl : public InputConnector::EventSink {
   Result<void> SendMouseMoveEvent(int x, int y) override;
   Result<void> SendMouseButtonEvent(int button, bool down) override;
   Result<void> SendMouseWheelEvent(int pixels) override;
+  Result<void> SendGamepadKeyEvent(int button, bool down) override;
+  Result<void> SendGamepadMotionEvent(int code, int value) override;
   Result<void> SendTouchEvent(const std::string& device_label, int x, int y,
                               bool down) override;
   Result<void> SendMultiTouchEvent(const std::string& device_label,
@@ -92,6 +95,18 @@ Result<void> EventSinkImpl::SendMouseButtonEvent(int button, bool down) {
 Result<void> EventSinkImpl::SendMouseWheelEvent(int pixels) {
   CF_EXPECT(input_devices_.mouse.has_value(), "No mouse device setup");
   CF_EXPECT(input_devices_.mouse->SendWheelEvent(pixels));
+  return {};
+}
+
+Result<void> EventSinkImpl::SendGamepadKeyEvent(int button, bool down) {
+  CF_EXPECT(input_devices_.gamepad.has_value(), "No gamepad device setup");
+  CF_EXPECT(input_devices_.gamepad->SendKeyEvent(button, down));
+  return {};
+}
+
+Result<void> EventSinkImpl::SendGamepadMotionEvent(int code, int value) {
+  CF_EXPECT(input_devices_.gamepad.has_value(), "No gamepad device setup");
+  CF_EXPECT(input_devices_.gamepad->SendMotionEvent(code, value));
   return {};
 }
 
@@ -206,6 +221,11 @@ void InputConnectorBuilder::WithRotary(SharedFD conn) {
 void InputConnectorBuilder::WithMouse(SharedFD conn) {
   CHECK(!connector_->devices_.mouse) << "Mouse already specified";
   connector_->devices_.mouse.emplace(InputConnection(conn));
+}
+
+void InputConnectorBuilder::WithGamepad(SharedFD conn) {
+  CHECK(!connector_->devices_.gamepad) << "Gamepad already specified";
+  connector_->devices_.gamepad.emplace(InputConnection(conn));
 }
 
 std::unique_ptr<InputConnector> InputConnectorBuilder::Build() && {

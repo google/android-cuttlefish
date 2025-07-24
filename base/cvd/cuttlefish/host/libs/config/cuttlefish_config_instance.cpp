@@ -985,6 +985,15 @@ bool CuttlefishConfig::InstanceSpecific::enable_mouse() const {
   return (*Dictionary())[kEnableMouse].asBool();
 }
 
+static constexpr char kEnableGamepad[] = "enable_gamepad";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_gamepad(
+    bool enable) {
+  (*Dictionary())[kEnableGamepad] = enable;
+}
+bool CuttlefishConfig::InstanceSpecific::enable_gamepad() const {
+  return (*Dictionary())[kEnableGamepad].asBool();
+}
+
 static constexpr char kCustomKeyboardConfig[] = "custom_keyboard_config";
 void CuttlefishConfig::MutableInstanceSpecific::set_custom_keyboard_config(
     const std::string& custom_keyboard_config_json_path) {
@@ -2010,6 +2019,10 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
 
 std::string CuttlefishConfig::InstanceSpecific::mouse_socket_path() const {
   return PerInstanceInternalUdsPath("mouse.sock");
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gamepad_socket_path() const {
+  return PerInstanceInternalUdsPath("gamepad.sock");
 }
 
 std::string CuttlefishConfig::InstanceSpecific::rotary_socket_path() const {

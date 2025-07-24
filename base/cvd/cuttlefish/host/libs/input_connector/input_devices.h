@@ -93,6 +93,14 @@ class MouseDevice : public InputDevice {
   Result<void> SendWheelEvent(int pixels);
 };
 
+class GamepadDevice : public InputDevice {
+ public:
+  GamepadDevice(InputConnection conn) : InputDevice(conn) {}
+
+  Result<void> SendKeyEvent(int code, bool down);
+  Result<void> SendMotionEvent(int code, int value);
+};
+
 class KeyboardDevice : public InputDevice {
  public:
   KeyboardDevice(InputConnection conn)

@@ -168,6 +168,11 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
         GetAndroidInfoConfig(instance_android_info_txt, "mouse");
     guest_config.mouse_supported =
         res_mouse_support.ok() && res_mouse_support.value() == "supported";
+    
+    auto res_gamepad_support =
+        GetAndroidInfoConfig(instance_android_info_txt, "gamepad");
+    guest_config.gamepad_supported =
+        res_gamepad_support.ok() && res_gamepad_support.value() == "supported";
 
     auto res_custom_keyboard_config =
         GetAndroidInfoConfig(instance_android_info_txt, "custom_keyboard");
