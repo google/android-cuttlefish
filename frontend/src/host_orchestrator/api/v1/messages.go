@@ -142,7 +142,7 @@ type StatArtifactResponse struct{}
 
 type CreateImageDirectoryResponse struct {
 	// [Output Only] Identifier of created image directory.
-	ID string `json:"name"`
+	ID string `json:"id"`
 }
 
 type UpdateImageDirectoryRequest struct {
