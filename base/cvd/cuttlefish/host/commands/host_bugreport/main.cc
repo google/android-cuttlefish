@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-
 #include <string>
 
 #include <android-base/file.h>
@@ -124,25 +122,7 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
   return {};
 }
 
-Result<void> CvdHostBugreportMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, true);
-
-  std::string log_filename = TempDir() + "/cvd_hbr.log.XXXXXX";
-  {
-    auto fd = SharedFD::Mkstemp(&log_filename);
-    CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
-    android::base::SetLogger(TeeLogger({
-        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
-        {LogFileSeverity(), fd, MetadataLevel::FULL},
-    }));
-  }
-
-  auto config = CuttlefishConfig::Get();
-  CHECK(config) << "Unable to find the config";
-
-  WritableZip archive = CF_EXPECT(ZipOpenReadWrite(FLAGS_output));
-
+void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
   LogError(AddFileAt(archive, config->AssemblyPath("assemble_cvd.log"),
                      "cuttlefish_assembly/assemble_cvd.log"));
   LogError(AddFileAt(archive, config->AssemblyPath("cuttlefish_config.json"),
@@ -205,6 +185,31 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
   AddNetsimdLogs(archive);
 
   LOG(INFO) << "Building cvd bugreport completed";
+}
+
+Result<void> CvdHostBugreportMain(int argc, char** argv) {
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+
+  std::string log_filename = TempDir() + "/cvd_hbr.log.XXXXXX";
+  {
+    auto fd = SharedFD::Mkstemp(&log_filename);
+    CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
+    android::base::SetLogger(TeeLogger({
+        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
+        {LogFileSeverity(), fd, MetadataLevel::FULL},
+    }));
+  }
+
+  auto config = CuttlefishConfig::Get();
+  CHECK(config) << "Unable to find the config";
+
+  WritableZip archive = CF_EXPECT(ZipOpenReadWrite(FLAGS_output));
+
+  // This function will gather as much as it can and log what it couldn't. It
+  // won't fail because the bugreport log file needs to be added to the archive
+  // and the archive needs to be finalized.
+  TakeHostBugreport(config, archive);
 
   LogError(AddFileAt(archive, log_filename, "cvd_bugreport_builder.log"));
 
