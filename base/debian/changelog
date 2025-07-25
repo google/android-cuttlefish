@@ -1,8 +1,26 @@
-cuttlefish-common (1.17.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.17.0) unstable; urgency=medium
 
-  *
+  * Begin development of version 1.17 by @Databean in https://github.com/google/android-cuttlefish/pull/1422
+  * Create a ChromeOsStateImage type by @Databean in https://github.com/google/android-cuttlefish/pull/1420
+  * Create a `DiskImage` superclass over `Qcow2Image` by @Databean in https://github.com/google/android-cuttlefish/pull/1414
+  * Upgrade all debian actions to use bookworm by @Databean in https://github.com/google/android-cuttlefish/pull/1426
+  * Add rootcanal. by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1419
+  * Revert "Temporary workaround: use a presubmit build in place of git_main testing to fix kokoro" by @Databean in https://github.com/google/android-cuttlefish/pull/1424
+  * Extract `ReadGuestConfig` from flags.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1427
+  * Adding std::vector header to logging_splitters.h. by @jemoreira in https://github.com/google/android-cuttlefish/pull/1429
+  * Move *CompositeDiskBuilder out of disk_flags.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1425
+  * Split disk_flags.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1430
+  * Read avb metadata straight into memory rather than going through a temporary directory and file by @Databean in https://github.com/google/android-cuttlefish/pull/1431
+  * Update Gfxstream to c7ceec935723db8c6b296b04bc71eb6f6eb27607 by @jmacnak in https://github.com/google/android-cuttlefish/pull/1423
+  * Create a type to represent the `--boot_image` flag. by @Databean in https://github.com/google/android-cuttlefish/pull/1433
+  * Add ms-tpm-20-ref by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1436
+  * Extract RunWithManagedStdio from subprocess.h by @Databean in https://github.com/google/android-cuttlefish/pull/1437
+  * Mark 1.16 as stable by @Databean in https://github.com/google/android-cuttlefish/pull/1438
+  * Retrogress protobuf version for load_config proto. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1441
+  * ms-tpm-20-ref: Add simulator_lib. by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1442
+  * Recommend cvd create instead of start by @jemoreira in https://github.com/google/android-cuttlefish/pull/1443
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Jul 2025 18:54:49 -0700
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 25 Jul 2025 12:05:33 -0700
 
 cuttlefish-common (1.16.0) stable; urgency=medium
 
