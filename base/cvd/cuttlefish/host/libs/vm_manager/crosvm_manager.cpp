@@ -308,7 +308,8 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
       gpu_mode == kGpuModeGfxstream ||
           gpu_mode == kGpuModeGfxstreamGuestAngle ||
           gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-          gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe,
+          gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe ||
+          gpu_mode == kGpuModeGuestSwiftshader,
       "GPU mode " << gpu_mode << " not yet supported with vhost user gpu.");
 
   const std::string gpu_pci_address =
@@ -317,7 +318,9 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   // Why does this need JSON instead of just following the normal flags style...
   Json::Value gpu_params_json;
   gpu_params_json["pci-address"] = gpu_pci_address;
-  if (gpu_mode == kGpuModeGfxstream) {
+  if (gpu_mode == kGpuModeGuestSwiftshader) {
+    gpu_params_json["backend"] = "2D";
+  } else if (gpu_mode == kGpuModeGfxstream) {
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
     gpu_params_json["egl"] = true;
     gpu_params_json["gles"] = true;
@@ -334,6 +337,14 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   gpu_params_json["system-blob"] = instance.enable_gpu_system_blob();
   if (!instance.gpu_renderer_features().empty()) {
     gpu_params_json["renderer-features"] = instance.gpu_renderer_features();
+  }
+  gpu_params_json["udmabuf"] = instance.enable_gpu_udmabuf();
+
+  const bool target_is_32bit = instance.target_arch() == Arch::Arm ||
+                               instance.target_arch() == Arch::X86;
+  if (target_is_32bit) {
+    // 256MB so it is small enough for a 32-bit kernel.
+    gpu_params_json["pci-bar-size"] = 268435456;
   }
 
   if (instance.hwcomposer() != kHwComposerNone) {
