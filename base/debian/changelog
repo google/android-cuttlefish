@@ -1,3 +1,9 @@
+cuttlefish-common (1.18.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 25 Jul 2025 16:24:35 -0700
+
 cuttlefish-common (1.17.0) unstable; urgency=medium
 
   * Begin development of version 1.17 by @Databean in https://github.com/google/android-cuttlefish/pull/1422
