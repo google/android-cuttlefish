@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-
 #include <string>
 
 #include <android-base/file.h>
@@ -47,7 +45,7 @@ void LogError(Result<T> res) {
   }
 }
 
-void AddNetsimdLogs(WritableZip& archive) {
+Result<void> AddNetsimdLogs(WritableZip& archive) {
   // The temp directory name depends on whether the `USER` environment variable
   // is defined.
   // https://source.corp.google.com/h/googleplex-android/platform/superproject/main/+/main:tools/netsim/rust/common/src/system/mod.rs;l=37-57;drc=360ddb57df49472a40275b125bb56af2a65395c7
@@ -55,19 +53,14 @@ void AddNetsimdLogs(WritableZip& archive) {
   std::string dir = user.empty()
                         ? TempDir() + "/android/netsimd"
                         : fmt::format("{}/android-{}/netsimd", TempDir(), user);
-  if (!DirectoryExists(dir)) {
-    LOG(INFO) << "netsimd logs directory: `" << dir << "` does not exist.";
-    return;
-  }
-  auto names = DirectoryContents(dir);
-  if (!names.ok()) {
-    LOG(ERROR) << "Cannot read from netsimd directory `" << dir
-               << "`: " << names.error().FormatForEnv(/* color = */ false);
-    return;
-  }
-  for (const auto& name : names.value()) {
+  CF_EXPECTF(DirectoryExists(dir),
+             "netsimd logs directory: `{}` does not exist.", dir);
+  auto names = CF_EXPECTF(DirectoryContents(dir),
+                          "Cannot read from netsimd directory `{}`", dir);
+  for (const auto& name : names) {
     LogError(AddFileAt(archive, dir + "/" + name, "netsimd/" + name));
   }
+  return {};
 }
 
 Result<void> CreateDeviceBugreport(
@@ -124,25 +117,11 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
   return {};
 }
 
-Result<void> CvdHostBugreportMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, true);
-
-  std::string log_filename = TempDir() + "/cvd_hbr.log.XXXXXX";
-  {
-    auto fd = SharedFD::Mkstemp(&log_filename);
-    CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
-    android::base::SetLogger(TeeLogger({
-        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
-        {LogFileSeverity(), fd, MetadataLevel::FULL},
-    }));
-  }
-
-  auto config = CuttlefishConfig::Get();
-  CHECK(config) << "Unable to find the config";
-
-  WritableZip archive = CF_EXPECT(ZipOpenReadWrite(FLAGS_output));
-
+// This function will gather as much as it can. It logs any errors it runs into,
+// but doesn't propagate them because a partial bug report is still useful and
+// the fact that something was missing/inaccessible is still useful debugging
+// information.
+void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
   LogError(AddFileAt(archive, config->AssemblyPath("assemble_cvd.log"),
                      "cuttlefish_assembly/assemble_cvd.log"));
   LogError(AddFileAt(archive, config->AssemblyPath("cuttlefish_config.json"),
@@ -202,9 +181,32 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     }
   }
 
-  AddNetsimdLogs(archive);
+  LogError(AddNetsimdLogs(archive));
 
   LOG(INFO) << "Building cvd bugreport completed";
+}
+
+Result<void> CvdHostBugreportMain(int argc, char** argv) {
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+
+  std::string log_filename = TempDir() + "/cvd_hbr.log.XXXXXX";
+  {
+    auto fd = SharedFD::Mkstemp(&log_filename);
+    CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
+    android::base::SetLogger(TeeLogger({
+        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
+        {LogFileSeverity(), fd, MetadataLevel::FULL},
+    }));
+  }
+
+  auto config = CuttlefishConfig::Get();
+  CHECK(config) << "Unable to find the config";
+
+  WritableZip archive = CF_EXPECT(ZipOpenReadWrite(FLAGS_output));
+
+  // Only logs errors, but doesn't return them.
+  TakeHostBugreport(config, archive);
 
   LogError(AddFileAt(archive, log_filename, "cvd_bugreport_builder.log"));
 
