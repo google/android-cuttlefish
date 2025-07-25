@@ -106,6 +106,24 @@ Result<void> CreateDeviceBugreport(
   return {};
 }
 
+Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
+                             WritableZip& archive) {
+  // TODO(b/359657254) Create the `adb bugreport` asynchronously.
+  std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
+  CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr, "mkdtemp failed: '{}'",
+             strerror(errno));
+  CF_EXPECT(CreateDeviceBugreport(instance, device_br_dir),
+            "Failed to create device bugreport");
+  auto names = CF_EXPECT(DirectoryContents(device_br_dir),
+                         "Cannot read from device bugreport directory");
+  for (const auto& name : names) {
+    std::string filename = device_br_dir + "/" + name;
+    LogError(AddFileAt(archive, filename, android::base::Basename(filename)));
+  }
+  static_cast<void>(RecursivelyRemoveDirectory(device_br_dir));
+  return {};
+}
+
 Result<void> CvdHostBugreportMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
@@ -180,28 +198,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
     }
 
     if (FLAGS_include_adb_bugreport) {
-      // TODO(b/359657254) Create the `adb bugreport` asynchronously.
-      std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
-      CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr,
-                 "mkdtemp failed: '{}'", strerror(errno));
-      auto result = CreateDeviceBugreport(instance, device_br_dir);
-      if (result.ok()) {
-        auto names = DirectoryContents(device_br_dir);
-        if (names.ok()) {
-          for (const auto& name : names.value()) {
-            std::string filename = device_br_dir + "/" + name;
-            LogError(AddFileAt(archive, filename,
-                               android::base::Basename(filename)));
-          }
-        } else {
-          LOG(ERROR) << "Cannot read from device bugreport directory: "
-                     << names.error().FormatForEnv(/* color = */ false);
-        }
-      } else {
-        LOG(ERROR) << "Failed to create device bugreport: "
-                   << result.error().FormatForEnv(/* color = */ false);
-      }
-      static_cast<void>(RecursivelyRemoveDirectory(device_br_dir));
+      LogError(AddAdbBugreport(instance, archive));
     }
   }
 
