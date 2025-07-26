@@ -51,7 +51,7 @@ class ThreadJoiner {
 
 }  // namespace
 
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
+int RunWithManagedStdio(Command cmd_tmp, const std::string* stdin_str,
                         std::string* stdout_str, std::string* stderr_str,
                         SubprocessOptions options) {
   /*
@@ -138,6 +138,18 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     return -1;
   }
   return code;
+}
+
+Result<std::string> RunAndCaptureStdout(Command command) {
+  std::string standard_out;
+  std::string standard_err;
+  std::string command_str = command.GetShortName();
+  int exit_code = RunWithManagedStdio(std::move(command), nullptr,
+                                      &standard_out, &standard_err);
+  CF_EXPECTF(exit_code == 0,
+             "Failed to execute '{}' <args>: exit code = {}, stdout = '{}', stderr = '{}'",
+             command_str, exit_code, standard_out, standard_err);
+  return standard_out;
 }
 
 }  // namespace cuttlefish

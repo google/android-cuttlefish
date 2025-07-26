@@ -539,7 +539,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   auto graphics_detector_binary_result = GraphicsDetectorBinaryPath();
   if (!graphics_detector_binary_result.ok()) {
     LOG(ERROR) << "Failed to run graphics detector, graphics detector path "
-               << " not available: "
+               << " not available: \n"
                << graphics_detector_binary_result.error().FormatForEnv()
                << ". Assuming no availability.";
     return {};
@@ -550,15 +550,15 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   Command graphics_detector_cmd(graphics_detector_binary_result.value());
   graphics_detector_cmd.AddParameter(graphics_availability_file.path);
 
-  std::string graphics_detector_stdout;
-  auto ret = RunWithManagedStdio(std::move(graphics_detector_cmd), nullptr,
-                                 &graphics_detector_stdout, nullptr);
-  if (ret != 0) {
-    LOG(ERROR) << "Failed to run graphics detector, bad return value: " << ret
-               << ". Assuming no availability.";
+  Result<std::string> graphics_detector_stdout =
+      RunAndCaptureStdout(std::move(graphics_detector_cmd));
+  if (!graphics_detector_stdout.ok()) {
+    LOG(ERROR)
+        << "Failed to run graphics detector, assuming no availability: \n"
+        << graphics_detector_stdout.error().FormatForEnv();
     return {};
   }
-  LOG(DEBUG) << graphics_detector_stdout;
+  LOG(DEBUG) << *graphics_detector_stdout;
 
   auto graphics_availability_content_result =
       ReadFileContents(graphics_availability_file.path);

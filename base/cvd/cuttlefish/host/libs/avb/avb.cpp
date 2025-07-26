@@ -93,16 +93,7 @@ Result<std::string> Avb::InfoImage(const std::string& image_path) const {
                             .AddParameter(kInfoImage)
                             .AddParameter("--image")
                             .AddParameter(image_path);
-
-  std::string standard_out, standard_err;
-  int exit_code = RunWithManagedStdio(std::move(avbtool_cmd), nullptr,
-                                      &standard_out, &standard_err);
-  CF_EXPECTF(exit_code == 0,
-             "Failed to run avbtool {} on '{}': code = {}, stdout = '{}', "
-             "stderr = '{}'",
-             kInfoImage, image_path, exit_code, standard_out, standard_err);
-
-  return standard_out;
+  return CF_EXPECT(RunAndCaptureStdout(std::move(avbtool_cmd)));
 }
 
 Command Avb::GenerateMakeVbMetaImage(

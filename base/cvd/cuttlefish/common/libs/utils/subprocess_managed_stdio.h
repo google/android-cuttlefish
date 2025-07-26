@@ -17,9 +17,13 @@
 
 #include <string>
 
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 
 namespace cuttlefish {
+
+// Success is defined by the exit code being `0`.
+Result<std::string> RunAndCaptureStdout(Command);
 
 /*
  * Consumes a Command and runs it, optionally managing the stdio channels.
@@ -33,8 +37,8 @@ namespace cuttlefish {
  * If some setup fails, `command` fails to start, or `command` exits due to a
  * signal, the return value will be negative.
  */
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
-                        std::string* stdout, std::string* stderr,
+int RunWithManagedStdio(Command, const std::string* stdin, std::string* stdout,
+                        std::string* stderr,
                         SubprocessOptions options = SubprocessOptions());
 
 }  // namespace cuttlefish
