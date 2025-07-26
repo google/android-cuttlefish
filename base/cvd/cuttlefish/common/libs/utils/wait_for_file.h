@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
 #include <string>
@@ -23,9 +22,7 @@
 namespace cuttlefish {
 
 #ifdef __linux__
-Result<void> WaitForUnixSocket(const std::string& path, int timeoutSec);
-Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
-                                                      int timeoutSec);
+Result<void> WaitForFile(const std::string& path, int timeoutSec);
 #endif
 
-}
+}  // namespace cuttlefish
