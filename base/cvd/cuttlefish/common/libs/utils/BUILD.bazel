@@ -103,7 +103,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
-        "//cuttlefish/common/libs/utils:inotify",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//libbase",
@@ -452,6 +451,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "wait_for_file",
+    srcs = ["wait_for_file.cc"],
+    hdrs = ["wait_for_file.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:inotify",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "wait_for_unix_socket",
     srcs = ["wait_for_unix_socket.cpp"],
     hdrs = ["wait_for_unix_socket.h"],
@@ -460,5 +472,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/common/libs/utils:wait_for_file",
     ],
 )

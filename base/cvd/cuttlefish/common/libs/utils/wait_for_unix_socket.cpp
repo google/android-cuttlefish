@@ -24,6 +24,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/wait_for_file.h"
 
 namespace cuttlefish {
 
