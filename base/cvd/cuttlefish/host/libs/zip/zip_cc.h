@@ -224,7 +224,8 @@ class ReadableZip {
 
 class WritableZip : public ReadableZip {
  public:
-  static Result<WritableZip> FromSource(WritableZipSource);
+  static Result<WritableZip> FromSource(WritableZipSource,
+                                        bool truncate = true);
 
   WritableZip(WritableZip&&);
   ~WritableZip() override;

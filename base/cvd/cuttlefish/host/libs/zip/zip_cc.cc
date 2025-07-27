@@ -319,7 +319,7 @@ Result<WritableZipSource> WritableZipSource::BorrowData(const void* data,
 Result<WritableZipSource> WritableZipSource::FromFile(const std::string& path) {
   ManagedZipError error = NewZipError();
   ManagedZipSource source(zip_source_file_create(
-      path.c_str(), 0, ZIP_LENGTH_UNCHECKED, error.get()));
+      path.c_str(), 0, ZIP_LENGTH_TO_END, error.get()));
 
   CF_EXPECT(source.get(), ZipErrorString(error.get()));
 
@@ -504,15 +504,20 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
 
 ReadableZip::ReadableZip(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 
-Result<WritableZip> WritableZip::FromSource(WritableZipSource source) {
+Result<WritableZip> WritableZip::FromSource(WritableZipSource source,
+                                            bool truncate) {
   CF_EXPECT(source.impl_.get());
   zip_source_t* source_raw = CF_EXPECT(source.impl_->raw_.get());
 
   ManagedZipError error = NewZipError();
   zip_source_keep(source_raw);
 
+  int flags = ZIP_CREATE;
+  if (truncate) {
+    flags |= ZIP_TRUNCATE;
+  }
   ManagedZip zip_ret(
-      zip_open_from_source(source_raw, ZIP_CREATE | ZIP_TRUNCATE, error.get()));
+      zip_open_from_source(source_raw, flags, error.get()));
 
   if (!zip_ret.get()) {
     zip_source_free(source_raw);  // balance zip_source_keep
