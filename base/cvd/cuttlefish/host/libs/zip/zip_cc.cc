@@ -318,8 +318,8 @@ Result<WritableZipSource> WritableZipSource::BorrowData(const void* data,
 
 Result<WritableZipSource> WritableZipSource::FromFile(const std::string& path) {
   ManagedZipError error = NewZipError();
-  ManagedZipSource source(zip_source_file_create(
-      path.c_str(), 0, ZIP_LENGTH_UNCHECKED, error.get()));
+  ManagedZipSource source(
+      zip_source_file_create(path.c_str(), 0, ZIP_LENGTH_TO_END, error.get()));
 
   CF_EXPECT(source.get(), ZipErrorString(error.get()));
 
@@ -460,8 +460,8 @@ Result<ReadableZip> ReadableZip::FromSource(SeekableZipSource source) {
   // methods on it.
   WritableZipSource fake_writable_source(std::move(source.impl_));
 
-  return ReadableZip(std::make_unique<Impl>(
-      std::move(zip_ret), std::move(fake_writable_source)));
+  return ReadableZip(std::make_unique<Impl>(std::move(zip_ret),
+                                            std::move(fake_writable_source)));
 }
 
 ReadableZip::ReadableZip(ReadableZip&&) = default;
@@ -498,21 +498,35 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
 
   CF_EXPECT(raw_source.get(), ZipErrorString(error.get()));
 
-  return SeekableZipSource(std::make_unique<ReadableZipSource::Impl>(
-      std::move(raw_source)));
+  return SeekableZipSource(
+      std::make_unique<ReadableZipSource::Impl>(std::move(raw_source)));
 }
 
 ReadableZip::ReadableZip(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 
-Result<WritableZip> WritableZip::FromSource(WritableZipSource source) {
+Result<WritableZip> WritableZip::FromSource(
+    WritableZipSource source, WritableZip::OpenBehavior open_behavior) {
+  int flags = 0;
+  switch (open_behavior) {
+    case OpenBehavior::KeepIfExists:
+      flags = ZIP_CREATE;
+      break;
+    case OpenBehavior::Truncate:
+      flags = ZIP_CREATE | ZIP_TRUNCATE;
+      break;
+  }
+  return CF_EXPECT(FromSource(std::move(source), flags));
+}
+
+Result<WritableZip> WritableZip::FromSource(WritableZipSource source,
+                                            int flags) {
   CF_EXPECT(source.impl_.get());
   zip_source_t* source_raw = CF_EXPECT(source.impl_->raw_.get());
 
   ManagedZipError error = NewZipError();
   zip_source_keep(source_raw);
 
-  ManagedZip zip_ret(
-      zip_open_from_source(source_raw, ZIP_CREATE | ZIP_TRUNCATE, error.get()));
+  ManagedZip zip_ret(zip_open_from_source(source_raw, flags, error.get()));
 
   if (!zip_ret.get()) {
     zip_source_free(source_raw);  // balance zip_source_keep

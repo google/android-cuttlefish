@@ -224,7 +224,12 @@ class ReadableZip {
 
 class WritableZip : public ReadableZip {
  public:
-  static Result<WritableZip> FromSource(WritableZipSource);
+  enum class OpenBehavior {
+    KeepIfExists,
+    Truncate,
+  };
+  static Result<WritableZip> FromSource(
+      WritableZipSource, OpenBehavior open_behavior = OpenBehavior::Truncate);
 
   WritableZip(WritableZip&&);
   ~WritableZip() override;
@@ -239,6 +244,8 @@ class WritableZip : public ReadableZip {
   static Result<void> Finalize(WritableZip);
 
  private:
+  static Result<WritableZip> FromSource(WritableZipSource, int flags);
+
   WritableZip(std::unique_ptr<Impl>);
 };
 
