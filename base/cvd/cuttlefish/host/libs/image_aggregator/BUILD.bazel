@@ -55,7 +55,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//libbase",
+        "//libsparse",
     ],
 )
 

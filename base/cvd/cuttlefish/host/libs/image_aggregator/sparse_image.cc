@@ -16,14 +16,17 @@
 
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
-#include <android-base/file.h>
-#include <android-base/logging.h>
 #include <string.h>
 #include <sys/file.h>
 
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <utility>
+
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <sparse/sparse.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -45,6 +48,12 @@ Result<SharedFD> AcquireLock(const std::string& tmp_lock_image_path) {
 
   return fd;
 }
+
+struct SparseImageDeleter {
+  void operator()(sparse_file* file) {
+    sparse_file_destroy(file);
+  }
+};
 
 }  // namespace
 
@@ -86,5 +95,51 @@ Result<void> ForceRawImage(const std::string& image_path) {
 
   return {};
 }
+
+struct AndroidSparseImage::Impl {
+  std::unique_ptr<sparse_file, SparseImageDeleter> raw_sparse_file;
+  android::base::unique_fd raw_fd;
+};
+
+Result<AndroidSparseImage> AndroidSparseImage::OpenExisting(const std::string& path) {
+  SharedFD fd = SharedFD::Open(path, O_RDONLY | O_CLOEXEC);
+  CF_EXPECTF(fd->IsOpen(), "{}", fd->StrError());
+
+  std::unique_ptr<Impl> impl = std::make_unique<AndroidSparseImage::Impl>();
+  CF_EXPECT(impl.get());
+
+  impl->raw_fd = android::base::unique_fd(fd->UNMANAGED_Dup());
+  CF_EXPECT(impl->raw_fd.ok());
+
+  impl->raw_sparse_file.reset(sparse_file_import(impl->raw_fd.get(), /* verbose= */ false, /* crc= */ false));
+  CF_EXPECT(impl->raw_sparse_file.get());
+
+  return AndroidSparseImage(std::move(impl));
+}
+
+AndroidSparseImage::AndroidSparseImage(std::unique_ptr<AndroidSparseImage::Impl> impl) : impl_(std::move(impl)) { }
+
+AndroidSparseImage::AndroidSparseImage(AndroidSparseImage&& other) {
+  impl_ = std::move(other.impl_);
+}
+
+AndroidSparseImage::~AndroidSparseImage() = default;
+
+AndroidSparseImage& AndroidSparseImage::operator=(AndroidSparseImage&& other) {
+  impl_ = std::move(other.impl_);
+  return *this;
+}
+
+std::string AndroidSparseImage::MagicString() {
+  return std::string(kAndroidSparseImageMagic);
+}
+
+Result<uint64_t> AndroidSparseImage::VirtualSizeBytes() const {
+  CF_EXPECT(impl_.get());
+  CF_EXPECT(impl_->raw_sparse_file.get());
+
+  return sparse_file_len(impl_->raw_sparse_file.get(), /* sparse= */ false, /* crc= */ true);
+}
+
 
 }  // namespace cuttlefish
