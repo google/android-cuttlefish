@@ -24,5 +24,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//libbase",
+        "@abseil-cpp//absl/strings:strings",
     ],
 )

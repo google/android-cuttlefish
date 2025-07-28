@@ -39,6 +39,9 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
+#include "absl/strings/strip.h"
+#include "absl/strings/numbers.h"
+
 namespace cuttlefish {
 
 InstanceLockFile::InstanceLockFile(LockFile&& lock_file, const int instance_num)
@@ -248,6 +251,44 @@ Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
   CF_EXPECT(RemoveFile(lock_file_path), std::strerror(errno));
   return {};
+}
+
+Result<std::set<int>> InstanceLockFileManager::GetLocks() {
+  const std::string &path = InstanceLocksPath();
+  if (!DirectoryExists(path)) {
+    return {};
+  }
+
+  std::set<int> r;
+  std::vector<std::string> contents = CF_EXPECT(DirectoryContents(path));
+  for (absl::string_view filepath : contents) {
+    // "local-instance-%d.lock"
+    if (!absl::ConsumePrefix(&filepath, "local-instance-") ||
+        !absl::ConsumeSuffix(&filepath, ".lock")) {
+      continue;
+    }
+    int lock_number;
+    if (!absl::SimpleAtoi(filepath, &lock_number)) {
+      continue;
+    }
+    r.insert(lock_number);
+  }
+  return r;
+}
+
+Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireLocks(
+    unsigned int number) {
+  std::set<int> all = CF_EXPECT(GetLocks());
+
+  std::set<InstanceLockFile> more;
+  for (int i = 1; more.size() < number; i++) {
+    if (all.find(i) != all.end()) continue;
+    auto lock = CF_EXPECT(TryAcquireLock(i));
+    if (lock) {
+      more.emplace(std::move(*lock));
+    }
+  }
+  return more;
 }
 
 }  // namespace cuttlefish
