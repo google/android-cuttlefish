@@ -25,6 +25,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#include <sparse/sparse.h>
+#include <zlib.h>
+
 #include <fstream>
 #include <random>
 #include <string>
@@ -34,8 +37,6 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
-#include <sparse/sparse.h>
-#include <zlib.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -44,7 +45,7 @@
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
-#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
 namespace cuttlefish {
 namespace {
