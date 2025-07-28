@@ -250,4 +250,16 @@ Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
   return {};
 }
 
+Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireUnusedLocks(
+    unsigned int number) {
+  std::set<InstanceLockFile> more;
+  for (int i = 1; more.size() < number; i++) {
+    auto lock = CF_EXPECT(TryAcquireLock(i));
+    if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
+      more.emplace(std::move(*lock));
+    }
+  }
+  return more;
+}
+
 }  // namespace cuttlefish

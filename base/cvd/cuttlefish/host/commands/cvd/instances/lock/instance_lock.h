@@ -51,6 +51,7 @@ class InstanceLockFileManager {
 
   Result<InstanceLockFile> AcquireLock(int instance_num);
   Result<std::set<InstanceLockFile>> AcquireLocks(const std::set<int>& nums);
+  Result<std::set<InstanceLockFile>> AcquireUnusedLocks(unsigned int number);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
   Result<std::set<InstanceLockFile>> TryAcquireLocks(const std::set<int>& nums);
