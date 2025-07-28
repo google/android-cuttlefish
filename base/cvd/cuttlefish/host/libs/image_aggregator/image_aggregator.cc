@@ -188,12 +188,13 @@ std::uint64_t ExpandedStorageSize(const std::string& file_path) {
   }
 
   // Android-Sparse
-  if (auto sparse =
-          sparse_file_import(fd, /* verbose */ false, /* crc */ false);
-      sparse) {
-    auto size = sparse_file_len(sparse, false, true);
-    sparse_file_destroy(sparse);
-    return size;
+  if (android::base::StartsWith(magic, AndroidSparseImage::MagicString())) {
+    Result<AndroidSparseImage> image = AndroidSparseImage::OpenExisting(file_path);
+    CHECK(image.ok()) << image.error().FormatForEnv();
+
+    Result<uint64_t> size = image->VirtualSizeBytes();
+    CHECK(size.ok()) << size.error().FormatForEnv();
+    return *size;
   }
 
   // raw image file
