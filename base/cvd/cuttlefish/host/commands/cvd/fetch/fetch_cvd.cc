@@ -44,7 +44,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
-#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
