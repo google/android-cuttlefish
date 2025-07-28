@@ -51,7 +51,7 @@ class SensorsSimulator {
  private:
   std::mutex sensors_data_mtx_;
   SensorsData sensors_data_[kMaxSensorId + 1];
-  Eigen::Matrix3d prior_rotation_matrix_, current_rotation_matrix_;
+  Eigen::Matrix3d current_rotation_matrix_;
   std::chrono::time_point<std::chrono::high_resolution_clock>
       last_event_timestamp_;
   bool is_auto_;
