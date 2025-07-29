@@ -43,12 +43,16 @@ func TestSnapshot(t *testing.T) {
 			log.Printf("failed to collect HO logs: %s", err)
 		}
 	})
-	uploadDir, err := uploadArtifacts(srv)
+	imageDir, err := common.PrepareArtifact(srv, "../artifacts/images.zip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hostPkgDir, err := common.PrepareArtifact(srv, "../artifacts/cvd-host_package.tar.gz")
 	if err != nil {
 		t.Fatal(err)
 	}
 	const groupName = "cvd"
-	cvd, err := createDevice(srv, groupName, uploadDir)
+	cvd, err := createDevice(srv, groupName, hostPkgDir, imageDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,26 +115,12 @@ func TestSnapshot(t *testing.T) {
 	}
 }
 
-func uploadArtifacts(srv hoclient.HostOrchestratorClient) (string, error) {
-	uploadDir, err := srv.CreateUploadDir()
-	if err != nil {
-		return "", err
-	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/images.zip"); err != nil {
-		return "", err
-	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
-		return "", err
-	}
-	return uploadDir, nil
-}
-
-func createDevice(srv hoclient.HostOrchestratorClient, group_name, artifactsDir string) (*hoapi.CVD, error) {
+func createDevice(srv hoclient.HostOrchestratorClient, group_name, hostPkgDir, imageDir string) (*hoapi.CVD, error) {
 	config := `
   {
     "common": {
       "group_name": "` + group_name + `",
-      "host_package": "@user_artifacts/` + artifactsDir + `"
+      "host_package": "@image_dirs/` + hostPkgDir + `"
     },
     "instances": [
       {
@@ -140,7 +130,7 @@ func createDevice(srv hoclient.HostOrchestratorClient, group_name, artifactsDir 
           "cpus": 8
         },
         "disk": {
-          "default_build": "@user_artifacts/` + artifactsDir + `"
+          "default_build": "@image_dirs/` + imageDir + `"
         },
         "streaming": {
           "device_id": "cvd-1"

@@ -23,7 +23,6 @@ import (
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
 
-	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 )
 
@@ -40,11 +39,15 @@ func TestPowerBtn(t *testing.T) {
 			log.Printf("failed to collect HO logs: %s", err)
 		}
 	})
-	uploadDir, err := srv.CreateUploadDir()
+	imageDir, err := common.PrepareArtifact(srv, "../artifacts/images.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
-	cvd, err := createDevice(srv, uploadDir)
+	hostPkgDir, err := common.PrepareArtifact(srv, "../artifacts/cvd-host_package.tar.gz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cvd, err := common.CreateCVDFromImageDirs(srv, hostPkgDir, imageDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,14 +85,4 @@ func TestPowerBtn(t *testing.T) {
 	if !strings.Contains(stdoutStr, eventName) {
 		t.Errorf("event %q was not captured", eventName)
 	}
-}
-
-func createDevice(srv hoclient.HostOrchestratorClient, dir string) (*hoapi.CVD, error) {
-	if err := common.UploadAndExtract(srv, dir, "../artifacts/images.zip"); err != nil {
-		return nil, err
-	}
-	if err := common.UploadAndExtract(srv, dir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
-		return nil, err
-	}
-	return common.CreateCVDFromUserArtifactsDir(srv, dir)
 }

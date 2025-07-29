@@ -41,14 +41,12 @@ func TestInstance(t *testing.T) {
 			log.Printf("failed to collect HO logs: %s", err)
 		}
 	})
-	uploadDir, err := srv.CreateUploadDir()
+	imageDir, err := uploadImages(srv, "../artifacts/images.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := uploadImages(srv, uploadDir, "../artifacts/images.zip"); err != nil {
-		t.Fatal(err)
-	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
+	hostPkgDir, err := common.PrepareArtifact(srv, "../artifacts/cvd-host_package.tar.gz")
+	if err != nil {
 		t.Fatal(err)
 	}
 	const group_name = "foo"
@@ -56,7 +54,7 @@ func TestInstance(t *testing.T) {
   {
     "common": {
       "group_name": "` + group_name + `",
-      "host_package": "@user_artifacts/` + uploadDir + `"
+      "host_package": "@image_dirs/` + hostPkgDir + `"
     },
     "instances": [
       {
@@ -66,7 +64,7 @@ func TestInstance(t *testing.T) {
           "cpus": 8
         },
         "disk": {
-          "default_build": "@user_artifacts/` + uploadDir + `"
+          "default_build": "@image_dirs/` + imageDir + `"
         },
         "streaming": {
           "device_id": "cvd-1"
@@ -112,22 +110,35 @@ func TestInstance(t *testing.T) {
 	}
 }
 
-func uploadImages(srv hoclient.HostOrchestratorClient, remoteDir, imgsZipSrc string) error {
+func uploadImages(srv hoclient.HostOrchestratorClient, imgsZipSrc string) (string, error) {
 	outDir := "/tmp/aosp_cf_x86_64_only_phone-img-13625421"
 	if err := runCmd("unzip", "-d", outDir, imgsZipSrc); err != nil {
-		return err
+		return "", err
 	}
 	defer os.Remove(outDir)
 	entries, err := os.ReadDir(outDir)
 	if err != nil {
-		return err
+		return "", err
+	}
+	res := hoapi.CreateImageDirectoryResponse{}
+	if op, err := srv.CreateImageDirectory(); err != nil {
+		return "", err
+	} else if err := srv.WaitForOperation(op.Name, &res); err != nil {
+		return "", err
 	}
 	for _, e := range entries {
-		if err := srv.UploadFile(remoteDir, filepath.Join(outDir, e.Name())); err != nil {
-			return err
+		filename := filepath.Join(outDir, e.Name())
+		if err := srv.UploadArtifact(filename); err != nil {
+			return "", err
 		}
+		if op, err := srv.UpdateImageDirectoryWithUserArtifact(res.ID, filename); err != nil {
+			return "", err
+		} else if err := srv.WaitForOperation(op.Name, nil); err != nil {
+			return "", err
+		}
+
 	}
-	return nil
+	return res.ID, nil
 }
 
 func runCmd(name string, args ...string) error {

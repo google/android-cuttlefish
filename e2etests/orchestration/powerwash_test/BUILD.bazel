@@ -24,7 +24,6 @@ go_test(
     tags = ["host-ready"],
     deps = [
         "//orchestration/common",
-        "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
         "@com_github_google_android_cuttlefish_frontend_src_libhoclient//:libhoclient",
     ],
 )
