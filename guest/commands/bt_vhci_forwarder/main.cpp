@@ -67,7 +67,7 @@ ssize_t forward(int from_fd, int to_fd, unsigned char* buf) {
     return count;
   }
   // TODO(b/182245475) Ignore HCI_VENDOR_PKT
-  // because root-canal cannot handle it.
+  // because rootcanal cannot handle it.
   if (buf[0] == HCI_VENDOR_PKT) {
     LOG(INFO) << "Ignoring VENDOR packet";
     return 0;

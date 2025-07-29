@@ -40,8 +40,8 @@ class RootCanal : public CommandSource {
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
-    // Create the root-canal command with the process_restarter
-    // as runner to restart root-canal when it crashes.
+    // Create the rootcanal command with the process_restarter
+    // as runner to restart rootcanal when it crashes.
     Command rootcanal(ProcessRestarterBinary());
     rootcanal.AddParameter("-when_killed");
     rootcanal.AddParameter("-when_dumped");

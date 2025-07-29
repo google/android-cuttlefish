@@ -42,6 +42,12 @@ install_symlink_host {
 }
 
 install_symlink_host {
+    name: "rootcanal",
+    installed_location: "bin/rootcanal",
+    symlink_target: "root-canal",
+}
+
+install_symlink_host {
     name: "unpack_bootimg.py",
     installed_location: "bin/unpack_bootimg.py",
     symlink_target: "unpack_bootimg",
@@ -229,6 +235,7 @@ cvd_host_tools = [
     "resize.f2fs",
     "resize2fs",
     "restart_cvd",
+    "rootcanal",
     "root-canal",
     "run_cvd",
     "sandboxer_proxy",
