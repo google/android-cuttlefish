@@ -38,21 +38,18 @@ func TestBugReport(t *testing.T) {
 			log.Printf("failed to collect HO logs: %s", err)
 		}
 	})
-	uploadDir, err := srv.CreateUploadDir()
+	imageDir, err := common.PrepareArtifact(srv, "../artifacts/images.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/images.zip"); err != nil {
-		t.Fatal(err)
-	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
-		t.Fatal(err)
-	}
-	cvd, err := common.CreateCVDFromUserArtifactsDir(srv, uploadDir)
+	hostPkgDir, err := common.PrepareArtifact(srv, "../artifacts/cvd-host_package.tar.gz")
 	if err != nil {
-		t.Fatalf("failed creating instance: %s", err)
+		t.Fatal(err)
 	}
-
+	cvd, err := common.CreateCVDFromImageDirs(srv, hostPkgDir, imageDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 	zipFilename, err := createBugReport(srv, cvd.Group)
 	if err != nil {
 		t.Fatalf("failed creating bugreport: %s", err)

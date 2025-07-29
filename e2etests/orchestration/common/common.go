@@ -41,18 +41,27 @@ func DownloadHostBugReport(srv hoclient.HostOrchestratorClient, group string) er
 	return nil
 }
 
-func UploadAndExtract(srv hoclient.HostOrchestratorClient, remoteDir, src string) error {
-	if err := srv.UploadFile(remoteDir, src); err != nil {
-		return err
+func PrepareArtifact(srv hoclient.HostOrchestratorClient, filename string) (string, error) {
+	if err := srv.UploadArtifact(filename); err != nil {
+		return "", err
 	}
-	op, err := srv.ExtractFile(remoteDir, filepath.Base(src))
-	if err != nil {
-		return err
+	if op, err := srv.ExtractArtifact(filename); err != nil {
+		return "", err
+	} else if err := srv.WaitForOperation(op.Name, nil); err != nil {
+		return "", err
 	}
-	if err := srv.WaitForOperation(op.Name, nil); err != nil {
-		return err
+	res := hoapi.CreateImageDirectoryResponse{}
+	if op, err := srv.CreateImageDirectory(); err != nil {
+		return "", err
+	} else if err := srv.WaitForOperation(op.Name, &res); err != nil {
+		return "", err
 	}
-	return nil
+	if op, err := srv.UpdateImageDirectoryWithUserArtifact(res.ID, filename); err != nil {
+		return "", err
+	} else if err := srv.WaitForOperation(op.Name, nil); err != nil {
+		return "", err
+	}
+	return res.ID, nil
 }
 
 // The zip file is verified checking for errors extracting
@@ -96,11 +105,11 @@ func VerifyLogsEndpoint(srvURL, group, name string) error {
 	return nil
 }
 
-func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorClient, dir string) (*hoapi.CVD, error) {
+func CreateCVDFromImageDirs(srv hoclient.HostOrchestratorClient, hostPkgDir, imageDir string) (*hoapi.CVD, error) {
 	config := `
   {
     "common": {
-      "host_package": "@user_artifacts/` + dir + `"
+      "host_package": "@image_dirs/` + hostPkgDir + `"
     },
     "instances": [
       {
@@ -110,7 +119,7 @@ func CreateCVDFromUserArtifactsDir(srv hoclient.HostOrchestratorClient, dir stri
           "cpus": 8
         },
         "disk": {
-          "default_build": "@user_artifacts/` + dir + `"
+          "default_build": "@image_dirs/` + imageDir + `"
         },
         "streaming": {
           "device_id": "cvd-1"

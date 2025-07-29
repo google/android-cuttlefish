@@ -35,14 +35,12 @@ func TestCreateInstance(t *testing.T) {
 			log.Printf("failed to collect HO logs: %s", err)
 		}
 	})
-	uploadDir, err := srv.CreateUploadDir()
+	imageDir, err := common.PrepareArtifact(srv, "../artifacts/images.zip")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/images.zip"); err != nil {
-		t.Fatal(err)
-	}
-	if err := common.UploadAndExtract(srv, uploadDir, "../artifacts/cvd-host_package.tar.gz"); err != nil {
+	hostPkgDir, err := common.PrepareArtifact(srv, "../artifacts/cvd-host_package.tar.gz")
+	if err != nil {
 		t.Fatal(err)
 	}
 	const group_name = "foo"
@@ -50,7 +48,7 @@ func TestCreateInstance(t *testing.T) {
   {
     "common": {
       "group_name": "` + group_name + `",
-      "host_package": "@user_artifacts/` + uploadDir + `"
+      "host_package": "@image_dirs/` + hostPkgDir + `"
 
     },
     "instances": [
@@ -61,7 +59,7 @@ func TestCreateInstance(t *testing.T) {
           "cpus": 8
         },
         "disk": {
-          "default_build": "@user_artifacts/` + uploadDir + `"
+          "default_build": "@image_dirs/` + imageDir + `"
         },
         "streaming": {
           "device_id": "cvd-1"
