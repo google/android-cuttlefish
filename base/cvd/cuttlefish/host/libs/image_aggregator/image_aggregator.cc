@@ -45,15 +45,13 @@
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
-#include "cuttlefish/host/libs/image_aggregator/qcow2.h"
+#include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
 namespace cuttlefish {
 namespace {
 
 constexpr int GPT_NUM_PARTITIONS = 128;
-static const std::string CDISK_MAGIC = "composite_disk\x1d";
-static const std::string QCOW2_MAGIC = "QFI\xfb";
 
 /**
  * Creates a "Protective" MBR Partition Table header. The GUID
@@ -143,45 +141,9 @@ struct PartitionInfo {
  * images.
  */
 Result<uint64_t> ExpandedStorageSize(const std::string& file_path) {
-  android::base::unique_fd fd(open(file_path.c_str(), O_RDONLY));
-  CF_EXPECTF(fd.get() >= 0, "Could not open '{}': {}", file_path,
-             strerror(errno));
-
-  std::uint64_t file_size = FileSize(file_path);
-
-  // Try to read the disk in a nicely-aligned block size unless the whole file
-  // is smaller.
-  constexpr uint64_t MAGIC_BLOCK_SIZE = 4096;
-  std::string magic(std::min(file_size, MAGIC_BLOCK_SIZE), '\0');
-
-  CF_EXPECTF(android::base::ReadFully(fd, magic.data(), magic.size()),
-             "Failed to read '{}': {}'", file_path, strerror(errno));
-
-  CF_EXPECTF(lseek(fd, 0, SEEK_SET) != -1, "Failed to lseek('{}'): {}",
-             file_path, strerror(errno));
-
-  // Composite disk image
-  if (android::base::StartsWith(magic, CDISK_MAGIC)) {
-    CompositeDiskImage image =
-        CF_EXPECT(CompositeDiskImage::OpenExisting(file_path));
-    return CF_EXPECT(image.VirtualSizeBytes());
-  }
-
-  // Qcow2 image
-  if (android::base::StartsWith(magic, Qcow2Image::MagicString())) {
-    Qcow2Image image = CF_EXPECT(Qcow2Image::OpenExisting(file_path));
-    return CF_EXPECT(image.VirtualSizeBytes());
-  }
-
-  // Android-Sparse
-  if (android::base::StartsWith(magic, AndroidSparseImage::MagicString())) {
-    AndroidSparseImage image =
-        CF_EXPECT(AndroidSparseImage::OpenExisting(file_path));
-    return CF_EXPECT(image.VirtualSizeBytes());
-  }
-
-  // raw image file
-  return file_size;
+  std::unique_ptr<DiskImage> disk = CF_EXPECT(ImageFromFile(file_path));
+  CF_EXPECT(disk.get());
+  return CF_EXPECT(disk->VirtualSizeBytes());
 }
 
 /*
@@ -494,7 +456,7 @@ Result<void> CreateCompositeDisk(std::vector<ImagePartition> partitions,
       CF_EXPECT(builder.MakeCompositeDiskSpec(header_file, footer_file));
   std::ofstream composite(output_composite_path.c_str(),
                           std::ios::binary | std::ios::trunc);
-  composite << CDISK_MAGIC;
+  composite << CompositeDiskImage::MagicString();
   composite_proto.SerializeToOstream(&composite);
   composite.flush();
 
