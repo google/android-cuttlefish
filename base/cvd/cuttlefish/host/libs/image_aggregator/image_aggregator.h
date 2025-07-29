@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/utils/result.h"
+
 namespace cuttlefish {
 
 enum ImagePartitionType {
@@ -44,8 +46,8 @@ uint64_t AlignToPartitionSize(uint64_t size);
  * `output_path`. The raw disk file will have a GUID Partition Table and copy in
  * the contents of the files mentioned in `partitions`.
  */
-void AggregateImage(const std::vector<ImagePartition>& partitions,
-                    const std::string& output_path);
+Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
+                            const std::string& output_path);
 
 /**
  * Generate the files necessary for booting with a Composite Disk.
@@ -59,9 +61,9 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
  * then the specification file containing the file paths and offsets is saved to
  * `output_composite_path`.
  */
-void CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path,
-                         bool read_only);
+Result<void> CreateCompositeDisk(std::vector<ImagePartition> partitions,
+                                 const std::string& header_file,
+                                 const std::string& footer_file,
+                                 const std::string& output_composite_path,
+                                 bool read_only);
 }
