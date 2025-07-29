@@ -44,6 +44,7 @@
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
+#include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
@@ -161,19 +162,9 @@ Result<uint64_t> ExpandedStorageSize(const std::string& file_path) {
 
   // Composite disk image
   if (android::base::StartsWith(magic, CDISK_MAGIC)) {
-    // seek to the beginning of proto message
-    CF_EXPECTF(lseek(fd, CDISK_MAGIC.size(), SEEK_SET) != -1,
-               "Failed to lseek('{}'): {}", file_path, strerror(errno));
-
-    std::string message;
-    CF_EXPECTF(android::base::ReadFdToString(fd, &message),
-               "Failed to read '{}': {}", file_path, strerror(errno));
-
-    CompositeDisk cdisk;
-    CF_EXPECTF(cdisk.ParseFromString(message), "Failed to parse '{}': {}",
-               file_path, strerror(errno));
-
-    return cdisk.length();
+    CompositeDiskImage image =
+        CF_EXPECT(CompositeDiskImage::OpenExisting(file_path));
+    return CF_EXPECT(image.VirtualSizeBytes());
   }
 
   // Qcow2 image
