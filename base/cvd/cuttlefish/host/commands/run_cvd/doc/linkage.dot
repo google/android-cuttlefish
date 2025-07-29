@@ -33,7 +33,7 @@ digraph {
 
     bt_connector
     netsim
-    root_canal [label = "root-canal"]
+    root_canal [label = "rootcanal"]
     root_canal_log_tee [label = "log_tee"]
   }
 

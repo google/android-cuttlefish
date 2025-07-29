@@ -123,7 +123,7 @@ std::string ProcessRestarterBinary() {
   return HostBinaryPath("process_restarter");
 }
 
-std::string RootCanalBinary() { return HostBinaryPath("root-canal"); }
+std::string RootCanalBinary() { return HostBinaryPath("rootcanal"); }
 
 std::string ScreenRecordingServerBinary() {
   return HostBinaryPath("screen_recording_server");
