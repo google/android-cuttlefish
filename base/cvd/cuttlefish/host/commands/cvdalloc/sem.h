@@ -20,7 +20,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
-namespace cuttlefish {
+namespace cuttlefish::cvdalloc {
 
 constexpr std::chrono::seconds kSemNoTimeout = std::chrono::seconds(0);
 
@@ -40,4 +40,4 @@ Result<void> Post(const SharedFD socket);
  */
 Result<void> Wait(const SharedFD socket, std::chrono::seconds timeout);
 
-}  // namespace
+}  // namespace cuttlefish::cvdalloc

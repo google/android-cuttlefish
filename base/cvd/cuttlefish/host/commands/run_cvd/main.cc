@@ -42,6 +42,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/casimir_control_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/console_forwarder.h"
 #include "cuttlefish/host/commands/run_cvd/launch/control_env_proxy_server.h"
+#include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 #include "cuttlefish/host/commands/run_cvd/launch/echo_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/gnss_grpc_proxy.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
@@ -174,6 +175,7 @@ fruit::Component<> runCvdComponent(
       .install(AutoCmd<VhalProxyServer>::Component)
       .install(Ti50EmulatorComponent)
 #endif
+      .install(CvdallocComponent)
       .install(AdbConfigComponent)
       .install(AdbConfigFragmentComponent)
       .install(FastbootConfigComponent)

@@ -125,14 +125,13 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
   };
 
   CF_EXPECT(Allocate(id, bridge_name));
-  CF_EXPECT(Post(sock));
+  CF_EXPECT(cvdalloc::Post(sock));
 
   LOG(INFO) << "cvdalloc: waiting to teardown";
 
-  CF_EXPECT(Wait(sock, kSemNoTimeout));
+  CF_EXPECT(cvdalloc::Wait(sock, cvdalloc::kSemNoTimeout));
   std::move(teardown).Invoke();
-  CF_EXPECT(Post(sock));
-
+  CF_EXPECT(cvdalloc::Post(sock));
 
   return 0;
 }
