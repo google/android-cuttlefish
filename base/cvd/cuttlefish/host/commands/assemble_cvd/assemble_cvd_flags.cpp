@@ -115,10 +115,6 @@ DEFINE_vec(
     "Frame socket path to use when launching a VM "
     "For example, \"--frames_socket_path=${XDG_RUNTIME_DIR}/wayland-0\"");
 
-
-DEFINE_vec(use_allocd, CF_DEFAULTS_USE_ALLOCD?"true":"false",
-            "Acquire static resources from the resource allocator daemon.");
-
 DEFINE_vec(use_cvdalloc, CF_DEFAULTS_USE_CVDALLOC? "true": "false",
             "Acquire static resources with cvdalloc.");
 

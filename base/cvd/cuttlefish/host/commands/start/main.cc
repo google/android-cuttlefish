@@ -158,7 +158,6 @@ const std::unordered_set<std::string>& BoolFlags() {
       "smt",
       "start_gnss_proxy",
       "start_webrtc",
-      "use_allocd",
       "use_cvdalloc",
       "use_random_serial",
       "use_sdcard",

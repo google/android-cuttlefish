@@ -1,38 +1,5 @@
-load("//:build_variables.bzl", "COPTS")
-
 package(
     default_visibility = ["//:android_cuttlefish"],
-)
-
-cc_binary(
-    name = "allocd",
-    srcs = [
-        "allocd.cpp",
-        "request.h",
-        "resource.cpp",
-        "resource.h",
-        "resource_manager.cpp",
-        "resource_manager.h",
-        "utils.cpp",
-        "utils.h",
-    ],
-    copts = COPTS + [
-        "-Wno-reorder",
-        "-Wno-unknown-pragmas",
-        "-Wno-attributes",
-        "-Wno-sign-compare",
-        "-Wno-write-strings",
-        "-DNODISCARD_EXPECTED=true",
-    ],
-    includes = [""],
-    deps = [
-        ":alloc_utils",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config:logging",
-        "//libbase",
-        "@gflags",
-        "@jsoncpp",
-    ],
 )
 
 cc_library(

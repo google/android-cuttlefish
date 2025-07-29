@@ -490,7 +490,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(serial_number));
   std::vector<bool> use_random_serial_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(use_random_serial));
-  std::vector<bool> use_allocd_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_allocd));
   std::vector<bool> use_cvdalloc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_cvdalloc));
   std::vector<bool> use_sdcard_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_sdcard));
   std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
@@ -766,16 +765,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_use_cvdalloc(use_cvdalloc_vec[instance_index]);
 
-    IfaceConfig iface_config;
-    if (use_allocd_vec[instance_index]) {
-      auto iface_opt = AllocateNetworkInterfaces();
-      if (!iface_opt.has_value()) {
-        LOG(FATAL) << "Failed to acquire network interfaces";
-      }
-      iface_config = iface_opt.value();
-    } else {
-      iface_config = CF_EXPECT(DefaultNetworkInterfaces(const_instance));
-    }
+    IfaceConfig iface_config =
+        CF_EXPECT(DefaultNetworkInterfaces(const_instance));
 
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
@@ -796,7 +787,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
     instance.set_filename_encryption_mode(
       guest_configs[instance_index].hctr2_supported ? "hctr2" : "cts");
-    instance.set_use_allocd(use_allocd_vec[instance_index]);
     instance.set_enable_audio(enable_audio_vec[instance_index]);
     instance.set_enable_usb(enable_usb_vec[instance_index]);
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
