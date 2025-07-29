@@ -17,7 +17,7 @@
 
 #include "cuttlefish/host/libs/command_util/util.h"
 
-namespace cuttlefish {
+namespace cuttlefish::cvdalloc {
 
 Result<void> Post(const SharedFD socket) {
   char i = 0;
@@ -35,4 +35,4 @@ Result<void> Wait(const SharedFD socket, std::chrono::seconds timeout) {
   return {};
 }
 
-}  // namespace
+}  // namespace cuttlefish::cvdalloc
