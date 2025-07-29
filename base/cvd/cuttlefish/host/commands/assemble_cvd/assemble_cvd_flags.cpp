@@ -135,7 +135,7 @@ DEFINE_vec(
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
 DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
-            "Enable the root-canal which is Bluetooth emulator in the host.");
+            "Enable the rootcanal which is Bluetooth emulator in the host.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
