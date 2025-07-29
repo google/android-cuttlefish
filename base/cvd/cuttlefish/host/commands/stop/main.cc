@@ -34,8 +34,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/allocd/request.h"
-#include "cuttlefish/host/libs/allocd/utils.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -152,29 +150,6 @@ int StopInstance(const CuttlefishConfig& config,
   return 0;
 }
 
-/// Send a StopSession request to allocd
-void ReleaseAllocdResources(SharedFD allocd_sock, uint32_t session_id) {
-  if (!allocd_sock->IsOpen() || session_id == -1) {
-    return;
-  }
-  Json::Value config;
-  Json::Value request_list;
-  Json::Value req;
-  req["request_type"] =
-      ReqTyToStr(RequestType::StopSession);
-  req["session_id"] = session_id;
-  request_list.append(req);
-  config["config_request"]["request_list"] = request_list;
-  SendJsonMsg(allocd_sock, config);
-  auto resp_opt = RecvJsonMsg(allocd_sock);
-  if (!resp_opt.has_value()) {
-    LOG(ERROR) << "Bad response from allocd";
-    return;
-  }
-  auto resp = resp_opt.value();
-  LOG(INFO) << "Stop Session operation: " << resp["config_status"];
-}
-
 struct FlagVaules {
   std::int32_t wait_for_launcher;
   bool clear_instance_dirs;
@@ -223,21 +198,6 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
         [&instance, &config, &wait_for_launcher,
          &clear_instance_dirs]() -> int {
           int exit_status = StopInstance(*config, instance, wait_for_launcher);
-          {
-            auto session_id = instance.session_id();
-            if (exit_status == 0 && instance.use_allocd()) {
-              // only release session resources if the instance was stopped
-              SharedFD allocd_sock = SharedFD::SocketLocalClient(
-                  kDefaultLocation, false, SOCK_STREAM);
-              if (!allocd_sock->IsOpen()) {
-                LOG(ERROR) << "Unable to connect to allocd on "
-                           << kDefaultLocation << ": "
-                           << allocd_sock->StrError();
-              }
-              ReleaseAllocdResources(allocd_sock, session_id);
-            }
-          }
-
           if (clear_instance_dirs && DirectoryExists(instance.instance_dir())) {
             LOG(INFO) << "Deleting instance dir " << instance.instance_dir();
             if (!RecursivelyRemoveDirectory(instance.instance_dir()).ok()) {

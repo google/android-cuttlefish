@@ -58,7 +58,6 @@ DECLARE_vec(guest_vulkan_driver);
 
 DECLARE_vec(frames_socket_path);
 
-DECLARE_vec(use_allocd);
 DECLARE_vec(use_cvdalloc);
 DECLARE_vec(enable_minimal_mode);
 DECLARE_vec(pause_in_bootloader);
