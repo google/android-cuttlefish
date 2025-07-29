@@ -15,6 +15,18 @@ cc_proto_library(
 )
 
 cf_cc_library(
+    name = "composite_disk",
+    srcs = ["composite_disk.cc"],
+    hdrs = ["composite_disk.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+    ],
+)
+
+cf_cc_library(
     name = "disk_image",
     hdrs = ["disk_image.h"],
     deps = [
@@ -37,6 +49,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//libbase",
