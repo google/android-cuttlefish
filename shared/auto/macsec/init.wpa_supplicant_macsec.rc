@@ -13,6 +13,7 @@
 # limitations under the License.
 
 on late-fs
+    exec u:r:modprobe:s0 -- /system/bin/modprobe -a -d /system/lib/modules macsec.ko
     wait /sys/class/net/eth1
     start wpa_supplicant_macsec
 
