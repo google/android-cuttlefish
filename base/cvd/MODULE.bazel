@@ -291,6 +291,47 @@ pica_crates.from_cargo(
 
 use_repo(pica_crates, "pica_crates")
 
+netsim_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+netsim_crates.spec(
+    package = "grpcio-sys",
+    version = "0.13.0+1.56.2-patched",
+)
+netsim_crates.annotation(
+    crate = "grpcio-sys",
+    gen_build_script = "off",
+
+    # Mimic build.rs to use grpc from bazel_dep()
+    deps = [
+        ":grpc_wrap",
+    ],
+    rustc_env = {
+        "BINDING_PATH": "$(execpath bindings/bindings.rs)",
+    },
+    additive_build_file_content = """
+
+cc_library(
+    name = "grpc_wrap",
+    srcs = [
+        "grpc_wrap.cc",
+        "@@//build_external/grpcio-sys:gpr_assert",
+    ],
+    copts = [
+        "-include",
+        "$(execpath @@//build_external/grpcio-sys:gpr_assert)",
+    ],
+    deps = ["@@//build_external/grpcio-sys:grpc_wrap_deps"],
+)
+""",
+)
+netsim_crates.from_specs(
+    name = "netsim_crates",
+    # Needed because it shares the extension with crosvm
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools_repo = "rust_host_tools_nightly",
+)
+
+use_repo(netsim_crates, "netsim_crates")
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Upstream mtools is in subversion, which bazel doesn't support
@@ -624,7 +665,7 @@ git_repository(
 git_repository(
     name = "ms-tpm-20-ref",
     build_file = "@//:BUILD.ms-tpm-20-ref.bazel",
-    commit = "ee21db0a941decd3cac67925ea3310873af60ab3", # v1.83r1
+    commit = "ee21db0a941decd3cac67925ea3310873af60ab3",  # v1.83r1
     remote = "https://github.com/microsoft/ms-tpm-20-ref",
     patches = [
         "@//build_external/ms-tpm-20-ref:0001-Turn-off-ALG_CAMELLIA.patch",
