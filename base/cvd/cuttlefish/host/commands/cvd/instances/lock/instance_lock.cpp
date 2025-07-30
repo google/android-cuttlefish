@@ -37,6 +37,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 
@@ -66,7 +67,7 @@ InstanceLockFileManager::InstanceLockFileManager() {}
 
 Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   std::stringstream path;
-  path << TempDir() << "/acloud_cvd_temp/";
+  path << InstanceLocksPath();
   CF_EXPECT(EnsureDirectoryExists(path.str()));
   path << "local-instance-" << instance_num << ".lock";
   return path.str();

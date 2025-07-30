@@ -155,7 +155,7 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
 }
 
 Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
-  const std::string lock_dir = "/tmp/acloud_cvd_temp";
+  const std::string lock_dir = InstanceLocksPath();
   std::string lock_file_prefix = lock_dir;
   lock_file_prefix.append("/local-instance-");
 
