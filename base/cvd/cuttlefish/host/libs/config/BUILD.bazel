@@ -129,6 +129,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:esp",
+        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/config:openwrt_args",
         "//libbase",

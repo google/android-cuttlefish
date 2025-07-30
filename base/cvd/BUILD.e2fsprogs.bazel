@@ -6,6 +6,23 @@ package(
 )
 
 cc_binary(
+    name = "blkid",
+    srcs = [
+        "misc/blkid.c",
+    ],
+    includes = [
+        "lib",
+    ],
+    deps = [
+        "@//build_external/e2fsprogs:e2fsprogs_config",
+        "@//build_external/e2fsprogs:libext2fs_generated",
+        ":e2fsprogs_version",
+        ":libext2fs",
+        ":libext2_blkid",
+    ],
+)
+
+cc_binary(
     name = "e2fsdroid",
     srcs = [
         "contrib/android/basefs_allocator.c",

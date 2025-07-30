@@ -29,6 +29,8 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 
+#include "host/libs/config/known_paths.h"
+
 namespace cuttlefish {
 namespace {
 
@@ -58,7 +60,7 @@ Result<std::vector<std::string>> ExtractHelper(
 Result<std::vector<std::string>> ExtractFiles(
     const std::string& archive, const std::vector<std::string>& to_extract,
     const std::string& target_directory) {
-  Command bsdtar_cmd = Command("/usr/bin/bsdtar")
+  Command bsdtar_cmd = Command(BsdtarBinary())
                            .AddParameter("-x")
                            .AddParameter("-v")
                            .AddParameter("-C")
@@ -130,7 +132,7 @@ Result<std::vector<std::string>> ExtractArchiveContents(
 
 std::string ExtractArchiveToMemory(const std::string& archive_filepath,
                                    const std::string& archive_member) {
-  Command bsdtar_cmd("/usr/bin/bsdtar");
+  Command bsdtar_cmd(BsdtarBinary());
   bsdtar_cmd.AddParameter("-xf");
   bsdtar_cmd.AddParameter(archive_filepath);
   bsdtar_cmd.AddParameter("-O");
@@ -147,7 +149,7 @@ std::string ExtractArchiveToMemory(const std::string& archive_filepath,
 }
 
 std::vector<std::string> ArchiveContents(const std::string& archive) {
-  Command bsdtar_cmd("/usr/bin/bsdtar");
+  Command bsdtar_cmd(BsdtarBinary());
   bsdtar_cmd.AddParameter("-tf");
   bsdtar_cmd.AddParameter(archive);
   std::string bsdtar_input, bsdtar_output;

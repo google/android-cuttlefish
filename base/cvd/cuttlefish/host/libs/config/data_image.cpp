@@ -38,6 +38,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/esp.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 
@@ -103,7 +104,7 @@ Result<void> ResizeImage(const std::string& data_image, int data_image_mb,
 }
 
 std::string GetFsType(const std::string& path) {
-  Command command("/usr/sbin/blkid");
+  Command command(BlkidBinary());
   command.AddParameter(path);
 
   std::string blkid_out;
@@ -180,11 +181,10 @@ Result<void> CreateBlankImage(const std::string& image, int num_mb,
   }
 
   if (image_fmt == "ext4") {
-    CF_EXPECT(Execute({"/sbin/mkfs.ext4", image}) == 0);
+    CF_EXPECT(Execute({Mke2fsBinary(), image}) == 0);
   } else if (image_fmt == "f2fs") {
-    auto make_f2fs_path = HostBinaryPath("make_f2fs");
     CF_EXPECT(
-        Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
+        Execute({Makef2fsBinary(), "-l", "data", image, "-C", "utf8", "-O",
                  "compression,extra_attr,project_quota,casefold", "-g",
                  "android", "-b", F2FS_BLOCKSIZE, "-w", F2FS_BLOCKSIZE}) == 0);
   } else if (image_fmt == "sdcard") {
