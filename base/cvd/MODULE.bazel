@@ -323,8 +323,20 @@ cc_library(
 )
 """,
 )
-netsim_crates.from_specs(
+netsim_crates.from_cargo(
     name = "netsim_crates",
+    manifests = [
+        "@android_tools_netsim//:rust/Cargo.toml",
+        "@android_tools_netsim//:rust/capture/Cargo.toml",
+        "@android_tools_netsim//:rust/cli/Cargo.toml",
+        "@android_tools_netsim//:rust/common/Cargo.toml",
+        "@android_tools_netsim//:rust/daemon/Cargo.toml",
+        "@android_tools_netsim//:rust/hostapd-rs/Cargo.toml",
+        "@android_tools_netsim//:rust/http-proxy/Cargo.toml",
+        "@android_tools_netsim//:rust/libslirp-rs/Cargo.toml",
+        "@android_tools_netsim//:rust/packets/Cargo.toml",
+        "@android_tools_netsim//:rust/proto/Cargo.toml",
+    ],
     # Needed because it shares the extension with crosvm
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     host_tools_repo = "rust_host_tools_nightly",
@@ -673,4 +685,11 @@ git_repository(
         "@//build_external/ms-tpm-20-ref:0003-Don-t-use-EC_POINTs_mul.patch",
     ],
     patch_strip = 1,
+)
+
+git_repository(
+    name = "android_tools_netsim",
+    build_file = "@//:BUILD.android_tools_netsim.bazel",
+    commit = "efabf7cb7e63b7466f79e9171907ed1e746ef1a3",
+    remote = "https://android.googlesource.com/platform/tools/netsim",
 )

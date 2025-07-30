@@ -71,6 +71,7 @@ package_files(
         "cuttlefish-common/bin/modem_simulator": "//cuttlefish/host/commands/modem_simulator",
         "cuttlefish-common/bin/ms-tpm-20-ref": "@ms-tpm-20-ref//:simulator",
         "cuttlefish-common/bin/mtools": "@mtools//:mtools",
+        "cuttlefish-common/bin/netsim": "@android_tools_netsim//:netsim",
         "cuttlefish-common/bin/openwrt_control_server": "//cuttlefish/host/commands/openwrt_control_server",
         "cuttlefish-common/bin/operator_proxy": "//cuttlefish/host/frontend/operator_proxy",
         "cuttlefish-common/bin/pica": "@pica",

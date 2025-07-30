@@ -1,0 +1,56 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
+
+rust_library(
+    name = "libnetsim_proto",
+    crate_name = "netsim_proto",
+    srcs = glob(["rust/proto/src/**/*.rs"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@netsim_crates//:grpcio",
+        "@netsim_crates//:protobuf",
+    ],
+)
+
+rust_library(
+    name = "libnetsim_common",
+    crate_name = "netsim_common",
+    srcs = glob(["rust/common/src/**/*.rs"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "@netsim_crates//:anyhow",
+        "@netsim_crates//:chrono",
+        "@netsim_crates//:env_logger",
+        "@netsim_crates//:libc",
+        "@netsim_crates//:log",
+        "@netsim_crates//:rand",
+        "@netsim_crates//:zip",
+    ],
+)
+
+rust_library(
+    name = "libnetsim_cli",
+    crate_name = "netsim_cli",
+    srcs = glob(["rust/cli/src/*.rs"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":libnetsim_common",
+        ":libnetsim_proto",
+        "@netsim_crates//:anyhow",
+        "@netsim_crates//:clap",
+        "@netsim_crates//:futures",
+        "@netsim_crates//:futures-util",
+        "@netsim_crates//:grpcio",
+        "@netsim_crates//:hex",
+        "@netsim_crates//:protobuf",
+        "@netsim_crates//:tracing",
+    ],
+)
+
+rust_binary(
+    name = "netsim",
+    srcs = ["rust/cli/bin/netsim.rs"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":libnetsim_cli",
+    ],
+)
