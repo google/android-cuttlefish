@@ -43,6 +43,7 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
@@ -53,29 +54,6 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
-
-std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
-  switch (net) {
-    case ExternalNetworkMode::kUnknown:
-      return out << "unknown";
-    case ExternalNetworkMode::kTap:
-      return out << "tap";
-    case ExternalNetworkMode::kSlirp:
-      return out << "slirp";
-  }
-}
-Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "tap")) {
-    return ExternalNetworkMode::kTap;
-  } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
-    return ExternalNetworkMode::kSlirp;
-  } else {
-    return CF_ERRF(
-        "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
-        "and \"slirp\"",
-        str);
-  }
-}
 
 std::ostream& operator<<(std::ostream& out, GuestHwuiRenderer renderer) {
   return out << ToString(renderer);
