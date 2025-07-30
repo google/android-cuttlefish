@@ -23,7 +23,6 @@
 
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/display.h"
 
 #define DEFINE_vec DEFINE_string
@@ -73,8 +72,6 @@ DEFINE_vec(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
 DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
            "Whether to use random serial for the device.");
-DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
-              "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
            "What gpu configuration to use, one of {auto, custom, drm_virgl, "
            "gfxstream, gfxstream_guest_angle, "

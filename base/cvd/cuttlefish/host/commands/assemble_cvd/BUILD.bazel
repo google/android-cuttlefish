@@ -258,6 +258,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:initramfs_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/commands/assemble_cvd/flags:vm_manager",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",

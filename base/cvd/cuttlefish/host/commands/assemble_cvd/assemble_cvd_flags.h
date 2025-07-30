@@ -45,7 +45,6 @@ DECLARE_vec(guest_enforce_security);
 DECLARE_vec(memory_mb);
 DECLARE_vec(serial_number);
 DECLARE_vec(use_random_serial);
-DECLARE_vec(vm_manager);
 DECLARE_vec(gpu_mode);
 DECLARE_vec(gpu_vhost_user_mode);
 DECLARE_vec(hwcomposer);
