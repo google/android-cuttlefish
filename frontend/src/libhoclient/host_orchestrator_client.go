@@ -111,13 +111,6 @@ type UserArtifactsClient interface {
 	// Extract artifact into the artifacts repository.
 	// Artifacts are identified by their SHA256 checksum in the artifacts repository
 	ExtractArtifact(filename string) (*hoapi.Operation, error)
-	// Creates a directory in the host where user artifacts can be uploaded to.
-	CreateUploadDir() (string, error)
-	// Uploads file into the given directory.
-	UploadFile(uploadDir string, filename string) error
-	UploadFileWithOptions(uploadDir string, filename string, options UploadOptions) error
-	// Extracts a compressed file.
-	ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error)
 }
 
 // Manage image directories created by the user.
@@ -519,22 +512,6 @@ func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuild
 	return nil
 }
 
-func (c *HostOrchestratorClientImpl) CreateUploadDir() (string, error) {
-	uploadDir := &hoapi.UploadDirectory{}
-	if err := c.HTTPHelper.NewPostRequest("/userartifacts", nil).JSONResDo(uploadDir); err != nil {
-		return "", err
-	}
-	return uploadDir.Name, nil
-}
-
-func (c *HostOrchestratorClientImpl) UploadFile(uploadDir string, filename string) error {
-	return c.UploadFileWithOptions(uploadDir, filename, DefaultUploadOptions())
-}
-
-func (c *HostOrchestratorClientImpl) UploadFileWithOptions(uploadDir string, filename string, uploadOpts UploadOptions) error {
-	return c.upload("/userartifacts/"+uploadDir, filename, uploadOpts)
-}
-
 func sha256Checksum(filename string) (string, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -592,15 +569,6 @@ func (c *HostOrchestratorClientImpl) upload(endpoint, filename string, uploadOpt
 		UploadOptions:  uploadOpts,
 	}
 	return uploader.Upload([]string{filename})
-}
-
-func (c *HostOrchestratorClientImpl) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
-	result := &hoapi.Operation{}
-	rb := c.HTTPHelper.NewPostRequest("/userartifacts/"+uploadDir+"/"+filename+"/:extract", nil)
-	if err := rb.JSONResDo(result); err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) (*hoapi.Operation, error) {
