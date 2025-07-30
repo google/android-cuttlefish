@@ -36,7 +36,7 @@ func TestUploadFileChunkSizeBytesIsZeroPanic(t *testing.T) {
 
 	srv := NewHostOrchestratorClient("https://test.com")
 
-	srv.UploadFileWithOptions("dir", "baz", UploadOptions{ChunkSizeBytes: 0})
+	srv.upload("/v1/userartifacts/foo", "baz", UploadOptions{ChunkSizeBytes: 0})
 }
 
 func TestUploadFileExponentialBackoff(t *testing.T) {
@@ -56,7 +56,7 @@ func TestUploadFileExponentialBackoff(t *testing.T) {
 
 	srv := NewHostOrchestratorClient(ts.URL)
 
-	err := srv.UploadFileWithOptions("dir", waldoFile, UploadOptions{
+	err := srv.upload("/v1/userartifacts/foo", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
 			InitialDuration: 100 * time.Millisecond,
 			Multiplier:      2,
@@ -90,7 +90,7 @@ func TestUploadFileExponentialBackoffReachedElapsedTime(t *testing.T) {
 
 	srv := NewHostOrchestratorClient(ts.URL)
 
-	err := srv.UploadFileWithOptions("dir", waldoFile, UploadOptions{
+	err := srv.upload("/v1/userartifacts/foo", waldoFile, UploadOptions{
 		BackOffOpts: ExpBackOffOptions{
 			InitialDuration:     100 * time.Millisecond,
 			RandomizationFactor: 0.5,
