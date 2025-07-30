@@ -107,6 +107,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:secure_hals",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//libbase",
         "@fmt",
         "@jsoncpp",
@@ -131,6 +132,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/config:openwrt_args",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//libbase",
     ],
 )
@@ -219,6 +221,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:vmm_mode",
     ],
 )
 
@@ -275,5 +278,16 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+    ],
+)
+
+cf_cc_library(
+    name = "vmm_mode",
+    srcs = ["vmm_mode.cc"],
+    hdrs = ["vmm_mode.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@fmt",
     ],
 )

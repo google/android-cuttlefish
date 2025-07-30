@@ -42,6 +42,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/config/guest_os.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,30 @@
  */
 #pragma once
 
-#include <vector>
+#include <ostream>
+#include <string>
+#include <string_view>
+
+#include <fmt/ostream.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 
-class VmManagerFlag {
- public:
-  static Result<VmManagerFlag> FromGlobalGflags(
-      const std::vector<GuestConfig>&);
-
-  VmmMode Mode() const;
-
- private:
-  explicit VmManagerFlag(VmmMode);
-
-  VmmMode mode_;
+enum class VmmMode {
+  kUnknown,
+  kCrosvm,
+  kGem5,
+  kQemu,
 };
 
+std::ostream& operator<<(std::ostream&, VmmMode);
+std::string ToString(VmmMode mode);
+Result<VmmMode> ParseVmm(std::string_view);
+
 }  // namespace cuttlefish
+
+#if FMT_VERSION >= 90000
+template <>
+struct fmt::formatter<cuttlefish::VmmMode> : ostream_formatter {};
+#endif

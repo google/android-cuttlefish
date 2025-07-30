@@ -30,6 +30,7 @@
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 #ifdef __APPLE__
 #define CF_UNUSED_ON_MACOS [[maybe_unused]]

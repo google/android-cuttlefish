@@ -38,23 +38,13 @@
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace Json {
 class Value;
 }
 
 namespace cuttlefish {
-
-enum class VmmMode {
-  kUnknown,
-  kCrosvm,
-  kGem5,
-  kQemu,
-};
-
-std::ostream& operator<<(std::ostream&, VmmMode);
-std::string ToString(VmmMode mode);
-Result<VmmMode> ParseVmm(std::string_view);
 
 enum class ExternalNetworkMode {
   kUnknown,
@@ -1037,6 +1027,4 @@ bool IsRestoring(const CuttlefishConfig&);
 #if FMT_VERSION >= 90000
 template <>
 struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
-template <>
-struct fmt::formatter<cuttlefish::VmmMode> : ostream_formatter {};
 #endif
