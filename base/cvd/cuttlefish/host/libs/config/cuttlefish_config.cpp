@@ -39,6 +39,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 namespace {

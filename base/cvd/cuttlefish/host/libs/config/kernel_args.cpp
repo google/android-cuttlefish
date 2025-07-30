@@ -21,6 +21,7 @@
 
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 namespace {

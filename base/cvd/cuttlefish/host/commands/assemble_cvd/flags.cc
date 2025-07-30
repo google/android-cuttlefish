@@ -66,6 +66,7 @@
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"

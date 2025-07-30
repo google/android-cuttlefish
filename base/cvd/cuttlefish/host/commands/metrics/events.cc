@@ -22,6 +22,7 @@
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 
 namespace cuttlefish {

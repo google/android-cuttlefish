@@ -86,6 +86,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/feature",
