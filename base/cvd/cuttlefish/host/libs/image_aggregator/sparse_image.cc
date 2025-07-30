@@ -38,7 +38,10 @@ namespace {
 
 constexpr std::string_view kAndroidSparseImageMagic = "\x3A\xFF\x26\xED";
 
-Result<SharedFD> AcquireLock(const std::string& tmp_lock_image_path) {
+Result<SharedFD> AcquireLockForImage(const std::string& image_path) {
+  std::string image_realpath;
+  CF_EXPECT(android::base::Realpath(image_path, &image_realpath));
+  std::string tmp_lock_image_path = image_realpath + ".lock";
   SharedFD fd =
       SharedFD::Open(tmp_lock_image_path.c_str(), O_RDWR | O_CREAT, 0666);
   CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", tmp_lock_image_path,
@@ -68,10 +71,10 @@ Result<bool> IsSparseImage(const std::string& image_path) {
 }
 
 Result<void> ForceRawImage(const std::string& image_path) {
-  std::string tmp_lock_image_path = image_path + ".lock";
-
-  SharedFD fd = CF_EXPECT(AcquireLock(tmp_lock_image_path));
-
+  if (!CF_EXPECT(IsSparseImage(image_path))) {
+    return {};
+  }
+  SharedFD fd = CF_EXPECT(AcquireLockForImage(image_path));
   if (!CF_EXPECT(IsSparseImage(image_path))) {
     return {};
   }
