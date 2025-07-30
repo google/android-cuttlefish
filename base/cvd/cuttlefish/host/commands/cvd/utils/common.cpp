@@ -146,6 +146,10 @@ std::string InstanceDatabasePath() {
   return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
 
+std::string InstanceLocksPath() {
+  return "/tmp/acloud_cvd_temp/";
+}
+
 std::string DefaultBaseDir() {
   auto time = std::chrono::system_clock::now().time_since_epoch().count();
   return fmt::format("{}/{}", PerUserDir(), time);

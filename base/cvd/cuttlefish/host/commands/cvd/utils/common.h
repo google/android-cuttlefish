@@ -83,6 +83,8 @@ std::string PerUserCacheDir();
 
 std::string InstanceDatabasePath();
 
+std::string InstanceLocksPath();
+
 std::string DefaultBaseDir();
 
 Result<std::string> GroupDirFromHome(std::string_view group_home_dir);
