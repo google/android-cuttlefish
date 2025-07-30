@@ -54,6 +54,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
@@ -410,31 +411,16 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
 
-  // TODO(weihsu), b/250988697:
-  // FLAGS_vm_manager used too early, have to handle this vectorized string early
-  // Currently, all instances should use same vmm, added checking here
-  std::vector<std::string> vm_manager_vec =
-      android::base::Split(FLAGS_vm_manager, ",");
-  for (int i=1; i<vm_manager_vec.size(); i++) {
-    CF_EXPECT(
-        vm_manager_vec[0] == vm_manager_vec[i],
-        "All instances should have same vm_manager, " << FLAGS_vm_manager);
-  }
-  CF_EXPECT_GT(vm_manager_vec.size(), 0);
-  while (vm_manager_vec.size() < instance_nums.size()) {
-    vm_manager_vec.emplace_back(vm_manager_vec[0]);
-  }
-
   // TODO(weihsu), b/250988697: moved bootconfig_supported and hctr2_supported
   // into each instance, but target_arch is still in todo
   // target_arch should be in instance later
-  auto vmm_mode = CF_EXPECT(ParseVmm(vm_manager_vec[0]));
-  auto vmm = GetVmManager(vmm_mode, guest_configs[0].target_arch);
-  if (!vmm) {
-    LOG(FATAL) << "Invalid vm_manager: " << vm_manager_vec[0];
-  }
-  tmp_config_obj.set_vm_manager(vmm_mode);
-  tmp_config_obj.set_ap_vm_manager(vm_manager_vec[0] + "_openwrt");
+  VmManagerFlag vm_manager_flag =
+      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
+  std::unique_ptr<vm_manager::VmManager> vmm =
+      GetVmManager(vm_manager_flag.Mode(), guest_configs[0].target_arch);
+  tmp_config_obj.set_vm_manager(vm_manager_flag.Mode());
+  tmp_config_obj.set_ap_vm_manager(ToString(vm_manager_flag.Mode()) +
+                                   "_openwrt");
 
   // TODO: schuffelen - fix behavior on riscv64
   if (guest_configs[0].target_arch == Arch::RiscV64) {
@@ -1092,7 +1078,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         gpu_renderer_features_vec[instance_index],
         gpu_context_types_vec[instance_index],
         guest_hwui_renderer_vec[instance_index],
-        guest_renderer_preload_vec[instance_index], vmm_mode,
+        guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
         guest_configs[instance_index], instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
 
@@ -1175,7 +1161,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool os_overlay = true;
     // Gem5 already uses CoW wrappers around disk images
-    os_overlay &= vmm_mode != VmmMode::kGem5;
+    os_overlay &= vm_manager_flag.Mode() != VmmMode::kGem5;
     os_overlay &= FLAGS_use_overlay;
     if (os_overlay) {
       auto path = const_instance.PerInstancePath("overlay.img");
@@ -1184,7 +1170,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       virtual_disk_paths.push_back(const_instance.os_composite_disk_path());
     }
 
-    bool persistent_disk = vmm_mode != VmmMode::kGem5;
+    bool persistent_disk = vm_manager_flag.Mode() != VmmMode::kGem5;
     if (persistent_disk) {
 #ifdef __APPLE__
       const std::string persistent_composite_img_base =
@@ -1305,7 +1291,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto external_network_mode = CF_EXPECT(
         ParseExternalNetworkMode(device_external_network_vec[instance_index]));
     CF_EXPECT(external_network_mode == ExternalNetworkMode::kTap ||
-                  vmm_mode == VmmMode::kQemu,
+                  vm_manager_flag.Mode() == VmmMode::kQemu,
               "TODO(b/286284441): slirp only works on QEMU");
     instance.set_external_network_mode(external_network_mode);
 
@@ -1601,50 +1587,30 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
   std::vector<GuestConfig> guest_configs =
       CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
 
-  // TODO(weihsu), b/250988697:
-  // assume all instances are using same VM manager/app/arch,
-  // later that multiple instances may use different VM manager/app/arch
-
-  // Temporary add this checking to make sure all instances have same target_arch.
-  // This checking should be removed later.
-  for (int instance_index = 1; instance_index < guest_configs.size(); instance_index++) {
-    CF_EXPECT(guest_configs[0].target_arch == guest_configs[instance_index].target_arch,
-              "all instance target_arch should be same");
-  }
-  if (FLAGS_vm_manager.empty()) {
-    if (IsHostCompatible(guest_configs[0].target_arch)) {
-      FLAGS_vm_manager = ToString(VmmMode::kCrosvm);
-    } else {
-      FLAGS_vm_manager = ToString(VmmMode::kQemu);
-    }
-  }
-
-  std::vector<std::string> vm_manager_vec =
-      android::base::Split(FLAGS_vm_manager, ",");
-
-  // TODO(weihsu), b/250988697:
-  // Currently, all instances should use same vmm
-  auto vmm = CF_EXPECT(ParseVmm(vm_manager_vec[0]));
+  VmManagerFlag vm_manager_flag =
+      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
 
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
 
-  if (vmm == VmmMode::kQemu) {
-    CF_EXPECT(SetDefaultFlagsForQemu(system_image_dir, guest_configs,
-                                     name_to_default_value));
-  } else if (vmm == VmmMode::kCrosvm) {
-    CF_EXPECT(SetDefaultFlagsForCrosvm(system_image_dir, guest_configs,
+  switch (vm_manager_flag.Mode()) {
+    case VmmMode::kQemu:
+      CF_EXPECT(SetDefaultFlagsForQemu(system_image_dir, guest_configs,
                                        name_to_default_value));
-  } else if (vmm == VmmMode::kGem5) {
-    // TODO: Get the other architectures working
-    if (guest_configs[0].target_arch != Arch::Arm64) {
-      return CF_ERR("Gem5 only supports ARM64");
-    }
-    SetDefaultFlagsForGem5();
-  } else {
-    return CF_ERR("Unknown Virtual Machine Manager: " << FLAGS_vm_manager);
+      break;
+    case VmmMode::kCrosvm:
+      CF_EXPECT(SetDefaultFlagsForCrosvm(system_image_dir, guest_configs,
+                                         name_to_default_value));
+      break;
+    case VmmMode::kGem5:
+      CF_EXPECT_EQ(guest_configs[0].target_arch, Arch::Arm64,
+                   "Gem5 only supports ARM64");
+      SetDefaultFlagsForGem5();
+      break;
+    case VmmMode::kUnknown:
+      return CF_ERR("Unknown VM manager");
   }
-  if (vmm != VmmMode::kGem5) {
+  if (vm_manager_flag.Mode() != VmmMode::kGem5) {
     // After SetCommandLineOptionWithMode in SetDefaultFlagsForCrosvm/Qemu,
     // default flag values changed, need recalculate name_to_default_value
     name_to_default_value = CurrentFlagsToDefaultValue();

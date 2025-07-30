@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
  */
 #pragma once
 
-#include <ostream>
-#include <string>
+#include <vector>
+
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-enum class Arch {
-  Arm,
-  Arm64,
-  RiscV64,
-  X86,
-  X86_64,
+class VmManagerFlag {
+ public:
+  static Result<VmManagerFlag> FromGlobalGflags(
+      const std::vector<GuestConfig>&);
+
+  VmmMode Mode() const;
+
+ private:
+  explicit VmManagerFlag(VmmMode);
+
+  VmmMode mode_;
 };
-
-const std::string& HostArchStr();
-Arch HostArch();
-bool IsHostCompatible(Arch arch);
-
-std::ostream& operator<<(std::ostream&, Arch);
 
 }  // namespace cuttlefish

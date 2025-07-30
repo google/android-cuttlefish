@@ -81,3 +81,17 @@ cf_cc_library(
         "@gflags",
     ],
 )
+
+cf_cc_library(
+    name = "vm_manager",
+    srcs = ["vm_manager.cc"],
+    hdrs = ["vm_manager.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@gflags",
+    ],
+)
