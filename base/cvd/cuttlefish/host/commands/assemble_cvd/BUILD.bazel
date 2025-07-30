@@ -267,6 +267,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:display",
+        "//cuttlefish/host/libs/config:external_network_mode",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
