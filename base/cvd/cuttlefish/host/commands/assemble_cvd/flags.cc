@@ -58,7 +58,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
-#include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -381,7 +380,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
     const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
     const KernelPathFlag& kernel_path,
-    const SystemImageDirFlag& system_image_dir) {
+    const SystemImageDirFlag& system_image_dir,
+    const VmManagerFlag& vm_manager_flag) {
   CuttlefishConfig tmp_config_obj;
   // If a snapshot path is provided, do not read all flags to set up the config.
   // Instead, read the config that was saved at time of snapshot and restore
@@ -414,8 +414,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // TODO(weihsu), b/250988697: moved bootconfig_supported and hctr2_supported
   // into each instance, but target_arch is still in todo
   // target_arch should be in instance later
-  VmManagerFlag vm_manager_flag =
-      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
   std::unique_ptr<vm_manager::VmManager> vmm =
       GetVmManager(vm_manager_flag.Mode(), guest_configs[0].target_arch);
   tmp_config_obj.set_vm_manager(vm_manager_flag.Mode());
@@ -1571,24 +1569,13 @@ void SetDefaultFlagsForOpenwrt(Arch target_arch) {
   }
 }
 
-Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
-    const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
-    const KernelPathFlag& kernel_path,
-    const SystemImageDirFlag& system_image_dir) {
+Result<void> SetFlagDefaultsForVmm(
+    const std::vector<GuestConfig>& guest_configs,
+    const SystemImageDirFlag& system_image_dir,
+    const VmManagerFlag& vm_manager_flag) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   int32_t instances_size = instance_nums.size();
-
-  CF_EXPECT(ResolveInstanceFiles(boot_image, initramfs_path, kernel_path,
-                                 system_image_dir),
-            "Failed to resolve instance files");
-
-  // Depends on ResolveInstanceFiles to set flag globals
-  std::vector<GuestConfig> guest_configs =
-      CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
-
-  VmManagerFlag vm_manager_flag =
-      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
 
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
@@ -1642,7 +1629,7 @@ Result<std::vector<GuestConfig>> GetGuestConfigAndSetDefaults(
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
 
-  return guest_configs;
+  return {};
 }
 
 std::string GetConfigFilePath(const CuttlefishConfig& config) {
