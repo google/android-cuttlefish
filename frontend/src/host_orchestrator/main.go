@@ -127,8 +127,7 @@ func main() {
 
 	om := orchestrator.NewMapOM()
 	uamOpts := orchestrator.UserArtifactsManagerOpts{
-		LegacyRootDir: filepath.Join(*imRootDir, "user_artifacts"),
-		RootDir:       filepath.Join(*imRootDir, "userartifacts"),
+		RootDir: filepath.Join(*imRootDir, "userartifacts"),
 	}
 	uam, err := orchestrator.NewUserArtifactsManagerImpl(uamOpts)
 	if err != nil {
