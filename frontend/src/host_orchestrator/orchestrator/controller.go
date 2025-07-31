@@ -105,20 +105,12 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvdbugreports/{uuid}", &downloadCVDBugReportHandler{c.Config}).Methods("GET")
 	router.Handle("/cvdbugreports/{uuid}", httpHandler(&deleteCVDBugReportHandler{c.Config})).Methods("DELETE")
 	router.Handle("/snapshots/{id}", httpHandler(&deleteSnapshotHandler{c.Config, c.OperationManager})).Methods("DELETE")
-	router.Handle("/userartifacts",
-		httpHandler(&createUploadDirectoryHandler{c.UserArtifactsManager})).Methods("POST")
-	router.Handle("/userartifacts",
-		httpHandler(&listUploadDirectoriesHandler{c.UserArtifactsManager})).Methods("GET")
-	router.Handle("/userartifacts/{name}",
-		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, false})).Methods("PUT")
-	router.Handle("/userartifacts/{dir}/{name}/:extract",
-		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, false})).Methods("POST")
 	router.Handle("/v1/userartifacts/{checksum}",
-		httpHandler(&createUpdateUserArtifactHandler{c.UserArtifactsManager, true})).Methods("PUT")
+		httpHandler(&uploadUserArtifactHandler{c.UserArtifactsManager})).Methods("PUT")
 	router.Handle("/v1/userartifacts/{checksum}",
 		httpHandler(&statUserArtifactHandler{c.UserArtifactsManager})).Methods("GET")
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
-		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager, true})).Methods("POST")
+		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/cvd_imgs_dirs", httpHandler(&createImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("POST")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
 	// Debug endpoints.
@@ -574,25 +566,8 @@ func (h *deleteSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 	return op, nil
 }
 
-type createUploadDirectoryHandler struct {
+type uploadUserArtifactHandler struct {
 	m UserArtifactsManager
-}
-
-func (h *createUploadDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
-	return h.m.NewDir()
-}
-
-type listUploadDirectoriesHandler struct {
-	m UserArtifactsManager
-}
-
-func (h *listUploadDirectoriesHandler) Handle(r *http.Request) (interface{}, error) {
-	return h.m.ListDirs()
-}
-
-type createUpdateUserArtifactHandler struct {
-	m    UserArtifactsManager
-	isV1 bool
 }
 
 func parseFormValueInt(r *http.Request, key string) (int64, error) {
@@ -604,7 +579,7 @@ func parseFormValueInt(r *http.Request, key string) (int64, error) {
 	return value, nil
 }
 
-func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
+func (h *uploadUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 	if err := r.ParseMultipartForm(0); err != nil {
 		if err == multipart.ErrMessageTooLarge {
 			return nil, &operator.AppError{
@@ -615,61 +590,27 @@ func (h *createUpdateUserArtifactHandler) Handle(r *http.Request) (interface{}, 
 		return nil, operator.NewBadRequestError("Invalid multipart form request", err)
 	}
 	defer r.MultipartForm.RemoveAll()
-	vars := mux.Vars(r)
 	f, fheader, err := r.FormFile("file")
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 	chunkOffsetBytes, err := parseFormValueInt(r, "chunk_offset_bytes")
-	if h.isV1 {
-		if err != nil {
-			return nil, err
-		}
-		fileSizeBytes, err := parseFormValueInt(r, "file_size_bytes")
-		if err != nil {
-			return nil, err
-		}
-		chunk := UserArtifactChunk{
-			File:          f,
-			Name:          fheader.Filename,
-			OffsetBytes:   chunkOffsetBytes,
-			SizeBytes:     fheader.Size,
-			FileSizeBytes: fileSizeBytes,
-		}
-		return nil, h.m.UpdateArtifact(vars["checksum"], chunk)
-	} else {
-		dir := vars["name"]
-		if err := ValidateFileName(dir); err != nil {
-			return nil, operator.NewBadRequestError("invalid directory name", err)
-		}
-		if err != nil {
-			log.Println("use of deprecated `chunk_number`")
-			chunkNumberRaw := r.FormValue("chunk_number")
-			chunkNumber, err := strconv.Atoi(chunkNumberRaw)
-			if err != nil {
-				return nil, operator.NewBadRequestError(
-					fmt.Sprintf("Invalid chunk_number form field value: %q", chunkNumberRaw), err)
-			}
-			if chunkNumber < 0 {
-				return nil, operator.NewBadRequestError(fmt.Sprintf("invalid value (chunk_number:%d)", chunkNumber), nil)
-			}
-			chunkSizeBytes, err := parseFormValueInt(r, "chunk_size_bytes")
-			if err != nil {
-				return nil, err
-			}
-			if chunkNumber < 0 {
-				return nil, operator.NewBadRequestError(fmt.Sprintf("invalid value (chunk_size_bytes:%d)", chunkSizeBytes), nil)
-			}
-			chunkOffsetBytes = int64(chunkNumber-1) * chunkSizeBytes
-		}
-		chunk := UserArtifactChunk{
-			Name:        fheader.Filename,
-			File:        f,
-			OffsetBytes: chunkOffsetBytes,
-		}
-		return nil, h.m.UpdateArtifactWithDir(dir, chunk)
+	if err != nil {
+		return nil, err
 	}
+	fileSizeBytes, err := parseFormValueInt(r, "file_size_bytes")
+	if err != nil {
+		return nil, err
+	}
+	chunk := UserArtifactChunk{
+		File:          f,
+		Name:          fheader.Filename,
+		OffsetBytes:   chunkOffsetBytes,
+		SizeBytes:     fheader.Size,
+		FileSizeBytes: fileSizeBytes,
+	}
+	return nil, h.m.UpdateArtifact(mux.Vars(r)["checksum"], chunk)
 }
 
 type statUserArtifactHandler struct {
@@ -681,31 +622,16 @@ func (h *statUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
 }
 
 type extractUserArtifactHandler struct {
-	om   OperationManager
-	uam  UserArtifactsManager
-	isV1 bool
+	om  OperationManager
+	uam UserArtifactsManager
 }
 
 func (h *extractUserArtifactHandler) Handle(r *http.Request) (interface{}, error) {
-	vars := mux.Vars(r)
-	if !h.isV1 {
-		if err := ValidateFileName(vars["dir"]); err != nil {
-			return nil, operator.NewBadRequestError("invalid directory name", err)
-		}
-		if err := ValidateFileName(vars["name"]); err != nil {
-			return nil, operator.NewBadRequestError("invalid artifact name", err)
-		}
-	}
 	op := h.om.New()
 	go func() {
-		var err error
-		if h.isV1 {
-			err = h.uam.ExtractArtifact(vars["checksum"])
-		} else {
-			err = h.uam.ExtractArtifactWithDir(vars["dir"], vars["name"])
-		}
-		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
-			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		err := h.uam.ExtractArtifact(mux.Vars(r)["checksum"])
+		if opErr := h.om.Complete(op.Name, &OperationResult{Error: err}); opErr != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, opErr)
 		}
 	}()
 	return op, nil
