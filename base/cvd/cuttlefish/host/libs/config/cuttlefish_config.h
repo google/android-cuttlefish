@@ -220,33 +220,13 @@ class CuttlefishConfig {
   void set_extra_kernel_cmdline(const std::string& extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
-  // A directory containing the SSL certificates for the signaling server
-  void set_webrtc_certs_dir(const std::string& certs_dir);
-  std::string webrtc_certs_dir() const;
-
-  // The port for the webrtc signaling server. It's used by the signaling server
-  // to bind to it and by the webrtc process to connect to and register itself
-  void set_sig_server_port(int port);
-  int sig_server_port() const;
+  // The port for the webrtc signaling server proxy.
+  void set_sig_server_proxy_port(int port);
+  int sig_server_proxy_port() const;
 
   // The address of the signaling server
   void set_sig_server_address(const std::string& addr);
   std::string sig_server_address() const;
-
-  // The path section of the url where the webrtc process registers itself with
-  // the signaling server
-  void set_sig_server_path(const std::string& path);
-  std::string sig_server_path() const;
-
-  // Whether the webrtc process should use a secure connection (WSS) to the
-  // signaling server.
-  void set_sig_server_secure(bool secure);
-  bool sig_server_secure() const;
-
-  // Whether the webrtc process should attempt to verify the authenticity of the
-  // signaling server (reject self signed certificates)
-  void set_sig_server_strict(bool strict);
-  bool sig_server_strict() const;
 
   // Whether display composition is enabled for one or more displays
   bool OverlaysEnabled() const;
@@ -472,13 +452,6 @@ class CuttlefishConfig {
     // The device id the webrtc process should use to register with the
     // signaling server
     std::string webrtc_device_id() const;
-
-    // Whether this instance should start the webrtc signaling server
-    bool start_webrtc_sig_server() const;
-
-    // Whether to start a reverse proxy to the webrtc signaling server already
-    // running in the host
-    bool start_webrtc_sig_server_proxy() const;
 
     // Whether this instance should start a rootcanal instance
     bool start_rootcanal() const;
@@ -736,8 +709,6 @@ class CuttlefishConfig {
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
-    void set_start_webrtc_signaling_server(bool start);
-    void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_rootcanal(bool start);
     void set_start_casimir(bool start);
     void set_start_pica(bool start);

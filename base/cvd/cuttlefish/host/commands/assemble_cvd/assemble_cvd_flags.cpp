@@ -205,27 +205,10 @@ DEFINE_vec(start_webrtc, fmt::format("{}", CF_DEFAULTS_START_WEBRTC),
            "Whether to start the webrtc process.");
 
 DEFINE_vec(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
-              "[Experimental] Path to WebRTC webpage assets.");
-
-DEFINE_string(webrtc_certs_dir, CF_DEFAULTS_WEBRTC_CERTS_DIR,
-              "[Experimental] Path to WebRTC certificates directory.");
-
-DEFINE_bool(
-    // The actual default for this flag is set with SetCommandLineOption() in
-    // GetGuestConfigsAndSetDefaults() at the end of this file.
-    start_webrtc_sig_server, CF_DEFAULTS_START_WEBRTC_SIG_SERVER,
-    "Whether to start the webrtc signaling server. This option only applies to "
-    "the first instance, if multiple instances are launched they'll share the "
-    "same signaling server, which is owned by the first one.");
+           "Path to WebRTC webpage assets.");
 
 DEFINE_string(webrtc_sig_server_addr, CF_DEFAULTS_WEBRTC_SIG_SERVER_ADDR,
               "The address of the webrtc signaling server.");
-
-DEFINE_int32(
-    webrtc_sig_server_port, CF_DEFAULTS_WEBRTC_SIG_SERVER_PORT,
-    "The port of the signaling server if started outside of this launch. If "
-    "-start_webrtc_sig_server is given it will choose 8443+instance_num1-1 and "
-    "this parameter is ignored.");
 
 // TODO (jemoreira): We need a much bigger range to reliably support several
 // simultaneous connections.
@@ -236,20 +219,6 @@ DEFINE_vec(tcp_port_range, CF_DEFAULTS_TCP_PORT_RANGE,
 DEFINE_vec(udp_port_range, CF_DEFAULTS_UDP_PORT_RANGE,
               "The minimum and maximum UDP port numbers to allocate for ICE "
               "candidates as 'min:max'. To use any port just specify '0:0'");
-
-DEFINE_string(webrtc_sig_server_path, CF_DEFAULTS_WEBRTC_SIG_SERVER_PATH,
-              "The path section of the URL where the device should be "
-              "registered with the signaling server.");
-
-DEFINE_bool(
-    webrtc_sig_server_secure, CF_DEFAULTS_WEBRTC_SIG_SERVER_SECURE,
-    "Whether the WebRTC signaling server uses secure protocols (WSS vs WS).");
-
-DEFINE_bool(verify_sig_server_certificate,
-            CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE,
-            "Whether to verify the signaling server's certificate with a "
-            "trusted signing authority (Disallow self signed certificates). "
-            "This is ignored if an insecure server is configured.");
 
 DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,

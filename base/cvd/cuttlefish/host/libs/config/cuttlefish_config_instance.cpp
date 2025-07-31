@@ -1831,23 +1831,6 @@ std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
   return (*Dictionary())[kWebrtcDeviceId].asString();
 }
 
-static constexpr char kStartSigServer[] = "webrtc_start_sig_server";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_webrtc_signaling_server(bool start) {
-  (*Dictionary())[kStartSigServer] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
-  return (*Dictionary())[kStartSigServer].asBool();
-}
-
-static constexpr char kStartSigServerProxy[] = "webrtc_start_sig_server_proxy";
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_start_webrtc_sig_server_proxy(bool start) {
-  (*Dictionary())[kStartSigServerProxy] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server_proxy() const {
-  return (*Dictionary())[kStartSigServerProxy].asBool();
-}
-
 static constexpr char kStartRootcanal[] = "start_rootcanal";
 void CuttlefishConfig::MutableInstanceSpecific::set_start_rootcanal(
     bool start) {
