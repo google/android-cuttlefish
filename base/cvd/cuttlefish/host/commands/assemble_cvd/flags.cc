@@ -461,11 +461,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (guest_config_mac80211_hwsim.has_value()) {
     tmp_config_obj.set_virtio_mac80211_hwsim(*guest_config_mac80211_hwsim);
   } else {
-#ifdef ENFORCE_MAC80211_HWSIM
     tmp_config_obj.set_virtio_mac80211_hwsim(true);
-#else
-    tmp_config_obj.set_virtio_mac80211_hwsim(false);
-#endif
   }
 
   if ((FLAGS_ap_rootfs_image.empty()) != (FLAGS_ap_kernel_image.empty())) {
