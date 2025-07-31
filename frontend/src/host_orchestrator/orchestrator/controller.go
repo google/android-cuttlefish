@@ -88,6 +88,14 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/displays",
+		httpHandler(newCreateDisplayAddHandler(c.Config, c.OperationManager))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/displays",
+		httpHandler(newCreateDisplayListHandler(c.Config, c.OperationManager))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/displays/{displayNumber}",
+		httpHandler(newCreateDisplayRemoveHandler(c.Config, c.OperationManager))).Methods("DELETE")
+	router.Handle("/cvds/{group}/{name}/displays/{displayNumber}/:screenshot",
+		httpHandler(newCreateDisplayScreenshotHandler(c.Config, c.OperationManager))).Methods("GET")
 	router.Handle("/cvds/{group}/{name}/snapshots",
 		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
@@ -337,6 +345,120 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 		ExecContext:      exec.CommandContext,
 	}
 	return NewCreateSnapshotAction(opts).Run()
+}
+
+type displayAddHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayAddHandler(c Config, om OperationManager) *displayAddHandler {
+	return &displayAddHandler{Config: c, OM: om}
+}
+
+func (h *displayAddHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.DisplayAddRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("malformed DisplayAddRequest JSON in request", err)
+	}
+
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := DisplayAddActionOpts{
+		Request:          req,
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayAddAction(opts).Run()
+}
+
+type displayListHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayListHandler(c Config, om OperationManager) *displayListHandler {
+	return &displayListHandler{Config: c, OM: om}
+}
+
+func (h *displayListHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := DisplayListActionOpts{
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayListAction(opts).Run()
+}
+
+type displayRemoveHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayRemoveHandler(c Config, om OperationManager) *displayRemoveHandler {
+	return &displayRemoveHandler{Config: c, OM: om}
+}
+
+func (h *displayRemoveHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+
+	displayNumberStr := vars["displayNumber"]
+	displayNumber, err := strconv.Atoi(displayNumberStr)
+	if err != nil {
+		return nil, operator.NewBadRequestError("invalid display number", err)
+	}
+
+	opts := DisplayRemoveActionOpts{
+		DisplayNumber:    displayNumber,
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayRemoveAction(opts).Run()
+}
+
+type displayScreenshotHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayScreenshotHandler(c Config, om OperationManager) *displayScreenshotHandler {
+	return &displayScreenshotHandler{Config: c, OM: om}
+}
+
+func (h *displayScreenshotHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+
+	displayNumberStr := vars["displayNumber"]
+	displayNumber, err := strconv.Atoi(displayNumberStr)
+	if err != nil {
+		return nil, operator.NewBadRequestError("invalid display number", err)
+	}
+
+	req := &apiv1.DisplayScreenshotRequest{
+		DisplayNumber: displayNumber,
+	}
+	opts := DisplayScreenshotActionOpts{
+		Request:          req,
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayScreenshotAction(opts).Run()
 }
 
 type startCVDHandler struct {

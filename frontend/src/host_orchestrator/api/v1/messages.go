@@ -172,3 +172,39 @@ type StartCVDRequest struct {
 	// Start from the relevant snaphost if not empty.
 	SnapshotID string `json:"snapshot_id,omitempty"`
 }
+
+type DisplayAddRequest struct {
+	Width         int `json:"width"`
+	Height        int `json:"height"`
+	DPI           int `json:"dpi,omitempty"`
+	RefreshRateHZ int `json:"refresh_rate_hz,omitempty"`
+}
+
+type DisplayAddResponse = struct {
+	DisplayNumber int `json:"display_number"`
+}
+
+type DisplayMode struct {
+	Windowed []int `json:"windowed"`
+}
+
+type Display struct {
+	DPI           []int       `json:"dpi"`
+	Mode          DisplayMode `json:"mode"`
+	RefreshRateHZ int         `json:"refresh-rate"`
+}
+
+type DisplayListResponse struct {
+	Displays map[int]Display `json:displays`
+}
+
+type DisplayRemoveResponse = EmptyResponse
+
+type DisplayScreenshotRequest struct {
+	DisplayNumber int `json:"display_number,omitempty"`
+}
+
+type DisplayScreenshotResponse struct {
+	ScreenshotBytesBase64 string `json:screenshot_bytes"`
+	ScreenshotMimeType    string `json:"screenshot_mime_type"`
+}
