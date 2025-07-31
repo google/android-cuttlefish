@@ -32,6 +32,7 @@ use std::os::fd::AsFd;
 use std::os::fd::AsRawFd;
 use std::os::unix::ffi::OsStrExt;
 
+mod frp;
 mod sdd;
 mod tpm;
 
@@ -126,6 +127,8 @@ pub unsafe fn ta_main(
         // No support for converting previous implementation's keyblobs.
         legacy_key: None,
         rpc,
+        frp_secret_storage: Some(Box::new(frp::HostFrpSecretStorage)),
+        frp_data_storage: Some(Box::new(frp::HostFrpDataStorage)),
     };
     let mut ta = KeyMintTa::new(hw_info, RpcInfo::V3(rpc_info_v3), imp, dev);
 

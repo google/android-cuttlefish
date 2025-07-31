@@ -64,6 +64,13 @@ prebuilt_etc {
     src: "android.hardware.security.secureclock-service.rust.xml",
 }
 
+prebuilt_etc {
+    name: "android.hardware.security.factory_reset_protection-service.rust.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.security.factory_reset_protection-service.rust.xml",
+}
+
 apex_defaults {
     name: "com.android.hardware.keymint.rust_defaults",
     manifest: "manifest.json",
