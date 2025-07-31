@@ -301,6 +301,75 @@ func (cli *CLI) TakeSnapshot(selector Selector, dir string) error {
 	return err
 }
 
+type DisplayAddOpts struct {
+	Width         int
+	Height        int
+	DPI           int
+	RefreshRateHZ int
+}
+
+func (o *DisplayAddOpts) toArg() string {
+	return fmt.Sprintf("--display=width=%d,height=%d,dpi=%d,refresh_rate_hz=%d", o.Width, o.Height, o.DPI, o.RefreshRateHZ)
+}
+
+func (cli *CLI) DisplayAdd(selector Selector, opts DisplayAddOpts) error {
+	args := selector.asArgs()
+	args = append(args, "display")
+	args = append(args, "add")
+	args = append(args, opts.toArg())
+	_, err := cli.exec(CVDBin, args...)
+	return err
+}
+
+type DisplayMode struct {
+	Windowed []int `json:"windowed"`
+}
+
+type Display struct {
+	DPI           []int       `json:"dpi"`
+	Mode          DisplayMode `json:"mode"`
+	RefreshRateHZ int         `json:"refresh-rate"`
+}
+
+type Displays struct {
+	Displays map[int]*Display `json:"displays"`
+}
+
+func (cli *CLI) DisplayList(selector Selector) (*Displays, error) {
+	args := selector.asArgs()
+	args = append(args, "display")
+	args = append(args, "list")
+
+	out, err := cli.exec(CVDBin, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed execution of `cvd display list`: %w", err)
+	}
+	displays := &Displays{}
+	if err := json.Unmarshal(out, displays); err != nil {
+		return nil, fmt.Errorf("error parsing `cvd display list` output: %w", err)
+	}
+	return displays, nil
+}
+
+func (cli *CLI) DisplayRemove(selector Selector, displayNumber int) error {
+	args := selector.asArgs()
+	args = append(args, "display")
+	args = append(args, "remove")
+	args = append(args, fmt.Sprintf("--display=%d", displayNumber))
+	_, err := cli.exec(CVDBin, args...)
+	return err
+}
+
+func (cli *CLI) DisplayScreenshot(selector Selector, displayNumber int, path string) error {
+	args := selector.asArgs()
+	args = append(args, "display")
+	args = append(args, "screenshot")
+	args = append(args, fmt.Sprintf("--display_number=%d", displayNumber))
+	args = append(args, "--screenshot_path="+path)
+	_, err := cli.exec(CVDBin, args...)
+	return err
+}
+
 func (cli *CLI) PowerWash(selector Selector) error {
 	args := selector.asArgs()
 	args = append(args, "powerwash")
