@@ -58,7 +58,7 @@ class InstanceLockFileManager {
   // Best-effort attempt to find a free instance id.
   Result<std::optional<InstanceLockFile>> TryAcquireUnusedLock();
 
-  Result<std::vector<InstanceLockFile>> LockAllAvailable();
+  Result<std::set<InstanceLockFile>> LockAllAvailable();
 
   // TODO: This routine should  be removed and replaced with allocd
   // The caller must check if the instance_num belongs to the user, before

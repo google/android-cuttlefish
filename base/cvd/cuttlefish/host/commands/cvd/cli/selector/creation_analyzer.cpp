@@ -119,7 +119,7 @@ CreationAnalyzer::CreationAnalyzer(
       instance_lock_file_manager_{instance_lock_file_manager} {}
 
 static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
-    std::vector<InstanceLockFile>&& lock_files) {
+    std::set<InstanceLockFile>&& lock_files) {
   std::unordered_map<unsigned, InstanceLockFile> mapping;
   for (auto& lock_file : lock_files) {
     const unsigned id = static_cast<unsigned>(lock_file.Instance());
