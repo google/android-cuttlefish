@@ -106,27 +106,3 @@ func TestValidateStartCVDRequest(t *testing.T) {
 		}
 	}
 }
-
-func TestValidateFileName(t *testing.T) {
-	var inputs = []struct {
-		val   string
-		fails bool
-	}{
-		{"tmp.foo", false},
-		{"/tmp/foo", true},
-		{".", true},
-		{"..", true},
-	}
-
-	for _, i := range inputs {
-
-		err := ValidateFileName(i.val)
-
-		if i.fails && err == nil {
-			t.Fatalf("expected error, got %s", err)
-		}
-		if !i.fails && err != nil {
-			t.Fatalf("expected <nil>, got %s", err)
-		}
-	}
-}

@@ -240,80 +240,6 @@ func (testIDM) UpdateImageDirectory(imageDirName, dir string) error {
 	return nil
 }
 
-func TestCreateUploadDirectoryIsHandled(t *testing.T) {
-	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("POST", "/userartifacts", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	controller := Controller{UserArtifactsManager: &testUAM{}}
-
-	makeRequest(rr, req, &controller)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("request was not handled. This failure implies an API breaking change.")
-	}
-}
-
-func TestListUploadDirectoriesIsHandled(t *testing.T) {
-	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/userartifacts", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	controller := Controller{UserArtifactsManager: &testUAM{}}
-
-	makeRequest(rr, req, &controller)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("request was not handled. This failure implies an API breaking change.")
-	}
-}
-
-func TestUploadUserArtifactLegacyWithoutChunkOffsetBytesIsHandled(t *testing.T) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	fw, _ := writer.CreateFormField("chunk_number")
-	io.Copy(fw, strings.NewReader("1"))
-	fw, _ = writer.CreateFormField("chunk_total")
-	io.Copy(fw, strings.NewReader("100"))
-	fw, _ = writer.CreateFormField("chunk_size_bytes")
-	io.Copy(fw, strings.NewReader("64"))
-	fw, _ = writer.CreateFormFile("file", "foo.txt")
-	io.Copy(fw, bytes.NewReader([]byte("lorem")))
-	writer.Close()
-	req, _ := http.NewRequest("PUT", "/userartifacts/foo", bytes.NewReader(body.Bytes()))
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	controller := Controller{UserArtifactsManager: &testUAM{}}
-	rr := httptest.NewRecorder()
-
-	makeRequest(rr, req, &controller)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("request was not handled. This failure implies an API breaking change.")
-	}
-}
-
-func TestUploadUserArtifactLegacyWithChunkOffsetBytesIsHandled(t *testing.T) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	fw, _ := writer.CreateFormField("chunk_offset_bytes")
-	io.Copy(fw, strings.NewReader("0"))
-	fw, _ = writer.CreateFormFile("file", "foo.txt")
-	io.Copy(fw, bytes.NewReader([]byte("lorem")))
-	writer.Close()
-	req, _ := http.NewRequest("PUT", "/userartifacts/foo", bytes.NewReader(body.Bytes()))
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	controller := Controller{UserArtifactsManager: &testUAM{}}
-	rr := httptest.NewRecorder()
-
-	makeRequest(rr, req, &controller)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("request was not handled. This failure implies an API breaking change.")
-	}
-}
-
 func TestUploadUserArtifactIsHandled(t *testing.T) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
@@ -344,21 +270,6 @@ func TestStatUserArtifactIsHandled(t *testing.T) {
 	}
 	controller := Controller{UserArtifactsManager: &testUAM{}}
 	rr := httptest.NewRecorder()
-
-	makeRequest(rr, req, &controller)
-
-	if rr.Code != http.StatusOK {
-		t.Errorf("request was not handled. This failure implies an API breaking change.")
-	}
-}
-
-func TestExtractUserArtifactLegacyIsHandled(t *testing.T) {
-	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("POST", "/userartifacts/foo/bar/:extract", strings.NewReader("{}"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	controller := Controller{UserArtifactsManager: &testUAM{}, OperationManager: NewMapOM()}
 
 	makeRequest(rr, req, &controller)
 
