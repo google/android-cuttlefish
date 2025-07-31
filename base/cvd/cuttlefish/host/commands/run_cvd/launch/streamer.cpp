@@ -219,40 +219,24 @@ class WebRtcServer : public virtual CommandSource,
         sensors_socket_pair_(sensors_socket_pair) {}
   // DiagnosticInformation
   std::vector<std::string> Diagnostics() const override {
-    if (!Enabled() ||
-        !(config_.ForDefaultInstance().start_webrtc_sig_server() ||
-          config_.ForDefaultInstance().start_webrtc_sig_server_proxy())) {
-      // When WebRTC is enabled but an operator other than the one launched by
-      // run_cvd is used there is no way to know the url to which to point the
-      // browser to.
+    if (!Enabled()) {
       return {};
     }
     std::ostringstream out;
     out << "Point your browser to https://localhost:"
-        << config_.sig_server_port() << " to interact with the device.";
+        << config_.sig_server_proxy_port() << " to interact with the device.";
     return {out.str()};
   }
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
     std::vector<MonitorCommand> commands;
-    if (instance_.start_webrtc_sig_server()) {
-      Command sig_server(WebRtcSigServerBinary());
-      sig_server.AddParameter("-assets_dir=", instance_.webrtc_assets_dir());
-      sig_server.AddParameter("-use_secure_http=",
-                              config_.sig_server_secure() ? "true" : "false");
-      if (!config_.webrtc_certs_dir().empty()) {
-        sig_server.AddParameter("-certs_dir=", config_.webrtc_certs_dir());
-      }
-      sig_server.AddParameter("-http_server_port=", config_.sig_server_port());
-      commands.emplace_back(std::move(sig_server));
-    }
 
-    if (instance_.start_webrtc_sig_server_proxy()) {
-      Command sig_proxy(WebRtcSigServerProxyBinary());
-      sig_proxy.AddParameter("-server_port=", config_.sig_server_port());
-      commands.emplace_back(std::move(sig_proxy));
-    }
+    // Start a TCP proxy to make the host signaling server available on the
+    // legacy port.
+    Command sig_proxy(WebRtcSigServerProxyBinary());
+    sig_proxy.AddParameter("-server_port=", config_.sig_server_proxy_port());
+    commands.emplace_back(std::move(sig_proxy));
 
     auto stopper = [webrtc_controller = webrtc_controller_]() mutable {
       (void)webrtc_controller.SendStopRecordingCommand();
@@ -263,13 +247,6 @@ class WebRtcServer : public virtual CommandSource,
 
     webrtc.UnsetFromEnvironment("http_proxy");
     sockets_.AppendCommandArguments(webrtc);
-    // Currently there is no way to ensure the signaling server will already
-    // have bound the socket to the port by the time the webrtc process runs
-    // (the common technique of doing it from the launcher is not possible here
-    // as the server library being used creates its own sockets). However, this
-    // issue is mitigated slightly by doing some retrying and backoff in the
-    // webrtc process when connecting to the websocket, so it shouldn't be an
-    // issue most of the time.
     webrtc.AddParameter("--command_fd=", webrtc_controller_.GetClientSocket());
     webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe_);
     webrtc.AddParameter("-client_dir=",

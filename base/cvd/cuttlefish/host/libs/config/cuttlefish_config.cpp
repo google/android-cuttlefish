@@ -137,19 +137,11 @@ void CuttlefishConfig::set_gem5_debug_flags(const std::string& gem5_debug_flags)
   (*dictionary_)[kGem5DebugFlags] = gem5_debug_flags;
 }
 
-static constexpr char kWebRTCCertsDir[] = "webrtc_certs_dir";
-void CuttlefishConfig::set_webrtc_certs_dir(const std::string& certs_dir) {
-  (*dictionary_)[kWebRTCCertsDir] = certs_dir;
-}
-std::string CuttlefishConfig::webrtc_certs_dir() const {
-  return (*dictionary_)[kWebRTCCertsDir].asString();
-}
-
 static constexpr char kSigServerPort[] = "webrtc_sig_server_port";
-void CuttlefishConfig::set_sig_server_port(int port) {
+void CuttlefishConfig::set_sig_server_proxy_port(int port) {
   (*dictionary_)[kSigServerPort] = port;
 }
-int CuttlefishConfig::sig_server_port() const {
+int CuttlefishConfig::sig_server_proxy_port() const {
   return (*dictionary_)[kSigServerPort].asInt();
 }
 
@@ -159,31 +151,6 @@ void CuttlefishConfig::set_sig_server_address(const std::string& addr) {
 }
 std::string CuttlefishConfig::sig_server_address() const {
   return (*dictionary_)[kSigServerAddress].asString();
-}
-
-static constexpr char kSigServerPath[] = "webrtc_sig_server_path";
-void CuttlefishConfig::set_sig_server_path(const std::string& path) {
-  // Don't use SetPath here, it's a URL path not a file system path
-  (*dictionary_)[kSigServerPath] = path;
-}
-std::string CuttlefishConfig::sig_server_path() const {
-  return (*dictionary_)[kSigServerPath].asString();
-}
-
-static constexpr char kSigServerSecure[] = "webrtc_sig_server_secure";
-void CuttlefishConfig::set_sig_server_secure(bool secure) {
-  (*dictionary_)[kSigServerSecure] = secure;
-}
-bool CuttlefishConfig::sig_server_secure() const {
-  return (*dictionary_)[kSigServerSecure].asBool();
-}
-
-static constexpr char kSigServerStrict[] = "webrtc_sig_server_strict";
-void CuttlefishConfig::set_sig_server_strict(bool strict) {
-  (*dictionary_)[kSigServerStrict] = strict;
-}
-bool CuttlefishConfig::sig_server_strict() const {
-  return (*dictionary_)[kSigServerStrict].asBool();
 }
 
 bool CuttlefishConfig::OverlaysEnabled() const {

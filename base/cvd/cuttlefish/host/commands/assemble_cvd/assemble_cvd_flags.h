@@ -97,23 +97,13 @@ DECLARE_vec(start_webrtc);
 
 DECLARE_vec(webrtc_assets_dir);
 
-DECLARE_string(webrtc_certs_dir);
-
 DECLARE_bool(start_webrtc_sig_server);
 
 DECLARE_string(webrtc_sig_server_addr);
 
-DECLARE_int32(webrtc_sig_server_port);
-
 DECLARE_vec(tcp_port_range);
 
 DECLARE_vec(udp_port_range);
-
-DECLARE_string(webrtc_sig_server_path);
-
-DECLARE_bool(webrtc_sig_server_secure);
-
-DECLARE_bool(verify_sig_server_certificate);
 
 DECLARE_vec(webrtc_device_id);
 

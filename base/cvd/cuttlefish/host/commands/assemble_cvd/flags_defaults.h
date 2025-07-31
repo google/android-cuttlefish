@@ -220,17 +220,11 @@
 
 // Streaming default parameters
 #define CF_DEFAULTS_START_WEBRTC false
-#define CF_DEFAULTS_START_WEBRTC_SIG_SERVER true
 #define CF_DEFAULTS_WEBRTC_DEVICE_ID "cvd-{num}"
-#define CF_DEFAULTS_VERIFY_SIG_SERVER_CERTIFICATE false
 #define CF_DEFAULTS_WEBRTC_ASSETS_DIR \
   cuttlefish::DefaultHostArtifactsPath("usr/share/webrtc/assets")
-#define CF_DEFAULTS_WEBRTC_CERTS_DIR \
-  cuttlefish::DefaultHostArtifactsPath("usr/share/webrtc/certs")
-#define CF_DEFAULTS_WEBRTC_SIG_SERVER_ADDR CF_DEFAULTS_DYNAMIC_STRING
+#define CF_DEFAULTS_WEBRTC_SIG_SERVER_ADDR "/run/cuttlefish/operator"
 #define CF_DEFAULTS_WEBRTC_SIG_SERVER_PATH "/register_device"
-#define CF_DEFAULTS_WEBRTC_SIG_SERVER_PORT 443
-#define CF_DEFAULTS_WEBRTC_SIG_SERVER_SECURE true
 #define CF_DEFAULTS_TCP_PORT_RANGE "15550:15599"
 #define CF_DEFAULTS_UDP_PORT_RANGE "15550:15599"
 

@@ -25,22 +25,6 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-struct ServerConfig {
-  enum class Security {
-    kInsecure,
-    kAllowSelfSigned,
-    kStrict,
-  };
-
-  // The ip address or domain name of the operator server.
-  std::string addr;
-  int port;
-  // The path component of the operator server's register url.
-  std::string path;
-  // The security level to use when connecting to the operator server.
-  Security security;
-};
-
 class ServerConnectionObserver {
  public:
   virtual ~ServerConnectionObserver() = default;
@@ -62,7 +46,7 @@ class ServerConnectionObserver {
 class ServerConnection {
  public:
   static std::unique_ptr<ServerConnection> Connect(
-      const ServerConfig& conf,
+      const std::string& operator_path,
       std::weak_ptr<ServerConnectionObserver> observer);
 
   // Destroying the connection will disconnect from the signaling server and

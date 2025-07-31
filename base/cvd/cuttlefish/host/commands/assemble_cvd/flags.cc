@@ -84,8 +84,6 @@ using vm_manager::GetVmManager;
 
 namespace {
 
-constexpr auto HOST_OPERATOR_SOCKET_PATH = "/run/cuttlefish/operator";
-
 std::pair<uint16_t, uint16_t> ParsePortRange(const std::string& flag) {
   static const std::regex rgx("[0-9]+:[0-9]+");
   CHECK(std::regex_match(flag, rgx))
@@ -444,14 +442,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_gem5_debug_flags(FLAGS_gem5_debug_flags);
 
-  // streaming, webrtc setup
-  tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
-  tmp_config_obj.set_sig_server_secure(FLAGS_webrtc_sig_server_secure);
-  // Note: This will be overridden if the sig server is started by us
-  tmp_config_obj.set_sig_server_port(FLAGS_webrtc_sig_server_port);
   tmp_config_obj.set_sig_server_address(FLAGS_webrtc_sig_server_addr);
-  tmp_config_obj.set_sig_server_path(FLAGS_webrtc_sig_server_path);
-  tmp_config_obj.set_sig_server_strict(FLAGS_verify_sig_server_certificate);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
   // TODO(moelsherif): Handle this flag (set_metrics_binary) in the future
@@ -1212,28 +1203,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // end of streaming, webrtc setup
 
-    instance.set_start_webrtc_signaling_server(false);
-
     CF_EXPECT(Contains(num_to_webrtc_device_id_flag_map, num),
               "Error in looking up num to webrtc_device_id_flag_map");
     instance.set_webrtc_device_id(num_to_webrtc_device_id_flag_map[num]);
 
-    if (!is_first_instance || !start_webrtc_vec[instance_index]) {
-      // Only the first instance starts the signaling server or proxy
-      instance.set_start_webrtc_signaling_server(false);
-      instance.set_start_webrtc_sig_server_proxy(false);
-    } else {
-      auto port = 8443 + num - 1;
-      // Change the signaling server port for all instances
-      tmp_config_obj.set_sig_server_port(port);
-      // Either the signaling server or the proxy is started, never both
-      instance.set_start_webrtc_signaling_server(FLAGS_start_webrtc_sig_server);
-      // The proxy is only started if the host operator is available
-      instance.set_start_webrtc_sig_server_proxy(
-          cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH) &&
-          !FLAGS_start_webrtc_sig_server);
-    }
-
+    auto port = 8443 + num - 1;
+    // Change the signaling server port for all instances
+    tmp_config_obj.set_sig_server_proxy_port(port);
     instance.set_start_netsim(is_first_instance && is_any_netsim);
 
     instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
@@ -1570,10 +1546,6 @@ Result<void> SetFlagDefaultsForVmm(
     const std::vector<GuestConfig>& guest_configs,
     const SystemImageDirFlag& system_image_dir,
     const VmManagerFlag& vm_manager_flag) {
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  int32_t instances_size = instance_nums.size();
-
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
 
@@ -1593,30 +1565,6 @@ Result<void> SetFlagDefaultsForVmm(
       break;
     case VmmMode::kUnknown:
       return CF_ERR("Unknown VM manager");
-  }
-  if (vm_manager_flag.Mode() != VmmMode::kGem5) {
-    // After SetCommandLineOptionWithMode in SetDefaultFlagsForCrosvm/Qemu,
-    // default flag values changed, need recalculate name_to_default_value
-    name_to_default_value = CurrentFlagsToDefaultValue();
-    std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-        start_webrtc));
-    bool start_webrtc = false;
-    for(bool value : start_webrtc_vec) {
-      start_webrtc |= value;
-    }
-
-    auto host_operator_present =
-        cuttlefish::FileIsSocket(HOST_OPERATOR_SOCKET_PATH);
-    // The default for starting signaling server depends on whether or not webrtc
-    // is to be started and the presence of the host orchestrator.
-    SetCommandLineOptionWithMode(
-        "start_webrtc_sig_server",
-        start_webrtc && !host_operator_present ? "true" : "false",
-        google::FlagSettingMode::SET_FLAGS_DEFAULT);
-    SetCommandLineOptionWithMode(
-        "webrtc_sig_server_addr",
-        host_operator_present ? HOST_OPERATOR_SOCKET_PATH : "0.0.0.0",
-        google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
   SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
