@@ -39,6 +39,7 @@ bazel_dep(name = "rootcanal")
 bazel_dep(name = "rules_cc", version = "0.1.2")
 bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_license", version = "1.0.0")
+bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")
 bazel_dep(name = "rules_python", version = "1.1.0")
@@ -86,6 +87,7 @@ git_override(
         # https://github.com/bazelbuild/bazel/issues/26578
         "@//build_external/rootcanal:0001-Use-our-local_repository.patch",
         "@//build_external/rootcanal:0002-Use-pdlc-from-pdl-compiler-crate.patch",
+        "@//build_external/rootcanal:0003-Make-rootcanal_proto-public.patch",
     ],
 )
 

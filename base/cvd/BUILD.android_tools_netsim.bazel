@@ -1,4 +1,6 @@
 load("@netsim_crates//:defs.bzl", "all_crate_deps")
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
 
 rust_library(
@@ -47,4 +49,30 @@ rust_binary(
     ) + [
         ":libnetsim_cli",
     ],
+)
+
+proto_library(
+    name = "netsim_proto",
+    srcs = [
+        "proto/netsim/common.proto",
+        "proto/netsim/config.proto",
+        "proto/netsim/frontend.proto",
+        "proto/netsim/hci_packet.proto",
+        "proto/netsim/model.proto",
+        "proto/netsim/packet_streamer.proto",
+        "proto/netsim/startup.proto",
+        "proto/netsim/stats.proto",
+    ],
+    strip_import_prefix = "proto",
+    deps = [
+        "@protobuf//:empty_proto",
+        "@protobuf//:timestamp_proto",
+        "@rootcanal//:rootcanal_proto",
+    ],
+)
+
+# lib-netsimd-proto
+cc_proto_library(
+    name = "netsim_proto_cc",
+    deps = [":netsim_proto"],
 )

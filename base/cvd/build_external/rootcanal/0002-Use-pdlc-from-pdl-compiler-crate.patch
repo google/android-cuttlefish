@@ -1,7 +1,7 @@
-From 665c76256a01aded0bd3b326a5f329e897ebbc60 Mon Sep 17 00:00:00 2001
+From 86ccd4891af81c6e6b4a572d9eee04fb8a8590b9 Mon Sep 17 00:00:00 2001
 From: HONG Yifan <elsk@google.com>
 Date: Fri, 18 Jul 2025 23:19:24 +0000
-Subject: [PATCH 2/2] Use pdlc from pdl-compiler crate.
+Subject: [PATCH 2/3] Use pdlc from pdl-compiler crate.
 
 pdlc might not be installed on the host system.
 ---
@@ -11,7 +11,7 @@ pdlc might not be installed on the host system.
  3 files changed, 15 insertions(+), 6 deletions(-)
 
 diff --git a/BUILD b/BUILD
-index cc326d8..c2c25fe 100644
+index 6775c02..93ab013 100644
 --- a/BUILD
 +++ b/BUILD
 @@ -34,24 +34,27 @@ cc_proto_library(
@@ -46,7 +46,7 @@ index cc326d8..c2c25fe 100644
  
  rust_static_library(
 diff --git a/MODULE.bazel b/MODULE.bazel
-index 185542e..a497468 100644
+index 2d203d4..b64dc07 100644
 --- a/MODULE.bazel
 +++ b/MODULE.bazel
 @@ -43,5 +43,8 @@ crate.spec(package = "rand", version = "0.8.3")
@@ -93,5 +93,5 @@ index 58285d6..14d1db5 100644
  
  run_binary(
 -- 
-2.50.0.727.gbf7dc18ff4-goog
+2.50.1.552.g942d659e1b-goog
 

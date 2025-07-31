@@ -1,0 +1,25 @@
+From 45a57e95175e6a6a0cc1994355b82a2c1178b1f7 Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Thu, 31 Jul 2025 01:09:02 +0000
+Subject: [PATCH 3/3] Make rootcanal_proto public.
+
+Used by netsim.
+---
+ BUILD | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/BUILD b/BUILD
+index 93ab013..f4a3aeb 100644
+--- a/BUILD
++++ b/BUILD
+@@ -25,6 +25,7 @@ proto_library(
+     name = "rootcanal_proto",
+     srcs = ["proto/rootcanal/configuration.proto"],
+     strip_import_prefix = "proto",
++    visibility = ["//visibility:public"],
+ )
+ 
+ cc_proto_library(
+-- 
+2.50.1.552.g942d659e1b-goog
+
