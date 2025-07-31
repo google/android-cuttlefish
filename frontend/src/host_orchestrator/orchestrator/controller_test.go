@@ -222,10 +222,6 @@ func (testUAM) ExtractedArtifactPath(checksum string) string {
 	return ""
 }
 
-func (testUAM) GetDirPath(string) string {
-	return ""
-}
-
 func (testUAM) ExtractArtifactWithDir(string, string) error {
 	return nil
 }

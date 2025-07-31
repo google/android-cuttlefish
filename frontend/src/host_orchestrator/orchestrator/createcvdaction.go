@@ -109,9 +109,6 @@ func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.
 	config = strings.ReplaceAll(config,
 		apiv1.EnvConfigImageDirectoriesVar+"/",
 		a.paths.ImageDirectoriesDir+"/")
-	config = strings.ReplaceAll(config,
-		apiv1.EnvConfigUserArtifactsVar+"/",
-		a.userArtifactsDirResolver.GetDirPath("")+"/")
 	configFile, err := createTempFile("cvdload*.json", config, 0640)
 	if err != nil {
 		return nil, err

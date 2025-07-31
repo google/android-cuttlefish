@@ -41,10 +41,6 @@ type UserArtifactsDirResolver interface {
 	UpdatedArtifactPath(checksum string) string
 	// Retrieve the full path where the extracted artifact located
 	ExtractedArtifactPath(checksum string) string
-
-	// Given a directory name returns its full path.
-	// Deprecated: use `UpdatedArtifactPath` instead
-	GetDirPath(name string) string
 }
 
 type UserArtifactChunk struct {
@@ -161,10 +157,6 @@ func (m *UserArtifactsManagerImpl) UpdatedArtifactPath(checksum string) string {
 
 func (m *UserArtifactsManagerImpl) ExtractedArtifactPath(checksum string) string {
 	return filepath.Join(m.RootDir, fmt.Sprintf("%s_extracted", checksum))
-}
-
-func (m *UserArtifactsManagerImpl) GetDirPath(name string) string {
-	return filepath.Join(m.LegacyRootDir, name)
 }
 
 func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
