@@ -366,11 +366,10 @@ git_repository(
 
 git_repository(
     name = "gfxstream",
-    commit = "620cd8d0e1e839228d1894da4508d08b8ac798bc",
+    commit = "c7ceec935723db8c6b296b04bc71eb6f6eb27607",
     remote = "https://github.com/google/gfxstream.git",
     patch_strip = 1,
     patches = [
-        "@//build_external/gfxstream:PATCH.gfxstream.3683847.patch",
         "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
     ],
 )
@@ -620,4 +619,17 @@ git_repository(
     build_file = "@//:BUILD.pica.bazel",
     commit = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # v0.1.12
     remote = "https://github.com/google/pica/",
+)
+
+git_repository(
+    name = "ms-tpm-20-ref",
+    build_file = "@//:BUILD.ms-tpm-20-ref.bazel",
+    commit = "ee21db0a941decd3cac67925ea3310873af60ab3", # v1.83r1
+    remote = "https://github.com/microsoft/ms-tpm-20-ref",
+    patches = [
+        "@//build_external/ms-tpm-20-ref:0001-Turn-off-ALG_CAMELLIA.patch",
+        "@//build_external/ms-tpm-20-ref:0002-Use-the-BoringSSL-bignum_st-structure.patch",
+        "@//build_external/ms-tpm-20-ref:0003-Don-t-use-EC_POINTs_mul.patch",
+    ],
+    patch_strip = 1,
 )

@@ -1,10 +1,21 @@
-cuttlefish-frontend (1.17.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.18.0) UNRELEASED; urgency=medium
 
-  *
+  * 
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 18 Jul 2025 18:54:49 -0700
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 25 Jul 2025 16:24:53 -0700
 
-cuttlefish-frontend (1.16.0) unstable; urgency=medium
+cuttlefish-frontend (1.17.0) unstable; urgency=medium
+
+  * HO can launch CF instances with image directories via canonical config. by @0405ysj in https://github.com/google/android-cuttlefish/pull/1402
+  * Begin development of version 1.17 by @Databean in https://github.com/google/android-cuttlefish/pull/1422
+  * Display owner and group information in the device pane by @jemoreira in https://github.com/google/android-cuttlefish/pull/1434
+  * Delete unused code paths by @jemoreira in https://github.com/google/android-cuttlefish/pull/1435
+  * Mark 1.16 as stable by @Databean in https://github.com/google/android-cuttlefish/pull/1438
+  * Modify json key of ID in CreateImageDirectoryResponse oat messages.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/1446
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 25 Jul 2025 12:06:08 -0700
+
+cuttlefish-frontend (1.16.0) stable; urgency=medium
 
   * `Use a fixed version of swagger for presubmit tests` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1412
   * `Fix swagger test failure` by @jemoreira in https://github.com/google/android-cuttlefish/pull/1411

@@ -26,6 +26,7 @@ import (
 	"strings"
 	"testing"
 
+	hoapi "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	hoclient "github.com/google/android-cuttlefish/frontend/src/libhoclient"
 	"github.com/google/go-cmp/cmp"
 )
@@ -36,9 +37,12 @@ const baseURL = "http://0.0.0.0:2080"
 // parameters, however the HO continues to support them for backwards
 // compatibility reasons.
 func TestUploadFileUseChunkNumber(t *testing.T) {
-	srv := hoclient.NewHostOrchestratorClient(baseURL)
-	dir, err := srv.CreateUploadDir()
-	if err != nil {
+	httpHelper := hoclient.HTTPHelper{
+		Client:       http.DefaultClient,
+		RootEndpoint: baseURL,
+	}
+	dir := &hoapi.UploadDirectory{}
+	if err := httpHelper.NewPostRequest("/userartifacts", nil).JSONResDo(dir); err != nil {
 		t.Fatal(err)
 	}
 	localPath := "../artifacts/cvd-host_package.tar.gz"
@@ -51,7 +55,7 @@ func TestUploadFileUseChunkNumber(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	url := fmt.Sprintf("%s/userartifacts/%s", baseURL, dir)
+	url := fmt.Sprintf("%s/userartifacts/%s", baseURL, dir.Name)
 	pipeReader, pipeWriter := io.Pipe()
 	writer := multipart.NewWriter(pipeWriter)
 	req, err := http.NewRequest(http.MethodPut, url, pipeReader)
@@ -88,7 +92,7 @@ func TestUploadFileUseChunkNumber(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	remotePath := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/cvd-host_package.tar.gz", dir)
+	remotePath := fmt.Sprintf("/var/lib/cuttlefish-common/user_artifacts/%s/cvd-host_package.tar.gz", dir.Name)
 	got, err := hash(remotePath)
 	if err != nil {
 		t.Fatal(err)

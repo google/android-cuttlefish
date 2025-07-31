@@ -24,6 +24,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 
 namespace cuttlefish {
 namespace {
@@ -40,11 +41,7 @@ Result<std::size_t> GetDiskUsage(const std::string& path,
   du_cmd.AddParameter("--block-size=" + size_arg);
   du_cmd.AddParameter(path);
 
-  std::string out;
-  std::string err;
-  int return_code = RunWithManagedStdio(std::move(du_cmd), nullptr, &out, &err);
-  CF_EXPECTF(return_code == 0, "Failed to run `du` command.  stderr: {}", err);
-  CF_EXPECTF(!out.empty(), "No output read from `du` command. stderr: {}", err);
+  std::string out = CF_EXPECT(RunAndCaptureStdout(std::move(du_cmd)));
   std::vector<std::string> split_out =
       android::base::Tokenize(out, kWhitespaceCharacters);
   CF_EXPECTF(!split_out.empty(),

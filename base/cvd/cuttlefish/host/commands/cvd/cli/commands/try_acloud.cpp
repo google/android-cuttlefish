@@ -60,12 +60,7 @@ constexpr char kDetailedHelpText[] =
    
     - Or `cvdr` for remote instance management.)";
 
-bool CheckIfCvdrExist() {
-  auto cmd = Command("which").AddParameter(kCvdrBinName);
-  int ret = RunWithManagedStdio(std::move(cmd), nullptr, nullptr, nullptr,
-                                SubprocessOptions());
-  return ret == 0;
-}
+bool CheckIfCvdrExist() { return Execute({"which", kCvdrBinName}) == 0; }
 
 }  // namespace
 

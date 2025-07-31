@@ -32,6 +32,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -39,6 +40,7 @@
 #include "cuttlefish/host/libs/config/esp.h"
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 // https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=127;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
 #define F2FS_BLOCKSIZE "4096"
@@ -105,34 +107,30 @@ std::string GetFsType(const std::string& path) {
   Command command("/usr/sbin/blkid");
   command.AddParameter(path);
 
-  std::string blkid_out;
-  std::string blkid_err;
-  int code =
-      RunWithManagedStdio(std::move(command), nullptr, &blkid_out, &blkid_err);
-  if (code != 0) {
-    LOG(ERROR) << "blkid failed with code " << code << ". stdout='" << blkid_out
-               << "', stderr='" << blkid_err << "'";
+  Result<std::string> blkid_out = RunAndCaptureStdout(std::move(command));
+  if (!blkid_out.ok()) {
+    LOG(ERROR) << "`blkid '" << path
+               << "'` failed: " << blkid_out.error().FormatForEnv();
     return "";
   }
 
   static constexpr std::string_view kTypePrefix = "TYPE=\"";
 
-  std::size_t type_begin = blkid_out.find(kTypePrefix);
+  std::size_t type_begin = blkid_out->find(kTypePrefix);
   if (type_begin == std::string::npos) {
-    LOG(ERROR) << "blkid did not report a TYPE. stdout='" << blkid_out
-               << "', stderr='" << blkid_err << "'";
+    LOG(ERROR) << "blkid did not report a TYPE. stdout='" << *blkid_out << "'";
     return "";
   }
   type_begin += kTypePrefix.size();
 
-  std::size_t type_end = blkid_out.find('"', type_begin);
+  std::size_t type_end = blkid_out->find('"', type_begin);
   if (type_end == std::string::npos) {
     LOG(ERROR) << "unable to find the end of the blkid TYPE. stdout='"
-               << blkid_out << "', stderr='" << blkid_err << "'";
+               << *blkid_out << "'";
     return "";
   }
 
-  return blkid_out.substr(type_begin, type_end - type_begin);
+  return blkid_out->substr(type_begin, type_end - type_begin);
 }
 
 enum class DataImageAction { kNoAction, kResizeImage, kCreateBlankImage };

@@ -15,6 +15,34 @@ cc_proto_library(
 )
 
 cf_cc_library(
+    name = "composite_disk",
+    srcs = ["composite_disk.cc"],
+    hdrs = ["composite_disk.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+    ],
+)
+
+cf_cc_library(
+    name = "image_from_file",
+    srcs = ["image_from_file.cc"],
+    hdrs = ["image_from_file.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/host/libs/image_aggregator:qcow2",
+        "//cuttlefish/host/libs/image_aggregator:raw",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "disk_image",
     hdrs = ["disk_image.h"],
     deps = [
@@ -24,14 +52,8 @@ cf_cc_library(
 
 cf_cc_library(
     name = "image_aggregator",
-    srcs = [
-        "image_aggregator.cc",
-        "sparse_image_utils.cc",
-    ],
-    hdrs = [
-        "image_aggregator.h",
-        "sparse_image_utils.h",
-    ],
+    srcs = ["image_aggregator.cc"],
+    hdrs = ["image_aggregator.h"],
     copts = COPTS + [
         "-Wno-packed-non-pod",
     ],
@@ -41,16 +63,41 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/libs/config:config_utils",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
-        "//cuttlefish/host/libs/image_aggregator:qcow2",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//libbase",
         "//libsparse",
         "@protobuf",
         "@zlib",
+    ],
+)
+
+cf_cc_library(
+    name = "raw",
+    srcs = ["raw.cc"],
+    hdrs = ["raw.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+    ],
+)
+
+cf_cc_library(
+    name = "sparse_image",
+    srcs = ["sparse_image.cc"],
+    hdrs = ["sparse_image.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//libbase",
+        "//libsparse",
     ],
 )
 
@@ -66,6 +113,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:cf_endian",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
     ],
 )

@@ -23,7 +23,6 @@
 #include <fstream>
 #include <optional>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -44,6 +43,7 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 namespace {
@@ -74,37 +74,6 @@ Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
         "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
         "and \"slirp\"",
         str);
-  }
-}
-
-std::string ToString(VmmMode mode) {
-  std::stringstream ss;
-  ss << mode;
-  return ss.str();
-}
-
-std::ostream& operator<<(std::ostream& out, VmmMode vmm) {
-  switch (vmm) {
-    case VmmMode::kUnknown:
-      return out << "unknown";
-    case VmmMode::kCrosvm:
-      return out << "crosvm";
-    case VmmMode::kGem5:
-      return out << "gem5";
-    case VmmMode::kQemu:
-      return out << "qemu_cli";
-  }
-}
-
-Result<VmmMode> ParseVmm(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "crosvm")) {
-    return VmmMode::kCrosvm;
-  } else if (android::base::EqualsIgnoreCase(str, "gem5")) {
-    return VmmMode::kGem5;
-  } else if (android::base::EqualsIgnoreCase(str, "qemu_cli")) {
-    return VmmMode::kQemu;
-  } else {
-    return CF_ERRF("\"{}\" is not a valid Vmm.", str);
   }
 }
 
@@ -1869,15 +1838,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
 }
 std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
   return (*Dictionary())[kWebrtcDeviceId].asString();
-}
-
-static constexpr char kGroupId[] = "group_id";
-void CuttlefishConfig::MutableInstanceSpecific::set_group_id(
-    const std::string& id) {
-  (*Dictionary())[kGroupId] = id;
-}
-std::string CuttlefishConfig::InstanceSpecific::group_id() const {
-  return (*Dictionary())[kGroupId].asString();
 }
 
 static constexpr char kStartSigServer[] = "webrtc_start_sig_server";

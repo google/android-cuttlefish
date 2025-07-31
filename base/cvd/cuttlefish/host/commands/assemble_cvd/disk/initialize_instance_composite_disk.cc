@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -27,6 +26,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {

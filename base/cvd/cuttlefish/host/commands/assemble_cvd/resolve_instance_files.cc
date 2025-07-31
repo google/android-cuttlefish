@@ -36,7 +36,8 @@
 
 namespace cuttlefish {
 
-Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
+Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
+                                  const InitramfsPathFlag& initramfs_path,
                                   const KernelPathFlag& kernel_path,
                                   const SystemImageDirFlag& system_image_dir) {
   // It is conflict (invalid) to pass both kernel_path/initramfs_path
@@ -46,11 +47,10 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
   bool flags_image_has_input =
       (!FLAGS_super_image.empty()) || (!FLAGS_vendor_boot_image.empty()) ||
       (!FLAGS_vbmeta_vendor_dlkm_image.empty()) ||
-      (!FLAGS_vbmeta_system_dlkm_image.empty()) || (!FLAGS_boot_image.empty());
+      (!FLAGS_vbmeta_system_dlkm_image.empty()) || (!boot_image.IsDefault());
   CF_EXPECT(!(flags_kernel_initramfs_has_input && flags_image_has_input),
             "Cannot pass both kernel_path/initramfs_path and image file paths");
 
-  std::string default_boot_image = "";
   std::string default_super_image = "";
   std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
@@ -76,7 +76,6 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
 
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.
-    default_boot_image += comma_str + cur_system_image_dir + "/boot.img";
     default_super_image += comma_str + cur_system_image_dir + "/super.img";
     default_vendor_boot_image +=
         comma_str + cur_system_image_dir + "/vendor_boot.img";
@@ -97,8 +96,6 @@ Result<void> ResolveInstanceFiles(const InitramfsPathFlag& initramfs_path,
       }
     }
   }
-  SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vendor_boot_image",

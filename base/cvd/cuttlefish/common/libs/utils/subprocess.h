@@ -325,23 +325,6 @@ class Command {
 };
 std::ostream& operator<<(std::ostream& out, const Command& command);
 
-
-/*
- * Consumes a Command and runs it, optionally managing the stdio channels.
- *
- * If `stdin` is set, the subprocess stdin will be pipe providing its contents.
- * If `stdout` is set, the subprocess stdout will be captured and saved to it.
- * If `stderr` is set, the subprocess stderr will be captured and saved to it.
- *
- * If `command` exits normally, the lower 8 bits of the return code will be
- * returned in a value between 0 and 255.
- * If some setup fails, `command` fails to start, or `command` exits due to a
- * signal, the return value will be negative.
- */
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
-                        std::string* stdout, std::string* stderr,
-                        SubprocessOptions options = SubprocessOptions());
-
 /**
  * Returns the exit status on success, negative values on error
  *

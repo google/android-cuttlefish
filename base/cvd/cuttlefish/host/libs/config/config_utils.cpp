@@ -176,10 +176,8 @@ bool HostSupportsQemuCli() {
   static bool supported =
 #ifdef __linux__
       InSandbox() ||
-      RunWithManagedStdio(
-          Command("/usr/lib/cuttlefish-common/bin/capability_query.py")
-              .AddParameter("qemu_cli"),
-          nullptr, nullptr, nullptr) == 0;
+      Execute({"/usr/lib/cuttlefish-common/bin/capability_query.py",
+               "qemu_cli"}) == 0;
 #else
       true;
 #endif

@@ -25,6 +25,7 @@
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/status_fetcher.h"
@@ -103,8 +104,7 @@ Result<Json::Value> LocalInstance::FetchStatus(std::chrono::seconds timeout) {
 }
 
 Result<void> LocalInstance::PressPowerBtn() {
-  auto bin_check = 
-      HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath();
+  auto bin_check = HostToolTarget(host_artifacts_path()).GetPowerBtnBinPath();
   if (bin_check.ok()) {
     return PressPowerBtnLegacy();
   }
@@ -114,18 +114,12 @@ Result<void> LocalInstance::PressPowerBtn() {
                "powerbtn not supported in vm manager " << config->vm_manager());
   auto instance = config->ForInstance(id());
 
-  Command command(instance.crosvm_binary());
-  command.AddParameter("powerbtn");
-  command.AddParameter(instance.CrosvmSocketPath());
+  Command command = Command(instance.crosvm_binary())
+                        .AddParameter("powerbtn")
+                        .AddParameter(instance.CrosvmSocketPath());
 
   LOG(INFO) << "Pressing power button";
-  std::string output;
-  std::string error;
-  auto ret = RunWithManagedStdio(std::move(command), NULL, &output, &error);
-  CF_EXPECT_EQ(ret, 0,
-               "crosvm powerbtn returned: " << ret << "\n"
-                                            << output << "\n"
-                                            << error);
+  CF_EXPECT(RunAndCaptureStdout(std::move(command)));
   return {};
 }
 

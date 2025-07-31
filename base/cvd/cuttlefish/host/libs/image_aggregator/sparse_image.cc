@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
-#include <android-base/file.h>
-#include <android-base/logging.h>
 #include <string.h>
 #include <sys/file.h>
 
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <utility>
+
+#include <android-base/file.h>
+#include <android-base/logging.h>
+#include <sparse/sparse.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/host/libs/config/config_utils.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 
 namespace cuttlefish {
@@ -37,7 +38,10 @@ namespace {
 
 constexpr std::string_view kAndroidSparseImageMagic = "\x3A\xFF\x26\xED";
 
-Result<SharedFD> AcquireLock(const std::string& tmp_lock_image_path) {
+Result<SharedFD> AcquireLockForImage(const std::string& image_path) {
+  std::string image_realpath;
+  CF_EXPECT(android::base::Realpath(image_path, &image_realpath));
+  std::string tmp_lock_image_path = image_realpath + ".lock";
   SharedFD fd =
       SharedFD::Open(tmp_lock_image_path.c_str(), O_RDWR | O_CREAT, 0666);
   CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", tmp_lock_image_path,
@@ -47,6 +51,12 @@ Result<SharedFD> AcquireLock(const std::string& tmp_lock_image_path) {
 
   return fd;
 }
+
+struct SparseImageDeleter {
+  void operator()(sparse_file* file) {
+    sparse_file_destroy(file);
+  }
+};
 
 }  // namespace
 
@@ -61,10 +71,10 @@ Result<bool> IsSparseImage(const std::string& image_path) {
 }
 
 Result<void> ForceRawImage(const std::string& image_path) {
-  std::string tmp_lock_image_path = image_path + ".lock";
-
-  SharedFD fd = CF_EXPECT(AcquireLock(tmp_lock_image_path));
-
+  if (!CF_EXPECT(IsSparseImage(image_path))) {
+    return {};
+  }
+  SharedFD fd = CF_EXPECT(AcquireLockForImage(image_path));
   if (!CF_EXPECT(IsSparseImage(image_path))) {
     return {};
   }
@@ -88,5 +98,51 @@ Result<void> ForceRawImage(const std::string& image_path) {
 
   return {};
 }
+
+struct AndroidSparseImage::Impl {
+  std::unique_ptr<sparse_file, SparseImageDeleter> raw_sparse_file;
+  android::base::unique_fd raw_fd;
+};
+
+Result<AndroidSparseImage> AndroidSparseImage::OpenExisting(const std::string& path) {
+  SharedFD fd = SharedFD::Open(path, O_RDONLY | O_CLOEXEC);
+  CF_EXPECTF(fd->IsOpen(), "{}", fd->StrError());
+
+  std::unique_ptr<Impl> impl = std::make_unique<AndroidSparseImage::Impl>();
+  CF_EXPECT(impl.get());
+
+  impl->raw_fd = android::base::unique_fd(fd->UNMANAGED_Dup());
+  CF_EXPECT(impl->raw_fd.ok());
+
+  impl->raw_sparse_file.reset(sparse_file_import(impl->raw_fd.get(), /* verbose= */ false, /* crc= */ false));
+  CF_EXPECT(impl->raw_sparse_file.get());
+
+  return AndroidSparseImage(std::move(impl));
+}
+
+AndroidSparseImage::AndroidSparseImage(std::unique_ptr<AndroidSparseImage::Impl> impl) : impl_(std::move(impl)) { }
+
+AndroidSparseImage::AndroidSparseImage(AndroidSparseImage&& other) {
+  impl_ = std::move(other.impl_);
+}
+
+AndroidSparseImage::~AndroidSparseImage() = default;
+
+AndroidSparseImage& AndroidSparseImage::operator=(AndroidSparseImage&& other) {
+  impl_ = std::move(other.impl_);
+  return *this;
+}
+
+std::string AndroidSparseImage::MagicString() {
+  return std::string(kAndroidSparseImageMagic);
+}
+
+Result<uint64_t> AndroidSparseImage::VirtualSizeBytes() const {
+  CF_EXPECT(impl_.get());
+  CF_EXPECT(impl_->raw_sparse_file.get());
+
+  return sparse_file_len(impl_->raw_sparse_file.get(), /* sparse= */ false, /* crc= */ true);
+}
+
 
 }  // namespace cuttlefish

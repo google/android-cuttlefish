@@ -23,7 +23,6 @@
 
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/display.h"
 
 #define DEFINE_vec DEFINE_string
@@ -73,8 +72,6 @@ DEFINE_vec(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
 DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
            "Whether to use random serial for the device.");
-DEFINE_vec(vm_manager, CF_DEFAULTS_VM_MANAGER,
-              "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
            "What gpu configuration to use, one of {auto, custom, drm_virgl, "
            "gfxstream, gfxstream_guest_angle, "
@@ -135,7 +132,7 @@ DEFINE_vec(
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
 DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
-            "Enable the root-canal which is Bluetooth emulator in the host.");
+            "Enable the rootcanal which is Bluetooth emulator in the host.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
@@ -253,8 +250,6 @@ DEFINE_bool(verify_sig_server_certificate,
             "Whether to verify the signaling server's certificate with a "
             "trusted signing authority (Disallow self signed certificates). "
             "This is ignored if an insecure server is configured.");
-
-DEFINE_string(group_id, "", "The group name of instance");
 
 DEFINE_vec(
     webrtc_device_id, CF_DEFAULTS_WEBRTC_DEVICE_ID,
@@ -513,9 +508,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "images have been updated since the first launch."
             "If the device starts from a snapshot, this will be always true.");
 
-DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
-              "Location of cuttlefish boot image. If empty it is assumed to be "
-              "boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
               "Location of the super partition image.");
 DEFINE_string(

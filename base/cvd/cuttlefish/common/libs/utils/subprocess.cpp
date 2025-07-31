@@ -37,8 +37,6 @@
 #include <set>
 #include <sstream>
 #include <string>
-#include <thread>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -47,7 +45,6 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 
@@ -523,109 +520,6 @@ std::string Command::AsBashScript(
     contents += " &> " + AbsolutePath(redirected_stdio_path);
   }
   return contents;
-}
-
-// A class that waits for threads to exit in its destructor.
-class ThreadJoiner {
-std::vector<std::thread*> threads_;
-public:
-  ThreadJoiner(const std::vector<std::thread*> threads) : threads_(threads) {}
-  ~ThreadJoiner() {
-    for (auto& thread : threads_) {
-      if (thread->joinable()) {
-        thread->join();
-      }
-    }
-  }
-};
-
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
-                        std::string* stdout_str, std::string* stderr_str,
-                        SubprocessOptions options) {
-  /*
-   * The order of these declarations is necessary for safety. If the function
-   * returns at any point, the Command will be destroyed first, closing all
-   * of its references to SharedFDs. This will cause the thread internals to fail
-   * their reads or writes. The ThreadJoiner then waits for the threads to
-   * complete, as running the destructor of an active std::thread crashes the
-   * program.
-   *
-   * C++ scoping rules dictate that objects are descoped in reverse order to
-   * construction, so this behavior is predictable.
-   */
-  std::thread stdin_thread, stdout_thread, stderr_thread;
-  ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
-  Command cmd = std::move(cmd_tmp);
-  bool io_error = false;
-  if (stdin_str != nullptr) {
-    SharedFD pipe_read, pipe_write;
-    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
-      LOG(ERROR) << "Could not create a pipe to write the stdin of \""
-                << cmd.GetShortName() << "\"";
-      return -1;
-    }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
-    stdin_thread = std::thread([pipe_write, stdin_str, &io_error]() {
-      int written = WriteAll(pipe_write, *stdin_str);
-      if (written < 0) {
-        io_error = true;
-        LOG(ERROR) << "Error in writing stdin to process";
-      }
-    });
-  }
-  if (stdout_str != nullptr) {
-    SharedFD pipe_read, pipe_write;
-    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
-      LOG(ERROR) << "Could not create a pipe to read the stdout of \""
-                << cmd.GetShortName() << "\"";
-      return -1;
-    }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
-    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
-      int read = ReadAll(pipe_read, stdout_str);
-      if (read < 0) {
-        io_error = true;
-        LOG(ERROR) << "Error in reading stdout from process";
-      }
-    });
-  }
-  if (stderr_str != nullptr) {
-    SharedFD pipe_read, pipe_write;
-    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
-      LOG(ERROR) << "Could not create a pipe to read the stderr of \""
-                << cmd.GetShortName() << "\"";
-      return -1;
-    }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
-    stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
-      int read = ReadAll(pipe_read, stderr_str);
-      if (read < 0) {
-        io_error = true;
-        LOG(ERROR) << "Error in reading stderr from process";
-      }
-    });
-  }
-
-  auto subprocess = cmd.Start(std::move(options));
-  if (!subprocess.Started()) {
-    return -1;
-  }
-  auto cmd_short_name = cmd.GetShortName();
-  {
-    // Force the destructor to run by moving it into a smaller scope.
-    // This is necessary to close the write end of the pipe.
-    Command forceDelete = std::move(cmd);
-  }
-
-  int code = subprocess.Wait();
-  {
-    auto join_threads = std::move(thread_joiner);
-  }
-  if (io_error) {
-    LOG(ERROR) << "IO error communicating with " << cmd_short_name;
-    return -1;
-  }
-  return code;
 }
 
 namespace {

@@ -25,6 +25,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+#include <sparse/sparse.h>
+#include <zlib.h>
+
 #include <fstream>
 #include <random>
 #include <string>
@@ -34,8 +37,6 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
-#include <sparse/sparse.h>
-#include <zlib.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -43,15 +44,14 @@
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
-#include "cuttlefish/host/libs/image_aggregator/qcow2.h"
-#include "cuttlefish/host/libs/image_aggregator/sparse_image_utils.h"
+#include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
+#include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
+#include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
 namespace cuttlefish {
 namespace {
 
 constexpr int GPT_NUM_PARTITIONS = 128;
-static const std::string CDISK_MAGIC = "composite_disk\x1d";
-static const std::string QCOW2_MAGIC = "QFI\xfb";
 
 /**
  * Creates a "Protective" MBR Partition Table header. The GUID
@@ -140,63 +140,10 @@ struct PartitionInfo {
  * disk file, as the imag eflashing process also can handle Android-Sparse
  * images.
  */
-std::uint64_t ExpandedStorageSize(const std::string& file_path) {
-  android::base::unique_fd fd(open(file_path.c_str(), O_RDONLY));
-  CHECK(fd.get() >= 0) << "Could not open \"" << file_path << "\""
-                       << strerror(errno);
-
-  std::uint64_t file_size = FileSize(file_path);
-
-  // Try to read the disk in a nicely-aligned block size unless the whole file
-  // is smaller.
-  constexpr uint64_t MAGIC_BLOCK_SIZE = 4096;
-  std::string magic(std::min(file_size, MAGIC_BLOCK_SIZE), '\0');
-  if (!android::base::ReadFully(fd, magic.data(), magic.size())) {
-    PLOG(FATAL) << "Fail to read: " << file_path;
-    return 0;
-  }
-  CHECK(lseek(fd, 0, SEEK_SET) != -1)
-      << "Fail to seek(\"" << file_path << "\")" << strerror(errno);
-
-  // Composite disk image
-  if (android::base::StartsWith(magic, CDISK_MAGIC)) {
-    // seek to the beginning of proto message
-    CHECK(lseek(fd, CDISK_MAGIC.size(), SEEK_SET) != -1)
-        << "Fail to seek(\"" << file_path << "\")" << strerror(errno);
-    std::string message;
-    if (!android::base::ReadFdToString(fd, &message)) {
-      PLOG(FATAL) << "Fail to read(cdisk): " << file_path;
-      return 0;
-    }
-    CompositeDisk cdisk;
-    if (!cdisk.ParseFromString(message)) {
-      PLOG(FATAL) << "Fail to parse(cdisk): " << file_path;
-      return 0;
-    }
-    return cdisk.length();
-  }
-
-  // Qcow2 image
-  if (android::base::StartsWith(magic, Qcow2Image::MagicString())) {
-    Result<Qcow2Image> image = Qcow2Image::OpenExisting(file_path);
-    CHECK(image.ok()) << image.error().FormatForEnv();
-
-    Result<uint64_t> size = image->VirtualSizeBytes();
-    CHECK(size.ok()) << size.error().FormatForEnv();
-    return *size;
-  }
-
-  // Android-Sparse
-  if (auto sparse =
-          sparse_file_import(fd, /* verbose */ false, /* crc */ false);
-      sparse) {
-    auto size = sparse_file_len(sparse, false, true);
-    sparse_file_destroy(sparse);
-    return size;
-  }
-
-  // raw image file
-  return file_size;
+Result<uint64_t> ExpandedStorageSize(const std::string& file_path) {
+  std::unique_ptr<DiskImage> disk = CF_EXPECT(ImageFromFile(file_path));
+  CF_EXPECT(disk.get());
+  return CF_EXPECT(disk->VirtualSizeBytes());
 }
 
 /*
@@ -238,7 +185,7 @@ private:
   std::uint64_t next_disk_offset_ = sizeof(GptBeginning);
   bool read_only_ = true;
 
-  static const std::uint8_t* GetPartitionGUID(ImagePartition source) {
+  static Result<const std::uint8_t*> GetPartitionGUID(ImagePartition source) {
     // Due to some endianness mismatch in e2fsprogs GUID vs GPT, the GUIDs are
     // rearranged to make the right GUIDs appear in gdisk
     switch (source.type) {
@@ -254,25 +201,26 @@ private:
             0xba, 0x4b, 0x0,  0xa0, 0xc9, 0x3e, 0xc9, 0x3b};
         return kEfiSystemPartitionGuid;
       default:
-        LOG(FATAL) << "Unknown partition type: " << (int) source.type;
+        return CF_ERR("Unknown partition type: " << (int)source.type);
     }
   }
 
 public:
   CompositeDiskBuilder(bool read_only) : read_only_(read_only) {}
 
-  void AppendPartition(ImagePartition source) {
-    uint64_t size = ExpandedStorageSize(source.image_file_path);
+  Result<void> AppendPartition(ImagePartition source) {
+    uint64_t size = CF_EXPECT(ExpandedStorageSize(source.image_file_path));
     auto aligned_size = AlignToPartitionSize(size);
-    CHECK(size == aligned_size || read_only_)
-        << "read-write partition " << source.label
-        << " is not aligned to the size of " << (1 << PARTITION_SIZE_SHIFT);
+    CF_EXPECTF(size == aligned_size || read_only_,
+               "read-write partition '{}' is not aligned to the size of '{}'",
+               source.label, (1 << PARTITION_SIZE_SHIFT));
     partitions_.push_back(PartitionInfo{
         .source = source,
         .size = size,
         .offset = next_disk_offset_,
     });
     next_disk_offset_ = next_disk_offset_ + aligned_size;
+    return {};
   }
 
   std::uint64_t DiskSize() const {
@@ -284,8 +232,8 @@ public:
    * and `footer_file` will be populated with the contents of `Beginning()` and
    * `End()`.
    */
-  CompositeDisk MakeCompositeDiskSpec(const std::string& header_file,
-                                      const std::string& footer_file) const {
+  Result<CompositeDisk> MakeCompositeDiskSpec(
+      const std::string& header_file, const std::string& footer_file) const {
     CompositeDisk disk;
     disk.set_version(2);
     disk.set_length(DiskSize());
@@ -301,8 +249,9 @@ public:
       component->set_read_write_capability(
           read_only_ ? ReadWriteCapability::READ_ONLY
                      : ReadWriteCapability::READ_WRITE);
-      uint64_t size = ExpandedStorageSize(partition.source.image_file_path);
-      CHECK(partition.size == size);
+      uint64_t size =
+          CF_EXPECT(ExpandedStorageSize(partition.source.image_file_path));
+      CF_EXPECT_EQ(partition.size, size);
       // When partition's aligned size differs from its (unaligned) size
       // reading the disk within the guest os would fail due to the gap.
       // Putting any disk bigger than 4K can fill this gap.
@@ -331,11 +280,8 @@ public:
    * This method is not deterministic: some data is generated such as the disk
    * uuids.
    */
-  GptBeginning Beginning() const {
-    if (partitions_.size() > GPT_NUM_PARTITIONS) {
-      LOG(FATAL) << "Too many partitions: " << partitions_.size();
-      return {};
-    }
+  Result<GptBeginning> Beginning() const {
+    CF_EXPECT_LE(partitions_.size(), GPT_NUM_PARTITIONS, "Too many partitions");
     GptBeginning gpt = {
         .protective_mbr = ProtectiveMbr(DiskSize()),
         .header =
@@ -361,10 +307,9 @@ public:
               (partition.offset + partition.AlignedSize()) / kSectorSize - 1,
       };
       SetRandomUuid(gpt.entries[i].unique_partition_guid);
-      const std::uint8_t* const type_guid = GetPartitionGUID(partition.source);
-      if (type_guid == nullptr) {
-        LOG(FATAL) << "Could not recognize partition guid";
-      }
+      const std::uint8_t* const type_guid =
+          CF_EXPECT(GetPartitionGUID(partition.source));
+      CF_EXPECT(type_guid != nullptr, "Could not recognize partition guid");
       memcpy(gpt.entries[i].partition_type_guid, type_guid, 16);
       std::u16string wide_name(partitions_[i].source.label.begin(),
                               partitions_[i].source.label.end());
@@ -397,29 +342,24 @@ public:
   }
 };
 
-bool WriteBeginning(SharedFD out, const GptBeginning& beginning) {
+Result<void> WriteBeginning(SharedFD out, const GptBeginning& beginning) {
   std::string begin_str((const char*) &beginning, sizeof(GptBeginning));
-  if (WriteAll(out, begin_str) != begin_str.size()) {
-    LOG(ERROR) << "Could not write GPT beginning: " << out->StrError();
-    return false;
-  }
-  return true;
+  CF_EXPECT_EQ(WriteAll(out, begin_str), begin_str.size(),
+               "Could not write GPT beginning: " << out->StrError());
+  return {};
 }
 
-bool WriteEnd(SharedFD out, const GptEnd& end) {
+Result<void> WriteEnd(SharedFD out, const GptEnd& end) {
   auto disk_size = (end.footer.current_lba + 1) * kSectorSize;
   auto footer_start = (end.footer.last_usable_lba + 1) * kSectorSize;
   auto padding = disk_size - footer_start - sizeof(GptEnd);
   std::string padding_str(padding, '\0');
-  if (WriteAll(out, padding_str) != padding_str.size()) {
-    LOG(ERROR) << "Could not write GPT end padding: " << out->StrError();
-    return false;
-  }
-  if (WriteAllBinary(out, &end) != sizeof(end)) {
-    LOG(ERROR) << "Could not write GPT end contents: " << out->StrError();
-    return false;
-  }
-  return true;
+
+  CF_EXPECT_EQ(WriteAll(out, padding_str), padding_str.size(),
+               "Could not write GPT end padding: " << out->StrError());
+  CF_EXPECT_EQ(WriteAllBinary(out, &end), sizeof(end),
+               "Could not write GPT end contents: " << out->StrError());
+  return {};
 }
 
 /**
@@ -434,13 +374,11 @@ bool WriteEnd(SharedFD out, const GptEnd& end) {
  * crosvm has read-only support for Android-Sparse files, but QEMU does not
  * support them.
  */
-void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
+Result<void> DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
   for (const auto& partition : partitions) {
-    Result<void> res = ForceRawImage(partition.image_file_path);
-    if (!res.ok()) {
-      LOG(FATAL) << "Desparse failed: " << res.error().FormatForEnv();
-    }
+    CF_EXPECT(ForceRawImage(partition.image_file_path));
   }
+  return {};
 }
 
 } // namespace
@@ -449,69 +387,80 @@ uint64_t AlignToPartitionSize(uint64_t size) {
   return AlignToPowerOf2(size, PARTITION_SIZE_SHIFT);
 }
 
-void AggregateImage(const std::vector<ImagePartition>& partitions,
-                    const std::string& output_path) {
-  DeAndroidSparse(partitions);
+Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
+                            const std::string& output_path) {
+  CF_EXPECT(DeAndroidSparse(partitions));
+
   CompositeDiskBuilder builder(false);
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
   }
-  auto output = SharedFD::Creat(output_path, 0600);
-  auto beginning = builder.Beginning();
-  if (!WriteBeginning(output, beginning)) {
-    LOG(FATAL) << "Could not write GPT beginning to \"" << output_path
-               << "\": " << output->StrError();
-  }
+
+  SharedFD output = SharedFD::Creat(output_path, 0600);
+  CF_EXPECTF(output->IsOpen(), "{}", output->StrError());
+
+  GptBeginning beginning = CF_EXPECT(builder.Beginning());
+  CF_EXPECTF(WriteBeginning(output, beginning),
+             "Could not write GPT beginning to '{}': {}", output_path,
+             output->StrError());
+
   for (auto& disk : partitions) {
-    auto disk_fd = SharedFD::Open(disk.image_file_path, O_RDONLY);
+    SharedFD disk_fd = SharedFD::Open(disk.image_file_path, O_RDONLY);
+    CF_EXPECTF(disk_fd->IsOpen(), "{}", disk_fd->StrError());
+
     auto file_size = FileSize(disk.image_file_path);
-    if (!output->CopyFrom(*disk_fd, file_size)) {
-      LOG(FATAL) << "Could not copy from \"" << disk.image_file_path
-                 << "\" to \"" << output_path << "\": " << output->StrError();
-    }
+    CF_EXPECTF(output->CopyFrom(*disk_fd, file_size),
+               "Could not copy from '{}' to '{}': {}", disk.image_file_path,
+               output_path, output->StrError());
     // Handle disk images that are not aligned to PARTITION_SIZE_SHIFT
     std::uint64_t padding = AlignToPartitionSize(file_size) - file_size;
     std::string padding_str;
     padding_str.resize(padding, '\0');
-    if (WriteAll(output, padding_str) != padding_str.size()) {
-      LOG(FATAL) << "Could not write partition padding to \"" << output_path
-                 << "\": " << output->StrError();
-    }
+
+    CF_EXPECTF(WriteAll(output, padding_str) != padding_str.size(),
+               "Could not write partition padding to '{}': {}", output_path,
+               output->StrError());
   }
-  if (!WriteEnd(output, builder.End(beginning))) {
-    LOG(FATAL) << "Could not write GPT end to \"" << output_path
-               << "\": " << output->StrError();
-  }
+  CF_EXPECTF(WriteEnd(output, builder.End(beginning)),
+             "Could not write GPT end to '{}': {}", output_path,
+             output->StrError());
+  return {};
 };
 
-void CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path,
-                         bool read_only) {
-  DeAndroidSparse(partitions);
+Result<void> CreateCompositeDisk(std::vector<ImagePartition> partitions,
+                                 const std::string& header_file,
+                                 const std::string& footer_file,
+                                 const std::string& output_composite_path,
+                                 bool read_only) {
+  CF_EXPECT(DeAndroidSparse(partitions));
 
   CompositeDiskBuilder builder(read_only);
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
   }
-  auto header = SharedFD::Creat(header_file, 0600);
-  auto beginning = builder.Beginning();
-  if (!WriteBeginning(header, beginning)) {
-    LOG(FATAL) << "Could not write GPT beginning to \"" << header_file
-               << "\": " << header->StrError();
-  }
-  auto footer = SharedFD::Creat(footer_file, 0600);
-  if (!WriteEnd(footer, builder.End(beginning))) {
-    LOG(FATAL) << "Could not write GPT end to \"" << footer_file
-               << "\": " << footer->StrError();
-  }
-  auto composite_proto = builder.MakeCompositeDiskSpec(header_file, footer_file);
+  SharedFD header = SharedFD::Creat(header_file, 0600);
+  CF_EXPECTF(header->IsOpen(), "{}", header->StrError());
+
+  GptBeginning beginning = CF_EXPECT(builder.Beginning());
+  CF_EXPECTF(WriteBeginning(header, beginning),
+             "Could not write GPT beginning to '{}': {}", header_file,
+             header->StrError());
+
+  SharedFD footer = SharedFD::Creat(footer_file, 0600);
+  CF_EXPECTF(footer->IsOpen(), "{}", footer->StrError());
+
+  CF_EXPECTF(WriteEnd(footer, builder.End(beginning)),
+             "Could not write GPT end to '{}': {}", footer_file,
+             footer->StrError());
+  CompositeDisk composite_proto =
+      CF_EXPECT(builder.MakeCompositeDiskSpec(header_file, footer_file));
   std::ofstream composite(output_composite_path.c_str(),
                           std::ios::binary | std::ios::trunc);
-  composite << CDISK_MAGIC;
+  composite << CompositeDiskImage::MagicString();
   composite_proto.SerializeToOstream(&composite);
   composite.flush();
+
+  return {};
 }
 
 } // namespace cuttlefish

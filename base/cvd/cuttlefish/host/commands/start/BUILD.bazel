@@ -24,6 +24,8 @@ cf_cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/commands/start:start_flags",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",

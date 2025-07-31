@@ -20,6 +20,7 @@
 #include <sys/utsname.h>
 
 #include <cstdlib>
+#include <ostream>
 #include <string>
 
 #include <android-base/logging.h>
@@ -61,6 +62,21 @@ bool IsHostCompatible(Arch arch) {
   Arch host_arch = HostArch();
   return arch == host_arch || (arch == Arch::Arm && host_arch == Arch::Arm64) ||
          (arch == Arch::X86 && host_arch == Arch::X86_64);
+}
+
+std::ostream& operator<<(std::ostream& out, Arch arch) {
+  switch (arch) {
+    case Arch::Arm:
+      return out << "arm";
+    case Arch::Arm64:
+      return out << "arm64";
+    case Arch::RiscV64:
+      return out << "riscv64";
+    case Arch::X86:
+      return out << "x86";
+    case Arch::X86_64:
+      return out << "x86_64";
+  }
 }
 
 }  // namespace cuttlefish

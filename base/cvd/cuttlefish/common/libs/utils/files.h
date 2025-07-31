@@ -105,10 +105,6 @@ Result<void> WalkDirectory(
     const std::string& dir,
     const std::function<bool(const std::string&)>& callback);
 
-#ifdef __linux__
-Result<void> WaitForFile(const std::string& path, int timeoutSec);
-#endif
-
 // parameter to EmulateAbsolutePath
 struct InputPathForm {
   /** If nullopt, uses the process' current working dir

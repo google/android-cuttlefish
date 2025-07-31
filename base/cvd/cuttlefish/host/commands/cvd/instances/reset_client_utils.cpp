@@ -35,6 +35,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/legacy/run_server.h"
@@ -61,7 +62,6 @@ static Command CreateStopCvdCommand(const std::string& stopper_path,
 Result<void> RunStopCvd(const GroupProcInfo& group_info,
                         bool clear_runtime_dirs) {
   const auto& stopper_path = group_info.stop_cvd_path_;
-  int ret_code = 0;
   cvd_common::Envs stop_cvd_envs;
   stop_cvd_envs["HOME"] = group_info.home_;
   if (group_info.android_host_out_) {
@@ -78,42 +78,32 @@ Result<void> RunStopCvd(const GroupProcInfo& group_info,
   if (clear_runtime_dirs) {
     Command first_stop_cvd = CreateStopCvdCommand(
         stopper_path, stop_cvd_envs, {"--clear_instance_dirs=true"});
-    LOG(ERROR) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
-               << stopper_path << " --clear_instance_dirs=true";
-    std::string stdout_str;
-    std::string stderr_str;
-    ret_code = RunWithManagedStdio(std::move(first_stop_cvd), nullptr,
-                                   std::addressof(stdout_str),
-                                   std::addressof(stderr_str));
-    // TODO(kwstephenkim): deletes manually if `stop_cvd --clear_instance_dirs`
-    // failed.
-  }
-  if (!clear_runtime_dirs || ret_code != 0) {
-    if (clear_runtime_dirs) {
+    LOG(INFO) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
+              << stopper_path << " --clear_instance_dirs=true";
+    if (RunAndCaptureStdout(std::move(first_stop_cvd)).ok()) {
+      LOG(INFO) << "\"" << stopper_path << " successfully "
+                << "\" stopped instances at HOME=" << group_info.home_;
+      return {};
+    } else {
       LOG(ERROR) << "Failed to run " << stopper_path
                  << " --clear_instance_dirs=true";
       LOG(ERROR) << "Perhaps --clear_instance_dirs is not taken.";
       LOG(ERROR) << "Trying again without it";
     }
-    Command second_stop_cvd =
-        CreateStopCvdCommand(stopper_path, stop_cvd_envs, {});
-    LOG(ERROR) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
-               << stopper_path;
-    std::string stdout_str;
-    std::string stderr_str;
-    ret_code = RunWithManagedStdio(std::move(second_stop_cvd), nullptr,
-                                   std::addressof(stdout_str),
-                                   std::addressof(stderr_str));
+    // TODO(kwstephenkim): deletes manually if `stop_cvd --clear_instance_dirs`
+    // failed.
   }
-  if (ret_code != 0) {
-    std::stringstream error;
-    error << "HOME=" << group_info.home_
-          << group_info.stop_cvd_path_ + " Failed.";
-    return CF_ERR(error.str());
+  Command second_stop_cvd =
+      CreateStopCvdCommand(stopper_path, stop_cvd_envs, {});
+  LOG(INFO) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
+            << stopper_path;
+  if (RunAndCaptureStdout(std::move(second_stop_cvd)).ok()) {
+    LOG(INFO) << "\"" << stopper_path << " successfully "
+              << "\" stopped instances at HOME=" << group_info.home_;
+    return {};
   }
-  LOG(ERROR) << "\"" << stopper_path << " successfully "
-             << "\" stopped instances at HOME=" << group_info.home_;
-  return {};
+  return CF_ERRF("`HOME={} {}` Failed", group_info.home_,
+                 group_info.stop_cvd_path_);
 }
 
 Result<void> RunStopCvdAll(bool clear_runtime_dirs) {

@@ -17,13 +17,15 @@
 #pragma once
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
 namespace cuttlefish {
 
-Result<void> ResolveInstanceFiles(const InitramfsPathFlag&,
+Result<void> ResolveInstanceFiles(const BootImageFlag&,
+                                  const InitramfsPathFlag&,
                                   const KernelPathFlag& kernel_path,
                                   const SystemImageDirFlag& system_image_dir);
 

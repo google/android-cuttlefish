@@ -22,7 +22,7 @@
 #include <android-base/file.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 
@@ -211,14 +211,13 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
   if (vm_manager_ == VmmMode::kCrosvm) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
-    CreateCompositeDisk(partitions_, AbsolutePath(header_path_),
-                        AbsolutePath(footer_path_),
-                        AbsolutePath(composite_disk_path_),
-                        read_only_);
+    CF_EXPECT(CreateCompositeDisk(
+        partitions_, AbsolutePath(header_path_), AbsolutePath(footer_path_),
+        AbsolutePath(composite_disk_path_), read_only_));
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(partitions_, AbsolutePath(composite_disk_path_));
+    CF_EXPECT(AggregateImage(partitions_, AbsolutePath(composite_disk_path_)));
   }
 
   using android::base::WriteStringToFile;

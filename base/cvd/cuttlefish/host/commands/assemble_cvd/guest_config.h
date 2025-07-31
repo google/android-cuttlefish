@@ -21,6 +21,7 @@
 
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
@@ -48,6 +49,6 @@ struct GuestConfig {
 };
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
-    const KernelPathFlag& kernel_path,
+    const BootImageFlag&, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir);
 }

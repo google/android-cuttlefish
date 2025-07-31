@@ -377,16 +377,6 @@ Result<void> CvdStartCommandHandler::UpdateArgs(cvd_common::Args& args,
                                                 LocalInstanceGroup& group) {
   CF_EXPECT(UpdateInstanceArgs(args, group));
   CF_EXPECT(UpdateWebrtcDeviceIds(args, group));
-  // for backward compatibility, older cvd host tools don't accept group_id
-  HostToolTarget host_tool_target(group.HostArtifactsPath());
-  auto has_group_id_flag =
-      HostToolTarget(group.HostArtifactsPath())
-          .GetFlagInfo(CF_EXPECT(host_tool_target.GetStartBinName()),
-                       "group_id")
-          .ok();
-  if (has_group_id_flag) {
-    args.emplace_back("--group_id=" + group.GroupName());
-  }
   return {};
 }
 

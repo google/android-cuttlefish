@@ -35,6 +35,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/acloud:user_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli:command_request",

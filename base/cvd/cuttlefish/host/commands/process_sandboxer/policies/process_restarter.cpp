@@ -34,7 +34,7 @@ sandbox2::PolicyBuilder ProcessRestarterPolicy(const HostInfo& host) {
       .AddFileAt(sandboxer_proxy, host.HostToolExe("adb_connector"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("casimir"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("crosvm"))
-      .AddFileAt(sandboxer_proxy, host.HostToolExe("root-canal"))
+      .AddFileAt(sandboxer_proxy, host.HostToolExe("rootcanal"))
       .AddFileAt(sandboxer_proxy, host.HostToolExe("vhost_device_vsock"))
       .AddPolicyOnSyscall(__NR_prctl,
                           {ARG_32(0), JEQ32(PR_SET_PDEATHSIG, ALLOW)})

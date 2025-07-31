@@ -19,6 +19,18 @@ package(
 )
 
 cf_cc_library(
+    name = "boot_image",
+    srcs = ["boot_image.cc"],
+    hdrs = ["boot_image.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "display_proto",
     srcs = ["display_proto.cc"],
     hdrs = ["display_proto.h"],
@@ -65,6 +77,20 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "vm_manager",
+    srcs = ["vm_manager.cc"],
+    hdrs = ["vm_manager.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//libbase",
         "@gflags",
     ],

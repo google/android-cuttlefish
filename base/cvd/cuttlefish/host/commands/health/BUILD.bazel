@@ -10,8 +10,9 @@ cf_cc_binary(
         "health.cpp",
     ],
     deps = [
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/vm_manager",
         "//libbase",
         "@gflags",
     ],

@@ -1,0 +1,52 @@
+From 7554f9dc9bac4f0df3b22de4e4b3c6505f94bccb Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Fri, 18 Jul 2025 19:29:17 +0000
+Subject: [PATCH 3/3] Don't use EC_POINTs_mul
+
+Original author is joerichey@google.com.
+
+Original patch comments:
+
+BoringSSL does not support this method. It has been proposed for deprecation.
+See: https://github.com/openssl/openssl/issues/8332
+
+Normal code paths will never hit this anyway. The S point is optional and
+rarely specificed.
+---
+ TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c b/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c
+index 5d9b53d..aae0f2c 100644
+--- a/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c
++++ b/TPMCmd/tpm/cryptolibs/Ossl/BnToOsslMath.c
+@@ -489,7 +489,6 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
+ )
+ {
+     EC_POINT* pR = EC_POINT_new(E->G);
+-    EC_POINT* pS = EcPointInitialized(S, E);
+     BIG_INITIALIZED(bnD, d);
+     EC_POINT* pQ = EcPointInitialized(Q, E);
+     BIG_INITIALIZED(bnU, u);
+@@ -498,17 +497,10 @@ LIB_EXPORT BOOL BnEccModMult2(bigPoint            R,  // OUT: computed point
+         EC_POINT_mul(E->G, pR, bnD, pQ, bnU, E->CTX);
+     else
+     {
+-        const EC_POINT* points[2];
+-        const BIGNUM*   scalars[2];
+-        points[0]  = pS;
+-        points[1]  = pQ;
+-        scalars[0] = bnD;
+-        scalars[1] = bnU;
+-        EC_POINTs_mul(E->G, pR, NULL, 2, points, scalars, E->CTX);
++        return FALSE;
+     }
+     PointFromOssl(R, pR, E);
+     EC_POINT_free(pR);
+-    EC_POINT_free(pS);
+     EC_POINT_free(pQ);
+     return !BnEqualZero(R->z);
+ }
+-- 
+2.50.0.727.gbf7dc18ff4-goog
+

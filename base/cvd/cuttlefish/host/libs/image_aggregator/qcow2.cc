@@ -23,6 +23,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/cf_endian.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 
 namespace cuttlefish {
 
@@ -61,18 +62,7 @@ Result<Qcow2Image> Qcow2Image::Create(const std::string& crosvm_path,
                            .AddParameter(backing_file)
                            .AddParameter(output_overlay_path);
 
-  std::string stdout_str;
-  std::string stderr_str;
-  int return_code = RunWithManagedStdio(std::move(create_cmd), nullptr,
-                                        &stdout_str, &stderr_str);
-  CF_EXPECT_EQ(return_code, 0,
-               "Failed to run `"
-                   << crosvm_path << " create_qcow2 --backing-file "
-                   << backing_file << " " << output_overlay_path << "`"
-                   << "stdout:\n###\n"
-                   << stdout_str << "\n###"
-                   << "stderr:\n###\n"
-                   << stderr_str << "\n###");
+  CF_EXPECT(RunAndCaptureStdout(std::move(create_cmd)));
 
   return CF_EXPECT(OpenExisting(std::move(output_overlay_path)));
 }

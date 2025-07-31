@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <ostream>
 #include <string>
 
 namespace cuttlefish {
@@ -30,5 +31,7 @@ enum class Arch {
 const std::string& HostArchStr();
 Arch HostArch();
 bool IsHostCompatible(Arch arch);
+
+std::ostream& operator<<(std::ostream&, Arch);
 
 }  // namespace cuttlefish

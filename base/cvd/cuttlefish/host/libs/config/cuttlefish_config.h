@@ -38,23 +38,13 @@
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace Json {
 class Value;
 }
 
 namespace cuttlefish {
-
-enum class VmmMode {
-  kUnknown,
-  kCrosvm,
-  kGem5,
-  kQemu,
-};
-
-std::ostream& operator<<(std::ostream&, VmmMode);
-std::string ToString(VmmMode mode);
-Result<VmmMode> ParseVmm(std::string_view);
 
 enum class ExternalNetworkMode {
   kUnknown,
@@ -484,10 +474,6 @@ class CuttlefishConfig {
     // signaling server
     std::string webrtc_device_id() const;
 
-    // The group id the webrtc process should use to register with the
-    // signaling server
-    std::string group_id() const;
-
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
 
@@ -752,7 +738,6 @@ class CuttlefishConfig {
     void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
-    void set_group_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
     void set_start_webrtc_sig_server_proxy(bool start);
     void set_start_rootcanal(bool start);
@@ -1045,6 +1030,4 @@ bool IsRestoring(const CuttlefishConfig&);
 #if FMT_VERSION >= 90000
 template <>
 struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
-template <>
-struct fmt::formatter<cuttlefish::VmmMode> : ostream_formatter {};
 #endif

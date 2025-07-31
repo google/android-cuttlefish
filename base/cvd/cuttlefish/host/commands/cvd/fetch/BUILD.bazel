@@ -47,7 +47,7 @@ cf_cc_library(
     hdrs = ["de_android_sparse.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//libbase",
         "//libsparse",
     ],
@@ -134,7 +134,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
         "//cuttlefish/host/libs/config:fetcher_config",
-        "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_string",

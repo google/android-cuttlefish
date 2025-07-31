@@ -45,7 +45,6 @@ DECLARE_vec(guest_enforce_security);
 DECLARE_vec(memory_mb);
 DECLARE_vec(serial_number);
 DECLARE_vec(use_random_serial);
-DECLARE_vec(vm_manager);
 DECLARE_vec(gpu_mode);
 DECLARE_vec(gpu_vhost_user_mode);
 DECLARE_vec(hwcomposer);
@@ -115,8 +114,6 @@ DECLARE_string(webrtc_sig_server_path);
 DECLARE_bool(webrtc_sig_server_secure);
 
 DECLARE_bool(verify_sig_server_certificate);
-
-DECLARE_string(group_id);
 
 DECLARE_vec(webrtc_device_id);
 
@@ -238,7 +235,6 @@ DECLARE_string(instance_dir);
 DECLARE_string(snapshot_path);
 DECLARE_bool(resume);
 
-DECLARE_string(boot_image);
 DECLARE_string(super_image);
 DECLARE_string(vendor_boot_image);
 DECLARE_string(vbmeta_image);

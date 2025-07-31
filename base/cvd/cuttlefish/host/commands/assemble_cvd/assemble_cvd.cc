@@ -42,10 +42,13 @@
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flag_feature.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/adb/adb.h"
@@ -312,19 +315,20 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, SharedFD log,
+    fruit::Injector<>& injector, SharedFD log, const BootImageFlag& boot_image,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
-    const SystemImageDirFlag& system_image_dir) {
+    const SystemImageDirFlag& system_image_dir,
+    const VmManagerFlag& vm_manager_flag) {
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config = CF_EXPECT(
-        InitializeCuttlefishConfiguration(
-            FLAGS_instance_dir, guest_configs, injector, fetcher_config,
-            initramfs_path, kernel_path, system_image_dir),
-        "cuttlefish configuration initialization failed");
+    auto config = CF_EXPECT(InitializeCuttlefishConfiguration(
+                                FLAGS_instance_dir, guest_configs, injector,
+                                fetcher_config, boot_image, initramfs_path,
+                                kernel_path, system_image_dir, vm_manager_flag),
+                            "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
     if (!snapshot_path.empty()) {
@@ -615,6 +619,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
+  BootImageFlag boot_image = BootImageFlag::FromGlobalGflags(system_image_dir);
+
   fruit::Injector<> injector(FlagsComponent, &system_image_dir);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
@@ -643,16 +649,24 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  auto guest_configs =
-      CF_EXPECT(GetGuestConfigAndSetDefaults(initramfs_path, kernel_path,
-                                             system_image_dir),
-                "Failed to parse arguments");
+  CF_EXPECT(ResolveInstanceFiles(boot_image, initramfs_path, kernel_path,
+                                 system_image_dir),
+            "Failed to resolve instance files");
+  // Depends on ResolveInstanceFiles to set flag globals
+  std::vector<GuestConfig> guest_configs =
+      CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
 
-  auto config =
-      CF_EXPECT(InitFilesystemAndCreateConfig(
-                    std::move(fetcher_config), guest_configs, injector, log,
-                    initramfs_path, kernel_path, system_image_dir),
-                "Failed to create config");
+  VmManagerFlag vm_manager_flag =
+      CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
+
+  CF_EXPECT(
+      SetFlagDefaultsForVmm(guest_configs, system_image_dir, vm_manager_flag));
+
+  auto config = CF_EXPECT(
+      InitFilesystemAndCreateConfig(
+          std::move(fetcher_config), guest_configs, injector, log, boot_image,
+          initramfs_path, kernel_path, system_image_dir, vm_manager_flag),
+      "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;

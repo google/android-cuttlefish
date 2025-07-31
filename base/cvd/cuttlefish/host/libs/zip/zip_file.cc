@@ -31,7 +31,8 @@ Result<ReadableZip> ZipOpenRead(const std::string& fs_path) {
 
 Result<WritableZip> ZipOpenReadWrite(const std::string& fs_path) {
   WritableZipSource source = CF_EXPECT(WritableZipSource::FromFile(fs_path));
-  return CF_EXPECT(WritableZip::FromSource(std::move(source)));
+  return CF_EXPECT(WritableZip::FromSource(
+      std::move(source), WritableZip::OpenBehavior::KeepIfExists));
 }
 
 Result<void> AddFile(WritableZip& zip, const std::string& fs_path) {

@@ -35,6 +35,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/acloud/config.h"
 #include "cuttlefish/host/commands/cvd/acloud/create_converter_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -80,10 +81,7 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
     repo_cmd.SetWorkingDirectory(fd_top);
   }
 
-  std::string repo_stdout;
-  CF_EXPECT_EQ(
-      RunWithManagedStdio(std::move(repo_cmd), nullptr, &repo_stdout, nullptr),
-      0);
+  std::string repo_stdout = CF_EXPECT(RunAndCaptureStdout(std::move(repo_cmd)));
 
   Command git_cmd("git");
   git_cmd.AddParameter("remote");
@@ -91,10 +89,7 @@ static Result<BranchBuildTargetInfo> GetDefaultBranchBuildTarget(
     git_cmd.SetWorkingDirectory(fd_top);
   }
 
-  std::string git_stdout;
-  CF_EXPECT_EQ(
-      RunWithManagedStdio(std::move(git_cmd), nullptr, &git_stdout, nullptr),
-      0);
+  std::string git_stdout = CF_EXPECT(RunAndCaptureStdout(std::move(git_cmd)));
 
   git_stdout.erase(std::remove(git_stdout.begin(), git_stdout.end(), '\n'),
                    git_stdout.cend());
@@ -132,10 +127,7 @@ Result<std::vector<std::string>> BashTokenize(const std::string& str) {
   command.AddParameter("-c");
   command.AddParameter("printf '%s\n' ", str);
 
-  std::string bash_stdout;
-  CF_EXPECT(
-      RunWithManagedStdio(std::move(command), nullptr, &bash_stdout, nullptr),
-      0);
+  std::string bash_stdout = CF_EXPECT(RunAndCaptureStdout(std::move(command)));
 
   return android::base::Split(bash_stdout, "\n");
 }

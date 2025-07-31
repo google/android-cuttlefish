@@ -16,10 +16,7 @@
 
 #pragma once
 
-#include <functional>
 #include <memory>
-#include <mutex>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,9 +39,6 @@ class ClientHandler;
 struct StreamerConfig {
   // The id with which to register with the operator server.
   std::string device_id;
-
-  // The group id with which to register with the operator server.
-  std::string group_id;
 
   // The port on which the client files are being served
   int client_files_port;
