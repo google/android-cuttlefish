@@ -86,7 +86,7 @@ func TestCreateInstance(t *testing.T) {
 	}
 	want := &hoapi.CreateCVDResponse{
 		CVDs: []*hoapi.CVD{
-			&hoapi.CVD{
+			{
 				Group:          "foo",
 				Name:           "1",
 				BuildSource:    &hoapi.BuildSource{},
