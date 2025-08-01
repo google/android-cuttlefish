@@ -39,6 +39,28 @@ func TestCreateImageDirectory(t *testing.T) {
 	}
 }
 
+func TestListImageDirectories(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+
+	if dirs, err := idm.ListImageDirectories(); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff([]string{}, dirs); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+	dir, err := idm.CreateImageDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dirs, err := idm.ListImageDirectories(); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff([]string{dir}, dirs); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestUpdateImageDirectorySucceeds(t *testing.T) {
 	rootDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, rootDir)
