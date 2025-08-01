@@ -232,6 +232,10 @@ func (testIDM) CreateImageDirectory() (string, error) {
 	return "", nil
 }
 
+func (testIDM) ListImageDirectories() ([]string, error) {
+	return []string{}, nil
+}
+
 func (testIDM) UpdateImageDirectory(imageDirName, dir string) error {
 	return nil
 }
