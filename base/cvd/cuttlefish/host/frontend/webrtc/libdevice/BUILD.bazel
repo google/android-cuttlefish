@@ -68,7 +68,6 @@ cf_cc_library(
         "lights_observer.cpp",
         "local_recorder.cpp",
         "recording_manager.cpp",
-        "server_connection.cpp",
         "streamer.cpp",
     ],
     hdrs = [
@@ -79,14 +78,12 @@ cf_cc_library(
         "lights_observer.h",
         "local_recorder.h",
         "recording_manager.h",
-        "server_connection.h",
         "streamer.h",
     ],
     linkopts = [
         "-lopus",
     ],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:vsock_connection",
@@ -100,6 +97,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:server_connection",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_track_source_impl",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
@@ -111,6 +109,17 @@ cf_cc_library(
         "@libvpx",
         "@libwebm//:mkvmuxer",
         "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "server_connection",
+    srcs = ["server_connection.cpp"],
+    hdrs = ["server_connection.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@jsoncpp",
     ],
 )
 
