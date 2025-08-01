@@ -308,6 +308,21 @@ func TestCreateImageDirectoryIsHandled(t *testing.T) {
 	}
 }
 
+func TestListImageDirectoriesIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/cvd_imgs_dirs", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{ImageDirectoriesManager: &testIDM{}}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestUpdateImageDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	body, err := json.Marshal(apiv1.UpdateImageDirectoryRequest{UserArtifactChecksum: "aaa"})

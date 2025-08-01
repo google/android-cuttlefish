@@ -112,6 +112,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/cvd_imgs_dirs", httpHandler(&createImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("POST")
+	router.Handle("/cvd_imgs_dirs", httpHandler(&listImageDirectoriesHandler{c.ImageDirectoriesManager})).Methods("GET")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
@@ -654,6 +655,22 @@ func (h *createImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 		}
 	}()
 	return op, nil
+}
+
+type listImageDirectoriesHandler struct {
+	idm ImageDirectoriesManager
+}
+
+func (h *listImageDirectoriesHandler) Handle(r *http.Request) (interface{}, error) {
+	dirs, err := h.idm.ListImageDirectories()
+	if err != nil {
+		return nil, err
+	}
+	imageDirs := []apiv1.ImageDirectory{}
+	for _, dir := range dirs {
+		imageDirs = append(imageDirs, apiv1.ImageDirectory{ID: dir})
+	}
+	return apiv1.ListImageDirectoriesResponse{ImageDirs: imageDirs}, nil
 }
 
 type updateImageDirectoryHandler struct {
