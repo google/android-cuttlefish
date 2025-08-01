@@ -77,6 +77,7 @@ cf_cc_library(
 
 cf_cc_library(
     name = "mbr",
+    srcs = ["mbr.cc"],
     hdrs = ["mbr.h"],
 )
 

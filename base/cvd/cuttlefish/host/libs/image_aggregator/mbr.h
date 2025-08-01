@@ -39,4 +39,12 @@ struct __attribute__((packed)) MasterBootRecord {
 
 static_assert(sizeof(MasterBootRecord) == kSectorSize);
 
+/**
+ * Creates a "Protective" MBR Partition Table header. The GUID
+ * Partition Table Specification recommends putting this on the first sector
+ * of the disk, to protect against old disk formatting tools from misidentifying
+ * the GUID Partition Table later and doing the wrong thing.
+ */
+MasterBootRecord ProtectiveMbr(uint64_t size);
+
 }  // namespace cuttlefish
