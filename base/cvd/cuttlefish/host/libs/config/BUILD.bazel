@@ -132,9 +132,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:esp",
-        "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/host/libs/image_aggregator:mbr",
         "//libbase",
     ],
 )
@@ -274,11 +274,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
     ],
-)
-
-cf_cc_library(
-    name = "mbr",
-    hdrs = ["mbr.h"],
 )
 
 cf_cc_library(

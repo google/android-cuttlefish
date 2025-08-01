@@ -42,10 +42,10 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
-#include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
+#include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
 namespace cuttlefish {
