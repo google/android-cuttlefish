@@ -5,6 +5,17 @@ package(
 )
 
 cf_cc_library(
+    name = "audio_device",
+    srcs = ["audio_device.cpp"],
+    hdrs = ["audio_device.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//libbase",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
     name = "audio_source",
     hdrs = ["audio_source.h"],
 )
@@ -28,13 +39,11 @@ cf_cc_library(
 cf_cc_library(
     name = "libcommon",
     srcs = [
-        "audio_device.cpp",
         "peer_connection_utils.cpp",
         "port_range_socket_factory.cpp",
         "vp8only_encoder_factory.cpp",
     ],
     hdrs = [
-        "audio_device.h",
         "peer_connection_utils.h",
         "port_range_socket_factory.h",
         "signaling_constants.h",
@@ -43,7 +52,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
         "//libbase",
         "@fmt",
         "@jsoncpp",
