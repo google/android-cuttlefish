@@ -37,21 +37,13 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "libcommon",
-    srcs = [
-        "peer_connection_utils.cpp",
-    ],
-    hdrs = [
-        "peer_connection_utils.h",
-    ],
+    name = "peer_connection_utils",
+    srcs = ["peer_connection_utils.cpp"],
+    hdrs = ["peer_connection_utils.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
         "//cuttlefish/host/frontend/webrtc/libcommon:vp8only_encoder_factory",
-        "//libbase",
-        "@fmt",
-        "@jsoncpp",
         "@libwebrtc",
     ],
 )
