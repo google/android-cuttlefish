@@ -55,6 +55,10 @@ std::set<std::string> FallbackDirs() {
   paths.insert(parent_path + "/cuttlefish_assembly");
 
   std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(parent_path.c_str()), closedir);
+  if (!dir.get()) {
+    return paths;
+  }
+
   for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
     std::string subdir(entity->d_name);
     if (!android::base::StartsWith(subdir, "cuttlefish_runtime.")) {
@@ -270,7 +274,8 @@ int main(int argc, char** argv) {
     return 134;
   }
 
-  if (cuttlefish::CuttlefishConfig::Get()->enable_metrics() ==
+  if (cuttlefish::CuttlefishConfig::Get() &&
+      cuttlefish::CuttlefishConfig::Get()->enable_metrics() ==
       cuttlefish::CuttlefishConfig::Answer::kYes) {
     cuttlefish::MetricsReceiver::LogMetricsVMStop();
   }
