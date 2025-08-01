@@ -15,24 +15,28 @@
  */
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
+namespace cuttlefish {
 
 inline constexpr int kSectorSizeShift = 9;
 inline constexpr int kSectorSize = 1 << kSectorSizeShift;
 
 struct __attribute__((packed)) MbrPartitionEntry {
-  std::uint8_t status;
-  std::uint8_t begin_chs[3];
-  std::uint8_t partition_type;
-  std::uint8_t end_chs[3];
-  std::uint32_t first_lba;
-  std::uint32_t num_sectors;
+  uint8_t status;
+  uint8_t begin_chs[3];
+  uint8_t partition_type;
+  uint8_t end_chs[3];
+  uint32_t first_lba;
+  uint32_t num_sectors;
 };
 
 struct __attribute__((packed)) MasterBootRecord {
-  std::uint8_t bootstrap_code[446];
+  uint8_t bootstrap_code[446];
   MbrPartitionEntry partitions[4];
-  std::uint8_t boot_signature[2];
+  uint8_t boot_signature[2];
 };
 
 static_assert(sizeof(MasterBootRecord) == kSectorSize);
+
+}  // namespace cuttlefish
