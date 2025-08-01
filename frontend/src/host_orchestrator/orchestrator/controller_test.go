@@ -240,6 +240,10 @@ func (testIDM) UpdateImageDirectory(imageDirName, dir string) error {
 	return nil
 }
 
+func (testIDM) DeleteImageDirectory(imageDirName string) error {
+	return nil
+}
+
 func TestUploadUserArtifactIsHandled(t *testing.T) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
