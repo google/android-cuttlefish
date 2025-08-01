@@ -5,6 +5,11 @@ package(
 )
 
 cf_cc_library(
+    name = "audio_frame_buffer",
+    hdrs = ["audio_frame_buffer.h"],
+)
+
+cf_cc_library(
     name = "libdevice",
     srcs = [
         "audio_track_source_impl.cpp",
@@ -21,7 +26,6 @@ cf_cc_library(
         "video_track_source_impl.cpp",
     ],
     hdrs = [
-        "audio_frame_buffer.h",
         "audio_sink.h",
         "audio_track_source_impl.h",
         "camera_controller.h",
@@ -52,6 +56,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libcommon:connection_controller",
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_connection_utils",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_frame_buffer",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
