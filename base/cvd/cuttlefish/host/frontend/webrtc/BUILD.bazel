@@ -70,6 +70,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//cuttlefish/host/frontend/webrtc/libdevice",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
         "//cuttlefish/host/libs/audio_connector",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
