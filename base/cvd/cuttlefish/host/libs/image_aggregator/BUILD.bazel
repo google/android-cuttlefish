@@ -27,6 +27,14 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "disk_image",
+    hdrs = ["disk_image.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+cf_cc_library(
     name = "image_from_file",
     srcs = ["image_from_file.cc"],
     hdrs = ["image_from_file.h"],
@@ -43,14 +51,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "disk_image",
-    hdrs = ["disk_image.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:result",
-    ],
-)
-
-cf_cc_library(
     name = "image_aggregator",
     srcs = ["image_aggregator.cc"],
     hdrs = ["image_aggregator.h"],
@@ -63,16 +63,21 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/libs/config:mbr",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
         "//cuttlefish/host/libs/image_aggregator:composite_disk",
         "//cuttlefish/host/libs/image_aggregator:image_from_file",
+        "//cuttlefish/host/libs/image_aggregator:mbr",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//libbase",
         "//libsparse",
         "@protobuf",
         "@zlib",
     ],
+)
+
+cf_cc_library(
+    name = "mbr",
+    hdrs = ["mbr.h"],
 )
 
 cf_cc_library(
