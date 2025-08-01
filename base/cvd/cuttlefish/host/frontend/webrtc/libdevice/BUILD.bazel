@@ -70,7 +70,6 @@ cf_cc_library(
         "recording_manager.cpp",
         "server_connection.cpp",
         "streamer.cpp",
-        "video_track_source_impl.cpp",
     ],
     hdrs = [
         "client_handler.h",
@@ -82,7 +81,6 @@ cf_cc_library(
         "recording_manager.h",
         "server_connection.h",
         "streamer.h",
-        "video_track_source_impl.h",
     ],
     linkopts = [
         "-lopus",
@@ -103,6 +101,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
+        "//cuttlefish/host/frontend/webrtc/libdevice:video_track_source_impl",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -120,5 +119,15 @@ cf_cc_library(
     hdrs = ["video_sink.h"],
     deps = [
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+    ],
+)
+
+cf_cc_library(
+    name = "video_track_source_impl",
+    srcs = ["video_track_source_impl.cpp"],
+    hdrs = ["video_track_source_impl.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
+        "@libwebrtc",
     ],
 )
