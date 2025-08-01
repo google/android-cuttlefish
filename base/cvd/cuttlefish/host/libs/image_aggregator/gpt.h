@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
@@ -25,31 +25,31 @@ namespace cuttlefish {
 constexpr int GPT_NUM_PARTITIONS = 128;
 
 struct __attribute__((packed)) GptHeader {
-  std::uint8_t signature[8];
-  std::uint8_t revision[4];
-  std::uint32_t header_size;
-  std::uint32_t header_crc32;
-  std::uint32_t reserved;
-  std::uint64_t current_lba;
-  std::uint64_t backup_lba;
-  std::uint64_t first_usable_lba;
-  std::uint64_t last_usable_lba;
-  std::uint8_t disk_guid[16];
-  std::uint64_t partition_entries_lba;
-  std::uint32_t num_partition_entries;
-  std::uint32_t partition_entry_size;
-  std::uint32_t partition_entries_crc32;
+  uint8_t signature[8];
+  uint8_t revision[4];
+  uint32_t header_size;
+  uint32_t header_crc32;
+  uint32_t reserved;
+  uint64_t current_lba;
+  uint64_t backup_lba;
+  uint64_t first_usable_lba;
+  uint64_t last_usable_lba;
+  uint8_t disk_guid[16];
+  uint64_t partition_entries_lba;
+  uint32_t num_partition_entries;
+  uint32_t partition_entry_size;
+  uint32_t partition_entries_crc32;
 };
 
 static_assert(sizeof(GptHeader) == 92);
 
 struct __attribute__((packed)) GptPartitionEntry {
-  std::uint8_t partition_type_guid[16];
-  std::uint8_t unique_partition_guid[16];
-  std::uint64_t first_lba;
-  std::uint64_t last_lba;
-  std::uint64_t attributes;
-  std::uint16_t partition_name[36];  // UTF-16LE
+  uint8_t partition_type_guid[16];
+  uint8_t unique_partition_guid[16];
+  uint64_t first_lba;
+  uint64_t last_lba;
+  uint64_t attributes;
+  uint16_t partition_name[36];  // UTF-16LE
 };
 
 static_assert(sizeof(GptPartitionEntry) == 128);
@@ -57,9 +57,9 @@ static_assert(sizeof(GptPartitionEntry) == 128);
 struct __attribute__((packed)) GptBeginning {
   MasterBootRecord protective_mbr;
   GptHeader header;
-  std::uint8_t header_padding[kSectorSize - sizeof(GptHeader)];
+  uint8_t header_padding[kSectorSize - sizeof(GptHeader)];
   GptPartitionEntry entries[GPT_NUM_PARTITIONS];
-  std::uint8_t partition_alignment[3072];
+  uint8_t partition_alignment[3072];
 };
 
 static_assert(AlignToPowerOf2(sizeof(GptBeginning), PARTITION_SIZE_SHIFT) ==
@@ -68,7 +68,7 @@ static_assert(AlignToPowerOf2(sizeof(GptBeginning), PARTITION_SIZE_SHIFT) ==
 struct __attribute__((packed)) GptEnd {
   GptPartitionEntry entries[GPT_NUM_PARTITIONS];
   GptHeader footer;
-  std::uint8_t footer_padding[kSectorSize - sizeof(GptHeader)];
+  uint8_t footer_padding[kSectorSize - sizeof(GptHeader)];
 };
 
 static_assert(sizeof(GptEnd) % kSectorSize == 0);
