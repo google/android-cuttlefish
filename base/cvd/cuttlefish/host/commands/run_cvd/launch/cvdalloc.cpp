@@ -15,9 +15,15 @@
 
 #include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+
 #include <chrono>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -50,9 +56,11 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
+    std::string path = CvdallocBinary();
+    CF_EXPECT(BinaryIsValid(path));
     auto nice_stop = [this]() { return Stop(); };
 
-    Command cmd(CvdallocBinary(), KillSubprocessFallback(nice_stop));
+    Command cmd(path, KillSubprocessFallback(nice_stop));
     cmd.AddParameter("--id=", instance_.id());
     cmd.AddParameter("--socket=", their_socket_);
     std::vector<MonitorCommand> commands;
@@ -82,6 +90,21 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
         CF_EXPECT(SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0));
     socket_ = std::move(p.first);
     their_socket_ = std::move(p.second);
+    return {};
+  }
+
+  Result<void> BinaryIsValid(std::string_view path) {
+    struct stat st;
+    int r = stat(path.data(), &st);
+    CF_EXPECT(r == 0, "Could not stat the cvdalloc binary at "
+                          << path << ": " << strerror(errno));
+
+    CF_EXPECTF((st.st_mode & S_ISUID) != 0 && st.st_uid == 0,
+        "cvdalloc binary does not have permissions to allocate resources.\n"
+        "As root, please\n\n    chown root {}\n    chmod u+s {}\n\n"
+        "and start the instance again.",
+        path, path);
+
     return {};
   }
 
