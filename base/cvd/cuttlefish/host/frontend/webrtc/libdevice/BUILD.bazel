@@ -59,6 +59,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "data_channels",
+    srcs = ["data_channels.cpp"],
+    hdrs = ["data_channels.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:gamepad",
+        "//cuttlefish/host/frontend/webrtc/libdevice:keyboard",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
     name = "gamepad",
     srcs = ["gamepad.cpp"],
     hdrs = ["gamepad.h"],
@@ -74,13 +90,11 @@ cf_cc_library(
     name = "libdevice",
     srcs = [
         "client_handler.cpp",
-        "data_channels.cpp",
         "gamepad.cpp",
         "streamer.cpp",
     ],
     hdrs = [
         "client_handler.h",
-        "data_channels.h",
         "gamepad.h",
         "streamer.h",
     ],
@@ -101,8 +115,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
-        "//cuttlefish/host/frontend/webrtc/libdevice:gamepad",
-        "//cuttlefish/host/frontend/webrtc/libdevice:keyboard",
+        "//cuttlefish/host/frontend/webrtc/libdevice:data_channels",
         "//cuttlefish/host/frontend/webrtc/libdevice:recording_manager",
         "//cuttlefish/host/frontend/webrtc/libdevice:server_connection",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
