@@ -50,6 +50,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "connection_observer",
+    hdrs = ["connection_observer.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "libdevice",
     srcs = [
         "client_handler.cpp",
@@ -65,7 +74,6 @@ cf_cc_library(
     ],
     hdrs = [
         "client_handler.h",
-        "connection_observer.h",
         "data_channels.h",
         "gamepad.h",
         "keyboard.h",
@@ -94,6 +102,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_track_source_impl",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
