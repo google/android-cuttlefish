@@ -66,7 +66,6 @@ cf_cc_library(
         "gamepad.cpp",
         "keyboard.cpp",
         "lights_observer.cpp",
-        "local_recorder.cpp",
         "recording_manager.cpp",
         "streamer.cpp",
     ],
@@ -76,7 +75,6 @@ cf_cc_library(
         "gamepad.h",
         "keyboard.h",
         "lights_observer.h",
-        "local_recorder.h",
         "recording_manager.h",
         "streamer.h",
     ],
@@ -97,6 +95,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:local_recorder",
         "//cuttlefish/host/frontend/webrtc/libdevice:server_connection",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_track_source_impl",
@@ -107,6 +106,16 @@ cf_cc_library(
         "@boringssl//:crypto",
         "@jsoncpp",
         "@libvpx",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "local_recorder",
+    srcs = ["local_recorder.cpp"],
+    hdrs = ["local_recorder.h"],
+    deps = [
+        "//libbase",
         "@libwebm//:mkvmuxer",
         "@libwebrtc",
     ],
