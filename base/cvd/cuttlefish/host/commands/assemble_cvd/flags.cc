@@ -50,6 +50,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_image_flags_vectorization.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -356,20 +357,6 @@ std::optional<std::string> InstancesUdsDir() {
     return std::nullopt;
   }
   return instances_uds_dir;
-}
-
-std::string DefaultBootloaderArchDir(Arch arch) {
-  switch (arch) {
-    case Arch::Arm64:
-      return "aarch64";
-    case Arch::Arm:
-      return "arm";
-    case Arch::RiscV64:
-      return "riscv64";
-    case Arch::X86:
-    case Arch::X86_64:
-      return "x86_64";
-  }
 }
 
 } // namespace
@@ -1342,9 +1329,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
+  BootloaderFlag bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
+      guest_configs, system_image_dir, vm_manager_flag));
+
   CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config,
-                                        boot_image, initramfs_path, kernel_path,
-                                        system_image_dir));
+                                        boot_image, bootloader, initramfs_path,
+                                        kernel_path, system_image_dir));
 
   return tmp_config_obj;
 }
@@ -1360,34 +1350,19 @@ Result<void> SetDefaultFlagsForQemu(
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
   std::vector<bool> start_webrtc_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
-  std::string default_bootloader = "";
   std::string default_android_efi_loader = "";
   std::string default_start_webrtc = "";
 
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    std::string curr_bootloader =
-        system_image_dir.ForIndex(instance_index) + "/bootloader";
     std::string curr_android_efi_loader =
         system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
 
-    // /bootloader isn't presented in the output folder by default and can be
-    // only fetched by --bootloader in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (!FileExists(curr_bootloader)) {
-      // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath(fmt::format(
-          "etc/bootloader_{}/bootloader.qemu",
-          DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
-    }
-
     if (instance_index > 0) {
-      default_bootloader += ",";
       default_android_efi_loader += ",";
       default_start_webrtc += ",";
     }
 
-    default_bootloader += curr_bootloader;
     // EFI loader isn't presented in the output folder by default and can be
     // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
     // it's presented.
@@ -1410,8 +1385,6 @@ Result<void> SetDefaultFlagsForQemu(
   SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
-  SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("android_efi_loader",
                                default_android_efi_loader.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -1436,33 +1409,18 @@ Result<void> SetDefaultFlagsForCrosvm(
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
 
   std::string default_android_efi_loader = "";
-  std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    std::string curr_bootloader =
-        system_image_dir.ForIndex(instance_index) + "/bootloader";
     std::string curr_android_efi_loader =
         system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
 
-    // /bootloader isn't presented in the output folder by default and can be
-    // only fetched by --bootloader in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (!FileExists(curr_bootloader)) {
-      // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath(fmt::format(
-          "etc/bootloader_{}/bootloader.crosvm",
-          DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
-    }
-
     if (instance_index > 0) {
-      default_bootloader += ",";
       default_android_efi_loader += ",";
       default_enable_sandbox_str += ",";
       default_start_webrtc += ",";
     }
 
-    default_bootloader += curr_bootloader;
     // EFI loader isn't presented in the output folder by default and can be
     // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
     // it's presented.
@@ -1480,8 +1438,6 @@ Result<void> SetDefaultFlagsForCrosvm(
           "{}", static_cast<bool>(start_webrtc_vec[instance_index]));
     }
   }
-  SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("android_efi_loader",
                                default_android_efi_loader.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
