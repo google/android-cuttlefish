@@ -41,17 +41,16 @@ cf_cc_library(
     srcs = [
         "peer_connection_utils.cpp",
         "port_range_socket_factory.cpp",
-        "vp8only_encoder_factory.cpp",
     ],
     hdrs = [
         "peer_connection_utils.h",
         "port_range_socket_factory.h",
-        "vp8only_encoder_factory.h",
     ],
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
+        "//cuttlefish/host/frontend/webrtc/libcommon:vp8only_encoder_factory",
         "//libbase",
         "@fmt",
         "@jsoncpp",
@@ -78,6 +77,15 @@ cf_cc_library(
         "//libbase",
         "@fmt",
         "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "vp8only_encoder_factory",
+    srcs = ["vp8only_encoder_factory.cpp"],
+    hdrs = ["vp8only_encoder_factory.h"],
+    deps = [
         "@libwebrtc",
     ],
 )
