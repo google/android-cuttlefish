@@ -40,11 +40,9 @@ cf_cc_library(
     name = "libcommon",
     srcs = [
         "peer_connection_utils.cpp",
-        "port_range_socket_factory.cpp",
     ],
     hdrs = [
         "peer_connection_utils.h",
-        "port_range_socket_factory.h",
     ],
     deps = [
         "//cuttlefish/common/libs/utils:json",
