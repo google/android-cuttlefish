@@ -48,6 +48,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:vsock_connection",
         "//cuttlefish/host/frontend/webrtc/libcommon",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//cuttlefish/host/frontend/webrtc/libcommon:connection_controller",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
