@@ -104,19 +104,12 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "libdevice",
+    name = "streamer",
     srcs = ["streamer.cpp"],
     hdrs = ["streamer.h"],
-    linkopts = [
-        "-lopus",
-    ],
     deps = [
-        "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:vsock_connection",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
-        "//cuttlefish/host/frontend/webrtc/libcommon:connection_controller",
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_connection_utils",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
@@ -125,18 +118,14 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:client_handler",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
-        "//cuttlefish/host/frontend/webrtc/libdevice:data_channels",
         "//cuttlefish/host/frontend/webrtc/libdevice:recording_manager",
         "//cuttlefish/host/frontend/webrtc/libdevice:server_connection",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_track_source_impl",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
-        "@boringssl//:crypto",
         "@jsoncpp",
-        "@libvpx",
         "@libwebrtc",
     ],
 )
