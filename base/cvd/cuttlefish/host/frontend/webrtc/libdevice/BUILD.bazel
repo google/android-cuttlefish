@@ -65,7 +65,6 @@ cf_cc_library(
         "data_channels.cpp",
         "gamepad.cpp",
         "keyboard.cpp",
-        "lights_observer.cpp",
         "recording_manager.cpp",
         "streamer.cpp",
     ],
@@ -74,7 +73,6 @@ cf_cc_library(
         "data_channels.h",
         "gamepad.h",
         "keyboard.h",
-        "lights_observer.h",
         "recording_manager.h",
         "streamer.h",
     ],
@@ -107,6 +105,17 @@ cf_cc_library(
         "@jsoncpp",
         "@libvpx",
         "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "lights_observer",
+    srcs = ["lights_observer.cpp"],
+    hdrs = ["lights_observer.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:vsock_connection",
+        "//libbase",
+        "@jsoncpp",
     ],
 )
 

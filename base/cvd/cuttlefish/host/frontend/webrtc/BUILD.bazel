@@ -73,6 +73,7 @@ cf_cc_binary(
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:lights_observer",
         "//cuttlefish/host/frontend/webrtc/libdevice:local_recorder",
         "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
         "//cuttlefish/host/libs/audio_connector",
