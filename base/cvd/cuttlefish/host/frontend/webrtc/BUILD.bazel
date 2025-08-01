@@ -68,7 +68,6 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
-        "//cuttlefish/host/frontend/webrtc/libcommon",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//cuttlefish/host/frontend/webrtc/libdevice",
         "//cuttlefish/host/libs/audio_connector",
