@@ -11,7 +11,6 @@ cf_cc_library(
         "connection_controller.cpp",
         "peer_connection_utils.cpp",
         "port_range_socket_factory.cpp",
-        "utils.cpp",
         "vp8only_encoder_factory.cpp",
     ],
     hdrs = [
@@ -22,9 +21,23 @@ cf_cc_library(
         "peer_signaling_handler.h",
         "port_range_socket_factory.h",
         "signaling_constants.h",
-        "utils.h",
         "vp8only_encoder_factory.h",
     ],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "utils",
+    srcs = ["utils.cpp"],
+    hdrs = ["utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
