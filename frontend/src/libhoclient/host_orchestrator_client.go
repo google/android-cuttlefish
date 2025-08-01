@@ -122,6 +122,8 @@ type ImageDirectoriesClient interface {
 	// Update image directory to include uploaded or extracted user artifact at
 	// Host Orchestrator.
 	UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error)
+	// Delete the specified image directory.
+	DeleteImageDirectory(id string) (*hoapi.Operation, error)
 }
 
 // Operations that could be performend on a given instance.
@@ -613,6 +615,14 @@ func (c *HostOrchestratorClientImpl) UpdateImageDirectoryWithUserArtifact(id, fi
 	req := hoapi.UpdateImageDirectoryRequest{UserArtifactChecksum: checksum}
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewPutRequest("/cvd_imgs_dirs/"+id, req).JSONResDo(op); err != nil {
+		return nil, err
+	}
+	return op, nil
+}
+
+func (c *HostOrchestratorClientImpl) DeleteImageDirectory(id string) (*hoapi.Operation, error) {
+	op := &hoapi.Operation{}
+	if err := c.HTTPHelper.NewDeleteRequest("/cvd_imgs_dirs/" + id).JSONResDo(op); err != nil {
 		return nil, err
 	}
 	return op, nil

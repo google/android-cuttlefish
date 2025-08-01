@@ -285,6 +285,26 @@ func TestUpdateImageDirectoryWithUserArtifactSucceeds(t *testing.T) {
 	}
 }
 
+func TestDeleteImageDirectorySucceeds(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch ep := r.Method + " " + r.URL.Path; ep {
+		case "DELETE /cvd_imgs_dirs/foo":
+			writeOK(w, hoapi.Operation{Name: "bar"})
+		default:
+			t.Fatal("unexpected endpoint: " + ep)
+		}
+	}))
+	defer ts.Close()
+	client := NewHostOrchestratorClient(ts.URL)
+
+	expected := &hoapi.Operation{Name: "bar"}
+	if op, err := client.DeleteImageDirectory("foo"); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff(expected, op); diff != "" {
+		t.Fatalf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestCreateCVDWithUserProjectOverride(t *testing.T) {
 	fakeRes := &hoapi.CreateCVDResponse{CVDs: []*hoapi.CVD{{Name: "1"}}}
 	token := "foo"
