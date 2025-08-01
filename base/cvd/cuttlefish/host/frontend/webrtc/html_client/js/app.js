@@ -375,6 +375,11 @@ class DeviceControlApp {
       enableMouseButton(this.#deviceConnection);
     }
 
+    if (this.#deviceConnection.description.gamepad_enabled) {
+      // Enable gamepad button conditionally.
+      enableGamepadButton(this.#deviceConnection);
+    }
+
     enableKeyboardRewriteButton(this.#deviceConnection);
 
     // Set up displays

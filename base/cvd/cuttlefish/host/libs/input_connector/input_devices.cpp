@@ -159,6 +159,22 @@ Result<void> MouseDevice::SendWheelEvent(int pixels) {
   return {};
 }
 
+Result<void> GamepadDevice::SendKeyEvent(int code, bool down) {
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_KEY, code, down);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
+  return {};
+}
+
+Result<void> GamepadDevice::SendMotionEvent(int code, int value) {
+  EventBuffer buffer(2);
+  buffer.AddEvent(EV_ABS, code, value);
+  buffer.AddEvent(EV_SYN, SYN_REPORT, 0);
+  CF_EXPECT(WriteEvents(buffer));
+  return {};
+}
+
 Result<void> KeyboardDevice::SendEvent(uint16_t code, bool down) {
   EventBuffer buffer(2);
   buffer.AddEvent(EV_KEY, code, down);

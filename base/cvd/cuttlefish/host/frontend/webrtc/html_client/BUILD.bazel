@@ -12,6 +12,7 @@ exports_files([
     "js/app.js",
     "js/cf_webrtc.js",
     "js/controls.js",
+    "js/gamepad.js",
     "js/keyboard.js",
     "js/location.js",
     "js/mouse.js",
