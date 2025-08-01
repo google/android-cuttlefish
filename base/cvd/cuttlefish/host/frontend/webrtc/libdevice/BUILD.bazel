@@ -29,6 +29,14 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "camera_controller",
+    hdrs = ["camera_controller.h"],
+    deps = [
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "libdevice",
     srcs = [
         "camera_streamer.cpp",
@@ -44,7 +52,6 @@ cf_cc_library(
         "video_track_source_impl.cpp",
     ],
     hdrs = [
-        "camera_controller.h",
         "camera_streamer.h",
         "client_handler.h",
         "connection_observer.h",
@@ -74,6 +81,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
         "//cuttlefish/host/frontend/webrtc/libdevice:audio_track_source_impl",
+        "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
