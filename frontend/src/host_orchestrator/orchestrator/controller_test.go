@@ -347,6 +347,21 @@ func TestUpdateImageDirectoryIsHandled(t *testing.T) {
 	}
 }
 
+func TestDeleteImageDirectoryIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("DELETE", "/cvd_imgs_dirs/foo", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{ImageDirectoriesManager: &testIDM{}, OperationManager: NewMapOM()}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestGetDebugVarzIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", "/_debug/varz", strings.NewReader("{}"))
