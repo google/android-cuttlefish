@@ -18,7 +18,6 @@ cf_cc_library(
         "audio_source.h",
         "connection_controller.h",
         "peer_connection_utils.h",
-        "peer_signaling_handler.h",
         "port_range_socket_factory.h",
         "signaling_constants.h",
         "vp8only_encoder_factory.h",
@@ -27,10 +26,20 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/frontend/webrtc/libcommon:peer_signaling_handler",
         "//libbase",
         "@fmt",
         "@jsoncpp",
         "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "peer_signaling_handler",
+    hdrs = ["peer_signaling_handler.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@jsoncpp",
     ],
 )
 
