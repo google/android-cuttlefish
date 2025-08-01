@@ -117,6 +117,8 @@ type UserArtifactsClient interface {
 type ImageDirectoriesClient interface {
 	// Create an empty image directory.
 	CreateImageDirectory() (*hoapi.Operation, error)
+	// List all image directories.
+	ListImageDirectories() (*hoapi.ListImageDirectoriesResponse, error)
 	// Update image directory to include uploaded or extracted user artifact at
 	// Host Orchestrator.
 	UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error)
@@ -593,6 +595,14 @@ func (c *HostOrchestratorClientImpl) CreateImageDirectory() (*hoapi.Operation, e
 		return nil, err
 	}
 	return op, nil
+}
+
+func (c *HostOrchestratorClientImpl) ListImageDirectories() (*hoapi.ListImageDirectoriesResponse, error) {
+	res := &hoapi.ListImageDirectoriesResponse{}
+	if err := c.HTTPHelper.NewGetRequest("/cvd_imgs_dirs").JSONResDo(res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (c *HostOrchestratorClientImpl) UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error) {
