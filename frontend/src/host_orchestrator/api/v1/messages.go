@@ -136,9 +136,18 @@ type ListUploadDirectoriesResponse struct {
 
 type StatArtifactResponse struct{}
 
+type ImageDirectory struct {
+	ID string `json:"id"`
+}
+
 type CreateImageDirectoryResponse struct {
 	// [Output Only] Identifier of created image directory.
 	ID string `json:"id"`
+}
+
+type ListImageDirectoriesResponse struct {
+	// [Output Only] Identifiers of image directories.
+	ImageDirs []ImageDirectory `json:"image_dirs"`
 }
 
 type UpdateImageDirectoryRequest struct {
