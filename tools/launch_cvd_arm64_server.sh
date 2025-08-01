@@ -13,6 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This shell script is now deprecated, and will be removed shortly. Please
+# consider to setup Cloud Orchestration on the on-premise server instead.
+# https://github.com/google/cloud-android-orchestration/blob/main/scripts/on-premises/single-server/README.md
+
 color_cyan="\033[0;36m"
 color_plain="\033[0m"
 color_yellow="\033[0;33m"
