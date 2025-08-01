@@ -112,7 +112,9 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/cvd_imgs_dirs", httpHandler(&createImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("POST")
+	router.Handle("/cvd_imgs_dirs", httpHandler(&listImageDirectoriesHandler{c.ImageDirectoriesManager})).Methods("GET")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
+	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&deleteImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("DELETE")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -656,6 +658,22 @@ func (h *createImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 	return op, nil
 }
 
+type listImageDirectoriesHandler struct {
+	idm ImageDirectoriesManager
+}
+
+func (h *listImageDirectoriesHandler) Handle(r *http.Request) (interface{}, error) {
+	dirs, err := h.idm.ListImageDirectories()
+	if err != nil {
+		return nil, err
+	}
+	imageDirs := []apiv1.ImageDirectory{}
+	for _, dir := range dirs {
+		imageDirs = append(imageDirs, apiv1.ImageDirectory{ID: dir})
+	}
+	return apiv1.ListImageDirectoriesResponse{ImageDirs: imageDirs}, nil
+}
+
 type updateImageDirectoryHandler struct {
 	idm  ImageDirectoriesManager
 	om   OperationManager
@@ -676,6 +694,22 @@ func (h *updateImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 	op := h.om.New()
 	go func() {
 		err := h.idm.UpdateImageDirectory(mux.Vars(r)["id"], dir)
+		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
+}
+
+type deleteImageDirectoryHandler struct {
+	idm ImageDirectoriesManager
+	om  OperationManager
+}
+
+func (h *deleteImageDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	op := h.om.New()
+	go func() {
+		err := h.idm.DeleteImageDirectory(mux.Vars(r)["id"])
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}

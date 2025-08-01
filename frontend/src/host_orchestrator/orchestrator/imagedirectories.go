@@ -27,9 +27,13 @@ import (
 type ImageDirectoriesManager interface {
 	// Create an empty image directory.
 	CreateImageDirectory() (string, error)
+	// List all image directories.
+	ListImageDirectories() ([]string, error)
 	// Update image directory with creating or modifying symlinks of all files
 	// under specified directory.
 	UpdateImageDirectory(imageDirName, dir string) error
+	// Delete the specified image directory.
+	DeleteImageDirectory(imageDirName string) error
 }
 
 // Options for creating instances of ImageDirectoriesManager implementations.
@@ -56,6 +60,26 @@ func (m *ImageDirectoriesManagerImpl) CreateImageDirectory() (string, error) {
 		return "", fmt.Errorf("failed to create an image directory: %w", err)
 	}
 	return dirname, nil
+}
+
+func (m *ImageDirectoriesManagerImpl) ListImageDirectories() ([]string, error) {
+	imageDirs := []string{}
+	if exists, err := dirExists(m.RootDir); err != nil {
+		return nil, fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return imageDirs, nil
+	}
+	entries, err := ioutil.ReadDir(m.RootDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory: %w", err)
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			return nil, fmt.Errorf("invalid image directory: %q", entry.Name())
+		}
+		imageDirs = append(imageDirs, entry.Name())
+	}
+	return imageDirs, nil
 }
 
 func (m *ImageDirectoriesManagerImpl) UpdateImageDirectory(imageDirName, dir string) error {
@@ -86,6 +110,19 @@ func (m *ImageDirectoriesManagerImpl) UpdateImageDirectory(imageDirName, dir str
 		if err := os.Symlink(filepath.Join(dir, entry.Name()), symlink); err != nil {
 			return fmt.Errorf("failed to create symlink: %w", err)
 		}
+	}
+	return nil
+}
+
+func (m *ImageDirectoriesManagerImpl) DeleteImageDirectory(imageDirName string) error {
+	imageDir := filepath.Join(m.RootDir, imageDirName)
+	if exists, err := dirExists(imageDir); err != nil {
+		return fmt.Errorf("failed to check existence of directory: %w", err)
+	} else if !exists {
+		return operator.NewNotFoundError(fmt.Sprintf("image directory(dir:%q) not found", imageDirName), nil)
+	}
+	if err := os.RemoveAll(imageDir); err != nil {
+		return fmt.Errorf("failed to remove image directory: %w", err)
 	}
 	return nil
 }
