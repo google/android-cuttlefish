@@ -35,6 +35,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gpt",
+    hdrs = ["gpt.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/host/libs/image_aggregator:mbr",
+    ],
+)
+
+cf_cc_library(
     name = "image_from_file",
     srcs = ["image_from_file.cc"],
     hdrs = ["image_from_file.h"],
@@ -65,6 +74,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
         "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:gpt",
         "//cuttlefish/host/libs/image_aggregator:image_from_file",
         "//cuttlefish/host/libs/image_aggregator:mbr",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
