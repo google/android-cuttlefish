@@ -42,34 +42,16 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
-#include "cuttlefish/host/libs/config/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
+#include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
 namespace cuttlefish {
 namespace {
 
 constexpr int GPT_NUM_PARTITIONS = 128;
-
-/**
- * Creates a "Protective" MBR Partition Table header. The GUID
- * Partition Table Specification recommends putting this on the first sector
- * of the disk, to protect against old disk formatting tools from misidentifying
- * the GUID Partition Table later and doing the wrong thing.
- */
-MasterBootRecord ProtectiveMbr(std::uint64_t size) {
-  MasterBootRecord mbr = {
-      .partitions = {{
-          .partition_type = 0xEE,
-          .first_lba = 1,
-          .num_sectors = (std::uint32_t)size / kSectorSize,
-      }},
-      .boot_signature = {0x55, 0xAA},
-  };
-  return mbr;
-}
 
 struct __attribute__((packed)) GptHeader {
   std::uint8_t signature[8];

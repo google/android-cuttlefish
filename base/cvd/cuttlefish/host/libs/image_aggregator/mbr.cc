@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+#include "cuttlefish/host/libs/image_aggregator/mbr.h"
 
-#include <cstdint>
+#include <stdint.h>
 
-inline constexpr int kSectorSizeShift = 9;
-inline constexpr int kSectorSize = 1 << kSectorSizeShift;
+namespace cuttlefish {
 
-struct __attribute__((packed)) MbrPartitionEntry {
-  std::uint8_t status;
-  std::uint8_t begin_chs[3];
-  std::uint8_t partition_type;
-  std::uint8_t end_chs[3];
-  std::uint32_t first_lba;
-  std::uint32_t num_sectors;
-};
+MasterBootRecord ProtectiveMbr(uint64_t size) {
+  MasterBootRecord mbr = {
+      .partitions = {{
+          .partition_type = 0xEE,
+          .first_lba = 1,
+          .num_sectors = (uint32_t)size / kSectorSize,
+      }},
+      .boot_signature = {0x55, 0xAA},
+  };
+  return mbr;
+}
 
-struct __attribute__((packed)) MasterBootRecord {
-  std::uint8_t bootstrap_code[446];
-  MbrPartitionEntry partitions[4];
-  std::uint8_t boot_signature[2];
-};
-
-static_assert(sizeof(MasterBootRecord) == kSectorSize);
+}  // namespace cuttlefish
