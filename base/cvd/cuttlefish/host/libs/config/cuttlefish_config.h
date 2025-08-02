@@ -35,6 +35,7 @@
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
@@ -43,15 +44,6 @@ class Value;
 }
 
 namespace cuttlefish {
-
-enum class GuestHwuiRenderer {
-  kUnknown,
-  kSkiaGl,
-  kSkiaVk,
-};
-std::ostream& operator<<(std::ostream&, GuestHwuiRenderer);
-std::string ToString(GuestHwuiRenderer renderer);
-Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view);
 
 enum class GuestRendererPreload {
   kAuto,
