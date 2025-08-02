@@ -5,32 +5,77 @@ package(
 )
 
 cf_cc_library(
-    name = "libcommon",
-    srcs = [
-        "audio_device.cpp",
-        "connection_controller.cpp",
-        "peer_connection_utils.cpp",
-        "port_range_socket_factory.cpp",
-        "utils.cpp",
-        "vp8only_encoder_factory.cpp",
+    name = "audio_device",
+    srcs = ["audio_device.cpp"],
+    hdrs = ["audio_device.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//libbase",
+        "@libwebrtc",
     ],
-    hdrs = [
-        "audio_device.h",
-        "audio_source.h",
-        "connection_controller.h",
-        "peer_connection_utils.h",
-        "peer_signaling_handler.h",
-        "port_range_socket_factory.h",
-        "signaling_constants.h",
-        "utils.h",
-        "vp8only_encoder_factory.h",
+)
+
+cf_cc_library(
+    name = "audio_source",
+    hdrs = ["audio_source.h"],
+)
+
+cf_cc_library(
+    name = "connection_controller",
+    srcs = ["connection_controller.cpp"],
+    hdrs = ["connection_controller.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/frontend/webrtc/libcommon:peer_signaling_handler",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+        "@libwebrtc",
     ],
+)
+
+cf_cc_library(
+    name = "peer_connection_utils",
+    srcs = ["peer_connection_utils.cpp"],
+    hdrs = ["peer_connection_utils.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
+        "//cuttlefish/host/frontend/webrtc/libcommon:vp8only_encoder_factory",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "peer_signaling_handler",
+    hdrs = ["peer_signaling_handler.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "utils",
+    srcs = ["utils.cpp"],
+    hdrs = ["utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
         "@fmt",
         "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "vp8only_encoder_factory",
+    srcs = ["vp8only_encoder_factory.cpp"],
+    hdrs = ["vp8only_encoder_factory.h"],
+    deps = [
         "@libwebrtc",
     ],
 )
