@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 
-#include <array>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -27,8 +26,6 @@
 #include <string_view>
 #include <vector>
 
-#include <fmt/ostream.h>
-
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -37,6 +34,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
@@ -45,15 +43,6 @@ class Value;
 }
 
 namespace cuttlefish {
-
-enum class ExternalNetworkMode {
-  kUnknown,
-  kTap,
-  kSlirp,
-};
-
-std::ostream& operator<<(std::ostream&, ExternalNetworkMode);
-Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view);
 
 enum class GuestHwuiRenderer {
   kUnknown,
@@ -994,8 +983,3 @@ class CuttlefishConfig {
 bool IsRestoring(const CuttlefishConfig&);
 
 }  // namespace cuttlefish
-
-#if FMT_VERSION >= 90000
-template <>
-struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
-#endif

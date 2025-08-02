@@ -1,8 +1,37 @@
-cuttlefish-common (1.18.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.19.0) UNRELEASED; urgency=medium
 
-  * 
+  *   
 
- -- Chad Reynolds <chadreynolds@google.com>  Fri, 25 Jul 2025 16:24:35 -0700
+ -- Jason Macnak <natsu@google.com>  Fri, 01 Aug 2025 15:06:58 -0700
+
+cuttlefish-common (1.18.0) unstable; urgency=medium
+
+  * Start development on v1.18 by @cjreynol in https://github.com/google/android-cuttlefish/pull/1448
+  * Extract `WaitForFile` out of `files.cpp` by @Databean in https://github.com/google/android-cuttlefish/pull/1449
+  * Split `sparse_image_utils` out of `image_aggregator` by @Databean in https://github.com/google/android-cuttlefish/pull/1452
+  * Import ag/34790658 by @Databean in https://github.com/google/android-cuttlefish/pull/1451
+  * Create a DiskImage subclass for android-sparse images by @Databean in https://github.com/google/android-cuttlefish/pull/1453
+  * Use `Result` types in `image_aggregator.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1456
+  * sparse_image_utils acquires flock on where real image is located at by @0405ysj in https://github.com/google/android-cuttlefish/pull/1460
+  * root-canal -> rootcanal by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1455
+  * Create a CompositeDiskImage subclass of DiskImage by @Databean in https://github.com/google/android-cuttlefish/pull/1459
+  * Create a `VmManagerFlag` type by @Databean in https://github.com/google/android-cuttlefish/pull/1458
+  * Expose image type detection from image_aggregator by @Databean in https://github.com/google/android-cuttlefish/pull/1461
+  * Convenient wrappers for `RunWithManagedStdio` by @Databean in https://github.com/google/android-cuttlefish/pull/1445
+  * Lift `GetGuestConfigAndSetDefaults` components out by @Databean in https://github.com/google/android-cuttlefish/pull/1462
+  * Make `cvd host_bugreport` more robust by @jemoreira in https://github.com/google/android-cuttlefish/pull/1450
+  * Extract `VmmMode` to a separate file out of `cuttlefish_config.h` by @Databean in https://github.com/google/android-cuttlefish/pull/1463
+  * Stop supporting legacy HO golang client APIs dealing with user artifacts by @0405ysj in https://github.com/google/android-cuttlefish/pull/1454
+  * Format golang files under Github repository by @0405ysj in https://github.com/google/android-cuttlefish/pull/1468
+  * Incorporate the grpcio-sys crate. by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1464
+  * Stop supporting legacy HO REST APIs dealing with user artifacts by @0405ysj in https://github.com/google/android-cuttlefish/pull/1466
+  * Fix wifi mode selection again by @Databean in https://github.com/google/android-cuttlefish/pull/1470
+  * Don't start the webrtc_operator binary by @jemoreira in https://github.com/google/android-cuttlefish/pull/1465
+  * Return bootparams in-memory from UnpackBootImage by @Databean in https://github.com/google/android-cuttlefish/pull/1432
+  * Update build_packages.sh by @spi3ex in https://github.com/google/android-cuttlefish/pull/1472
+  * Fix some segfaults during cvd reset. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1474
+
+ -- Jason Macnak <natsu@google.com>  Fri, 01 Aug 2025 13:14:27 -0700
 
 cuttlefish-common (1.17.0) unstable; urgency=medium
 
