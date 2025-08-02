@@ -20,6 +20,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
@@ -37,6 +38,9 @@ class CachingBuildApi : public BuildApi {
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name,
       const std::string& backup_artifact_name) override;
+
+  Result<ReadableZip> OpenZipArchive(const Build& build,
+                                     const std::string& zip_name) override;
 
  private:
   Result<bool> CanCache(const std::string& target_directory);
