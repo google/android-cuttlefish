@@ -106,6 +106,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:external_network_mode",
+        "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//libbase",
@@ -187,6 +188,16 @@ cf_cc_library(
         "//libbase",
         "@gflags",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "guest_hwui_renderer",
+    srcs = ["guest_hwui_renderer.cc"],
+    hdrs = ["guest_hwui_renderer.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
     ],
 )
 

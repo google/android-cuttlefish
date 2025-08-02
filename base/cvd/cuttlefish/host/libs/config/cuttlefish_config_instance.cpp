@@ -44,6 +44,7 @@
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
@@ -54,33 +55,6 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
-
-std::ostream& operator<<(std::ostream& out, GuestHwuiRenderer renderer) {
-  return out << ToString(renderer);
-}
-
-std::string ToString(GuestHwuiRenderer renderer) {
-  switch (renderer) {
-    case GuestHwuiRenderer::kUnknown:
-      return "unknown";
-    case GuestHwuiRenderer::kSkiaGl:
-      return "skiagl";
-    case GuestHwuiRenderer::kSkiaVk:
-      return "skiavk";
-  }
-}
-
-Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "unknown")) {
-    return GuestHwuiRenderer::kUnknown;
-  } else if (android::base::EqualsIgnoreCase(str, "skiagl")) {
-    return GuestHwuiRenderer::kSkiaGl;
-  } else if (android::base::EqualsIgnoreCase(str, "skiavk")) {
-    return GuestHwuiRenderer::kSkiaVk;
-  } else {
-    return CF_ERRF("\"{}\" is not a valid HWUI renderer.", str);
-  }
-}
 
 std::ostream& operator<<(std::ostream& out, GuestRendererPreload preload) {
   return out << ToString(preload);

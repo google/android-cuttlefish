@@ -46,6 +46,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:external_network_mode",
+        "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/feature",
