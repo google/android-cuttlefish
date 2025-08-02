@@ -20,6 +20,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
@@ -36,6 +37,9 @@ class BuildApi {
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name,
       const std::string& backup_artifact_name) = 0;
+
+  virtual Result<ReadableZip> OpenZipArchive(const Build& build,
+                                             const std::string& artifact_name) = 0;
 };
 
 }  // namespace cuttlefish
