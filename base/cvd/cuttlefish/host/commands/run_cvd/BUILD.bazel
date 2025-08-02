@@ -40,15 +40,7 @@ cf_cc_library(
 
 cf_cc_binary(
     name = "run_cvd",
-    srcs = [
-        "main.cc",
-        "server_loop.cpp",
-        "server_loop.h",
-        "server_loop_impl.cpp",
-        "server_loop_impl.h",
-        "server_loop_impl_snapshot.cpp",
-        "server_loop_impl_webrtc.cpp",
-    ],
+    srcs = ["main.cc"],
     deps = [
         ":reporting",
         "//cuttlefish/common/libs/fs",
@@ -65,6 +57,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/commands/run_cvd:boot_state_machine",
+        "//cuttlefish/host/commands/run_cvd:server_loop",
         "//cuttlefish/host/commands/run_cvd:validate",
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
         "//cuttlefish/host/commands/run_cvd/launch:automotive_proxy",
@@ -122,6 +115,41 @@ cf_cc_binary(
         "@googleapis//google/rpc:status_cc_proto",
         "@grpc",
         "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
+    name = "server_loop",
+    srcs = [
+        "server_loop.cpp",
+        "server_loop_impl.cpp",
+        "server_loop_impl.h",
+        "server_loop_impl_snapshot.cpp",
+        "server_loop_impl_webrtc.cpp",
+    ],
+    hdrs = ["server_loop.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
+        "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
+        "//cuttlefish/host/libs/config:ap_boot_flow",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/host/libs/process_monitor",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
+        "@gflags",
     ],
 )
 
