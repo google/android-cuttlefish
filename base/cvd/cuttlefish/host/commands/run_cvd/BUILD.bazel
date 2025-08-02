@@ -26,8 +26,6 @@ cf_cc_binary(
         "server_loop_impl.h",
         "server_loop_impl_snapshot.cpp",
         "server_loop_impl_webrtc.cpp",
-        "validate.cpp",
-        "validate.h",
     ],
     deps = [
         ":reporting",
@@ -45,6 +43,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
+        "//cuttlefish/host/commands/run_cvd:validate",
         "//cuttlefish/host/commands/run_cvd/launch:auto_cmd",
         "//cuttlefish/host/commands/run_cvd/launch:automotive_proxy",
         "//cuttlefish/host/commands/run_cvd/launch:bluetooth_connector",
@@ -101,5 +100,20 @@ cf_cc_binary(
         "@googleapis//google/rpc:status_cc_proto",
         "@grpc",
         "@grpc//:grpc++",
+    ],
+)
+
+cf_cc_library(
+    name = "validate",
+    srcs = ["validate.cpp"],
+    hdrs = ["validate.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:network",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
     ],
 )
