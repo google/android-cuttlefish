@@ -268,7 +268,17 @@ class WebRtcServer : public virtual CommandSource,
 
   // SetupFeature
   bool Enabled() const override {
-    return sockets_.Enabled() && instance_.enable_webrtc();
+    if (!sockets_.Enabled()) {
+      return false;
+    }
+    switch (config_.vm_manager()) {
+      case VmmMode::kCrosvm:
+      case VmmMode::kQemu:
+        return true;
+      case VmmMode::kGem5:
+      case VmmMode::kUnknown:
+        return false;
+    }
   }
 
  private:

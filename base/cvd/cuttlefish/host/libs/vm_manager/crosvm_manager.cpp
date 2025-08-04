@@ -640,23 +640,21 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     disk_i++;
   }
 
-  if (instance.enable_webrtc()) {
-    auto display_configs = instance.display_configs();
-    CF_EXPECT(!display_configs.empty());
+  auto display_configs = instance.display_configs();
+  CF_EXPECT(!display_configs.empty());
 
-    const int display_cnt = instance.display_configs().size();
-    const int touchpad_cnt = instance.touchpad_configs().size();
-    const int total_touch_cnt = display_cnt + touchpad_cnt;
-    for (int touch_idx = 0; touch_idx < total_touch_cnt; ++touch_idx) {
-      crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx));
-    }
-    if (instance.enable_mouse()) {
-      crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path());
-    }
-    crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path());
-    crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
-    crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
+  const int display_cnt = instance.display_configs().size();
+  const int touchpad_cnt = instance.touchpad_configs().size();
+  const int total_touch_cnt = display_cnt + touchpad_cnt;
+  for (int touch_idx = 0; touch_idx < total_touch_cnt; ++touch_idx) {
+    crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx));
   }
+  if (instance.enable_mouse()) {
+    crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path());
+  }
+  crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path());
+  crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
+  crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
 
   // GPU capture can only support named files and not file descriptors due to
   // having to pass arguments to crosvm via a wrapper script.
