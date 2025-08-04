@@ -93,8 +93,6 @@ DECLARE_vec(enable_virtiofs);
 
 DECLARE_string(seccomp_policy_dir);
 
-DECLARE_vec(start_webrtc);
-
 DECLARE_vec(webrtc_assets_dir);
 
 DECLARE_bool(start_webrtc_sig_server);

@@ -62,6 +62,7 @@ CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
     : config_(config), id_(id) {
   // Legacy for acloud
   (*Dictionary())[kInstanceDir] = config_->InstancesPath(IdToName(id));
+  (*Dictionary())["enable_webrtc"] = true;
 }
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
@@ -1024,14 +1025,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_enable_jcard_simulator(
 }
 bool CuttlefishConfig::InstanceSpecific::enable_jcard_simulator() const {
   return (*Dictionary())[kEnableJcardSimulator].asBool();
-}
-
-static constexpr char kEnableWebRTC[] = "enable_webrtc";
-void CuttlefishConfig::MutableInstanceSpecific::set_enable_webrtc(bool enable_webrtc) {
-  (*Dictionary())[kEnableWebRTC] = enable_webrtc;
-}
-bool CuttlefishConfig::InstanceSpecific::enable_webrtc() const {
-  return (*Dictionary())[kEnableWebRTC].asBool();
 }
 
 static constexpr char kWebRTCAssetsDir[] = "webrtc_assets_dir";
