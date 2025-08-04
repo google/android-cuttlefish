@@ -16,8 +16,6 @@ package orchestrator
 
 import (
 	"fmt"
-	"log"
-	"path/filepath"
 	"regexp"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
@@ -48,19 +46,6 @@ func ValidateStartCVDRequest(r *apiv1.StartCVDRequest) error {
 		if err := ValidateSnapshotID(r.SnapshotID); err != nil {
 			return operator.NewBadRequestError("invalid request", err)
 		}
-	}
-	return nil
-}
-
-// Validate whether the passed string could be a valid file or directory name.
-func ValidateFileName(s string) error {
-	if s == "." || s == ".." {
-		return fmt.Errorf("invalid value: %s", s)
-	}
-	sanitized := filepath.Base(filepath.Clean(s))
-	if sanitized != s {
-		log.Printf("invalid file name %q: sanitized value: %q", s, sanitized)
-		return fmt.Errorf("invalid value: %s", s)
 	}
 	return nil
 }

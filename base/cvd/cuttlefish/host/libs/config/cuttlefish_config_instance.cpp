@@ -43,6 +43,7 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
@@ -53,29 +54,6 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
-
-std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
-  switch (net) {
-    case ExternalNetworkMode::kUnknown:
-      return out << "unknown";
-    case ExternalNetworkMode::kTap:
-      return out << "tap";
-    case ExternalNetworkMode::kSlirp:
-      return out << "slirp";
-  }
-}
-Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "tap")) {
-    return ExternalNetworkMode::kTap;
-  } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
-    return ExternalNetworkMode::kSlirp;
-  } else {
-    return CF_ERRF(
-        "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
-        "and \"slirp\"",
-        str);
-  }
-}
 
 std::ostream& operator<<(std::ostream& out, GuestHwuiRenderer renderer) {
   return out << ToString(renderer);
@@ -1838,23 +1816,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
 }
 std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
   return (*Dictionary())[kWebrtcDeviceId].asString();
-}
-
-static constexpr char kStartSigServer[] = "webrtc_start_sig_server";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_webrtc_signaling_server(bool start) {
-  (*Dictionary())[kStartSigServer] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
-  return (*Dictionary())[kStartSigServer].asBool();
-}
-
-static constexpr char kStartSigServerProxy[] = "webrtc_start_sig_server_proxy";
-void CuttlefishConfig::MutableInstanceSpecific::
-    set_start_webrtc_sig_server_proxy(bool start) {
-  (*Dictionary())[kStartSigServerProxy] = start;
-}
-bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server_proxy() const {
-  return (*Dictionary())[kStartSigServerProxy].asBool();
 }
 
 static constexpr char kStartRootcanal[] = "start_rootcanal";

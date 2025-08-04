@@ -79,7 +79,6 @@ DEFINE_string(client_dir, "webrtc", "Location of the client files");
 namespace cuttlefish {
 
 using webrtc_streaming::RecordingManager;
-using webrtc_streaming::ServerConfig;
 using webrtc_streaming::Streamer;
 using webrtc_streaming::StreamerConfig;
 using webrtc_streaming::VideoSink;
@@ -278,18 +277,7 @@ int CuttlefishMain() {
   streamer_config.adb_port = instance.adb_host_port();
   streamer_config.control_env_proxy_server_path =
       instance.grpc_socket_path() + "/ControlEnvProxyServer.sock";
-  streamer_config.operator_server.addr = cvd_config->sig_server_address();
-  streamer_config.operator_server.port = cvd_config->sig_server_port();
-  streamer_config.operator_server.path = cvd_config->sig_server_path();
-  if (cvd_config->sig_server_secure()) {
-    streamer_config.operator_server.security =
-        cvd_config->sig_server_strict()
-            ? ServerConfig::Security::kStrict
-            : ServerConfig::Security::kAllowSelfSigned;
-  } else {
-    streamer_config.operator_server.security =
-        ServerConfig::Security::kInsecure;
-  }
+  streamer_config.operator_path = cvd_config->sig_server_address();
   streamer_config.enable_mouse = instance.enable_mouse();
   streamer_config.enable_gamepad = instance.enable_gamepad();
 

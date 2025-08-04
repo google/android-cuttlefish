@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,10 +40,6 @@ type UserArtifactsDirResolver interface {
 	UpdatedArtifactPath(checksum string) string
 	// Retrieve the full path where the extracted artifact located
 	ExtractedArtifactPath(checksum string) string
-
-	// Given a directory name returns its full path.
-	// Deprecated: use `UpdatedArtifactPath` instead
-	GetDirPath(name string) string
 }
 
 type UserArtifactChunk struct {
@@ -65,24 +60,10 @@ type UserArtifactsManager interface {
 	ExtractArtifact(checksum string) error
 
 	UserArtifactsDirResolver
-	// Creates a new directory for uploading user artifacts in the future.
-	// Deprecated: use `UpdateArtifact` instead
-	NewDir() (*apiv1.UploadDirectory, error)
-	// List existing directories
-	// Deprecated: use `UpdateArtifact` instead
-	ListDirs() (*apiv1.ListUploadDirectoriesResponse, error)
-	// Update artifact with the passed chunk
-	// Deprecated: use `UpdateArtifact` instead
-	UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error
-	// Extract artifact
-	// Deprecated: use `ExtractArtifact` instead
-	ExtractArtifactWithDir(dir, name string) error
 }
 
 // Options for creating instances of UserArtifactsManager implementations.
 type UserArtifactsManagerOpts struct {
-	// Root directory for legacy APIs treating user artifacts.
-	LegacyRootDir string
 	// Root directory for storing user artifacts. After Host Orchestrator moves user artifacts from
 	// the working directory into here, it becomes immutable unless introducing any replacement
 	// algorithm(e.g. LRU) on RootDir to manage the storage.
@@ -119,52 +100,12 @@ func NewUserArtifactsManagerImpl(opts UserArtifactsManagerOpts) (*UserArtifactsM
 	}, nil
 }
 
-func (m *UserArtifactsManagerImpl) NewDir() (*apiv1.UploadDirectory, error) {
-	if err := createDir(m.LegacyRootDir); err != nil {
-		return nil, err
-	}
-	dir, err := ioutil.TempDir(m.LegacyRootDir, "")
-	if err != nil {
-		return nil, err
-	}
-	if err := os.Chmod(dir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to grant read permission at %q: %w", dir, err)
-	}
-	log.Println("created new user artifact directory", dir)
-	return &apiv1.UploadDirectory{Name: filepath.Base(dir)}, nil
-}
-
-func (m *UserArtifactsManagerImpl) ListDirs() (*apiv1.ListUploadDirectoriesResponse, error) {
-	exist, err := fileExist(m.LegacyRootDir)
-	if err != nil {
-		return nil, err
-	}
-	if !exist {
-		return &apiv1.ListUploadDirectoriesResponse{Items: make([]*apiv1.UploadDirectory, 0)}, nil
-	}
-	entries, err := ioutil.ReadDir(m.LegacyRootDir)
-	if err != nil {
-		return nil, err
-	}
-	dirs := make([]*apiv1.UploadDirectory, 0)
-	for _, entry := range entries {
-		if entry.IsDir() {
-			dirs = append(dirs, &apiv1.UploadDirectory{Name: entry.Name()})
-		}
-	}
-	return &apiv1.ListUploadDirectoriesResponse{Items: dirs}, nil
-}
-
 func (m *UserArtifactsManagerImpl) UpdatedArtifactPath(checksum string) string {
 	return filepath.Join(m.RootDir, checksum)
 }
 
 func (m *UserArtifactsManagerImpl) ExtractedArtifactPath(checksum string) string {
 	return filepath.Join(m.RootDir, fmt.Sprintf("%s_extracted", checksum))
-}
-
-func (m *UserArtifactsManagerImpl) GetDirPath(name string) string {
-	return filepath.Join(m.LegacyRootDir, name)
 }
 
 func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArtifactChunk) error {
@@ -191,20 +132,6 @@ func (m *UserArtifactsManagerImpl) UpdateArtifact(checksum string, chunk UserArt
 		if err := m.moveArtifactIfNeeded(checksum, chunk); err != nil {
 			return fmt.Errorf("failed to move the user artifact from working directory: %w", err)
 		}
-	}
-	return nil
-}
-
-func (m *UserArtifactsManagerImpl) UpdateArtifactWithDir(dir string, chunk UserArtifactChunk) error {
-	dir = filepath.Join(m.LegacyRootDir, dir)
-	if ok, err := fileExist(dir); err != nil {
-		return err
-	} else if !ok {
-		return operator.NewBadRequestError("upload directory %q does not exist", err)
-	}
-	filename := filepath.Join(dir, chunk.Name)
-	if err := writeChunk(filename, chunk); err != nil {
-		return err
 	}
 	return nil
 }
@@ -383,22 +310,6 @@ func extractFile(dst string, src string) error {
 		return operator.NewBadRequestError(fmt.Sprintf("unsupported extension: %q", src), nil)
 	}
 	return nil
-}
-
-func (m *UserArtifactsManagerImpl) ExtractArtifactWithDir(dir, name string) error {
-	dir = filepath.Join(m.LegacyRootDir, dir)
-	if ok, err := fileExist(dir); err != nil {
-		return err
-	} else if !ok {
-		return operator.NewBadRequestError(fmt.Sprintf("directory %q does not exist", dir), nil)
-	}
-	filename := filepath.Join(dir, name)
-	if ok, err := fileExist(filename); err != nil {
-		return err
-	} else if !ok {
-		return operator.NewBadRequestError(fmt.Sprintf("artifact %q does not exist", name), nil)
-	}
-	return extractFile(dir, filename)
 }
 
 func untar(dst string, src string) error {

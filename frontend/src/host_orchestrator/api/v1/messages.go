@@ -41,10 +41,6 @@ type AndroidCIBundle struct {
 // Prefix for specifying image directory ID while creating CVD with CreateCVDRequest.EnvConfig.
 const EnvConfigImageDirectoriesVar = "@image_dirs"
 
-// Prefix for specifying user artifact path while creating CVD with CreateCVDRequest.EnvConfig.
-// [DEPRECATED]. Use `EnvConfigImageDirectoriesVar` instead.
-const EnvConfigUserArtifactsVar = "@user_artifacts"
-
 // Use `X-Cutf-Host-Orchestrator-BuildAPI-Creds` http header to pass the Build API credentials.
 type CreateCVDRequest struct {
 	// Environment canonical configuration.
@@ -140,9 +136,18 @@ type ListUploadDirectoriesResponse struct {
 
 type StatArtifactResponse struct{}
 
+type ImageDirectory struct {
+	ID string `json:"id"`
+}
+
 type CreateImageDirectoryResponse struct {
 	// [Output Only] Identifier of created image directory.
 	ID string `json:"id"`
+}
+
+type ListImageDirectoriesResponse struct {
+	// [Output Only] Identifiers of image directories.
+	ImageDirs []ImageDirectory `json:"image_dirs"`
 }
 
 type UpdateImageDirectoryRequest struct {

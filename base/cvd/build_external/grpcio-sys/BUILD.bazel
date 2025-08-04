@@ -1,0 +1,16 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+cc_library(
+    name = "grpc_wrap_deps",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@abseil-cpp//absl/log",
+        "@grpc//:grpc_unsecure",
+    ],
+)
+
+filegroup(
+    name = "gpr_assert",
+    srcs = ["gpr_assert.h"],
+    visibility = ["//visibility:public"],
+)

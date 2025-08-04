@@ -38,6 +38,7 @@
 #include "cuttlefish/host/frontend/webrtc/libdevice/audio_track_source_impl.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/camera_streamer.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/client_handler.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/server_connection.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_track_source_impl.h"
 #include "cuttlefish/host/frontend/webrtc_operator/constants/signaling_constants.h"
 
@@ -390,7 +391,7 @@ void Streamer::Impl::Register(std::weak_ptr<OperatorObserver> observer) {
   // the registration will take place
   if (!server_connection_) {
     server_connection_ =
-        ServerConnection::Connect(config_.operator_server, weak_from_this());
+        ServerConnection::Connect(config_.operator_path, weak_from_this());
   } else {
     // in case connection attempt is retried, just call Reconnect().
     // Recreating server_connection_ object will destroy existing WSConnection

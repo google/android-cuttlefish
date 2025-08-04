@@ -17,6 +17,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <string>
 #include <thread>
 
 #include <android-base/logging.h>
@@ -54,10 +55,10 @@ class UnixServerConnection : public ServerConnection {
 };
 
 std::unique_ptr<ServerConnection> ServerConnection::Connect(
-    const ServerConfig& conf,
+    const std::string& operator_path,
     std::weak_ptr<ServerConnectionObserver> observer) {
   std::unique_ptr<ServerConnection> ret(
-      new UnixServerConnection(conf.addr, observer));
+      new UnixServerConnection(operator_path, observer));
   ret->Connect();
   return ret;
 }

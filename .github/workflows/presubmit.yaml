@@ -328,11 +328,6 @@ jobs:
         sudo podman exec -it tester sh -c 'echo "orchestrator_android_build_url=http://localhost:8090" >> /etc/default/cuttlefish-host_orchestrator && service cuttlefish-host_orchestrator restart'
         sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/verify_access_token_test:verify_access_token_test_test
         sudo podman rm -f tester
-        # Run upload_file_test
-        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
-        sudo podman exec -it tester usermod -a -G httpcvd testrunner
-        sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/upload_file_test:upload_file_test_test
-        sudo podman rm -f tester
         # Run create_with_gce_metadata_credentials_test
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
         sleep 30s # Add delay before restarting cuttlefish-host_orchestrator service.
