@@ -16,7 +16,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 
 #include <errno.h>
-#include <fcntl.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -36,6 +35,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -98,13 +98,7 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
     int r = stat(path.data(), &st);
     CF_EXPECT(r == 0, "Could not stat the cvdalloc binary at "
                           << path << ": " << strerror(errno));
-
-    CF_EXPECTF((st.st_mode & S_ISUID) != 0 && st.st_uid == 0,
-        "cvdalloc binary does not have permissions to allocate resources.\n"
-        "As root, please\n\n    chown root {}\n    chmod u+s {}\n\n"
-        "and start the instance again.",
-        path, path);
-
+    CF_EXPECT(ValidateCvdallocBinary(path));
     return {};
   }
 

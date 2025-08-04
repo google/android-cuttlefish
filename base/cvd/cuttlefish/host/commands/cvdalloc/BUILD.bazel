@@ -28,6 +28,19 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "privilege",
+    srcs = [
+        "privilege.cpp",
+        "privilege.h",
+    ],
+    hdrs = ["privilege.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+    ],
+)
+
 cf_cc_binary(
     name = "cvdalloc",
     srcs = [
@@ -35,9 +48,11 @@ cf_cc_binary(
     ],
     deps = [
         ":interface",
+        ":privilege",
         ":sem",
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
         "//libbase",
         "@abseil-cpp//absl/cleanup:cleanup",
         "@abseil-cpp//absl/flags:flag",
