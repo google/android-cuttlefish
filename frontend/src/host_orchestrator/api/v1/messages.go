@@ -191,11 +191,11 @@ type DisplayMode struct {
 type Display struct {
 	DPI           []int       `json:"dpi"`
 	Mode          DisplayMode `json:"mode"`
-	RefreshRateHZ int         `json:"refresh-rate"`
+	RefreshRateHZ int         `json:"refresh_rate_hz"`
 }
 
 type DisplayListResponse struct {
-	Displays map[int]Display `json:displays`
+	Displays map[int]Display `json:"displays"`
 }
 
 type DisplayRemoveResponse = EmptyResponse
