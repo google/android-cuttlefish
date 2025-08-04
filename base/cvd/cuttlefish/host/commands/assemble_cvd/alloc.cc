@@ -19,9 +19,12 @@
 #include <iomanip>
 #include <sstream>
 
+#include "absl/strings/numbers.h"
+
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/allocd/request.h"
 #include "cuttlefish/host/libs/allocd/utils.h"
+
 
 namespace cuttlefish {
 
@@ -31,8 +34,13 @@ static std::string StrForInstance(const std::string& prefix, int num) {
   return stream.str();
 }
 
-IfaceConfig DefaultNetworkInterfaces(int num) {
+Result<IfaceConfig> DefaultNetworkInterfaces(
+    const CuttlefishConfig::InstanceSpecific& instance) {
   IfaceConfig config{};
+
+  int num;
+  CF_EXPECT(absl::SimpleAtoi(instance.id(), &num));
+
   config.mobile_tap.name = StrForInstance("cvd-mtap-", num);
   config.mobile_tap.resource_id = 0;
   config.mobile_tap.session_id = 0;
