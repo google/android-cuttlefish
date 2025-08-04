@@ -10,7 +10,10 @@ cf_cc_library(
     hdrs = ["alloc.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/allocd:allocd_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

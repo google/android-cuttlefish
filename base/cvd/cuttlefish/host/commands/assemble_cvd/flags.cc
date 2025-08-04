@@ -772,6 +772,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, instance_nums,
                                              FLAGS_webrtc_device_id));
   for (const auto& num : instance_nums) {
+    auto instance = tmp_config_obj.ForInstance(num);
+    auto const_instance =
+        const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
+
+    instance.set_use_cvdalloc(use_cvdalloc_vec[instance_index]);
+
     IfaceConfig iface_config;
     if (use_allocd_vec[instance_index]) {
       auto iface_opt = AllocateNetworkInterfaces();
@@ -780,14 +786,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       }
       iface_config = iface_opt.value();
     } else {
-      iface_config = DefaultNetworkInterfaces(num);
+      iface_config = CF_EXPECT(DefaultNetworkInterfaces(const_instance));
     }
 
-    auto instance = tmp_config_obj.ForInstance(num);
-    auto const_instance =
-        const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
-
-    instance.set_use_cvdalloc(use_cvdalloc_vec[instance_index]);
     instance.set_crosvm_use_balloon(use_balloon_vec[instance_index]);
     instance.set_crosvm_use_rng(use_rng_vec[instance_index]);
     instance.set_crosvm_simple_media_device(simple_media_device_vec[instance_index]);
