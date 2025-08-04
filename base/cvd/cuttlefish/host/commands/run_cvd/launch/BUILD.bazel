@@ -109,6 +109,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/cvdalloc:privilege",
         "//cuttlefish/host/commands/cvdalloc:sem",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:cuttlefish_config",

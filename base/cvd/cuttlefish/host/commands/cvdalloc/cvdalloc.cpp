@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
+#include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
 
 ABSL_FLAG(int, id, 0, "Id");
@@ -94,30 +95,20 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
   };
 
   /*
-   * Explicit setuid calls seem to be required.
-   *
-   * This likely has something to do with invoking external commands,
-   * but it isn't clear why an explicit setuid(0) is necessary.
-   * It's possible a Linux kernel bug around permissions checking on tap
-   * devices may be the culprit, which we can't control.
-   *
-   * TODO: We should just use capabilities on Linux and rely on setuid as
-   * a fallback for other platforms.
-   *
    * Save our current uid, so we can restore it to drop privileges later.
    */
   uid_t orig = getuid();
 
   absl::Cleanup drop_privileges = [orig]() {
-    int r = setuid(orig);
+    int r = DropPrivileges(orig);
     if (r == -1) {
       LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << strerror(errno);
     }
   };
 
-  r = setuid(0);
+  r = BeginElevatedPrivileges();
   if (r == -1) {
-    return CF_ERRNO("Couldn't setuid root: " << strerror(errno));
+    return CF_ERRNO("Couldn't elevate permissions: " << strerror(errno));
   }
 
   std::string bridge_name = "cvd-pi-br";
