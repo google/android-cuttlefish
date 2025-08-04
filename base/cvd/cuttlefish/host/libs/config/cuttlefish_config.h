@@ -23,7 +23,6 @@
 #include <optional>
 #include <set>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/architecture.h"
@@ -36,6 +35,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
+#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
@@ -44,16 +44,6 @@ class Value;
 }
 
 namespace cuttlefish {
-
-enum class GuestRendererPreload {
-  kAuto,
-  kGuestDefault,
-  kEnabled,
-  kDisabled,
-};
-std::ostream& operator<<(std::ostream&, GuestRendererPreload);
-std::string ToString(GuestRendererPreload);
-Result<GuestRendererPreload> ParseGuestRendererPreload(std::string_view);
 
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {

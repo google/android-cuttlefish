@@ -23,13 +23,14 @@
 
 namespace cuttlefish {
 
-enum class GuestHwuiRenderer {
-  kUnknown,
-  kSkiaGl,
-  kSkiaVk,
+enum class GuestRendererPreload {
+  kAuto,
+  kGuestDefault,
+  kEnabled,
+  kDisabled,
 };
-std::ostream& operator<<(std::ostream&, GuestHwuiRenderer);
-std::string ToString(GuestHwuiRenderer renderer);
-Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view);
+std::ostream& operator<<(std::ostream&, GuestRendererPreload);
+std::string ToString(GuestRendererPreload);
+Result<GuestRendererPreload> ParseGuestRendererPreload(std::string_view);
 
 }  // namespace cuttlefish

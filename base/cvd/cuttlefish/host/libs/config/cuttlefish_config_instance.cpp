@@ -24,7 +24,6 @@
 #include <optional>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -45,6 +44,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
+#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
@@ -55,41 +55,6 @@ const char* kInstances = "instances";
 std::string IdToName(const std::string& id) { return kCvdNamePrefix + id; }
 
 }  // namespace
-
-std::ostream& operator<<(std::ostream& out, GuestRendererPreload preload) {
-  return out << ToString(preload);
-}
-
-std::string ToString(GuestRendererPreload preload) {
-  switch (preload) {
-    case GuestRendererPreload::kAuto:
-      return "auto";
-    case GuestRendererPreload::kGuestDefault:
-      return "default";
-    case GuestRendererPreload::kEnabled:
-      return "enabled";
-    case GuestRendererPreload::kDisabled:
-      return "disabled";
-  }
-}
-
-Result<GuestRendererPreload> ParseGuestRendererPreload(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "auto")) {
-    return GuestRendererPreload::kAuto;
-  } else if (android::base::EqualsIgnoreCase(str, "default")) {
-    return GuestRendererPreload::kGuestDefault;
-  } else if (android::base::EqualsIgnoreCase(str, "enabled")) {
-    return GuestRendererPreload::kEnabled;
-  } else if (android::base::EqualsIgnoreCase(str, "disabled")) {
-    return GuestRendererPreload::kDisabled;
-  } else {
-    return CF_ERRF("\"{}\" is not a valid renderer preload.", str);
-  }
-}
-
-std::ostream& operator<<(std::ostream&, GuestRendererPreload);
-std::string ToString(GuestRendererPreload);
-Result<GuestRendererPreload> ParseGuestRendererPreload(std::string_view);
 
 static constexpr char kInstanceDir[] = "instance_dir";
 CuttlefishConfig::MutableInstanceSpecific::MutableInstanceSpecific(
