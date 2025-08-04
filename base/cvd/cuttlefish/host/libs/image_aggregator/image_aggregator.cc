@@ -417,7 +417,7 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
     std::string padding_str;
     padding_str.resize(padding, '\0');
 
-    CF_EXPECTF(WriteAll(output, padding_str) != padding_str.size(),
+    CF_EXPECTF(WriteAll(output, padding_str) == padding_str.size(),
                "Could not write partition padding to '{}': {}", output_path,
                output->StrError());
   }
