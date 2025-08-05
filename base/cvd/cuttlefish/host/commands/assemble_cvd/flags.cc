@@ -49,6 +49,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_image_flags_vectorization.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
@@ -1326,47 +1327,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
+  AndroidEfiLoaderFlag efi_loader =
+      AndroidEfiLoaderFlag::FromGlobalGflags(system_image_dir, vm_manager_flag);
+
   BootloaderFlag bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
       guest_configs, system_image_dir, vm_manager_flag));
 
-  CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config,
-                                        boot_image, bootloader, initramfs_path,
-                                        kernel_path, system_image_dir));
+  CF_EXPECT(DiskImageFlagsVectorization(
+      tmp_config_obj, fetcher_config, efi_loader, boot_image, bootloader,
+      initramfs_path, kernel_path, system_image_dir));
 
   return tmp_config_obj;
-}
-
-Result<void> SetDefaultFlagsForQemu(
-    const SystemImageDirFlag& system_image_dir,
-    const std::vector<GuestConfig>& guest_configs,
-    std::map<std::string, std::string>& name_to_default_value) {
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  int32_t instances_size = instance_nums.size();
-  std::vector<std::string> gpu_mode_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
-  std::string default_android_efi_loader = "";
-
-  for (int instance_index = 0; instance_index < instance_nums.size();
-       instance_index++) {
-    std::string curr_android_efi_loader =
-        system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
-
-    if (instance_index > 0) {
-      default_android_efi_loader += ",";
-    }
-
-    // EFI loader isn't presented in the output folder by default and can be
-    // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (FileExists(curr_android_efi_loader)) {
-      default_android_efi_loader += curr_android_efi_loader;
-    }
-  }
-  SetCommandLineOptionWithMode("android_efi_loader",
-                               default_android_efi_loader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  return {};
 }
 
 Result<void> SetDefaultFlagsForCrosvm(
@@ -1382,29 +1353,14 @@ Result<void> SetDefaultFlagsForCrosvm(
       EnsureDirectoryExists(kCrosvmVarEmptyDir).ok() &&
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
 
-  std::string default_android_efi_loader = "";
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    std::string curr_android_efi_loader =
-        system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
-
     if (instance_index > 0) {
-      default_android_efi_loader += ",";
       default_enable_sandbox_str += ",";
-    }
-
-    // EFI loader isn't presented in the output folder by default and can be
-    // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (FileExists(curr_android_efi_loader)) {
-      default_android_efi_loader += curr_android_efi_loader;
     }
     default_enable_sandbox_str += fmt::format("{}", default_enable_sandbox);
   }
-  SetCommandLineOptionWithMode("android_efi_loader",
-                               default_android_efi_loader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // This is the 1st place to set "enable_sandbox" flag value
   SetCommandLineOptionWithMode("enable_sandbox",
                                default_enable_sandbox_str.c_str(),
@@ -1468,8 +1424,6 @@ Result<void> SetFlagDefaultsForVmm(
 
   switch (vm_manager_flag.Mode()) {
     case VmmMode::kQemu:
-      CF_EXPECT(SetDefaultFlagsForQemu(system_image_dir, guest_configs,
-                                       name_to_default_value));
       break;
     case VmmMode::kCrosvm:
       CF_EXPECT(SetDefaultFlagsForCrosvm(system_image_dir, guest_configs,
