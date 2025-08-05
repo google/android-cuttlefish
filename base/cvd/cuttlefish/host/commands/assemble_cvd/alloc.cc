@@ -20,40 +20,46 @@
 #include <sstream>
 
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_format.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/allocd/request.h"
 #include "cuttlefish/host/libs/allocd/utils.h"
 
-
 namespace cuttlefish {
 
-static std::string StrForInstance(const std::string& prefix, int num) {
-  std::ostringstream stream;
-  stream << prefix << std::setfill('0') << std::setw(2) << num;
-  return stream.str();
+static Result<std::string> InterfaceName(
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::string& name) {
+  int num;
+  CF_EXPECT(absl::SimpleAtoi(instance.id(), &num));
+
+  if (instance.use_cvdalloc()) {
+    return CvdallocInterfaceName(name, num);
+  }
+
+  return absl::StrFormat("%s-%s-%02d", kDefaultInterfacePrefix, name, num);
 }
 
 Result<IfaceConfig> DefaultNetworkInterfaces(
     const CuttlefishConfig::InstanceSpecific& instance) {
   IfaceConfig config{};
 
-  int num;
-  CF_EXPECT(absl::SimpleAtoi(instance.id(), &num));
-
-  config.mobile_tap.name = StrForInstance("cvd-mtap-", num);
+  config.mobile_tap.name = CF_EXPECT(InterfaceName(instance, "mtap"));
   config.mobile_tap.resource_id = 0;
   config.mobile_tap.session_id = 0;
 
-  config.bridged_wireless_tap.name = StrForInstance("cvd-wtap-", num);
+  config.bridged_wireless_tap.name = CF_EXPECT(InterfaceName(instance, "wtap"));
   config.bridged_wireless_tap.resource_id = 0;
   config.bridged_wireless_tap.session_id = 0;
 
-  config.non_bridged_wireless_tap.name = StrForInstance("cvd-wifiap-", num);
+  config.non_bridged_wireless_tap.name =
+      CF_EXPECT(InterfaceName(instance, "wifiap"));
   config.non_bridged_wireless_tap.resource_id = 0;
   config.non_bridged_wireless_tap.session_id = 0;
 
-  config.ethernet_tap.name = StrForInstance("cvd-etap-", num);
+  config.ethernet_tap.name = CF_EXPECT(InterfaceName(instance, "etap"));
   config.ethernet_tap.resource_id = 0;
   config.ethernet_tap.session_id = 0;
 

@@ -25,6 +25,8 @@
 
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/commands/cvdalloc/interface.h"
 
 ABSL_FLAG(int, id, 0, "Id");
 ABSL_FLAG(int, socket, 0, "Socket");
@@ -37,26 +39,28 @@ void Usage() {
   LOG(ERROR) << "Should only be invoked from run_cvd.";
 }
 
-Result<void> Allocate(int id) {
+Result<void> Allocate(int id, const std::string &bridge_name) {
   LOG(INFO) << "cvdalloc: allocating network resources";
 
-  CreateBridge("cvd-br");
+  CreateBridge(bridge_name);
   CF_EXPECT(
-      CreateMobileIface(absl::StrFormat("cvd-mtap-%02d", id), id, kMobileIp));
+      CreateMobileIface(CvdallocInterfaceName("mtap", id), id, kMobileIp));
   CF_EXPECT(
-      CreateMobileIface(absl::StrFormat("cvd-wtap-%02d", id), id, kWirelessIp));
-  CF_EXPECT(CreateEthernetIface(absl::StrFormat("cvd-etap-%02d", id), "cvd-br",
+      CreateMobileIface(CvdallocInterfaceName("wtap", id), id, kWirelessIp));
+  CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("etap", id), bridge_name,
                                 true, true, false));
+
   return {};
 }
 
-Result<void> Teardown(int id) {
+Result<void> Teardown(int id, const std::string &bridge_name) {
   LOG(INFO) << "cvdalloc: tearing down resources";
 
-  DestroyMobileIface(absl::StrFormat("cvd-mtap-%02d", id), id, kMobileIp);
-  DestroyMobileIface(absl::StrFormat("cvd-wtap-%02d", id), id, kWirelessIp);
-  DestroyEthernetIface(absl::StrFormat("cvd-etap-%02d", id), true, true, false);
-  DestroyBridge("cvd-br");
+  DestroyMobileIface(CvdallocInterfaceName("mtap", id), id, kMobileIp);
+  DestroyMobileIface(CvdallocInterfaceName("wtap", id), id, kWirelessIp);
+  DestroyEthernetIface(CvdallocInterfaceName("etap", id), true, true, false);
+  DestroyBridge(bridge_name);
+
   return {};
 }
 
@@ -109,13 +113,15 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
     return CF_ERRNO("Couldn't setuid root: " << strerror(errno));
   }
 
-  auto teardown = android::base::ScopeGuard([id, sock]() {
+  std::string bridge_name = "cvd-pi-br";
+
+  auto teardown = android::base::ScopeGuard([id, bridge_name, sock]() {
     sock->Shutdown(SHUT_RDWR);
 
-    Teardown(id);
+    Teardown(id, bridge_name);
   });
 
-  CF_EXPECT(Allocate(id));
+  CF_EXPECT(Allocate(id, bridge_name));
 
   int i = 0;
   r = sock->Write(&i, sizeof(int));
