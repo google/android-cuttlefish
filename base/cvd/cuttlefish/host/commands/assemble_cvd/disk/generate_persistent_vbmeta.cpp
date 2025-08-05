@@ -31,7 +31,6 @@ namespace cuttlefish {
 namespace {
 
 Result<void> PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
-  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
   std::vector<ChainPartition> chained_partitions = {ChainPartition{
       .name = "uboot_env",
       .rollback_index = "1",
@@ -44,7 +43,7 @@ Result<void> PrepareVBMetaImage(const std::string& path, bool has_boot_config) {
         .key_path = TestPubKeyRsa4096(),
     });
   }
-  CF_EXPECT(avbtool->MakeVbMetaImage(path, chained_partitions, {}, {}));
+  CF_EXPECT(Avb().MakeVbMetaImage(path, chained_partitions, {}, {}));
   return {};
 }
 
