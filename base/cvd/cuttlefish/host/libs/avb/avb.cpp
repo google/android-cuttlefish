@@ -22,8 +22,6 @@
 #include <memory>
 #include <string>
 
-#include <fruit/fruit.h>
-
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -43,6 +41,8 @@ constexpr char kMakeVbmetaImage[] = "make_vbmeta_image";
 constexpr size_t kVbMetaMaxSize = 65536ul;
 
 }  // namespace
+
+Avb::Avb() : Avb(AvbToolBinary(), kDefaultAlgorithm, TestKeyRsa4096()) {}
 
 Avb::Avb(std::string avbtool_path, std::string algorithm, std::string key)
     : avbtool_path_(std::move(avbtool_path)),
@@ -153,16 +153,6 @@ Result<void> EnforceVbMetaSize(const std::string& path) {
                path, vbmeta_fd->StrError());
   }
   return {};
-}
-
-std::unique_ptr<Avb> GetDefaultAvb() {
-  return std::unique_ptr<Avb>(
-      new Avb(AvbToolBinary(), kDefaultAlgorithm, TestKeyRsa4096()));
-}
-
-fruit::Component<Avb> CuttlefishKeyAvbComponent() {
-  return fruit::createComponent().registerProvider(
-      []() -> Avb* { return GetDefaultAvb().release(); });
 }
 
 }  // namespace cuttlefish

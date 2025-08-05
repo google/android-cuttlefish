@@ -412,9 +412,8 @@ Result<void> BuildVbmetaImage(const std::string& image_path,
   CF_EXPECT(!image_path.empty());
   CF_EXPECTF(FileExists(image_path), "'{}' does not exist", image_path);
 
-  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
-  CF_EXPECT(avbtool->MakeVbMetaImage(vbmeta_path, {}, {image_path},
-                                     {"--padding_size", "4096"}));
+  CF_EXPECT(Avb().MakeVbMetaImage(vbmeta_path, {}, {image_path},
+                                  {"--padding_size", "4096"}));
   return {};
 }
 

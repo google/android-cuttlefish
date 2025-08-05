@@ -192,9 +192,8 @@ Result<void> PrepareBootEnvImage(
   const off_t boot_env_size_bytes =
       AlignToPowerOf2(kMaxAvbMetadataSize + 4096, PARTITION_SIZE_SHIFT);
 
-  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
-  CF_EXPECT(avbtool->AddHashFooter(tmp_boot_env_image_path, "uboot_env",
-                                   boot_env_size_bytes));
+  CF_EXPECT(Avb().AddHashFooter(tmp_boot_env_image_path, "uboot_env",
+                                boot_env_size_bytes));
 
   if (!FileExists(image_path) ||
       ReadFile(image_path) != ReadFile(tmp_boot_env_image_path)) {
