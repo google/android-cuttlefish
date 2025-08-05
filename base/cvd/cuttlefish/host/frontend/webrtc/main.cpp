@@ -75,6 +75,10 @@ DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
 DEFINE_int32(sensors_fd, -1, "An fd to communicate with sensors_simulator.");
 DEFINE_string(client_dir, "webrtc", "Location of the client files");
 
+DEFINE_string(group_id, "",
+              "UNUSED - Kept to support webRTC and run_cvd with different "
+              "versions during the migration");
+
 namespace cuttlefish {
 
 using webrtc_streaming::RecordingManager;
