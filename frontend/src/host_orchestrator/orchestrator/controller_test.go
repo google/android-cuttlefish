@@ -232,7 +232,15 @@ func (testIDM) CreateImageDirectory() (string, error) {
 	return "", nil
 }
 
+func (testIDM) ListImageDirectories() ([]string, error) {
+	return []string{}, nil
+}
+
 func (testIDM) UpdateImageDirectory(imageDirName, dir string) error {
+	return nil
+}
+
+func (testIDM) DeleteImageDirectory(imageDirName string) error {
 	return nil
 }
 
@@ -304,6 +312,21 @@ func TestCreateImageDirectoryIsHandled(t *testing.T) {
 	}
 }
 
+func TestListImageDirectoriesIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/cvd_imgs_dirs", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{ImageDirectoriesManager: &testIDM{}}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
 func TestUpdateImageDirectoryIsHandled(t *testing.T) {
 	rr := httptest.NewRecorder()
 	body, err := json.Marshal(apiv1.UpdateImageDirectoryRequest{UserArtifactChecksum: "aaa"})
@@ -316,6 +339,21 @@ func TestUpdateImageDirectoryIsHandled(t *testing.T) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	controller := Controller{ImageDirectoriesManager: &testIDM{}, OperationManager: NewMapOM(), UserArtifactsManager: &testUAM{}}
+
+	makeRequest(rr, req, &controller)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("request was not handled. This failure implies an API breaking change.")
+	}
+}
+
+func TestDeleteImageDirectoryIsHandled(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, err := http.NewRequest("DELETE", "/cvd_imgs_dirs/foo", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Controller{ImageDirectoriesManager: &testIDM{}, OperationManager: NewMapOM()}
 
 	makeRequest(rr, req, &controller)
 

@@ -112,13 +112,13 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
   return locks;
 }
 
-Result<std::vector<InstanceLockFile>>
+Result<std::set<InstanceLockFile>>
 InstanceLockFileManager::LockAllAvailable() {
   if (!all_instance_nums_) {
     all_instance_nums_ = CF_EXPECT(FindPotentialInstanceNumsFromNetDevices());
   }
 
-  std::vector<InstanceLockFile> acquired_lock_files;
+  std::set<InstanceLockFile> acquired_lock_files;
   for (const auto num : *all_instance_nums_) {
     auto lock_result = TryAcquireLock(num);
     if (!lock_result.ok()) {
@@ -134,7 +134,7 @@ InstanceLockFileManager::LockAllAvailable() {
     if (status != InUseState::kNotInUse) {
       continue;
     }
-    acquired_lock_files.emplace_back(std::move(*lock));
+    acquired_lock_files.emplace(std::move(*lock));
   }
   return acquired_lock_files;
 }

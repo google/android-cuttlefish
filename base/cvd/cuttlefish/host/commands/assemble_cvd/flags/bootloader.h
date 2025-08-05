@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
+#include <stddef.h>
+
+#include <string>
+#include <vector>
+
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
+#include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 
 namespace cuttlefish {
 
-Result<void> DiskImageFlagsVectorization(
-    CuttlefishConfig& config, const FetcherConfig& fetcher_config,
-    const BootImageFlag&, const BootloaderFlag&, const InitramfsPathFlag&,
-    const KernelPathFlag&, const SystemImageDirFlag&);
+/* Device bootloader flag, `--bootloader` */
+class BootloaderFlag {
+ public:
+  static Result<BootloaderFlag> FromGlobalGflags(
+      const std::vector<GuestConfig>&, const SystemImageDirFlag&,
+      const VmManagerFlag&);
+
+  std::string BootloaderForInstance(size_t instance_index) const;
+
+ private:
+  BootloaderFlag(std::vector<std::string> bootloaders);
+
+  std::vector<std::string> bootloaders_;
+};
 
 }  // namespace cuttlefish

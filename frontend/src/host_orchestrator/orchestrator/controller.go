@@ -88,6 +88,14 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",
 		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/displays",
+		httpHandler(newCreateDisplayAddHandler(c.Config, c.OperationManager))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/displays",
+		httpHandler(newCreateDisplayListHandler(c.Config, c.OperationManager))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/displays/{displayNumber}",
+		httpHandler(newCreateDisplayRemoveHandler(c.Config, c.OperationManager))).Methods("DELETE")
+	router.Handle("/cvds/{group}/{name}/displays/{displayNumber}/:screenshot",
+		httpHandler(newCreateDisplayScreenshotHandler(c.Config, c.OperationManager))).Methods("GET")
 	router.Handle("/cvds/{group}/{name}/snapshots",
 		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
@@ -112,7 +120,9 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/v1/userartifacts/{checksum}/:extract",
 		httpHandler(&extractUserArtifactHandler{c.OperationManager, c.UserArtifactsManager})).Methods("POST")
 	router.Handle("/cvd_imgs_dirs", httpHandler(&createImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("POST")
+	router.Handle("/cvd_imgs_dirs", httpHandler(&listImageDirectoriesHandler{c.ImageDirectoriesManager})).Methods("GET")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
+	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&deleteImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("DELETE")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -335,6 +345,120 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 		ExecContext:      exec.CommandContext,
 	}
 	return NewCreateSnapshotAction(opts).Run()
+}
+
+type displayAddHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayAddHandler(c Config, om OperationManager) *displayAddHandler {
+	return &displayAddHandler{Config: c, OM: om}
+}
+
+func (h *displayAddHandler) Handle(r *http.Request) (interface{}, error) {
+	req := &apiv1.DisplayAddRequest{}
+	err := json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		return nil, operator.NewBadRequestError("malformed DisplayAddRequest JSON in request", err)
+	}
+
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := DisplayAddActionOpts{
+		Request:          req,
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayAddAction(opts).Run()
+}
+
+type displayListHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayListHandler(c Config, om OperationManager) *displayListHandler {
+	return &displayListHandler{Config: c, OM: om}
+}
+
+func (h *displayListHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := DisplayListActionOpts{
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayListAction(opts).Run()
+}
+
+type displayRemoveHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayRemoveHandler(c Config, om OperationManager) *displayRemoveHandler {
+	return &displayRemoveHandler{Config: c, OM: om}
+}
+
+func (h *displayRemoveHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+
+	displayNumberStr := vars["displayNumber"]
+	displayNumber, err := strconv.Atoi(displayNumberStr)
+	if err != nil {
+		return nil, operator.NewBadRequestError("invalid display number", err)
+	}
+
+	opts := DisplayRemoveActionOpts{
+		DisplayNumber:    displayNumber,
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayRemoveAction(opts).Run()
+}
+
+type displayScreenshotHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newCreateDisplayScreenshotHandler(c Config, om OperationManager) *displayScreenshotHandler {
+	return &displayScreenshotHandler{Config: c, OM: om}
+}
+
+func (h *displayScreenshotHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+
+	displayNumberStr := vars["displayNumber"]
+	displayNumber, err := strconv.Atoi(displayNumberStr)
+	if err != nil {
+		return nil, operator.NewBadRequestError("invalid display number", err)
+	}
+
+	req := &apiv1.DisplayScreenshotRequest{
+		DisplayNumber: displayNumber,
+	}
+	opts := DisplayScreenshotActionOpts{
+		Request:          req,
+		Selector:         cvd.Selector{Group: group, Instance: name},
+		Paths:            h.Config.Paths,
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewDisplayScreenshotAction(opts).Run()
 }
 
 type startCVDHandler struct {
@@ -656,6 +780,22 @@ func (h *createImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 	return op, nil
 }
 
+type listImageDirectoriesHandler struct {
+	idm ImageDirectoriesManager
+}
+
+func (h *listImageDirectoriesHandler) Handle(r *http.Request) (interface{}, error) {
+	dirs, err := h.idm.ListImageDirectories()
+	if err != nil {
+		return nil, err
+	}
+	imageDirs := []apiv1.ImageDirectory{}
+	for _, dir := range dirs {
+		imageDirs = append(imageDirs, apiv1.ImageDirectory{ID: dir})
+	}
+	return apiv1.ListImageDirectoriesResponse{ImageDirs: imageDirs}, nil
+}
+
 type updateImageDirectoryHandler struct {
 	idm  ImageDirectoriesManager
 	om   OperationManager
@@ -676,6 +816,22 @@ func (h *updateImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 	op := h.om.New()
 	go func() {
 		err := h.idm.UpdateImageDirectory(mux.Vars(r)["id"], dir)
+		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}()
+	return op, nil
+}
+
+type deleteImageDirectoryHandler struct {
+	idm ImageDirectoriesManager
+	om  OperationManager
+}
+
+func (h *deleteImageDirectoryHandler) Handle(r *http.Request) (interface{}, error) {
+	op := h.om.New()
+	go func() {
+		err := h.idm.DeleteImageDirectory(mux.Vars(r)["id"])
 		if err := h.om.Complete(op.Name, &OperationResult{Error: err}); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}

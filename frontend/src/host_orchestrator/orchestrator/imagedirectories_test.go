@@ -39,6 +39,36 @@ func TestCreateImageDirectory(t *testing.T) {
 	}
 }
 
+func TestListImageDirectories(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+
+	if dirs, err := idm.ListImageDirectories(); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff([]string{}, dirs); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+	dir, err := idm.CreateImageDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dirs, err := idm.ListImageDirectories(); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff([]string{dir}, dirs); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+	if err := idm.DeleteImageDirectory(dir); err != nil {
+		t.Fatal(err)
+	}
+	if dirs, err := idm.ListImageDirectories(); err != nil {
+		t.Fatal(err)
+	} else if diff := cmp.Diff([]string{}, dirs); diff != "" {
+		t.Errorf("response mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestUpdateImageDirectorySucceeds(t *testing.T) {
 	rootDir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, rootDir)
@@ -131,6 +161,51 @@ func TestUpdateImageDirectoryFailsWhenSrcDirectoryDoesNotExist(t *testing.T) {
 	}
 
 	if err := idm.UpdateImageDirectory(imageDir, "foo"); err == nil {
+		t.Error("expected error")
+	}
+}
+
+func TestDeleteImageDirectorySucceeds(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+	imageDir, err := idm.CreateImageDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	srcDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, srcDir)
+	src := filepath.Join(srcDir, "foo.txt")
+	f, err := os.Create(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := ioutil.WriteFile(src, []byte("hello_world"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := idm.UpdateImageDirectory(imageDir, srcDir); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := idm.DeleteImageDirectory(imageDir); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(rootDir, imageDir)); err == nil {
+		t.Error("expected error")
+	} else if !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+}
+
+func TestDeleteImageDirectoryFailsWhenImageDirectoryDoesNotExist(t *testing.T) {
+	rootDir := orchtesting.TempDir(t)
+	defer orchtesting.RemoveDir(t, rootDir)
+	opts := ImageDirectoriesManagerOpts{RootDir: rootDir}
+	idm := NewImageDirectoriesManagerImpl(opts)
+
+	if err := idm.DeleteImageDirectory("foo"); err == nil {
 		t.Error("expected error")
 	}
 }

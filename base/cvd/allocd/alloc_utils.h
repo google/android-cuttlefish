@@ -25,7 +25,6 @@
 #include <sstream>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "request.h"
 
 namespace cuttlefish {
 
