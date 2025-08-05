@@ -1,7 +1,18 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "interface",
+    srcs = [
+        "interface.cpp",
+    ],
+    hdrs = ["interface.h"],
+    deps = [
+        "@abseil-cpp//absl/strings:str_format",
+    ],
 )
 
 cf_cc_binary(
@@ -10,6 +21,7 @@ cf_cc_binary(
         "cvdalloc.cpp",
     ],
     deps = [
+        ":interface",
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
         "//libbase",
