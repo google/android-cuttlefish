@@ -248,6 +248,10 @@ bool StartSelectorParser::CalcMayBeDefaultGroup() {
 Result<void> StartSelectorParser::ParseOptions() {
   may_be_default_group_ = CalcMayBeDefaultGroup();
 
+  std::optional<bool> use_cvdalloc;
+  CF_EXPECT(FilterSelectorFlag(cmd_args_, "use_cvdalloc", use_cvdalloc));
+  use_cvdalloc_ = use_cvdalloc.value_or(false);
+
   std::optional<std::string> num_instances;
   std::optional<std::string> instance_nums;
   std::optional<std::string> base_instance_num;
