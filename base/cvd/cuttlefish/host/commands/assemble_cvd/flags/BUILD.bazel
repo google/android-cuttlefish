@@ -19,6 +19,21 @@ package(
 )
 
 cf_cc_library(
+    name = "android_efi_loader",
+    srcs = ["android_efi_loader.cc"],
+    hdrs = ["android_efi_loader.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/host/commands/assemble_cvd/flags:vm_manager",
+        "//cuttlefish/host/libs/config:vmm_mode",
+        "@abseil-cpp//absl/strings",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "boot_image",
     srcs = ["boot_image.cc"],
     hdrs = ["boot_image.h"],

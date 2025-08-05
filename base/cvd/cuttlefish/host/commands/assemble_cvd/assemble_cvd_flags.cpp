@@ -517,9 +517,6 @@ DEFINE_string(
     system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
     "Location of system target zip file.");
 
-DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
-              "Location of android EFI loader for android efi load flow.");
-
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");
 DEFINE_string(linux_initramfs_path, CF_DEFAULTS_LINUX_INITRAMFS_PATH,

@@ -234,8 +234,6 @@ DECLARE_string(vvmtruststore_path);
 DECLARE_string(default_target_zip);
 DECLARE_string(system_target_zip);
 
-DECLARE_string(android_efi_loader);
-
 DECLARE_string(linux_kernel_path);
 DECLARE_string(linux_initramfs_path);
 DECLARE_string(linux_root_image);
