@@ -54,10 +54,10 @@ while getopts ":r:c:" opt; do
 done
 
 preserve_envvar=""
-if [ -n "$http_proxy" ]; then
+if [ -n "${http_proxy:-}" ]; then
   preserve_envvar="-e http_proxy=${http_proxy}"
 fi
-if [ -n "$https_proxy" ]; then
+if [ -n "${https_proxy:-}" ]; then
   preserve_envvar+=" -e https_proxy=${https_proxy}"
 fi
 
