@@ -157,8 +157,11 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
     }
     return instance_info;
   }
+
+  std::set<int> requested(requested_instance_ids.begin(),
+                          requested_instance_ids.end());
   auto acquired_all_file_locks =
-      CF_EXPECT(instance_lock_file_manager_.LockAllAvailable());
+      CF_EXPECT(instance_lock_file_manager_.TryAcquireLocks(requested));
   auto id_to_lockfile_map =
       ConstructIdLockFileMap(std::move(acquired_all_file_locks));
   for (const auto& [id, instance_name] : id_name_pairs) {
@@ -177,10 +180,13 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(bool acquire_file_locks) {
             "For now, cvd server always acquire the file locks "
                 << "when IDs are automatically allocated.");
 
+  const auto incremental = selector_options_parser_.UseCvdalloc();
   // As this test was done earlier, this line must not fail
   const auto n_instances = selector_options_parser_.RequestedNumInstances();
   auto acquired_all_file_locks =
-      CF_EXPECT(instance_lock_file_manager_.LockAllAvailable());
+      incremental ? CF_EXPECT(instance_lock_file_manager_.AcquireUnusedLocks(
+                        n_instances))
+                  : CF_EXPECT(instance_lock_file_manager_.LockAllAvailable());
   auto id_to_lockfile_map =
       ConstructIdLockFileMap(std::move(acquired_all_file_locks));
 

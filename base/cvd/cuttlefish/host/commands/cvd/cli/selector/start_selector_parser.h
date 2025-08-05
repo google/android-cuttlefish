@@ -54,6 +54,7 @@ class StartSelectorParser {
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
   bool IsMaybeDefaultGroup() const { return may_be_default_group_; }
+  bool UseCvdalloc() const { return use_cvdalloc_; }
 
  private:
   StartSelectorParser(const std::string& system_wide_user_home,
@@ -138,6 +139,7 @@ class StartSelectorParser {
   std::optional<std::vector<unsigned>> instance_ids_;
   unsigned requested_num_instances_;
   bool may_be_default_group_;
+  bool use_cvdalloc_;
 
   // temporarily keeps the leftover of the input cmd_args
   const std::string client_user_home_;
