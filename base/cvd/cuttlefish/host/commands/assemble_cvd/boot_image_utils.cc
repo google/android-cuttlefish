@@ -370,10 +370,14 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     return false;
   }
 
-  auto avbtool = Avb(AvbToolBinary());
+  std::unique_ptr<Avb> avbtool = GetDefaultAvb();
+  if (!avbtool) {
+    LOG(ERROR) << "Failed to create avb object";
+    return false;
+  }
   Result<void> result =
-      avbtool.AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
-                            FileSize(vendor_boot_image_path));
+      avbtool->AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
+                             FileSize(vendor_boot_image_path));
   if (!result.ok()) {
     LOG(ERROR) << result.error().Trace();
     return false;

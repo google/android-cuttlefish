@@ -42,7 +42,6 @@ struct ChainPartition {
 
 class Avb {
  public:
-  Avb(std::string avbtool_path);
   Avb(std::string avbtool_path, std::string algorithm, std::string key);
 
   /**
