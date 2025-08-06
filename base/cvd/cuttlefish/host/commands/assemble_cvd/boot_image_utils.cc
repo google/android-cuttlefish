@@ -370,10 +370,9 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     return false;
   }
 
-  auto avbtool = Avb(AvbToolBinary());
   Result<void> result =
-      avbtool.AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
-                            FileSize(vendor_boot_image_path));
+      Avb().AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
+                          FileSize(vendor_boot_image_path));
   if (!result.ok()) {
     LOG(ERROR) << result.error().Trace();
     return false;
@@ -472,11 +471,8 @@ void RepackGem5BootImage(
 // https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 Result<std::string> ReadAndroidVersionFromBootImage(
     const std::string& boot_image_path) {
-  std::unique_ptr<Avb> avb = GetDefaultAvb();
-  CF_EXPECT(avb.get());
-
   std::string boot_params =
-      CF_EXPECTF(avb->InfoImage(boot_image_path),
+      CF_EXPECTF(Avb().InfoImage(boot_image_path),
                  "Failed to get avb boot data from '{}'", boot_image_path);
 
   std::string os_version =

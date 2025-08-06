@@ -30,6 +30,7 @@
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
@@ -56,6 +57,9 @@ class AndroidBuildApi : public BuildApi {
       const Build& build, const std::string& target_directory,
       const std::string& artifact_name,
       const std::string& backup_artifact_name) override;
+
+  Result<ReadableZip> OpenZipArchive(const Build& build,
+                                     const std::string& archive_name) override;
 
  private:
   Result<std::vector<std::string>> Headers();
@@ -100,6 +104,11 @@ class AndroidBuildApi : public BuildApi {
 
   Result<Build> GetBuild(const DeviceBuildString& build_string);
   Result<Build> GetBuild(const DirectoryBuildString& build_string);
+
+  Result<ReadableZip> OpenZipArchive(const DeviceBuild& build,
+                                     const std::string& archive_name);
+  Result<ReadableZip> OpenZipArchive(const DirectoryBuild& build,
+                                     const std::string& archive_name);
 
   HttpClient& http_client;
   CredentialSource* credential_source;

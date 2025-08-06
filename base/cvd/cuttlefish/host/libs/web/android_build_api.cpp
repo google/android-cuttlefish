@@ -50,6 +50,9 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
+#include "cuttlefish/host/libs/zip/remote_zip.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/zip_file.h"
 
 namespace cuttlefish {
 namespace {
@@ -188,6 +191,33 @@ Result<std::string> AndroidBuildApi::DownloadFileWithBackup(
     selected_artifact = backup_artifact_name;
   }
   return DownloadTargetFile(build, target_directory, selected_artifact);
+}
+
+Result<ReadableZip> AndroidBuildApi::OpenZipArchive(
+    const Build& build, const std::string& archive_name) {
+  Result<ReadableZip> res =
+      std::visit([this, &archive_name](
+                     auto&& arg) { return OpenZipArchive(arg, archive_name); },
+                 build);
+  return CF_EXPECT(std::move(res));
+}
+
+Result<ReadableZip> AndroidBuildApi::OpenZipArchive(
+    const DeviceBuild& build, const std::string& archive_name) {
+  std::string url = CF_EXPECT(GetArtifactDownloadUrl(build, archive_name));
+  std::vector<std::string> headers = CF_EXPECT(Headers());
+  return CF_EXPECT(ZipFromUrl(http_client, url, headers));
+}
+
+Result<ReadableZip> AndroidBuildApi::OpenZipArchive(
+    const DirectoryBuild& build, const std::string& archive_name) {
+  for (const std::string& path : build.paths) {
+    std::string zip_path_attempt = path + "/" + archive_name;
+    if (FileExists(zip_path_attempt)) {
+      return CF_EXPECT(ZipOpenRead(zip_path_attempt));
+    }
+  }
+  return CF_ERRF("Could not find '{}'", archive_name);
 }
 
 Result<std::vector<std::string>> AndroidBuildApi::Headers() {

@@ -49,7 +49,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_image_flags_vectorization.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -358,20 +360,6 @@ std::optional<std::string> InstancesUdsDir() {
   return instances_uds_dir;
 }
 
-std::string DefaultBootloaderArchDir(Arch arch) {
-  switch (arch) {
-    case Arch::Arm64:
-      return "aarch64";
-    case Arch::Arm:
-      return "arm";
-    case Arch::RiscV64:
-      return "riscv64";
-    case Arch::X86:
-    case Arch::X86_64:
-      return "x86_64";
-  }
-}
-
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
@@ -562,8 +550,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> kgdb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(kgdb));
   std::vector<std::string> boot_slot_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(boot_slot));
-  std::vector<bool> start_webrtc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      start_webrtc));
   std::vector<std::string> webrtc_assets_dir_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(webrtc_assets_dir));
   std::vector<std::string> tcp_port_range_vec =
@@ -1194,7 +1180,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_wifi_mac_prefix(5554 + (num - 1));
 
     // streaming, webrtc setup
-    instance.set_enable_webrtc(start_webrtc_vec[instance_index]);
     instance.set_webrtc_assets_dir(webrtc_assets_dir_vec[instance_index]);
 
     auto tcp_range  = ParsePortRange(tcp_port_range_vec[instance_index]);
@@ -1344,80 +1329,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
-  CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config,
-                                        boot_image, initramfs_path, kernel_path,
-                                        system_image_dir));
+  AndroidEfiLoaderFlag efi_loader =
+      AndroidEfiLoaderFlag::FromGlobalGflags(system_image_dir, vm_manager_flag);
+
+  BootloaderFlag bootloader = CF_EXPECT(BootloaderFlag::FromGlobalGflags(
+      guest_configs, system_image_dir, vm_manager_flag));
+
+  CF_EXPECT(DiskImageFlagsVectorization(
+      tmp_config_obj, fetcher_config, efi_loader, boot_image, bootloader,
+      initramfs_path, kernel_path, system_image_dir));
 
   return tmp_config_obj;
-}
-
-Result<void> SetDefaultFlagsForQemu(
-    const SystemImageDirFlag& system_image_dir,
-    const std::vector<GuestConfig>& guest_configs,
-    std::map<std::string, std::string>& name_to_default_value) {
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  int32_t instances_size = instance_nums.size();
-  std::vector<std::string> gpu_mode_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
-  std::vector<bool> start_webrtc_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
-  std::string default_bootloader = "";
-  std::string default_android_efi_loader = "";
-  std::string default_start_webrtc = "";
-
-  for (int instance_index = 0; instance_index < instance_nums.size();
-       instance_index++) {
-    std::string curr_bootloader =
-        system_image_dir.ForIndex(instance_index) + "/bootloader";
-    std::string curr_android_efi_loader =
-        system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
-
-    // /bootloader isn't presented in the output folder by default and can be
-    // only fetched by --bootloader in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (!FileExists(curr_bootloader)) {
-      // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath(fmt::format(
-          "etc/bootloader_{}/bootloader.qemu",
-          DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
-    }
-
-    if (instance_index > 0) {
-      default_bootloader += ",";
-      default_android_efi_loader += ",";
-      default_start_webrtc += ",";
-    }
-
-    default_bootloader += curr_bootloader;
-    // EFI loader isn't presented in the output folder by default and can be
-    // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (FileExists(curr_android_efi_loader)) {
-      default_android_efi_loader += curr_android_efi_loader;
-    }
-    if (gpu_mode_vec[instance_index] == kGpuModeGuestSwiftshader &&
-        !start_webrtc_vec[instance_index]) {
-      // This makes WebRTC the default streamer unless the user requests
-      // another via a --star_<streamer> flag, while at the same time it's
-      // possible to run without any streamer by setting --start_webrtc=false.
-      default_start_webrtc += "true";
-    } else {
-      default_start_webrtc += fmt::format(
-          "{}", static_cast<bool>(start_webrtc_vec[instance_index]));
-    }
-  }
-  // This is the 1st place to set "start_webrtc" flag value
-  // for now, we don't set non-default options for QEMU
-  SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-
-  SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("android_efi_loader",
-                               default_android_efi_loader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  return {};
 }
 
 Result<void> SetDefaultFlagsForCrosvm(
@@ -1426,10 +1348,6 @@ Result<void> SetDefaultFlagsForCrosvm(
     std::map<std::string, std::string>& name_to_default_value) {
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  int32_t instances_size = instance_nums.size();
-  std::vector<bool> start_webrtc_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(start_webrtc));
-  std::string default_start_webrtc = "";
 
   std::set<Arch> supported_archs{Arch::X86_64};
   bool default_enable_sandbox =
@@ -1437,59 +1355,14 @@ Result<void> SetDefaultFlagsForCrosvm(
       EnsureDirectoryExists(kCrosvmVarEmptyDir).ok() &&
       IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
 
-  std::string default_android_efi_loader = "";
-  std::string default_bootloader = "";
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
-    std::string curr_bootloader =
-        system_image_dir.ForIndex(instance_index) + "/bootloader";
-    std::string curr_android_efi_loader =
-        system_image_dir.ForIndex(instance_index) + "/android_efi_loader.efi";
-
-    // /bootloader isn't presented in the output folder by default and can be
-    // only fetched by --bootloader in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (!FileExists(curr_bootloader)) {
-      // Fallback to default bootloader
-      curr_bootloader = DefaultHostArtifactsPath(fmt::format(
-          "etc/bootloader_{}/bootloader.crosvm",
-          DefaultBootloaderArchDir(guest_configs[instance_index].target_arch)));
-    }
-
     if (instance_index > 0) {
-      default_bootloader += ",";
-      default_android_efi_loader += ",";
       default_enable_sandbox_str += ",";
-      default_start_webrtc += ",";
-    }
-
-    default_bootloader += curr_bootloader;
-    // EFI loader isn't presented in the output folder by default and can be
-    // only fetched by --uefi_app_build in fetch_cvd, so pick it only in case
-    // it's presented.
-    if (FileExists(curr_android_efi_loader)) {
-      default_android_efi_loader += curr_android_efi_loader;
     }
     default_enable_sandbox_str += fmt::format("{}", default_enable_sandbox);
-    if (!start_webrtc_vec[instance_index]) {
-      // This makes WebRTC the default streamer unless the user requests
-      // another via a --star_<streamer> flag, while at the same time it's
-      // possible to run without any streamer by setting --start_webrtc=false.
-      default_start_webrtc += "true";
-    } else {
-      default_start_webrtc += fmt::format(
-          "{}", static_cast<bool>(start_webrtc_vec[instance_index]));
-    }
   }
-  SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("android_efi_loader",
-                               default_android_efi_loader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  // This is the 1st place to set "start_webrtc" flag value
-  SetCommandLineOptionWithMode("start_webrtc", default_start_webrtc.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // This is the 1st place to set "enable_sandbox" flag value
   SetCommandLineOptionWithMode("enable_sandbox",
                                default_enable_sandbox_str.c_str(),
@@ -1553,8 +1426,6 @@ Result<void> SetFlagDefaultsForVmm(
 
   switch (vm_manager_flag.Mode()) {
     case VmmMode::kQemu:
-      CF_EXPECT(SetDefaultFlagsForQemu(system_image_dir, guest_configs,
-                                       name_to_default_value));
       break;
     case VmmMode::kCrosvm:
       CF_EXPECT(SetDefaultFlagsForCrosvm(system_image_dir, guest_configs,

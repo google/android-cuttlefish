@@ -20,11 +20,8 @@
 #include <sys/types.h>
 
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <vector>
-
-#include <fruit/fruit.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -42,7 +39,7 @@ struct ChainPartition {
 
 class Avb {
  public:
-  Avb(std::string avbtool_path);
+  Avb();
   Avb(std::string avbtool_path, std::string algorithm, std::string key);
 
   /**
@@ -55,7 +52,7 @@ class Avb {
   */
   Result<void> AddHashFooter(const std::string& image_path,
                              const std::string& partition_name,
-                             const off_t partition_size_bytes) const;
+                             off_t partition_size_bytes) const;
   Result<std::string> InfoImage(const std::string& image_path) const;
   Result<void> MakeVbMetaImage(
       const std::string& output_path,
@@ -66,7 +63,7 @@ class Avb {
  private:
   Command GenerateAddHashFooter(const std::string& image_path,
                                 const std::string& partition_name,
-                                const off_t partition_size_bytes) const;
+                                off_t partition_size_bytes) const;
   Command GenerateInfoImage(const std::string& image_path,
                             const SharedFD& output_path) const;
   Command GenerateMakeVbMetaImage(
@@ -81,9 +78,5 @@ class Avb {
 };
 
 Result<void> EnforceVbMetaSize(const std::string& path);
-
-std::unique_ptr<Avb> GetDefaultAvb();
-
-fruit::Component<Avb> CuttlefishKeyAvbComponent();
 
 }  // namespace cuttlefish

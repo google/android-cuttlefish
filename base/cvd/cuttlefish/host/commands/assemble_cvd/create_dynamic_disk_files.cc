@@ -76,13 +76,10 @@ Result<void> CreateDynamicDiskFiles(
     const FetcherConfig& fetcher_config, const CuttlefishConfig& config,
     const SystemImageDirFlag& system_image_dir) {
   for (const auto& instance : config.Instances()) {
-    std::unique_ptr<Avb> avb = GetDefaultAvb();
-    CF_EXPECT(avb.get());
-
     std::optional<ChromeOsStateImage> chrome_os_state =
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
-    CF_EXPECT(RepackKernelRamdisk(config, instance, *avb));
+    CF_EXPECT(RepackKernelRamdisk(config, instance, Avb()));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk

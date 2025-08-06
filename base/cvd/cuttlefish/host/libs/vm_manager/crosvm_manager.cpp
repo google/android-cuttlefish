@@ -45,6 +45,8 @@
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
+#include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
@@ -321,7 +323,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
     gpu_params_json["egl"] = true;
     gpu_params_json["gles"] = true;
-  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
+  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||enable_gamepad
              gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
              gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     gpu_params_json["context-types"] = "gfxstream-vulkan";
@@ -638,26 +640,24 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     disk_i++;
   }
 
-  if (instance.enable_webrtc()) {
-    auto display_configs = instance.display_configs();
-    CF_EXPECT(!display_configs.empty());
+  auto display_configs = instance.display_configs();
+  CF_EXPECT(!display_configs.empty());
 
-    const int display_cnt = instance.display_configs().size();
-    const int touchpad_cnt = instance.touchpad_configs().size();
-    const int total_touch_cnt = display_cnt + touchpad_cnt;
-    for (int touch_idx = 0; touch_idx < total_touch_cnt; ++touch_idx) {
-      crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx));
-    }
-    if (instance.enable_mouse()) {
-      crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path());
-    }
-    if (instance.enable_gamepad()) {
-      crosvm_cmd.AddVhostUser("input", instance.gamepad_socket_path());
-    }
-    crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path());
-    crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
-    crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
+  const int display_cnt = instance.display_configs().size();
+  const int touchpad_cnt = instance.touchpad_configs().size();
+  const int total_touch_cnt = display_cnt + touchpad_cnt;
+  for (int touch_idx = 0; touch_idx < total_touch_cnt; ++touch_idx) {
+    crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx));
   }
+  if (instance.enable_mouse()) {
+    crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path());
+  }
+  if (instance.enable_gamepad()) {
+    crosvm_cmd.AddVhostUser("input", instance.gamepad_socket_path());
+  }
+  crosvm_cmd.AddVhostUser("input", instance.rotary_socket_path());
+  crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
+  crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
 
   // GPU capture can only support named files and not file descriptors due to
   // having to pass arguments to crosvm via a wrapper script.

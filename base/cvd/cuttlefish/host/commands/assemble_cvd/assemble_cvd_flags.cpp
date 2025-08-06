@@ -202,7 +202,7 @@ DEFINE_string(
     "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
 DEFINE_vec(start_webrtc, fmt::format("{}", CF_DEFAULTS_START_WEBRTC),
-           "Whether to start the webrtc process.");
+           "(Deprecated, webrtc is enabled depending on the VMM)");
 
 DEFINE_vec(webrtc_assets_dir, CF_DEFAULTS_WEBRTC_ASSETS_DIR,
            "Path to WebRTC webpage assets.");
@@ -258,7 +258,6 @@ DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
 DEFINE_vec(restart_subprocesses,
            fmt::format("{}", CF_DEFAULTS_RESTART_SUBPROCESSES),
            "Restart any crashed host process");
-DEFINE_vec(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
 DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
               "Force booting into the given slot. If empty, "
               "the slot will be chosen based on the misc partition if using a "
@@ -517,9 +516,6 @@ DEFINE_string(
 DEFINE_string(
     system_target_zip, CF_DEFAULTS_SYSTEM_TARGET_ZIP,
     "Location of system target zip file.");
-
-DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
-              "Location of android EFI loader for android efi load flow.");
 
 DEFINE_string(linux_kernel_path, CF_DEFAULTS_LINUX_KERNEL_PATH,
               "Location of linux kernel for cuttlefish otheros flow.");

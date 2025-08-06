@@ -37,6 +37,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 
@@ -66,7 +67,7 @@ InstanceLockFileManager::InstanceLockFileManager() {}
 
 Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   std::stringstream path;
-  path << TempDir() << "/acloud_cvd_temp/";
+  path << InstanceLocksPath();
   CF_EXPECT(EnsureDirectoryExists(path.str()));
   path << "local-instance-" << instance_num << ".lock";
   return path.str();
@@ -112,13 +113,13 @@ Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
   return locks;
 }
 
-Result<std::vector<InstanceLockFile>>
+Result<std::set<InstanceLockFile>>
 InstanceLockFileManager::LockAllAvailable() {
   if (!all_instance_nums_) {
     all_instance_nums_ = CF_EXPECT(FindPotentialInstanceNumsFromNetDevices());
   }
 
-  std::vector<InstanceLockFile> acquired_lock_files;
+  std::set<InstanceLockFile> acquired_lock_files;
   for (const auto num : *all_instance_nums_) {
     auto lock_result = TryAcquireLock(num);
     if (!lock_result.ok()) {
@@ -134,7 +135,7 @@ InstanceLockFileManager::LockAllAvailable() {
     if (status != InUseState::kNotInUse) {
       continue;
     }
-    acquired_lock_files.emplace_back(std::move(*lock));
+    acquired_lock_files.emplace(std::move(*lock));
   }
   return acquired_lock_files;
 }

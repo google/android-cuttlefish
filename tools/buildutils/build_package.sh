@@ -53,9 +53,17 @@ while getopts ":r:c:" opt; do
   esac
 done
 
+preserve_envvar=""
+if [ -n "${http_proxy:-}" ]; then
+  preserve_envvar="-e http_proxy=${http_proxy}"
+fi
+if [ -n "${https_proxy:-}" ]; then
+  preserve_envvar+=" -e https_proxy=${https_proxy}"
+fi
+
 pushd "${PKGDIR}"
 echo "Installing package dependencies"
 sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
 echo "Building packages"
-debuild ${remote_cache_arg} ${cache_version_arg} --prepend-path /usr/local/bin -i -uc -us -b
+debuild ${remote_cache_arg} ${cache_version_arg} ${preserve_envvar} --prepend-path /usr/local/bin -i -uc -us -b
 popd

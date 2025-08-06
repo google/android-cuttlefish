@@ -58,7 +58,6 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -299,9 +298,9 @@ class CvdStartCommandHandler : public CvdCommandHandler {
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
     const LocalInstanceGroup& group, const cvd_common::Envs& envs,
     const CommandRequest& request) {
-  // rm -fr "TempDir()/acloud_cvd_temp/local-instance-<i>"
+  // rm -fr "InstanceLocksPath()/local-instance-<i>"
   std::string acloud_compat_home_prefix =
-      TempDir() + "/acloud_cvd_temp/local-instance-";
+      InstanceLocksPath() + "/local-instance-";
   std::vector<std::string> acloud_compat_homes;
   acloud_compat_homes.reserve(group.Instances().size());
   for (const auto& instance : group.Instances()) {

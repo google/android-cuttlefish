@@ -84,9 +84,8 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
     const off_t bootconfig_size_bytes = AlignToPowerOf2(
         kMaxAvbMetadataSize + bootconfig.size(), PARTITION_SIZE_SHIFT);
 
-    std::unique_ptr<Avb> avbtool = GetDefaultAvb();
-    CF_EXPECT(avbtool->AddHashFooter(bootconfig_path, "bootconfig",
-                                     bootconfig_size_bytes));
+    CF_EXPECT(Avb().AddHashFooter(bootconfig_path, "bootconfig",
+                                  bootconfig_size_bytes));
   }
 
   return BootConfigPartition(std::move(bootconfig_path));

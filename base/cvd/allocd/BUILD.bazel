@@ -7,8 +7,6 @@ package(
 cc_binary(
     name = "allocd",
     srcs = [
-        "alloc_utils.cpp",
-        "alloc_utils.h",
         "allocd.cpp",
         "request.h",
         "resource.cpp",
@@ -28,10 +26,26 @@ cc_binary(
     ],
     includes = [""],
     deps = [
+        ":alloc_utils",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
         "@gflags",
         "@jsoncpp",
+    ],
+)
+
+cc_library(
+    name = "alloc_utils",
+    srcs = [
+        "alloc_utils.cpp",
+    ],
+    hdrs = [
+        "alloc_utils.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config:logging",
+        "//libbase",
     ],
 )

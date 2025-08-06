@@ -26,7 +26,9 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -40,8 +42,9 @@ namespace cuttlefish {
 
 Result<void> DiskImageFlagsVectorization(
     CuttlefishConfig& config, const FetcherConfig& fetcher_config,
-    const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
-    const KernelPathFlag& kernel_path,
+    const AndroidEfiLoaderFlag& android_efi_loader,
+    const BootImageFlag& boot_image, const BootloaderFlag& bootloader,
+    const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   std::vector<std::string> super_image =
       android::base::Split(FLAGS_super_image, ",");
@@ -61,9 +64,6 @@ Result<void> DiskImageFlagsVectorization(
       android::base::Split(FLAGS_default_target_zip, ",");
   std::vector<std::string> system_target_zip_vec =
       android::base::Split(FLAGS_system_target_zip, ",");
-
-  std::vector<std::string> android_efi_loader =
-      android::base::Split(FLAGS_android_efi_loader, ",");
 
   std::vector<std::string> chromeos_disk =
       android::base::Split(FLAGS_chromeos_disk, ",");
@@ -88,9 +88,6 @@ Result<void> DiskImageFlagsVectorization(
 
   std::vector<std::string> custom_partition_path =
       android::base::Split(FLAGS_custom_partition_path, ",");
-
-  std::vector<std::string> bootloader =
-      android::base::Split(FLAGS_bootloader, ",");
 
   std::vector<std::string> blank_sdcard_image_mb =
       android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
@@ -151,11 +148,8 @@ Result<void> DiskImageFlagsVectorization(
       cur_super_image = super_image[instance_index];
     }
     instance.set_super_image(cur_super_image);
-    if (instance_index >= android_efi_loader.size()) {
-      instance.set_android_efi_loader(android_efi_loader[0]);
-    } else {
-      instance.set_android_efi_loader(android_efi_loader[instance_index]);
-    }
+    instance.set_android_efi_loader(
+        android_efi_loader.AndroidEfiLoaderForInstance(instance_index));
     if (instance_index >= chromeos_disk.size()) {
       instance.set_chromeos_disk(chromeos_disk[0]);
     } else {
@@ -207,11 +201,7 @@ Result<void> DiskImageFlagsVectorization(
     } else {
       instance.set_custom_partition_path(custom_partition_path[instance_index]);
     }
-    if (instance_index >= bootloader.size()) {
-      instance.set_bootloader(bootloader[0]);
-    } else {
-      instance.set_bootloader(bootloader[instance_index]);
-    }
+    instance.set_bootloader(bootloader.BootloaderForInstance(instance_index));
     instance.set_kernel_path(kernel_path.KernelPathForIndex(instance_index));
     instance.set_initramfs_path(
         initramfs_path.InitramfsPathForIndex(instance_index));
