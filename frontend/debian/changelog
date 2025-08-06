@@ -1,10 +1,10 @@
 cuttlefish-frontend (1.19.0) UNRELEASED; urgency=medium
 
-  *   
+  *
 
  -- Jason Macnak <natsu@google.com>  Fri, 01 Aug 2025 15:06:46 -0700
 
-cuttlefish-frontend (1.18.0) unstable; urgency=medium
+cuttlefish-frontend (1.18.0) stable; urgency=medium
 
   * Start development on v1.18 by @cjreynol in https://github.com/google/android-cuttlefish/pull/1448
   * Extract `WaitForFile` out of `files.cpp` by @Databean in https://github.com/google/android-cuttlefish/pull/1449
@@ -168,7 +168,7 @@ cuttlefish-frontend (1.5.0) stable; urgency=medium
 
 cuttlefish-frontend (1.3.0) stable; urgency=medium
 
-  * 
+  *
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 21 Mar 2025 14:52:51 -0700
 
@@ -225,7 +225,7 @@ cuttlefish-frontend (0.9.29) stable; urgency=medium
   [ Sergio A. Rodriguez - cuttlefish-user]
   * Support for `cvd stop`.
   * User service account credentials if running on GCE.
-  * Use upstream `cvd`. 
+  * Use upstream `cvd`.
   * Extract ".zip" and ".tar.gz" user artifacts.
   * Support `cvd powerwash`.
 
