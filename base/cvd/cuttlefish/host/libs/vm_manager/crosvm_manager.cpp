@@ -323,7 +323,7 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
     gpu_params_json["egl"] = true;
     gpu_params_json["gles"] = true;
-  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||enable_gamepad
+  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
              gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
              gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     gpu_params_json["context-types"] = "gfxstream-vulkan";
