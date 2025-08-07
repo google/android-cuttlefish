@@ -111,12 +111,11 @@ impl keyblob::SecureDeletionSecretManager for HostSddManager {
             .checked_add(1)
             .ok_or(km_err!(RollbackResistanceUnavailable, "ran out of slot IDs"))?;
 
-        info!("Generating new secret with slot ID: {:?}", slot_id);
+        info!("Generating new secret with slot ID: {slot_id:?}");
 
         assert!(
             !self.data.secure_deletion_secrets.contains_key(&slot_id),
-            "Slot ID already in use: {:?}",
-            slot_id
+            "Slot ID already in use: {slot_id:?}"
         );
 
         // Generate new sdd.
@@ -144,7 +143,7 @@ impl keyblob::SecureDeletionSecretManager for HostSddManager {
         slot: keyblob::SecureDeletionSlot,
     ) -> Result<keyblob::SecureDeletionData, Error> {
         let slot_id = slot.0;
-        info!("Fetching secret with slot ID: {:?}", slot_id);
+        info!("Fetching secret with slot ID: {slot_id:?}");
 
         let secret = self.data.secure_deletion_secrets.get(&slot_id).ok_or(km_err!(
             InvalidKeyBlob,
@@ -159,7 +158,7 @@ impl keyblob::SecureDeletionSecretManager for HostSddManager {
 
     fn delete_secret(&mut self, slot: keyblob::SecureDeletionSlot) -> Result<(), Error> {
         let slot_id = slot.0;
-        info!("Deleting secret with slot ID: {:?}", slot_id);
+        info!("Deleting secret with slot ID: {slot_id:?}");
 
         let secret = self
             .data
@@ -185,7 +184,7 @@ impl keyblob::SecureDeletionSecretManager for HostSddManager {
             for _ in 0..5 {
                 match fs::remove_file(SECURE_DELETION_DATA_FILE) {
                     Ok(_) => return,
-                    Err(e) => error!("Couldn't delete file: {:?}", e),
+                    Err(e) => error!("Couldn't delete file: {e:?}"),
                 }
             }
             panic!("FATAL: Failed to delete secure deletion data file.");

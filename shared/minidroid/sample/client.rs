@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     );
     // Redirect panic messages to logcat.
     std::panic::set_hook(Box::new(|panic_info| {
-        error!("{}", panic_info);
+        error!("{panic_info}");
     }));
 
     if std::env::args().len() != 3 {
@@ -31,15 +31,14 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         std::env::args().nth(2).and_then(|arg| arg.parse::<u32>().ok()).expect("invalid port");
 
     info!(
-        "Hello Rust Minidroid client! Connecting to CID {} and port {}",
-        service_host_cid, service_port
+        "Hello Rust Minidroid client! Connecting to CID {service_host_cid} and port {service_port}"
     );
 
     let service = get_service(service_host_cid, service_port)?;
     service.sayHello()?;
     service.printText("Hello from Rust client! 🦀")?;
     let result = service.addInteger(4, 6)?;
-    info!("Finished client. 4 + 6 = {}", result);
+    info!("Finished client. 4 + 6 = {result}");
 
     Ok(())
 }

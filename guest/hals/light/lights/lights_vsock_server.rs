@@ -82,7 +82,7 @@ impl VsockServer {
 
                             if let Err(e) = Self::send_buffer_with_length(&connection, json_as_vec)
                             {
-                                error!("Failed to send buffer over socket. Error: {}", e);
+                                error!("Failed to send buffer over socket. Error: {e}");
                                 break;
                             }
                         }
@@ -153,6 +153,6 @@ impl Drop for VsockServer {
 
         // We made sure to unblock the connection thread, now join it.
         let thread_result = self.thread_handle.take().unwrap().join().unwrap();
-        info!("Connection thread finished with: {:?}", thread_result);
+        info!("Connection thread finished with: {thread_result:?}");
     }
 }

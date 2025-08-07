@@ -44,7 +44,7 @@ fn main() {
 
     // Redirect panic messages to logcat.
     std::panic::set_hook(Box::new(|message| {
-        error!("{}", message);
+        error!("{message}");
         std::process::exit(-1);
     }));
 

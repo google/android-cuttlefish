@@ -99,7 +99,7 @@ impl VirtioInputConfig {
     pub fn from_json(device_config_str: &str) -> Result<VirtioInputConfig> {
         let config: InputConfigFile =
             serde_json::from_str(device_config_str).context("Failed to parse JSON string")?;
-        debug!("Parsed device config: {:?}", config);
+        debug!("Parsed device config: {config:?}");
 
         let mut supported_events = BTreeMap::<u16, VirtioInputBitmap>::new();
         let mut supported_event_types = VirtioInputBitmap::new();

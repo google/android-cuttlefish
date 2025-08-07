@@ -44,7 +44,7 @@ fn main() {
 
     // Redirect panic messages to logcat.
     panic::set_hook(Box::new(|panic_info| {
-        error!("{}", panic_info);
+        error!("{panic_info}");
         process::exit(0); // Force panic in thread to quit.
     }));
 

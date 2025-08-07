@@ -177,7 +177,7 @@ impl NfcService {
                     .await
                     .expect("Failed to read from virtio-console device");
 
-                info!("read sz={}", total_packet_length);
+                info!("read sz={total_packet_length}");
                 if let Err(e) = log_packet(&buf[0..total_packet_length]) {
                     debug!(
                         "+ Unidentified packet ({e:?}): bytes={:?}",

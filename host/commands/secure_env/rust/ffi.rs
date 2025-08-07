@@ -45,7 +45,7 @@ pub unsafe extern "C" fn kmr_ta_main(
             | SecurityLevel::Strongbox),
         ) => x,
         _ => {
-            error!("unexpected security level {}, running as SOFTWARE", security_level);
+            error!("unexpected security level {security_level}, running as SOFTWARE");
             SecurityLevel::Software
         }
     };

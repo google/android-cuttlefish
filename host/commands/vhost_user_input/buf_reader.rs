@@ -27,7 +27,7 @@ impl<R: Read + Sync + Send> BufReader<R> {
             bail!("Event buffer is full");
         }
         let read = self.reader.read(&mut self.buf[self.size..]).context("Failed to read events")?;
-        trace!("Read {} bytes", read);
+        trace!("Read {read} bytes");
         if read == 0 {
             bail!("Event source closed");
         }

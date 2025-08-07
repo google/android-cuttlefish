@@ -39,7 +39,7 @@ fn init_logging(verbosity: &str) -> Result<()> {
         .format_timestamp_secs()
         .filter_level(
             LevelFilter::from_str(verbosity)
-                .with_context(|| format!("Invalid log level: {}", verbosity))?,
+                .with_context(|| format!("Invalid log level: {verbosity}"))?,
         )
         .init();
     Ok(())
@@ -101,7 +101,7 @@ fn main() -> Result<()> {
         info!("Accepted connection in vhost-user daemon");
         if let Err(e) = daemon.wait() {
             // This will print an error even when the frontend disconnects to do a restart.
-            error!("Error: {:?}", e);
+            error!("Error: {e:?}");
         };
         info!("Daemon exited");
     }

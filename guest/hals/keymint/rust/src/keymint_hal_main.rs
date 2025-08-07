@@ -73,7 +73,7 @@ fn set_terminal_raw(fd: libc::c_int) -> Result<(), HalServiceError> {
 
 fn main() {
     if let Err(HalServiceError(e)) = inner_main() {
-        panic!("HAL service failed: {:?}", e);
+        panic!("HAL service failed: {e:?}");
     }
 }
 
@@ -87,7 +87,7 @@ fn inner_main() -> Result<(), HalServiceError> {
     );
     // Redirect panic messages to logcat.
     panic::set_hook(Box::new(|panic_info| {
-        error!("{}", panic_info);
+        error!("{panic_info}");
     }));
 
     info!("KeyMint HAL service is starting.");

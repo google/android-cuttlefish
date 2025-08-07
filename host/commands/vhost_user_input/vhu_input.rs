@@ -68,7 +68,7 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
     }
 
     fn set_event_idx(&mut self, enabled: bool) {
-        trace!("set_event_idx: {}", enabled);
+        trace!("set_event_idx: {enabled}");
         self.event_idx = enabled;
     }
 
@@ -82,7 +82,7 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
     }
 
     fn exit_event(&self, thread_index: usize) -> Option<vmm_sys_util::eventfd::EventFd> {
-        trace!("exit_event: thread_idx={}", thread_index);
+        trace!("exit_event: thread_idx={thread_index}");
         vmm_sys_util::eventfd::EventFd::new(0).ok()
     }
 
@@ -97,7 +97,7 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
         _phase: VhostTransferStatePhase,
         _file: File,
     ) -> IoResult<Option<File>> {
-        trace!("set_device_state_fd: direction={:?}", direction);
+        trace!("set_device_state_fd: direction={direction:?}");
         Ok(None)
     }
 
@@ -107,18 +107,18 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
     }
 
     fn get_config(&self, offset: u32, size: u32) -> Vec<u8> {
-        trace!("get_config: offset={}, size={}", offset, size);
+        trace!("get_config: offset={offset}, size={size}");
         match self.config.get_raw() {
             Ok(raw_config) => raw_config[offset as usize..(offset + size) as usize].to_vec(),
             Err(e) => {
-                error!("Failed to get valid config: {:?}", e);
+                error!("Failed to get valid config: {e:?}");
                 vec![0u8; size as usize]
             }
         }
     }
 
     fn set_config(&mut self, offset: u32, buf: &[u8]) -> IoResult<()> {
-        trace!("set_config: offset: {}, values: {:?}", offset, buf);
+        trace!("set_config: offset: {offset}, values: {buf:?}");
         self.config.set_raw(offset, buf).map_err(|e| IoError::new(IoErrorKind::InvalidInput, e))
     }
 
@@ -148,7 +148,7 @@ impl<R: Read + Sync + Send> VhostUserBackendMut for VhostUserInput<R> {
                 self.send_pending_events(&vrings[EVENT_QUEUE as usize]).map_err(IoError::other)?;
             }
             _ => {
-                error!("Unknown device event: {}", device_event);
+                error!("Unknown device event: {device_event}");
             }
         }
         Ok(())
@@ -204,7 +204,7 @@ impl<R: Read + Sync + Send> VhostUserInput<R> {
             || match vring_state.needs_notification() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Couldn't check if vring needs notification: {:?}", e);
+                    error!("Couldn't check if vring needs notification: {e:?}");
                     true
                 }
             };
@@ -246,7 +246,7 @@ impl<R: Read + Sync + Send> VhostUserInput<R> {
             || match vring_state.needs_notification() {
                 Ok(v) => v,
                 Err(e) => {
-                    error!("Couldn't check if vring needs notification: {:?}", e);
+                    error!("Couldn't check if vring needs notification: {e:?}");
                     true
                 }
             };

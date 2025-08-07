@@ -134,7 +134,7 @@ impl BluetoothHci {
                     Idc::SCO_DATA => 3,
                     Idc::ISO_DATA => 4,
                     Idc::EVENT => 2,
-                    _ => panic!("received invalid IDC bytes 0x{:02x}", idc),
+                    _ => panic!("received invalid IDC bytes 0x{idc:02x}"),
                 };
 
                 // Read the packet header bytes.

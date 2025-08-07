@@ -90,7 +90,7 @@ pub unsafe fn ta_main(
         match sdd::HostSddManager::new(&mut rng) {
             Ok(v) => Some(Box::new(v)),
             Err(e) => {
-                error!("Failed to initialize secure deletion data manager: {:?}", e);
+                error!("Failed to initialize secure deletion data manager: {e:?}");
                 None
             }
         };
@@ -167,7 +167,7 @@ pub unsafe fn ta_main(
             None,
             /*timeout=*/ None,
         ) {
-            error!("FATAL: Failed to select on input FDs: {:?}", e);
+            error!("FATAL: Failed to select on input FDs: {e:?}");
             return;
         }
 
@@ -175,19 +175,18 @@ pub unsafe fn ta_main(
             // Read a request message from the pipe, as a 4-byte BE length followed by the message.
             let mut req_len_data = [0u8; 4];
             if let Err(e) = infile.read_exact(&mut req_len_data) {
-                error!("FATAL: Failed to read request length from connection: {:?}", e);
+                error!("FATAL: Failed to read request length from connection: {e:?}");
                 return;
             }
             let req_len = u32::from_be_bytes(req_len_data) as usize;
             if req_len > kmr_wire::DEFAULT_MAX_SIZE {
-                error!("FATAL: Request too long ({})", req_len);
+                error!("FATAL: Request too long ({req_len})");
                 return;
             }
             let req_data = &mut buf[..req_len];
             if let Err(e) = infile.read_exact(req_data) {
                 error!(
-                    "FATAL: Failed to read request data of length {} from connection: {:?}",
-                    req_len, e
+                    "FATAL: Failed to read request data of length {req_len} from connection: {e:?}"
                 );
                 return;
             }
@@ -207,13 +206,12 @@ pub unsafe fn ta_main(
             };
             let rsp_len_data = rsp_len.to_be_bytes();
             if let Err(e) = outfile.write_all(&rsp_len_data[..]) {
-                error!("FATAL: Failed to write response length to connection: {:?}", e);
+                error!("FATAL: Failed to write response length to connection: {e:?}");
                 return;
             }
             if let Err(e) = outfile.write_all(&rsp) {
                 error!(
-                    "FATAL: Failed to write response data of length {} to connection: {:?}",
-                    rsp_len, e
+                    "FATAL: Failed to write response data of length {rsp_len} to connection: {e:?}"
                 );
                 return;
             }
@@ -226,31 +224,29 @@ pub unsafe fn ta_main(
             // Read suspend request.
             let mut suspend_request = 0u8;
             if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut suspend_request)) {
-                error!("FATAL: Failed to read suspend request: {:?}", e);
+                error!("FATAL: Failed to read suspend request: {e:?}");
                 return;
             }
             if suspend_request != SNAPSHOT_SOCKET_MESSAGE_SUSPEND {
                 error!(
-                    "FATAL: Unexpected value from snapshot socket: got {}, expected {}",
-                    suspend_request, SNAPSHOT_SOCKET_MESSAGE_SUSPEND
+                    "FATAL: Unexpected value from snapshot socket: got {suspend_request}, expected {SNAPSHOT_SOCKET_MESSAGE_SUSPEND}"
                 );
                 return;
             }
             // Write ACK.
             if let Err(e) = snapshot_socket.write_all(&[SNAPSHOT_SOCKET_MESSAGE_SUSPEND_ACK]) {
-                error!("FATAL: Failed to write suspend ACK request: {:?}", e);
+                error!("FATAL: Failed to write suspend ACK request: {e:?}");
                 return;
             }
             // Block until we get a resume request.
             let mut resume_request = 0u8;
             if let Err(e) = snapshot_socket.read_exact(std::slice::from_mut(&mut resume_request)) {
-                error!("FATAL: Failed to read resume request: {:?}", e);
+                error!("FATAL: Failed to read resume request: {e:?}");
                 return;
             }
             if resume_request != SNAPSHOT_SOCKET_MESSAGE_RESUME {
                 error!(
-                    "FATAL: Unexpected value from snapshot socket: got {}, expected {}",
-                    resume_request, SNAPSHOT_SOCKET_MESSAGE_RESUME
+                    "FATAL: Unexpected value from snapshot socket: got {resume_request}, expected {SNAPSHOT_SOCKET_MESSAGE_RESUME}"
                 );
                 return;
             }
