@@ -43,6 +43,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
     ],
 )
 
@@ -81,6 +82,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_state",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
     ],
 )
 
@@ -118,6 +120,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
     ],
 )
 
@@ -223,6 +226,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
     ],
 )
 
