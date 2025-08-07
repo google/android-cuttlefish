@@ -71,7 +71,6 @@ constexpr auto kControlPanelButtonHingeAngleValue = "hinge_angle_value";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 constexpr auto kMouseEnabled = "mouse_enabled";
 constexpr auto kGamepadEnabled = "gamepad_enabled";
-constexpr auto kGroupIdField = "group_id";
 
 constexpr int kRegistrationRetries = 3;
 constexpr int kRetryFirstIntervalMs = 1000;
