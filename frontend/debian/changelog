@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.17.0) unstable; urgency=medium
+cuttlefish-frontend (1.17.0) stable; urgency=medium
 
   * HO can launch CF instances with image directories via canonical config. by @0405ysj in https://github.com/google/android-cuttlefish/pull/1402
   * Begin development of version 1.17 by @Databean in https://github.com/google/android-cuttlefish/pull/1422
