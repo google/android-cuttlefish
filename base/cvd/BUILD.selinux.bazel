@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_flex//flex:flex.bzl", "flex_cc_library")
 
 package(
@@ -57,8 +59,8 @@ cc_library(
         "libselinux/src/mapping.c",
         "libselinux/src/mapping.h",
         "libselinux/src/matchpathcon.c",
-        "libselinux/src/policyvers.c",
         "libselinux/src/policy.h",
+        "libselinux/src/policyvers.c",
         "libselinux/src/procattr.c",
         "libselinux/src/regex.c",
         "libselinux/src/regex.h",
@@ -74,6 +76,12 @@ cc_library(
         "libselinux/src/sha1.c",
         "libselinux/src/sha1.h",
         "libselinux/src/stringrep.c",
+    ],
+    hdrs = glob([
+        "libselinux/include/**/*.h",
+    ]),
+    copts = [
+        "-Wno-unused-but-set-variable",
     ],
     includes = [
         "libselinux/include",
@@ -94,18 +102,12 @@ cc_library(
         "PCRE2_CODE_UNIT_WIDTH=8",
         "USE_PCRE2",
     ],
-    copts = [
-        "-Wno-unused-but-set-variable",
-    ],
-    hdrs = glob([
-        "libselinux/include/**/*.h",
-    ]),
     strip_include_prefix = "libselinux/include",
     deps = [
-        "@//android:log_header",
-        "@//libcutils",
-        "@pcre2",
         ":libsepol_headers",
+        "@//android:log_header",
+        "@android_system_core//:libcutils",
+        "@pcre2",
     ],
 )
 
@@ -113,11 +115,11 @@ cc_library(
     name = "libsepol",
     srcs = [
         "libsepol/cil/src/android.c",
+        "libsepol/cil/src/cil.c",
         "libsepol/cil/src/cil_binary.c",
         "libsepol/cil/src/cil_binary.h",
         "libsepol/cil/src/cil_build_ast.c",
         "libsepol/cil/src/cil_build_ast.h",
-        "libsepol/cil/src/cil.c",
         "libsepol/cil/src/cil_copy_ast.c",
         "libsepol/cil/src/cil_copy_ast.h",
         "libsepol/cil/src/cil_deny.c",
@@ -172,8 +174,8 @@ cc_library(
         "libsepol/src/hierarchy.c",
         "libsepol/src/ibendport_internal.h",
         "libsepol/src/ibpkey_internal.h",
-        "libsepol/src/iface_record.c",
         "libsepol/src/iface_internal.h",
+        "libsepol/src/iface_record.c",
         "libsepol/src/interfaces.c",
         "libsepol/src/kernel_to_cil.c",
         "libsepol/src/kernel_to_common.c",
@@ -227,20 +229,17 @@ cc_library(
 
 cc_library(
     name = "libsepol_cil_headers",
-    includes = [
-        "libsepol/cil/include",
-    ],
     hdrs = glob([
         "libsepol/cil/include/**/*.h",
     ]),
+    includes = [
+        "libsepol/cil/include",
+    ],
     strip_include_prefix = "libsepol/cil/include",
 )
 
 cc_library(
     name = "libsepol_cil_internal_headers",
-    includes = [
-        "libsepol/cil/src",
-    ],
     hdrs = [
         "libsepol/cil/src/cil_flavor.h",
         "libsepol/cil/src/cil_internal.h",
@@ -251,11 +250,14 @@ cc_library(
         "libsepol/cil/src/cil_symtab.h",
         "libsepol/cil/src/cil_tree.h",
     ],
+    includes = [
+        "libsepol/cil/src",
+    ],
+    strip_include_prefix = "libsepol/cil/src",
     deps = [
         ":libsepol_cil_headers",
         ":libsepol_headers",
     ],
-    strip_include_prefix = "libsepol/cil/src",
 )
 
 flex_cc_library(
@@ -266,12 +268,12 @@ flex_cc_library(
 
 cc_library(
     name = "libsepol_headers",
-    includes = [
-        "libsepol/include",
-    ],
     hdrs = glob([
         "libsepol/include/**/*.h",
     ]),
+    includes = [
+        "libsepol/include",
+    ],
     strip_include_prefix = "libsepol/include",
 )
 
@@ -286,8 +288,8 @@ cc_binary(
         "USE_PCRE2",
     ],
     deps = [
-        "@pcre2",
         ":libselinux",
         ":libsepol",
+        "@pcre2",
     ],
 )
