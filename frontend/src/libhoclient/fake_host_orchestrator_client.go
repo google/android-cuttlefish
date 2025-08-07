@@ -163,8 +163,11 @@ func (c *FakeHostOrchestratorClient) WaitForOperation(opName string, result any)
 		return fmt.Errorf("operation already waited for")
 	}
 	res := <-ch
-	decoder := json.NewDecoder(bytes.NewReader(res))
-	return decoder.Decode(result)
+	if result != nil {
+		decoder := json.NewDecoder(bytes.NewReader(res))
+		return decoder.Decode(result)
+	}
+	return nil
 }
 
 func (c *FakeHostOrchestratorClient) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
