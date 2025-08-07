@@ -1,4 +1,3 @@
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//:build_variables.bzl", "COPTS")
 
 package(
@@ -63,8 +62,8 @@ cc_binary(
     ],
     deps = [
         "//libbase",
+        "//libcutils",
         "//libsparse",
-        "@android_system_core//:libcutils",
         "@android_system_core//:liblp",
         "@avb//:libavb",
         "@googletest//:gtest",

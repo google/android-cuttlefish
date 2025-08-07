@@ -1,4 +1,3 @@
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//:build_variables.bzl", "COPTS")
 
 package(
@@ -178,7 +177,7 @@ cc_binary(
     deps = [
         ":libadb_cc_protos",
         "//libbase",
-        "@android_system_core//:libcutils",
+        "//libcutils",
         "@boringssl//:crypto",
         "@boringssl//:ssl",
         "@brotli//:brotlidec",

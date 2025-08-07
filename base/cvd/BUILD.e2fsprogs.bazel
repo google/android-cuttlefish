@@ -1,6 +1,3 @@
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
-
 package(
     default_visibility = [
         "@//:android_cuttlefish",
@@ -11,10 +8,10 @@ package(
 cc_binary(
     name = "e2fsdroid",
     srcs = [
-        "contrib/android/base_fs.c",
-        "contrib/android/base_fs.h",
         "contrib/android/basefs_allocator.c",
         "contrib/android/basefs_allocator.h",
+        "contrib/android/base_fs.c",
+        "contrib/android/base_fs.h",
         "contrib/android/block_list.c",
         "contrib/android/block_list.h",
         "contrib/android/block_range.c",
@@ -31,17 +28,17 @@ cc_binary(
         "misc",
     ],
     deps = [
-        ":libext2_com_err",
-        ":libext2_misc",
-        ":libext2fs",
         "@//android:log_header",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//libbase",
+        "@//libcutils",
         "@//libsparse",
-        "@android_system_core//:libcutils",
-        "@boringssl//:crypto",
         "@selinux//:libselinux",
+        "@boringssl//:crypto",
         "@zlib",
+        ":libext2fs",
+        ":libext2_com_err",
+        ":libext2_misc",
     ],
 )
 
@@ -92,15 +89,15 @@ cc_binary(
         "e2fsck",
     ],
     deps = [
+        "@//build_external/e2fsprogs:e2fsprogs_config",
+        "@//build_external/e2fsprogs:libext2_quota_generated",
         ":e2fsprogs_version",
+        ":libext2fs",
         ":libext2_blkid",
         ":libext2_com_err",
         ":libext2_e2p",
         ":libext2_quota",
         ":libext2_uuid",
-        ":libext2fs",
-        "@//build_external/e2fsprogs:e2fsprogs_config",
-        "@//build_external/e2fsprogs:libext2_quota_generated",
     ],
 )
 
@@ -148,9 +145,9 @@ cc_library(
         "lib/ext2fs/dblist.c",
         "lib/ext2fs/dblist_dir.c",
         "lib/ext2fs/digest_encode.c",
-        "lib/ext2fs/dir_iterate.c",
         "lib/ext2fs/dirblock.c",
         "lib/ext2fs/dirhash.c",
+        "lib/ext2fs/dir_iterate.c",
         "lib/ext2fs/dupfs.c",
         "lib/ext2fs/e2image.h",
         "lib/ext2fs/expanddir.c",
@@ -164,8 +161,8 @@ cc_library(
         "lib/ext2fs/finddev.c",
         "lib/ext2fs/flushb.c",
         "lib/ext2fs/freefs.c",
-        "lib/ext2fs/gen_bitmap.c",
         "lib/ext2fs/gen_bitmap64.c",
+        "lib/ext2fs/gen_bitmap.c",
         "lib/ext2fs/get_num_dirs.c",
         "lib/ext2fs/get_pathname.c",
         "lib/ext2fs/getenv.c",
@@ -219,20 +216,20 @@ cc_library(
         "lib/ext2fs/valid_blk.c",
         "lib/ext2fs/version.c",
     ],
-    hdrs = libext2fs_headers,
     includes = [
         "lib",
         "lib/ext2fs",
     ],
+    hdrs = libext2fs_headers,
     strip_include_prefix = "lib",
     deps = [
-        ":e2fsprogs_version",
-        ":libext2_com_err",
-        ":libext2_e2p_headers",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//build_external/e2fsprogs:libext2fs_generated_private",
         "@//libsparse",
         "@zlib",
+        ":e2fsprogs_version",
+        ":libext2_com_err",
+        ":libext2_e2p_headers",
     ],
 )
 
@@ -265,10 +262,10 @@ cc_library(
         "lib",
     ],
     deps = [
-        ":e2fsprogs_version",
-        ":libext2_uuid",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//build_external/e2fsprogs:libext2_blkid_generated",
+        ":e2fsprogs_version",
+        ":libext2_uuid",
     ],
 )
 
@@ -279,18 +276,18 @@ libext2_com_err_headers = [
 cc_library(
     name = "libext2_com_err",
     srcs = [
-        "lib/et/com_err.c",
-        "lib/et/com_right.c",
         "lib/et/error_message.c",
         "lib/et/error_table.h",
         "lib/et/et_name.c",
         "lib/et/init_et.c",
         "lib/et/internal.h",
+        "lib/et/com_err.c",
+        "lib/et/com_right.c",
     ],
-    hdrs = libext2_com_err_headers,
     includes = [
         "lib",
     ],
+    hdrs = libext2_com_err_headers,
     strip_include_prefix = "lib",
     deps = [
         "@//build_external/e2fsprogs:e2fsprogs_config",
@@ -314,10 +311,10 @@ cc_library(
         "lib/e2p/errcode.c",
         "lib/e2p/feature.c",
         "lib/e2p/fgetflags.c",
-        "lib/e2p/fgetproject.c",
-        "lib/e2p/fgetversion.c",
         "lib/e2p/fsetflags.c",
+        "lib/e2p/fgetproject.c",
         "lib/e2p/fsetproject.c",
+        "lib/e2p/fgetversion.c",
         "lib/e2p/fsetversion.c",
         "lib/e2p/getflags.c",
         "lib/e2p/getversion.c",
@@ -337,17 +334,17 @@ cc_library(
         "lib/e2p/setversion.c",
         "lib/e2p/uuid.c",
     ],
-    hdrs = libext2_e2p_headers,
     includes = [
         "lib",
     ],
+    hdrs = libext2_e2p_headers,
     strip_include_prefix = "lib",
     deps = [
-        ":libext2_com_err_headers",
-        ":libext2_quota_headers",
-        ":libext2fs_headers",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//build_external/e2fsprogs:libext2fs_generated",
+        ":libext2fs_headers",
+        ":libext2_com_err_headers",
+        ":libext2_quota_headers",
     ],
 )
 
@@ -365,19 +362,19 @@ cc_library(
         "misc/create_inode.c",
         "misc/create_inode_libarchive.c",
     ],
+    includes = [
+        "lib",
+    ],
     hdrs = [
         "misc/create_inode.h",
         "misc/create_inode_libarchive.h",
     ],
-    includes = [
-        "lib",
-    ],
     strip_include_prefix = "misc",
     deps = [
+        "@//build_external/e2fsprogs:e2fsprogs_config",
+        ":libext2fs",
         ":libext2_com_err",
         ":libext2_quota",
-        ":libext2fs",
-        "@//build_external/e2fsprogs:e2fsprogs_config",
     ],
 )
 
@@ -410,17 +407,17 @@ cc_library(
         "lib/support/quotaio_v2.c",
         "lib/support/quotaio_v2.h",
     ],
-    hdrs = libext2_quota_headers,
     includes = [
         "lib",
     ],
+    hdrs = libext2_quota_headers,
     strip_include_prefix = "lib",
     deps = [
-        ":libext2_blkid",
-        ":libext2_com_err",
-        ":libext2fs",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//build_external/e2fsprogs:libext2_quota_generated_private",
+        ":libext2fs",
+        ":libext2_blkid",
+        ":libext2_com_err",
     ],
 )
 
@@ -442,9 +439,9 @@ cc_library(
         "lib/uuid/parse.c",
         "lib/uuid/unpack.c",
         "lib/uuid/unparse.c",
+        "lib/uuid/uuidd.h",
         "lib/uuid/uuidP.h",
         "lib/uuid/uuid_time.c",
-        "lib/uuid/uuidd.h",
     ],
     includes = [
         "lib",
@@ -458,9 +455,9 @@ cc_library(
 cc_binary(
     name = "mke2fs",
     srcs = [
-        "misc/mk_hugefiles.c",
         "misc/mke2fs.c",
         "misc/mke2fs.h",
+        "misc/mk_hugefiles.c",
         "misc/util.c",
         "misc/util.h",
     ],
@@ -469,20 +466,20 @@ cc_binary(
         "lib",
     ],
     deps = [
-        ":e2fsprogs_version",
-        ":libext2_blkid",
-        ":libext2_com_err",
-        ":libext2_e2p",
-        ":libext2_misc",
-        ":libext2_quota",
-        ":libext2_uuid",
-        ":libext2fs",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//build_external/e2fsprogs:libext2_quota_generated",
         "@//build_external/e2fsprogs:mke2fs_generated",
         "@//libbase",
         "@//libsparse",
         "@zlib",
+        ":e2fsprogs_version",
+        ":libext2fs",
+        ":libext2_blkid",
+        ":libext2_com_err",
+        ":libext2_e2p",
+        ":libext2_misc",
+        ":libext2_quota",
+        ":libext2_uuid",
     ],
 )
 
@@ -501,12 +498,12 @@ cc_binary(
         "resize",
     ],
     deps = [
+        "@//build_external/e2fsprogs:e2fsprogs_config",
         ":e2fsprogs_version",
-        ":libext2_blkid",
+        ":libext2fs",
         ":libext2_com_err",
         ":libext2_e2p",
         ":libext2_uuid",
-        ":libext2fs",
-        "@//build_external/e2fsprogs:e2fsprogs_config",
+        ":libext2_blkid",
     ],
 )
