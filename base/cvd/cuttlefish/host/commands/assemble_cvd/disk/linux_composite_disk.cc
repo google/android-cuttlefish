@@ -20,6 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
@@ -31,7 +32,7 @@ std::vector<ImagePartition> LinuxCompositeDiskConfig(
   partitions.push_back(ImagePartition{
       .label = "linux_esp",
       .image_file_path = AbsolutePath(instance.esp_image_path()),
-      .type = kEfiSystemPartition,
+      .type = GptPartitionType::kEfiSystemPartition,
   });
   partitions.push_back(ImagePartition{
       .label = "linux_root",

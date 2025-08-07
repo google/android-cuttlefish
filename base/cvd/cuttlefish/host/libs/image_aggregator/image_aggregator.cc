@@ -45,6 +45,7 @@
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/gpt.h"
+#include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
@@ -112,32 +113,7 @@ void SetRandomUuid(std::uint8_t uuid[16]) {
  * one-by-one, then produce specification files
  */
 class CompositeDiskBuilder {
-private:
-  std::vector<PartitionInfo> partitions_;
-  std::uint64_t next_disk_offset_ = sizeof(GptBeginning);
-  bool read_only_ = true;
-
-  static Result<const std::uint8_t*> GetPartitionGUID(ImagePartition source) {
-    // Due to some endianness mismatch in e2fsprogs GUID vs GPT, the GUIDs are
-    // rearranged to make the right GUIDs appear in gdisk
-    switch (source.type) {
-      case kLinuxFilesystem: {
-        static constexpr std::uint8_t kLinuxFileSystemGuid[] = {
-            0xaf, 0x3d, 0xc6, 0xf,  0x83, 0x84, 0x72, 0x47,
-            0x8e, 0x79, 0x3d, 0x69, 0xd8, 0x47, 0x7d, 0xe4};
-        return kLinuxFileSystemGuid;
-      }
-      case kEfiSystemPartition:
-        static constexpr std::uint8_t kEfiSystemPartitionGuid[] = {
-            0x28, 0x73, 0x2a, 0xc1, 0x1f, 0xf8, 0xd2, 0x11,
-            0xba, 0x4b, 0x0,  0xa0, 0xc9, 0x3e, 0xc9, 0x3b};
-        return kEfiSystemPartitionGuid;
-      default:
-        return CF_ERR("Unknown partition type: " << (int)source.type);
-    }
-  }
-
-public:
+ public:
   CompositeDiskBuilder(bool read_only) : read_only_(read_only) {}
 
   Result<void> AppendPartition(ImagePartition source) {
@@ -240,7 +216,7 @@ public:
       };
       SetRandomUuid(gpt.entries[i].unique_partition_guid);
       const std::uint8_t* const type_guid =
-          CF_EXPECT(GetPartitionGUID(partition.source));
+          CF_EXPECT(GetPartitionGUID(partition.source.type));
       CF_EXPECT(type_guid != nullptr, "Could not recognize partition guid");
       memcpy(gpt.entries[i].partition_type_guid, type_guid, 16);
       std::u16string wide_name(partitions_[i].source.label.begin(),
@@ -272,6 +248,11 @@ public:
         crc32(0, (std::uint8_t*) &gpt.footer, sizeof(GptHeader));
     return gpt;
   }
+
+ private:
+  std::vector<PartitionInfo> partitions_;
+  std::uint64_t next_disk_offset_ = sizeof(GptBeginning);
+  bool read_only_ = true;
 };
 
 Result<void> WriteBeginning(SharedFD out, const GptBeginning& beginning) {

@@ -24,6 +24,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
@@ -41,7 +42,7 @@ std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
       ImagePartition{
           .label = "android_esp",
           .image_file_path = AbsolutePath(instance.esp_image_path()),
-          .type = kEfiSystemPartition,
+          .type = GptPartitionType::kEfiSystemPartition,
       });
 
   return partitions;

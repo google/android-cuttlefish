@@ -25,18 +25,14 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 
 namespace cuttlefish {
-
-enum ImagePartitionType {
-  kLinuxFilesystem = 0,
-  kEfiSystemPartition,
-};
 
 struct ImagePartition {
   std::string label;
   std::string image_file_path;
-  ImagePartitionType type = kLinuxFilesystem;
+  GptPartitionType type = GptPartitionType::kLinuxFilesystem;
 };
 
 uint64_t AlignToPartitionSize(uint64_t size);
