@@ -103,7 +103,7 @@ func (c *FakeHostOrchestratorClient) UploadArtifact(filename string) error {
 func (c *FakeHostOrchestratorClient) ExtractArtifact(filename string) (*hoapi.Operation, error) {
 	op, ch := c.newFakeOperation()
 	go func() {
-		ch <- []byte("done")
+		ch <- []byte("{}")
 	}()
 	return op, nil
 }
@@ -134,7 +134,7 @@ func (c *FakeHostOrchestratorClient) ListImageDirectories() (*hoapi.ListImageDir
 func (c *FakeHostOrchestratorClient) UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error) {
 	op, ch := c.newFakeOperation()
 	go func() {
-		ch <- []byte("done")
+		ch <- []byte("{}")
 	}()
 	return op, nil
 }
@@ -149,7 +149,7 @@ func (c *FakeHostOrchestratorClient) DeleteImageDirectory(id string) (*hoapi.Ope
 			}
 		}
 		c.imageDirs = newImageDirs
-		ch <- []byte("done")
+		ch <- []byte("{}")
 	}()
 	return op, nil
 }
@@ -206,7 +206,7 @@ func (c *FakeHostOrchestratorClient) UploadFileWithOptions(uploadDir string, fil
 
 func (c *FakeHostOrchestratorClient) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
 	op, ch := c.newFakeOperation()
-	go func() { ch <- []byte("done") }()
+	go func() { ch <- []byte("{}") }()
 	return op, nil
 }
 
