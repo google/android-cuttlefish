@@ -32,7 +32,7 @@ std::string SerializeFreqDomains(
   std::stringstream freq_domain_arg;
   bool first_vector = true;
 
-  for (const std::pair<int, std::vector<int>>& pair : freq_domains) {
+  for (const std::pair<const int, std::vector<int>>& pair : freq_domains) {
     if (!first_vector) {
       freq_domain_arg << ",";
     }
