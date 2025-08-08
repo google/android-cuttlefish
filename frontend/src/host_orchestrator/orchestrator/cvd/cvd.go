@@ -169,9 +169,9 @@ func (cli *CLI) Load(configPath string, opts LoadOpts) (*Group, error) {
 }
 
 type CreateOptions struct {
-	HostPath     string
-	ProductPath  string
-	InstanceNums []uint32
+	HostPath      string
+	ProductPath   string
+	InstanceCount uint32
 }
 
 func (o *CreateOptions) toArgs() []string {
@@ -182,10 +182,7 @@ func (o *CreateOptions) toArgs() []string {
 	if o.ProductPath != "" {
 		args = append(args, "--product_path", o.ProductPath)
 	}
-	if len(o.InstanceNums) > 0 {
-		args = append(args, "--instance_nums", strings.Join(sliceItoa(o.InstanceNums), ","))
-		args = append(args, "--num_instances", fmt.Sprintf("%d", len(o.InstanceNums)))
-	}
+	args = append(args, "--num_instances", fmt.Sprintf("%d", o.InstanceCount))
 	return args
 }
 
