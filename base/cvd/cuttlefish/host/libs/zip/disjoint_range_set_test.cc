@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -45,6 +46,13 @@ TEST(DisjointRangeSet, SingleMember) {
   EXPECT_TRUE(set.ContainsRange(9, 10));
   EXPECT_FALSE(set.ContainsRange(9, 11));
 
+  EXPECT_EQ(set.EndOfContainingRange(4), std::nullopt);
+  EXPECT_EQ(set.EndOfContainingRange(5), std::make_optional(10));
+  EXPECT_EQ(set.EndOfContainingRange(6), std::make_optional(10));
+  EXPECT_EQ(set.EndOfContainingRange(9), std::make_optional(10));
+  EXPECT_EQ(set.EndOfContainingRange(10), std::nullopt);
+  EXPECT_EQ(set.EndOfContainingRange(11), std::nullopt);
+
   std::vector<std::pair<uint64_t, uint64_t>> expected = {{5, 10}};
   EXPECT_EQ(set.AllRanges(), expected);
 }
@@ -70,6 +78,20 @@ TEST(DisjointRangeSet, DisjointMembers) {
   EXPECT_FALSE(set.ContainsRange(18, 22));
 
   EXPECT_FALSE(set.ContainsRange(7, 17));
+
+  EXPECT_EQ(set.EndOfContainingRange(4), std::nullopt);
+  EXPECT_EQ(set.EndOfContainingRange(5), std::make_optional(10));
+  EXPECT_EQ(set.EndOfContainingRange(6), std::make_optional(10));
+  EXPECT_EQ(set.EndOfContainingRange(9), std::make_optional(10));
+  EXPECT_EQ(set.EndOfContainingRange(10), std::nullopt);
+  EXPECT_EQ(set.EndOfContainingRange(11), std::nullopt);
+
+  EXPECT_EQ(set.EndOfContainingRange(14), std::nullopt);
+  EXPECT_EQ(set.EndOfContainingRange(15), std::make_optional(20));
+  EXPECT_EQ(set.EndOfContainingRange(16), std::make_optional(20));
+  EXPECT_EQ(set.EndOfContainingRange(19), std::make_optional(20));
+  EXPECT_EQ(set.EndOfContainingRange(20), std::nullopt);
+  EXPECT_EQ(set.EndOfContainingRange(21), std::nullopt);
 
   std::vector<std::pair<uint64_t, uint64_t>> expected = {{5, 10}, {15, 20}};
   EXPECT_EQ(set.AllRanges(), expected);
