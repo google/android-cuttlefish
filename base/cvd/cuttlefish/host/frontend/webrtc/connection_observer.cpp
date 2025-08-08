@@ -104,6 +104,16 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     return {};
   }
 
+  Result<void> OnGamepadKeyEvent(int button, bool down) override {
+    CF_EXPECT(input_events_sink_->SendGamepadKeyEvent(button, down));
+    return {};
+  }
+
+  Result<void> OnGamepadMotionEvent(int code, int value) override {
+    CF_EXPECT(input_events_sink_->SendGamepadMotionEvent(code, value));
+    return {};
+  }
+
   Result<void> OnTouchEvent(const std::string &device_label, int x, int y,
                             bool down) override {
     CF_EXPECT(input_events_sink_->SendTouchEvent(device_label, x, y, down));
@@ -476,3 +486,4 @@ void CfConnectionObserverFactory::SetCameraHandler(
   camera_controller_ = controller;
 }
 }  // namespace cuttlefish
+

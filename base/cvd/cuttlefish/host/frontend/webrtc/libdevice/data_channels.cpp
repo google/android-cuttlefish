@@ -20,6 +20,7 @@
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
+#include "cuttlefish/host/frontend/webrtc/libdevice/gamepad.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/keyboard.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
@@ -131,6 +132,19 @@ class InputChannelHandler : public DataChannelHandler {
       int pixels = CF_EXPECT(get_int("pixels"));
 
       CF_EXPECT(observer()->OnMouseWheelEvent(pixels));
+    } else if (event_type == "gamepadKey") {
+      std::string id = CF_EXPECT(get_str("id"));
+      int32_t button = CF_EXPECT(get_int("button"));
+      int32_t down = CF_EXPECT(get_int("down"));
+      uint16_t code = JsIndexToLinux(button);
+      LOG(INFO) << "gamepad_id=" << id;
+
+      CF_EXPECT(observer()->OnGamepadKeyEvent(code, down));
+    } else if (event_type == "gamepadMotion") {
+      int32_t button = CF_EXPECT(get_int("button"));
+      int32_t value = CF_EXPECT(get_int("value"));
+
+      CF_EXPECT(observer()->OnGamepadMotionEvent(button, value));
     } else if (event_type == "multi-touch") {
       std::string label = CF_EXPECT(get_str("device_label"));
       auto idArr = CF_EXPECT(get_arr("id"));
@@ -480,3 +494,4 @@ void DataChannelHandlers::OnDataChannelOpen(
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
+

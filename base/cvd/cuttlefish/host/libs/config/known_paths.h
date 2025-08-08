@@ -29,6 +29,7 @@ std::string ControlEnvProxyServerBinary();
 std::string CpioBinary();
 std::string DefaultKeyboardSpec();
 std::string DefaultMouseSpec();
+std::string DefaultGamepadSpec();
 std::string DefaultMultiTouchpadSpecTemplate();
 std::string DefaultMultiTouchscreenSpecTemplate();
 std::string DefaultRotaryDeviceSpec();
@@ -75,3 +76,4 @@ std::string WmediumdBinary();
 std::string WmediumdGenConfigBinary();
 
 }  // namespace cuttlefish
+

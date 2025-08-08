@@ -11,6 +11,7 @@ cf_cc_library(
         "camera_streamer.cpp",
         "client_handler.cpp",
         "data_channels.cpp",
+        "gamepad.cpp",
         "keyboard.cpp",
         "lights_observer.cpp",
         "local_recorder.cpp",
@@ -28,6 +29,7 @@ cf_cc_library(
         "client_handler.h",
         "connection_observer.h",
         "data_channels.h",
+        "gamepad.h",
         "keyboard.h",
         "lights_observer.h",
         "local_recorder.h",
@@ -58,3 +60,4 @@ cf_cc_library(
         "@libwebrtc",
     ],
 )
+

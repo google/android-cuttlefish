@@ -70,6 +70,7 @@ constexpr auto kControlPanelButtonLidSwitchOpen = "lid_switch_open";
 constexpr auto kControlPanelButtonHingeAngleValue = "hinge_angle_value";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 constexpr auto kMouseEnabled = "mouse_enabled";
+constexpr auto kGamepadEnabled = "gamepad_enabled";
 
 constexpr int kRegistrationRetries = 3;
 constexpr int kRetryFirstIntervalMs = 1000;
@@ -481,6 +482,8 @@ void Streamer::Impl::OnOpen() {
     }
     // Add mouse button conditionally.
     device_info[kMouseEnabled] = config_.enable_mouse;
+    // Add gamepad button conditionally.
+    device_info[kGamepadEnabled] = config_.enable_gamepad;
 
     device_info[kCustomControlPanelButtonsField] = custom_control_panel_buttons;
     register_obj[cuttlefish::webrtc_signaling::kDeviceInfoField] = device_info;
@@ -744,3 +747,4 @@ void Streamer::Impl::SetupCameraForClient(int client_id) {
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
+
