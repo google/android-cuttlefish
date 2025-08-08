@@ -38,6 +38,16 @@ cf_cc_library(
     ],
 )
 
+proto_library(
+    name = "disjoint_range_set_proto",
+    srcs = ["disjoint_range_set.proto"],
+)
+
+cc_proto_library(
+    name = "disjoint_range_set_cc_proto",
+    deps = ["//cuttlefish/host/libs/zip:disjoint_range_set_proto"],
+)
+
 cf_cc_test(
     name = "disjoint_range_set_test",
     srcs = ["disjoint_range_set_test.cc"],
@@ -74,6 +84,30 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip:zip_cc",
         "//cuttlefish/host/libs/zip:zip_string",
         "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "serialize_disjoint_range_set",
+    srcs = ["serialize_disjoint_range_set.cc"],
+    hdrs = ["serialize_disjoint_range_set.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:disjoint_range_set",
+        "//cuttlefish/host/libs/zip:disjoint_range_set_cc_proto",
+    ],
+)
+
+cf_cc_test(
+    name = "serialize_disjoint_range_set_test",
+    srcs = ["serialize_disjoint_range_set_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/zip:disjoint_range_set",
+        "//cuttlefish/host/libs/zip:serialize_disjoint_range_set",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
