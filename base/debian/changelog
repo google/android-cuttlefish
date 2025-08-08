@@ -1,10 +1,10 @@
 cuttlefish-common (1.19.0) UNRELEASED; urgency=medium
 
-  *   
+  *
 
  -- Jason Macnak <natsu@google.com>  Fri, 01 Aug 2025 15:06:58 -0700
 
-cuttlefish-common (1.18.0) unstable; urgency=medium
+cuttlefish-common (1.18.0) stable; urgency=medium
 
   * Start development on v1.18 by @cjreynol in https://github.com/google/android-cuttlefish/pull/1448
   * Extract `WaitForFile` out of `files.cpp` by @Databean in https://github.com/google/android-cuttlefish/pull/1449
