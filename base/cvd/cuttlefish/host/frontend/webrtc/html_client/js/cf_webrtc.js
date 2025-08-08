@@ -292,6 +292,23 @@ class DeviceConnection {
     });
   }
 
+  sendGamepadKey({id, button, down}) {
+    this.#sendJsonInput({
+      type: 'gamepadKey',
+      id: id,
+      button: button,
+      down: down ? 1 : 0,
+    });
+  }
+
+  sendGamepadMotion({button, value}) {
+    this.#sendJsonInput({
+      type: 'gamepadMotion',
+      button: button,
+      value: value,
+    });
+  }
+
   // TODO (b/124121375): This should probably be an array of pointer events and
   // have different properties.
   sendMultiTouch({idArr, xArr, yArr, down, device_label}) {
@@ -693,3 +710,4 @@ export async function Connect(deviceId, serverConnector) {
 
   return control.ConnectDevice(pc, infraConfig).then(_ => deviceConnection);
 }
+

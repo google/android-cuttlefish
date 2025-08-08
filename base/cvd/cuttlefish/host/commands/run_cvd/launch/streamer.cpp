@@ -132,6 +132,10 @@ class StreamerSockets : public virtual SetupFeature {
       cmd.AddParameter("-mouse_fd=",
                        input_connections_provider_.MouseConnection());
     }
+    if (instance_.enable_gamepad()) {
+      cmd.AddParameter("-gamepad_fd=",
+                       input_connections_provider_.GamepadConnection());
+    }
     cmd.AddParameter("-rotary_fd=",
                      input_connections_provider_.RotaryDeviceConnection());
     cmd.AddParameter("-keyboard_fd=",
@@ -324,3 +328,4 @@ launchStreamerComponent() {
 }
 
 }  // namespace cuttlefish
+

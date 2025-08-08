@@ -56,6 +56,8 @@ struct StreamerConfig {
   std::string control_env_proxy_server_path;
   // Whether mouse is enabled.
   bool enable_mouse;
+  // Whether gamepad is enabled.
+  bool enable_gamepad;
 };
 
 class OperatorObserver {
@@ -132,3 +134,4 @@ class Streamer {
 
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish
+
