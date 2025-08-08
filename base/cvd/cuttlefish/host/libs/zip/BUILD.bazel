@@ -30,6 +30,25 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "disjoint_range_set",
+    srcs = ["disjoint_range_set.cc"],
+    hdrs = ["disjoint_range_set.h"],
+    deps = [
+        "//libbase",
+    ],
+)
+
+cf_cc_test(
+    name = "disjoint_range_set_test",
+    srcs = ["disjoint_range_set_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/zip:disjoint_range_set",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
