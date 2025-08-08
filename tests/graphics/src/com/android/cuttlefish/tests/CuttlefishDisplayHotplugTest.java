@@ -22,6 +22,7 @@ import android.platform.test.annotations.LargeTest;
 import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.device.internal.CuttlefishDisplayHandler;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -70,24 +71,9 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
 
     private static final long DEFAULT_TIMEOUT_MS = 5000;
 
-    private static final String CVD_BINARY_BASENAME = "cvd";
+    private static final int DEFAULT_DPI = 320;
 
-    private static final String CVD_DISPLAY_BINARY_BASENAME = "cvd_internal_display";
-
-    private CommandResult runCvdCommand(Collection<String> commandArgs) throws FileNotFoundException {
-        // TODO: Switch back to using `cvd` after either:
-        //  * Commands under `cvd` can be used with instances launched through `launch_cvd`.
-        //  * ATP launches instances using `cvd start` instead of `launch_cvd`.
-        String cvdBinary = runner.getHostBinaryPath(CVD_DISPLAY_BINARY_BASENAME);
-
-        List<String> fullCommand = new ArrayList<String>(commandArgs);
-        fullCommand.add(0, cvdBinary);
-
-        // Remove the "display" part of the command until switching back to `cvd`.
-        fullCommand.remove(1);
-
-        return runner.run(DEFAULT_TIMEOUT_MS, fullCommand.toArray(new String[0]));
-    }
+    private static final int DEFAULT_REFRESH_RATE_HZ = 60;
 
     private static final String HELPER_APP_APK = "CuttlefishDisplayHotplugHelperApp.apk";
 
@@ -145,56 +131,6 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
         abstract int width();
         abstract int height();
     }
-
-    /**
-     * Expected input JSON format:
-     *
-     *   {
-     *     "displays" : {
-     *       "<display id>": {
-     *         "mode": {
-     *           "windowed": [
-     *             <width>,
-     *             <height>,
-     *           ],
-     *         },
-     *         ...
-     *       },
-     *       ...
-     *     }
-     *   }
-     *
-     */
-    private Map<Integer, HostDisplayInfo> parseHostDisplayInfos(String inputJson) {
-        if (Strings.isNullOrEmpty(inputJson)) {
-            throw new IllegalArgumentException("Null display info json.");
-        }
-
-        Map<Integer, HostDisplayInfo> displayInfos = new HashMap<Integer, HostDisplayInfo>();
-
-        try {
-            JSONObject json = new JSONObject(inputJson);
-            JSONObject jsonDisplays = json.getJSONObject("displays");
-            for (Iterator<String> keyIt = jsonDisplays.keys(); keyIt.hasNext(); ) {
-                String displayNumberString = keyIt.next();
-
-                JSONObject jsonDisplay = jsonDisplays.getJSONObject(displayNumberString);
-                JSONObject jsonDisplayMode = jsonDisplay.getJSONObject("mode");
-                JSONArray jsonDisplayModeWindowed = jsonDisplayMode.getJSONArray("windowed");
-
-                int id = Integer.parseInt(displayNumberString);
-                int w = jsonDisplayModeWindowed.getInt(0);
-                int h = jsonDisplayModeWindowed.getInt(1);
-
-                displayInfos.put(id, HostDisplayInfo.create(id, w, h));
-            }
-        } catch (JSONException e) {
-            throw new IllegalArgumentException("Invalid display info json: " + inputJson, e);
-        }
-
-        return displayInfos;
-    }
-
 
     /**
      * Expected input JSON format:
@@ -270,15 +206,16 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
         return parseGuestDisplayInfos(getDisplayHotplugHelperAppOutput());
     }
 
-    public Map<Integer, HostDisplayInfo> getHostDisplays() throws FileNotFoundException {
-        CommandResult listDisplaysResult = runCvdCommand(Lists.newArrayList("display", "list"));
-        if (!CommandStatus.SUCCESS.equals(listDisplaysResult.getStatus())) {
-            throw new IllegalStateException(
-                    String.format("Failed to run list displays command:%s\n%s",
-                                  listDisplaysResult.getStdout(),
-                                  listDisplaysResult.getStderr()));
-        }
-        return parseHostDisplayInfos(listDisplaysResult.getStdout());
+    public Map<Integer, HostDisplayInfo> getHostDisplays() throws Exception {
+        Map<Integer, HostDisplayInfo> hostDisplayInfos = new HashMap<Integer, HostDisplayInfo>();
+
+        new CuttlefishDisplayHandler()
+            .listDisplays(getDevice())
+            .forEach((displayNumber, display) -> {
+                hostDisplayInfos.put(displayNumber, HostDisplayInfo.create(displayNumber, display.width, display.height));
+            });
+
+        return hostDisplayInfos;
     }
 
     @AutoValue
@@ -291,51 +228,23 @@ public class CuttlefishDisplayHotplugTest extends CuttlefishHostTest {
         abstract int height();
     }
 
-    /* As supported by `cvd display add` */
-    private static final int MAX_ADD_DISPLAYS = 4;
-
-    public void addDisplays(List<AddDisplayParams> params) throws FileNotFoundException {
-        if (params.size() > MAX_ADD_DISPLAYS) {
-            throw new IllegalArgumentException(
-                "`cvd display add` only supports adding up to " + MAX_ADD_DISPLAYS +
-                " at once but was requested to add " + params.size() + " displays.");
-        }
-
-        List<String> addDisplaysCommand = Lists.newArrayList("display", "add");
-        for (AddDisplayParams display : params) {
-            addDisplaysCommand.add(String.format(
-                "--display=width=%d,height=%d", display.width(), display.height()));
-        }
-
-        CommandResult addDisplayResult = runCvdCommand(addDisplaysCommand);
-        if (!CommandStatus.SUCCESS.equals(addDisplayResult.getStatus())) {
-            throw new IllegalStateException(
-                    String.format("Failed to run add display command:%s\n%s",
-                                  addDisplayResult.getStdout(),
-                                  addDisplayResult.getStderr()));
+    public void addDisplays(List<AddDisplayParams> params) throws DeviceNotAvailableException {
+        for (AddDisplayParams param : params) {
+            new CuttlefishDisplayHandler().addDisplay(getDevice(), param.width(), param.height(), DEFAULT_DPI, DEFAULT_REFRESH_RATE_HZ);
         }
     }
 
-    public void addDisplay(int width, int height) throws FileNotFoundException {
+    public void addDisplay(int width, int height) throws DeviceNotAvailableException {
         addDisplays(List.of(AddDisplayParams.create(width, height)));
     }
 
-    public void removeDisplays(List<Integer> displayIds) throws FileNotFoundException {
-        List<String> removeDisplaysCommand = Lists.newArrayList("display", "remove");
+    public void removeDisplays(List<Integer> displayIds) throws DeviceNotAvailableException {
         for (Integer displayId : displayIds) {
-            removeDisplaysCommand.add("--display=" + displayId.toString());
-        }
-
-        CommandResult removeDisplayResult = runCvdCommand(removeDisplaysCommand);
-        if (!CommandStatus.SUCCESS.equals(removeDisplayResult.getStatus())) {
-            throw new IllegalStateException(
-                    String.format("Failed to run remove display command:%s\n%s",
-                                  removeDisplayResult.getStdout(),
-                                  removeDisplayResult.getStderr()));
+            new CuttlefishDisplayHandler().removeDisplay(getDevice(), displayId);
         }
     }
 
-    public void removeDisplay(int displayId) throws FileNotFoundException {
+    public void removeDisplay(int displayId) throws DeviceNotAvailableException {
         removeDisplays(List.of(displayId));
     }
 
