@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <set>
 #include <utility>
 #include <vector>
@@ -52,6 +53,8 @@ class Range {
   std::pair<uint64_t, uint64_t> AsPair() const {
     return std::make_pair(start_, end_);
   }
+
+  uint64_t End() const { return end_; }
 
  private:
   uint64_t start_;
@@ -137,6 +140,20 @@ void DisjointRangeSet::InsertRange(uint64_t start, uint64_t end) {
     it = ranges.erase(it);
   }
   ranges.emplace(new_range);
+}
+
+std::optional<uint64_t> DisjointRangeSet::EndOfContainingRange(
+    uint64_t start) const {
+  const std::set<Range>& ranges = impl_->ranges_;
+
+  Range test(start, start + 1);
+
+  Iterator it = ranges.upper_bound(test);
+  if (it == ranges.begin()) {
+    return std::nullopt;
+  }
+  it--;
+  return it->Contains(test) ? std::make_optional(it->End()) : std::nullopt;
 }
 
 std::vector<std::pair<uint64_t, uint64_t>> DisjointRangeSet::AllRanges() const {

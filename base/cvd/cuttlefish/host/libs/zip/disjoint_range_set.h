@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -35,6 +36,9 @@ class DisjointRangeSet {
   bool ContainsRange(uint64_t start, uint64_t end) const;
   // Records that all numbers from [start,end) are contained.
   void InsertRange(uint64_t start, uint64_t end);
+  // Returns the end of the range that `start` is a member of. Returns
+  // std::nullopt if `start` is not within a range.
+  std::optional<uint64_t> EndOfContainingRange(uint64_t start) const;
 
   std::vector<std::pair<uint64_t, uint64_t>> AllRanges() const;
 

@@ -59,6 +59,20 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "lazily_loaded_file",
+    srcs = ["lazily_loaded_file.cc"],
+    hdrs = ["lazily_loaded_file.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip:disjoint_range_set",
+        "//cuttlefish/host/libs/zip:serialize_disjoint_range_set",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "remote_zip",
     srcs = ["remote_zip.cc"],
     hdrs = ["remote_zip.h"],
