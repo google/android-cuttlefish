@@ -19,4 +19,3 @@ exports_files([
     "js/rootcanal.js",
     "js/touch.js",
 ])
-
