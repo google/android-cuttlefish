@@ -206,6 +206,46 @@ symlinks: {
 }
 
 symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/keyboard.json"
+  link_name: "etc/default_input_devices/keyboard.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/mouse.json"
+  link_name: "etc/default_input_devices/mouse.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/multi_touchpad_template.json"
+  link_name: "etc/default_input_devices/multi_touchpad_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/multi_touchscreen_template.json"
+  link_name: "etc/default_input_devices/multi_touchscreen_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/rotary_wheel.json"
+  link_name: "etc/default_input_devices/rotary_wheel.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/single_touchpad_template.json"
+  link_name: "etc/default_input_devices/single_touchpad_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/single_touchscreen_template.json"
+  link_name: "etc/default_input_devices/single_touchscreen_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/switches.json"
+  link_name: "etc/default_input_devices/switches.json"
+}
+
+symlinks: {
   target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
   link_name: "etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
 }
