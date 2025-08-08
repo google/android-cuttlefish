@@ -31,8 +31,7 @@ import (
 )
 
 const (
-	CVDBin      = "/usr/bin/cvd"
-	FetchCVDBin = "/usr/bin/fetch_cvd"
+	CVDBin = "/usr/bin/cvd"
 )
 
 // A CVD instance group
@@ -415,6 +414,7 @@ func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) 
 		return fmt.Errorf("invalid main build: %w", err)
 	}
 	args := []string{
+		"fetch",
 		fmt.Sprintf("--directory=%s", targetDir),
 		fmt.Sprintf("--default_build=%s", cliFormat(mainBuild)),
 	}
@@ -443,7 +443,7 @@ func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) 
 		args = append(args, fmt.Sprintf("--api_base_url=%s", opts.BuildAPIBaseURL))
 	}
 
-	cmd := cli.buildCmd(FetchCVDBin, args...)
+	cmd := cli.buildCmd(CVDBin, args...)
 
 	if opts.Credentials.UseGCEServiceAccountCredentials {
 		cmd.Args = append(cmd.Args, "--credential_source=gce")
@@ -462,7 +462,7 @@ func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) 
 	}
 
 	if _, err := cli.runCmd(cmd); err != nil {
-		return fmt.Errorf("`fetch_cvd` failed: %w", err)
+		return fmt.Errorf("`cvd fetch` failed: %w", err)
 	}
 	// TODO(b/286466643): Remove this hack once cuttlefish is capable of booting from read-only artifacts again.
 	if _, err := cli.exec("chmod", "-R", "g+rw", targetDir); err != nil {
