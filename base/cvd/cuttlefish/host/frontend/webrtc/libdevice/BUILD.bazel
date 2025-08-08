@@ -60,4 +60,3 @@ cf_cc_library(
         "@libwebrtc",
     ],
 )
-
