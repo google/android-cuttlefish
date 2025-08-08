@@ -43,7 +43,6 @@ constexpr char kAvbVbmetaAlgorithm[] = "avb_vbmeta_algorithm";
 constexpr char kAvbVbmetaArgs[] = "avb_vbmeta_args";
 constexpr char kAvbVbmetaKeyPath[] = "avb_vbmeta_key_path";
 constexpr char kDynamicPartitions[] = "dynamic_partition_list";
-constexpr char kGoogleDynamicPartitions[] = "google_dynamic_partitions";
 constexpr char kRollbackIndexSuffix[] = "_rollback_index_location";
 constexpr char kSuperBlockDevices[] = "super_block_devices";
 constexpr char kSuperPartitionGroups[] = "super_partition_groups";
