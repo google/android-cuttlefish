@@ -17,6 +17,9 @@
 PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
 SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
+# Disable UWB
+CF_VENDOR_NO_UWB := true
+
 $(call inherit-product, device/google/atv/products/atv_vendor.mk)
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
