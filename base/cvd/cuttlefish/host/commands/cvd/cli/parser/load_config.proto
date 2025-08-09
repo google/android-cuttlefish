@@ -23,6 +23,8 @@ package cuttlefish.cvd.config;
  * We should check they are kept in sync.
  */
 option go_package = "github.com/google/android_cuttlefish/base/cvd/cuttlefish/host/commands/cvd/cli/parser/golang/";
+option java_package = "com.google.android_cuttlefish.base.cvd.cuttlefish.host.commands.cvd.cli.parser";
+option java_outer_classname = "CvdConfig";
 
 message EnvironmentSpecification {
   repeated Instance instances = 1;
@@ -33,6 +35,16 @@ message EnvironmentSpecification {
   optional bool netsim_uwb = 6;
 }
 
+// TODO: chadreynolds - when we can make breaking changes and update, use this
+// in EnvironmentSpecification instead of individual fields
+message EnvironmentOptions {
+  optional Fetch fetch = 1;
+  optional Metrics metrics = 2;
+  optional Common common = 3;
+  optional bool netsim_bt = 4;
+  optional bool netsim_uwb = 5;
+}
+
 message Common {
   optional string group_name = 1;
   optional string host_package = 2;
@@ -41,7 +53,8 @@ message Common {
 message Fetch {
   optional string api_key = 1;
   optional string credential_source = 2;
-  optional uint32 wait_retry_period_seconds = 3 [json_name="wait_retry_period"];
+  optional uint32 wait_retry_period_seconds = 3
+      [json_name = "wait_retry_period"];
   reserved 4;
   optional bool keep_downloaded_archives = 5;
   optional string api_base_url = 6;
@@ -58,7 +71,7 @@ message Instance {
   optional Streaming streaming = 7;
   optional Connectivity connectivity = 8;
   // TODO: b/337089452 - handle outside of proto logic
-  optional string import_template = 9 [json_name="@import"];
+  optional string import_template = 9 [json_name = "@import"];
 }
 
 message Boot {
@@ -97,7 +110,7 @@ message Display {
 
 message Disk {
   optional string default_build = 1;
-  optional Super super_partition = 2 [json_name="super"];
+  optional Super super_partition = 2 [json_name = "super"];
   optional bool download_img_zip = 3;
   optional bool download_target_files_zip = 4;
   optional uint32 blank_data_image_mb = 5;
