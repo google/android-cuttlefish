@@ -202,6 +202,7 @@ class ReadableZip {
   friend class WritableZipSource;
 
   static Result<ReadableZip> FromSource(SeekableZipSource);
+  static ReadableZip Invalid();
 
   ReadableZip(ReadableZip&&);
   virtual ~ReadableZip();

@@ -48,10 +48,13 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/web/build_zip_name.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/zip_file.h"
 
 namespace cuttlefish {
 namespace {
@@ -248,10 +251,11 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     trace.CompletePhase("Desparse image files");
   }
 
+  std::string target_files_name =
+      GetBuildZipName(*builds.default_build, "target_files");
+  ReadableZip target_files_zip = ReadableZip::Invalid();
   if (builds.system || flags.download_target_files_zip) {
     LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
-    std::string target_files_name =
-        GetBuildZipName(*builds.default_build, "target_files");
     std::string target_files = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.default_target_files,
         target_files_name));
@@ -260,7 +264,19 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
                                       default_build_id, default_build_target,
                                       {target_files}, target_directories.root));
+    target_files_zip = CF_EXPECT(ZipOpenRead(target_files));
+  } else {
+    target_files_zip =
+        CF_EXPECT(OpenZip(build_api, *builds.default_build, target_files_name));
   }
+  std::string ab_partitions = "ab_partitions.txt";
+  std::string ab_partitions_txt_out =
+      target_directories.default_target_files + "/" + ab_partitions;
+  CF_EXPECT(ExtractFile(target_files_zip, "META/" + ab_partitions,
+                        ab_partitions_txt_out));
+  CF_EXPECT(config.AddFilesToConfig(
+      FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+      {ab_partitions_txt_out}, target_directories.root));
   return {};
 }
 
