@@ -20,7 +20,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync/atomic"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
@@ -52,8 +51,6 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	fetchCredentials         cvd.FetchCredentials
 	buildAPIBaseURL          string
-
-	instanceCounter uint32
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
@@ -179,7 +176,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 		return nil, err
 	}
 	startParams := startCVDParams{
-		InstanceNumbers:  a.newInstanceNumbers(instancesCount),
+		InstanceCount:    instancesCount,
 		MainArtifactsDir: targetDir,
 	}
 	if buildSource.KernelBuild != nil {
@@ -192,20 +189,11 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Remove once `acloud CLI` gets deprecated.
-	if contains(startParams.InstanceNumbers, 1) {
-		go runAcloudSetup(a.execContext, a.paths.InstancesDir, targetDir)
-	}
-	return group, nil
-}
 
-func (a *CreateCVDAction) newInstanceNumbers(n uint32) []uint32 {
-	result := []uint32{}
-	for i := 0; i < int(n); i++ {
-		num := atomic.AddUint32(&a.instanceCounter, 1)
-		result = append(result, num)
-	}
-	return result
+	// TODO: Remove once `acloud CLI` gets deprecated.
+	go runAcloudSetup(a.execContext, a.paths.InstancesDir, targetDir)
+
+	return group, nil
 }
 
 func validateRequest(r *apiv1.CreateCVDRequest) error {

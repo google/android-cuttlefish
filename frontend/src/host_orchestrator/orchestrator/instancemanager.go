@@ -152,7 +152,7 @@ const (
 )
 
 type startCVDParams struct {
-	InstanceNumbers  []uint32
+	InstanceCount    uint32
 	MainArtifactsDir string
 	// OPTIONAL. If set, kernel relevant artifacts will be pulled from this dir.
 	KernelDir string
@@ -165,9 +165,7 @@ func CreateCVD(ctx hoexec.ExecContext, p startCVDParams) (*cvd.Group, error) {
 		HostPath:    p.MainArtifactsDir,
 		ProductPath: p.MainArtifactsDir,
 	}
-	if len(p.InstanceNumbers) > 1 {
-		createOpts.InstanceNums = p.InstanceNumbers
-	}
+	createOpts.InstanceCount = p.InstanceCount
 
 	startOpts := cvd.StartOptions{
 		ReportUsageStats: reportAnonymousUsageStats,
