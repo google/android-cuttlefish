@@ -58,8 +58,8 @@ class AndroidBuildApi : public BuildApi {
       const std::string& artifact_name,
       const std::string& backup_artifact_name) override;
 
-  Result<ReadableZip> OpenZipArchive(const Build& build,
-                                     const std::string& archive_name) override;
+  Result<SeekableZipSource> FileReader(
+      const Build&, const std::string& artifact_name) override;
 
  private:
   Result<std::vector<std::string>> Headers();
@@ -105,10 +105,10 @@ class AndroidBuildApi : public BuildApi {
   Result<Build> GetBuild(const DeviceBuildString& build_string);
   Result<Build> GetBuild(const DirectoryBuildString& build_string);
 
-  Result<ReadableZip> OpenZipArchive(const DeviceBuild& build,
-                                     const std::string& archive_name);
-  Result<ReadableZip> OpenZipArchive(const DirectoryBuild& build,
-                                     const std::string& archive_name);
+  Result<SeekableZipSource> FileReader(const DeviceBuild&,
+                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(const DirectoryBuild&,
+                                       const std::string& artifact_name);
 
   HttpClient& http_client;
   CredentialSource* credential_source;

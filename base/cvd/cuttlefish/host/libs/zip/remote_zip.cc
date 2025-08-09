@@ -30,7 +30,6 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
@@ -124,8 +123,9 @@ Result<uint64_t> GetSizeIfSupportsRangeRequests(
 
 }  // namespace
 
-Result<ReadableZip> ZipFromUrl(HttpClient& http_client, const std::string& url,
-                               std::vector<std::string> headers) {
+Result<SeekableZipSource> ZipSourceFromUrl(HttpClient& http_client,
+                                           const std::string& url,
+                                           std::vector<std::string> headers) {
   uint64_t size =
       CF_EXPECT(GetSizeIfSupportsRangeRequests(http_client, url, headers));
 
@@ -133,13 +133,7 @@ Result<ReadableZip> ZipFromUrl(HttpClient& http_client, const std::string& url,
       std::make_unique<RemoteZip>(http_client, url, size, std::move(headers));
   CF_EXPECT(callbacks.get());
 
-  SeekableZipSource source =
-      CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
-
-  SeekableZipSource buffered =
-      CF_EXPECT(BufferZipSource(std::move(source), 1 << 16));
-
-  return CF_EXPECT(ReadableZip::FromSource(std::move(buffered)));
+  return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
 }
 
 }  // namespace cuttlefish
