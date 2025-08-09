@@ -117,7 +117,9 @@ TEST(RemoteZipTest, TwoFiles) {
 
   http_client.SetResponse(std::move(*callback));
 
-  Result<ReadableZip> remote_zip = ZipFromUrl(http_client, "url", {});
+  Result<SeekableZipSource> source = ZipSourceFromUrl(http_client, "url", {});
+  ASSERT_THAT(source, IsOk());
+  Result<ReadableZip> remote_zip = ReadableZip::FromSource(std::move(*source));
   ASSERT_THAT(remote_zip, IsOk());
 
   Result<SeekableZipSource> file_a(remote_zip->GetFile("a.txt"));

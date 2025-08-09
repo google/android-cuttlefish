@@ -28,8 +28,8 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/zip/cached_zip_source.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
-#include "cuttlefish/host/libs/zip/zip_file.h"
 
 namespace cuttlefish {
 namespace {
@@ -144,11 +144,11 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
                                   paths.target_backup_artifact));
 }
 
-Result<ReadableZip> CachingBuildApi::OpenZipArchive(
-    const Build& build, const std::string& zip_name) {
-  // TODO: schuffelen - cache only needed zip file parts
-  CF_EXPECT(build_api_.DownloadFile(build, cache_base_path_, zip_name));
-  return ZipOpenRead(cache_base_path_ + "/" + zip_name);
+Result<SeekableZipSource> CachingBuildApi::FileReader(
+    const Build& build, const std::string& artifact) {
+  SeekableZipSource source = CF_EXPECT(build_api_.FileReader(build, artifact));
+  std::string cache_path = fmt::format("{}/{}", cache_base_path_, artifact);
+  return CF_EXPECT(CacheZipSource(std::move(source), cache_path));
 }
 
 }  // namespace cuttlefish

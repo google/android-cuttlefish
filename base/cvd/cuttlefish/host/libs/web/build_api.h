@@ -38,8 +38,8 @@ class BuildApi {
       const std::string& artifact_name,
       const std::string& backup_artifact_name) = 0;
 
-  virtual Result<ReadableZip> OpenZipArchive(const Build& build,
-                                             const std::string& artifact_name) = 0;
+  virtual Result<SeekableZipSource> FileReader(
+      const Build&, const std::string& artifact_name) = 0;
 };
 
 }  // namespace cuttlefish

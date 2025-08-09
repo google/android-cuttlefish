@@ -37,7 +37,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip:zip_cc",
-        "//cuttlefish/host/libs/zip:zip_file",
         "//libbase",
         "@jsoncpp",
     ],
@@ -91,6 +90,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "build_api_zip",
+    srcs = ["build_api_zip.cc"],
+    hdrs = ["build_api_zip.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/zip:buffered_zip_source",
+        "//cuttlefish/host/libs/zip:zip_cc",
+    ],
+)
+
+cf_cc_library(
     name = "build_zip_name",
     srcs = ["build_zip_name.cc"],
     hdrs = ["build_zip_name.h"],
@@ -113,8 +125,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:credential_source",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/zip:cached_zip_source",
         "//cuttlefish/host/libs/zip:zip_cc",
-        "//cuttlefish/host/libs/zip:zip_file",
         "//libbase",
         "@fmt",
     ],

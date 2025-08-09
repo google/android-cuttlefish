@@ -13,21 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/host/libs/web/build_api_zip.h"
 
 #include <string>
-#include <vector>
+#include <utility>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/zip/buffered_zip_source.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
-/* Creates a read-only zip archive that downloads files on-demand from a remote
- * URL. It requires and validates the remote web server supports HTTP range
- * requests. `headers` are passed through when making HTTP requests to the
- * `HttpClient`. */
-Result<SeekableZipSource> ZipSourceFromUrl(HttpClient&, const std::string& url,
-                                           std::vector<std::string> headers);
+Result<ReadableZip> OpenZip(BuildApi& build_api, const Build& build,
+                            const std::string& name) {
+  SeekableZipSource source = CF_EXPECT(build_api.FileReader(build, name));
+
+  SeekableZipSource buffered =
+      CF_EXPECT(BufferZipSource(std::move(source), 1 << 16));
+
+  return CF_EXPECT(ReadableZip::FromSource(std::move(buffered)));
 }
+
+}  // namespace cuttlefish

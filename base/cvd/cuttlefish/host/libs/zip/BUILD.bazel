@@ -106,7 +106,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip:zip_cc",
         "@abseil-cpp//absl/strings",
         "@fmt",
