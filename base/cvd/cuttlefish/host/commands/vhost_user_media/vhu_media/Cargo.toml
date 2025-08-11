@@ -1,0 +1,17 @@
+[package]
+name = "vhu_media"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+libc = { workspace = true }
+log = { workspace = true }
+thiserror = { workspace = true }
+vhost = { workspace = true }
+vhost-user-backend = { workspace = true }
+virtio-bindings = { workspace = true }
+virtio-media = { workspace = true }
+virtio-queue = { workspace = true }
+vm-allocator = { workspace = true }
+vm-memory = { workspace = true }
+vmm-sys-util = { workspace = true }
