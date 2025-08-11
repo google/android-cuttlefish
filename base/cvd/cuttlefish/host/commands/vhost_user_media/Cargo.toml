@@ -1,0 +1,34 @@
+[workspace]
+resolver = "3"
+members = ["simple_device", "vhu_media"]
+
+[workspace.dependencies]
+vhu_media = { path = "vhu_media" }
+
+# External dependencies
+anyhow = { version = "1.0.97", features = [ "default", "std" ] }
+clap = { version = "4.5",  features = ["derive"] }
+env_logger = "0.11"
+libc = "0.2"
+log = "0.4"
+thiserror = "2.0"
+vhost = { version = "0.14", features = ["vhost-user-backend"] }
+vhost-user-backend = "0.20"
+virtio-bindings = "0.2.6"
+virtio-media = "0.0.7"
+virtio-queue = "0.16.0"
+vm-allocator = "0.1.3"
+vm-memory = "0.16.2"
+vmm-sys-util = "0.15.0"
+v4l2r = { version = "0.0.6", features = ["arch64"] }
+uuid = { version = "1.8.0", features=["v4"] }
+zerocopy = { version = "0.8.13", features = ["derive"] }
+bitflags = "2.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1"
+
+[patch.crates-io]
+vhost = { path = "/usr/local/google/home/sorama/code/github.com/forks/vhost/vhost" }
+vhost-user-backend = { path = "/usr/local/google/home/sorama/code/github.com/forks/vhost/vhost-user-backend" }
+virtio-media = { path = "/usr/local/google/home/sorama/code/github.com/virtio-media/device" }
+
