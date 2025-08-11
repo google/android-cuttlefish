@@ -1,0 +1,14 @@
+[package]
+name = "simple_device"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { workspace = true }
+env_logger = { workspace = true }
+log = { workspace = true }
+thiserror = { workspace = true }
+vhost-user-backend = { workspace = true }
+vhu_media = { workspace = true }
+virtio-media = { workspace = true }
+vm-memory = { workspace = true }
