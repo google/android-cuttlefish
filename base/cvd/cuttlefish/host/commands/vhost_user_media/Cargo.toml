@@ -1,0 +1,21 @@
+[workspace]
+members = [
+    "simple_device",
+    "vhu_media",
+]
+
+[workspace.dependencies]
+clap = { version = "4.5",  features = ["derive"] }
+env_logger = "0.11"
+libc = "0.2"
+log = "0.4"
+thiserror = "2.0"
+vhost = { git = "https://github.com/rust-vmm/vhost.git", rev = "03c9524", features = ["vhost-user-backend"] }
+vhost-user-backend = { git = "https://github.com/rust-vmm/vhost.git", rev = "03c9524" }
+vhu_media = { path = "vhu_media" }
+virtio-bindings = "0.2.6"
+virtio-media = "0.0.7"
+virtio-queue = "0.17.0"
+vm-allocator = "0.1.3"
+vm-memory = "=0.17.1"
+vmm-sys-util = "0.15.0"
