@@ -12,6 +12,7 @@ cf_cc_test(
     ],
     deps = [
         "//cuttlefish/host/libs/location",
+        "//cuttlefish/host/libs/location:string_parse",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
