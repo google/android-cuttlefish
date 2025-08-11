@@ -429,9 +429,6 @@ DEFINE_bool(snapshot_compatible, false,
             "Declaring that device is snapshot'able and runs with only "
             "supported ones.");
 
-DEFINE_vec(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
-           "configuration file for the MCU emulator");
-
 DEFINE_string(straced_host_executables, CF_DEFAULTS_STRACED_HOST_EXECUTABLES,
               "Comma-separated list of executable names to run under strace "
               "to collect their system call information.");

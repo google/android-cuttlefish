@@ -199,8 +199,6 @@ DECLARE_vec(device_external_network);
 
 DECLARE_bool(snapshot_compatible);
 
-DECLARE_vec(mcu_config_path);
-
 DECLARE_string(straced_host_executables);
 
 DECLARE_vec(fail_fast);
