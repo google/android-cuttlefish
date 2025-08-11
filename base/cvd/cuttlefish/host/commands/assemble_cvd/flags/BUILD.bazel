@@ -105,6 +105,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "mcu_config_path",
+    srcs = ["mcu_config_path.cc"],
+    hdrs = ["mcu_config_path.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//libbase",
+        "@gflags",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "system_image_dir",
     srcs = ["system_image_dir.cc"],
     hdrs = ["system_image_dir.h"],

@@ -42,7 +42,6 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/commands/assemble_cvd/alloc.h"
@@ -55,6 +54,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
@@ -634,7 +634,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> vhost_user_block_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_user_block));
 
-  std::vector<std::string> mcu_config_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mcu_config_path));
+  McuConfigPathFlag mcu_config_paths = McuConfigPathFlag::FromGlobalGflags();
 
   std::vector<std::string> vcpu_config_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vcpu_config_path));
@@ -1253,16 +1253,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "TODO(b/286284441): slirp only works on QEMU");
     instance.set_external_network_mode(external_network_mode);
 
-    if (!mcu_config_vec[instance_index].empty()) {
-      auto mcu_cfg_path = mcu_config_vec[instance_index];
-      CF_EXPECT(FileExists(mcu_cfg_path), "MCU config file does not exist");
-      std::string file_content;
-      using android::base::ReadFileToString;
-      CF_EXPECT(ReadFileToString(mcu_cfg_path.c_str(), &file_content,
-                                 /* follow_symlinks */ true),
-                "Failed to read mcu config file");
-      instance.set_mcu(CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file"));
-    }
+    instance.set_mcu(CF_EXPECT(mcu_config_paths.JsonForIndex(instance_index)));
 
     if (!vcpu_config_vec[instance_index].empty()) {
       auto vcpu_cfg_path = vcpu_config_vec[instance_index];
@@ -1382,15 +1373,6 @@ void SetDefaultFlagsForGem5() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
-void SetDefaultFlagsForMcu() {
-  auto path = DefaultHostArtifactsPath("etc/mcu_config.json");
-  if (!CanAccess(path, R_OK)) {
-    return;
-  }
-  SetCommandLineOptionWithMode("mcu_config_path", path.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-}
-
 void SetDefaultFlagsForOpenwrt(Arch target_arch) {
   if (target_arch == Arch::X86_64) {
     SetCommandLineOptionWithMode(
@@ -1441,8 +1423,6 @@ Result<void> SetFlagDefaultsForVmm(
   }
 
   SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
-
-  SetDefaultFlagsForMcu();
 
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);
