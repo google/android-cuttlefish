@@ -1,0 +1,13 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@vhost_user_media_workspace_crates//:defs.bzl", "all_crate_deps")
+
+package(default_visibility = ["//:android_cuttlefish"])
+
+rust_binary(
+    name = "simple_device",
+    srcs = ["src/main.rs"],
+    edition = "2024",
+    deps = [
+        "//cuttlefish/host/commands/vhost_user_media/vhu_media",
+    ] + all_crate_deps(),
+)
