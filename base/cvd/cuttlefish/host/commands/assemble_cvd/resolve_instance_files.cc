@@ -31,6 +31,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
@@ -39,13 +40,14 @@ namespace cuttlefish {
 Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
                                   const InitramfsPathFlag& initramfs_path,
                                   const KernelPathFlag& kernel_path,
+                                  const SuperImageFlag& super_image,
                                   const SystemImageDirFlag& system_image_dir) {
   // It is conflict (invalid) to pass both kernel_path/initramfs_path
   // and image file paths.
   bool flags_kernel_initramfs_has_input =
       (!kernel_path.HasValue()) || (!initramfs_path.HasValue());
   bool flags_image_has_input =
-      (!FLAGS_super_image.empty()) || (!FLAGS_vendor_boot_image.empty()) ||
+      (!super_image.IsDefault()) || (!FLAGS_vendor_boot_image.empty()) ||
       (!FLAGS_vbmeta_vendor_dlkm_image.empty()) ||
       (!FLAGS_vbmeta_system_dlkm_image.empty()) || (!boot_image.IsDefault());
   CF_EXPECT(!(flags_kernel_initramfs_has_input && flags_image_has_input),
@@ -76,7 +78,6 @@ Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
 
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.
-    default_super_image += comma_str + cur_system_image_dir + "/super.img";
     default_vendor_boot_image +=
         comma_str + cur_system_image_dir + "/vendor_boot.img";
     default_vbmeta_image += comma_str + cur_system_image_dir + "/vbmeta.img";
@@ -96,8 +97,6 @@ Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
       }
     }
   }
-  SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vendor_boot_image",
                                default_vendor_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);

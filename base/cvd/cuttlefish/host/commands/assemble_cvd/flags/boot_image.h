@@ -24,7 +24,7 @@
 
 namespace cuttlefish {
 
-/* Android kernel path flag, --kernel_path */
+/* Android boot image path flag, --boot_image */
 class BootImageFlag {
  public:
   static BootImageFlag FromGlobalGflags(const SystemImageDirFlag&);

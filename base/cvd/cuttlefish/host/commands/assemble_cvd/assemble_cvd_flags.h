@@ -220,7 +220,6 @@ DECLARE_string(instance_dir);
 DECLARE_string(snapshot_path);
 DECLARE_bool(resume);
 
-DECLARE_string(super_image);
 DECLARE_string(vendor_boot_image);
 DECLARE_string(vbmeta_image);
 DECLARE_string(vbmeta_system_image);
