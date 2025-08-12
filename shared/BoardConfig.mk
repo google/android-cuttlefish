@@ -397,6 +397,10 @@ BOARD_KERNEL_CMDLINE += panic=-1
 # serial console. Doesn't do anything on ARM/ARM64 + QEMU or Gem5.
 BOARD_KERNEL_CMDLINE += 8250.nr_uarts=1
 
+# Enable rust_binder explicitly, because the prop + reboot system doesn't work for
+# cuttlefish.
+BOARD_KERNEL_CMDLINE += binder.impl=rust
+
 # Cuttlefish doesn't use CMA, so don't reserve RAM for it
 BOARD_KERNEL_CMDLINE += cma=0
 
