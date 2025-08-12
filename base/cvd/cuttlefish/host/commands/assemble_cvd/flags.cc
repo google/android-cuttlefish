@@ -366,7 +366,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
     const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
-    const KernelPathFlag& kernel_path,
+    const KernelPathFlag& kernel_path, const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
     const VmManagerFlag& vm_manager_flag) {
   CuttlefishConfig tmp_config_obj;
@@ -1328,7 +1328,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   CF_EXPECT(DiskImageFlagsVectorization(
       tmp_config_obj, fetcher_config, efi_loader, boot_image, bootloader,
-      initramfs_path, kernel_path, system_image_dir));
+      initramfs_path, kernel_path, super_image, system_image_dir));
 
   return tmp_config_obj;
 }

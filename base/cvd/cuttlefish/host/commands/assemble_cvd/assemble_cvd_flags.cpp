@@ -472,9 +472,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "in. This flag is ignored if the underlying partition "
             "images have been updated since the first launch."
             "If the device starts from a snapshot, this will be always true.");
-
-DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
-              "Location of the super partition image.");
 DEFINE_string(
     vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
     "Location of cuttlefish vendor boot image. If empty it is assumed to "

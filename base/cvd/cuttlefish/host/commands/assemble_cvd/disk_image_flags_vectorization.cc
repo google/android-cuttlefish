@@ -31,6 +31,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -45,9 +46,8 @@ Result<void> DiskImageFlagsVectorization(
     const AndroidEfiLoaderFlag& android_efi_loader,
     const BootImageFlag& boot_image, const BootloaderFlag& bootloader,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
+    const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir) {
-  std::vector<std::string> super_image =
-      android::base::Split(FLAGS_super_image, ",");
   std::vector<std::string> vendor_boot_image =
       android::base::Split(FLAGS_vendor_boot_image, ",");
   std::vector<std::string> vbmeta_image =
@@ -94,7 +94,6 @@ Result<void> DiskImageFlagsVectorization(
 
   std::string cur_boot_image;
   std::string cur_vendor_boot_image;
-  std::string cur_super_image;
   int value{};
   int instance_index = 0;
   auto instance_nums =
@@ -142,12 +141,7 @@ Result<void> DiskImageFlagsVectorization(
     } else {
       instance.set_vvmtruststore_path(vvmtruststore_path[instance_index]);
     }
-    if (instance_index >= super_image.size()) {
-      cur_super_image = super_image[0];
-    } else {
-      cur_super_image = super_image[instance_index];
-    }
-    instance.set_super_image(cur_super_image);
+    instance.set_super_image(super_image.SuperImageForIndex(instance_index));
     instance.set_android_efi_loader(
         android_efi_loader.AndroidEfiLoaderForInstance(instance_index));
     if (instance_index >= chromeos_disk.size()) {
