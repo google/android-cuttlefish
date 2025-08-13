@@ -104,7 +104,6 @@ cf_cc_library(
         "call_service.h",
         "modem_simulator.h",
         "network_service.h",
-        "network_service_constants.h",
         "sim_service.h",
         "sms_service.h",
         "stk_service.h",
@@ -126,6 +125,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:misc_service",
         "//cuttlefish/host/commands/modem_simulator:modem_service",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
+        "//cuttlefish/host/commands/modem_simulator:network_service_constants",
         "//cuttlefish/host/commands/modem_simulator:nvram_config",
         "//cuttlefish/host/commands/modem_simulator:pdu_parser",
         "//cuttlefish/host/commands/modem_simulator:sup_service",
@@ -157,6 +157,11 @@ cf_cc_binary(
 cf_cc_library(
     name = "modem_technology",
     hdrs = ["modem_technology.h"],
+)
+
+cf_cc_library(
+    name = "network_service_constants",
+    hdrs = ["network_service_constants.h"],
 )
 
 cf_cc_library(
