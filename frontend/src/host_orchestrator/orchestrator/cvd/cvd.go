@@ -408,7 +408,7 @@ func (i *Instance) Screenshot(displayNumber int, path string) error {
 	args := i.selectorArgs()
 	args = append(args, "display")
 	args = append(args, "screenshot")
-	args = append(args, fmt.Sprintf("--display_number=%d", displayNumber))
+	args = append(args, fmt.Sprintf("--display=%d", displayNumber))
 	args = append(args, "--screenshot_path="+path)
 	_, err := i.cli.exec(CVDBin, args...)
 	return err
