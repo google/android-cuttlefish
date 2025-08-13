@@ -24,7 +24,6 @@ cf_cc_library(
         "sms_service.cpp",
         "stk_service.cpp",
         "sup_service.cpp",
-        "thread_looper.cpp",
     ],
     hdrs = [
         "call_service.h",
@@ -43,7 +42,6 @@ cf_cc_library(
         "sms_service.h",
         "stk_service.h",
         "sup_service.h",
-        "thread_looper.h",
     ],
     clang_tidy_enabled = False,  # TODO(b/405163202): Enable back once migration is completed.
     copts = [
@@ -54,6 +52,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@jsoncpp",
@@ -102,5 +101,14 @@ cf_cc_test(
         "//libbase",
         "@gflags",
         "@googletest//:gtest",
+    ],
+)
+
+cf_cc_library(
+    name = "thread_looper",
+    srcs = ["thread_looper.cpp"],
+    hdrs = ["thread_looper.h"],
+    deps = [
+        "//libbase",
     ],
 )
