@@ -26,10 +26,18 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "device_config",
+    srcs = ["cf_device_config.cpp"],
+    hdrs = ["device_config.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+cf_cc_library(
     name = "modem_simulator_lib",
     srcs = [
         "call_service.cpp",
-        "cf_device_config.cpp",
         "channel_monitor.cpp",
         "data_service.cpp",
         "misc_service.cpp",
@@ -46,7 +54,6 @@ cf_cc_library(
         "call_service.h",
         "channel_monitor.h",
         "data_service.h",
-        "device_config.h",
         "misc_service.h",
         "modem_service.h",
         "modem_simulator.h",
@@ -68,6 +75,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
+        "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:pdu_parser",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -119,6 +127,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
