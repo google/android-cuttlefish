@@ -94,34 +94,6 @@ cf_cc_binary(
 )
 
 cf_cc_library(
-    name = "modem_simulator_test_lib",
-    hdrs = [
-        "unittest/iccfile.txt",
-    ],
-)
-
-cf_cc_test(
-    name = "modem_simulator_test",
-    srcs = [
-        "unittest/main_test.cpp",
-        "unittest/service_test.cpp",
-    ],
-    deps = [
-        ":modem_simulator_lib",
-        ":modem_simulator_test_lib",
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
-        "//cuttlefish/host/commands/modem_simulator:command_parser",
-        "//cuttlefish/host/commands/modem_simulator:pdu_parser",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//libbase",
-        "@gflags",
-        "@googletest//:gtest",
-    ],
-)
-
-cf_cc_library(
     name = "pdu_parser",
     srcs = ["pdu_parser.cpp"],
     hdrs = ["pdu_parser.h"],
@@ -132,6 +104,25 @@ cf_cc_test(
     srcs = ["unittest/pdu_parser_test.cpp"],
     deps = [
         "//cuttlefish/host/commands/modem_simulator:pdu_parser",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_test(
+    name = "service_test",
+    srcs = [
+        "unittest/iccfile.h",
+        "unittest/service_test.cpp",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@gflags",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

@@ -29,9 +29,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 namespace fs = std::filesystem;
 
-static const char *myiccfile =
-#include "iccfile.txt"
-    ;
+#include "iccfile.h"
 
 static const std::string tmp_test_dir = std::string(fs::temp_directory_path()) +
                                         std::string("/cuttlefish_modem_test");
