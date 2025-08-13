@@ -7,12 +7,20 @@ package(
 exports_files(glob(["etc/**"]))
 
 cf_cc_library(
+    name = "command_parser",
+    srcs = ["command_parser.cpp"],
+    hdrs = ["command_parser.h"],
+    deps = [
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "modem_simulator_lib",
     srcs = [
         "call_service.cpp",
         "cf_device_config.cpp",
         "channel_monitor.cpp",
-        "command_parser.cpp",
         "data_service.cpp",
         "misc_service.cpp",
         "modem_service.cpp",
@@ -28,7 +36,6 @@ cf_cc_library(
     hdrs = [
         "call_service.h",
         "channel_monitor.h",
-        "command_parser.h",
         "data_service.h",
         "device_config.h",
         "misc_service.h",
@@ -52,6 +59,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/modem_simulator:command_parser",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
@@ -97,6 +105,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/modem_simulator:command_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",
