@@ -44,7 +44,6 @@ cf_cc_library(
         "modem_service.cpp",
         "modem_simulator.cpp",
         "network_service.cpp",
-        "nvram_config.cpp",
         "sim_service.cpp",
         "sms_service.cpp",
         "stk_service.cpp",
@@ -59,7 +58,6 @@ cf_cc_library(
         "modem_simulator.h",
         "network_service.h",
         "network_service_constants.h",
-        "nvram_config.h",
         "sim_service.h",
         "sms_service.h",
         "stk_service.h",
@@ -77,6 +75,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:command_parser",
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
+        "//cuttlefish/host/commands/modem_simulator:nvram_config",
         "//cuttlefish/host/commands/modem_simulator:pdu_parser",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -105,6 +104,19 @@ cf_cc_binary(
 cf_cc_library(
     name = "modem_technology",
     hdrs = ["modem_technology.h"],
+)
+
+cf_cc_library(
+    name = "nvram_config",
+    srcs = ["nvram_config.cpp"],
+    hdrs = ["nvram_config.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/modem_simulator:device_config",
+        "//cuttlefish/host/commands/modem_simulator:modem_technology",
+        "//libbase",
+        "@jsoncpp",
+    ],
 )
 
 cf_cc_library(
