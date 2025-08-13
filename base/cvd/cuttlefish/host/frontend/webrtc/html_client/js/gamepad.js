@@ -25,11 +25,19 @@ function enableGamepadButton(dc) {
   let gamepadEnabled = false;
   let animationFrameId = null;
 
+  let offClass = 'toggle-off';
+  let onClass = 'toggle-on';
+
   function onMouseDown(evt) {
     gamepadEnabled = !gamepadEnabled;
+    let button = evt.target;
     if (gamepadEnabled) {
+      button.classList.remove(onClass);
+      button.classList.add(offClass);
       animationFrameId = requestAnimationFrame(pollGamepad);
     } else {
+      button.classList.add(onClass);
+      button.classList.remove(offClass);
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
@@ -41,15 +49,19 @@ function enableGamepadButton(dc) {
   });
   window.addEventListener("gamepaddisconnected", function(e) {
     console.log("***Gamepad DisConnected*** :", e.gamepad);
-    document.getElementById("gamepad_btn").style.display = "none";
+    let button = document.getElementById("gamepad_btn");
     if (animationFrameId !== null) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
     }
+    button.classList.add(onClass);
+    button.classList.remove(offClass);
+    button.style.display = "none";
     gamepadEnabled = false;
   });
 
   let button = document.getElementById("gamepad_btn");
+  button.classList.add('toggle-control');
   button.disabled = false;
   button.addEventListener('mousedown', onMouseDown);
 
@@ -101,5 +113,3 @@ function enableGamepadButton(dc) {
     animationFrameId = requestAnimationFrame(pollGamepad);
   }
 }
-
-
