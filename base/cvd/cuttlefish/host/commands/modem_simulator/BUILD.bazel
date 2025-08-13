@@ -27,7 +27,6 @@ cf_cc_library(
         "modem_simulator.cpp",
         "network_service.cpp",
         "nvram_config.cpp",
-        "pdu_parser.cpp",
         "sim_service.cpp",
         "sms_service.cpp",
         "stk_service.cpp",
@@ -44,7 +43,6 @@ cf_cc_library(
         "network_service.h",
         "network_service_constants.h",
         "nvram_config.h",
-        "pdu_parser.h",
         "sim_service.h",
         "sms_service.h",
         "stk_service.h",
@@ -60,6 +58,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
+        "//cuttlefish/host/commands/modem_simulator:pdu_parser",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
@@ -106,11 +105,18 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
+        "//cuttlefish/host/commands/modem_simulator:pdu_parser",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@gflags",
         "@googletest//:gtest",
     ],
+)
+
+cf_cc_library(
+    name = "pdu_parser",
+    srcs = ["pdu_parser.cpp"],
+    hdrs = ["pdu_parser.h"],
 )
 
 cf_cc_library(
