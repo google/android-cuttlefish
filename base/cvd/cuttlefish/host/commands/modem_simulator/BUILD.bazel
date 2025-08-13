@@ -99,7 +99,6 @@ cf_cc_library(
         "sim_service.cpp",
         "sms_service.cpp",
         "stk_service.cpp",
-        "sup_service.cpp",
     ],
     hdrs = [
         "call_service.h",
@@ -109,7 +108,6 @@ cf_cc_library(
         "sim_service.h",
         "sms_service.h",
         "stk_service.h",
-        "sup_service.h",
     ],
     clang_tidy_enabled = False,  # TODO(b/405163202): Enable back once migration is completed.
     copts = [
@@ -130,6 +128,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
         "//cuttlefish/host/commands/modem_simulator:nvram_config",
         "//cuttlefish/host/commands/modem_simulator:pdu_parser",
+        "//cuttlefish/host/commands/modem_simulator:sup_service",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -207,6 +206,15 @@ cf_cc_test(
         "@gflags",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "sup_service",
+    srcs = ["sup_service.cpp"],
+    hdrs = ["sup_service.h"],
+    deps = [
+        "//cuttlefish/host/commands/modem_simulator:modem_service",
     ],
 )
 
