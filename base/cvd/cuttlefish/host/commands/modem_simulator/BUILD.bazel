@@ -89,6 +89,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:nvram_config",
         "//cuttlefish/host/commands/modem_simulator:pdu_parser",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
+        "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@jsoncpp",
@@ -172,5 +173,13 @@ cf_cc_library(
     hdrs = ["thread_looper.h"],
     deps = [
         "//libbase",
+    ],
+)
+
+cf_cc_library(
+    name = "virtual_modem_simulator",
+    hdrs = ["virtual_modem_simulator.h"],
+    deps = [
+        "//cuttlefish/host/commands/modem_simulator:client",
     ],
 )

@@ -19,6 +19,7 @@
 #include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
 #include "cuttlefish/host/commands/modem_simulator/thread_looper.h"
+#include "cuttlefish/host/commands/modem_simulator/virtual_modem_simulator.h"
 
 namespace cuttlefish {
 
@@ -26,7 +27,8 @@ class SimService;
 class MiscService;
 class NetworkService;
 class SmsService;
-class ModemSimulator {
+
+class ModemSimulator : public VirtualModemSimulator {
  public:
   ModemSimulator(int32_t modem_id);
   ~ModemSimulator();
@@ -36,11 +38,11 @@ class ModemSimulator {
 
   void Initialize(std::unique_ptr<ChannelMonitor>&& channel_monitor);
 
-  void DispatchCommand(const Client& client, std::string& command);
+  void DispatchCommand(const Client& client, std::string& command) override;
 
-  void OnFirstClientConnected();
+  void OnFirstClientConnected() override;
   void SaveModemState();
-  bool IsWaitingSmsPdu();
+  bool IsWaitingSmsPdu() override;
   bool IsRadioOn() const;
   void SetRemoteClient(cuttlefish::SharedFD client, bool is_accepted) {
     channel_monitor_->SetRemoteClient(client, is_accepted);
