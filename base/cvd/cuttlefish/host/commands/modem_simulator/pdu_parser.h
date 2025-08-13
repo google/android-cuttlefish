@@ -41,7 +41,7 @@ class PDUParser {
   std::string IntToHexString(int value);
 
   // special handling for time zone difference (to GMT)
-  std::string IntToHexStringTimeZoneDiff(int value);
+  std::string IntToHexStringTimeZoneDiff(int tzdiff_hour);
   std::string GetCurrentTimeStamp();
 
   bool is_valid_pdu_;
