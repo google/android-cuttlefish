@@ -27,7 +27,7 @@ import (
 
 type StartCVDActionOpts struct {
 	Request          *apiv1.StartCVDRequest
-	Selector         cvd.Selector
+	Selector         cvd.GroupSelector
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
@@ -35,7 +35,7 @@ type StartCVDActionOpts struct {
 
 type StartCVDAction struct {
 	req      *apiv1.StartCVDRequest
-	selector cvd.Selector
+	selector cvd.GroupSelector
 	paths    IMPaths
 	om       OperationManager
 	cvdCLI   *cvd.CLI
@@ -78,7 +78,7 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *StartCVDAction) exec(op apiv1.Operation, opts cvd.StartOptions) (*apiv1.EmptyResponse, error) {
-	if err := a.cvdCLI.Start(a.selector, opts); err != nil {
+	if err := a.cvdCLI.LazySelectGroup(a.selector).Start(opts); err != nil {
 		return nil, operator.NewInternalError("cvd start failed", err)
 	}
 	return &apiv1.EmptyResponse{}, nil

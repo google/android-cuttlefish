@@ -70,24 +70,24 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
 	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
+		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/:stop",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
+		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
+		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	// Append `include_adb_bugreport=true` query parameter to include a device `adb bugreport` in the cvd bugreport.
 	router.Handle("/cvds/{group}/:bugreport",
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
+		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:start",
 		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
+		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
+		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",
-		httpHandler(newExecCVDCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
+		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/displays",
 		httpHandler(newCreateDisplayAddHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/displays",
@@ -291,32 +291,57 @@ func (h *listCVDsHandler) Handle(r *http.Request) (interface{}, error) {
 	return NewListCVDsAction(opts).Run()
 }
 
-type execCVDCommandHandler struct {
+type execCVDGroupCommandHandler struct {
 	Config  Config
 	OM      OperationManager
-	Command execCvdCommand
+	Command execCvdGroupCommand
 }
 
-func newExecCVDCommandHandler(c Config, om OperationManager, command execCvdCommand) *execCVDCommandHandler {
-	return &execCVDCommandHandler{
+func newExecCVDGroupCommandHandler(c Config, om OperationManager, command execCvdGroupCommand) *execCVDGroupCommandHandler {
+	return &execCVDGroupCommandHandler{
 		Config:  c,
 		OM:      om,
 		Command: command,
 	}
 }
 
-func (h *execCVDCommandHandler) Handle(r *http.Request) (interface{}, error) {
+func (h *execCVDGroupCommandHandler) Handle(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	group := vars["group"]
-	name := vars["name"]
-	opts := ExecCVDCommandActionOpts{
+	opts := ExecCVDGroupCommandActionOpts{
 		Command:          h.Command,
-		Selector:         cvd.Selector{Group: group, Instance: name},
-		Paths:            h.Config.Paths,
+		Selector:         cvd.GroupSelector{Name: group},
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
 	}
-	return NewExecCVDCommandAction(opts).Run()
+	return NewExecCVDGroupCommandAction(opts).Run()
+}
+
+type execCVDInstanceCommandHandler struct {
+	Config  Config
+	OM      OperationManager
+	Command execCvdInstanceCommand
+}
+
+func newExecCVDInstanceCommandHandler(c Config, om OperationManager, command execCvdInstanceCommand) *execCVDInstanceCommandHandler {
+	return &execCVDInstanceCommandHandler{
+		Config:  c,
+		OM:      om,
+		Command: command,
+	}
+}
+
+func (h *execCVDInstanceCommandHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := ExecCVDInstanceCommandActionOpts{
+		Command:          h.Command,
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewExecCVDInstanceCommandAction(opts).Run()
 }
 
 type createSnapshotHandler struct {
@@ -339,7 +364,7 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 	name := vars["name"]
 	opts := CreateSnapshotActionOpts{
 		Request:          req,
-		Selector:         cvd.Selector{Group: group, Instance: name},
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -368,7 +393,7 @@ func (h *displayAddHandler) Handle(r *http.Request) (interface{}, error) {
 	name := vars["name"]
 	opts := DisplayAddActionOpts{
 		Request:          req,
-		Selector:         cvd.Selector{Group: group, Instance: name},
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -390,7 +415,7 @@ func (h *displayListHandler) Handle(r *http.Request) (interface{}, error) {
 	group := vars["group"]
 	name := vars["name"]
 	opts := DisplayListActionOpts{
-		Selector:         cvd.Selector{Group: group, Instance: name},
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -420,7 +445,7 @@ func (h *displayRemoveHandler) Handle(r *http.Request) (interface{}, error) {
 
 	opts := DisplayRemoveActionOpts{
 		DisplayNumber:    displayNumber,
-		Selector:         cvd.Selector{Group: group, Instance: name},
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -453,7 +478,7 @@ func (h *displayScreenshotHandler) Handle(r *http.Request) (interface{}, error) 
 	}
 	opts := DisplayScreenshotActionOpts{
 		Request:          req,
-		Selector:         cvd.Selector{Group: group, Instance: name},
+		Selector:         cvd.InstanceSelector{GroupName: group, Name: name},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,
@@ -478,10 +503,9 @@ func (h *startCVDHandler) Handle(r *http.Request) (interface{}, error) {
 	}
 	vars := mux.Vars(r)
 	group := vars["group"]
-	name := vars["name"]
 	opts := StartCVDActionOpts{
 		Request:          req,
-		Selector:         cvd.Selector{Group: group, Instance: name},
+		Selector:         cvd.GroupSelector{Name: group},
 		Paths:            h.Config.Paths,
 		OperationManager: h.OM,
 		ExecContext:      exec.CommandContext,

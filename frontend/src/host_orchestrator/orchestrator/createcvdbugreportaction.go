@@ -70,7 +70,7 @@ func (a *CreateCVDBugReportAction) Run() (apiv1.Operation, error) {
 	go func(uuid string, op apiv1.Operation) {
 		dst := filepath.Join(a.paths.CVDBugReportsDir, uuid, BugReportZipFileName)
 		result := &OperationResult{}
-		if err := a.cvdCLI.BugReport(cvd.Selector{Group: a.group}, a.includeADBBugreport, dst); err != nil {
+		if err := a.cvdCLI.LazySelectGroup(cvd.GroupSelector{Name: a.group}).BugReport(a.includeADBBugreport, dst); err != nil {
 			result.Error = operator.NewInternalError("`cvd host_bugreport` failed: ", err)
 		} else {
 			result.Value = uuid

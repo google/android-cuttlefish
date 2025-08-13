@@ -60,18 +60,18 @@ func CvdGroupToAPIObject(group *cvd.Group) []*apiv1.CVD {
 func CvdInstanceToAPIObject(instance *cvd.Instance, group string) *apiv1.CVD {
 	return &apiv1.CVD{
 		Group: group,
-		Name:  instance.InstanceName,
+		Name:  instance.Name,
 		// TODO(b/259725479): Update when `cvd fleet` prints out build information.
 		BuildSource:    &apiv1.BuildSource{},
-		Status:         instance.Status,
-		Displays:       instance.Displays,
-		WebRTCDeviceID: instance.WebRTCDeviceID,
-		ADBSerial:      instance.ADBSerial,
+		Status:         instance.Status(),
+		Displays:       instance.Displays(),
+		WebRTCDeviceID: instance.WebRTCDeviceID(),
+		ADBSerial:      instance.ADBSerial(),
 	}
 }
 
-func findGroup(fleet *cvd.Fleet, name string) (bool, *cvd.Group) {
-	for _, e := range fleet.Groups {
+func findGroup(groups []*cvd.Group, name string) (bool, *cvd.Group) {
+	for _, e := range groups {
 		if e.Name == name {
 			return true, e
 		}
@@ -81,7 +81,7 @@ func findGroup(fleet *cvd.Fleet, name string) (bool, *cvd.Group) {
 
 func findInstance(group *cvd.Group, name string) (bool, *cvd.Instance) {
 	for _, e := range group.Instances {
-		if e.InstanceName == name {
+		if e.Name == name {
 			return true, e
 		}
 	}
@@ -102,7 +102,7 @@ func CVDLogsDir(ctx hoexec.ExecContext, groupName, name string) (string, error) 
 	if !ok {
 		return "", operator.NewNotFoundError(fmt.Sprintf("Instance %q not found", name), nil)
 	}
-	return ins.InstanceDir + "/logs", nil
+	return ins.InstanceDir() + "/logs", nil
 }
 
 type fetchCVDCommandArtifactsFetcher struct {
@@ -182,7 +182,7 @@ func CreateCVD(ctx hoexec.ExecContext, p startCVDParams) (*cvd.Group, error) {
 	}
 
 	cvdCLI := cvd.NewCLI(ctx)
-	group, err := cvdCLI.Create(cvd.Selector{Group: groupName}, createOpts, startOpts)
+	group, err := cvdCLI.Create(cvd.GroupSelector{Name: groupName}, createOpts, startOpts)
 	if err != nil {
 		return nil, fmt.Errorf("launch cvd stage failed: %w", err)
 	}

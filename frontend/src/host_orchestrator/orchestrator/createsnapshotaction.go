@@ -26,7 +26,7 @@ import (
 
 type CreateSnapshotActionOpts struct {
 	Request          *apiv1.CreateSnapshotRequest
-	Selector         cvd.Selector
+	Selector         cvd.InstanceSelector
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
@@ -34,7 +34,7 @@ type CreateSnapshotActionOpts struct {
 
 type CreateSnapshotAction struct {
 	req      *apiv1.CreateSnapshotRequest
-	selector cvd.Selector
+	selector cvd.InstanceSelector
 	paths    IMPaths
 	om       OperationManager
 	cvdCLI   *cvd.CLI
@@ -69,7 +69,8 @@ func (a *CreateSnapshotAction) Run() (apiv1.Operation, error) {
 }
 
 func (a *CreateSnapshotAction) createSnapshot(op apiv1.Operation) (*apiv1.CreateSnapshotResponse, error) {
-	if err := a.cvdCLI.Suspend(a.selector); err != nil {
+	instance := a.cvdCLI.LazySelectInstance(a.selector)
+	if err := instance.Suspend(); err != nil {
 		return nil, operator.NewInternalError("cvd suspend failed", err)
 	}
 	snapshotID := a.req.SnapshotID
@@ -79,10 +80,10 @@ func (a *CreateSnapshotAction) createSnapshot(op apiv1.Operation) (*apiv1.Create
 	dir := filepath.Join(a.paths.SnapshotsRootDir, snapshotID)
 	// snapshot_util_cvd makes sure the directory is not being used before.
 	// https://github.com/google/android-cuttlefish/blob/7fb47855a2c937e4531044437616bd82e11e3b2e/base/cvd/cuttlefish/host/commands/snapshot_util_cvd/main.cc#L97
-	if err := a.cvdCLI.TakeSnapshot(a.selector, dir); err != nil {
+	if err := instance.TakeSnapshot(dir); err != nil {
 		return nil, operator.NewInternalError("cvd snapshot_take failed", err)
 	}
-	if err := a.cvdCLI.Resume(a.selector); err != nil {
+	if err := instance.Resume(); err != nil {
 		return nil, operator.NewInternalError("cvd resume failed", err)
 	}
 	return &apiv1.CreateSnapshotResponse{SnapshotID: snapshotID}, nil

@@ -44,13 +44,12 @@ func NewListCVDsAction(opts ListCVDsActionOpts) *ListCVDsAction {
 }
 
 func (a *ListCVDsAction) Run() (*apiv1.ListCVDsResponse, error) {
-	fleet, err := a.cvdCLI.Fleet()
+	groups, err := a.cvdCLI.Fleet()
 	if err != nil {
 		return nil, err
 	}
-	groups := fleet.Groups
 	if a.group != "" {
-		ok, g := findGroup(fleet, a.group)
+		ok, g := findGroup(groups, a.group)
 		if !ok {
 			return nil, operator.NewNotFoundError(fmt.Sprintf("Group %q not found", a.group), nil)
 		}

@@ -29,7 +29,7 @@ import (
 
 type DisplayScreenshotActionOpts struct {
 	Request          *apiv1.DisplayScreenshotRequest
-	Selector         cvd.Selector
+	Selector         cvd.InstanceSelector
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
@@ -37,7 +37,7 @@ type DisplayScreenshotActionOpts struct {
 
 type DisplayScreenshotAction struct {
 	req      *apiv1.DisplayScreenshotRequest
-	selector cvd.Selector
+	selector cvd.InstanceSelector
 	paths    IMPaths
 	om       OperationManager
 	cvdCLI   *cvd.CLI
@@ -75,7 +75,7 @@ func (a *DisplayScreenshotAction) createScreenshot(op apiv1.Operation) (*apiv1.D
 
 	screenshotPath := filepath.Join(tempdir, "screenshot.png")
 
-	if err := a.cvdCLI.DisplayScreenshot(a.selector, 0, screenshotPath); err != nil {
+	if err := a.cvdCLI.LazySelectInstance(a.selector).Screenshot(0, screenshotPath); err != nil {
 		return nil, operator.NewInternalError("cvd display screenshot failed", err)
 	}
 
