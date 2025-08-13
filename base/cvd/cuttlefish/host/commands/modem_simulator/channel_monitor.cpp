@@ -22,13 +22,13 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
+#include "cuttlefish/host/commands/modem_simulator/virtual_modem_simulator.h"
 
 namespace cuttlefish {
 
 constexpr int32_t kMaxCommandLength = 4096;
 
-ChannelMonitor::ChannelMonitor(ModemSimulator& modem, SharedFD server)
+ChannelMonitor::ChannelMonitor(VirtualModemSimulator& modem, SharedFD server)
     : modem_(modem), server_(std::move(server)) {
   if (!SharedFD::Pipe(&read_pipe_, &write_pipe_)) {
     LOG(ERROR) << "Unable to create pipe, ignore";

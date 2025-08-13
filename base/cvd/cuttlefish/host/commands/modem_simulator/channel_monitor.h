@@ -20,12 +20,11 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/modem_simulator/client.h"
+#include "cuttlefish/host/commands/modem_simulator/virtual_modem_simulator.h"
 
 class ModemServiceTest;
 
 namespace cuttlefish {
-
-class ModemSimulator;
 
 enum ModemSimulatorExitCodes : int {
   kSuccess = 0,
@@ -35,7 +34,7 @@ enum ModemSimulatorExitCodes : int {
 
 class ChannelMonitor {
  public:
-  ChannelMonitor(ModemSimulator& modem, cuttlefish::SharedFD server);
+  ChannelMonitor(VirtualModemSimulator& modem, cuttlefish::SharedFD server);
   ~ChannelMonitor();
 
   ChannelMonitor(const ChannelMonitor&) = delete;
@@ -49,7 +48,7 @@ class ChannelMonitor {
   void SendUnsolicitedCommand(std::string& response);
 
  private:
-  ModemSimulator& modem_;
+  VirtualModemSimulator& modem_;
   std::thread monitor_thread_;
   cuttlefish::SharedFD server_;
   cuttlefish::SharedFD read_pipe_;
