@@ -7,6 +7,16 @@ package(
 exports_files(glob(["etc/**"]))
 
 cf_cc_library(
+    name = "client",
+    srcs = ["client.cc"],
+    hdrs = ["client.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "command_parser",
     srcs = ["command_parser.cpp"],
     hdrs = ["command_parser.h"],
@@ -72,6 +82,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/modem_simulator:client",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
