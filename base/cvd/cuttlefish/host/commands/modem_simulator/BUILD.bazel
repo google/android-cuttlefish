@@ -104,7 +104,6 @@ cf_cc_test(
     name = "modem_simulator_test",
     srcs = [
         "unittest/main_test.cpp",
-        "unittest/pdu_parser_test.cpp",
         "unittest/service_test.cpp",
     ],
     deps = [
@@ -126,6 +125,16 @@ cf_cc_library(
     name = "pdu_parser",
     srcs = ["pdu_parser.cpp"],
     hdrs = ["pdu_parser.h"],
+)
+
+cf_cc_test(
+    name = "pdu_parser_test",
+    srcs = ["unittest/pdu_parser_test.cpp"],
+    deps = [
+        "//cuttlefish/host/commands/modem_simulator:pdu_parser",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cf_cc_library(
