@@ -57,6 +57,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "misc_service",
+    srcs = ["misc_service.cpp"],
+    hdrs = ["misc_service.h"],
+    deps = [
+        "//cuttlefish/host/commands/modem_simulator:device_config",
+        "//cuttlefish/host/commands/modem_simulator:modem_service",
+    ],
+)
+
+cf_cc_library(
     name = "modem_service",
     srcs = ["modem_service.cpp"],
     hdrs = ["modem_service.h"],
@@ -74,7 +84,6 @@ cf_cc_library(
     srcs = [
         "call_service.cpp",
         "data_service.cpp",
-        "misc_service.cpp",
         "modem_simulator.cpp",
         "network_service.cpp",
         "sim_service.cpp",
@@ -85,7 +94,6 @@ cf_cc_library(
     hdrs = [
         "call_service.h",
         "data_service.h",
-        "misc_service.h",
         "modem_simulator.h",
         "network_service.h",
         "network_service_constants.h",
@@ -107,6 +115,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:client",
         "//cuttlefish/host/commands/modem_simulator:command_parser",
         "//cuttlefish/host/commands/modem_simulator:device_config",
+        "//cuttlefish/host/commands/modem_simulator:misc_service",
         "//cuttlefish/host/commands/modem_simulator:modem_service",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
         "//cuttlefish/host/commands/modem_simulator:nvram_config",
