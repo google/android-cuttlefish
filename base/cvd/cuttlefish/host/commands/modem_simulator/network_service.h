@@ -20,6 +20,7 @@
 
 #include "cuttlefish/host/commands/modem_simulator/data_service.h"
 #include "cuttlefish/host/commands/modem_simulator/misc_service.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_technology.h"
 #include "cuttlefish/host/commands/modem_simulator/modem_service.h"
 #include "cuttlefish/host/commands/modem_simulator/network_service_constants.h"
 #include "cuttlefish/host/commands/modem_simulator/sim_service.h"
@@ -60,16 +61,6 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   void OnVoiceRegisterStateChanged();
   void OnDataRegisterStateChanged();
   void OnSignalStrengthChanged();
-
-  enum ModemTechnology {
-    M_MODEM_TECH_GSM = 1 << 0,
-    M_MODEM_TECH_WCDMA = 1 << 1,
-    M_MODEM_TECH_CDMA = 1 << 2,
-    M_MODEM_TECH_EVDO = 1 << 3,
-    M_MODEM_TECH_TDSCDMA = 1 << 4,
-    M_MODEM_TECH_LTE = 1 << 5,
-    M_MODEM_TECH_NR = 1 << 6,
-  };
 
   enum RegistrationState {
     NET_REGISTRATION_UNREGISTERED = 0,

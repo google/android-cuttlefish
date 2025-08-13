@@ -22,6 +22,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_technology.h"
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
 #include "cuttlefish/host/commands/modem_simulator/thread_looper.h"
 namespace cuttlefish {
@@ -749,7 +750,7 @@ NetworkService::getNetworkTypeFromTech(ModemTechnology modemTech) {
   }
 }
 
-NetworkService::ModemTechnology NetworkService::getTechFromNetworkType(
+ModemTechnology NetworkService::getTechFromNetworkType(
     NetworkRegistrationStatus::AccessTechnoloy act) {
   switch (act) {
     case NetworkRegistrationStatus::ACESS_TECH_GSM:
