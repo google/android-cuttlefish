@@ -91,10 +91,27 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "modem_simulator_class",
+    srcs = ["modem_simulator.cpp"],
+    hdrs = ["modem_simulator.h"],
+    deps = [
+        "//cuttlefish/host/commands/modem_simulator:channel_monitor",
+        "//cuttlefish/host/commands/modem_simulator:data_service",
+        "//cuttlefish/host/commands/modem_simulator:misc_service",
+        "//cuttlefish/host/commands/modem_simulator:modem_service",
+        "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
+        "//cuttlefish/host/commands/modem_simulator:nvram_config",
+        "//cuttlefish/host/commands/modem_simulator:sup_service",
+        "//cuttlefish/host/commands/modem_simulator:thread_looper",
+        "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "modem_simulator_lib",
     srcs = [
         "call_service.cpp",
-        "modem_simulator.cpp",
         "network_service.cpp",
         "sim_service.cpp",
         "sms_service.cpp",
@@ -102,7 +119,6 @@ cf_cc_library(
     ],
     hdrs = [
         "call_service.h",
-        "modem_simulator.h",
         "network_service.h",
         "sim_service.h",
         "sms_service.h",
@@ -144,9 +160,9 @@ cf_cc_binary(
         "main.cpp",
     ],
     deps = [
-        ":modem_simulator_lib",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@fmt",
@@ -205,6 +221,7 @@ cf_cc_test(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/modem_simulator:channel_monitor",
         "//cuttlefish/host/commands/modem_simulator:device_config",
+        "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
