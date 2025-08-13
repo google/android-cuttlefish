@@ -23,7 +23,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"
-#include "cuttlefish/host/commands/modem_simulator/network_service.h"
+#include "cuttlefish/host/commands/modem_simulator/modem_technology.h"
 
 namespace cuttlefish {
 
@@ -35,10 +35,10 @@ static constexpr char kPreferredNetworkMode[] = "preferred_network_mode";
 static constexpr char kEmergencyMode[] = "emergency_mode";
 
 static constexpr int kDefaultNetworkSelectionMode = 0;     // AUTOMATIC
-static constexpr int kDefaultModemTechnoloy = NetworkService::M_MODEM_TECH_LTE;
+static constexpr int kDefaultModemTechnoloy = ModemTechnology::M_MODEM_TECH_LTE;
 static constexpr int kDefaultPreferredNetworkMode =
-    NetworkService::M_MODEM_TECH_LTE | NetworkService::M_MODEM_TECH_WCDMA |
-    NetworkService::M_MODEM_TECH_GSM;
+    ModemTechnology::M_MODEM_TECH_LTE | ModemTechnology::M_MODEM_TECH_WCDMA |
+    ModemTechnology::M_MODEM_TECH_GSM;
 static constexpr bool kDefaultEmergencyMode = false;
 
 /**
