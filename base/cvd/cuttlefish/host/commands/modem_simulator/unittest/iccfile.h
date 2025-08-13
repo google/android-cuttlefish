@@ -1,3 +1,4 @@
+static const char *myiccfile =
 R"(<IccProfile>
 <MF path="3F00">
     <EF name="EF_DIR" id="2F00" structure="linear fixed">
@@ -173,4 +174,4 @@ R"(<IccProfile>
     </SELECTITEM>
 </SETUPMENU>
 
-</IccProfile>)"
+</IccProfile>)";
