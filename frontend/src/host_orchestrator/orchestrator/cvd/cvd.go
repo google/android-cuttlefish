@@ -124,7 +124,7 @@ func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) 
 	cmd := cli.buildCmd(CVDBin, args...)
 
 	if opts.Credentials.UseGCEServiceAccountCredentials {
-		cmd.Args = append(cmd.Args, "--credential_source=gce")
+		cmd.Args = append(cmd.Args, "--use_gce_metadata")
 	} else if opts.Credentials.AccessTokenCredentials != (AccessTokenCredentials{}) {
 		file, err := createCredentialsFile(opts.Credentials.AccessTokenCredentials.AccessToken)
 		if err != nil {
@@ -135,8 +135,7 @@ func (cli *CLI) Fetch(mainBuild AndroidBuild, targetDir string, opts FetchOpts) 
 		cmd.ExtraFiles = append(cmd.ExtraFiles, file)
 		// The actual fd number is not retained, the lowest available number is used instead.
 		fd := 3 + len(cmd.ExtraFiles) - 1
-		// TODO(b/401592023) Use --credential_filepath when cvd load supports it
-		cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_source=/proc/self/fd/%d", fd))
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--credential_filepath=/proc/self/fd/%d", fd))
 	}
 
 	if _, err := cli.runCmd(cmd); err != nil {
