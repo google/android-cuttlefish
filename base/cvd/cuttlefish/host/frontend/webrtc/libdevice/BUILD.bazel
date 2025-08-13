@@ -59,6 +59,12 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gamepad",
+    srcs = ["gamepad.cpp"],
+    hdrs = ["gamepad.h"],
+)
+
+cf_cc_library(
     name = "keyboard",
     srcs = ["keyboard.cpp"],
     hdrs = ["keyboard.h"],
@@ -95,6 +101,7 @@ cf_cc_library(
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
         "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
         "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:gamepad",
         "//cuttlefish/host/frontend/webrtc/libdevice:keyboard",
         "//cuttlefish/host/frontend/webrtc/libdevice:recording_manager",
         "//cuttlefish/host/frontend/webrtc/libdevice:server_connection",
