@@ -23,7 +23,7 @@ import (
 
 type DisplayRemoveActionOpts struct {
 	DisplayNumber    int
-	Selector         cvd.Selector
+	Selector         cvd.InstanceSelector
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
@@ -31,7 +31,7 @@ type DisplayRemoveActionOpts struct {
 
 type DisplayRemoveAction struct {
 	displayNumber int
-	selector      cvd.Selector
+	selector      cvd.InstanceSelector
 	paths         IMPaths
 	om            OperationManager
 	cvdCLI        *cvd.CLI
@@ -48,7 +48,7 @@ func NewDisplayRemoveAction(opts DisplayRemoveActionOpts) *DisplayRemoveAction {
 }
 
 func (a *DisplayRemoveAction) Run() (*apiv1.DisplayRemoveResponse, error) {
-	if err := a.cvdCLI.DisplayRemove(a.selector, a.displayNumber); err != nil {
+	if err := a.cvdCLI.LazySelectInstance(a.selector).RemoveDisplay(a.displayNumber); err != nil {
 		return nil, operator.NewInternalError("cvd display remove failed:", err)
 	}
 

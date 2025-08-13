@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "output",
+    srcs = ["output.go"],
+    importpath = "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd/output",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//orchestrator/exec",
+    ],
+)

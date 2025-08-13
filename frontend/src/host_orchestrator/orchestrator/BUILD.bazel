@@ -21,6 +21,7 @@ go_library(
         "//api/v1:api",
         "//orchestrator/artifacts",
         "//orchestrator/cvd",
+        "//orchestrator/cvd/output",
         "//orchestrator/debug",
         "//orchestrator/exec",
         "@com_github_google_android_cuttlefish_frontend_src_liboperator//operator",

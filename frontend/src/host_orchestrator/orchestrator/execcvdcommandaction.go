@@ -22,67 +22,104 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 )
 
-type execCvdCommand interface {
-	exec(cvd *cvd.CLI, sel cvd.Selector) error
+type execCvdGroupCommand interface {
+	exec(cvd *cvd.CLI, sel cvd.GroupSelector) error
 }
 
 type startCvdCommand struct{}
 
-func (a *startCvdCommand) exec(cvdCLI *cvd.CLI, sel cvd.Selector) error {
-	return cvdCLI.Start(sel, cvd.StartOptions{})
+func (a *startCvdCommand) exec(cvdCLI *cvd.CLI, sel cvd.GroupSelector) error {
+	return cvdCLI.LazySelectGroup(sel).Start(cvd.StartOptions{})
 }
 
 type stopCvdCommand struct{}
 
-func (a *stopCvdCommand) exec(cvd *cvd.CLI, sel cvd.Selector) error {
-	return cvd.Stop(sel)
+func (a *stopCvdCommand) exec(cvd *cvd.CLI, sel cvd.GroupSelector) error {
+	return cvd.LazySelectGroup(sel).Stop()
 }
 
 type removeCvdCommand struct{}
 
-func (a *removeCvdCommand) exec(cvd *cvd.CLI, sel cvd.Selector) error {
-	return cvd.Remove(sel)
+func (a *removeCvdCommand) exec(cvd *cvd.CLI, sel cvd.GroupSelector) error {
+	return cvd.LazySelectGroup(sel).Remove()
 }
 
-type powerwashCvdCommand struct{}
-
-func (a *powerwashCvdCommand) exec(cvd *cvd.CLI, sel cvd.Selector) error {
-	return cvd.PowerWash(sel)
-}
-
-type powerbtnCvdCommand struct{}
-
-func (a *powerbtnCvdCommand) exec(cvd *cvd.CLI, sel cvd.Selector) error {
-	return cvd.PowerBtn(sel)
-}
-
-type ExecCVDCommandActionOpts struct {
-	Command          execCvdCommand
-	Selector         cvd.Selector
-	Paths            IMPaths
+type ExecCVDGroupCommandActionOpts struct {
+	Command          execCvdGroupCommand
+	Selector         cvd.GroupSelector
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
 }
 
-type ExecCVDCommandAction struct {
-	command  execCvdCommand
-	selector cvd.Selector
-	paths    IMPaths
+type ExecCVDGroupCommandAction struct {
+	command  execCvdGroupCommand
+	selector cvd.GroupSelector
 	om       OperationManager
 	cvdCLI   *cvd.CLI
 }
 
-func NewExecCVDCommandAction(opts ExecCVDCommandActionOpts) *ExecCVDCommandAction {
-	return &ExecCVDCommandAction{
+func NewExecCVDGroupCommandAction(opts ExecCVDGroupCommandActionOpts) *ExecCVDGroupCommandAction {
+	return &ExecCVDGroupCommandAction{
 		command:  opts.Command,
 		selector: opts.Selector,
-		paths:    opts.Paths,
 		om:       opts.OperationManager,
 		cvdCLI:   cvd.NewCLI(opts.ExecContext),
 	}
 }
 
-func (a *ExecCVDCommandAction) Run() (apiv1.Operation, error) {
+func (a *ExecCVDGroupCommandAction) Run() (apiv1.Operation, error) {
+	op := a.om.New()
+	go func(op apiv1.Operation) {
+		result := &OperationResult{}
+		result.Value = &apiv1.EmptyResponse{}
+		result.Error = a.command.exec(a.cvdCLI, a.selector)
+		if err := a.om.Complete(op.Name, result); err != nil {
+			log.Printf("error completing operation %q: %v\n", op.Name, err)
+		}
+	}(op)
+	return op, nil
+}
+
+type execCvdInstanceCommand interface {
+	exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error
+}
+
+type powerwashCvdCommand struct{}
+
+func (a *powerwashCvdCommand) exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error {
+	return cvd.LazySelectInstance(sel).PowerWash()
+}
+
+type powerbtnCvdCommand struct{}
+
+func (a *powerbtnCvdCommand) exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error {
+	return cvd.LazySelectInstance(sel).PowerBtn()
+}
+
+type ExecCVDInstanceCommandActionOpts struct {
+	Command          execCvdInstanceCommand
+	Selector         cvd.InstanceSelector
+	OperationManager OperationManager
+	ExecContext      exec.ExecContext
+}
+
+type ExecCVDInstanceCommandAction struct {
+	command  execCvdInstanceCommand
+	selector cvd.InstanceSelector
+	om       OperationManager
+	cvdCLI   *cvd.CLI
+}
+
+func NewExecCVDInstanceCommandAction(opts ExecCVDInstanceCommandActionOpts) *ExecCVDInstanceCommandAction {
+	return &ExecCVDInstanceCommandAction{
+		command:  opts.Command,
+		selector: opts.Selector,
+		om:       opts.OperationManager,
+		cvdCLI:   cvd.NewCLI(opts.ExecContext),
+	}
+}
+
+func (a *ExecCVDInstanceCommandAction) Run() (apiv1.Operation, error) {
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}

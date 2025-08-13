@@ -17,19 +17,20 @@ package orchestrator
 import (
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd"
+	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/cvd/output"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/google/android-cuttlefish/frontend/src/liboperator/operator"
 )
 
 type DisplayListActionOpts struct {
-	Selector         cvd.Selector
+	Selector         cvd.InstanceSelector
 	Paths            IMPaths
 	OperationManager OperationManager
 	ExecContext      exec.ExecContext
 }
 
 type DisplayListAction struct {
-	selector cvd.Selector
+	selector cvd.InstanceSelector
 	paths    IMPaths
 	om       OperationManager
 	cvdCLI   *cvd.CLI
@@ -44,13 +45,13 @@ func NewDisplayListAction(opts DisplayListActionOpts) *DisplayListAction {
 	}
 }
 
-func toApiv1DisplayMode(m cvd.DisplayMode) apiv1.DisplayMode {
+func toApiv1DisplayMode(m output.DisplayMode) apiv1.DisplayMode {
 	return apiv1.DisplayMode{
 		Windowed: m.Windowed,
 	}
 }
 
-func toApiv1Display(d *cvd.Display) apiv1.Display {
+func toApiv1Display(d *output.Display) apiv1.Display {
 	return apiv1.Display{
 		DPI:           d.DPI,
 		RefreshRateHZ: d.RefreshRateHZ,
@@ -58,7 +59,7 @@ func toApiv1Display(d *cvd.Display) apiv1.Display {
 	}
 }
 
-func toApiv1DisplayResponse(d *cvd.Displays) *apiv1.DisplayListResponse {
+func toApiv1DisplayResponse(d *output.Displays) *apiv1.DisplayListResponse {
 	resp := &apiv1.DisplayListResponse{
 		Displays: make(map[int]apiv1.Display),
 	}
@@ -69,7 +70,7 @@ func toApiv1DisplayResponse(d *cvd.Displays) *apiv1.DisplayListResponse {
 }
 
 func (a *DisplayListAction) Run() (*apiv1.DisplayListResponse, error) {
-	displays, err := a.cvdCLI.DisplayList(a.selector)
+	displays, err := a.cvdCLI.LazySelectInstance(a.selector).ListDisplays()
 	if err != nil {
 		return nil, operator.NewInternalError("cvd display list failed", err)
 	}
