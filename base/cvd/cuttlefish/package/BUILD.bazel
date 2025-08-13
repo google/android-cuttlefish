@@ -59,6 +59,7 @@ package_files(
         "cuttlefish-common/bin/logcat_receiver": "//cuttlefish/host/commands/logcat_receiver",
         "cuttlefish-common/bin/lpadd": "@android_system_extras//:lpadd",
         "cuttlefish-common/bin/lpmake": "@android_system_extras//:lpmake",
+        "cuttlefish-common/bin/lz4": "@lz4//programs:lz4",
         "cuttlefish-common/bin/make_f2fs": "@f2fs_tools//:make_f2fs",
         "cuttlefish-common/bin/metrics_launcher": "//cuttlefish/host/commands/metrics_launcher",
         "cuttlefish-common/bin/metrics": "//cuttlefish/host/commands/metrics",
