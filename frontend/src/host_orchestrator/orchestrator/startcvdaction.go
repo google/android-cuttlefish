@@ -69,7 +69,7 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}
-		result.Value, result.Error = a.exec(op, opts)
+		result.Value, result.Error = a.exec(opts)
 		if err := a.om.Complete(op.Name, result); err != nil {
 			log.Printf("error completing operation %q: %v\n", op.Name, err)
 		}
@@ -77,7 +77,7 @@ func (a *StartCVDAction) Run() (apiv1.Operation, error) {
 	return op, nil
 }
 
-func (a *StartCVDAction) exec(op apiv1.Operation, opts cvd.StartOptions) (*apiv1.EmptyResponse, error) {
+func (a *StartCVDAction) exec(opts cvd.StartOptions) (*apiv1.EmptyResponse, error) {
 	if err := a.cvdCLI.LazySelectGroup(a.selector).Start(opts); err != nil {
 		return nil, operator.NewInternalError("cvd start failed", err)
 	}
