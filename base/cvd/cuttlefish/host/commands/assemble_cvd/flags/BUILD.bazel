@@ -145,6 +145,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "vendor_boot_image",
+    srcs = ["vendor_boot_image.cc"],
+    hdrs = ["vendor_boot_image.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "vm_manager",
     srcs = ["vm_manager.cc"],
     hdrs = ["vm_manager.h"],

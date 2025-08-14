@@ -472,10 +472,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "in. This flag is ignored if the underlying partition "
             "images have been updated since the first launch."
             "If the device starts from a snapshot, this will be always true.");
-DEFINE_string(
-    vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
-    "Location of cuttlefish vendor boot image. If empty it is assumed to "
-    "be vendor_boot.img in the directory specified by -system_image_dir.");
 DEFINE_string(vbmeta_image, CF_DEFAULTS_VBMETA_IMAGE,
               "Location of cuttlefish vbmeta image. If empty it is assumed to "
               "be vbmeta.img in the directory specified by -system_image_dir.");

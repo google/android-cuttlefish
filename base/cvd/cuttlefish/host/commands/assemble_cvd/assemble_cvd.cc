@@ -47,6 +47,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
@@ -320,18 +321,19 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
+    const VendorBootImageFlag& vendor_boot_image,
     const VmManagerFlag& vm_manager_flag) {
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config =
-        CF_EXPECT(InitializeCuttlefishConfiguration(
-                      FLAGS_instance_dir, guest_configs, injector,
-                      fetcher_config, boot_image, initramfs_path, kernel_path,
-                      super_image, system_image_dir, vm_manager_flag),
-                  "cuttlefish configuration initialization failed");
+    auto config = CF_EXPECT(
+        InitializeCuttlefishConfiguration(
+            FLAGS_instance_dir, guest_configs, injector, fetcher_config,
+            boot_image, initramfs_path, kernel_path, super_image,
+            system_image_dir, vendor_boot_image, vm_manager_flag),
+        "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
     if (!snapshot_path.empty()) {
@@ -626,6 +628,9 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   SuperImageFlag super_image =
       SuperImageFlag::FromGlobalGflags(system_image_dir);
 
+  VendorBootImageFlag vendor_boot_image =
+      VendorBootImageFlag::FromGlobalGflags(system_image_dir);
+
   fruit::Injector<> injector(FlagsComponent, &system_image_dir);
 
   for (auto& late_injected : injector.getMultibindings<LateInjected>()) {
@@ -654,9 +659,10 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // gflags either consumes all arguments that start with - or leaves all of
   // them in place, and either errors out on unknown flags or accepts any flags.
 
-  CF_EXPECT(ResolveInstanceFiles(boot_image, initramfs_path, kernel_path,
-                                 super_image, system_image_dir),
-            "Failed to resolve instance files");
+  CF_EXPECT(
+      ResolveInstanceFiles(boot_image, initramfs_path, kernel_path, super_image,
+                           system_image_dir, vendor_boot_image),
+      "Failed to resolve instance files");
   // Depends on ResolveInstanceFiles to set flag globals
   std::vector<GuestConfig> guest_configs =
       CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
@@ -671,7 +677,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       CF_EXPECT(InitFilesystemAndCreateConfig(
                     std::move(fetcher_config), guest_configs, injector, log,
                     boot_image, initramfs_path, kernel_path, super_image,
-                    system_image_dir, vm_manager_flag),
+                    system_image_dir, vendor_boot_image, vm_manager_flag),
                 "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";

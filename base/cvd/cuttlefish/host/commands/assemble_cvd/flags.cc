@@ -56,6 +56,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
@@ -368,6 +369,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
     const KernelPathFlag& kernel_path, const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
+    const VendorBootImageFlag& vendor_boot_image,
     const VmManagerFlag& vm_manager_flag) {
   CuttlefishConfig tmp_config_obj;
   // If a snapshot path is provided, do not read all flags to set up the config.
@@ -1328,7 +1330,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   CF_EXPECT(DiskImageFlagsVectorization(
       tmp_config_obj, fetcher_config, efi_loader, boot_image, bootloader,
-      initramfs_path, kernel_path, super_image, system_image_dir));
+      initramfs_path, kernel_path, super_image, system_image_dir,
+      vendor_boot_image));
 
   return tmp_config_obj;
 }
