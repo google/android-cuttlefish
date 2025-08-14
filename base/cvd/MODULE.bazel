@@ -43,7 +43,7 @@ bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")
 bazel_dep(name = "rules_python", version = "1.1.0")
-bazel_dep(name = "rules_rust", version = "0.60.0")
+bazel_dep(name = "rules_rust", version = "0.63.0")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
 bazel_dep(name = "toolchains_llvm", version = "1.2.0")
 bazel_dep(name = "sandboxed_api")
@@ -144,6 +144,16 @@ python.toolchain(
     python_version = "3.12",
 )
 
+rust_host_tools = use_extension("@rules_rust//rust:extensions.bzl", "rust_host_tools")
+rust_host_tools.host_tools(
+    name = "rust_host_tools_nightly",
+    version = "nightly",
+)
+use_repo(
+    rust_host_tools,
+    "rust_host_tools_nightly",
+)
+
 append_squashfs_overlay_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 append_squashfs_overlay_crates.from_cargo(
     name = "append_squashfs_overlay_crates",
@@ -151,7 +161,7 @@ append_squashfs_overlay_crates.from_cargo(
     manifests = [
         "//cuttlefish/host/commands/append_squashfs_overlay:Cargo.toml",
     ],
-    host_tools_repo = "rust_host_tools_nightly",
+    host_tools = "@rust_host_tools_nightly",
 )
 use_repo(append_squashfs_overlay_crates, "append_squashfs_overlay_crates")
 
@@ -162,7 +172,7 @@ vhost_user_input_crates.from_cargo(
     manifests = [
         "//cuttlefish/host/commands/vhost_user_input:Cargo.toml",
     ],
-    host_tools_repo = "rust_host_tools_nightly",
+    host_tools = "@rust_host_tools_nightly",
 )
 use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 
@@ -272,7 +282,7 @@ crosvm_bin.from_specs(
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
     cargo_lockfile = "@crosvm//:Cargo.lock",
     # Executable dependencies are an unstable cargo feature.
-    host_tools_repo = "rust_host_tools_nightly",
+    host_tools = "@rust_host_tools_nightly",
 )
 
 use_repo(crosvm_bin, "crosvm_bin")
@@ -288,7 +298,7 @@ pica_crates.from_cargo(
     manifests = ["@pica//:Cargo.toml"],
     # Needed because it shares the extension with crosvm
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
-    host_tools_repo = "rust_host_tools_nightly",
+    host_tools = "@rust_host_tools_nightly",
 )
 
 use_repo(pica_crates, "pica_crates")
@@ -341,7 +351,7 @@ netsim_crates.from_cargo(
     ],
     # Needed because it shares the extension with crosvm
     cargo_config = "@//build_external/crosvm:crosvm.config.toml",
-    host_tools_repo = "rust_host_tools_nightly",
+    host_tools = "@rust_host_tools_nightly",
 )
 
 use_repo(netsim_crates, "netsim_crates")
