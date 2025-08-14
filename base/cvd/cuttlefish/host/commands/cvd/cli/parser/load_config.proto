@@ -29,23 +29,24 @@ message EnvironmentSpecification {
   optional Fetch fetch = 2;
   optional Metrics metrics = 3;
   optional Common common = 4;
-  optional bool netsim_bt = 5;
-  optional bool netsim_uwb = 6;
+  optional bool netsim_bt = 5 [deprecated = true];
+  optional bool netsim_uwb = 6 [deprecated = true];
 }
 
 message Common {
   optional string group_name = 1;
-  optional string host_package = 2;
+  optional string host_package = 2 [deprecated = true];
 }
 
 message Fetch {
-  optional string api_key = 1;
-  optional string credential_source = 2;
-  optional uint32 wait_retry_period_seconds = 3 [json_name="wait_retry_period"];
+  optional string api_key = 1 [deprecated = true];
+  optional string credential_source = 2 [deprecated = true];
+  optional uint32 wait_retry_period_seconds = 3
+      [json_name = "wait_retry_period", deprecated = true];
   reserved 4;
-  optional bool keep_downloaded_archives = 5;
-  optional string api_base_url = 6;
-  optional string project_id = 7;
+  optional bool keep_downloaded_archives = 5 [deprecated = true];
+  optional string api_base_url = 6 [deprecated = true];
+  optional string project_id = 7 [deprecated = true];
 }
 
 message Instance {
@@ -58,13 +59,14 @@ message Instance {
   optional Streaming streaming = 7;
   optional Connectivity connectivity = 8;
   // TODO: b/337089452 - handle outside of proto logic
-  optional string import_template = 9 [json_name="@import"];
+  optional string import_template = 9
+      [json_name = "@import", deprecated = true];
 }
 
 message Boot {
   optional Build kernel = 1;
   optional bool enable_bootanimation = 2;
-  optional string extra_bootconfig_args = 3;
+  optional string extra_bootconfig_args = 3 [deprecated = true];
   optional string build = 4;
   optional Build bootloader = 5;
 }
@@ -84,7 +86,7 @@ message Vsock {
 message Graphics {
   repeated Display displays = 1;
   optional bool record_screen = 2;
-  optional string gpu_mode = 3;
+  optional string gpu_mode = 3 [deprecated = true];
 }
 
 message Display {
@@ -97,9 +99,9 @@ message Display {
 
 message Disk {
   optional string default_build = 1;
-  optional Super super_partition = 2 [json_name="super"];
-  optional bool download_img_zip = 3;
-  optional bool download_target_files_zip = 4;
+  optional Super super_partition = 2 [json_name = "super"];
+  optional bool download_img_zip = 3 [deprecated = true];
+  optional bool download_target_files_zip = 4 [deprecated = true];
   optional uint32 blank_data_image_mb = 5;
   optional string otatools = 6;
 }
@@ -111,7 +113,7 @@ message Super {
 message Security {
   optional string serial_number = 1;
   optional bool use_random_serial = 2;
-  optional bool guest_enforce_security = 3;
+  optional bool guest_enforce_security = 3 [deprecated = true];
 }
 
 message Streaming {
@@ -129,13 +131,13 @@ message Vm {
     Gem5 gem5 = 7;
     Qemu qemu = 8;
   }
-  repeated CustomAction custom_actions = 9;
+  repeated CustomAction custom_actions = 9 [deprecated = true];
 }
 
 message Crosvm {
-  optional bool enable_sandbox = 1;
-  optional bool simple_media_device = 2;
-  optional string v4l2_proxy = 3;
+  optional bool enable_sandbox = 1 [deprecated = true];
+  optional bool simple_media_device = 2 [deprecated = true];
+  optional string v4l2_proxy = 3 [deprecated = true];
 }
 
 message Gem5 {}
@@ -162,7 +164,7 @@ message DeviceState {
 }
 
 message Metrics {
-  optional bool enable = 1;
+  optional bool enable = 1 [deprecated = true];
 }
 
 message DisplayOverlay {
