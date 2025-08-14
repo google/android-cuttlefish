@@ -33,6 +33,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -47,9 +48,8 @@ Result<void> DiskImageFlagsVectorization(
     const BootImageFlag& boot_image, const BootloaderFlag& bootloader,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SuperImageFlag& super_image,
-    const SystemImageDirFlag& system_image_dir) {
-  std::vector<std::string> vendor_boot_image =
-      android::base::Split(FLAGS_vendor_boot_image, ",");
+    const SystemImageDirFlag& system_image_dir,
+    const VendorBootImageFlag& vendor_boot_image) {
   std::vector<std::string> vbmeta_image =
       android::base::Split(FLAGS_vbmeta_image, ",");
   std::vector<std::string> vbmeta_system_image =
@@ -93,7 +93,6 @@ Result<void> DiskImageFlagsVectorization(
       android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
 
   std::string cur_boot_image;
-  std::string cur_vendor_boot_image;
   int value{};
   int instance_index = 0;
   auto instance_nums =
@@ -106,13 +105,10 @@ Result<void> DiskImageFlagsVectorization(
 
     instance.set_init_boot_image(system_image_dir.ForIndex(instance_index) +
                                  "/init_boot.img");
-    if (instance_index >= vendor_boot_image.size()) {
-      cur_vendor_boot_image = vendor_boot_image[0];
-    } else {
-      cur_vendor_boot_image = vendor_boot_image[instance_index];
-    }
-    instance.set_vendor_boot_image(cur_vendor_boot_image);
-    instance.set_new_vendor_boot_image(cur_vendor_boot_image);
+    instance.set_vendor_boot_image(
+        vendor_boot_image.VendorBootImageForIndex(instance_index));
+    instance.set_new_vendor_boot_image(
+        vendor_boot_image.VendorBootImageForIndex(instance_index));
 
     if (instance_index >= vbmeta_image.size()) {
       instance.set_vbmeta_image(vbmeta_image[0]);

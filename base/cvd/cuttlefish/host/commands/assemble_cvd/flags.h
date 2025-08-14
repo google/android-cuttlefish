@@ -25,6 +25,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -42,7 +43,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
     const BootImageFlag&, const InitramfsPathFlag&,
     const KernelPathFlag& kernel_path, const SuperImageFlag&,
-    const SystemImageDirFlag&, const VmManagerFlag&);
+    const SystemImageDirFlag&, const VendorBootImageFlag&,
+    const VmManagerFlag&);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 

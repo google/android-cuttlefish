@@ -33,34 +33,31 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
 namespace cuttlefish {
 
-Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
-                                  const InitramfsPathFlag& initramfs_path,
-                                  const KernelPathFlag& kernel_path,
-                                  const SuperImageFlag& super_image,
-                                  const SystemImageDirFlag& system_image_dir) {
+Result<void> ResolveInstanceFiles(
+    const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
+    const KernelPathFlag& kernel_path, const SuperImageFlag& super_image,
+    const SystemImageDirFlag& system_image_dir,
+    const VendorBootImageFlag& vendor_boot_image) {
   // It is conflict (invalid) to pass both kernel_path/initramfs_path
   // and image file paths.
   bool flags_kernel_initramfs_has_input =
       (!kernel_path.HasValue()) || (!initramfs_path.HasValue());
   bool flags_image_has_input =
-      (!super_image.IsDefault()) || (!FLAGS_vendor_boot_image.empty()) ||
+      (!super_image.IsDefault()) || (!vendor_boot_image.IsDefault()) ||
       (!FLAGS_vbmeta_vendor_dlkm_image.empty()) ||
       (!FLAGS_vbmeta_system_dlkm_image.empty()) || (!boot_image.IsDefault());
   CF_EXPECT(!(flags_kernel_initramfs_has_input && flags_image_has_input),
             "Cannot pass both kernel_path/initramfs_path and image file paths");
 
-  std::string default_super_image = "";
-  std::string default_vendor_boot_image = "";
   std::string default_vbmeta_image = "";
   std::string default_vbmeta_system_image = "";
   std::string default_vbmeta_vendor_dlkm_image = "";
   std::string default_vbmeta_system_dlkm_image = "";
-  std::string default_16k_kernel_image = "";
-  std::string default_16k_ramdisk_image = "";
   std::string vvmtruststore_path = "";
 
   std::string comma_str = "";
@@ -78,8 +75,6 @@ Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
 
     // If user did not specify location of either of these files, expect them to
     // be placed in --system_image_dir location.
-    default_vendor_boot_image +=
-        comma_str + cur_system_image_dir + "/vendor_boot.img";
     default_vbmeta_image += comma_str + cur_system_image_dir + "/vbmeta.img";
     default_vbmeta_system_image +=
         comma_str + cur_system_image_dir + "/vbmeta_system.img";
@@ -97,9 +92,6 @@ Result<void> ResolveInstanceFiles(const BootImageFlag& boot_image,
       }
     }
   }
-  SetCommandLineOptionWithMode("vendor_boot_image",
-                               default_vendor_boot_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vbmeta_image", default_vbmeta_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("vbmeta_system_image",
