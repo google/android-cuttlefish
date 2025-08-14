@@ -1,6 +1,9 @@
+load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load("@netsim_crates//:defs.bzl", "all_crate_deps")
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
 
 rust_library(
@@ -73,6 +76,75 @@ proto_library(
 
 # lib-netsimd-proto
 cc_proto_library(
-    name = "netsim_proto_cc",
+    name = "netsim_cc_proto",
     deps = [":netsim_proto"],
+)
+
+cpp_grpc_library(
+    name = "netsim_cc_grpc",
+    protos = [":netsim_proto"],
+    deps = [":netsim_cc_proto"],
+)
+
+# netsim_daemon_cc, netsim_daemon_h
+run_binary(
+    name = "netsim_daemon_ffi",
+    srcs = [
+        "rust/daemon/src/ffi.rs",
+    ],
+    outs = [
+        "netsim-daemon/src/ffi.rs.cc",
+        "netsim-daemon/src/ffi.rs.h",
+    ],
+    args = [
+        "$(execpath rust/daemon/src/ffi.rs)",
+        "--cfg",
+        'feature="cuttlefish"',
+        "-o",
+        "$(execpath netsim-daemon/src/ffi.rs.h)",
+        "-o",
+        "$(execpath netsim-daemon/src/ffi.rs.cc)",
+    ],
+    tool = "@cxx.rs//:codegen",
+)
+
+cc_library(
+    name = "lib-netsim",
+    srcs = [
+        "src/backend/grpc_client.cc",
+        "src/hci/bluetooth_facade.cc",
+        "src/hci/hci_packet_transport.cc",
+        "src/hci/rust_device.cc",
+        "src/util/crash_report.cc",
+        "src/util/ini_file.cc",
+        "src/util/log.cc",
+        "src/util/os_utils.cc",
+        "src/util/string_utils.cc",
+        ":netsim_daemon_ffi",
+    ] + glob([
+        "src/**/*.h",
+    ]),
+    copts = [
+        "-Wno-unused-parameter",
+        "-g",  # Produce debugging information.
+    ],
+    defines = [
+        # We use NETSIM_ANDROID_EMULATOR here to temporarily simplify crash
+        # reporting infra.
+        # TODO: Properly add breakpad, libunwindstack, etc.
+        "NETSIM_ANDROID_EMULATOR",
+    ],
+    includes = [
+        "src",
+    ],
+    linkstatic = True,
+    deps = [
+        ":netsim_cc_grpc",
+        ":netsim_cc_proto",
+        "@@//build_external/cxxbridge:cxx-bridge-header",
+        "@grpc//:grpc++",
+        "@jsoncpp",
+        "@protobuf",
+        "@rootcanal",
+    ],
 )
