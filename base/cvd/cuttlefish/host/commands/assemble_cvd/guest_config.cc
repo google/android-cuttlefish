@@ -25,6 +25,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -34,7 +35,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
-#include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
@@ -46,7 +46,7 @@ Result<std::string> GetAndroidInfoConfig(
   CF_EXPECT(FileExists(android_info_file_path));
 
   std::string android_info_contents = ReadFile(android_info_file_path);
-  auto android_info_map = CF_EXPECT(ParseMiscInfo(android_info_contents));
+  auto android_info_map = CF_EXPECT(ParseKeyEqualsValue(android_info_contents));
   CF_EXPECT(android_info_map.find(key) != android_info_map.end());
   return android_info_map[key];
 }

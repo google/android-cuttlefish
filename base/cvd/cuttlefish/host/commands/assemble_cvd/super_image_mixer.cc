@@ -20,13 +20,13 @@
 #include <array>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -137,9 +137,9 @@ Result<MiscInfo> CombineDynamicPartitionsInfo(
              "System target files zip does not contain {}",
              kDynamicPartitionsPath);
 
-  const MiscInfo vendor_dp_info = CF_EXPECT(ParseMiscInfo(
+  const MiscInfo vendor_dp_info = CF_EXPECT(ParseKeyEqualsValue(
       ExtractArchiveToMemory(target_files.vendor_zip, kDynamicPartitionsPath)));
-  const MiscInfo system_dp_info = CF_EXPECT(ParseMiscInfo(
+  const MiscInfo system_dp_info = CF_EXPECT(ParseKeyEqualsValue(
       ExtractArchiveToMemory(target_files.system_zip, kDynamicPartitionsPath)));
 
   return CF_EXPECT(GetCombinedDynamicPartitions(vendor_dp_info, system_dp_info,
@@ -155,9 +155,9 @@ Result<MiscInfo> CombineMiscInfo(
   CF_EXPECTF(Contains(target_files.system_contents, kMiscInfoPath),
              "System target files zip does not contain {}", kMiscInfoPath);
 
-  const MiscInfo vendor_misc = CF_EXPECT(ParseMiscInfo(
+  const MiscInfo vendor_misc = CF_EXPECT(ParseKeyEqualsValue(
       ExtractArchiveToMemory(target_files.vendor_zip, kMiscInfoPath)));
-  const MiscInfo system_misc = CF_EXPECT(ParseMiscInfo(
+  const MiscInfo system_misc = CF_EXPECT(ParseKeyEqualsValue(
       ExtractArchiveToMemory(target_files.system_zip, kMiscInfoPath)));
 
   const auto combined_dp_info =
@@ -165,7 +165,7 @@ Result<MiscInfo> CombineMiscInfo(
   const auto output_misc = CF_EXPECT(MergeMiscInfos(
       vendor_misc, system_misc, combined_dp_info, system_partitions));
 
-  CF_EXPECT(WriteMiscInfo(output_misc, misc_output_path));
+  CF_EXPECT(WriteKeyEqualsValue(output_misc, misc_output_path));
   return std::move(output_misc);
 }
 

@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 
+#include <map>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -35,6 +36,7 @@
 #include <json/value.h>
 #include <json/writer.h>
 
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -167,31 +169,21 @@ class ConfigFlagImpl : public ConfigFlag {
     if(!ReadFileToString(info_path, &android_info)) {
       return {};
     }
-    // grab the config with name "config" in android-info.txt,
-    // it's the setting that's respected.
-    // TODO (rammuthiah) Replace this logic with ParseMiscInfo
-    // from host/commands/assemble_cvd/misc_info.h
-    // Currently blocked on linking error for misc_info which is part of
-    // assemble_cvd and this bit of code which is in run_cvd.
-    auto split_config = Split(android_info, "\n");
-    if (split_config.empty()) {
+    Result<std::map<std::string, std::string>> parsed_config =
+        ParseKeyEqualsValue(android_info);
+    if (!parsed_config.ok()) {
       return {};
     }
-
-    for (std::string_view local_config_value : split_config) {
-      if (!android::base::ConsumePrefix(&local_config_value, "config=")) {
-        continue;
-      }
-
-      if (!config_reader_.HasConfig(std::string{local_config_value})) {
-        LOG(WARNING) << info_path << " contains invalid config preset: '"
-                     << local_config_value << "'.";
-        return {};
-      }
-      return std::string{local_config_value};
+    auto config_it = parsed_config->find("config");
+    if (config_it == parsed_config->end()) {
+      return {};
     }
-
-    return {};
+    if (!config_reader_.HasConfig(config_it->second)) {
+      LOG(WARNING) << info_path << " contains invalid config preset: '"
+                   << config_it->second << "'.";
+      return {};
+    }
+    return config_it->second;
   }
 
   ConfigReader& config_reader_;

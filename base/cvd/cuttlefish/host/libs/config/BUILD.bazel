@@ -26,6 +26,7 @@ cf_cc_library(
     srcs = ["config_flag.cpp"],
     hdrs = ["config_flag.h"],
     deps = [
+        "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
