@@ -1,4 +1,4 @@
-cuttlefish-common (1.20.0) unstable; urgency=medium
+cuttlefish-frontend (1.20.0) unstable; urgency=medium
 
   * Start development on v1.20 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1513
   * Apply buildozer autoformatting by @Databean in https://github.com/google/android-cuttlefish/pull/1511
