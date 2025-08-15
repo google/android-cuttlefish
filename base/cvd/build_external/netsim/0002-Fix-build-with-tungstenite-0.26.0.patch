@@ -1,0 +1,29 @@
+From f509289bf5513958f9e150b7e13a8de64561d4b4 Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Mon, 18 Aug 2025 22:36:31 +0000
+Subject: [PATCH 2/2] Fix build with tungstenite 0.26.0.
+
+Starting 0.26.0, in tugstenite, Message::Binary() no
+longer accepts raw Vec<u8>, only the opaque bytes::Bytes.
+
+https://github.com/snapview/tungstenite-rs/blob/master/CHANGELOG.md#0260
+---
+ rust/daemon/src/transport/websocket.rs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rust/daemon/src/transport/websocket.rs b/rust/daemon/src/transport/websocket.rs
+index 525d478e..d88a028d 100644
+--- a/rust/daemon/src/transport/websocket.rs
++++ b/rust/daemon/src/transport/websocket.rs
+@@ -81,7 +81,7 @@ impl Response for WebSocketTransport {
+             .websocket_writer
+             .lock()
+             .expect("Failed to acquire lock on WebSocket")
+-            .send(Message::Binary(buffer))
++            .send(Message::Binary(buffer.into()))
+         {
+             error!("{err}");
+         };
+-- 
+2.51.0.rc1.167.g924127e9c0-goog
+
