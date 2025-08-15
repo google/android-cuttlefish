@@ -311,6 +311,7 @@ cf_cc_library(
     srcs = ["guest_config.cc"],
     hdrs = ["guest_config.h"],
     deps = [
+        "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/common/libs/utils:environment",
@@ -318,7 +319,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
-        "//cuttlefish/host/commands/assemble_cvd:misc_info",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -376,6 +376,7 @@ cf_cc_library(
     hdrs = ["misc_info.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/avb",
@@ -420,6 +421,7 @@ cf_cc_library(
     srcs = ["super_image_mixer.cc"],
     hdrs = ["super_image_mixer.h"],
     deps = [
+        "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",

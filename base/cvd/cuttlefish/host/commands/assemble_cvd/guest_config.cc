@@ -25,6 +25,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -34,7 +35,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
-#include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
