@@ -5,62 +5,190 @@ package(
 )
 
 cf_cc_library(
-    name = "libdevice",
-    srcs = [
-        "audio_track_source_impl.cpp",
-        "camera_streamer.cpp",
-        "client_handler.cpp",
-        "data_channels.cpp",
-        "gamepad.cpp",
-        "keyboard.cpp",
-        "lights_observer.cpp",
-        "local_recorder.cpp",
-        "recording_manager.cpp",
-        "server_connection.cpp",
-        "streamer.cpp",
-        "video_track_source_impl.cpp",
-    ],
-    hdrs = [
-        "audio_frame_buffer.h",
-        "audio_sink.h",
-        "audio_track_source_impl.h",
-        "camera_controller.h",
-        "camera_streamer.h",
-        "client_handler.h",
-        "connection_observer.h",
-        "data_channels.h",
-        "gamepad.h",
-        "keyboard.h",
-        "lights_observer.h",
-        "local_recorder.h",
-        "recording_manager.h",
-        "server_connection.h",
-        "streamer.h",
-        "video_sink.h",
-        "video_track_source_impl.h",
-    ],
-    linkopts = [
-        "-lopus",
-    ],
+    name = "audio_frame_buffer",
+    hdrs = ["audio_frame_buffer.h"],
+)
+
+cf_cc_library(
+    name = "audio_track_source_impl",
+    srcs = ["audio_track_source_impl.cpp"],
+    hdrs = ["audio_track_source_impl.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
+        "//libbase",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "audio_sink",
+    hdrs = ["audio_sink.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_frame_buffer",
+    ],
+)
+
+cf_cc_library(
+    name = "camera_controller",
+    hdrs = ["camera_controller.h"],
+    deps = [
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "camera_streamer",
+    srcs = ["camera_streamer.cpp"],
+    hdrs = ["camera_streamer.h"],
+    deps = [
         "//cuttlefish/common/libs/utils:vsock_connection",
-        "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
-        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
+        "//libbase",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "client_handler",
+    srcs = ["client_handler.cpp"],
+    hdrs = ["client_handler.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/frontend/webrtc/libcommon:connection_controller",
-        "//cuttlefish/host/frontend/webrtc/libcommon:peer_connection_utils",
-        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
-        "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
-        "//cuttlefish/host/libs/config:custom_actions",
+        "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:data_channels",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "//libbase",
         "@boringssl//:crypto",
         "@jsoncpp",
-        "@libvpx",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "connection_observer",
+    hdrs = ["connection_observer.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "data_channels",
+    srcs = ["data_channels.cpp"],
+    hdrs = ["data_channels.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:gamepad",
+        "//cuttlefish/host/frontend/webrtc/libdevice:keyboard",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "gamepad",
+    srcs = ["gamepad.cpp"],
+    hdrs = ["gamepad.h"],
+)
+
+cf_cc_library(
+    name = "keyboard",
+    srcs = ["keyboard.cpp"],
+    hdrs = ["keyboard.h"],
+)
+
+cf_cc_library(
+    name = "streamer",
+    srcs = ["streamer.cpp"],
+    hdrs = ["streamer.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//cuttlefish/host/frontend/webrtc/libcommon:peer_connection_utils",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_track_source_impl",
+        "//cuttlefish/host/frontend/webrtc/libdevice:camera_controller",
+        "//cuttlefish/host/frontend/webrtc/libdevice:camera_streamer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:client_handler",
+        "//cuttlefish/host/frontend/webrtc/libdevice:connection_observer",
+        "//cuttlefish/host/frontend/webrtc/libdevice:recording_manager",
+        "//cuttlefish/host/frontend/webrtc/libdevice:server_connection",
+        "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
+        "//cuttlefish/host/frontend/webrtc/libdevice:video_track_source_impl",
+        "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
+        "//cuttlefish/host/libs/config:custom_actions",
+        "//libbase",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "lights_observer",
+    srcs = ["lights_observer.cpp"],
+    hdrs = ["lights_observer.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:vsock_connection",
+        "//libbase",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "local_recorder",
+    srcs = ["local_recorder.cpp"],
+    hdrs = ["local_recorder.h"],
+    deps = [
+        "//libbase",
         "@libwebm//:mkvmuxer",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "recording_manager",
+    srcs = ["recording_manager.cpp"],
+    hdrs = ["recording_manager.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libdevice:local_recorder",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//libbase",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "server_connection",
+    srcs = ["server_connection.cpp"],
+    hdrs = ["server_connection.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "video_sink",
+    hdrs = ["video_sink.h"],
+    deps = [
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+    ],
+)
+
+cf_cc_library(
+    name = "video_track_source_impl",
+    srcs = ["video_track_source_impl.cpp"],
+    hdrs = ["video_track_source_impl.h"],
+    deps = [
+        "//cuttlefish/host/frontend/webrtc/libdevice:video_sink",
         "@libwebrtc",
     ],
 )
