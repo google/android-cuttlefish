@@ -1,7 +1,7 @@
 From 86ccd4891af81c6e6b4a572d9eee04fb8a8590b9 Mon Sep 17 00:00:00 2001
 From: HONG Yifan <elsk@google.com>
 Date: Fri, 18 Jul 2025 23:19:24 +0000
-Subject: [PATCH 2/3] Use pdlc from pdl-compiler crate.
+Subject: [PATCH 2/4] Use pdlc from pdl-compiler crate.
 
 pdlc might not be installed on the host system.
 ---
@@ -93,5 +93,5 @@ index 58285d6..14d1db5 100644
  
  run_binary(
 -- 
-2.50.1.552.g942d659e1b-goog
+2.51.0.rc1.163.g2494970778-goog
 
