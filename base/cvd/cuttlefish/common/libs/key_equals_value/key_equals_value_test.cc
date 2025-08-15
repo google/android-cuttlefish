@@ -29,42 +29,45 @@ namespace {
 TEST(KeyEqualsValue, Deserialize) {
   std::string serialized = "key1 = value1 \n key2 = value2";
 
-  MiscInfo expected = {{"key1", "value1"}, {"key2", "value2"}};
-  ASSERT_THAT(ParseMiscInfo(serialized), IsOkAndValue(expected));
+  std::map<std::string, std::string> expected = {{"key1", "value1"},
+                                                 {"key2", "value2"}};
+  ASSERT_THAT(ParseKeyEqualsValue(serialized), IsOkAndValue(expected));
 }
 
 TEST(KeyEqualsValue, Serialize) {
-  MiscInfo misc_info = {{"key1", "value1"}, {"key2", "value2"}};
+  std::map<std::string, std::string> misc_info = {{"key1", "value1"},
+                                                  {"key2", "value2"}};
 
-  EXPECT_EQ(SerializeMiscInfo(misc_info), "key1=value1\nkey2=value2\n");
+  EXPECT_EQ(SerializeKeyEqualsValue(misc_info), "key1=value1\nkey2=value2\n");
 }
 
 TEST(KeyEqualsValue, SerializeDeserialize) {
-  MiscInfo misc_info = {{"key1", "value1"}, {"key2", "value2"}};
+  std::map<std::string, std::string> misc_info = {{"key1", "value1"},
+                                                  {"key2", "value2"}};
 
-  std::string serialized = SerializeMiscInfo(misc_info);
+  std::string serialized = SerializeKeyEqualsValue(misc_info);
 
-  ASSERT_THAT(ParseMiscInfo(serialized), IsOkAndValue(misc_info));
+  ASSERT_THAT(ParseKeyEqualsValue(serialized), IsOkAndValue(misc_info));
 }
 
 TEST(KeyEqualsValue, DeserializeDuplicateKeySameValue) {
   std::string serialized = "key1=value1\nkey1=value1";
 
-  MiscInfo expected = {{"key1", "value1"}};
-  ASSERT_THAT(ParseMiscInfo(serialized), IsOkAndValue(expected));
+  std::map<std::string, std::string> expected = {{"key1", "value1"}};
+  ASSERT_THAT(ParseKeyEqualsValue(serialized), IsOkAndValue(expected));
 }
 
 TEST(KeyEqualsValue, DeserializeDuplicateKeyDifferentValue) {
   std::string serialized = "key1=value1\nkey1=value2";
 
-  Result<MiscInfo> parsed = ParseMiscInfo(serialized);
-  ASSERT_THAT(parsed, IsError());
+  ASSERT_THAT(ParseKeyEqualsValue(serialized), IsError());
 }
 
 TEST(KeyEqualsValue, EmptyLines) {
   std::string serialized = "\n\n\n\n\n\n";
 
-  ASSERT_THAT(ParseMiscInfo(serialized), IsOkAndValue(MiscInfo()));
+  ASSERT_THAT(ParseKeyEqualsValue(serialized),
+              IsOkAndValue(std::map<std::string, std::string>()));
 }
 
 }  // namespace

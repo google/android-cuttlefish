@@ -28,7 +28,6 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
-#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/avb/avb.h"
