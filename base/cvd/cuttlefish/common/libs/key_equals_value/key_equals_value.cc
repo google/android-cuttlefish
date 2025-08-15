@@ -29,8 +29,9 @@
 
 namespace cuttlefish {
 
-Result<MiscInfo> ParseMiscInfo(const std::string& contents) {
-  MiscInfo misc_info;
+Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
+    const std::string& contents) {
+  std::map<std::string, std::string> key_equals_value;
   for (std::string_view line : absl::StrSplit(contents, '\n')) {
     std::pair<std::string_view, std::string_view> key_value =
         absl::StrSplit(line, absl::MaxSplits('=', 1));
@@ -42,29 +43,32 @@ Result<MiscInfo> ParseMiscInfo(const std::string& contents) {
 
     key_value.second = absl::StripAsciiWhitespace(key_value.second);
 
-    auto [it, inserted] = misc_info.emplace(key_value);
+    auto [it, inserted] = key_equals_value.emplace(key_value);
     CF_EXPECTF(inserted || it->second == key_value.second,
                "Duplicate key with different value. key:\"{}\", previous "
                "value:\"{}\", this value:\"{}\"",
                key_value.first, it->second, key_value.second);
   }
-  return misc_info;
+  return key_equals_value;
 }
 
-std::string SerializeMiscInfo(const MiscInfo& misc_info) {
+std::string SerializeKeyEqualsValue(
+    const std::map<std::string, std::string>& key_equals_value) {
   std::stringstream file_content;
-  for (const auto& [key, value] : misc_info) {
+  for (const auto& [key, value] : key_equals_value) {
     file_content << key << "=" << value << "\n";
   }
   return file_content.str();
 }
 
-Result<void> WriteMiscInfo(const MiscInfo& misc_info, const std::string& path) {
+Result<void> WriteKeyEqualsValue(
+    const std::map<std::string, std::string>& key_equals_value,
+    const std::string& path) {
   SharedFD output = SharedFD::Creat(path, 0644);
   CF_EXPECTF(output->IsOpen(), "Failed to open '{}': '{}'", path,
              output->StrError());
 
-  std::string serialized = SerializeMiscInfo(misc_info);
+  std::string serialized = SerializeKeyEqualsValue(key_equals_value);
 
   CF_EXPECTF(WriteAll(output, serialized) == serialized.size(),
              "Failed to write to '{}': '{}'", path, output->StrError());

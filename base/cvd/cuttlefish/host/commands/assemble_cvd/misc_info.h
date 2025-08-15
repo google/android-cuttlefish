@@ -15,14 +15,16 @@
 
 #pragma once
 
+#include <map>
 #include <set>
 #include <string>
 
-#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 
 namespace cuttlefish {
+
+using MiscInfo = std::map<std::string, std::string>;
 
 struct VbmetaArgs {
   std::string algorithm;

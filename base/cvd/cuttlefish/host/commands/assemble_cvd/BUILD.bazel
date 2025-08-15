@@ -380,7 +380,6 @@ cf_cc_library(
     hdrs = ["misc_info.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/avb",

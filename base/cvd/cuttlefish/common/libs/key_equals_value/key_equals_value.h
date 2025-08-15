@@ -22,12 +22,10 @@
 
 namespace cuttlefish {
 
-// TODO(chadreynolds): rename MiscInfo to more generic KeyValueFile since this
-// logic is processing multiple filetypes now
-using MiscInfo = std::map<std::string, std::string>;
-
-Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents);
-std::string SerializeMiscInfo(const MiscInfo&);
-Result<void> WriteMiscInfo(const MiscInfo& misc_info, const std::string& path);
+Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
+    const std::string&);
+std::string SerializeKeyEqualsValue(const std::map<std::string, std::string>&);
+Result<void> WriteKeyEqualsValue(const std::map<std::string, std::string>&,
+                                 const std::string& path);
 
 }  // namespace cuttlefish
