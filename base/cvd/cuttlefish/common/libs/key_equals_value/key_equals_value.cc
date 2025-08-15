@@ -54,20 +54,24 @@ Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents) {
   return misc_info;
 }
 
-Result<void> WriteMiscInfo(const MiscInfo& misc_info,
-                           const std::string& output_path) {
+std::string SerializeMiscInfo(const MiscInfo& misc_info) {
   std::stringstream file_content;
   for (const auto& entry : misc_info) {
     file_content << entry.first << "=" << entry.second << "\n";
   }
+  return file_content.str();
+}
 
+Result<void> WriteMiscInfo(const MiscInfo& misc_info,
+                           const std::string& output_path) {
   SharedFD output_file = SharedFD::Creat(output_path.c_str(), 0644);
   CF_EXPECT(output_file->IsOpen(),
             "Failed to open output misc file: " << output_file->StrError());
 
   CF_EXPECT(
-      WriteAll(output_file, file_content.str()) >= 0,
+      WriteAll(output_file, SerializeMiscInfo(misc_info)) >= 0,
       "Failed to write output misc file contents: " << output_file->StrError());
+
   return {};
 }
 

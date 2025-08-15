@@ -27,6 +27,7 @@ namespace cuttlefish {
 using MiscInfo = std::map<std::string, std::string>;
 
 Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents);
+std::string SerializeMiscInfo(const MiscInfo&);
 Result<void> WriteMiscInfo(const MiscInfo& misc_info,
                            const std::string& output_path);
 

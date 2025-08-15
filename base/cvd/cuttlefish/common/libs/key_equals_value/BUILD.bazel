@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -13,5 +13,17 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
+    ],
+)
+
+cf_cc_test(
+    name = "key_equals_value_test",
+    srcs = ["key_equals_value_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/key_equals_value",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
