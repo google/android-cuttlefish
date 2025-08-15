@@ -37,8 +37,6 @@ static const std::string MF_SIM       = "3F00";
 static const std::string DF_TELECOM   = "7F10";
 static const std::string DF_PHONEBOOK = "5F3A";
 static const std::string DF_GRAPHICS  = "5F50";
-static const std::string DF_GSM       = "7F20";
-static const std::string DF_CDMA      = "7F25";
 static const std::string DF_ADF       = "7FFF";  // UICC access
 
 // In an ADN record, everything but the alpha identifier

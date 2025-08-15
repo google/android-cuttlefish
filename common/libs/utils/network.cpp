@@ -63,7 +63,7 @@ namespace {
 // u16 csum_offset;
 // u16 num_buffers;
 // };
-static constexpr int SIZE_OF_VIRTIO_NET_HDR_V1 = 12;
+// static constexpr int SIZE_OF_VIRTIO_NET_HDR_V1 = 12;
 #endif
 
 /**

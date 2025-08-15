@@ -845,7 +845,6 @@ Result<ProtoType> ParseBinProtoFlagHelper(const std::string& flag_value,
   std::vector<uint8_t> output;
   CF_EXPECT(DecodeBase64(flag_value, &output));
   std::string serialized = std::string(output.begin(), output.end());
-  bool result = proto_result.ParseFromString(serialized);
   CF_EXPECT(proto_result.ParseFromString(serialized),
             "Failed to parse binary proto, flag: " << flag_name << ", value: "
                                                    << flag_value);
@@ -1463,7 +1462,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> v4l2_proxy_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(crosvm_v4l2_proxy));
   std::vector<bool> use_pmem_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_pmem));
-  const bool restore_from_snapshot = !std::string(FLAGS_snapshot_path).empty();
   std::vector<std::string> device_external_network_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(device_external_network));
 
