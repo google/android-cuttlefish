@@ -1,3 +1,4 @@
+load("@@//build_external/netsim:pdl_rust.bzl", "pdl_rust")
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load("@netsim_crates//:defs.bzl", "all_crate_deps")
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
@@ -5,6 +6,36 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
+
+pdl_rust(
+    name = "netsim_netlink_rust_gen",
+    src = "pdl/netlink.pdl",
+    out = "netlink_packets.rs",
+)
+
+pdl_rust(
+    name = "netsim_mac80211_hwsim_rust_gen",
+    src = "pdl/mac80211_hwsim.pdl",
+    out = "mac80211_hwsim_packets.rs",
+)
+
+pdl_rust(
+    name = "netsim_ieee80211_rust_gen",
+    src = "pdl/ieee80211.pdl",
+    out = "ieee80211_packets.rs",
+)
+
+pdl_rust(
+    name = "netsim_llc_rust_gen",
+    src = "pdl/llc.pdl",
+    out = "llc_packets.rs",
+)
+
+pdl_rust(
+    name = "netsim_arp_rust_gen",
+    src = "pdl/arp.pdl",
+    out = "arp_packets.rs",
+)
 
 rust_library(
     name = "libnetsim_proto",
