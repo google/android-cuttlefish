@@ -4,7 +4,6 @@ cuttlefish-common (1.20.0) unstable; urgency=medium
   * Apply buildozer autoformatting by @Databean in https://github.com/google/android-cuttlefish/pull/1511
   * Add netsim by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1457
   * Create a type for the `--mcu_config_path` flag by @Databean in https://github.com/google/android-cuttlefish/pull/1519
-  * Minor improvements to the host orchestrator by @jemoreira in https://github.com/google/android-cuttlefish/pull/1514
   * Revert "Revert "Move libcutils to the imported version from AOSP."" by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1516
   * Add a DisjointRangeSet type representing which parts of a space are covered by @Databean in https://github.com/google/android-cuttlefish/pull/1515
   * Split `//cuttlefish/host/frontend/webrtc/libcommon:libcommon` and remove unused files by @Databean in https://github.com/google/android-cuttlefish/pull/1471

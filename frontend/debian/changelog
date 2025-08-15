@@ -2,30 +2,8 @@ cuttlefish-common (1.20.0) unstable; urgency=medium
 
   * Start development on v1.20 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1513
   * Apply buildozer autoformatting by @Databean in https://github.com/google/android-cuttlefish/pull/1511
-  * Add netsim by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1457
-  * Create a type for the `--mcu_config_path` flag by @Databean in https://github.com/google/android-cuttlefish/pull/1519
   * Minor improvements to the host orchestrator by @jemoreira in https://github.com/google/android-cuttlefish/pull/1514
-  * Revert "Revert "Move libcutils to the imported version from AOSP."" by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1516
-  * Add a DisjointRangeSet type representing which parts of a space are covered by @Databean in https://github.com/google/android-cuttlefish/pull/1515
-  * Split `//cuttlefish/host/frontend/webrtc/libcommon:libcommon` and remove unused files by @Databean in https://github.com/google/android-cuttlefish/pull/1471
-  * Add serialization operations for DisjointRangeSet by @Databean in https://github.com/google/android-cuttlefish/pull/1520
-  * Create a flag to represent `--super_image` by @Databean in https://github.com/google/android-cuttlefish/pull/1521
-  * Update dependency versions: jsoncpp, platforms, protobuf, rules_cc, rules_python by @Databean in https://github.com/google/android-cuttlefish/pull/1517
-  * Enable clang-tidy for `//cuttlefish/host/libs/location` by @Databean in https://github.com/google/android-cuttlefish/pull/1518
-  * cvdalloc binary. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1505
-  * Add lz4 executable. by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1529
-  * netsim: add lib corresponding to lib-netsimd-proto by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1530
-  * Split out a lot of `//cuttlefish/host/commands/modem_simulator:modem_simulator_lib` by @Databean in https://github.com/google/android-cuttlefish/pull/1524
-  * Update rules_rust to 0.63.0. by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1531
-  * Create a type to represent the `--vendor_boot_image` flag by @Databean in https://github.com/google/android-cuttlefish/pull/1532
-  * Allow for locks to be acquired incrementally. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1497
-  * Add a use_cvdalloc flag to the config. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1526
-  * Add message encapsulating environment fields by @cjreynol in https://github.com/google/android-cuttlefish/pull/1533
   * Mark 1.19 as stable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1527
-  * Change gamepad button color when clicking by @ruki2067 in https://github.com/google/android-cuttlefish/pull/1525
-  * Add a LazilyLoadedFile type that loads fragments from an external source as needed by @Databean in https://github.com/google/android-cuttlefish/pull/1523
-  * Pass DefaultNetworkInterfaces the config. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1535
-  * Use incremental locking when use_cvdalloc. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1534
 
  -- Ram Muthiah <rammuthiah@google.com>  Fri, 15 Aug 2025 21:40:58 +0100
 
