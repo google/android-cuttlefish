@@ -1,7 +1,7 @@
 From a17bc08456664b526fb3cb6da80a6f75a0fd8a70 Mon Sep 17 00:00:00 2001
 From: HONG Yifan <elsk@google.com>
 Date: Fri, 18 Jul 2025 22:58:54 +0000
-Subject: [PATCH 1/3] Use our local_repository.
+Subject: [PATCH 1/4] Use our local_repository.
 
 https://github.com/bazelbuild/bazel/issues/26578
 ---
@@ -24,5 +24,5 @@ index c888365..2d203d4 100644
  new_local_repository(
      name = "fmtlib",
 -- 
-2.50.1.552.g942d659e1b-goog
+2.51.0.rc1.163.g2494970778-goog
 
