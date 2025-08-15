@@ -1,7 +1,7 @@
 From 2199f2cff9359d7858cd2b1fbda46854210f173d Mon Sep 17 00:00:00 2001
 From: HONG Yifan <elsk@google.com>
 Date: Mon, 18 Aug 2025 19:42:13 +0000
-Subject: [PATCH] Drop pica from daemon/Cargo.toml.
+Subject: [PATCH 1/2] Drop pica from daemon/Cargo.toml.
 
 We need to use our pica >= 0.1.9, which is still
 not in crates.io yet.

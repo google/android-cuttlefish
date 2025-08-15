@@ -739,6 +739,7 @@ git_repository(
     remote = "https://android.googlesource.com/platform/tools/netsim",
     patches = [
         "@//build_external/netsim:0001-Drop-pica-from-daemon-Cargo.toml.patch",
+        "@//build_external/netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
     ],
     patch_strip = 1,
 )

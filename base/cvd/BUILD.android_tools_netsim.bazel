@@ -1,3 +1,4 @@
+load("@@//build_external/netsim:collect_files_in_dir.bzl", "collect_files_in_dir")
 load("@@//build_external/netsim:pdl_rust.bzl", "pdl_rust")
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load("@netsim_crates//:defs.bzl", "all_crate_deps")
@@ -37,9 +38,24 @@ pdl_rust(
     out = "arp_packets.rs",
 )
 
+# HACK to have a unified OUT_DIR
+collect_files_in_dir(
+    name = "libnetsim_packets_out_dir",
+    srcs = [
+        ":netsim_arp_rust_gen",
+        ":netsim_ieee80211_rust_gen",
+        ":netsim_llc_rust_gen",
+        ":netsim_mac80211_hwsim_rust_gen",
+        ":netsim_netlink_rust_gen",
+        "@rootcanal//packets:link_layer_packets_rs",
+    ],
+    out = "link_layer_packets.rs",
+)
+
 rust_library(
     name = "libnetsim_proto",
     srcs = glob(["rust/proto/src/**/*.rs"]),
+    crate_features = ["cuttlefish"],
     crate_name = "netsim_proto",
     visibility = ["//visibility:public"],
     deps = all_crate_deps(
@@ -71,6 +87,38 @@ rust_library(
         ":libnetsim_common",
         ":libnetsim_proto",
     ],
+)
+
+rust_library(
+    name = "libnetsim_packets",
+    srcs = glob([
+        "rust/packets/src/**/*.rs",
+    ]) + [
+        ":libnetsim_packets_out_dir",
+    ],
+    crate_name = "netsim_packets",
+    rustc_env = {
+        "OUT_DIR": "$(execpath libnetsim_packets_out_dir)",
+    },
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        package_name = "packets",
+        normal = True,
+    ),
+)
+
+rust_library(
+    name = "libnetsim_hostapd_rs",
+    srcs = glob([
+        "rust/hostapd-rs/src/**/*.rs",
+    ]),
+    crate_name = "hostapd_rs",
+    deps = [
+        ":libnetsim_packets",
+    ] + all_crate_deps(
+        package_name = "hostapd-rs",
+        normal = True,
+    ),
 )
 
 rust_binary(
@@ -178,4 +226,32 @@ cc_library(
         "@protobuf",
         "@rootcanal",
     ],
+)
+
+rust_library(
+    name = "libnetsim_daemon",
+    srcs = glob([
+        "rust/daemon/src/**/*.rs",
+    ]),
+    compile_data = glob([
+        "rust/daemon/src/**/*.csv",
+    ]),
+    crate_features = ["cuttlefish"],
+    crate_name = "netsim_daemon",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":libnetsim_common",
+        ":libnetsim_hostapd_rs",
+        ":libnetsim_packets",
+        ":libnetsim_proto",
+        # pica is manually excluded from Cargo.toml due to missing required
+        # version on crates.io, so we need to manually add it here.
+        "@netsim_crates//:pica",
+        # This is missing from Cargo.toml, so manually add it.
+        "@netsim_crates//:libc",
+        "@netsim_crates//:openssl",
+    ] + all_crate_deps(
+        package_name = "daemon",
+        normal = True,
+    ),
 )
