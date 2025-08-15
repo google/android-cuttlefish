@@ -20,13 +20,13 @@
 #include <array>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"

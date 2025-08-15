@@ -15,18 +15,14 @@
 
 #pragma once
 
-#include <map>
 #include <set>
 #include <string>
 
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 
 namespace cuttlefish {
-
-// TODO(chadreynolds): rename MiscInfo to more generic KeyValueFile since this
-// logic is processing multiple filetypes now
-using MiscInfo = std::map<std::string, std::string>;
 
 struct VbmetaArgs {
   std::string algorithm;
@@ -36,9 +32,6 @@ struct VbmetaArgs {
   std::vector<std::string> extra_arguments;
 };
 
-Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents);
-Result<void> WriteMiscInfo(const MiscInfo& misc_info,
-                           const std::string& output_path);
 Result<MiscInfo> GetCombinedDynamicPartitions(
     const MiscInfo& vendor_info, const MiscInfo& system_info,
     const std::set<std::string>& extracted_images);
