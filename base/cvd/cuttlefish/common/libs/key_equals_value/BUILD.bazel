@@ -12,7 +12,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:result",
-        "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

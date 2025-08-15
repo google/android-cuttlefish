@@ -16,61 +16,58 @@
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 
 #include <memory>
+#include <sstream>
 #include <string>
+#include <utility>
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-Result<MiscInfo> ParseMiscInfo(const std::string& misc_info_contents) {
-  auto lines = android::base::Split(misc_info_contents, "\n");
+Result<MiscInfo> ParseMiscInfo(const std::string& contents) {
   MiscInfo misc_info;
-  for (auto& line : lines) {
-    line = android::base::Trim(line);
-    if (line.empty()) {
+  for (std::string_view line : absl::StrSplit(contents, '\n')) {
+    std::pair<std::string_view, std::string_view> key_value =
+        absl::StrSplit(line, absl::MaxSplits('=', 1));
+    key_value.first = absl::StripAsciiWhitespace(key_value.first);
+
+    if (key_value.first.empty()) {
       continue;
     }
-    auto eq_pos = line.find('=');
-    if (eq_pos == std::string::npos) {
-      LOG(WARNING) << "Line in unknown format: \"" << line << "\"";
-      continue;
-    }
-    // Not using android::base::Split here to only capture the first =
-    const auto key = android::base::Trim(line.substr(0, eq_pos));
-    const auto value = android::base::Trim(line.substr(eq_pos + 1));
-    const bool duplicate = Contains(misc_info, key) && misc_info[key] != value;
-    CF_EXPECTF(!duplicate,
+
+    key_value.second = absl::StripAsciiWhitespace(key_value.second);
+
+    auto [it, inserted] = misc_info.emplace(key_value);
+    CF_EXPECTF(inserted || it->second == key_value.second,
                "Duplicate key with different value. key:\"{}\", previous "
                "value:\"{}\", this value:\"{}\"",
-               key, misc_info[key], value);
-    misc_info[key] = value;
+               key_value.first, it->second, key_value.second);
   }
   return misc_info;
 }
 
 std::string SerializeMiscInfo(const MiscInfo& misc_info) {
   std::stringstream file_content;
-  for (const auto& entry : misc_info) {
-    file_content << entry.first << "=" << entry.second << "\n";
+  for (const auto& [key, value] : misc_info) {
+    file_content << key << "=" << value << "\n";
   }
   return file_content.str();
 }
 
-Result<void> WriteMiscInfo(const MiscInfo& misc_info,
-                           const std::string& output_path) {
-  SharedFD output_file = SharedFD::Creat(output_path.c_str(), 0644);
-  CF_EXPECT(output_file->IsOpen(),
-            "Failed to open output misc file: " << output_file->StrError());
+Result<void> WriteMiscInfo(const MiscInfo& misc_info, const std::string& path) {
+  SharedFD output = SharedFD::Creat(path, 0644);
+  CF_EXPECTF(output->IsOpen(), "Failed to open '{}': '{}'", path,
+             output->StrError());
 
-  CF_EXPECT(
-      WriteAll(output_file, SerializeMiscInfo(misc_info)) >= 0,
-      "Failed to write output misc file contents: " << output_file->StrError());
+  std::string serialized = SerializeMiscInfo(misc_info);
+
+  CF_EXPECTF(WriteAll(output, serialized) == serialized.size(),
+             "Failed to write to '{}': '{}'", path, output->StrError());
 
   return {};
 }
