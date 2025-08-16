@@ -1,0 +1,17 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+genrule(
+    name = "cxx-bridge-header-gen",
+    outs = [
+        "rust/cxx.h",
+    ],
+    cmd = "$(location @cxx.rs//:codegen) --header > $@",
+    tools = ["@cxx.rs//:codegen"],
+)
+
+cc_library(
+    name = "cxx-bridge-header",
+    hdrs = [":cxx-bridge-header-gen"],
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
