@@ -76,7 +76,7 @@ package_files(
         "cuttlefish-common/bin/netsim": "@android_tools_netsim//:netsim",
         "cuttlefish-common/bin/openwrt_control_server": "//cuttlefish/host/commands/openwrt_control_server",
         "cuttlefish-common/bin/operator_proxy": "//cuttlefish/host/frontend/operator_proxy",
-        "cuttlefish-common/bin/pica": "@pica",
+        "cuttlefish-common/bin/pica": "@netsim_crates//:pica__pica",
         "cuttlefish-common/bin/powerbtn_cvd": "//cuttlefish/host/commands/powerbtn_cvd",
         "cuttlefish-common/bin/powerwash_cvd": "//cuttlefish/host/commands/powerwash_cvd",
         "cuttlefish-common/bin/process_restarter": "//cuttlefish/host/commands/process_restarter",
