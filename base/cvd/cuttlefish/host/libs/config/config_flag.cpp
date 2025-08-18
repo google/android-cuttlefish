@@ -28,6 +28,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
