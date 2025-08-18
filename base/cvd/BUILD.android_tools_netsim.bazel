@@ -3,6 +3,7 @@ load("@@//build_external/netsim:pdl_rust.bzl", "pdl_rust")
 load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load("@netsim_crates//:defs.bzl", "all_crate_deps")
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
@@ -216,6 +217,7 @@ cc_library(
     includes = [
         "src",
     ],
+    linkopts = ["-rdynamic"],  # Allow obtaining backtraces for debugging.
     linkstatic = True,
     deps = [
         ":netsim_cc_grpc",
@@ -254,4 +256,24 @@ rust_library(
         package_name = "daemon",
         normal = True,
     ),
+)
+
+cc_binary(
+    name = "netsimd",
+    srcs = ["rust/netsimd.cc"],
+    copts = [
+        "-Wno-unused-parameter",
+        "-g",  # Produce debugging information.
+    ],
+    includes = ["src"],
+    linkopts = ["-rdynamic"],  # Allow obtaining backtraces for debugging.
+    visibility = ["//visibility:public"],
+    deps = [
+        ":lib-netsim",
+        ":libnetsim_daemon",
+        ":netsim_cc_proto",
+        "@grpc//:grpc++",
+        "@netsim_crates//:grpcio-sys",
+        "@rootcanal//:librootcanal",
+    ],
 )
