@@ -1,0 +1,29 @@
+From 2199f2cff9359d7858cd2b1fbda46854210f173d Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Mon, 18 Aug 2025 19:42:13 +0000
+Subject: [PATCH] Drop pica from daemon/Cargo.toml.
+
+We need to use our pica >= 0.1.9, which is still
+not in crates.io yet.
+
+Bug: b/402294843
+---
+ rust/daemon/Cargo.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rust/daemon/Cargo.toml b/rust/daemon/Cargo.toml
+index 9e50a22c..e3400cf7 100644
+--- a/rust/daemon/Cargo.toml
++++ b/rust/daemon/Cargo.toml
+@@ -24,7 +24,7 @@ http-proxy = { path = "../http-proxy" }
+ netsim-packets = { path = "../packets" }
+ # Relax the version constraint for 'pica' to allow cargo to select a compatible version
+ # from crates.io since 0.1.9 seems to be only available in AOSP.
+-pica = { version = "0.1", default-features = false }
++# pica = { version = "0.1", default-features = false }
+ protobuf = "3.2.0"
+ protobuf-json-mapping = "3.2.0"
+ rand = "0.8.5"
+-- 
+2.51.0.rc1.167.g924127e9c0-goog
+
