@@ -268,6 +268,17 @@ func (cli *CLI) LazySelectInstance(selector InstanceSelector) *Instance {
 	}
 }
 
+// Reset the host by removing all existing devices.
+func (cli *CLI) Reset() error {
+	args := []string{"reset", "-y"}
+
+	if _, err := cli.exec(CVDBin, args...); err != nil {
+		return fmt.Errorf("failed execution of `cvd %s`: %w", strings.Join(args, " "), err)
+	}
+
+	return nil
+}
+
 func (cli *CLI) groupFromCmdOutput(cmdOut []byte) (*Group, error) {
 	var g output.Group
 	if err := json.Unmarshal(cmdOut, &g); err != nil {
