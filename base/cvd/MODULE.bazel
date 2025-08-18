@@ -288,22 +288,6 @@ crosvm_bin.from_specs(
 
 use_repo(crosvm_bin, "crosvm_bin")
 
-pica_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
-pica_crates.spec(
-    package = "pdl-compiler",
-    version = "0.3.3",
-)
-pica_crates.annotation(crate = "pdl-compiler", gen_all_binaries = True)
-pica_crates.from_cargo(
-    name = "pica_crates",
-    manifests = ["@pica//:Cargo.toml"],
-    # Needed because it shares the extension with crosvm
-    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
-    host_tools = "@rust_host_tools_nightly",
-)
-
-use_repo(pica_crates, "pica_crates")
-
 netsim_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 netsim_crates.spec(
     package = "grpcio-sys",
@@ -335,6 +319,22 @@ cc_library(
     deps = ["@@//build_external/grpcio-sys:grpc_wrap_deps"],
 )
 """,
+)
+netsim_crates.spec(
+    package = "pica",
+    git = "https://github.com/google/pica/",
+    rev = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # 0.1.12,
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "pica",
+    gen_all_binaries = True,
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "pdl-compiler",
+    gen_all_binaries = True,
+    repositories = ["netsim_crates"],
 )
 netsim_crates.from_cargo(
     name = "netsim_crates",
@@ -678,13 +678,6 @@ git_repository(
     build_file = "@//:BUILD.android_system_extras.bazel",
     commit = "fc2494a2abd7ab21774d03deb09c1362bbb0bba8",
     remote = "https://android.googlesource.com/platform/system/extras",
-)
-
-git_repository(
-    name = "pica",
-    build_file = "@//:BUILD.pica.bazel",
-    commit = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # v0.1.12
-    remote = "https://github.com/google/pica/",
 )
 
 git_repository(
