@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include <google/protobuf/message.h>
 #include <json/json.h>
 

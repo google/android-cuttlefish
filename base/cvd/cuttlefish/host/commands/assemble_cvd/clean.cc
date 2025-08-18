@@ -24,6 +24,7 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/result.h"

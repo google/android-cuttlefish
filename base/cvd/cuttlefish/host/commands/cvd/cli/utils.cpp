@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"

@@ -24,6 +24,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/host/libs/web/http_client/url_escape.h"
 

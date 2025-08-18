@@ -39,6 +39,7 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"

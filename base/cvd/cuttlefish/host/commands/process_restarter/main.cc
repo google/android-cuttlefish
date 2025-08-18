@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/result.h"

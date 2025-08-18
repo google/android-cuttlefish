@@ -126,6 +126,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
+        "@fmt",
     ],
 )
 
