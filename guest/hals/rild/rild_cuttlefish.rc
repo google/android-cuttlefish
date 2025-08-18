@@ -1,5 +1,0 @@
-service vendor.ril-daemon /vendor/bin/hw/libcuttlefish-rild
-    class main
-    user radio
-    group radio inet misc audio log readproc wakelock
-    capabilities BLOCK_SUSPEND NET_ADMIN NET_RAW

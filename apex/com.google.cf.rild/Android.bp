@@ -24,7 +24,7 @@ prebuilt_etc {
 
 prebuilt_etc {
     name: "com.google.cf.rild.xml",
-    src: ":libril-modem-lib-manifests",
+    src: "com.google.cf.rild.xml",
     sub_dir: "vintf",
     installable: false,
 }
