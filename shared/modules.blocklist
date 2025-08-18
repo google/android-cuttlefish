@@ -11,3 +11,6 @@ blocklist vkms.ko
 #
 # Prevent it from loading completely as it's not needed in Cuttlefish.
 blocklist snd-aloop.ko
+
+# vivid should only be loaded when it needs to be used
+blocklist vivid.ko
