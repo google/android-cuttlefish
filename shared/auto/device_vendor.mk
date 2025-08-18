@@ -182,6 +182,9 @@ PRODUCT_PACKAGES += ConnectivityOverlayMinradio
 # Disable thread network
 CF_VENDOR_NO_THREADNETWORK := true
 
+# Disable light HAL
+LOCAL_ENABLE_LIGHT := false
+
 # Auto CF target is configured to use Configurable Audio Policy Engine if vendor audio configuration
 # flag is not set. However, to prevent fallback on common cuttlefish audio configuration files, make
 # use of the vendor flag even for default cuttlefish auto config.
