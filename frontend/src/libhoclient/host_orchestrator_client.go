@@ -101,6 +101,8 @@ type InstancesClient interface {
 	CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error)
 	// Deletes an existing cvd instance.
 	DeleteCVD(id string) error
+	// Forcefully deletes all existing cvd instances and cleans up the host's state.
+	Reset() error
 }
 
 // Manage artifacts created by the user.
@@ -449,6 +451,19 @@ func (c *HostOrchestratorClientImpl) ListCVDs() ([]*hoapi.CVD, error) {
 		return nil, err
 	}
 	return res.CVDs, nil
+}
+
+func (c *HostOrchestratorClientImpl) Reset() error {
+	var op hoapi.Operation
+	rb := c.HTTPHelper.NewPostRequest("/reset", nil)
+	if err := rb.JSONResDo(&op); err != nil {
+		return err
+	}
+	res := &hoapi.EmptyResponse{}
+	if err := c.WaitForOperation(op.Name, &res); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *HostOrchestratorClientImpl) Powerwash(groupName, instanceName string) error {
