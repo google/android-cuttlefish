@@ -150,7 +150,7 @@ func (m *UserArtifactsManagerImpl) ExtractArtifact(checksum string) error {
 	if exists, err := dirExists(dir); err != nil {
 		return fmt.Errorf("failed to check existence of directory: %w", err)
 	} else if exists {
-		return operator.NewConflictError(fmt.Sprintf("user artifact(checksum:%q) already extracted", checksum), nil)
+		return nil
 	}
 	file, err := m.getFilePath(checksum)
 	if err != nil {
