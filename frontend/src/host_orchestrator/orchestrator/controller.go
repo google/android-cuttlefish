@@ -123,6 +123,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvd_imgs_dirs", httpHandler(&listImageDirectoriesHandler{c.ImageDirectoriesManager})).Methods("GET")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&deleteImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("DELETE")
+	router.Handle("/reset", httpHandler(&resetCVDHandler{c.OperationManager})).Methods("POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")
@@ -861,6 +862,18 @@ func (h *deleteImageDirectoryHandler) Handle(r *http.Request) (interface{}, erro
 		}
 	}()
 	return op, nil
+}
+
+type resetCVDHandler struct {
+	om OperationManager
+}
+
+func (h *resetCVDHandler) Handle(r *http.Request) (interface{}, error) {
+	opts := ResetCVDActionOpts{
+		OperationManager: h.om,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewResetCVDAction(opts).Run()
 }
 
 type getDebugVariablesHandler struct {
