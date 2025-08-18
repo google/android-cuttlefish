@@ -96,6 +96,11 @@ func (c *FakeHostOrchestratorClient) ListCVDs() ([]*hoapi.CVD, error) {
 	return ret, nil
 }
 
+func (c *FakeHostOrchestratorClient) Reset() error {
+	c.cvds = make(map[int]*hoapi.CVD)
+	return nil
+}
+
 func (c *FakeHostOrchestratorClient) UploadArtifact(filename string) error {
 	return nil
 }
