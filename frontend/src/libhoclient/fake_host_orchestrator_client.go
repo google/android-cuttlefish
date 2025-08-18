@@ -64,21 +64,6 @@ func (c *FakeHostOrchestratorClient) CreateCVD(req *hoapi.CreateCVDRequest, cred
 	return &hoapi.CreateCVDResponse{CVDs: cvds}, err
 }
 
-func (c *FakeHostOrchestratorClient) CreateCVDOp(req *hoapi.CreateCVDRequest, creds BuildAPICreds) (*hoapi.Operation, error) {
-	op, ch := c.newFakeOperation()
-	go func() {
-		res, err := c.CreateCVD(req, creds)
-		var msg []byte
-		if err != nil {
-			msg, _ = json.Marshal(err)
-		} else {
-			msg, _ = json.Marshal(res)
-		}
-		ch <- msg
-	}()
-	return op, nil
-}
-
 func (c *FakeHostOrchestratorClient) DeleteCVD(id string) error {
 	for k, cvd := range c.cvds {
 		if cvd.Group == id {
