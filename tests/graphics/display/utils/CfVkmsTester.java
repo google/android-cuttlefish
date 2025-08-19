@@ -346,7 +346,7 @@ public class CfVkmsTester implements Closeable {
         this.device = device;
         boolean success = false;
         try {
-            success = toggleSystemUi(false) && configureVkmsAsDisplayDriver()
+            success = toggleSystemUi(false) && toggleVkmsAsDisplayDriver(true)
                 && setupDisplayConnectors(displaysCount, explicitConfig) && toggleVkms(true)
                 && toggleSystemUi(true);
         } catch (Exception e) {
@@ -394,8 +394,9 @@ public class CfVkmsTester implements Closeable {
         return true;
     }
 
-    private boolean configureVkmsAsDisplayDriver() throws Exception {
-        String command = "setprop vendor.hwc.drm.device /dev/dri/card1";
+    private boolean toggleVkmsAsDisplayDriver(boolean enable) throws Exception {
+        String command =
+            "setprop vendor.hwc.drm.device " + (enable ? "/dev/dri/card1" : "/dev/dri/card0");
         CommandResult result = executeCommand(command);
 
         if (result.getStatus() != CommandStatus.SUCCESS) {
@@ -404,7 +405,11 @@ public class CfVkmsTester implements Closeable {
         }
 
         CLog.i("Successfully set vendor.hwc.drm.device property");
+        // On Disabling VKMS, we don't need to do anything else.
+        if (!enable)
+            return true;
 
+        // Create VKMS directory if we're enabling VKMS.
         command = "mkdir " + VKMS_BASE_DIR;
         result = executeCommand(command);
 
@@ -661,6 +666,7 @@ public class CfVkmsTester implements Closeable {
         // Remove the base directory
         device.executeShellCommand("rmdir " + VKMS_BASE_DIR);
 
+        toggleVkmsAsDisplayDriver(false);
         CLog.i("VKMS cleanup completed");
     }
 
