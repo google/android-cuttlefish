@@ -303,6 +303,7 @@ netsim_crates.annotation(
     # Mimic build.rs to use grpc from bazel_dep()
     deps = [
         ":grpc_wrap",
+        "@@//build_external/grpcio-sys:gpr_log_stub",
     ],
     rustc_env = {
         "BINDING_PATH": "$(execpath bindings/bindings.rs)",

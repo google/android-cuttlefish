@@ -5,12 +5,23 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "@abseil-cpp//absl/log",
-        "@grpc//:grpc_unsecure",
+        "@grpc",
     ],
 )
 
 filegroup(
     name = "gpr_assert",
     srcs = ["gpr_assert.h"],
+    visibility = ["//visibility:public"],
+)
+
+# We use grpc@1.71.0, which removed the deprecated log functions. However,
+# grpcio-sys assumes 1.56.2 which still expects these. So add them.
+cc_library(
+    name = "gpr_log_stub",
+    srcs = [
+        "log_stub.c",
+    ],
+    includes = ["grpc/include"],
     visibility = ["//visibility:public"],
 )
