@@ -17,6 +17,7 @@ package libhoclient
 import (
 	"crypto/sha256"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -592,10 +593,16 @@ func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) error {
 		return err
 	}
 	op := &hoapi.Operation{}
-	if err := c.HTTPHelper.NewPostRequest("/v1/userartifacts/"+checksum+"/:extract", nil).JSONResDo(op); err != nil {
-		return err
+	err = c.HTTPHelper.NewPostRequest("/v1/userartifacts/"+checksum+"/:extract", nil).JSONResDo(op)
+	if err == nil {
+		return c.waitForOperation(op.Name, nil)
 	}
-	return c.waitForOperation(op.Name, nil)
+	var apiErr *ApiCallError
+	if errors.As(err, &apiErr) && apiErr.HTTPStatusCode == http.StatusConflict {
+		// 409 Conflict is returned if the artifact was already started
+		return nil
+	}
+	return err
 }
 
 func (c *HostOrchestratorClientImpl) CreateImageDirectory() (*hoapi.CreateImageDirectoryResponse, error) {
