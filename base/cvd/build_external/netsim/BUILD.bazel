@@ -1,0 +1,36 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+load(":openssl_sys.bzl", "openssl_sys_env")
+
+openssl_sys_env(
+    name = "openssl_sys_env",
+    # TODO: switch to @openssl
+    deps = [
+        "@boringssl//:crypto",
+        "@boringssl//:ssl",
+    ],
+)
+
+filegroup(
+    name = "openssl_lib_dir",
+    srcs = [":openssl_sys_env"],
+    output_group = "lib_dir",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "openssl_include_dir",
+    srcs = [":openssl_sys_env"],
+    output_group = "include_dir",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "boringssl_LICENSE",
+    actual = "@boringssl//:LICENSE",
+    visibility = ["//visibility:public"],
+)
+
+py_binary(
+    name = "copy_openssl_headers",
+    srcs = ["copy_openssl_headers.py"],
+)

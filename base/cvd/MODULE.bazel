@@ -293,7 +293,8 @@ use_repo(crosvm_bin, "crosvm_bin")
 netsim_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 netsim_crates.spec(
     package = "grpcio-sys",
-    version = "0.13.0+1.56.2-patched",
+    version = "0.13.0",
+    features = ["openssl"],
 )
 netsim_crates.annotation(
     crate = "grpcio-sys",
@@ -333,9 +334,45 @@ netsim_crates.annotation(
     gen_all_binaries = True,
     repositories = ["netsim_crates"],
 )
+# b/413182531 no need to specify .spec() for pdl-compiler because it is already
+# in rootcanal's MODULE.bazel.
 netsim_crates.annotation(
     crate = "pdl-compiler",
     gen_all_binaries = True,
+    repositories = ["netsim_crates"],
+)
+netsim_crates.spec(
+    package = "openssl",
+    version = "0.10.73",
+    repositories = ["netsim_crates"],
+)
+netsim_crates.spec(
+    package = "openssl-sys",
+    version = "0.9.109",
+    features = ["bindgen"],
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "openssl",
+    build_script_env = {
+        "DEP_OPENSSL_BORINGSSL": "1",
+    },
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "openssl-sys",
+    build_script_env = {
+        "OPENSSL_LIB_DIR": "$(execpath @@//build_external/netsim:openssl_lib_dir)",
+        "OPENSSL_INCLUDE_DIR": "$(execpath @@//build_external/netsim:openssl_include_dir)",
+        # Actual library name in boringssl; see bssl_cc_library.
+        # Skip crypto_cxx because we don't need C++ code for building this Rust crate; only C APIs
+        # for FFI
+        "OPENSSL_LIBS": "ssl_internal:crypto_internal",
+    },
+    build_script_data = [
+        "@@//build_external/netsim:openssl_lib_dir",
+        "@@//build_external/netsim:openssl_include_dir",
+    ],
     repositories = ["netsim_crates"],
 )
 netsim_crates.from_cargo(
