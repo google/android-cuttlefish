@@ -58,6 +58,7 @@ bootstrap_go_package {
     pkgPath: "android/soong/cuttlefish",
     deps: [
         "blueprint",
+        "blueprint-proptools",
         "soong",
         "soong-android",
         "soong-cc",
