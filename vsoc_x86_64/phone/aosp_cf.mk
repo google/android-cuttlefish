@@ -67,8 +67,6 @@ PRODUCT_IGNORE_ALL_ANDROIDMK := true
 # TODO(b/342327756, b/342330305): Allow the following Android.mk files
 PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
 
-PRODUCT_USE_SOONG_NOTICE_XML := true
-
 # Compare target product name directly to avoid this from any product inherits aosp_cf.mk
 ifneq ($(filter aosp_cf_x86_64_phone aosp_cf_x86_64_phone_soong_system aosp_cf_x86_64_foldable,$(TARGET_PRODUCT)),)
 # TODO(b/350000347) Enable Soong defined system image from coverage build
