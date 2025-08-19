@@ -1,0 +1,85 @@
+From 62e9e86e8eda397023b5077ae0acd384dda4419e Mon Sep 17 00:00:00 2001
+From: HONG Yifan <elsk@google.com>
+Date: Tue, 19 Aug 2025 18:50:18 +0000
+Subject: [PATCH 5/5] Define librootcanal_ffi.so and librootcanal libraries.
+
+librootcanal_ffi.so becomes a cc_library instead of cc_binary.
+
+Expose librootcanal, which is like rootcanal but excluding the main
+file.
+
+This ensured that we can have cc_binary depending on it.
+
+Bug: b/402294843
+---
+ BUILD | 34 +++++++++++++++++++++++++++++-----
+ 1 file changed, 29 insertions(+), 5 deletions(-)
+
+diff --git a/BUILD b/BUILD
+index 2c2f1d6..fc26477 100644
+--- a/BUILD
++++ b/BUILD
+@@ -107,9 +107,8 @@ rust_static_library(
+     ],
+ )
+ 
+-cc_binary(
++cc_library(
+     name = "librootcanal_ffi.so",
+-    linkopts = ["-shared"],
+     srcs = [
+         "include/crypto/crypto.h",
+         "include/hci/address.h",
+@@ -161,6 +160,7 @@ cc_binary(
+         "include",
+         "rust/include",
+     ],
++    linkstatic = False,
+     visibility = ["//visibility:public"],
+     deps = [
+         ":rootcanal_config",
+@@ -173,10 +173,9 @@ cc_binary(
+     ],
+ )
+ 
+-cc_binary(
+-    name = "rootcanal",
++cc_library(
++    name = "librootcanal",
+     srcs = [
+-        "desktop/root_canal_main.cc",
+         "desktop/test_environment.cc",
+         "desktop/test_environment.h",
+         "include/crypto/crypto.h",
+@@ -286,3 +285,28 @@ cc_binary(
+     # breaks the device registration
+     # features = ["-thin_lto"],
+ )
++
++cc_binary(
++    name = "rootcanal",
++    srcs = [
++        "desktop/root_canal_main.cc",
++    ],
++    copts = [
++        "-std=c++17",
++        "-Wno-c99-designator",
++        "-Wno-google3-literal-operator",
++        "-Wno-pessimizing-move",
++        "-include",
++        "string.h",
++        "-I.",
++        "-fmacro-prefix-map=external/rootcanal/=",
++    ],
++    defines = [
++        "NDEBUG",
++        "_GNU_SOURCE",
++    ],
++    visibility = ["//visibility:public"],
++    deps = [
++        ":librootcanal",
++    ],
++)
+-- 
+2.51.0.rc1.167.g924127e9c0-goog
+

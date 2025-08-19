@@ -1,7 +1,7 @@
-From b9d49fae3b1f3a011de9591b03559d23eb9e18cc Mon Sep 17 00:00:00 2001
+From d541397ddc515bbd98181025e480d569f3dd9954 Mon Sep 17 00:00:00 2001
 From: HONG Yifan <elsk@google.com>
 Date: Fri, 15 Aug 2025 22:32:07 +0000
-Subject: [PATCH 4/4] Add link_layer_packets_rs.
+Subject: [PATCH 4/5] Add link_layer_packets_rs.
 
 Unlike in Android.bp, we use rust_legacy here to match other pdl
 files, and to also create the *Builder classes.
@@ -18,7 +18,7 @@ index 14d1db5..10d4c74 100644
 @@ -29,6 +29,15 @@ genrule(
      tools = ["@crates//:pdl-compiler__pdlc"],
  )
-
+ 
 +genrule(
 +    name = "link_layer_packets_rs",
 +    cmd = "$(execpath @crates//:pdl-compiler__pdlc) --output-format rust_legacy $(location link_layer_packets.pdl) > $(location link_layer_packets.rs)",
@@ -31,7 +31,6 @@ index 14d1db5..10d4c74 100644
  run_binary(
      name = "hci_packets_h",
      args = [
---
-2.51.0.rc1.163.g2494970778-goog
-
+-- 
+2.51.0.rc1.167.g924127e9c0-goog
 
