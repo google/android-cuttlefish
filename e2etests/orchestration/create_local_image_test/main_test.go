@@ -120,10 +120,8 @@ func uploadImages(srv hoclient.HostOrchestratorClient, imgsZipSrc string) (strin
 	if err != nil {
 		return "", err
 	}
-	res := hoapi.CreateImageDirectoryResponse{}
-	if op, err := srv.CreateImageDirectory(); err != nil {
-		return "", err
-	} else if err := srv.WaitForOperation(op.Name, &res); err != nil {
+	res, err := srv.CreateImageDirectory()
+	if err != nil {
 		return "", err
 	}
 	for _, e := range entries {
@@ -131,12 +129,9 @@ func uploadImages(srv hoclient.HostOrchestratorClient, imgsZipSrc string) (strin
 		if err := srv.UploadArtifact(filename); err != nil {
 			return "", err
 		}
-		if op, err := srv.UpdateImageDirectoryWithUserArtifact(res.ID, filename); err != nil {
-			return "", err
-		} else if err := srv.WaitForOperation(op.Name, nil); err != nil {
+		if err := srv.UpdateImageDirectoryWithUserArtifact(res.ID, filename); err != nil {
 			return "", err
 		}
-
 	}
 	return res.ID, nil
 }
