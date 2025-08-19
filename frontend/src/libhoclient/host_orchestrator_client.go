@@ -111,20 +111,20 @@ type UserArtifactsClient interface {
 	UploadArtifact(filename string) error
 	// Extract artifact into the artifacts repository.
 	// Artifacts are identified by their SHA256 checksum in the artifacts repository
-	ExtractArtifact(filename string) (*hoapi.Operation, error)
+	ExtractArtifact(filename string) error
 }
 
 // Manage image directories created by the user.
 type ImageDirectoriesClient interface {
 	// Create an empty image directory.
-	CreateImageDirectory() (*hoapi.Operation, error)
+	CreateImageDirectory() (*hoapi.CreateImageDirectoryResponse, error)
 	// List all image directories.
 	ListImageDirectories() (*hoapi.ListImageDirectoriesResponse, error)
 	// Update image directory to include uploaded or extracted user artifact at
 	// Host Orchestrator.
-	UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error)
+	UpdateImageDirectoryWithUserArtifact(id, filename string) error
 	// Delete the specified image directory.
-	DeleteImageDirectory(id string) (*hoapi.Operation, error)
+	DeleteImageDirectory(id string) error
 }
 
 // Operations that could be performend on a given instance.
@@ -151,12 +151,6 @@ type InstanceConnectionsClient interface {
 	ConnectADBWebSocket(device string) (*websocket.Conn, error)
 }
 
-// Manage the `operation` resource in the HO API used to track lengthy actions.
-type OperationsClient interface {
-	// Wait for an operation, `result` will be populated with the relevant operation's result object.
-	WaitForOperation(name string, result any) error
-}
-
 // Manages snapshots.
 type SnapshotsClient interface {
 	// Create device snapshot.
@@ -170,7 +164,6 @@ type HostOrchestratorClient interface {
 	ImageDirectoriesClient
 	InstanceOperationsClient
 	InstanceConnectionsClient
-	OperationsClient
 	SnapshotsClient
 }
 
@@ -375,16 +368,16 @@ func (c *HostOrchestratorClientImpl) createPolledConnection(device string) (*opa
 	return &res, nil
 }
 
-func (c *HostOrchestratorClientImpl) WaitForOperation(name string, res any) error {
+func (c *HostOrchestratorClientImpl) waitForOperation(name string, res any) error {
 	retryOpts := RetryOptions{
 		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
 		RetryDelay:  5 * time.Second,
 		MaxWait:     2 * time.Minute,
 	}
-	return c.waitForOperation(name, res, retryOpts)
+	return c.waitForOperationOpts(name, res, retryOpts)
 }
 
-func (c *HostOrchestratorClientImpl) waitForOperation(name string, res any, retryOpts RetryOptions) error {
+func (c *HostOrchestratorClientImpl) waitForOperationOpts(name string, res any, retryOpts RetryOptions) error {
 	path := "/operations/" + name + "/:wait"
 	return c.HTTPHelper.NewPostRequest(path, nil).JSONResDoWithRetries(res, retryOpts)
 }
@@ -398,7 +391,7 @@ func (c *HostOrchestratorClientImpl) FetchArtifacts(req *hoapi.FetchArtifactsReq
 	}
 
 	res := &hoapi.FetchArtifactsResponse{}
-	if err := c.WaitForOperation(op.Name, &res); err != nil {
+	if err := c.waitForOperation(op.Name, &res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -425,7 +418,7 @@ func (c *HostOrchestratorClientImpl) CreateCVD(req *hoapi.CreateCVDRequest, cred
 		RetryDelay:  30 * time.Second,
 		MaxWait:     10 * time.Minute,
 	}
-	if err := c.waitForOperation(op.Name, &res, retryOpts); err != nil {
+	if err := c.waitForOperationOpts(op.Name, &res, retryOpts); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -438,7 +431,7 @@ func (c *HostOrchestratorClientImpl) DeleteCVD(id string) error {
 		return err
 	}
 	res := &hoapi.StopCVDResponse{}
-	if err := c.WaitForOperation(op.Name, &res); err != nil {
+	if err := c.waitForOperation(op.Name, &res); err != nil {
 		return err
 	}
 	return nil
@@ -459,7 +452,7 @@ func (c *HostOrchestratorClientImpl) Reset() error {
 		return err
 	}
 	res := &hoapi.EmptyResponse{}
-	if err := c.WaitForOperation(op.Name, &res); err != nil {
+	if err := c.waitForOperation(op.Name, &res); err != nil {
 		return err
 	}
 	return nil
@@ -502,7 +495,7 @@ func (c *HostOrchestratorClientImpl) CreateSnapshot(groupName, instanceName stri
 		RetryDelay:  30 * time.Second,
 		MaxWait:     10 * time.Minute,
 	}
-	if err := c.waitForOperation(op.Name, &res, retryOpts); err != nil {
+	if err := c.waitForOperationOpts(op.Name, &res, retryOpts); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -515,7 +508,7 @@ func (c *HostOrchestratorClientImpl) DeleteSnapshot(id string) error {
 	if err := rb.JSONResDo(op); err != nil {
 		return err
 	}
-	return c.WaitForOperation(op.Name, nil)
+	return c.waitForOperation(op.Name, nil)
 }
 
 func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {
@@ -524,7 +517,7 @@ func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuild
 		return err
 	}
 	res := &hoapi.EmptyResponse{}
-	if err := c.WaitForOperation(op.Name, &res); err != nil {
+	if err := c.waitForOperation(op.Name, &res); err != nil {
 		return err
 	}
 	return nil
@@ -589,28 +582,32 @@ func (c *HostOrchestratorClientImpl) upload(endpoint, filename string, uploadOpt
 	return uploader.Upload([]string{filename})
 }
 
-func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) (*hoapi.Operation, error) {
+func (c *HostOrchestratorClientImpl) ExtractArtifact(filename string) error {
 	checksum, err := sha256Checksum(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	res := &hoapi.StatArtifactResponse{}
 	if err := c.HTTPHelper.NewGetRequest("/v1/userartifacts/" + checksum).JSONResDo(res); err != nil {
-		return nil, err
+		return err
 	}
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewPostRequest("/v1/userartifacts/"+checksum+"/:extract", nil).JSONResDo(op); err != nil {
-		return nil, err
+		return err
 	}
-	return op, nil
+	return c.waitForOperation(op.Name, nil)
 }
 
-func (c *HostOrchestratorClientImpl) CreateImageDirectory() (*hoapi.Operation, error) {
+func (c *HostOrchestratorClientImpl) CreateImageDirectory() (*hoapi.CreateImageDirectoryResponse, error) {
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewPostRequest("/cvd_imgs_dirs", nil).JSONResDo(op); err != nil {
 		return nil, err
 	}
-	return op, nil
+	res := &hoapi.CreateImageDirectoryResponse{}
+	if err := c.waitForOperation(op.Name, res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (c *HostOrchestratorClientImpl) ListImageDirectories() (*hoapi.ListImageDirectoriesResponse, error) {
@@ -621,25 +618,25 @@ func (c *HostOrchestratorClientImpl) ListImageDirectories() (*hoapi.ListImageDir
 	return res, nil
 }
 
-func (c *HostOrchestratorClientImpl) UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error) {
+func (c *HostOrchestratorClientImpl) UpdateImageDirectoryWithUserArtifact(id, filename string) error {
 	checksum, err := sha256Checksum(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req := hoapi.UpdateImageDirectoryRequest{UserArtifactChecksum: checksum}
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewPutRequest("/cvd_imgs_dirs/"+id, req).JSONResDo(op); err != nil {
-		return nil, err
+		return err
 	}
-	return op, nil
+	return c.waitForOperation(op.Name, nil)
 }
 
-func (c *HostOrchestratorClientImpl) DeleteImageDirectory(id string) (*hoapi.Operation, error) {
+func (c *HostOrchestratorClientImpl) DeleteImageDirectory(id string) error {
 	op := &hoapi.Operation{}
 	if err := c.HTTPHelper.NewDeleteRequest("/cvd_imgs_dirs/" + id).JSONResDo(op); err != nil {
-		return nil, err
+		return err
 	}
-	return op, nil
+	return c.waitForOperation(op.Name, nil)
 }
 
 func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBugReportOpts, dst io.Writer) error {
@@ -658,7 +655,7 @@ func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBu
 		MaxWait:     3 * time.Minute,
 	}
 	uuid := ""
-	if err := c.waitForOperation(op.Name, &uuid, retryOpts); err != nil {
+	if err := c.waitForOperationOpts(op.Name, &uuid, retryOpts); err != nil {
 		return err
 	}
 	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+"/cvdbugreports/"+uuid, nil)

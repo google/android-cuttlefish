@@ -15,8 +15,6 @@
 package libhoclient
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"time"
@@ -28,16 +26,14 @@ import (
 
 // Fake implementation of the HostOrchestratorClient interface for use in testing
 type FakeHostOrchestratorClient struct {
-	cvds       map[int]*hoapi.CVD
-	operations map[string]chan []byte
-	imageDirs  []string
+	cvds      map[int]*hoapi.CVD
+	imageDirs []string
 }
 
 func NewFakeHostOrchestratorClient() *FakeHostOrchestratorClient {
 	return &FakeHostOrchestratorClient{
-		cvds:       make(map[int]*hoapi.CVD),
-		operations: make(map[string]chan []byte),
-		imageDirs:  []string{},
+		cvds:      make(map[int]*hoapi.CVD),
+		imageDirs: []string{},
 	}
 }
 
@@ -90,25 +86,16 @@ func (c *FakeHostOrchestratorClient) UploadArtifact(filename string) error {
 	return nil
 }
 
-func (c *FakeHostOrchestratorClient) ExtractArtifact(filename string) (*hoapi.Operation, error) {
-	op, ch := c.newFakeOperation()
-	go func() {
-		ch <- []byte("{}")
-	}()
-	return op, nil
+func (c *FakeHostOrchestratorClient) ExtractArtifact(filename string) error {
+	return nil
 }
 
-func (c *FakeHostOrchestratorClient) CreateImageDirectory() (*hoapi.Operation, error) {
-	op, ch := c.newFakeOperation()
-	go func() {
-		dir := c.randomString()
-		c.imageDirs = append(c.imageDirs, dir)
-		msg, _ := json.Marshal(&hoapi.CreateImageDirectoryResponse{
-			ID: dir,
-		})
-		ch <- msg
-	}()
-	return op, nil
+func (c *FakeHostOrchestratorClient) CreateImageDirectory() (*hoapi.CreateImageDirectoryResponse, error) {
+	dir := c.randomString()
+	c.imageDirs = append(c.imageDirs, dir)
+	return &hoapi.CreateImageDirectoryResponse{
+		ID: dir,
+	}, nil
 }
 
 func (c *FakeHostOrchestratorClient) ListImageDirectories() (*hoapi.ListImageDirectoriesResponse, error) {
@@ -121,42 +108,18 @@ func (c *FakeHostOrchestratorClient) ListImageDirectories() (*hoapi.ListImageDir
 	}, nil
 }
 
-func (c *FakeHostOrchestratorClient) UpdateImageDirectoryWithUserArtifact(id, filename string) (*hoapi.Operation, error) {
-	op, ch := c.newFakeOperation()
-	go func() {
-		ch <- []byte("{}")
-	}()
-	return op, nil
+func (c *FakeHostOrchestratorClient) UpdateImageDirectoryWithUserArtifact(id, filename string) error {
+	return nil
 }
 
-func (c *FakeHostOrchestratorClient) DeleteImageDirectory(id string) (*hoapi.Operation, error) {
-	op, ch := c.newFakeOperation()
-	go func() {
-		newImageDirs := []string{}
-		for _, dir := range c.imageDirs {
-			if dir != id {
-				newImageDirs = append(newImageDirs, dir)
-			}
+func (c *FakeHostOrchestratorClient) DeleteImageDirectory(id string) error {
+	newImageDirs := []string{}
+	for _, dir := range c.imageDirs {
+		if dir != id {
+			newImageDirs = append(newImageDirs, dir)
 		}
-		c.imageDirs = newImageDirs
-		ch <- []byte("{}")
-	}()
-	return op, nil
-}
-
-func (c *FakeHostOrchestratorClient) WaitForOperation(opName string, result any) error {
-	ch, ok := c.operations[opName]
-	if !ok {
-		return fmt.Errorf("operation not found")
 	}
-	if ch == nil {
-		return fmt.Errorf("operation already waited for")
-	}
-	res := <-ch
-	if result != nil {
-		decoder := json.NewDecoder(bytes.NewReader(res))
-		return decoder.Decode(result)
-	}
+	c.imageDirs = newImageDirs
 	return nil
 }
 
@@ -195,12 +158,6 @@ func (c *FakeHostOrchestratorClient) UploadFile(uploadDir string, filename strin
 
 func (c *FakeHostOrchestratorClient) UploadFileWithOptions(uploadDir string, filename string, options UploadOptions) error {
 	return nil
-}
-
-func (c *FakeHostOrchestratorClient) ExtractFile(uploadDir string, filename string) (*hoapi.Operation, error) {
-	op, ch := c.newFakeOperation()
-	go func() { ch <- []byte("{}") }()
-	return op, nil
 }
 
 func (c *FakeHostOrchestratorClient) createFakeCVDs(total int) ([]*hoapi.CVD, error) {
@@ -265,16 +222,6 @@ func (c *FakeHostOrchestratorClient) unusedCVDId() int {
 		}
 		id++
 	}
-}
-
-func (c *FakeHostOrchestratorClient) newFakeOperation() (*hoapi.Operation, chan []byte) {
-	ch := make(chan []byte)
-	op := &hoapi.Operation{
-		Name: fmt.Sprintf("%d", len(c.operations)),
-		Done: false,
-	}
-	c.operations[op.Name] = ch
-	return op, ch
 }
 
 func (c *FakeHostOrchestratorClient) randomString() string {

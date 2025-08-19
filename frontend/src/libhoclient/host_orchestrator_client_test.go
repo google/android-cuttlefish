@@ -192,7 +192,7 @@ func TestExtractArtifactReceive404WhenArtifactDoesNotExist(t *testing.T) {
 	defer ts.Close()
 	client := NewHostOrchestratorClient(ts.URL)
 
-	if _, err := client.ExtractArtifact(testFile); err == nil {
+	if err := client.ExtractArtifact(testFile); err == nil {
 		t.Fatal("Expected error")
 	}
 }
@@ -207,6 +207,8 @@ func TestExtractArtifactSucceeds(t *testing.T) {
 			writeOK(w, hoapi.StatArtifactResponse{})
 		case "POST /v1/userartifacts/d2c055002a6cdf8dd9edf90c7a666cb5f7f2d25da8519ec206f56777d74e0c7d/:extract":
 			writeOK(w, hoapi.Operation{Name: "foo"})
+		case "POST /operations/foo/:wait":
+			writeOK(w, "{}")
 		default:
 			t.Fatal("unexpected endpoint: " + ep)
 		}
@@ -214,19 +216,19 @@ func TestExtractArtifactSucceeds(t *testing.T) {
 	defer ts.Close()
 	client := NewHostOrchestratorClient(ts.URL)
 
-	expected := &hoapi.Operation{Name: "foo"}
-	if op, err := client.ExtractArtifact(testFile); err != nil {
+	if err := client.ExtractArtifact(testFile); err != nil {
 		t.Fatal(err)
-	} else if diff := cmp.Diff(expected, op); diff != "" {
-		t.Fatalf("response mismatch (-want +got):\n%s", diff)
 	}
 }
 
 func TestCreateImageDirectorySucceeds(t *testing.T) {
+	expected := &hoapi.CreateImageDirectoryResponse{ID: "foo"}
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch ep := r.Method + " " + r.URL.Path; ep {
 		case "POST /cvd_imgs_dirs":
 			writeOK(w, hoapi.Operation{Name: "foo"})
+		case "POST /operations/foo/:wait":
+			writeOK(w, expected)
 		default:
 			t.Fatal("unexpected endpoint: " + ep)
 		}
@@ -234,10 +236,9 @@ func TestCreateImageDirectorySucceeds(t *testing.T) {
 	defer ts.Close()
 	client := NewHostOrchestratorClient(ts.URL)
 
-	expected := &hoapi.Operation{Name: "foo"}
-	if op, err := client.CreateImageDirectory(); err != nil {
+	if res, err := client.CreateImageDirectory(); err != nil {
 		t.Fatal(err)
-	} else if diff := cmp.Diff(expected, op); diff != "" {
+	} else if diff := cmp.Diff(expected, res); diff != "" {
 		t.Fatalf("response mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -270,6 +271,8 @@ func TestUpdateImageDirectoryWithUserArtifactSucceeds(t *testing.T) {
 		switch ep := r.Method + " " + r.URL.Path; ep {
 		case "PUT /cvd_imgs_dirs/foo":
 			writeOK(w, hoapi.Operation{Name: "bar"})
+		case "POST /operations/bar/:wait":
+			writeOK(w, "{}")
 		default:
 			t.Fatal("unexpected endpoint: " + ep)
 		}
@@ -277,11 +280,8 @@ func TestUpdateImageDirectoryWithUserArtifactSucceeds(t *testing.T) {
 	defer ts.Close()
 	client := NewHostOrchestratorClient(ts.URL)
 
-	expected := &hoapi.Operation{Name: "bar"}
-	if op, err := client.UpdateImageDirectoryWithUserArtifact("foo", testFile); err != nil {
+	if err := client.UpdateImageDirectoryWithUserArtifact("foo", testFile); err != nil {
 		t.Fatal(err)
-	} else if diff := cmp.Diff(expected, op); diff != "" {
-		t.Fatalf("response mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -290,6 +290,8 @@ func TestDeleteImageDirectorySucceeds(t *testing.T) {
 		switch ep := r.Method + " " + r.URL.Path; ep {
 		case "DELETE /cvd_imgs_dirs/foo":
 			writeOK(w, hoapi.Operation{Name: "bar"})
+		case "POST /operations/bar/:wait":
+			writeOK(w, "{}")
 		default:
 			t.Fatal("unexpected endpoint: " + ep)
 		}
@@ -297,11 +299,8 @@ func TestDeleteImageDirectorySucceeds(t *testing.T) {
 	defer ts.Close()
 	client := NewHostOrchestratorClient(ts.URL)
 
-	expected := &hoapi.Operation{Name: "bar"}
-	if op, err := client.DeleteImageDirectory("foo"); err != nil {
+	if err := client.DeleteImageDirectory("foo"); err != nil {
 		t.Fatal(err)
-	} else if diff := cmp.Diff(expected, op); diff != "" {
-		t.Fatalf("response mismatch (-want +got):\n%s", diff)
 	}
 }
 
