@@ -173,3 +173,20 @@ BOARD_BOOTCONFIG += androidboot.hibernation_resume_device=259:3
 
 # TODO (b/405655265) Remove once the BT issue is fixed
 BOARD_BOOTCONFIG += androidboot.cuttlefish_service_bluetooth_checker=false
+
+# Telephony: Use Minradio RIL instead of Cuttlefish RIL
+TARGET_USES_CF_RILD := false
+PRODUCT_PACKAGES += com.android.hardware.radio.minradio.virtual
+PRODUCT_PACKAGES += ConnectivityOverlayMinradio
+
+# Disable thread network
+CF_VENDOR_NO_THREADNETWORK := true
+
+# Auto CF target is configured to use Configurable Audio Policy Engine if vendor audio configuration
+# flag is not set. However, to prevent fallback on common cuttlefish audio configuration files, make
+# use of the vendor flag even for default cuttlefish auto config.
+LOCAL_USE_VENDOR_AUDIO_CONFIGURATION ?= false
+ifeq ($(LOCAL_USE_VENDOR_AUDIO_CONFIGURATION),false)
+LOCAL_USE_VENDOR_AUDIO_CONFIGURATION := true
+$(call inherit-product, device/google/cuttlefish/shared/auto/audio_policy_engine.mk)
+endif
