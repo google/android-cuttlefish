@@ -31,14 +31,18 @@ shift
 
 remote_cache_arg=""
 cache_version_arg=""
+disk_cache_arg=""
 
-while getopts ":r:c:" opt; do
+while getopts ":r:c:d:" opt; do
   case "${opt}" in
     r)
       remote_cache_arg="-e BAZEL_REMOTE_CACHE=${OPTARG}"
       ;;
     c)
       cache_version_arg="-e BAZEL_CACHE_VERSION=${OPTARG}"
+      ;;
+    d)
+      disk_cache_arg="-e BAZEL_DISK_CACHE_DIR=${OPTARG}"
       ;;
     \?)
       echo "Invalid option: ${OPTARG}" >&2
@@ -65,5 +69,5 @@ pushd "${PKGDIR}"
 echo "Installing package dependencies"
 sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
 echo "Building packages"
-debuild ${remote_cache_arg} ${cache_version_arg} ${preserve_envvar} --prepend-path /usr/local/bin -i -uc -us -b
+debuild ${remote_cache_arg} ${cache_version_arg} ${disk_cache_arg} ${preserve_envvar} --prepend-path /usr/local/bin -i -uc -us -b
 popd
