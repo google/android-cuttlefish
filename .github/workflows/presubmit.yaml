@@ -192,29 +192,22 @@ jobs:
       with:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
-  build-debian-package:
-    runs-on: ubuntu-22.04-4core
-    container:
-      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+  build-debian-package-x86:
+    runs-on: ubuntu-22.04
     steps:
-    - name: Check for dockerenv file
-      run: (ls /.dockerenv && echo 'Found dockerenv') || (echo 'No dockerenv')
-    - name: setup apt
-      run: apt update -y && apt upgrade -y
-    - name: install dependencies
-      run: apt install -y git devscripts config-package-dev debhelper-compat golang protobuf-compiler yq
-    - name: go version
-      run: go version
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        docker-images: false
+        swap-storage: false
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
       with:
         path: "android-cuttlefish"
-    - name: install bazel
-      run: bash android-cuttlefish/tools/buildutils/installbazel.sh
     - name: Load cache config
       run: |
         cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq .jobs[\"build-debian-package\"] android-cuttlefish/.github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq .jobs[\"build-debian-package-x86\"] android-cuttlefish/.github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate cache key prefix
       run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
@@ -226,37 +219,33 @@ jobs:
           ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
           ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
           ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
-    - name: install package build dependencies
-      run: cd android-cuttlefish/base && mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'
-    - name: build base debian package
-      run: cd android-cuttlefish/base && debuild -e BAZEL_DISK_CACHE_DIR=$HOME/bazel-disk-cache -i -us -uc -b
-    - name: install base debian package
-      run: dpkg -i android-cuttlefish/cuttlefish-base_*_*64.deb || apt-get install -f -y
-    - name: build frontend debian packages
-      run: cd android-cuttlefish/frontend && debuild -i -us -uc -b
-    - name: install user debian package
-      run: dpkg -i android-cuttlefish/cuttlefish-user_*_*64.deb || apt-get install -f -y
-    - name: Build debs.tar
-      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs.tar --null --files-from -
-    - name: Publish debs.tar
+    - name: Build CF debian packages
+      run: |
+        cd android-cuttlefish
+        sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
+        sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
+        sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
+    - name: Build debs_x86.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_x86.tar --null --files-from -
+    - name: Publish debs_x86.tar
       uses: actions/upload-artifact@v4
       with:
-        name: debs
-        path: debs.tar
+        name: debs_x86
+        path: debs_x86.tar
   e2e-tests-orchestration-build-image:
     runs-on: ubuntu-24.04
-    needs: [build-debian-package]
+    needs: [build-debian-package-x86]
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download cuttlefish debs
       uses: actions/download-artifact@v4
       with:
-        name: debs
+        name: debs_x86
         github-token: ${{ github.token }}
     - name: Build image
       run: |
-        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
+        tar -xvf debs_x86.tar && mv android-cuttlefish/cuttlefish*.deb .
         sudo podman info
         sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
         sudo podman save --quiet -o android-cuttlefish-e2etest.tar localhost/android-cuttlefish-e2etest
@@ -345,7 +334,7 @@ jobs:
         df -h
   docker-image-check:
     runs-on: ubuntu-22.04
-    needs: [build-debian-package]
+    needs: [build-debian-package-x86]
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@v1.3.1
@@ -356,12 +345,12 @@ jobs:
     - name: Download cuttlefish debs
       uses: actions/download-artifact@v4
       with:
-        name: debs
+        name: debs_x86
         github-token: ${{ github.token }}
     - name: Run check
       shell: bash
       run: |
-        tar -xvf debs.tar && mv android-cuttlefish/cuttlefish*.deb .
+        tar -xvf debs_x86.tar && mv android-cuttlefish/cuttlefish*.deb .
         ./docker/image-builder.sh -m dev
         docker images
         sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
