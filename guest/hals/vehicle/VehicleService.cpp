@@ -65,15 +65,14 @@ int main(int argc, char* argv[]) {
   }
   ABinderProcess_startThreadPool();
 
-  unsigned int port =
-      static_cast<unsigned int>(property_get_int32(kBootConfigPort, -1));
+  int port = property_get_int32(kBootConfigPort, -1);
   CHECK(port >= 0) << "Failed to read port number from: " << kBootConfigPort;
 
   std::string serverAddr;
   if (useVsock) {
     VsockConnectionInfo vsock = {
         .cid = VMADDR_CID_HOST,
-        .port = port,
+        .port = static_cast<unsigned int>(port),
     };
     serverAddr = vsock.str();
     LOG(INFO) << "Connecting to vsock server at " << serverAddr;
