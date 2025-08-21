@@ -28,12 +28,6 @@
 
 namespace cuttlefish {
 
-DeviceBuild::DeviceBuild(std::string id, std::string target,
-                         std::optional<std::string> filepath)
-    : id(std::move(id)),
-      target(std::move(target)),
-      filepath(std::move(filepath)) {}
-
 std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
   return out << "(id=\"" << build.id << "\", target=\"" << build.target
              << "\", filepath=\"" << build.filepath.value_or("") << "\")";
@@ -44,6 +38,7 @@ DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
                                std::optional<std::string> filepath)
     : paths(std::move(paths)),
       target(std::move(target)),
+      // TODO(schuffelen): Support local builds other than "eng"
       id("eng"),
       filepath(std::move(filepath)) {
   product = StringFromEnv("TARGET_PRODUCT", "");
