@@ -182,8 +182,7 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
 Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
     std::string_view initial_status, std::string_view build_id,
     std::string_view target) {
-  const std::string url =
-      android_build_url_->GetBuildStatusUrl(build_id, target);
+  const std::string url = android_build_url_->GetBuildUrl(build_id, target);
   std::string status(initial_status);
   while (retry_period_ != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
@@ -233,7 +232,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
 
 Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
   const std::string url =
-      android_build_url_->GetBuildStatusUrl(build.id, build.target);
+      android_build_url_->GetBuildUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
 
@@ -263,7 +262,7 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
 
 Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
   const std::string url =
-      android_build_url_->GetProductNameUrl(build.id, build.target);
+      android_build_url_->GetBuildUrl(build.id, build.target);
   auto response =
       CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
   const Json::Value json = CF_EXPECT(GetResponseJson(response),
