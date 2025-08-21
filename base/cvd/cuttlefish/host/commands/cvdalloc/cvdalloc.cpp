@@ -18,7 +18,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/macros.h>
-#include <android-base/scopeguard.h>
+#include "absl/cleanup/cleanup.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/str_format.h"
@@ -87,6 +87,10 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
     return CF_ERRNO("close: " << strerror(errno));
   }
 
+  absl::Cleanup shutdown = [sock]() {
+    sock->Shutdown(SHUT_RDWR);
+  };
+
   /*
    * Explicit setuid calls seem to be required.
    *
@@ -102,12 +106,12 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
    */
   uid_t orig = getuid();
 
-  auto drop_privileges = android::base::ScopeGuard([orig]() {
+  absl::Cleanup drop_privileges = [orig]() {
     int r = setuid(orig);
     if (r == -1) {
       LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << strerror(errno);
     }
-  });
+  };
 
   r = setuid(0);
   if (r == -1) {
@@ -116,21 +120,19 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
 
   std::string bridge_name = "cvd-pi-br";
 
-  auto teardown = android::base::ScopeGuard([id, bridge_name, sock]() {
-    sock->Shutdown(SHUT_RDWR);
-
+  absl::Cleanup teardown = [id, bridge_name, sock]() {
     Teardown(id, bridge_name);
-  });
+  };
 
   CF_EXPECT(Allocate(id, bridge_name));
-
   CF_EXPECT(Post(sock));
 
   LOG(INFO) << "cvdalloc: waiting to teardown";
 
   CF_EXPECT(Wait(sock, kSemNoTimeout));
+  std::move(teardown).Invoke();
+  CF_EXPECT(Post(sock));
 
-  /* Teardown invoked by scopeguard above. */
 
   return 0;
 }
