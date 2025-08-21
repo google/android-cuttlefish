@@ -58,6 +58,8 @@
         <!-- Call logs -->
         <permission name="android.permission.READ_CALL_LOG" fixed="false"/>
         <permission name="android.permission.WRITE_CALL_LOG" fixed="false"/>
+        <!-- Calendars -->
+        <permission name="android.permission.READ_CALENDAR" fixed="false"/>
         <!-- Used to set up a Wi-Fi P2P network -->
         <permission name="android.permission.NEARBY_WIFI_DEVICES" fixed="false"/>
         <!-- Notifications -->
