@@ -63,7 +63,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   ScopedTeeLogger logger(
       LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
 
-  Result<void> result = FetchCvdMain(flags);
+  Result<std::vector<FetchResult>> result = FetchCvdMain(flags);
   if (flags.build_api_flags.enable_caching) {
     LOG(DEBUG) << "Running automatic cache cleanup";
     const std::string cache_directory = PerUserCacheDir();
