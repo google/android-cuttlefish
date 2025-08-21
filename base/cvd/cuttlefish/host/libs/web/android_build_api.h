@@ -114,8 +114,8 @@ class AndroidBuildApi : public BuildApi {
   Result<SeekableZipSource> FileReader(const DirectoryBuild&,
                                        const std::string& artifact_name);
 
-  HttpClient& http_client;
-  CredentialSource* credential_source;
+  HttpClient& http_client_;
+  CredentialSource* credential_source_;
   AndroidBuildUrl* android_build_url_;
   std::chrono::seconds retry_period_;
   CasDownloader* cas_downloader_;

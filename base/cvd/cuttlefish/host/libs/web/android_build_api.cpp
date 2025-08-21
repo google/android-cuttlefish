@@ -90,8 +90,8 @@ AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  AndroidBuildUrl* android_build_url,
                                  const std::chrono::seconds retry_period,
                                  CasDownloader* cas_downloader)
-    : http_client(http_client),
-      credential_source(credential_source),
+    : http_client_(http_client),
+      credential_source_(credential_source),
       android_build_url_(android_build_url),
       retry_period_(retry_period),
       cas_downloader_(cas_downloader) {}
@@ -165,7 +165,7 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
     const DeviceBuild& build, const std::string& artifact_name) {
   std::string url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact_name));
   std::vector<std::string> headers = CF_EXPECT(Headers());
-  return CF_EXPECT(ZipSourceFromUrl(http_client, url, headers));
+  return CF_EXPECT(ZipSourceFromUrl(http_client_, url, headers));
 }
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
@@ -191,7 +191,7 @@ Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
                << retry_period_.count() << " seconds and checking again.";
     std::this_thread::sleep_for(retry_period_);
     auto response =
-        CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
+        CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
     Json::Value json = CF_EXPECT(GetResponseJson(response),
                                  "Error retrying build status retrieval");
     status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"}));
@@ -201,9 +201,9 @@ Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
 
 Result<std::vector<std::string>> AndroidBuildApi::Headers() {
   std::vector<std::string> headers;
-  if (credential_source) {
+  if (credential_source_) {
     headers.push_back("Authorization: Bearer " +
-                      CF_EXPECT(credential_source->Credential()));
+                      CF_EXPECT(credential_source_->Credential()));
   }
   return headers;
 }
@@ -213,7 +213,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
   const std::string url =
       android_build_url_->GetLatestBuildIdUrl(branch, target);
   auto response =
-      CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
+      CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
 
   const Json::Value json = CF_EXPECTF(GetResponseJson(response),
                                       "Error fetching last known good build "
@@ -235,10 +235,10 @@ Result<std::string> AndroidBuildApi::BuildStatus(const DeviceBuild& build) {
   const std::string url =
       android_build_url_->GetBuildStatusUrl(build.id, build.target);
   auto response =
-      CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
+      CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
 
   std::string no_auth_error_message;
-  if (credential_source == nullptr && response.http_code == 404) {
+  if (credential_source_ == nullptr && response.http_code == 404) {
     // In LatestBuildId we currently cannot distinguish between the cases:
     //    - user provided a build ID (not an error)
     //    - user provided a branch with a typo
@@ -265,7 +265,7 @@ Result<std::string> AndroidBuildApi::ProductName(const DeviceBuild& build) {
   const std::string url =
       android_build_url_->GetProductNameUrl(build.id, build.target);
   auto response =
-      CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
+      CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
   const Json::Value json = CF_EXPECT(GetResponseJson(response),
                                      "Error fetching product name for build:\n"
                                          << build);
@@ -282,7 +282,7 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const std::string url = android_build_url_->GetArtifactUrl(
         build.id, build.target, artifact_filenames, page_token);
     auto response =
-        CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
+        CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
 
     const Json::Value json = CF_EXPECT(GetResponseJson(response),
                                        "Error fetching artifacts list for:\n"
@@ -331,7 +331,7 @@ Result<std::string> AndroidBuildApi::GetArtifactDownloadUrl(
       android_build_url_->GetArtifactDownloadUrl(build.id, build.target,
                                                  artifact);
   auto response = CF_EXPECT(
-      HttpGetToJson(http_client, download_url_endpoint, CF_EXPECT(Headers())));
+      HttpGetToJson(http_client_, download_url_endpoint, CF_EXPECT(Headers())));
   const Json::Value json =
       CF_EXPECTF(GetResponseJson(response, /* allow redirect response */ true),
                  "Error fetching download URL for \"{}\" from build ID \"{}\"",
@@ -343,7 +343,7 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
                                              const std::string& artifact,
                                              const std::string& path) {
   const auto url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact));
-  auto response = CF_EXPECT(HttpGetToFile(http_client, url, path));
+  auto response = CF_EXPECT(HttpGetToFile(http_client_, url, path));
   CF_EXPECTF(response.HttpSuccess(), "Failed to download file: {}",
              response.StatusDescription());
   return {};
