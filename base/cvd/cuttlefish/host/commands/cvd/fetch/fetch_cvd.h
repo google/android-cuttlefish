@@ -15,15 +15,36 @@
 
 #pragma once
 
+#include <optional>
+#include <ostream>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 
 namespace cuttlefish {
 
+struct Builds {
+  std::optional<Build> default_build;
+  std::optional<Build> system;
+  std::optional<Build> kernel;
+  std::optional<Build> boot;
+  std::optional<Build> bootloader;
+  std::optional<Build> android_efi_loader;
+  std::optional<Build> otatools;
+  std::optional<ChromeOsBuildString> chrome_os;
+};
+
+struct FetchResult {
+  std::string fetcher_config_path;
+  Builds builds;
+};
+
 std::string GetFetchLogsFileName(const std::string& target_directory);
 
-Result<void> FetchCvdMain(const FetchFlags& flags);
+Result<std::vector<FetchResult>> FetchCvdMain(const FetchFlags& flags);
 
 }  // namespace cuttlefish

@@ -59,17 +59,6 @@ namespace {
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 constexpr bool kOverrideEntries = true;
 
-struct Builds {
-  std::optional<Build> default_build;
-  std::optional<Build> system;
-  std::optional<Build> kernel;
-  std::optional<Build> boot;
-  std::optional<Build> bootloader;
-  std::optional<Build> android_efi_loader;
-  std::optional<Build> otatools;
-  std::optional<ChromeOsBuildString> chrome_os;
-};
-
 struct Target {
   BuildStrings build_strings;
   DownloadFlags download_flags;
@@ -189,13 +178,13 @@ Result<Build> GetHostBuild(BuildApi& build_api,
   return host_package_build.value_or(*fallback_host_build);
 }
 
-Result<void> SaveConfig(FetcherConfig& config,
-                        const std::string& target_directory) {
+Result<std::string> SaveConfig(FetcherConfig& config,
+                               const std::string& target_directory) {
   // Due to constraints of the build system, artifacts intentionally cannot
   // determine their own build id. So it's unclear which build number fetch_cvd
   // itself was built at.
   // https://android.googlesource.com/platform/build/+/979c9f3/Changes.md#build_number
-  std::string fetcher_path = target_directory + "/fetcher_config.json";
+  const std::string fetcher_path = target_directory + "/fetcher_config.json";
   CF_EXPECT(config.AddFilesToConfig(FileSource::GENERATED, "", "",
                                     {fetcher_path}, target_directory));
   config.SaveToFile(fetcher_path);
@@ -203,7 +192,7 @@ Result<void> SaveConfig(FetcherConfig& config,
   for (const auto& file : config.get_cvd_files()) {
     LOG(VERBOSE) << target_directory << "/" << file.second.file_path << "\n";
   }
-  return {};
+  return fetcher_path;
 }
 
 Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
@@ -594,8 +583,9 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
   return {};
 }
 
-Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
-                   std::vector<Target>& targets) {
+Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
+                                       const HostToolsTarget& host_target,
+                                       std::vector<Target>& targets) {
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
@@ -624,6 +614,7 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
       std::cref(flags.keep_downloaded_archives),
       std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
   size_t count = 1;
+  std::vector<FetchResult> fetch_results;
   for (const auto& target : targets) {
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
     FetcherConfig config;
@@ -631,17 +622,22 @@ Result<void> Fetch(const FetchFlags& flags, const HostToolsTarget& host_target,
                           target.builds, target.directories,
                           target.download_flags, flags.keep_downloaded_archives,
                           config, tracer));
-    CF_EXPECT(SaveConfig(config, target.directories.root));
+    const std::string config_path =
+        CF_EXPECT(SaveConfig(config, target.directories.root));
+    count++;
+    fetch_results.emplace_back(FetchResult{
+        .fetcher_config_path = config_path,
+        .builds = target.builds,
+    });
     LOG(INFO) << "Completed target fetch to '" << target.directories.root
               << "' (" << count << " out of " << targets.size() << ")";
-    count++;
   }
   LOG(DEBUG) << "Waiting for host package fetch";
   CF_EXPECT(host_package_future.get());
   LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
 
   LOG(INFO) << "Completed all fetches";
-  return {};
+  return fetch_results;
 }
 
 }  // namespace
@@ -650,14 +646,13 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
-Result<void> FetchCvdMain(const FetchFlags& flags) {
+Result<std::vector<FetchResult>> FetchCvdMain(const FetchFlags& flags) {
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target =
       HostToolsTarget::Create(flags, append_subdirectory);
   CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory, targets));
-  CF_EXPECT(Fetch(flags, host_target, targets));
-  return {};
+  return CF_EXPECT(Fetch(flags, host_target, targets));
 }
 
 }  // namespace cuttlefish
