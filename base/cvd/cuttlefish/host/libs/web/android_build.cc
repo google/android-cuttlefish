@@ -29,8 +29,9 @@
 namespace cuttlefish {
 
 std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
-  return out << "(id=\"" << build.id << "\", target=\"" << build.target
-             << "\", filepath=\"" << build.filepath.value_or("") << "\")";
+  return out << "(id=\"" << build.id << "\", branch=\"" << build.branch
+             << "\", target=\"" << build.target << "\", filepath=\""
+             << build.filepath.value_or("") << "\")";
 }
 
 DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
