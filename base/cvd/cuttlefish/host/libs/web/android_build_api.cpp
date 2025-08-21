@@ -26,6 +26,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <tuple>
 #include <unordered_set>
@@ -111,15 +112,8 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
   std::string status = CF_EXPECT(BuildStatus(proposed_build));
   CF_EXPECT(!status.empty(),
             proposed_build << " is not a valid branch or build id.");
-  LOG(DEBUG) << "Status for build " << proposed_build << " is " << status;
-  while (retry_period_ != std::chrono::seconds::zero() &&
-         !StatusIsTerminal(status)) {
-    LOG(DEBUG) << "Status is \"" << status << "\". Waiting for "
-              << retry_period_.count() << " seconds.";
-    std::this_thread::sleep_for(retry_period_);
-    status = CF_EXPECT(BuildStatus(proposed_build));
-  }
-  LOG(DEBUG) << "Status for build " << proposed_build << " is " << status;
+  CF_EXPECT(BlockUntilTerminalStatus(status, proposed_build.id,
+                                     proposed_build.target));
   proposed_build.product = CF_EXPECT(ProductName(proposed_build));
   return proposed_build;
 }
@@ -183,6 +177,26 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
     }
   }
   return CF_ERRF("Could not find '{}'", artifact_name);
+}
+
+Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
+    std::string_view initial_status, std::string_view build_id,
+    std::string_view target) {
+  const std::string url =
+      android_build_url_->GetBuildStatusUrl(build_id, target);
+  std::string status(initial_status);
+  while (retry_period_ != std::chrono::seconds::zero() &&
+         !StatusIsTerminal(status)) {
+    LOG(DEBUG) << "Status is \"" << status << "\". Waiting for "
+               << retry_period_.count() << " seconds and checking again.";
+    std::this_thread::sleep_for(retry_period_);
+    auto response =
+        CF_EXPECT(HttpGetToJson(http_client, url, CF_EXPECT(Headers())));
+    Json::Value json = CF_EXPECT(GetResponseJson(response),
+                                 "Error retrying build status retrieval");
+    status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"}));
+  }
+  return {};
 }
 
 Result<std::vector<std::string>> AndroidBuildApi::Headers() {
