@@ -38,16 +38,9 @@ class UrlBuilder {
     return UrlBuilder(fmt::format("{}/builds", api_base));
   }
 
-  static UrlBuilder GetBuildStatusBaseUrl(std::string_view api_base,
-                                          std::string_view id,
-                                          std::string_view target) {
-    return UrlBuilder(fmt::format("{}/builds/{}/{}", api_base, UrlEscape(id),
-                                  UrlEscape(target)));
-  }
-
-  static UrlBuilder GetProductNameBaseUrl(std::string_view api_base,
-                                          std::string_view id,
-                                          std::string_view target) {
+  static UrlBuilder GetBuildBaseUrl(std::string_view api_base,
+                                    std::string_view id,
+                                    std::string_view target) {
     return UrlBuilder(fmt::format("{}/builds/{}/{}", api_base, UrlEscape(id),
                                   UrlEscape(target)));
   }
@@ -136,19 +129,9 @@ std::string AndroidBuildUrl::GetLatestBuildIdUrl(std::string_view branch,
   return builder.GetUrl();
 }
 
-std::string AndroidBuildUrl::GetBuildStatusUrl(std::string_view id,
-                                               std::string_view target) {
-  UrlBuilder builder =
-      UrlBuilder::GetBuildStatusBaseUrl(api_base_url_, id, target);
-  builder.AddApiKeyAndProjectId(api_key_, project_id_);
-
-  return builder.GetUrl();
-}
-
-std::string AndroidBuildUrl::GetProductNameUrl(std::string_view id,
-                                               std::string_view target) {
-  UrlBuilder builder =
-      UrlBuilder::GetProductNameBaseUrl(api_base_url_, id, target);
+std::string AndroidBuildUrl::GetBuildUrl(std::string_view id,
+                                         std::string_view target) {
+  UrlBuilder builder = UrlBuilder::GetBuildBaseUrl(api_base_url_, id, target);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);
 
   return builder.GetUrl();

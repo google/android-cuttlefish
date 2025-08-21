@@ -28,8 +28,7 @@ class AndroidBuildUrl {
 
   std::string GetLatestBuildIdUrl(std::string_view branch,
                                   std::string_view target);
-  std::string GetBuildStatusUrl(std::string_view id, std::string_view target);
-  std::string GetProductNameUrl(std::string_view id, std::string_view target);
+  std::string GetBuildUrl(std::string_view id, std::string_view target);
   std::string GetArtifactUrl(std::string_view id, std::string_view target,
                              const std::vector<std::string>& artifact_filenames,
                              std::string_view page_token);
