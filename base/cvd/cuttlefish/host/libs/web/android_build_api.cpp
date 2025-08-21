@@ -97,24 +97,29 @@ AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
       cas_downloader_(cas_downloader) {}
 
 Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
-  CF_EXPECT(build_string.target.has_value());
-  DeviceBuild proposed_build = DeviceBuild(
-      build_string.branch_or_id, *build_string.target, build_string.filepath);
+  CF_EXPECT(
+      build_string.target.has_value(),
+      "Given build string must have a target with the branch or build id");
+  std::string proposed_build_id = build_string.branch_or_id;
   auto latest_build_id =
-      CF_EXPECT(LatestBuildId(build_string.branch_or_id, *build_string.target));
+      CF_EXPECT(LatestBuildId(proposed_build_id, *build_string.target));
   if (latest_build_id) {
-    proposed_build.id = *latest_build_id;
+    proposed_build_id = *latest_build_id;
     LOG(INFO) << "Latest build id for branch '" << build_string.branch_or_id
-              << "' and target '" << proposed_build.target << "' is '"
-              << proposed_build.id << "'";
+              << "' and target '" << *build_string.target << "' is '"
+              << proposed_build_id << "'";
   }
 
   AndroidBuildApi::BuildInfo build_info =
-      CF_EXPECT(GetBuildInfo(proposed_build.id, proposed_build.target));
-  CF_EXPECT(BlockUntilTerminalStatus(build_info.status, proposed_build.id,
+      CF_EXPECT(GetBuildInfo(proposed_build_id, *build_string.target));
+  CF_EXPECT(BlockUntilTerminalStatus(build_info.status, proposed_build_id,
                                      build_info.target));
-  proposed_build.product = build_info.product;
-  return proposed_build;
+  return DeviceBuild{
+      .id = proposed_build_id,
+      .target = build_info.target,
+      .product = build_info.product,
+      .filepath = build_string.filepath,
+  };
 }
 
 Result<Build> AndroidBuildApi::GetBuild(
