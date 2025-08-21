@@ -116,6 +116,7 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
                                      build_info.target));
   return DeviceBuild{
       .id = proposed_build_id,
+      .branch = build_info.branch,
       .target = build_info.target,
       .product = build_info.product,
       .filepath = build_string.filepath,

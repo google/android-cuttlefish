@@ -25,6 +25,7 @@ namespace cuttlefish {
 
 struct DeviceBuild {
   std::string id;
+  std::string branch;
   std::string target;
   std::string product;
   std::optional<std::string> filepath;
