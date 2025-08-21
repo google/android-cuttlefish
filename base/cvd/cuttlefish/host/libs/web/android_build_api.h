@@ -63,6 +63,14 @@ class AndroidBuildApi : public BuildApi {
       const Build&, const std::string& artifact_name) override;
 
  private:
+  struct BuildInfo {
+    std::string branch;
+    std::string product;
+    std::string status;
+    std::string target;
+  };
+  Result<BuildInfo> GetBuildInfo(std::string_view build_id,
+                                 std::string_view target);
   Result<void> BlockUntilTerminalStatus(std::string_view initial_status,
                                         std::string_view build_id,
                                         std::string_view target);
@@ -70,10 +78,6 @@ class AndroidBuildApi : public BuildApi {
 
   Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
                                                    const std::string& target);
-
-  Result<std::string> BuildStatus(const DeviceBuild&);
-
-  Result<std::string> ProductName(const DeviceBuild&);
 
   Result<std::unordered_set<std::string>> Artifacts(
       const DeviceBuild& build,
