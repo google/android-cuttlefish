@@ -39,6 +39,7 @@ cf_cc_binary(
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/cleanup:cleanup",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/strings:str_format",
