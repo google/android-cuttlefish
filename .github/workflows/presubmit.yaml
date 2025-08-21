@@ -232,6 +232,46 @@ jobs:
       with:
         name: debs_x86
         path: debs_x86.tar
+  build-debian-package-arm:
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        docker-images: false
+        swap-storage: false
+    - name: checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      with:
+        path: "android-cuttlefish"
+    - name: Load cache config
+      run: |
+        cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq .jobs[\"build-debian-package-arm\"] android-cuttlefish/.github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+    - name: Generate cache key prefix
+      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
+    - name: Mount Bazel cache
+      uses: actions/cache/restore@v4
+      with:
+        path: "~/bazel-disk-cache"
+        key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
+        restore-keys: |
+          ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
+          ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
+          ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
+    - name: Build CF debian packages
+      run: |
+        cd android-cuttlefish
+        sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
+        sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
+        sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
+    - name: Build debs_arm.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm.tar --null --files-from -
+    - name: Publish debs_arm.tar
+      uses: actions/upload-artifact@v4
+      with:
+        name: debs_arm
+        path: debs_arm.tar
   e2e-tests-orchestration-build-image:
     runs-on: ubuntu-24.04
     needs: [build-debian-package-x86]
