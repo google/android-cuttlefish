@@ -34,11 +34,9 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -85,38 +83,6 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
 }
 
 }  // namespace
-
-DeviceBuild::DeviceBuild(std::string id, std::string target,
-                         std::optional<std::string> filepath)
-    : id(std::move(id)),
-      target(std::move(target)),
-      filepath(std::move(filepath)) {}
-
-std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
-  return out << "(id=\"" << build.id << "\", target=\"" << build.target
-             << "\", filepath=\"" << build.filepath.value_or("") << "\")";
-}
-
-DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
-                               std::string target,
-                               std::optional<std::string> filepath)
-    : paths(std::move(paths)),
-      target(std::move(target)),
-      id("eng"),
-      filepath(std::move(filepath)) {
-  product = StringFromEnv("TARGET_PRODUCT", "");
-}
-
-std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
-  auto paths = android::base::Join(build.paths, ":");
-  return out << "(paths=\"" << paths << "\", target=\"" << build.target
-             << "\", filepath=\"" << build.filepath.value_or("") << "\")";
-}
-
-std::ostream& operator<<(std::ostream& out, const Build& build) {
-  std::visit([&out](auto&& arg) { out << arg; }, build);
-  return out;
-}
 
 AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  CredentialSource* credential_source,
