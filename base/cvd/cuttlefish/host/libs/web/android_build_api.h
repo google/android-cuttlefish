@@ -18,6 +18,7 @@
 #include <chrono>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_set>
 #include <vector>
@@ -62,6 +63,9 @@ class AndroidBuildApi : public BuildApi {
       const Build&, const std::string& artifact_name) override;
 
  private:
+  Result<void> BlockUntilTerminalStatus(std::string_view initial_status,
+                                        std::string_view build_id,
+                                        std::string_view target);
   Result<std::vector<std::string>> Headers();
 
   Result<std::optional<std::string>> LatestBuildId(const std::string& branch,
