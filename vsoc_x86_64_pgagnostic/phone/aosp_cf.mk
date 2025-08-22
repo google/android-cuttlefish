@@ -74,4 +74,3 @@ TARGET_BOOTS_16K := true
 
 # Ignore all Android.mk files
 PRODUCT_IGNORE_ALL_ANDROIDMK := true
-PRODUCT_ALLOWED_ANDROIDMK_FILES := art/Android.mk
