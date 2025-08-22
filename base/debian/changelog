@@ -1,8 +1,24 @@
-cuttlefish-common (1.21.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.21.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.20.0 as unstable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1539
+  * Filesystem-cached ZipSource by @Databean in https://github.com/google/android-cuttlefish/pull/1537
+  * Expose lower-level zip source types from BuildApi and remote_zip.h by @Databean in https://github.com/google/android-cuttlefish/pull/1549
+  * netsim: Add lib-netsim by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1540
+  * Update header includes to support fmtlib upgrade by @Databean in https://github.com/google/android-cuttlefish/pull/1550
+  * Use ubuntu-22.04-arm as Github workflow runner by @0405ysj in https://github.com/google/android-cuttlefish/pull/1544
+  * Extract key-equals-value parsing by @Databean in https://github.com/google/android-cuttlefish/pull/1536
+  * netsimd: Add dependencies of libnetsim_daemon by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1552
+  * Remove operations from the host orchestrator client api by @jemoreira in https://github.com/google/android-cuttlefish/pull/1553
+  * Fix Debian version of container image by @0405ysj in https://github.com/google/android-cuttlefish/pull/1555
+  * Cleanup tools/cuttlefish-host-image-installer by @0405ysj in https://github.com/google/android-cuttlefish/pull/1546
+  * Name cvdalloc-managed interfaces differently. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1548
+  * netsim: Add netsimd by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1564
+  * Create abstraction for cvdalloc socket signaling. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1565
+  * Use standard runner to build CF debian packages for x86 on Github workflow by @0405ysj in https://github.com/google/android-cuttlefish/pull/1559
+  * Start development on v1.21 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1557
+  * Use standard runner to build CF debian packages for ARM on Github workflow by @0405ysj in https://github.com/google/android-cuttlefish/pull/1560
 
- -- Ram Muthiah <rammuthiah@google.com>  Tue, 19 Aug 2025 14:19:23 +0100
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 22 Aug 2025 17:48:44 -0400
 
 cuttlefish-common (1.20.0) unstable; urgency=medium
 

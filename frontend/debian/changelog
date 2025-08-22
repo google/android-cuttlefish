@@ -1,8 +1,16 @@
-cuttlefish-frontend (1.21.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.21.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.20.0 as unstable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1539
+  * Improvements to the HO's cvd command wrapper by @jemoreira in https://github.com/google/android-cuttlefish/pull/1528
+  * Use newer credential flags from HO by @jemoreira in https://github.com/google/android-cuttlefish/pull/1542
+  * Fix host orchestrator screenshot endpoint by @jemoreira in https://github.com/google/android-cuttlefish/pull/1541
+  * Add host orchestrator endpoint for cvd reset by @jemoreira in https://github.com/google/android-cuttlefish/pull/1543
+  * Remove operations from the host orchestrator client api by @jemoreira in https://github.com/google/android-cuttlefish/pull/1553
+  * Use standard runner to build CF debian packages for x86 on Github workflow by @0405ysj in https://github.com/google/android-cuttlefish/pull/1559
+  * Start development on v1.21 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1557
 
- -- Ram Muthiah <rammuthiah@google.com>  Tue, 19 Aug 2025 14:19:23 +0100
+
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 22 Aug 2025 17:53:56 -0400
 
 cuttlefish-frontend (1.20.0) unstable; urgency=medium
 
