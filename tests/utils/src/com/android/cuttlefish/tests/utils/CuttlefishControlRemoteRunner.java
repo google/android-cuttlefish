@@ -16,15 +16,15 @@
 
 package com.android.cuttlefish.tests.utils;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.TestDeviceOptions;
 import com.android.tradefed.device.cloud.GceAvdInfo;
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
-import com.android.tradefed.device.cloud.RemoteFileUtil;
-import com.android.tradefed.device.cloud.RemoteSshUtil;
 import com.android.tradefed.device.connection.AdbSshConnection;
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.IRunUtil;
+import com.android.tradefed.util.RemoteFileUtil;
+import com.android.tradefed.util.RemoteSshUtil;
 import com.android.tradefed.util.RunUtil;
 
 import com.google.common.collect.Iterables;
@@ -83,7 +83,12 @@ public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
 
     private boolean remoteFileExists(String path) {
         return RemoteFileUtil.doesRemoteFileExist(
-                testDeviceAvdInfo, testDeviceOptions, runUtil, DEFAULT_TIMEOUT_MILLIS, path);
+                testDeviceAvdInfo.hostAndPort().getHost(),
+                testDeviceOptions.getInstanceUser(),
+                testDeviceOptions.getSshPrivateKeyPath(),
+                runUtil,
+                DEFAULT_TIMEOUT_MILLIS,
+                path);
     }
 
     @Override
@@ -99,7 +104,12 @@ public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
         String[] commandArray = Iterables.toArray(command, String.class);
 
         return RemoteSshUtil.remoteSshCommandExec(
-                testDeviceAvdInfo, testDeviceOptions, runUtil, timeout, commandArray);
+                testDeviceAvdInfo.hostAndPort().getHost(),
+                testDeviceOptions.getInstanceUser(),
+                testDeviceOptions.getSshPrivateKeyPath(),
+                runUtil,
+                timeout,
+                commandArray);
     }
 
     @Override
@@ -115,6 +125,11 @@ public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
     @Override
     public File getFile(String path) throws IOException {
         return RemoteFileUtil.fetchRemoteFile(
-            testDeviceAvdInfo, testDeviceOptions, runUtil, DEFAULT_TIMEOUT_MILLIS, path);
+                testDeviceAvdInfo.hostAndPort().getHost(),
+                testDeviceOptions.getInstanceUser(),
+                testDeviceOptions.getSshPrivateKeyPath(),
+                runUtil,
+                DEFAULT_TIMEOUT_MILLIS,
+                path);
     }
 }
