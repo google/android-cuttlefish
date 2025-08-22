@@ -196,7 +196,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         docker-images: false
         swap-storage: false
@@ -236,7 +236,7 @@ jobs:
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         docker-images: false
         swap-storage: false
@@ -332,7 +332,7 @@ jobs:
     needs: [e2e-tests-orchestration-build-image]
     steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         tool-cache: true
     - name: checkout repository
@@ -377,7 +377,7 @@ jobs:
     needs: [build-debian-package-x86]
     steps:
     - name: Free disk space
-      uses: jlumbroso/free-disk-space@v1.3.1
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
         tool-cache: true
     - name: Checkout repository
