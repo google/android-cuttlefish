@@ -12,12 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-soong_namespace {
-    imports: [
-        "device/generic/goldfish",
-    ],
-}
-
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
@@ -30,22 +24,9 @@ prebuilt_etc {
 
 prebuilt_etc {
     name: "com.google.cf.rild.xml",
-    src: ":android.hardware.radio.ranchu-manifests",
+    src: "com.google.cf.rild.xml",
     sub_dir: "vintf",
     installable: false,
-}
-
-cc_binary {
-    name: "android.hardware.radio-service.cuttlefish",
-    defaults: [
-        "android.hardware.radio-service.ranchu.defaults",
-        "cuttlefish_guest_only",
-    ],
-    cflags: [
-        "-Wno-deprecated-declarations",
-        "-DON_CUTTLEFISH",
-        "-DLOG_TAG=\"radio-service.cf\"",
-    ],
 }
 
 apex {
@@ -58,7 +39,10 @@ apex {
     soc_specific: true,
 
     binaries: [
-        "android.hardware.radio-service.cuttlefish",
+        "libcuttlefish-rild",
+    ],
+    native_shared_libs: [
+        "libcuttlefish-ril-2",
     ],
     prebuilts: [
         "android.hardware.telephony.carrierlock.prebuilt.xml",
