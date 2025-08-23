@@ -86,6 +86,9 @@ Result<Instance> RemoveNonPrefixedBuildStrings(const Instance& instance) {
   auto& bootloader = *boot.mutable_bootloader()->mutable_build();
   bootloader = CF_EXPECT(GetFetchBuildString(bootloader));
 
+  auto& android_efi_loader = *boot.mutable_android_efi_loader()->mutable_build();
+  android_efi_loader = CF_EXPECT(GetFetchBuildString(android_efi_loader));
+
   return result;
 }
 
@@ -107,6 +110,10 @@ static std::string BootBuild(const Instance& instance) {
 
 static std::string BootloaderBuild(const Instance& instance) {
   return instance.boot().bootloader().build();
+}
+
+static std::string AndroidEfiLoaderBuild(const Instance& instance) {
+  return instance.boot().android_efi_loader().build();
 }
 
 static std::string OtaToolsBuild(const Instance& instance) {
@@ -194,10 +201,8 @@ Result<std::vector<std::string>> ParseFetchCvdConfigs(
       GenerateInstanceFlag("boot_build", fetch_instances, BootBuild));
   result.emplace_back(GenerateInstanceFlag("bootloader_build", fetch_instances,
                                            BootloaderBuild));
-  // TODO: schuffelen - should android_efi_loader_build come from a separate
-  // setting?
   result.emplace_back(GenerateInstanceFlag("android_efi_loader_build",
-                                           fetch_instances, BootloaderBuild));
+                                           fetch_instances, AndroidEfiLoaderBuild));
   result.emplace_back(
       GenerateInstanceFlag("otatools_build", fetch_instances, OtaToolsBuild));
   result.emplace_back(GenerateInstanceFlag("download_img_zip", fetch_instances,

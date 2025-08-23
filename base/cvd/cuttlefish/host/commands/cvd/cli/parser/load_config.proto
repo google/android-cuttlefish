@@ -80,6 +80,7 @@ message Boot {
   optional string extra_bootconfig_args = 3;
   optional string build = 4;
   optional Build bootloader = 5;
+  optional Build android_efi_loader = 6;
 }
 
 message Build {
