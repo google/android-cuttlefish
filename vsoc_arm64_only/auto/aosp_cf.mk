@@ -41,6 +41,9 @@ $(call inherit-product, packages/services/Car/car_product/build/car_product.mk)
 #
 $(call inherit-product, device/google/cuttlefish/shared/auto/device_vendor.mk)
 
+# Use vsock as VHAL transport to align with on-device deployment
+ENABLE_AUTO_ETHERNET ?= false
+
 #
 # Special settings for the target
 #
