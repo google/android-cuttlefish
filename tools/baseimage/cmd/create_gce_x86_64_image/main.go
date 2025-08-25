@@ -24,8 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce_x86_64"
-
+	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 	"google.golang.org/api/compute/v1"
 )
 
@@ -273,16 +272,16 @@ func createImageMain(project, zone string) error {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 	// Upload Scripts
-	if err := uploadBashScript(project, zone, insName, "update_kernel.sh", gce_x86_64.ScriptUpdateKernel); err != nil {
+	if err := uploadBashScript(project, zone, insName, "update_kernel.sh", scripts.UpdateKernel); err != nil {
 		return fmt.Errorf("error uploading update kernel script: %v", err)
 	}
-	if err := uploadBashScript(project, zone, insName, "remove_old_kernel.sh", gce_x86_64.ScriptRemoveOldKernel); err != nil {
+	if err := uploadBashScript(project, zone, insName, "remove_old_kernel.sh", scripts.RemoveOldKernel); err != nil {
 		return fmt.Errorf("error uploading update kernel script: %v", err)
 	}
-	if err := uploadBashScript(project, zone, insName, "create_base_image.sh", gce_x86_64.ScriptCreateBaseImage); err != nil {
+	if err := uploadBashScript(project, zone, insName, "create_base_image.sh", scripts.CreateBaseImage); err != nil {
 		return fmt.Errorf("error uploading update kernel script: %v", err)
 	}
-	if err := uploadBashScript(project, zone, insName, "install_nvidia.sh", gce_x86_64.ScriptInstallNvidia); err != nil {
+	if err := uploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
 		return fmt.Errorf("error uploading install nvidia script: %v", err)
 	}
 	// Execute Scripts
