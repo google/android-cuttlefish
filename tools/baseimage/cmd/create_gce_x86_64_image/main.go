@@ -15,13 +15,9 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
@@ -42,42 +38,6 @@ var (
 	project = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone    = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
 )
-
-func runCmd(name string, args ...string) error {
-	cmd := exec.CommandContext(context.TODO(), name, args...)
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
-	log.Printf("Executing command: `%s`\n", cmd.String())
-	return cmd.Run()
-}
-
-func waitForInstance(project, zone, name string) error {
-	for attempt := 0; attempt < 3; attempt++ {
-		time.Sleep(30 * time.Second)
-		log.Printf("wait for instance: uptime attempt number: %d", attempt)
-		if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, name, "--command", "uptime"); err == nil {
-			return nil
-		}
-	}
-	return errors.New("waiting for instance timed out")
-}
-
-func uploadBashScript(project, zone, insName, scriptName, scriptContent string) error {
-	r := strings.NewReplacer("\"", "\\\"", "$", "\\$")
-	escapedContent := r.Replace(scriptContent)
-
-	commands := []string{
-		fmt.Sprintf("/usr/bin/echo \"%s\" > %s", escapedContent, scriptName),
-		fmt.Sprintf("/usr/bin/cat %s", scriptName),
-		fmt.Sprintf("/usr/bin/chmod +x %s", scriptName),
-	}
-	for _, c := range commands {
-		if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, insName, "--command", c); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 func createImageMain(project, zone string) error {
 	h, err := gce.NewGceHelper(project, zone)
@@ -127,42 +87,42 @@ func createImageMain(project, zone string) error {
 	}
 	log.Println("disk attached")
 
-	if err := waitForInstance(project, zone, insName); err != nil {
+	if err := gce.WaitForInstance(project, zone, insName); err != nil {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 	// Upload Scripts
-	if err := uploadBashScript(project, zone, insName, "update_kernel.sh", scripts.UpdateKernel); err != nil {
-		return fmt.Errorf("error uploading update kernel script: %v", err)
+	if err := gce.UploadBashScript(project, zone, insName, "update_kernel.sh", scripts.UpdateKernel); err != nil {
+		return fmt.Errorf("error uploading update_kernel.sh: %v", err)
 	}
-	if err := uploadBashScript(project, zone, insName, "remove_old_kernel.sh", scripts.RemoveOldKernel); err != nil {
-		return fmt.Errorf("error uploading update kernel script: %v", err)
+	if err := gce.UploadBashScript(project, zone, insName, "remove_old_kernel.sh", scripts.RemoveOldKernel); err != nil {
+		return fmt.Errorf("error uploading remove_old_kernel.sh: %v", err)
 	}
-	if err := uploadBashScript(project, zone, insName, "create_base_image.sh", scripts.CreateBaseImage); err != nil {
-		return fmt.Errorf("error uploading update kernel script: %v", err)
+	if err := gce.UploadBashScript(project, zone, insName, "create_base_image.sh", scripts.CreateBaseImage); err != nil {
+		return fmt.Errorf("error uploading create_base_image.sh: %v", err)
 	}
-	if err := uploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
-		return fmt.Errorf("error uploading install nvidia script: %v", err)
+	if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
+		return fmt.Errorf("error uploading install_nvidia.sh: %v", err)
 	}
 	// Execute Scripts
-	if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, insName, "--command", "./update_kernel.sh"); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./update_kernel.sh"); err != nil {
 		return err
 	}
 	time.Sleep(2 * time.Minute) // update kernel script ends up rebooting the instance
-	if err := waitForInstance(project, zone, insName); err != nil {
+	if err := gce.WaitForInstance(project, zone, insName); err != nil {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
-	if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, insName, "--command", "./remove_old_kernel.sh"); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./remove_old_kernel.sh"); err != nil {
 		return err
 	}
-	if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, insName, "--command", "./create_base_image.sh"); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./create_base_image.sh"); err != nil {
 		return err
 	}
 	// Reboot the instance to force a clean umount of the attached disk's file system.
-	if err := runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, insName, "--command", "sudo reboot"); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "sudo reboot"); err != nil {
 		return err
 	}
 	time.Sleep(2 * time.Minute)
-	if err := waitForInstance(project, zone, insName); err != nil {
+	if err := gce.WaitForInstance(project, zone, insName); err != nil {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 	log.Printf("deleting instance %q...", insName)
