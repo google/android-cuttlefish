@@ -40,36 +40,6 @@ func NewGceHelper(project, zone string) (*GceHelper, error) {
 	}, nil
 }
 
-func (h *GceHelper) waitForOperation(op *compute.Operation) error {
-	for attempt := 0; attempt < 3 && op.Status != "DONE"; attempt++ {
-		var err error
-		op, err = h.Service.ZoneOperations.Wait(h.Project, h.Zone, op.Name).Do()
-		if err != nil {
-			return err
-		}
-		time.Sleep(30 * time.Second)
-	}
-	if op.Status != "DONE" {
-		return fmt.Errorf("wait for operation %q: timed out", op.Name)
-	}
-	return nil
-}
-
-func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
-	for attempt := 0; attempt < 3 && op.Status != "DONE"; attempt++ {
-		var err error
-		op, err = h.Service.GlobalOperations.Wait(h.Project, op.Name).Do()
-		if err != nil {
-			return err
-		}
-		time.Sleep(30 * time.Second)
-	}
-	if op.Status != "DONE" {
-		return fmt.Errorf("wait for operation %q: timed out", op.Name)
-	}
-	return nil
-}
-
 func (h *GceHelper) CreateDisk(sourceImageProject, sourceImage, name string) (*compute.Disk, error) {
 	payload := &compute.Disk{
 		Name:        name,
@@ -87,6 +57,25 @@ func (h *GceHelper) CreateDisk(sourceImageProject, sourceImage, name string) (*c
 
 func (h *GceHelper) DeleteDisk(name string) error {
 	op, err := h.Service.Disks.Delete(h.Project, h.Zone, name).Do()
+	if err != nil {
+		return err
+	}
+	return h.waitForOperation(op)
+}
+
+func (h *GceHelper) AttachDisk(ins, disk string) error {
+	attachedDisk := &compute.AttachedDisk{
+		Source: fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
+	}
+	op, err := h.Service.Instances.AttachDisk(h.Project, h.Zone, ins, attachedDisk).Do()
+	if err != nil {
+		return err
+	}
+	return h.waitForOperation(op)
+}
+
+func (h *GceHelper) DetachDisk(ins, disk string) error {
+	op, err := h.Service.Instances.DetachDisk(h.Project, h.Zone, ins, disk).Do()
 	if err != nil {
 		return err
 	}
@@ -137,25 +126,6 @@ func (h *GceHelper) DeleteInstance(name string) error {
 	return h.waitForOperation(op)
 }
 
-func (h *GceHelper) AttachDisk(ins, disk string) error {
-	attachedDisk := &compute.AttachedDisk{
-		Source: fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
-	}
-	op, err := h.Service.Instances.AttachDisk(h.Project, h.Zone, ins, attachedDisk).Do()
-	if err != nil {
-		return err
-	}
-	return h.waitForOperation(op)
-}
-
-func (h *GceHelper) DetachDisk(ins, disk string) error {
-	op, err := h.Service.Instances.DetachDisk(h.Project, h.Zone, ins, disk).Do()
-	if err != nil {
-		return err
-	}
-	return h.waitForOperation(op)
-}
-
 func (h *GceHelper) CreateImage(ins, disk, name string) error {
 	payload := &compute.Image{
 		Name:       name,
@@ -167,4 +137,34 @@ func (h *GceHelper) CreateImage(ins, disk, name string) error {
 		return err
 	}
 	return h.waitForGlobalOperation(op)
+}
+
+func (h *GceHelper) waitForOperation(op *compute.Operation) error {
+	for attempt := 0; attempt < 3 && op.Status != "DONE"; attempt++ {
+		var err error
+		op, err = h.Service.ZoneOperations.Wait(h.Project, h.Zone, op.Name).Do()
+		if err != nil {
+			return err
+		}
+		time.Sleep(30 * time.Second)
+	}
+	if op.Status != "DONE" {
+		return fmt.Errorf("wait for operation %q: timed out", op.Name)
+	}
+	return nil
+}
+
+func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
+	for attempt := 0; attempt < 3 && op.Status != "DONE"; attempt++ {
+		var err error
+		op, err = h.Service.GlobalOperations.Wait(h.Project, op.Name).Do()
+		if err != nil {
+			return err
+		}
+		time.Sleep(30 * time.Second)
+	}
+	if op.Status != "DONE" {
+		return fmt.Errorf("wait for operation %q: timed out", op.Name)
+	}
+	return nil
 }
