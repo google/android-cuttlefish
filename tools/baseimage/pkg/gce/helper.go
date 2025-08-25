@@ -16,7 +16,11 @@ package gce
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
+	"os/exec"
+	"strings"
 	"time"
 
 	"google.golang.org/api/compute/v1"
@@ -167,4 +171,44 @@ func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
 		return fmt.Errorf("wait for operation %q: timed out", op.Name)
 	}
 	return nil
+}
+
+func WaitForInstance(project, zone, ins string) error {
+	for attempt := 0; attempt < 3; attempt++ {
+		time.Sleep(30 * time.Second)
+		log.Printf("wait for instance: uptime attempt number: %d", attempt)
+		if err := RunCmd(project, zone, ins, "uptime"); err == nil {
+			return nil
+		}
+	}
+	return errors.New("waiting for instance timed out")
+}
+
+func UploadBashScript(project, zone, ins, scriptName, scriptContent string) error {
+	r := strings.NewReplacer("\"", "\\\"", "$", "\\$")
+	escapedContent := r.Replace(scriptContent)
+
+	commands := []string{
+		fmt.Sprintf("/usr/bin/echo \"%s\" > %s", escapedContent, scriptName),
+		fmt.Sprintf("/usr/bin/cat %s", scriptName),
+		fmt.Sprintf("/usr/bin/chmod +x %s", scriptName),
+	}
+	for _, c := range commands {
+		if err := RunCmd(project, zone, ins, c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func RunCmd(project, zone, ins, cmd string) error {
+	return runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, ins, "--command", cmd)
+}
+
+func runCmd(name string, args ...string) error {
+	cmd := exec.CommandContext(context.TODO(), name, args...)
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
+	log.Printf("Executing command: `%s`\n", cmd.String())
+	return cmd.Run()
 }
