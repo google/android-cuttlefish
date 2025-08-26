@@ -125,9 +125,9 @@ func createImageMain(project, zone string) error {
 	if err := gce.WaitForInstance(project, zone, insName); err != nil {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
-	log.Printf("deleting instance %q...", insName)
-	if err := h.DeleteInstance(insName); err != nil {
-		return fmt.Errorf("error deleting instance: %v", err)
+	log.Printf("stopping instance %q...", insName)
+	if err := h.StopInstance(insName); err != nil {
+		return fmt.Errorf("error stopping instance: %v", err)
 	}
 	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)

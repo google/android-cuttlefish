@@ -122,6 +122,14 @@ func (h *GceHelper) CreateInstance(name string) (*compute.Instance, error) {
 	return payload, nil
 }
 
+func (h *GceHelper) StopInstance(name string) error {
+	op, err := h.Service.Instances.Stop(h.Project, h.Zone, name).Do()
+	if err != nil {
+		return err
+	}
+	return h.waitForOperation(op)
+}
+
 func (h *GceHelper) DeleteInstance(name string) error {
 	op, err := h.Service.Instances.Delete(h.Project, h.Zone, name).Do()
 	if err != nil {
