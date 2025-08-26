@@ -13,5 +13,6 @@ popd
 ## Run tool
 
 ```
+gcloud auth application-default login
 tools/baseimage/create_gce_x86_64_image --project <project> [--zone <zone>]
 ```
