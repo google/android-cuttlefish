@@ -32,3 +32,16 @@ cf_cc_library(
         "metrics_defs.h",
     ],
 )
+
+cf_cc_library(
+    name = "host_metrics",
+    srcs = [
+        "host_metrics.cc",
+    ],
+    hdrs = [
+        "host_metrics.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
