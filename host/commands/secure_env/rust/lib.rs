@@ -17,16 +17,12 @@
 
 extern crate alloc;
 
-use kmr_common::crypto;
-use kmr_crypto_boring::{
-    aes::BoringAes, aes_cmac::BoringAesCmac, des::BoringDes, ec::BoringEc, eq::BoringEq,
-    hmac::BoringHmac, rng::BoringRng, rsa::BoringRsa, sha256::BoringSha256,
-};
+use kmr_crypto_boring::rng::BoringRng;
 use kmr_ta::device::{
     BootloaderDone, CsrSigningAlgorithm, Implementation, TrustedPresenceUnsupported,
 };
 use kmr_ta::{HardwareInfo, KeyMintTa, RpcInfo, RpcInfoV3};
-use kmr_ta_nonsecure::{rpc, soft};
+use kmr_ta_nonsecure::{boringssl_crypto_impls, rpc, soft};
 use kmr_wire::keymint::SecurityLevel;
 use kmr_wire::rpc::MINIMUM_SUPPORTED_KEYS_IN_CSR;
 use log::{error, info, trace};
@@ -85,37 +81,19 @@ pub unsafe fn ta_main(
         supported_num_of_keys_in_csr: MINIMUM_SUPPORTED_KEYS_IN_CSR,
     };
 
-    let mut rng = BoringRng;
     let sdd_mgr: Option<Box<dyn kmr_common::keyblob::SecureDeletionSecretManager>> =
-        match sdd::HostSddManager::new(&mut rng) {
+        match sdd::HostSddManager::new(&mut BoringRng) {
             Ok(v) => Some(Box::new(v)),
             Err(e) => {
                 error!("Failed to initialize secure deletion data manager: {e:?}");
                 None
             }
         };
-    let clock = clock::StdClock;
-    let rsa = BoringRsa::default();
-    let ec = BoringEc::default();
-    let hkdf: Box<dyn kmr_common::crypto::Hkdf> =
-        if security_level == SecurityLevel::TrustedEnvironment {
-            Box::new(tpm::KeyDerivation::new(trm))
-        } else {
-            Box::new(BoringHmac)
-        };
-    let imp = crypto::Implementation {
-        rng: Box::new(rng),
-        clock: Some(Box::new(clock)),
-        compare: Box::new(BoringEq),
-        aes: Box::new(BoringAes),
-        des: Box::new(BoringDes),
-        hmac: Box::new(BoringHmac),
-        rsa: Box::new(rsa),
-        ec: Box::new(ec),
-        ckdf: Box::new(BoringAesCmac),
-        hkdf,
-        sha256: Box::new(BoringSha256),
-    };
+
+    let mut imp = boringssl_crypto_impls();
+    if security_level == SecurityLevel::TrustedEnvironment {
+        imp.hkdf = Box::new(tpm::KeyDerivation::new(trm));
+    }
 
     let keys: Box<dyn kmr_ta::device::RetrieveKeyMaterial> =
         if security_level == SecurityLevel::TrustedEnvironment {
