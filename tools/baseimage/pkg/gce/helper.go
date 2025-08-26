@@ -209,6 +209,10 @@ func UploadBashScript(project, zone, ins, scriptName, scriptContent string) erro
 	return nil
 }
 
+func UploadFile(project, zone, ins, src string, dst string) error {
+	return runCmd("gcloud", "compute", "scp", "--project", project, "--zone", zone, src, ins+":"+dst)
+}
+
 func RunCmd(project, zone, ins, cmd string) error {
 	return runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, ins, "--command", cmd)
 }
