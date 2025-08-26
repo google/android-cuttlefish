@@ -165,3 +165,42 @@ chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
 ./NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run -x
 NVIDIA-Linux-${nvidia_arch}-${nvidia_version}/nvidia-installer --silent --no-install-compat32-libs --no-backup --no-wine-files --install-libglvnd --dkms -k "${kmodver}"
 `
+
+const InstallCuttlefishPackages = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+if [[ $# -eq 0 ]] ; then
+  echo "usage: $0 /path/to/zip"
+  exit 1
+fi
+
+# Prepare chroot environment for attached disk.
+sudo mkdir -p /mnt/image
+sudo mount /dev/sdb1 /mnt/image
+sudo mount -t sysfs none /mnt/image/sys
+sudo mount -t proc none /mnt/image/proc
+sudo mount --bind /boot/efi /mnt/image/boot/efi
+sudo mount --bind /dev/ /mnt/image/dev
+sudo mount --bind /dev/pts /mnt/image/dev/pts
+sudo mount --bind /run /mnt/image/run
+if [ ! -f /mnt/image/etc/resolv.conf ]; then
+  sudo cp /etc/resolv.conf /mnt/image/etc/
+fi
+
+# Unzip
+sudo apt install -y unzip
+rm -rf /mnt/image/tmp/install
+unzip -d /mnt/image/tmp/install $1
+
+readonly PKG_NAMES=("cuttlefish-base" "cuttlefish-user" "cuttlefish-orchestration")
+
+# Install packages
+for name in "${PKG_NAMES[@]}"; do
+  path=("/mnt/image/tmp/install/${name}"*.deb)
+  path="${path[0]}"
+  name=$(basename "${path}")
+  echo "Installing: ${name}"
+
+  sudo chroot /mnt/image /usr/bin/apt install -y "/tmp/install/${name}"
+done
+`
