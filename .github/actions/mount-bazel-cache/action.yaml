@@ -1,0 +1,40 @@
+name: 'Mount Bazel cache'
+inputs:
+  action-name:
+    required: true
+  cache-path:
+    required: true
+  writable:
+    required: false
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+  - name: Load cache config
+    run: |
+      cat .config/cache-config.env >> $GITHUB_ENV
+      echo "JOB_HASH=$(yq . .github/actions/${{ inputs.action-name }}/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+    shell: bash
+  - name: Generate cache key prefix
+    run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-${{ inputs.action-name }}-${{ env.JOB_HASH }}" >> $GITHUB_ENV
+    shell: bash
+  - name: Restore cache
+    if: inputs.writable != 'true'
+    uses: actions/cache/restore@v4
+    with:
+      path: "${{ inputs.cache-path }}"
+      key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
+      restore-keys: |
+        ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
+        ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
+        ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
+  - name: Restore and save cache
+    if: inputs.writable == 'true'
+    uses: actions/cache@v4
+    with:
+      path: "${{ inputs.cache-path }}"
+      key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
+      restore-keys: |
+        ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
+        ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
+        ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}

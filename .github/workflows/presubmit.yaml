@@ -166,21 +166,11 @@ jobs:
         swap-storage: false
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Load cache config
-      run: |
-        cat .config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq . .github/actions/run-cvd-unit-tests/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-    - name: Generate cache key prefix
-      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
-      uses: actions/cache/restore@v4
+      uses: ./.github/actions/mount-bazel-cache
       with:
-        path: "~/bazel-disk-cache"
-        key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
-        restore-keys: |
-          ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
-          ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
-          ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
+        action-name: "run-cvd-unit-tests"
+        cache-path: "$HOME/bazel-disk-cache"
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
       with:
@@ -201,21 +191,11 @@ jobs:
         swap-storage: false
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Load cache config
-      run: |
-        cat .config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq . .github/actions/build-debian-packages/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-    - name: Generate cache key prefix
-      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
-      uses: actions/cache/restore@v4
+      uses: ./.github/actions/mount-bazel-cache
       with:
-        path: "~/bazel-disk-cache"
-        key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
-        restore-keys: |
-          ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
-          ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
-          ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
+        action-name: "build-debian-packages"
+        cache-path: "$HOME/bazel-disk-cache"
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
@@ -237,21 +217,11 @@ jobs:
         swap-storage: false
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Load cache config
-      run: |
-        cat .config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq . .github/actions/build-debian-packages/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
-    - name: Generate cache key prefix
-      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
-      uses: actions/cache/restore@v4
+      uses: ./.github/actions/mount-bazel-cache
       with:
-        path: "~/bazel-disk-cache"
-        key: ${{ format('{0}-{1}-{2}-{3}', env.CACHE_KEY_PREFIX, github.ref_name, github.sha, github.event_name) }}
-        restore-keys: |
-          ${{ format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) }}
-          ${{ format('{0}-main-', env.CACHE_KEY_PREFIX) }}
-          ${{ format('{0}-', env.CACHE_KEY_PREFIX) }}
+        action-name: "build-debian-packages"
+        cache-path: "$HOME/bazel-disk-cache"
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
