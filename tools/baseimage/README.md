@@ -6,7 +6,7 @@ Run following commands at the root of the `android-cuttlefish` repo directory.
 
 ```
 pushd tools/baseimage
-go build ./cmd/create_gce_x86_64_image
+go build ./cmd/create_gce_orchestration_image
 popd
 ```
 
@@ -14,5 +14,5 @@ popd
 
 ```
 gcloud auth application-default login
-tools/baseimage/create_gce_x86_64_image --project <project> [--zone <zone>]
+tools/baseimage/create_gce_orchestration_image --project <project> [--zone <zone>]
 ```

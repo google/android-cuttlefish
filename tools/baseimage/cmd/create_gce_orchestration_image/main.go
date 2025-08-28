@@ -76,7 +76,7 @@ func createImageMain(project, zone string) error {
 	}
 	log.Printf("disk created: %q", attachedDiskName)
 	log.Println("creating instance...")
-	ins, err := h.CreateInstance(insName)
+	ins, err := h.CreateInstanceWithImage(debianSourceImageProject, debianSourceImage, "n1-standard-16", insName)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
@@ -97,8 +97,8 @@ func createImageMain(project, zone string) error {
 	if err := gce.UploadBashScript(project, zone, insName, "remove_old_kernel.sh", scripts.RemoveOldKernel); err != nil {
 		return fmt.Errorf("error uploading remove_old_kernel.sh: %v", err)
 	}
-	if err := gce.UploadBashScript(project, zone, insName, "create_base_image.sh", scripts.CreateBaseImage); err != nil {
-		return fmt.Errorf("error uploading create_base_image.sh: %v", err)
+	if err := gce.UploadBashScript(project, zone, insName, "create_orchestration_image.sh", scripts.CreateOrchestrationImage); err != nil {
+		return fmt.Errorf("error uploading create_orchestration_image.sh: %v", err)
 	}
 	if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
 		return fmt.Errorf("error uploading install_nvidia.sh: %v", err)
@@ -114,7 +114,7 @@ func createImageMain(project, zone string) error {
 	if err := gce.RunCmd(project, zone, insName, "./remove_old_kernel.sh"); err != nil {
 		return err
 	}
-	if err := gce.RunCmd(project, zone, insName, "./create_base_image.sh"); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./create_orchestration_image.sh"); err != nil {
 		return err
 	}
 	// Reboot the instance to force a clean umount of the attached disk's file system.
@@ -129,7 +129,7 @@ func createImageMain(project, zone string) error {
 	if err := h.StopInstance(insName); err != nil {
 		return fmt.Errorf("error stopping instance: %v", err)
 	}
-	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
+	if err := h.CreateImage(attachedDiskName, outImageName, nil); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	return nil
