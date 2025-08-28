@@ -19,14 +19,12 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-// TODO: chadreynolds - add support for more fields than HostInfo
-Result<void> WriteMetricsEvent(const std::string& metrics_directory,
-                               std::string_view session_id,
-                               const HostInfo& host_metrics);
+Result<std::string> ReadSessionIdFile(const std::string& metrics_directory);
+
+Result<void> GenerateSessionIdFile(const std::string& metrics_directory);
 
 }  // namespace cuttlefish
