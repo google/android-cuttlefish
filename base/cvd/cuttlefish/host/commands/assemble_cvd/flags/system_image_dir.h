@@ -32,6 +32,8 @@ class SystemImageDirFlag {
   // flags, it is accessed directly by index instead.
   std::string ForIndex(size_t argument_index) const;
 
+  size_t Size() const { return system_image_dirs_.size(); }
+
  private:
   explicit SystemImageDirFlag(std::vector<std::string> system_image_dirs);
 
