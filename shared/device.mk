@@ -555,7 +555,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     ro.surface_flinger.game_default_frame_rate_override=60
 
 # Disable GPU-intensive background blur for widget picker
-PRODUCT_SYSTEM_PROPERTIES += \
+PRODUCT_SYSTEM_EXT_PROPERTIES += \
     ro.launcher.depth.widget=0
 
 # Start fingerprint virtual HAL process
