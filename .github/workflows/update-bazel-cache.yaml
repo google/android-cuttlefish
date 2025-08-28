@@ -19,19 +19,10 @@ jobs:
         swap-storage: false
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Setup apt
-      run: sudo apt-get update -y && sudo apt-get upgrade -y
-    - name: Install dependencies
-      run: |
-        sudo apt-get install -y git clang libcurl4-openssl-dev clang-tidy xxd cmake liblzma-dev libvpx-dev libopus-dev libaom-dev autoconf libtool
-        wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2_amd64.deb
-        sudo dpkg -i libtinfo5_6.3-2_amd64.deb
-    - name: Install bazel
-      run: sudo bash tools/buildutils/installbazel.sh
     - name: Load cache config
       run: |
         cat .config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq .jobs[\"run-cvd-unit-tests\"] .github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq . .github/actions/run-cvd-unit-tests/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate cache key prefix
       run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
@@ -43,8 +34,10 @@ jobs:
           ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
           ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
           ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}
-    - name: Run unit tests
-      run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
+    - name: Run cvd unit tests
+      uses: ./.github/actions/run-cvd-unit-tests
+      with:
+        cache-path: "$HOME/bazel-disk-cache"
   update-debian-package-x86-bazel-cache:
     if: ${{ github.repository_owner == 'google' }}
     runs-on: ubuntu-22.04
