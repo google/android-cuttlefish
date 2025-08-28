@@ -29,7 +29,7 @@ jobs:
       uses: ./.github/actions/run-cvd-unit-tests
       with:
         cache-path: "$HOME/bazel-disk-cache"
-  update-debian-package-x86-bazel-cache:
+  update-debian-package-amd64-bazel-cache:
     if: ${{ github.repository_owner == 'google' }}
     runs-on: ubuntu-22.04
     steps:
@@ -50,7 +50,7 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         cache-path: "$HOME/bazel-disk-cache"
-  update-debian-package-arm-bazel-cache:
+  update-debian-package-arm64-bazel-cache:
     if: ${{ github.repository_owner == 'google' }}
     runs-on: ubuntu-22.04-arm
     steps:

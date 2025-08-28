@@ -181,7 +181,7 @@ jobs:
       with:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
-  build-debian-package-x86:
+  build-debian-package-amd64:
     runs-on: ubuntu-22.04
     steps:
     - name: Free disk space
@@ -200,14 +200,14 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         cache-path: "$HOME/bazel-disk-cache"
-    - name: Build debs_x86.tar
-      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_x86.tar --null --files-from -
-    - name: Publish debs_x86.tar
+    - name: Build debs_amd64.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64.tar --null --files-from -
+    - name: Publish debs_amd64.tar
       uses: actions/upload-artifact@v4
       with:
-        name: debs_x86
-        path: debs_x86.tar
-  build-debian-package-arm:
+        name: debs_amd64
+        path: debs_amd64.tar
+  build-debian-package-arm64:
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Free disk space
@@ -226,27 +226,27 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         cache-path: "$HOME/bazel-disk-cache"
-    - name: Build debs_arm.tar
-      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm.tar --null --files-from -
-    - name: Publish debs_arm.tar
+    - name: Build debs_arm64.tar
+      run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64.tar --null --files-from -
+    - name: Publish debs_arm64.tar
       uses: actions/upload-artifact@v4
       with:
-        name: debs_arm
-        path: debs_arm.tar
+        name: debs_arm64
+        path: debs_arm64.tar
   e2e-tests-orchestration-build-image:
     runs-on: ubuntu-24.04
-    needs: [build-debian-package-x86]
+    needs: [build-debian-package-amd64]
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Download cuttlefish debs
       uses: actions/download-artifact@v4
       with:
-        name: debs_x86
+        name: debs_amd64
         github-token: ${{ github.token }}
     - name: Build image
       run: |
-        tar -xvf debs_x86.tar
+        tar -xvf debs_amd64.tar
         sudo podman info
         sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
         sudo podman save --quiet -o android-cuttlefish-e2etest.tar localhost/android-cuttlefish-e2etest
@@ -335,7 +335,7 @@ jobs:
         df -h
   docker-image-check:
     runs-on: ubuntu-22.04
-    needs: [build-debian-package-x86]
+    needs: [build-debian-package-amd64]
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
@@ -346,12 +346,12 @@ jobs:
     - name: Download cuttlefish debs
       uses: actions/download-artifact@v4
       with:
-        name: debs_x86
+        name: debs_amd64
         github-token: ${{ github.token }}
     - name: Run check
       shell: bash
       run: |
-        tar -xvf debs_x86.tar
+        tar -xvf debs_amd64.tar
         ./docker/image-builder.sh -m dev
         docker images
         sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
