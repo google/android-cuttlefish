@@ -1,0 +1,9 @@
+service wifi_on /vendor/bin/wifi_on.sh
+    class core
+    user root
+    group shell
+    oneshot
+    disabled
+
+on sys-boot-completed-set && property:ro.boot.cf_wifi_on=1
+    start wifi_on
