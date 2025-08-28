@@ -132,6 +132,25 @@ PRODUCT_PACKAGES += android.hardware.automotive.occupant_awareness@1.0-service
 include packages/services/Car/car_product/occupant_awareness/OccupantAwareness.mk
 BOARD_SEPOLICY_DIRS += packages/services/Car/car_product/occupant_awareness/sepolicy
 
+ENABLE_CARTELEMETRY_SERVICE ?= true
+USE_EMULATED_CAMERA2_HAL ?= false
+
+ifeq ($(USE_EMULATED_CAMERA2_HAL), true)
+ENABLE_CAMERA_SERVICE := true
+PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
+PRODUCT_PACKAGES += com.google.emulated.camera.provider.hal
+
+PRODUCT_COPY_FILES += \
+frameworks/native/data/etc/android.hardware.camera.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.xml \
+frameworks/native/data/etc/android.hardware.camera.concurrent.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.concurrent.xml \
+frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml
+
+PRODUCT_PACKAGES += \
+    emu_camera_back.json \
+    emu_camera_front.json \
+    emu_camera_depth.json
+
+else
 # EVS
 # By default, we enable EvsManager, a sample EVS app, and a mock EVS HAL implementation.
 # If you want to use your own EVS HAL implementation, please set ENABLE_MOCK_EVSHAL as false
@@ -143,7 +162,6 @@ ENABLE_EVS_SERVICE ?= true
 ENABLE_MOCK_EVSHAL ?= true
 ENABLE_CAREVSSERVICE_SAMPLE ?= true
 ENABLE_SAMPLE_EVS_APP ?= true
-ENABLE_CARTELEMETRY_SERVICE ?= true
 
 ifeq ($(ENABLE_MOCK_EVSHAL), true)
 CUSTOMIZE_EVS_SERVICE_PARAMETER := true
@@ -156,6 +174,7 @@ BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/evs
 ifeq ($(ENABLE_SAMPLE_EVS_APP), true)
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/auto/evs/evs_app_config.json:$(TARGET_COPY_OUT_VENDOR)/etc/automotive/evs/config_override.json
+endif
 endif
 
 BOARD_IS_AUTOMOTIVE := true
