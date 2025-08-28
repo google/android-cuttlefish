@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <string>
+#include <string_view>
 
 #include <fmt/format.h>
 
@@ -37,12 +38,15 @@ std::string GenerateFilenameSuffix() {
 }  // namespace
 
 Result<void> WriteMetricsEvent(const std::string& metrics_directory,
+                               std::string_view session_id,
                                const HostInfo& host_metrics) {
   const std::string event_filepath =
       fmt::format("{}/vm-instantiation_{}_{}", metrics_directory,
                   std::chrono::system_clock::now(), GenerateFilenameSuffix());
   // TODO: chadreynolds - convert (what will be a proto) to text
-  CF_EXPECT(WriteNewFile(event_filepath, host_metrics.to_string()));
+  CF_EXPECT(WriteNewFile(
+      event_filepath,
+      fmt::format("{}\n{}\n", host_metrics.to_string(), session_id)));
   return {};
 }
 
