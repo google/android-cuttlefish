@@ -52,7 +52,7 @@ jobs:
     - name: Load cache config
       run: |
         cat .config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq .jobs[\"build-debian-package-x86\"] .github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq . .github/actions/build-debian-packages/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate cache key prefix
       run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
@@ -64,10 +64,10 @@ jobs:
           ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
           ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
           ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}
-    - name: Build CF debian packages
-      run: |
-        sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
-        sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
+    - name: Build CF host debian packages
+      uses: ./.github/actions/build-debian-packages
+      with:
+        cache-path: "$HOME/bazel-disk-cache"
   update-debian-package-arm-bazel-cache:
     if: ${{ github.repository_owner == 'google' }}
     runs-on: ubuntu-22.04-arm
@@ -82,7 +82,7 @@ jobs:
     - name: Load cache config
       run: |
         cat .config/cache-config.env >> $GITHUB_ENV
-        echo "JOB_HASH=$(yq .jobs[\"build-debian-package-arm\"] .github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "JOB_HASH=$(yq . .github/actions/build-debian-packages/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate cache key prefix
       run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
     - name: Mount Bazel cache
@@ -94,7 +94,7 @@ jobs:
           ${{ github.event_name == 'push' && format('{0}-{1}-', env.CACHE_KEY_PREFIX, github.ref_name) || '' }}
           ${{ github.event_name == 'push' && format('{0}-main-', env.CACHE_KEY_PREFIX) || '' }}
           ${{ github.event_name == 'push' && format('{0}-', env.CACHE_KEY_PREFIX) || '' }}
-    - name: Build CF debian packages
-      run: |
-        sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
-        sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
+    - name: Build CF host debian packages
+      uses: ./.github/actions/build-debian-packages
+      with:
+        cache-path: "$HOME/bazel-disk-cache"

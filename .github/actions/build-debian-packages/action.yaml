@@ -1,0 +1,13 @@
+name: 'Build debian packages for Cuttlefish host'
+inputs:
+  cache-path:
+    required: true
+runs:
+  using: "composite"
+  steps:
+  - name: Build CF debian packages
+    run: |
+      sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
+      sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=${{ inputs.cache-path }}:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
+      sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
+    shell: bash
