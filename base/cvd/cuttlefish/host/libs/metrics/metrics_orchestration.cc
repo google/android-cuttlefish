@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
+#include "cuttlefish/host/libs/metrics/session_id.h"
 
 namespace cuttlefish {
 namespace {
@@ -46,14 +47,17 @@ std::string GetMetricsDirectoryFilepath(
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
   CF_EXPECT(EnsureDirectoryExists(metrics_directory));
   CF_EXPECT(WriteNewFile(metrics_directory + "/README", kReadmeText));
+  CF_EXPECT(GenerateSessionIdFile(metrics_directory));
   return {};
 }
 
 Result<void> GatherMetrics(const std::string& metrics_directory) {
+  const std::string session_id =
+      CF_EXPECT(ReadSessionIdFile(metrics_directory));
   HostInfo host_metrics = GetHostInfo();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   // TODO: chadreynolds - convert data to the proto representation
-  CF_EXPECT(WriteMetricsEvent(metrics_directory, host_metrics));
+  CF_EXPECT(WriteMetricsEvent(metrics_directory, session_id, host_metrics));
   // TODO: chadreynolds - if <TBD> condition, transmit metrics event as well
   return {};
 }

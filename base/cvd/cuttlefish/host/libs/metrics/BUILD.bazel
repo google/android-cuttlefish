@@ -47,6 +47,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/libs/metrics:metrics_writer",
+        "//cuttlefish/host/libs/metrics:session_id",
         "//libbase",
         "@fmt",
     ],
@@ -67,5 +68,20 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/common/libs/utils:result",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "session_id",
+    srcs = [
+        "session_id.cc",
+    ],
+    hdrs = [
+        "session_id.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "@libuuid",
     ],
 )
