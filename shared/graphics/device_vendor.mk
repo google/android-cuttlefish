@@ -65,7 +65,7 @@ PRODUCT_VENDOR_PROPERTIES += ro.vendor.hwc.drm.present_fence_not_reliable=true
 # Force using virtio_gpu (card0) exclusively.
 PRODUCT_VENDOR_PROPERTIES += vendor.hwc.drm.device=/dev/dri/card0
 
-PRODUCT_SYSTEM_PROPERTIES += \
+PRODUCT_SYSTEM_EXT_PROPERTIES += \
     service.sf.prime_shader_cache=0
 
 # Gralloc implementation
