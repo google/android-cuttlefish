@@ -120,7 +120,7 @@ LocalRecorder::~LocalRecorder() = default;
 void LocalRecorder::AddDisplay(
     const std::string& label, size_t width, size_t height,
     std::shared_ptr<webrtc::VideoTrackSourceInterface> source) {
-  LOG(ERROR) << "Display added with label '" << label << "'";
+  LOG(INFO) << "Display added with label '" << label << "'";
 
   std::lock_guard lock(impl_->mkv_mutex_);
 
