@@ -16,14 +16,15 @@
 
 #include "host/libs/config/config_flag.h"
 
+#include <fstream>
+#include <set>
+#include <string>
+
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <json/json.h>
-#include <fstream>
-#include <set>
-#include <string>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/flag_parser.h"
@@ -36,12 +37,17 @@
 DEFINE_string(system_image_dir, CF_DEFAULTS_SYSTEM_IMAGE_DIR, "");
 
 using gflags::FlagSettingMode::SET_FLAGS_DEFAULT;
+using android::base::Join;
 using android::base::ReadFileToString;
 using android::base::Split;
 
 namespace cuttlefish {
 
 namespace {
+
+std::string VectorizedFlagValue(const std::vector<std::string>& value) {
+  return Join(value, ",");
+}
 
 class SystemImageDirFlagImpl : public SystemImageDirFlag {
  public:
@@ -116,17 +122,18 @@ class ConfigReader : public FlagFeature {
 class ConfigFlagImpl : public ConfigFlag {
  public:
   INJECT(ConfigFlagImpl(ConfigReader& cr, SystemImageDirFlag& s))
-      : config_reader_(cr), system_image_dir_flag_(s) {
-    is_default_ = true;
-    config_ = "phone";  // default value
+      : config_reader_(cr),
+        system_image_dir_flag_(s),
+        configs_(android::base::Split(s.Path(), ",").size(), "phone"),
+        is_default_(true) {
     auto help =
         "Config preset name. Will automatically set flag fields using the "
         "values from this file of presets. See "
         "device/google/cuttlefish/shared/config/config_*.json for possible "
         "values.";
-    auto getter = [this]() { return config_; };
+    auto getter = [this]() { return VectorizedFlagValue(configs_); };
     auto setter = [this](const FlagMatch& m) -> Result<void> {
-      CF_EXPECT(ChooseConfig(m.value));
+      CF_EXPECT(ChooseConfigs(m.value));
       return {};
     };
     flag_ = GflagsCompatFlag("config").Help(help).Getter(getter).Setter(setter);
@@ -142,19 +149,37 @@ class ConfigFlagImpl : public ConfigFlag {
   Result<void> Process(std::vector<std::string>& args) override {
     CF_EXPECT(flag_.Parse(args), "Failed to parse `--config` flag");
 
-    if (auto info_cfg = FindAndroidInfoConfig(); is_default_ && info_cfg) {
-      config_ = *info_cfg;
-    }
-    LOG(INFO) << "Launching CVD using --config='" << config_ << "'.";
-    auto config_values = CF_EXPECT(config_reader_.ReadConfig(config_));
-    for (const std::string& flag : config_values.getMemberNames()) {
-      std::string value;
-      if (flag == "custom_actions") {
-        Json::StreamWriterBuilder factory;
-        value = Json::writeString(factory, config_values[flag]);
-      } else {
-        value = config_values[flag].asString();
+    if (is_default_) {
+      size_t system_image_dir_cnt =
+          Split(system_image_dir_flag_.Path(), ",").size();
+      configs_.resize(system_image_dir_cnt);
+      // The default value is read from android_info.txt when available
+      for (size_t i = 0; i < configs_.size(); ++i) {
+        auto info_cfg = FindAndroidInfoConfig(i);
+        if (info_cfg) {
+          configs_[i] = *info_cfg;
+        }
       }
+    }
+    std::map<std::string, std::vector<std::string>> flags;
+    LOG(INFO) << "Launching CVD using --config='"
+              << VectorizedFlagValue(configs_) << "'.";
+    for (size_t i = 0; i < configs_.size(); ++i) {
+      Json::Value config_values =
+          CF_EXPECT(config_reader_.ReadConfig(configs_[i]));
+      for (const std::string& flag : config_values.getMemberNames()) {
+        std::string value;
+        if (flag == "custom_actions") {
+          Json::StreamWriterBuilder factory;
+          value = Json::writeString(factory, config_values[flag]);
+        } else {
+          value = config_values[flag].asString();
+        }
+        flags[flag].push_back(value);
+      }
+    }
+    for (const auto& [flag, values] : flags) {
+      auto value = VectorizedFlagValue(values);
       args.insert(args.begin(), "--" + flag + "=" + value);
       // To avoid the flag forwarder from thinking this song is different from a
       // default. Should fail silently if the flag doesn't exist.
@@ -168,25 +193,30 @@ class ConfigFlagImpl : public ConfigFlag {
   }
 
  private:
-  Result<void> ChooseConfig(const std::string& name) {
-    CF_EXPECTF(config_reader_.HasConfig(name),
-               "Invalid --config option '{}'. Valid options: [{}]", name,
-               fmt::join(config_reader_.AvailableConfigs(), ","));
-    config_ = name;
+  Result<void> ChooseConfigs(const std::string& value) {
+    std::vector<std::string> configs = Split(value, ",");
+    for (const auto& name : configs) {
+      CF_EXPECTF(config_reader_.HasConfig(name),
+                 "Invalid --config option '{}'. Valid options: [{}]", name,
+                 fmt::join(config_reader_.AvailableConfigs(), ","));
+    }
+    configs_ = configs;
     is_default_ = false;
     return {};
   }
-  std::optional<std::string> FindAndroidInfoConfig() const {
-    auto info_path =
-        android::base::Split(system_image_dir_flag_.Path(), ",")[0] +
-        "/android-info.txt";
+  std::optional<std::string> FindAndroidInfoConfig(size_t index) const {
+    auto image_dirs = android::base::Split(system_image_dir_flag_.Path(), ",");
+    if (index >= image_dirs.size()) {
+      index = 0;
+    }
+    auto info_path = image_dirs[index] + "/android-info.txt";
 
     LOG(INFO) << "Reading --config option from: " << info_path;
     if (!FileExists(info_path)) {
       return {};
     }
     std::string android_info;
-    if(!ReadFileToString(info_path, &android_info)) {
+    if (!ReadFileToString(info_path, &android_info)) {
       return {};
     }
     // grab the config with name "config" in android-info.txt,
@@ -218,7 +248,7 @@ class ConfigFlagImpl : public ConfigFlag {
 
   ConfigReader& config_reader_;
   SystemImageDirFlag& system_image_dir_flag_;
-  std::string config_;
+  std::vector<std::string> configs_;
   bool is_default_;
   Flag flag_;
 };
