@@ -49,6 +49,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_image_flags_vectorization.h"
 #include "cuttlefish/host/commands/assemble_cvd/display.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/blank_data_image_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
@@ -222,56 +223,6 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
         &value_vec[instance_index]),
         "Failed to parse value \"" << flag_vec[instance_index] << "\" for " << flag_name);
       }
-    }
-  }
-  return value_vec;
-}
-
-Result<std::vector<int>> GetDataImageFlagOrGuestIntValueForInstances(
-    const std::string& flag_values,
-    const std::vector<GuestConfig>& guest_configs, int32_t instances_size,
-    std::map<std::string, std::string>& name_to_default_value) {
-  std::vector<std::string> flag_vec = android::base::Split(flag_values, ",");
-  std::vector<int> value_vec(instances_size);
-  std::string flag_name = "blank_data_image_mb";
-  bool flag_set =
-      !gflags::GetCommandLineFlagInfoOrDie(flag_name.c_str()).is_default;
-  CF_EXPECT(name_to_default_value.find(flag_name) !=
-            name_to_default_value.end());
-  std::string default_value = name_to_default_value[flag_name];
-  bool first_unset = false;
-
-  for (int instance_index = 0; instance_index < instances_size;
-       instance_index++) {
-    if (flag_set) {
-      if (instance_index < flag_vec.size()) {
-        if ((flag_vec[instance_index] == "unset" ||
-             flag_vec[instance_index] == "\"unset\"") &&
-            instance_index == 0) {
-          first_unset = true;
-        } else {
-          CF_EXPECT(android::base::ParseInt(default_value,
-                                            &value_vec[instance_index]),
-                    "Failed to parse value \"" << default_value << "\" for "
-                                               << flag_name);
-          continue;
-        }
-      } else {
-        if (!first_unset) {
-          value_vec[instance_index] = value_vec[0];
-          continue;
-        }
-      }
-    }
-
-    if (guest_configs[instance_index].blank_data_image_mb != 0) {
-      value_vec[instance_index] =
-          guest_configs[instance_index].blank_data_image_mb;
-    } else {
-      CF_EXPECT(
-          android::base::ParseInt(default_value, &value_vec[instance_index]),
-          "Failed to parse value \"" << default_value << "\" for "
-                                     << flag_name);
     }
   }
   return value_vec;
@@ -505,10 +456,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<std::string> vsock_guest_group_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vsock_guest_group));
   std::vector<int> cpus_vec = CF_EXPECT(GET_FLAG_INT_VALUE(cpus));
-  std::vector<int> blank_data_image_mb_vec =
-      CF_EXPECT(GetDataImageFlagOrGuestIntValueForInstances(
-          FLAGS_blank_data_image_mb, guest_configs, instances_size,
-          name_to_default_value));
+  BlankDataImageMbFlag blank_data_image_mb_values =
+      CF_EXPECT(BlankDataImageMbFlag::FromGlobalGflags(guest_configs));
   std::vector<int> gdb_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(gdb_port));
   std::vector<std::string> setupwizard_mode_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(setupwizard_mode));
@@ -929,7 +878,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_configs[instance_index].android_version_number);
     instance.set_console(console_vec[instance_index]);
     instance.set_kgdb(console_vec[instance_index] && kgdb_vec[instance_index]);
-    instance.set_blank_data_image_mb(blank_data_image_mb_vec[instance_index]);
+    instance.set_blank_data_image_mb(
+        blank_data_image_mb_values.ForIndex(instance_index));
     instance.set_gdb_port(gdb_port_vec[instance_index]);
     instance.set_fail_fast(fail_fast_vec[instance_index]);
     if (vhost_user_block_vec[instance_index]) {

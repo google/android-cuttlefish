@@ -269,6 +269,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:network_flags",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/commands/assemble_cvd/flags:android_efi_loader",
+        "//cuttlefish/host/commands/assemble_cvd/flags:blank_data_image_mb",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:bootloader",
         "//cuttlefish/host/commands/assemble_cvd/flags:display_proto",

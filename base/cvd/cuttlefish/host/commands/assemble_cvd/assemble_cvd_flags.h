@@ -22,7 +22,6 @@
 
 DECLARE_vec(cpus);
 DECLARE_vec(data_policy);
-DECLARE_vec(blank_data_image_mb);
 DECLARE_vec(gdb_port);
 
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
