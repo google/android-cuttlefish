@@ -48,7 +48,21 @@ set_config_expr() {
 }
 
 setup_nginx() {
-  ln -s /etc/nginx/sites-available/cuttlefish-orchestration.conf /etc/nginx/sites-enabled/cuttlefish-orchestration.conf
+  DIR="/etc/cuttlefish-orchestration/ssl/cert"
+  CERT_FILE="${DIR}/cert.pem"
+  KEY_FILE="${DIR}/key.pem"
+  mkdir -p "${DIR}"
+  openssl req \
+    -newkey rsa:4096 \
+    -x509 \
+    -sha256 \
+    -days 36000 \
+    -nodes \
+    -out "${CERT_FILE}" \
+    -keyout "${KEY_FILE}" \
+    -subj "/C=US"
+  ln -s /etc/nginx/sites-available/cuttlefish-orchestration.conf \
+    /etc/nginx/sites-enabled/cuttlefish-orchestration.conf
   service nginx reload
 }
 
