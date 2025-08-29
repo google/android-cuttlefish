@@ -34,6 +34,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "blank_data_image_mb",
+    srcs = ["blank_data_image_mb.cc"],
+    hdrs = ["blank_data_image_mb.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "boot_image",
     srcs = ["boot_image.cc"],
     hdrs = ["boot_image.h"],
