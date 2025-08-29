@@ -36,6 +36,24 @@
 namespace cuttlefish {
 namespace {
 
+static const char kUsage[] =
+    R"(
+
+Interact with a Cuttlefish virtual device's displays.
+
+usage: cvd display <subcommand> <args>
+
+Commands:(cvd display help <subcommand> for more information):
+
+    add: Adds and connects displays.
+
+    list: Lists all of the displays currently connected.
+
+    remove: Disconnects and removes displays.
+
+    screenshot: Screenshots the contents of a given display.
+)";
+
 static const char kAddUsage[] =
     R"(
 
@@ -81,6 +99,11 @@ Result<int> GetInstanceNum(std::vector<std::string>& args) {
 }
 
 Result<int> DoHelp(std::vector<std::string>& args) {
+  if (args.empty()) {
+    std::cerr << kUsage << std::endl;
+    return 0;
+  }
+
   static const android::base::NoDestructor<
       std::unordered_map<std::string, std::string>>
       kSubCommandUsages({

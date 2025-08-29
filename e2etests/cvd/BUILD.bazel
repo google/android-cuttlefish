@@ -66,6 +66,17 @@ cvd_command_boot_test(
 )
 
 cvd_command_boot_test(
+    name = "add_displays",
+    branch = "aosp-android-latest-release",
+    cvd_command = [
+        "display",
+        "add",
+        "--display=width=500,height=500",
+    ],
+    target = "aosp_cf_x86_64_only_phone-userdebug",
+)
+
+cvd_command_boot_test(
     name = "list_displays",
     branch = "aosp-android-latest-release",
     cvd_command = [
