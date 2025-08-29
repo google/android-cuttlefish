@@ -11,9 +11,6 @@ case "$1" in
 
         usermod -a -G cvdnetwork,kvm httpcvd
     fi
-
-    # Reload nginx having the orchestration configuration
-    service nginx reload
 esac
 
 #DEBHELPER#
