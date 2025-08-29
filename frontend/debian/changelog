@@ -4,7 +4,7 @@ cuttlefish-frontend (1.22.0) UNRELEASED; urgency=medium
 
  -- Sergio Rodriguez <sorama@google.com>  Fri, 22 Aug 2025 20:02:28 -0400
 
-cuttlefish-frontend (1.21.0) unstable; urgency=medium
+cuttlefish-frontend (1.21.0) stable; urgency=medium
 
   * Mark release 1.20.0 as unstable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1539
   * Improvements to the HO's cvd command wrapper by @jemoreira in https://github.com/google/android-cuttlefish/pull/1528

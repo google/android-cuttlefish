@@ -4,7 +4,7 @@ cuttlefish-common (1.22.0) UNRELEASED; urgency=medium
 
  -- Sergio Rodriguez <sorama@google.com>  Fri, 22 Aug 2025 20:01:10 -0400
 
-cuttlefish-common (1.21.0) unstable; urgency=medium
+cuttlefish-common (1.21.0) stable; urgency=medium
 
   * Mark release 1.20.0 as unstable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1539
   * Filesystem-cached ZipSource by @Databean in https://github.com/google/android-cuttlefish/pull/1537
