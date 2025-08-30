@@ -107,7 +107,9 @@ Result<int> CrosvmDisplayController::RunCrosvmDisplayCommand(
 
   Result<std::string> res = RunAndCaptureStdout(std::move(command));
   if (res.ok()) {
-    *stdout_str = CF_EXPECT(std::move(res));
+    if (stdout_str != nullptr) {
+      *stdout_str = std::move(*res);
+    }
     return 0;
   } else {
     LOG(ERROR) << "Failed to run crosvm display command:\n"
