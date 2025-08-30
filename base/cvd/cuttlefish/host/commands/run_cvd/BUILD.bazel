@@ -60,6 +60,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:casimir_control_server",
         "//cuttlefish/host/commands/run_cvd/launch:console_forwarder",
         "//cuttlefish/host/commands/run_cvd/launch:control_env_proxy_server",
+        "//cuttlefish/host/commands/run_cvd/launch:cvdalloc",
         "//cuttlefish/host/commands/run_cvd/launch:echo_server",
         "//cuttlefish/host/commands/run_cvd/launch:gnss_grpc_proxy",
         "//cuttlefish/host/commands/run_cvd/launch:kernel_log_monitor",

@@ -102,6 +102,25 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "cvdalloc",
+    srcs = ["cvdalloc.cpp"],
+    hdrs = ["cvdalloc.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/cvdalloc:sem",
+        "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/host/libs/feature",
+        "//cuttlefish/host/libs/vm_manager",
+        "//libbase",
+        "@fruit",
+    ],
+)
+
+cf_cc_library(
     name = "echo_server",
     srcs = ["echo_server.cpp"],
     hdrs = ["echo_server.h"],

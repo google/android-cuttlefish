@@ -46,6 +46,8 @@ std::string ControlEnvProxyServerBinary() {
 
 std::string CpioBinary() { return HostBinaryPath("cpio"); }
 
+std::string CvdallocBinary() { return HostBinaryPath("cvdalloc"); }
+
 std::string DefaultKeyboardSpec() {
   return DefaultHostArtifactsPath("etc/default_input_devices/keyboard.json");
 }
