@@ -18,24 +18,28 @@
 #include <string>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 
 namespace cuttlefish {
 
+namespace {
+
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 
-static std::string SerialNumber(const Instance& instance) {
+std::string SerialNumber(const Instance& instance, size_t index) {
   if (instance.security().has_serial_number()) {
     return instance.security().serial_number();
   } else {
-    return CF_DEFAULTS_SERIAL_NUMBER;
+    return fmt::format("CUTTLEFISHCVD{:02d}", index + 1);
   }
 }
 
-static bool UseRandomSerial(const Instance& instance) {
+bool UseRandomSerial(const Instance& instance) {
   if (instance.security().has_use_random_serial()) {
     return instance.security().use_random_serial();
   } else {
@@ -43,13 +47,15 @@ static bool UseRandomSerial(const Instance& instance) {
   }
 }
 
-static bool GuestEnforceSecurity(const Instance& instance) {
+bool GuestEnforceSecurity(const Instance& instance) {
   if (instance.security().has_guest_enforce_security()) {
     return instance.security().guest_enforce_security();
   } else {
     return CF_DEFAULTS_GUEST_ENFORCE_SECURITY;
   }
 }
+
+}  // namespace
 
 std::vector<std::string> GenerateSecurityFlags(
     const EnvironmentSpecification& cfg) {
