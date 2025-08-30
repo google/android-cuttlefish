@@ -1,8 +1,23 @@
-cuttlefish-common (1.22.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.22.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.22 by @ser-io in https://github.com/google/android-cuttlefish/pull/1570
+  * Post before shutdown on clean termination. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1567
+  * Refactor files under tools/baseimage by @0405ysj in https://github.com/google/android-cuttlefish/pull/1561
+  * Add default styles for button elements by @asasui-2 in https://github.com/google/android-cuttlefish/pull/1578
+  * Use standard runner for performing cvd unit tests by @0405ysj in https://github.com/google/android-cuttlefish/pull/1563
+  * Remove `tools/buildimage`. by @ser-io in https://github.com/google/android-cuttlefish/pull/1575
+  * Introduce a separate config proto field for the android efi loader by @Databean in https://github.com/google/android-cuttlefish/pull/1571
+  * Continue refactoring files under tools/baseimage by @0405ysj in https://github.com/google/android-cuttlefish/pull/1574
+  * Checkout repo on home dir when building debs from GH workflow by @0405ysj in https://github.com/google/android-cuttlefish/pull/1582
+  * Refine Github workflows to use action for redundant logic by @0405ysj in https://github.com/google/android-cuttlefish/pull/1583
+  * gce_install_cuttlefish_packages tool. by @ser-io in https://github.com/google/android-cuttlefish/pull/1580
+  * Return build information from fetches by @cjreynol in https://github.com/google/android-cuttlefish/pull/1577
+  * Mark 1.21 as stable by @ser-io in https://github.com/google/android-cuttlefish/pull/1586
+  * Vectorize assemble_cvd's --config flag by @jemoreira in https://github.com/google/android-cuttlefish/pull/1584
+  * Used fixed debian image label. by @ser-io in https://github.com/google/android-cuttlefish/pull/1588
+  * cvd generates different serial numbers by @jemoreira in https://github.com/google/android-cuttlefish/pull/1593
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 22 Aug 2025 20:01:10 -0400
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 29 Aug 2025 18:27:52 -0700
 
 cuttlefish-common (1.21.0) stable; urgency=medium
 
