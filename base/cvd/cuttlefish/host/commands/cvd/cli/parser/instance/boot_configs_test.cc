@@ -161,7 +161,7 @@ TEST(BootFlagsParserTest, ParseTwoInstancesSerialNumberFlagEmptyJson) {
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
   EXPECT_TRUE(FindConfig(*serialized_data,
-                         R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD01)"))
+                         R"(--serial_number=CUTTLEFISHCVD01,CUTTLEFISHCVD02)"))
       << "serial_number flag is missing or wrongly formatted";
 }
 

@@ -44,11 +44,19 @@ template <typename T>
 std::string GenerateInstanceFlag(
     const std::string& name,
     const cvd::config::EnvironmentSpecification& config, T callback) {
-  std::vector<decltype(callback(config.instances()[0]))> values;
-  for (const auto& instance : config.instances()) {
-    values.emplace_back(callback(instance));
+  if constexpr (std::is_invocable_v<T, const cvd::config::Instance&, size_t>) {
+    std::vector<decltype(callback(config.instances()[0], 0))> values;
+    for (size_t i = 0; i < config.instances_size(); ++i) {
+      values.emplace_back(callback(config.instances(i), i));
+    }
+    return GenerateVecFlag(name, values);
+  } else {
+    std::vector<decltype(callback(config.instances()[0]))> values;
+    for (size_t i = 0; i < config.instances_size(); ++i) {
+      values.emplace_back(callback(config.instances(i)));
+    }
+    return GenerateVecFlag(name, values);
   }
-  return GenerateVecFlag(name, values);
 }
 
 template <typename T>
