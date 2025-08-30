@@ -30,12 +30,9 @@
 DEFINE_vec(cpus, std::to_string(CF_DEFAULTS_CPUS),
               "Virtual CPU count.");
 DEFINE_vec(data_policy, CF_DEFAULTS_DATA_POLICY,
-              "How to handle userdata partition."
-              " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "
-              "'always_create'.");
-DEFINE_vec(blank_data_image_mb,
-              CF_DEFAULTS_BLANK_DATA_IMAGE_MB,
-             "The size of the blank data image to generate, MB.");
+           "How to handle userdata partition."
+           " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "
+           "'always_create'.");
 DEFINE_vec(gdb_port, std::to_string(CF_DEFAULTS_GDB_PORT),
              "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
              "kernel must have been built with CONFIG_RANDOMIZE_BASE "
