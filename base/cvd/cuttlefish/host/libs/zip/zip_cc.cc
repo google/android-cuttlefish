@@ -464,6 +464,10 @@ Result<ReadableZip> ReadableZip::FromSource(SeekableZipSource source) {
                                             std::move(fake_writable_source)));
 }
 
+ReadableZip ReadableZip::Invalid() {
+  return ReadableZip(std::unique_ptr<Impl>());
+}
+
 ReadableZip::ReadableZip(ReadableZip&&) = default;
 ReadableZip::~ReadableZip() = default;
 ReadableZip& ReadableZip::operator=(ReadableZip&&) = default;
