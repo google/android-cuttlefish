@@ -27,8 +27,6 @@
 
 #define DEFINE_vec DEFINE_string
 
-DEFINE_vec(cpus, std::to_string(CF_DEFAULTS_CPUS),
-              "Virtual CPU count.");
 DEFINE_vec(data_policy, CF_DEFAULTS_DATA_POLICY,
            "How to handle userdata partition."
            " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "

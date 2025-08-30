@@ -20,7 +20,6 @@
 
 #define DECLARE_vec DECLARE_string
 
-DECLARE_vec(cpus);
 DECLARE_vec(data_policy);
 DECLARE_vec(gdb_port);
 

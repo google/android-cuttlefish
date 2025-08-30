@@ -52,6 +52,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/blank_data_image_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -455,7 +456,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       vsock_guest_cid));
   std::vector<std::string> vsock_guest_group_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vsock_guest_group));
-  std::vector<int> cpus_vec = CF_EXPECT(GET_FLAG_INT_VALUE(cpus));
+  CpusFlag cpus_values = CF_EXPECT(CpusFlag::FromGlobalGflags());
   BlankDataImageMbFlag blank_data_image_mb_values =
       CF_EXPECT(BlankDataImageMbFlag::FromGlobalGflags(guest_configs));
   std::vector<int> gdb_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(gdb_port));
@@ -861,10 +862,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_session_id(iface_config.mobile_tap.session_id);
 
-    instance.set_cpus(cpus_vec[instance_index]);
+    instance.set_cpus(cpus_values.ForIndex(instance_index));
     // make sure all instances have multiple of 2 then SMT mode
     // if any of instance doesn't have multiple of 2 then NOT SMT
-    CF_EXPECT(!smt_vec[instance_index] || cpus_vec[instance_index] % 2 == 0,
+    CF_EXPECT(!smt_vec[instance_index] ||
+                  cpus_values.ForIndex(instance_index) % 2 == 0,
               "CPUs must be a multiple of 2 in SMT mode");
     instance.set_smt(smt_vec[instance_index]);
 
