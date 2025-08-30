@@ -1,8 +1,17 @@
-cuttlefish-frontend (1.22.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.22.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.22 by @ser-io in https://github.com/google/android-cuttlefish/pull/1570
+  * Refactor files under tools/baseimage by @0405ysj in https://github.com/google/android-cuttlefish/pull/1561
+  * Remove `tools/buildimage`. by @ser-io in https://github.com/google/android-cuttlefish/pull/1575
+  * Continue refactoring files under tools/baseimage by @0405ysj in https://github.com/google/android-cuttlefish/pull/1574
+  * Sync ExtractArtifact between Host Orchestrator and its golang client by @0405ysj in https://github.com/google/android-cuttlefish/pull/1579
+  * Checkout repo on home dir when building debs from GH workflow by @0405ysj in https://github.com/google/android-cuttlefish/pull/1582
+  * Refine Github workflows to use action for redundant logic by @0405ysj in https://github.com/google/android-cuttlefish/pull/1583
+  * gce_install_cuttlefish_packages tool. by @ser-io in https://github.com/google/android-cuttlefish/pull/1580
+  * Mark 1.21 as stable by @ser-io in https://github.com/google/android-cuttlefish/pull/1586
+  * Used fixed debian image label. by @ser-io in https://github.com/google/android-cuttlefish/pull/1588
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 22 Aug 2025 20:02:28 -0400
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 29 Aug 2025 18:28:24 -0700
 
 cuttlefish-frontend (1.21.0) stable; urgency=medium
 
