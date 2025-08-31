@@ -5,6 +5,23 @@ inputs:
 runs:
   using: "composite"
   steps:
+  - name: Setup nightly version
+    run: |
+      # TODO(b/440196950): Setup condition on this step when we build
+      # stable/unstable versions here too.
+
+      # Modify debian/changelog to build debian package with desired version
+      # format.
+      # Stable/Unstable version format : X.Y.Z
+      # Nightly version format         : X.Y.Z~gitYYYYMMDD.<Github SHA 8 digit>
+      DATE=$(date -u +'%Y%m%d')
+      SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+      SUFFIX="~git${DATE}.${SHORT_SHA}"
+      sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
+        base/debian/changelog
+      sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
+        frontend/debian/changelog
+    shell: bash
   - name: Build CF debian packages
     run: |
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .

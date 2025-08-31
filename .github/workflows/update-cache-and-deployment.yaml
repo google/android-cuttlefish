@@ -1,4 +1,4 @@
-name: Update Bazel Cache
+name: Update bazel cache and deploy artifacts
 
 on:
   push:
@@ -29,8 +29,9 @@ jobs:
       uses: ./.github/actions/run-cvd-unit-tests
       with:
         cache-path: "$HOME/bazel-disk-cache"
-  update-debian-package-amd64-bazel-cache:
+  update-bazel-cache-and-deploy-debian-package-amd64:
     if: ${{ github.repository_owner == 'google' }}
+    environment: deployment
     runs-on: ubuntu-22.04
     steps:
     - name: Free disk space
@@ -50,8 +51,19 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         cache-path: "$HOME/bazel-disk-cache"
-  update-debian-package-arm64-bazel-cache:
+    - name: Authentication on GCP project android-cuttlefish-artifacts
+      if: github.event_name == 'push'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Deploy CF host debian packages
+      if: github.event_name == 'push'
+      uses: ./.github/actions/deploy-debian-packages
+      with:
+        path: .
+  update-bazel-cache-and-deploy-debian-package-arm64:
     if: ${{ github.repository_owner == 'google' }}
+    environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Free disk space
@@ -71,3 +83,13 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         cache-path: "$HOME/bazel-disk-cache"
+    - name: Authentication on GCP project android-cuttlefish-artifacts
+      if: github.event_name == 'push'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Deploy CF host debian packages
+      if: github.event_name == 'push'
+      uses: ./.github/actions/deploy-debian-packages
+      with:
+        path: .
