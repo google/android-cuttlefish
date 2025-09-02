@@ -47,6 +47,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "bool_flag",
+    srcs = ["bool_flag.cc"],
+    hdrs = ["bool_flag.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "boot_image",
     srcs = ["boot_image.cc"],
     hdrs = ["boot_image.h"],
@@ -97,6 +109,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:bool_flag",
         "//libbase",
         "@gflags",
     ],

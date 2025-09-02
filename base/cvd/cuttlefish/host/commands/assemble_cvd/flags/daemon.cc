@@ -16,15 +16,13 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 
-#include <cstdlib>
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/bool_flag.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 
 DEFINE_string(daemon, CF_DEFAULTS_DAEMON ? "true" : "false",
@@ -34,34 +32,10 @@ DEFINE_string(daemon, CF_DEFAULTS_DAEMON ? "true" : "false",
 namespace cuttlefish {
 
 Result<DaemonFlag> DaemonFlag::FromGlobalGflags() {
-  gflags::CommandLineFlagInfo flag_info =
-      gflags::GetCommandLineFlagInfoOrDie("daemon");
-  bool default_value = CF_EXPECT(ParseBool(flag_info.default_value, "daemon"));
-
-  std::vector<std::string> string_values =
-      android::base::Split(flag_info.current_value, ",");
-  std::vector<bool> values(string_values.size());
-
-  for (int i = 0; i < string_values.size(); i++) {
-    if (string_values[i] == "unset" || string_values[i] == "\"unset\"") {
-      values[i] = default_value;
-    } else {
-      values[i] = CF_EXPECT(ParseBool(string_values[i], "daemon"));
-    }
-  }
-  return DaemonFlag(default_value, std::move(values));
+  auto bool_flag = CF_EXPECT(BoolFlag::FromGlobalGflagsAndName("daemon"));
+  return DaemonFlag(std::move(bool_flag));
 }
 
-bool DaemonFlag::ForIndex(std::size_t index) const {
-  if (index < daemon_values_.size()) {
-    return daemon_values_[index];
-  } else {
-    return default_value_;
-  }
-}
-
-DaemonFlag::DaemonFlag(const bool default_value,
-                       std::vector<bool> daemon_values)
-    : default_value_(default_value), daemon_values_(daemon_values) {}
+DaemonFlag::DaemonFlag(BoolFlag&& bool_flag) : BoolFlag(std::move(bool_flag)) {}
 
 }  // namespace cuttlefish

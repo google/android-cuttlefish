@@ -17,19 +17,24 @@
 #pragma once
 
 #include <cstdlib>
+#include <string>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/bool_flag.h"
 
 namespace cuttlefish {
 
-class DaemonFlag : public BoolFlag {
+class BoolFlag {
  public:
-  static Result<DaemonFlag> FromGlobalGflags();
+  BoolFlag(BoolFlag&&) = default;
+  static Result<BoolFlag> FromGlobalGflagsAndName(const std::string& name);
+  bool ForIndex(const std::size_t index) const;
 
  private:
-  DaemonFlag(BoolFlag&&);
+  BoolFlag(const bool, std::vector<bool>);
+
+  bool default_value_ = false;
+  std::vector<bool> values_;
 };
 
 }  // namespace cuttlefish
