@@ -9,7 +9,7 @@ on:
 
 jobs:
   update-cvd-test-bazel-cache:
-    if: ${{ github.repository_owner == 'google' }}
+    if: github.repository_owner == 'google'
     runs-on: ubuntu-24.04
     steps:
     - name: Free disk space
@@ -30,7 +30,7 @@ jobs:
       with:
         cache-path: "$HOME/bazel-disk-cache"
   update-bazel-cache-and-deploy-debian-package-amd64:
-    if: ${{ github.repository_owner == 'google' }}
+    if: github.repository_owner == 'google'
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
@@ -62,7 +62,7 @@ jobs:
       with:
         path: .
   update-bazel-cache-and-deploy-debian-package-arm64:
-    if: ${{ github.repository_owner == 'google' }}
+    if: github.repository_owner == 'google'
     environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
