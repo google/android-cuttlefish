@@ -54,6 +54,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -495,7 +496,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       pause_in_bootloader));
   std::vector<std::string> uuid_vec = CF_EXPECT(GET_FLAG_STR_VALUE(uuid));
-  std::vector<bool> daemon_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(daemon));
+  DaemonFlag daemon_values = CF_EXPECT(DaemonFlag::FromGlobalGflags());
   std::vector<bool> enable_minimal_mode_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       enable_minimal_mode));
   std::vector<bool> enable_modem_simulator_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
@@ -978,7 +979,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_userdata_format(userdata_format_vec[instance_index]);
     instance.set_guest_enforce_security(guest_enforce_security_vec[instance_index]);
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
-    instance.set_run_as_daemon(daemon_vec[instance_index]);
+    instance.set_run_as_daemon(daemon_values.ForIndex(instance_index));
     instance.set_enable_modem_simulator(enable_modem_simulator_vec[instance_index] &&
                                         !enable_minimal_mode_vec[instance_index]);
     instance.set_modem_simulator_instance_number(modem_simulator_count_vec[instance_index]);
