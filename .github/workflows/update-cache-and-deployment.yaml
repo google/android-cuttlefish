@@ -95,6 +95,8 @@ jobs:
         path: .
 
   deploy-docker-image-amd64:
+    if: github.repository_owner == 'google' && github.event_name == 'push'
+    environment: deployment
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
@@ -116,6 +118,8 @@ jobs:
       with:
         arch: amd64
   deploy-docker-image-arm64:
+    if: github.repository_owner == 'google' && github.event_name == 'push'
+    environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Checkout repository
@@ -136,3 +140,40 @@ jobs:
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: arm64
+  deploy-docker-manifest:
+    if: github.repository_owner == 'google' && github.event_name == 'push'
+    environment: deployment
+    needs: [deploy-docker-image-amd64, deploy-docker-image-arm64]
+    environment: deployment
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Authentication on GCP project android-cuttlefish-artifacts
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Login to Artifact Registry
+      uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # aka v3.5.0
+      with:
+        registry: us-docker.pkg.dev
+        username: _json_key
+        password: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Deploy manifests
+      run: |
+        # TODO(b/440196950): Setup condition on this step when we build
+        # stable/unstable versions here too.
+
+        # Stable/Unstable version tag : X.Y.Z
+        # Nightly version tag         : gitYYYYMMDD-<Github SHA 8 digit>
+        DATE=$(date -u +'%Y%m%d')
+        SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+        TAG="git${DATE}-${SHORT_SHA}"
+        IMAGE=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration
+
+        for MANIFEST_TAG in ${TAG} nightly; do
+          docker manifest create ${IMAGE}:${MANIFEST_TAG} \
+            --amend ${IMAGE}:${TAG}-amd64 \
+            --amend ${IMAGE}:${TAG}-arm64
+          docker manifest push ${IMAGE}:${MANIFEST_TAG}
+        done
