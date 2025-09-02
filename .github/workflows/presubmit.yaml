@@ -233,6 +233,34 @@ jobs:
       with:
         name: debs_arm64
         path: debs_arm64.tar
+  build-docker-image-amd64:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Build docker image
+      run: docker/image-builder.sh
+    - name: Save docker image
+      run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
+    - name: Publish docker image
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
+      with:
+        name: cuttlefish-orchestration-amd64
+        path: cuttlefish-orchestration.tar
+  build-docker-image-arm64:
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Build docker image
+      run: docker/image-builder.sh
+    - name: Save docker image
+      run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
+    - name: Publish docker image
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
+      with:
+        name: cuttlefish-orchestration-arm64
+        path: cuttlefish-orchestration.tar
   e2e-tests-orchestration-build-image:
     runs-on: ubuntu-24.04
     needs: [build-debian-package-amd64]
