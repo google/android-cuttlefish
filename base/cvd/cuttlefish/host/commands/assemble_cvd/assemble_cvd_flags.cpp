@@ -230,9 +230,6 @@ DEFINE_vec(
 
 DEFINE_vec(uuid, CF_DEFAULTS_UUID,
            "UUID to use for the device. Random if not specified");
-DEFINE_vec(daemon, CF_DEFAULTS_DAEMON?"true":"false",
-            "Run cuttlefish in background, the launcher exits on boot "
-            "completed/failed");
 
 DEFINE_vec(setupwizard_mode, CF_DEFAULTS_SETUPWIZARD_MODE,
               "One of DISABLED,OPTIONAL,REQUIRED");
