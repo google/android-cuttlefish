@@ -105,7 +105,6 @@ DECLARE_vec(udp_port_range);
 DECLARE_vec(webrtc_device_id);
 
 DECLARE_vec(uuid);
-DECLARE_vec(daemon);
 
 DECLARE_vec(setupwizard_mode);
 DECLARE_vec(enable_bootanimation);

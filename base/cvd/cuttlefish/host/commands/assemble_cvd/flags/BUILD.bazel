@@ -90,6 +90,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "daemon",
+    srcs = ["daemon.cc"],
+    hdrs = ["daemon.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "display_proto",
     srcs = ["display_proto.cc"],
     hdrs = ["display_proto.h"],
