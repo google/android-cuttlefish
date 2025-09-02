@@ -58,6 +58,8 @@ namespace cuttlefish {
 
 namespace {
 
+constexpr auto kDefaultConfig = "phone";
+
 std::string VectorizedFlagValue(const std::vector<std::string>& value) {
   return absl::StrJoin(value, ",");
 }
@@ -108,7 +110,7 @@ class ConfigFlagImpl : public ConfigFlag {
   INJECT(ConfigFlagImpl(ConfigReader& cr, SystemImageDirFlag& s))
       : config_reader_(cr),
         system_image_dir_flag_(s),
-        configs_(s.Size(), "phone"),
+        configs_(s.Size(), kDefaultConfig),
         is_default_(true) {
     auto help =
         "Config preset name. Will automatically set flag fields using the "
@@ -133,12 +135,11 @@ class ConfigFlagImpl : public ConfigFlag {
     CF_EXPECT(flag_.Parse(args), "Failed to parse `--config` flag");
 
     if (is_default_) {
+      configs_.resize(system_image_dir_flag_.Size());
       // The default value is read from android_info.txt when available
       for (size_t i = 0; i < configs_.size(); ++i) {
         std::optional<std::string> info_cfg = FindAndroidInfoConfig(i);
-        if (info_cfg) {
-          configs_[i] = *info_cfg;
-        }
+        configs_[i] = info_cfg.value_or(kDefaultConfig);
       }
     }
     std::map<std::string, std::vector<std::string>> flags;
