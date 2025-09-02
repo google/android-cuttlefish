@@ -472,7 +472,7 @@ git_repository(
 
 git_repository(
     name = "gfxstream",
-    commit = "c7ceec935723db8c6b296b04bc71eb6f6eb27607",
+    commit = "efbcd112d2cf43b7bca9260f8d81fd948446bcd3",
     remote = "https://github.com/google/gfxstream.git",
     patch_strip = 1,
     patches = [
