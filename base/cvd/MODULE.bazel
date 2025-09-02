@@ -466,7 +466,7 @@ git_repository(
 git_repository(
     name = "swiftshader",
     build_file = "@//:BUILD.swiftshader.bazel",
-    commit = "4c3426403b9c89253322265323ca658a2476faca",
+    commit = "14f87286123a47207ba25d0d32ebda27b13fe5a3",
     remote = "https://swiftshader.googlesource.com/SwiftShader.git",
 )
 
