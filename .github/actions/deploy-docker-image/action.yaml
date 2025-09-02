@@ -1,0 +1,22 @@
+name: 'Deploy docker image cuttlefish-orchestration'
+inputs:
+  arch:
+    required: true
+runs:
+  using: "composite"
+  steps:
+  - name: Deploy docker image into Artifact Registry
+    run: |
+      # TODO(b/440196950): Setup condition on this step when we build
+      # stable/unstable versions here too.
+
+      # Stable/Unstable version tag : X.Y.Z
+      # Nightly version tag         : gitYYYYMMDD-<Github SHA 8 digit>
+      DATE=$(date -u +'%Y%m%d')
+      SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+      TAG="git${DATE}-${SHORT_SHA}-${{ inputs.arch }}"
+      REMOTE_IMAGE_TAG=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${TAG}
+
+      docker tag cuttlefish-orchestration ${REMOTE_IMAGE_TAG}
+      docker push ${REMOTE_IMAGE_TAG}
+    shell: bash

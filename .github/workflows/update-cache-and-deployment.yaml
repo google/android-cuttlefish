@@ -93,3 +93,46 @@ jobs:
       uses: ./.github/actions/deploy-debian-packages
       with:
         path: .
+
+  deploy-docker-image-amd64:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Build docker image
+      run: docker/image-builder.sh
+    - name: Authentication on GCP project android-cuttlefish-artifacts
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Login to Artifact Registry
+      uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # aka v3.5.0
+      with:
+        registry: us-docker.pkg.dev
+        username: _json_key
+        password: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Deploy docker image
+      uses: ./.github/actions/deploy-docker-image
+      with:
+        arch: amd64
+  deploy-docker-image-arm64:
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Build docker image
+      run: docker/image-builder.sh
+    - name: Authentication on GCP project android-cuttlefish-artifacts
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Login to Artifact Registry
+      uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # aka v3.5.0
+      with:
+        registry: us-docker.pkg.dev
+        username: _json_key
+        password: '${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}'
+    - name: Deploy docker image
+      uses: ./.github/actions/deploy-docker-image
+      with:
+        arch: arm64
