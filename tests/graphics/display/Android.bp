@@ -17,58 +17,6 @@ package {
     default_team: "trendy_team_android_core_graphics_stack",
 }
 
-cc_binary {
-    name: "simply_red",
-    defaults: ["hwc_deps"],
-    srcs: [
-        "./src/simply_red.cpp",
-    ],
-    static_libs: [
-        "hwc_tester",
-    ],
-    include_dirs: [
-        "platform_testing/tests/display/hcct/utils",
-    ],
-    compile_multilib: "both",
-    multilib: {
-        lib32: {
-            suffix: "32",
-        },
-        lib64: {
-            suffix: "",
-        },
-    },
-}
-
-java_test_host {
-    name: "CuttlefishHwcRedSmokeTest",
-    defaults: [
-        "cuttlefish_host_test_utils_defaults",
-    ],
-    srcs: [
-        "CuttlefishHwcRedSmokeTest.java",
-    ],
-    data_device_bins_both: [
-        "simply_red",
-    ],
-    test_options: {
-        unit_test: false,
-    },
-    test_suites: [
-        "device-tests",
-    ],
-    libs: [
-        "compatibility-host-util",
-        "cts-tradefed",
-        "tradefed",
-    ],
-    plugins: [
-        "auto_annotation_plugin",
-        "auto_value_plugin",
-    ],
-    test_config_template: "display_config_template.xml",
-}
-
 java_test_host {
     name: "CfVkmsConnectorsTest",
     defaults: [
