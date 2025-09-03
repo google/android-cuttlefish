@@ -1,5 +1,7 @@
 name: 'Deploy debian packages for Cuttlefish host'
 inputs:
+  deploy-channel:
+    required: true
   path:
     required: true
 runs:
@@ -11,11 +13,17 @@ runs:
       version: '>= 363.0.0'
   - name: Deploy deb packages into Artifact Registry
     run: |
+      if [[ ${{ inputs.deploy-channel }} == "stable" )]]; then
+        REPO=android-cuttlefish
+      else
+        REPO=android-cuttlefish-${{ inputs.deploy-channel }}
+      fi
+
       pushd ${{ inputs.path }}
       for var in base user orchestration; do
         gcloud --project=android-cuttlefish-artifacts \
           artifacts apt upload \
-          android-cuttlefish-nightly \
+          ${REPO} \
           --location=us \
           --source=$(find . -name cuttlefish-${var}_*.deb)
       done

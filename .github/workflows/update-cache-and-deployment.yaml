@@ -61,6 +61,7 @@ jobs:
       if: inputs.deploy-channel == 'nightly'
       uses: ./.github/actions/deploy-debian-packages
       with:
+        deploy-channel: ${{ inputs.deploy-channel }}
         path: .
   update-bazel-cache-and-deploy-debian-package-arm64:
     environment: deployment
@@ -91,6 +92,7 @@ jobs:
       if: inputs.deploy-channel == 'nightly'
       uses: ./.github/actions/deploy-debian-packages
       with:
+        deploy-channel: ${{ inputs.deploy-channel }}
         path: .
 
   deploy-docker-image-amd64:
