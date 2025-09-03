@@ -240,8 +240,9 @@ DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
 DEFINE_bool(enable_automotive_proxy, CF_DEFAULTS_ENABLE_AUTOMOTIVE_PROXY,
             "Enable the automotive proxy service on the host.");
 
-DEFINE_bool(enable_vhal_proxy_server, CF_DEFAULTS_ENABLE_VHAL_PROXY_SERVER,
-            "Enable the vhal proxy service on the host.");
+DEFINE_vec(enable_vhal_proxy_server,
+           fmt::format("{}", CF_DEFAULTS_ENABLE_VHAL_PROXY_SERVER),
+           "Enable the vhal proxy service on the host.");
 DEFINE_int32(vhal_proxy_server_instance_num,
              CF_DEFAULTS_VHAL_PROXY_SERVER_INSTANCE_NUM,
              "If it is greater than 0, use an existing vhal proxy server "
@@ -1542,6 +1543,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::set<std::string> straced_set(straced.begin(), straced.end());
   tmp_config_obj.set_straced_host_executables(straced_set);
 
+  std::vector<bool> enable_vhal_proxy_server_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_vhal_proxy_server));
+  bool enable_vhal_proxy_server =
+      std::any_of(enable_vhal_proxy_server_vec.begin(),
+                  enable_vhal_proxy_server_vec.end(), [](bool e) { return e; });
   auto vhal_proxy_server_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_vhal_proxy_server_instance_num > 0) {
     vhal_proxy_server_instance_num = FLAGS_vhal_proxy_server_instance_num - 1;
@@ -1550,7 +1556,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       cuttlefish::vhal_proxy_server::kDefaultEthPort +
       vhal_proxy_server_instance_num);
   LOG(DEBUG) << "launch vhal proxy server: "
-             << (FLAGS_enable_vhal_proxy_server &&
+             << (enable_vhal_proxy_server &&
                  vhal_proxy_server_instance_num <= 0);
 
   tmp_config_obj.set_kvm_path(FLAGS_kvm_path);
@@ -2067,7 +2073,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_start_pica(is_first_instance && !is_uwb_netsim &&
                             FLAGS_pica_instance_num <= 0);
     instance.set_start_vhal_proxy_server(
-        is_first_instance && FLAGS_enable_vhal_proxy_server &&
+        is_first_instance && enable_vhal_proxy_server &&
         FLAGS_vhal_proxy_server_instance_num <= 0);
 
     // TODO(b/288987294) Remove this when separating environment is done
