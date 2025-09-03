@@ -170,11 +170,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "run-cvd-unit-tests"
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
-      with:
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v4
@@ -195,11 +192,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
-      with:
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Build debs_amd64.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64.tar --null --files-from -
     - name: Publish debs_amd64.tar
@@ -221,11 +215,8 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
-      with:
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Build debs_arm64.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64.tar --null --files-from -
     - name: Publish debs_arm64.tar

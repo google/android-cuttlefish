@@ -1,7 +1,4 @@
 name: 'Run cvd unit tests'
-inputs:
-  cache-path:
-    required: true
 runs:
   using: "composite"
   steps:
@@ -18,5 +15,5 @@ runs:
     run: sudo tools/buildutils/installbazel.sh
     shell: bash
   - name: Run unit tests
-    run: cd base/cvd && bazel test --disk_cache=${{ inputs.cache-path }} --sandbox_writable_path=$HOME --test_output=errors ...
+    run: cd base/cvd && bazel test --disk_cache=$HOME/bazel-disk-cache --sandbox_writable_path=$HOME --test_output=errors ...
     shell: bash
