@@ -1,0 +1,16 @@
+name: Unstable channel
+
+on:
+  push:
+    branches:
+      - 'version-[0-9]+.[0-9]+-dev'
+
+jobs:
+  deploy:
+    if: github.repository_owner == 'google'
+    uses: ./.github/workflows/update-cache-and-deployment.yaml
+    with:
+      update-cache: false
+      deploy-channel: unstable
+    secrets:
+      artifact-registry-uploader-json-creds: ${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}

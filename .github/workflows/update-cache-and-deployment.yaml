@@ -53,12 +53,12 @@ jobs:
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
-      if: inputs.deploy-channel == 'nightly'
+      if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v2'
       with:
         credentials_json: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy CF host debian packages
-      if: inputs.deploy-channel == 'nightly'
+      if: inputs.deploy-channel != ''
       uses: ./.github/actions/deploy-debian-packages
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
@@ -84,12 +84,12 @@ jobs:
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
-      if: inputs.deploy-channel == 'nightly'
+      if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v2'
       with:
         credentials_json: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy CF host debian packages
-      if: inputs.deploy-channel == 'nightly'
+      if: inputs.deploy-channel != ''
       uses: ./.github/actions/deploy-debian-packages
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
