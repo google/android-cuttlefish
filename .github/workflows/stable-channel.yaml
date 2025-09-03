@@ -1,0 +1,16 @@
+name: Stable channel
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  deploy:
+    if: github.repository_owner == 'google'
+    uses: ./.github/workflows/update-cache-and-deployment.yaml
+    with:
+      update-cache: false
+      deploy-channel: stable
+    secrets:
+      artifact-registry-uploader-json-creds: ${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}
