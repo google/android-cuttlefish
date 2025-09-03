@@ -1,0 +1,16 @@
+name: Postsubmit
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-cache-and-deploy:
+    if: github.repository_owner == 'google'
+    uses: ./.github/workflows/update-cache-and-deployment.yaml
+    with:
+      update-cache: true
+      deploy-channel: nightly
+    secrets:
+      artifact-registry-uploader-json-creds: ${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}
