@@ -1,0 +1,14 @@
+name: Scheduled bazel cache update
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+
+jobs:
+  update-cache:
+    if: github.repository_owner == 'google'
+    uses: ./.github/workflows/update-cache-and-deployment.yaml
+    with:
+      update-cache: true
+    secrets:
+      artifact-registry-uploader-json-creds: ${{ secrets.ARTIFACT_REGISTRY_UPLOADER }}
