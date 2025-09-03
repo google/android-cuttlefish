@@ -50,6 +50,8 @@ jobs:
         writable: '${{ inputs.update-cache }}'
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
+      with:
+        deploy-channel: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel == 'nightly'
       uses: 'google-github-actions/auth@v2'
@@ -78,6 +80,8 @@ jobs:
         writable: '${{ inputs.update-cache }}'
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
+      with:
+        deploy-channel: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel == 'nightly'
       uses: 'google-github-actions/auth@v2'
