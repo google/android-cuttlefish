@@ -42,3 +42,7 @@ PRODUCT_MODEL := AOSP Cuttlefish x86_64 auto 64-bit only with Declarative window
 
 # Include the`launch_cvd --config auto_dewd` option.
 $(call soong_config_append,cvd,launch_configs,cvd_config_auto_dewd.json)
+# Soong-only configuration for aosp_cf_x86_64_auto_dewd
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_auto_dewd)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
