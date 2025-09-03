@@ -23,12 +23,9 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "run-cvd-unit-tests"
-        cache-path: "$HOME/bazel-disk-cache"
         writable: "true"
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
-      with:
-        cache-path: "$HOME/bazel-disk-cache"
   update-bazel-cache-and-deploy-debian-package-amd64:
     if: github.repository_owner == 'google'
     environment: deployment
@@ -45,12 +42,9 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
-        cache-path: "$HOME/bazel-disk-cache"
         writable: "true"
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
-      with:
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: github.event_name == 'push'
       uses: 'google-github-actions/auth@v2'
@@ -77,12 +71,9 @@ jobs:
       uses: ./.github/actions/mount-bazel-cache
       with:
         action-name: "build-debian-packages"
-        cache-path: "$HOME/bazel-disk-cache"
         writable: "true"
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
-      with:
-        cache-path: "$HOME/bazel-disk-cache"
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: github.event_name == 'push'
       uses: 'google-github-actions/auth@v2'
