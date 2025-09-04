@@ -666,8 +666,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_vhal_proxy_server_port(
       cuttlefish::vhal_proxy_server::kDefaultEthPort +
       vhal_proxy_server_instance_num);
+  std::vector<bool> enable_vhal_proxy_server_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_vhal_proxy_server));
+  bool enable_vhal_proxy_server =
+      std::any_of(enable_vhal_proxy_server_vec.begin(),
+                  enable_vhal_proxy_server_vec.end(), [](bool e) { return e; });
   LOG(DEBUG) << "launch vhal proxy server: "
-             << (FLAGS_enable_vhal_proxy_server &&
+             << (enable_vhal_proxy_server &&
                  vhal_proxy_server_instance_num <= 0);
 
   tmp_config_obj.set_kvm_path(FLAGS_kvm_path);
@@ -1164,7 +1169,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_start_pica(is_first_instance && !is_uwb_netsim &&
                             FLAGS_pica_instance_num <= 0);
     instance.set_start_vhal_proxy_server(
-        is_first_instance && FLAGS_enable_vhal_proxy_server &&
+        is_first_instance && enable_vhal_proxy_server &&
         FLAGS_vhal_proxy_server_instance_num <= 0);
 
     // TODO(b/288987294) Remove this when separating environment is done
