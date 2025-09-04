@@ -76,7 +76,7 @@ func createImageMain(project, zone string) error {
 	}
 	log.Printf("disk created: %q", attachedDiskName)
 	log.Println("creating instance...")
-	ins, err := h.CreateInstance(insName)
+	ins, err := h.CreateInstanceWithImage(debianSourceImageProject, debianSourceImage, "n1-standard-16", insName)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
@@ -129,7 +129,7 @@ func createImageMain(project, zone string) error {
 	if err := h.StopInstance(insName); err != nil {
 		return fmt.Errorf("error stopping instance: %v", err)
 	}
-	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
+	if err := h.CreateImage(attachedDiskName, outImageName, nil); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	return nil

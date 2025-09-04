@@ -101,7 +101,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	defer cleanupDeleteDisk(h, attachedDiskName)
 
 	log.Println("creating instance...")
-	_, err = h.CreateInstance(insName)
+	_, err = h.CreateInstanceWithImage(opts.SourceImageProject, opts.SourceImage, "n1-standard-16", insName)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
@@ -136,7 +136,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	log.Println("instance deleted")
 
 	log.Printf("creating image %q...", outImageName)
-	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
+	if err := h.CreateImage(attachedDiskName, outImageName, nil); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	log.Println("image created")

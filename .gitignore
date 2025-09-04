@@ -28,4 +28,5 @@ frontend/src/operator/webui/src/environments/version.ts
 /**/bazel-*
 MODULE.bazel.lock
 
+/tools/baseimage/create_gce_co_container_image
 /tools/baseimage/create_gce_x86_64_image

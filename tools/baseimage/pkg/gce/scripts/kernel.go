@@ -23,6 +23,23 @@ sudo apt install -t bookworm -y linux-image-cloud-amd64
 sudo reboot
 `
 
+const UpdateBackportKernel = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+ARCH=$(uname -m)
+if [ "$ARCH" == "x86_64" ]; then
+    ARCH="amd64"
+elif [ "$ARCH" == "aarch64" ]; then
+    ARCH="arm64"
+fi
+
+echo "deb http://deb.debian.org/debian bookworm-backports main" |\
+    sudo tee /etc/apt/sources.list > /dev/null
+sudo apt update
+sudo apt install -y linux-base -t bookworm-backports
+sudo apt install -y linux-image-cloud-$ARCH -t bookworm-backports
+`
+
 // https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/tools/update_gce_kernel.sh;drc=7f601ad9132960b58ee3d7fe8f8b382d20720a22
 const RemoveOldKernel = `#!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail

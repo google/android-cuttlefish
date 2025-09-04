@@ -86,15 +86,22 @@ func (h *GceHelper) DetachDisk(ins, disk string) error {
 	return h.waitForOperation(op)
 }
 
-func (h *GceHelper) CreateInstance(name string) (*compute.Instance, error) {
+func (h *GceHelper) CreateInstanceWithImage(sourceImageProject, sourceImage, machineType, name string) (*compute.Instance, error) {
+	return h.createInstance(fmt.Sprintf("projects/%s/global/images/%s", sourceImageProject, sourceImage), machineType, name)
+}
+
+func (h *GceHelper) CreateInstanceWithImageFamily(sourceImageProject, sourceImageFamily, machineType, name string) (*compute.Instance, error) {
+	return h.createInstance(fmt.Sprintf("projects/%s/global/images/family/%s", sourceImageProject, sourceImageFamily), machineType, name)
+}
+
+func (h *GceHelper) createInstance(sourceImage, machineType, name string) (*compute.Instance, error) {
 	payload := &compute.Instance{
 		Name:           name,
-		MachineType:    fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, "n1-standard-16"),
-		MinCpuPlatform: "Intel Haswell",
+		MachineType:    fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, machineType),
 		Disks: []*compute.AttachedDisk{
 			{
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/debian-12-bookworm-v20250415",
+					SourceImage: sourceImage,
 				},
 				Boot:       true,
 				AutoDelete: true,
@@ -138,11 +145,19 @@ func (h *GceHelper) DeleteInstance(name string) error {
 	return h.waitForOperation(op)
 }
 
-func (h *GceHelper) CreateImage(ins, disk, name string) error {
+func (h *GceHelper) CreateImage(disk, name string, features []string) error {
 	payload := &compute.Image{
 		Name:       name,
 		SourceDisk: fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
 		Licenses:   []string{"https://www.googleapis.com/compute/v1/projects/vm-options/global/licenses/enable-vmx"},
+	}
+	if features != nil {
+		guestOsFeatures := []*compute.GuestOsFeature{}
+		for _, feature := range features {
+			guestOsFeatures = append(guestOsFeatures, &compute.GuestOsFeature{Type: feature})
+
+		}
+		payload.GuestOsFeatures = guestOsFeatures
 	}
 	op, err := h.Service.Images.Insert(h.Project, payload).Do()
 	if err != nil {
