@@ -741,14 +741,33 @@ static void requestShutdown(RIL_Token t)
     return;
 }
 
+// This is the function that will run on the new background thread.
+// This is to simulate the radio state change during reboot.
+static void* broadcastRadioStateThreadFunc(void* arg __unused) {
+    // Wait 1 second
+    sleep(1);
+
+    // Change state to OFF
+    setRadioState(RADIO_STATE_OFF);
+
+    // Wait another second
+    sleep(1);
+
+    // Change state back to ON
+    setRadioState(RADIO_STATE_ON);
+
+    return NULL;
+}
+
 static void requestNvResetConfig(void* data, size_t datalen __unused, RIL_Token t) {
     assert(datalen >= sizeof(int*));
     int nvConfig = ((int*)data)[0];
     if (nvConfig == 1 /* ResetNvType::RELOAD */) {
-        setRadioState(RADIO_STATE_OFF);
-        // Wait for FW to process radio off before sending radio on for reboot
-        sleep(5);
-        setRadioState(RADIO_STATE_ON);
+        pthread_t tid;  // Variable to hold the thread ID
+        // Create and start the new thread to broadcast radio state change.
+        int err = pthread_create(&tid, NULL, &broadcastRadioStateThreadFunc, NULL);
+        // Detach the thread to let it run independently and clean up automatically
+        pthread_detach(tid);
     }
     RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
