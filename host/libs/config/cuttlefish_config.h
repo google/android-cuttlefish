@@ -370,6 +370,7 @@ class CuttlefishConfig {
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
     std::string mobile_mac() const;
+    bool has_wifi_card() const;
     std::string wifi_bridge_name() const;
     std::string wifi_tap_name() const;
     std::string wifi_mac() const;
@@ -792,6 +793,7 @@ class CuttlefishConfig {
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_mobile_mac(const std::string& mac);
+    void set_has_wifi_card(bool has_wifi_card);
     void set_wifi_bridge_name(const std::string& wifi_bridge_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
     void set_wifi_mac(const std::string& mac);

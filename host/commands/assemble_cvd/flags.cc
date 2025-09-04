@@ -527,7 +527,8 @@ DEFINE_vec(crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
-DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
+DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
+           "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");
@@ -1572,7 +1573,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   mutable_env_config.set_group_uuid(std::time(0));
 
-  mutable_env_config.set_enable_wifi(FLAGS_enable_wifi);
+  std::vector<bool> enable_wifi_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_wifi));
+  bool enable_wifi = std::any_of(enable_wifi_vec.begin(), enable_wifi_vec.end(),
+                                 [](bool e) { return e; });
+  mutable_env_config.set_enable_wifi(enable_wifi);
 
   mutable_env_config.set_vhost_user_mac80211_hwsim(
       FLAGS_vhost_user_mac80211_hwsim);
@@ -1583,7 +1588,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // vhost_user_mac80211_hwsim is not specified.
   const bool start_wmediumd = tmp_config_obj.virtio_mac80211_hwsim() &&
                               FLAGS_vhost_user_mac80211_hwsim.empty() &&
-                              FLAGS_enable_wifi;
+                              enable_wifi;
   if (start_wmediumd) {
     auto vhost_user_socket_path =
         env_config.PerEnvironmentUdsPath("vhost_user_mac80211");
@@ -1840,6 +1845,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_data_policy(data_policy_vec[instance_index]);
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
+    instance.set_has_wifi_card(enable_wifi_vec[instance_index]);
     instance.set_wifi_bridge_name("cvd-wbr");
     instance.set_ethernet_bridge_name("cvd-ebr");
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);

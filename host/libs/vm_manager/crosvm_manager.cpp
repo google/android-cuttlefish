@@ -720,7 +720,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.AddTap(instance.ethernet_tap_name(), instance.ethernet_mac(),
                       ethernet_pci);
 
-    if (!config.virtio_mac80211_hwsim() && environment.enable_wifi()) {
+    if (!config.virtio_mac80211_hwsim() && instance.has_wifi_card()) {
       crosvm_cmd.AddTap(instance.wifi_tap_name());
     }
   }
