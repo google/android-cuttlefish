@@ -10,14 +10,15 @@ android_cuttlefish_root_dir=$(realpath -s $script_location/..)
 usage() {
   echo "usage: $0 [-t <tag>] [-m <mode>]"
   echo "  -t: name or name:tag of docker image (default cuttlefish-orchestration)"
-  echo "  -m: set mode for build image (default: prod)"
-  echo "      prod - Downloads and installs host packages"
-  echo "      dev  - Use *.deb files under repo dir as prebuilt of host packages"
-
+  echo "  -m: set mode for build image (default: stable)"
+  echo "      stable   - Downloads and installs host packages from stable channel"
+  echo "      unstable - Downloads and installs host packages from unstable channel"
+  echo "      nightly  - Downloads and installs host packages from nightly channel"
+  echo "      dev      - Use *.deb files under repo dir as prebuilt of host packages"
 }
 
 name=cuttlefish-orchestration
-build_option=prod
+mode=stable
 while getopts ":hm:t:" opt; do
   case "${opt}" in
     h)
@@ -25,7 +26,7 @@ while getopts ":hm:t:" opt; do
       exit 0
       ;;
     m)
-      build_option="${OPTARG}"
+      mode="${OPTARG}"
       ;;
     t)
       name="${OPTARG}"
@@ -43,6 +44,29 @@ while getopts ":hm:t:" opt; do
   esac
 done
 
+case "${mode}" in
+  stable)
+    build_option=prod
+    repo=android-cuttlefish
+    ;;
+  unstable)
+    build_option=prod
+    repo=android-cuttlefish-unstable
+    ;;
+  nightly)
+    build_option=prod
+    repo=android-cuttlefish-nightly
+    ;;
+  dev)
+    build_option=dev
+    repo=
+    ;;
+  *)
+    echo "Invalid mode: ${mode}" >&2
+    usage
+    exit 1
+esac
+
 # Build docker image
 pushd $android_cuttlefish_root_dir
 DOCKER_BUILDKIT=1 docker build \
@@ -52,5 +76,6 @@ DOCKER_BUILDKIT=1 docker build \
     -t $name \
     --target runner \
     --build-arg BUILD_OPTION=$build_option \
+    --build-arg REPO=$repo \
     .
 popd

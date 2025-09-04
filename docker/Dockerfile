@@ -45,15 +45,16 @@ RUN apt install -y --no-install-recommends -f \
 
 FROM runner-base AS runner-prod
 
-RUN apt install -y --no-install-recommends \
-    wget
-RUN wget -qO- https://artifacts.codelinaro.org/artifactory/linaro-372-googlelt-gigabyte-ampere-cuttlefish-installer/gigabyte-ampere-cuttlefish-installer/latest/debian/linaro-glt-gig-archive-bookworm.asc \
-    | tee /etc/apt/trusted.gpg.d/linaro-glt-gig-archive-bookworm.asc
-RUN echo "deb https://artifacts.codelinaro.org/linaro-372-googlelt-gigabyte-ampere-cuttlefish-installer/gigabyte-ampere-cuttlefish-installer/latest/debian bookworm main" \
-    | tee /etc/apt/sources.list.d/linaro-glt-gig-archive-bookworm.list
+ARG REPO
+RUN apt install -y --no-install-recommends gnupg
+RUN curl https://us-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add -
+RUN echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts $REPO main" \
+    | tee -a /etc/apt/sources.list.d/artifact-registry.list
 RUN apt update
 RUN apt install -y --no-install-recommends \
-    cuttlefish-base cuttlefish-user cuttlefish-orchestration
+    cuttlefish-base \
+    cuttlefish-user \
+    cuttlefish-orchestration
 
 
 FROM runner-${BUILD_OPTION} AS runner

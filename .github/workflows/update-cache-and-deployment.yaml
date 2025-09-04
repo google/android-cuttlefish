@@ -97,13 +97,14 @@ jobs:
 
   deploy-docker-image-amd64:
     if: inputs.deploy-channel == 'nightly'
+    needs: [update-bazel-cache-and-deploy-debian-package-amd64]
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Build docker image
-      run: docker/image-builder.sh
+      run: docker/image-builder.sh -m ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@v2'
       with:
@@ -120,13 +121,14 @@ jobs:
         arch: amd64
   deploy-docker-image-arm64:
     if: inputs.deploy-channel == 'nightly'
+    needs: [update-bazel-cache-and-deploy-debian-package-arm64]
     environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Build docker image
-      run: docker/image-builder.sh
+      run: docker/image-builder.sh -m ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@v2'
       with:
