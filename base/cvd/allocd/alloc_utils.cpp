@@ -117,14 +117,14 @@ bool CreateEthernetIface(const std::string& name, const std::string& bridge_name
 
 std::string MobileGatewayName(const std::string& ipaddr, uint16_t id) {
   std::stringstream ss;
-  ss << ipaddr << "." << (4 * id + 1);
+  ss << ipaddr << "." << (4 * id - 3);
   return ss.str();
 }
 
 std::string MobileNetworkName(const std::string& ipaddr,
                               const std::string& netmask, uint16_t id) {
   std::stringstream ss;
-  ss << ipaddr << "." << (4 * id) << netmask;
+  ss << ipaddr << "." << (4 * id - 4) << netmask;
   return ss.str();
 }
 

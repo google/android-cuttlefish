@@ -23,4 +23,16 @@ std::string CvdallocInterfaceName(const std::string &name, int num) {
   return absl::StrFormat("%s-%s%d", kCvdallocInterfacePrefix, name, num);
 }
 
+std::string InstanceToMobileGatewayAddress(int num) {
+  return absl::StrFormat("%s.%d", kCvdallocMobileIpPrefix, 4 * num - 3);
+}
+
+std::string InstanceToMobileAddress(int num) {
+  return absl::StrFormat("%s.%d", kCvdallocMobileIpPrefix, 4 * num - 2);
+}
+
+std::string InstanceToMobileBroadcast(int num) {
+  return absl::StrFormat("%s.%d", kCvdallocMobileIpPrefix, 4 * num - 1);
+}
+
 }  // namespace cuttlefish
