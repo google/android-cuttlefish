@@ -225,12 +225,20 @@ jobs:
         name: debs_arm64
         path: debs_arm64.tar
   build-docker-image-amd64:
+    needs: [build-debian-package-amd64]
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Download cuttlefish debs
+      uses: actions/download-artifact@v4
+      with:
+        name: debs_amd64
     - name: Build docker image
-      run: docker/image-builder.sh
+      shell: bash
+      run: |
+        tar -xvf debs_amd64.tar
+        docker/image-builder.sh -m dev
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
     - name: Publish docker image
@@ -239,12 +247,20 @@ jobs:
         name: cuttlefish-orchestration-amd64
         path: cuttlefish-orchestration.tar
   build-docker-image-arm64:
+    needs: [build-debian-package-arm64]
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Download cuttlefish debs
+      uses: actions/download-artifact@v4
+      with:
+        name: debs_arm64
     - name: Build docker image
-      run: docker/image-builder.sh
+      shell: bash
+      run: |
+        tar -xvf debs_arm64.tar
+        docker/image-builder.sh -m dev
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
     - name: Publish docker image
@@ -354,25 +370,19 @@ jobs:
         df -h
   docker-image-check:
     runs-on: ubuntu-22.04
-    needs: [build-debian-package-amd64]
+    needs: [build-docker-image-amd64]
     steps:
-    - name: Free disk space
-      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
-      with:
-        tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
-    - name: Download cuttlefish debs
+    - name: Download docker image
       uses: actions/download-artifact@v4
       with:
-        name: debs_amd64
-        github-token: ${{ github.token }}
+        name: cuttlefish-orchestration-amd64
+    - name: Load docker image
+      run: docker load --input cuttlefish-orchestration.tar
     - name: Run check
       shell: bash
       run: |
-        tar -xvf debs_amd64.tar
-        ./docker/image-builder.sh -m dev
-        docker images
         sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
         # Wait for HO service to start.
         sleep 10s
@@ -382,5 +392,3 @@ jobs:
         # Run create_from_images_zip_test e2e tests
         cd e2etests
         bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
-
-
