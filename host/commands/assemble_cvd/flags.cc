@@ -202,8 +202,9 @@ DEFINE_vec(
     pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER?"true":"false",
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
-DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
-            "Enable the rootcanal which is Bluetooth emulator in the host.");
+DEFINE_vec(enable_host_bluetooth,
+           fmt::format("{}", CF_DEFAULTS_ENABLE_HOST_BLUETOOTH),
+           "Enable the rootcanal which is Bluetooth emulator in the host.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
@@ -1289,17 +1290,18 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
+  // old flags but vectorized for multi-device instances
+  int32_t instances_size = instance_nums.size();
+  // get flag default values and store into map
+  auto name_to_default_value = CurrentFlagsToDefaultValue();
+
   // netsim flags allow all radios or selecting a specific radio
   bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt || FLAGS_netsim_uwb;
   bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
   bool is_uwb_netsim = FLAGS_netsim || FLAGS_netsim_uwb;
 
-  // crosvm should create fifos for Bluetooth
-  tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth ||
-                                           is_bt_netsim);
-
-  // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
-  tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
+  std::vector<bool> enable_host_bluetooth_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_host_bluetooth));
 
   tmp_config_obj.set_enable_host_nfc(FLAGS_enable_host_nfc);
   tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc);
@@ -1312,10 +1314,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_automotive_proxy(FLAGS_enable_automotive_proxy);
 
-  // get flag default values and store into map
-  auto name_to_default_value = CurrentFlagsToDefaultValue();
-  // old flags but vectorized for multi-device instances
-  int32_t instances_size = instance_nums.size();
   std::vector<std::string> gnss_file_paths =
       CF_EXPECT(GET_FLAG_STR_VALUE(gnss_file_path));
   std::vector<std::string> fixed_location_file_paths =
@@ -1863,6 +1861,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_ethernet_tap_name(iface_config.ethernet_tap.name);
+
+    // crosvm should create fifos for Bluetooth
+    bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
+    // or is_bt_netsim is here for backwards compatibility only
+    instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
+    // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
+    instance.set_enable_host_bluetooth_connector(enable_host_bluetooth &&
+                                                 !is_bt_netsim);
 
     instance.set_uuid(FLAGS_uuid);
 

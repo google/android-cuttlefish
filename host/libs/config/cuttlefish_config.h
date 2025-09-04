@@ -161,19 +161,12 @@ class CuttlefishConfig {
   void set_enable_host_uwb_connector(bool enable_host_uwb);
   bool enable_host_uwb_connector() const;
 
-  void set_enable_host_bluetooth(bool enable_host_bluetooth);
-  bool enable_host_bluetooth() const;
-
   void set_enable_automotive_proxy(bool enable_automotive_proxy);
   bool enable_automotive_proxy() const;
 
   // The vsock port used by vhal_proxy_server
   void set_vhal_proxy_server_port(int port);
   int vhal_proxy_server_port() const;
-
-  // Bluetooth is enabled by bt_connector and rootcanal
-  void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
-  bool enable_host_bluetooth_connector() const;
 
   void set_enable_host_nfc(bool enable_host_nfc);
   bool enable_host_nfc() const;
@@ -379,6 +372,10 @@ class CuttlefishConfig {
     std::string ethernet_bridge_name() const;
     std::string ethernet_mac() const;
     std::string ethernet_ipv6() const;
+    bool has_bluetooth() const;
+    // Bluetooth is enabled by bt_connector and rootcanal
+    bool enable_host_bluetooth_connector() const;
+
     uint32_t session_id() const;
     bool use_allocd() const;
     int vsock_guest_cid() const;
@@ -802,6 +799,8 @@ class CuttlefishConfig {
     void set_ethernet_bridge_name(const std::string& set_ethernet_bridge_name);
     void set_ethernet_mac(const std::string& mac);
     void set_ethernet_ipv6(const std::string& ip);
+    void set_has_bluetooth(bool has_bluetooth);
+    void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
     void set_session_id(uint32_t session_id);
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
