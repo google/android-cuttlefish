@@ -20,7 +20,14 @@
 namespace cuttlefish {
 
 constexpr std::string_view kCvdallocInterfacePrefix = "cvd-pi";
+constexpr char kCvdallocMobileIpPrefix[] = "192.168.144";
+constexpr char kCvdallocWirelessIpPrefix[] = "192.168.160";
+constexpr char kCvdallocWirelessApIpPrefix[] = "192.168.176";
+constexpr char kCvdallocEthernetIpPrefix[] = "192.168.192";
 
 std::string CvdallocInterfaceName(const std::string &name, int num);
+std::string InstanceToMobileGatewayAddress(int num);
+std::string InstanceToMobileAddress(int num);
+std::string InstanceToMobileBroadcast(int num);
 
 }  // namespace cuttlefish
