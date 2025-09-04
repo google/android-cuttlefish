@@ -20,6 +20,10 @@
 #include <ifaddrs.h>
 
 #include <android-base/logging.h>
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_format.h"
+
+#include "cuttlefish/host/commands/cvdalloc/interface.h"
 
 namespace cuttlefish {
 namespace {
@@ -131,6 +135,21 @@ Result<void> ConfigureNetworkSettings(
     const std::string& ril_dns_arg,
     const CuttlefishConfig::InstanceSpecific& const_instance,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
+  // We can't introspect the tap interfaces using cvdalloc because
+  // they're not set up yet. However, we can expect the following
+  // instance to address scheme for the mtap interfaces.
+  if (const_instance.use_cvdalloc()) {
+    int num;
+    CF_EXPECT(absl::SimpleAtoi(const_instance.id(), &num));
+
+    instance.set_ril_gateway(InstanceToMobileGatewayAddress(num));
+    instance.set_ril_ipaddr(InstanceToMobileAddress(num));
+    instance.set_ril_broadcast(InstanceToMobileBroadcast(num));
+    instance.set_ril_dns("8.8.8.8");
+    instance.set_ril_prefixlen(30);
+    return {};
+  }
+
   NetConfig netconfig;
   // Check the mobile bridge first; this was the traditional way we configured
   // the mobile interface. If that fails, it probably means we are using a
