@@ -62,7 +62,7 @@ DECLARE_vec(use_allocd);
 DECLARE_vec(use_cvdalloc);
 DECLARE_vec(enable_minimal_mode);
 DECLARE_vec(pause_in_bootloader);
-DECLARE_bool(enable_host_bluetooth);
+DECLARE_vec(enable_host_bluetooth);
 DECLARE_int32(rootcanal_instance_num);
 DECLARE_string(rootcanal_args);
 DECLARE_bool(enable_host_nfc);
@@ -70,10 +70,10 @@ DECLARE_int32(casimir_instance_num);
 DECLARE_string(casimir_args);
 DECLARE_bool(enable_host_uwb);
 DECLARE_int32(pica_instance_num);
-DECLARE_bool(netsim);
+DECLARE_vec(netsim);
 
-DECLARE_bool(netsim_bt);
-DECLARE_bool(netsim_uwb);
+DECLARE_vec(netsim_bt);
+DECLARE_vec(netsim_uwb);
 DECLARE_string(netsim_args);
 
 DECLARE_bool(enable_automotive_proxy);
@@ -192,7 +192,7 @@ DECLARE_vec(crosvm_v4l2_proxy);
 
 DECLARE_vec(use_pmem);
 
-DECLARE_bool(enable_wifi);
+DECLARE_vec(enable_wifi);
 
 DECLARE_vec(device_external_network);
 

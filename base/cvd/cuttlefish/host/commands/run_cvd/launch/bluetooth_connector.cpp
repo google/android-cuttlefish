@@ -40,7 +40,7 @@ namespace cuttlefish {
 Result<std::optional<MonitorCommand>> BluetoothConnector(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!config.enable_host_bluetooth_connector()) {
+  if (!instance.enable_host_bluetooth_connector()) {
     return {};
   }
   std::vector<std::string> fifo_paths = {

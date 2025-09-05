@@ -127,7 +127,8 @@ class RootCanal : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "RootCanal"; }
   bool Enabled() const override {
-    return config_.enable_host_bluetooth_connector() && instance_.start_rootcanal();
+    return instance_.enable_host_bluetooth_connector() &&
+           instance_.start_rootcanal();
   }
 
  private:

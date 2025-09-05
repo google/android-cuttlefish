@@ -131,8 +131,9 @@ DEFINE_vec(
     pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER?"true":"false",
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
-DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
-            "Enable the rootcanal which is Bluetooth emulator in the host.");
+DEFINE_vec(enable_host_bluetooth,
+           fmt::format("{}", CF_DEFAULTS_ENABLE_HOST_BLUETOOTH),
+           "Enable the rootcanal which is Bluetooth emulator in the host.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
@@ -156,13 +157,13 @@ DEFINE_int32(
     "If it is greater than 0, use an existing pica instance which is "
     "launched from cuttlefish instance "
     "with pica_instance_num. Else, launch a new pica instance");
-DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
-            "[Experimental] Connect all radios to netsim.");
 
-DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
-            "Connect Bluetooth radio to netsim.");
-DEFINE_bool(netsim_uwb, CF_DEFAULTS_NETSIM_UWB,
-            "[Experimental] Connect Uwb radio to netsim.");
+DEFINE_vec(netsim, fmt::format("{}", CF_DEFAULTS_NETSIM),
+           "[Experimental] Connect all radios to netsim.");
+DEFINE_vec(netsim_bt, fmt::format("{}", CF_DEFAULTS_NETSIM_BT),
+           "Connect Bluetooth radio to netsim.");
+DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
+           "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 
@@ -420,7 +421,8 @@ DEFINE_vec(crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
-DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
+DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
+           "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");
