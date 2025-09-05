@@ -1596,6 +1596,26 @@ void CuttlefishConfig::MutableInstanceSpecific::set_ethernet_ipv6(
   (*Dictionary())[kEthernetIPV6] = ip;
 }
 
+static constexpr char kHasBluetooth[] = "has_bluetooth";
+bool CuttlefishConfig::InstanceSpecific::has_bluetooth() const {
+  return (*Dictionary())[kHasBluetooth].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_has_bluetooth(
+    bool has_bluetooth) {
+  (*Dictionary())[kHasBluetooth] = has_bluetooth;
+}
+
+static constexpr char kRequiresHostBluetoothConnector[] =
+    "enable_host_bluetooth_connector";
+bool CuttlefishConfig::InstanceSpecific::enable_host_bluetooth_connector()
+    const {
+  return (*Dictionary())[kRequiresHostBluetoothConnector].asBool();
+}
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_enable_host_bluetooth_connector(bool enable_host_bluetooth) {
+  (*Dictionary())[kRequiresHostBluetoothConnector] = enable_host_bluetooth;
+}
+
 static constexpr char kUseAllocd[] = "use_allocd";
 bool CuttlefishConfig::InstanceSpecific::use_allocd() const {
   return (*Dictionary())[kUseAllocd].asBool();

@@ -809,7 +809,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"));
 
   // /dev/hvc5 = bt
-  if (config.enable_host_bluetooth()) {
+  if (instance.has_bluetooth()) {
     crosvm_cmd.AddHvcReadWrite(
         instance.PerInstanceInternalPath("bt_fifo_vm.out"),
         instance.PerInstanceInternalPath("bt_fifo_vm.in"));
