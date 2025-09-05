@@ -157,13 +157,13 @@ DEFINE_int32(
     "If it is greater than 0, use an existing pica instance which is "
     "launched from cuttlefish instance "
     "with pica_instance_num. Else, launch a new pica instance");
-DEFINE_bool(netsim, CF_DEFAULTS_NETSIM,
-            "[Experimental] Connect all radios to netsim.");
 
-DEFINE_bool(netsim_bt, CF_DEFAULTS_NETSIM_BT,
-            "Connect Bluetooth radio to netsim.");
-DEFINE_bool(netsim_uwb, CF_DEFAULTS_NETSIM_UWB,
-            "[Experimental] Connect Uwb radio to netsim.");
+DEFINE_vec(netsim, fmt::format("{}", CF_DEFAULTS_NETSIM),
+           "[Experimental] Connect all radios to netsim.");
+DEFINE_vec(netsim_bt, fmt::format("{}", CF_DEFAULTS_NETSIM_BT),
+           "Connect Bluetooth radio to netsim.");
+DEFINE_vec(netsim_uwb, fmt::format("{}", CF_DEFAULTS_NETSIM_UWB),
+           "[Experimental] Connect Uwb radio to netsim.");
 DEFINE_string(netsim_args, CF_DEFAULTS_NETSIM_ARGS,
               "Space-separated list of netsim args.");
 

@@ -70,10 +70,10 @@ DECLARE_int32(casimir_instance_num);
 DECLARE_string(casimir_args);
 DECLARE_bool(enable_host_uwb);
 DECLARE_int32(pica_instance_num);
-DECLARE_bool(netsim);
+DECLARE_vec(netsim);
 
-DECLARE_bool(netsim_bt);
-DECLARE_bool(netsim_uwb);
+DECLARE_vec(netsim_bt);
+DECLARE_vec(netsim_uwb);
 DECLARE_string(netsim_args);
 
 DECLARE_bool(enable_automotive_proxy);
