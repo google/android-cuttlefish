@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.24.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 05 Sep 2025 14:38:33 -0700
+
 cuttlefish-frontend (1.23.0) unstable; urgency=medium
 
   * Generate ssl certificate at init. by @ser-io in https://github.com/google/android-cuttlefish/pull/1590
