@@ -1777,15 +1777,6 @@ void CuttlefishConfig::MutableInstanceSpecific::
   (*Dictionary())[kRequiresHostBluetoothConnector] = enable_host_bluetooth;
 }
 
-static constexpr char kEnableHostUwbConnector[] = "enable_host_uwb_connector";
-bool CuttlefishConfig::InstanceSpecific::enable_host_uwb_connector() const {
-  return (*Dictionary())[kEnableHostUwbConnector].asBool();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_enable_host_uwb_connector(
-    bool enable_host_uwb) {
-  (*Dictionary())[kEnableHostUwbConnector] = enable_host_uwb;
-}
-
 static constexpr char kUseAllocd[] = "use_allocd";
 bool CuttlefishConfig::InstanceSpecific::use_allocd() const {
   return (*Dictionary())[kUseAllocd].asBool();
