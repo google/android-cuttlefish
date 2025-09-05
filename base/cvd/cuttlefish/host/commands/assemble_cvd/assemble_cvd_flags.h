@@ -62,7 +62,7 @@ DECLARE_vec(use_allocd);
 DECLARE_vec(use_cvdalloc);
 DECLARE_vec(enable_minimal_mode);
 DECLARE_vec(pause_in_bootloader);
-DECLARE_bool(enable_host_bluetooth);
+DECLARE_vec(enable_host_bluetooth);
 DECLARE_int32(rootcanal_instance_num);
 DECLARE_string(rootcanal_args);
 DECLARE_bool(enable_host_nfc);

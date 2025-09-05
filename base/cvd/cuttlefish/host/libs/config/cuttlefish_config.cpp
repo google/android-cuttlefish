@@ -211,23 +211,6 @@ void CuttlefishConfig::set_pica_uci_port(int pica_uci_port) {
   (*dictionary_)[kPicaUciPort] = pica_uci_port;
 }
 
-static constexpr char kEnableHostBluetooth[] = "enable_host_bluetooth";
-void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
-  (*dictionary_)[kEnableHostBluetooth] = enable_host_bluetooth;
-}
-bool CuttlefishConfig::enable_host_bluetooth() const {
-  return (*dictionary_)[kEnableHostBluetooth].asBool();
-}
-
-static constexpr char kEnableHostBluetoothConnector[] =
-    "enable_host_bluetooth_connector";
-void CuttlefishConfig::set_enable_host_bluetooth_connector(bool enable_host_bluetooth) {
-  (*dictionary_)[kEnableHostBluetoothConnector] = enable_host_bluetooth;
-}
-bool CuttlefishConfig::enable_host_bluetooth_connector() const {
-  return (*dictionary_)[kEnableHostBluetoothConnector].asBool();
-}
-
 static constexpr char kEnableAutomotiveProxy[] = "enable_automotive_proxy";
 void CuttlefishConfig::set_enable_automotive_proxy(
     bool enable_automotive_proxy) {
