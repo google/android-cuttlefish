@@ -411,26 +411,47 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
+  tmp_config_obj.set_enable_host_nfc(FLAGS_enable_host_nfc);
+  tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc);
+
   // get flag default values and store into map
   auto name_to_default_value = CurrentFlagsToDefaultValue();
   // old flags but vectorized for multi-device instances
   int32_t instances_size = instance_nums.size();
 
   // netsim flags allow all radios or selecting a specific radio
-  bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt || FLAGS_netsim_uwb;
-  bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
-  bool is_uwb_netsim = FLAGS_netsim || FLAGS_netsim_uwb;
+  std::vector<bool> netsim_all_radios_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim));
+  bool any_netsim_all_radios =
+      std::any_of(netsim_all_radios_vec.begin(), netsim_all_radios_vec.end(),
+                  [](bool e) { return e; });
+  std::vector<bool> netsim_bt_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_bt));
+  bool any_netsim_bt = std::any_of(netsim_bt_vec.begin(), netsim_bt_vec.end(),
+                                   [](bool e) { return e; });
+  std::vector<bool> netsim_uwb_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(netsim_uwb));
+  bool any_netsim_uwb = std::any_of(
+      netsim_uwb_vec.begin(), netsim_uwb_vec.end(), [](bool e) { return e; });
+  bool netsim_has_bt = any_netsim_all_radios || any_netsim_bt;
+  bool netsim_has_uwb = any_netsim_all_radios || any_netsim_uwb;
+
+  // These flags inform NetsimServer::ResultSetup which radios it owns.
+  if (netsim_has_bt) {
+    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
+  }
+  if (netsim_has_uwb) {
+    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Uwb);
+  }
+
+  bool any_not_netsim_bt = false;
+  bool any_not_netsim_uwb = false;
+  for (int32_t i = 0; i < instances_size; ++i) {
+    any_not_netsim_bt |= !netsim_all_radios_vec[i] && !netsim_bt_vec[i];
+    any_not_netsim_uwb |= !netsim_all_radios_vec[i] && !netsim_uwb_vec[i];
+  }
 
   std::vector<bool> enable_host_bluetooth_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_host_bluetooth));
 
-  tmp_config_obj.set_enable_host_nfc(FLAGS_enable_host_nfc);
-  tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc);
-
-  // These flags inform NetsimServer::ResultSetup which radios it owns.
-  if (is_bt_netsim) {
-    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Bluetooth);
-  }
   // end of vectorize ap_rootfs_image, ap_kernel_image, wmediumd_config
 
   tmp_config_obj.set_enable_automotive_proxy(FLAGS_enable_automotive_proxy);
@@ -639,15 +660,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   if (FLAGS_pica_instance_num > 0) {
     pica_instance_num = FLAGS_pica_instance_num - 1;
   }
-  tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb || is_uwb_netsim);
-
-  // netsim has its own connector for uwb
-  tmp_config_obj.set_enable_host_uwb_connector(FLAGS_enable_host_uwb &&
-                                               !is_uwb_netsim);
-
-  if (is_uwb_netsim) {
-    tmp_config_obj.netsim_radio_enable(CuttlefishConfig::NetsimRadio::Uwb);
-  }
+  tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb || any_netsim_uwb);
 
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
   LOG(DEBUG) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
@@ -981,11 +994,20 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // crosvm should create fifos for Bluetooth
     bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
+    bool is_netsim_all = netsim_all_radios_vec[instance_index];
+    bool is_bt_netsim = is_netsim_all || netsim_bt_vec[instance_index];
     // or is_bt_netsim is here for backwards compatibility only
     instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
     // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
     instance.set_enable_host_bluetooth_connector(enable_host_bluetooth &&
                                                  !is_bt_netsim);
+
+    bool is_uwb_netsim = is_netsim_all || netsim_uwb_vec[instance_index];
+    // netsim has its own connector for uwb
+    instance.set_enable_host_uwb_connector(FLAGS_enable_host_uwb &&
+                                           !is_uwb_netsim);
+
+    bool is_any_netsim = is_netsim_all || is_bt_netsim || is_uwb_netsim;
 
     instance.set_uuid(FLAGS_uuid);
 
@@ -1171,12 +1193,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     tmp_config_obj.set_sig_server_proxy_port(port);
     instance.set_start_netsim(is_first_instance && is_any_netsim);
 
-    instance.set_start_rootcanal(is_first_instance && !is_bt_netsim &&
+    instance.set_start_rootcanal(is_first_instance && any_not_netsim_bt &&
                                  (FLAGS_rootcanal_instance_num <= 0));
 
-    instance.set_start_casimir(is_first_instance && FLAGS_casimir_instance_num <= 0);
+    instance.set_start_casimir(is_first_instance &&
+                               FLAGS_casimir_instance_num <= 0);
 
-    instance.set_start_pica(is_first_instance && !is_uwb_netsim &&
+    instance.set_start_pica(is_first_instance && any_not_netsim_uwb &&
                             FLAGS_pica_instance_num <= 0);
     instance.set_start_vhal_proxy_server(
         is_first_instance && enable_vhal_proxy_server &&
