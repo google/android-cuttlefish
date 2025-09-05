@@ -420,7 +420,8 @@ DEFINE_vec(crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
-DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
+DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
+           "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");

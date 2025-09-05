@@ -192,7 +192,7 @@ DECLARE_vec(crosvm_v4l2_proxy);
 
 DECLARE_vec(use_pmem);
 
-DECLARE_bool(enable_wifi);
+DECLARE_vec(enable_wifi);
 
 DECLARE_vec(device_external_network);
 
