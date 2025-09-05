@@ -1,8 +1,11 @@
-cuttlefish-frontend (1.23.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.23.0) unstable; urgency=medium
 
-  * 
+  * Generate ssl certificate at init. by @ser-io in https://github.com/google/android-cuttlefish/pull/1590
+  * Deploy docker manifest for cuttlefish-orchestration by @0405ysj in https://github.com/google/android-cuttlefish/pull/1600
+  * Docker image cuttlefish-orchestration can download debs from AR instead. by @0405ysj in https://github.com/google/android-cuttlefish/pull/1609
+  * Add explicit `provideZoneChangeDetection` to providers by @k311093 in https://github.com/google/android-cuttlefish/pull/1613
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 29 Aug 2025 18:38:25 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 05 Sep 2025 14:07:25 -0700
 
 cuttlefish-frontend (1.22.0) unstable; urgency=medium
 
