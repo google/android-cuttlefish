@@ -52,7 +52,7 @@ PRODUCT_COPY_FILES += \
 # TODO(b/206676167): This property can be removed when renderscript is removed.
 # Prevents framework from attempting to load renderscript libraries, which are
 # not supported on this architecture.
-PRODUCT_SYSTEM_PROPERTIES += \
+PRODUCT_PRODUCT_PROPERTIES += \
     config.disable_renderscript=1 \
 
 PRODUCT_NAME := aosp_cf_riscv64_slim
