@@ -15,7 +15,7 @@
  */
 //! This module implements the ILights AIDL interface.
 
-use rustutils::system_properties;
+use rustutils::android::system_properties;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
