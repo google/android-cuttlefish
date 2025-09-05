@@ -1,8 +1,23 @@
-cuttlefish-common (1.23.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.23.0) unstable; urgency=medium
 
-  * 
+  * Mark 1.22.0 as unstable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1595
+  * Use LOG(INFO) for informational message by @jemoreira in https://github.com/google/android-cuttlefish/pull/1591
+  * Deploy nightly version of CF host debian packages into AR by @0405ysj in https://github.com/google/android-cuttlefish/pull/1585
+  * Deploy nightly version of docker image into AR by @0405ysj in https://github.com/google/android-cuttlefish/pull/1597
+  * Fix typo on update-cache-and-deployment.yaml by @0405ysj in https://github.com/google/android-cuttlefish/pull/1601
+  * Minor cvd display fixes by @jmacnak in https://github.com/google/android-cuttlefish/pull/1589
+  * Begin development of version 1.23 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1596
+  * Do not deal with cache path as parameter for GH actions by @0405ysj in https://github.com/google/android-cuttlefish/pull/1606
+  * Create a type to represent --blank_data_image_mb by @cjreynol in https://github.com/google/android-cuttlefish/pull/1592
+  * Update gfx deps by @jmacnak in https://github.com/google/android-cuttlefish/pull/1603
+  * Ensure the configs flag has a value by @jemoreira in https://github.com/google/android-cuttlefish/pull/1605
+  * Wire cvdalloc up to run_cvd. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1576
+  * Deploy CF host debian packages into stable/unstable channel by @0405ysj in https://github.com/google/android-cuttlefish/pull/1607
+  * Fix typo on deploy-debian-packages GH action by @0405ysj in https://github.com/google/android-cuttlefish/pull/1611
+  * Add type to represent `--cpus` by @cjreynol in https://github.com/google/android-cuttlefish/pull/1594
+  * Vectorize --enable_vhal_proxy_server by @jemoreira in https://github.com/google/android-cuttlefish/pull/1608
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 29 Aug 2025 18:38:39 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 05 Sep 2025 14:05:34 -0700
 
 cuttlefish-common (1.22.0) unstable; urgency=medium
 
