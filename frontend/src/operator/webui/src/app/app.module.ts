@@ -1,4 +1,4 @@
-import {NgModule} from '@angular/core';
+import {NgModule, provideZoneChangeDetection} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 
@@ -17,6 +17,10 @@ import {ViewPaneComponent} from './view-pane/view-pane.component';
 import {SafeDeviceUrlPipe} from './safe-device-url.pipe';
 import {KtdGridModule} from '@katoid/angular-grid-layout';
 import {RouterModule} from '@angular/router';
+
+@NgModule({providers: [provideZoneChangeDetection()]})
+export class ZoneChangeDetectionModule {
+}
 
 @NgModule({
   declarations: [
@@ -39,6 +43,7 @@ import {RouterModule} from '@angular/router';
     HttpClientModule,
     KtdGridModule,
     RouterModule.forRoot([{path: '**', component: AppComponent}]),
+    ZoneChangeDetectionModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
