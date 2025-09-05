@@ -158,9 +158,6 @@ class CuttlefishConfig {
   void set_enable_host_uwb(bool enable_host_uwb);
   bool enable_host_uwb() const;
 
-  void set_enable_host_uwb_connector(bool enable_host_uwb);
-  bool enable_host_uwb_connector() const;
-
   void set_enable_automotive_proxy(bool enable_automotive_proxy);
   bool enable_automotive_proxy() const;
 
@@ -375,6 +372,8 @@ class CuttlefishConfig {
     bool has_bluetooth() const;
     // Bluetooth is enabled by bt_connector and rootcanal
     bool enable_host_bluetooth_connector() const;
+    bool enable_host_uwb_connector() const;
+
 
     uint32_t session_id() const;
     bool use_allocd() const;
@@ -801,6 +800,7 @@ class CuttlefishConfig {
     void set_ethernet_ipv6(const std::string& ip);
     void set_has_bluetooth(bool has_bluetooth);
     void set_enable_host_bluetooth_connector(bool enable_host_bluetooth);
+    void set_enable_host_uwb_connector(bool enable_host_uwb);
     void set_session_id(uint32_t session_id);
     void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
