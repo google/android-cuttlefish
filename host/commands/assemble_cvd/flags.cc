@@ -202,8 +202,9 @@ DEFINE_vec(
     pause_in_bootloader, CF_DEFAULTS_PAUSE_IN_BOOTLOADER?"true":"false",
     "Stop the bootflow in u-boot. You can continue the boot by connecting "
     "to the device console and typing in \"boot\".");
-DEFINE_bool(enable_host_bluetooth, CF_DEFAULTS_ENABLE_HOST_BLUETOOTH,
-            "Enable the rootcanal which is Bluetooth emulator in the host.");
+DEFINE_vec(enable_host_bluetooth,
+           fmt::format("{}", CF_DEFAULTS_ENABLE_HOST_BLUETOOTH),
+           "Enable the rootcanal which is Bluetooth emulator in the host.");
 DEFINE_int32(
     rootcanal_instance_num, CF_DEFAULTS_ROOTCANAL_INSTANCE_NUM,
     "If it is greater than 0, use an existing rootcanal instance which is "
@@ -527,7 +528,8 @@ DEFINE_vec(crosvm_v4l2_proxy, CF_DEFAULTS_CROSVM_V4L2_PROXY,
 DEFINE_vec(use_pmem, "true",
            "Make this flag false to disable pmem with crosvm");
 
-DEFINE_bool(enable_wifi, true, "Enables the guest WIFI. Mainly for Minidroid");
+DEFINE_vec(enable_wifi, fmt::format("{}", CF_DEFAULTS_ENABLE_WIFI),
+           "Enables the guest WIFI. Mainly for Minidroid");
 
 DEFINE_vec(device_external_network, CF_DEFAULTS_DEVICE_EXTERNAL_NETWORK,
            "The mechanism to connect to the public internet.");
@@ -1288,17 +1290,18 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
   tmp_config_obj.set_ap_kernel_image(FLAGS_ap_kernel_image);
 
+  // old flags but vectorized for multi-device instances
+  int32_t instances_size = instance_nums.size();
+  // get flag default values and store into map
+  auto name_to_default_value = CurrentFlagsToDefaultValue();
+
   // netsim flags allow all radios or selecting a specific radio
   bool is_any_netsim = FLAGS_netsim || FLAGS_netsim_bt || FLAGS_netsim_uwb;
   bool is_bt_netsim = FLAGS_netsim || FLAGS_netsim_bt;
   bool is_uwb_netsim = FLAGS_netsim || FLAGS_netsim_uwb;
 
-  // crosvm should create fifos for Bluetooth
-  tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth ||
-                                           is_bt_netsim);
-
-  // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
-  tmp_config_obj.set_enable_host_bluetooth_connector(FLAGS_enable_host_bluetooth && !is_bt_netsim);
+  std::vector<bool> enable_host_bluetooth_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_host_bluetooth));
 
   tmp_config_obj.set_enable_host_nfc(FLAGS_enable_host_nfc);
   tmp_config_obj.set_enable_host_nfc_connector(FLAGS_enable_host_nfc);
@@ -1311,10 +1314,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_automotive_proxy(FLAGS_enable_automotive_proxy);
 
-  // get flag default values and store into map
-  auto name_to_default_value = CurrentFlagsToDefaultValue();
-  // old flags but vectorized for multi-device instances
-  int32_t instances_size = instance_nums.size();
   std::vector<std::string> gnss_file_paths =
       CF_EXPECT(GET_FLAG_STR_VALUE(gnss_file_path));
   std::vector<std::string> fixed_location_file_paths =
@@ -1572,7 +1571,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   mutable_env_config.set_group_uuid(std::time(0));
 
-  mutable_env_config.set_enable_wifi(FLAGS_enable_wifi);
+  std::vector<bool> enable_wifi_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_wifi));
+  bool enable_wifi = std::any_of(enable_wifi_vec.begin(), enable_wifi_vec.end(),
+                                 [](bool e) { return e; });
+  mutable_env_config.set_enable_wifi(enable_wifi);
 
   mutable_env_config.set_vhost_user_mac80211_hwsim(
       FLAGS_vhost_user_mac80211_hwsim);
@@ -1583,7 +1586,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // vhost_user_mac80211_hwsim is not specified.
   const bool start_wmediumd = tmp_config_obj.virtio_mac80211_hwsim() &&
                               FLAGS_vhost_user_mac80211_hwsim.empty() &&
-                              FLAGS_enable_wifi;
+                              enable_wifi;
   if (start_wmediumd) {
     auto vhost_user_socket_path =
         env_config.PerEnvironmentUdsPath("vhost_user_mac80211");
@@ -1840,6 +1843,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_data_policy(data_policy_vec[instance_index]);
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
+    instance.set_has_wifi_card(enable_wifi_vec[instance_index]);
     instance.set_wifi_bridge_name("cvd-wbr");
     instance.set_ethernet_bridge_name("cvd-ebr");
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
@@ -1857,6 +1861,14 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     }
 
     instance.set_ethernet_tap_name(iface_config.ethernet_tap.name);
+
+    // crosvm should create fifos for Bluetooth
+    bool enable_host_bluetooth = enable_host_bluetooth_vec[instance_index];
+    // or is_bt_netsim is here for backwards compatibility only
+    instance.set_has_bluetooth(enable_host_bluetooth || is_bt_netsim);
+    // rootcanal and bt_connector should handle Bluetooth (instead of netsim)
+    instance.set_enable_host_bluetooth_connector(enable_host_bluetooth &&
+                                                 !is_bt_netsim);
 
     instance.set_uuid(FLAGS_uuid);
 
