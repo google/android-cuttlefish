@@ -29,3 +29,8 @@ PRODUCT_PACKAGE_OVERLAYS += \
 
 $(warning ${PRODUCT_NAME} is for development purposes only.)
 
+
+# Soong-only configuration for aosp_cf_x86_64_auto_mdnd
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_auto_mdnd)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
