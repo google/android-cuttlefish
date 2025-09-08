@@ -11,10 +11,10 @@ runs:
       # Modify debian/changelog to build debian package with desired version
       # format.
       # Stable version format           : X.Y.Z
-      # Unstable/nightly version format : X.Y.Z~gitYYYYMMDD.<Github SHA 8 digit>
-      DATE=$(date -u +'%Y%m%d')
+      # Unstable/nightly version format : X.Y.Z~gitYYYYMMDDHHMM.<Github SHA 8 digit>
+      DATETIME=$(date -u +'%Y%m%d%H%M')
       SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-      SUFFIX="~git${DATE}.${SHORT_SHA}"
+      SUFFIX="~git${DATETIME}.${SHORT_SHA}"
       sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
         base/debian/changelog
       sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
