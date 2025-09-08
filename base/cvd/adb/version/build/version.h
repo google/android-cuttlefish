@@ -23,7 +23,7 @@ namespace android {
 namespace build {
 
 std::string GetBuildNumber() {
-  return "common";
+  return "cuttlefish_common";
 }
 
 }  // namespace build
