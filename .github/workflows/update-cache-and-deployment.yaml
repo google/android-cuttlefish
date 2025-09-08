@@ -96,7 +96,7 @@ jobs:
         path: .
 
   deploy-docker-image-amd64:
-    if: inputs.deploy-channel == 'nightly'
+    if: inputs.deploy-channel != ''
     needs: [update-bazel-cache-and-deploy-debian-package-amd64]
     environment: deployment
     runs-on: ubuntu-22.04
@@ -120,7 +120,7 @@ jobs:
       with:
         arch: amd64
   deploy-docker-image-arm64:
-    if: inputs.deploy-channel == 'nightly'
+    if: inputs.deploy-channel != ''
     needs: [update-bazel-cache-and-deploy-debian-package-arm64]
     environment: deployment
     runs-on: ubuntu-22.04-arm
@@ -144,7 +144,7 @@ jobs:
       with:
         arch: arm64
   deploy-docker-manifest:
-    if: inputs.deploy-channel == 'nightly'
+    if: inputs.deploy-channel != ''
     needs: [deploy-docker-image-amd64, deploy-docker-image-arm64]
     environment: deployment
     runs-on: ubuntu-22.04
