@@ -32,6 +32,9 @@ PRODUCT_SOONG_NAMESPACES += \
 # If downstream target provides its own RILD, set TARGET_USES_CF_RILD := false
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
+    # NR 5G, LTE, TD-SCDMA, CDMA, EVDO, GSM and WCDMA
+    PRODUCT_VENDOR_PROPERTIES += ro.telephony.default_network=33
+
     PRODUCT_PACKAGES += com.google.cf.rild
 endif
 
