@@ -119,6 +119,7 @@ jobs:
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: amd64
+        deploy-channel: ${{ inputs.deploy-channel }}
   deploy-docker-image-arm64:
     if: inputs.deploy-channel != ''
     needs: [update-bazel-cache-and-deploy-debian-package-arm64]
@@ -143,6 +144,7 @@ jobs:
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: arm64
+        deploy-channel: ${{ inputs.deploy-channel }}
   deploy-docker-manifest:
     if: inputs.deploy-channel != ''
     needs: [deploy-docker-image-amd64, deploy-docker-image-arm64]
@@ -163,14 +165,27 @@ jobs:
         password: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy manifests
       run: |
-        # TODO(b/440196950): Setup condition on this step when we build
-        # stable/unstable versions here too.
-
-        # Stable/Unstable version tag : X.Y.Z
-        # Nightly version tag         : gitYYYYMMDD-<Github SHA 8 digit>
-        DATE=$(date -u +'%Y%m%d')
-        SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-        TAG="git${DATE}-${SHORT_SHA}"
+        case "${{ inputs.deploy-channel }}" in
+          stable)
+            # Stable version tag : X.Y.Z
+            SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+'
+            TAG="${SEMVER}"
+            ;;
+          unstable)
+            # Unstable version tag : X.Y-<Github SHA 8 digit>
+            SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+'
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            TAG="${SEMVER}-${SHORT_SHA}"
+            ;;
+          nightly)
+            # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
+            DATE=$(date -u +'%Y%m%d%H%M')
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            TAG="git${DATE}-${SHORT_SHA}"
+          *)
+            exit 1
+            ;;
+        esac
         IMAGE=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration
 
         for MANIFEST_TAG in ${TAG} ${{ inputs.deploy-channel }}; do
