@@ -2,19 +2,34 @@ name: 'Deploy docker image cuttlefish-orchestration'
 inputs:
   arch:
     required: true
+  deploy-channel:
+    required: true
 runs:
   using: "composite"
   steps:
   - name: Deploy docker image into Artifact Registry
     run: |
-      # TODO(b/440196950): Setup condition on this step when we build
-      # stable/unstable versions here too.
-
-      # Stable/Unstable version tag : X.Y.Z
-      # Nightly version tag         : gitYYYYMMDD-<Github SHA 8 digit>
-      DATE=$(date -u +'%Y%m%d')
-      SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-      TAG="git${DATE}-${SHORT_SHA}-${{ inputs.arch }}"
+      case "${{ inputs.deploy-channel }}" in
+        stable)
+          # Stable version tag : X.Y.Z-<amd64|arm64>
+          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+'
+          TAG="${SEMVER}-${{ inputs.arch }}"
+          ;;
+        unstable)
+          # Unstable version tag : X.Y-<Github SHA 8 digit>-<amd64|arm64>
+          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+'
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+          TAG="${SEMVER}-${SHORT_SHA}-${{ inputs.arch }}"
+          ;;
+        nightly)
+          # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>-<amd64|arm64>
+          DATE=$(date -u +'%Y%m%d%H%M')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+          TAG="git${DATE}-${SHORT_SHA}-${{ inputs.arch }}"
+        *)
+          exit 1
+          ;;
+      esac
       REMOTE_IMAGE_TAG=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${TAG}
 
       docker tag cuttlefish-orchestration ${REMOTE_IMAGE_TAG}
