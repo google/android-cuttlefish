@@ -72,6 +72,9 @@ class ProcessMonitor {
   // Resume all host subprocesses
   Result<void> ResumeMonitoredProcesses();
 
+  /* Reads on this SharedFD will block while subprocesses are running, */
+  SharedFD status() { return status_; };
+
  private:
   Result<void> StartSubprocesses(Properties& properties);
   Result<void> MonitorRoutine();
@@ -86,6 +89,7 @@ class ProcessMonitor {
   Result<void> ResumeHostProcessesImpl();
 
   Properties properties_;
+  SharedFD status_;
   const SharedFD channel_to_secure_env_;
   pid_t monitor_;
   std::optional<transport::SharedFdChannel> parent_channel_;

@@ -28,6 +28,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -103,6 +104,17 @@ Result<void> ServerLoopImpl::Run() {
 
   while (true) {
     // TODO: use select to handle simultaneous connections.
+    SharedFDSet read_set;
+    read_set.Set(server_);
+    read_set.Set(process_monitor.status());
+
+    Select(&read_set, nullptr, nullptr, nullptr);
+
+    if (read_set.IsSet(process_monitor.status())) {
+      return CF_ERR("process monitor has died");
+    }
+
+    CF_EXPECT(read_set.IsSet(server_));
     auto client = SharedFD::Accept(*server_);
     while (client->IsOpen()) {
       auto launcher_action_with_info_result = ReadLauncherActionFromFd(client);
