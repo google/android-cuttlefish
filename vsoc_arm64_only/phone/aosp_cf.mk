@@ -62,3 +62,8 @@ PRODUCT_VENDOR_PROPERTIES += \
 
 # Ignore all Android.mk files
 PRODUCT_IGNORE_ALL_ANDROIDMK := true
+
+# Soong-only configuration for aosp_cf_arm64_only_phone
+ifeq ($(TARGET_PRODUCT),aosp_cf_arm64_only_phone)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
