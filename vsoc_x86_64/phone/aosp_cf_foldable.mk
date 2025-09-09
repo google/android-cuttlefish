@@ -30,3 +30,8 @@ PRODUCT_PACKAGES += \
     aosp_cuttlefish_foldable_overlay_frameworks_base
 # Include the android-info.txt that specifies the foldable --config by default.
 TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/foldable/android-info.txt
+
+# Soong-only configuration for aosp_cf_x86_64_foldable
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_foldable)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
