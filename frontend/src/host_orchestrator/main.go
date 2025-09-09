@@ -24,6 +24,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"sync"
@@ -31,6 +32,7 @@ import (
 
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator"
 	"github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/debug"
+	hoexec "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/orchestrator/exec"
 	"github.com/gorilla/mux"
 )
 
@@ -51,6 +53,34 @@ func startHttpServer(addr string, port int) error {
 
 	// handler is nil, so DefaultServeMux is used.
 	return http.ListenAndServe(fmt.Sprintf("%s:%d", addr, port), nil)
+}
+
+// Logs the version of relevant HO service dependencies.
+func logDepsVersions() {
+	var deps = []struct {
+		name string
+		cmd  string
+		args []string
+	}{
+		{
+			name: "kernel",
+			cmd:  "uname",
+			args: []string{"-r"},
+		},
+		{
+			name: "cvd",
+			cmd:  "cvd",
+			args: []string{"version"},
+		},
+	}
+	for _, e := range deps {
+		out, err := hoexec.Exec(exec.CommandContext, e.cmd, e.args...)
+		if err != nil {
+			log.Printf("%q version error: %+v\n\n", e.name, err)
+		} else {
+			log.Printf("%s version\n%s\n", e.name, out)
+		}
+	}
 }
 
 func start(starters []func() error) {
@@ -112,6 +142,8 @@ func main() {
 		w := io.MultiWriter(os.Stderr, f)
 		log.SetOutput(w)
 	}
+
+	logDepsVersions()
 
 	if err := os.MkdirAll(*imRootDir, 0774); err != nil {
 		log.Fatalf("Unable to create artifacts directory: %v", err)
