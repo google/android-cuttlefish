@@ -396,20 +396,27 @@ Result<void> ProcessMonitor::StartAndMonitorProcesses() {
   CF_EXPECT(monitor_ == -1, "The monitor process was already started");
   CF_EXPECT(!parent_channel_.has_value(),
             "Parent monitor socket was already opened");
+  SharedFD pipe_read, pipe_write;
+  CF_EXPECT(SharedFD::Pipe(&pipe_read, &pipe_write));
+
   SharedFD parent_sock;
   SharedFD child_sock;
   SharedFD::SocketPair(AF_UNIX, SOCK_STREAM, 0, &parent_sock, &child_sock);
   monitor_ = fork();
   if (monitor_ == 0) {
+    pipe_read->Close();
     child_channel_ = transport::SharedFdChannel(child_sock, child_sock);
     Result<void> monitor_result = MonitorRoutine();
     if (!monitor_result.ok()) {
       LOG(ERROR) << "Monitoring processes failed:\n"
                  << monitor_result.error().FormatForEnv();
     }
+    pipe_write->Close();
     std::exit(monitor_result.ok() ? 0 : 1);
   } else {
+    pipe_write->Close();
     parent_channel_ = transport::SharedFdChannel(parent_sock, parent_sock);
+    status_ = pipe_read;
     return {};
   }
 }
