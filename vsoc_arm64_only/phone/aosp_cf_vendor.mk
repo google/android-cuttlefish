@@ -25,3 +25,8 @@ PRODUCT_BUILD_SYSTEM_EXT_IMAGE := false
 PRODUCT_BUILD_SUPER_PARTITION := false
 TARGET_SKIP_OTA_PACKAGE := true
 
+
+# Soong-only configuration for aosp_cf_arm64_only_phone_vendor
+ifeq ($(TARGET_PRODUCT),aosp_cf_arm64_only_phone_vendor)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
