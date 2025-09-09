@@ -57,3 +57,8 @@ PRODUCT_MODEL := Cuttlefish x86_64 tv
 PRODUCT_VENDOR_PROPERTIES += \
     ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
     ro.soc.model=$(PRODUCT_DEVICE)
+
+# Soong-only configuration for aosp_cf_x86_64_tv
+ifeq ($(TARGET_PRODUCT),aosp_cf_x86_64_tv)
+PRODUCT_SOONG_ONLY := $(RELEASE_SOONG_ONLY_CUTTLEFISH)
+endif
