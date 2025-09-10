@@ -17,8 +17,14 @@ package {
 }
 
 prebuilt_etc {
-    name: "com.google.cf.bt.rc",
-    src: "com.google.cf.bt.rc",
+    name: "com.google.cf.bt.default.rc",
+    src: "com.google.cf.bt.default.rc",
+    installable: false,
+}
+
+prebuilt_etc {
+    name: "com.google.cf.bt.lpp.rc",
+    src: "com.google.cf.bt.lpp.rc",
     installable: false,
 }
 
@@ -50,33 +56,73 @@ prebuilt_etc {
     installable: false,
 }
 
-apex {
+prebuilt_etc {
+    name: "android.hardware.bluetooth.gatt-service.default.xml",
+    src: ":manifest_android.hardware.bluetooth.gatt-service.default.xml",
+    sub_dir: "vintf",
+    installable: false,
+}
+
+bt_binaries_default = [
+    "android.hardware.bluetooth-service.cuttlefish",
+    "android.hardware.bluetooth.finder-service.default",
+    "android.hardware.bluetooth.lmp_event-service.default",
+    "android.hardware.bluetooth.ranging-service.default",
+    "android.hardware.bluetooth.socket-service.default",
+]
+
+bt_binaries_lpp = bt_binaries_default + [
+    "android.hardware.bluetooth.gatt-service.default",
+]
+
+bt_prebuilts_default = [
+    // permissions
+    "android.hardware.bluetooth.prebuilt.xml",
+    "android.hardware.bluetooth_le.prebuilt.xml",
+    // vintf
+    "android.hardware.bluetooth-service.cuttlefish.xml",
+    "android.hardware.bluetooth.finder-service.default.xml",
+    "android.hardware.bluetooth.lmp_event-service.default.xml",
+    "android.hardware.bluetooth.ranging-service.default.xml",
+    "android.hardware.bluetooth.socket-service.default.xml",
+    "com.google.cf.bt.default.rc",
+]
+
+bt_prebuilts_lpp = bt_prebuilts_default + [
+    "android.hardware.bluetooth.gatt-service.default.xml",
+    "com.google.cf.bt.lpp.rc",
+]
+
+soong_config_module_type {
+    name: "bt_apex_configurable",
+    module_type: "apex",
+    config_namespace: "cuttlefish_config",
+    bool_variables: [
+        "bt_lpp_service_instance_enabled",
+    ],
+    properties: [
+        "file_contexts",
+        "binaries",
+        "prebuilts",
+    ],
+}
+
+bt_apex_configurable {
     name: "com.google.cf.bt",
     manifest: "manifest.json",
-    file_contexts: "file_contexts",
     key: "com.google.cf.apex.key",
     certificate: ":com.google.cf.apex.certificate",
     updatable: false,
     soc_specific: true,
+    file_contexts: "file_contexts_default",
+    binaries: bt_binaries_default,
+    prebuilts: bt_prebuilts_default,
 
-    binaries: [
-        "android.hardware.bluetooth-service.cuttlefish",
-        "android.hardware.bluetooth.finder-service.default",
-        "android.hardware.bluetooth.lmp_event-service.default",
-        "android.hardware.bluetooth.ranging-service.default",
-        "android.hardware.bluetooth.socket-service.default",
-    ],
-    prebuilts: [
-        // permissions
-        "android.hardware.bluetooth.prebuilt.xml",
-        "android.hardware.bluetooth_le.prebuilt.xml",
-        // vintf
-        "android.hardware.bluetooth-service.cuttlefish.xml",
-        "android.hardware.bluetooth.finder-service.default.xml",
-        "android.hardware.bluetooth.lmp_event-service.default.xml",
-        "android.hardware.bluetooth.ranging-service.default.xml",
-        "android.hardware.bluetooth.socket-service.default.xml",
-        // init rc
-        "com.google.cf.bt.rc",
-    ],
+    soong_config_variables: {
+        bt_lpp_service_instance_enabled: {
+            file_contexts: "file_contexts_lpp",
+            binaries: bt_binaries_lpp,
+            prebuilts: bt_prebuilts_lpp,
+        },
+    },
 }
