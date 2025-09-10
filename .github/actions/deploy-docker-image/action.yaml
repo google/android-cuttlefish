@@ -12,12 +12,12 @@ runs:
       case "${{ inputs.deploy-channel }}" in
         stable)
           # Stable version tag : X.Y.Z-<amd64|arm64>
-          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+'
+          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
           TAG="${SEMVER}-${{ inputs.arch }}"
           ;;
         unstable)
           # Unstable version tag : X.Y-<Github SHA 8 digit>-<amd64|arm64>
-          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+'
+          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+')
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
           TAG="${SEMVER}-${SHORT_SHA}-${{ inputs.arch }}"
           ;;
