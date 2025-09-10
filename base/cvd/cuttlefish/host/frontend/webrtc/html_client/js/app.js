@@ -334,6 +334,9 @@ class DeviceControlApp {
     createSelectListener('display-spec-preset-select', () => this.#updateDisplaySpecFrom());
     createButtonListener('display-add-confirm', null, this.#deviceConnection, evt => this.#onDisplayAdditionConfirm(evt));
 
+    createButtonListener('display-remove-modal-confirm',null,this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('confirm'));
+    createButtonListener('display-remove-modal-cancel',null,this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('cancel'));
+
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
       document.getElementById('control-panel-custom-buttons').style.display =
@@ -677,12 +680,26 @@ class DeviceControlApp {
     this.#deviceConnection.sendControlMessage(JSON.stringify(message));
   }
 
+  #handleDisplayRemovalModalAction(action){
+    const removeModalElement = document.getElementById('display-remove-modal');
+    const removeDisplayId = removeModalElement.dataset.removal_display_id;
+    let removeButtonId = removeDisplayId + '_remove_button';
+    if(action === 'confirm'){
+      this.#removeDisplay(removeDisplayId);
+    } else {
+      // Clear the dataset on cancel.
+      delete removeModalElement.dataset.removal_display_id;
+    }
+    hideModal(removeButtonId,'display-remove-modal');
+  }
+
   #removeDisplay(displayId) {
     const message = {
       command: 'remove-display',
       display_id: displayId
     };
     this.#deviceConnection.sendControlMessage(JSON.stringify(message));
+    console.debug(`display_id being removed in the removeDisplay function=${displayId}`);
   }
 
   #showWebrtcError() {
@@ -940,11 +957,8 @@ class DeviceControlApp {
         deviceDisplayInfo.id = stream_id + '_info';
 
         let deviceDisplayRemoveButton =
-          displayFragment.querySelector('.device-display-remove-button');
-        deviceDisplayRemoveButton.id = stream_id + '_remove_button';
-        deviceDisplayRemoveButton.addEventListener('mousedown', () => {
-          this.#removeDisplay(display_id);
-        });
+          displayFragment.querySelector('.device-display-remove-modal-button');
+        deviceDisplayRemoveButton.id = display_id + '_remove_button';
 
         deviceDisplayVideo = displayFragment.querySelector('video');
         deviceDisplayVideo.id = stream_id;
@@ -962,6 +976,17 @@ class DeviceControlApp {
         this.#addMouseTracking(deviceDisplayVideo, scaleDisplayCoordinates);
 
         deviceDisplays.appendChild(displayFragment);
+
+        createModalButton(deviceDisplayRemoveButton.id , 'display-remove-modal', null);
+        let removeModalElement = document.getElementById('display-remove-modal');
+        createButtonListener(deviceDisplayRemoveButton.id, null, this.#deviceConnection, () => {
+          let removeDisplayText = document.getElementById('display-remove-text');
+
+          // Store the display ID of the most recently clicked trash icon.
+          // This prevents the deletion of multiple displays.
+          removeDisplayText.textContent = `Delete the display ${display_id} ?`;
+          removeModalElement.dataset.removal_display_id = display_id;
+        });
 
         // Confusingly, events for adding tracks occur on the peer connection
         // but events for removing tracks occur on the stream.
@@ -1350,4 +1375,3 @@ function getStyleAfterRotation(rotationDeg, ar) {
 
   return {transform, maxWidth, maxHeight};
 }
-
