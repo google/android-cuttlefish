@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.23.0) unstable; urgency=medium
+cuttlefish-frontend (1.23.0) stable; urgency=medium
 
   * Generate ssl certificate at init. by @ser-io in https://github.com/google/android-cuttlefish/pull/1590
   * Deploy docker manifest for cuttlefish-orchestration by @0405ysj in https://github.com/google/android-cuttlefish/pull/1600
