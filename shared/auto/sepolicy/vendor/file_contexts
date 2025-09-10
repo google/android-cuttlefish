@@ -3,3 +3,5 @@
 # Battery Health HAL
 /vendor/bin/hw/android\.hardware\.health-service\.automotive                u:object_r:hal_health_default_exec:s0
 /dev/block/vda19                                                            u:object_r:swap_block_device:s0
+# The Wifi setup script.
+/vendor/bin/wifi_on\.sh                                                     u:object_r:wifi_on_exec:s0

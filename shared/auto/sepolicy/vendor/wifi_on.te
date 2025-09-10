@@ -1,0 +1,7 @@
+type wifi_on, domain;
+type wifi_on_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(wifi_on)
+
+allow wifi_on shell_exec:file rx_file_perms;
+allow wifi_on wifi_service:service_manager find;
