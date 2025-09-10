@@ -405,8 +405,14 @@ button{
   align-items: center;
 }
 
-.device-display-remove-button {
-  color: var(--main-fg);
+.device-display-remove-modal-button {
+  color: #fafafa;
+}
+
+.display-remove-buttons {
+  display: flex;
+  margin: 5px;
+  justify-content: space-between;
 }
 
 /* The actual <video> element for each display. */

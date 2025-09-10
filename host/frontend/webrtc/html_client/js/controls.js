@@ -260,32 +260,47 @@ function positionModal(button_id, modal_id) {
   modalDiv.style.left = modalButton.offsetWidth + 30;
 }
 
+function showModal(button_id,modal_id) {
+  const modalButton = document.getElementById(button_id);
+  const modalDiv = document.getElementById(modal_id);
+
+  modalButton.classList.add('modal-button-opened')
+  modalDiv.style.display = 'block';
+}
+
+function hideModal(button_id,hide_id){
+  const modalButton = document.getElementById(button_id);
+  const modalDivHide = document.getElementById(hide_id);
+
+  modalButton.classList.remove('modal-button-opened');
+  modalDivHide.style.display = 'none';
+}
+
 function createModalButton(button_id, modal_id, close_id, hide_id) {
   const modalButton = document.getElementById(button_id);
   const modalDiv = document.getElementById(modal_id);
   const modalHeader = modalDiv.querySelector('.modal-header');
   const modalClose = document.getElementById(close_id);
-  const modalDivHide = document.getElementById(hide_id);
 
   positionModal(button_id, modal_id);
 
-  function showHideModal(show) {
-    if (show) {
-      modalButton.classList.add('modal-button-opened')
-      modalDiv.style.display = 'block';
-    } else {
-      modalButton.classList.remove('modal-button-opened')
-      modalDiv.style.display = 'none';
-    }
-    if (modalDivHide != null) {
-      modalDivHide.style.display = 'none';
-    }
-  }
   // Allow the show modal button to toggle the modal,
-  modalButton.addEventListener(
-      'click', evt => showHideModal(modalDiv.style.display != 'block'));
+  modalButton.addEventListener('click', evt => {
+    if(modalDiv.style.display != 'block'){
+      showModal(button_id,modal_id);
+    }else{
+      hideModal(button_id,modal_id);
+    }
+
+    if (hide_id != null) {
+      hideModal(button_id,hide_id);
+    }
+  });
+
   // but the close button always closes.
-  modalClose.addEventListener('click', evt => showHideModal(false));
+  if(modalClose){
+    modalClose.addEventListener('click', evt => hideModal(button_id,modal_id));
+  }
 
   // Allow the modal to be dragged by the header.
   let modalOffsets = {

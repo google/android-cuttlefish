@@ -293,6 +293,15 @@
           <button id='display-add-confirm' title='Add a new display' class='modal-button'>Add</button>
         </div>
       </div>
+      <div id='display-remove-modal' class='modal' data-removal_display_id='0'>
+        <div id='display-remove-modal-header' class='modal-header'>
+          <h2 id='display-remove-text'></h2>
+        </div>
+        <div class='display-remove-buttons'>
+          <button id='display-remove-modal-confirm' title='Confirm' class='modal-button'>confirm</button>
+          <button id='display-remove-modal-cancel' title='Cancel' class='modal-button '>cancel</button>
+        </div>
+      </div>
       <script src="js/adb.js"></script>
       <script src="js/location.js"></script>
       <script src="js/keyboard.js"></script>
@@ -307,7 +316,7 @@
         <div class="device-display">
           <div class="device-display-info">
             <div class="device-display-info-text"></div>
-            <button class="material-icons device-display-remove-button" title="Remove display">delete</button>
+            <button class="material-icons device-display-remove-modal-button" title="Remove display">delete</button>
           </div>
           <div class="device-video-container">
             <video autoplay muted playsinline src="/" class="device-display-video"></video>
