@@ -73,14 +73,14 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        dir: ["e2etests", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator"]
+        dir: ["e2etests", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator", "tools/baseimage"]
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Install dependencies
       uses: actions/setup-go@v3
       with:
-        go-version: '1.23.1'
+        go-version: '1.24.2'
     - run: go version
     - name: Staticcheck
       uses: dominikh/staticcheck-action@v1.3.1
