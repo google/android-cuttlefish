@@ -19,6 +19,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 
@@ -97,4 +98,21 @@ class FetcherConfig {
                                 bool override_entry = false);
 };
 
-} // namespace cuttlefish
+class FetcherConfigs {
+ public:
+  static FetcherConfigs Create(std::vector<FetcherConfig> configs);
+  FetcherConfigs(FetcherConfigs&&) = default;
+  ~FetcherConfigs() = default;
+
+  void Append(FetcherConfig&& config);
+
+  size_t Size() const { return fetcher_configs_.size(); }
+
+  const FetcherConfig& ForInstance(size_t instance_index) const;
+
+ private:
+  FetcherConfigs(std::vector<FetcherConfig> configs);
+  std::vector<FetcherConfig> fetcher_configs_;
+};
+
+}  // namespace cuttlefish

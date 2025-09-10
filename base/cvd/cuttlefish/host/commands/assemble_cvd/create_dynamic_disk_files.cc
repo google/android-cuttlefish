@@ -73,8 +73,9 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
 }
 
 Result<void> CreateDynamicDiskFiles(
-    const FetcherConfig& fetcher_config, const CuttlefishConfig& config,
+    const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
     const SystemImageDirFlag& system_image_dir) {
+  size_t instance_index = 0;
   for (const auto& instance : config.Instances()) {
     std::optional<ChromeOsStateImage> chrome_os_state =
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
@@ -84,7 +85,8 @@ Result<void> CreateDynamicDiskFiles(
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk
     CF_EXPECT(InitializeEspImage(config, instance));
-    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
+    CF_EXPECT(RebuildSuperImageIfNecessary(
+        fetcher_configs.ForInstance(instance_index), instance));
 
     CF_EXPECT(InitializeAccessKregistryImage(instance));
     CF_EXPECT(InitializeHwcomposerPmemImage(instance));
@@ -202,6 +204,7 @@ Result<void> CreateDynamicDiskFiles(
       RepackGem5BootImage(instance.PerInstancePath("initrd.img"), boot_config,
                           config.assembly_dir(), instance.initramfs_path());
     }
+    ++instance_index;
   }
 
   return {};

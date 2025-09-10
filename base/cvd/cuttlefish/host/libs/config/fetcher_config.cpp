@@ -17,11 +17,13 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
 #include <cctype>
+#include <cstddef>
 #include <fstream>
 #include <map>
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <android-base/file.h>
@@ -100,15 +102,16 @@ std::string SourceEnumToString(const FileSource& source) {
   }
 }
 
-} // namespace
+}  // namespace
 
-CvdFile::CvdFile() {
-}
+CvdFile::CvdFile() {}
 
 CvdFile::CvdFile(const FileSource& source, const std::string& build_id,
                  const std::string& build_target, const std::string& file_path)
-    : source(source), build_id(build_id), build_target(build_target), file_path(file_path) {
-}
+    : source(source),
+      build_id(build_id),
+      build_target(build_target),
+      file_path(file_path) {}
 
 std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
   os << "CvdFile(";
@@ -119,13 +122,11 @@ std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
   return os;
 }
 
-FetcherConfig::FetcherConfig() : dictionary_(new Json::Value()) {
-}
+FetcherConfig::FetcherConfig() : dictionary_(new Json::Value()) {}
 
 FetcherConfig::FetcherConfig(FetcherConfig&&) = default;
 
-FetcherConfig::~FetcherConfig() {
-}
+FetcherConfig::~FetcherConfig() {}
 
 bool FetcherConfig::SaveToFile(const std::string& file) const {
   std::ofstream ofs(file);
@@ -210,7 +211,7 @@ Json::Value CvdFileToJson(const CvdFile& cvd_file) {
   return json;
 }
 
-} // namespace
+}  // namespace
 
 bool FetcherConfig::add_cvd_file(const CvdFile& file, bool override_entry) {
   if (!dictionary_->isMember(kCvdFiles)) {
@@ -236,7 +237,8 @@ std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
   return files;
 }
 
-std::string FetcherConfig::FindCvdFileWithSuffix(const std::string& suffix) const {
+std::string FetcherConfig::FindCvdFileWithSuffix(
+    const std::string& suffix) const {
   if (!dictionary_->isMember(kCvdFiles)) {
     return {};
   }
@@ -274,4 +276,25 @@ Result<void> FetcherConfig::AddFilesToConfig(
   return {};
 }
 
-} // namespace cuttlefish
+FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {
+  if (configs.empty()) {
+    configs.emplace_back();
+  }
+  return FetcherConfigs(std::move(configs));
+}
+
+FetcherConfigs::FetcherConfigs(std::vector<FetcherConfig> configs)
+    : fetcher_configs_(std::move(configs)) {}
+
+void FetcherConfigs::Append(FetcherConfig&& config) {
+  fetcher_configs_.emplace_back(std::move(config));
+}
+
+const FetcherConfig& FetcherConfigs::ForInstance(size_t instance_index) const {
+  if (instance_index < fetcher_configs_.size()) {
+    return fetcher_configs_[instance_index];
+  }
+  return fetcher_configs_[0];
+}
+
+}  // namespace cuttlefish

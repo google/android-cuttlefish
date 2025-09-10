@@ -43,7 +43,7 @@
 namespace cuttlefish {
 
 Result<void> DiskImageFlagsVectorization(
-    CuttlefishConfig& config, const FetcherConfig& fetcher_config,
+    CuttlefishConfig& config, const FetcherConfigs& fetcher_configs,
     const AndroidEfiLoaderFlag& android_efi_loader,
     const BootImageFlag& boot_image, const BootloaderFlag& bootloader,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
@@ -251,7 +251,8 @@ Result<void> DiskImageFlagsVectorization(
     // We will need to rebuild vendor_dlkm if custom ramdisk is specified, as a
     // result super image would need to be rebuilt as well.
     if (CF_EXPECT(SuperImageNeedsRebuilding(
-            fetcher_config, const_instance.default_target_zip(),
+            fetcher_configs.ForInstance(instance_index),
+            const_instance.default_target_zip(),
             const_instance.system_target_zip())) ||
         has_initramfs) {
       const std::string new_super_image_path =

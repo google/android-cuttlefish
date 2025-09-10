@@ -32,17 +32,20 @@ DEFINE_string(initramfs_path, CF_DEFAULTS_INITRAMFS_PATH,
 namespace cuttlefish {
 
 InitramfsPathFlag InitramfsPathFlag::FromGlobalGflags(
-    const FetcherConfig& fetcher_config) {
+    const FetcherConfigs& fetcher_configs) {
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("initramfs_path");
 
-  std::string paths_comma_separated =
-      flag_info.is_default
-          ? fetcher_config.FindCvdFileWithSuffix("initramfs.img")
-          : flag_info.current_value;
-
-  std::vector<std::string> initramfs_paths =
-      android::base::Split(paths_comma_separated, ",");
+  std::vector<std::string> initramfs_paths;
+  if (flag_info.is_default) {
+    for (size_t i = 0; i < fetcher_configs.Size(); ++i) {
+      initramfs_paths.emplace_back(
+          fetcher_configs.ForInstance(i).FindCvdFileWithSuffix(
+              "initramfs.img"));
+    }
+  } else {
+    initramfs_paths = android::base::Split(flag_info.current_value, ",");
+  }
 
   return InitramfsPathFlag(std::move(initramfs_paths));
 }
