@@ -1344,6 +1344,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(userdata_format));
   std::vector<bool> guest_enforce_security_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       guest_enforce_security));
+  std::vector<std::string> serial_number_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(serial_number));
   std::vector<bool> use_random_serial_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       use_random_serial));
   std::vector<bool> use_allocd_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_allocd));
@@ -1613,6 +1615,20 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto num_to_webrtc_device_id_flag_map =
       CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, instance_nums,
                                              FLAGS_webrtc_device_id));
+  size_t provided_serials_cnt =
+      android::base::Split(FLAGS_serial_number, ",").size();
+  CF_EXPECTF(
+      provided_serials_cnt == 1 || provided_serials_cnt == instances_size,
+      "Must have a single serial number prefix or one serial number per "
+      "instance, have {} but expectected {}",
+      provided_serials_cnt, instances_size);
+  if (provided_serials_cnt == 1 && instances_size > 1) {
+    // Make sure the serial numbers are different when running multiple
+    // instances and using the default value for the flag
+    for (size_t i = 0; i < instance_nums.size(); ++i) {
+      serial_number_vec[i] += std::to_string(instance_nums[i]);
+    }
+  }
   for (const auto& num : instance_nums) {
     IfaceConfig iface_config;
     if (use_allocd_vec[instance_index]) {
@@ -1735,7 +1751,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       instance.set_serial_number(
           RandomSerialNumber("CFCVD" + std::to_string(num)));
     } else {
-      instance.set_serial_number(FLAGS_serial_number + std::to_string(num));
+      instance.set_serial_number(serial_number_vec[instance_index]);
     }
 
     instance.set_grpc_socket_path(const_instance.PerInstanceGrpcSocketPath(""));
