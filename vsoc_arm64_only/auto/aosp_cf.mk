@@ -44,6 +44,9 @@ $(call inherit-product, device/google/cuttlefish/shared/auto/device_vendor.mk)
 # Use vsock as VHAL transport to align with on-device deployment
 ENABLE_AUTO_ETHERNET ?= false
 
+# Distribute kernel image for qnx-tooling
+$(call dist-for-goals, dist_files, $(PRODUCT_OUT)/kernel)
+
 #
 # Special settings for the target
 #
