@@ -26,6 +26,7 @@ runs:
           DATE=$(date -u +'%Y%m%d%H%M')
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
           TAG="git${DATE}-${SHORT_SHA}-${{ inputs.arch }}"
+          ;;
         *)
           exit 1
           ;;
