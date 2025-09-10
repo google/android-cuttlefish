@@ -37,8 +37,6 @@ import org.junit.Test;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CfVkmsCursorTest extends BaseHostJUnit4Test {
-    private static final String CURSOR_FLAG =
-            "com.android.graphics.libgui.flags.cursor_plane_compatibility";
     private static final long UI_STARTUP_TIMEOUT_MS = 10 * 1000;
     private static final String DUMPSYS_COMMAND = "dumpsys SurfaceFlinger";
     private static final Pattern NO_STATS_PATTERN = Pattern.compile("No stats yet");
@@ -53,18 +51,6 @@ public class CfVkmsCursorTest extends BaseHostJUnit4Test {
     }
 
     private CfVkmsTester mVkmsTester;
-
-    private boolean toggleFlag(String flag, boolean enable) throws Exception {
-        String command = "aflags " + (enable ? "enable " : "disable ") + flag + " --immediate";
-        CommandResult result = getDevice().executeShellV2Command(command);
-        if (result.getStatus() != CommandStatus.SUCCESS) {
-            CLog.e("Failed to %s flag: %s", enable ? "enable" : "disable", result.getStderr());
-            return false;
-        }
-
-        CLog.i("Successfully %s flag", enable ? "enabled" : "disabled");
-        return true;
-    }
 
     @Before
     public void setUp() throws Exception {
@@ -88,8 +74,7 @@ public class CfVkmsCursorTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void cursorCompositionSucceeds_withCursorFlagEnabled() throws Exception {
-        assertTrue(toggleFlag(CURSOR_FLAG, true));
+    public void cursorCompositionSucceeds() throws Exception {
         assertTrue(mVkmsTester.toggleSystemUi(false));
         assertTrue(mVkmsTester.toggleSystemUi(true));
 
@@ -105,23 +90,6 @@ public class CfVkmsCursorTest extends BaseHostJUnit4Test {
         } else {
             fail("No attempted cursor frames detected");
         }
-    }
-
-    @Test
-    public void cursorCompositionNotAttempted_withCursorFlagDisabled() throws Exception {
-        assertTrue(toggleFlag(CURSOR_FLAG, false));
-        assertTrue(mVkmsTester.toggleSystemUi(false));
-        assertTrue(mVkmsTester.toggleSystemUi(true));
-
-        // Wait for displays to be detected. UI might take some time to turn on.
-        long startTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() - startTime < UI_STARTUP_TIMEOUT_MS) {}
-
-        CursorStats results = testCursorComposition();
-        assertEquals("Detected successful cursor frames when there should be none", 0,
-                results.cursorFrames);
-        assertEquals("Detected failed cursor frames when there should be none", 0,
-                results.failedCursorFrames);
     }
 
     private CursorStats testCursorComposition() throws Exception {
