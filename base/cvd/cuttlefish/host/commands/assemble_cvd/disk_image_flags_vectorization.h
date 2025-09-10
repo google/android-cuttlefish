@@ -31,7 +31,7 @@
 namespace cuttlefish {
 
 Result<void> DiskImageFlagsVectorization(
-    CuttlefishConfig& config, const FetcherConfig& fetcher_config,
+    CuttlefishConfig& config, const FetcherConfigs& fetcher_configs,
     const AndroidEfiLoaderFlag&, const BootImageFlag&, const BootloaderFlag&,
     const InitramfsPathFlag&, const KernelPathFlag&, const SuperImageFlag&,
     const SystemImageDirFlag&, const VendorBootImageFlag&);

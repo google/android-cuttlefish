@@ -25,6 +25,7 @@
 #include <set>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -317,7 +318,7 @@ std::optional<std::string> InstancesUdsDir() {
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
+    fruit::Injector<>& injector, const FetcherConfigs& fetcher_configs,
     const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
     const KernelPathFlag& kernel_path, const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
@@ -1322,7 +1323,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       guest_configs, system_image_dir, vm_manager_flag));
 
   CF_EXPECT(DiskImageFlagsVectorization(
-      tmp_config_obj, fetcher_config, efi_loader, boot_image, bootloader,
+      tmp_config_obj, fetcher_configs, efi_loader, boot_image, bootloader,
       initramfs_path, kernel_path, super_image, system_image_dir,
       vendor_boot_image));
 

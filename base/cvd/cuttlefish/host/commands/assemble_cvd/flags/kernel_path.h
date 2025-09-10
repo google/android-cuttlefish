@@ -25,7 +25,7 @@ namespace cuttlefish {
 /* Android kernel path flag, --kernel_path */
 class KernelPathFlag {
  public:
-  static KernelPathFlag FromGlobalGflags(const FetcherConfig& fetcher_config);
+  static KernelPathFlag FromGlobalGflags(const FetcherConfigs& fetcher_config);
 
   std::string KernelPathForIndex(size_t index) const;
 

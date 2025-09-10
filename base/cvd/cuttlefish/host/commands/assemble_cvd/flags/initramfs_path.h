@@ -26,7 +26,7 @@ namespace cuttlefish {
 class InitramfsPathFlag {
  public:
   static InitramfsPathFlag FromGlobalGflags(
-      const FetcherConfig& fetcher_config);
+      const FetcherConfigs& fetcher_configs);
 
   std::string InitramfsPathForIndex(size_t index) const;
 

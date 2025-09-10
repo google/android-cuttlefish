@@ -25,7 +25,6 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
@@ -65,27 +64,20 @@ namespace {
 
 static constexpr std::string_view kFetcherConfigFile = "fetcher_config.json";
 
-FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
-  FetcherConfig fetcher_config;
-  for (const auto& file : files) {
-    if (android::base::EndsWith(file, kFetcherConfigFile)) {
-      std::string home_directory = StringFromEnv("HOME", CurrentDirectory());
-      std::string fetcher_file = file;
-      if (!FileExists(file) &&
-          FileExists(home_directory + "/" + fetcher_file)) {
-        LOG(INFO) << "Found " << fetcher_file << " in HOME directory ('"
-                  << home_directory << "') and not current working directory";
-        fetcher_file = home_directory + "/" + fetcher_file;
-      }
-
-      if (fetcher_config.LoadFromFile(fetcher_file)) {
-        return fetcher_config;
-      }
-      LOG(ERROR) << "Could not load fetcher config file.";
+FetcherConfigs FindFetcherConfigs(
+    const SystemImageDirFlag& system_image_dir) {
+  std::vector<FetcherConfig> fetcher_configs;
+  for (size_t i = 0; i < system_image_dir.Size(); ++i) {
+    std::string fetcher_file =
+        fmt::format("{}/{}", system_image_dir.ForIndex(i), kFetcherConfigFile);
+    FetcherConfig fetcher_config;
+    if (!fetcher_config.LoadFromFile(fetcher_file)) {
+      LOG(DEBUG) << "No valid fetcher_config in '" << fetcher_file
+                 << "', falling back to default";
     }
+    fetcher_configs.emplace_back(std::move(fetcher_config));
   }
-  LOG(DEBUG) << "Could not locate fetcher config file.";
-  return fetcher_config;
+  return FetcherConfigs::Create(std::move(fetcher_configs));
 }
 
 std::string GetLegacyConfigFilePath(const CuttlefishConfig& config) {
@@ -316,8 +308,9 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
 }
 
 Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
-    FetcherConfig fetcher_config, const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, SharedFD log, const BootImageFlag& boot_image,
+    FetcherConfigs fetcher_configs,
+    const std::vector<GuestConfig>& guest_configs, fruit::Injector<>& injector,
+    SharedFD log, const BootImageFlag& boot_image,
     const InitramfsPathFlag& initramfs_path, const KernelPathFlag& kernel_path,
     const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
@@ -330,7 +323,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // disk.
     auto config = CF_EXPECT(
         InitializeCuttlefishConfiguration(
-            FLAGS_instance_dir, guest_configs, injector, fetcher_config,
+            FLAGS_instance_dir, guest_configs, injector, fetcher_configs,
             boot_image, initramfs_path, kernel_path, super_image,
             system_image_dir, vendor_boot_image, vm_manager_flag),
         "cuttlefish configuration initialization failed");
@@ -517,7 +510,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     }
   }
 
-  CF_EXPECT(CreateDynamicDiskFiles(fetcher_config, *config, system_image_dir));
+  CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, system_image_dir));
 
   return config;
 }
@@ -557,14 +550,7 @@ fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
       .install(CustomActionsComponent);
 }
 
-} // namespace
-
-Result<int> AssembleCvdMain(int argc, char** argv) {
-  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-
-  auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
-
+Result<void> CheckNoTTY() {
   int tty = isatty(0);
   int error_num = errno;
   CF_EXPECT(tty == 0,
@@ -573,17 +559,33 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   CF_EXPECT(error_num != EBADF,
             "stdin was not a valid file descriptor, expected to be "
             "passed the output of launch_cvd. Did you mean to run launch_cvd?");
+  return {};
+}
 
+Result<std::vector<std::string>> ReadInputFiles() {
   std::string input_files_str;
-  {
-    auto input_fd = SharedFD::Dup(0);
-    auto bytes_read = ReadAll(input_fd, &input_files_str);
-    CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
-                                   << input_fd->StrError() << "\"");
-  }
-  std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
+  auto input_fd = SharedFD::Dup(0);
+  CF_EXPECTF(input_fd->IsOpen(), "Failed to dup stdin: {}",
+             input_fd->StrError());
+  auto bytes_read = ReadAll(input_fd, &input_files_str);
+  CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
+                                 << input_fd->StrError() << "\"");
+  return android::base::Split(input_files_str, "\n");
+}
 
-  FetcherConfig fetcher_config = FindFetcherConfig(input_files);
+} // namespace
+
+Result<int> AssembleCvdMain(int argc, char** argv) {
+  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+
+  auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
+
+  CF_EXPECT(CheckNoTTY());
+
+  // Read everything that cvd_internal_start writes, but ignore it since
+  // fetcher_config.json will be searched for in the system image directory.
+  (void) CF_EXPECT(ReadInputFiles());
 
   auto args = ArgsToVec(argc - 1, argv + 1);
 
@@ -617,12 +619,14 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
                                          /* remove_flags */ false);
   }
 
-  InitramfsPathFlag initramfs_path =
-      InitramfsPathFlag::FromGlobalGflags(fetcher_config);
-  KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_config);
-
   SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
+
+  FetcherConfigs fetcher_configs = FindFetcherConfigs(system_image_dir);
+
+  InitramfsPathFlag initramfs_path =
+      InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
+  KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_configs);
 
   BootImageFlag boot_image = BootImageFlag::FromGlobalGflags(system_image_dir);
   SuperImageFlag super_image =
@@ -675,7 +679,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   auto config =
       CF_EXPECT(InitFilesystemAndCreateConfig(
-                    std::move(fetcher_config), guest_configs, injector, log,
+                    std::move(fetcher_configs), guest_configs, injector, log,
                     boot_image, initramfs_path, kernel_path, super_image,
                     system_image_dir, vendor_boot_image, vm_manager_flag),
                 "Failed to create config");

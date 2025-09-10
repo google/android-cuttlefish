@@ -23,7 +23,7 @@
 
 namespace cuttlefish {
 
-Result<void> CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
+Result<void> CreateDynamicDiskFiles(const FetcherConfigs& fetcher_config,
                                     const CuttlefishConfig& config,
                                     const SystemImageDirFlag&);
 

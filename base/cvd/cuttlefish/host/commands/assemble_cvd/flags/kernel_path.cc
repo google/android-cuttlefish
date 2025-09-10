@@ -32,16 +32,20 @@ DEFINE_string(kernel_path, CF_DEFAULTS_KERNEL_PATH,
 namespace cuttlefish {
 
 KernelPathFlag KernelPathFlag::FromGlobalGflags(
-    const FetcherConfig& fetcher_config) {
+    const FetcherConfigs& fetcher_configs) {
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("kernel_path");
 
-  std::string paths_comma_separated =
-      flag_info.is_default ? fetcher_config.FindCvdFileWithSuffix("kernel")
-                           : flag_info.current_value;
+  std::vector<std::string> kernel_paths;
 
-  std::vector<std::string> kernel_paths =
-      android::base::Split(paths_comma_separated, ",");
+  if (flag_info.is_default) {
+    for (size_t i = 0; i < fetcher_configs.Size(); ++i) {
+      kernel_paths.emplace_back(
+          fetcher_configs.ForInstance(i).FindCvdFileWithSuffix("kernel"));
+    }
+  } else {
+    kernel_paths = android::base::Split(flag_info.current_value, ",");
+  }
 
   return KernelPathFlag(std::move(kernel_paths));
 }
