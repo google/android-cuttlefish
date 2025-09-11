@@ -335,7 +335,7 @@ DEFINE_vec(
     "with the instance number to support multiple instances");
 
 DEFINE_vec(uuid, CF_DEFAULTS_UUID,
-              "UUID to use for the device. Random if not specified");
+           "UUID to use for the device. Random if not specified");
 DEFINE_vec(daemon, CF_DEFAULTS_DAEMON?"true":"false",
             "Run cuttlefish in background, the launcher exits on boot "
             "completed/failed");
@@ -1373,6 +1373,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> use_sdcard_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_sdcard));
   std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       pause_in_bootloader));
+  std::vector<std::string> uuid_vec = CF_EXPECT(GET_FLAG_STR_VALUE(uuid));
   std::vector<bool> daemon_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(daemon));
   std::vector<bool> enable_minimal_mode_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       enable_minimal_mode));
@@ -1908,7 +1909,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool is_any_netsim = is_netsim_all || is_bt_netsim || is_uwb_netsim;
 
-    instance.set_uuid(FLAGS_uuid);
+    instance.set_uuid(uuid_vec[instance_index]);
 
     instance.set_environment_name(environment_name);
 
