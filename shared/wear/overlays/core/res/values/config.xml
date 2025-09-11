@@ -135,4 +135,10 @@
   <bool name="config_supportsMicToggle">false</bool>
   <bool name="config_supportsCamToggle">false</bool>
 
+  <!--For AppFunction, this configuration lists package names grouped as "Device Settings".
+      Packages in this list share the same App Function access settings. In the UI, they are
+      presented as a single "Device Settings" item rather than individually. -->
+  <string-array name="config_appFunctionDeviceSettingsPackages" translatable="false">
+  </string-array>
+
 </resources>
