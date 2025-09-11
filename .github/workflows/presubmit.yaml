@@ -181,6 +181,11 @@ jobs:
   build-debian-package-amd64:
     runs-on: ubuntu-22.04
     steps:
+    - name: echo
+      run: |
+        DATETIME=$(date -d '${{ github.event.repository.pushed_at }}' -u +'%Y%m%d%H%M')
+        echo $DATETIME here!!!!!!!!!!!!!!!!!!!!!!
+        exit 1
     - name: Free disk space
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
       with:
