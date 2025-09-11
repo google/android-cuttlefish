@@ -23,7 +23,7 @@ runs:
           ;;
         nightly)
           # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>-<amd64|arm64>
-          DATE=$(date -d '${{ github.event.repository.pushed_at }}' -u +'%Y%m%d%H%M')
+          DATE=$(date -u +'%Y%m%d%H%M')
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
           TAG="git${DATE}-${SHORT_SHA}-${{ inputs.arch }}"
           ;;
