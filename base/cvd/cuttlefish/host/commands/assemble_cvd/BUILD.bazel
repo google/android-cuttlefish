@@ -273,6 +273,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:bootloader",
         "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
+        "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
         "//cuttlefish/host/commands/assemble_cvd/flags:display_proto",
         "//cuttlefish/host/commands/assemble_cvd/flags:initramfs_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
