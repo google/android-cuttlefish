@@ -1,3 +1,9 @@
+cuttlefish-frontend (1.25.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 12 Sep 2025 15:19:45 -0700
+
 cuttlefish-frontend (1.24.0) unstable; urgency=medium
 
   * [HO] Log kernel and cvd versions. by @ser-io in https://github.com/google/android-cuttlefish/pull/1622
