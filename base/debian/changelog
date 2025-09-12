@@ -1,8 +1,25 @@
-cuttlefish-common (1.24.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.24.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.24 by @Databean in https://github.com/google/android-cuttlefish/pull/1616
+  * Unstable/stable channel can build and deploy docker image by @0405ysj in https://github.com/google/android-cuttlefish/pull/1617
+  * Validate cvdalloc binary file permissions. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1547
+  * Vectorize some netsim, bluetooth and wifi assemble_cve flags by @jemoreira in https://github.com/google/android-cuttlefish/pull/1614
+  * ADB prints the platform version by @jemoreira in https://github.com/google/android-cuttlefish/pull/1620
+  * Use better version/tag format for debian packages & docker images by @0405ysj in https://github.com/google/android-cuttlefish/pull/1619
+  * Fix typo on postsubmit procedure of GH workflow by @0405ysj in https://github.com/google/android-cuttlefish/pull/1623
+  * fulfill missing parentheses for deploying docker images by @0405ysj in https://github.com/google/android-cuttlefish/pull/1625
+  * Apply staticcheck under tools/baseimage, for better code maintenance by @0405ysj in https://github.com/google/android-cuttlefish/pull/1610
+  * Use fetcher_config.json from the system image dir by @jemoreira in https://github.com/google/android-cuttlefish/pull/1626
+  * Mark v1.23.0 stable. by @Databean in https://github.com/google/android-cuttlefish/pull/1627
+  * Refer timestamp of last push for versioning artifacts by @0405ysj in https://github.com/google/android-cuttlefish/pull/1629
+  * Revert "Refer timestamp of last push for versioning artifacts" by @0405ysj in https://github.com/google/android-cuttlefish/pull/1631
+  * Ensure the instance RIL is set up properly. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1612
+  * On Linux, cvdalloc uses capabilities. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1621
+  * Use vectorized flags correctly by @jemoreira in https://github.com/google/android-cuttlefish/pull/1632
+  * Import changes from cl/804447160 by @Databean in https://github.com/google/android-cuttlefish/pull/1633
+  * Add a remove-display modal to confirm the removal by @asasui-2 in https://github.com/google/android-cuttlefish/pull/1624
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 05 Sep 2025 14:38:18 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 12 Sep 2025 14:16:15 -0700
 
 cuttlefish-common (1.23.0) stable; urgency=medium
 
