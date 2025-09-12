@@ -52,7 +52,7 @@ bazel_dep(name = "zlib", version = "1.3.1.bcr.5")
 
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
-CROSVM_REV = "bc84c8bd6ce078e251594aa1af9e84932c5d0d81"
+CROSVM_REV = "d3175012b887aee0dc5767aa05cfdab901d65798"
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor
@@ -214,7 +214,6 @@ crosvm_bin.spec(
         "qcow",
         "usb",
     ],
-    # TODO: schuffelen - fix the sandbox
     git = CROSVM_REMOTE,
     rev = CROSVM_REV,
 )
@@ -263,7 +262,7 @@ crosvm_bin.annotation(
 crosvm_bin.annotation(
     crate = "minijail-sys",
     build_script_data = ["@@//:minijail_sources"],
-    build_script_rundir = "external/+_repo_rules2+crosvm/third_party/minijail",
+    build_script_rundir = "external/+_repo_rules3+crosvm/third_party/minijail",
     patch_args = ["-p1"],
     # crates_universe checks out only a subdirectory of the repository, so the
     # file paths in this patch are relative to that directory.
