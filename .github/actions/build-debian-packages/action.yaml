@@ -1,20 +1,19 @@
 name: 'Build debian packages for Cuttlefish host'
 inputs:
-  deploy-channel:
+  yyyymmddhhmm:
     required: false
 runs:
   using: "composite"
   steps:
-  - name: Modify version for unstable/nightly channel
-    if: inputs.deploy-channel != 'stable'
+  - name: Modify version with datetime
+    if: inputs.yyyymmddhhmm != ''
     run: |
       # Modify debian/changelog to build debian package with desired version
       # format.
       # Stable version format           : X.Y.Z
       # Unstable/nightly version format : X.Y.Z~gitYYYYMMDDHHMM.<Github SHA 8 digit>
-      DATETIME=$(date -u +'%Y%m%d%H%M')
       SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-      SUFFIX="~git${DATETIME}.${SHORT_SHA}"
+      SUFFIX="~git${{ inputs.yyyymmddhhmm }}.${SHORT_SHA}"
       sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
         base/debian/changelog
       sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
