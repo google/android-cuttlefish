@@ -14,6 +14,11 @@ on:
         required: true
 
 jobs:
+  set-github-env:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Set YYYYMMDDHHMM
+      run: echo "YYYYMMDDHHMM=$(date -u +'%Y%m%d%H%M')" >> $GITHUB_ENV
   update-cvd-test-bazel-cache:
     if: inputs.update-cache
     runs-on: ubuntu-24.04
@@ -33,6 +38,7 @@ jobs:
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
   update-bazel-cache-and-deploy-debian-package-amd64:
+    needs: [set-github-env]
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
@@ -51,7 +57,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
-        deploy-channel: ${{ inputs.deploy-channel }}
+        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v2'
@@ -64,6 +70,7 @@ jobs:
         deploy-channel: ${{ inputs.deploy-channel }}
         path: .
   update-bazel-cache-and-deploy-debian-package-arm64:
+    needs: [set-github-env]
     environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
@@ -82,7 +89,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
-        deploy-channel: ${{ inputs.deploy-channel }}
+        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v2'
@@ -120,6 +127,7 @@ jobs:
       with:
         arch: amd64
         deploy-channel: ${{ inputs.deploy-channel }}
+        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
   deploy-docker-image-arm64:
     if: inputs.deploy-channel != ''
     needs: [update-bazel-cache-and-deploy-debian-package-arm64]
@@ -145,6 +153,7 @@ jobs:
       with:
         arch: arm64
         deploy-channel: ${{ inputs.deploy-channel }}
+        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
   deploy-docker-manifest:
     if: inputs.deploy-channel != ''
     needs: [deploy-docker-image-amd64, deploy-docker-image-arm64]
@@ -179,9 +188,8 @@ jobs:
             ;;
           nightly)
             # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
-            DATE=$(date -u +'%Y%m%d%H%M')
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-            TAG="git${DATE}-${SHORT_SHA}"
+            TAG="git${{ env.YYYYMMDDHHMM }}-${SHORT_SHA}"
             ;;
           *)
             exit 1

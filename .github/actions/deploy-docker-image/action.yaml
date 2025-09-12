@@ -4,6 +4,8 @@ inputs:
     required: true
   deploy-channel:
     required: true
+  yyyymmddhhmm:
+    required: false
 runs:
   using: "composite"
   steps:
@@ -23,9 +25,8 @@ runs:
           ;;
         nightly)
           # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>-<amd64|arm64>
-          DATE=$(date -u +'%Y%m%d%H%M')
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          TAG="git${DATE}-${SHORT_SHA}-${{ inputs.arch }}"
+          TAG="git${{ inputs.yyyymmddhhmm }}-${SHORT_SHA}-${{ inputs.arch }}"
           ;;
         *)
           exit 1
