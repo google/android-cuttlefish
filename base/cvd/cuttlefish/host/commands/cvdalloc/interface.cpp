@@ -35,4 +35,15 @@ std::string InstanceToMobileBroadcast(int num) {
   return absl::StrFormat("%s.%d", kCvdallocMobileIpPrefix, 4 * num - 1);
 }
 
+std::string InstanceToWifiGatewayAddress(int num) {
+  return absl::StrFormat("%s.%d", kCvdallocWirelessApIpPrefix, 4 * num - 3);
+}
+
+std::string InstanceToWifiAddress(int num) {
+  return absl::StrFormat("%s.%d", kCvdallocWirelessApIpPrefix, 4 * num - 2);
+}
+
+std::string InstanceToWifiBroadcast(int num) {
+  return absl::StrFormat("%s.%d", kCvdallocWirelessApIpPrefix, 4 * num - 1);
+}
 }  // namespace cuttlefish

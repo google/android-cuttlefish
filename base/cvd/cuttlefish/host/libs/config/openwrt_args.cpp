@@ -21,6 +21,7 @@
 
 #include <android-base/parseint.h>
 
+#include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -64,12 +65,19 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
 
   } else {
     openwrt_args["bridged_wifi_tap"] = "false";
-    openwrt_args["wan_gateway"] =
-        getIpAddress(94 + c_class_base, d_class_base + 1);
-    openwrt_args["wan_ipaddr"] =
-        getIpAddress(94 + c_class_base, d_class_base + 2);
-    openwrt_args["wan_broadcast"] =
-        getIpAddress(94 + c_class_base, d_class_base + 3);
+
+    if (instance.use_cvdalloc()) {
+      openwrt_args["wan_gateway"] = InstanceToWifiGatewayAddress(instance_num);
+      openwrt_args["wan_ipaddr"] = InstanceToWifiAddress(instance_num);
+      openwrt_args["wan_broadcast"] = InstanceToWifiBroadcast(instance_num);
+    } else {
+      openwrt_args["wan_gateway"] =
+          getIpAddress(94 + c_class_base, d_class_base + 1);
+      openwrt_args["wan_ipaddr"] =
+          getIpAddress(94 + c_class_base, d_class_base + 2);
+      openwrt_args["wan_broadcast"] =
+          getIpAddress(94 + c_class_base, d_class_base + 3);
+    }
   }
 
   return openwrt_args;
