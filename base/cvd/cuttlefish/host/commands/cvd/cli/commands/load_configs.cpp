@@ -26,6 +26,7 @@
 
 #include <android-base/logging.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"

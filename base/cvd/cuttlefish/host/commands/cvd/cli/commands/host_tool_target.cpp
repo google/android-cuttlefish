@@ -23,6 +23,7 @@
 
 #include <android-base/strings.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"

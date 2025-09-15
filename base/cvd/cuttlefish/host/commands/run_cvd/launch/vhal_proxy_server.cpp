@@ -20,6 +20,7 @@
 #include <optional>
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"

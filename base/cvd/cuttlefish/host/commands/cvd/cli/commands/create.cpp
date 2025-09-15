@@ -36,6 +36,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"

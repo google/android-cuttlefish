@@ -31,6 +31,7 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"

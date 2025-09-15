@@ -24,6 +24,7 @@
 
 #include <android-base/logging.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>

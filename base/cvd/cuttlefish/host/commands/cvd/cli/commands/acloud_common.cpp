@@ -21,6 +21,7 @@
 #include <string>
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
