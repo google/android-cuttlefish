@@ -999,8 +999,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     CF_EXPECT(ConfigureNetworkSettings(ril_dns_vec[instance_index],
                                        const_instance, instance));
 
-    if (NetworkInterfaceExists(iface_config.non_bridged_wireless_tap.name) &&
-        tmp_config_obj.virtio_mac80211_hwsim()) {
+    bool use_non_bridged_wireless =
+        (NetworkInterfaceExists(iface_config.non_bridged_wireless_tap.name) ||
+         const_instance.use_cvdalloc()) &&
+        tmp_config_obj.virtio_mac80211_hwsim();
+    if (use_non_bridged_wireless) {
       instance.set_use_bridged_wifi_tap(false);
       instance.set_wifi_tap_name(iface_config.non_bridged_wireless_tap.name);
     } else {

@@ -29,5 +29,8 @@ std::string CvdallocInterfaceName(const std::string &name, int num);
 std::string InstanceToMobileGatewayAddress(int num);
 std::string InstanceToMobileAddress(int num);
 std::string InstanceToMobileBroadcast(int num);
+std::string InstanceToWifiGatewayAddress(int num);
+std::string InstanceToWifiAddress(int num);
+std::string InstanceToWifiBroadcast(int num);
 
 }  // namespace cuttlefish

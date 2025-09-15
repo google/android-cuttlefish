@@ -283,6 +283,7 @@ cf_cc_library(
     srcs = ["openwrt_args.cpp"],
     hdrs = ["openwrt_args.h"],
     deps = [
+        "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
     ],
