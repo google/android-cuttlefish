@@ -38,7 +38,5 @@ Result<VmmMode> ParseVmm(std::string_view);
 
 }  // namespace cuttlefish
 
-#if FMT_VERSION >= 90000
 template <>
 struct fmt::formatter<cuttlefish::VmmMode> : ostream_formatter {};
-#endif
