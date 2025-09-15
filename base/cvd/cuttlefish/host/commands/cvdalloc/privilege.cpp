@@ -68,6 +68,18 @@ static int SetAmbientCapabilities() {
     return -1;
   }
 
+  r = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_BIND_SERVICE, 0, 0);
+  if (r == -1) {
+    PLOG(INFO) << "prctl";
+    return -1;
+  }
+
+  r = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_NET_RAW, 0, 0);
+  if (r == -1) {
+    PLOG(INFO) << "prctl";
+    return -1;
+  }
+
   return 1;
 }
 #endif
@@ -84,7 +96,8 @@ Result<void> ValidateCvdallocBinary(std::string_view path) {
   CF_EXPECTF(
       s != 1 && (cap.data[0].permitted & (1 << CAP_NET_ADMIN)) != 0,
       "cvdalloc binary does not have permissions to allocate resources.\n"
-      "As root, please\n\n    setcap cap_net_admin=+ep `realpath {}`",
+      "As root, please\n\n    setcap cap_net_admin,cap_net_bind_service,"
+      "cap_net_raw=+ep `realpath {}`",
       path);
 #else
   CF_EXPECTF(

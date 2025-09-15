@@ -32,5 +32,8 @@ std::string InstanceToMobileBroadcast(int num);
 std::string InstanceToWifiGatewayAddress(int num);
 std::string InstanceToWifiAddress(int num);
 std::string InstanceToWifiBroadcast(int num);
+std::string InstanceToBridgedWifiGatewayAddress(int num);
+std::string InstanceToBridgedWifiAddress(int num);
+std::string InstanceToBridgedWifiBroadcast(int num);
 
 }  // namespace cuttlefish
