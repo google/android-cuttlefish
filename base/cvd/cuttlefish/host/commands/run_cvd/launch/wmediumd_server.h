@@ -44,7 +44,7 @@ class WmediumdServer : public vm_manager::VmmDependencyCommand {
   std::string Name() const override;
   bool Enabled() const override;
 
-  Result<void> WaitForAvailability() const override;
+  Result<void> WaitForAvailability() override;
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override;

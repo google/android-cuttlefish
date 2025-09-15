@@ -43,7 +43,7 @@ class CommandSource : public virtual SetupFeature {
 
 class StatusCheckCommandSource : public virtual CommandSource {
  public:
-  virtual Result<void> WaitForAvailability() const = 0;
+  virtual Result<void> WaitForAvailability() = 0;
 };
 
 }  // namespace cuttlefish

@@ -93,7 +93,7 @@ class Mcu : public vm_manager::VmmDependencyCommand {
   }
 
   // StatusCheckCommandSource
-  Result<void> WaitForAvailability() const override {
+  Result<void> WaitForAvailability() override {
     if (!Enabled()) {
       return {};
     }
