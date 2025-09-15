@@ -41,23 +41,26 @@ void Usage() {
   LOG(ERROR) << "Should only be invoked from run_cvd.";
 }
 
-Result<void> Allocate(int id, const std::string &bridge_name) {
+Result<void> Allocate(int id, const std::string &ethernet_bridge_name,
+                      const std::string &wireless_bridge_name) {
   LOG(INFO) << "cvdalloc: allocating network resources";
 
-  CreateBridge(bridge_name);
   CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("mtap", id), id,
                               kCvdallocMobileIpPrefix));
-  CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("wtap", id), id,
-                              kCvdallocWirelessIpPrefix));
+  CreateEthernetBridgeIface(wireless_bridge_name, kCvdallocWirelessIpPrefix);
+  CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("wtap", id),
+                                wireless_bridge_name, true, true, false));
   CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("wifiap", id), id,
                               kCvdallocWirelessApIpPrefix));
-  CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("etap", id), bridge_name,
-                                true, true, false));
+  CreateEthernetBridgeIface(ethernet_bridge_name, kCvdallocEthernetIpPrefix);
+  CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("etap", id),
+                                ethernet_bridge_name, true, true, false));
 
   return {};
 }
 
-Result<void> Teardown(int id, const std::string &bridge_name) {
+Result<void> Teardown(int id, const std::string &ethernet_bridge_name,
+                      const std::string &wireless_bridge_name) {
   LOG(INFO) << "cvdalloc: tearing down resources";
 
   DestroyMobileIface(CvdallocInterfaceName("mtap", id), id,
@@ -67,7 +70,8 @@ Result<void> Teardown(int id, const std::string &bridge_name) {
   DestroyMobileIface(CvdallocInterfaceName("wifiap", id), id,
                      kCvdallocWirelessApIpPrefix);
   DestroyEthernetIface(CvdallocInterfaceName("etap", id), true, true, false);
-  DestroyBridge(bridge_name);
+  DestroyBridge(ethernet_bridge_name);
+  DestroyBridge(wireless_bridge_name);
 
   return {};
 }
@@ -115,13 +119,15 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
     return CF_ERRNO("Couldn't elevate permissions: " << strerror(errno));
   }
 
-  std::string bridge_name = "cvd-pi-br";
+  std::string ethernet_bridge_name = "cvd-pi-ebr";
+  std::string wireless_bridge_name = "cvd-pi-wbr";
 
-  absl::Cleanup teardown = [id, bridge_name, sock]() {
-    Teardown(id, bridge_name);
+  absl::Cleanup teardown = [id, ethernet_bridge_name, wireless_bridge_name]() {
+    LOG(INFO) << "cvdalloc: teardown started";
+    Teardown(id, ethernet_bridge_name, wireless_bridge_name);
   };
 
-  CF_EXPECT(Allocate(id, bridge_name));
+  CF_EXPECT(Allocate(id, ethernet_bridge_name, wireless_bridge_name));
   CF_EXPECT(cvdalloc::Post(sock));
 
   LOG(INFO) << "cvdalloc: waiting to teardown";

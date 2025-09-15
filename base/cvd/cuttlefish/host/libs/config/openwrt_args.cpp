@@ -57,12 +57,20 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
   // (AOSP) external/openwrt-prebuilts/shared/uci-defaults/0_default_config
   if (instance.use_bridged_wifi_tap()) {
     openwrt_args["bridged_wifi_tap"] = "true";
-    openwrt_args["wan_gateway"] = getIpAddress(96, 1);
-    // TODO(seungjaeyoo) : Remove config after using DHCP server outside OpenWRT
-    // instead.
-    openwrt_args["wan_ipaddr"] = getIpAddress(96, d_class_base + 2);
-    openwrt_args["wan_broadcast"] = getIpAddress(96, d_class_base + 3);
 
+    if (instance.use_cvdalloc()) {
+      openwrt_args["wan_gateway"] =
+          InstanceToBridgedWifiGatewayAddress(instance_num);
+      openwrt_args["wan_ipaddr"] = InstanceToBridgedWifiAddress(instance_num);
+      openwrt_args["wan_broadcast"] =
+          InstanceToBridgedWifiBroadcast(instance_num);
+    } else {
+      openwrt_args["wan_gateway"] = getIpAddress(96, 1);
+      // TODO(seungjaeyoo) : Remove config after using DHCP server outside
+      // OpenWRT instead.
+      openwrt_args["wan_ipaddr"] = getIpAddress(96, d_class_base + 2);
+      openwrt_args["wan_broadcast"] = getIpAddress(96, d_class_base + 3);
+    }
   } else {
     openwrt_args["bridged_wifi_tap"] = "false";
 
