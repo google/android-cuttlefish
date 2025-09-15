@@ -103,7 +103,7 @@ bool WmediumdServer::Enabled() const {
   return instance_.start_wmediumd_instance();
 }
 
-Result<void> WmediumdServer::WaitForAvailability() const {
+Result<void> WmediumdServer::WaitForAvailability() {
   if (Enabled()) {
     if (!environment_.wmediumd_api_server_socket().empty()) {
       CF_EXPECT(

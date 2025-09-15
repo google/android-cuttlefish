@@ -56,7 +56,7 @@ class VhostDeviceVsock : public vm_manager::VmmDependencyCommand {
   std::string Name() const override;
   bool Enabled() const override;
 
-  Result<void> WaitForAvailability() const override;
+  Result<void> WaitForAvailability() override;
 
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
@@ -113,7 +113,7 @@ std::string VhostDeviceVsock::Name() const { return "VhostDeviceVsock"; }
 
 bool VhostDeviceVsock::Enabled() const { return instance_.vhost_user_vsock(); }
 
-Result<void> VhostDeviceVsock::WaitForAvailability() const {
+Result<void> VhostDeviceVsock::WaitForAvailability() {
   if (Enabled()) {
     CF_EXPECT(WaitForUnixSocket(
         fmt::format("{}/vsock_{}_{}/vm.vsock", TempDir(),

@@ -75,7 +75,7 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
   }
 
   // StatusCheckCommandSource
-  Result<void> WaitForAvailability() const override {
+  Result<void> WaitForAvailability() override {
     LOG(INFO) << "cvdalloc (run_cvd): waiting to finish allocation.";
     CF_EXPECT(cvdalloc::Wait(socket_, kCvdAllocateTimeout),
               "cvdalloc (run_cvd): Wait failed");
