@@ -15,11 +15,41 @@
 
 #pragma once
 
+#include <mutex>
+#include <string_view>
+
 #include <fruit/fruit.h>
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/feature/command_source.h"
+#include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
+
+class Cvdalloc : public vm_manager::VmmDependencyCommand {
+ public:
+  INJECT(Cvdalloc(const CuttlefishConfig::InstanceSpecific &instance));
+
+  // CommandSource
+  Result<std::vector<MonitorCommand>> Commands() override;
+  std::string Name() const override;
+  bool Enabled() const override;
+  std::unordered_set<SetupFeature *> Dependencies() const override;
+
+  // StatusCheckCommandSource
+  Result<void> WaitForAvailability() override;
+
+ private:
+  Result<void> ResultSetup() override;
+  Result<void> BinaryIsValid(std::string_view path);
+  StopperResult Stop();
+
+  const CuttlefishConfig::InstanceSpecific &instance_;
+  SharedFD socket_, their_socket_;
+};
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
 CvdallocComponent();
