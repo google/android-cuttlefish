@@ -35,7 +35,5 @@ Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view);
 
 }  // namespace cuttlefish
 
-#if FMT_VERSION >= 90000
 template <>
 struct fmt::formatter<cuttlefish::ExternalNetworkMode> : ostream_formatter {};
-#endif

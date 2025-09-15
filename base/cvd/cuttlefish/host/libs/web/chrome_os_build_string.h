@@ -23,13 +23,6 @@
 
 #include <fmt/format.h>
 
-#ifndef CONST_IF_LATER_FMTLIB
-#if FMT_VERSION >= 90000
-#define CONST_IF_LATER_FMTLIB const
-#else
-#define CONST_IF_LATER_FMTLIB
-#endif
-#endif
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 
 namespace cuttlefish {
@@ -56,7 +49,7 @@ struct fmt::formatter<cuttlefish::ChromeOsBuilder>
     : formatter<std::string_view> {
   template <typename FormatContext>
   auto format(const cuttlefish::ChromeOsBuilder& cob,
-              FormatContext& ctx) CONST_IF_LATER_FMTLIB {
+              FormatContext& ctx) const {
     auto formatted =
         fmt::format("{}/{}/{}", cob.project, cob.bucket, cob.builder);
     return formatter<std::string_view>::format(formatted, ctx);
@@ -68,7 +61,7 @@ struct fmt::formatter<cuttlefish::ChromeOsBuildString>
     : formatter<std::string_view> {
   template <typename FormatContext>
   auto format(const cuttlefish::ChromeOsBuildString& cobs,
-              FormatContext& ctx) CONST_IF_LATER_FMTLIB {
+              FormatContext& ctx) const {
     auto formatted =
         std::visit([](auto&& value) { return fmt::format("{}", value); }, cobs);
     return formatter<std::string_view>::format(formatted, ctx);
@@ -80,7 +73,7 @@ struct fmt::formatter<std::optional<cuttlefish::ChromeOsBuildString>>
     : formatter<std::string_view> {
   template <typename FormatContext>
   auto format(const std::optional<cuttlefish::ChromeOsBuildString>& cobs,
-              FormatContext& ctx) CONST_IF_LATER_FMTLIB {
+              FormatContext& ctx) const {
     auto formatted = cobs ? fmt::format("{}", *cobs) : "";
     return formatter<std::string_view>::format(formatted, ctx);
   }
