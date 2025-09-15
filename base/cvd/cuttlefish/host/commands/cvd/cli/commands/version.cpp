@@ -21,8 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <fmt/format.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include <fmt/ranges.h>
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"

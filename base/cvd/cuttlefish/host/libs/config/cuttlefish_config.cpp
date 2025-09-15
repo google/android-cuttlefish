@@ -26,9 +26,10 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <json/reader.h>
 #include <json/value.h>
 

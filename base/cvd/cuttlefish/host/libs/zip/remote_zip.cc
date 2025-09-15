@@ -27,6 +27,7 @@
 
 #include "absl/strings/numbers.h"
 #include "fmt/core.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"

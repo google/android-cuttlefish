@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 #include "android-base/file.h"
 #include "android-base/logging.h"
