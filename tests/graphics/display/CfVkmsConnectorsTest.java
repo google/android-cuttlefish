@@ -85,19 +85,16 @@ public class CfVkmsConnectorsTest extends BaseHostJUnit4Test {
         mVkmsTester = CfVkmsTester.createWithConfig(getDevice(), mConnectorConfigs);
         assertNotNull("Failed to initialize VKMS tester", mVkmsTester);
 
-        // Wait for displays to be detected. UI might take some time to turn on. When on, we should
-        // expect more than 1 display.
-        long startTime = System.currentTimeMillis();
-        int displayCount = 0;
-        while (displayCount < 2 && System.currentTimeMillis() - startTime < 500) {
-            String command = "dumpsys SurfaceFlinger --displays";
-            CommandResult result = getDevice().executeShellV2Command(command);
-            assertEquals(
-                "Failed to execute dumpsys command", CommandStatus.SUCCESS, result.getStatus());
-            mSurfaceFlingerDumpsys = result.getStdout();
-            displayCount = getNumberOfDisplays(mSurfaceFlingerDumpsys);
-        }
-        assertTrue("Displays were not detected", displayCount >= 1);
+        // Wait for displays to be detected.
+        mVkmsTester.waitForDisplaysToBeOn(
+            mExpectedDisplayCount, CfVkmsTester.DISPLAY_BRINGUP_TIMEOUT_MS);
+
+        // Get the final dumpsys output for the tests
+        String command = "dumpsys SurfaceFlinger --displays";
+        CommandResult result = getDevice().executeShellV2Command(command);
+        assertEquals(
+            "Failed to execute dumpsys command", CommandStatus.SUCCESS, result.getStatus());
+        mSurfaceFlingerDumpsys = result.getStdout();
     }
 
     @After
@@ -115,17 +112,7 @@ public class CfVkmsConnectorsTest extends BaseHostJUnit4Test {
     @Test
     public void testConnectorDisplayCountCheck() throws Exception {
         // Count the number of displays in the output
-        int displayCount = 0;
-        if (mSurfaceFlingerDumpsys != null && !mSurfaceFlingerDumpsys.isEmpty()) {
-            // Use regex to find lines starting with "Display"
-            // This pattern matches lines like "Display 0" or "Display 4621520188814754049"
-            Pattern pattern = Pattern.compile("^Display\\s+\\d+", Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(mSurfaceFlingerDumpsys);
-
-            while (matcher.find()) {
-                displayCount++;
-            }
-        }
+        int displayCount = getNumberOfDisplays(mSurfaceFlingerDumpsys);
 
         // Log the output for debugging
         CLog.i("Found %d displays in SurfaceFlinger", displayCount);
@@ -143,7 +130,8 @@ public class CfVkmsConnectorsTest extends BaseHostJUnit4Test {
     public void testConnectorDisplayNamesCheck() throws Exception {
         // Define expected display names based on the configured monitors
         Set<String> expectedDisplayNames = new HashSet<>();
-        expectedDisplayNames.add("Primary display");
+        // No name present in CfVkmsEdidHelper.EdpDisplay.REDRIX's EDID
+        expectedDisplayNames.add("");
         expectedDisplayNames.add("HP Spectre 32");
         expectedDisplayNames.add("ASUS VH238");
         expectedDisplayNames.add("HP Z24i");
@@ -186,9 +174,8 @@ public class CfVkmsConnectorsTest extends BaseHostJUnit4Test {
         if (dumpsysOutput != null && !dumpsysOutput.isEmpty()) {
             // Use regex to find lines starting with "Display"
             // This pattern matches lines like "Display 0" or "Display 4621520188814754049"
-            Pattern pattern = Pattern.compile("^Display\\s+\\d+", Pattern.MULTILINE);
+            Pattern pattern = Pattern.compile("^Display\\s+(\\d+|\\w+)", Pattern.MULTILINE);
             Matcher matcher = pattern.matcher(dumpsysOutput);
-
             while (matcher.find()) {
                 displayCount++;
             }

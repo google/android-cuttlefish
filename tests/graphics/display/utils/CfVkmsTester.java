@@ -32,6 +32,7 @@ import java.util.List;
  */
 public class CfVkmsTester implements Closeable {
     private static final String VKMS_BASE_DIR = "/config/vkms/my-vkms";
+    public static final long DISPLAY_BRINGUP_TIMEOUT_MS = 10_000;
 
     // DRM resource types
     private enum DrmResource {
@@ -367,12 +368,23 @@ public class CfVkmsTester implements Closeable {
     }
 
     public boolean toggleSystemUi(boolean enable) throws Exception {
-        String command =
-            enable ? "start vendor.hwcomposer-3 && start" : "stop && stop vendor.hwcomposer-3";
-        CommandResult result = executeCommand(command);
-        if (result.getStatus() != CommandStatus.SUCCESS) {
-            CLog.e("Failed to %s HWC3 service: %s", enable ? "start" : "stop", result.getStderr());
-            return false;
+        if (enable) {
+            if (executeCommand("start vendor.hwcomposer-3").getStatus() != CommandStatus.SUCCESS) {
+                CLog.e("Failed to start vendor.hwcomposer-3 service");
+                return false;
+            }
+            if (executeCommand("start").getStatus() != CommandStatus.SUCCESS) {
+                CLog.e("Failed to start zygote");
+                return false;
+            }
+        } else {
+            if (executeCommand("stop").getStatus() != CommandStatus.SUCCESS) {
+                CLog.w("Failed to stop zygote. This may be expected if it was already stopped.");
+            }
+            if (executeCommand("stop vendor.hwcomposer-3").getStatus() != CommandStatus.SUCCESS) {
+                CLog.w("Failed to stop vendor.hwcomposer-3. This may be expected if it was already "
+                    + "stopped.");
+            }
         }
 
         CLog.i("Successfully %s UI service", enable ? "started" : "stopped");
@@ -695,6 +707,43 @@ public class CfVkmsTester implements Closeable {
             shutdownAndCleanUpVkms();
         } catch (Exception e) {
             throw new IOException("Failed to clean up VKMS: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Helper method to wait for displays to be online by periodically checking SurfaceFlinger.
+     *
+     * @param minimumExpectedDisplays The minimum number of displays expected to be detected
+     * @param waitTimeoutMs The maximum time to wait in milliseconds
+     * @throws Exception If displays are not detected in time or a command fails
+     */
+    public void waitForDisplaysToBeOn(int minimumExpectedDisplays, long waitTimeoutMs)
+        throws Exception {
+        final long pollIntervalMs = 500;
+        long startTime = System.currentTimeMillis();
+        int displayCount = 0;
+        while (displayCount < minimumExpectedDisplays
+            && System.currentTimeMillis() - startTime < waitTimeoutMs) {
+            String command = "dumpsys SurfaceFlinger --displays | grep -c '^Display '";
+            CommandResult result = device.executeShellV2Command(command);
+            if (result.getStatus() == CommandStatus.SUCCESS) {
+                try {
+                    displayCount = Integer.parseInt(result.getStdout().trim());
+                } catch (NumberFormatException e) {
+                    CLog.w("Could not parse display count from dumpsys: %s", result.getStdout());
+                    displayCount = 0;
+                }
+            } else {
+                CLog.d("dumpsys SurfaceFlinger failed, UI likely not ready yet. Retrying...");
+            }
+
+            // Wait a poll interval
+            long pollStartTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - pollStartTime < pollIntervalMs) {}
+        }
+        if (displayCount < minimumExpectedDisplays) {
+            throw new Exception("Displays were not detected in time. Expected at least "
+                + minimumExpectedDisplays + ", found " + displayCount);
         }
     }
 }
