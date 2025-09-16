@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 #include <android-base/no_destructor.h>
 #include <android-base/parseint.h>
+#include <fmt/format.h>
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -168,6 +169,36 @@ const std::unordered_set<std::string>& BoolFlags() {
   return *bool_flags;
 }
 
+Result<void> LinkLogs2InstanceDir(
+    const std::string& config_path, const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
+
+  CF_EXPECT(CreateSymLink(
+      config_path,
+      instance.PerInstanceLogPath(android::base::Basename(config_path)),
+      false));
+
+  std::string assemble_cvd_logs = config.AssemblyPath("assemble_cvd.log");
+  CF_EXPECT(CreateSymLink(assemble_cvd_logs,
+                          instance.PerInstanceLogPath("assemble_cvd.log")));
+
+  std::string images_dir = instance.images_dir();
+  std::string fetch_log = fmt::format("{}/{}", images_dir, "fetch.log");
+  if (!FileExists(fetch_log)) {
+    // The fetch.log file can be in the same directory as the downloaded
+    // instances or its parent directory if --target_subdirectory was used.
+    fetch_log =
+        fmt::format("{}/{}", android::base::Dirname(images_dir), "fetch.log");
+  }
+  if (FileExists(fetch_log)) {
+    CF_EXPECT(
+        CreateSymLink(fetch_log, instance.PerInstanceLogPath("fetch.log")));
+  }
+
+  return {};
+}
+
 int CvdInternalStartMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
@@ -281,6 +312,12 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   std::vector<Subprocess> runners;
   for (const auto& instance : config->Instances()) {
+    Result<void> link_res =
+        LinkLogs2InstanceDir(conf_path, *config, instance);
+    if (!link_res.ok()) {
+      LOG(ERROR) << "Failed to link logs to instance dir: "
+                 << link_res.error().FormatForEnv();
+    }
     SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);
     CHECK(runner_stdin->IsOpen()) << runner_stdin->StrError();
     setenv(kCuttlefishInstanceEnvVarName, instance.id().c_str(),
