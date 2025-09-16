@@ -840,6 +840,8 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
       android::base::Split(FLAGS_blank_metadata_image_mb, ",");
   std::vector<std::string> blank_sdcard_image_mb =
       android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
+  std::vector<std::string> system_image_dir =
+      android::base::Split(FLAGS_system_image_dir, ",");
 
   std::string cur_kernel_path;
   std::string cur_initramfs_path;
@@ -850,6 +852,9 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
   int instance_index = 0;
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
+  for (size_t i = system_image_dir.size(); i < instance_nums.size(); ++i) {
+    system_image_dir.push_back(system_image_dir[0]);
+  }
   for (const auto& num : instance_nums) {
     auto instance = config.ForInstance(num);
     if (instance_index >= misc_info.size()) {
@@ -862,6 +867,7 @@ Result<void> DiskImageFlagsVectorization(CuttlefishConfig& config, const Fetcher
     } else {
       cur_boot_image = boot_image[instance_index];
     }
+    instance.set_images_dir(system_image_dir[instance_index]);
     instance.set_boot_image(cur_boot_image);
     instance.set_new_boot_image(cur_boot_image);
 
