@@ -251,6 +251,9 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   qemu_cmd.AddPrerequisite([&dependency_commands]() -> Result<void> {
     for (auto dependencyCommand : dependency_commands) {
+      if (!dependencyCommand->Enabled()) {
+        continue;
+      }
       CF_EXPECT(dependencyCommand->WaitForAvailability());
     }
 
