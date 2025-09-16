@@ -861,7 +861,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-cpu");
     qemu_cmd.AddParameter("rv64",
                           ",v=true,elen=64,vlen=128",
-                          ",zba=true,zbb=true,zbs=true");
+                          ",zba=true,zbb=true,zbs=true",
+                          ",zacas=true");
   }
 
   qemu_cmd.AddParameter("-msg");
