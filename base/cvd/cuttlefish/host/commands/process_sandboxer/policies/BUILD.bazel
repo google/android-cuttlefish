@@ -54,6 +54,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/process_sandboxer:policies_header",
         "@sandboxed_api//sandboxed_api/sandbox2",
+        "@sandboxed_api//sandboxed_api/sandbox2/allowlists:map_exec",
         "@sandboxed_api//sandboxed_api/sandbox2/util:bpf_helper",
         "@sandboxed_api//sandboxed_api/util:file_base",
     ],
