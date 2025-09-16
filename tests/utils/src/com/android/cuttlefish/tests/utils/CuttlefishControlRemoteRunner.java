@@ -39,6 +39,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * @deprecated Use tradefed features to control (see b/435448037#comment29).
+ */
+@Deprecated
 public class CuttlefishControlRemoteRunner implements CuttlefishControlRunner {
 
     private static final String OXYGEN_CUTTLEFISH_RUNTIME_DIRECTORY = "/tmp/cfbase/3";

@@ -22,6 +22,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+/**
+ * @deprecated Use tradefed features to control (see b/435448037#comment29).
+ */
+@Deprecated
 public interface CuttlefishControlRunner {
 
     public CommandResult run(long timeout, String... command);

@@ -19,7 +19,6 @@ package com.android.cuttlefish.tests.utils;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
 import com.android.tradefed.device.internal.CuttlefishDisplayHandler;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ByteArrayInputStreamSource;
@@ -42,7 +41,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
-import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -53,19 +51,6 @@ import org.junit.runners.model.Statement;
  * Base test class for interacting with a Cuttlefish device with host binaries.
  */
 public abstract class CuttlefishHostTest extends BaseHostJUnit4Test {
-
-    protected CuttlefishControlRunner runner;
-
-    @Before
-    public void cuttlefishHostTestSetUp() throws Exception {
-        ITestDevice device = getDevice();
-        CLog.i("Test Device Class Name: " + device.getClass().getSimpleName());
-        if (device instanceof RemoteAndroidVirtualDevice) {
-            runner = new CuttlefishControlRemoteRunner((RemoteAndroidVirtualDevice)device);
-        } else {
-            runner = new CuttlefishControlLocalRunner(getTestInformation());
-        }
-    }
 
     private static final long DEFAULT_COMMAND_TIMEOUT_MS = 5000;
 

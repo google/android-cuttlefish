@@ -32,6 +32,10 @@ import java.util.Optional;
 
 import org.junit.Assert;
 
+/**
+ * @deprecated Use tradefed features to control (see b/435448037#comment29).
+ */
+@Deprecated
 public class CuttlefishControlLocalRunner implements CuttlefishControlRunner {
 
     private static final String CVD_CUTTLEFISH_CONFIG =

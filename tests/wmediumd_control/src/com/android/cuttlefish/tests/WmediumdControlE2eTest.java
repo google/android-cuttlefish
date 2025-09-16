@@ -16,7 +16,11 @@
 
 package com.android.cuttlefish.tests;
 
+import com.android.cuttlefish.tests.utils.CuttlefishControlLocalRunner;
+import com.android.cuttlefish.tests.utils.CuttlefishControlRemoteRunner;
+import com.android.cuttlefish.tests.utils.CuttlefishControlRunner;
 import com.android.cuttlefish.tests.utils.CuttlefishHostTest;
+import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -53,6 +57,7 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
 
     private JsonFormat.Parser jsonParser;
     private JsonFormat.Printer jsonPrinter;
+    private CuttlefishControlRunner runner;
 
     private int getRSSI() throws Exception {
         CommandResult wifiScanCommandResult = testDevice.executeShellV2Command("cmd wifi status");
@@ -173,6 +178,13 @@ public class WmediumdControlE2eTest extends CuttlefishHostTest {
         this.testDevice = getDevice();
         this.jsonParser = JsonFormat.parser();
         this.jsonPrinter = JsonFormat.printer();
+
+        CLog.i("Test Device Class Name: " + testDevice.getClass().getSimpleName());
+        if (testDevice instanceof RemoteAndroidVirtualDevice) {
+            runner = new CuttlefishControlRemoteRunner((RemoteAndroidVirtualDevice)testDevice);
+        } else {
+            runner = new CuttlefishControlLocalRunner(getTestInformation());
+        }
     }
 
     @Test(timeout = 60 * 1000)
