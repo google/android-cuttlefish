@@ -512,6 +512,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   CrosvmBuilder crosvm_cmd;
   crosvm_cmd.Cmd().AddPrerequisite([&dependencyCommands]() -> Result<void> {
     for (auto dependencyCommand : dependencyCommands) {
+      if (!dependencyCommand->Enabled()) {
+        continue;
+      }
       CF_EXPECT(dependencyCommand->WaitForAvailability());
     }
 
