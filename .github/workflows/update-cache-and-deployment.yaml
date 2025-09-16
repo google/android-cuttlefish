@@ -14,11 +14,16 @@ on:
         required: true
 
 jobs:
-  set-github-env:
+  set-variables:
     runs-on: ubuntu-22.04
+    outputs:
+      yyyymmddhhmm: ${{ steps.yyyymmddhhmm.outputs.time }}
     steps:
     - name: Set YYYYMMDDHHMM
-      run: echo "YYYYMMDDHHMM=$(date -u +'%Y%m%d%H%M')" >> $GITHUB_ENV
+      id: yyyymmddhhmm
+      run: echo "time=$(date -u +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+    - name: Echo YYYYMMDDHHMM
+      run: echo ${{ steps.yyyymmddhhmm.outputs.time }}
   update-cvd-test-bazel-cache:
     if: inputs.update-cache
     runs-on: ubuntu-24.04
@@ -38,7 +43,7 @@ jobs:
     - name: Run cvd unit tests
       uses: ./.github/actions/run-cvd-unit-tests
   update-bazel-cache-and-deploy-debian-package-amd64:
-    needs: [set-github-env]
+    needs: [set-variables]
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
@@ -57,7 +62,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
-        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
+        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v2'
@@ -70,7 +75,7 @@ jobs:
         deploy-channel: ${{ inputs.deploy-channel }}
         path: .
   update-bazel-cache-and-deploy-debian-package-arm64:
-    needs: [set-github-env]
+    needs: [set-variables]
     environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
@@ -89,7 +94,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
-        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
+        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v2'
@@ -104,7 +109,7 @@ jobs:
 
   deploy-docker-image-amd64:
     if: inputs.deploy-channel != ''
-    needs: [update-bazel-cache-and-deploy-debian-package-amd64]
+    needs: [set-variables, update-bazel-cache-and-deploy-debian-package-amd64]
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
@@ -127,10 +132,10 @@ jobs:
       with:
         arch: amd64
         deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
+        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
   deploy-docker-image-arm64:
     if: inputs.deploy-channel != ''
-    needs: [update-bazel-cache-and-deploy-debian-package-arm64]
+    needs: [set-variables, update-bazel-cache-and-deploy-debian-package-arm64]
     environment: deployment
     runs-on: ubuntu-22.04-arm
     steps:
@@ -153,10 +158,10 @@ jobs:
       with:
         arch: arm64
         deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ env.YYYYMMDDHHMM }}
+        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
   deploy-docker-manifest:
     if: inputs.deploy-channel != ''
-    needs: [deploy-docker-image-amd64, deploy-docker-image-arm64]
+    needs: [set-variables, deploy-docker-image-amd64, deploy-docker-image-arm64]
     environment: deployment
     runs-on: ubuntu-22.04
     steps:
@@ -189,7 +194,7 @@ jobs:
           nightly)
             # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-            TAG="git${{ env.YYYYMMDDHHMM }}-${SHORT_SHA}"
+            TAG="git${{ needs.set-variables.outputs.yyyymmddhhmm }}-${SHORT_SHA}"
             ;;
           *)
             exit 1
