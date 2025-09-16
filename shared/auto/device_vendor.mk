@@ -145,11 +145,6 @@ frameworks/native/data/etc/android.hardware.camera.xml:$(TARGET_COPY_OUT_VENDOR)
 frameworks/native/data/etc/android.hardware.camera.concurrent.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.concurrent.xml \
 frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml
 
-PRODUCT_PACKAGES += \
-    emu_camera_back.json \
-    emu_camera_front.json \
-    emu_camera_depth.json
-
 else
 # EVS
 # By default, we enable EvsManager, a sample EVS app, and a mock EVS HAL implementation.
