@@ -17,15 +17,17 @@
 
 #include <fruit/fruit.h>
 
+#include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-fruit::Component<fruit::Required<
-    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
-    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, WmediumdServer>>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::EnvironmentSpecific,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 LogTeeCreator, WmediumdServer, Cvdalloc>>
 OpenWrtComponent();
 
 }  // namespace cuttlefish
