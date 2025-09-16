@@ -8,7 +8,7 @@ rust_binary {
     vendor: true,
     prefer_rlib: true,
     rustlibs: [
-        "android.hardware.light-V2-rust",
+        "android.hardware.light-V3-rust",
         "libanyhow",
         "libbinder_rs",
         "liblog_rust",
