@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
+import com.android.tradefed.device.internal.CuttlefishDisplayHandler;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ByteArrayInputStreamSource;
 import com.android.tradefed.result.InputStreamSource;
@@ -75,32 +76,10 @@ public abstract class CuttlefishHostTest extends BaseHostJUnit4Test {
     private static final String CVD_DISPLAY_BINARY_BASENAME = "cvd_internal_display";
 
     protected BufferedImage getDisplayScreenshot() throws Exception {
-        File screenshotTempFile =  File.createTempFile("screenshot", ".png");
-        screenshotTempFile.deleteOnExit();
-
-        // TODO: Switch back to using `cvd` after either:
-        //  * Commands under `cvd` can be used with instances launched through `launch_cvd`.
-        //  * ATP launches instances using `cvd start` instead of `launch_cvd`.
-        String cvdDisplayBinary = runner.getHostBinaryPath(CVD_DISPLAY_BINARY_BASENAME);
-
-        List<String> fullCommand = new ArrayList<String>();
-        fullCommand.add(cvdDisplayBinary);
-        fullCommand.add("screenshot");
-        fullCommand.add("--screenshot_path=" + screenshotTempFile.getAbsolutePath());
-
-        CommandResult result = runner.run(DEFAULT_COMMAND_TIMEOUT_MS, fullCommand.toArray(new String[0]));
-        if (!CommandStatus.SUCCESS.equals(result.getStatus())) {
-            throw new IllegalStateException(
-                    String.format("Failed to run display screenshot command:\nstdout: %s\nstderr: %s",
-                                  result.getStdout(),
-                                  result.getStderr()));
-        }
-
-        BufferedImage screenshot = ImageIO.read(runner.getFile(screenshotTempFile.getAbsolutePath()));
+        BufferedImage screenshot = new CuttlefishDisplayHandler().screenshotDisplay(getDevice(), /*displayNumber=*/0);
         if (screenshot == null) {
-            throw new IllegalStateException(String.format("Failed to read screenshot from %s", screenshotTempFile));
+            throw new IllegalStateException(String.format("Failed to get screenshot."));
         }
-
         return screenshot;
     }
 
