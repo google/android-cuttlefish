@@ -125,7 +125,7 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
       .AllowEventFd()
       .AllowFork()  // Multithreading, sandboxer_proxy, process monitor
       .AllowGetIDs()
-      .AllowInotifyInit()
+      .AllowInotify()
       .AllowMkdir()
       .AllowPipe()
       .AllowSafeFcntl()
@@ -135,8 +135,6 @@ sandbox2::PolicyBuilder RunCvdPolicy(const HostInfo& host) {
       .AllowSyscall(__NR_connect)
       .AllowSyscall(__NR_execve)  // sandboxer_proxy
       .AllowSyscall(__NR_getsid)
-      .AllowSyscall(__NR_inotify_add_watch)
-      .AllowSyscall(__NR_inotify_rm_watch)
       .AllowSyscall(__NR_listen)
       .AllowSyscall(__NR_msgget)  // Metrics SysV RPC
       .AllowSyscall(__NR_msgsnd)  // Metrics SysV RPC

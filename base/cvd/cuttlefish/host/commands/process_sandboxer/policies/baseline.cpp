@@ -22,6 +22,7 @@
 #include <string_view>
 #include <vector>
 
+#include "sandboxed_api/sandbox2/allowlists/map_exec.h"
 #include "sandboxed_api/sandbox2/policybuilder.h"
 #include "sandboxed_api/sandbox2/util/bpf_helper.h"
 #include "sandboxed_api/util/path.h"
@@ -35,11 +36,12 @@ sandbox2::PolicyBuilder BaselinePolicy(const HostInfo& host,
   return sandbox2::PolicyBuilder()
       .AddLibrariesForBinary(exe, JoinPath(host.host_artifacts_path, "lib64"))
       // For dynamic linking and memory allocation
-      .AllowDynamicStartup()
+      .AllowDynamicStartup(sandbox2::MapExec())
       .AllowExit()
       .AllowGetPIDs()
       .AllowGetRandom()
       // Observed by `strace` on `socket_vsock_proxy` with x86_64 AOSP `glibc`.
+      .Allow(sandbox2::MapExec())
       .AddPolicyOnMmap([](bpf_labels& labels) -> std::vector<sock_filter> {
         return {
             ARG_32(2),  // prot
