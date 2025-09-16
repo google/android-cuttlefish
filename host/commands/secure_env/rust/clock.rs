@@ -18,6 +18,7 @@
 use kmr_common::crypto;
 
 /// Monotonic clock.
+#[allow(dead_code)]
 #[derive(Default)]
 pub struct StdClock;
 
