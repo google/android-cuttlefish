@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 
 #include <chrono>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -46,8 +47,14 @@ namespace cuttlefish {
 constexpr std::chrono::seconds kCvdAllocateTimeout = std::chrono::seconds(30);
 constexpr std::chrono::seconds kCvdTeardownTimeout = std::chrono::seconds(2);
 
+enum class CvdallocStatus {
+  kUnknown = 0,
+  kAvailable,
+  kFailed
+};
+
 Cvdalloc::Cvdalloc(const CuttlefishConfig::InstanceSpecific& instance)
-    : instance_(instance) {}
+    : instance_(instance), status_(CvdallocStatus::kUnknown) {}
 
 Result<std::vector<MonitorCommand>> Cvdalloc::Commands() {
   std::string path = CvdallocBinary();
@@ -67,10 +74,16 @@ bool Cvdalloc::Enabled() const { return instance_.use_cvdalloc(); }
 std::unordered_set<SetupFeature *> Cvdalloc::Dependencies() const { return {}; }
 
 Result<void> Cvdalloc::WaitForAvailability() {
-  LOG(INFO) << "cvdalloc (run_cvd): waiting to finish allocation.";
-  CF_EXPECT(cvdalloc::Wait(socket_, kCvdAllocateTimeout),
-            "cvdalloc (run_cvd): Wait failed");
-  LOG(INFO) << "cvdalloc (run_cvd): allocation is done.";
+  std::lock_guard<std::mutex> lock(availability_mutex_);
+  CF_EXPECT(status_ != CvdallocStatus::kFailed);
+  if (status_ == CvdallocStatus::kUnknown) {
+    LOG(INFO) << "cvdalloc (run_cvd): waiting to finish allocation.";
+    status_ = CvdallocStatus::kFailed;
+    CF_EXPECT(cvdalloc::Wait(socket_, kCvdAllocateTimeout),
+              "cvdalloc (run_cvd): Wait failed");
+    LOG(INFO) << "cvdalloc (run_cvd): allocation is done.";
+    status_ = CvdallocStatus::kAvailable;
+  }
 
   return {};
 }

@@ -27,6 +27,7 @@
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -48,12 +49,14 @@ class OpenWrt : public CommandSource {
   INJECT(OpenWrt(const CuttlefishConfig& config,
                  const CuttlefishConfig::EnvironmentSpecific& environment,
                  const CuttlefishConfig::InstanceSpecific& instance,
-                 LogTeeCreator& log_tee, WmediumdServer& wmediumd_server))
+                 LogTeeCreator& log_tee, WmediumdServer& wmediumd_server,
+                 Cvdalloc& cvdalloc))
       : config_(config),
         environment_(environment),
         instance_(instance),
         log_tee_(log_tee),
-        wmediumd_server_(wmediumd_server) {}
+        wmediumd_server_(wmediumd_server),
+        cvdalloc_(cvdalloc) {}
 
   // CommandSource
   Result<std::vector<MonitorCommand>> Commands() override {
@@ -62,7 +65,12 @@ class OpenWrt : public CommandSource {
     CrosvmBuilder ap_cmd;
 
     ap_cmd.Cmd().AddPrerequisite([this]() -> Result<void> {
-      return wmediumd_server_.WaitForAvailability();
+      if (cvdalloc_.Enabled()) {
+        CF_EXPECT(cvdalloc_.WaitForAvailability());
+        LOG(INFO) << "openwrt (run_cvd): cvdalloc is available."; 
+      }
+      CF_EXPECT(wmediumd_server_.WaitForAvailability());
+      return {};
     });
 
     std::string first_time_argument;
@@ -183,15 +191,17 @@ class OpenWrt : public CommandSource {
   const CuttlefishConfig::InstanceSpecific& instance_;
   LogTeeCreator& log_tee_;
   WmediumdServer& wmediumd_server_;
+  Cvdalloc& cvdalloc_;
 
   static constexpr int kOpenwrtVmResetExitCode = 32;
 };
 
 }  // namespace
 
-fruit::Component<fruit::Required<
-    const CuttlefishConfig, const CuttlefishConfig::EnvironmentSpecific,
-    const CuttlefishConfig::InstanceSpecific, LogTeeCreator, WmediumdServer>>
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::EnvironmentSpecific,
+                                 const CuttlefishConfig::InstanceSpecific,
+                                 LogTeeCreator, WmediumdServer, Cvdalloc>>
 OpenWrtComponent() {
   return fruit::createComponent()
       .addMultibinding<CommandSource, OpenWrt>()

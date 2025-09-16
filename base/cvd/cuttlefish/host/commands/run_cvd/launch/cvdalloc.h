@@ -29,6 +29,8 @@
 
 namespace cuttlefish {
 
+enum class CvdallocStatus;
+
 class Cvdalloc : public vm_manager::VmmDependencyCommand {
  public:
   INJECT(Cvdalloc(const CuttlefishConfig::InstanceSpecific &instance));
@@ -49,6 +51,8 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
 
   const CuttlefishConfig::InstanceSpecific &instance_;
   SharedFD socket_, their_socket_;
+  std::mutex availability_mutex_;
+  CvdallocStatus status_;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>>
