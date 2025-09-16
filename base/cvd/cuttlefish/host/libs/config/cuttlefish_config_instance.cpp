@@ -99,6 +99,14 @@ bool CuttlefishConfig::InstanceSpecific::use_bootloader() const {
 };
 
 // vectorized and moved system image files into instance specific
+static constexpr char kImagesDir[] = "images_dir";
+std::string CuttlefishConfig::InstanceSpecific::images_dir() const {
+  return (*Dictionary())[kImagesDir].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_images_dir(
+    const std::string& dir) {
+  (*Dictionary())[kImagesDir] = dir;
+}
 static constexpr char kBootImage[] = "boot_image";
 std::string CuttlefishConfig::InstanceSpecific::boot_image() const {
   return (*Dictionary())[kBootImage].asString();
