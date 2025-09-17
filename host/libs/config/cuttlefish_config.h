@@ -696,6 +696,7 @@ class CuttlefishConfig {
     bool restart_subprocesses() const;
 
     // android artifacts
+    std::string images_dir() const;
     std::string boot_image() const;
     std::string new_boot_image() const;
     std::string init_boot_image() const;
@@ -941,6 +942,7 @@ class CuttlefishConfig {
     void set_restart_subprocesses(bool restart_subprocesses);
 
     // system image files
+    void set_images_dir(const std::string& dir);
     void set_boot_image(const std::string& boot_image);
     void set_new_boot_image(const std::string& new_boot_image);
     void set_init_boot_image(const std::string& init_boot_image);
