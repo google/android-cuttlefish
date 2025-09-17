@@ -246,8 +246,6 @@ Result<std::unique_ptr<OperatorControlConn>> PreregisterGroup(
   return operator_conn;
 }
 
-}  // namespace
-
 class CvdStartCommandHandler : public CvdCommandHandler {
  public:
   CvdStartCommandHandler(InstanceManager& instance_manager)
@@ -681,6 +679,8 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
     std::vector<std::string>&) const {
   return kDetailedHelpText;
 }
+
+}  // namespace
 
 std::unique_ptr<CvdCommandHandler> NewCvdStartCommandHandler(
     InstanceManager& instance_manager) {
