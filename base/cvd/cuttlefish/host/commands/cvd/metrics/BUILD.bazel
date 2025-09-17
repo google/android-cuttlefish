@@ -5,6 +5,11 @@ package(
 )
 
 cf_cc_library(
+    name = "is_enabled",
+    hdrs = ["is_enabled.h"],
+)
+
+cf_cc_library(
     name = "metrics",
     srcs = [
         # TODO: b/315772518 - cvd metrics are currently disabled

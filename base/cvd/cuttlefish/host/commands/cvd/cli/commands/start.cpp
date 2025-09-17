@@ -61,11 +61,15 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/metrics/metrics_defs.h"
 
 namespace cuttlefish {
 namespace {
@@ -626,6 +630,43 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   LOG(INFO) << "launch command: " << launch_command;
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
+
+  LOG(INFO)
+      << "By using this Android Virtual Device, you agree to Google Terms of "
+         "Service (https://policies.google.com/terms). The Google Privacy "
+         "Policy (https://policies.google.com/privacy) describes how Google "
+         "handles information generated as you use Google services.";
+  if (kEnableCvdMetrics) {
+    static constexpr int kLogSourceId = 1753;
+    static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
+    static constexpr int kCppClientType =
+        19;  // C++ native client type (clientanalytics.proto)
+             //
+    LOG(INFO) << "This will automatically send diagnostic information to "
+                 "Google, such as crash reports and usage data from the host "
+                 "machine managing the Android Virtual Device.";
+    CuttlefishLogEvent cf_log_event;
+
+    cf_log_event.set_session_id("cvd-todo-session");
+
+    LogRequest request_proto;
+    request_proto.set_log_source(kLogSourceId);
+    request_proto.set_log_source_name(kLogSourceStr);
+
+    ClientInfo& client_info = *request_proto.mutable_client_info();
+    client_info.set_client_type(kCppClientType);
+
+    LogEvent& log_event = *request_proto.add_log_event();
+    log_event.set_event_time_ms(metrics::GetEpochTimeMs());
+    log_event.set_source_extension(cf_log_event.SerializeAsString());
+
+    std::string request_string = request_proto.SerializeAsString();
+    MetricsExitCodes reporting_outcome =
+        metrics::PostRequest(request_string, metrics::ClearcutServer::kProd);
+    if (reporting_outcome != MetricsExitCodes::kSuccess) {
+      LOG(ERROR) << "Issue reporting metrics: " << reporting_outcome;
+    }
+  }
 
   auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
   if (!acloud_compat_action_result.ok()) {

@@ -22,7 +22,7 @@
 
 #pragma GCC system_header
 
-#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/common.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"  // IWYU pragma: export
+#include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"  // IWYU pragma: export
+#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"  // IWYU pragma: export
+#include "cuttlefish/host/commands/metrics/proto/common.pb.h"  // IWYU pragma: export
