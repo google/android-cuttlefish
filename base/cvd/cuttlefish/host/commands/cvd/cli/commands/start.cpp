@@ -70,12 +70,6 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char kSummaryHelpText[] =
-    "Start a Cuttlefish virtual device or environment";
-
-constexpr char kDetailedHelpText[] =
-    "Run cvd start --help for the full help text.";
-
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();
   std::string config_file;
@@ -255,9 +249,15 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override {
     return {"start", "launch_cvd"};
   }
-  Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override;
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> SummaryHelp() const override {
+    return "Start a Cuttlefish virtual device or environment";
+  }
+  // TODO(b/315027339): Swap to true.  Will likely need to add `cvd::Request` as
+  // a parameter of DetailedHelp to match current implementation
+  bool ShouldInterceptHelp() const override { return false; }
+  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+    return "Run cvd start --help for the full help text.";
+  }
 
  private:
   Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
@@ -279,8 +279,6 @@ class CvdStartCommandHandler : public CvdCommandHandler {
     LocalInstanceGroup group;
     std::vector<InstanceLockFile> lock_files;
   };
-
-  Result<void> UpdateArgs(cvd_common::Args& args, LocalInstanceGroup& group);
 
   Result<void> UpdateEnvs(cvd_common::Envs& envs,
                           const LocalInstanceGroup& group);
@@ -368,13 +366,6 @@ Result<void> CvdStartCommandHandler::AcloudCompatActions(
                     "compatible location";
     }
   }
-  return {};
-}
-
-Result<void> CvdStartCommandHandler::UpdateArgs(cvd_common::Args& args,
-                                                LocalInstanceGroup& group) {
-  CF_EXPECT(UpdateInstanceArgs(args, group));
-  CF_EXPECT(UpdateWebrtcDeviceIds(args, group));
   return {};
 }
 
@@ -541,7 +532,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
             "Selected instance group is already started, use `cvd create` to "
             "create a new one.");
 
-  CF_EXPECT(UpdateArgs(subcmd_args, group));
+  CF_EXPECT(UpdateInstanceArgs(subcmd_args, group));
+  CF_EXPECT(UpdateWebrtcDeviceIds(subcmd_args, group));
   CF_EXPECT(UpdateEnvs(envs, group));
   const auto bin = CF_EXPECT(FindStartBin(group.HostArtifactsPath()));
 
@@ -665,19 +657,6 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   }
 
   return {};
-}
-
-Result<std::string> CvdStartCommandHandler::SummaryHelp() const {
-  return kSummaryHelpText;
-}
-
-// TODO(b/315027339): Swap to true.  Will likely need to add `cvd::Request` as a
-// parameter of DetailedHelp to match current implementation
-bool CvdStartCommandHandler::ShouldInterceptHelp() const { return false; }
-
-Result<std::string> CvdStartCommandHandler::DetailedHelp(
-    std::vector<std::string>&) const {
-  return kDetailedHelpText;
 }
 
 }  // namespace
