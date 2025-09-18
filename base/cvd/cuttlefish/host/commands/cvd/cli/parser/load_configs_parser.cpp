@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <optional>
 #include <ostream>
 #include <set>
 #include <sstream>
@@ -237,47 +238,49 @@ Result<Json::Value> GetOverriddenConfig(
 Result<LoadDirectories> GenerateLoadDirectories(
     const std::string& parent_directory,
     std::vector<std::string>& system_image_path_configs,
-    std::optional<std::string> system_host_path, const int num_instances) {
-  CF_EXPECT_GT(num_instances, 0, "No instances in config to load");
-  auto result = LoadDirectories{
-      .target_directory = parent_directory + "/artifacts",
-      .launch_home_directory = parent_directory + "/home",
-  };
+    std::optional<std::string> system_host_path) {
+  CF_EXPECT(!system_image_path_configs.empty(), "No instances in config to load");
 
-  std::vector<std::string> system_image_directories;
+  std::vector<std::optional<std::string>> targets_opt;
   int num_remote = 0;
-  for (int i = 0; i < num_instances; i++) {
-    const std::string instance_build_path = system_image_path_configs[i];
-    CF_EXPECT_EQ((int)system_image_path_configs.size(), num_instances,
-                 "Number of instances is inconsistent");
-
-    auto target_subdirectory = std::to_string(i);
-    result.target_subdirectories.emplace_back(target_subdirectory);
+  for (const auto& instance_build_path: system_image_path_configs) {
     if (IsLocalBuild(instance_build_path)) {
-      system_image_directories.emplace_back(instance_build_path);
+      targets_opt.emplace_back(instance_build_path);
     } else {
-      const std::string dir =
-          result.target_directory + "/" + target_subdirectory;
-      system_image_directories.emplace_back(dir);
+      targets_opt.emplace_back();
       num_remote++;
     }
-    LOG(INFO) << "Instance " << i << " directory is "
-              << system_image_directories.back();
   }
 
   CF_EXPECT(system_host_path || num_remote > 0,
             "Host tools path must be provided when using only local artifacts");
 
+  std::optional<std::string> parent_dir_opt;
+  if (!parent_directory.empty()) {
+    parent_dir_opt.emplace(parent_directory);
+  }
+  std::optional<std::string> host_tools_opt;
   if (system_host_path && IsLocalBuild(system_host_path.value())) {
     // If config specifies a host tools path, we use this.
-    result.host_package_directory = system_host_path.value();
-  } else {
-    result.host_package_directory =
-        result.target_directory + "/" + kHostToolsSubdirectory;
+    host_tools_opt = std::move(system_host_path);
+  }
+  GroupDirectories dirs = CF_EXPECT(GenerateGroupDirectories(
+      std::move(parent_dir_opt), std::nullopt, std::move(host_tools_opt),
+      std::move(targets_opt)));
+
+  std::vector<std::string> target_dirs = dirs.targets();
+  auto result = LoadDirectories{
+      .target_directory = dirs.artifacts(),
+      .launch_home_directory = dirs.home(),
+      .host_package_directory = dirs.host_tools(),
+      .system_image_directory_flag_value =
+          android::base::Join(target_dirs, ','),
+  };
+  for (const std::string& target_dir : target_dirs) {
+    result.target_subdirectories.emplace_back(
+        android::base::Basename(target_dir));
   }
 
-  result.system_image_directory_flag_value =
-      android::base::Join(system_image_directories, ',');
   return result;
 }
 
@@ -342,10 +345,9 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
       !args.empty(),
       "No arguments provided to cvd command, please provide path to json file");
 
-  if (load_flags.base_dir.empty()) {
-    load_flags.base_dir = DefaultBaseDir();
+  if (!load_flags.base_dir.empty()) {
+    MakeAbsolute(load_flags.base_dir, working_directory);
   }
-  MakeAbsolute(load_flags.base_dir, working_directory);
 
   load_flags.config_path = args.front();
   MakeAbsolute(load_flags.config_path, working_directory);
@@ -386,9 +388,8 @@ Result<CvdFlags> GetCvdFlags(const LoadFlags& flags) {
   std::optional<std::string> host_package_dir =
       GetConfiguredSystemHostPath(launch);
 
-  const auto load_directories = CF_EXPECT(
-      GenerateLoadDirectories(flags.base_dir, system_image_path_configs,
-                              host_package_dir, launch.instances().size()));
+  const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
+      flags.base_dir, system_image_path_configs, host_package_dir));
 
   return CF_EXPECT(ParseCvdConfigs(launch, load_directories),
                    "Parsing json configs failed");

@@ -147,9 +147,6 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
             FindGroups(data, {.home = group_proto.home_directory()}).empty(),
             "An instance group already exists with HOME directory: {}",
             group_proto.home_directory());
-        CF_EXPECTF(EnsureDirectoryExists(group_proto.home_directory()),
-                   "HOME dir, \"{}\" neither exists nor can be created.",
-                   group_proto.home_directory());
         std::unordered_map<uint32_t, std::string> ids_to_name_map;
         for (const auto& group : data.instance_groups()) {
           for (const auto& instance : group.instances()) {
