@@ -17,6 +17,7 @@
 
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish::metrics {
 
@@ -35,6 +36,9 @@ std::string GetCompany();
 std::string GetVmmVersion();
 uint64_t GetEpochTimeMs();
 std::string ProtoToString(LogEvent* event);
+
 MetricsExitCodes PostRequest(const std::string& output, ClearcutServer server);
+MetricsExitCodes PostRequest(HttpClient&, const std::string& output,
+                             ClearcutServer server);
 
 }  // namespace cuttlefish::metrics

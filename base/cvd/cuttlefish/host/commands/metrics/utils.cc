@@ -29,11 +29,13 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <curl/curl.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_string.h"
 
 namespace cuttlefish::metrics {
 
@@ -129,20 +131,6 @@ uint64_t GetEpochTimeMs() {
   return milliseconds_since_epoch;
 }
 
-size_t curl_out_writer([[maybe_unused]] char* response, size_t size,
-                       size_t nmemb, [[maybe_unused]] void* userdata) {
-  return size * nmemb;
-}
-
-CURLUcode SetCurlUrlPart(CURLU* url, CURLUPart part, const char* value) {
-  CURLUcode urc = curl_url_set(url, part, value, 0);
-  if (urc != 0) {
-    LOG(ERROR) << "Failed to set url part '" << part << "' to '" << value
-               << "': Error '" << curl_url_strerror(urc) << "'";
-  }
-  return urc;
-}
-
 std::string ClearcutServerUrl(metrics::ClearcutServer server) {
   switch (server) {
     case metrics::kLocal:
@@ -160,51 +148,33 @@ std::string ClearcutServerUrl(metrics::ClearcutServer server) {
   }
 }
 
-MetricsExitCodes PostRequest(const std::string& output,
-                             metrics::ClearcutServer server) {
+MetricsExitCodes PostRequest(const std::string& output, ClearcutServer server) {
+  CurlGlobalInit curl_global_init;
+  std::unique_ptr<HttpClient> http_client = CurlHttpClient();
+  if (!http_client) {
+    return MetricsExitCodes::kMetricsError;
+  }
+  return PostRequest(*http_client, output, server);
+}
+
+MetricsExitCodes PostRequest(HttpClient& http_client, const std::string& output,
+                             ClearcutServer server) {
   std::string clearcut_url = ClearcutServerUrl(server);
 
-  std::unique_ptr<CURLU, void (*)(CURLU*)> url(curl_url(), curl_url_cleanup);
-  if (!url) {
-    LOG(ERROR) << "Failed to initialize CURLU.";
-    return kMetricsError;
+  Result<HttpResponse<std::string>> http_res =
+      HttpPostToString(http_client, clearcut_url, output);
+  if (!http_res.ok()) {
+    LOG(ERROR) << "HTTP command failed: " << http_res.error().FormatForEnv();
+    return MetricsExitCodes::kMetricsError;
   }
 
-  CURLUcode urc =
-      curl_url_set(url.get(), CURLUPART_URL, clearcut_url.c_str(), 0);
-  if (urc != 0) {
-    LOG(ERROR) << "Failed to set url to " << url.get() << clearcut_url
-               << "': " << curl_url_strerror(urc) << "'";
-    return kMetricsError;
-  }
-  curl_global_init(CURL_GLOBAL_ALL);
-
-  std::unique_ptr<CURL, void (*)(CURL*)> curl(curl_easy_init(),
-                                              curl_easy_cleanup);
-
-  if (!curl) {
-    LOG(ERROR) << "Failed to initialize CURL.";
-    return kMetricsError;
-  }
-
-  curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, &curl_out_writer);
-  curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 0L);
-  curl_easy_setopt(curl.get(), CURLOPT_CURLU, url.get());
-  curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, output.data());
-  curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, output.size());
-  CURLcode rc = curl_easy_perform(curl.get());
-  long http_code = 0;
-  curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &http_code);
-
-  if (rc == CURLE_ABORTED_BY_CALLBACK || http_code != 200) {
-    LOG(ERROR) << "Metrics message failed: [" << output << "]";
-    LOG(ERROR) << "http error code: " << http_code;
-    LOG(ERROR) << "curl error code: " << rc << " | " << curl_easy_strerror(rc);
-    return kMetricsError;
+  if (!http_res->HttpSuccess()) {
+    LOG(ERROR) << "Metrics message failed: [" << http_res->data << "]";
+    LOG(ERROR) << "http error code: " << http_res->http_code;
+    return MetricsExitCodes::kMetricsError;
   }
   LOG(INFO) << "Metrics posted to ClearCut";
-  curl_global_cleanup();
-  return kSuccess;
+  return MetricsExitCodes::kSuccess;
 }
 
 }  // namespace cuttlefish::metrics
