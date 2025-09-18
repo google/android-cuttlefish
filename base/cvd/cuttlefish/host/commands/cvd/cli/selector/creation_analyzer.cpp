@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -29,7 +30,6 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/unique_resource_allocator.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
@@ -79,12 +79,9 @@ class CreationAnalyzer {
    * if the HOME value is not equal to the HOME directory recognized by the
    * system, it can be safely regarded as overridden by the user.
    *
-   * If that is not the case, we use a automatically generated value as HOME.
-   * If the group instance is the default one, we still use the user's system-
-   * widely recognized home. If not, we populate them user /tmp/.cf/<uid>/
-   *
+   * If that is not the case, we use an automatically generated value as HOME.
    */
-  Result<std::string> AnalyzeHome() const;
+  Result<std::optional<std::string>> AnalyzeHome() const;
 
   Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
       bool acquire_file_locks);
@@ -254,16 +251,26 @@ Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo(
   }
   auto group_info = CF_EXPECT(ExtractGroup(instance_info));
 
-  auto home = CF_EXPECT(AnalyzeHome());
+  std::optional<std::string> home = CF_EXPECT(AnalyzeHome());
 
-  auto android_host_out = CF_EXPECT(AndroidHostPath(envs_));
+  std::string android_host_out = CF_EXPECT(AndroidHostPath(envs_));
   std::string android_product_out_path = Contains(envs_, kAndroidProductOut)
                                              ? envs_.at(kAndroidProductOut)
                                              : android_host_out;
+  std::vector<std::string> target_dirs =
+      android::base::Split(android_product_out_path, ",");
+  std::vector<std::optional<std::string>> target_dir_opts;
+  for (const std::string& target_dir: target_dirs) {
+    target_dir_opts.emplace_back(target_dir);
+  }
+  GroupDirectories group_dirs = CF_EXPECT(
+      GenerateGroupDirectories(std::nullopt, std::move(home),
+                               std::move(android_host_out), target_dir_opts));
+
   return GroupCreationInfo{
-      .home = home,
-      .host_artifacts_path = android_host_out,
-      .product_out_path = android_product_out_path,
+      .home = group_dirs.home(),
+      .host_artifacts_path = group_dirs.host_tools(),
+      .product_out_path = android::base::Join(group_dirs.targets(), ","),
       .group_name = group_info.group_name,
       .instances = std::move(instance_info),
   };
@@ -279,16 +286,12 @@ Result<CreationAnalyzer::GroupInfo> CreationAnalyzer::ExtractGroup(
   return group_name_info;
 }
 
-Result<std::string> CreationAnalyzer::AnalyzeHome() const {
+Result<std::optional<std::string>> CreationAnalyzer::AnalyzeHome() const {
   auto system_wide_home = CF_EXPECT(SystemWideUserHome());
   if (Contains(envs_, "HOME") && envs_.at("HOME") != system_wide_home) {
     return envs_.at("HOME");
   }
-
-  // TODO(jemoreira): use the group name for this directory
-  std::string auto_generated_home = DefaultBaseDir() + "/home";
-  CF_EXPECT(EnsureDirectoryExists(auto_generated_home));
-  return auto_generated_home;
+  return std::nullopt;
 }
 
 }  // namespace

@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <chrono>
-#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>

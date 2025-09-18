@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -85,8 +86,6 @@ std::string InstanceDatabasePath();
 
 std::string InstanceLocksPath();
 
-std::string DefaultBaseDir();
-
 Result<std::string> GroupDirFromHome(std::string_view group_home_dir);
 
 std::string AssemblyDirFromHome(const std::string& group_home_dir);
@@ -96,5 +95,28 @@ std::string AssemblyDirFromHome(const std::string& group_home_dir);
 // in order, the ANDROID_HOST_OUT, ANDROID_SOONG_HOST_OUT and HOME environment
 // variables followed by the current directory.
 Result<std::string> AndroidHostPath(const cvd_common::Envs& env);
+
+class GroupDirectories {
+ public:
+  GroupDirectories(std::string base, size_t num_instances)
+      : base_(std::move(base)), num_instances_(num_instances) {}
+  std::string base() const;
+  std::string home() const;
+  std::string artifacts() const;
+  std::string host_tools() const;
+  std::vector<std::string> targets() const;
+
+ private:
+  std::string base_;
+  size_t num_instances_;
+};
+// Creates a group directory under the per-user directory with subdirectories
+// for host tools and target artifacts. Symbolic links are used when the user
+// provides some of these directories to ensure a consistent structure under the
+// per-user directory.
+Result<GroupDirectories> GenerateGroupDirectories(
+    std::optional<std::string> base, std::optional<std::string> home,
+    std::optional<std::string> host_tools,
+    std::vector<std::optional<std::string>> targets);
 
 }  // namespace cuttlefish
