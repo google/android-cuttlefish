@@ -26,7 +26,6 @@ cf_cc_binary(
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/msg_queue",
         "//libbase",
-        "@curl",
         "@fruit",
         "@gflags",
         "@jsoncpp",
@@ -36,18 +35,17 @@ cf_cc_binary(
 
 cf_cc_library(
     name = "libmetrics_utils",
-    srcs = [
-        "utils.cc",
-    ],
-    hdrs = [
-        "utils.h",
-    ],
+    srcs = ["utils.cc"],
+    hdrs = ["utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
         "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web/http_client:curl_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
         "//libbase",
-        "@curl",
         "@gflags",
     ],
 )
