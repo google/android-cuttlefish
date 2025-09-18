@@ -33,7 +33,6 @@
 #include "cuttlefish/common/libs/utils/unix_sockets.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
-#include "cuttlefish/host/commands/cvd/metrics/metrics_notice.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -82,7 +81,6 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   // In the future, it might be determined by the server if not given.
   const auto all_args_size_before = all_args.size();
   bool acloud_translator_optout_value = true;
-  PrintDataCollectionNotice();
   flags.emplace_back(GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
                                       acloud_translator_optout_value));
   CF_EXPECT(ConsumeFlags({GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
