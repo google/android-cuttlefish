@@ -180,13 +180,13 @@ TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  const std::string valid_home_search_key{Workspace() + "/" + "myau"};
-  const std::string invalid_home_search_key{"/no/such/path"};
+  const std::string valid_group_name{"myau"};
+  const std::string invalid_group_name{"nosuchgroup"};
 
-  auto valid_groups = db.FindGroups({.home = valid_home_search_key});
-  auto valid_group = db.FindGroup({.home = valid_home_search_key});
-  auto invalid_groups = db.FindGroups({.home = invalid_home_search_key});
-  auto invalid_group = db.FindGroup({.home = invalid_home_search_key});
+  auto valid_groups = db.FindGroups({.group_name = valid_group_name});
+  auto valid_group = db.FindGroup({.group_name = valid_group_name});
+  auto invalid_groups = db.FindGroups({.group_name = invalid_group_name});
+  auto invalid_group = db.FindGroup({.group_name = invalid_group_name});
 
   ASSERT_TRUE(valid_groups.ok());
   ASSERT_EQ(valid_groups->size(), 1);
@@ -207,7 +207,7 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
       !AddGroup("mjau", {InstanceProto(3, "name")})) {
     GTEST_SKIP() << Error().msg;
   }
-  auto eng_group = db.FindGroup({.home = Workspace() + "/" + "meow"});
+  auto eng_group = db.FindGroup({.group_name = "meow"});
   if (!eng_group.ok()) {
     GTEST_SKIP() << "meow"
                  << " group was not found.";
@@ -232,7 +232,7 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
                         {InstanceProto(5, "yumi"), InstanceProto(5, "tiger")}));
   ASSERT_FALSE(AddGroup({"yah_ong4"},
                         {InstanceProto(1, "yumi"), InstanceProto(6, "tiger")}));
-  auto kitty_group = db.FindGroup({.home = Workspace() + "/" + "yah_ong1"});
+  auto kitty_group = db.FindGroup({.group_name = "yah_ong1"});
   if (!kitty_group.ok()) {
     GTEST_SKIP() << "yah_ong1"
                  << " group was not found";
@@ -266,8 +266,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto miau_group = db.FindGroup({.home = Workspace() + "/" + "miau"});
-  auto nyah_group = db.FindGroup({.home = Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({.group_name = "miau"});
+  auto nyah_group = db.FindGroup({.group_name = "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah group"
                  << " group was not found";
@@ -308,8 +308,8 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto miau_group = db.FindGroup({.home = Workspace() + "/" + "miau"});
-  auto nyah_group = db.FindGroup({.home = Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({.group_name = "miau"});
+  auto nyah_group = db.FindGroup({.group_name = "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
@@ -343,8 +343,8 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  auto miau_group = db.FindGroup({.home = Workspace() + "/" + "miau"});
-  auto nyah_group = db.FindGroup({.home = Workspace() + "/" + "nyah"});
+  auto miau_group = db.FindGroup({.group_name = "miau"});
+  auto nyah_group = db.FindGroup({.group_name = "nyah"});
   if (!miau_group.ok() || !nyah_group.ok()) {
     GTEST_SKIP() << "miau or nyah "
                  << " group was not found";
@@ -426,7 +426,7 @@ TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
   ASSERT_TRUE(load_result.ok()) << load_result.error().Trace();
   {
     // re-look up the group and the instances
-    auto miau_group = db.FindGroup({.home = "/home/dir"});
+    auto miau_group = db.FindGroup({.group_name = "miau"});
     ASSERT_TRUE(miau_group.ok()) << miau_group.error().Trace();
     auto result_8 = db.FindInstanceWithGroup({.instance_names = {"8"}});
     auto result_tv =

@@ -53,7 +53,6 @@ class StartSelectorParser {
     return instance_ids_;
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
-  bool IsMaybeDefaultGroup() const { return may_be_default_group_; }
   bool UseCvdalloc() const { return use_cvdalloc_; }
 
  private:
@@ -121,7 +120,6 @@ class StartSelectorParser {
 
   Result<unsigned> VerifyNumOfInstances(const VerifyNumOfInstancesParam& params,
                                         unsigned default_n_instances = 1) const;
-  bool CalcMayBeDefaultGroup();
 
   /**
    * The following are considered, and left empty if can't be figured out.
@@ -138,7 +136,6 @@ class StartSelectorParser {
    */
   std::optional<std::vector<unsigned>> instance_ids_;
   unsigned requested_num_instances_;
-  bool may_be_default_group_;
   bool use_cvdalloc_;
 
   // temporarily keeps the leftover of the input cmd_args

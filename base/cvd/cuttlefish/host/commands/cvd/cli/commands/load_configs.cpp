@@ -81,13 +81,15 @@ class LoadConfigsCommand : public CvdCommandHandler {
     CF_EXPECT_EQ(can_handle_request, true);
 
     auto cvd_flags = CF_EXPECT(GetCvdFlags(request));
-    std::string group_home_directory =
-        cvd_flags.load_directories.launch_home_directory;
 
     std::mutex group_creation_mtx;
+    // Have to use the group name because LocalInstanceGroup can't be default
+    // constructed. A value will be assigned to this variable in the same
+    // critical section where the group is created.
+    std::string group_name = "";
 
     auto push_result = PushInterruptListener(
-        [this, &group_home_directory, &group_creation_mtx](int) {
+        [this, &group_name, &group_creation_mtx](int) {
           // Creating the listener before the group exists has a very low chance
           // that it may run before the group is actually created and fail,
           // that's fine. The alternative is having a very low chance of being
@@ -101,7 +103,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
           {
             std::lock_guard lock(group_creation_mtx);
             auto group_res =
-                instance_manager_.FindGroup({.home = group_home_directory});
+                instance_manager_.FindGroup({.group_name = group_name});
             if (!group_res.ok()) {
               LOG(ERROR) << "Failed to load group from database: "
                          << group_res.error().Message();
@@ -124,6 +126,10 @@ class LoadConfigsCommand : public CvdCommandHandler {
     group_creation_mtx.lock();
     // Don't use CF_EXPECT here or the mutex will be left locked.
     auto group_res = CreateGroup(cvd_flags);
+    if (group_res.ok()) {
+      // Have to initialize the group_name variable before releasing the mutex.
+      group_name = (*group_res).GroupName();
+    }
     group_creation_mtx.unlock();
     auto group = CF_EXPECT(std::move(group_res));
 

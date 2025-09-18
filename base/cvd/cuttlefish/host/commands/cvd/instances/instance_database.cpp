@@ -30,7 +30,6 @@
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/device_name.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
@@ -76,9 +75,6 @@ bool InstanceMatches(const cvd::Instance& instance,
 // instances matching the instance related fields.
 bool GroupMatches(const cvd::InstanceGroup& group,
                   const InstanceDatabase::Filter& filter) {
-  if (filter.home && filter.home != group.home_directory()) {
-    return false;
-  }
   if (filter.group_name && filter.group_name != group.name()) {
     return false;
   }
@@ -102,7 +98,7 @@ bool GroupMatches(const cvd::InstanceGroup& group,
 }  // namespace
 
 bool InstanceDatabase::Filter::Empty() const {
-  return !home && !instance_id && !group_name && instance_names.empty();
+  return !instance_id && !group_name && instance_names.empty();
 }
 
 InstanceDatabase::InstanceDatabase(const std::string& backing_file)
@@ -143,10 +139,12 @@ Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
         CF_EXPECTF(FindGroups(data, {.group_name = group_proto.name()}).empty(),
                    "An instance group already exists with name: {}",
                    group_proto.name());
-        CF_EXPECTF(
-            FindGroups(data, {.home = group_proto.home_directory()}).empty(),
-            "An instance group already exists with HOME directory: {}",
-            group_proto.home_directory());
+        for (const auto& existing_group : data.instance_groups()) {
+          CF_EXPECT_NE(
+              existing_group.home_directory(), group_proto.home_directory(),
+              "An instance group already exists with HOME directory: {}"
+                  << group_proto.home_directory());
+        }
         std::unordered_map<uint32_t, std::string> ids_to_name_map;
         for (const auto& group : data.instance_groups()) {
           for (const auto& instance : group.instances()) {

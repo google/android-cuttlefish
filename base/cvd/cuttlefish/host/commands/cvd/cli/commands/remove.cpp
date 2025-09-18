@@ -72,7 +72,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
                     "kill any remaining device processes.";
     }
 
-    CF_EXPECT(instance_manager_.RemoveInstanceGroupByHome(group.HomeDir()));
+    CF_EXPECT(instance_manager_.RemoveInstanceGroup(group));
 
     return {};
   }

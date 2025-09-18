@@ -26,9 +26,7 @@
 
 #include <android-base/parseint.h>
 
-#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -40,19 +38,15 @@ namespace {
 Result<LocalInstanceGroup> GetDefaultGroup(
     const InstanceManager& instance_manager) {
   const auto all_groups = CF_EXPECT(instance_manager.FindGroups({}));
-  if (all_groups.size() == 1) {
-    return all_groups.front();
-  }
-  std::string system_wide_home = CF_EXPECT(SystemWideUserHome());
-  auto group =
-      CF_EXPECT(instance_manager.FindGroup({.home = system_wide_home}));
-  return group;
+  CF_EXPECTF(all_groups.size() == 1,
+             "There are {} instance groups, unable to pick one",
+             all_groups.size());
+  return all_groups.front();
 }
 
 Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
     const SelectorOptions& selectors, const cvd_common::Envs& env) {
   InstanceDatabase::Filter filter;
-  filter.home = OverridenHomeDirectory(env);
   filter.group_name = selectors.group_name;
   if (selectors.instance_names) {
     const auto per_instance_names = selectors.instance_names.value();
