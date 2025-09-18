@@ -32,7 +32,6 @@ use std::os::fd::AsFd;
 use std::os::fd::AsRawFd;
 use std::os::unix::ffi::OsStrExt;
 
-mod clock;
 mod sdd;
 mod tpm;
 
