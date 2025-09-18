@@ -111,7 +111,8 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         mVkmsTester = CfVkmsTester.createWithConfig(getDevice(), connectorConfigs);
         assertNotNull("Failed to initialize VKMS tester", mVkmsTester);
 
-        waitForUiToBeOn(connectorConfigs.size());
+        mVkmsTester.waitForDisplaysToBeOn(
+            connectorConfigs.size(), CfVkmsTester.DISPLAY_BRINGUP_TIMEOUT_MS);
         String command = "dumpsys SurfaceFlinger --display-id";
         CommandResult result = getDevice().executeShellV2Command(command);
         assertEquals(
@@ -133,6 +134,17 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
      * Test to verify that the same monitor maintains the same display ID across different
      * configurations. This ensures that the display ID is determined by the monitor's EDID
      * rather than by connection order or port number.
+     *
+     * Note: Android currently requires that the primary display is marked as internal,
+     * otherwise SurfaceFlinger will crash. This is a requirement for all Hardware
+     * Abstraction Layer (HAL) implementations, which means that the first
+     * connected display will always report itself as internal (regardless of
+     * its true type).
+     * See:
+     * https://source.android.com/docs/core/display/multi_display/displays#more_displays
+     *
+     * Because EDID-based IDs are only enabled on external displays, we must
+     * test this case in any display position other than first.
      */
     @Test
     public void testDisplayIdConsistencyAtDifferentPorts() throws Exception {
@@ -146,22 +158,9 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         // Test multiple configurations
         String configName = "unknown";
         try {
-            // First configuration: Just the reference monitor
-            configName = "single_display";
-            List<CfVkmsTester.VkmsConnectorSetup> config = new ArrayList<>();
-            config.add(CfVkmsTester.VkmsConnectorSetup.builder()
-                    .setType(CfVkmsTester.ConnectorType.DISPLAY_PORT)
-                    .setMonitor(referenceMonitor)
-                    .setEnabledAtStart(true)
-                    .build());
-
-            String displayId =
-                testConfigurationAndGetDisplayId(config, referenceDisplayName, configName);
-            displayIdsByConfig.put(configName, displayId);
-
-            // Second configuration: Reference monitor in second position
+            // First configuration: Reference monitor in second position.
             configName = "second_position";
-            config = new ArrayList<>();
+            List<CfVkmsTester.VkmsConnectorSetup> config = new ArrayList<>();
             config.add(CfVkmsTester.VkmsConnectorSetup.builder()
                     .setType(CfVkmsTester.ConnectorType.EDP)
                     .setMonitor(CfVkmsEdidHelper.EdpDisplay.REDRIX)
@@ -173,12 +172,19 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
                     .setEnabledAtStart(true)
                     .build());
 
-            displayId = testConfigurationAndGetDisplayId(config, referenceDisplayName, configName);
+            String displayId =
+                testConfigurationAndGetDisplayId(config, referenceDisplayName, configName);
             displayIdsByConfig.put(configName, displayId);
 
-            // Third configuration: Reference monitor with different connector type
-            configName = "different_connector";
+            // Second configuration: Reference monitor with different connector type in second
+            // position
+            configName = "second_position+different_connector";
             config = new ArrayList<>();
+            config.add(CfVkmsTester.VkmsConnectorSetup.builder()
+                    .setType(CfVkmsTester.ConnectorType.EDP)
+                    .setMonitor(CfVkmsEdidHelper.EdpDisplay.REDRIX)
+                    .setEnabledAtStart(true)
+                    .build());
             config.add(CfVkmsTester.VkmsConnectorSetup.builder()
                     .setType(CfVkmsTester.ConnectorType.HDMI_A)
                     .setMonitor(referenceMonitor)
@@ -188,7 +194,7 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
             displayId = testConfigurationAndGetDisplayId(config, referenceDisplayName, configName);
             displayIdsByConfig.put(configName, displayId);
 
-            // Fourth configuration: Many displays including reference
+            // Third configuration: Many displays including reference
             configName = "many_displays";
             config = new ArrayList<>();
             config.add(CfVkmsTester.VkmsConnectorSetup.builder()
@@ -246,6 +252,13 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         // Create a configuration with multiple identical monitors
         List<CfVkmsTester.VkmsConnectorSetup> collisionConfig = new ArrayList<>();
 
+        // Add an internal panel
+        collisionConfig.add(CfVkmsTester.VkmsConnectorSetup.builder()
+                .setType(CfVkmsTester.ConnectorType.EDP)
+                .setMonitor(CfVkmsEdidHelper.EdpDisplay.REDRIX)
+                .setEnabledAtStart(true)
+                .build());
+
         // Add three identical monitors on different ports
         // First on DisplayPort
         collisionConfig.add(CfVkmsTester.VkmsConnectorSetup.builder()
@@ -261,9 +274,9 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
                 .setEnabledAtStart(true)
                 .build());
 
-        // Third on HDMI-B
+        // Third on a different DisplayPort
         collisionConfig.add(CfVkmsTester.VkmsConnectorSetup.builder()
-                .setType(CfVkmsTester.ConnectorType.HDMI_B)
+                .setType(CfVkmsTester.ConnectorType.DISPLAY_PORT)
                 .setMonitor(referenceMonitor)
                 .setEnabledAtStart(true)
                 .build());
@@ -272,7 +285,8 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         try {
             mVkmsTester = CfVkmsTester.createWithConfig(getDevice(), collisionConfig);
             assertNotNull("Failed to initialize VKMS for collision test", mVkmsTester);
-            waitForUiToBeOn(collisionConfig.size());
+            mVkmsTester.waitForDisplaysToBeOn(
+                collisionConfig.size(), CfVkmsTester.DISPLAY_BRINGUP_TIMEOUT_MS);
 
             // Get all displays with the reference name
             List<String> identicalDisplayIds = getDisplayIdsForName(referenceDisplayName);
@@ -447,7 +461,7 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         // This pattern matches the display ID line format
         Pattern pattern =
             Pattern.compile("Display (\\d+|\\w+) \\(HWC display (\\d+)\\): (?:port=(\\d+) "
-                    + "pnpId=(\\w+) displayName=\"([^\"]+)\"|.*)",
+                    + "pnpId=(\\w+).*displayName=\"([^\"]*)\"|.*)",
                 Pattern.MULTILINE);
 
         Matcher matcher = pattern.matcher(output);
@@ -488,7 +502,7 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         try {
             tester = CfVkmsTester.createWithConfig(getDevice(), config);
             assertNotNull("Failed to initialize VKMS configuration: " + configName, tester);
-            waitForUiToBeOn(config.size());
+            tester.waitForDisplaysToBeOn(config.size(), CfVkmsTester.DISPLAY_BRINGUP_TIMEOUT_MS);
             // Get the display ID for our reference monitor
             String displayId = getDisplayIdForName(displayName);
             assertNotNull(
@@ -581,7 +595,7 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
         try {
             tester = CfVkmsTester.createWithConfig(getDevice(), config);
             assertNotNull("Failed to initialize VKMS configuration: " + configName, tester);
-            waitForUiToBeOn(config.size());
+            tester.waitForDisplaysToBeOn(config.size(), CfVkmsTester.DISPLAY_BRINGUP_TIMEOUT_MS);
 
             // Run the command to get display IDs
             String command = "dumpsys SurfaceFlinger --display-id";
@@ -619,25 +633,6 @@ public class CfVkmsDisplaysTest extends BaseHostJUnit4Test {
             if (tester != null) {
                 tester.close();
             }
-        }
-    }
-
-    /**
-     * Helper method to wait for displays to turn on by periodically checking SurfaceFlinger.
-     *
-     * @param minimumExpectedDisplays The minimum number of displays expected to be detected
-     * @throws Exception If an error occurs while executing shell commands
-     */
-    private void waitForUiToBeOn(int minimumExpectedDisplays) throws Exception {
-        long startTime = System.currentTimeMillis();
-        List<DisplayInfo> displays = new ArrayList<>();
-        while (displays.size() < minimumExpectedDisplays
-            && System.currentTimeMillis() - startTime < 500) {
-            String command = "dumpsys SurfaceFlinger --display-id";
-            CommandResult result = getDevice().executeShellV2Command(command);
-            assertEquals(
-                "Failed to execute dumpsys command", CommandStatus.SUCCESS, result.getStatus());
-            displays = parseDisplayInfo(result.getStdout());
         }
     }
 }
