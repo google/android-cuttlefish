@@ -36,7 +36,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:shared_fd_flag",
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/metrics",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "@protobuf",
