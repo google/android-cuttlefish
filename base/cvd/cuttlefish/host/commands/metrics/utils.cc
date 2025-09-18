@@ -131,15 +131,15 @@ uint64_t GetEpochTimeMs() {
   return milliseconds_since_epoch;
 }
 
-std::string ClearcutServerUrl(metrics::ClearcutServer server) {
+std::string ClearcutServerUrl(ClearcutServer server) {
   switch (server) {
-    case metrics::kLocal:
+    case ClearcutServer::kLocal:
       return "http://localhost:27910/log";
 
-    case metrics::kStaging:
+    case ClearcutServer::kStaging:
       return "https://play.googleapis.com:443/staging/log";
 
-    case metrics::kProd:
+    case ClearcutServer::kProd:
       return "https://play.googleapis.com:443/log";
 
     default:

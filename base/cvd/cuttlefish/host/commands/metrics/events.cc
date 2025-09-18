@@ -172,7 +172,7 @@ int Clearcut::SendEvent(CuttlefishLogEvent::DeviceType device_type,
     return MetricsExitCodes::kMetricsError;
   }
 
-  return metrics::PostRequest(logRequestStr, metrics::kProd);
+  return metrics::PostRequest(logRequestStr, metrics::ClearcutServer::kProd);
 }
 
 int Clearcut::SendVMStart(CuttlefishLogEvent::DeviceType device) {
