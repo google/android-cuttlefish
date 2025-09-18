@@ -60,9 +60,11 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
         << per_user_dir << "), artifacts not deleted";
     return {};
   }
-  CF_EXPECT(
-      RecursivelyRemoveDirectory(CF_EXPECT(GroupDirFromHome(group.HomeDir()))),
-      "Failed to remove group directory");
+  std::string group_directory = CF_EXPECT(GroupDirFromHome(group.HomeDir()));
+  if (DirectoryExists(group_directory)) {
+    CF_EXPECT(RecursivelyRemoveDirectory(group_directory),
+              "Failed to remove group directory");
+  }
   return {};
 }
 
