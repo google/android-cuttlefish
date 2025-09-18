@@ -44,7 +44,7 @@ class InstanceManager {
   Result<LocalInstanceGroup> CreateInstanceGroup(
       const selector::GroupCreationInfo& group_info);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
-  Result<bool> RemoveInstanceGroupByHome(const std::string&);
+  Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
 
   cvd::Status CvdClear(const CommandRequest&);
 

@@ -107,9 +107,7 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
   return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
 }
 
-Result<bool> InstanceManager::RemoveInstanceGroupByHome(
-    const std::string& dir) {
-  LocalInstanceGroup group = CF_EXPECT(instance_db_.FindGroup({.home = dir}));
+Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
   CF_EXPECT(!group.HasActiveInstances(),
             "Group still contains active instances");
   for (auto& instance : group.Instances()) {

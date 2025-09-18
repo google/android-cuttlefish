@@ -37,7 +37,6 @@ class InstanceDatabase {
   // A group/instance matches the filter if it matches all of the specified
   // properties in the filter (effectively an AND operation, not an OR).
   struct Filter {
-    std::optional<std::string> home;
     std::optional<unsigned> instance_id;
     std::optional<std::string> group_name;
     // This property matches a group that contains instances with all these

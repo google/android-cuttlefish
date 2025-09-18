@@ -30,7 +30,6 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/users.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/device_selector_utils.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_option_parser_utils.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -231,23 +230,7 @@ StartSelectorParser::HandleInstanceIds(
   return ParsedInstanceIdsOpt{instance_ids_vector};
 }
 
-bool StartSelectorParser::CalcMayBeDefaultGroup() {
-  /*
-   * the logic to determine whether this group is the default one or not:
-   *  If HOME is not overridden and no selector options, then
-   *   the default group
-   *  Or, not a default group
-   *
-   */
-  if (OverridenHomeDirectory(envs_).has_value()) {
-    return false;
-  }
-  return !selector_options_.HasOptions();
-}
-
 Result<void> StartSelectorParser::ParseOptions() {
-  may_be_default_group_ = CalcMayBeDefaultGroup();
-
   std::optional<bool> use_cvdalloc;
   CF_EXPECT(FilterSelectorFlag(cmd_args_, "use_cvdalloc", use_cvdalloc));
   use_cvdalloc_ = use_cvdalloc.value_or(false);
