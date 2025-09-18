@@ -121,11 +121,6 @@ symlinks {
 }
 
 symlinks {
-  target: "/usr/lib/cuttlefish-common/bin/metrics"
-  link_name: "bin/metrics"
-}
-
-symlinks {
   target: "/usr/lib/cuttlefish-common/bin/metrics_launcher"
   link_name: "bin/metrics_launcher"
 }
