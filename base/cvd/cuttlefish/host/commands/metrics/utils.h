@@ -21,7 +21,7 @@
 
 namespace cuttlefish::metrics {
 
-enum ClearcutServer : int {
+enum class ClearcutServer {
   kLocal = 0,
   kStaging = 1,
   kProd = 2,
