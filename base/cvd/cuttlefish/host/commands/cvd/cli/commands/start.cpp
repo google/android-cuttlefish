@@ -637,7 +637,8 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   if (kEnableCvdMetrics) {
     static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
     static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
-    static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
+    static constexpr ClientInfo::ClientType kCppClientType =
+        ClientInfo::CPLUSPLUS;
 
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "

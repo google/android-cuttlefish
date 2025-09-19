@@ -52,5 +52,6 @@ message CuttlefishLogEvent {
   optional string cuttlefish_version = 4;
 
   // An event encompassing metrics data
-  optional logs.proto.wireless.android.cuttlefish.events.MetricsEvent metrics_event = 5;
+  optional logs.proto.wireless.android.cuttlefish.events.MetricsEvent
+      metrics_event = 5;
 }
