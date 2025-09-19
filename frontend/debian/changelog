@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.25.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.25.0) unstable; urgency=medium
 
-  * 
+  * No changes.
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 12 Sep 2025 15:19:45 -0700
+ -- Jason Macnak <natsu@google.com>  Fri, 19 Sep 2025 14:40:30 -0700
 
 cuttlefish-frontend (1.24.0) unstable; urgency=medium
 

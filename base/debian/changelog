@@ -1,8 +1,17 @@
-cuttlefish-common (1.25.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.25.0) unstable; urgency=medium
 
-  * 
+  * Use the HttpClient wrapper over curl in host/commands/metrics by @Databean in https://github.com/google/android-cuttlefish/pull/1649
+  * Delete `cvd/metrics`. by @Databean in https://github.com/google/android-cuttlefish/pull/1651
+  * Apply `--test_output=errors` by default by @Databean in https://github.com/google/android-cuttlefish/pull/1653
+  * Make `ClearcutServer` into an `enum class` by @Databean in https://github.com/google/android-cuttlefish/pull/1650
+  * Fix stable version format for deployment by @0405ysj in https://github.com/google/android-cuttlefish/pull/1656
+  * Add explicit `provideZoneChangeDetection` to providers by @k311093 in https://github.com/google/android-cuttlefish/pull/1657
+  * openwrt's vmm waits for cvdalloc. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1646
+  * The server loop ends if the process monitor does. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1652
+  * Do not update kernel in create base image tool. by @ser-io in https://github.com/google/android-cuttlefish/pull/1658
+  * Parity between public and internal metrics protos by @Databean in https://github.com/google/android-cuttlefish/pull/1655
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 12 Sep 2025 15:19:30 -0700
+ -- Jason Macnak <natsu@google.com>  Fri, 19 Sep 2025 14:39:40 -0700
 
 cuttlefish-common (1.24.0) unstable; urgency=medium
 
