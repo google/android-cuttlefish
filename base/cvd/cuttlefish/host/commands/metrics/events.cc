@@ -30,13 +30,12 @@ namespace cuttlefish {
 namespace {
 
 // TODO: 403646742 - this value previously came from the build, need to revisit
-constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
+static constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
 
-constexpr int kLogSourceId = 1753;
+static constexpr int kLogSourceId = 1753;
 
-constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
-constexpr int kCppClientType =
-    19;  // C++ native client type (clientanalytics.proto)
+static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
+static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
 
 std::pair<uint64_t, uint64_t> ConvertMillisToTime(uint64_t millis) {
   uint64_t seconds = millis / 1000;
