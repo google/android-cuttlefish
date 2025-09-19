@@ -21,7 +21,7 @@ import "cuttlefish/host/commands/metrics/proto/log_source_enum.proto";
 
 message LogRequest {
   optional ClientInfo client_info = 1;
-  optional LogSource log_source = 2;
+  optional LogSourceEnum.LogSource log_source = 2;
   optional int64 request_time_ms = 4;
   repeated LogEvent log_event = 3;
   optional string log_source_name = 5;

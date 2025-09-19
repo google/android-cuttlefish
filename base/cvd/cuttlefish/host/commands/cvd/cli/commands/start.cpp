@@ -80,7 +80,7 @@ using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
-using wireless_android_play_playlog::LogSource;
+using wireless_android_play_playlog::LogSourceEnum::LogSource;
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();
