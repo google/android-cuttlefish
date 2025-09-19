@@ -30,6 +30,7 @@ cf_cc_binary(
         "@gflags",
         "@jsoncpp",
         "@protobuf",
+        "@protobuf//:timestamp_cc_proto",
     ],
 )
 
