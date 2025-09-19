@@ -31,5 +31,8 @@
 namespace cuttlefish {
 
 using google::protobuf::Timestamp;
+using wireless_android_play_playlog::ClientInfo;
+using wireless_android_play_playlog::LogEvent;
+using wireless_android_play_playlog::LogRequest;
 
 }
