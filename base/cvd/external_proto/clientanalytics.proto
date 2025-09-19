@@ -17,7 +17,7 @@ syntax = "proto2";
 
 package wireless_android_play_playlog;
 
-import "cuttlefish/host/commands/metrics/proto/log_source_enum.proto";
+import "external_proto/log_source_enum.proto";
 
 message LogRequest {
   optional ClientInfo client_info = 1;
@@ -35,7 +35,8 @@ message ClientInfo {
   optional ClientType client_type = 1;
 }
 
-// TODO(moelsherif) : This message is not used yet. It will be used to send back the next request wait time.
+// TODO(moelsherif) : This message is not used yet. It will be used to send back
+// the next request wait time.
 message LogResponse {
   optional int64 next_request_wait_millis = 1;
 }

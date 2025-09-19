@@ -21,14 +21,14 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/log_source_enum.pb.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "external_proto/cf_log.pb.h"
+#include "external_proto/cf_metrics_event.pb.h"
+#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/log_source_enum.pb.h"
 
 namespace cuttlefish {
 

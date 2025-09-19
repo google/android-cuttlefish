@@ -65,13 +65,13 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
-#include "cuttlefish/host/commands/metrics/proto/log_source_enum.pb.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "external_proto/cf_log.pb.h"
+#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/log_source_enum.pb.h"
 
 namespace cuttlefish {
 namespace {
