@@ -15,7 +15,7 @@
  */
 syntax = "proto2";
 
-package cuttlefish;
+package logs.proto.wireless.android.cuttlefish;
 
 import "cuttlefish/host/commands/metrics/proto/cf_metrics_event.proto";
 import "google/protobuf/timestamp.proto";
@@ -52,5 +52,5 @@ message CuttlefishLogEvent {
   optional string cuttlefish_version = 4;
 
   // An event encompassing metrics data
-  optional MetricsEvent metrics_event = 5;
+  optional logs.proto.wireless.android.cuttlefish.events.MetricsEvent metrics_event = 5;
 }

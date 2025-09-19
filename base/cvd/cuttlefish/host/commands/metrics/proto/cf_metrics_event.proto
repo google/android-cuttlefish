@@ -18,7 +18,7 @@ syntax = "proto2";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
-package cuttlefish;
+package logs.proto.wireless.android.cuttlefish.events;
 
 // Wrapper for Cuttlefish Metrics log events.
 // Next index: 22
