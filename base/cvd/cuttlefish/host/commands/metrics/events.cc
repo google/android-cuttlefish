@@ -47,15 +47,15 @@ static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
 static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
 
-std::pair<uint64_t, uint64_t> ConvertMillisToTime(uint64_t millis) {
-  uint64_t seconds = millis / 1000;
-  uint64_t nanos = (millis % 1000) * 1000000;
-  return {seconds, nanos};
+Timestamp MillisToTimestamp(uint64_t millis) {
+  Timestamp timestamp;
+  timestamp.set_nanos((millis % 1000) * 1000000);
+  timestamp.set_seconds(millis / 1000);
+
+  return timestamp;
 }
 
 CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
-  auto [now_s, now_ns] = ConvertMillisToTime(now_ms);
-
   // "cf_event" is the top level CuttlefishLogEvent
   CuttlefishLogEvent cf_event;
   cf_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
@@ -65,9 +65,7 @@ CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
     cf_event.set_cuttlefish_version(GetCfVersion());
   }
 
-  Timestamp& timestamp = *cf_event.mutable_timestamp_ms();
-  timestamp.set_seconds(now_s);
-  timestamp.set_nanos(now_ns);
+  *cf_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
 
   return cf_event;
 }
@@ -115,8 +113,6 @@ MetricsEvent::VmmType GetVmm() {
 // Builds the 2nd level MetricsEvent.
 void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent& cf_event,
                             MetricsEvent::EventType event_type) {
-  auto [now_s, now_ns] = ConvertMillisToTime(now_ms);
-
   // "metrics_event" is the 2nd level MetricsEvent
   MetricsEvent& metrics_event = *cf_event.mutable_metrics_event();
   metrics_event.set_event_type(event_type);
@@ -131,9 +127,7 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent& cf_event,
   metrics_event.set_company(GetCompany());
   metrics_event.set_api_level(PRODUCT_SHIPPING_API_LEVEL);
 
-  Timestamp& metrics_timestamp = *metrics_event.mutable_event_time();
-  metrics_timestamp.set_seconds(now_s);
-  metrics_timestamp.set_nanos(now_ns);
+  *metrics_event.mutable_event_time() = MillisToTimestamp(now_ms);
 }
 
 LogRequest BuildLogRequest(uint64_t now_ms,
