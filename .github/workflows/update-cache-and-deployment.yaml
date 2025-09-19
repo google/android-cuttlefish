@@ -62,6 +62,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
+        deploy-channel: ${{ inputs.deploy-channel }}
         yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
@@ -94,6 +95,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
+        deploy-channel: ${{ inputs.deploy-channel }}
         yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
