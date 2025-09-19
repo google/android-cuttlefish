@@ -99,7 +99,7 @@ message MetricsEvent {
   optional ErrorType error_type = 2;
 
   // Time the event occurred in milliseconds since Unix epoch.
-  optional google.protobuf.Timestamp event_time_ms = 3;
+  optional google.protobuf.Timestamp event_time = 3;
 
   // Elapsed time for the event in milliseconds.
   optional google.protobuf.Duration elapsed_time_ms = 4;

@@ -123,7 +123,7 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
   metrics_event->set_company(metrics::GetCompany());
   metrics_event->set_api_level(PRODUCT_SHIPPING_API_LEVEL);
 
-  Timestamp* metrics_timestamp = metrics_event->mutable_event_time_ms();
+  Timestamp* metrics_timestamp = metrics_event->mutable_event_time();
   metrics_timestamp->set_seconds(now_s);
   metrics_timestamp->set_nanos(now_ns);
 }
