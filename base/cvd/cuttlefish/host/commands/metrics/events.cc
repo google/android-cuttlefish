@@ -22,6 +22,8 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/log_source_enum.pb.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
@@ -32,6 +34,10 @@ namespace cuttlefish {
 namespace {
 
 using google::protobuf::Timestamp;
+using wireless_android_play_playlog::ClientInfo;
+using wireless_android_play_playlog::LogEvent;
+using wireless_android_play_playlog::LogRequest;
+using wireless_android_play_playlog::LogSource;
 
 // TODO: 403646742 - this value previously came from the build, need to revisit
 static constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;

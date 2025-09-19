@@ -12,8 +12,6 @@ cf_cc_library(
     deps = [
         ":cf_log_cc_proto",
         ":cf_metrics_event_cc_proto",
-        ":clientanalytics_cc_proto",
-        ":log_source_enum_cc_proto",
         "@protobuf",
     ],
 )
