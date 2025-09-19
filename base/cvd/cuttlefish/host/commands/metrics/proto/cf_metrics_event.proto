@@ -15,9 +15,10 @@
  */
 syntax = "proto2";
 
-package cuttlefish;
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 
-import "cuttlefish/host/commands/metrics/proto/common.proto";
+package cuttlefish;
 
 // Wrapper for Cuttlefish Metrics log events.
 // Next index: 22
@@ -98,10 +99,10 @@ message MetricsEvent {
   optional ErrorType error_type = 2;
 
   // Time the event occurred in milliseconds since Unix epoch.
-  optional Timestamp event_time_ms = 3;
+  optional google.protobuf.Timestamp event_time_ms = 3;
 
   // Elapsed time for the event in milliseconds.
-  optional Duration elapsed_time_ms = 4;
+  optional google.protobuf.Duration elapsed_time_ms = 4;
 
   // The type of OS this log event originated from.
   optional OsType os_type = 5;
