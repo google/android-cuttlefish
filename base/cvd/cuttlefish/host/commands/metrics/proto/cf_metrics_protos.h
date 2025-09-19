@@ -34,5 +34,7 @@ using google::protobuf::Timestamp;
 using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
+using logs::proto::wireless::android::cuttlefish::events::MetricsEvent;
 
 }
