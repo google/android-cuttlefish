@@ -19,12 +19,9 @@
 
 #include "google/protobuf/timestamp.pb.h"
 
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
-#include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event.pb.h"
 #include "external_proto/clientanalytics.pb.h"
@@ -56,23 +53,23 @@ std::pair<uint64_t, uint64_t> ConvertMillisToTime(uint64_t millis) {
   return {seconds, nanos};
 }
 
-std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(uint64_t now_ms) {
+CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
   auto [now_s, now_ns] = ConvertMillisToTime(now_ms);
 
-  // "cfEvent" is the top level CuttlefishLogEvent
-  auto cfEvent = std::make_unique<CuttlefishLogEvent>();
-  cfEvent->set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
-  cfEvent->set_session_id(GenerateSessionId(now_ms));
+  // "cf_event" is the top level CuttlefishLogEvent
+  CuttlefishLogEvent cf_event;
+  cf_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
+  cf_event.set_session_id(GenerateSessionId(now_ms));
 
   if (!GetCfVersion().empty()) {
-    cfEvent->set_cuttlefish_version(GetCfVersion());
+    cf_event.set_cuttlefish_version(GetCfVersion());
   }
 
-  Timestamp* timestamp = cfEvent->mutable_timestamp_ms();
-  timestamp->set_seconds(now_s);
-  timestamp->set_nanos(now_ns);
+  Timestamp& timestamp = *cf_event.mutable_timestamp_ms();
+  timestamp.set_seconds(now_s);
+  timestamp.set_nanos(now_ns);
 
-  return cfEvent;
+  return cf_event;
 }
 
 MetricsEvent::OsType GetOsType() {
@@ -102,63 +99,57 @@ MetricsEvent::OsType GetOsType() {
   return MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
 }
 
-MetricsEvent::VmmType GetVmmManager() {
-  auto config = CuttlefishConfig::Get();
+MetricsEvent::VmmType GetVmm() {
+  const CuttlefishConfig* config = CuttlefishConfig::Get();
   CHECK(config) << "Could not open cuttlefish config";
-  auto vmm = config->vm_manager();
-  if (vmm == VmmMode::kCrosvm) {
-    return MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
+  switch (config->vm_manager()) {
+    case VmmMode::kCrosvm:
+      return MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
+    case VmmMode::kQemu:
+      return MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
+    default:
+      return MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
   }
-  if (vmm == VmmMode::kQemu) {
-    return MetricsEvent::CUTTLEFISH_VMM_TYPE_QEMU;
-  }
-  return MetricsEvent::CUTTLEFISH_VMM_TYPE_UNSPECIFIED;
 }
 
 // Builds the 2nd level MetricsEvent.
-void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
+void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent& cf_event,
                             MetricsEvent::EventType event_type) {
   auto [now_s, now_ns] = ConvertMillisToTime(now_ms);
 
   // "metrics_event" is the 2nd level MetricsEvent
-  MetricsEvent* metrics_event = cfEvent->mutable_metrics_event();
-  metrics_event->set_event_type(event_type);
-  metrics_event->set_os_type(GetOsType());
-  metrics_event->set_os_version(GetOsVersion());
-  metrics_event->set_vmm_type(GetVmmManager());
+  MetricsEvent& metrics_event = *cf_event.mutable_metrics_event();
+  metrics_event.set_event_type(event_type);
+  metrics_event.set_os_type(GetOsType());
+  metrics_event.set_os_version(GetOsVersion());
+  metrics_event.set_vmm_type(GetVmm());
 
   if (!GetVmmVersion().empty()) {
-    metrics_event->set_vmm_version(GetVmmVersion());
+    metrics_event.set_vmm_version(GetVmmVersion());
   }
 
-  metrics_event->set_company(GetCompany());
-  metrics_event->set_api_level(PRODUCT_SHIPPING_API_LEVEL);
+  metrics_event.set_company(GetCompany());
+  metrics_event.set_api_level(PRODUCT_SHIPPING_API_LEVEL);
 
-  Timestamp* metrics_timestamp = metrics_event->mutable_event_time();
-  metrics_timestamp->set_seconds(now_s);
-  metrics_timestamp->set_nanos(now_ns);
+  Timestamp& metrics_timestamp = *metrics_event.mutable_event_time();
+  metrics_timestamp.set_seconds(now_s);
+  metrics_timestamp.set_nanos(now_ns);
 }
 
-std::unique_ptr<LogRequest> BuildLogRequest(uint64_t now_ms,
-                                            CuttlefishLogEvent* cfEvent) {
+LogRequest BuildLogRequest(uint64_t now_ms,
+                           const CuttlefishLogEvent& cf_event) {
   // "log_request" is the top level LogRequest
-  auto log_request = std::make_unique<LogRequest>();
-  log_request->set_request_time_ms(now_ms);
-  log_request->set_log_source(kLogSourceId);
-  log_request->set_log_source_name(kLogSourceStr);
+  LogRequest log_request;
+  log_request.set_request_time_ms(now_ms);
+  log_request.set_log_source(kLogSourceId);
+  log_request.set_log_source_name(kLogSourceStr);
 
-  ClientInfo* client_info = log_request->mutable_client_info();
-  client_info->set_client_type(kCppClientType);
+  ClientInfo& client_info = *log_request.mutable_client_info();
+  client_info.set_client_type(kCppClientType);
 
-  std::string cfLogStr;
-  if (!cfEvent->SerializeToString(&cfLogStr)) {
-    LOG(ERROR) << "Serialization failed for event";
-    return nullptr;
-  }
-
-  LogEvent* logEvent = log_request->add_log_event();
-  logEvent->set_event_time_ms(now_ms);
-  logEvent->set_source_extension(cfLogStr);
+  LogEvent& log_event = *log_request.add_log_event();
+  log_event.set_event_time_ms(now_ms);
+  log_event.set_source_extension(cf_event.SerializeAsString());
 
   return log_request;
 }
@@ -166,22 +157,13 @@ std::unique_ptr<LogRequest> BuildLogRequest(uint64_t now_ms,
 int SendEvent(MetricsEvent::EventType event_type) {
   uint64_t now_ms = GetEpochTimeMs();
 
-  auto cfEvent = BuildCfLogEvent(now_ms);
-  AddCfMetricsEventToLog(now_ms, cfEvent.get(), event_type);
+  CuttlefishLogEvent cf_event = BuildCfLogEvent(now_ms);
+  AddCfMetricsEventToLog(now_ms, cf_event, event_type);
 
-  auto logRequest = BuildLogRequest(now_ms, cfEvent.get());
-  if (!logRequest) {
-    LOG(ERROR) << "Failed to build LogRequest";
-    return MetricsExitCodes::kMetricsError;
-  }
+  LogRequest log_request = BuildLogRequest(now_ms, cf_event);
+  std::string log_request_str = log_request.SerializeAsString();
 
-  std::string logRequestStr;
-  if (!logRequest->SerializeToString(&logRequestStr)) {
-    LOG(ERROR) << "Serialization failed for LogRequest";
-    return MetricsExitCodes::kMetricsError;
-  }
-
-  return PostRequest(logRequestStr, ClearcutServer::kProd);
+  return PostRequest(log_request_str, ClearcutServer::kProd);
 }
 
 }  // namespace
