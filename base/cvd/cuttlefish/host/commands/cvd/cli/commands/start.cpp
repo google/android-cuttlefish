@@ -629,9 +629,8 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   if (kEnableCvdMetrics) {
     static constexpr int kLogSourceId = 1753;
     static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
-    static constexpr int kCppClientType =
-        19;  // C++ native client type (clientanalytics.proto)
-             //
+    static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
+
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
