@@ -15,7 +15,7 @@
  */
 syntax = "proto2";
 
-package wireless_android_play_playlog;
+package wireless_android_play_playlog.LogSourceEnum;
 
 enum LogSource {
   UNKNOWN = -1;

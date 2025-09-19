@@ -40,7 +40,7 @@ using logs::proto::wireless::android::cuttlefish::events::MetricsEvent;
 using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
-using wireless_android_play_playlog::LogSource;
+using wireless_android_play_playlog::LogSourceEnum::LogSource;
 
 // TODO: 403646742 - this value previously came from the build, need to revisit
 static constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
