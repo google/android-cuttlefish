@@ -26,14 +26,9 @@
 
 #include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"  // IWYU pragma: export
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"  // IWYU pragma: export
-#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"  // IWYU pragma: export
 
 namespace cuttlefish {
 
-using wireless_android_play_playlog::ClientInfo;
-using wireless_android_play_playlog::LogEvent;
-using wireless_android_play_playlog::LogRequest;
-using wireless_android_play_playlog::LogSource;
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEvent;
 

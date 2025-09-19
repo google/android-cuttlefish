@@ -66,6 +66,8 @@
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/log_source_enum.pb.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -73,6 +75,11 @@
 
 namespace cuttlefish {
 namespace {
+
+using wireless_android_play_playlog::ClientInfo;
+using wireless_android_play_playlog::LogEvent;
+using wireless_android_play_playlog::LogRequest;
+using wireless_android_play_playlog::LogSource;
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();

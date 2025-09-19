@@ -19,6 +19,8 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/metrics/proto:clientanalytics_cc_proto",
+        "//cuttlefish/host/commands/metrics/proto:log_source_enum_cc_proto",
         "//cuttlefish/host/commands/metrics/proto:metrics_protos",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:vmm_mode",
@@ -40,7 +42,7 @@ cf_cc_library(
     hdrs = ["utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/commands/metrics/proto:metrics_protos",
+        "//cuttlefish/host/commands/metrics/proto:clientanalytics_cc_proto",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
