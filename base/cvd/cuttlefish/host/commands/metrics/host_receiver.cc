@@ -20,11 +20,11 @@
 #include <android-base/logging.h>
 
 #include "cuttlefish/host/commands/metrics/events.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
 #include "cuttlefish/host/libs/metrics/metrics_configs.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/msg_queue/msg_queue.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 

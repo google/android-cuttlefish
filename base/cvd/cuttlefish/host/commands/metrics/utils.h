@@ -15,9 +15,9 @@
  */
 #pragma once
 
-#include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish::metrics {
 
