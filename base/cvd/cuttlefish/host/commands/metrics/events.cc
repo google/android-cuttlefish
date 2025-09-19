@@ -30,7 +30,7 @@
 #include "external_proto/clientanalytics.pb.h"
 #include "external_proto/log_source_enum.pb.h"
 
-namespace cuttlefish {
+namespace cuttlefish::metrics {
 
 namespace {
 
@@ -63,10 +63,10 @@ std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(
   // "cfEvent" is the top level CuttlefishLogEvent
   auto cfEvent = std::make_unique<CuttlefishLogEvent>();
   cfEvent->set_device_type(device_type);
-  cfEvent->set_session_id(metrics::GenerateSessionId(now_ms));
+  cfEvent->set_session_id(GenerateSessionId(now_ms));
 
-  if (!metrics::GetCfVersion().empty()) {
-    cfEvent->set_cuttlefish_version(metrics::GetCfVersion());
+  if (!GetCfVersion().empty()) {
+    cfEvent->set_cuttlefish_version(GetCfVersion());
   }
 
   Timestamp* timestamp = cfEvent->mutable_timestamp_ms();
@@ -125,14 +125,14 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent* cfEvent,
   MetricsEvent* metrics_event = cfEvent->mutable_metrics_event();
   metrics_event->set_event_type(event_type);
   metrics_event->set_os_type(GetOsType());
-  metrics_event->set_os_version(metrics::GetOsVersion());
+  metrics_event->set_os_version(GetOsVersion());
   metrics_event->set_vmm_type(GetVmmManager());
 
-  if (!metrics::GetVmmVersion().empty()) {
-    metrics_event->set_vmm_version(metrics::GetVmmVersion());
+  if (!GetVmmVersion().empty()) {
+    metrics_event->set_vmm_version(GetVmmVersion());
   }
 
-  metrics_event->set_company(metrics::GetCompany());
+  metrics_event->set_company(GetCompany());
   metrics_event->set_api_level(PRODUCT_SHIPPING_API_LEVEL);
 
   Timestamp* metrics_timestamp = metrics_event->mutable_event_time();
@@ -163,11 +163,10 @@ std::unique_ptr<LogRequest> BuildLogRequest(uint64_t now_ms,
 
   return log_request;
 }
-}  // namespace
 
-int Clearcut::SendEvent(CuttlefishLogEvent::DeviceType device_type,
+int SendEvent(CuttlefishLogEvent::DeviceType device_type,
                         MetricsEvent::EventType event_type) {
-  uint64_t now_ms = metrics::GetEpochTimeMs();
+  uint64_t now_ms = GetEpochTimeMs();
 
   auto cfEvent = BuildCfLogEvent(now_ms, device_type);
   AddCfMetricsEventToLog(now_ms, cfEvent.get(), event_type);
@@ -184,41 +183,27 @@ int Clearcut::SendEvent(CuttlefishLogEvent::DeviceType device_type,
     return MetricsExitCodes::kMetricsError;
   }
 
-  return metrics::PostRequest(logRequestStr, metrics::ClearcutServer::kProd);
+  return PostRequest(logRequestStr, ClearcutServer::kProd);
 }
 
-int Clearcut::SendVMStart(CuttlefishLogEvent::DeviceType device) {
+}  // namespace
+
+int SendVMStart(CuttlefishLogEvent::DeviceType device) {
   return SendEvent(device,
                    MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION);
 }
 
-int Clearcut::SendVMStop(CuttlefishLogEvent::DeviceType device) {
+int SendVMStop(CuttlefishLogEvent::DeviceType device) {
   return SendEvent(device, MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_STOP);
 }
 
-int Clearcut::SendDeviceBoot(CuttlefishLogEvent::DeviceType device) {
+int SendDeviceBoot(CuttlefishLogEvent::DeviceType device) {
   return SendEvent(device, MetricsEvent::CUTTLEFISH_EVENT_TYPE_DEVICE_BOOT);
 }
 
-int Clearcut::SendLockScreen(CuttlefishLogEvent::DeviceType device) {
+int SendLockScreen(CuttlefishLogEvent::DeviceType device) {
   return SendEvent(device,
                    MetricsEvent::CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE);
 }
 
-// TODO (moelsherif@): remove this function in the future since it is not used
-CuttlefishLogEvent* sampleEvent() {
-  CuttlefishLogEvent* event = new CuttlefishLogEvent();
-  event->set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
-  return event;
-}
-
-// TODO (moelsherif@): remove this function in the future since it is not used
-std::string ProtoToString(LogEvent* event) {
-  std::string output;
-  if (!event->SerializeToString(&output)) {
-    LOG(ERROR) << "failed to serialize proto LogEvent";
-  }
-  return output;
-}
-
-}  // namespace cuttlefish
+}  // namespace cuttlefish::metrics

@@ -16,33 +16,16 @@
 #pragma once
 
 #include "external_proto/cf_log.pb.h"
-#include "external_proto/cf_metrics_event.pb.h"
 
-namespace cuttlefish {
+namespace cuttlefish::metrics {
 
-class Clearcut {
- private:
-  static int SendEvent(
-      logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType
-          device_type,
-      logs::proto::wireless::android::cuttlefish::events::MetricsEvent::
-          EventType event_type);
-
- public:
-  Clearcut() = default;
-  ~Clearcut() = default;
-  static int SendVMStart(
-      logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType
-          device_type);
-  static int SendVMStop(
-      logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType
-          device_type);
-  static int SendDeviceBoot(
-      logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType
-          device_type);
-  static int SendLockScreen(
-      logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType
-          device_type);
-};
+int SendVMStart(
+    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
+int SendVMStop(
+    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
+int SendDeviceBoot(
+    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
+int SendLockScreen(
+    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
 
 }  // namespace cuttlefish
