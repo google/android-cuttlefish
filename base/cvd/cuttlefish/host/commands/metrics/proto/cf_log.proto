@@ -17,8 +17,8 @@ syntax = "proto2";
 
 package cuttlefish;
 
-import "cuttlefish/host/commands/metrics/proto/common.proto";
 import "cuttlefish/host/commands/metrics/proto/cf_metrics_event.proto";
+import "google/protobuf/timestamp.proto";
 
 // Wrapper for Cuttlefish log events
 // Next index: 7
@@ -40,7 +40,7 @@ message CuttlefishLogEvent {
   }
 
   // Local time on the event source device of when this event occurred.
-  optional Timestamp timestamp_ms = 1;
+  optional google.protobuf.Timestamp timestamp_ms = 1;
 
   // The type of device this log event originated from.
   optional DeviceType device_type = 2;

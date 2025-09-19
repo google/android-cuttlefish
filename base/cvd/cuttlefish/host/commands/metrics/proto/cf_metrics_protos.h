@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 // pragma is used here to disable the warnings emitted from the protobuf
 // headers. By adding #pragma before including cf_log.pb.h, it suppresses
 // protobuf warnings, but allows the rest of the files to continue using
@@ -25,4 +27,9 @@
 #include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"  // IWYU pragma: export
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"  // IWYU pragma: export
 #include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"  // IWYU pragma: export
-#include "cuttlefish/host/commands/metrics/proto/common.pb.h"  // IWYU pragma: export
+
+namespace cuttlefish {
+
+using google::protobuf::Timestamp;
+
+}

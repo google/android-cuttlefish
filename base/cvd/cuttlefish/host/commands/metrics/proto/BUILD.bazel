@@ -13,7 +13,6 @@ cf_cc_library(
         ":metrics_cf_log_proto",
         ":metrics_cf_metrics_event_proto",
         ":metrics_clientanalytics_proto",
-        ":metrics_common_proto",
         "@protobuf",
     ],
 )
@@ -23,7 +22,7 @@ proto_library(
     srcs = ["cf_log.proto"],
     deps = [
         ":cf_metrics_event_proto",
-        ":common_proto",
+        "@protobuf//:timestamp_proto",
     ],
 )
 
@@ -36,7 +35,8 @@ proto_library(
     name = "cf_metrics_event_proto",
     srcs = ["cf_metrics_event.proto"],
     deps = [
-        ":common_proto",
+        "@protobuf//:duration_proto",
+        "@protobuf//:timestamp_proto",
     ],
 )
 
@@ -53,14 +53,4 @@ proto_library(
 cc_proto_library(
     name = "metrics_clientanalytics_proto",
     deps = [":clientanalytics_proto"],
-)
-
-proto_library(
-    name = "common_proto",
-    srcs = ["common.proto"],
-)
-
-cc_proto_library(
-    name = "metrics_common_proto",
-    deps = [":common_proto"],
 )
