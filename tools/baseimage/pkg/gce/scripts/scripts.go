@@ -65,6 +65,10 @@ if [ ! -f /mnt/image/etc/resolv.conf ]; then
 fi
 sudo chroot /mnt/image /usr/bin/apt update
 
+kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
+
 # Install JDK.
 #
 # JDK it's not required to launch a CF device. It's required to run
@@ -96,7 +100,6 @@ echo "deb http://deb.debian.org/debian bookworm-backports main" | \
   sudo chroot /mnt/image /usr/bin/tee -a /etc/apt/sources.list >/dev/null
 
 sudo chroot /mnt/image /usr/bin/apt-get update
-sudo chroot /mnt/image /usr/bin/apt install -t bookworm-backports -y linux-image-cloud-amd64
 
 # update QEMU version to most recent backport
 sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bookworm
@@ -124,6 +127,16 @@ sudo chroot /mnt/image /usr/bin/mkdir -p /var/empty
 sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
+
+kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
+
+if [ "${kmodver_begin}" != "${kmodver_end}" ]; then
+  echo "KERNEL UPDATE DETECTED!!! ${kmodver_begin} -> ${kmodver_end}"
+  echo "Use source image with kernel ${kmodver_end} installed."
+  exit 1
+fi
 
 # Skip unmounting:
 #  Sometimes systemd starts, making it hard to unmount
