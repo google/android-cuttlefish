@@ -13,6 +13,7 @@ cf_cc_library(
         ":metrics_cf_log_proto",
         ":metrics_cf_metrics_event_proto",
         ":metrics_clientanalytics_proto",
+        ":log_source_enum_cc_proto",
         "@protobuf",
     ],
 )
@@ -48,9 +49,22 @@ cc_proto_library(
 proto_library(
     name = "clientanalytics_proto",
     srcs = ["clientanalytics.proto"],
+    deps = [
+        ":log_source_enum_proto",
+    ],
 )
 
 cc_proto_library(
     name = "metrics_clientanalytics_proto",
     deps = [":clientanalytics_proto"],
+)
+
+proto_library(
+    name = "log_source_enum_proto",
+    srcs = ["log_source_enum.proto"],
+)
+
+cc_proto_library(
+    name = "log_source_enum_cc_proto",
+    deps = [":log_source_enum_proto"],
 )

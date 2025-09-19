@@ -17,30 +17,8 @@ syntax = "proto2";
 
 package wireless_android_play_playlog;
 
-import "cuttlefish/host/commands/metrics/proto/log_source_enum.proto";
+enum LogSource {
+  UNKNOWN = -1;
 
-message LogRequest {
-  optional ClientInfo client_info = 1;
-  optional LogSource log_source = 2;
-  optional int64 request_time_ms = 4;
-  repeated LogEvent log_event = 3;
-  optional string log_source_name = 5;
-}
-
-message ClientInfo {
-  enum ClientType {
-    UNKNOWN = 0;
-    CPLUSPLUS = 19;
-  }
-  optional ClientType client_type = 1;
-}
-
-// TODO(moelsherif) : This message is not used yet. It will be used to send back the next request wait time.
-message LogResponse {
-  optional int64 next_request_wait_millis = 1;
-}
-
-message LogEvent {
-  optional int64 event_time_ms = 1;
-  optional bytes source_extension = 6;
+  CUTTLEFISH_METRICS = 1753;
 }
