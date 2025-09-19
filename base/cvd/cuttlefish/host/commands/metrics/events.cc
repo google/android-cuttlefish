@@ -111,10 +111,10 @@ MetricsEvent::VmmType GetVmm() {
 }
 
 // Builds the 2nd level MetricsEvent.
-void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent& cf_event,
-                            MetricsEvent::EventType event_type) {
+MetricsEvent BuildMetricsEvent(uint64_t now_ms,
+                               MetricsEvent::EventType event_type) {
   // "metrics_event" is the 2nd level MetricsEvent
-  MetricsEvent& metrics_event = *cf_event.mutable_metrics_event();
+  MetricsEvent metrics_event;
   metrics_event.set_event_type(event_type);
   metrics_event.set_os_type(GetOsType());
   metrics_event.set_os_version(GetOsVersion());
@@ -128,6 +128,8 @@ void AddCfMetricsEventToLog(uint64_t now_ms, CuttlefishLogEvent& cf_event,
   metrics_event.set_api_level(PRODUCT_SHIPPING_API_LEVEL);
 
   *metrics_event.mutable_event_time() = MillisToTimestamp(now_ms);
+
+  return metrics_event;
 }
 
 LogRequest BuildLogRequest(uint64_t now_ms,
@@ -152,7 +154,7 @@ int SendEvent(MetricsEvent::EventType event_type) {
   uint64_t now_ms = GetEpochTimeMs();
 
   CuttlefishLogEvent cf_event = BuildCfLogEvent(now_ms);
-  AddCfMetricsEventToLog(now_ms, cf_event, event_type);
+  *cf_event.mutable_metrics_event() = BuildMetricsEvent(now_ms, event_type);
 
   LogRequest log_request = BuildLogRequest(now_ms, cf_event);
   std::string log_request_str = log_request.SerializeAsString();
