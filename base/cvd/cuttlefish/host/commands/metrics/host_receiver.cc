@@ -78,13 +78,13 @@ void MetricsHostReceiver::ProcessMessage(const std::string& text) {
   int rc = MetricsExitCodes::kSuccess;
 
   if (text == "VMStart") {
-    rc = Clearcut::SendVMStart(hostDev);
+    rc = metrics::SendVMStart(hostDev);
   } else if (text == "VMStop") {
-    rc = Clearcut::SendVMStop(hostDev);
+    rc = metrics::SendVMStop(hostDev);
   } else if (text == "DeviceBoot") {
-    rc = Clearcut::SendDeviceBoot(hostDev);
+    rc = metrics::SendDeviceBoot(hostDev);
   } else if (text == "LockScreen") {
-    rc = Clearcut::SendLockScreen(hostDev);
+    rc = metrics::SendLockScreen(hostDev);
   } else {
     LOG(ERROR) << "Message not recognized: " << text;
     rc = MetricsExitCodes::kMetricsError;
