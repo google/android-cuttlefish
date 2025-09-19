@@ -1,19 +1,5 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
-
 package(
     default_visibility = ["//:android_cuttlefish"],
-)
-
-cf_cc_library(
-    name = "metrics_protos",
-    hdrs = [
-        "cf_metrics_protos.h",
-    ],
-    deps = [
-        ":cf_log_cc_proto",
-        ":cf_metrics_event_cc_proto",
-        "@protobuf",
-    ],
 )
 
 proto_library(

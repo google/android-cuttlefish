@@ -21,7 +21,8 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_metrics_event.pb.h"
 #include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
 #include "cuttlefish/host/commands/metrics/proto/log_source_enum.pb.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
@@ -34,6 +35,8 @@ namespace cuttlefish {
 namespace {
 
 using google::protobuf::Timestamp;
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
+using logs::proto::wireless::android::cuttlefish::events::MetricsEvent;
 using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;

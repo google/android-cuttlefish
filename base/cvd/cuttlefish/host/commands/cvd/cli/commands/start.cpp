@@ -65,7 +65,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
 #include "cuttlefish/host/commands/metrics/proto/clientanalytics.pb.h"
 #include "cuttlefish/host/commands/metrics/proto/log_source_enum.pb.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
@@ -76,6 +76,7 @@
 namespace cuttlefish {
 namespace {
 
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;

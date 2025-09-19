@@ -20,13 +20,15 @@
 #include <android-base/logging.h>
 
 #include "cuttlefish/host/commands/metrics/events.h"
-#include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
+#include "cuttlefish/host/commands/metrics/proto/cf_log.pb.h"
 #include "cuttlefish/host/libs/metrics/metrics_configs.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/msg_queue/msg_queue.h"
 
 namespace cuttlefish {
+
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
 MetricsHostReceiver::MetricsHostReceiver(bool is_metrics_enabled)
     : is_metrics_enabled_(is_metrics_enabled) {}
