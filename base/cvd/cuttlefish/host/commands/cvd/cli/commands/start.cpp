@@ -627,7 +627,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
          "Policy (https://policies.google.com/privacy) describes how Google "
          "handles information generated as you use Google services.";
   if (kEnableCvdMetrics) {
-    static constexpr int kLogSourceId = 1753;
+    static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
     static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
     static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
 

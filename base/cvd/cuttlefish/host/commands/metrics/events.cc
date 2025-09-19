@@ -32,7 +32,7 @@ namespace {
 // TODO: 403646742 - this value previously came from the build, need to revisit
 static constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
 
-static constexpr int kLogSourceId = 1753;
+static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
 
 static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
