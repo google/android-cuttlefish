@@ -10,9 +10,9 @@ cf_cc_library(
         "cf_metrics_protos.h",
     ],
     deps = [
-        ":metrics_cf_log_proto",
-        ":metrics_cf_metrics_event_proto",
-        ":metrics_clientanalytics_proto",
+        ":cf_log_cc_proto",
+        ":cf_metrics_event_cc_proto",
+        ":clientanalytics_cc_proto",
         ":log_source_enum_cc_proto",
         "@protobuf",
     ],
@@ -28,7 +28,7 @@ proto_library(
 )
 
 cc_proto_library(
-    name = "metrics_cf_log_proto",
+    name = "cf_log_cc_proto",
     deps = [":cf_log_proto"],
 )
 
@@ -42,7 +42,7 @@ proto_library(
 )
 
 cc_proto_library(
-    name = "metrics_cf_metrics_event_proto",
+    name = "cf_metrics_event_cc_proto",
     deps = [":cf_metrics_event_proto"],
 )
 
@@ -55,7 +55,7 @@ proto_library(
 )
 
 cc_proto_library(
-    name = "metrics_clientanalytics_proto",
+    name = "clientanalytics_cc_proto",
     deps = [":clientanalytics_proto"],
 )
 
