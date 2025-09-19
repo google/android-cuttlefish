@@ -56,13 +56,12 @@ std::pair<uint64_t, uint64_t> ConvertMillisToTime(uint64_t millis) {
   return {seconds, nanos};
 }
 
-std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(
-    uint64_t now_ms, CuttlefishLogEvent::DeviceType device_type) {
+std::unique_ptr<CuttlefishLogEvent> BuildCfLogEvent(uint64_t now_ms) {
   auto [now_s, now_ns] = ConvertMillisToTime(now_ms);
 
   // "cfEvent" is the top level CuttlefishLogEvent
   auto cfEvent = std::make_unique<CuttlefishLogEvent>();
-  cfEvent->set_device_type(device_type);
+  cfEvent->set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
   cfEvent->set_session_id(GenerateSessionId(now_ms));
 
   if (!GetCfVersion().empty()) {
@@ -164,11 +163,10 @@ std::unique_ptr<LogRequest> BuildLogRequest(uint64_t now_ms,
   return log_request;
 }
 
-int SendEvent(CuttlefishLogEvent::DeviceType device_type,
-                        MetricsEvent::EventType event_type) {
+int SendEvent(MetricsEvent::EventType event_type) {
   uint64_t now_ms = GetEpochTimeMs();
 
-  auto cfEvent = BuildCfLogEvent(now_ms, device_type);
+  auto cfEvent = BuildCfLogEvent(now_ms);
   AddCfMetricsEventToLog(now_ms, cfEvent.get(), event_type);
 
   auto logRequest = BuildLogRequest(now_ms, cfEvent.get());
@@ -188,22 +186,20 @@ int SendEvent(CuttlefishLogEvent::DeviceType device_type,
 
 }  // namespace
 
-int SendVMStart(CuttlefishLogEvent::DeviceType device) {
-  return SendEvent(device,
-                   MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION);
+int SendVMStart() {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION);
 }
 
-int SendVMStop(CuttlefishLogEvent::DeviceType device) {
-  return SendEvent(device, MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_STOP);
+int SendVMStop() {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_STOP);
 }
 
-int SendDeviceBoot(CuttlefishLogEvent::DeviceType device) {
-  return SendEvent(device, MetricsEvent::CUTTLEFISH_EVENT_TYPE_DEVICE_BOOT);
+int SendDeviceBoot() {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_DEVICE_BOOT);
 }
 
-int SendLockScreen(CuttlefishLogEvent::DeviceType device) {
-  return SendEvent(device,
-                   MetricsEvent::CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE);
+int SendLockScreen() {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE);
 }
 
 }  // namespace cuttlefish::metrics

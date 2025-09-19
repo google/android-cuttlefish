@@ -15,17 +15,11 @@
  */
 #pragma once
 
-#include "external_proto/cf_log.pb.h"
-
 namespace cuttlefish::metrics {
 
-int SendVMStart(
-    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
-int SendVMStop(
-    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
-int SendDeviceBoot(
-    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
-int SendLockScreen(
-    logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent::DeviceType);
+int SendVMStart();
+int SendVMStop();
+int SendDeviceBoot();
+int SendLockScreen();
 
 }  // namespace cuttlefish

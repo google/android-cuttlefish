@@ -73,18 +73,16 @@ bool MetricsHostReceiver::Initialize(const std::string& metrics_queue_name) {
 }
 
 void MetricsHostReceiver::ProcessMessage(const std::string& text) {
-  auto hostDev = CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST;
-
   int rc = MetricsExitCodes::kSuccess;
 
   if (text == "VMStart") {
-    rc = metrics::SendVMStart(hostDev);
+    rc = metrics::SendVMStart();
   } else if (text == "VMStop") {
-    rc = metrics::SendVMStop(hostDev);
+    rc = metrics::SendVMStop();
   } else if (text == "DeviceBoot") {
-    rc = metrics::SendDeviceBoot(hostDev);
+    rc = metrics::SendDeviceBoot();
   } else if (text == "LockScreen") {
-    rc = metrics::SendLockScreen(hostDev);
+    rc = metrics::SendLockScreen();
   } else {
     LOG(ERROR) << "Message not recognized: " << text;
     rc = MetricsExitCodes::kMetricsError;
