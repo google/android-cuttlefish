@@ -17,6 +17,8 @@
 
 #include <sys/utsname.h>
 
+#include "google/protobuf/timestamp.pb.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/metrics/proto/cf_metrics_protos.h"
@@ -28,6 +30,8 @@
 namespace cuttlefish {
 
 namespace {
+
+using google::protobuf::Timestamp;
 
 // TODO: 403646742 - this value previously came from the build, need to revisit
 static constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
