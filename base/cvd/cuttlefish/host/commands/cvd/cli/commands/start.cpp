@@ -65,22 +65,14 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
-#include "cuttlefish/host/commands/metrics/utils.h"
+#include "cuttlefish/host/commands/metrics/events.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
-#include "external_proto/cf_log.pb.h"
-#include "external_proto/clientanalytics.pb.h"
-#include "external_proto/log_source_enum.pb.h"
 
 namespace cuttlefish {
 namespace {
-
-using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
-using wireless_android_play_playlog::ClientInfo;
-using wireless_android_play_playlog::LogEvent;
-using wireless_android_play_playlog::LogRequest;
-using wireless_android_play_playlog::LogSourceEnum::LogSource;
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();
@@ -635,32 +627,10 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
          "Policy (https://policies.google.com/privacy) describes how Google "
          "handles information generated as you use Google services.";
   if (kEnableCvdMetrics) {
-    static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
-    static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
-    static constexpr ClientInfo::ClientType kCppClientType =
-        ClientInfo::CPLUSPLUS;
-
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
-    CuttlefishLogEvent cf_log_event;
-
-    cf_log_event.set_session_id("cvd-todo-session");
-
-    LogRequest request_proto;
-    request_proto.set_log_source(kLogSourceId);
-    request_proto.set_log_source_name(kLogSourceStr);
-
-    ClientInfo& client_info = *request_proto.mutable_client_info();
-    client_info.set_client_type(kCppClientType);
-
-    LogEvent& log_event = *request_proto.add_log_event();
-    log_event.set_event_time_ms(metrics::GetEpochTimeMs());
-    log_event.set_source_extension(cf_log_event.SerializeAsString());
-
-    std::string request_string = request_proto.SerializeAsString();
-    MetricsExitCodes reporting_outcome =
-        metrics::PostRequest(request_string, metrics::ClearcutServer::kProd);
+    int reporting_outcome = metrics::SendVMStart(VmmMode::kUnknown);
     if (reporting_outcome != MetricsExitCodes::kSuccess) {
       LOG(ERROR) << "Issue reporting metrics: " << reporting_outcome;
     }
@@ -703,6 +673,13 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
     group.SetAllStates(cvd::INSTANCE_STATE_BOOT_FAILED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
     return start_res;
+  }
+
+  if (kEnableCvdMetrics) {
+    int reporting_outcome = metrics::SendDeviceBoot(VmmMode::kUnknown);
+    if (reporting_outcome != MetricsExitCodes::kSuccess) {
+      LOG(ERROR) << "Issue reporting metrics: " << reporting_outcome;
+    }
   }
 
   return {};

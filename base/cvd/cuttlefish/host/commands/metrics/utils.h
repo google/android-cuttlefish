@@ -17,7 +17,6 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish::metrics {
 
@@ -35,7 +34,6 @@ std::string GetMacAddress();
 std::string GetCompany();
 std::string GetVmmVersion();
 uint64_t GetEpochTimeMs();
-std::string ProtoToString(wireless_android_play_playlog::LogEvent* event);
 
 MetricsExitCodes PostRequest(const std::string& output, ClearcutServer server);
 MetricsExitCodes PostRequest(HttpClient&, const std::string& output,

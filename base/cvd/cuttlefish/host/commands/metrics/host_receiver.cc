@@ -20,9 +20,10 @@
 #include <android-base/logging.h>
 
 #include "cuttlefish/host/commands/metrics/events.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/metrics/metrics_configs.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
-#include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/msg_queue/msg_queue.h"
 #include "external_proto/cf_log.pb.h"
 
@@ -73,18 +74,20 @@ bool MetricsHostReceiver::Initialize(const std::string& metrics_queue_name) {
 }
 
 void MetricsHostReceiver::ProcessMessage(const std::string& text) {
-  auto hostDev = CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST;
-
   int rc = MetricsExitCodes::kSuccess;
 
+  const CuttlefishConfig* config = CuttlefishConfig::Get();
+  CHECK(config) << "Could not open cuttlefish config";
+  VmmMode vmm_mode = config->vm_manager();
+
   if (text == "VMStart") {
-    rc = Clearcut::SendVMStart(hostDev);
+    rc = metrics::SendVMStart(vmm_mode);
   } else if (text == "VMStop") {
-    rc = Clearcut::SendVMStop(hostDev);
+    rc = metrics::SendVMStop(vmm_mode);
   } else if (text == "DeviceBoot") {
-    rc = Clearcut::SendDeviceBoot(hostDev);
+    rc = metrics::SendDeviceBoot(vmm_mode);
   } else if (text == "LockScreen") {
-    rc = Clearcut::SendLockScreen(hostDev);
+    rc = metrics::SendLockScreen(vmm_mode);
   } else {
     LOG(ERROR) << "Message not recognized: " << text;
     rc = MetricsExitCodes::kMetricsError;
