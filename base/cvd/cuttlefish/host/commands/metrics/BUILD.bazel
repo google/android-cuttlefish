@@ -10,7 +10,6 @@ cf_cc_library(
     hdrs = ["events.h"],
     deps = [
         "//cuttlefish/host/commands/metrics:libmetrics_utils",
-        "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_cc_proto",
@@ -35,6 +34,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/metrics:events",
         "//cuttlefish/host/commands/metrics:libmetrics_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/msg_queue",

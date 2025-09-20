@@ -20,7 +20,6 @@
 #include "google/protobuf/timestamp.pb.h"
 
 #include "cuttlefish/host/commands/metrics/utils.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event.pb.h"
@@ -97,10 +96,8 @@ MetricsEvent::OsType GetOsType() {
   return MetricsEvent::CUTTLEFISH_OS_TYPE_UNSPECIFIED;
 }
 
-MetricsEvent::VmmType GetVmm() {
-  const CuttlefishConfig* config = CuttlefishConfig::Get();
-  CHECK(config) << "Could not open cuttlefish config";
-  switch (config->vm_manager()) {
+MetricsEvent::VmmType GetVmm(VmmMode vmm_mode) {
+  switch (vmm_mode) {
     case VmmMode::kCrosvm:
       return MetricsEvent::CUTTLEFISH_VMM_TYPE_CROSVM;
     case VmmMode::kQemu:
@@ -111,14 +108,14 @@ MetricsEvent::VmmType GetVmm() {
 }
 
 // Builds the 2nd level MetricsEvent.
-MetricsEvent BuildMetricsEvent(uint64_t now_ms,
+MetricsEvent BuildMetricsEvent(uint64_t now_ms, VmmMode vmm_mode,
                                MetricsEvent::EventType event_type) {
   // "metrics_event" is the 2nd level MetricsEvent
   MetricsEvent metrics_event;
   metrics_event.set_event_type(event_type);
   metrics_event.set_os_type(GetOsType());
   metrics_event.set_os_version(GetOsVersion());
-  metrics_event.set_vmm_type(GetVmm());
+  metrics_event.set_vmm_type(GetVmm(vmm_mode));
 
   if (!GetVmmVersion().empty()) {
     metrics_event.set_vmm_version(GetVmmVersion());
@@ -150,11 +147,12 @@ LogRequest BuildLogRequest(uint64_t now_ms,
   return log_request;
 }
 
-int SendEvent(MetricsEvent::EventType event_type) {
+int SendEvent(MetricsEvent::EventType event_type, VmmMode vmm_mode) {
   uint64_t now_ms = GetEpochTimeMs();
 
   CuttlefishLogEvent cf_event = BuildCfLogEvent(now_ms);
-  *cf_event.mutable_metrics_event() = BuildMetricsEvent(now_ms, event_type);
+  *cf_event.mutable_metrics_event() =
+      BuildMetricsEvent(now_ms, vmm_mode, event_type);
 
   LogRequest log_request = BuildLogRequest(now_ms, cf_event);
   std::string log_request_str = log_request.SerializeAsString();
@@ -164,20 +162,22 @@ int SendEvent(MetricsEvent::EventType event_type) {
 
 }  // namespace
 
-int SendVMStart() {
-  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION);
+int SendVMStart(VmmMode vmm_mode) {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION,
+                   vmm_mode);
 }
 
-int SendVMStop() {
-  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_STOP);
+int SendVMStop(VmmMode vmm_mode) {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_STOP, vmm_mode);
 }
 
-int SendDeviceBoot() {
-  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_DEVICE_BOOT);
+int SendDeviceBoot(VmmMode vmm_mode) {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_DEVICE_BOOT, vmm_mode);
 }
 
-int SendLockScreen() {
-  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE);
+int SendLockScreen(VmmMode vmm_mode) {
+  return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE,
+                   vmm_mode);
 }
 
 }  // namespace cuttlefish::metrics
