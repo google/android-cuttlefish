@@ -15,11 +15,13 @@
  */
 #pragma once
 
+#include "cuttlefish/host/libs/config/vmm_mode.h"
+
 namespace cuttlefish::metrics {
 
-int SendVMStart();
-int SendVMStop();
-int SendDeviceBoot();
-int SendLockScreen();
+int SendVMStart(VmmMode);
+int SendVMStop(VmmMode);
+int SendDeviceBoot(VmmMode);
+int SendLockScreen(VmmMode);
 
 }  // namespace cuttlefish
