@@ -6,8 +6,9 @@ def _pdl_rust_impl(ctx):
         tools = [ctx.executable._pdlc],
         inputs = [ctx.file.src],
         outputs = [out],
-        command = "{pdlc} --output-format rust {src} > {out}".format(
+        command = "{pdlc} --output-format {output_format} {src} > {out}".format(
             pdlc = ctx.executable._pdlc.path,
+            output_format = ctx.attr.output_format,
             src = ctx.file.src.path,
             out = out.path,
         ),
@@ -19,6 +20,10 @@ pdl_rust = rule(
     attrs = {
         "src": attr.label(allow_single_file = True),
         "out": attr.string(mandatory = True),
+        "output_format": attr.string(
+            default = "rust",
+            values = ["rust", "rust_legacy"],
+        ),
         "_pdlc": attr.label(
             # Any crates with pdl-compiler would work.
             default = "@netsim_crates//:pdl-compiler__pdlc",
