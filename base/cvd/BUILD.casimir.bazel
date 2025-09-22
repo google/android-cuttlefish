@@ -1,0 +1,39 @@
+load("@@//build_external/netsim:collect_files_in_dir.bzl", "collect_files_in_dir")
+load("@@//build_external/netsim:pdl_rust.bzl", "pdl_rust")
+load("@casimir_crates//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+pdl_rust(
+    name = "nci_packets_rust_gen",
+    src = "src/nci_packets.pdl",
+    out = "nci_packets.rs",
+    output_format = "rust_legacy",
+)
+
+pdl_rust(
+    name = "rf_packets_rust_gen",
+    src = "src/rf_packets.pdl",
+    out = "rf_packets.rs",
+    output_format = "rust_legacy",
+)
+
+collect_files_in_dir(
+    name = "out_dir",
+    srcs = [
+        ":nci_packets_rust_gen",
+        ":rf_packets_rust_gen",
+    ],
+    out = "out_dir",
+)
+
+rust_binary(
+    name = "casimir",
+    srcs = glob(["src/*.rs"]) + [
+        ":out_dir",
+    ],
+    rustc_env = {
+        "OUT_DIR": "$(execpath :out_dir)",
+    },
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(normal = True),
+)

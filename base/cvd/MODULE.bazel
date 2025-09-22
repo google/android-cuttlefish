@@ -397,6 +397,18 @@ netsim_crates.from_cargo(
 
 use_repo(netsim_crates, "netsim_crates")
 
+casimir_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+casimir_crates.from_cargo(
+    name = "casimir_crates",
+    manifests = [
+        "@casimir//:Cargo.toml",
+    ],
+    # Needed because it shares the extension with crosvm
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools = "@rust_host_tools_nightly",
+)
+use_repo(casimir_crates, "casimir_crates")
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 # Upstream mtools is in subversion, which bazel doesn't support
@@ -743,4 +755,11 @@ git_repository(
         "@//build_external/netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
     ],
     patch_strip = 1,
+)
+
+git_repository(
+    name = "casimir",
+    build_file = "@//:BUILD.casimir.bazel",
+    commit = "f785e9275ee5ed85f98e7b850783ca0559ee1799",
+    remote = "https://github.com/google/casimir",
 )
