@@ -24,7 +24,6 @@
 #include "android-base/strings.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_instances.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_metrics_configs.h"
@@ -59,17 +58,13 @@ Result<std::vector<std::string>> GenerateCfFlags(
   std::vector<std::string> flags;
   flags.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
 
-  bool netsim_bt = CF_DEFAULTS_NETSIM_BT;
   if (launch.has_netsim_bt()) {
-    netsim_bt = launch.netsim_bt();
+    flags.emplace_back(GenerateFlag("netsim_bt", launch.netsim_bt()));
   }
-  flags.emplace_back(GenerateFlag("netsim_bt", netsim_bt));
 
-  bool netsim_uwb = CF_DEFAULTS_NETSIM_UWB;
   if (launch.has_netsim_uwb()) {
-    netsim_uwb = launch.netsim_uwb();
+    flags.emplace_back(GenerateFlag("netsim_uwb", launch.netsim_uwb()));
   }
-  flags.emplace_back(GenerateFlag("netsim_uwb", netsim_uwb));
 
   flags = MergeResults(std::move(flags), GenerateMetricsFlags(launch));
   flags = MergeResults(std::move(flags), CF_EXPECT(GenerateInstancesFlags(launch)));

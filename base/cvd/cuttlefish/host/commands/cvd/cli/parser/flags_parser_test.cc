@@ -134,10 +134,10 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEmptyJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_bt=true)"))
-      << "netsim_bt flag is missing or wrongly formatted";
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--netsim_uwb=true)"))
-      << "netsim_uwb flag is missing or wrongly formatted";
+  EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_bt=)"))
+      << "netsim_bt flag is set";
+  EXPECT_FALSE(FindConfig(*serialized_data, R"(--netsim_uwb=)"))
+      << "netsim_uwb flag is set";
 }
 
 TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
