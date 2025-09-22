@@ -120,7 +120,7 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_co
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/virtio_pci.ko
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(SYSTEM_VIRTIO_PREBUILTS_PATH)/vmw_vsock_virtio_transport.ko
 
-ifneq (,$(findstring auto, $(PRODUCT_NAME))$(findstring sdv, $(PRODUCT_NAME)))
+ifneq (,$(findstring auto, $(PRODUCT_NAME)))
 # Support arm64 Cuttlefish on-device deployment
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard $(KERNEL_MODULES_PATH)/virtio_mmio.ko)
 endif
