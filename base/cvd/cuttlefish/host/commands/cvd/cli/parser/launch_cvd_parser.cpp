@@ -56,28 +56,28 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
 
 Result<std::vector<std::string>> GenerateCfFlags(
     const EnvironmentSpecification& launch) {
-  std::vector<std::string> ret;
-  ret.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
+  std::vector<std::string> flags;
+  flags.emplace_back(GenerateFlag("num_instances", launch.instances().size()));
 
   bool netsim_bt = CF_DEFAULTS_NETSIM_BT;
   if (launch.has_netsim_bt()) {
     netsim_bt = launch.netsim_bt();
   }
-  ret.emplace_back(GenerateFlag("netsim_bt", netsim_bt));
+  flags.emplace_back(GenerateFlag("netsim_bt", netsim_bt));
 
   bool netsim_uwb = CF_DEFAULTS_NETSIM_UWB;
   if (launch.has_netsim_uwb()) {
     netsim_uwb = launch.netsim_uwb();
   }
-  ret.emplace_back(GenerateFlag("netsim_uwb", netsim_uwb));
+  flags.emplace_back(GenerateFlag("netsim_uwb", netsim_uwb));
 
-  ret = MergeResults(std::move(ret), GenerateMetricsFlags(launch));
-  ret = MergeResults(std::move(ret), CF_EXPECT(GenerateInstancesFlags(launch)));
-  auto flag_op = GenerateUndefOkFlag(ret);
+  flags = MergeResults(std::move(flags), GenerateMetricsFlags(launch));
+  flags = MergeResults(std::move(flags), CF_EXPECT(GenerateInstancesFlags(launch)));
+  auto flag_op = GenerateUndefOkFlag(flags);
   if (flag_op.has_value()) {
-    ret.emplace_back(std::move(*flag_op));
+    flags.emplace_back(std::move(*flag_op));
   }
-  return ret;
+  return flags;
 }
 
 }  // namespace
