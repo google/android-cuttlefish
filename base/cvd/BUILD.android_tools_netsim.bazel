@@ -50,7 +50,7 @@ collect_files_in_dir(
         ":netsim_netlink_rust_gen",
         "@rootcanal//packets:link_layer_packets_rs",
     ],
-    out = "link_layer_packets.rs",
+    out = "libnetsim_packets_out_dir",
 )
 
 rust_library(
