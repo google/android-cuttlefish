@@ -91,17 +91,19 @@ func createImageMain(project, zone string) error {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 	// Upload Scripts
-	if err := gce.UploadBashScript(project, zone, insName, "update_kernel.sh", scripts.UpdateKernel); err != nil {
-		return fmt.Errorf("error uploading update_kernel.sh: %v", err)
+	list := []struct {
+		dstname string
+		content string
+	}{
+		{"update_kernel.sh", scripts.UpdateKernel},
+		{"remove_old_kernel.sh", scripts.RemoveOldKernel},
+		{"create_base_image.sh", scripts.CreateBaseImage},
+		{"install_nvidia.sh", scripts.InstallNvidia},
 	}
-	if err := gce.UploadBashScript(project, zone, insName, "remove_old_kernel.sh", scripts.RemoveOldKernel); err != nil {
-		return fmt.Errorf("error uploading remove_old_kernel.sh: %v", err)
-	}
-	if err := gce.UploadBashScript(project, zone, insName, "create_base_image.sh", scripts.CreateBaseImage); err != nil {
-		return fmt.Errorf("error uploading create_base_image.sh: %v", err)
-	}
-	if err := gce.UploadBashScript(project, zone, insName, "install_nvidia.sh", scripts.InstallNvidia); err != nil {
-		return fmt.Errorf("error uploading install_nvidia.sh: %v", err)
+	for _, s := range list {
+		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
+			return fmt.Errorf("error uploading update_kernel.sh: %v", err)
+		}
 	}
 	// Execute Scripts
 	if err := gce.RunCmd(project, zone, insName, "./update_kernel.sh"); err != nil {
