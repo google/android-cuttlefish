@@ -34,6 +34,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 
 namespace cuttlefish {
+namespace {
 
 using cvd::config::Display;
 using cvd::config::EnvironmentSpecification;
@@ -108,16 +109,33 @@ bool RecordScreen(const Instance& instance) {
   }
 }
 
-std::string GpuMode(const Instance& instance) {
-  if (instance.graphics().has_gpu_mode() &&
-      !instance.graphics().gpu_mode().empty()) {
-    return instance.graphics().gpu_mode();
-  } else {
-    // Use the instance default
-    // https://github.com/google/android-cuttlefish/blob/c4f1643479f98bdc7310d281e81751188595233b/base/cvd/cuttlefish/host/commands/assemble_cvd/flags.cc#L948
-    // See also b/406464352#comment7
-    return "unset";
+std::optional<std::string> GpuMode(const Instance& instance) {
+  if (!instance.graphics().has_gpu_mode() ||
+      instance.graphics().gpu_mode().empty()) {
+    return std::nullopt;
   }
+  return instance.graphics().gpu_mode();
+}
+
+std::optional<std::vector<std::string>> GpuModes(const EnvironmentSpecification& cfg) {
+  std::vector<std::optional<std::string>> opts;
+  for (const Instance& instance: cfg.instances()) {
+    opts.emplace_back(GpuMode(instance));
+  }
+  if (std::none_of(opts.begin(), opts.end(),
+                   [](const auto& opt) { return opt.has_value(); })) {
+    return std::nullopt;
+  }
+  std::vector<std::string> values;
+  for (const std::optional<std::string>& opt: opts) {
+  // Use the instance default
+  // https://github.com/google/android-cuttlefish/blob/c4f1643479f98bdc7310d281e81751188595233b/base/cvd/cuttlefish/host/commands/assemble_cvd/flags.cc#L948
+  // See also b/406464352#comment7
+    values.emplace_back(opt.value_or("unset"));
+  }
+  return values;
+}
+
 }
 
 Result<std::vector<std::string>> GenerateGraphicsFlags(
@@ -128,7 +146,10 @@ Result<std::vector<std::string>> GenerateGraphicsFlags(
     flags.push_back(std::move(display_flag.value()));
   }
   flags.push_back(GenerateInstanceFlag("record_screen", cfg, RecordScreen));
-  flags.push_back(GenerateInstanceFlag("gpu_mode", cfg, GpuMode));
+  std::optional<std::vector<std::string>> gpu_modes = GpuModes(cfg);
+  if (gpu_modes.has_value()) {
+    flags.push_back(GenerateVecFlag("gpu_mode", gpu_modes.value()));
+  }
   return flags;
 }
 
