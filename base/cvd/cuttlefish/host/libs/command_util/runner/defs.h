@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <ostream>
+
 namespace cuttlefish {
 
 enum RunnerExitCodes : int {
@@ -63,5 +65,7 @@ enum class LauncherResponse : char {
   kError = 'E',
   kUnknownAction = 'U',
 };
+
+std::ostream& operator<<(std::ostream&, LauncherResponse);
 
 }  // namespace cuttlefish

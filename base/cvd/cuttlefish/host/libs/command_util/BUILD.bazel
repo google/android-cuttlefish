@@ -17,6 +17,7 @@ cc_proto_library(
 cf_cc_library(
     name = "command_util",
     srcs = [
+        "runner/defs.cc",
         "snapshot_utils.cc",
         "util.cc",
     ],

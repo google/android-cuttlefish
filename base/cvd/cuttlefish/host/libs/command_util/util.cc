@@ -164,7 +164,7 @@ Result<void> RunLauncherAction(SharedFD monitor_socket, LauncherAction action,
   LauncherResponse response;
   CF_EXPECT(ReadExactBinaryResult(monitor_socket, &response),
             "Error reading LauncherResponse");
-  CF_EXPECT_EQ((int)response, (int)LauncherResponse::kSuccess);
+  CF_EXPECT_EQ(response, LauncherResponse::kSuccess);
   return {};
 }
 
@@ -194,7 +194,7 @@ Result<void> RunLauncherAction(
   LauncherResponse response;
   CF_EXPECT(ReadExactBinaryResult(monitor_socket, &response),
             "Error reading LauncherResponse");
-  CF_EXPECT_EQ((int)response, (int)LauncherResponse::kSuccess);
+  CF_EXPECT_EQ(response, LauncherResponse::kSuccess);
   return {};
 }
 
