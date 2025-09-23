@@ -31,10 +31,25 @@ dpkg --list | grep -v $(uname -r) | grep -E 'linux-image-[0-9]|linux-headers-[0-
 sudo update-grub2
 `
 
-// https://cs.android.com/android/platform/superproject/+/android15-qpr2-release:device/google/cuttlefish/tools/create_base_image_gce.sh;drc=5480406e8fff1706a3901e2d7729b60ba8897aab
-// This script is based on existing create_base_image_gce.sh removing the part of
-// building and installing the cuttlefish debian packages.
-const CreateBaseImage = `#!/usr/bin/env bash
+// Mount attached disk `/dev/sdb1` at `/mnt/image`.
+const MountAttachedDisk = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+sudo mkdir -p /mnt/image
+sudo mount /dev/sdb1 /mnt/image
+sudo mount -t sysfs none /mnt/image/sys
+sudo mount -t proc none /mnt/image/proc
+sudo mount --bind /boot/efi /mnt/image/boot/efi
+sudo mount --bind /dev/ /mnt/image/dev
+sudo mount --bind /dev/pts /mnt/image/dev/pts
+sudo mount --bind /run /mnt/image/run
+# resolv.conf is needed on Debian but not Ubuntu
+if [ ! -f /mnt/image/etc/resolv.conf ]; then
+  sudo cp /etc/resolv.conf /mnt/image/etc/
+fi
+`
+
+const CreateBaseImageMain = `#!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail
 
 sudo apt-get update
@@ -50,19 +65,8 @@ sudo growpart /dev/sdb 1 || /bin/true
 sudo e2fsck -f -y /dev/sdb1 || /bin/true
 sudo resize2fs /dev/sdb1
 
-# Install relevant packages
-sudo mkdir -p /mnt/image
-sudo mount /dev/sdb1 /mnt/image
-sudo mount -t sysfs none /mnt/image/sys
-sudo mount -t proc none /mnt/image/proc
-sudo mount --bind /boot/efi /mnt/image/boot/efi
-sudo mount --bind /dev/ /mnt/image/dev
-sudo mount --bind /dev/pts /mnt/image/dev/pts
-sudo mount --bind /run /mnt/image/run
-# resolv.conf is needed on Debian but not Ubuntu
-if [ ! -f /mnt/image/etc/resolv.conf ]; then
-  sudo cp /etc/resolv.conf /mnt/image/etc/
-fi
+./mount_attached_disk.sh
+
 sudo chroot /mnt/image /usr/bin/apt update
 
 kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
