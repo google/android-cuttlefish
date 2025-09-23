@@ -10,6 +10,11 @@ symlinks {
   link_name: "bin/allocd_client"
 }
 
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/assemble_cvd"
+  link_name: "bin/assemble_cvd"
+}
+
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/casimir_control_server"
   link_name: "bin/casimir_control_server"
@@ -168,6 +173,11 @@ symlinks: {
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/restart_cvd"
   link_name: "bin/restart_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/run_cvd"
+  link_name: "bin/run_cvd"
 }
 
 symlinks: {
