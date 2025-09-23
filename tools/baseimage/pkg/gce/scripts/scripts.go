@@ -14,23 +14,6 @@
 
 package scripts
 
-// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/tools/update_gce_kernel.sh;drc=7f601ad9132960b58ee3d7fe8f8b382d20720a22
-const UpdateKernel = `#!/usr/bin/env bash
-set -o errexit -o nounset -o pipefail
-
-sudo apt update
-sudo apt install -t bookworm -y linux-image-cloud-amd64
-sudo reboot
-`
-
-// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/tools/update_gce_kernel.sh;drc=7f601ad9132960b58ee3d7fe8f8b382d20720a22
-const RemoveOldKernel = `#!/usr/bin/env bash
-set -o errexit -o nounset -o pipefail
-
-dpkg --list | grep -v $(uname -r) | grep -E 'linux-image-[0-9]|linux-headers-[0-9]' | awk '{print $2" "$3}' | sort -k2,2 | awk '{print $1}' | xargs sudo apt-get -y purge
-sudo update-grub2
-`
-
 // Mount attached disk `/dev/sdb1` at `/mnt/image`.
 const MountAttachedDisk = `#!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail

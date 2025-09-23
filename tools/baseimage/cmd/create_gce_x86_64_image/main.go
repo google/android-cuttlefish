@@ -95,28 +95,16 @@ func createImageMain(project, zone string) error {
 		dstname string
 		content string
 	}{
-		{"update_kernel.sh", scripts.UpdateKernel},
-		{"remove_old_kernel.sh", scripts.RemoveOldKernel},
 		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
 		{"install_nvidia.sh", scripts.InstallNvidia},
 		{"create_base_image_main.sh", scripts.CreateBaseImageMain},
 	}
 	for _, s := range list {
 		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
-			return fmt.Errorf("error uploading update_kernel.sh: %v", err)
+			return fmt.Errorf("error uploading script: %v", err)
 		}
 	}
 	// Execute Scripts
-	if err := gce.RunCmd(project, zone, insName, "./update_kernel.sh"); err != nil {
-		return err
-	}
-	time.Sleep(2 * time.Minute) // update kernel script ends up rebooting the instance
-	if err := gce.WaitForInstance(project, zone, insName); err != nil {
-		return fmt.Errorf("waiting for instance error: %v", err)
-	}
-	if err := gce.RunCmd(project, zone, insName, "./remove_old_kernel.sh"); err != nil {
-		return err
-	}
 	if err := gce.RunCmd(project, zone, insName, "./create_base_image_main.sh"); err != nil {
 		return err
 	}
