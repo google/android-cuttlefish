@@ -57,11 +57,8 @@ func installCuttlefishDebs(project, zone, insName, zipSrc string) error {
 	}
 	for _, s := range list {
 		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
-			return fmt.Errorf("error uploading update_kernel.sh: %v", err)
+			return fmt.Errorf("error uploading bash script: %v", err)
 		}
-	}
-	if err := gce.UploadBashScript(project, zone, insName, "install.sh", scripts.InstallCuttlefishPackages); err != nil {
-		return fmt.Errorf("error uploading script: %v", err)
 	}
 	if err := gce.RunCmd(project, zone, insName, "./install.sh "+dstSrc); err != nil {
 		return err
@@ -131,7 +128,9 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 
-	installCuttlefishDebs(project, zone, insName, opts.CuttlefishDebsZipSource)
+	if err := installCuttlefishDebs(project, zone, insName, opts.CuttlefishDebsZipSource); err != nil {
+		return fmt.Errorf("install cuttlefish debs error: %v", err)
+	}
 
 	// Reboot the instance to force a clean umount of the attached disk's file system.
 	if err := gce.RunCmd(project, zone, insName, "sudo reboot"); err != nil {
