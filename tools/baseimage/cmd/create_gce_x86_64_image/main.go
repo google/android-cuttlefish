@@ -97,8 +97,9 @@ func createImageMain(project, zone string) error {
 	}{
 		{"update_kernel.sh", scripts.UpdateKernel},
 		{"remove_old_kernel.sh", scripts.RemoveOldKernel},
-		{"create_base_image.sh", scripts.CreateBaseImage},
+		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
 		{"install_nvidia.sh", scripts.InstallNvidia},
+		{"create_base_image_main.sh", scripts.CreateBaseImageMain},
 	}
 	for _, s := range list {
 		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
@@ -116,7 +117,7 @@ func createImageMain(project, zone string) error {
 	if err := gce.RunCmd(project, zone, insName, "./remove_old_kernel.sh"); err != nil {
 		return err
 	}
-	if err := gce.RunCmd(project, zone, insName, "./create_base_image.sh"); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./create_base_image_main.sh"); err != nil {
 		return err
 	}
 	// Reboot the instance to force a clean umount of the attached disk's file system.
