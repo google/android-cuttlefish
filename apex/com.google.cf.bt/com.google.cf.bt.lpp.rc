@@ -1,3 +1,8 @@
+service bt_socket_lpp /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.socket-service.lpp
+    class hal
+    user bluetooth
+    group bluetooth
+
 service bt_gatt_lpp /apex/com.google.cf.bt/bin/hw/android.hardware.bluetooth.gatt-service.default
     class hal
     user bluetooth
