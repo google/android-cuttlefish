@@ -191,18 +191,7 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-# Prepare chroot environment for attached disk.
-sudo mkdir -p /mnt/image
-sudo mount /dev/sdb1 /mnt/image
-sudo mount -t sysfs none /mnt/image/sys
-sudo mount -t proc none /mnt/image/proc
-sudo mount --bind /boot/efi /mnt/image/boot/efi
-sudo mount --bind /dev/ /mnt/image/dev
-sudo mount --bind /dev/pts /mnt/image/dev/pts
-sudo mount --bind /run /mnt/image/run
-if [ ! -f /mnt/image/etc/resolv.conf ]; then
-  sudo cp /etc/resolv.conf /mnt/image/etc/
-fi
+./mount_attached_disk.sh
 
 # Unzip
 sudo apt install -y unzip
