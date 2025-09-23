@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -112,9 +113,10 @@ static std::string V4l2Proxy(const Instance& instance) {
   return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
 }
 
-static Result<std::string> CustomConfigsFlagValue(const Instance& instance) {
+static Result<std::optional<std::string>> CustomConfigsFlagValue(
+    const Instance& instance) {
   if (instance.vm().custom_actions().empty()) {
-    return "unset";
+    return std::nullopt;
   }
   std::vector<std::string> json_entries;
   for (const auto& action : instance.vm().custom_actions()) {
@@ -132,8 +134,11 @@ static Result<std::vector<std::string>> CustomConfigsFlags(
     const EnvironmentSpecification& cfg) {
   std::vector<std::string> ret;
   for (const auto& instance : cfg.instances()) {
-    auto value = CF_EXPECT(CustomConfigsFlagValue(instance));
-    ret.emplace_back(fmt::format("--custom_actions={}", value));
+    std::optional<std::string> opt =
+        CF_EXPECT(CustomConfigsFlagValue(instance));
+    if (opt.has_value()) {
+      ret.emplace_back(fmt::format("--custom_actions={}", opt.value()));
+    }
   }
   return ret;
 }

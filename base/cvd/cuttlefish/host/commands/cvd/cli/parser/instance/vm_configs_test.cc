@@ -942,8 +942,8 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagEmptyJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, R"(--custom_actions=unset)"))
-      << "custom_actions flag is missing or wrongly formatted";
+  EXPECT_FALSE(FindConfig(*serialized_data, R"(--custom_actions=)"))
+      << "custom_actions flag is set";
 }
 
 TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
@@ -986,10 +986,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
       custom_actions.emplace_back(flag.substr(sizeof(kPrefix) - 1));
     }
   }
-  std::sort(custom_actions.begin(), custom_actions.end());
-
-  EXPECT_EQ(custom_actions.size(), 2);
-  EXPECT_EQ(custom_actions[1], "unset");
+  EXPECT_EQ(custom_actions.size(), 1);
 
   Json::Value expected_actions;
   expected_actions[0]["device_states"][0]["lid_switch_open"] = false;

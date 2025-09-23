@@ -15,6 +15,7 @@
  */
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_disk_configs.h"
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -31,6 +32,12 @@ using cvd::config::Instance;
 std::vector<std::string> GenerateDiskFlags(
     const EnvironmentSpecification& config) {
   std::vector<std::string> data_image_mbs;
+  if (std::none_of(config.instances().cbegin(), config.instances().cend(),
+                   [](const auto& instance) {
+                     return instance.disk().has_blank_data_image_mb();
+                   })) {
+    return {};
+  }
   for (const auto& instance : config.instances()) {
     const auto& disk = instance.disk();
     if (disk.has_blank_data_image_mb()) {

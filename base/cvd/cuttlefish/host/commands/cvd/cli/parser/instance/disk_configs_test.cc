@@ -42,9 +42,9 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageEmptyJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(
-      FindConfig(*serialized_data, R"(--blank_data_image_mb=unset,unset)"))
-      << "blank_data_image_mb flag is missing or wrongly formatted";
+  EXPECT_FALSE(
+      FindConfig(*serialized_data, R"(--blank_data_image_mb=)"))
+      << "blank_data_image_mb flag is set";
 }
 
 TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImagePartialJson) {
