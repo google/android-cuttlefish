@@ -37,9 +37,8 @@ import org.junit.Test;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CfVkmsCursorTest extends BaseHostJUnit4Test {
-    private static final long UI_STARTUP_TIMEOUT_MS = 10 * 1000;
+    private static final long CURSOR_FRAMES_TIMEOUT_MS = 10 * 1000;
     private static final String DUMPSYS_COMMAND = "dumpsys SurfaceFlinger";
-    private static final Pattern NO_STATS_PATTERN = Pattern.compile("No stats yet");
     private static final Pattern SUCCESS_PATTERN =
             Pattern.compile("Cursor plane frames: (\\d+)", Pattern.MULTILINE);
     private static final Pattern FAILURE_PATTERN =
@@ -78,10 +77,6 @@ public class CfVkmsCursorTest extends BaseHostJUnit4Test {
         assertTrue(mVkmsTester.toggleSystemUi(false));
         assertTrue(mVkmsTester.toggleSystemUi(true));
 
-        // Wait for displays to be detected. UI might take some time to turn on.
-        long startTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() - startTime < UI_STARTUP_TIMEOUT_MS) {}
-
         CursorStats results = testCursorComposition();
         if (results.cursorFrames > 0) {
             return;
@@ -93,15 +88,32 @@ public class CfVkmsCursorTest extends BaseHostJUnit4Test {
     }
 
     private CursorStats testCursorComposition() throws Exception {
-        CommandResult result = getDevice().executeShellV2Command(DUMPSYS_COMMAND);
-        assertEquals(
-                "Failed to execute dumpsys command", CommandStatus.SUCCESS, result.getStatus());
-        String output = result.getStdout();
+        String output = null;
+        long startTime = System.currentTimeMillis();
 
-        assertTrue("Dumpsys command failed to return output", output != null && !output.isEmpty());
+        // Wait for cursor frames (either successful or failed) to be available.
+        while (System.currentTimeMillis() - startTime < CURSOR_FRAMES_TIMEOUT_MS) {
+            CommandResult result = getDevice().executeShellV2Command(DUMPSYS_COMMAND);
+            if (result.getStatus() == CommandStatus.SUCCESS && result.getStdout() != null
+                && !result.getStdout().isEmpty()) {
+                String currentOutput = result.getStdout();
+                // Create new matchers for this specific output
+                Matcher success = SUCCESS_PATTERN.matcher(currentOutput);
+                Matcher failure = FAILURE_PATTERN.matcher(currentOutput);
 
-        Matcher noStatsMatcher = NO_STATS_PATTERN.matcher(output);
-        assertFalse("No stats yet", noStatsMatcher.find());
+                if ((success.find() && Integer.parseInt(success.group(1)) > 0)
+                    || (failure.find() && Integer.parseInt(failure.group(1)) > 0)) {
+                    output = currentOutput;
+                    break;
+                }
+            } else {
+                CLog.d("dumpsys SurfaceFlinger failed, UI likely not ready yet. Retrying...");
+            }
+
+            long pollStartTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - pollStartTime < mVkmsTester.POLL_INTERVAL_MS) {}
+        }
+        assertNotNull("Timed out waiting for any cursor frames (success or failure).", output);
 
         CursorStats results = new CursorStats();
         Matcher successMatcher = SUCCESS_PATTERN.matcher(output);

@@ -32,6 +32,7 @@ import java.util.List;
  */
 public class CfVkmsTester implements Closeable {
     private static final String VKMS_BASE_DIR = "/config/vkms/my-vkms";
+    public static final long POLL_INTERVAL_MS = 500;
     public static final long DISPLAY_BRINGUP_TIMEOUT_MS = 10_000;
 
     // DRM resource types
@@ -719,7 +720,6 @@ public class CfVkmsTester implements Closeable {
      */
     public void waitForDisplaysToBeOn(int minimumExpectedDisplays, long waitTimeoutMs)
         throws Exception {
-        final long pollIntervalMs = 500;
         long startTime = System.currentTimeMillis();
         int displayCount = 0;
         while (displayCount < minimumExpectedDisplays
@@ -739,7 +739,7 @@ public class CfVkmsTester implements Closeable {
 
             // Wait a poll interval
             long pollStartTime = System.currentTimeMillis();
-            while (System.currentTimeMillis() - pollStartTime < pollIntervalMs) {}
+            while (System.currentTimeMillis() - pollStartTime < POLL_INTERVAL_MS) {}
         }
         if (displayCount < minimumExpectedDisplays) {
             throw new Exception("Displays were not detected in time. Expected at least "
