@@ -48,6 +48,18 @@ func installCuttlefishDebs(project, zone, insName, zipSrc string) error {
 	if err := gce.UploadFile(project, zone, insName, zipSrc, dstSrc); err != nil {
 		return fmt.Errorf("error uploading %s: %v", zipSrc, err)
 	}
+	list := []struct {
+		dstname string
+		content string
+	}{
+		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
+		{"install.sh", scripts.InstallCuttlefishPackages},
+	}
+	for _, s := range list {
+		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
+			return fmt.Errorf("error uploading update_kernel.sh: %v", err)
+		}
+	}
 	if err := gce.UploadBashScript(project, zone, insName, "install.sh", scripts.InstallCuttlefishPackages); err != nil {
 		return fmt.Errorf("error uploading script: %v", err)
 	}
