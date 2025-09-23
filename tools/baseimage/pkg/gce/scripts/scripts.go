@@ -193,6 +193,10 @@ fi
 
 ./mount_attached_disk.sh
 
+kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
+
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
@@ -212,4 +216,18 @@ for name in "${PKG_NAMES[@]}"; do
 
   sudo chroot /mnt/image /usr/bin/apt install -y "/tmp/install/${name}"
 done
+
+kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+  cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
+echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
+
+if [ "${kmodver_begin}" != "${kmodver_end}" ]; then
+  echo "KERNEL UPDATE DETECTED!!! ${kmodver_begin} -> ${kmodver_end}"
+  echo "Use source image with kernel ${kmodver_end} installed."
+  exit 1
+fi
+
+# Skip unmounting:
+#  Sometimes systemd starts, making it hard to unmount
+#  In any case we'll unmount cleanly when the instance shuts down
 `
