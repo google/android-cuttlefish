@@ -193,6 +193,9 @@ fi
 
 ./mount_attached_disk.sh
 
+sudo chroot /mnt/image /usr/bin/apt update
+sudo chroot /mnt/image /usr/bin/apt upgrade -y
+
 # Unzip
 sudo apt install -y unzip
 rm -rf /mnt/image/tmp/install
