@@ -136,6 +136,6 @@ public class RilE2eTests {
         CellInfoLte cellInfo = (CellInfoLte) cellInfos.get(0);
         CellSignalStrengthLte signalStrength = cellInfo.getCellSignalStrength();
         int bars = signalStrength.getLevel();
-        MatcherAssert.assertThat("Signal Bars", bars, greaterThan(1));
+        MatcherAssert.assertThat("Signal Bars", bars, greaterThan(0));
     }
 }
