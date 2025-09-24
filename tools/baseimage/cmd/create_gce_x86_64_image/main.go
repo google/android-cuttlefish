@@ -24,22 +24,23 @@ import (
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
 
-// Cuttlefish base images are based on debian images.
-const (
-	debianSourceImageProject = "debian-cloud"
-	debianSourceImage        = "debian-12-bookworm-v20250610"
-)
-
 const (
 	outImageName = "cuttlefish-base-image"
 )
 
 var (
-	project = flag.String("project", "", "GCE project whose resources will be used for creating the image")
-	zone    = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
+	project              = flag.String("project", "", "GCE project whose resources will be used for creating the image")
+	zone                 = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
+	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
+	source_image         = flag.String("source-image", "", "Source image name")
 )
 
-func createImageMain(project, zone string) error {
+type createImageOpts struct {
+	SourceImageProject string
+	SourceImage        string
+}
+
+func createImageMain(project, zone string, opts createImageOpts) error {
 	h, err := gce.NewGceHelper(project, zone)
 	if err != nil {
 		return fmt.Errorf("failed to create GCE helper: %w", err)
@@ -70,7 +71,7 @@ func createImageMain(project, zone string) error {
 		}
 	}()
 	log.Println("creating disk...")
-	disk, err := h.CreateDisk(debianSourceImageProject, debianSourceImage, attachedDiskName)
+	disk, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName)
 	if err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}
@@ -135,8 +136,18 @@ func main() {
 	if *zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
+	if *source_image_project == "" {
+		log.Fatal("usage: `-source-image-project` must not be empty")
+	}
+	if *source_image == "" {
+		log.Fatal("usage: `-source_image` must not be empty")
+	}
 
-	if err := createImageMain(*project, *zone); err != nil {
+	opts := createImageOpts{
+		SourceImageProject: *source_image_project,
+		SourceImage:        *source_image,
+	}
+	if err := createImageMain(*project, *zone, opts); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("image %q was created successfully", outImageName)
