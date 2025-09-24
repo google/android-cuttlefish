@@ -16,6 +16,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <string_view>
+
 #include <android-base/logging.h>
 #include <android-base/macros.h>
 #include "absl/cleanup/cleanup.h"
@@ -41,8 +43,8 @@ void Usage() {
   LOG(ERROR) << "Should only be invoked from run_cvd.";
 }
 
-Result<void> Allocate(int id, const std::string &ethernet_bridge_name,
-                      const std::string &wireless_bridge_name) {
+Result<void> Allocate(int id, std::string_view ethernet_bridge_name,
+                      std::string_view wireless_bridge_name) {
   LOG(INFO) << "cvdalloc: allocating network resources";
 
   CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("mtap", id), id,
@@ -61,8 +63,8 @@ Result<void> Allocate(int id, const std::string &ethernet_bridge_name,
   return {};
 }
 
-Result<void> Teardown(int id, const std::string &ethernet_bridge_name,
-                      const std::string &wireless_bridge_name) {
+Result<void> Teardown(int id, std::string_view ethernet_bridge_name,
+                      std::string_view wireless_bridge_name) {
   LOG(INFO) << "cvdalloc: tearing down resources";
 
   DestroyMobileIface(CvdallocInterfaceName("mtap", id), id,
