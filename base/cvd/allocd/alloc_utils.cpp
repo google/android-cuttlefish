@@ -17,8 +17,10 @@
 
 #include <cstdint>
 #include <fstream>
+#include <string_view>
 
 #include "android-base/logging.h"
+#include "absl/strings/str_format.h"
 
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
@@ -53,7 +55,7 @@ int RunExternalCommand(const std::string& command) {
   return ret;
 }
 
-bool AddTapIface(const std::string& name) {
+bool AddTapIface(std::string_view name) {
   std::stringstream ss;
   ss << "ip tuntap add dev " << name << " mode tap group cvdnetwork vnet_hdr";
   auto add_command = ss.str();
@@ -62,7 +64,7 @@ bool AddTapIface(const std::string& name) {
   return status == 0;
 }
 
-bool ShutdownIface(const std::string& name) {
+bool ShutdownIface(std::string_view name) {
   std::stringstream ss;
   ss << "ip link set dev " << name << " down";
   auto link_command = ss.str();
@@ -72,7 +74,7 @@ bool ShutdownIface(const std::string& name) {
   return status == 0;
 }
 
-bool BringUpIface(const std::string& name) {
+bool BringUpIface(std::string_view name) {
   std::stringstream ss;
   ss << "ip link set dev " << name << " up";
   auto link_command = ss.str();
@@ -82,7 +84,7 @@ bool BringUpIface(const std::string& name) {
   return status == 0;
 }
 
-bool CreateEthernetIface(const std::string& name, const std::string& bridge_name,
+bool CreateEthernetIface(std::string_view name, std::string_view bridge_name,
                          bool has_ipv4_bridge, bool has_ipv6_bridge,
                          bool use_ebtables_legacy) {
   // assume bridge exists
@@ -119,21 +121,21 @@ bool CreateEthernetIface(const std::string& name, const std::string& bridge_name
   return true;
 }
 
-std::string MobileGatewayName(const std::string& ipaddr, uint16_t id) {
+std::string MobileGatewayName(std::string_view ipaddr, uint16_t id) {
   std::stringstream ss;
   ss << ipaddr << "." << (4 * id - 3);
   return ss.str();
 }
 
-std::string MobileNetworkName(const std::string& ipaddr,
-                              const std::string& netmask, uint16_t id) {
+std::string MobileNetworkName(std::string_view ipaddr,
+                              std::string_view netmask, uint16_t id) {
   std::stringstream ss;
   ss << ipaddr << "." << (4 * id - 4) << netmask;
   return ss.str();
 }
 
-bool CreateMobileIface(const std::string& name, uint16_t id,
-                       const std::string& ipaddr) {
+bool CreateMobileIface(std::string_view name, uint16_t id,
+                       std::string_view ipaddr) {
   if (id > kMaxIfaceNameId) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
@@ -160,8 +162,8 @@ bool CreateMobileIface(const std::string& name, uint16_t id,
   return true;
 }
 
-bool DestroyMobileIface(const std::string& name, uint16_t id,
-                        const std::string& ipaddr) {
+bool DestroyMobileIface(std::string_view name, uint16_t id,
+                        std::string_view ipaddr) {
   if (id > 63) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
@@ -176,8 +178,8 @@ bool DestroyMobileIface(const std::string& name, uint16_t id,
   return DestroyIface(name);
 }
 
-bool AddGateway(const std::string& name, const std::string& gateway,
-                const std::string& netmask) {
+bool AddGateway(std::string_view name, std::string_view gateway,
+                std::string_view netmask) {
   std::stringstream ss;
   ss << "ip addr add " << gateway << netmask << " broadcast + dev " << name;
   auto command = ss.str();
@@ -187,8 +189,8 @@ bool AddGateway(const std::string& name, const std::string& gateway,
   return status == 0;
 }
 
-bool DestroyGateway(const std::string& name, const std::string& gateway,
-                    const std::string& netmask) {
+bool DestroyGateway(std::string_view name, std::string_view gateway,
+                    std::string_view netmask) {
   std::stringstream ss;
   ss << "ip addr del " << gateway << netmask << " broadcast + dev " << name;
   auto command = ss.str();
@@ -198,7 +200,7 @@ bool DestroyGateway(const std::string& name, const std::string& gateway,
   return status == 0;
 }
 
-bool DestroyEthernetIface(const std::string& name, bool has_ipv4_bridge,
+bool DestroyEthernetIface(std::string_view name, bool has_ipv4_bridge,
                           bool has_ipv6_bridge, bool use_ebtables_legacy) {
   if (!has_ipv6_bridge) {
     DestroyEbtables(name, false, use_ebtables_legacy);
@@ -211,7 +213,7 @@ bool DestroyEthernetIface(const std::string& name, bool has_ipv4_bridge,
   return DestroyIface(name);
 }
 
-void CleanupEthernetIface(const std::string& name,
+void CleanupEthernetIface(std::string_view name,
                           const EthernetNetworkConfig& config) {
   if (config.has_broute_ipv6) {
     DestroyEbtables(name, false, config.use_ebtables_legacy);
@@ -226,19 +228,19 @@ void CleanupEthernetIface(const std::string& name,
   }
 }
 
-bool CreateEbtables(const std::string& name, bool use_ipv4,
+bool CreateEbtables(std::string_view name, bool use_ipv4,
                     bool use_ebtables_legacy) {
   return EbtablesBroute(name, use_ipv4, true, use_ebtables_legacy) &&
          EbtablesFilter(name, use_ipv4, true, use_ebtables_legacy);
 }
 
-bool DestroyEbtables(const std::string& name, bool use_ipv4,
+bool DestroyEbtables(std::string_view name, bool use_ipv4,
                      bool use_ebtables_legacy) {
   return EbtablesBroute(name, use_ipv4, false, use_ebtables_legacy) &&
          EbtablesFilter(name, use_ipv4, false, use_ebtables_legacy);
 }
 
-bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add,
+bool EbtablesBroute(std::string_view name, bool use_ipv4, bool add,
                     bool use_ebtables_legacy) {
   std::stringstream ss;
   // we don't know the name of the ebtables program, but since we're going to
@@ -258,7 +260,7 @@ bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add,
   return status == 0;
 }
 
-bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add,
+bool EbtablesFilter(std::string_view name, bool use_ipv4, bool add,
                     bool use_ebtables_legacy) {
   std::stringstream ss;
   if (use_ebtables_legacy) {
@@ -275,8 +277,8 @@ bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add,
   return status == 0;
 }
 
-bool LinkTapToBridge(const std::string& tap_name,
-                     const std::string& bridge_name) {
+bool LinkTapToBridge(std::string_view tap_name,
+                     std::string_view bridge_name) {
   std::stringstream ss;
   ss << "ip link set dev " << tap_name << " master " << bridge_name;
   auto command = ss.str();
@@ -285,7 +287,7 @@ bool LinkTapToBridge(const std::string& tap_name,
   return status == 0;
 }
 
-bool CreateTap(const std::string& name) {
+bool CreateTap(std::string_view name) {
   LOG(INFO) << "Attempt to create tap interface: " << name;
   if (!AddTapIface(name)) {
     LOG(WARNING) << "Failed to create tap interface: " << name;
@@ -301,7 +303,7 @@ bool CreateTap(const std::string& name) {
   return true;
 }
 
-bool DeleteIface(const std::string& name) {
+bool DeleteIface(std::string_view name) {
   std::stringstream ss;
   ss << "ip link delete " << name;
   auto link_command = ss.str();
@@ -311,7 +313,7 @@ bool DeleteIface(const std::string& name) {
   return status == 0;
 }
 
-bool DestroyIface(const std::string& name) {
+bool DestroyIface(std::string_view name) {
   if (!ShutdownIface(name)) {
     LOG(WARNING) << "Failed to shutdown tap interface: " << name;
     // the interface might have already shutdown ... so ignore and try to remove
@@ -336,7 +338,7 @@ std::optional<std::string> GetUserName(uid_t uid) {
   return std::nullopt;
 }
 
-bool BridgeExists(const std::string& name) {
+bool BridgeExists(std::string_view name) {
   std::stringstream ss;
   ss << "ip link show " << name << " >/dev/null";
 
@@ -347,7 +349,7 @@ bool BridgeExists(const std::string& name) {
   return status == 0;
 }
 
-bool CreateBridge(const std::string& name) {
+bool CreateBridge(std::string_view name) {
   std::stringstream ss;
   ss << "ip link add name " << name
      << " type bridge forward_delay 0 stp_state 0";
@@ -363,15 +365,15 @@ bool CreateBridge(const std::string& name) {
   return BringUpIface(name);
 }
 
-bool DestroyBridge(const std::string& name) { return DeleteIface(name); }
+bool DestroyBridge(std::string_view name) { return DeleteIface(name); }
 
-bool SetupBridgeGateway(const std::string& bridge_name,
-                        const std::string& ipaddr) {
+bool SetupBridgeGateway(std::string_view bridge_name,
+                        std::string_view ipaddr) {
   GatewayConfig config{false, false, false};
-  auto gateway = ipaddr + ".1";
+  auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto network = ipaddr + ".0" + netmask;
-  auto dhcp_range = ipaddr + ".2," + ipaddr + ".255";
+  auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
+  auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (!AddGateway(bridge_name, gateway, netmask)) {
     return false;
@@ -395,12 +397,12 @@ bool SetupBridgeGateway(const std::string& bridge_name,
   return ret;
 }
 
-void CleanupBridgeGateway(const std::string& name, const std::string& ipaddr,
+void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
                           const GatewayConfig& config) {
-  auto gateway = ipaddr + ".1";
+  auto gateway = absl::StrFormat("%s.1", ipaddr);
   auto netmask = "/24";
-  auto network = ipaddr + ".0" + netmask;
-  auto dhcp_range = ipaddr + ".2," + ipaddr + ".255";
+  auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
+  auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (config.has_iptable) {
     IptableConfig(network, false);
@@ -415,8 +417,8 @@ void CleanupBridgeGateway(const std::string& name, const std::string& ipaddr,
   }
 }
 
-bool StartDnsmasq(const std::string& bridge_name, const std::string& gateway,
-                  const std::string& dhcp_range) {
+bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
+                  std::string_view dhcp_range) {
   auto dns_servers = "8.8.8.8,8.8.4.4";
   auto dns6_servers = "2001:4860:4860::8888,2001:4860:4860::8844";
   std::stringstream ss;
@@ -448,9 +450,10 @@ bool StartDnsmasq(const std::string& bridge_name, const std::string& gateway,
   return status == 0;
 }
 
-bool StopDnsmasq(const std::string& name) {
+bool StopDnsmasq(std::string_view name) {
   std::ifstream file;
-  std::string filename = "/var/run/cuttlefish-dnsmasq-" + name + ".pid";
+  std::string filename = absl::StrFormat(
+      "/var/run/cuttlefish-dnsmasq-%s.pid", name);
   LOG(INFO) << "stopping dsnmasq for interface: " << name;
   file.open(filename);
   if (file.is_open()) {
@@ -474,7 +477,7 @@ bool StopDnsmasq(const std::string& name) {
   return ret;
 }
 
-bool IptableConfig(const std::string& network, bool add) {
+bool IptableConfig(std::string_view network, bool add) {
   std::stringstream ss;
   ss << "iptables -t nat " << (add ? "-A" : "-D") << " POSTROUTING -s "
      << network << " -j MASQUERADE";
@@ -486,8 +489,8 @@ bool IptableConfig(const std::string& network, bool add) {
   return status == 0;
 }
 
-bool CreateEthernetBridgeIface(const std::string& name,
-                               const std::string& ipaddr) {
+bool CreateEthernetBridgeIface(std::string_view name,
+                               std::string_view ipaddr) {
   if (BridgeExists(name)) {
     LOG(INFO) << "Bridge " << name << " exists already, doing nothing.";
     return true;
@@ -505,8 +508,8 @@ bool CreateEthernetBridgeIface(const std::string& name,
   return true;
 }
 
-bool DestroyEthernetBridgeIface(const std::string& name,
-                                const std::string& ipaddr) {
+bool DestroyEthernetBridgeIface(std::string_view name,
+                                std::string_view ipaddr) {
   GatewayConfig config{true, true, true};
 
   // Don't need to check if removing some part of the config failed, we need to
