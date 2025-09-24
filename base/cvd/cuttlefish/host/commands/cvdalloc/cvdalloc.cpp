@@ -47,12 +47,14 @@ Result<void> Allocate(int id, const std::string &ethernet_bridge_name,
 
   CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("mtap", id), id,
                               kCvdallocMobileIpPrefix));
-  CreateEthernetBridgeIface(wireless_bridge_name, kCvdallocWirelessIpPrefix);
+  CF_EXPECT(CreateEthernetBridgeIface(wireless_bridge_name,
+                                      kCvdallocWirelessIpPrefix));
   CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("wtap", id),
                                 wireless_bridge_name, true, true, false));
   CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("wifiap", id), id,
                               kCvdallocWirelessApIpPrefix));
-  CreateEthernetBridgeIface(ethernet_bridge_name, kCvdallocEthernetIpPrefix);
+  CF_EXPECT(CreateEthernetBridgeIface(ethernet_bridge_name,
+                                      kCvdallocEthernetIpPrefix));
   CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("etap", id),
                                 ethernet_bridge_name, true, true, false));
 
