@@ -58,6 +58,10 @@ echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
+# Avoid automatic updates during tests.
+# https://manpages.debian.org/bookworm/unattended-upgrades/unattended-upgrade.8.en.html
+sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
+
 # Install JDK.
 #
 # JDK it's not required to launch a CF device. It's required to run
