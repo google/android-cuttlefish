@@ -146,6 +146,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/screen_recording",
         "//libbase",
         "@fmt",
         "@jsoncpp",

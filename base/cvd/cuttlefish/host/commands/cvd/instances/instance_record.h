@@ -19,6 +19,7 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <vector>
 #include <utility>
 
 #include <json/json.h>
@@ -26,6 +27,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
@@ -69,18 +71,26 @@ class LocalInstance {
                        std::chrono::seconds boot_timeout);
   Result<void> PowerWash(std::chrono::seconds launcher_timeout,
                          std::chrono::seconds boot_timeout);
+  Result<std::vector<std::string>> ListRecordings();
+  Result<void> StartRecording(std::chrono::seconds launcher_timeout);
+  Result<void> StopRecording(std::chrono::seconds launcher_timeout);
 
  private:
   LocalInstance(std::shared_ptr<cvd::InstanceGroup> group_proto,
                 cvd::Instance* instance_proto);
 
+  std::string config_file_path() const;
   Result<SharedFD> GetLauncherMonitor(std::chrono::seconds timeout) const;
   Result<Json::Value> ReadJsonConfig() const;
+  Result<const CuttlefishConfig*> LoadConfig();
+  Result<const CuttlefishConfig::InstanceSpecific> GetInstanceConfig();
 
   // Sharing ownership of the group proto ensures the instance proto reference
   // doesn't invalidate.
   std::shared_ptr<cvd::InstanceGroup> group_proto_;
   cvd::Instance* instance_proto_;
+  // This may be null, access through LoadConfig() instead.
+  std::shared_ptr<const CuttlefishConfig> UNSAFE_config_;
   friend class LocalInstanceGroup;
 };
 

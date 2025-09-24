@@ -304,6 +304,24 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "screen_recording",
+    srcs = ["screen_recording.cpp"],
+    hdrs = ["screen_recording.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@fmt",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "remove",
     srcs = ["remove.cpp"],
     hdrs = ["remove.h"],
