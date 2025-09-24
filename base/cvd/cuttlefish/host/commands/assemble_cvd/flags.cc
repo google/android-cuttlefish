@@ -992,8 +992,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_has_wifi_card(enable_wifi_vec[instance_index]);
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
-    instance.set_wifi_bridge_name("cvd-wbr");
-    instance.set_ethernet_bridge_name("cvd-ebr");
+    if (const_instance.use_cvdalloc()) {
+      instance.set_wifi_bridge_name("cvd-pi-wbr");
+      instance.set_ethernet_bridge_name("cvd-pi-ebr");
+    } else {
+      instance.set_wifi_bridge_name("cvd-wbr");
+      instance.set_ethernet_bridge_name("cvd-ebr");
+    }
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
 
     CF_EXPECT(ConfigureNetworkSettings(ril_dns_vec[instance_index],
