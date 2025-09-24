@@ -24,6 +24,7 @@
 #include <android-base/logging.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
@@ -33,6 +34,7 @@
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
 
 namespace cuttlefish {
 
@@ -181,9 +183,45 @@ Result<void> LocalInstance::PowerWash(std::chrono::seconds launcher_timeout,
   return {};
 }
 
+Result<std::vector<std::string>> LocalInstance::ListRecordings() {
+  std::string recordings_dir =
+      fmt::format("{}/recording", instance_dir());
+  std::vector<std::string> files = CF_EXPECT(DirectoryContents(recordings_dir));
+  for (std::string& file: files) {
+    file = fmt::format("{}/{}", recordings_dir, file);
+  }
+  return files;
+}
+
+Result<void> LocalInstance::StartRecording(
+    std::chrono::seconds launcher_timeout) {
+  CF_EXPECT(state() == cvd::INSTANCE_STATE_STARTING ||
+                state() == cvd::INSTANCE_STATE_RUNNING,
+            "Instance must be running to be recorded");
+  CuttlefishConfig::InstanceSpecific instance_config =
+      CF_EXPECT(GetInstanceConfig(), "Failed to load instance config");
+  CF_EXPECT(StartScreenRecording(instance_config, launcher_timeout));
+  return {};
+}
+
+Result<void> LocalInstance::StopRecording(
+    std::chrono::seconds launcher_timeout) {
+  CF_EXPECT(state() == cvd::INSTANCE_STATE_STARTING ||
+                state() == cvd::INSTANCE_STATE_RUNNING,
+            "Instance must be running to be recorded");
+  CuttlefishConfig::InstanceSpecific instance_config =
+      CF_EXPECT(GetInstanceConfig(), "Failed to load instance config");
+  CF_EXPECT(StopScreenRecording(instance_config, launcher_timeout));
+  return {};
+}
+
+std::string LocalInstance::config_file_path() const {
+  return home_directory() + "/.cuttlefish_config.json";
+}
+
 Result<Json::Value> LocalInstance::ReadJsonConfig() const {
   Json::CharReaderBuilder builder;
-  std::string config_file = instance_dir() + "/cuttlefish_config.json";
+  std::string config_file = config_file_path();
   std::ifstream ifs(config_file);
   std::string errorMessage;
   Json::Value config;
@@ -191,6 +229,19 @@ Result<Json::Value> LocalInstance::ReadJsonConfig() const {
   CF_EXPECTF(std::move(parsed), "Could not read config file {}: {}",
              config_file, errorMessage);
   return config;
+}
+
+Result<const CuttlefishConfig*> LocalInstance::LoadConfig() {
+  if (!UNSAFE_config_) {
+    UNSAFE_config_ = CuttlefishConfig::GetFromFile(config_file_path());
+    CF_EXPECT(UNSAFE_config_ != nullptr, "Failed to load config from file");
+  }
+  return UNSAFE_config_.get();
+}
+
+Result<const CuttlefishConfig::InstanceSpecific>
+LocalInstance::GetInstanceConfig() {
+  return CF_EXPECT(LoadConfig())->ForInstance(id());
 }
 
 Result<SharedFD> LocalInstance::GetLauncherMonitor(

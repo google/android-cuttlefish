@@ -50,6 +50,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/reset.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/restart.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/screen_recording.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/snapshot.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/status.h"
@@ -117,6 +118,8 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       NewCvdDeviceRestartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewRemoveCvdCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdResetCommandHandler(instance_manager));
+  request_handlers_.emplace_back(
+      NewScreenRecordingCommandHandler(instance_manager));
   request_handlers_.emplace_back(
       NewCvdSnapshotCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
