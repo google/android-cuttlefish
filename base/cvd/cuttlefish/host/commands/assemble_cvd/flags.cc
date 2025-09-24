@@ -66,6 +66,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/network_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
+#include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -994,8 +995,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_has_wifi_card(enable_wifi_vec[instance_index]);
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
     if (const_instance.use_cvdalloc()) {
-      instance.set_wifi_bridge_name("cvd-pi-wbr");
-      instance.set_ethernet_bridge_name("cvd-pi-ebr");
+      instance.set_wifi_bridge_name(std::string(kCvdallocWirelessBridgeName));
+      instance.set_ethernet_bridge_name(
+          std::string(kCvdallocEthernetBridgeName));
     } else {
       instance.set_wifi_bridge_name("cvd-wbr");
       instance.set_ethernet_bridge_name("cvd-ebr");
