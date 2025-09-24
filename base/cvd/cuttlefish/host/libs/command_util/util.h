@@ -30,11 +30,10 @@ Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket);
 
 Result<SharedFD> GetLauncherMonitorFromInstance(
     const CuttlefishConfig::InstanceSpecific& instance_config,
-    const int timeout_seconds);
+    int timeout_seconds);
 
 Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
-                                    int instance_num,
-                                    int timeout_seconds);
+                                    int instance_num, int timeout_seconds);
 
 struct LauncherActionInfo {
   LauncherAction action;
