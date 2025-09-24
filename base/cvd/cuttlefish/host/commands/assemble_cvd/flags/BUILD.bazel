@@ -106,6 +106,30 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "flag_base",
+    srcs = ["flag_base.cc"],
+    hdrs = ["flag_base.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "from_gflags",
+    srcs = ["from_gflags.cc"],
+    hdrs = ["from_gflags.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//libbase",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "initramfs_path",
     srcs = ["initramfs_path.cc"],
     hdrs = ["initramfs_path.h"],
