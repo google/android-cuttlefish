@@ -20,11 +20,9 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
-#include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to screen record.");
@@ -46,18 +44,19 @@ Result<void> RecordCvdMain(int argc, char* argv[]) {
 
   const CuttlefishConfig* config =
       CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
-  SharedFD monitor_socket = CF_EXPECT(
-      GetLauncherMonitor(*config, FLAGS_instance_num, FLAGS_wait_for_launcher));
+  const CuttlefishConfig::InstanceSpecific& instance =
+      config->ForInstance(FLAGS_instance_num);
 
-  bool is_start = command == "start";
-  run_cvd::ExtendedLauncherAction extended_action;
-  if (is_start) {
-    extended_action.mutable_start_screen_recording();
+  if (command == "start") {
+    CF_EXPECT(StartScreenRecording(
+        instance, std::chrono::seconds(FLAGS_wait_for_launcher)));
   } else {
-    extended_action.mutable_stop_screen_recording();
+    CF_EXPECT(StopScreenRecording(
+        instance, std::chrono::seconds(FLAGS_wait_for_launcher)));
   }
-  CF_EXPECT(RunLauncherAction(monitor_socket, extended_action, std::nullopt));
+
   LOG(INFO) << "record_cvd " << command << " was successful.";
+
   return {};
 }
 
@@ -70,7 +69,7 @@ int main(int argc, char* argv[]) {
 
   cuttlefish::Result<void> result = cuttlefish::RecordCvdMain(argc, argv);
   if (!result.ok()) {
-    LOG(DEBUG) << result.error().FormatForEnv();
+    LOG(ERROR) << result.error().FormatForEnv();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
