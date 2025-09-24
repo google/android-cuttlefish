@@ -92,7 +92,7 @@ Result<SharedFD> GetLauncherMonitorFromInstance(
 
 Result<SharedFD> GetLauncherMonitor(const CuttlefishConfig& config,
                                     const int instance_num,
-                                    const int timeout_seconds) {
+                                    int timeout_seconds) {
   auto instance_config = config.ForInstance(instance_num);
   return GetLauncherMonitorFromInstance(instance_config, timeout_seconds);
 }
