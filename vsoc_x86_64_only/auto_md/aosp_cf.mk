@@ -33,7 +33,8 @@ PRODUCT_PACKAGES += \
     CarServiceOverlayEmulatorOsDouble \
     CarServiceOverlayMdEmulatorOsDouble \
     MultiDisplayTest \
-    AAECarControlCenterApp
+    AAECarControlCenterApp \
+    CarFrameworkResConfigMultiDisplayRRO
 
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     com.android.car.internal.debug.num_auto_populated_users=1 # 1 passenger only (so 2nd display shows user picker)
