@@ -123,15 +123,12 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
     return CF_ERRNO("Couldn't elevate permissions: " << strerror(errno));
   }
 
-  std::string ethernet_bridge_name = "cvd-pi-ebr";
-  std::string wireless_bridge_name = "cvd-pi-wbr";
-
-  absl::Cleanup teardown = [id, ethernet_bridge_name, wireless_bridge_name]() {
+  absl::Cleanup teardown = [id]() {
     LOG(INFO) << "cvdalloc: teardown started";
-    Teardown(id, ethernet_bridge_name, wireless_bridge_name);
+    Teardown(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName);
   };
 
-  CF_EXPECT(Allocate(id, ethernet_bridge_name, wireless_bridge_name));
+  CF_EXPECT(Allocate(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName));
   CF_EXPECT(cvdalloc::Post(sock));
 
   LOG(INFO) << "cvdalloc: waiting to teardown";
