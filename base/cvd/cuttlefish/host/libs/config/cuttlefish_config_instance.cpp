@@ -22,7 +22,6 @@
 #include <cctype>
 #include <fstream>
 #include <optional>
-#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
