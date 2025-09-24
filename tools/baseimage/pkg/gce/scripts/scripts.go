@@ -51,11 +51,12 @@ sudo resize2fs /dev/sdb1
 
 ./mount_attached_disk.sh
 
-sudo chroot /mnt/image /usr/bin/apt update
-
 kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
+
+sudo chroot /mnt/image /usr/bin/apt update
+sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
 # Install JDK.
 #
