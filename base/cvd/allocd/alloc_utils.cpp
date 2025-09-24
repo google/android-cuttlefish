@@ -43,7 +43,9 @@ int RunExternalCommand(const std::string& command) {
       LOG(INFO) << "child process exited normally";
       ret = WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
-      LOG(WARNING) << "child process was terminated by a signal";
+      int sig = WTERMSIG(status);
+      LOG(WARNING) << "child process was terminated by signal "
+                   << strsignal(sig) << " (" << sig << ")";
     } else {
       LOG(WARNING) << "child process did not terminate normally";
     }
@@ -334,6 +336,17 @@ std::optional<std::string> GetUserName(uid_t uid) {
   return std::nullopt;
 }
 
+bool BridgeExists(const std::string& name) {
+  std::stringstream ss;
+  ss << "ip link show " << name << " >/dev/null";
+
+  auto command = ss.str();
+  LOG(INFO) << "bridge exists: " << command;
+  int status = RunExternalCommand(command);
+
+  return status == 0;
+}
+
 bool CreateBridge(const std::string& name) {
   std::stringstream ss;
   ss << "ip link add name " << name
@@ -475,6 +488,11 @@ bool IptableConfig(const std::string& network, bool add) {
 
 bool CreateEthernetBridgeIface(const std::string& name,
                                const std::string& ipaddr) {
+  if (BridgeExists(name)) {
+    LOG(INFO) << "Bridge " << name << " exists already, doing nothing.";
+    return true;
+  }
+
   if (!CreateBridge(name)) {
     return false;
   }
