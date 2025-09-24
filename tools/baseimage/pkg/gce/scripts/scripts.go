@@ -36,6 +36,7 @@ const CreateBaseImageMain = `#!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail
 
 sudo apt-get update
+sudo apt-get upgrade -y
 
 # Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
 echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
