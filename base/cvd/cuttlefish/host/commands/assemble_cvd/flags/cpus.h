@@ -16,24 +16,20 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 
 namespace cuttlefish {
 
-class CpusFlag {
+class CpusFlag : public FlagBase<int> {
  public:
   static Result<CpusFlag> FromGlobalGflags();
-
-  int ForIndex(std::size_t index) const;
+  ~CpusFlag() override = default;
 
  private:
-  CpusFlag(const int, std::vector<int>);
-
-  int default_value_ = 0;
-  std::vector<int> cpus_values_;
+  CpusFlag(std::vector<int>);
 };
 
 }  // namespace cuttlefish

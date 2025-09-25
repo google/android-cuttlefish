@@ -16,53 +16,33 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 
-#include <cstdlib>
-#include <string>
+#include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 
 DEFINE_string(cpus, std::to_string(CF_DEFAULTS_CPUS), "Virtual CPU count.");
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kFlagName[] = "cpus";
+
+}  // namespace
 
 Result<CpusFlag> CpusFlag::FromGlobalGflags() {
-  gflags::CommandLineFlagInfo flag_info =
-      gflags::GetCommandLineFlagInfoOrDie("cpus");
-  int default_value;
-  CF_EXPECTF(android::base::ParseInt(flag_info.default_value, &default_value),
-             "Failed to parse value as integer: \"{}\"",
-             flag_info.default_value);
-
-  std::vector<std::string> string_values =
-      android::base::Split(flag_info.current_value, ",");
-  std::vector<int> values(string_values.size());
-
-  for (int i = 0; i < string_values.size(); i++) {
-    if (string_values[i] == "unset" || string_values[i] == "\"unset\"") {
-      values[i] = default_value;
-    } else {
-      CF_EXPECTF(android::base::ParseInt(string_values[i], &values[i]),
-                 "Failed to parse value as integer: \"{}\"", string_values[i]);
-    }
-  }
-  return CpusFlag(default_value, std::move(values));
+  const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
+  std::vector<int> flag_values =
+      CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
+  return CpusFlag(std::move(flag_values));
 }
 
-int CpusFlag::ForIndex(std::size_t index) const {
-  if (index < cpus_values_.size()) {
-    return cpus_values_[index];
-  } else {
-    return default_value_;
-  }
-}
-
-CpusFlag::CpusFlag(const int default_value, std::vector<int> cpus_values)
-    : default_value_(default_value), cpus_values_(cpus_values) {}
+CpusFlag::CpusFlag(std::vector<int> flag_values)
+    : FlagBase<int>(std::move(flag_values)) {}
 
 }  // namespace cuttlefish
