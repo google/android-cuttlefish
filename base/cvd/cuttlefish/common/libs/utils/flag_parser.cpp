@@ -165,6 +165,14 @@ Result<bool> ParseBool(std::string_view value, std::string_view name) {
   return false;
 }
 
+Result<int> ParseInt(const std::string& value, std::string_view name) {
+  int result;
+  CF_EXPECTF(android::base::ParseInt(value, &result),
+             "Failed to parse value \"{}\" as integer for \"{}\"",
+             value, name);
+  return result;
+}
+
 Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
   using android::base::StringReplace;
