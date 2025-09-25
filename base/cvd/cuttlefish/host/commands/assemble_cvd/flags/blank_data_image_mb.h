@@ -16,26 +16,22 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 
 namespace cuttlefish {
 
-class BlankDataImageMbFlag {
+class BlankDataImageMbFlag : public FlagBase<int> {
  public:
   static Result<BlankDataImageMbFlag> FromGlobalGflags(
       const std::vector<GuestConfig>& guest_configs);
-
-  int ForIndex(std::size_t index) const;
+  ~BlankDataImageMbFlag() override = default;
 
  private:
-  BlankDataImageMbFlag(const int, std::vector<int>);
-
-  int default_value_ = 0;
-  std::vector<int> blank_data_image_mb_values_;
+  BlankDataImageMbFlag(std::vector<int>);
 };
 
 }  // namespace cuttlefish

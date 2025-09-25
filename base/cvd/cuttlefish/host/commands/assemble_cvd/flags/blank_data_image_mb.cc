@@ -16,15 +16,14 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/blank_data_image_mb.h"
 
-#include <cstdlib>
-#include <string>
+#include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 
@@ -32,50 +31,29 @@ DEFINE_string(blank_data_image_mb, CF_DEFAULTS_BLANK_DATA_IMAGE_MB,
               "The size of the blank data image to generate, MB.");
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kFlagName[] = "blank_data_image_mb";
+
+}  // namespace
 
 Result<BlankDataImageMbFlag> BlankDataImageMbFlag::FromGlobalGflags(
     const std::vector<GuestConfig>& guest_configs) {
-  gflags::CommandLineFlagInfo flag_info =
-      gflags::GetCommandLineFlagInfoOrDie("blank_data_image_mb");
-  int default_value;
-  CF_EXPECTF(android::base::ParseInt(flag_info.default_value, &default_value),
-             "Failed to parse value as integer: \"{}\"",
-             flag_info.default_value);
+  const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
+  std::vector<int> flag_values =
+      CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
 
-  std::vector<std::string> string_values =
-      android::base::Split(flag_info.current_value, ",");
-  const std::size_t size = guest_configs.size() > string_values.size()
-                               ? guest_configs.size()
-                               : string_values.size();
-  std::vector<int> values(size);
-
-  for (int i = 0; i < size; i++) {
-    if (i < string_values.size()) {
-      if (string_values[i] == "unset" || string_values[i] == "\"unset\"") {
-        values[i] = default_value;
-      } else {
-        CF_EXPECTF(android::base::ParseInt(string_values[i], &values[i]),
-                   "Failed to parse value as integer: \"{}\"",
-                   string_values[i]);
-      }
-    } else {
-      values[i] = guest_configs[i].blank_data_image_mb;
+  if (guest_configs.size() > flag_values.size()) {
+    flag_values.reserve(guest_configs.size());
+    for (int i = flag_values.size(); i < guest_configs.size(); i++) {
+      flag_values[i] = guest_configs[i].blank_data_image_mb;
     }
   }
-  return BlankDataImageMbFlag(default_value, std::move(values));
+
+  return BlankDataImageMbFlag(std::move(flag_values));
 }
 
-int BlankDataImageMbFlag::ForIndex(std::size_t index) const {
-  if (index < blank_data_image_mb_values_.size()) {
-    return blank_data_image_mb_values_[index];
-  } else {
-    return default_value_;
-  }
-}
-
-BlankDataImageMbFlag::BlankDataImageMbFlag(
-    const int default_value, std::vector<int> blank_data_image_mb_values)
-    : default_value_(default_value),
-      blank_data_image_mb_values_(blank_data_image_mb_values) {}
+BlankDataImageMbFlag::BlankDataImageMbFlag(std::vector<int> flag_values)
+    : FlagBase<int>(std::move(flag_values)) {}
 
 }  // namespace cuttlefish
