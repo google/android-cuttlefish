@@ -120,6 +120,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/metrics:host_metrics",
         "//cuttlefish/host/libs/metrics:metrics_setup",
+        "//cuttlefish/host/libs/metrics:metrics_writer",
         "//libbase",
         "@fmt",
         "@jsoncpp",

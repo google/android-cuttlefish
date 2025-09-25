@@ -60,6 +60,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/metrics/host_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_setup.h"
+#include "cuttlefish/host/libs/metrics/metrics_writer.h"
 
 namespace cuttlefish {
 namespace {
@@ -401,14 +402,22 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
 
+  // TODO CJR: figure out a better pattern for the error handling
+  // TODO CJR: move this logic into a helper or helpers, then capture any
+  // bubbled up error to log
   Result<std::string> metrics_setup_result = SetUpMetrics(group.HomeDir());
   if (metrics_setup_result.ok()) {
     Result<HostMetrics> host_metrics_result = GetHostMetrics();
     if (host_metrics_result.ok()) {
-      // TODO: chadreynolds - write out the data to a file in the metrics
-      // directory
+      Result<void> write_result =
+          WriteMetricsEvent(*metrics_setup_result, *host_metrics_result);
+      if (!write_result.ok()) {
+        // TODO: chadreynolds - create a metrics.log to store this information
+        LOG(INFO) << fmt::format("Unable to write out host metrics.  Error: {}",
+                                 write_result.error());
+      }
     } else {
-      // TODO: chadreynolds - create a metrics.log to store this information in
+      // TODO: chadreynolds - create a metrics.log to store this information
       LOG(INFO) << fmt::format("Unable to gather host metrics.  Error: {}",
                                host_metrics_result.error());
     }
