@@ -192,8 +192,7 @@ Result<void> LinkLogs2InstanceDir(
         fmt::format("{}/{}", android::base::Dirname(images_dir), "fetch.log");
   }
   if (FileExists(fetch_log)) {
-    CF_EXPECT(
-        CreateSymLink(fetch_log, instance.PerInstanceLogPath("fetch.log")));
+    CF_EXPECT(Copy(fetch_log, instance.PerInstanceLogPath("fetch.log")));
   }
 
   return {};
