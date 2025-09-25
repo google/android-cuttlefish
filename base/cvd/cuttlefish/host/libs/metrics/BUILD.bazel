@@ -32,3 +32,21 @@ cf_cc_library(
         "metrics_defs.h",
     ],
 )
+
+cf_cc_library(
+    name = "metrics_orchestration",
+    srcs = [
+        "metrics_orchestration.cc",
+    ],
+    hdrs = [
+        "metrics_orchestration.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//libbase",
+        "@fmt",
+    ],
+)

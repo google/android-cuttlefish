@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
 namespace cuttlefish {
 namespace {
@@ -398,6 +399,8 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
+
+  GatherVmInstantiationMetrics(group);
 
   if (flags.start) {
     auto start_cmd =
