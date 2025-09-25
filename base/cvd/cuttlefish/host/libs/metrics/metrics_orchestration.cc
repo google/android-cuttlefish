@@ -25,6 +25,7 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/libs/metrics/metrics_writer.h"
 
 namespace cuttlefish {
 namespace {
@@ -49,10 +50,10 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
 }
 
 Result<void> GatherMetrics(const std::string& metrics_directory) {
-  GetHostInfo();
+  HostInfo host_metrics = GetHostInfo();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   // TODO: chadreynolds - convert data to the proto representation
-  // TODO: chadreynolds - write metrics data to a file
+  CF_EXPECT(WriteMetricsEvent(metrics_directory, host_metrics));
   // TODO: chadreynolds - if <TBD> condition, transmit metrics event as well
   return {};
 }
