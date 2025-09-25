@@ -1,8 +1,25 @@
-cuttlefish-common (1.26.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.26.0) unstable; urgency=medium
 
-  * Pending
+  * Homogenize group directory structure by @jemoreira in https://github.com/google/android-cuttlefish/pull/1654
+  * Move metrics protos outside of the  directory by @Databean in https://github.com/google/android-cuttlefish/pull/1661
+  * Refactor `metrics/events.cc` and reuse legacy `launch_cvd` metrics in `cvd` by @Databean in https://github.com/google/android-cuttlefish/pull/1662
+  * Avoid setting some flags with their default values from cvd by @jemoreira in https://github.com/google/android-cuttlefish/pull/1667
+  * Update some `MODULE.bazel` dependencies by @Databean in https://github.com/google/android-cuttlefish/pull/1666
+  * cvdalloc supports non-bridged Wi-Fi. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1663
+  * Refactor mount attached disk logic by @ser-io in https://github.com/google/android-cuttlefish/pull/1671
+  * Add formatted output for the `LauncherResponse` type by @Databean in https://github.com/google/android-cuttlefish/pull/1669
+  * Do not update kernel in gce_install_cuttlefish_packages tool by @ser-io in https://github.com/google/android-cuttlefish/pull/1672
+  * Cleanup kernel handling logic in create base image tool. by @ser-io in https://github.com/google/android-cuttlefish/pull/1674
+  * Tool to create image with a given kernel version. by @ser-io in https://github.com/google/android-cuttlefish/pull/1673
+  * cvdalloc supports bridged Wi-Fi. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1670
+  * Avoid automatic updates in base image. by @ser-io in https://github.com/google/android-cuttlefish/pull/1675
+  * Add casimir by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1664
+  * Pass source image in create base image tool. by @ser-io in https://github.com/google/android-cuttlefish/pull/1676
+  * Report the correct bridge name when use_cvdalloc. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1678
+  * netsim: update out_dir name. by @jacky8hyf in https://github.com/google/android-cuttlefish/pull/1665
+  * Make bridge creation idempotent. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1677
 
- -- Jason Macnak <natsu@google.com>  Fri, 19 Sep 2025 15:58:55 -0700
+ -- Alistair Delva <adelva@google.com>  Thu, 25 Sep 2025 14:04:56 -0700
 
 cuttlefish-common (1.25.0) unstable; urgency=medium
 

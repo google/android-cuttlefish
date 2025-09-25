@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.26.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.26.0) unstable; urgency=medium
 
-  * Pending
+  * No changes.
 
- -- Jason Macnak <natsu@google.com>  Fri, 19 Sep 2025 15:59:03 -0700
+ -- Alistair Delva <adelva@google.com>  Thu, 25 Sep 2025 14:04:56 -0700
 
 cuttlefish-frontend (1.25.0) unstable; urgency=medium
 
