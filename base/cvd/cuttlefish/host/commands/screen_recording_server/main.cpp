@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-#include <iostream>
+#include <functional>
 #include <memory>
 #include <string>
 
+#include <android-base/logging.h>
 #include <gflags/gflags.h>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <grpcpp/support/status_code_enum.h>
 
-#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
-#include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
-
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
 
 using google::protobuf::Empty;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using grpc::StatusCode;
 using screenrecordingserver::ScreenRecordingService;
 using screenrecordingserver::StartRecordingResponse;
 using screenrecordingserver::StopRecordingResponse;
@@ -49,58 +49,51 @@ const int COMMAND_TIMEOUT_SEC = 10;
 namespace cuttlefish {
 namespace {
 
+using StartStopFn = std::function<Result<void>(
+    const CuttlefishConfig::InstanceSpecific&, std::chrono::seconds)>;
+
 class ScreenRecordingServiceImpl final
     : public ScreenRecordingService::Service {
   Status StartRecording(ServerContext* context, const Empty* request,
                         StartRecordingResponse* reply) override {
-    run_cvd::ExtendedLauncherAction start_action;
-    start_action.mutable_start_screen_recording();
-
-    std::vector<bool> successes = SendToAllInstances(start_action);
-    reply->mutable_successes()->Assign(successes.begin(), successes.end());
-    return Status::OK;
+    return Handle(reply, StartScreenRecording);
   }
 
   Status StopRecording(ServerContext* context, const Empty* request,
                        StopRecordingResponse* reply) override {
-    run_cvd::ExtendedLauncherAction stop_action;
-    stop_action.mutable_stop_screen_recording();
-
-    std::vector<bool> successes = SendToAllInstances(stop_action);
-    reply->mutable_successes()->Assign(successes.begin(), successes.end());
-    return Status::OK;
+    return Handle(reply, StopScreenRecording);
   }
 
  private:
-  std::vector<bool> SendToAllInstances(
-      run_cvd::ExtendedLauncherAction extended_action) {
-    std::vector<bool> successes;
-
-    auto launcher_monitor_sockets = GetLauncherMonitorSockets();
-    for (const SharedFD& socket : *launcher_monitor_sockets) {
-      Result<void> result =
-          RunLauncherAction(socket, extended_action, std::nullopt);
-      successes.push_back(result.ok());
+  template <typename R>
+  Status Handle(R* reply, StartStopFn fn) {
+    Result<std::vector<bool>> successes_res = OnAllInstances(fn);
+    if (successes_res.ok()) {
+      reply->mutable_successes()->Assign(successes_res->begin(),
+                                         successes_res->end());
+      return Status::OK;
+    } else {
+      LOG(ERROR) << "Failed to start recording: "
+                 << successes_res.error().FormatForEnv();
+      reply->mutable_successes()->Add(false);
+      return Status(StatusCode::ABORTED,
+                    successes_res.error().FormatForEnv(false));
     }
-
-    return successes;
   }
 
-  Result<std::vector<SharedFD>> GetLauncherMonitorSockets() {
-    std::vector<SharedFD> monitor_sockets;
-
-    const CuttlefishConfig* config =
-        CF_EXPECT(CuttlefishConfig::Get(), "Failed to obtain config object");
-    std::vector<CuttlefishConfig::InstanceSpecific> instance_specifics =
-        config->Instances();
-    for (const CuttlefishConfig::InstanceSpecific& instance_specific :
-         instance_specifics) {
-      auto monitor_socket = CF_EXPECT(GetLauncherMonitorFromInstance(
-          instance_specific, COMMAND_TIMEOUT_SEC));
-      monitor_sockets.push_back(monitor_socket);
+  Result<std::vector<bool>> OnAllInstances(StartStopFn fn) {
+    std::vector<bool> successes;
+    const CuttlefishConfig* config = CF_EXPECT(CuttlefishConfig::Get());
+    for (const auto& instance : config->Instances()) {
+      Result<void> result =
+          fn(instance, std::chrono::seconds(COMMAND_TIMEOUT_SEC));
+      successes.push_back(result.ok());
+      if (!result.ok()) {
+        LOG(ERROR) << "Failed to communicate with instance " << instance.id()
+                   << ": " << result.error().FormatForEnv();
+      }
     }
-
-    return monitor_sockets;
+    return successes;
   }
 };
 
