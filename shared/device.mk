@@ -93,7 +93,7 @@ PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
 endif
 
 # Use AIDL for media.c2 HAL
-PRODUCT_VENDOR_PROPERTIES += media.c2.hal.selection=aidl
+PRODUCT_VENDOR_PROPERTIES += media.c2.hal.selection?=aidl
 
 # Explanation of specific properties:
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
