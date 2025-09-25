@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/metrics/metrics_setup.h"
 
 namespace cuttlefish {
 namespace {
@@ -398,6 +399,15 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
+
+  // TODO CJR: what is the path?
+  Result<std::string> metrics_setup_result = SetUpMetrics("");
+  if (metrics_setup_result.ok()) {
+    // TODO: chadreynolds - gather and write create event
+  } else {
+    LOG(INFO) << fmt::format("Unable to initialize metrics, collection and possible transmission are disabled.  Error: {}", metrics_setup_result.error());
+  }
+  // TODO: chadreynolds - use a `std::optional` and pass on the metrics directory in that form
 
   if (flags.start) {
     auto start_cmd =
