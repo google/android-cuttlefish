@@ -34,7 +34,7 @@
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
+#include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
 
 namespace cuttlefish {
 

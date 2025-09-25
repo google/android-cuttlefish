@@ -30,7 +30,7 @@
 #include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
-#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
+#include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
 
 using google::protobuf::Empty;
 using grpc::Server;

@@ -5,12 +5,12 @@ package(
 )
 
 cf_cc_library(
-    name = "screen_recording",
+    name = "screen_recording_controls",
     srcs = [
-        "screen_recording.cc",
+        "screen_recording_controls.cc",
     ],
     hdrs = [
-        "screen_recording.h",
+        "screen_recording_controls.h",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",

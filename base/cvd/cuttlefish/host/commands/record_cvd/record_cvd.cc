@@ -22,7 +22,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
+#include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to screen record.");
