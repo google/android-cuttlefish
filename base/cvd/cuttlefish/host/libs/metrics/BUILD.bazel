@@ -46,7 +46,26 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/metrics:metrics_writer",
         "//libbase",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_writer",
+    srcs = [
+        "metrics_writer.cc",
+    ],
+    hdrs = [
+        "metrics_writer.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/common/libs/utils:random",
+        "//cuttlefish/common/libs/utils:result",
         "@fmt",
     ],
 )
