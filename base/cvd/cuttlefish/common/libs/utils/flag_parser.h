@@ -133,7 +133,7 @@ std::ostream& operator<<(std::ostream&, const Flag&);
 
 std::vector<std::string> ArgsToVec(int argc, char** argv);
 
-Result<bool> ParseBool(const std::string& value, const std::string& name);
+Result<bool> ParseBool(std::string_view value, std::string_view name);
 
 /* Handles a list of flags. Flags are matched in the order given in case two
  * flags match the same argument. Matched flags are removed, leaving only

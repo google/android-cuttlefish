@@ -155,7 +155,7 @@ static bool LikelyFlag(const std::string& next_arg) {
   return android::base::StartsWith(next_arg, "-");
 }
 
-Result<bool> ParseBool(const std::string& value, const std::string& name) {
+Result<bool> ParseBool(std::string_view value, std::string_view name) {
   auto result = android::base::ParseBool(value);
   CF_EXPECT(result != android::base::ParseBoolResult::kError,
             "Failed to parse value \"" << value << "\" for " << name);
