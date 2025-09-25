@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/metrics/host_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_setup.h"
 
 namespace cuttlefish {
@@ -400,10 +401,17 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
 
-  // TODO CJR: what is the path?
-  Result<std::string> metrics_setup_result = SetUpMetrics("");
+  Result<std::string> metrics_setup_result = SetUpMetrics(group.HomeDir());
   if (metrics_setup_result.ok()) {
-    // TODO: chadreynolds - gather and write create event
+    Result<HostMetrics> host_metrics_result = GetHostMetrics();
+    if (host_metrics_result.ok()) {
+      // TODO: chadreynolds - write out the data to a file in the metrics
+      // directory
+    } else {
+      // TODO: chadreynolds - create a metrics.log to store this information in
+      LOG(INFO) << fmt::format("Unable to gather host metrics.  Error: {}",
+                               host_metrics_result.error());
+    }
   } else {
     LOG(INFO) << fmt::format("Unable to initialize metrics, collection and possible transmission are disabled.  Error: {}", metrics_setup_result.error());
   }
