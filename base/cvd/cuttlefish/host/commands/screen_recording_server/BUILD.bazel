@@ -39,6 +39,8 @@ cf_cc_binary(
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/host/libs/screen_recording",
+        "//libbase",
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",
