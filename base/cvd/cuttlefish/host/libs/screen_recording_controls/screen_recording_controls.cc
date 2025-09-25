@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/screen_recording/screen_recording.h"
+#include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
 
 #include <chrono>
 
