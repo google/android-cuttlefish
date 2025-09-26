@@ -119,6 +119,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/metrics:metrics_orchestrator",
+        "//cuttlefish/host/libs/metrics:metrics_setup",
         "//libbase",
         "@fmt",
         "@jsoncpp",

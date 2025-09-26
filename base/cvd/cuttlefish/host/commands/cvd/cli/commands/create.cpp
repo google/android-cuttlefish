@@ -58,6 +58,8 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/metrics/metrics_orchestrator.h"
+#include "cuttlefish/host/libs/metrics/metrics_setup.h"
 
 namespace cuttlefish {
 namespace {
@@ -232,6 +234,23 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   return {};
 }
 
+// TODO: chadreynolds - create a metrics.log to catch error logs
+// TODO CJR: better name
+std::optional<std::string> RunMetrics(const LocalInstanceGroup& group) {
+  Result<std::string> metrics_dir_result = SetUpMetrics(group.HomeDir());
+  if (!metrics_dir_result.ok()) {
+    LOG(INFO) << fmt::format("Failed to initialize metrics.  Error: {}",
+                             metrics_dir_result.error());
+    return std::nullopt;
+  }
+  Result<void> event_result = RunVmInstantiationMetrics(*metrics_dir_result);
+  if (!event_result.ok()) {
+    LOG(INFO) << fmt::format("Failed to gather device_boot_metrics");
+    return std::nullopt;
+  }
+  return *metrics_dir_result;
+}
+
 }  // namespace
 
 class CvdCreateCommandHandler : public CvdCommandHandler {
@@ -398,6 +417,8 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
+
+  const std::optional<std::string> metrics_directory = RunMetrics(group);
 
   if (flags.start) {
     auto start_cmd =
