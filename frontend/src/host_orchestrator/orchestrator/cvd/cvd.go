@@ -460,6 +460,37 @@ func (i *Instance) TakeSnapshot(dir string) error {
 	return err
 }
 
+func (i *Instance) StartScreenRecording() error {
+	args := i.selectorArgs()
+	args = append(args, "screen_recording", "start")
+	_, err := i.cli.exec(CVDBin, args...)
+	return err
+}
+
+func (i *Instance) StopScreenRecording() error {
+	args := i.selectorArgs()
+	args = append(args, "screen_recording", "stop")
+	_, err := i.cli.exec(CVDBin, args...)
+	return err
+}
+
+func (i *Instance) ListScreenRecordings() ([]string, error) {
+	args := i.selectorArgs()
+	args = append(args, "screen_recording", "list")
+	out, err := i.cli.exec(CVDBin, args...)
+	if err != nil {
+		return nil, err
+	}
+	var parsedOutput output.ScreenRecordingsList
+	if err := json.Unmarshal(out, &parsedOutput); err != nil {
+		return nil, fmt.Errorf("failed to parse output of `%v`: %w", args, err)
+	}
+	if len(parsedOutput) != 1 {
+		return nil, fmt.Errorf("expected single element in output of `%v` command: %q", args, string(out))
+	}
+	return parsedOutput[0].Recordings, nil
+}
+
 func (i *Instance) selectorArgs() []string {
 	return (&InstanceSelector{GroupName: i.GroupName, Name: i.Name}).asArgs()
 }

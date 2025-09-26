@@ -96,6 +96,18 @@ func (a *powerbtnCvdCommand) exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error 
 	return cvd.LazySelectInstance(sel).PowerBtn()
 }
 
+type startScreenRecordingCvdCommand struct{}
+
+func (a *startScreenRecordingCvdCommand) exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error {
+	return cvd.LazySelectInstance(sel).StartScreenRecording()
+}
+
+type stopScreenRecordingCvdCommand struct{}
+
+func (a *stopScreenRecordingCvdCommand) exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error {
+	return cvd.LazySelectInstance(sel).StopScreenRecording()
+}
+
 type ExecCVDInstanceCommandActionOpts struct {
 	Command          execCvdInstanceCommand
 	Selector         cvd.InstanceSelector
