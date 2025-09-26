@@ -58,9 +58,8 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/metrics/host_metrics.h"
+#include "cuttlefish/host/libs/metrics/metrics_orchestrator.h"
 #include "cuttlefish/host/libs/metrics/metrics_setup.h"
-#include "cuttlefish/host/libs/metrics/metrics_writer.h"
 
 namespace cuttlefish {
 namespace {
@@ -235,6 +234,23 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   return {};
 }
 
+// TODO: chadreynolds - create a metrics.log to catch error logs
+// TODO CJR: better name
+std::optional<std::string> RunMetrics(const LocalInstanceGroup& group) {
+  Result<std::string> metrics_dir_result = SetUpMetrics(group.HomeDir());
+  if (!metrics_dir_result.ok()) {
+    LOG(INFO) << fmt::format("Failed to initialize metrics.  Error: {}",
+                             metrics_dir_result.error());
+    return std::nullopt;
+  }
+  Result<void> event_result = RunVmInstantiationMetrics(*metrics_dir_result);
+  if (!event_result.ok()) {
+    LOG(INFO) << fmt::format("Failed to gather device_boot_metrics");
+    return std::nullopt;
+  }
+  return *metrics_dir_result;
+}
+
 }  // namespace
 
 class CvdCreateCommandHandler : public CvdCommandHandler {
@@ -402,29 +418,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   group.SetStartTime(CvdServerClock::now());
   instance_manager_.UpdateInstanceGroup(group);
 
-  // TODO CJR: figure out a better pattern for the error handling
-  // TODO CJR: move this logic into a helper or helpers, then capture any
-  // bubbled up error to log
-  Result<std::string> metrics_setup_result = SetUpMetrics(group.HomeDir());
-  if (metrics_setup_result.ok()) {
-    Result<HostMetrics> host_metrics_result = GetHostMetrics();
-    if (host_metrics_result.ok()) {
-      Result<void> write_result =
-          WriteMetricsEvent(*metrics_setup_result, *host_metrics_result);
-      if (!write_result.ok()) {
-        // TODO: chadreynolds - create a metrics.log to store this information
-        LOG(INFO) << fmt::format("Unable to write out host metrics.  Error: {}",
-                                 write_result.error());
-      }
-    } else {
-      // TODO: chadreynolds - create a metrics.log to store this information
-      LOG(INFO) << fmt::format("Unable to gather host metrics.  Error: {}",
-                               host_metrics_result.error());
-    }
-  } else {
-    LOG(INFO) << fmt::format("Unable to initialize metrics, collection and possible transmission are disabled.  Error: {}", metrics_setup_result.error());
-  }
-  // TODO: chadreynolds - use a `std::optional` and pass on the metrics directory in that form
+  const std::optional<std::string> metrics_directory = RunMetrics(group);
 
   if (flags.start) {
     auto start_cmd =

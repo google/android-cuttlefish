@@ -34,6 +34,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "metrics_orchestrator",
+    srcs = [
+        "metrics_orchestrator.cc",
+    ],
+    hdrs = [
+        "metrics_orchestrator.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/metrics:host_metrics",
+        "//cuttlefish/host/libs/metrics:metrics_writer",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "metrics_setup",
     srcs = [
         "metrics_setup.cc",

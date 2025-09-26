@@ -38,12 +38,14 @@ std::string GenerateRandomString() {
 
 }  // namespace
 
+// TODO CJR: depending on the eventual structure of the messages, may want
+// separate methods for writing
 Result<void> WriteMetricsEvent(const std::string& metrics_directory,
                                const HostMetrics& host_metrics) {
   const std::string event_filepath =
       fmt::format("{}/vm-instantiation_{}_{}", metrics_directory,
                   std::chrono::system_clock::now(), GenerateRandomString());
-  // TODO: chadreynolds - convert internal representation to proto then text
+  // TODO: chadreynolds - convert (what will be a proto) to text
   CF_EXPECT(WriteNewFile(event_filepath, host_metrics.release + "\n"));
   return {};
 }
