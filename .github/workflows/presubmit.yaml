@@ -164,6 +164,7 @@ jobs:
       with:
         large-packages: false
         swap-storage: false
+        tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Mount Bazel cache
@@ -186,6 +187,7 @@ jobs:
       with:
         docker-images: false
         swap-storage: false
+        tool-cache: true
     - name: checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
     - name: Mount Bazel cache
