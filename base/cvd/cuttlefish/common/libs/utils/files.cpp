@@ -50,6 +50,7 @@
 #include <numeric>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
@@ -544,6 +545,19 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
   CF_EXPECTF(size >= 0, "Failed to read file contents.  Error:\n",
              file->StrError());
   return file_content;
+}
+
+Result<void> WriteNewFile(const std::string& filepath,
+                          std::string_view content) {
+  CF_EXPECTF(!FileExists(filepath), "File already exists: {}", filepath);
+  SharedFD file_fd = SharedFD::Open(filepath, O_CREAT | O_WRONLY);
+  CF_EXPECTF(file_fd->IsOpen(), "Failed to open file \"{}\" for writing: {}",
+             filepath, file_fd->StrError());
+  const auto written_size = WriteAll(file_fd, content);
+  CF_EXPECTF(written_size == content.size(),
+             "Failed to write all content to file. Error:\n",
+             file_fd->StrError());
+  return {};
 }
 
 std::string CurrentDirectory() {
