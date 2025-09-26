@@ -51,3 +51,10 @@ type Display struct {
 type Displays struct {
 	Displays map[int]*Display `json:"displays"`
 }
+
+// The output of the `cvd screen_recordings list` command
+type ScreenRecordingsList []struct {
+	GroupName    string   `json:"group_name"`
+	InstanceName string   `json:"instance_name"`
+	Recordings   []string `json:"recordings"`
+}

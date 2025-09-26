@@ -208,3 +208,7 @@ type DisplayScreenshotResponse struct {
 	ScreenshotBytesBase64 string `json:"screenshot_bytes"`
 	ScreenshotMimeType    string `json:"screenshot_mime_type"`
 }
+
+type ListScreenRecordingsResponse struct {
+	ScreenRecordings []string `json:"screen_recordings"`
+}

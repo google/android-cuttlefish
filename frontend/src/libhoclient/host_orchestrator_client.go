@@ -142,6 +142,14 @@ type InstanceOperationsClient interface {
 	Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error
 	// Create device snapshot.
 	CreateSnapshot(groupName, instanceName string, req *hoapi.CreateSnapshotRequest) (*hoapi.CreateSnapshotResponse, error)
+	// List screen recordings
+	ListScreenRecordings(groupName, instanceName string) ([]string, error)
+	// Download a screen recording
+	DownloadScreenRecording(groupName, instanceName, recording string, dst io.Writer) error
+	// Start recording the screen
+	StartScreenRecording(groupName, instanceName string) error
+	// Stop recording the screen
+	StopScreenRecording(groupName, instanceName string) error
 }
 
 // Manage direct two-way communication channels with remote instances.
@@ -510,6 +518,48 @@ func (c *HostOrchestratorClientImpl) DeleteSnapshot(id string) error {
 		return err
 	}
 	return c.waitForOperation(op.Name, nil)
+}
+
+func (c *HostOrchestratorClientImpl) ListScreenRecordings(groupName, instanceName string) ([]string, error) {
+	path := fmt.Sprintf("/cvds/%s/%s/screen_recordings", groupName, instanceName)
+	rb := c.HTTPHelper.NewGetRequest(path)
+	response := &hoapi.ListScreenRecordingsResponse{}
+	if err := rb.JSONResDo(response); err != nil {
+		return nil, err
+	}
+	return response.ScreenRecordings, nil
+}
+
+func (c *HostOrchestratorClientImpl) DownloadScreenRecording(groupName, instanceName, recording string, dst io.Writer) error {
+	path := fmt.Sprintf("/cvds/%s/%s/screen_recordings/%s", groupName, instanceName, recording)
+	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+path, nil)
+	if err != nil {
+		return err
+	}
+	res, err := c.HTTPHelper.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if _, err := io.Copy(dst, res.Body); err != nil {
+		return err
+	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return &ApiCallError{ErrorMsg: opapi.ErrorMsg{Error: res.Status}}
+	}
+	return nil
+}
+
+func (c *HostOrchestratorClientImpl) StartScreenRecording(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:start_screen_recording", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorClientImpl) StopScreenRecording(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:stop_screen_recording", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
 }
 
 func (c *HostOrchestratorClientImpl) doEmptyResponseRequest(rb *HTTPRequestBuilder) error {

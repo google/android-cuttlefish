@@ -160,6 +160,22 @@ func (c *FakeHostOrchestratorClient) UploadFileWithOptions(uploadDir string, fil
 	return nil
 }
 
+func (c *FakeHostOrchestratorClient) ListScreenRecordings(groupName, instanceName string) ([]string, error) {
+	return []string{}, nil
+}
+
+func (c *FakeHostOrchestratorClient) DownloadScreenRecording(groupName, instanceName, recording string, dst io.Writer) error {
+	return nil
+}
+
+func (c *FakeHostOrchestratorClient) StartScreenRecording(groupName, instanceName string) error {
+	return nil
+}
+
+func (c *FakeHostOrchestratorClient) StopScreenRecording(groupName, instanceName string) error {
+	return nil
+}
+
 func (c *FakeHostOrchestratorClient) createFakeCVDs(total int) ([]*hoapi.CVD, error) {
 	cvds := []*hoapi.CVD{}
 	for cnt := 0; cnt < total; cnt++ {

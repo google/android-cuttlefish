@@ -88,6 +88,10 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/:start_screen_recording",
+		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &startScreenRecordingCvdCommand{}))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/:stop_screen_recording",
+		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &stopScreenRecordingCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/displays",
 		httpHandler(newCreateDisplayAddHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/displays",
@@ -96,6 +100,10 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newCreateDisplayRemoveHandler(c.Config, c.OperationManager))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/displays/{displayNumber}/:screenshot",
 		httpHandler(newCreateDisplayScreenshotHandler(c.Config, c.OperationManager))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/screen_recordings/{recording_name}",
+		&getScreenRecordingHandler{Config: c.Config}).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/screen_recordings",
+		httpHandler(newListScreenRecordingsHandler(c.Config))).Methods("GET")
 	router.Handle("/cvds/{group}/{name}/snapshots",
 		httpHandler(newCreateSnapshotHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/operations", httpHandler(&listOperationsHandler{om: c.OperationManager})).Methods("GET")
@@ -371,6 +379,44 @@ func (h *createSnapshotHandler) Handle(r *http.Request) (interface{}, error) {
 		ExecContext:      exec.CommandContext,
 	}
 	return NewCreateSnapshotAction(opts).Run()
+}
+
+type listScreenRecordingsHandler struct {
+	Config Config
+}
+
+func newListScreenRecordingsHandler(c Config) *listScreenRecordingsHandler {
+	return &listScreenRecordingsHandler{Config: c}
+}
+
+func (h *listScreenRecordingsHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	opts := ListScreenRecordingsActionOpts{
+		Selector:    cvd.InstanceSelector{GroupName: group, Name: name},
+		ExecContext: exec.CommandContext,
+	}
+	return NewListScreenRecordingsAction(opts).Run()
+}
+
+type getScreenRecordingHandler struct {
+	Config Config
+}
+
+func (h *getScreenRecordingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	group := vars["group"]
+	name := vars["name"]
+	recording := vars["recording_name"]
+	opts := GetScreenRecordingActionOpts{
+		Selector:    cvd.InstanceSelector{GroupName: group, Name: name},
+		Recording:   recording,
+		ExecContext: exec.CommandContext,
+		Writer:      w,
+		Request:     r,
+	}
+	NewGetScreenRecordingAction(opts).Run()
 }
 
 type displayAddHandler struct {
