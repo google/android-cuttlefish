@@ -1,0 +1,22 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "external_proto/cf_guest.proto";
+import "external_proto/cf_host.proto";
+import "google/protobuf/cpp_features.proto";
+
+option features.(pb.cpp).string_type = VIEW;
+
+// Host information, guest information, and guest events for an instance group
+// containing one or more Cuttlefish devices.
+//
+// See go/cf-metrics-prd-v2 for more information.
+//
+// Next index: 3
+message MetricsEventV2 {
+  // Information about the machine outside the Cuttlefish virtual machine.
+  CuttlefishHost host = 1;
+  // A cuttlefish virtual machine running under the host.
+  repeated CuttlefishGuest guest = 2;
+}

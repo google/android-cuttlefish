@@ -13,45 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-syntax = "proto2";
+edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish;
 
 import "external_proto/cf_metrics_event.proto";
+import "external_proto/cf_metrics_event_v2.proto";
+import "google/protobuf/cpp_features.proto";
 import "google/protobuf/timestamp.proto";
 
+option features.(pb.cpp).string_type = VIEW;
+option features.utf8_validation = NONE;
+
 // Wrapper for Cuttlefish log events
-// Next index: 7
+// Next index: 8
 message CuttlefishLogEvent {
   // Defines the device class that this log was sourced from.
   // This may not be the same device which uploaded the log event.
   // Next index: 3
   enum DeviceType {
+    option features.enum_type = CLOSED;
+
     // The log event was sourced from an unspecified device type.
-    // TODO(moelsherif) : This event is not converted yet in the code
     CUTTLEFISH_DEVICE_TYPE_UNSPECIFIED = 0;
 
     // A log event that was sourced from a Cuttlefish host device.
     CUTTLEFISH_DEVICE_TYPE_HOST = 1;
 
     // A log event that was sent by an Cuttlefish guest device.
-    // TODO(moelsherif) : This event is not converted yet in the code
     CUTTLEFISH_DEVICE_TYPE_GUEST = 2;
   }
 
   // Local time on the event source device of when this event occurred.
-  optional google.protobuf.Timestamp timestamp_ms = 1;
+  google.protobuf.Timestamp timestamp_ms = 1;
 
   // The type of device this log event originated from.
-  optional DeviceType device_type = 2;
+  DeviceType device_type = 2;
+
+  // The identifier for this device.
+  string device_id = 3;
 
   // The identifier for this session.
-  optional string session_id = 6;
+  string session_id = 6;
 
   // The version of Cuttlefish that's sending the log event.
-  optional string cuttlefish_version = 4;
+  string cuttlefish_version = 4;
 
-  // An event encompassing metrics data
-  optional logs.proto.wireless.android.cuttlefish.events.MetricsEvent
-      metrics_event = 5;
+  oneof events {
+    // Metrics V1, used by launch_cvd: go/cf-metrics-prd
+    logs.proto.wireless.android.cuttlefish.events.MetricsEvent metrics_event =
+        5;
+    // Metrics V2, used by cvd: go/cf-metrics-prd-v2
+    logs.proto.wireless.android.cuttlefish.events.MetricsEventV2
+        metrics_event_v2 = 7;
+  }
 }

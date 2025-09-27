@@ -1,0 +1,157 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "google/protobuf/cpp_features.proto";
+
+option features.(pb.cpp).string_type = VIEW;
+
+// Flags passed to `launch_cvd` / `cvd_internal_start` that are relevant for a
+// particular instance. While `cvd_internal_start` are often "vectorized" with
+// comma-separated values given in one flag for multiple instances, these are
+// a cross-section for one instance.
+//
+// See go/cf-metrics-prd-v2 for more information.
+//
+// Next index: 27
+message CuttlefishFlags {
+  // Configuration for adb auto-connection and tunneling support.
+  //
+  // Next index: 4
+  enum AdbMode {
+    CUTTLEFISH_FLAGS_ADB_MODE_UNSPECIFIED = 0;
+    // TCP to virtio-sockets proxies running both inside and outisde the virtual
+    // machine.
+    CUTTLEFISH_FLAGS_ADB_MODE_VSOCK_TUNNEL = 1;
+    // A TCP to virtio-sockets proxy runs on the host.
+    CUTTLEFISH_FLAGS_ADB_MODE_VSOCK_HALF_TUNNEL = 2;
+    // No proxies are used for adb.
+    CUTTLEFISH_FLAGS_ADB_MODE_NATIVE_VSOCK = 3;
+  }
+  // Configuration for adb auto-connection and tunneling support.
+  AdbMode adb_mode = 1;
+
+  bool boot_image_specified = 2;
+
+  bool bootloader_specified = 3;
+
+  // The number of kvm threads allocated to the instance in the virtual machine
+  // manager.
+  uint32 cpus = 4;
+
+  // Whether the instance is configured to run in the background after
+  // launching.
+  bool daemon = 5;
+
+  bool data_image_specified = 6;
+
+  // Whether to reuse, alter, or replace the userdata.img file produced by the
+  // build system.
+  //
+  // Next index: 4
+  enum DataPolicy {
+    CUTTLEFISH_FLAGS_DATA_POLICY_UNSPECIFIED = 0;
+    // Use the `userdata.img` provided by the build system.
+    CUTTLEFISH_FLAGS_DATA_POLICY_USE_EXISTING = 1;
+    // Ignore the provided `userdata.img` and create a new one.
+    CUTTLEFISH_FLAGS_DATA_POLICY_ALWAYS_CREATE = 2;
+    // Reuse the provided `userdata.img`, but resize it before use.
+    CUTTLEFISH_FLAGS_DATA_POLICY_RESIZE_UP_TO = 3;
+  }
+
+  // Whether to reuse, alter, or replace the userdata.img file produced by the
+  // build system.
+  DataPolicy data_policy = 7;
+
+  uint32 dpi = 8;
+
+  string extra_kernel_cmdline = 9;
+
+  // Next index: 9
+  enum GpuMode {
+    CUTTLEFISH_FLAGS_GPU_MODE_UNSPECIFIED = 0;
+    CUTTLEFISH_FLAGS_GPU_MODE_AUTO = 1;
+    CUTTLEFISH_FLAGS_GPU_MODE_CUSTOM = 2;
+    CUTTLEFISH_FLAGS_GPU_MODE_GUEST_SWIFTSHADER = 3;
+    CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM = 4;
+    CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE = 5;
+    CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER = 6;
+    CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE = 7;
+    CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER = 8;
+  }
+
+  // The graphics backend that the user asked for through flags.
+  GpuMode gpu_mode_requested = 10;
+
+  // What graphics backend renders the frames, and what transport is used to
+  // send it graphics commands. `AUTO` is not valid for this mode.
+  GpuMode gpu_mode_used = 11;
+
+  // Whether SELinux is enabled in Android.
+  bool guest_enforce_security = 12;
+
+  // How many megabytes of random access memory are allocated to the virtual
+  // machine.
+  uint64 memory_mb = 13;
+
+  bool metadata_image_specified = 14;
+
+  bool misc_image_specified = 15;
+
+  bool qemu_binary_specified = 16;
+
+  // How many frames are shown per second on the screen.
+  uint32 refresh_rate_hz = 17;
+
+  // Whether to restart service subprocesses when they exit or crash.
+  bool restart_subprocesses = 18;
+
+  // Whether to run the service that informs a local adb server that this device
+  // exists.
+  bool run_adb_connector = 19;
+
+  // Whether to start a server sharing the screen over VNC.
+  bool start_vnc_server = 20;
+
+  bool super_image_specified = 21;
+
+  // Was the `--system_image_dir` flag specified?
+  bool system_image_dir_specified = 22;
+
+  // Was the `--vendor_boot_image` flag specified?
+  bool vendor_boot_image_specified = 23;
+
+  // The Virtual Machine Manager used to run this guest.
+  // Next index: 4
+  enum VmmMode {
+    // The log event was sourced from an unspecified vmm type.
+    CUTTLEFISH_GUEST_VMM_TYPE_UNSPECIFIED = 0;
+    CUTTLEFISH_GUEST_VMM_TYPE_CROSVM = 1;
+    CUTTLEFISH_GUEST_VMM_TYPE_QEMU = 2;
+    CUTTLEFISH_GUEST_VMM_TYPE_GEM5 = 3;
+  }
+
+  // The Virtual Machine Manager used to run this guest.
+  VmmMode vmm_mode = 24;
+
+  // The horizontal resolution of the screen, in pixels.
+  uint32 x_res = 25;
+
+  // The vertical resolution of the screen, in pixels.
+  uint32 y_res = 26;
+}

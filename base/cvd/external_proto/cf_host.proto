@@ -1,0 +1,37 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "google/protobuf/cpp_features.proto";
+
+option features.(pb.cpp).string_type = VIEW;
+
+// A host machine running one or more Cuttlefish devices. The information may be
+// general or specific to one host group.
+//
+// See go/cf-metrics-prd-v2 for more information.
+//
+// Next index: 3
+message CuttlefishHost {
+  // Category of operating system outside the Cuttlefish VM.
+  // Next index: 6
+  enum OsType {
+    CUTTLEFISH_HOST_OS_TYPE_UNSPECIFIED = 0;
+
+    CUTTLEFISH_HOST_OS_TYPE_LINUX_X86 = 1;
+
+    CUTTLEFISH_HOST_OS_TYPE_LINUX_X86_64 = 2;
+
+    CUTTLEFISH_HOST_OS_TYPE_LINUX_AARCH32 = 3;
+
+    CUTTLEFISH_HOST_OS_TYPE_LINUX_AARCH64 = 4;
+
+    CUTTLEFISH_HOST_OS_TYPE_LINUX_RISCV64 = 5;
+  }
+
+  // Category of operating system outside the Cuttlefish VM.
+  OsType host_os = 1;
+
+  // Freeform string adding more detail to the category.
+  string host_os_version = 2;
+}

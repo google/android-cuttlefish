@@ -15,19 +15,19 @@
  */
 #pragma once
 
-#include <stdint.h>
-
-#include <string>
+#include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
 
 namespace cuttlefish::metrics {
 
-std::string GetOsName();
-std::string GetOsVersion();
-std::string GenerateSessionId(uint64_t now);
-std::string GetCfVersion();
-std::string GetMacAddress();
-std::string GetCompany();
-std::string GetVmmVersion();
-uint64_t GetEpochTimeMs();
+enum class ClearcutServer {
+  kLocal = 0,
+  kStaging = 1,
+  kProd = 2,
+};
+
+MetricsExitCodes PostRequest(const std::string& output, ClearcutServer server);
+MetricsExitCodes PostRequest(HttpClient&, const std::string& output,
+                             ClearcutServer server);
 
 }  // namespace cuttlefish::metrics

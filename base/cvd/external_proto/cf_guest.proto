@@ -1,0 +1,57 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "external_proto/cf_flags.proto";
+import "google/protobuf/cpp_features.proto";
+
+option features.(pb.cpp).string_type = VIEW;
+
+// A Cuttlefish guest device running in a virtual machine.
+//
+// See go/cf-metrics-prd-v2 for more information.
+//
+// Next index: 8
+message CuttlefishGuest {
+  // The newest event to happen to this guest virtual machine that was not
+  // already reported in a previous metrics message.
+  // Next index: 5
+  enum EventType {
+    // Unknown event, or no event occurred on this guest since the last metrics
+    // message.
+    CUTTLEFISH_GUEST_EVENT_TYPE_UNSPECIFIED = 0;
+
+    // `cvd` is invoking `cvd_internal_start` / `launch_cvd`.
+    CUTTLEFISH_GUEST_EVENT_TYPE_VM_INSTANTIATION = 1;
+
+    // The guest writes VIRTUAL_DEVICE_BOOT_COMPLETED to the kernel log.
+    CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_COMPLETED = 2;
+
+    // The lock screen is rendered and interactive.
+    CUTTLEFISH_GUEST_EVENT_TYPE_LOCK_SCREEN_AVAILABLE = 3;
+
+    // User stopped the virtual machine with `cvd stop`/`stop_cvd`. Not every
+    // device that is created will necessarily be shut down this way, users may
+    // `pkill` or `ctrl-c` these devices.
+    CUTTLEFISH_GUEST_EVENT_TYPE_VM_STOP = 4;
+  }
+
+  // The newest event to happen to this guest virtual machine that was not
+  // already reported in a previous metrics message.
+  EventType event_type = 1;
+
+  string guest_id = 2;
+
+  // Free-text operating system version for the guest.
+  // Ex. Android version (9.x, 10.x, etc.) or `uname -r` output
+  string guest_os_version = 3;
+
+  // Android API level: https://developer.android.com/tools/releases/platforms
+  int32 guest_api_level = 4;
+
+  // Free-text version information about the Virtual Machine Manager running
+  // this guest.
+  string vmm_version = 6;
+
+  CuttlefishFlags flags = 7;
+}

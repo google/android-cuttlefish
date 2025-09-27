@@ -15,9 +15,15 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish::metrics {
+
+logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent BuildCfLogEvent(
+    uint64_t now_ms);
 
 int SendVMStart(VmmMode);
 int SendVMStop(VmmMode);

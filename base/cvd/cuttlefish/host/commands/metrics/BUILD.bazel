@@ -5,16 +5,28 @@ package(
 )
 
 cf_cc_library(
+    name = "clearcut_protos",
+    srcs = ["clearcut_protos.cc"],
+    hdrs = ["clearcut_protos.h"],
+    deps = [
+        "//external_proto:cf_log_cc_proto",
+        "//external_proto:clientanalytics_cc_proto",
+        "//external_proto:log_source_enum_cc_proto",
+    ],
+)
+
+cf_cc_library(
     name = "events",
     srcs = ["events.cc"],
     hdrs = ["events.h"],
     deps = [
-        "//cuttlefish/host/commands/metrics:libmetrics_utils",
+        "//cuttlefish/host/commands/metrics:clearcut_protos",
+        "//cuttlefish/host/commands/metrics:send",
+        "//cuttlefish/host/commands/metrics:utils",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_cc_proto",
         "//external_proto:clientanalytics_cc_proto",
-        "//external_proto:log_source_enum_cc_proto",
         "@protobuf//:timestamp_cc_proto",
     ],
 )
@@ -32,7 +44,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/metrics:events",
-        "//cuttlefish/host/commands/metrics:libmetrics_utils",
+        "//cuttlefish/host/commands/metrics:utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/metrics",
@@ -48,28 +60,32 @@ cf_cc_binary(
 )
 
 cf_cc_library(
-    name = "libmetrics_utils",
-    srcs = ["utils.cc"],
-    hdrs = ["utils.h"],
+    name = "send",
+    srcs = ["send.cc"],
+    hdrs = ["send.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//libbase",
-        "@gflags",
     ],
 )
 
+cf_cc_library(
+    name = "utils",
+    srcs = ["utils.cc"],
+    hdrs = ["utils.h"],
+    deps = ["//libbase"],
+)
+
 cf_cc_test(
-    name = "metrics_test",
-    srcs = [
-        "unittest/utils_tests.cpp",
-    ],
+    name = "utils_test",
+    srcs = ["utils_tests.cpp"],
     deps = [
-        ":libmetrics_utils",
+        "//cuttlefish/host/commands/metrics:utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

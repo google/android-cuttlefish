@@ -19,12 +19,13 @@
 
 #include "google/protobuf/timestamp.pb.h"
 
+#include "cuttlefish/host/commands/metrics/clearcut_protos.h"
+#include "cuttlefish/host/commands/metrics/send.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event.pb.h"
 #include "external_proto/clientanalytics.pb.h"
-#include "external_proto/log_source_enum.pb.h"
 
 namespace cuttlefish::metrics {
 
@@ -33,18 +34,11 @@ namespace {
 using google::protobuf::Timestamp;
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEvent;
-using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
-using wireless_android_play_playlog::LogSourceEnum::LogSource;
 
 // TODO: 403646742 - this value previously came from the build, need to revisit
 static constexpr int PRODUCT_SHIPPING_API_LEVEL = 37;
-
-static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
-
-static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
-static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
 
 Timestamp MillisToTimestamp(uint64_t millis) {
   Timestamp timestamp;
@@ -52,21 +46,6 @@ Timestamp MillisToTimestamp(uint64_t millis) {
   timestamp.set_seconds(millis / 1000);
 
   return timestamp;
-}
-
-CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
-  // "cf_event" is the top level CuttlefishLogEvent
-  CuttlefishLogEvent cf_event;
-  cf_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
-  cf_event.set_session_id(GenerateSessionId(now_ms));
-
-  if (!GetCfVersion().empty()) {
-    cf_event.set_cuttlefish_version(GetCfVersion());
-  }
-
-  *cf_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
-
-  return cf_event;
 }
 
 MetricsEvent::OsType GetOsType() {
@@ -129,24 +108,6 @@ MetricsEvent BuildMetricsEvent(uint64_t now_ms, VmmMode vmm_mode,
   return metrics_event;
 }
 
-LogRequest BuildLogRequest(uint64_t now_ms,
-                           const CuttlefishLogEvent& cf_event) {
-  // "log_request" is the top level LogRequest
-  LogRequest log_request;
-  log_request.set_request_time_ms(now_ms);
-  log_request.set_log_source(kLogSourceId);
-  log_request.set_log_source_name(kLogSourceStr);
-
-  ClientInfo& client_info = *log_request.mutable_client_info();
-  client_info.set_client_type(kCppClientType);
-
-  LogEvent& log_event = *log_request.add_log_event();
-  log_event.set_event_time_ms(now_ms);
-  log_event.set_source_extension(cf_event.SerializeAsString());
-
-  return log_request;
-}
-
 int SendEvent(MetricsEvent::EventType event_type, VmmMode vmm_mode) {
   uint64_t now_ms = GetEpochTimeMs();
 
@@ -154,13 +115,29 @@ int SendEvent(MetricsEvent::EventType event_type, VmmMode vmm_mode) {
   *cf_event.mutable_metrics_event() =
       BuildMetricsEvent(now_ms, vmm_mode, event_type);
 
-  LogRequest log_request = BuildLogRequest(now_ms, cf_event);
+  LogEvent log_event = BuildLogEvent(now_ms, cf_event);
+
+  LogRequest log_request = BuildLogRequest(now_ms, log_event);
   std::string log_request_str = log_request.SerializeAsString();
 
   return PostRequest(log_request_str, ClearcutServer::kProd);
 }
 
 }  // namespace
+
+CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
+  CuttlefishLogEvent cf_event;
+  cf_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
+  cf_event.set_session_id(GenerateSessionId(now_ms));
+
+  if (!GetCfVersion().empty()) {
+    cf_event.set_cuttlefish_version(GetCfVersion());
+  }
+
+  *cf_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
+
+  return cf_event;
+}
 
 int SendVMStart(VmmMode vmm_mode) {
   return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION,
