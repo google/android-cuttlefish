@@ -3,17 +3,55 @@ package(
 )
 
 proto_library(
+    name = "cf_flags_proto",
+    srcs = ["cf_flags.proto"],
+    deps = ["@protobuf//:cpp_features_proto"],
+)
+
+cc_proto_library(
+    name = "cf_flags_cc_proto",
+    deps = ["//external_proto:cf_flags_proto"],
+)
+
+proto_library(
+    name = "cf_guest_proto",
+    srcs = ["cf_guest.proto"],
+    deps = [
+        "//external_proto:cf_flags_proto",
+        "@protobuf//:cpp_features_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "cf_guest_cc_proto",
+    deps = ["//external_proto:cf_guest_proto"],
+)
+
+proto_library(
+    name = "cf_host_proto",
+    srcs = ["cf_host.proto"],
+    deps = ["@protobuf//:cpp_features_proto"],
+)
+
+cc_proto_library(
+    name = "cf_host_cc_proto",
+    deps = ["//external_proto:cf_host_proto"],
+)
+
+proto_library(
     name = "cf_log_proto",
     srcs = ["cf_log.proto"],
     deps = [
-        ":cf_metrics_event_proto",
+        "//external_proto:cf_metrics_event_proto",
+        "//external_proto:cf_metrics_event_v2_proto",
+        "@protobuf//:cpp_features_proto",
         "@protobuf//:timestamp_proto",
     ],
 )
 
 cc_proto_library(
     name = "cf_log_cc_proto",
-    deps = [":cf_log_proto"],
+    deps = ["//external_proto:cf_log_proto"],
 )
 
 proto_library(
@@ -27,20 +65,33 @@ proto_library(
 
 cc_proto_library(
     name = "cf_metrics_event_cc_proto",
-    deps = [":cf_metrics_event_proto"],
+    deps = ["//external_proto:cf_metrics_event_proto"],
+)
+
+proto_library(
+    name = "cf_metrics_event_v2_proto",
+    srcs = ["cf_metrics_event_v2.proto"],
+    deps = [
+        "//external_proto:cf_guest_proto",
+        "//external_proto:cf_host_proto",
+        "@protobuf//:cpp_features_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "cf_metrics_event_v2_cc_proto",
+    deps = ["//external_proto:cf_metrics_event_v2_proto"],
 )
 
 proto_library(
     name = "clientanalytics_proto",
     srcs = ["clientanalytics.proto"],
-    deps = [
-        ":log_source_enum_proto",
-    ],
+    deps = ["//external_proto:log_source_enum_proto"],
 )
 
 cc_proto_library(
     name = "clientanalytics_cc_proto",
-    deps = [":clientanalytics_proto"],
+    deps = ["//external_proto:clientanalytics_proto"],
 )
 
 proto_library(
@@ -50,5 +101,5 @@ proto_library(
 
 cc_proto_library(
     name = "log_source_enum_cc_proto",
-    deps = [":log_source_enum_proto"],
+    deps = ["//external_proto:log_source_enum_proto"],
 )
