@@ -5,17 +5,28 @@ package(
 )
 
 cf_cc_library(
+    name = "clearcut_protos",
+    srcs = ["clearcut_protos.cc"],
+    hdrs = ["clearcut_protos.h"],
+    deps = [
+        "//external_proto:cf_log_cc_proto",
+        "//external_proto:clientanalytics_cc_proto",
+        "//external_proto:log_source_enum_cc_proto",
+    ],
+)
+
+cf_cc_library(
     name = "events",
     srcs = ["events.cc"],
     hdrs = ["events.h"],
     deps = [
+        "//cuttlefish/host/commands/metrics:clearcut_protos",
         "//cuttlefish/host/commands/metrics:send",
         "//cuttlefish/host/commands/metrics:utils",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_cc_proto",
         "//external_proto:clientanalytics_cc_proto",
-        "//external_proto:log_source_enum_cc_proto",
         "@protobuf//:timestamp_cc_proto",
     ],
 )
