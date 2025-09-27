@@ -19,6 +19,7 @@
 
 #include "google/protobuf/timestamp.pb.h"
 
+#include "cuttlefish/host/commands/metrics/send.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "external_proto/cf_log.pb.h"

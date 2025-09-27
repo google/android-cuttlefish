@@ -10,6 +10,7 @@ cf_cc_library(
     hdrs = ["events.h"],
     deps = [
         "//cuttlefish/host/commands/metrics:libmetrics_utils",
+        "//cuttlefish/host/commands/metrics:send",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_cc_proto",
@@ -51,16 +52,7 @@ cf_cc_library(
     name = "libmetrics_utils",
     srcs = ["utils.cc"],
     hdrs = ["utils.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/libs/metrics:metrics_headers",
-        "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
-        "//cuttlefish/host/libs/web/http_client:curl_http_client",
-        "//cuttlefish/host/libs/web/http_client:http_string",
-        "//libbase",
-        "@gflags",
-    ],
+    deps = ["//libbase"],
 )
 
 cf_cc_test(
@@ -72,5 +64,20 @@ cf_cc_test(
         ":libmetrics_utils",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "send",
+    srcs = ["send.cc"],
+    hdrs = ["send.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web/http_client:curl_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
+        "//libbase",
     ],
 )
