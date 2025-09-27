@@ -48,20 +48,6 @@ Timestamp MillisToTimestamp(uint64_t millis) {
   return timestamp;
 }
 
-CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
-  CuttlefishLogEvent cf_event;
-  cf_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
-  cf_event.set_session_id(GenerateSessionId(now_ms));
-
-  if (!GetCfVersion().empty()) {
-    cf_event.set_cuttlefish_version(GetCfVersion());
-  }
-
-  *cf_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
-
-  return cf_event;
-}
-
 MetricsEvent::OsType GetOsType() {
   struct utsname buf;
   if (uname(&buf) != 0) {
@@ -138,6 +124,20 @@ int SendEvent(MetricsEvent::EventType event_type, VmmMode vmm_mode) {
 }
 
 }  // namespace
+
+CuttlefishLogEvent BuildCfLogEvent(uint64_t now_ms) {
+  CuttlefishLogEvent cf_event;
+  cf_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
+  cf_event.set_session_id(GenerateSessionId(now_ms));
+
+  if (!GetCfVersion().empty()) {
+    cf_event.set_cuttlefish_version(GetCfVersion());
+  }
+
+  *cf_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
+
+  return cf_event;
+}
 
 int SendVMStart(VmmMode vmm_mode) {
   return SendEvent(MetricsEvent::CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION,
