@@ -1,0 +1,35 @@
+name: Update Stable Tag
+
+on: [pull_request, push]
+  # TODO CJR: change event trigger away from test
+  #release:
+  #  types: [released]
+
+permissions:
+  contents: write
+  actions: write
+
+# TODO CJR: s/test_chad/stable
+jobs:
+  update-stable-tag:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        # TODO CJR: why does fetch-tags not seem to pull the tag 
+        #   unless fetch-depth is set?
+        fetch-depth: 0
+        fetch-tags: true
+        sparse-checkout:
+    # TODO CJR: do not think we need this step if using github.ref
+    # correct, remove this after testing
+    - name: Determine build to mark
+       # returns in reverse chronological order by default
+      run:  echo "STABLE=$(git rev-list --tags --max-count=1)" >> $GITHUB_ENV
+    - name: Delete current, local stable tag
+      run:  git tag -d test_chad
+    - name: Create new stable tag
+      run: git tag test_chad $STABLE # TODO CJR use this for final version ${{ github.ref }}
+    - name: Force push to overwrite current stable
+      run: git push -f --tags
