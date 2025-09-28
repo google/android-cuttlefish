@@ -18,12 +18,43 @@
 #pragma once
 
 #include <stdint.h>
+#include <map>
+
+#include <android-base/unique_fd.h>
 
 #include <wayland-server-core.h>
 
 namespace wayland {
 
+struct DmabufPlane {
+  android::base::unique_fd fd;
+  uint32_t plane = 0;
+  uint32_t offset = 0;
+  uint32_t stride = 0;
+  uint32_t modifier_hi = 0;
+  uint32_t modifier_lo = 0;
+};
+
+struct DmabufParams {
+  DmabufParams() = default;
+
+  DmabufParams(const DmabufParams& rhs) = delete;
+  DmabufParams& operator=(const DmabufParams& rhs) = delete;
+
+  std::map<int32_t, DmabufPlane> planes;
+};
+
+struct Dmabuf {
+  uint32_t width = 0;
+  uint32_t height = 0;
+  uint32_t format = 0;
+  uint32_t flags = 0;
+  DmabufParams* params;
+};
+
 // Binds the dmabuf interface to the given wayland server.
 void BindDmabufInterface(wl_display* display);
+
+bool IsDmabufResource(struct wl_resource* resource);
 
 }  // namespace wayland
