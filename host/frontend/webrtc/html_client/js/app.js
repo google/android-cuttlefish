@@ -334,8 +334,8 @@ class DeviceControlApp {
     createSelectListener('display-spec-preset-select', () => this.#updateDisplaySpecFrom());
     createButtonListener('display-add-confirm', null, this.#deviceConnection, evt => this.#onDisplayAdditionConfirm(evt));
 
-    createButtonListener('display-remove-modal-confirm',null,this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('confirm'));
-    createButtonListener('display-remove-modal-cancel',null,this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('cancel'));
+    createButtonListener('display-remove-modal-confirm', null, this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('confirm'));
+    createButtonListener('display-remove-modal-cancel', null, this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('cancel'));
 
     if (this.#deviceConnection.description.custom_control_panel_buttons.length >
         0) {
@@ -684,11 +684,11 @@ class DeviceControlApp {
     this.#deviceConnection.sendControlMessage(JSON.stringify(message));
   }
 
-  #handleDisplayRemovalModalAction(action){
+  #handleDisplayRemovalModalAction(action) {
     const removeModalElement = document.getElementById('display-remove-modal');
     const removeDisplayId = removeModalElement.dataset.removal_display_id;
     let removeButtonId = removeDisplayId + '_remove_button';
-    if(action === 'confirm'){
+    if (action === 'confirm') {
       this.#removeDisplay(removeDisplayId);
     } else {
       // Clear the dataset on cancel.

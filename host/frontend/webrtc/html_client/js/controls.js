@@ -260,7 +260,7 @@ function positionModal(button_id, modal_id) {
   modalDiv.style.left = modalButton.offsetWidth + 30;
 }
 
-function showModal(button_id,modal_id) {
+function showModal(button_id, modal_id) {
   const modalButton = document.getElementById(button_id);
   const modalDiv = document.getElementById(modal_id);
 
@@ -268,7 +268,7 @@ function showModal(button_id,modal_id) {
   modalDiv.style.display = 'block';
 }
 
-function hideModal(button_id,hide_id){
+function hideModal(button_id, hide_id) {
   const modalButton = document.getElementById(button_id);
   const modalDivHide = document.getElementById(hide_id);
 
@@ -286,20 +286,20 @@ function createModalButton(button_id, modal_id, close_id, hide_id) {
 
   // Allow the show modal button to toggle the modal,
   modalButton.addEventListener('click', evt => {
-    if(modalDiv.style.display != 'block'){
-      showModal(button_id,modal_id);
-    }else{
-      hideModal(button_id,modal_id);
+    if (modalDiv.style.display != 'block') {
+      showModal(button_id, modal_id);
+    } else {
+      hideModal(button_id, modal_id);
     }
 
     if (hide_id != null) {
-      hideModal(button_id,hide_id);
+      hideModal(button_id, hide_id);
     }
   });
 
   // but the close button always closes.
-  if(modalClose){
-    modalClose.addEventListener('click', evt => hideModal(button_id,modal_id));
+  if (modalClose) {
+    modalClose.addEventListener('click', evt => hideModal(button_id, modal_id));
   }
 
   // Allow the modal to be dragged by the header.
