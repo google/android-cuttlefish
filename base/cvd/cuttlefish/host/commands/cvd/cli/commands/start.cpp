@@ -299,9 +299,9 @@ class CvdStartCommandHandler : public CvdCommandHandler {
 Result<void> CvdStartCommandHandler::AcloudCompatActions(
     const LocalInstanceGroup& group, const cvd_common::Envs& envs,
     const CommandRequest& request) {
-  // rm -fr "InstanceLocksPath()/local-instance-<i>"
+  // rm -fr "AcloudInstanceLocksPath()/local-instance-<i>"
   std::string acloud_compat_home_prefix =
-      InstanceLocksPath() + "/local-instance-";
+      AcloudInstanceLocksPath() + "/local-instance-";
   std::vector<std::string> acloud_compat_homes;
   acloud_compat_homes.reserve(group.Instances().size());
   for (const auto& instance : group.Instances()) {

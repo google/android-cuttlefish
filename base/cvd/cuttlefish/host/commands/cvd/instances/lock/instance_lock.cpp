@@ -63,11 +63,13 @@ bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
   return lock_file_ < other.lock_file_;
 }
 
-InstanceLockFileManager::InstanceLockFileManager() {}
+InstanceLockFileManager::InstanceLockFileManager(
+    std::string_view instance_locks_path)
+    : instance_locks_path_(instance_locks_path) {};
 
 Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   std::stringstream path;
-  path << InstanceLocksPath();
+  path << instance_locks_path_;
   CF_EXPECT(EnsureDirectoryExists(path.str()));
   path << "local-instance-" << instance_num << ".lock";
   return path.str();
