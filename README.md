@@ -20,6 +20,30 @@ Google Compute Engine
 * `cuttlefish-common` - [DEPRECATED] Provided for compatibility only, it's a
 metapackage that depends on `cuttlefish-base` and `cuttlefish-user`
 
+### Download from Artifact Registry
+
+To register the apt repository on Artifact Registry, please execute command
+below.
+
+```bash
+sudo curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg \
+    -o /etc/apt/trusted.gpg.d/artifact-registry.asc
+sudo chmod a+r /etc/apt/trusted.gpg.d/artifact-registry.asc
+echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts android-cuttlefish main" \
+    | sudo tee -a /etc/apt/sources.list.d/artifact-registry.list
+sudo apt update
+```
+
+Afterwards, debian packages are available to download via `apt install`. Noting
+that only `cuttlefish-base`, `cuttlefish-user`, and `cuttlefish-orchestration`
+are deployed to Artifact Registry.
+
+```bash
+sudo apt install cuttlefish-base cuttlefish-user cuttlefish-orchestration
+```
+
+### Build and install manually
+
 The packages can be built with the following script:
 
 ```bash
