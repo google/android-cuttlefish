@@ -24,7 +24,6 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <grpcpp/support/status_code_enum.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
