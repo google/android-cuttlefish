@@ -37,11 +37,12 @@ std::string GenerateFilenameSuffix() {
 
 }  // namespace
 
-Result<void> WriteMetricsEvent(const std::string& metrics_directory,
+Result<void> WriteMetricsEvent(std::string_view event_type,
+                               const std::string& metrics_directory,
                                std::string_view session_id,
                                const HostInfo& host_metrics) {
   const std::string event_filepath =
-      fmt::format("{}/vm-instantiation_{}_{}", metrics_directory,
+      fmt::format("{}/{}_{}_{}", metrics_directory, event_type,
                   std::chrono::system_clock::now(), GenerateFilenameSuffix());
   // TODO: chadreynolds - convert (what will be a proto) to text
   CF_EXPECT(WriteNewFile(

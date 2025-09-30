@@ -25,7 +25,8 @@
 namespace cuttlefish {
 
 // TODO: chadreynolds - add support for more fields than HostInfo
-Result<void> WriteMetricsEvent(const std::string& metrics_directory,
+Result<void> WriteMetricsEvent(std::string_view event_type,
+                               const std::string& metrics_directory,
                                std::string_view session_id,
                                const HostInfo& host_metrics);
 

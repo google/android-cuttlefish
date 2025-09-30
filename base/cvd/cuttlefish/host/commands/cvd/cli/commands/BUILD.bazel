@@ -425,6 +425,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:clientanalytics_cc_proto",
         "//libbase",
@@ -471,6 +472,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//libbase",
     ],
 )
