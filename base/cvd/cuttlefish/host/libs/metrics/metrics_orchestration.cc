@@ -51,15 +51,32 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> GatherMetrics(const std::string& metrics_directory) {
+Result<void> GatherAndWriteMetrics(std::string_view event_type,
+                                   const std::string& metrics_directory) {
   const std::string session_id =
       CF_EXPECT(ReadSessionIdFile(metrics_directory));
   HostInfo host_metrics = GetHostInfo();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   // TODO: chadreynolds - convert data to the proto representation
-  CF_EXPECT(WriteMetricsEvent(metrics_directory, session_id, host_metrics));
+  CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, session_id,
+                              host_metrics));
   // TODO: chadreynolds - if <TBD> condition, transmit metrics event as well
   return {};
+}
+
+void RunMetrics(const std::string& metrics_directory,
+                std::string_view event_type) {
+  if (!FileExists(metrics_directory)) {
+    LOG(INFO) << "Metrics directory does not exist, perhaps metrics were not "
+                 "initialized.";
+    return;
+  }
+  Result<void> event_result =
+      GatherAndWriteMetrics(event_type, metrics_directory);
+  if (!event_result.ok()) {
+    LOG(INFO) << fmt::format("Failed to gather metrics for {}.  Error: {}",
+                             event_type, event_result.error());
+  }
 }
 
 }  // namespace
@@ -74,12 +91,25 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                               metrics_setup_result.error());
     return;
   }
-  Result<void> event_result = GatherMetrics(metrics_directory);
-  if (!event_result.ok()) {
-    LOG(ERROR) << fmt::format(
-        "Failed to gather device instantiation metrics.  Error: {}",
-        event_result.error());
-  }
+  RunMetrics(metrics_directory, "device instantiation");
+}
+
+void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
+  const std::string metrics_directory =
+      GetMetricsDirectoryFilepath(instance_group);
+  RunMetrics(metrics_directory, "device start");
+}
+
+void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
+  const std::string metrics_directory =
+      GetMetricsDirectoryFilepath(instance_group);
+  RunMetrics(metrics_directory, "device boot complete");
+}
+
+void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
+  const std::string metrics_directory =
+      GetMetricsDirectoryFilepath(instance_group);
+  RunMetrics(metrics_directory, "device stop");
 }
 
 }  // namespace cuttlefish

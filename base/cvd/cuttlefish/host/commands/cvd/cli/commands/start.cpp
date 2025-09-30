@@ -73,6 +73,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/clientanalytics.pb.h"
 
@@ -639,6 +640,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
+    GatherVmStartMetrics(group);
     uint64_t now_ms = metrics::GetEpochTimeMs();
     CuttlefishLogEvent cf_log_event = metrics::BuildCfLogEvent(now_ms);
     cf_log_event.mutable_metrics_event_v2();
@@ -668,6 +670,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
     CF_EXPECT(CvdResetGroup(group));
   }
   CF_EXPECT(CheckProcessExitedNormally(infop));
+  GatherVmBootCompleteMetrics(group);
   return {};
 }
 

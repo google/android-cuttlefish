@@ -39,6 +39,7 @@
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
 namespace cuttlefish {
 namespace {
@@ -137,6 +138,8 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
     group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   }
+
+  GatherVmStopMetrics(group);
 
   CF_EXPECT(std::move(stop_outcome));
   return {};
