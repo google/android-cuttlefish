@@ -9,13 +9,8 @@ Currently it's available for x86_64 and ARM64 architectures.
 Currently docker image is available to download from Artifact Registry.
 Please run command below to download latest version of docker image.
 
-Also, please choose one location among `us`, `europe`, or `asia`.
-It's available to download artifacts from any location, but download latency is
-different based on your location.
-
 ```bash
-DOWNLOAD_LOCATION=us # Choose one among us, europe, or asia.
-docker pull $DOWNLOAD_LOCATION-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration
+docker pull us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable
 ```
 
 ## Use docker image with Cloud Orchestrator
