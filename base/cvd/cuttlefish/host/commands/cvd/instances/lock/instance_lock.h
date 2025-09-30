@@ -47,7 +47,7 @@ class InstanceLockFileManager {
   using LockFileManager = cvd_impl::LockFileManager;
 
  public:
-  InstanceLockFileManager();
+  InstanceLockFileManager(std::string_view instance_locks_path);
 
   Result<InstanceLockFile> AcquireLock(int instance_num);
   Result<std::set<InstanceLockFile>> AcquireLocks(const std::set<int>& nums);
@@ -71,7 +71,8 @@ class InstanceLockFileManager {
    * Generate value to initialize
    */
   Result<std::set<int>> FindPotentialInstanceNumsFromNetDevices();
-  static Result<std::string> LockFilePath(int instance_num);
+  Result<std::string> LockFilePath(int instance_num);
+  std::string_view instance_locks_path_;
   std::optional<std::set<int>> all_instance_nums_;
   LockFileManager lock_file_manager_;
 };

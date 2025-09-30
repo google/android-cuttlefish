@@ -84,6 +84,7 @@ std::string PerUserCacheDir();
 
 std::string InstanceDatabasePath();
 
+std::string AcloudInstanceLocksPath();
 std::string InstanceLocksPath();
 
 Result<std::string> GroupDirFromHome(std::string_view group_home_dir);

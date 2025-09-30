@@ -26,6 +26,7 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_format.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -166,7 +167,11 @@ std::string InstanceDatabasePath() {
   return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
 
-std::string InstanceLocksPath() { return "/tmp/acloud_cvd_temp/"; }
+std::string AcloudInstanceLocksPath() { return "/tmp/acloud_cvd_temp/"; }
+
+std::string InstanceLocksPath() {
+  return absl::StrFormat("%s/%s/", CvdDir(), "lock");
+}
 
 Result<std::string> GroupDirFromHome(std::string_view dir) {
   std::string per_user_dir = PerUserDir();
