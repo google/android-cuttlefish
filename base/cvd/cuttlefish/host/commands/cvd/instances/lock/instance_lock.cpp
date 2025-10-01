@@ -64,8 +64,8 @@ bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
 }
 
 InstanceLockFileManager::InstanceLockFileManager(
-    std::string_view instance_locks_path)
-    : instance_locks_path_(instance_locks_path) {};
+    std::string instance_locks_path)
+    : instance_locks_path_(std::move(instance_locks_path)) {};
 
 Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   std::stringstream path;
