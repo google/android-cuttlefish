@@ -39,10 +39,6 @@ class Cvd {
       const std::vector<std::string>& all_args,
       const std::unordered_map<std::string, std::string>& env);
 
-  Result<void> HandleAcloud(
-    const std::vector<std::string>& args,
-    const std::unordered_map<std::string, std::string>& env);
-
  private:
   InstanceManager& instance_manager_;
   InstanceLockFileManager& lock_file_manager_;
