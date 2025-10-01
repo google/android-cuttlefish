@@ -27,6 +27,11 @@ PRODUCT_ENFORCE_RRO_TARGETS := frameworks-res
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := true
 
 #
+# Allow audio tracks and Audio HAL streams to run in real time priority
+#
+PRODUCT_PRODUCT_PROPERTIES += ro.audio.track_realtime_priority=1
+
+#
 # All components inherited here go to system_ext image
 #
 $(call inherit-product, packages/services/Car/car_product/build/car_system_ext.mk)
