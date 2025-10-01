@@ -52,5 +52,5 @@ message InstanceGroup {
 
 message PersistentData {
   repeated InstanceGroup instance_groups = 1;
-  bool acloud_translator_optout = 2;
+  reserved 2;  // bool acloud_translator_optout
 }

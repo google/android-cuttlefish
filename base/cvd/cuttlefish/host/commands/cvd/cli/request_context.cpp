@@ -27,9 +27,6 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/acloud_command.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/acloud_mixsuperimage.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/acloud_translator.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
@@ -55,7 +52,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/status.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/stop.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/try_acloud.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/version.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
@@ -89,9 +85,6 @@ std::vector<std::string> GetPossibleCommands(
 RequestContext::RequestContext(InstanceManager& instance_manager,
                                InstanceLockFileManager& lock_file_manager)
     : command_sequence_executor_(this->request_handlers_) {
-  request_handlers_.emplace_back(NewAcloudCommand(command_sequence_executor_));
-  request_handlers_.emplace_back(NewAcloudMixSuperImageCommand());
-  request_handlers_.emplace_back(NewAcloudTranslatorCommand(instance_manager));
   request_handlers_.emplace_back(NewCvdCacheCommandHandler());
   request_handlers_.emplace_back(
       NewCvdCmdlistHandler(command_sequence_executor_));
@@ -124,7 +117,6 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       NewCvdSnapshotCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewTryAcloudCommand());
   request_handlers_.emplace_back(NewCvdVersionHandler());
   request_handlers_.emplace_back(NewCvdNoopHandler());
 }
