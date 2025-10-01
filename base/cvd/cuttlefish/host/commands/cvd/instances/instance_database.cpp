@@ -286,19 +286,4 @@ Result<void> InstanceDatabase::LoadFromJson(const Json::Value& db_json) {
       });
 }
 
-Result<void> InstanceDatabase::SetAcloudTranslatorOptout(bool optout) {
-  return viewer_.WithExclusiveLock<void>(
-      [optout](cvd::PersistentData& data) -> Result<void> {
-        data.set_acloud_translator_optout(optout);
-        return {};
-      });
-}
-
-Result<bool> InstanceDatabase::GetAcloudTranslatorOptout() const {
-  return viewer_.WithSharedLock<bool>(
-      [](const cvd::PersistentData& data) -> Result<bool> {
-        return data.acloud_translator_optout();
-      });
-}
-
 }  // namespace cuttlefish

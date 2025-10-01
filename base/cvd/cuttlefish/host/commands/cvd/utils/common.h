@@ -50,7 +50,6 @@ constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
 // kAndroidHostOut for old branches
 constexpr char kAndroidSoongHostOut[] = "ANDROID_SOONG_HOST_OUT";
 constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
-constexpr char kLaunchedByAcloud[] = "LAUNCHED_BY_ACLOUD";
 
 template <typename Ostream, typename... Args>
 Ostream& ConcatToStream(Ostream& out, Args&&... args) {
@@ -84,7 +83,6 @@ std::string PerUserCacheDir();
 
 std::string InstanceDatabasePath();
 
-std::string AcloudInstanceLocksPath();
 std::string InstanceLocksPath();
 
 Result<std::string> GroupDirFromHome(std::string_view group_home_dir);

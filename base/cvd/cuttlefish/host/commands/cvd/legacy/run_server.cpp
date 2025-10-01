@@ -43,8 +43,6 @@ inline constexpr char kInternalCarryoverClientFd[] =
     "INTERNAL_carryover_client_fd";
 inline constexpr char kInternalMemoryCarryoverFd[] =
     "INTERNAL_memory_carryover_fd";
-inline constexpr char kInternalAcloudTranslatorOptOut[] =
-    "INTERNAL_acloud_translator_optout";
 inline constexpr char kInternalRestartedInProcess[] =
     "INTERNAL_restarted_in_process";
 
@@ -52,7 +50,6 @@ struct ParseResult {
   SharedFD internal_server_fd;
   SharedFD carryover_client_fd;
   std::optional<SharedFD> memory_carryover_fd;
-  std::optional<bool> acloud_translator_optout;
   std::optional<android::base::LogSeverity> verbosity_level;
   bool restarted_in_process;
 };
@@ -75,20 +72,6 @@ Result<ParseResult> ParseIfServer(std::vector<std::string>& all_args) {
   flags.emplace_back(GflagsCompatFlag(kInternalRestartedInProcess,
                                       result.restarted_in_process));
   CF_EXPECT(ConsumeFlags(flags, all_args));
-
-  // now the flags above consumed their lexical tokens from all_args
-  // For now, the default value of acloud_translator_optout is false
-  // In the future, it might be determined by the server if not given.
-  const auto all_args_size_before = all_args.size();
-  bool acloud_translator_optout_value = true;
-  flags.emplace_back(GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
-                                      acloud_translator_optout_value));
-  CF_EXPECT(ConsumeFlags({GflagsCompatFlag(kInternalAcloudTranslatorOptOut,
-                                           acloud_translator_optout_value)},
-                         all_args));
-  if (all_args.size() != all_args_size_before) {
-    result.acloud_translator_optout = acloud_translator_optout_value;
-  }
 
   if (memory_carryover_fd->IsOpen()) {
     result.memory_carryover_fd = std::move(memory_carryover_fd);
@@ -127,12 +110,6 @@ Result<void> ImportResourcesImpl(const ParseResult& param) {
     auto json = CF_EXPECT(ParseJson(json_string));
     CF_EXPECTF(instance_database.LoadFromJson(json), "Failed to load from: {}",
                json_string);
-  }
-  if (param.acloud_translator_optout) {
-    LOG(VERBOSE) << "Acloud translation optout: "
-                 << param.acloud_translator_optout.value();
-    CF_EXPECT(instance_database.SetAcloudTranslatorOptout(
-        param.acloud_translator_optout.value()));
   }
   return {};
 }

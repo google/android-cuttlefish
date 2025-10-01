@@ -74,15 +74,6 @@ InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
                                  InstanceDatabase& instance_db)
     : lock_manager_(lock_manager), instance_db_(instance_db) {}
 
-Result<void> InstanceManager::SetAcloudTranslatorOptout(bool optout) {
-  CF_EXPECT(instance_db_.SetAcloudTranslatorOptout(optout));
-  return {};
-}
-
-Result<bool> InstanceManager::GetAcloudTranslatorOptout() const {
-  return CF_EXPECT(instance_db_.GetAcloudTranslatorOptout());
-}
-
 Result<std::pair<LocalInstance, LocalInstanceGroup>>
 InstanceManager::FindInstanceWithGroup(
     const InstanceDatabase::Filter& filter) const {

@@ -6,8 +6,6 @@ package(
 
 exports_files([
     ".clang-tidy",
-    "acloud_command.cpp",
-    "acloud_command.h",
     "cmd_list.cpp",
     "cmd_list.h",
     "create.cpp",
@@ -17,50 +15,6 @@ exports_files([
     "load_configs.cpp",
     "load_configs.h",
 ])
-
-cf_cc_library(
-    name = "acloud_common",
-    srcs = ["acloud_common.cpp"],
-    hdrs = ["acloud_common.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "@fmt",
-    ],
-)
-
-cf_cc_library(
-    name = "acloud_mixsuperimage",
-    srcs = ["acloud_mixsuperimage.cpp"],
-    hdrs = ["acloud_mixsuperimage.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/host/libs/config:config_utils",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
-    name = "acloud_translator",
-    srcs = ["acloud_translator.cpp"],
-    hdrs = ["acloud_translator.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/host/commands/cvd/instances",
-    ],
-)
 
 cf_cc_library(
     name = "bugreport",
@@ -465,23 +419,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
-    name = "try_acloud",
-    srcs = ["try_acloud.cpp"],
-    hdrs = ["try_acloud.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/host/commands/cvd/acloud",
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli/commands:acloud_common",
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//libbase",
     ],
 )

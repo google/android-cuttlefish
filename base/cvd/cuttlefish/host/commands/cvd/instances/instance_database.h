@@ -53,10 +53,6 @@ class InstanceDatabase {
 
   Result<void> LoadFromJson(const Json::Value&);
 
-  Result<void> SetAcloudTranslatorOptout(bool optout);
-
-  Result<bool> GetAcloudTranslatorOptout() const;
-
   /** Adds instance group.
    *
    * A new group name will be generated one is not provided.
