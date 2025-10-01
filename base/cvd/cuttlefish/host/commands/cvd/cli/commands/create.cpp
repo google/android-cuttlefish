@@ -46,7 +46,6 @@
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/acloud_common.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
@@ -142,7 +141,6 @@ struct CreateFlags {
   bool start;
   std::string config_file;
   bool acquire_file_locks;
-  bool prepare_for_acloud_delete;
 };
 
 Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
@@ -153,7 +151,6 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
       .start = true,
       .config_file = "",
       .acquire_file_locks = GetAcquireFileLockEnvValue(envs).value_or(true),
-      .prepare_for_acloud_delete = false,
   };
   std::vector<Flag> flags = {
       GflagsCompatFlag("host_path", flag_values.host_path),
@@ -161,8 +158,6 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
       GflagsCompatFlag("start", flag_values.start),
       GflagsCompatFlag("config_file", flag_values.config_file),
       GflagsCompatFlag(kAcquireFileLock, flag_values.acquire_file_locks),
-      GflagsCompatFlag("internal_prepare_for_acloud_delete",
-                       flag_values.prepare_for_acloud_delete),
   };
   CF_EXPECT(ConsumeFlags(flags, args));
   return flag_values;
@@ -418,16 +413,6 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
         LOG(ERROR) << "Failed to create symlinks for default group: "
                    << symlink_res.error().FormatForEnv();
       }
-    }
-  }
-
-  if (flags.prepare_for_acloud_delete) {
-    Result<void> prepare_delete_result =
-        PrepareForAcloudDeleteCommand(group.HostArtifactsPath());
-    if (!prepare_delete_result.ok()) {
-      LOG(ERROR) << prepare_delete_result.error().FormatForEnv();
-      LOG(WARNING) << "Failed to prepare for execution of `acloud delete`, use "
-                      "`cvd rm` instead";
     }
   }
 

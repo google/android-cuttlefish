@@ -36,27 +36,6 @@
 
 namespace cuttlefish {
 
-namespace {
-[[noreturn]] void CallPythonAcloud(std::vector<std::string>& args) {
-  auto android_top = StringFromEnv("ANDROID_BUILD_TOP", "");
-  CHECK(!android_top.empty())
-      << "Could not find android environment. Please run "
-      << "\"source build/envsetup.sh\".";
-  // TODO(b/206893146): Detect what the platform actually is.
-  auto py_acloud_path =
-      android_top + "/prebuilts/asuite/acloud/linux-x86/acloud";
-  std::unique_ptr<char*[]> new_argv(new char*[args.size() + 1]);
-  for (size_t i = 0; i < args.size(); i++) {
-    new_argv[i] = args[i].data();
-  }
-  new_argv[args.size()] = nullptr;
-  execv(py_acloud_path.data(), new_argv.get());
-  PLOG(FATAL) << "execv(" << py_acloud_path << ", ...) failed";
-  abort();
-}
-
-}  // namespace
-
 Cvd::Cvd(InstanceManager& instance_manager,
          InstanceLockFileManager& lock_file_manager)
     : instance_manager_(instance_manager),
@@ -97,24 +76,6 @@ Result<void> Cvd::HandleCvdCommand(
   std::vector<std::string> selector_args = CF_EXPECT(ExtractCvdArgs(args));
   // TODO(schuffelen): Deduplicate cvd process split.
   CF_EXPECT(HandleCommand(args, env, selector_args));
-  return {};
-}
-
-Result<void> Cvd::HandleAcloud(
-    const std::vector<std::string>& args,
-    const std::unordered_map<std::string, std::string>& env) {
-  std::vector<std::string> args_copy{args};
-  args_copy[0] = "try-acloud";
-
-  Result<void> attempt = HandleCommand(args_copy, env, {});
-  if (!attempt.ok()) {
-    CallPythonAcloud(args_copy);
-    // no return
-  }
-
-  args_copy[0] = "acloud";
-  CF_EXPECT(HandleCommand(args_copy, env, {}));
-
   return {};
 }
 

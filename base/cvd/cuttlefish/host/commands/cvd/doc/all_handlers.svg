@@ -38,19 +38,6 @@
 <polygon fill="black" stroke="black" points="284.57,-381.41 294.6,-384.83 288.89,-375.9 284.57,-381.41"/>
 <text text-anchor="middle" x="156.59" y="-274.8" font-family="Times,serif" font-size="14.00">AF_UNIX</text>
 </g>
-<!-- acloud -->
-<g id="node30" class="node">
-<title>acloud</title>
-<ellipse fill="none" stroke="black" cx="1443.45" cy="-18" rx="66.89" ry="18"/>
-<text text-anchor="middle" x="1443.45" y="-14.3" font-family="Times,serif" font-size="14.00">acloud (python)</text>
-</g>
-<!-- CvdClient&#45;&gt;acloud -->
-<g id="edge2" class="edge">
-<title>CvdClient&#45;&gt;acloud</title>
-<path fill="none" stroke="black" d="M107.5,-33.15C157.78,-26.94 242.86,-18 316.33,-18 316.33,-18 316.33,-18 1143.27,-18 1219.13,-18 1305.81,-18 1366.28,-18"/>
-<polygon fill="black" stroke="black" points="1366.5,-21.5 1376.5,-18 1366.5,-14.5 1366.5,-21.5"/>
-<text text-anchor="middle" x="665.46" y="-21.8" font-family="Times,serif" font-size="14.00">fork/exec</text>
-</g>
 <!-- CvdCommandHandler -->
 <g id="node3" class="node">
 <title>CvdCommandHandler</title>
@@ -62,18 +49,6 @@
 <title>CvdServer&#45;&gt;CvdCommandHandler</title>
 <path fill="none" stroke="black" d="M358.12,-391.29C392.14,-382.99 441.71,-370.9 481.06,-361.3"/>
 <polygon fill="black" stroke="black" points="481.95,-364.68 490.84,-358.91 480.29,-357.88 481.95,-364.68"/>
-</g>
-<!-- AcloudMixSuperImageCommand -->
-<g id="node5" class="node">
-<title>AcloudMixSuperImageCommand</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-209" rx="131.88" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-205.3" font-family="Times,serif" font-size="14.00">AcloudMixSuperImageCommand</text>
-</g>
-<!-- CvdCommandHandler&#45;&gt;AcloudMixSuperImageCommand -->
-<g id="edge7" class="edge">
-<title>CvdCommandHandler&#45;&gt;AcloudMixSuperImageCommand</title>
-<path fill="none" stroke="black" d="M600.82,-333.64C632.46,-326.94 673.03,-319.03 709.46,-314 771.94,-305.38 942.81,-330.06 992.33,-291 1012.53,-275.07 991.15,-253.13 1010.33,-236 1015.45,-231.43 1021.13,-227.55 1027.18,-224.28"/>
-<polygon fill="black" stroke="black" points="1028.8,-227.38 1036.28,-219.89 1025.75,-221.08 1028.8,-227.38"/>
 </g>
 <!-- CvdFetchCommandHandler -->
 <g id="node6" class="node">
@@ -171,42 +146,6 @@
 <path fill="none" stroke="black" d="M572.33,-329.11C590.62,-318.1 615.79,-304.14 639.46,-295 738.45,-256.79 957.51,-268.96 973.33,-256 1019.15,-218.48 966.86,-168.21 1010.33,-128 1021.94,-117.27 1036.63,-110.34 1051.95,-105.94"/>
 <polygon fill="black" stroke="black" points="1053.23,-109.23 1062.08,-103.41 1051.53,-102.44 1053.23,-109.23"/>
 </g>
-<!-- TryAcloudCommand -->
-<g id="node14" class="node">
-<title>TryAcloudCommand</title>
-<ellipse fill="none" stroke="black" cx="1142.27" cy="-155" rx="87.18" ry="18"/>
-<text text-anchor="middle" x="1142.27" y="-151.3" font-family="Times,serif" font-size="14.00">TryAcloudCommand</text>
-</g>
-<!-- CvdCommandHandler&#45;&gt;TryAcloudCommand -->
-<g id="edge4" class="edge">
-<title>CvdCommandHandler&#45;&gt;TryAcloudCommand</title>
-<path fill="none" stroke="black" d="M584.58,-330.56C601.29,-324.27 621.16,-317.25 639.46,-312 670.04,-303.22 678,-301.8 709.46,-297 771.86,-287.48 945.36,-313.17 992.33,-271 1022.37,-244.04 981.85,-210.59 1010.33,-182 1020.29,-172.01 1032.89,-165.24 1046.32,-160.73"/>
-<polygon fill="black" stroke="black" points="1047.62,-164 1056.23,-157.82 1045.65,-157.28 1047.62,-164"/>
-</g>
-<!-- AcloudCommand -->
-<g id="node15" class="node">
-<title>AcloudCommand</title>
-<ellipse fill="none" stroke="black" cx="841.4" cy="-591" rx="74.19" ry="18"/>
-<text text-anchor="middle" x="841.4" y="-587.3" font-family="Times,serif" font-size="14.00">AcloudCommand</text>
-</g>
-<!-- CvdCommandHandler&#45;&gt;AcloudCommand -->
-<g id="edge6" class="edge">
-<title>CvdCommandHandler&#45;&gt;AcloudCommand</title>
-<path fill="none" stroke="black" d="M556.85,-364.08C572.92,-389.33 604.59,-435.68 639.46,-468 659.71,-486.77 675.03,-479.8 691.46,-502 708.53,-525.06 688.38,-544.53 709.46,-564 722.69,-576.23 739.94,-583.52 757.55,-587.75"/>
-<polygon fill="black" stroke="black" points="756.84,-591.18 767.35,-589.79 758.27,-584.32 756.84,-591.18"/>
-</g>
-<!-- AcloudTranslatorCommand -->
-<g id="node16" class="node">
-<title>AcloudTranslatorCommand</title>
-<ellipse fill="none" stroke="black" cx="841.4" cy="-537" rx="110.48" ry="18"/>
-<text text-anchor="middle" x="841.4" y="-533.3" font-family="Times,serif" font-size="14.00">AcloudTranslatorCommand</text>
-</g>
-<!-- CvdCommandHandler&#45;&gt;AcloudTranslatorCommand -->
-<g id="edge5" class="edge">
-<title>CvdCommandHandler&#45;&gt;AcloudTranslatorCommand</title>
-<path fill="none" stroke="black" d="M556.79,-364.14C572.34,-388.25 602.92,-430.62 639.46,-455 659.68,-468.49 673.21,-455.93 691.46,-472 705.48,-484.35 694.76,-498.46 709.46,-510 717.11,-516.01 725.77,-520.78 734.9,-524.55"/>
-<polygon fill="black" stroke="black" points="733.97,-527.94 744.56,-528.12 736.4,-521.37 733.97,-527.94"/>
-</g>
 <!-- CvdCommandHandlerProxy -->
 <g id="node17" class="node">
 <title>CvdCommandHandlerProxy</title>
@@ -278,18 +217,6 @@
 <title>CommandSequenceExecutor&#45;&gt;CvdCommandHandler</title>
 <path fill="none" stroke="black" d="M363.14,-279.5C400.55,-293.27 453.86,-312.9 492.87,-327.26"/>
 <polygon fill="black" stroke="black" points="491.87,-330.62 502.46,-330.79 494.28,-324.05 491.87,-330.62"/>
-</g>
-<!-- CommandSequenceExecutor&#45;&gt;AcloudCommand -->
-<g id="edge22" class="edge">
-<title>CommandSequenceExecutor&#45;&gt;AcloudCommand</title>
-<path fill="none" stroke="black" d="M348.5,-287.39C373.06,-308.41 407.42,-340.55 431.07,-374 453.46,-405.65 440.56,-425.68 468.07,-453 552.45,-536.79 692.17,-570.32 774.33,-583.28"/>
-<polygon fill="black" stroke="black" points="350.47,-284.48 340.57,-280.71 345.96,-289.83 350.47,-284.48"/>
-</g>
-<!-- CommandSequenceExecutor&#45;&gt;AcloudTranslatorCommand -->
-<g id="edge21" class="edge">
-<title>CommandSequenceExecutor&#45;&gt;AcloudTranslatorCommand</title>
-<path fill="none" stroke="black" d="M345.08,-287.97C368.37,-310.03 402.76,-343.38 431.07,-374 448.42,-392.76 447.21,-403.24 468.07,-418 554.67,-479.25 593.31,-461.78 691.46,-502 699.56,-505.32 701.12,-507.32 709.46,-510 726.81,-515.57 745.83,-520.27 763.86,-524.1"/>
-<polygon fill="black" stroke="black" points="347.3,-285.25 337.63,-280.94 342.5,-290.34 347.3,-285.25"/>
 </g>
 <!-- CommandSequenceExecutor&#45;&gt;CvdCommandHandlerProxy -->
 <g id="edge23" class="edge">
