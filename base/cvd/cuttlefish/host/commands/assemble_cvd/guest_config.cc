@@ -26,9 +26,9 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
-#include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"

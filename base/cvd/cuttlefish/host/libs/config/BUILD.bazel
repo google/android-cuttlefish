@@ -56,10 +56,10 @@ cf_cc_library(
     srcs = ["config_utils.cpp"],
     hdrs = ["config_utils.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/common/libs/utils:subprocess",
@@ -97,11 +97,11 @@ cf_cc_library(
     ],
     hdrs = ["cuttlefish_config.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:device_type",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flags_validator",
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
@@ -125,8 +125,8 @@ cf_cc_library(
     hdrs = ["data_image.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
@@ -162,8 +162,8 @@ cf_cc_library(
     hdrs = ["esp.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:architecture",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
@@ -255,7 +255,7 @@ cf_cc_library(
     srcs = ["kernel_args.cpp"],
     hdrs = ["kernel_args.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:architecture",
+        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:vmm_mode",
     ],

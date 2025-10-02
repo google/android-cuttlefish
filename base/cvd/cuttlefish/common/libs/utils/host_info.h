@@ -28,10 +28,25 @@ enum class Arch {
   X86_64,
 };
 
+enum class Os {
+  Linux,
+  Unknown,
+};
+
+struct HostInfo {
+  Arch arch;
+  Os os;
+  std::string release;
+
+  std::string to_string() const;
+};
+
 const std::string& HostArchStr();
 Arch HostArch();
 bool IsHostCompatible(Arch arch);
+HostInfo GetHostInfo();
 
 std::ostream& operator<<(std::ostream&, Arch);
+std::ostream& operator<<(std::ostream&, Os);
 
 }  // namespace cuttlefish

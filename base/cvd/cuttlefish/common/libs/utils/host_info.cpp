@@ -14,33 +14,41 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 
-#include <string.h>
 #include <sys/utsname.h>
 
 #include <cstdlib>
+#include <cstring>
 #include <ostream>
+#include <sstream>
 #include <string>
+#include <string_view>
 
 #include <android-base/logging.h>
 #include <android-base/no_destructor.h>
 #include <android-base/strings.h>
 
 namespace cuttlefish {
+namespace {
 
-/** Returns e.g. aarch64, x86_64, etc */
-const std::string& HostArchStr() {
-  static android::base::NoDestructor<std::string> arch([] {
-    utsname buf;
-    CHECK_EQ(uname(&buf), 0) << strerror(errno);
-    return std::string(buf.machine);
-  }());
-  return *arch;
+struct HostUname {
+  std::string arch;
+  std::string os;
+  std::string release;
+};
+
+HostUname GetHostUname() {
+  utsname out;
+  CHECK_EQ(uname(&out), 0) << strerror(errno);
+  return HostUname{
+      .arch = std::string(out.machine),
+      .os = std::string(out.sysname),
+      .release = std::string(out.release),
+  };
 }
 
-Arch HostArch() {
-  std::string arch_str = HostArchStr();
+Arch HostArch(std::string_view arch_str) {
   if (arch_str == "aarch64" || arch_str == "arm64") {
     return Arch::Arm64;
   } else if (arch_str == "arm") {
@@ -56,6 +64,33 @@ Arch HostArch() {
     LOG(FATAL) << "Unknown host architecture: " << arch_str;
     return Arch::X86;
   }
+}
+
+Os HostOs(std::string_view os_str) {
+  if (os_str == "GNU/Linux") {
+    return Os::Linux;
+  }
+  return Os::Unknown;
+}
+
+}  // namespace
+
+/** Returns e.g. aarch64, x86_64, etc */
+const std::string& HostArchStr() {
+  static android::base::NoDestructor<std::string> arch(
+      [] { return GetHostUname().arch; }());
+  return *arch;
+}
+
+Arch HostArch() { return HostArch(GetHostUname().arch); }
+
+HostInfo GetHostInfo() {
+  const HostUname host_uname = GetHostUname();
+  return HostInfo{
+      .arch = HostArch(host_uname.arch),
+      .os = HostOs(host_uname.os),
+      .release = host_uname.release,
+  };
 }
 
 bool IsHostCompatible(Arch arch) {
@@ -77,6 +112,23 @@ std::ostream& operator<<(std::ostream& out, Arch arch) {
     case Arch::X86_64:
       return out << "x86_64";
   }
+}
+
+std::ostream& operator<<(std::ostream& out, Os arch) {
+  switch (arch) {
+    case Os::Linux:
+      return out << "GNU/Linux";
+    case Os::Unknown:
+      return out << "unknown";
+  }
+}
+
+std::string HostInfo::to_string() const {
+  std::stringstream result;
+  result << "arch:" << this->arch << "\n";
+  result << "os:" << this->os << "\n";
+  result << "release:" << this->release << "\n";
+  return result.str();
 }
 
 }  // namespace cuttlefish

@@ -34,8 +34,8 @@
 #include <json/json.h>
 #include <vulkan/vulkan.h>
 
-#include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
