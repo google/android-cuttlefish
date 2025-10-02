@@ -257,6 +257,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "random",
+    srcs = [
+        "random.cpp",
+    ],
+    hdrs = [
+        "random.h",
+    ],
+)
+
+cf_cc_library(
     name = "result",
     srcs = [
         "result.cpp",

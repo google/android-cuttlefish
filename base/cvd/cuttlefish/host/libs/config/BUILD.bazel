@@ -61,6 +61,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",

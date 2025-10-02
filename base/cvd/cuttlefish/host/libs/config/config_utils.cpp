@@ -16,9 +16,6 @@
 
 #include "cuttlefish/host/libs/config/config_utils.h"
 
-#include <string.h>
-#include <time.h>
-
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
@@ -32,6 +29,7 @@
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
+#include "cuttlefish/common/libs/utils/random.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 
@@ -100,13 +98,8 @@ std::string ForCurrentInstance(const char* prefix) {
 }
 
 std::string RandomSerialNumber(const std::string& prefix) {
-  const char hex_characters[] = "0123456789ABCDEF";
-  std::srand(time(0));
-  char str[10];
-  for(int i=0; i<10; i++){
-    str[i] = hex_characters[rand() % strlen(hex_characters)];
-  }
-  return prefix + str;
+  const std::string hex_characters = "0123456789ABCDEF";
+  return prefix + GenerateRandomString(hex_characters, 10);
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
