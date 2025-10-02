@@ -215,18 +215,29 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "device_google_cuttlefish_shared_config_media_files",
+    name: "device_google_cuttlefish_shared_config_media_codecs",
     defaults: ["cuttlefish_config_general_files_defaults"],
     srcs: [
         "media_codecs.xml",
         "media_codecs_google_video.xml",
         "media_codecs_performance.xml",
-        "media_profiles.xml",
     ],
     dsts: [
         "media_codecs.xml",
         "media_codecs_google_video.xml",
         "media_codecs_performance.xml",
+    ],
+    vendor: true,
+}
+
+prebuilt_etc {
+    name: "device_google_cuttlefish_shared_config_media_profiles",
+    defaults: ["cuttlefish_config_general_files_defaults"],
+    srcs: select(soong_config_variable("ANDROID", "board_is_automotive"), {
+        true: ["media_profiles_automotive.xml"],
+        default: ["media_profiles.xml"],
+    }),
+    dsts: [
         "media_profiles_V1_0.xml",
     ],
     vendor: true,

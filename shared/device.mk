@@ -228,7 +228,8 @@ $(call soong_config_set_bool,cuttlefish_config,use_general_files,true)
 PRODUCT_PACKAGES += \
     device_google_cuttlefish_shared_config_init_vendor_rc \
     device_google_cuttlefish_shared_config_init_product_rc \
-    device_google_cuttlefish_shared_config_media_files \
+    device_google_cuttlefish_shared_config_media_codecs \
+    device_google_cuttlefish_shared_config_media_profiles \
     device_google_cuttlefish_shared_config_media_profiles_vendor \
     device_google_cuttlefish_shared_config_seriallogging_rc \
     device_google_cuttlefish_shared_config_ueventd_rc \
