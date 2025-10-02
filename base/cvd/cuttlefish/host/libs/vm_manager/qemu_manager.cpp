@@ -34,8 +34,8 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
-#include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"

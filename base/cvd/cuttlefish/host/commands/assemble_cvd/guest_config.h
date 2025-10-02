@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/architecture.h"
 #include "cuttlefish/common/libs/utils/device_type.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"

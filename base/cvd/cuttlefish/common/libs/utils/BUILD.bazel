@@ -5,15 +5,6 @@ package(
 )
 
 cf_cc_library(
-    name = "architecture",
-    srcs = ["architecture.cpp"],
-    hdrs = ["architecture.h"],
-    deps = [
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
     name = "archive",
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
@@ -170,6 +161,15 @@ cf_cc_library(
     hdrs = ["flags_validator.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+cf_cc_library(
+    name = "host_info",
+    srcs = ["host_info.cpp"],
+    hdrs = ["host_info.h"],
+    deps = [
+        "//libbase",
     ],
 )
 

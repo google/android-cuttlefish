@@ -22,7 +22,7 @@
 
 #include <fruit/fruit.h>
 
-#include "cuttlefish/common/libs/utils/architecture.h"
+#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
