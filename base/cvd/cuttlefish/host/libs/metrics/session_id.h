@@ -16,16 +16,15 @@
 
 #pragma once
 
-#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include <string>
+#include <string_view>
+
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group);
+Result<std::string> ReadSessionIdFile(const std::string& metrics_directory);
 
-void GatherVmStartMetrics(const LocalInstanceGroup& instance_group);
-
-void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group);
-
-void GatherVmStopMetrics(const LocalInstanceGroup& instance_group);
+Result<void> GenerateSessionIdFile(const std::string& metrics_directory);
 
 }  // namespace cuttlefish
