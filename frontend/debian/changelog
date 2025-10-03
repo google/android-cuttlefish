@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.27.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.27.0) unstable; urgency=medium
 
-  *
+  * No changes.
 
- -- Alistair Delva <adelva@google.com>  Thu, 25 Sep 2025 14:28:32 -0700
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 20:23:38 +0100
 
 cuttlefish-frontend (1.26.0) unstable; urgency=medium
 

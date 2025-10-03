@@ -1,8 +1,18 @@
-cuttlefish-common (1.27.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.27.0) unstable; urgency=medium
 
-  *
+  * Add and use flag wrapper template class by @cjreynol in https://github.com/google/android-cuttlefish/pull/1680
+  * alloc_utils and cvdalloc use string_view. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1681
+  * Remove allocd. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1682
+  * Add `cvd screen_recording list|start|stop` command by @jemoreira in https://github.com/google/android-cuttlefish/pull/1679
+  * Talk about bridge names symbolically. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1688
+  * Send the new metrics proto from `cvd start` by @Databean in https://github.com/google/android-cuttlefish/pull/1690
+  * Remove unnecessary include by @jemoreira in https://github.com/google/android-cuttlefish/pull/1695
+  * Put locks in CvdDir when invoked as cvd. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1692
+  * Minor code formatting for display-remove modal by @asasui-2 in https://github.com/google/android-cuttlefish/pull/1696
+  * Fix a lifetime issue. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1698
+  * Initial metrics gather by @cjreynol in https://github.com/google/android-cuttlefish/pull/1685
 
- -- Alistair Delva <adelva@google.com>  Thu, 25 Sep 2025 14:28:21 -0700
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 20:03:54 +0100
 
 cuttlefish-common (1.26.0) unstable; urgency=medium
 
