@@ -57,13 +57,6 @@ prebuilt_etc {
 }
 
 prebuilt_etc {
-    name: "android.hardware.bluetooth.socket-service.lpp.xml",
-    src: ":manifest_android.hardware.bluetooth.socket-service.lpp.xml",
-    sub_dir: "vintf",
-    installable: false,
-}
-
-prebuilt_etc {
     name: "android.hardware.bluetooth.gatt-service.default.xml",
     src: ":manifest_android.hardware.bluetooth.gatt-service.default.xml",
     sub_dir: "vintf",
@@ -79,7 +72,6 @@ bt_binaries_default = [
 ]
 
 bt_binaries_lpp = bt_binaries_default + [
-    "android.hardware.bluetooth.socket-service.lpp",
     "android.hardware.bluetooth.gatt-service.default",
 ]
 
@@ -97,7 +89,6 @@ bt_prebuilts_default = [
 ]
 
 bt_prebuilts_lpp = bt_prebuilts_default + [
-    "android.hardware.bluetooth.socket-service.lpp.xml",
     "android.hardware.bluetooth.gatt-service.default.xml",
     "com.google.cf.bt.lpp.rc",
 ]
