@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
 #include <errno.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -62,27 +61,15 @@
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
-#include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
-#include "cuttlefish/host/commands/metrics/clearcut_protos.h"
-#include "cuttlefish/host/commands/metrics/events.h"
-#include "cuttlefish/host/commands/metrics/send.h"
-#include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
-#include "external_proto/cf_log.pb.h"
-#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 namespace {
-
-using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
-using wireless_android_play_playlog::LogEvent;
-using wireless_android_play_playlog::LogRequest;
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
   std::size_t initial_size = args.size();
@@ -631,28 +618,13 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
+  // TODO CJR: is this message specific to metrics?
   LOG(INFO)
       << "By using this Android Virtual Device, you agree to Google Terms of "
          "Service (https://policies.google.com/terms). The Google Privacy "
          "Policy (https://policies.google.com/privacy) describes how Google "
          "handles information generated as you use Google services.";
-  if (kEnableCvdMetrics) {
-    LOG(INFO) << "This will automatically send diagnostic information to "
-                 "Google, such as crash reports and usage data from the host "
-                 "machine managing the Android Virtual Device.";
-    GatherVmStartMetrics(group);
-    uint64_t now_ms = metrics::GetEpochTimeMs();
-    CuttlefishLogEvent cf_log_event = metrics::BuildCfLogEvent(now_ms);
-    cf_log_event.mutable_metrics_event_v2();
-    LogEvent log_event = metrics::BuildLogEvent(now_ms, cf_log_event);
-    LogRequest log_request =
-        metrics::BuildLogRequest(now_ms, std::move(log_event));
-    int reporting_outcome = metrics::PostRequest(
-        log_request.SerializeAsString(), metrics::ClearcutServer::kProd);
-    if (reporting_outcome != MetricsExitCodes::kSuccess) {
-      LOG(ERROR) << "Issue reporting metrics: " << reporting_outcome;
-    }
-  }
+  GatherVmStartMetrics(group);
 
   auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
   if (!acloud_compat_action_result.ok()) {
