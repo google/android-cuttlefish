@@ -40,6 +40,9 @@
     },
     {
       "name": "CtsScopedStorageRedactUriTest"
+    },
+    {
+      "name": "CtsAppSearchTestCases"
     }
   ],
   "auto-presubmit": [
