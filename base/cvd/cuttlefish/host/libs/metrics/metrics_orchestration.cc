@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
+#include <cstdint>
 #include <string>
 
 #include <android-base/logging.h>
@@ -25,11 +26,23 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
+#include "cuttlefish/host/commands/metrics/clearcut_protos.h"
+#include "cuttlefish/host/commands/metrics/events.h"
+#include "cuttlefish/host/commands/metrics/send.h"
+#include "cuttlefish/host/commands/metrics/utils.h"
+#include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
+#include "external_proto/cf_log.pb.h"
+#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 namespace {
+
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
+using wireless_android_play_playlog::LogEvent;
+using wireless_android_play_playlog::LogRequest;
 
 constexpr char kReadmeText[] =
     "The existence of records in this directory does"
@@ -51,6 +64,20 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
+Result<void> TransmitMetrics() {
+  uint64_t now_ms = metrics::GetEpochTimeMs();
+  CuttlefishLogEvent cf_log_event = metrics::BuildCfLogEvent(now_ms);
+  cf_log_event.mutable_metrics_event_v2();
+  LogEvent log_event = metrics::BuildLogEvent(now_ms, cf_log_event);
+  LogRequest log_request =
+      metrics::BuildLogRequest(now_ms, std::move(log_event));
+  int reporting_outcome = metrics::PostRequest(log_request.SerializeAsString(),
+                                               metrics::ClearcutServer::kProd);
+  CF_EXPECTF(reporting_outcome != MetricsExitCodes::kSuccess,
+             "Issue reporting metrics: {}", reporting_outcome);
+  return {};
+}
+
 Result<void> GatherAndWriteMetrics(std::string_view event_type,
                                    const std::string& metrics_directory) {
   const std::string session_id =
@@ -60,7 +87,12 @@ Result<void> GatherAndWriteMetrics(std::string_view event_type,
   // TODO: chadreynolds - convert data to the proto representation
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, session_id,
                               host_metrics));
-  // TODO: chadreynolds - if <TBD> condition, transmit metrics event as well
+  if (kEnableCvdMetrics) {
+    LOG(INFO) << "This will automatically send diagnostic information to "
+                 "Google, such as crash reports and usage data from the host "
+                 "machine managing the Android Virtual Device.";
+    CF_EXPECT(TransmitMetrics());
+  }
   return {};
 }
 
