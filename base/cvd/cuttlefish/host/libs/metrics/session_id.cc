@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/metrics/session_id.h"
 
 #include <string>
-#include <string_view>
 
 #include <uuid/uuid.h>
 
