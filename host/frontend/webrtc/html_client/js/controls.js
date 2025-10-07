@@ -329,6 +329,20 @@ function createModalButton(button_id, modal_id, close_id, hide_id) {
   });
 }
 
+function setDisplaysToSingleRow() {
+  const controlsAndDisplays = document.getElementById('controls-and-displays');
+
+  controlsAndDisplays.classList.remove('vertical-stacking');
+  controlsAndDisplays.classList.add('single-row');
+}
+
+function setDisplaysToVerticalStack() {
+  const controlsAndDisplays = document.getElementById('controls-and-displays');
+
+  controlsAndDisplays.classList.remove('single-row');
+  controlsAndDisplays.classList.add('vertical-stacking');
+}
+
 function cmdConsole(consoleViewName, consoleInputName) {
   let consoleView = document.getElementById(consoleViewName);
 

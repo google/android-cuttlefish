@@ -333,7 +333,8 @@ class DeviceControlApp {
 
     createSelectListener('display-spec-preset-select', () => this.#updateDisplaySpecFrom());
     createButtonListener('display-add-confirm', null, this.#deviceConnection, evt => this.#onDisplayAdditionConfirm(evt));
-
+    createButtonListener('display-single-row-button', null, this.#deviceConnection, evt => setDisplaysToVerticalStack(evt));
+    createButtonListener('display-vertical-stacking-button', null, this.#deviceConnection, evt => setDisplaysToSingleRow(evt));
     createButtonListener('display-remove-modal-confirm', null, this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('confirm'));
     createButtonListener('display-remove-modal-cancel', null, this.#deviceConnection, () => this.#handleDisplayRemovalModalAction('cancel'));
 
@@ -1009,6 +1010,17 @@ class DeviceControlApp {
           deviceDisplays.removeChild(deviceDisplay);
         }
       }
+    }
+
+    const displayVideos = deviceDisplays.querySelectorAll('.device-display-video');
+    const controlsAndDisplays = document.getElementById('controls-and-displays');
+    if (displayVideos.length <= 1) {
+      controlsAndDisplays.classList.remove('multiple-displays');
+
+      // When there is one display, the alignment mode becomes 'single-row'.
+      setDisplaysToSingleRow();
+    } else {
+      controlsAndDisplays.classList.add('multiple-displays');
     }
 
     this.#updateDeviceDisplaysInfo();
