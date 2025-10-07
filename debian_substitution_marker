@@ -211,6 +211,11 @@ symlinks: {
 }
 
 symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/webRTC"
+  link_name: "bin/webRTC"
+}
+
+symlinks: {
   target: "/usr/lib/cuttlefish-common/etc/default_input_devices/keyboard.json"
   link_name: "etc/default_input_devices/keyboard.json"
 }
