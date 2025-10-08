@@ -162,6 +162,29 @@ button{
   display: flex;
 }
 
+/*
+ * Add a layout class to #controls-and-displays.
+ * This enables managing both the display layout status,
+ * and the layout button state.
+ */
+.single-row #device-displays {
+  flex-direction: row;
+}
+.single-row .device-display-video {
+  max-height: 100%;
+}
+.single-row.multiple-displays #display-single-row-button {
+  display: block;
+}
+.vertical-stacking #device-displays {
+  flex-wrap: wrap;
+}
+.vertical-stacking .device-display-video {
+  max-height: 80vh;
+}
+.vertical-stacking.multiple-displays #display-vertical-stacking-button {
+  display: block;
+}
 #controls-and-displays > div {
   margin-left: 5px;
   margin-right: 5px;
@@ -278,9 +301,15 @@ button{
 .location-button {
   text-align: center;
 }
-#display-add-modal-button {
+
+.display-control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 10px;
   margin-right: 10px;
+}
+#display-add-modal-button {
   height: 40px;
   font-size: 32px;
   color: var(--button-fg);
@@ -290,6 +319,16 @@ button{
 #display-add-modal-button.modal-button-opened {
   background-color: var(--modal-bg);
 }
+
+#layout-toggle-button-container button {
+  display: none;
+  height: 40px;
+  font-size: 32px;
+  color: var(--button-fg);
+  border-radius: 10px;
+  background-color: var(--modal-bg);
+}
+
 .display-spec-form {
   margin: 16px 0px;
   display: flex;
@@ -364,7 +403,6 @@ button{
   /* Allows child elements to be positioned relative to this element. */
   position: relative;
   display: flex;
-  flex-direction: row;
   /* Don't show an outline when using the keyboard */
   outline: 0px solid transparent;
 }
@@ -378,7 +416,6 @@ button{
   position: relative;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
   margin: 10px;
   visibility: hidden;
 }
@@ -419,11 +456,9 @@ button{
 .device-display-video {
   position: relative;
   max-width: 100%;
-  max-height: 100%;
   touch-action: none;
   border: var(--display-border);
 }
-
 #touchpad-modal {
   /* Disable select to avoid weird behavior when dragging mouse while
   interacting with touchpads */

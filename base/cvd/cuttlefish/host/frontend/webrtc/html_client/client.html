@@ -21,6 +21,7 @@
         <link rel="stylesheet" type="text/css" href="custom.css" >
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Symbols">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     </head>
     <body>
@@ -31,7 +32,7 @@
         </h3>
       </div>
       <section id="device-connection">
-        <div id='controls-and-displays'>
+        <div id='controls-and-displays' class='single-row'>
           <div id='control-panel-default-buttons' class='control-panel-column'>
             <button id='power_btn' title='Power' disabled='true' class='material-icons'>power_settings_new</button>
             <button id='bluetooth-modal-button' title='Bluetooth console' class='material-icons'>
@@ -62,7 +63,13 @@
             <div id='device-displays' tabindex="-1">
             </div>
           </div>
-          <button id='display-add-modal-button' title='Add display' class='material-icons'>add_to_queue</button>
+          <div class='display-control-buttons'>
+            <button id='display-add-modal-button' title='Add display' class='material-icons'>add_to_queue</button>
+            <div id='layout-toggle-button-container'>
+              <button id='display-single-row-button' title='Switch to Stacking' class='google-symbols'>flex_no_wrap</button>
+              <button id='display-vertical-stacking-button' title='Switch to Single Row' class='google-symbols'>flex_direction</button>
+            </div>
+          </div>
         </div>
         <!-- Audio tags of id with a prefix of "device-audio" will be inserted here dynamically
         based on the number of audio streams.-->
