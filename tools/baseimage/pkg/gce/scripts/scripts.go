@@ -176,7 +176,7 @@ const InstallCuttlefishPackages = `#!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail
 
 if [[ $# -eq 0 ]] ; then
-  echo "usage: $0 /path/to/zip"
+  echo "usage: $0 /path/to/deb1 /path/to/deb2 /path/to/deb3"
   exit 1
 fi
 
@@ -189,20 +189,15 @@ echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
-# Unzip
-sudo apt install -y unzip
 rm -rf /mnt/image/tmp/install
-unzip -d /mnt/image/tmp/install $1
-
-readonly PKG_NAMES=("cuttlefish-base" "cuttlefish-user" "cuttlefish-orchestration")
+mkdir /mnt/image/tmp/install
 
 # Install packages
-for name in "${PKG_NAMES[@]}"; do
-  path=("/mnt/image/tmp/install/${name}"*.deb)
-  path="${path[0]}"
-  name=$(basename "${path}")
-  echo "Installing: ${name}"
-
+for src in "$@"
+do
+  echo "Installing: ${src}"
+  name=$(basename "${src}")
+  cp "${src}" "/mnt/image/tmp/install/${name}"
   sudo chroot /mnt/image /usr/bin/apt install -y "/tmp/install/${name}"
 done
 
