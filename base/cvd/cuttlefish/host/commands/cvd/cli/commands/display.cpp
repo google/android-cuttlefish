@@ -55,6 +55,8 @@ Commands:
     add                 Adds a new display to a given device.
     list                Prints the currently connected displays.
     remove              Removes a display from a given device.
+    screenshot --display=<id> --screenshot_path=<path>
+                        Captures a screenshot of the given display.
 )";
 
 class CvdDisplayCommandHandler : public CvdCommandHandler {
