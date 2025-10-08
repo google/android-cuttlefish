@@ -172,6 +172,19 @@ chmod a+x NVIDIA-Linux-${nvidia_arch}-${nvidia_version}.run
 NVIDIA-Linux-${nvidia_arch}-${nvidia_version}/nvidia-installer --silent --no-install-compat32-libs --no-backup --no-wine-files --install-libglvnd --dkms -k "${kmodver}"
 `
 
+const FillAvailableDiskSpace = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+sudo apt update
+
+sudo apt install -y cloud-utils
+sudo apt install -y cloud-guest-utils
+sudo apt install -y fdisk
+sudo growpart /dev/sdb 1 || /bin/true
+sudo e2fsck -f -y /dev/sdb1 || /bin/true
+sudo resize2fs /dev/sdb1
+`
+
 const InstallCuttlefishPackages = `#!/usr/bin/env bash
 set -o errexit -o nounset -o pipefail
 
@@ -179,6 +192,8 @@ if [[ $# -eq 0 ]] ; then
   echo "usage: $0 /path/to/deb1 /path/to/deb2 /path/to/deb3"
   exit 1
 fi
+
+./fill_available_disk_space.sh
 
 ./mount_attached_disk.sh
 

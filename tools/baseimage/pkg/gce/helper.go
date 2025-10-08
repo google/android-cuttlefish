@@ -44,10 +44,15 @@ func NewGceHelper(project, zone string) (*GceHelper, error) {
 	}, nil
 }
 
-func (h *GceHelper) CreateDisk(sourceImageProject, sourceImage, name string) (*compute.Disk, error) {
+type CreateDiskOpts struct {
+	SizeGb int64
+}
+
+func (h *GceHelper) CreateDisk(sourceImageProject, sourceImage, name string, opts CreateDiskOpts) (*compute.Disk, error) {
 	payload := &compute.Disk{
 		Name:        name,
 		SourceImage: fmt.Sprintf("projects/%s/global/images/%s", sourceImageProject, sourceImage),
+		SizeGb:      opts.SizeGb,
 	}
 	op, err := h.Service.Disks.Insert(h.Project, h.Zone, payload).Do()
 	if err != nil {
