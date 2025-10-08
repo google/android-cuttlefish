@@ -24,6 +24,9 @@ case "$1" in
     then
         addgroup --system kvm
     fi
+
+    setcap cap_net_admin,cap_net_bind_service,cap_net_raw=+ep \
+        /usr/lib/cuttlefish-common/bin/cvdalloc
     ;;
 esac
 
