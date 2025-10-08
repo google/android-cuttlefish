@@ -71,7 +71,7 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 		}
 	}()
 	log.Println("creating disk...")
-	disk, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName)
+	disk, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName, gce.CreateDiskOpts{})
 	if err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}

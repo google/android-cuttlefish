@@ -82,6 +82,7 @@ func installCuttlefishDebs(project, zone, insName string, debSrcs []string) erro
 		dstname string
 		content string
 	}{
+		{"fill_available_disk_space.sh", scripts.FillAvailableDiskSpace},
 		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
 		{"install.sh", scripts.InstallCuttlefishPackages},
 	}
@@ -133,7 +134,9 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 
 	log.Println("creating disk...")
-	_, err = h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName)
+	createDiskOpts := gce.CreateDiskOpts{SizeGb: 32}
+	_, err = h.CreateDisk(
+		opts.SourceImageProject, opts.SourceImage, attachedDiskName, createDiskOpts)
 	if err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}

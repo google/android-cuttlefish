@@ -70,7 +70,7 @@ func createImageMain(project, zone, linuxImageDeb string) error {
 		}
 	}()
 	log.Println("creating disk...")
-	disk, err := h.CreateDisk(debianSourceImageProject, debianSourceImage, attachedDiskName)
+	disk, err := h.CreateDisk(debianSourceImageProject, debianSourceImage, attachedDiskName, gce.CreateDiskOpts{})
 	if err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}
