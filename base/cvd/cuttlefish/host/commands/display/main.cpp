@@ -25,6 +25,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
@@ -207,6 +208,8 @@ Result<int> DoScreenshot(std::vector<std::string>& args) {
   }
   CF_EXPECT(!screenshot_path.empty(),
             "Must provide --screenshot_path. Usage:" << kScreenshotUsage);
+
+  screenshot_path = AbsolutePath(screenshot_path);
 
   run_cvd::ExtendedLauncherAction extended_action;
   extended_action.mutable_screenshot_display()->set_display_number(
