@@ -18,7 +18,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
@@ -29,24 +32,51 @@ const (
 	outImageName = "amended-image"
 )
 
-var (
-	project                    = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                       = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	source_image_project       = flag.String("source-image-project", "", "Source image GCP project")
-	source_image               = flag.String("source-image", "", "Source image name")
-	cuttlefish_debs_zip_source = flag.String("cuttlefish-debs-zip-source", "", "Local path to zip file containing cuttlefish debian packages")
-)
-
-type amendImageOpts struct {
-	SourceImageProject      string
-	SourceImage             string
-	CuttlefishDebsZipSource string
+type DebSrcsFlag struct {
+	Srcs []string
 }
 
-func installCuttlefishDebs(project, zone, insName, zipSrc string) error {
-	dstSrc := "/tmp/" + filepath.Base(zipSrc)
-	if err := gce.UploadFile(project, zone, insName, zipSrc, dstSrc); err != nil {
-		return fmt.Errorf("error uploading %s: %v", zipSrc, err)
+func (v *DebSrcsFlag) String() string {
+	return strings.Join(v.Srcs, " ")
+}
+
+func (v *DebSrcsFlag) Set(s string) error {
+	_, err := os.Stat(s)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
+	if !slices.Contains(v.Srcs, s) {
+		v.Srcs = append(v.Srcs, s)
+	}
+	return nil
+}
+
+var (
+	project              = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
+	zone                 = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
+	source_image         = flag.String("source-image", "", "Source image name")
+	deb_srcs             = DebSrcsFlag{}
+)
+
+func init() {
+	flag.Var(&deb_srcs, "deb", "local path to debian package")
+}
+
+type amendImageOpts struct {
+	SourceImageProject string
+	SourceImage        string
+	DebSrcs            []string
+}
+
+func installCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
+	dstSrcs := []string{}
+	for _, src := range debSrcs {
+		dst := "/tmp/" + filepath.Base(src)
+		dstSrcs = append(dstSrcs, dst)
+		if err := gce.UploadFile(project, zone, insName, src, dst); err != nil {
+			return fmt.Errorf("error uploading %s: %v", src, err)
+		}
 	}
 	list := []struct {
 		dstname string
@@ -60,7 +90,8 @@ func installCuttlefishDebs(project, zone, insName, zipSrc string) error {
 			return fmt.Errorf("error uploading bash script: %v", err)
 		}
 	}
-	if err := gce.RunCmd(project, zone, insName, "./install.sh "+dstSrc); err != nil {
+	args := strings.Join(dstSrcs, " ")
+	if err := gce.RunCmd(project, zone, insName, "./install.sh "+args); err != nil {
 		return err
 	}
 	return nil
@@ -128,7 +159,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 
-	if err := installCuttlefishDebs(project, zone, insName, opts.CuttlefishDebsZipSource); err != nil {
+	if err := installCuttlefishDebs(project, zone, insName, opts.DebSrcs); err != nil {
 		return fmt.Errorf("install cuttlefish debs error: %v", err)
 	}
 
@@ -155,6 +186,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 }
 
 func main() {
+
 	flag.Parse()
 
 	if *project == "" {
@@ -169,14 +201,14 @@ func main() {
 	if *source_image == "" {
 		log.Fatal("usage: `-source_image` must not be empty")
 	}
-	if *cuttlefish_debs_zip_source == "" {
-		log.Fatal("usage: `-cuttlefish-debs-zip-source` must not be empty")
+	if len(deb_srcs.Srcs) == 0 {
+		log.Fatal("usage: `-deb` must not be empty")
 	}
 
 	opts := amendImageOpts{
-		SourceImageProject:      *source_image_project,
-		SourceImage:             *source_image,
-		CuttlefishDebsZipSource: *cuttlefish_debs_zip_source,
+		SourceImageProject: *source_image_project,
+		SourceImage:        *source_image,
+		DebSrcs:            deb_srcs.Srcs,
 	}
 	if err := amendImageMain(*project, *zone, opts); err != nil {
 		log.Fatal(err)
