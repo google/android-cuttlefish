@@ -35,6 +35,10 @@ PRODUCT_VENDOR_PROPERTIES += \
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish # for audio, wifi and sensors
 
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
+DISABLE_RILD_OEM_HOOK := true
+# For customize cflags for libril share library building by soong.
+$(call soong_config_set,ril,disable_rild_oem_hook,true)
+
 PRODUCT_SET_DEBUGFS_RESTRICTIONS := true
 
 PRODUCT_FS_COMPRESSION := 1
