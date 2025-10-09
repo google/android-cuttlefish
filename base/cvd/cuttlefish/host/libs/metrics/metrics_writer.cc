@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/random.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/metrics/event_type.h"
 
 namespace cuttlefish {
 namespace {
@@ -37,12 +38,12 @@ std::string GenerateFilenameSuffix() {
 
 }  // namespace
 
-Result<void> WriteMetricsEvent(std::string_view event_type,
+Result<void> WriteMetricsEvent(EventType event_type,
                                const std::string& metrics_directory,
                                std::string_view session_id,
                                const HostInfo& host_metrics) {
   const std::string event_filepath =
-      fmt::format("{}/{}_{}_{}", metrics_directory, event_type,
+      fmt::format("{}/{}_{}_{}", metrics_directory, EventTypeString(event_type),
                   std::chrono::system_clock::now(), GenerateFilenameSuffix());
   // TODO: chadreynolds - convert (what will be a proto) to text
   CF_EXPECT(WriteNewFile(

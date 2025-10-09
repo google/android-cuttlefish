@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "cuttlefish/host/libs/metrics/event_type.h"
 
 #include <string>
-#include <string_view>
-
-#include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
 
 namespace cuttlefish {
 
-Result<void> WriteMetricsEvent(EventType event_type,
-                               const std::string& metrics_directory,
-                               std::string_view session_id,
-                               const HostInfo& host_metrics);
+std::string EventTypeString(EventType event_type) {
+  switch (event_type) {
+    case EventType::DeviceInstantiation:
+      return "device_instantiation";
+    case EventType::DeviceBootStart:
+      return "device_boot_start";
+    case EventType::DeviceBootComplete:
+      return "device_boot_complete";
+    case EventType::DeviceStop:
+      return "device_stop";
+  }
+}
 
 }  // namespace cuttlefish
