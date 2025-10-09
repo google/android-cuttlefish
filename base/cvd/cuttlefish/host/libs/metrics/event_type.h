@@ -17,17 +17,16 @@
 #pragma once
 
 #include <string>
-#include <string_view>
-
-#include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
 
 namespace cuttlefish {
 
-Result<void> WriteMetricsEvent(EventType event_type,
-                               const std::string& metrics_directory,
-                               std::string_view session_id,
-                               const HostInfo& host_metrics);
+enum class EventType {
+  DeviceInstantiation,
+  DeviceBootStart,
+  DeviceBootComplete,
+  DeviceStop,
+};
+
+std::string EventTypeString(EventType event_type);
 
 }  // namespace cuttlefish

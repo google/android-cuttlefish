@@ -31,16 +31,25 @@
 #include "cuttlefish/host/commands/metrics/events.h"
 #include "cuttlefish/host/commands/metrics/send.h"
 #include "cuttlefish/host/commands/metrics/utils.h"
+#include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
+#include "external_proto/cf_guest.pb.h"
+#include "external_proto/cf_host.pb.h"
 #include "external_proto/cf_log.pb.h"
+#include "external_proto/cf_metrics_event_v2.pb.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 namespace {
 
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
+using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
+using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest_EventType;
+using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
+using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
+using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
 
@@ -64,10 +73,72 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> TransmitMetrics() {
+CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
+  switch (event_type) {
+    case EventType::DeviceInstantiation:
+      return CuttlefishGuest_EventType::
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_INSTANTIATION;
+    case EventType::DeviceBootStart:
+      return CuttlefishGuest_EventType::
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_UNSPECIFIED;
+    case EventType::DeviceBootComplete:
+      return CuttlefishGuest_EventType::
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_COMPLETED;
+    case EventType::DeviceStop:
+      return CuttlefishGuest_EventType::
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_STOP;
+  }
+}
+
+CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
+  switch (host_info.os) {
+    case Os::Unknown:
+      return CuttlefishHost_OsType::
+          CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_UNSPECIFIED;
+    case Os::Linux:
+      switch (host_info.arch) {
+        case Arch::Arm:
+          return CuttlefishHost_OsType::
+              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_AARCH32;
+        case Arch::Arm64:
+          return CuttlefishHost_OsType::
+              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_AARCH64;
+        case Arch::RiscV64:
+          return CuttlefishHost_OsType::
+              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_RISCV64;
+        case Arch::X86:
+          return CuttlefishHost_OsType::
+              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_X86;
+        case Arch::X86_64:
+          return CuttlefishHost_OsType::
+              CuttlefishHost_OsType_CUTTLEFISH_HOST_OS_TYPE_LINUX_X86_64;
+      }
+  }
+}
+
+// TODO: chadreynolds - move this logic into a separate file dedicated to
+// conversion logic
+void PopulateMetricsEvent(EventType event_type,
+                          CuttlefishLogEvent& cf_log_event,
+                          const HostInfo& host_metrics,
+                          std::string_view session_id) {
+  cf_log_event.set_session_id(session_id);
+  MetricsEventV2* metrics_event = cf_log_event.mutable_metrics_event_v2();
+
+  CuttlefishGuest* guest = metrics_event->add_guest();
+  guest->set_event_type(ConvertEventType(event_type));
+  guest->set_guest_id(std::string(session_id) + "1");
+
+  CuttlefishHost* host = metrics_event->mutable_host();
+  host->set_host_os(ConvertHostOs(host_metrics));
+  host->set_host_os_version(host_metrics.release);
+}
+
+Result<void> TransmitMetrics(EventType event_type, const HostInfo& host_metrics,
+                             std::string_view session_id) {
   uint64_t now_ms = metrics::GetEpochTimeMs();
   CuttlefishLogEvent cf_log_event = metrics::BuildCfLogEvent(now_ms);
-  cf_log_event.mutable_metrics_event_v2();
+  PopulateMetricsEvent(event_type, cf_log_event, host_metrics, session_id);
   LogEvent log_event = metrics::BuildLogEvent(now_ms, cf_log_event);
   LogRequest log_request =
       metrics::BuildLogRequest(now_ms, std::move(log_event));
@@ -78,11 +149,11 @@ Result<void> TransmitMetrics() {
   return {};
 }
 
-Result<void> GatherAndWriteMetrics(std::string_view event_type,
+Result<void> GatherAndWriteMetrics(EventType event_type,
                                    const std::string& metrics_directory) {
   const std::string session_id =
       CF_EXPECT(ReadSessionIdFile(metrics_directory));
-  HostInfo host_metrics = GetHostInfo();
+  const HostInfo host_metrics = GetHostInfo();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   // TODO: chadreynolds - convert data to the proto representation
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, session_id,
@@ -91,13 +162,12 @@ Result<void> GatherAndWriteMetrics(std::string_view event_type,
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
-    CF_EXPECT(TransmitMetrics());
+    CF_EXPECT(TransmitMetrics(event_type, host_metrics, session_id));
   }
   return {};
 }
 
-void RunMetrics(const std::string& metrics_directory,
-                std::string_view event_type) {
+void RunMetrics(const std::string& metrics_directory, EventType event_type) {
   if (!FileExists(metrics_directory)) {
     LOG(INFO) << "Metrics directory does not exist, perhaps metrics were not "
                  "initialized.";
@@ -107,7 +177,7 @@ void RunMetrics(const std::string& metrics_directory,
       GatherAndWriteMetrics(event_type, metrics_directory);
   if (!event_result.ok()) {
     LOG(INFO) << fmt::format("Failed to gather metrics for {}.  Error: {}",
-                             event_type, event_result.error());
+                             EventTypeString(event_type), event_result.error());
   }
 }
 
@@ -123,25 +193,25 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                               metrics_setup_result.error());
     return;
   }
-  RunMetrics(metrics_directory, "device instantiation");
+  RunMetrics(metrics_directory, EventType::DeviceInstantiation);
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
   const std::string metrics_directory =
       GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, "device start");
+  RunMetrics(metrics_directory, EventType::DeviceBootStart);
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
   const std::string metrics_directory =
       GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, "device boot complete");
+  RunMetrics(metrics_directory, EventType::DeviceBootComplete);
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
   const std::string metrics_directory =
       GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, "device stop");
+  RunMetrics(metrics_directory, EventType::DeviceStop);
 }
 
 }  // namespace cuttlefish
