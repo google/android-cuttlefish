@@ -4,7 +4,7 @@ cuttlefish-frontend (1.28.0) UNRELEASED; urgency=medium
 
  -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 21:47:08 +0100
 
-cuttlefish-frontend (1.27.0) unstable; urgency=medium
+cuttlefish-frontend (1.27.0) stable; urgency=medium
 
   * No changes.
 
