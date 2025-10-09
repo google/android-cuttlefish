@@ -59,17 +59,17 @@ Result<void> PngScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
     png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
   });
 
+  png_init_io(png_ptr, outfile);
+
   // Set header info
   png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB,
                PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
                PNG_FILTER_TYPE_BASE);
 
-  png_init_io(png_ptr, outfile);
-
   png_write_info(png_ptr, info_ptr);
 
   for (int y = 0; y < height; ++y) {
-    png_write_row(png_ptr, rgb_frame.data() + y * height);
+    png_write_row(png_ptr, rgb_frame.data() + y * width * 3);
   }
 
   // Finalize
