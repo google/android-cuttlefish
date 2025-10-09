@@ -1,4 +1,4 @@
-service vendor.ril-daemon /apex/com.google.cf.rild/bin/hw/android.hardware.radio-service.cuttlefish
+service vendor.ril-daemon /apex/com.google.cf.rild/bin/hw/libcuttlefish-rild
     class main
     user radio
     group radio inet misc audio log readproc wakelock
