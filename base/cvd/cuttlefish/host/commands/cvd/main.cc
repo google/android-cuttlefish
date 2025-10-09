@@ -199,16 +199,6 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   IncreaseFileLimit();
 
   InstanceDatabase instance_db(InstanceDatabasePath());
-
-  // TODO(b/206893146): Make this decision inside the server.
-  if (android::base::Basename(all_args[0]) == "acloud") {
-    InstanceLockFileManager instance_lockfile_manager(
-        AcloudInstanceLocksPath());
-    InstanceManager instance_manager(instance_lockfile_manager, instance_db);
-    Cvd cvd(instance_manager, instance_lockfile_manager);
-    return cvd.HandleAcloud(all_args, env);
-  }
-
   InstanceLockFileManager instance_lockfile_manager(InstanceLocksPath());
   InstanceManager instance_manager(instance_lockfile_manager, instance_db);
   Cvd cvd(instance_manager, instance_lockfile_manager);

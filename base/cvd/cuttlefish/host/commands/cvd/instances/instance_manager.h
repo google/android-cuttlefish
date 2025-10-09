@@ -58,9 +58,6 @@ class InstanceManager {
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase::Filter& filter) const;
 
-  Result<void> SetAcloudTranslatorOptout(bool optout);
-  Result<bool> GetAcloudTranslatorOptout() const;
-
   Result<void> IssueStopCommand(const CommandRequest& request,
                                 const std::string& config_file_path,
                                 LocalInstanceGroup& group);
