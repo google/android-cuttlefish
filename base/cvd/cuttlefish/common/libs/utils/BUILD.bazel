@@ -402,6 +402,19 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "uuid",
+    srcs = [
+        "uuid.cpp",
+    ],
+    hdrs = [
+        "uuid.h",
+    ],
+    deps = [
+        "@libuuid",
+    ],
+)
+
 cf_cc_test(
     name = "unique_resource_allocator_test",
     srcs = ["unique_resource_allocator_test.cpp"],

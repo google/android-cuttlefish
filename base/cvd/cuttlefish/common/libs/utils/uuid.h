@@ -14,30 +14,12 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/session_id.h"
+#pragma once
 
 #include <string>
-#include <string_view>
-
-#include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/common/libs/utils/uuid.h"
 
 namespace cuttlefish {
-namespace {
 
-constexpr char kSessionIdFileName[] = "metrics_session_id.txt";
-
-}  // namespace
-
-Result<std::string> ReadSessionIdFile(const std::string& metrics_directory) {
-  return CF_EXPECT(ReadFileContents(metrics_directory + kSessionIdFileName));
-}
-
-Result<void> GenerateSessionIdFile(const std::string& metrics_directory) {
-  const std::string session_id = GenerateUuid();
-  CF_EXPECT(WriteNewFile(metrics_directory + kSessionIdFileName, session_id));
-  return {};
-}
+std::string GenerateUuid();
 
 }  // namespace cuttlefish

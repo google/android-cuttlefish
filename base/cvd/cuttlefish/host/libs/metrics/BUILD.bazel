@@ -82,6 +82,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
-        "@libuuid",
+        "//cuttlefish/common/libs/utils:uuid",
     ],
 )
