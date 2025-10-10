@@ -624,8 +624,8 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     add_hvc_sink();
   }
 
-  // /dev/hvc13 = sensors
-  add_hvc(instance.PerInstanceInternalPath("sensors_fifo_vm"));
+  // /dev/hvc13 is vacant, feel free to use
+  add_hvc_sink();
 
   // /dev/hvc14 = MCU CONTROL
   if (instance.mcu()["control"]["type"].asString() == "serial") {
@@ -660,6 +660,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   } else {
     add_hvc_sink();
   }
+
+  // /dev/hvc18 = sensors control
+  add_hvc(instance.PerInstanceInternalPath("sensors_control_fifo_vm"));
+
+  // /dev/hvc19 = sensors data
+  add_hvc(instance.PerInstanceInternalPath("sensors_data_fifo_vm"));
 
   auto disk_num = instance.virtual_disk_paths().size();
 
@@ -917,5 +923,5 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   return commands;
 }
 
-} // namespace vm_manager
+}  // namespace vm_manager
 }  // namespace cuttlefish

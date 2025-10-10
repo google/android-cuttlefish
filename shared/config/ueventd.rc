@@ -47,8 +47,7 @@
 # NFC
 /dev/hvc12 0666 nfc nfc
 
-# sensors
-/dev/hvc13 0660 system system
+# /dev/hvc13 sink
 
 # MCU control
 /dev/hvc14 0666 system system
@@ -60,6 +59,12 @@
 
 # jcardsimulator
 /dev/hvc17 0666 system system
+
+# Sensors control
+/dev/hvc18 0660 system system
+
+# Sensors data
+/dev/hvc19 0660 system system
 
 # Factory Reset Protection
 /dev/block/by-name/frp 0660 system system
