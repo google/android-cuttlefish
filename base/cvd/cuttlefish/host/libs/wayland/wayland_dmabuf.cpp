@@ -24,6 +24,8 @@
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 
+#include "cuttlefish/host/libs/wayland/wayland_utils.h"
+
 namespace wayland {
 namespace {
 
@@ -63,6 +65,19 @@ void linux_buffer_params_add(wl_client*,
                << " stride=" << stride
                << " mod_hi=" << modifier_hi
                << " mod_lo=" << modifier_lo;
+
+  DmabufParams* dmabuf_params = GetUserData<DmabufParams>(params);
+
+  DmabufPlane dma_plane = {
+      .fd = android::base::unique_fd(fd),
+      .plane = plane,
+      .offset = offset,
+      .stride = stride,
+      .modifier_hi = modifier_hi,
+      .modifier_lo = modifier_lo,
+  };
+
+  dmabuf_params->planes[plane] = std::move(dma_plane);
 }
 
 void linux_buffer_params_create(wl_client* client,
@@ -81,8 +96,19 @@ void linux_buffer_params_create(wl_client* client,
   wl_resource* buffer_resource =
       wl_resource_create(client, &wl_buffer_interface, 1, 0);
 
+  DmabufParams* dmabuf_params = GetUserData<DmabufParams>(params);
+
+  Dmabuf* dmabuf = new Dmabuf();
+  dmabuf->width = w;
+  dmabuf->height = h;
+  dmabuf->format = format;
+  dmabuf->flags = flags;
+  dmabuf->params = dmabuf_params;
+
   wl_resource_set_implementation(buffer_resource, &buffer_implementation,
-                                 nullptr, params_destroy_resource_callback);
+                                 dmabuf, params_destroy_resource_callback);
+
+  zwp_linux_buffer_params_v1_send_created(params, buffer_resource);
 }
 
 void linux_buffer_params_create_immed(wl_client* client,
@@ -128,12 +154,14 @@ void linux_dmabuf_create_params(wl_client* client,
                << " display=" << display
                << " id=" << id;
 
+  DmabufParams* dmabuf_params = new DmabufParams();
+
   wl_resource* buffer_params_resource =
       wl_resource_create(client, &zwp_linux_buffer_params_v1_interface, 1, id);
 
   wl_resource_set_implementation(buffer_params_resource,
                                  &zwp_linux_buffer_params_implementation,
-                                 nullptr, params_destroy_resource_callback);
+                                 dmabuf_params, params_destroy_resource_callback);
 }
 
 const struct zwp_linux_dmabuf_v1_interface
@@ -162,6 +190,11 @@ void bind_linux_dmabuf(wl_client* client,
 void BindDmabufInterface(wl_display* display) {
   wl_global_create(display, &zwp_linux_dmabuf_v1_interface,
                    kLinuxDmabufVersion, nullptr, bind_linux_dmabuf);
+}
+
+bool IsDmabufResource(struct wl_resource* resource) {
+  return wl_resource_instance_of(resource, &wl_buffer_interface,
+                                 &zwp_linux_dmabuf_v1_interface);
 }
 
 }  // namespace wayland
