@@ -1,8 +1,15 @@
-cuttlefish-common (1.28.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.28.0) unstable; urgency=medium
 
-  * 
+* Generate and gather metrics session ID  by @cjreynol in https://github.com/google/android-cuttlefish/pull/1693
+* Gather initial metrics for remaining events by @cjreynol in https://github.com/google/android-cuttlefish/pull/1694
+* Fix png screenshots by @jemoreira in https://github.com/google/android-cuttlefish/pull/1708
+* Make it flexible to install debian packages. by @ser-io in https://github.com/google/android-cuttlefish/pull/1707
+* Isolate the dependency on `libuuid` by @cjreynol in https://github.com/google/android-cuttlefish/pull/1709
+* Mark v1.27.0 stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1710
+* Remove unused include by @cjreynol in https://github.com/google/android-cuttlefish/pull/1703
+* Connect new metrics gathering with metrics transmission by @cjreynol in https://github.com/google/android-cuttlefish/pull/1702
 
- -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 21:46:43 +0100
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 10 Oct 2025 12:28:31 -0400
 
 cuttlefish-common (1.27.0) stable; urgency=medium
 
