@@ -48,7 +48,9 @@ SharedFD OpenSocket(int port) {
     }
     LOG(ERROR) << "Failed to open socket: " << fd->StrError();
     // Wait a little and try again
+    lock.unlock();
     sleep(1);
+    lock.lock();
   }
 }
 
@@ -62,7 +64,9 @@ SharedFD OpenSocket(const std::string& path) {
     }
     LOG(ERROR) << "Failed to open socket: " << fd->StrError();
     // Wait a little and try again
+    lock.unlock();
     sleep(1);
+    lock.lock();
   }
 }
 
