@@ -341,6 +341,12 @@ LOCAL_ENABLE_WIDEVINE ?= true
 ifeq ($(LOCAL_ENABLE_WIDEVINE),true)
 -include vendor/widevine/libwvdrmengine/apex/device/device.mk
 -include vendor/google/widevine/cdm/android/level3/generic/widevine_release_level3.mk
+
+ifeq ($(RELEASE_WIDEVINE_CUTTLEFISH_L1),true)
+PRODUCT_SOONG_NAMESPACES += vendor/google/widevine/cdm
+PRODUCT_PACKAGES += liboemcrypto_no_ipc_test_only
+endif
+
 endif
 
 #
