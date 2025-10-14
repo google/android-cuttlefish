@@ -36,6 +36,28 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "metrics_conversion",
+    srcs = [
+        "metrics_conversion.cc",
+    ],
+    hdrs = [
+        "metrics_conversion.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/host/commands/metrics:clearcut_protos",
+        "//cuttlefish/host/commands/metrics:events",
+        "//cuttlefish/host/commands/metrics:utils",
+        "//cuttlefish/host/libs/metrics:event_type",
+        "//external_proto:cf_guest_cc_proto",
+        "//external_proto:cf_host_cc_proto",
+        "//external_proto:cf_log_cc_proto",
+        "//external_proto:cf_metrics_event_v2_cc_proto",
+        "//external_proto:clientanalytics_cc_proto",
+    ],
+)
+
+cf_cc_library(
     name = "metrics_headers",
     hdrs = [
         "metrics_configs.h",
@@ -57,18 +79,12 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/metrics:is_enabled",
-        "//cuttlefish/host/commands/metrics:clearcut_protos",
-        "//cuttlefish/host/commands/metrics:events",
         "//cuttlefish/host/commands/metrics:send",
-        "//cuttlefish/host/commands/metrics:utils",
         "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/metrics:metrics_writer",
         "//cuttlefish/host/libs/metrics:session_id",
-        "//external_proto:cf_guest_cc_proto",
-        "//external_proto:cf_host_cc_proto",
-        "//external_proto:cf_log_cc_proto",
-        "//external_proto:cf_metrics_event_v2_cc_proto",
         "//external_proto:clientanalytics_cc_proto",
         "//libbase",
         "@fmt",
