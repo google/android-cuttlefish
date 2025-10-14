@@ -37,8 +37,6 @@ struct HostInfo {
   Arch arch;
   Os os;
   std::string release;
-
-  std::string to_string() const;
 };
 
 const std::string& HostArchStr();
