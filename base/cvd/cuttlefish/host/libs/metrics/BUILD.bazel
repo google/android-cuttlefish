@@ -102,11 +102,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/metrics:event_type",
+        "//external_proto:clientanalytics_cc_proto",
         "@fmt",
+        "@protobuf",
     ],
 )
 

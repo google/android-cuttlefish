@@ -76,8 +76,7 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
   const LogRequest log_request =
       ConstructLogRequest(event_type, host_metrics, session_id);
 
-  CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, session_id,
-                              host_metrics));
+  CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "

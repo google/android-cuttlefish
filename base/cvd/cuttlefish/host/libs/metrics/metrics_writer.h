@@ -17,17 +17,15 @@
 #pragma once
 
 #include <string>
-#include <string_view>
 
-#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-Result<void> WriteMetricsEvent(EventType event_type,
-                               const std::string& metrics_directory,
-                               std::string_view session_id,
-                               const HostInfo& host_metrics);
+Result<void> WriteMetricsEvent(
+    EventType event_type, const std::string& metrics_directory,
+    const wireless_android_play_playlog::LogRequest& log_request);
 
 }  // namespace cuttlefish
