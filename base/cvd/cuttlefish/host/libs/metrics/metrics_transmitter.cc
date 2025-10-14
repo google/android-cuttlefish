@@ -17,18 +17,54 @@
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/metrics/send.h"
-#include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
+#include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/host/libs/web/http_client/http_string.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
+namespace {
+
+// TODO: chadreynolds - create a compilation or runtime flag to swap
+// environments
+enum class ClearcutEnvironment {
+  kLocal = 0,
+  kStaging = 1,
+  kProd = 2,
+};
+
+std::string ClearcutEnvironmentUrl(const ClearcutEnvironment environment) {
+  switch (environment) {
+    case ClearcutEnvironment::kLocal:
+      return "http://localhost:27910/log";
+    case ClearcutEnvironment::kStaging:
+      return "https://play.googleapis.com:443/staging/log";
+    case ClearcutEnvironment::kProd:
+      return "https://play.googleapis.com:443/log";
+  }
+}
+
+Result<void> PostRequest(HttpClient& http_client, const std::string& output,
+                         const ClearcutEnvironment server) {
+  const std::string clearcut_url = ClearcutEnvironmentUrl(server);
+  HttpResponse<std::string> response =
+      CF_EXPECT(HttpPostToString(http_client, clearcut_url, output));
+  CF_EXPECTF(response.HttpSuccess(), "Metrics POST failed ({}): {}",
+             response.http_code, response.data);
+  return {};
+}
+
+}  // namespace
 
 Result<void> TransmitMetricsEvent(
     const wireless_android_play_playlog::LogRequest& log_request) {
-  int reporting_outcome = metrics::PostRequest(log_request.SerializeAsString(),
-                                               metrics::ClearcutServer::kProd);
-  CF_EXPECTF(reporting_outcome != MetricsExitCodes::kSuccess,
-             "Issue reporting metrics: {}", reporting_outcome);
+  CurlGlobalInit curl_global_init;
+  std::unique_ptr<HttpClient> http_client = CurlHttpClient();
+  CF_EXPECT(http_client.get() != nullptr,
+            "Unable to create cURL client for metrics transmission");
+  CF_EXPECT(PostRequest(*http_client, log_request.SerializeAsString(),
+                        ClearcutEnvironment::kProd));
   return {};
 }
 
