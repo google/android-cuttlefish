@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
 #include <string>
-#include <string_view>
 
 #include <android-base/logging.h>
 #include <fmt/format.h>
@@ -37,6 +36,8 @@
 
 namespace cuttlefish {
 namespace {
+
+using wireless_android_play_playlog::LogRequest;
 
 constexpr char kReadmeText[] =
     "The existence of records in this directory does"
@@ -58,10 +59,7 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> TransmitMetrics(EventType event_type, const HostInfo& host_metrics,
-                             std::string_view session_id) {
-  wireless_android_play_playlog::LogRequest log_request =
-      ConstructLogRequest(event_type, host_metrics, session_id);
+Result<void> TransmitMetrics(const LogRequest& log_request) {
   int reporting_outcome = metrics::PostRequest(log_request.SerializeAsString(),
                                                metrics::ClearcutServer::kProd);
   CF_EXPECTF(reporting_outcome != MetricsExitCodes::kSuccess,
@@ -75,14 +73,16 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
       CF_EXPECT(ReadSessionIdFile(metrics_directory));
   const HostInfo host_metrics = GetHostInfo();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
-  // TODO: chadreynolds - convert data to the proto representation
+  const LogRequest log_request =
+      ConstructLogRequest(event_type, host_metrics, session_id);
+
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, session_id,
                               host_metrics));
   if (kEnableCvdMetrics) {
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
-    CF_EXPECT(TransmitMetrics(event_type, host_metrics, session_id));
+    CF_EXPECT(TransmitMetrics(log_request));
   }
   return {};
 }
