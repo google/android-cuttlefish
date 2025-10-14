@@ -58,6 +58,7 @@ bootstrap_go_package {
     pkgPath: "android/soong/cuttlefish",
     deps: [
         "blueprint",
+        "blueprint-gobtools",
         "blueprint-proptools",
         "soong",
         "soong-android",
@@ -65,6 +66,7 @@ bootstrap_go_package {
     ],
     srcs: [
         "cvd-host-package.go",
+        "cuttlefish_enc.go",
     ],
     pluginFor: ["soong_build"],
 }
