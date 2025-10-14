@@ -21,7 +21,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -121,14 +120,6 @@ std::ostream& operator<<(std::ostream& out, Os arch) {
     case Os::Unknown:
       return out << "unknown";
   }
-}
-
-std::string HostInfo::to_string() const {
-  std::stringstream result;
-  result << "arch:" << this->arch << "\n";
-  result << "os:" << this->os << "\n";
-  result << "release:" << this->release << "\n";
-  return result.str();
 }
 
 }  // namespace cuttlefish
