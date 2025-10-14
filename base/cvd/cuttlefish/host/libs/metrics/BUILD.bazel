@@ -79,15 +79,30 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/metrics:is_enabled",
-        "//cuttlefish/host/commands/metrics:send",
         "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
-        "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",
         "//cuttlefish/host/libs/metrics:session_id",
         "//external_proto:clientanalytics_cc_proto",
         "//libbase",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_transmitter",
+    srcs = [
+        "metrics_transmitter.cc",
+    ],
+    hdrs = [
+        "metrics_transmitter.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/metrics:send",
+        "//cuttlefish/host/libs/metrics:metrics_headers",
+        "//external_proto:clientanalytics_cc_proto",
     ],
 )
 
