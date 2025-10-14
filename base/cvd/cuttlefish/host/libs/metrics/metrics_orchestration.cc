@@ -26,10 +26,9 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
-#include "cuttlefish/host/commands/metrics/send.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
-#include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
 #include "external_proto/clientanalytics.pb.h"
@@ -59,14 +58,6 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> TransmitMetrics(const LogRequest& log_request) {
-  int reporting_outcome = metrics::PostRequest(log_request.SerializeAsString(),
-                                               metrics::ClearcutServer::kProd);
-  CF_EXPECTF(reporting_outcome != MetricsExitCodes::kSuccess,
-             "Issue reporting metrics: {}", reporting_outcome);
-  return {};
-}
-
 Result<void> GatherAndWriteMetrics(EventType event_type,
                                    const std::string& metrics_directory) {
   const std::string session_id =
@@ -81,7 +72,7 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
-    CF_EXPECT(TransmitMetrics(log_request));
+    CF_EXPECT(TransmitMetricsEvent(log_request));
   }
   return {};
 }
