@@ -18,12 +18,11 @@
 
 #include <chrono>
 #include <string>
-#include <string_view>
 
 #include <fmt/format.h>
+#include <google/protobuf/text_format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/random.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
@@ -38,17 +37,15 @@ std::string GenerateFilenameSuffix() {
 
 }  // namespace
 
-Result<void> WriteMetricsEvent(EventType event_type,
-                               const std::string& metrics_directory,
-                               std::string_view session_id,
-                               const HostInfo& host_metrics) {
-  const std::string event_filepath =
-      fmt::format("{}/{}_{}_{}", metrics_directory, EventTypeString(event_type),
-                  std::chrono::system_clock::now(), GenerateFilenameSuffix());
-  // TODO: chadreynolds - convert (what will be a proto) to text
-  CF_EXPECT(WriteNewFile(
-      event_filepath,
-      fmt::format("{}\n{}\n", host_metrics.to_string(), session_id)));
+Result<void> WriteMetricsEvent(
+    EventType event_type, const std::string& metrics_directory,
+    const wireless_android_play_playlog::LogRequest& log_request) {
+  const std::string event_filepath = fmt::format(
+      "{}/{}_{}_{}.txtpb", metrics_directory, EventTypeString(event_type),
+      std::chrono::system_clock::now(), GenerateFilenameSuffix());
+  std::string text_proto_out;
+  google::protobuf::TextFormat::PrintToString(log_request, &text_proto_out);
+  CF_EXPECT(WriteNewFile(event_filepath, text_proto_out));
   return {};
 }
 
