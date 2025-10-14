@@ -26,8 +26,10 @@
 #include "cuttlefish/host/commands/sensors_simulator/sensors_simulator.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
-DEFINE_int32(sensors_in_fd, -1, "Sensors virtio-console from host to guest");
-DEFINE_int32(sensors_out_fd, -1, "Sensors virtio-console from guest to host");
+DEFINE_int32(control_from_guest_fd, -1, "Sensors control virtio-console from guest to host");
+DEFINE_int32(control_to_guest_fd, -1, "Sensors control virtio-console from host to guest");
+DEFINE_int32(data_from_guest_fd, -1, "Sensors data virtio-console from guest to host");
+DEFINE_int32(data_to_guest_fd, -1, "Sensors data virtio-console from host to guest");
 DEFINE_int32(webrtc_fd, -1, "A file descriptor to communicate with webrtc");
 DEFINE_int32(kernel_events_fd, -1,
              "A pipe for monitoring events based on messages "
@@ -92,15 +94,25 @@ int SensorsSimulatorMain(int argc, char** argv) {
   if (!webrtc_fd->IsOpen()) {
     LOG(FATAL) << kFdNotOpen << webrtc_fd->StrError();
   }
-  SharedFD sensors_in_fd = SharedFD::Dup(FLAGS_sensors_in_fd);
-  close(FLAGS_sensors_in_fd);
-  if (!sensors_in_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << sensors_in_fd->StrError();
+  SharedFD control_from_guest_fd = SharedFD::Dup(FLAGS_control_from_guest_fd);
+  close(FLAGS_control_from_guest_fd);
+  if (!control_from_guest_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << control_from_guest_fd->StrError();
   }
-  SharedFD sensors_out_fd = SharedFD::Dup(FLAGS_sensors_out_fd);
-  close(FLAGS_sensors_out_fd);
-  if (!sensors_out_fd->IsOpen()) {
-    LOG(FATAL) << kFdNotOpen << sensors_out_fd->StrError();
+  SharedFD control_to_guest_fd = SharedFD::Dup(FLAGS_control_to_guest_fd);
+  close(FLAGS_control_to_guest_fd);
+  if (!control_to_guest_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << control_to_guest_fd->StrError();
+  }
+  SharedFD data_from_guest_fd = SharedFD::Dup(FLAGS_data_from_guest_fd);
+  close(FLAGS_data_from_guest_fd);
+  if (!data_from_guest_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << data_from_guest_fd->StrError();
+  }
+  SharedFD data_to_guest_fd = SharedFD::Dup(FLAGS_data_to_guest_fd);
+  close(FLAGS_data_to_guest_fd);
+  if (!data_to_guest_fd->IsOpen()) {
+    LOG(FATAL) << kFdNotOpen << data_to_guest_fd->StrError();
   }
   SharedFD kernel_events_fd = SharedFD::Dup(FLAGS_kernel_events_fd);
   close(FLAGS_kernel_events_fd);
@@ -109,9 +121,9 @@ int SensorsSimulatorMain(int argc, char** argv) {
 
   auto device_type = static_cast<DeviceType>(FLAGS_device_type);
   SensorsSimulator sensors_simulator(device_type == DeviceType::Auto);
-  SensorsHalProxy sensors_hal_proxy(sensors_in_fd, sensors_out_fd,
-                                    kernel_events_fd, sensors_simulator,
-                                    device_type);
+  SensorsHalProxy sensors_hal_proxy(
+      control_from_guest_fd, control_to_guest_fd, data_from_guest_fd,
+      data_to_guest_fd, kernel_events_fd, sensors_simulator, device_type);
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
     if (!result.ok()) {

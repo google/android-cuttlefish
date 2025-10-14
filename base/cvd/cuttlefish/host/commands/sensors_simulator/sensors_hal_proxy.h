@@ -31,7 +31,8 @@ namespace sensors {
 
 class SensorsHalProxy {
  public:
-  SensorsHalProxy(SharedFD sensors_in_fd, SharedFD sensors_out_fd,
+  SensorsHalProxy(SharedFD control_from_guest_fd, SharedFD control_to_guest_fd,
+                  SharedFD data_from_guest_fd, SharedFD data_to_guest_fd,
                   SharedFD kernel_events_fd,
                   SensorsSimulator& sensors_simulator, DeviceType device_type);
 
@@ -39,7 +40,8 @@ class SensorsHalProxy {
   std::thread req_responder_thread_;
   std::thread data_reporter_thread_;
   std::thread reboot_monitor_thread_;
-  transport::SharedFdChannel channel_;
+  transport::SharedFdChannel control_channel_;
+  transport::SharedFdChannel data_channel_;
   SharedFD kernel_events_fd_;
   SensorsSimulator& sensors_simulator_;
   std::atomic<bool> hal_activated_ = false;

@@ -120,12 +120,16 @@ Result<void> UpdateSensorsHal(const std::string& sensors_data,
 
 }  // namespace
 
-SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
-                                 SharedFD sensors_out_fd,
+SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
+                                 SharedFD control_to_guest_fd,
+                                 SharedFD data_from_guest_fd,
+                                 SharedFD data_to_guest_fd,
                                  SharedFD kernel_events_fd,
                                  SensorsSimulator& sensors_simulator,
                                  DeviceType device_type)
-    : channel_(std::move(sensors_in_fd), std::move(sensors_out_fd)),
+    : control_channel_(std::move(control_from_guest_fd),
+                       std::move(control_to_guest_fd)),
+      data_channel_(std::move(data_from_guest_fd), std::move(data_to_guest_fd)),
       kernel_events_fd_(std::move(kernel_events_fd)),
       sensors_simulator_(sensors_simulator) {
   SensorsMask host_enabled_sensors;
@@ -150,8 +154,8 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
 
   req_responder_thread_ = std::thread([this, host_enabled_sensors] {
     while (running_) {
-      auto result =
-          ProcessHalRequest(channel_, hal_activated_, host_enabled_sensors);
+      auto result = ProcessHalRequest(control_channel_, hal_activated_,
+                                      host_enabled_sensors);
       if (!result.ok()) {
         running_ = false;
         LOG(ERROR) << result.error().FormatForEnv();
@@ -166,7 +170,7 @@ SensorsHalProxy::SensorsHalProxy(SharedFD sensors_in_fd,
         auto sensors_data =
             sensors_simulator_.GetSensorsData(host_update_sensors);
         auto result =
-            UpdateSensorsHal(sensors_data, channel_, host_update_sensors);
+            UpdateSensorsHal(sensors_data, data_channel_, host_update_sensors);
         if (!result.ok()) {
           running_ = false;
           LOG(ERROR) << result.error().FormatForEnv();
