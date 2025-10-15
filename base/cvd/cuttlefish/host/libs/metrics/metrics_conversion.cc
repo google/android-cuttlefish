@@ -19,7 +19,6 @@
 #include <cstdint>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_host.pb.h"
@@ -47,13 +46,6 @@ using wireless_android_play_playlog::LogSourceEnum::LogSource;
 static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
 static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
-
-uint64_t GetEpochTimeMs() {
-  auto now = std::chrono::system_clock::now().time_since_epoch();
-  uint64_t milliseconds_since_epoch =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-  return milliseconds_since_epoch;
-}
 
 Timestamp MillisToTimestamp(uint64_t millis) {
   Timestamp timestamp;
@@ -109,11 +101,12 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
 CuttlefishLogEvent BuildCuttlefishLogEvent(const EventType event_type,
                                            const HostInfo& host_metrics,
                                            std::string_view session_id,
+                                           std::string_view cf_common_version,
                                            uint64_t now_ms) {
   CuttlefishLogEvent cf_log_event;
   cf_log_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
   cf_log_event.set_session_id(session_id);
-  cf_log_event.set_cuttlefish_version(GetVersionIds().ToString());
+  cf_log_event.set_cuttlefish_version(cf_common_version);
   *cf_log_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
 
   MetricsEventV2* metrics_event = cf_log_event.mutable_metrics_event_v2();
@@ -149,10 +142,11 @@ LogRequest BuildLogRequest(uint64_t now_ms,
 
 LogRequest ConstructLogRequest(EventType event_type,
                                const HostInfo& host_metrics,
-                               std::string_view session_id) {
-  uint64_t now_ms = GetEpochTimeMs();
-  CuttlefishLogEvent cf_log_event =
-      BuildCuttlefishLogEvent(event_type, host_metrics, session_id, now_ms);
+                               std::string_view session_id,
+                               std::string_view cf_common_version,
+                               uint64_t now_ms) {
+  CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(
+      event_type, host_metrics, session_id, cf_common_version, now_ms);
   return BuildLogRequest(now_ms, cf_log_event);
 }
 

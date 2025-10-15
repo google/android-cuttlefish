@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
+#include <chrono>
+#include <cstdint>
 #include <string>
 
 #include <android-base/logging.h>
@@ -26,6 +28,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
+#include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
@@ -46,6 +49,13 @@ constexpr char kReadmeText[] =
     "step"
     " when it does>";
 
+uint64_t GetEpochTimeMs() {
+  auto now = std::chrono::system_clock::now().time_since_epoch();
+  uint64_t milliseconds_since_epoch =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+  return milliseconds_since_epoch;
+}
+
 std::string GetMetricsDirectoryFilepath(
     const LocalInstanceGroup& instance_group) {
   return instance_group.HomeDir() + "/metrics";
@@ -63,9 +73,11 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
   const std::string session_id =
       CF_EXPECT(ReadSessionIdFile(metrics_directory));
   const HostInfo host_metrics = GetHostInfo();
+  const std::string cf_common_version = GetVersionIds().ToString();
+  uint64_t now_ms = GetEpochTimeMs();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
-  const LogRequest log_request =
-      ConstructLogRequest(event_type, host_metrics, session_id);
+  const LogRequest log_request = ConstructLogRequest(
+      event_type, host_metrics, session_id, cf_common_version, now_ms);
 
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
