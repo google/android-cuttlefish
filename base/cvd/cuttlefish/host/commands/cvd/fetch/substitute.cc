@@ -121,10 +121,18 @@ Result<void> Substitute(const std::string& target_dir,
   std::string target = fmt::format("{}/{}", common_dir, link_name);
   std::string full_link_name = fmt::format("{}/{}", target_dir, link_name);
 
-  CF_EXPECTF(FileExists(target), "{}", target);
-  // TODO: schuffelen - relax this check after migration completes
-  CF_EXPECTF(FileExists(full_link_name),
-             "Cannot substitute '{}', does not exist", full_link_name);
+  if (!FileExists(target)) {
+     LOG(WARNING) << "Target file " << target << "missing; not making "
+         << "substitution " << target << " to " << full_link_name;
+     return {};
+  }
+
+  if (!FileExists(full_link_name)) {
+     LOG(WARNING) << "Link file " << full_link_name << "missing; not making "
+         << "substitution " << target << " to " << full_link_name;
+     return {};
+  }
+
   CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
   CF_EXPECT(CreateSymLink(target, full_link_name));
   return {};
