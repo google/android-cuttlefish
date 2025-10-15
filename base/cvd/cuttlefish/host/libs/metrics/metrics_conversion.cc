@@ -21,7 +21,6 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/commands/metrics/clearcut_protos.h"
 #include "cuttlefish/host/commands/metrics/events.h"
-#include "cuttlefish/host/commands/metrics/utils.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_host.pb.h"
@@ -41,6 +40,13 @@ using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
+
+uint64_t GetEpochTimeMs() {
+  auto now = std::chrono::system_clock::now().time_since_epoch();
+  uint64_t milliseconds_since_epoch =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+  return milliseconds_since_epoch;
+}
 
 CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
   switch (event_type) {
@@ -106,7 +112,7 @@ void PopulateMetricsEvent(EventType event_type,
 LogRequest ConstructLogRequest(EventType event_type,
                                const HostInfo& host_metrics,
                                std::string_view session_id) {
-  uint64_t now_ms = metrics::GetEpochTimeMs();
+  uint64_t now_ms = GetEpochTimeMs();
   CuttlefishLogEvent cf_log_event = metrics::BuildCfLogEvent(now_ms);
   PopulateMetricsEvent(event_type, cf_log_event, host_metrics, session_id);
   LogEvent log_event = metrics::BuildLogEvent(now_ms, cf_log_event);
