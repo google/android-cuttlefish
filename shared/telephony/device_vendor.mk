@@ -28,10 +28,15 @@ PRODUCT_PACKAGES += \
 PRODUCT_SOONG_NAMESPACES += \
     device/google/cuttlefish/shared/telephony/satellite
 
-
 # If downstream target provides its own RILD, set TARGET_USES_CF_RILD := false
 TARGET_USES_CF_RILD ?= true
 ifeq ($(TARGET_USES_CF_RILD),true)
+    # NR 5G, LTE, TD-SCDMA, CDMA, EVDO, GSM and WCDMA
+    PRODUCT_VENDOR_PROPERTIES += ro.telephony.default_network=33
+
+    PRODUCT_SOONG_NAMESPACES += \
+        device/google/cuttlefish/apex/com.google.cf.rild
+
     PRODUCT_PACKAGES += com.google.cf.rild
 endif
 

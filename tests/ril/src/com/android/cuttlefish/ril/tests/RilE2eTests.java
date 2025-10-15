@@ -24,8 +24,8 @@ import android.net.NetworkCapabilities;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.telephony.CellInfo;
-import android.telephony.CellInfoLte;
-import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellInfoNr;
+import android.telephony.CellSignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -133,8 +133,8 @@ public class RilE2eTests {
                 });
         cdl.await();
         MatcherAssert.assertThat("Size of list of cell info", cellInfos.size(), greaterThan(0));
-        CellInfoLte cellInfo = (CellInfoLte) cellInfos.get(0);
-        CellSignalStrengthLte signalStrength = cellInfo.getCellSignalStrength();
+        CellInfoNr cellInfo = (CellInfoNr) cellInfos.get(0);
+        CellSignalStrength signalStrength = cellInfo.getCellSignalStrength();
         int bars = signalStrength.getLevel();
         MatcherAssert.assertThat("Signal Bars", bars, greaterThan(0));
     }
