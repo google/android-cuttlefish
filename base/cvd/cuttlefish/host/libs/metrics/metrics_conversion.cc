@@ -19,8 +19,8 @@
 #include <cstdint>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/commands/metrics/clearcut_protos.h"
-#include "cuttlefish/host/commands/metrics/events.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_host.pb.h"
@@ -31,6 +31,7 @@
 namespace cuttlefish {
 namespace {
 
+using google::protobuf::Timestamp;
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
@@ -46,6 +47,14 @@ uint64_t GetEpochTimeMs() {
   uint64_t milliseconds_since_epoch =
       std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
   return milliseconds_since_epoch;
+}
+
+Timestamp MillisToTimestamp(uint64_t millis) {
+  Timestamp timestamp;
+  timestamp.set_nanos((millis % 1000) * 1000000);
+  timestamp.set_seconds(millis / 1000);
+
+  return timestamp;
 }
 
 CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
@@ -91,11 +100,16 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
   }
 }
 
-void PopulateMetricsEvent(EventType event_type,
-                          CuttlefishLogEvent& cf_log_event,
-                          const HostInfo& host_metrics,
-                          std::string_view session_id) {
+CuttlefishLogEvent BuildCuttlefishLogEvent(const EventType event_type,
+                                           const HostInfo& host_metrics,
+                                           std::string_view session_id,
+                                           uint64_t now_ms) {
+  CuttlefishLogEvent cf_log_event;
+  cf_log_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
   cf_log_event.set_session_id(session_id);
+  cf_log_event.set_cuttlefish_version(GetVersionIds().ToString());
+  *cf_log_event.mutable_timestamp_ms() = MillisToTimestamp(now_ms);
+
   MetricsEventV2* metrics_event = cf_log_event.mutable_metrics_event_v2();
 
   CuttlefishGuest* guest = metrics_event->add_guest();
@@ -105,6 +119,8 @@ void PopulateMetricsEvent(EventType event_type,
   CuttlefishHost* host = metrics_event->mutable_host();
   host->set_host_os(ConvertHostOs(host_metrics));
   host->set_host_os_version(host_metrics.release);
+
+  return cf_log_event;
 }
 
 }  // namespace
@@ -113,8 +129,8 @@ LogRequest ConstructLogRequest(EventType event_type,
                                const HostInfo& host_metrics,
                                std::string_view session_id) {
   uint64_t now_ms = GetEpochTimeMs();
-  CuttlefishLogEvent cf_log_event = metrics::BuildCfLogEvent(now_ms);
-  PopulateMetricsEvent(event_type, cf_log_event, host_metrics, session_id);
+  CuttlefishLogEvent cf_log_event =
+      BuildCuttlefishLogEvent(event_type, host_metrics, session_id, now_ms);
   LogEvent log_event = metrics::BuildLogEvent(now_ms, cf_log_event);
   return metrics::BuildLogRequest(now_ms, std::move(log_event));
 }
