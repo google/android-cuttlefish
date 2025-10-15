@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string_view>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -26,6 +27,7 @@ namespace cuttlefish {
 
 wireless_android_play_playlog::LogRequest ConstructLogRequest(
     EventType event_type, const HostInfo& host_metrics,
-    std::string_view session_id);
+    std::string_view session_id, std::string_view cf_common_version,
+    uint64_t now_ms);
 
 }  // namespace cuttlefish
