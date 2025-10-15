@@ -20,13 +20,13 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
-#include "cuttlefish/host/commands/metrics/clearcut_protos.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_host.pb.h"
 #include "external_proto/cf_log.pb.h"
 #include "external_proto/cf_metrics_event_v2.pb.h"
 #include "external_proto/clientanalytics.pb.h"
+#include "external_proto/log_source_enum.pb.h"
 
 namespace cuttlefish {
 namespace {
@@ -39,8 +39,14 @@ using logs::proto::wireless::android::cuttlefish::events::
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
+using wireless_android_play_playlog::ClientInfo;
 using wireless_android_play_playlog::LogEvent;
 using wireless_android_play_playlog::LogRequest;
+using wireless_android_play_playlog::LogSourceEnum::LogSource;
+
+static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
+static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
+static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
 
 uint64_t GetEpochTimeMs() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
@@ -123,6 +129,22 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const EventType event_type,
   return cf_log_event;
 }
 
+LogRequest BuildLogRequest(uint64_t now_ms,
+                           const CuttlefishLogEvent& cf_log_event) {
+  LogRequest log_request;
+  log_request.set_request_time_ms(now_ms);
+  log_request.set_log_source(kLogSourceId);
+  log_request.set_log_source_name(kLogSourceStr);
+
+  ClientInfo* client_info = log_request.mutable_client_info();
+  client_info->set_client_type(kCppClientType);
+
+  LogEvent* log_event = log_request.add_log_event();
+  log_event->set_event_time_ms(now_ms);
+  log_event->set_source_extension(cf_log_event.SerializeAsString());
+  return log_request;
+}
+
 }  // namespace
 
 LogRequest ConstructLogRequest(EventType event_type,
@@ -131,8 +153,7 @@ LogRequest ConstructLogRequest(EventType event_type,
   uint64_t now_ms = GetEpochTimeMs();
   CuttlefishLogEvent cf_log_event =
       BuildCuttlefishLogEvent(event_type, host_metrics, session_id, now_ms);
-  LogEvent log_event = metrics::BuildLogEvent(now_ms, cf_log_event);
-  return metrics::BuildLogRequest(now_ms, std::move(log_event));
+  return BuildLogRequest(now_ms, cf_log_event);
 }
 
 }  // namespace cuttlefish
