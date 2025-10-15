@@ -47,7 +47,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/commands/metrics:clearcut_protos",
         "//cuttlefish/host/commands/metrics:events",
-        "//cuttlefish/host/commands/metrics:utils",
         "//cuttlefish/host/libs/metrics:event_type",
         "//external_proto:cf_guest_cc_proto",
         "//external_proto:cf_host_cc_proto",
