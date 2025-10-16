@@ -38,8 +38,7 @@
 # hvc12 for NFC
 /dev/hvc12  u:object_r:nfc_device:s0
 
-# hvc13 for Sensors
-/dev/hvc13  u:object_r:sensors_device:s0
+# hvc13 sink
 
 # hvc14 for MCU control
 /dev/hvc14  u:object_r:mcu_control_device:s0
@@ -51,6 +50,12 @@
 
 # hvc17 jcardsimulator
 /dev/hvc17 u:object_r:secure_element_jcardsim_device:s0
+
+# hvc18 for Sensors control
+/dev/hvc18  u:object_r:sensors_device:s0
+
+# hvc19 for Sensors data
+/dev/hvc19  u:object_r:sensors_device:s0
 
 # ARM serial console device
 /dev/ttyAMA[0-9]*  u:object_r:serial_device:s0

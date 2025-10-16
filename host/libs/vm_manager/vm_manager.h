@@ -60,12 +60,14 @@ class VmManager {
   // - /dev/hvc10 = oemlock
   // - /dev/hvc11 = keymint
   // - /dev/hvc12 = NFC
-  // - /dev/hvc13 = sensors
+  // - /dev/hvc13 = vacant (sink, so feel free to use)
   // - /dev/hvc14 = MCU control
   // - /dev/hvc15 = MCU UART
   // - /dev/hvc16 = Ti50 TPM FIFO
   // - /dev/hvc17 = jcardsimulator
-  static const int kDefaultNumHvcs = 18;
+  // - /dev/hvc18 = Sensors control
+  // - /dev/hvc19 = Sensors data
+  static const int kDefaultNumHvcs = 20;
 
   // This is the number of virtual disks (block devices) that should be
   // configured by the VmManager. Related to the description above regarding

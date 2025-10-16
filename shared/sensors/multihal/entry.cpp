@@ -27,23 +27,24 @@ namespace {
 
 class VconsoleSensorsTransport : public goldfish::SensorsTransport {
  public:
-  VconsoleSensorsTransport(cuttlefish::SharedFD fd)
-      : console_sensors_fd_(std::move(fd)),
-        pure_sensors_fd_(console_sensors_fd_->UNMANAGED_Dup()),
-        sensors_channel_(console_sensors_fd_, console_sensors_fd_) {
-    // When the guest reboots, sensors_simulator on the host would continue
-    // writing sensor data to FIFO till BootloaderLoaded kernel event fires. The
-    // residual sensor data in sensor FIFO could interfere with sensor HAL init
-    // process. Hence, to be safe, let's clean up the FIFO when instantiating
-    // the transport.
-    if (Drain() < 0) {
-      LOG(FATAL) << "Failed to drain FIFO: " << console_sensors_fd_->StrError();
-    }
+  VconsoleSensorsTransport(cuttlefish::SharedFD control_fd,
+                           cuttlefish::SharedFD data_fd)
+      : control_fd_(std::move(control_fd)),
+        data_fd_(std::move(data_fd)),
+        pure_control_fd_(control_fd_->UNMANAGED_Dup()),
+        pure_data_fd_(data_fd_->UNMANAGED_Dup()),
+        control_channel_(control_fd_, control_fd_),
+        data_channel_(data_fd_, data_fd_) {}
+
+  ~VconsoleSensorsTransport() override {
+    close(pure_control_fd_);
+    close(pure_data_fd_);
   }
 
-  ~VconsoleSensorsTransport() override { close(pure_sensors_fd_); }
+  int Send(goldfish::SensorsMessageType type, const void* msg,
+           int size) override {
+    auto channel = GetChannel(type);
 
-  int Send(const void* msg, int size) override {
     auto message_result = cuttlefish::transport::CreateMessage(0, size);
     if (!message_result.ok()) {
       LOG(ERROR) << "Failed to allocate sensors message with size: " << size
@@ -55,7 +56,7 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
     auto message = std::move(message_result.value());
     std::memcpy(message->payload, msg, size);
 
-    auto send_result = sensors_channel_.SendRequest(*message);
+    auto send_result = channel.SendRequest(*message);
     if (!send_result.ok()) {
       LOG(ERROR) << "Failed to send sensors message with size: " << size
                  << " bytes. "
@@ -66,8 +67,11 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
     return size;
   }
 
-  int Receive(void* msg, int maxsize) override {
-    auto message_result = sensors_channel_.ReceiveMessage();
+  int Receive(goldfish::SensorsMessageType type, void* msg,
+              int maxsize) override {
+    auto channel = GetChannel(type);
+
+    auto message_result = channel.ReceiveMessage();
     if (!message_result.ok()) {
       LOG(ERROR) << "Failed to receive sensors message. "
                  << "Error message: " << message_result.error().Message();
@@ -86,69 +90,82 @@ class VconsoleSensorsTransport : public goldfish::SensorsTransport {
     return message->payload_size;
   }
 
-  int Drain() {
-    int original_flags = console_sensors_fd_->Fcntl(F_GETFL, 0);
-    if (original_flags == -1) {
-      LOG(ERROR) << "Failed to get current file descriptor flags.";
-      return -1;
-    }
-
-    if (console_sensors_fd_->Fcntl(F_SETFL, original_flags | O_NONBLOCK) ==
-        -1) {
-      LOG(ERROR) << "Failed to set O_NONBLOCK.";
-      return -1;
-    }
-
-    std::string data;
-    if (ReadAll(console_sensors_fd_, &data) < 0 &&
-        console_sensors_fd_->GetErrno() != EAGAIN) {
-      LOG(ERROR) << "Failed to read the file.";
-      return -1;
-    }
-
-    if (console_sensors_fd_->Fcntl(F_SETFL, original_flags) == -1) {
-      LOG(ERROR) << "Failed to restore to original file descriptor flags.";
-      return -1;
-    }
-
-    return 0;
+  bool Ok() const override {
+    return control_fd_->IsOpen() && data_fd_->IsOpen();
   }
 
-  bool Ok() const override { return console_sensors_fd_->IsOpen(); }
-
-  int Fd() const override { return pure_sensors_fd_; }
+  int Fd(goldfish::SensorsMessageType type) const override {
+    return GetPureFd(type);
+  }
 
   const char* Name() const override { return "vconsole_channel"; }
 
  private:
-  cuttlefish::SharedFD console_sensors_fd_;
-  // Store pure dup of console_sensors_fd_ to return it from
-  // Fd() method which supposed to return pure fd used for
-  // receive/send sensors data.
-  int pure_sensors_fd_;
-  cuttlefish::transport::SharedFdChannel sensors_channel_;
+  cuttlefish::transport::SharedFdChannel& GetChannel(
+      goldfish::SensorsMessageType type) {
+    switch (type) {
+      case goldfish::SensorsMessageType::CONTROL:
+        return control_channel_;
+      case goldfish::SensorsMessageType::DATA:
+        return data_channel_;
+    }
+  }
+
+  int GetPureFd(goldfish::SensorsMessageType type) const {
+    switch (type) {
+      case goldfish::SensorsMessageType::CONTROL:
+        return pure_control_fd_;
+      case goldfish::SensorsMessageType::DATA:
+        return pure_data_fd_;
+    }
+  }
+
+  cuttlefish::SharedFD control_fd_;
+  cuttlefish::SharedFD data_fd_;
+
+  // Store pure dup of control_fd and data_fd_ to return them from Fd() method
+  // which supposed to return pure fd used for receive/send sensors data.
+  int pure_control_fd_;
+  int pure_data_fd_;
+
+  cuttlefish::transport::SharedFdChannel control_channel_;
+  cuttlefish::transport::SharedFdChannel data_channel_;
 };
 
 }  // namespace
 
-inline constexpr const char kSensorsConsolePath[] = "/dev/hvc13";
+inline constexpr const char kSensorsControlPath[] = "/dev/hvc18";
+inline constexpr const char kSensorsDataPath[] = "/dev/hvc19";
 
 extern "C" ISensorsSubHal* sensorsHalGetSubHal_2_1(uint32_t* version) {
+  const auto control_fd =
+      cuttlefish::SharedFD::Open(kSensorsControlPath, O_RDWR);
+  if (!control_fd->IsOpen()) {
+    LOG(FATAL) << "Could not connect to sensors control: "
+               << control_fd->StrError();
+  }
+  if (control_fd->SetTerminalRaw() < 0) {
+    LOG(FATAL) << "Could not make " << kSensorsControlPath
+               << " a raw terminal: " << control_fd->StrError();
+  }
+
+  const auto data_fd = cuttlefish::SharedFD::Open(kSensorsDataPath, O_RDWR);
+  if (!data_fd->IsOpen()) {
+    LOG(FATAL) << "Could not connect to sensors data: " << data_fd->StrError();
+  }
+  if (data_fd->SetTerminalRaw() < 0) {
+    LOG(FATAL) << "Could not make " << kSensorsDataPath
+               << " a raw terminal: " << data_fd->StrError();
+  }
+
   // Leaking the memory intentionally to make sure this object is available
   // for other threads after main thread is terminated:
   // https://google.github.io/styleguide/cppguide.html#Static_and_Global_Variables
   // go/totw/110#destruction
-  static goldfish::MultihalSensors* impl = new goldfish::MultihalSensors([]() {
-    const auto fd = cuttlefish::SharedFD::Open(kSensorsConsolePath, O_RDWR);
-    if (!fd->IsOpen()) {
-      LOG(FATAL) << "Could not connect to sensors: " << fd->StrError();
-    }
-    if (fd->SetTerminalRaw() < 0) {
-      LOG(FATAL) << "Could not make " << kSensorsConsolePath
-                 << " a raw terminal: " << fd->StrError();
-    }
-    return std::make_unique<VconsoleSensorsTransport>(fd);
-  });
+  static goldfish::MultihalSensors* impl =
+      new goldfish::MultihalSensors([control_fd, data_fd]() {
+        return std::make_unique<VconsoleSensorsTransport>(control_fd, data_fd);
+      });
 
   *version = SUB_HAL_2_1_VERSION;
   return impl;

@@ -17,22 +17,32 @@
 #include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
+namespace {
+
+Result<SharedFD> CreateFifo(const std::string& path) {
+  unlink(path.c_str());
+  return SharedFD::Fifo(path, 0660);
+}
+
+}  // namespace
 
 Result<MonitorCommand> SensorsSimulator(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSensorsSocketPair::Type& sensors_socket_pair,
     KernelLogPipeProvider& kernel_log_pipe_provider) {
-  std::string to_guest_pipe_path =
-      instance.PerInstanceInternalPath("sensors_fifo_vm.in");
-  std::string from_guest_pipe_path =
-      instance.PerInstanceInternalPath("sensors_fifo_vm.out");
-  unlink(to_guest_pipe_path.c_str());
-  unlink(from_guest_pipe_path.c_str());
-  auto to_guest_fd = CF_EXPECT(SharedFD::Fifo(to_guest_pipe_path, 0660));
-  auto from_guest_fd = CF_EXPECT(SharedFD::Fifo(from_guest_pipe_path, 0660));
+  auto control_to_guest_fd = CF_EXPECT(CreateFifo(
+      instance.PerInstanceInternalPath("sensors_control_fifo_vm.in")));
+  auto control_from_guest_fd = CF_EXPECT(CreateFifo(
+      instance.PerInstanceInternalPath("sensors_control_fifo_vm.out")));
+  auto data_to_guest_fd = CF_EXPECT(
+      CreateFifo(instance.PerInstanceInternalPath("sensors_data_fifo_vm.in")));
+  auto data_from_guest_fd = CF_EXPECT(
+      CreateFifo(instance.PerInstanceInternalPath("sensors_data_fifo_vm.out")));
   Command command(SensorsSimulatorBinary());
-  command.AddParameter("--sensors_in_fd=", from_guest_fd)
-      .AddParameter("--sensors_out_fd=", to_guest_fd)
+  command.AddParameter("--control_from_guest_fd=", control_from_guest_fd)
+      .AddParameter("--control_to_guest_fd=", control_to_guest_fd)
+      .AddParameter("--data_from_guest_fd=", data_from_guest_fd)
+      .AddParameter("--data_to_guest_fd=", data_to_guest_fd)
       .AddParameter("--webrtc_fd=", sensors_socket_pair->webrtc_socket)
       .AddParameter("-kernel_events_fd=",
                     kernel_log_pipe_provider.KernelLogPipe())
