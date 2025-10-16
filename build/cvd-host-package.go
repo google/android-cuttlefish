@@ -25,6 +25,8 @@ import (
 	"android/soong/cc"
 )
 
+//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+
 func init() {
 	android.RegisterModuleType("cvd_host_package", cvdHostPackageFactory)
 	android.RegisterParallelSingletonType("cvd_host_package_singleton", cvdHostPackageSingletonFactory)
@@ -151,7 +153,7 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 		StampMetadata:   c.stampFile,
 	})
 }
-
+// @auto-generate: gob
 type CvdHostPackageMetadataInfo struct {
 	TarballMetadata android.Path
 	StampMetadata   android.Path
