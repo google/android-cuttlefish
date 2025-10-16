@@ -37,6 +37,9 @@ TARGET_NATIVE_BRIDGE_2ND_ARCH_VARIANT := armv7-a-neon
 TARGET_NATIVE_BRIDGE_2ND_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 
+# Turn ia32 syscall emulation back on for 32-bit apps
+BOARD_KERNEL_CMDLINE += ia32_emulation=true
+
 -include device/google/cuttlefish/shared/BoardConfig.mk
 -include device/google/cuttlefish/shared/bluetooth/BoardConfig.mk
 -include device/google/cuttlefish/shared/camera/BoardConfig.mk

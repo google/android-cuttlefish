@@ -35,6 +35,9 @@ endif
 
 TARGET_KERNEL_ARCH := x86_64
 
+# Turn ia32 syscall emulation back on for 32-bit apps
+BOARD_KERNEL_CMDLINE += ia32_emulation=true
+
 -include device/google/cuttlefish/shared/BoardConfig.mk
 -include device/google/cuttlefish/shared/bluetooth/BoardConfig.mk
 -include device/google/cuttlefish/shared/camera/BoardConfig.mk
