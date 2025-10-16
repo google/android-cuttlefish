@@ -41,7 +41,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf.mk \
 	aosp_cf_x86_64_phone_soong_system:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf_soong_system.mk \
 	aosp_cf_x86_64_tv:$(LOCAL_DIR)/vsoc_x86_64/tv/aosp_cf.mk \
-	aosp_cf_x86_64_foldable:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf_foldable.mk \
+	aosp_cf_x86_64_foldable:$(LOCAL_DIR)/vsoc_x86_64_only/phone/aosp_cf_foldable.mk \
 	aosp_cf_x86_64_host:$(LOCAL_DIR)/vsoc_x86_64_host/aosp_cf.mk \
 	aosp_cf_x86_64_minidroid:$(LOCAL_DIR)/vsoc_x86_64_minidroid/aosp_cf.mk \
 	aosp_cf_x86_64_only_phone:$(LOCAL_DIR)/vsoc_x86_64_only/phone/aosp_cf.mk \
