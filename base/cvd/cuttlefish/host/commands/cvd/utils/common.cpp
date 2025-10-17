@@ -167,8 +167,6 @@ std::string InstanceDatabasePath() {
   return fmt::format("{}/instance_database.binpb", PerUserDir());
 }
 
-std::string AcloudInstanceLocksPath() { return "/tmp/acloud_cvd_temp/"; }
-
 std::string InstanceLocksPath() {
   return absl::StrFormat("%s/%s/", CvdDir(), "lock");
 }

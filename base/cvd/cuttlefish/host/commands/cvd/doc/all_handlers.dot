@@ -14,7 +14,6 @@ digraph {
     subgraph first_order_handlers {
       rank = same;
 
-      AcloudMixSuperImageCommand
       CvdFetchCommandHandler
       CvdFleetCommandHandler
       CvdHelpHandler
@@ -23,13 +22,10 @@ digraph {
       CvdShutdownHandler
       CvdStartCommandHandler
       CvdVersionHandler
-      TryAcloudCommand
     }
     subgraph second_order_handlers {
       rank = same;
 
-      AcloudCommand
-      AcloudTranslatorCommand
       CvdCommandHandlerProxy
       CvdVmControlCommandHandler
       LoadConfigsCommand
@@ -48,17 +44,11 @@ digraph {
     cvd_status
     stop_cvd
     cvd_host_bugreport
-    acloud [label = "acloud (python)"]
   }
 
   CvdClient -> CvdServer [label = "AF_UNIX"]
-  CvdClient -> acloud [label = "fork/exec"]
   CvdServer -> CvdCommandHandler
 
-  CvdCommandHandler -> TryAcloudCommand
-  CvdCommandHandler -> AcloudTranslatorCommand
-  CvdCommandHandler -> AcloudCommand
-  CvdCommandHandler -> AcloudMixSuperImageCommand
   CvdCommandHandler -> CvdVmControlCommandHandler
   CvdCommandHandler -> CvdFetchCommandHandler
   CvdCommandHandler -> CvdFleetCommandHandler
@@ -73,8 +63,6 @@ digraph {
   CvdCommandHandler -> CvdStartCommandHandler
   CvdCommandHandler -> CvdVersionHandler
 
-  CommandSequenceExecutor -> AcloudTranslatorCommand [dir = "back"]
-  CommandSequenceExecutor -> AcloudCommand [dir = "back"]
   CommandSequenceExecutor -> CvdCommandHandlerProxy [dir = "back"]
   CommandSequenceExecutor -> LoadConfigsCommand [dir = "back"]
   CommandSequenceExecutor -> SerialPreset [dir = "back"]

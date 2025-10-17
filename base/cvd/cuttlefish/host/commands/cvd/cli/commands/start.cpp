@@ -29,7 +29,6 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -286,89 +285,9 @@ class CvdStartCommandHandler : public CvdCommandHandler {
 
   Result<std::string> FindStartBin(const std::string& android_host_out);
 
-  Result<void> AcloudCompatActions(const LocalInstanceGroup& group,
-                                   const cvd_common::Envs& envs,
-                                   const CommandRequest& request);
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
 };
-
-Result<void> CvdStartCommandHandler::AcloudCompatActions(
-    const LocalInstanceGroup& group, const cvd_common::Envs& envs,
-    const CommandRequest& request) {
-  // rm -fr "AcloudInstanceLocksPath()/local-instance-<i>"
-  std::string acloud_compat_home_prefix =
-      AcloudInstanceLocksPath() + "/local-instance-";
-  std::vector<std::string> acloud_compat_homes;
-  acloud_compat_homes.reserve(group.Instances().size());
-  for (const auto& instance : group.Instances()) {
-    acloud_compat_homes.push_back(
-        ConcatToString(acloud_compat_home_prefix, instance.id()));
-  }
-  for (const auto& acloud_compat_home : acloud_compat_homes) {
-    bool result_deleted = true;
-    std::stringstream acloud_compat_home_stream;
-    if (!FileExists(acloud_compat_home)) {
-      continue;
-    }
-    if (!Contains(envs, kLaunchedByAcloud) ||
-        envs.at(kLaunchedByAcloud) != "true") {
-      if (!DirectoryExists(acloud_compat_home, /*follow_symlinks=*/false)) {
-        // cvd created a symbolic link
-        result_deleted = RemoveFile(acloud_compat_home);
-      } else {
-        // acloud created a directory
-        // rm -fr isn't supporetd by TreeHugger, so if we fork-and-exec to
-        // literally run "rm -fr", the presubmit testing may fail if ever this
-        // code is tested in the future.
-        result_deleted = RecursivelyRemoveDirectory(acloud_compat_home).ok();
-      }
-    }
-    if (!result_deleted) {
-      LOG(ERROR) << "Removing " << acloud_compat_home << " failed.";
-      continue;
-    }
-  }
-
-  const std::string& home_dir = group.HomeDir();
-  CF_EXPECT(EnsureDirectoryExists(home_dir, 0775, /* group_name */ ""),
-            "Failed to create group's home directory");
-  const std::string& android_host_out = group.HostArtifactsPath();
-  CF_EXPECT(CreateSymLink(android_host_out, home_dir + "/host_bins",
-                          /* override_existing*/ true),
-            "Failed to symlink host artifacts path to group's HOME directory");
-  /* TODO(weihsu@): cvd acloud delete/list must handle multi-tenancy gracefully
-   *
-   * acloud delete just calls, for all instances in a group,
-   *  /tmp/acloud_cvd_temp/local-instance-<i>/host_bins/stop_cvd
-   *
-   * That isn't necessary. Not desirable. Cvd acloud should read the instance
-   * manager's in-memory data structure, and call stop_cvd once for the entire
-   * group.
-   *
-   * Likewise, acloud list simply shows all instances in a flattened way. The
-   * user has no clue about an instance group. Cvd acloud should show the
-   * hierarchy.
-   *
-   * For now, we create the symbolic links so that it is compatible with acloud
-   * in Python.
-   */
-  for (const auto& acloud_compat_home : acloud_compat_homes) {
-    if (acloud_compat_home == home_dir) {
-      LOG(ERROR) << "The \"HOME\" directory is acloud workspace, which will "
-                 << "be deleted by next cvd start or acloud command with the"
-                 << " same directory being \"HOME\"";
-      continue;
-    }
-    auto link_res = CreateSymLink(home_dir, acloud_compat_home,
-                                  /* override_existing*/ true);
-    if (!link_res.ok()) {
-      LOG(ERROR) << "Failed to symlink group's HOME directory to acloud "
-                    "compatible location";
-    }
-  }
-  return {};
-}
 
 Result<void> CvdStartCommandHandler::UpdateEnvs(
     cvd_common::Envs& envs, const LocalInstanceGroup& group) {
@@ -625,13 +544,6 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
          "Policy (https://policies.google.com/privacy) describes how Google "
          "handles information generated as you use Google services.";
   GatherVmStartMetrics(group);
-
-  auto acloud_compat_action_result = AcloudCompatActions(group, envs, request);
-  if (!acloud_compat_action_result.ok()) {
-    LOG(ERROR) << acloud_compat_action_result.error().FormatForEnv();
-    LOG(ERROR) << "AcloudCompatActions() failed"
-               << " but continue as they are minor errors.";
-  }
 
   siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
   // NOLINTNEXTLINE(misc-include-cleaner)
