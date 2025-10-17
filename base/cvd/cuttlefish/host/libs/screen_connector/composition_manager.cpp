@@ -27,12 +27,19 @@
 
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
 
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include "libyuv.h"
 
 #include <drm/drm_fourcc.h>
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
+#include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"
 
 static const int kRedIdx = 0;
 static const int kGreenIdx = 1;
