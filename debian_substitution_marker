@@ -180,10 +180,11 @@ symlinks: {
   link_name: "bin/screen_recording_server"
 }
 
-symlinks: {
-  target: "/usr/lib/cuttlefish-common/bin/sensors_simulator"
-  link_name: "bin/sensors_simulator"
-}
+# TODO(b/452945156): Uncomment once host package is updated and sensors simulator is landed.
+# symlinks: {
+#   target: "/usr/lib/cuttlefish-common/bin/sensors_simulator"
+#   link_name: "bin/sensors_simulator"
+# }
 
 symlinks: {
   target: "/usr/lib/cuttlefish-common/bin/simg2img"
