@@ -479,6 +479,18 @@ PRODUCT_PACKAGES += $(LOCAL_THERMAL_HAL_PRODUCT_PACKAGE)
 PRODUCT_PACKAGES += \
     com.android.hardware.neuralnetworks
 
+#
+# NPU HAL
+#
+ifeq ($(RELEASE_AIDL_USE_UNFROZEN),true)
+    PRODUCT_PACKAGES += \
+        com.android.hardware.npu.cf
+
+    # Indicates that Cuttlefish has NPU support
+    PRODUCT_COPY_FILES += \
+        frameworks/native/data/etc/android.hardware.npu.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.npu.xml
+endif
+
 # USB
 PRODUCT_PACKAGES += \
     com.android.hardware.usb
