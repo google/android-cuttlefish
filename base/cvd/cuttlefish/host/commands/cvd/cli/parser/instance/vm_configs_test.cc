@@ -55,7 +55,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=2,2"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=4,4"))
       << "cpus flag is missing or wrongly formatted";
 }
 
@@ -74,7 +74,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
             "vm": {
                 "crosvm":{
                 },
-                "cpus": 4
+                "cpus": 8
             }
         }
     ]
@@ -88,7 +88,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagPartialJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=2,4"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=4,8"))
       << "cpus flag is missing or wrongly formatted";
 }
 
@@ -133,14 +133,14 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
             "vm": {
                 "crosvm":{
                 },
-                "cpus": 4
+                "cpus": 6
             }
         },
         {
             "vm": {
                 "crosvm":{
                 },
-                "cpus": 6
+                "cpus": 8
             }
         }
     ]
@@ -154,7 +154,7 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagFullJson) {
       << "Invalid Json string";
   auto serialized_data = LaunchCvdParserTester(json_configs);
   EXPECT_TRUE(serialized_data.ok()) << serialized_data.error().Trace();
-  EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=4,6"))
+  EXPECT_TRUE(FindConfig(*serialized_data, "--cpus=6,8"))
       << "cpus flag is missing or wrongly formatted";
 }
 
