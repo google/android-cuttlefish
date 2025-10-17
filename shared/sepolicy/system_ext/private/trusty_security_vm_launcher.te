@@ -10,6 +10,7 @@ is_flag_enabled(RELEASE_AVF_ENABLE_EARLY_VM, `
     binder_use(trusty_security_vm_launcher)
     add_service(trusty_security_vm_launcher, accessor_trusty_keymint_comm_service)
     add_service(trusty_security_vm_launcher, accessor_trusty_keymint_provisioning_service)
+    add_service(trusty_security_vm_launcher, accessor_trusty_gatekeeper_service)
 
     allow trusty_security_vm_launcher kmsg_debug_device:chr_file rw_file_perms;
     use_bootstrap_libs(trusty_security_vm_launcher)
