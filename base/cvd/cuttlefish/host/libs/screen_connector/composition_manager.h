@@ -15,11 +15,17 @@
  */
 #pragma once
 
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+
 #include <android-base/logging.h>
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
-#include "cuttlefish/host/libs/screen_connector/screen_connector.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"
 
 namespace cuttlefish {
 class DisplayHandler;
@@ -81,6 +87,7 @@ class CompositionManager {
   std::string group_uuid_;
   std::map<int, std::vector<DisplayOverlay>> cfg_overlays_;
   std::map<int, LastFrameInfo> last_frame_info_map_;
+  std::map<int, std::vector<uint8_t>> frame_work_buffer_;
 };
 
 }  // namespace cuttlefish
