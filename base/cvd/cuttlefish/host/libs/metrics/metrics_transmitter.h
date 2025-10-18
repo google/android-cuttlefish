@@ -16,18 +16,12 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string_view>
-
-#include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-wireless_android_play_playlog::LogRequest ConstructLogRequest(
-    EventType event_type, const HostInfo& host_metrics,
-    std::string_view session_id, std::string_view cf_common_version,
-    uint64_t now_ms);
+Result<void> TransmitMetricsEvent(
+    const wireless_android_play_playlog::LogRequest& log_request);
 
 }  // namespace cuttlefish

@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
+#include <chrono>
+#include <cstdint>
 #include <string>
 
 #include <android-base/logging.h>
@@ -26,10 +28,10 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
-#include "cuttlefish/host/commands/metrics/send.h"
+#include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
-#include "cuttlefish/host/libs/metrics/metrics_defs.h"
+#include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
 #include "external_proto/clientanalytics.pb.h"
@@ -47,6 +49,13 @@ constexpr char kReadmeText[] =
     "step"
     " when it does>";
 
+uint64_t GetEpochTimeMs() {
+  auto now = std::chrono::system_clock::now().time_since_epoch();
+  uint64_t milliseconds_since_epoch =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+  return milliseconds_since_epoch;
+}
+
 std::string GetMetricsDirectoryFilepath(
     const LocalInstanceGroup& instance_group) {
   return instance_group.HomeDir() + "/metrics";
@@ -59,29 +68,23 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> TransmitMetrics(const LogRequest& log_request) {
-  int reporting_outcome = metrics::PostRequest(log_request.SerializeAsString(),
-                                               metrics::ClearcutServer::kProd);
-  CF_EXPECTF(reporting_outcome != MetricsExitCodes::kSuccess,
-             "Issue reporting metrics: {}", reporting_outcome);
-  return {};
-}
-
 Result<void> GatherAndWriteMetrics(EventType event_type,
                                    const std::string& metrics_directory) {
   const std::string session_id =
       CF_EXPECT(ReadSessionIdFile(metrics_directory));
   const HostInfo host_metrics = GetHostInfo();
+  const std::string cf_common_version = GetVersionIds().ToString();
+  uint64_t now_ms = GetEpochTimeMs();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
-  const LogRequest log_request =
-      ConstructLogRequest(event_type, host_metrics, session_id);
+  const LogRequest log_request = ConstructLogRequest(
+      event_type, host_metrics, session_id, cf_common_version, now_ms);
 
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
-    CF_EXPECT(TransmitMetrics(log_request));
+    CF_EXPECT(TransmitMetricsEvent(log_request));
   }
   return {};
 }
