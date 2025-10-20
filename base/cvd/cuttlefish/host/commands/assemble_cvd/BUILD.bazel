@@ -331,12 +331,15 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:instance_nums",
         "//libbase",
+        "@protobuf",
+        "@protobuf//src/google/protobuf/io",
     ],
 )
 
@@ -380,6 +383,16 @@ proto_library(
 cc_proto_library(
     name = "launch_cvd_cc_proto",
     deps = [":launch_cvd_proto"],
+)
+
+proto_library(
+    name = "guest_config_proto",
+    srcs = ["proto/guest_config.proto"],
+)
+
+cc_proto_library(
+    name = "guest_config_cc_proto",
+    deps = [":guest_config_proto"],
 )
 
 cf_cc_library(
