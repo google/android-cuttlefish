@@ -17,6 +17,8 @@
 
 #include <stdlib.h>
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -73,7 +75,14 @@ class CasDownloaderTests : public ::testing::Test {
         if (value == "false") {
           flags_string += fmt::format("\n      \"{}\": false", name);
         } else {
-          flags_string += fmt::format("\n      \"{}\": \"{}\"", name, value);
+          // Emit pure-digit values as JSON numbers so jsoncpp asInt64() works.
+          bool is_number = !value.empty() &&
+                           std::all_of(value.begin(), value.end(), ::isdigit);
+          if (is_number) {
+            flags_string += fmt::format("\n      \"{}\": {}", name, value);
+          } else {
+            flags_string += fmt::format("\n      \"{}\": \"{}\"", name, value);
+          }
         }
       } else {
         flags_string += fmt::format("\n      \"{}\": true", flag);
@@ -374,7 +383,7 @@ TEST_F(CasDownloaderTests, RecognizesValidFlags) {
 
 TEST_F(CasDownloaderTests, DisablesCacheIfCacheDirNotSet) {
   downloader_path_ = FakeDownloaderForArtifactAndFlags(
-      target_dir_ + "/artifact_name", "cache-dir");
+      target_dir_ + "/artifact_name");
   std::unique_ptr<CasDownloader> cas = CasUsingConfig();
 
   Result<void> download = cas->DownloadFile(
@@ -581,6 +590,46 @@ TEST_F(CasDownloaderTests, PassesCasOptionsFromCommandLine) {
   EXPECT_THAT(output, Not(HasSubstr("-get-tree-timeout=")));
   // Not supported by the fake downloader.
   EXPECT_THAT(output, Not(HasSubstr("-batch-update-blobs-timeout=")));
+}
+
+TEST_F(CasDownloaderTests, CacheMaxSize_DefaultWhenAbsent) {
+  // Fake downloader advertises support for cache-dir and cache-max-size.
+  downloader_path_ = FakeDownloaderForArtifactAndFlags(
+      target_dir_ + "/artifact_name", "cache-dir", "cache-max-size");
+  // Provide cache-dir but omit cache-max-size so default should be used.
+  std::unique_ptr<CasDownloader> cas = CasUsingConfig("cache-dir=path/to/cache");
+
+  Result<void> download = cas->DownloadFile(
+      "build_id", "build_target", "artifact_name", target_dir_,
+      [this](std::string filename) -> Result<std::string> {
+        return CasDigestsFile(filename, "_chunked_artifact_name=digest");
+      });
+
+  EXPECT_THAT(download, IsOk());
+  std::string output = ReadFile(cas_output_filepath_);
+  EXPECT_THAT(output,
+              HasSubstr(fmt::format("-cache-max-size={}", kDefaultCacheMaxSize)));
+}
+
+TEST_F(CasDownloaderTests, CacheMaxSize_OverriddenWhenTooSmall) {
+  // Fake downloader advertises support for cache-dir and cache-max-size.
+  downloader_path_ = FakeDownloaderForArtifactAndFlags(
+      target_dir_ + "/artifact_name", "cache-dir", "cache-max-size");
+  // Provide a too-small cache-max-size which should be replaced by the default.
+  std::unique_ptr<CasDownloader> cas =
+      CasUsingConfig("cache-dir=path/to/cache", "cache-max-size=1");
+
+  Result<void> download = cas->DownloadFile(
+      "build_id", "build_target", "artifact_name", target_dir_,
+      [this](std::string filename) -> Result<std::string> {
+        return CasDigestsFile(filename, "_chunked_artifact_name=digest");
+      });
+
+  EXPECT_THAT(download, IsOk());
+  std::string output = ReadFile(cas_output_filepath_);
+  EXPECT_THAT(output, Not(HasSubstr("-cache-max-size=1")));
+  EXPECT_THAT(output,
+              HasSubstr(fmt::format("-cache-max-size={}", kDefaultCacheMaxSize)));
 }
 
 int main(int argc, char** argv) {

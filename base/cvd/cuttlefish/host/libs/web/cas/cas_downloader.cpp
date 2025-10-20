@@ -72,6 +72,22 @@ std::vector<std::string> CreateCasFlags(std::string downloader_path,
                                         Json::Value& config_flags) {
   std::vector<std::string> cas_flags;
 
+  // If cache-dir is set and cache-max-size is absent or smaller than the default,
+  // ensure cache-max-size is at least kDefaultCacheMaxSize.
+  if (!config_flags["cache-dir"].asString().empty()) {
+    if (config_flags.isMember("cache-max-size")) {
+      int64_t provided = config_flags["cache-max-size"].asInt64();
+      if (provided < kDefaultCacheMaxSize) {
+        LOG(INFO) << "cache-max-size (" << provided
+                  << ") is smaller than default; using default ("
+                  << kDefaultCacheMaxSize << ")";
+        config_flags["cache-max-size"] = Json::Value(kDefaultCacheMaxSize);
+      }
+    } else {
+      config_flags["cache-max-size"] = Json::Value(kDefaultCacheMaxSize);
+    }
+  }
+  
   // Releasing of casdownloader and cvd can be out of sync. Filter out
   // unsupported flags for casdownloader.
   std::set<std::string> supported_flags = GetSupportedFlags(downloader_path);
