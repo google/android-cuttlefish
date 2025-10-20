@@ -1,0 +1,4 @@
+service vendor.npu-cf /apex/com.android.hardware.npu/bin/hw/android.hardware.npu@V1-cf-service
+    class hal
+    user nobody
+    group nobody
