@@ -1,4 +1,4 @@
-cuttlefish-common (1.28.0) unstable; urgency=medium
+cuttlefish-common (1.28.0) stable; urgency=medium
 
 * Generate and gather metrics session ID  by @cjreynol in https://github.com/google/android-cuttlefish/pull/1693
 * Gather initial metrics for remaining events by @cjreynol in https://github.com/google/android-cuttlefish/pull/1694

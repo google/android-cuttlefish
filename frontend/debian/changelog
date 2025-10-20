@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.28.0) unstable; urgency=medium
+cuttlefish-frontend (1.28.0) stable; urgency=medium
 
 * Add screen recordings endpoint to host orchestrator by @jemoreira in https://github.com/google/android-cuttlefish/pull/1689
 
