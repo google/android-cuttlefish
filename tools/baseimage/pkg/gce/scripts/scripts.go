@@ -59,7 +59,7 @@ sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
 # Avoid automatic updates during tests.
-# https://manpages.debian.org/bookworm/unattended-upgrades/unattended-upgrade.8.en.html
+# https://manpages.debian.org/trixie/unattended-upgrades/unattended-upgrade.8.en.html
 sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
 
 # Install JDK.
@@ -88,16 +88,10 @@ sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
 
-# Install image from backports which has matching headers
-echo "deb http://deb.debian.org/debian bookworm-backports main" | \
-  sudo chroot /mnt/image /usr/bin/tee -a /etc/apt/sources.list >/dev/null
-
-sudo chroot /mnt/image /usr/bin/apt-get update
-
 # update QEMU version to most recent backport
-sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86 -t bookworm
-sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm -t bookworm
-sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-x86
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-arm
+sudo chroot /mnt/image /usr/bin/apt install -y --only-upgrade qemu-system-misc
 
 # Install GPU driver dependencies
 sudo cp install_nvidia.sh /mnt/image/
@@ -105,11 +99,11 @@ sudo chroot /mnt/image /usr/bin/bash install_nvidia.sh
 sudo rm /mnt/image/install_nvidia.sh
 
 # Vulkan loader
-sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1 -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1
 
 # Wayland-server needed to have Nvidia driver fail gracefully when attempting to
 # use the EGL API on GCE instances without a GPU.
-sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0 -t bookworm
+sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0
 
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf
@@ -159,10 +153,13 @@ kmodver=$(dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
 
 apt-get install -y wget
 
-# Install headers from backports, to match the linux-image:
-apt-get install -y -t bookworm-backports $(echo linux-headers-${kmodver})
 # Dependencies for nvidia-installer
-apt-get install -y dkms libglvnd-dev libc6-dev pkg-config
+apt-get install -y \
+  $(echo linux-headers-${kmodver}) \
+  dkms \
+  libglvnd-dev \
+  libc6-dev \
+  pkg-config
 
 nvidia_version=570.158.01
 
