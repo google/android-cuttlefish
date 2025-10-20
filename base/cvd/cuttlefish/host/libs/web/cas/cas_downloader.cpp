@@ -211,10 +211,10 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   }
   CF_EXPECT(!downloader_path.empty(),
             "No cas downloader path provided in flags or config");
-  cas_flags = CreateCasFlags(downloader_path, config_flags);
-
   CF_EXPECTF(FileExists(downloader_path),
              "CAS Downloader binary not found: '{}'", downloader_path);
+  cas_flags = CreateCasFlags(downloader_path, config_flags);
+
   if (!service_account_filepath.empty() &&
       FileExists(service_account_filepath)) {
     cas_flags.push_back("-" + std::string(kFlagServiceAccountJson) + "=" +
