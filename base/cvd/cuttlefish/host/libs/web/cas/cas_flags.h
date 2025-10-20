@@ -32,6 +32,10 @@ inline constexpr int kDefaultGetTreeTimeout = 5;
 inline constexpr int kDefaultBatchReadBlobsTimeout = 180;
 inline constexpr int kDefaultBatchUpdateBlobsTimeout = 60;
 
+// Default cache size for CAS cache: 8 GiB.
+// Note: this is only effective when cache_dir is set.
+inline constexpr int64_t kDefaultCacheMaxSize = 8LL * 1024 * 1024 * 1024;
+
 // Flags for the CAS downloader binary.
 struct CasDownloaderFlags {
   std::vector<Flag> Flags();
@@ -40,7 +44,7 @@ struct CasDownloaderFlags {
   std::string downloader_path = "";
   bool prefer_uncompressed = false;
   std::string cache_dir = "";
-  int64_t cache_max_size = 0;  // Must be > 0 if cache_dir is set.
+  int64_t cache_max_size = kDefaultCacheMaxSize;  // Only effective when cache_dir is set.
   bool cache_lock = false;
   bool use_hardlink = true;
   int memory_limit = kDefaultMemoryLimit;
