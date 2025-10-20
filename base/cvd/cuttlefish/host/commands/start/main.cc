@@ -208,13 +208,13 @@ int CvdInternalStartMain(int argc, char** argv) {
   std::vector<std::string> args_copy = args;
   auto parse_res = ConsumeFlags(
       {GflagsCompatFlag("system_image_dir", image_dir)}, args_copy);
-  LOG(INFO) << "Using system_image_dir of: " << image_dir;
 
   if (!parse_res.ok()) {
     LOG(ERROR) << "Error extracting system_image_dir from args: "
                << parse_res.error().FormatForEnv();
     return -1;
   } else if (!image_dir.empty()) {
+    LOG(INFO) << "Using system_image_dir of: " << image_dir;
     assemble_args = {"--system_image_dir=" + image_dir};
   }
 
