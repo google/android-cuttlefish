@@ -26,7 +26,7 @@ import (
 // Cuttlefish base images are based on debian images.
 const (
 	debianSourceImageProject = "debian-cloud"
-	debianSourceImage        = "debian-12-bookworm-v20250610"
+	debianSourceImage        = "debian-13-trixie-v20251014"
 )
 
 const (
