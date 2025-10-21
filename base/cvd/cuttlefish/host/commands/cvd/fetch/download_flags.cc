@@ -15,8 +15,8 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 
-#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/get_optional.h"
+#include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
 
 namespace cuttlefish {
 

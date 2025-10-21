@@ -58,8 +58,8 @@ cf_cc_library(
     srcs = ["download_flags.cc"],
     hdrs = ["download_flags.h"],
     deps = [
-        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:get_optional",
+        "//cuttlefish/host/commands/cvd/fetch:vector_flags",
     ],
 )
 

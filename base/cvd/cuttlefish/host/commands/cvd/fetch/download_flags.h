@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
 
 namespace cuttlefish {
 
