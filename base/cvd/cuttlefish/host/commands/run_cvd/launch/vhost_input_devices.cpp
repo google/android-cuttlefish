@@ -179,7 +179,7 @@ class VhostInputDevices : public CommandSource,
     commands.emplace_back(std::move(switches_log_tee));
 
     const bool use_multi_touch =
-        GuestOsFromBootFlow(instance_.boot_flow()) == GuestOs::ChromeOs;
+        GuestOsFromBootFlow(instance_.boot_flow()) != GuestOs::ChromeOs;
 
     std::string touchscreen_template_path =
         use_multi_touch ? DefaultMultiTouchscreenSpecTemplate()
