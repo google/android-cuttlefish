@@ -17,7 +17,6 @@
 
 #include <dirent.h>
 #include <errno.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <chrono>
@@ -37,6 +36,7 @@
 #include <android-base/logging.h>
 #include <json/value.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -359,7 +359,7 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
     unlink(path.c_str());
     CF_EXPECT(symlink(source.c_str(), path.c_str()) == 0,
               "Could not create symlink from " << source << " to " << path
-                                               << ": " << strerror(errno));
+                                               << ": " << StrError(errno));
     return {};
   }
   return CF_ERR("Could not find artifact \"" << artifact << "\" in build \""
