@@ -291,6 +291,8 @@ std::string getAidlPackage(const std::string& aidlType) {
 
 static bool isAospAidlInterface(const std::string& name) {
   return base::StartsWith(name, "android.") &&
+         !base::StartsWith(name, "android.system.desktop.security.") &&
+         !base::StartsWith(name, "android.desktop.security.") &&
          !base::StartsWith(name, "android.hardware.tests.") &&
          !base::StartsWith(name, "android.aidl.tests");
 }
