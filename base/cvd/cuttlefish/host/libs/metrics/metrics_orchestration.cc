@@ -78,9 +78,6 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
 
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
-    LOG(INFO) << "This will automatically send diagnostic information to "
-                 "Google, such as crash reports and usage data from the host "
-                 "machine managing the Android Virtual Device.";
     CF_EXPECT(TransmitMetricsEvent(log_request));
   }
   return {};
@@ -111,6 +108,11 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
     LOG(ERROR) << fmt::format("Failed to initialize metrics.  Error: {}",
                               metrics_setup_result.error());
     return;
+  }
+  if (kEnableCvdMetrics) {
+    LOG(INFO) << "This will automatically send diagnostic information to "
+                 "Google, such as crash reports and usage data from the host "
+                 "machine managing the Android Virtual Device.";
   }
   RunMetrics(metrics_directory, EventType::DeviceInstantiation);
 }
