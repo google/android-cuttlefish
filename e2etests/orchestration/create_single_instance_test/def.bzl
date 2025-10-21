@@ -22,7 +22,6 @@ def create_single_instance_test(name, build_id, build_target):
             "BUILD_ID": build_id,
             "BUILD_TARGET": build_target,
         },
-        tags = ["host-ready"],
         deps = [
             "//orchestration/common",
             "@com_github_google_go_cmp//cmp",
