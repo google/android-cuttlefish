@@ -42,7 +42,7 @@ runs:
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
 
         # Compute tests for this runner
-        all_tests=$( sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output  query --noshow_progress 'attr(tags, "[\[ ]host-ready[,\]]", //...)' | grep -e "^\/\/" | sort )
+        all_tests=$( sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output  query --noshow_progress 'kind("go_test", orchestration/...) except attr(tags, "[\[ ]host-ready-special[,\]]", //...)' | grep -e "^\/\/" | sort )
         all_tests_count=$(echo "${all_tests}" | wc --lines)
         echo "ALL TESTS: ${all_tests_count}"
         echo "${all_tests}"
