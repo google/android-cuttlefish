@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
 #include <chrono>
-#include <cstdint>
 #include <string>
 
 #include <android-base/logging.h>
@@ -49,11 +48,9 @@ constexpr char kReadmeText[] =
     "step"
     " when it does>";
 
-uint64_t GetEpochTimeMs() {
+std::chrono::milliseconds GetEpochTime() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
-  uint64_t milliseconds_since_epoch =
-      std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-  return milliseconds_since_epoch;
+  return std::chrono::duration_cast<std::chrono::milliseconds>(now);
 }
 
 std::string GetMetricsDirectoryFilepath(
@@ -74,10 +71,10 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
       CF_EXPECT(ReadSessionIdFile(metrics_directory));
   const HostInfo host_metrics = GetHostInfo();
   const std::string cf_common_version = GetVersionIds().ToString();
-  uint64_t now_ms = GetEpochTimeMs();
+  std::chrono::milliseconds now = GetEpochTime();
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   const LogRequest log_request = ConstructLogRequest(
-      event_type, host_metrics, session_id, cf_common_version, now_ms);
+      event_type, host_metrics, session_id, cf_common_version, now);
 
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
