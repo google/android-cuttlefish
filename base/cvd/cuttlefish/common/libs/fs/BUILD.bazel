@@ -27,6 +27,7 @@ cf_cc_library(
     ],
     linkopts = ["-lrt"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
