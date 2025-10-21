@@ -43,6 +43,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
@@ -453,7 +454,7 @@ Result<std::pair<SharedFD, SharedFD>> SharedFD::SocketPair(int domain, int type,
                                                            int protocol) {
   SharedFD a, b;
   if (!SharedFD::SocketPair(domain, type, protocol, &a, &b)) {
-    return CF_ERR("socketpair failed: " << strerror(errno));
+    return CF_ERR("socketpair failed: " << ::cuttlefish::StrError(errno));
   }
   return std::make_pair(std::move(a), std::move(b));
 }
@@ -495,7 +496,7 @@ Result<SharedFD> SharedFD::Fifo(const std::string& path, mode_t mode) {
   if (TEMP_FAILURE_RETRY(stat(path.c_str(), &st)) == 0) {
     CF_EXPECTF(TEMP_FAILURE_RETRY(remove(path.c_str())) == 0,
                "Failed to delete old file at '{}': '{}'", path,
-               strerror(errno));
+               ::cuttlefish::StrError(errno));
   }
 
   CF_EXPECTF(TEMP_FAILURE_RETRY(mkfifo(path.c_str(), mode)) == 0,
@@ -528,7 +529,8 @@ Result<std::pair<SharedFD, std::string>> SharedFD::Mkostemp(
   // mkostemp replaces the Xs with random selections to make a unique filename
   auto temp_path = fmt::format("{}XXXXXX", path);
   const int fd = mkostemp(temp_path.data(), flags);
-  CF_EXPECTF(fd != -1, "Error creating temporary file: {}", strerror(errno));
+  CF_EXPECTF(fd != -1, "Error creating temporary file: {}",
+             ::cuttlefish::StrError(errno));
   auto shared_fd =
       SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
   return std::make_pair<SharedFD, std::string>(std::move(shared_fd),
@@ -700,7 +702,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 
   if (!abstract) {
     if (TEMP_FAILURE_RETRY(chmod(name.c_str(), mode)) == -1) {
-      LOG(ERROR) << "chmod failed: " << strerror(errno);
+      LOG(ERROR) << "chmod failed: " << ::cuttlefish::StrError(errno);
       // However, continue since we do have a listening socket
     }
   }
@@ -866,7 +868,8 @@ int FileInstance::Fsync() {
 Result<void> FileInstance::Flock(int operation) {
   LocalErrno record_errno(errno_);
 
-  CF_EXPECT(TEMP_FAILURE_RETRY(flock(fd_, operation)) == 0, strerror(errno));
+  CF_EXPECT(TEMP_FAILURE_RETRY(flock(fd_, operation)) == 0,
+            ::cuttlefish::StrError(errno));
   return {};
 }
 
@@ -997,7 +1000,7 @@ int FileInstance::SetTerminalRaw() {
 
 std::string FileInstance::StrError() const {
   errno = 0;
-  return std::string(strerror(errno_));
+  return std::string(::cuttlefish::StrError(errno_));
 }
 
 ScopedMMap FileInstance::MMap(void* addr, size_t length, int prot, int flags,
