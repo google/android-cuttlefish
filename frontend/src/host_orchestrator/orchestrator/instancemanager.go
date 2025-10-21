@@ -158,6 +158,8 @@ type startCVDParams struct {
 	KernelDir string
 	// OPTIONAL. If set, bootloader relevant artifacts will be pulled from this dir.
 	BootloaderDir string
+	// OPTIONAL.
+	VhostUserVsock string
 }
 
 func CreateCVD(ctx hoexec.ExecContext, p startCVDParams) (*cvd.Group, error) {
@@ -169,6 +171,7 @@ func CreateCVD(ctx hoexec.ExecContext, p startCVDParams) (*cvd.Group, error) {
 
 	startOpts := cvd.StartOptions{
 		ReportUsageStats: reportAnonymousUsageStats,
+		VhostUserVsock:   p.VhostUserVsock,
 	}
 	if p.KernelDir != "" {
 		startOpts.KernelImage = fmt.Sprintf("%s/bzImage", p.KernelDir)
