@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
+#include <unistd.h>
+
 #include <chrono>
 #include <string>
 
@@ -25,6 +27,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
@@ -39,6 +42,8 @@ namespace cuttlefish {
 namespace {
 
 using wireless_android_play_playlog::LogRequest;
+
+constexpr char kMetricsLogName[] = "metrics.log";
 
 constexpr char kReadmeText[] =
     "The existence of records in this directory does"
@@ -84,6 +89,12 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
 }
 
 void RunMetrics(const std::string& metrics_directory, EventType event_type) {
+  MetadataLevel metadata_level =
+      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
+  ScopedTeeLogger logger(LogToStderrAndFiles(
+      {fmt::format("{}/{}", metrics_directory, kMetricsLogName)}, "",
+      metadata_level));
+
   if (!FileExists(metrics_directory)) {
     LOG(INFO) << "Metrics directory does not exist, perhaps metrics were not "
                  "initialized.";
@@ -99,7 +110,6 @@ void RunMetrics(const std::string& metrics_directory, EventType event_type) {
 
 }  // namespace
 
-// TODO: chadreynolds - add a metrics.log to capture these log messages
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
   const std::string metrics_directory =
       GetMetricsDirectoryFilepath(instance_group);

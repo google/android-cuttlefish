@@ -75,6 +75,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/metrics:is_enabled",
         "//cuttlefish/host/commands/cvd/version",
