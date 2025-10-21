@@ -60,7 +60,9 @@ Result<void> PostRequest(HttpClient& http_client, const std::string& output,
 Result<void> TransmitMetricsEvent(
     const wireless_android_play_playlog::LogRequest& log_request) {
   CurlGlobalInit curl_global_init;
-  std::unique_ptr<HttpClient> http_client = CurlHttpClient();
+  const bool use_logging_debug_function = true;
+  std::unique_ptr<HttpClient> http_client =
+      CurlHttpClient(use_logging_debug_function);
   CF_EXPECT(http_client.get() != nullptr,
             "Unable to create cURL client for metrics transmission");
   CF_EXPECT(PostRequest(*http_client, log_request.SerializeAsString(),
