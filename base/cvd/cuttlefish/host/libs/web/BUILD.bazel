@@ -21,6 +21,7 @@ cf_cc_library(
     srcs = ["android_build_api.cpp"],
     hdrs = ["android_build_api.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
