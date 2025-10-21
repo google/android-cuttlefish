@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include <fmt/format.h>
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/uuid.h"
@@ -30,12 +32,14 @@ constexpr char kSessionIdFileName[] = "metrics_session_id.txt";
 }  // namespace
 
 Result<std::string> ReadSessionIdFile(const std::string& metrics_directory) {
-  return CF_EXPECT(ReadFileContents(metrics_directory + kSessionIdFileName));
+  return CF_EXPECT(ReadFileContents(
+      fmt::format("{}/{}", metrics_directory, kSessionIdFileName)));
 }
 
 Result<void> GenerateSessionIdFile(const std::string& metrics_directory) {
   const std::string session_id = GenerateUuid();
-  CF_EXPECT(WriteNewFile(metrics_directory + kSessionIdFileName, session_id));
+  CF_EXPECT(WriteNewFile(
+      fmt::format("{}/{}", metrics_directory, kSessionIdFileName), session_id));
   return {};
 }
 

@@ -366,16 +366,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "tcp_socket",
-    srcs = ["tcp_socket.cpp"],
-    hdrs = ["tcp_socket.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
     name = "tee_logging",
     srcs = ["tee_logging.cpp"],
     hdrs = ["tee_logging.h"],
