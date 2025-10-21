@@ -122,6 +122,7 @@ cf_cc_library(
     srcs = ["clean.cc"],
     hdrs = ["clean.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",

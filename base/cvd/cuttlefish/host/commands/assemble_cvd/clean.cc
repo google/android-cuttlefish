@@ -26,6 +26,7 @@
 #include <android-base/strings.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -77,7 +78,7 @@ Result<void> CleanPriorFiles(const std::string& path,
           errno == EBUSY)) {
       // If EEXIST or ENOTEMPTY, probably because a file was preserved. EROFS
       // or EBUSY likely means a bind mount for host-sandboxing mode.
-      return CF_ERRF("Could not rmdir '{}': '{}'", path, strerror(errno));
+      return CF_ERRF("Could not rmdir '{}': '{}'", path, StrError(errno));
     }
   }
   return {};
