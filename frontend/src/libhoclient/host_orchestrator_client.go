@@ -532,11 +532,7 @@ func (c *HostOrchestratorClientImpl) ListScreenRecordings(groupName, instanceNam
 
 func (c *HostOrchestratorClientImpl) DownloadScreenRecording(groupName, instanceName, recording string, dst io.Writer) error {
 	path := fmt.Sprintf("/cvds/%s/%s/screen_recordings/%s", groupName, instanceName, recording)
-	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+path, nil)
-	if err != nil {
-		return err
-	}
-	res, err := c.HTTPHelper.Client.Do(req)
+	res, err := c.HTTPHelper.NewGetRequest(path).Do()
 	if err != nil {
 		return err
 	}
@@ -717,11 +713,7 @@ func (c *HostOrchestratorClientImpl) CreateBugReport(group string, opts CreateBu
 	if err := c.waitForOperationOpts(op.Name, &uuid, retryOpts); err != nil {
 		return err
 	}
-	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+"/cvdbugreports/"+uuid, nil)
-	if err != nil {
-		return err
-	}
-	res, err := c.HTTPHelper.Client.Do(req)
+	res, err := c.HTTPHelper.NewGetRequest("/cvdbugreports/" + uuid).Do()
 	if err != nil {
 		return err
 	}
@@ -759,11 +751,7 @@ func NewJournalGatewaydClient(url string) *JournalGatewaydClient {
 func (c *JournalGatewaydClient) PullHOLogs(dst io.Writer) error {
 	const srvName = "cuttlefish-host_orchestrator.service"
 	path := fmt.Sprintf("/_journal/entries?_SYSTEMD_UNIT=%s", srvName)
-	req, err := http.NewRequest("GET", c.HTTPHelper.RootEndpoint+path, nil)
-	if err != nil {
-		return err
-	}
-	res, err := c.HTTPHelper.Client.Do(req)
+	res, err := c.HTTPHelper.NewGetRequest(path).Do()
 	if err != nil {
 		return err
 	}
