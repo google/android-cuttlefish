@@ -23,10 +23,29 @@ namespace android {
 namespace hardware {
 namespace npu {
 
+ndk::ScopedAStatus checkPriorities(std::vector<SchedulingConfig> configs) {
+  for (SchedulingConfig& config : configs) {
+    if (config.priority < SchedulingConfig::MIN_PRIORITY ||
+        config.priority > SchedulingConfig::MAX_PRIORITY) {
+      return ndk::ScopedAStatus::fromExceptionCodeWithMessage(
+          EX_ILLEGAL_ARGUMENT,
+          "Invalid priority. Must be between SchedulingConfig::LOWEST_PRIORITY "
+          "and SchedulingConfig::HIGHEST_PRIORITY");
+    }
+  }
+
+  return ndk::ScopedAStatus::ok();
+}
+
 ndk::ScopedAStatus SchedulingService::setSchedulingConfigs(
     const std::vector<SchedulingConfig>& schedulingConfigs) {
   LOG(INFO) << "setSchedulingConfigs received " << schedulingConfigs.size()
             << " configs";
+  ndk::ScopedAStatus checkStatus = checkPriorities(schedulingConfigs);
+  if (!checkStatus.isOk()) {
+    return checkStatus;
+  }
+
   mSchedulingConfigs.clear();
   updateSchedulingConfigs(schedulingConfigs);
   return ndk::ScopedAStatus::ok();
@@ -36,6 +55,11 @@ ndk::ScopedAStatus SchedulingService::updateSchedulingConfigs(
     const std::vector<SchedulingConfig>& schedulingConfigs) {
   LOG(INFO) << "updateSchedulingConfigs received " << schedulingConfigs.size()
             << " configs";
+  ndk::ScopedAStatus checkStatus = checkPriorities(schedulingConfigs);
+  if (!checkStatus.isOk()) {
+    return checkStatus;
+  }
+
   for (const SchedulingConfig& config : schedulingConfigs) {
     mSchedulingConfigs[config.uid] = config;
   }
