@@ -20,6 +20,8 @@
 #include <string>
 #include <string_view>
 
+#include "google/protobuf/timestamp.pb.h"
+
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "external_proto/cf_guest.pb.h"
