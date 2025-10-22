@@ -35,9 +35,9 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/guest_os.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
@@ -178,8 +178,7 @@ class VhostInputDevices : public CommandSource,
     commands.emplace_back(std::move(switches_cmd));
     commands.emplace_back(std::move(switches_log_tee));
 
-    const bool use_multi_touch =
-        GuestOsFromBootFlow(instance_.boot_flow()) != GuestOs::ChromeOs;
+    const bool use_multi_touch = ShouldEnableMultitouch(instance_);
 
     std::string touchscreen_template_path =
         use_multi_touch ? DefaultMultiTouchscreenSpecTemplate()

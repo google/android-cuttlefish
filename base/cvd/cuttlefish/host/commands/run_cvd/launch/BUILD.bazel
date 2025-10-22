@@ -73,6 +73,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "enable_multitouch",
+    srcs = ["enable_multitouch.cpp"],
+    hdrs = ["enable_multitouch.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:guest_os",
+    ],
+)
+
+cf_cc_library(
     name = "console_forwarder",
     srcs = ["console_forwarder.cpp"],
     hdrs = ["console_forwarder.h"],
@@ -424,6 +434,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
+        "//cuttlefish/host/commands/run_cvd/launch:enable_multitouch",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
         "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
@@ -536,6 +547,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/run_cvd/launch:enable_multitouch",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:guest_os",
