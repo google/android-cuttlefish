@@ -330,6 +330,10 @@ void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   *stream << fd;
 }
 
+void Command::BuildParameter(std::stringstream* stream, bool arg) {
+  *stream << (arg ? "true" : "false");
+}
+
 Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
                                 SharedFD shared_fd) & {
   CHECK(shared_fd->IsOpen());
@@ -430,7 +434,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
     // for other threads which don't exist in the child process.
 #ifdef __linux__
     if (options.ExitWithParent()) {
-      prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
+      prctl(PR_SET_PDEATHSIG, SIGHUP);  // Die when parent dies
     }
 #endif
 
@@ -469,7 +473,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
   if (pid == -1) {
     LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
   }
-  if (options.Verbose()) { // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
+  if (options.Verbose()) {  // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
     LOG(DEBUG) << "Started (pid: " << pid << "): " << cmd[0];
     for (int i = 1; cmd[i]; i++) {
       LOG(DEBUG) << cmd[i];

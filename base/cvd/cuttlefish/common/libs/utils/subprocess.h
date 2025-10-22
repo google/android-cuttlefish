@@ -145,6 +145,8 @@ class Command {
   }
   // Special treatment for SharedFD
   void BuildParameter(std::stringstream* stream, SharedFD shared_fd);
+  // Special treatment for bool so it uses true/false instead of 1/0
+  void BuildParameter(std::stringstream* stream, bool arg);
   template <typename T, typename... Args>
   void BuildParameter(std::stringstream* stream, T t, Args... args) {
     BuildParameter(stream, t);
