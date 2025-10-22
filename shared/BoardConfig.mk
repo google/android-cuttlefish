@@ -399,8 +399,7 @@ BOARD_KERNEL_CMDLINE += 8250.nr_uarts=1
 
 # Enable rust_binder explicitly, because the prop + reboot system doesn't work for
 # cuttlefish.
-# TODO(b/452839033): turn back on
-#BOARD_KERNEL_CMDLINE += binder.impl=rust
+BOARD_KERNEL_CMDLINE += binder.impl=rust
 
 # Cuttlefish doesn't use CMA, so don't reserve RAM for it
 BOARD_KERNEL_CMDLINE += cma=0
