@@ -34,6 +34,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/input_connections_provider.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
@@ -43,7 +44,6 @@
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
-#include "cuttlefish/host/libs/config/guest_os.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
@@ -114,9 +114,7 @@ class StreamerSockets : public virtual SetupFeature {
     const int touch_count = instance_.display_configs().size() +
                             instance_.touchpad_configs().size();
     if (touch_count > 0) {
-      if (GuestOsFromBootFlow(instance_.boot_flow()) == GuestOs::ChromeOs) {
-        cmd.AddParameter("--multitouch=false");
-      }
+      cmd.AddParameter("--multitouch=", ShouldEnableMultitouch(instance_));
       std::vector<SharedFD> touch_connections =
           input_connections_provider_.TouchscreenConnections();
       for (const SharedFD& touchpad_connection :
