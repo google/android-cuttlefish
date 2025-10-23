@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -48,10 +49,14 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
+#include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/web/build_zip_name.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
 namespace {
@@ -237,19 +242,58 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
     trace.CompletePhase("Desparse image files");
   }
 
+  std::string target_files_name =
+      GetBuildZipName(*builds.default_build, "target_files");
+  std::optional<std::string> target_files;
   if (builds.system || flags.download_target_files_zip) {
     LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
-    std::string target_files_name =
-        GetBuildZipName(*builds.default_build, "target_files");
-    std::string target_files = CF_EXPECT(build_api.DownloadFile(
+    target_files = CF_EXPECT(build_api.DownloadFile(
         *builds.default_build, target_directories.default_target_files,
         target_files_name));
     trace.CompletePhase("Download Target Files");
     LOG(INFO) << "Adding target files for default build";
-    CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
-                                      default_build_id, default_build_target,
-                                      {target_files}, target_directories.root));
+    CF_EXPECT(config.AddFilesToConfig(
+        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+        {*target_files}, target_directories.root));
   }
+
+  if (flags.extract_super_image_fragments) {
+    ReadableZip target_files_zip =
+        target_files.has_value()
+            ? CF_EXPECT(ZipOpenRead(*target_files))
+            : CF_EXPECT(
+                  OpenZip(build_api, *builds.default_build, target_files_name));
+    ReadableZipSource ab_partitions_source =
+        CF_EXPECT(target_files_zip.GetFile("META/ab_partitions.txt"));
+    std::string ab_partitions_contents =
+        CF_EXPECT(ReadToString(ab_partitions_source));
+
+    std::string ab_partitions_file =
+        target_directories.default_target_files + "/ab_partitions.txt";
+    CF_EXPECT(android::base::WriteStringToFile(ab_partitions_contents,
+                                               ab_partitions_file));
+    CF_EXPECT(config.AddFilesToConfig(
+        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+        {ab_partitions_file}, target_directories.default_target_files));
+
+    std::vector<std::string> ab_files =
+        absl::StrSplit(ab_partitions_contents, '\n');
+    ab_files.emplace_back("super_empty");
+    for (const std::string& ab_file : ab_files) {
+      if (ab_file.empty()) {
+        continue;
+      }
+      std::string output = fmt::format(
+          "{}/{}.img", target_directories.default_target_files, ab_file);
+      CF_EXPECTF(ExtractFile(target_files_zip,
+                             fmt::format("IMAGES/{}.img", ab_file), output),
+                 "Failed to extract {}", output);
+      CF_EXPECT(config.AddFilesToConfig(
+          FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
+          {output}, target_directories.default_target_files));
+    }
+  }
+
   return {};
 }
 

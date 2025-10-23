@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/strings/numbers.h"
+#include "android-base/logging.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 
@@ -69,6 +70,7 @@ class RemoteZip : public SeekableZipSourceCallback {
     std::vector<std::string> headers = headers_;
     headers.push_back(
         fmt::format("Range: bytes={}-{}", offset_, offset_ + zip_len - 1));
+    LOG(VERBOSE) << "Requesting " << headers.back();
     HttpRequest request = {
         .method = HttpMethod::kGet,
         .url = url_,
@@ -77,6 +79,13 @@ class RemoteZip : public SeekableZipSourceCallback {
     Result<HttpResponse<void>> res =
         http_client_.DownloadToCallback(request, cb);
     if (!res.ok() || !res->HttpSuccess() || already_read != zip_len) {
+      if (!res.ok()) {
+        LOG(ERROR) << res.error().FormatForEnv();
+      } else if (!res->HttpSuccess()) {
+        LOG(ERROR) << "HTTP code: " << res->http_code;
+      } else {
+        LOG(ERROR) << already_read << " != " << zip_len;
+      }
       errno = EIO;
       return -1;
     }

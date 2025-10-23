@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 
+#include "android-base/logging.h"
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
@@ -71,6 +73,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
       if (!reader_->SeekFromStart(offset_).ok()) {
         return false;
       }
+      LOG(VERBOSE) << "Bypassing buffer, reading " << len;
       Result<uint64_t> data_read = reader_->Read(data, len);
       if (data_read.ok()) {
         offset_ += *data_read;
@@ -97,6 +100,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     if (!reader_->SeekFromStart(offset_).ok()) {
       return -1;
     }
+    LOG(VERBOSE) << "Filling buffer with " << buffer_fill;
     Result<size_t> inner_read = reader_->Read(buffer_.data(), buffer_fill);
     if (!inner_read.ok()) {
       return -1;
@@ -106,9 +110,14 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     return Read(data, len);
   }
   uint64_t Size() override { return size_; }
-  bool SetOffset(int64_t offset) override {
-    offset_ = offset;
-    buffer_remaining_ = 0;
+  bool SetOffset(int64_t new_offset) override {
+    if (new_offset >= offset_ && new_offset < offset_ + buffer_remaining_) {
+      offset_in_buffer_ += new_offset - offset_;
+      buffer_remaining_ -= new_offset - offset_;
+    } else {
+      buffer_remaining_ = 0;
+    }
+    offset_ = new_offset;
     return true;
   }
   int64_t Offset() override { return offset_; }
