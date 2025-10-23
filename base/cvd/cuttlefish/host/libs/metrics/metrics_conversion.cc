@@ -113,6 +113,7 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
   // TODO: chadreynolds - use instance ID or device name once I gather for all
   // guests
   guest->set_guest_id(metrics_data.session_id + "1");
+  guest->set_guest_os_version(metrics_data.guest_metrics.os_version);
 
   CuttlefishHost* host = metrics_event->mutable_host();
   host->set_host_os(ConvertHostOs(metrics_data.host_metrics));
