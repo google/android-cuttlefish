@@ -22,6 +22,7 @@
 #include <string>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -32,6 +33,7 @@
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
@@ -53,14 +55,24 @@ constexpr char kReadmeText[] =
     "step"
     " when it does>";
 
+struct MetricsPaths {
+  std::string metrics_directory;
+  std::string artifacts_path;
+  std::string host_artifacts_path;
+};
+
 std::chrono::milliseconds GetEpochTime() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
   return std::chrono::duration_cast<std::chrono::milliseconds>(now);
 }
 
-std::string GetMetricsDirectoryFilepath(
-    const LocalInstanceGroup& instance_group) {
-  return instance_group.HomeDir() + "/metrics";
+MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
+  return MetricsPaths{
+      .metrics_directory = instance_group.HomeDir() + "/metrics",
+      .artifacts_path =
+          android::base::Split(instance_group.ProductOutPath(), ",").front(),
+      .host_artifacts_path = instance_group.HostArtifactsPath(),
+  };
 }
 
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
@@ -70,15 +82,18 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<MetricsData> GatherMetrics(EventType event_type,
-                                  const std::string& metrics_directory) {
+Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
+                                  EventType event_type) {
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   return MetricsData{
       .event_type = event_type,
-      .session_id = CF_EXPECT(ReadSessionIdFile(metrics_directory)),
+      .session_id =
+          CF_EXPECT(ReadSessionIdFile(metrics_paths.metrics_directory)),
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
+      .guest_metrics = CF_EXPECT(GetGuestInfo(
+          metrics_paths.artifacts_path, metrics_paths.host_artifacts_path)),
   };
 }
 
@@ -93,21 +108,20 @@ Result<void> OutputMetrics(EventType event_type,
   return {};
 }
 
-void RunMetrics(const std::string& metrics_directory, EventType event_type) {
+void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
   ScopedTeeLogger logger(LogToStderrAndFiles(
-      {fmt::format("{}/{}", metrics_directory, kMetricsLogName)}, "",
-      metadata_level));
+      {fmt::format("{}/{}", metrics_paths.metrics_directory, kMetricsLogName)},
+      "", metadata_level));
 
-  if (!FileExists(metrics_directory)) {
+  if (!FileExists(metrics_paths.metrics_directory)) {
     LOG(INFO) << "Metrics directory does not exist, perhaps metrics were not "
                  "initialized.";
     return;
   }
 
-  Result<MetricsData> gather_result =
-      GatherMetrics(event_type, metrics_directory);
+  Result<MetricsData> gather_result = GatherMetrics(metrics_paths, event_type);
   if (!gather_result.ok()) {
     LOG(INFO) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
@@ -115,8 +129,8 @@ void RunMetrics(const std::string& metrics_directory, EventType event_type) {
     return;
   }
 
-  Result<void> output_result =
-      OutputMetrics(event_type, metrics_directory, *gather_result);
+  Result<void> output_result = OutputMetrics(
+      event_type, metrics_paths.metrics_directory, *gather_result);
   if (!output_result.ok()) {
     LOG(INFO) << fmt::format("Failed to output metrics for {}.  Error: {}",
                              EventTypeString(event_type),
@@ -127,9 +141,9 @@ void RunMetrics(const std::string& metrics_directory, EventType event_type) {
 }  // namespace
 
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  Result<void> metrics_setup_result = SetUpMetrics(metrics_directory);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  Result<void> metrics_setup_result =
+      SetUpMetrics(metrics_paths.metrics_directory);
   if (!metrics_setup_result.ok()) {
     LOG(ERROR) << fmt::format("Failed to initialize metrics.  Error: {}",
                               metrics_setup_result.error());
@@ -140,25 +154,22 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
   }
-  RunMetrics(metrics_directory, EventType::DeviceInstantiation);
+  RunMetrics(metrics_paths, EventType::DeviceInstantiation);
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, EventType::DeviceBootStart);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceBootStart);
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, EventType::DeviceBootComplete);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceBootComplete);
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, EventType::DeviceStop);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceStop);
 }
 
 }  // namespace cuttlefish

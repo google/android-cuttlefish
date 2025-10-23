@@ -21,6 +21,7 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
@@ -31,6 +32,7 @@ struct MetricsData {
   std::string cf_common_version;
   std::chrono::milliseconds now;
   HostInfo host_metrics;
+  GuestInfo guest_metrics;
 };
 
 wireless_android_play_playlog::LogRequest ConstructLogRequest(
