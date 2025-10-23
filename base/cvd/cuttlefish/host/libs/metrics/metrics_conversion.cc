@@ -17,8 +17,6 @@
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 
 #include <chrono>
-#include <string>
-#include <string_view>
 
 #include "google/protobuf/timestamp.pb.h"
 
@@ -101,26 +99,24 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
   }
 }
 
-CuttlefishLogEvent BuildCuttlefishLogEvent(const EventType event_type,
-                                           const HostInfo& host_metrics,
-                                           std::string_view session_id,
-                                           std::string_view cf_common_version,
-                                           std::chrono::milliseconds now) {
+CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
   CuttlefishLogEvent cf_log_event;
   cf_log_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
-  cf_log_event.set_session_id(session_id);
-  cf_log_event.set_cuttlefish_version(cf_common_version);
-  *cf_log_event.mutable_timestamp_ms() = ToTimestamp(now);
+  cf_log_event.set_session_id(metrics_data.session_id);
+  cf_log_event.set_cuttlefish_version(metrics_data.cf_common_version);
+  *cf_log_event.mutable_timestamp_ms() = ToTimestamp(metrics_data.now);
 
   MetricsEventV2* metrics_event = cf_log_event.mutable_metrics_event_v2();
 
   CuttlefishGuest* guest = metrics_event->add_guest();
-  guest->set_event_type(ConvertEventType(event_type));
-  guest->set_guest_id(std::string(session_id) + "1");
+  guest->set_event_type(ConvertEventType(metrics_data.event_type));
+  // TODO: chadreynolds - use instance ID or device name once I gather for all
+  // guests
+  guest->set_guest_id(metrics_data.session_id + "1");
 
   CuttlefishHost* host = metrics_event->mutable_host();
-  host->set_host_os(ConvertHostOs(host_metrics));
-  host->set_host_os_version(host_metrics.release);
+  host->set_host_os(ConvertHostOs(metrics_data.host_metrics));
+  host->set_host_os_version(metrics_data.host_metrics.release);
 
   return cf_log_event;
 }
@@ -143,14 +139,9 @@ LogRequest BuildLogRequest(std::chrono::milliseconds now,
 
 }  // namespace
 
-LogRequest ConstructLogRequest(EventType event_type,
-                               const HostInfo& host_metrics,
-                               std::string_view session_id,
-                               std::string_view cf_common_version,
-                               std::chrono::milliseconds now) {
-  CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(
-      event_type, host_metrics, session_id, cf_common_version, now);
-  return BuildLogRequest(now, cf_log_event);
+LogRequest ConstructLogRequest(const MetricsData& metrics_data) {
+  CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(metrics_data);
+  return BuildLogRequest(metrics_data.now, cf_log_event);
 }
 
 }  // namespace cuttlefish
