@@ -70,17 +70,22 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> GatherAndWriteMetrics(EventType event_type,
-                                   const std::string& metrics_directory) {
-  const std::string session_id =
-      CF_EXPECT(ReadSessionIdFile(metrics_directory));
-  const HostInfo host_metrics = GetHostInfo();
-  const std::string cf_common_version = GetVersionIds().ToString();
-  std::chrono::milliseconds now = GetEpochTime();
+Result<MetricsData> GatherMetrics(EventType event_type,
+                                  const std::string& metrics_directory) {
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
-  const LogRequest log_request = ConstructLogRequest(
-      event_type, host_metrics, session_id, cf_common_version, now);
+  return MetricsData{
+      .event_type = event_type,
+      .session_id = CF_EXPECT(ReadSessionIdFile(metrics_directory)),
+      .cf_common_version = GetVersionIds().ToString(),
+      .now = GetEpochTime(),
+      .host_metrics = GetHostInfo(),
+  };
+}
 
+Result<void> OutputMetrics(EventType event_type,
+                           const std::string& metrics_directory,
+                           const MetricsData& metrics_data) {
+  const LogRequest log_request = ConstructLogRequest(metrics_data);
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
     CF_EXPECT(TransmitMetricsEvent(log_request));
@@ -100,11 +105,22 @@ void RunMetrics(const std::string& metrics_directory, EventType event_type) {
                  "initialized.";
     return;
   }
-  Result<void> event_result =
-      GatherAndWriteMetrics(event_type, metrics_directory);
-  if (!event_result.ok()) {
-    LOG(INFO) << fmt::format("Failed to gather metrics for {}.  Error: {}",
-                             EventTypeString(event_type), event_result.error());
+
+  Result<MetricsData> gather_result =
+      GatherMetrics(event_type, metrics_directory);
+  if (!gather_result.ok()) {
+    LOG(INFO) << fmt::format(
+        "Failed to gather all metrics data for {}.  Error: {}",
+        EventTypeString(event_type), gather_result.error());
+    return;
+  }
+
+  Result<void> output_result =
+      OutputMetrics(event_type, metrics_directory, *gather_result);
+  if (!output_result.ok()) {
+    LOG(INFO) << fmt::format("Failed to output metrics for {}.  Error: {}",
+                             EventTypeString(event_type),
+                             output_result.error());
   }
 }
 
