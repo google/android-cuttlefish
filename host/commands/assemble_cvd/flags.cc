@@ -1175,9 +1175,8 @@ std::string DefaultBootloaderArchDir(Arch arch) {
 } // namespace
 
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
-    const std::string& root_dir,
-    const std::vector<GuestConfig>& guest_configs,
-    fruit::Injector<>& injector, const FetcherConfig& fetcher_config) {
+    const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
+    fruit::Injector<>& injector, const FetcherConfigs& fetcher_configs) {
   CuttlefishConfig tmp_config_obj;
   // If a snapshot path is provided, do not read all flags to set up the config.
   // Instead, read the config that was saved at time of snapshot and restore
@@ -2246,7 +2245,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
                 calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
-  CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_config));
+  CF_EXPECT(DiskImageFlagsVectorization(tmp_config_obj, fetcher_configs));
 
   return tmp_config_obj;
 }
