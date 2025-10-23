@@ -23,11 +23,16 @@
 
 namespace cuttlefish {
 
+struct GuestPaths {
+  std::string artifacts;
+  std::string host_artifacts;
+};
+
 struct GuestInfo {
+  int instance_number;
   std::string os_version;
 };
 
-Result<GuestInfo> GetGuestInfo(std::string_view artifacts_path,
-                               std::string_view host_artifacts_path);
+Result<GuestInfo> GetGuestInfo(const GuestPaths& guest_paths);
 
 }  // namespace cuttlefish

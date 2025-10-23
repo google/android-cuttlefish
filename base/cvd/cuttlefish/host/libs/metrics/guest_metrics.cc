@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 
 #include <string>
-#include <string_view>
 
 #include <fmt/format.h>
 
@@ -31,13 +30,15 @@ constexpr char kAvbtool[] = "avbtool";
 
 }  // namespace
 
-Result<GuestInfo> GetGuestInfo(std::string_view artifacts_path,
-                               std::string_view host_artifacts_path) {
+Result<GuestInfo> GetGuestInfo(const GuestPaths& guest_paths) {
   const std::string boot_image_path =
-      fmt::format("{}/boot.img", artifacts_path);
+      fmt::format("{}/boot.img", guest_paths.artifacts);
   const std::string avbtool_path =
-      fmt::format("{}/bin/{}", host_artifacts_path, kAvbtool);
+      fmt::format("{}/bin/{}", guest_paths.host_artifacts, kAvbtool);
   return GuestInfo{
+      // TODO: chadreynolds - use actual instance ID when gathering for all
+      // guests
+      .instance_number = 1,
       .os_version = CF_EXPECTF(
           ReadAndroidVersionFromBootImage(boot_image_path, avbtool_path),
           "Failed to read guest os version from \"{}\" using `{}` at "
