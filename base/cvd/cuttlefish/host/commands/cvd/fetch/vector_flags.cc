@@ -68,6 +68,11 @@ std::vector<Flag> VectorFlags::Flags() {
                        this->download_target_files_zip,
                        kDefaultDownloadTargetFilesZip)
           .Help("Whether to fetch the -target_files-*.zip file."));
+  flags.emplace_back(
+      GflagsCompatFlag("extract_super_image_fragments",
+                       this->extract_super_image_fragments,
+                       kDefaultExtractSuperImageFragments)
+          .Help("Whether to fetch the -target_files-*.zip file."));
 
   return flags;
 }

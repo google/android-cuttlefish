@@ -13,6 +13,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_cc",
+        "//libbase",
     ],
 )
 
@@ -107,6 +108,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/zip:zip_cc",
+        "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],

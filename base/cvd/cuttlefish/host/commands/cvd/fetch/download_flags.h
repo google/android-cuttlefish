@@ -24,6 +24,7 @@ struct DownloadFlags {
 
   bool download_img_zip;
   bool download_target_files_zip;
+  bool extract_super_image_fragments;
 };
 
 }  // namespace cuttlefish

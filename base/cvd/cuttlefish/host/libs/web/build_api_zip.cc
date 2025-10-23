@@ -31,7 +31,7 @@ Result<ReadableZip> OpenZip(BuildApi& build_api, const Build& build,
   SeekableZipSource source = CF_EXPECT(build_api.FileReader(build, name));
 
   SeekableZipSource buffered =
-      CF_EXPECT(BufferZipSource(std::move(source), 1 << 16));
+      CF_EXPECT(BufferZipSource(std::move(source), 1 << 26));
 
   return CF_EXPECT(ReadableZip::FromSource(std::move(buffered)));
 }

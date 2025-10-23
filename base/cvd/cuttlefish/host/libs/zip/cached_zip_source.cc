@@ -47,6 +47,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
   }
 
   int64_t Read(char* data, uint64_t len) override {
+    LOG(VERBOSE) << "Reading " << len;
     if (Result<void> res = source_.Seek(offset_); !res.ok()) {
       LOG(ERROR) << res.error().FormatForEnv();
       return -1;
@@ -64,6 +65,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
   uint64_t Size() override { return size_; }
 
   bool SetOffset(int64_t offset) override {
+    LOG(VERBOSE) << "Setting offset to " << offset;
     offset_ = offset;
     return true;
   }
@@ -113,7 +115,7 @@ Result<SeekableZipSource> CacheZipSource(SeekableZipSource inner,
                                                   std::move(reader));
 
   LazilyLoadedFile file = CF_EXPECT(LazilyLoadedFile::Create(
-      std::move(file_path), std::move(file_callbacks)));
+      std::move(file_path), size, std::move(file_callbacks)));
 
   CachedZipSourceCallbacks callbacks(std::move(file), size);
 

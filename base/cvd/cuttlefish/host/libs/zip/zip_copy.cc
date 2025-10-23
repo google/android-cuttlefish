@@ -29,7 +29,7 @@ Result<void> Copy(ReadableZipSource& input, WritableZipSource& output) {
   ZipSourceReader reader = CF_EXPECT(input.Reader());
   ZipSourceWriter writer = CF_EXPECT(output.Writer());
 
-  std::vector<char> buf(1 << 16);
+  std::vector<char> buf(1 << 26);
   uint64_t chunk_read;
   while ((chunk_read = CF_EXPECT(reader.Read(buf.data(), buf.size()))) > 0) {
     uint64_t chunk_written = 0;

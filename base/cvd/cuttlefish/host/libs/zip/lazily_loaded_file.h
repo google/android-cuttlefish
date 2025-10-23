@@ -34,7 +34,8 @@ class LazilyLoadedFileReadCallback {
 class LazilyLoadedFile {
  public:
   static Result<LazilyLoadedFile> Create(
-      std::string filename, std::unique_ptr<LazilyLoadedFileReadCallback>);
+      std::string filename, size_t size,
+      std::unique_ptr<LazilyLoadedFileReadCallback>);
 
   LazilyLoadedFile(LazilyLoadedFile&&);
   ~LazilyLoadedFile();
