@@ -61,6 +61,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:guest_metrics",
         "//external_proto:cf_guest_cc_proto",
         "//external_proto:cf_host_cc_proto",
         "//external_proto:cf_log_cc_proto",
@@ -96,6 +97,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/metrics:is_enabled",
         "//cuttlefish/host/commands/cvd/version",
         "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",
