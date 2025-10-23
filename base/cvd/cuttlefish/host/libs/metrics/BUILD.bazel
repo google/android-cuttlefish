@@ -15,6 +15,21 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "guest_metrics",
+    srcs = [
+        "guest_metrics.cc",
+    ],
+    hdrs = [
+        "guest_metrics.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "metrics",
     srcs = [
         "metrics_receiver.cc",

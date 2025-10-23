@@ -470,9 +470,14 @@ void RepackGem5BootImage(
 // the os version field in the boot image header.
 // https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 Result<std::string> ReadAndroidVersionFromBootImage(
-    const std::string& boot_image_path) {
+    const std::string& boot_image_path,
+    const std::optional<std::string>& avbtool_path) {
+  Avb avbtool;
+  if (avbtool_path) {
+    avbtool = Avb(*avbtool_path);
+  }
   std::string boot_params =
-      CF_EXPECTF(Avb().InfoImage(boot_image_path),
+      CF_EXPECTF(avbtool.InfoImage(boot_image_path),
                  "Failed to get avb boot data from '{}'", boot_image_path);
 
   std::string os_version =
