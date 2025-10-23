@@ -57,8 +57,7 @@ constexpr char kReadmeText[] =
 
 struct MetricsPaths {
   std::string metrics_directory;
-  std::string artifacts_path;
-  std::string host_artifacts_path;
+  GuestPaths guest_paths;
 };
 
 std::chrono::milliseconds GetEpochTime() {
@@ -69,9 +68,13 @@ std::chrono::milliseconds GetEpochTime() {
 MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
   return MetricsPaths{
       .metrics_directory = instance_group.HomeDir() + "/metrics",
-      .artifacts_path =
-          android::base::Split(instance_group.ProductOutPath(), ",").front(),
-      .host_artifacts_path = instance_group.HostArtifactsPath(),
+      .guest_paths =
+          GuestPaths{
+              .artifacts =
+                  android::base::Split(instance_group.ProductOutPath(), ",")
+                      .front(),
+              .host_artifacts = instance_group.HostArtifactsPath(),
+          },
   };
 }
 
@@ -92,8 +95,7 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
-      .guest_metrics = CF_EXPECT(GetGuestInfo(
-          metrics_paths.artifacts_path, metrics_paths.host_artifacts_path)),
+      .guest_metrics = CF_EXPECT(GetGuestInfo(metrics_paths.guest_paths)),
   };
 }
 
