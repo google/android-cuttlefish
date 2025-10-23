@@ -44,6 +44,9 @@ constexpr size_t kVbMetaMaxSize = 65536ul;
 
 Avb::Avb() : Avb(AvbToolBinary(), kDefaultAlgorithm, TestKeyRsa4096()) {}
 
+Avb::Avb(std::string avbtool_path)
+    : Avb(std::move(avbtool_path), kDefaultAlgorithm, TestKeyRsa4096()) {}
+
 Avb::Avb(std::string avbtool_path, std::string algorithm, std::string key)
     : avbtool_path_(std::move(avbtool_path)),
       algorithm_(std::move(algorithm)),
