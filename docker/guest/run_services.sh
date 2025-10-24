@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+if [[ -n "$HANDLED_BY_CLOUD_ORCHESTRATOR" ]]; then
+  echo -n 'vhost_user_vsock="true"' >> /etc/default/cuttlefish-host_orchestrator
+fi
+
 service nginx start
 service cuttlefish-host-resources start
 service cuttlefish-operator start

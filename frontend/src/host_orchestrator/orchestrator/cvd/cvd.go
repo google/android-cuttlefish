@@ -537,6 +537,7 @@ type StartOptions struct {
 	InitramfsImage   string
 	BootloaderRom    string
 	ReportUsageStats bool
+	VhostUserVsock   string
 }
 
 func (o *StartOptions) toArgs() []string {
@@ -557,6 +558,9 @@ func (o *StartOptions) toArgs() []string {
 		args = append(args, "--report_anonymous_usage_stats=y")
 	} else {
 		args = append(args, "--report_anonymous_usage_stats=n")
+	}
+	if o.VhostUserVsock != "" {
+		args = append(args, "--vhost_user_vsock", o.VhostUserVsock)
 	}
 	return args
 }
