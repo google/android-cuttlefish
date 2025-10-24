@@ -29,6 +29,7 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -88,9 +89,7 @@ Result<void> CopyDirectoryImpl(
         CF_EXPECTF(RemoveFile(dest_path), "Failed to unlink/remove file \"{}\"",
                    dest_path);
       }
-      CF_EXPECTF(symlink(target.data(), dest_path.data()) == 0,
-                 "Creating symbolic link from {} to {} failed: {}", dest_path,
-                 target, strerror(errno));
+      CF_EXPECT(Symlink(target, dest_path));
       continue;
     }
 

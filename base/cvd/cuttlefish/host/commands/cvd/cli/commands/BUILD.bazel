@@ -352,6 +352,7 @@ cf_cc_library(
     srcs = ["start.cpp"],
     hdrs = ["start.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",

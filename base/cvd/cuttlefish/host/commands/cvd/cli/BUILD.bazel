@@ -72,6 +72,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
