@@ -1,8 +1,21 @@
-cuttlefish-common (1.30.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.30.0) unstable; urgency=medium
 
-  * 
+  * Isolate metrics transmission logic by @cjreynol in https://github.com/google/android-cuttlefish/pull/1717
+  * Fix errors around metrics file generation by @cjreynol in https://github.com/google/android-cuttlefish/pull/1728
+  * Bump to debian-13-trixie-v20251014 source image in create_gce_x86_64_… by @ser-io in https://github.com/google/android-cuttlefish/pull/1724
+  * Update script to create image based on trixie source image. by @ser-io in https://github.com/google/android-cuttlefish/pull/1726
+  * Delete tcp_socket.{cpp,h} by @Databean in https://github.com/google/android-cuttlefish/pull/1729
+  * Isolate metrics conversion by @cjreynol in https://github.com/google/android-cuttlefish/pull/1718
+  * Direct metrics cURL log messages to a log file by default by @cjreynol in https://github.com/google/android-cuttlefish/pull/1730
+  * Add a thread-safe StrError function based on abseil by @Databean in https://github.com/google/android-cuttlefish/pull/1732
+  * Remove acloud compat code. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1697
+  * Add some mirrors for mtools. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1735
+  * Enable multitouch events when not running a ChromeOs guest by @jemoreira in https://github.com/google/android-cuttlefish/pull/1733
+  * Import missing changes from android codebase by @jemoreira in https://github.com/google/android-cuttlefish/pull/1719
+  * Add missing include and dependency by @jemoreira in https://github.com/google/android-cuttlefish/pull/1736
+  * Download super image fragments with a new flag by @Databean in https://github.com/google/android-cuttlefish/pull/1738
 
- -- 3405691582 <dsk@google.com>  Mon, 20 Oct 2025 14:38:40 +0000
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 24 Oct 2025 14:37:04 -0700
 
 cuttlefish-common (1.29.0) unstable; urgency=medium
 
