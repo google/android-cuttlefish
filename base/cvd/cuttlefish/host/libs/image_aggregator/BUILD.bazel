@@ -20,6 +20,7 @@ cf_cc_library(
     hdrs = ["composite_disk.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
@@ -57,6 +58,7 @@ cf_cc_library(
     srcs = ["image_from_file.cc"],
     hdrs = ["image_from_file.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:composite_disk",
@@ -106,6 +108,7 @@ cf_cc_library(
     srcs = ["raw.cc"],
     hdrs = ["raw.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
@@ -118,6 +121,7 @@ cf_cc_library(
     hdrs = ["sparse_image.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
