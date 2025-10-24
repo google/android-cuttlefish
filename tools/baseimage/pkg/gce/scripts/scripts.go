@@ -270,3 +270,36 @@ fi
 #  Sometimes systemd starts, making it hard to unmount
 #  In any case we'll unmount cleanly when the instance shuts down
 `
+
+const ValidateCuttlefishImage = `#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail
+
+sudo apt-get install -y git
+
+# TODO(b/454977168): Validate NVIDIA drivers.
+nvidia-smi
+
+dpkg -s cuttlefish-base
+cvd_version=$(dpkg -s cuttlefish-base | grep Version: | cut -d" " -f2)
+echo "cvd version: ${cvd_version}"
+major=$(echo -n "${cvd_version}" | cut -d "." -f1)
+minor=$(echo -n "${cvd_version}" | cut -d "." -f2)
+branch="version-${major}.${minor}-dev"
+echo "running e2e tests from branch ${branch}"
+git clone https://github.com/google/android-cuttlefish -b ${branch}
+cd android-cuttlefish
+sudo bash tools/buildutils/installbazel.sh
+cd e2etests
+tests=( $(bazel query --noshow_progress 'kind("go_test", orchestration/...) except attr(tags, "[\[ ]host-ready-special[,\]]", //...)' | grep -e "^\/\/" | sort) )
+if [ -z "$tests" ]; then
+    echo "tests list is empty"
+    exit 1
+fi
+for t in "${tests[@]}"; do
+  echo "running test: ${t}"
+  bazel test ${t}
+  res=$(curl --fail -X POST "http://localhost:2080/reset")
+  op_name=$(echo "${res}" | jq -r '.name')
+  curl --fail -X POST http://localhost:2080/operations/${op_name}/:wait
+done
+`

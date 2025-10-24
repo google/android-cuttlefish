@@ -127,6 +127,55 @@ func (h *GceHelper) CreateInstance(name string) (*compute.Instance, error) {
 	return payload, nil
 }
 
+func (h *GceHelper) CreateInstanceToValidateImage(name, imageProject, image string) (*compute.Instance, error) {
+	payload := &compute.Instance{
+		Name:           name,
+		MachineType:    fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, "n1-standard-16"),
+		MinCpuPlatform: "Intel Haswell",
+		AdvancedMachineFeatures: &compute.AdvancedMachineFeatures{
+			EnableNestedVirtualization: true,
+		},
+		Disks: []*compute.AttachedDisk{
+			{
+				InitializeParams: &compute.AttachedDiskInitializeParams{
+					SourceImage: fmt.Sprintf("projects/%s/global/images/%s", imageProject, image),
+				},
+				Boot:       true,
+				AutoDelete: true,
+				DiskSizeGb: 200,
+			},
+		},
+		NetworkInterfaces: []*compute.NetworkInterface{
+			{
+				AccessConfigs: []*compute.AccessConfig{
+					{
+						Name: "External NAT",
+						Type: "ONE_TO_ONE_NAT",
+					},
+				},
+			},
+		},
+		GuestAccelerators: []*compute.AcceleratorConfig{
+			{
+				AcceleratorCount: 1,
+				AcceleratorType:  fmt.Sprintf("zones/%s/acceleratorTypes/nvidia-tesla-p100-vws", h.Zone),
+			},
+		},
+		Scheduling: &compute.Scheduling{
+			OnHostMaintenance: "TERMINATE",
+		},
+	}
+	op, err := h.Service.Instances.Insert(h.Project, h.Zone, payload).Do()
+	if err != nil {
+		return nil, err
+
+	}
+	if err := h.waitForOperation(op); err != nil {
+		return nil, err
+	}
+	return payload, nil
+}
+
 func (h *GceHelper) StopInstance(name string) error {
 	op, err := h.Service.Instances.Stop(h.Project, h.Zone, name).Do()
 	if err != nil {
