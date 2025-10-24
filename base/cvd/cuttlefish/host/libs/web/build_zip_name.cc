@@ -18,7 +18,7 @@
 #include <string>
 #include <variant>
 
-#include "third_party/android_cuttlefish/base/cvd/libbase/include/android-base/strings.h"
+#include "android-base/strings.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 
 namespace cuttlefish {
@@ -32,8 +32,8 @@ std::string GetBuildZipName(const Build& build, const std::string& name) {
       [](const auto& arg) -> const std::string& { return arg.target; }, build);
   const auto id = std::visit([](auto&& arg) { return arg.id; }, build);
   std::string dir_prefix;
-  if (is_signed && cf_android::base::EndsWith(target, "-user") &&
-      !cf_android::base::EndsWith(target, "-userdebug")) {
+  if (is_signed && android::base::EndsWith(target, "-user") &&
+      !android::base::EndsWith(target, "-userdebug")) {
     dir_prefix = "signed/";
   }
 
