@@ -34,6 +34,7 @@
 #include <json/json.h>
 #include <vulkan/vulkan.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -1028,7 +1029,7 @@ Result<bool> CrosvmManager::WaitForRestoreComplete(SharedFD stop_fd) const {
     std::vector<PollSharedFd> poll = {{.fd = stop_fd, .events = POLLIN}};
     const int result = SharedFD::Poll(poll, 50 /* ms */);
     // Check for errors.
-    CF_EXPECT(result >= 0, "failed to wait on stop_fd: " << strerror(errno));
+    CF_EXPECTF(result >= 0, "failed to wait on stop_fd: {}", StrError(errno));
     // Check if pipe became readable or closed.
     if (result > 0) {
       return false;
