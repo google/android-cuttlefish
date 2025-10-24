@@ -28,6 +28,7 @@ struct DeviceBuild {
   std::string branch;
   std::string target;
   std::string product;
+  bool is_signed = false;
   std::optional<std::string> filepath;
 };
 
@@ -41,6 +42,7 @@ struct DirectoryBuild {
   std::string target;
   std::string id;
   std::string product;
+  bool is_signed = false;
   std::optional<std::string> filepath;
 };
 

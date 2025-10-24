@@ -18,6 +18,7 @@
 #include <string>
 #include <variant>
 
+#include "third_party/android_cuttlefish/base/cvd/libbase/include/android-base/strings.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 
 namespace cuttlefish {
@@ -25,7 +26,23 @@ namespace cuttlefish {
 std::string GetBuildZipName(const Build& build, const std::string& name) {
   std::string product =
       std::visit([](auto&& arg) { return arg.product; }, build);
-  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
+  const auto is_signed =
+      std::visit([](auto&& arg) { return arg.is_signed; }, build);
+  const auto& target = std::visit(
+      [](const auto& arg) -> const std::string& { return arg.target; }, build);
+  const auto id = std::visit([](auto&& arg) { return arg.id; }, build);
+  std::string dir_prefix;
+  if (is_signed && cf_android::base::EndsWith(target, "-user") &&
+      !cf_android::base::EndsWith(target, "-userdebug")) {
+    dir_prefix = "signed/";
+  }
+
+  const auto filepath =
+      std::visit([](auto&& arg) { return arg.filepath; }, build);
+  if (filepath && !filepath->empty()) {
+    return dir_prefix + *filepath;
+  }
+
   return product + "-" + name + "-" + id + ".zip";
 }
 

@@ -109,6 +109,7 @@ cf_cc_library(
     hdrs = ["build_zip_name.h"],
     deps = [
         "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/base/cvd/libbase",
     ],
 )
 

@@ -118,6 +118,7 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
       .branch = build_info.branch,
       .target = build_info.target,
       .product = build_info.product,
+      .is_signed = build_info.is_signed,
       .filepath = build_string.filepath,
   };
 }
@@ -209,11 +210,17 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
              "build id.\n\nIs there a typo in the branch or target name?"
           << no_auth_error_message);
 
+  bool is_signed = false;
+  if (json.isMember("signed")) {
+    is_signed = json["signed"].asBool();
+  }
+
   return AndroidBuildApi::BuildInfo{
       .branch = CF_EXPECT(GetValue<std::string>(json, {"branch"})),
       .product = CF_EXPECT(GetValue<std::string>(json, {"target", "product"})),
       .status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"})),
       .target = CF_EXPECT(GetValue<std::string>(json, {"target", "name"})),
+      .is_signed = is_signed,
   };
 }
 
