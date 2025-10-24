@@ -28,6 +28,7 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -75,7 +76,7 @@ Result<void> SubstituteWithFlag(
           substitution_error = true;
           return false;
         }
-        Result<void> symlink_res = CreateSymLink(path, to_substitute);
+        Result<void> symlink_res = Symlink(path, to_substitute);
         if (!symlink_res.ok()) {
           LOG(ERROR) << symlink_res.error().FormatForEnv();
           substitution_error = true;
@@ -94,7 +95,7 @@ Result<void> SubstituteWithFlag(
       CF_EXPECTF(FileExists(to_substitute),
                  "Cannot substitute '{}', does not exist", to_substitute);
       CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
-      CF_EXPECT(CreateSymLink(source, to_substitute));
+      CF_EXPECT(Symlink(source, to_substitute));
     }
   }
 
@@ -134,7 +135,7 @@ Result<void> Substitute(const std::string& target_dir,
   }
 
   CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
-  CF_EXPECT(CreateSymLink(target, full_link_name));
+  CF_EXPECT(Symlink(target, full_link_name));
   return {};
 }
 

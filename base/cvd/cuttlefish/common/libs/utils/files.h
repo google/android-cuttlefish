@@ -41,8 +41,6 @@ Result<bool> AreHardLinked(const std::string& source,
 Result<std::string> CreateHardLink(const std::string& target,
                                    const std::string& hardlink,
                                    bool overwrite_existing = false);
-Result<void> CreateSymLink(const std::string& target, const std::string& link,
-                           bool overwrite_existing = false);
 Result<void> HardLinkDirecoryContentsRecursively(
     const std::string& source, const std::string& destination);
 // Merges the contents of the source directory into the destination directory.

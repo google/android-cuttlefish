@@ -232,6 +232,7 @@ cf_cc_library(
     hdrs = ["substitute.h"],
     deps = [
         ":host_pkg_migration_cc_proto",
+        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",

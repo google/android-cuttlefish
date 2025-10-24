@@ -26,6 +26,7 @@
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -173,14 +174,12 @@ Result<void> LinkLogs2InstanceDir(
     const CuttlefishConfig::InstanceSpecific& instance) {
   CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
 
-  CF_EXPECT(CreateSymLink(
-      config_path,
-      instance.PerInstanceLogPath(android::base::Basename(config_path)),
-      false));
+  CF_EXPECT(Symlink(config_path, instance.PerInstanceLogPath(
+                                     android::base::Basename(config_path))));
 
   std::string assemble_cvd_logs = config.AssemblyPath("assemble_cvd.log");
-  CF_EXPECT(CreateSymLink(assemble_cvd_logs,
-                          instance.PerInstanceLogPath("assemble_cvd.log")));
+  CF_EXPECT(Symlink(assemble_cvd_logs,
+                    instance.PerInstanceLogPath("assemble_cvd.log")));
 
   std::string images_dir = instance.images_dir();
   std::string fetch_log = fmt::format("{}/{}", images_dir, "fetch.log");
@@ -191,8 +190,7 @@ Result<void> LinkLogs2InstanceDir(
         fmt::format("{}/{}", android::base::Dirname(images_dir), "fetch.log");
   }
   if (FileExists(fetch_log)) {
-    CF_EXPECT(
-        CreateSymLink(fetch_log, instance.PerInstanceLogPath("fetch.log")));
+    CF_EXPECT(Symlink(fetch_log, instance.PerInstanceLogPath("fetch.log")));
   }
 
   return {};

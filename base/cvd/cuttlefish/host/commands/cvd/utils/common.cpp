@@ -28,6 +28,7 @@
 #include <android-base/strings.h>
 #include "absl/strings/str_format.h"
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -45,8 +46,7 @@ std::string DefaultBaseDir() {
 Result<void> LinkOrMakeDir(const std::string& path,
                            std::optional<std::string> target) {
   if (target.has_value()) {
-    CF_EXPECTF(CreateSymLink(*target, path),
-               "Failed to create link to {} from {}", *target, path);
+    CF_EXPECT(Symlink(*target, path));
   } else {
     CF_EXPECTF(EnsureDirectoryExists(path), "Failed to create directory: {}",
                path);

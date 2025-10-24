@@ -62,6 +62,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
@@ -138,22 +139,6 @@ Result<std::string> CreateHardLink(const std::string& target,
              "with error: {}",
              target, hardlink, strerror(errno));
   return hardlink;
-}
-
-Result<void> CreateSymLink(const std::string& target, const std::string& link,
-                           const bool overwrite_existing) {
-  if (FileExists(link), /* follow_symlink */ false) {
-    if (!overwrite_existing) {
-      return CF_ERRF(
-          "Cannot symlink from \"{}\" to \"{}\", the second file already "
-          "exists",
-          target, link);
-    }
-    CF_EXPECTF(unlink(link.c_str()) == 0,
-               "Failed to unlink \"{}\" with error: {}", link, strerror(errno));
-  }
-  CF_EXPECT(Symlink(target, link));
-  return {};
 }
 
 bool FileHasContent(const std::string& path) {
