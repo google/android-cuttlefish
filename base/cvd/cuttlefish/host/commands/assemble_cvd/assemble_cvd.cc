@@ -24,6 +24,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -97,10 +98,7 @@ Result<void> SaveConfig(const CuttlefishConfig& tmp_config_obj) {
   setenv(kCuttlefishConfigEnvVarName, config_file.c_str(), true);
   // TODO(schuffelen): Find alternative for host-sandboxing mode
   if (!InSandbox()) {
-    if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
-      return CF_ERRNO("symlink(\"" << config_file << "\", \"" << config_link
-                                   << ") failed");
-    }
+    CF_EXPECT(Symlink(config_file, config_link));
   }
 
   return {};
@@ -127,10 +125,7 @@ Result<void> CreateLegacySymlinks(
       CF_EXPECT(RemoveFile(symlink_location),
                 "Failed to remove symlink " << symlink_location);
     }
-    if (symlink(log_target.c_str(), symlink_location.c_str()) != 0) {
-      return CF_ERRNO("symlink(\"" << log_target << ", " << symlink_location
-                                   << ") failed");
-    }
+    CF_EXPECT(Symlink(log_target, symlink_location));
   }
 
   std::stringstream legacy_instance_path_stream;
@@ -149,11 +144,7 @@ Result<void> CreateLegacySymlinks(
   }
   // TODO(schuffelen): Find alternative for host-sandboxing mode
   if (!InSandbox()) {
-    if (symlink(instance.instance_dir().c_str(),
-                legacy_instance_path.c_str())) {
-      return CF_ERRNO("symlink(\"" << instance.instance_dir() << "\", \""
-                                   << legacy_instance_path << "\") failed");
-    }
+    CF_EXPECT(Symlink(instance.instance_dir(), legacy_instance_path));
   }
 
   const auto mac80211_uds_name = "vhost_user_mac80211";
@@ -163,10 +154,7 @@ Result<void> CreateLegacySymlinks(
   const auto legacy_mac80211_uds_path =
       instance.PerInstanceInternalPath(mac80211_uds_name);
 
-  if (symlink(mac80211_uds_path.c_str(), legacy_mac80211_uds_path.c_str())) {
-    return CF_ERRNO("symlink(\"" << mac80211_uds_path << "\", \""
-                                 << legacy_mac80211_uds_path << "\") failed");
-  }
+  CF_EXPECT(Symlink(mac80211_uds_path, legacy_mac80211_uds_path));
 
   return {};
 }
@@ -489,10 +477,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
   }
   // TODO(schuffelen): Find alternative for host-sandboxing mode
   if (!InSandbox()) {
-    if (symlink(config->assembly_dir().c_str(), FLAGS_assembly_dir.c_str())) {
-      return CF_ERRNO("symlink(\"" << config->assembly_dir() << "\", \""
-                                   << FLAGS_assembly_dir << "\") failed");
-    }
+    CF_EXPECT(Symlink(config->assembly_dir(), FLAGS_assembly_dir));
   }
 
   std::string first_instance = config->Instances()[0].instance_dir();
@@ -503,11 +488,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
   }
   // TODO(schuffelen): Find alternative for host-sandboxing mode
   if (!InSandbox()) {
-    if (symlink(first_instance.c_str(), double_legacy_instance_dir.c_str())) {
-      return CF_ERRNO("symlink(\"" << first_instance << "\", \""
-                                   << double_legacy_instance_dir
-                                   << "\") failed");
-    }
+    CF_EXPECT(Symlink(first_instance, double_legacy_instance_dir));
   }
 
   CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, system_image_dir));

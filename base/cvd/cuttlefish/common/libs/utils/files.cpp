@@ -62,6 +62,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -151,10 +152,7 @@ Result<void> CreateSymLink(const std::string& target, const std::string& link,
     CF_EXPECTF(unlink(link.c_str()) == 0,
                "Failed to unlink \"{}\" with error: {}", link, strerror(errno));
   }
-  CF_EXPECTF(symlink(target.c_str(), link.c_str()) == 0,
-             "link() failed trying to create symlink from \"{}\" to \"{}\" "
-             "with error: {}",
-             target, link, strerror(errno));
+  CF_EXPECT(Symlink(target, link));
   return {};
 }
 

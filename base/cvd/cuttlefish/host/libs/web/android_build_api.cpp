@@ -16,7 +16,6 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 
 #include <dirent.h>
-#include <errno.h>
 #include <unistd.h>
 
 #include <chrono>
@@ -36,7 +35,7 @@
 #include <android-base/logging.h>
 #include <json/value.h>
 
-#include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -357,9 +356,7 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
       continue;
     }
     unlink(path.c_str());
-    CF_EXPECT(symlink(source.c_str(), path.c_str()) == 0,
-              "Could not create symlink from " << source << " to " << path
-                                               << ": " << StrError(errno));
+    CF_EXPECT(Symlink(source, path));
     return {};
   }
   return CF_ERR("Could not find artifact \"" << artifact << "\" in build \""

@@ -18,7 +18,6 @@
 
 #include <errno.h>
 #include <stdint.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <cctype>
@@ -38,6 +37,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -222,9 +222,7 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
     CF_EXPECTF(RemoveFile(link), "Failed to remove file \"{}\": {}", link,
                std::strerror(errno));
   }
-  CF_EXPECTF(symlink(target.c_str(), link.c_str()) == 0,
-             "symlink(\"{}\", \"{}\") failed: {}", target, link,
-             std::strerror(errno));
+  CF_EXPECT(Symlink(target, link));
   return {};
 }
 

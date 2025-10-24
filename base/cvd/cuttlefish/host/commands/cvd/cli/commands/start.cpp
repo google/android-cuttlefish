@@ -16,10 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -39,6 +37,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -226,9 +225,7 @@ Result<void> SymlinkPreviousConfig(const std::string& group_home_dir) {
     // once
     return {};
   }
-  CF_EXPECTF(symlink(config_from_home.c_str(), link.c_str()) == 0,
-             "symlink(\"{}\", \"{}\") failed: {}", config_from_home, link,
-             std::strerror(errno));
+  CF_EXPECT(Symlink(config_from_home, link));
   return {};
 }
 
