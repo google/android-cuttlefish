@@ -11,6 +11,7 @@ cf_cc_library(
     hdrs = ["common.h"],
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
+        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
