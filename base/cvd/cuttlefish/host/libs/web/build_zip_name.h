@@ -24,8 +24,10 @@ namespace cuttlefish {
 /** Returns the name of one of the artifact target zip files.
  *
  * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
- * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
- */
+ * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip".
+ * For a signed build with target "cf_x86_64_auto-user", the zip would be
+ * "signed/signed-cf_x86_64_auto-img-5824130.zip".
+*/
 std::string GetBuildZipName(const Build& build, const std::string& name);
 
 }  // namespace cuttlefish

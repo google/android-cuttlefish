@@ -68,6 +68,7 @@ class AndroidBuildApi : public BuildApi {
     std::string product;
     std::string status;
     std::string target;
+    bool is_signed;
   };
   Result<BuildInfo> GetBuildInfo(std::string_view build_id,
                                  std::string_view target);
