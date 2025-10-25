@@ -26,6 +26,7 @@
 #include "libyuv.h"
 #include "png.h"
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -42,9 +43,8 @@ Result<void> PngScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
                         rgb_frame.data(), frame->width() * 3, width, height);
   CF_EXPECT(convert_res == 0, "Failed to convert I420 frame to RGB");
   FILE* outfile = fopen(screenshot_path.c_str(), "wb");
-  auto err = errno;
   CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
-             strerror(err));
+             StrError(errno));
   android::base::ScopeGuard close_file([outfile]() { fclose(outfile); });
 
   png_structp png_ptr =

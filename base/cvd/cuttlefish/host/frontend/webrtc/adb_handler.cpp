@@ -20,6 +20,8 @@
 
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
+
 using namespace android;
 
 namespace cuttlefish {
@@ -86,8 +88,9 @@ void AdbHandler::ReadLoop() {
     if (read_set_.IsSet(adb_socket_)) {
         auto read = adb_socket_->Read(buffer, sizeof(buffer));
         if (read < 0) {
-            LOG(ERROR) << "Error on reading from ADB socket: " << strerror(adb_socket_->GetErrno());
-            break;
+          LOG(ERROR) << "Error on reading from ADB socket: "
+                     << adb_socket_->StrError();
+          break;
         }
         if (read) {
             send_to_client_(buffer, read);

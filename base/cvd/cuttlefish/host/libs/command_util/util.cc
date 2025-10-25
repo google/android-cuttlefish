@@ -25,6 +25,7 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
@@ -146,7 +147,7 @@ Result<void> WaitForRead(SharedFD monitor_socket, const int timeout_seconds) {
             "Timeout expired waiting for launcher monitor to respond");
   CF_EXPECT(
       select_result > 0,
-      "Failed communication with the launcher monitor: " << strerror(errno));
+      "Failed communication with the launcher monitor: " << StrError(errno));
   return {};
 }
 

@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 
-#include <string.h>
 #include <sys/file.h>
 
 #include <fstream>
@@ -29,6 +28,7 @@
 #include <sparse/sparse.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -94,7 +94,7 @@ Result<void> ForceRawImage(const std::string& image_path) {
   // is a bind mount, in which case `rename` won't work anyway.
   CF_EXPECTF(rename(tmp_raw_image_path.c_str(), image_path.c_str()) == 0,
              "rename('{}','{}') failed: {}", tmp_raw_image_path, image_path,
-             strerror(errno));
+             StrError(errno));
 
   return {};
 }

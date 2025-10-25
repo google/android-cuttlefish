@@ -19,13 +19,14 @@
 #include <string>
 #include <utility>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
 
 Result<RawImage> RawImage::OpenExisting(const std::string& path) {
   off_t size = FileSize(path);
-  CF_EXPECT_GE(size, 0, strerror(errno));
+  CF_EXPECT_GE(size, 0, StrError(errno));
 
   return RawImage(size);
 }

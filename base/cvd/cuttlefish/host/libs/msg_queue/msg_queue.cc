@@ -28,6 +28,8 @@
 
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
+
 #define DEFAULT_MSGQ_KEY 0x1234
 #define HASH_MULTIPLIER 5381
 
@@ -58,8 +60,7 @@ SysVMessageQueue::SysVMessageQueue(int id, bool auto_close)
 
 SysVMessageQueue::~SysVMessageQueue(void) {
   if (auto_close_ && msgctl(msgid_, IPC_RMID, NULL) < 0) {
-    int error_num = errno;
-    LOG(ERROR) << "Could not remove message queue: " << strerror(error_num);
+    LOG(ERROR) << "Could not remove message queue: " << StrError(errno);
   }
 }
 
@@ -86,7 +87,7 @@ int SysVMessageQueue::Send(void* data, size_t size, bool block) {
       // returns EAGAIN if queue is full and non-blocking
       return EAGAIN;
     }
-    LOG(ERROR) << "Could not send message: " << strerror(error_num);
+    LOG(ERROR) << "Could not send message: " << StrError(error_num);
     return error_num;
   }
   return 0;
@@ -110,7 +111,7 @@ ssize_t SysVMessageQueue::Receive(void* data, size_t size, long msgtyp,
   ssize_t result = msgrcv(msgid_, data, size, msgtyp, msgflg);
   if (result == -1) {
     LOG(ERROR) << "receive: failed to receive any messages. Error: "
-               << strerror(errno);
+               << StrError(errno);
   }
 
   return result;

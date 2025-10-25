@@ -23,13 +23,13 @@
 #include <future>
 #include <iostream>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -87,7 +87,7 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
   std::string cmd_str = cmd.str();
   std::shared_ptr<FILE> cmd_out(popen(cmd_str.c_str(), "r"), pclose);
   if (!cmd_out) {
-    LOG(ERROR) << "Unable to execute '" << cmd_str << "': " << strerror(errno);
+    LOG(ERROR) << "Unable to execute '" << cmd_str << "': " << StrError(errno);
     return {};
   }
   int64_t pid;
@@ -96,7 +96,7 @@ std::set<pid_t> GetCandidateProcessGroups(const std::set<std::string>& dirs) {
     pid_t pgid = getpgid(static_cast<pid_t>(pid));
     if (pgid < 0) {
       LOG(ERROR) << "Unable to get process group of " << pid << ": "
-                 << strerror(errno);
+                 << StrError(errno);
       continue;
     }
     ret.insert(pgid);
@@ -115,7 +115,7 @@ int FallBackStop(const std::set<std::string>& dirs) {
     auto retval = killpg(pgid, SIGKILL);
     if (retval < 0) {
       LOG(ERROR) << "Failed to kill process group " << pgid << ": "
-                 << strerror(errno);
+                 << StrError(errno);
       exit_code |= kFallbackErrorBit;
     }
   }

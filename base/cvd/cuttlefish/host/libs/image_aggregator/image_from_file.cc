@@ -21,6 +21,7 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
@@ -34,7 +35,7 @@ namespace cuttlefish {
 Result<std::unique_ptr<DiskImage>> ImageFromFile(const std::string& file_path) {
   android::base::unique_fd fd(open(file_path.c_str(), O_RDONLY));
   CF_EXPECTF(fd.get() >= 0, "Could not open '{}': {}", file_path,
-             strerror(errno));
+             StrError(errno));
 
   std::uint64_t file_size = FileSize(file_path);
 
@@ -44,10 +45,10 @@ Result<std::unique_ptr<DiskImage>> ImageFromFile(const std::string& file_path) {
   std::string magic(std::min(file_size, MAGIC_BLOCK_SIZE), '\0');
 
   CF_EXPECTF(android::base::ReadFully(fd, magic.data(), magic.size()),
-             "Failed to read '{}': {}'", file_path, strerror(errno));
+             "Failed to read '{}': {}'", file_path, StrError(errno));
 
   CF_EXPECTF(lseek(fd, 0, SEEK_SET) != -1, "Failed to lseek('{}'): {}",
-             file_path, strerror(errno));
+             file_path, StrError(errno));
 
   // Composite disk image
   if (android::base::StartsWith(magic, CompositeDiskImage::MagicString())) {

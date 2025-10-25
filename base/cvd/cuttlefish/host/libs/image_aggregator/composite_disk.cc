@@ -21,6 +21,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 
 namespace cuttlefish {
@@ -45,7 +46,7 @@ Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(
   CF_EXPECT(impl.get());
 
   CF_EXPECTF(impl->cdisk.ParseFromString(message), "Failed to parse '{}': {}",
-             path, strerror(errno));
+             path, StrError(errno));
 
   return CompositeDiskImage(std::move(impl));
 }

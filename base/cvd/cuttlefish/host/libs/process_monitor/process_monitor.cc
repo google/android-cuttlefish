@@ -38,6 +38,7 @@
 #include <android-base/logging.h>
 #include "android-base/strings.h"
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/transport/channel.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -116,8 +117,7 @@ Result<void> MonitorLoop(std::atomic_bool& running,
   while (running.load()) {
     int wstatus;
     pid_t pid = wait(&wstatus);
-    int error_num = errno;
-    CF_EXPECT(pid != -1, "Wait failed: " << strerror(error_num));
+    CF_EXPECTF(pid != -1, "Wait failed: {}", StrError(errno));
     if (!WIFSIGNALED(wstatus) && !WIFEXITED(wstatus)) {
       LOG(DEBUG) << "Unexpected status from wait: " << wstatus << " for pid "
                  << pid;

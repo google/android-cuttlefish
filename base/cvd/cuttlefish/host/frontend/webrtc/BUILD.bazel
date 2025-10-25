@@ -61,6 +61,7 @@ cf_cc_binary(
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/sensors",
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/common/libs/utils:files",

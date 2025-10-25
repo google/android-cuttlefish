@@ -26,6 +26,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -163,17 +164,17 @@ Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {
   std::string full_path_template = full_path + ".temp.XXXXXX";
   int file_raw_fd = mkstemp(full_path_template.data());
   CF_EXPECTF(file_raw_fd >= 0, "Failed to create '{}': '{}'",
-             full_path_template, strerror(errno));
+             full_path_template, StrError(errno));
 
   SharedFD file_fd = SharedFD::Dup(file_raw_fd);
-  CF_EXPECT_EQ(close(file_raw_fd), 0, strerror(errno));
+  CF_EXPECT_EQ(close(file_raw_fd), 0, StrError(errno));
 
   CF_EXPECT_EQ(WriteAll(file_fd, contents), contents.size(),
                file_fd->StrError());
 
   CF_EXPECTF(rename(full_path_template.data(), full_path.data()) == 0,
              "Failed to rename '{}' to '{}': '{}'", full_path_template,
-             full_path, strerror(errno));
+             full_path, StrError(errno));
 
   return {};
 }
