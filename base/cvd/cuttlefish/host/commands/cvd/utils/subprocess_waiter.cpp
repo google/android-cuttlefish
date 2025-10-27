@@ -16,6 +16,12 @@
 
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 
+#include <mutex>
+
+#include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+
 namespace cuttlefish {
 
 Result<void> SubprocessWaiter::Setup(Command& command) {
@@ -38,7 +44,7 @@ Result<siginfo_t> SubprocessWaiter::Wait() {
 
   // This blocks until the process exits, but doesn't reap it.
   auto result = subprocess_->Wait(&infop, WEXITED | WNOWAIT);
-  CF_EXPECTF(result != -1, "Lost track of subprocess pid: {}", strerror(errno));
+  CF_EXPECTF(result != -1, "Lost track of subprocess pid: {}", StrError(errno));
   interrupt_lock.lock();
   // Perform a reaping wait on the process (which should already have exited).
   result = subprocess_->Wait(&infop, WEXITED);
@@ -65,7 +71,7 @@ Result<void> SubprocessWaiter::Interrupt() {
       case StopperResult::kStopSuccess:
         return {};
       default:
-        return CF_ERR("Unknown stop result: " << (uint64_t)stop_result);
+        return CF_ERRF("Unknown stop result: {}", (uint64_t)stop_result);
     }
   }
   interrupted_ = true;

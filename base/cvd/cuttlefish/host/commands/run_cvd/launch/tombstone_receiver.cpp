@@ -24,6 +24,7 @@
 #include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -42,7 +43,7 @@ Result<MonitorCommand> TombstoneReceiver(
                      // NOLINTNEXTLINE(misc-include-cleaner)
                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,
                "Failed to create tombstone directory: '{}'. error: '{}'",
-               tombstone_dir, strerror(errno));
+               tombstone_dir, StrError(errno));
   }
 
   auto port = instance.tombstone_receiver_port();

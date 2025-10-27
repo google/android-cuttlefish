@@ -23,6 +23,7 @@
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
@@ -104,7 +105,7 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
   // TODO(b/359657254) Create the `adb bugreport` asynchronously.
   std::string device_br_dir = TempDir() + "/cvd_dbrXXXXXX";
   CF_EXPECTF(mkdtemp(device_br_dir.data()) != nullptr, "mkdtemp failed: '{}'",
-             strerror(errno));
+             StrError(errno));
   CF_EXPECT(CreateDeviceBugreport(instance, device_br_dir),
             "Failed to create device bugreport");
   auto names = CF_EXPECT(DirectoryContents(device_br_dir),

@@ -30,6 +30,7 @@
 #include <fruit/injector.h>
 #include <fruit/macro.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
@@ -108,7 +109,7 @@ class KernelLogMonitor : public CommandSource,
     for (unsigned int i = 0; i < number_of_event_pipes_; ++i) {
       SharedFD event_pipe_write_end, event_pipe_read_end;
       CF_EXPECT(SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end),
-                "Failed creating kernel log pipe: " << strerror(errno));
+                "Failed creating kernel log pipe: " << StrError(errno));
       event_pipe_write_ends_.push_back(event_pipe_write_end);
       event_pipe_read_ends_.push_back(event_pipe_read_end);
     }

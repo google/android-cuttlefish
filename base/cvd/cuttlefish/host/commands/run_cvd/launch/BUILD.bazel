@@ -117,6 +117,7 @@ cf_cc_library(
     hdrs = ["cvdalloc.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvdalloc:privilege",
@@ -172,6 +173,7 @@ cf_cc_library(
     srcs = ["kernel_log_monitor.cpp"],
     hdrs = ["kernel_log_monitor.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
@@ -431,6 +433,7 @@ cf_cc_library(
     hdrs = ["streamer.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd:reporting",
@@ -478,6 +481,7 @@ cf_cc_library(
     hdrs = ["tombstone_receiver.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",

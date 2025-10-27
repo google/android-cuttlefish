@@ -51,6 +51,7 @@ cf_cc_library(
     hdrs = ["subprocess_waiter.h"],
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
     ],

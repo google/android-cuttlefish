@@ -16,7 +16,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/streamer.h"
 
 #include <errno.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -32,6 +31,7 @@
 #include <fruit/macro.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
@@ -43,8 +43,8 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
@@ -75,7 +75,7 @@ std::vector<Command> LaunchCustomActionServers(
     if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
                               &action_server_socket)) {
       LOG(ERROR) << "Unable to create custom action server socket pair: "
-                 << strerror(errno);
+                 << StrError(errno);
       continue;
     }
 

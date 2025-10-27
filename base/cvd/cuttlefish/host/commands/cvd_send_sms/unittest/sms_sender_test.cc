@@ -31,7 +31,7 @@ class SmsSenderTest : public ::testing::Test {
   void SetUp() override {
     CHECK(SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &client_fd_,
                                &fake_server_fd_))
-        << strerror(errno);
+        << client_fd_->StrError();
     CHECK(client_fd_->IsOpen());
     CHECK(fake_server_fd_->IsOpen());
   }
@@ -42,7 +42,7 @@ class SmsSenderTest : public ::testing::Test {
     ssize_t bytes_read;
     do {
       bytes_read = fake_server_fd_->Read(buffer.data(), buffer.size());
-      CHECK(bytes_read >= 0) << strerror(errno);
+      CHECK(bytes_read >= 0) << fake_server_fd_->StrError();
       ss << std::string(buffer.data(), bytes_read);
     } while (buffer[bytes_read - 1] != '\r');
     EXPECT_THAT(ss.str(), testing::Eq(expected_command));
