@@ -127,6 +127,7 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 
 	stamp := android.PathForModuleOut(ctx, "package.stamp")
 	dirBuilder := android.NewRuleBuilder(pctx, ctx)
+	dirBuilder.SandboxDisabled()
 	dirBuilder.Command().Text("rm").Flag("-rf").Text(packageDir.String())
 	dirBuilder.Command().Text("mkdir").Flag("-p").Text(packageDir.String())
 	c.CopySpecsToDir(ctx, dirBuilder, c.GatherPackagingSpecs(ctx), packageDir)
@@ -137,6 +138,7 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 
 	tarball := android.PathForModuleOut(ctx, "package.tar.gz")
 	tarballBuilder := android.NewRuleBuilder(pctx, ctx)
+	tarballBuilder.SandboxDisabled()
 	tarballBuilder.Command().Text("tar Scfz").
 		Output(tarball).
 		Flag("-C").
