@@ -9,6 +9,7 @@ cf_cc_binary(
     srcs = ["main.cc"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",

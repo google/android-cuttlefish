@@ -31,6 +31,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -179,7 +180,7 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
   } else {
     // The child returns the write end of the pipe
     if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
-      LOG(ERROR) << "Failed to daemonize child process: " << strerror(errno);
+      LOG(ERROR) << "Failed to daemonize child process: " << StrError(errno);
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
@@ -239,7 +240,7 @@ Result<SharedFD> ProcessLeader(
   // in the foreground
   if (getsid(0) != getpid()) {
     CF_EXPECTF(setpgid(0, 0) == 0, "Failed to create new process group: {}",
-               strerror(errno));
+               StrError(errno));
   }
   return {};
 }

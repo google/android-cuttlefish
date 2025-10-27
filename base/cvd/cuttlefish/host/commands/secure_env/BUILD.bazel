@@ -41,6 +41,7 @@ cf_cc_library(
     hdrs = ["worker_thread_loop_body.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env:suspend_resume_handler",
     ],

@@ -31,6 +31,8 @@
 
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
+
 namespace cuttlefish {
 
 #if defined(__linux__)
@@ -87,8 +89,8 @@ static int SetAmbientCapabilities() {
 Result<void> ValidateCvdallocBinary(std::string_view path) {
   struct stat st;
   int r = stat(path.data(), &st);
-  CF_EXPECT(r == 0, "Could not stat the cvdalloc binary at "
-                        << path << ": " << strerror(errno));
+  CF_EXPECTF(r == 0, "Could not stat the cvdalloc binary at '{}': '{}'", path,
+             StrError(errno));
 #if defined(__linux__)
   /* Try and determine if the cvdalloc binary has any capabilities. */
   struct vfs_cap_data cap;
@@ -139,13 +141,13 @@ int DropPrivileges(uid_t orig) {
   data[1] = {0, 0, 0};
   int r = syscall(SYS_capset, &h, data);
   if (r == -1) {
-    LOG(INFO) << "SYS_capset: " << strerror(errno);
+    LOG(INFO) << "SYS_capset: " << StrError(errno);
     return -1;
   }
 
   r = prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0L, 0L, 0L);
   if (r == -1) {
-    LOG(INFO) << "prctl: " << strerror(errno);
+    LOG(INFO) << "prctl: " << StrError(errno);
     return -1;
   }
 #endif

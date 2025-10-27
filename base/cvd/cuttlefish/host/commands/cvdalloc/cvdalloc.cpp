@@ -28,6 +28,7 @@
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
@@ -99,7 +100,7 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
   }
   int r = TEMP_FAILURE_RETRY(close(absl::GetFlag(FLAGS_socket)));
   if (r == -1) {
-    return CF_ERRNO("close: " << strerror(errno));
+    return CF_ERRNO("close: " << StrError(errno));
   }
 
   absl::Cleanup shutdown = [sock]() {
@@ -114,13 +115,13 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
   absl::Cleanup drop_privileges = [orig]() {
     int r = DropPrivileges(orig);
     if (r == -1) {
-      LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << strerror(errno);
+      LOG(ERROR) << "cvdalloc: couldn't drop privileges: " << StrError(errno);
     }
   };
 
   r = BeginElevatedPrivileges();
   if (r == -1) {
-    return CF_ERRNO("Couldn't elevate permissions: " << strerror(errno));
+    return CF_ERRF("Couldn't elevate permissions: {}", StrError(errno));
   }
 
   absl::Cleanup teardown = [id]() {

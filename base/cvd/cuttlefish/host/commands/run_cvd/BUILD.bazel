@@ -10,6 +10,7 @@ cf_cc_library(
     hdrs = ["boot_state_machine.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:tee_logging",
@@ -146,6 +147,7 @@ cf_cc_library(
     srcs = ["validate.cpp"],
     hdrs = ["validate.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/common/libs/utils:result",

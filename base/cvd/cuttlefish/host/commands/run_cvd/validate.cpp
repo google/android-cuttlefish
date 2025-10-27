@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 #include <fruit/fruit.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -72,7 +73,7 @@ Result<void> ValidateHostConfiguration() {
 
 Result<void> ValidateHostKernel() {
   struct utsname uname_data;
-  CF_EXPECT_EQ(uname(&uname_data), 0, "uname failed: " << strerror(errno));
+  CF_EXPECT_EQ(uname(&uname_data), 0, "uname failed: " << StrError(errno));
   LOG(DEBUG) << "uts.sysname = \"" << uname_data.sysname << "\"";
   LOG(DEBUG) << "uts.nodename = \"" << uname_data.nodename << "\"";
   LOG(DEBUG) << "uts.release = \"" << uname_data.release << "\"";

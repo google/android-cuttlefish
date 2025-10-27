@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/secure_env/worker_thread_loop_body.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/commands/secure_env/suspend_resume_handler.h"
 
 namespace cuttlefish {
@@ -31,7 +32,7 @@ Result<void> WorkerInnerLoop(std::function<bool()> process_callback,
     int num_fds = Select(&readable_fds, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
       LOG(FATAL) << "Select() returned a negative value: " << num_fds
-                 << strerror(errno);
+                 << StrError(errno);
     }
 
     if (readable_fds.IsSet(read_fd)) {

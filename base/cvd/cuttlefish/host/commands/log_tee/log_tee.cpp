@@ -25,8 +25,11 @@
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+
+using cuttlefish::StrError;
 
 DEFINE_string(process_name, "", "The process to credit log messages to");
 DEFINE_int32(log_fd_in, -1, "The file descriptor to read logs from.");
@@ -85,10 +88,10 @@ int main(int argc, char** argv) {
   sigemptyset(&mask);
   sigaddset(&mask, SIGINT);
   CHECK(sigprocmask(SIG_BLOCK, &mask, NULL) == 0)
-      << "sigprocmask failed: " << strerror(errno);
+      << "sigprocmask failed: " << StrError(errno);
 #ifdef __linux__
   int sfd = signalfd(-1, &mask, 0);
-  CHECK(sfd >= 0) << "signalfd failed: " << strerror(errno);
+  CHECK(sfd >= 0) << "signalfd failed: " << StrError(errno);
   auto int_fd = cuttlefish::SharedFD::Dup(sfd);
   close(sfd);
 #endif
@@ -122,7 +125,7 @@ int main(int argc, char** argv) {
     // are finished. Then, we could just read until EOF. However that would
     // require more work elsewhere in cuttlefish.
     CHECK(cuttlefish::SharedFD::Poll(poll_fds, /*timeout=*/-1) >= 0)
-        << "poll failed: " << strerror(errno);
+        << "poll failed: " << StrError(errno);
     if (poll_fds[0].revents) {
       chars_read = log_fd->Read(buf, sizeof(buf));
       if (chars_read < 0) {

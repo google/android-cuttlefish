@@ -16,7 +16,6 @@
 #include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
 
 #include <errno.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 
@@ -32,6 +31,7 @@
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
@@ -101,7 +101,7 @@ Result<void> Cvdalloc::BinaryIsValid(std::string_view path) {
   struct stat st;
   int r = stat(path.data(), &st);
   CF_EXPECT(r == 0, "Could not stat the cvdalloc binary at "
-                        << path << ": " << strerror(errno));
+                        << path << ": " << StrError(errno));
   CF_EXPECT(ValidateCvdallocBinary(path));
   return {};
 }
