@@ -118,25 +118,25 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
       "", metadata_level));
 
   if (!FileExists(metrics_paths.metrics_directory)) {
-    LOG(INFO) << "Metrics directory does not exist, perhaps metrics were not "
-                 "initialized.";
+    LOG(DEBUG) << "Metrics directory does not exist, perhaps metrics were not "
+                  "initialized.";
     return;
   }
 
   Result<MetricsData> gather_result = GatherMetrics(metrics_paths, event_type);
   if (!gather_result.ok()) {
-    LOG(INFO) << fmt::format(
+    LOG(DEBUG) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
-        EventTypeString(event_type), gather_result.error());
+        EventTypeString(event_type), gather_result.error().FormatForEnv());
     return;
   }
 
   Result<void> output_result = OutputMetrics(
       event_type, metrics_paths.metrics_directory, *gather_result);
   if (!output_result.ok()) {
-    LOG(INFO) << fmt::format("Failed to output metrics for {}.  Error: {}",
-                             EventTypeString(event_type),
-                             output_result.error());
+    LOG(DEBUG) << fmt::format("Failed to output metrics for {}.  Error: {}",
+                              EventTypeString(event_type),
+                              output_result.error().FormatForEnv());
   }
 }
 
@@ -147,8 +147,8 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
   Result<void> metrics_setup_result =
       SetUpMetrics(metrics_paths.metrics_directory);
   if (!metrics_setup_result.ok()) {
-    LOG(ERROR) << fmt::format("Failed to initialize metrics.  Error: {}",
-                              metrics_setup_result.error());
+    LOG(DEBUG) << fmt::format("Failed to initialize metrics.  Error: {}",
+                              metrics_setup_result.error().FormatForEnv());
     return;
   }
   if (kEnableCvdMetrics) {
