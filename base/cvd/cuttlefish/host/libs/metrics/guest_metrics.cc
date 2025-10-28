@@ -17,6 +17,7 @@
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 
 #include <string>
+#include <vector>
 
 #include <fmt/format.h>
 
@@ -30,21 +31,27 @@ constexpr char kAvbtool[] = "avbtool";
 
 }  // namespace
 
-Result<GuestInfo> GetGuestInfo(const GuestPaths& guest_paths) {
-  const std::string boot_image_path =
-      fmt::format("{}/boot.img", guest_paths.artifacts);
-  const std::string avbtool_path =
-      fmt::format("{}/bin/{}", guest_paths.host_artifacts, kAvbtool);
-  return GuestInfo{
-      // TODO: chadreynolds - use actual instance ID when gathering for all
-      // guests
-      .instance_number = 1,
-      .os_version = CF_EXPECTF(
-          ReadAndroidVersionFromBootImage(boot_image_path, avbtool_path),
-          "Failed to read guest os version from \"{}\" using `{}` at "
-          "\"{}\".",
-          boot_image_path, kAvbtool, avbtool_path),
-  };
+Result<std::vector<GuestInfo>> GetGuestInfo(const GuestPaths& guest_paths) {
+  std::vector<GuestInfo> result;
+  result.reserve(guest_paths.artifacts.size());
+  int i = 1;
+
+  for (const std::string& artifact_path : guest_paths.artifacts) {
+    const std::string boot_image_path =
+        fmt::format("{}/boot.img", artifact_path);
+    const std::string avbtool_path =
+        fmt::format("{}/bin/{}", guest_paths.host_artifacts, kAvbtool);
+    result.emplace_back(GuestInfo{
+        .instance_number = i,
+        .os_version = CF_EXPECTF(
+            ReadAndroidVersionFromBootImage(boot_image_path, avbtool_path),
+            "Failed to read guest os version from \"{}\" using `{}` at "
+            "\"{}\".",
+            boot_image_path, kAvbtool, avbtool_path),
+    });
+    i++;
+  }
+  return result;
 }
 
 }  // namespace cuttlefish

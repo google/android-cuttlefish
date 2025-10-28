@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
@@ -65,15 +66,29 @@ std::chrono::milliseconds GetEpochTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(now);
 }
 
+// use as many ProductOut values are available, then pad with the first value up
+// to the number of instances
+std::vector<std::string> GetProductOutPaths(
+    const std::string& group_product_out, const int instance_count) {
+  std::vector<std::string> result =
+      android::base::Split(group_product_out, ",");
+  if (!result.empty() && result.size() < instance_count) {
+    for (int i = result.size(); i < instance_count; i++) {
+      result.emplace_back(result.front());
+    }
+  }
+  return result;
+}
+
 MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
   return MetricsPaths{
       .metrics_directory = instance_group.HomeDir() + "/metrics",
       .guest_paths =
           GuestPaths{
-              .artifacts =
-                  android::base::Split(instance_group.ProductOutPath(), ",")
-                      .front(),
               .host_artifacts = instance_group.HostArtifactsPath(),
+              .artifacts =
+                  GetProductOutPaths(instance_group.ProductOutPath(),
+                                     instance_group.Instances().size()),
           },
   };
 }

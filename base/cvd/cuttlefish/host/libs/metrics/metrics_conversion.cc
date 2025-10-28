@@ -18,6 +18,7 @@
 
 #include <chrono>
 
+#include <fmt/format.h>
 #include "google/protobuf/timestamp.pb.h"
 
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -48,13 +49,6 @@ using wireless_android_play_playlog::LogSourceEnum::LogSource;
 static constexpr LogSource kLogSourceId = LogSource::CUTTLEFISH_METRICS;
 static constexpr char kLogSourceStr[] = "CUTTLEFISH_METRICS";
 static constexpr ClientInfo::ClientType kCppClientType = ClientInfo::CPLUSPLUS;
-
-Timestamp ToTimestamp(std::chrono::milliseconds ms) {
-  Timestamp timestamp;
-  timestamp.set_nanos((ms.count() % 1000) * 1000000);
-  timestamp.set_seconds(ms.count() / 1000);
-  return timestamp;
-}
 
 CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
   switch (event_type) {
@@ -104,20 +98,23 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
   cf_log_event.set_device_type(CuttlefishLogEvent::CUTTLEFISH_DEVICE_TYPE_HOST);
   cf_log_event.set_session_id(metrics_data.session_id);
   cf_log_event.set_cuttlefish_version(metrics_data.cf_common_version);
-  *cf_log_event.mutable_timestamp_ms() = ToTimestamp(metrics_data.now);
+  Timestamp& timestamp = *cf_log_event.mutable_timestamp_ms();
+  timestamp.set_nanos((metrics_data.now.count() % 1000) * 1000000);
+  timestamp.set_seconds(metrics_data.now.count() / 1000);
 
-  MetricsEventV2* metrics_event = cf_log_event.mutable_metrics_event_v2();
+  MetricsEventV2& metrics_event = *cf_log_event.mutable_metrics_event_v2();
 
-  CuttlefishGuest* guest = metrics_event->add_guest();
-  guest->set_event_type(ConvertEventType(metrics_data.event_type));
-  guest->set_guest_id(
-      metrics_data.session_id +
-      std::to_string(metrics_data.guest_metrics.instance_number));
-  guest->set_guest_os_version(metrics_data.guest_metrics.os_version);
+  for (const GuestInfo& guest_info : metrics_data.guest_metrics) {
+    CuttlefishGuest& guest = *metrics_event.add_guest();
+    guest.set_event_type(ConvertEventType(metrics_data.event_type));
+    guest.set_guest_id(fmt::format("{}-{}", metrics_data.session_id,
+                                   guest_info.instance_number));
+    guest.set_guest_os_version(guest_info.os_version);
+  }
 
-  CuttlefishHost* host = metrics_event->mutable_host();
-  host->set_host_os(ConvertHostOs(metrics_data.host_metrics));
-  host->set_host_os_version(metrics_data.host_metrics.release);
+  CuttlefishHost& host = *metrics_event.mutable_host();
+  host.set_host_os(ConvertHostOs(metrics_data.host_metrics));
+  host.set_host_os_version(metrics_data.host_metrics.release);
 
   return cf_log_event;
 }
@@ -129,12 +126,12 @@ LogRequest BuildLogRequest(std::chrono::milliseconds now,
   log_request.set_log_source(kLogSourceId);
   log_request.set_log_source_name(kLogSourceStr);
 
-  ClientInfo* client_info = log_request.mutable_client_info();
-  client_info->set_client_type(kCppClientType);
+  ClientInfo& client_info = *log_request.mutable_client_info();
+  client_info.set_client_type(kCppClientType);
 
-  LogEvent* log_event = log_request.add_log_event();
-  log_event->set_event_time_ms(now.count());
-  log_event->set_source_extension(cf_log_event.SerializeAsString());
+  LogEvent& log_event = *log_request.add_log_event();
+  log_event.set_event_time_ms(now.count());
+  log_event.set_source_extension(cf_log_event.SerializeAsString());
   return log_request;
 }
 
