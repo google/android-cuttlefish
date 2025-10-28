@@ -18,14 +18,15 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
 struct GuestPaths {
-  std::string artifacts;
   std::string host_artifacts;
+  std::vector<std::string> artifacts;
 };
 
 struct GuestInfo {
@@ -33,6 +34,6 @@ struct GuestInfo {
   std::string os_version;
 };
 
-Result<GuestInfo> GetGuestInfo(const GuestPaths& guest_paths);
+Result<std::vector<GuestInfo>> GetGuestInfo(const GuestPaths& guest_paths);
 
 }  // namespace cuttlefish

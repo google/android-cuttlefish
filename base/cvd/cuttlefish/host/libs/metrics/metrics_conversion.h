@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
@@ -32,7 +33,7 @@ struct MetricsData {
   std::string cf_common_version;
   std::chrono::milliseconds now;
   HostInfo host_metrics;
-  GuestInfo guest_metrics;
+  std::vector<GuestInfo> guest_metrics;
 };
 
 wireless_android_play_playlog::LogRequest ConstructLogRequest(

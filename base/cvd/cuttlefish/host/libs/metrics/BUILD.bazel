@@ -68,6 +68,7 @@ cf_cc_library(
         "//external_proto:cf_metrics_event_v2_cc_proto",
         "//external_proto:clientanalytics_cc_proto",
         "//external_proto:log_source_enum_cc_proto",
+        "@fmt",
         "@protobuf//:timestamp_cc_proto",
     ],
 )
