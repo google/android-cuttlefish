@@ -15,27 +15,32 @@
 
 #include "cuttlefish/host/libs/zip/zip_copy.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
+#include <array>
+#include <memory>
 #include <utility>
-#include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 
+static constexpr size_t kBufferSize = 1 << 26;
+
 Result<void> Copy(ReadableZipSource& input, WritableZipSource& output) {
   ZipSourceReader reader = CF_EXPECT(input.Reader());
   ZipSourceWriter writer = CF_EXPECT(output.Writer());
 
-  std::vector<char> buf(1 << 26);
+  std::unique_ptr<std::array<char, kBufferSize>> buf(
+      new std::array<char, kBufferSize>);
   uint64_t chunk_read;
-  while ((chunk_read = CF_EXPECT(reader.Read(buf.data(), buf.size()))) > 0) {
+  while ((chunk_read = CF_EXPECT(reader.Read(buf.get(), buf->size()))) > 0) {
     uint64_t chunk_written = 0;
     while (chunk_written < chunk_read) {
-      uint64_t written = CF_EXPECT(
-          writer.Write(&buf[chunk_written], chunk_read - chunk_written));
+      uint64_t written = CF_EXPECT(writer.Write(&buf->data()[chunk_written],
+                                                chunk_read - chunk_written));
       CF_EXPECT_GT(written, 0, "Premature EOF on writer");
       chunk_written += written;
     }
