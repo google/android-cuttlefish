@@ -24,6 +24,7 @@
 #include <android-base/file.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 
 namespace cuttlefish {
@@ -59,7 +60,7 @@ CvdInstanceDatabaseTest::CvdInstanceDatabaseTest()
       db_backing_fd_(mkstemp(db_backing_path_.data())),
       db_(db_backing_path_) {
   if (db_backing_fd_ < 0) {
-    SetErrorCode(ErrorCode::kFileError, strerror(errno));
+    SetErrorCode(ErrorCode::kFileError, StrError(errno));
   }
   InitWorkspace() && InitMockAndroidHostOut();
 }

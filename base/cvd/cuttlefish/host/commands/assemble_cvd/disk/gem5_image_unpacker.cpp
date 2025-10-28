@@ -18,6 +18,7 @@
 
 #include <android-base/file.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
@@ -70,7 +71,7 @@ Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config) {
   CF_EXPECT(
       mkdir(binaries_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0 ||
           errno == EEXIST,
-      "\"" << binaries_dir << "\": " << strerror(errno));
+      "\"" << binaries_dir << "\": " << StrError(errno));
   CF_EXPECT(Copy(
       instance_.bootloader(),
       binaries_dir + "/" + android::base::Basename(instance_.bootloader())));

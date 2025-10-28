@@ -29,6 +29,7 @@
 
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/signals.h"
 
@@ -60,8 +61,8 @@ void RunnerLoop(const int read_end) {
     auto bytes_read =
         TEMP_FAILURE_RETRY(recv(read_end, &signal, sizeof(signal), 0));
     if (bytes_read < 0) {
-      auto err = errno;
-      LOG(ERROR) << "Failed to receive signal from handler: " << strerror(err);
+      LOG(ERROR) << "Failed to receive signal from handler: "
+                 << StrError(errno);
       // This is unrecoverable, so stop running (this is unlikely)
       break;
     }

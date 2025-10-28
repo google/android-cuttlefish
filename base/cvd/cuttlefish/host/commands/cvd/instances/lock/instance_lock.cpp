@@ -34,6 +34,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -248,7 +249,7 @@ InstanceLockFileManager::TryAcquireUnusedLock() {
 
 Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
-  CF_EXPECT(RemoveFile(lock_file_path), std::strerror(errno));
+  CF_EXPECT(RemoveFile(lock_file_path), StrError(errno));
   return {};
 }
 

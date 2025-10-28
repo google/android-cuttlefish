@@ -76,6 +76,7 @@ cf_cc_library(
     hdrs = ["instance_database_helper.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",

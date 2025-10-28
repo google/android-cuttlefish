@@ -30,6 +30,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
@@ -73,24 +74,24 @@ class ConsoleForwarder {
     // Remove any stale symlink to a pts device
     auto ret = unlink(console_path_.c_str());
     CHECK(!(ret < 0 && errno != ENOENT))
-        << "Failed to unlink " << console_path_ << ": " << strerror(errno);
+        << "Failed to unlink " << console_path_ << ": " << StrError(errno);
 
     auto pty = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK);
-    CHECK(pty >= 0) << "Failed to open a PTY: " << strerror(errno);
+    CHECK(pty >= 0) << "Failed to open a PTY: " << StrError(errno);
 
-    CHECK_EQ(grantpt(pty), 0) << strerror(errno);
-    CHECK_EQ(unlockpt(pty), 0) << strerror(errno);
+    CHECK_EQ(grantpt(pty), 0) << StrError(errno);
+    CHECK_EQ(unlockpt(pty), 0) << StrError(errno);
 
     int packet_mode_enabled = 1;
-    CHECK_EQ(ioctl(pty, TIOCPKT, &packet_mode_enabled), 0) << strerror(errno);
+    CHECK_EQ(ioctl(pty, TIOCPKT, &packet_mode_enabled), 0) << StrError(errno);
 
     auto pty_dev_name = ptsname(pty);
     CHECK(pty_dev_name != nullptr)
-        << "Failed to obtain PTY device name: " << strerror(errno);
+        << "Failed to obtain PTY device name: " << StrError(errno);
 
     CHECK(symlink(pty_dev_name, console_path_.c_str()) >= 0)
         << "Failed to create symlink to " << pty_dev_name << " at "
-        << console_path_ << ": " << strerror(errno);
+        << console_path_ << ": " << StrError(errno);
 
     auto pty_shared_fd = SharedFD::Dup(pty);
     close(pty);
@@ -244,7 +245,7 @@ int ConsoleForwarderMain(int argc, char** argv) {
 
   // Don't get a SIGPIPE from the clients
   CHECK(sigaction(SIGPIPE, nullptr, nullptr) == 0)
-      << "Failed to set SIGPIPE to be ignored: " << strerror(errno);
+      << "Failed to set SIGPIPE to be ignored: " << StrError(errno);
 
   console_forwarder.StartServer();
 }

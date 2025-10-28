@@ -37,6 +37,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -220,7 +221,7 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   }
   if (FileExists(link, /* follow_symlinks */ false)) {
     CF_EXPECTF(RemoveFile(link), "Failed to remove file \"{}\": {}", link,
-               std::strerror(errno));
+               StrError(errno));
   }
   CF_EXPECT(Symlink(target, link));
   return {};
