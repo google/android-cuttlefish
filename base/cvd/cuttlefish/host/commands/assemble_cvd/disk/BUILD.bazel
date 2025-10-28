@@ -129,6 +129,7 @@ cf_cc_library(
     srcs = ["gem5_image_unpacker.cpp"],
     hdrs = ["gem5_image_unpacker.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
@@ -210,6 +211,7 @@ cf_cc_library(
     srcs = ["kernel_ramdisk_repacker.cpp"],
     hdrs = ["kernel_ramdisk_repacker.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",

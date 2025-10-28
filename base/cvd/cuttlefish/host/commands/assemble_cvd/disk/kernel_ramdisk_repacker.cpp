@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
@@ -74,7 +75,7 @@ Result<void> RepackSuperAndVbmeta(
   const auto new_super_img = instance.new_super_image();
   CF_EXPECTF(Copy(instance.super_image(), new_super_img),
              "Failed to copy super image '{}' to '{}': '{}'",
-             instance.super_image(), new_super_img, strerror(errno));
+             instance.super_image(), new_super_img, StrError(errno));
 
   CF_EXPECT(RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
                                      "vendor_dlkm"),

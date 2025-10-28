@@ -28,6 +28,7 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -94,7 +95,7 @@ Result<void> SubstituteWithFlag(
       // TODO: schuffelen - relax this check after migration completes
       CF_EXPECTF(FileExists(to_substitute),
                  "Cannot substitute '{}', does not exist", to_substitute);
-      CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", strerror(errno));
+      CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", StrError(errno));
       CF_EXPECT(Symlink(source, to_substitute));
     }
   }
@@ -134,7 +135,7 @@ Result<void> Substitute(const std::string& target_dir,
      return {};
   }
 
-  CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", strerror(errno));
+  CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", StrError(errno));
   CF_EXPECT(Symlink(target, full_link_name));
   return {};
 }

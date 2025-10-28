@@ -24,6 +24,7 @@
 #include <android-base/scopeguard.h>
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 
 namespace cuttlefish {
 
@@ -58,7 +59,7 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
     CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECTF(num_fds >= 0,
                "Select call to read the user input returned error: {}",
-               strerror(errno));
+               StrError(errno));
 
     if (read_set.IsSet(interrupt_event_fd_)) {
       eventfd_t val;

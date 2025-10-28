@@ -31,6 +31,7 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -140,8 +141,7 @@ void IncreaseFileLimit() {
   struct rlimit old_lim;
   // Get old limits
   if (getrlimit(RLIMIT_NOFILE, &old_lim) != 0) {
-    auto err = strerror(errno);
-    LOG(WARNING) << "Unable to get file limit (" << err
+    LOG(WARNING) << "Unable to get file limit (" << StrError(errno)
                  << "), virtual devices may not work properly if the limit is "
                     "set too low";
     return;
@@ -152,8 +152,7 @@ void IncreaseFileLimit() {
   old_lim.rlim_cur = old_lim.rlim_max;
   // Set limits
   if (setrlimit(RLIMIT_NOFILE, &old_lim) != 0) {
-    auto err = strerror(errno);
-    LOG(WARNING) << "Unable to set file limit (" << err
+    LOG(WARNING) << "Unable to set file limit (" << StrError(errno)
                  << "), virtual devices may not work properly if the limit is "
                     "set too low";
   }

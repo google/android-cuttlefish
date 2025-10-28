@@ -27,6 +27,7 @@
 #include <google/protobuf/text_format.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/proto.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -74,7 +75,7 @@ Result<void> CvdClient::StopCvdServer(bool clear) {
   // will close when it fully exits.
   SharedFD read_pipe, write_pipe;
   CF_EXPECT(cuttlefish::SharedFD::Pipe(&read_pipe, &write_pipe),
-            "Unable to create shutdown pipe: " << strerror(errno));
+            "Unable to create shutdown pipe: " << StrError(errno));
 
   auto response =
       SendRequest(request, OverrideFd{/* override none of 0, 1, 2 */},
