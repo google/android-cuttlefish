@@ -276,7 +276,7 @@ set -o errexit -o nounset -o pipefail
 
 sudo apt-get install -y git
 
-# TODO(b/454977168): Validate NVIDIA drivers.
+# Validate NVIDIA driver installation.
 nvidia-smi
 
 dpkg -s cuttlefish-base
