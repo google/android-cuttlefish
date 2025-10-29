@@ -113,6 +113,12 @@ static std::string V4l2Proxy(const Instance& instance) {
   return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
 }
 
+static std::string VhostUserVsock(const Instance& instance) {
+  const auto& crosvm = instance.vm().crosvm();
+  const auto& default_val = CF_DEFAULTS_VHOST_USER_VSOCK;
+  return crosvm.has_vhost_user_vsock() ? crosvm.vhost_user_vsock() : default_val;
+}
+
 static Result<std::optional<std::string>> CustomConfigsFlagValue(
     const Instance& instance) {
   if (instance.vm().custom_actions().empty()) {
@@ -155,6 +161,7 @@ Result<std::vector<std::string>> GenerateVmFlags(
       GenerateInstanceFlag("enable_sandbox", cfg, EnableSandbox),
       GenerateInstanceFlag("crosvm_simple_media_device", cfg, SimpleMediaDevice),
       GenerateInstanceFlag("crosvm_v4l2_proxy", cfg, V4l2Proxy),
+      GenerateInstanceFlag("vhost_user_vsock", cfg, VhostUserVsock),
   };
   return MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
 }
