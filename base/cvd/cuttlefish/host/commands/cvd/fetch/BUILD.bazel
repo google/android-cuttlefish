@@ -122,6 +122,33 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fetch_context",
+    srcs = ["fetch_context.cc"],
+    hdrs = ["fetch_context.h"],
+    deps = [
+        "//cuttlefish/common/libs/posix:strerror",
+        "//cuttlefish/common/libs/utils:archive",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/cvd/fetch:builds",
+        "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
+        "//cuttlefish/host/commands/cvd/fetch:target_directories",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/host/libs/web:build_api_zip",
+        "//cuttlefish/host/libs/web:build_zip_name",
+        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "fetch_cvd",
     srcs = ["fetch_cvd.cc"],
     hdrs = ["fetch_cvd.h"],
@@ -137,6 +164,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:download_flags",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
         "//cuttlefish/host/commands/cvd/fetch:extract_image_contents",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_context",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:host_package",

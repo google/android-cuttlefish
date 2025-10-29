@@ -276,6 +276,16 @@ Result<void> FetcherConfig::AddFilesToConfig(
   return {};
 }
 
+Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
+  if (!dictionary_->isMember(kCvdFiles)) {
+    return {};
+  }
+  auto& json_files = (*dictionary_)[kCvdFiles];
+  CF_EXPECTF(json_files.isMember(path), "Unknown file '{}'", path);
+  json_files.removeMember(path);
+  return {};
+}
+
 FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {
   if (configs.empty()) {
     configs.emplace_back();
