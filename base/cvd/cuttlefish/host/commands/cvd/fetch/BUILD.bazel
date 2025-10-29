@@ -21,6 +21,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "builds",
+    hdrs = ["builds.h"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:chrome_os_build_string",
+    ],
+)
+
+cf_cc_library(
     name = "build_strings",
     srcs = ["build_strings.cc"],
     hdrs = ["build_strings.h"],
@@ -123,6 +132,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:build_strings",
+        "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:download_flags",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
