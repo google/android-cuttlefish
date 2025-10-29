@@ -96,6 +96,8 @@ class FetcherConfig {
                                 const std::vector<std::string>& paths,
                                 const std::string& directory_prefix,
                                 bool override_entry = false);
+
+  Result<void> RemoveFileFromConfig(const std::string& path);
 };
 
 class FetcherConfigs {
