@@ -178,8 +178,10 @@ Result<void> LinkLogs2InstanceDir(
                                      android::base::Basename(config_path))));
 
   std::string assemble_cvd_logs = config.AssemblyPath("assemble_cvd.log");
-  CF_EXPECT(Symlink(assemble_cvd_logs,
-                    instance.PerInstanceLogPath("assemble_cvd.log")));
+  if (FileExists(assemble_cvd_logs)) {
+    CF_EXPECT(Symlink(assemble_cvd_logs,
+                      instance.PerInstanceLogPath("assemble_cvd.log")));
+  }
 
   std::string images_dir = instance.images_dir();
   std::string fetch_log = fmt::format("{}/{}", images_dir, "fetch.log");
@@ -309,8 +311,7 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   std::vector<Subprocess> runners;
   for (const auto& instance : config->Instances()) {
-    Result<void> link_res =
-        LinkLogs2InstanceDir(conf_path, *config, instance);
+    Result<void> link_res = LinkLogs2InstanceDir(conf_path, *config, instance);
     if (!link_res.ok()) {
       LOG(ERROR) << "Failed to link logs to instance dir: "
                  << link_res.error().FormatForEnv();
