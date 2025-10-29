@@ -44,6 +44,9 @@ $(call inherit-product, device/google/cuttlefish/shared/auto/device_vendor.mk)
 # Use vsock as VHAL transport to align with on-device deployment
 ENABLE_AUTO_ETHERNET ?= false
 
+# Fall back to the default sensor HAL
+LOCAL_SENSOR_PRODUCT_PACKAGE := com.android.hardware.sensors
+
 #
 # Special settings for the target
 #
