@@ -187,100 +187,55 @@ Result<std::string> SaveConfig(FetcherConfig& config,
   return fetcher_path;
 }
 
-Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
-                                const TargetDirectories& target_directories,
+Result<void> FetchDefaultTarget(FetchBuildContext& context,
+                                bool keep_downloaded_archives,
                                 const DownloadFlags& flags,
-                                const bool keep_downloaded_archives,
-                                FetcherConfig& config,
-                                FetchTracer::Trace trace) {
-  const auto [default_build_id, default_build_target] =
-      GetBuildIdAndTarget(*builds.default_build);
-
+                                bool has_system_build) {
   // Some older builds might not have misc_info.txt, so permit errors on
   // fetching misc_info.txt
-  Result<std::string> misc_info_result = build_api.DownloadFile(
-      *builds.default_build, target_directories.root, "misc_info.txt");
-  trace.CompletePhase("Download misc_info.txt");
-  if (misc_info_result.ok()) {
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        {misc_info_result.value()}, target_directories.root, kOverrideEntries));
+  if (!context.Artifact("misc_info.txt").Download().ok()) {
+    LOG(DEBUG) << "Failed to download misc_info.txt, continuing";
   }
-
   if (flags.download_img_zip) {
-    LOG(INFO) << "Downloading image zip for " << *builds.default_build;
-    std::string img_zip_name = GetBuildZipName(*builds.default_build, "img");
-    std::string default_img_zip_filepath = CF_EXPECT(build_api.DownloadFile(
-        *builds.default_build, target_directories.root, img_zip_name));
-    trace.CompletePhase("Download image zip",
-                        FileSize(default_img_zip_filepath));
-    std::vector<std::string> image_files = CF_EXPECT(
-        ExtractImageContents(default_img_zip_filepath, target_directories.root,
-                             keep_downloaded_archives));
-    trace.CompletePhase("Extract image zip contents");
-    LOG(DEBUG) << "Adding img-zip files for default build";
-    for (auto& file : image_files) {
-      LOG(VERBOSE) << file;
+    LOG(INFO) << "Downloading image zip for " << context;
+    std::string img_zip_name = context.GetBuildZipName("img");
+    FetchArtifact img_zip = context.Artifact(img_zip_name);
+    CF_EXPECT(img_zip.Download());
+    CF_EXPECT(img_zip.ExtractAll());
+    if (!keep_downloaded_archives) {
+      CF_EXPECT(img_zip.DeleteLocalFile());
     }
-    CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
-                                      default_build_id, default_build_target,
-                                      image_files, target_directories.root));
-    CF_EXPECT(DeAndroidSparse2(image_files));
-    trace.CompletePhase("Desparse image files");
   }
-
-  std::string target_files_name =
-      GetBuildZipName(*builds.default_build, "target_files");
-  std::optional<std::string> target_files;
-  if (builds.system || flags.download_target_files_zip) {
-    LOG(INFO) << "Downloading target files zip for " << *builds.default_build;
-    target_files = CF_EXPECT(build_api.DownloadFile(
-        *builds.default_build, target_directories.default_target_files,
-        target_files_name));
-    trace.CompletePhase("Download Target Files");
-    LOG(INFO) << "Adding target files for default build";
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        {*target_files}, target_directories.root));
+  std::string target_files_name = context.GetBuildZipName("target_files");
+  FetchArtifact target_files = context.Artifact(target_files_name);
+  if (has_system_build || flags.download_target_files_zip) {
+    LOG(INFO) << "Downloading target files zip for " << context;
+    std::string download_location =
+        fmt::format("default/{}", target_files_name);
+    CF_EXPECT(target_files.DownloadTo(download_location));
   }
-
   if (flags.extract_super_image_fragments) {
-    ReadableZip target_files_zip =
-        target_files.has_value()
-            ? CF_EXPECT(ZipOpenRead(*target_files))
-            : CF_EXPECT(
-                  OpenZip(build_api, *builds.default_build, target_files_name));
+    ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
     ReadableZipSource ab_partitions_source =
-        CF_EXPECT(target_files_zip.GetFile("META/ab_partitions.txt"));
+        CF_EXPECT(target_files_zip->GetFile("META/ab_partitions.txt"));
     std::string ab_partitions_contents =
         CF_EXPECT(ReadToString(ab_partitions_source));
 
-    std::string ab_partitions_file =
-        target_directories.default_target_files + "/ab_partitions.txt";
-    CF_EXPECT(android::base::WriteStringToFile(ab_partitions_contents,
-                                               ab_partitions_file));
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-        {ab_partitions_file}, target_directories.default_target_files));
+    CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
+                                        "default/ab_partitions.txt"));
 
-    std::vector<std::string> ab_files =
+    std::vector<std::string_view> ab_files =
         absl::StrSplit(ab_partitions_contents, '\n');
     ab_files.emplace_back("super_empty");
-    for (const std::string& ab_file : ab_files) {
+    for (std::string_view ab_file : ab_files) {
       if (ab_file.empty()) {
         continue;
       }
-      std::string output = fmt::format(
-          "{}/{}.img", target_directories.default_target_files, ab_file);
-      CF_EXPECTF(ExtractFile(target_files_zip,
-                             fmt::format("IMAGES/{}.img", ab_file), output),
-                 "Failed to extract {}", output);
-      CF_EXPECT(config.AddFilesToConfig(
-          FileSource::DEFAULT_BUILD, default_build_id, default_build_target,
-          {output}, target_directories.default_target_files));
+      std::string member = fmt::format("IMAGES/{}.img", ab_file);
+      std::string output = fmt::format("default/{}.img", ab_file);
+      CF_EXPECT(target_files.ExtractOneTo(member, output));
     }
   }
-
   return {};
 }
 
@@ -415,10 +370,10 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives,
                          FetcherConfig& config, FetchTracer& tracer) {
-  if (builds.default_build) {
-    CF_EXPECT(FetchDefaultTarget(build_api, builds, target_directories, flags,
-                                 keep_downloaded_archives, config,
-                                 tracer.NewTrace("Default")));
+  if (std::optional<FetchBuildContext> context = fetch_context.DefaultBuild()) {
+    bool has_system_build = fetch_context.SystemBuild().has_value();
+    CF_EXPECT(FetchDefaultTarget(*context, keep_downloaded_archives, flags,
+                                 has_system_build));
   }
 
   if (std::optional<FetchBuildContext> context = fetch_context.SystemBuild()) {
