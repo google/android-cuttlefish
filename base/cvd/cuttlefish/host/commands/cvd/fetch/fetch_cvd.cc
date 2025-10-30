@@ -40,6 +40,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/extract_image_contents.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_context.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
@@ -105,21 +106,6 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
     CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
   return {};
-}
-
-Result<std::vector<std::string>> FetchSystemImgZipImages(
-    BuildApi& build_api, const Build& build,
-    const std::string& target_directory, const bool keep_downloaded_archives) {
-  LOG(INFO) << "Downloading system image zip for " << build;
-  const std::string system_img_zip_name = GetBuildZipName(build, "img");
-  std::string system_img_zip = CF_EXPECTF(
-      build_api.DownloadFile(build, target_directory, system_img_zip_name),
-      "Unable to download {}", system_img_zip_name);
-  return CF_EXPECTF(
-      ExtractImages(system_img_zip, target_directory,
-                    {"system.img", "product.img"}, keep_downloaded_archives),
-      "Unable to extract system and product images from {}",
-      system_img_zip_name);
 }
 
 Result<std::optional<Build>> GetBuildHelper(
@@ -298,94 +284,45 @@ Result<void> FetchDefaultTarget(BuildApi& build_api, const Builds& builds,
   return {};
 }
 
-Result<void> FetchSystemTarget(BuildApi& build_api, const Build& system_build,
-                               const TargetDirectories& target_directories,
+Result<void> FetchSystemTarget(FetchBuildContext& context,
                                bool download_img_zip,
-                               const bool keep_downloaded_archives,
-                               FetcherConfig& config,
-                               FetchTracer::Trace trace) {
-  std::string target_files_name =
-      GetBuildZipName(system_build, "target_files");
-  std::string target_files = CF_EXPECT(build_api.DownloadFile(
-      system_build, target_directories.system_target_files, target_files_name));
-  trace.CompletePhase("Download Target Files", FileSize(target_files_name));
-  const auto [system_id, system_target] = GetBuildIdAndTarget(system_build);
-  CF_EXPECT(config.AddFilesToConfig(FileSource::SYSTEM_BUILD, system_id,
-                                    system_target, {target_files},
-                                    target_directories.root));
+                               const bool keep_downloaded_archives) {
+  std::string target_files_name = context.GetBuildZipName("target_files");
+  FetchArtifact target_files = context.Artifact(target_files_name);
+
+  CF_EXPECT(
+      target_files.DownloadTo(fmt::format("system/{}", target_files_name)));
 
   if (download_img_zip) {
-    LOG(INFO) << "Downloading system image zip for " << system_build;
-    std::vector<std::string> system_images;
-    Result<std::string> extracted_system = ExtractImage(
-        target_files, target_directories.root, "IMAGES/system.img");
-    if (extracted_system.ok()) {
-      const std::string system_path = target_directories.root + "/system.img";
-      CF_EXPECT(RenameFile(*extracted_system, system_path));
-      system_images.emplace_back(system_path);
-      trace.CompletePhase("Extract system image");
-    } else {
+    LOG(INFO) << "Downloading system image zip for " << context;
+    if (!target_files.ExtractOneTo("IMAGES/system.img", "system.img").ok()) {
       LOG(INFO) << "Unable to retrieve system.img from target files, falling "
                    "back to system *-img-*.zip for system image";
-      const auto img_zip_images =
-          CF_EXPECT(FetchSystemImgZipImages(build_api, system_build,
-                                            target_directories.root,
-                                            keep_downloaded_archives),
-                    "Unable to retrieve system images from fallback to "
-                    "system *-img-*.zip");
-      for (const auto& image_path : img_zip_images) {
-        system_images.emplace_back(image_path);
+      std::string system_img_zip_name = context.GetBuildZipName("img");
+      FetchArtifact system_files = context.Artifact(system_img_zip_name);
+
+      CF_EXPECT(system_files.Download());
+      CF_EXPECT(system_files.ExtractOne("system.img"));
+      CF_EXPECT(system_files.ExtractOne("product.img"));
+
+      if (!keep_downloaded_archives) {
+        CF_EXPECT(system_files.DeleteLocalFile());
       }
-      size_t size = 0;
-      for (const auto& img : img_zip_images) {
-        size += FileSize(img);
+    }
+
+    static constexpr std::string_view kSystemImageFiles[] = {
+        "init_boot",
+        "product",
+        "system_ext",
+        "vbmeta_system",
+    };
+    for (std::string_view system_image : kSystemImageFiles) {
+      std::string member = fmt::format("IMAGES/{}.img", system_image);
+      std::string rename_to = fmt::format("{}.img", system_image);
+      if (!target_files.ExtractOneTo(member, rename_to).ok()) {
+        LOG(DEBUG) << "Failed to extract " << member;
       }
-      trace.CompletePhase("Fetch system images fallback", size);
     }
-
-    Result<std::string> extracted_product = ExtractImage(
-        target_files, target_directories.root, "IMAGES/product.img");
-    if (extracted_product.ok()) {
-      const std::string product_path = target_directories.root + "/product.img";
-      CF_EXPECT(RenameFile(*extracted_product, product_path));
-      system_images.emplace_back(product_path);
-      trace.CompletePhase("Extract product image");
-    }
-
-    Result<std::string> extracted_system_ext = ExtractImage(
-        target_files, target_directories.root, "IMAGES/system_ext.img");
-    if (extracted_system_ext.ok()) {
-      const std::string system_ext_path =
-          target_directories.root + "/system_ext.img";
-      CF_EXPECT(RenameFile(*extracted_system_ext, system_ext_path));
-      system_images.emplace_back(system_ext_path);
-      trace.CompletePhase("Extract system_ext image");
-    }
-
-    Result<std::string> extracted_vbmeta_system = ExtractImage(
-        target_files, target_directories.root, "IMAGES/vbmeta_system.img");
-    if (extracted_vbmeta_system.ok()) {
-      const std::string vbmeta_system_path =
-          target_directories.root + "/vbmeta_system.img";
-      CF_EXPECT(RenameFile(*extracted_vbmeta_system, vbmeta_system_path));
-      system_images.emplace_back(vbmeta_system_path);
-      trace.CompletePhase("Extract vbmeta_system image");
-    }
-
-    Result<std::string> extracted_init_boot = ExtractImage(
-        target_files, target_directories.root, "IMAGES/init_boot.img");
-    if (extracted_init_boot.ok()) {
-      const std::string init_boot_path =
-          target_directories.root + "/init_boot.img";
-      CF_EXPECT(RenameFile(*extracted_init_boot, init_boot_path));
-      system_images.emplace_back(init_boot_path);
-      trace.CompletePhase("Extract init_boot image");
-    }
-
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::SYSTEM_BUILD, system_id, system_target, system_images,
-        target_directories.root, kOverrideEntries));
-    DeAndroidSparse2(system_images);
   }
   return {};
 }
@@ -571,8 +508,8 @@ Result<void> FetchChromeOsTarget(
   return {};
 }
 
-Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
-                         const Builds& builds,
+Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
+                         LuciBuildApi& luci_build_api, const Builds& builds,
                          const TargetDirectories& target_directories,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives,
@@ -583,10 +520,9 @@ Result<void> FetchTarget(BuildApi& build_api, LuciBuildApi& luci_build_api,
                                  tracer.NewTrace("Default")));
   }
 
-  if (builds.system) {
-    CF_EXPECT(FetchSystemTarget(
-        build_api, *builds.system, target_directories, flags.download_img_zip,
-        keep_downloaded_archives, config, tracer.NewTrace("System")));
+  if (std::optional<FetchBuildContext> context = fetch_context.SystemBuild()) {
+    CF_EXPECT(FetchSystemTarget(*context, flags.download_img_zip,
+                                keep_downloaded_archives));
   }
 
   if (builds.kernel) {
@@ -661,10 +597,12 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
   size_t count = 1;
   std::vector<FetchResult> fetch_results;
   for (const auto& target : targets) {
-    LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
     FetcherConfig config;
-    CF_EXPECT(FetchTarget(downloaders.AndroidBuild(), downloaders.Luci(),
-                          target.builds, target.directories,
+    FetchContext fetch_context(downloaders.AndroidBuild(), target.directories,
+                               target.builds, config, tracer);
+    LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
+    CF_EXPECT(FetchTarget(fetch_context, downloaders.AndroidBuild(),
+                          downloaders.Luci(), target.builds, target.directories,
                           target.download_flags, flags.keep_downloaded_archives,
                           config, tracer));
     const std::string config_path =
