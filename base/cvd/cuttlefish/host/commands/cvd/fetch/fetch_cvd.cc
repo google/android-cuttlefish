@@ -341,51 +341,21 @@ Result<void> FetchKernelTarget(FetchBuildContext context) {
   return {};
 }
 
-Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
-                             const std::string& target_directory,
-                             const bool keep_downloaded_archives,
-                             FetcherConfig& config, FetchTracer::Trace trace) {
-  std::string boot_img_zip_name = GetBuildZipName(boot_build, "img");
-  std::string downloaded_boot_filepath;
-  std::optional<std::string> boot_filepath = GetFilepath(boot_build);
-  if (boot_filepath) {
-    downloaded_boot_filepath = CF_EXPECT(build_api.DownloadFileWithBackup(
-        boot_build, target_directory, *boot_filepath, boot_img_zip_name));
-  } else {
-    downloaded_boot_filepath = CF_EXPECT(build_api.DownloadFile(
-        boot_build, target_directory, boot_img_zip_name));
-  }
-  trace.CompletePhase("Download", FileSize(downloaded_boot_filepath));
+Result<void> FetchBootTarget(FetchBuildContext& context,
+                             bool keep_downloaded_archives) {
+  std::string img_zip = context.GetBuildZipName("img");
+  std::string to_download = context.GetFilepath().value_or(img_zip);
+  FetchArtifact artifact = context.Artifact(to_download);
+  CF_EXPECT(artifact.Download());
 
-  std::vector<std::string> boot_files;
-  // downloaded a zip that needs to be extracted
-  if (android::base::EndsWith(downloaded_boot_filepath, boot_img_zip_name)) {
-    std::string extract_target = boot_filepath.value_or("boot.img");
-    std::string extracted_boot = CF_EXPECT(ExtractImage(
-        downloaded_boot_filepath, target_directory, extract_target));
-    std::string target_boot =
-        CF_EXPECT(RenameFile(extracted_boot, target_directory + "/boot.img"));
-    boot_files.push_back(target_boot);
-    trace.CompletePhase("Extract boot image");
-
-    // keep_downloaded_archives flag used because this is the last extract
-    // on this archive
-    Result<std::string> extracted_vendor_boot_result =
-        ExtractImage(downloaded_boot_filepath, target_directory,
-                     "vendor_boot.img", keep_downloaded_archives);
-    if (extracted_vendor_boot_result.ok()) {
-      trace.CompletePhase("Extract vendor boot image");
-      boot_files.push_back(extracted_vendor_boot_result.value());
+  if (to_download == img_zip) {
+    CF_EXPECT(artifact.ExtractOne("boot.img"));
+    CF_EXPECT(artifact.ExtractOne("vendor_boot.img"));
+    if (!keep_downloaded_archives) {
+      CF_EXPECT(artifact.DeleteLocalFile());
     }
-  } else {
-    boot_files.push_back(downloaded_boot_filepath);
   }
-  const auto [boot_id, boot_target] = GetBuildIdAndTarget(boot_build);
-  CF_EXPECT(config.AddFilesToConfig(FileSource::BOOT_BUILD, boot_id,
-                                    boot_target, boot_files, target_directory,
-                                    kOverrideEntries));
-  DeAndroidSparse2(boot_files);
-  trace.CompletePhase("Desparse");
+
   return {};
 }
 
@@ -460,10 +430,8 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
     CF_EXPECT(FetchKernelTarget(*context));
   }
 
-  if (builds.boot) {
-    CF_EXPECT(FetchBootTarget(build_api, *builds.boot, target_directories.root,
-                              keep_downloaded_archives, config,
-                              tracer.NewTrace("Boot")));
+  if (std::optional<FetchBuildContext> context = fetch_context.BootBuild()) {
+    CF_EXPECT(FetchBootTarget(*context, keep_downloaded_archives));
   }
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.BootloaderBuild()) {
