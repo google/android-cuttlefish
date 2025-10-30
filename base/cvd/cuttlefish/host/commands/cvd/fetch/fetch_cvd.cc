@@ -404,26 +404,14 @@ Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
   return {};
 }
 
-Result<void> FetchOtaToolsTarget(BuildApi& build_api,
-                                 const Build& otatools_build,
-                                 const TargetDirectories& target_directories,
-                                 const bool keep_downloaded_archives,
-                                 FetcherConfig& config,
-                                 FetchTracer::Trace trace) {
-  std::string otatools_filepath = CF_EXPECT(build_api.DownloadFile(
-      otatools_build, target_directories.root, "otatools.zip"));
-  trace.CompletePhase("Download", FileSize(otatools_filepath));
-  std::vector<std::string> ota_tools_files = CF_EXPECT(
-      ExtractArchiveContents(otatools_filepath, target_directories.otatools,
-                             keep_downloaded_archives));
-  trace.CompletePhase("Extract");
-  const auto [otatools_build_id, otatools_build_target] =
-      GetBuildIdAndTarget(otatools_build);
-  CF_EXPECT(config.AddFilesToConfig(FileSource::DEFAULT_BUILD,
-                                    otatools_build_id, otatools_build_target,
-                                    ota_tools_files, target_directories.root));
-  DeAndroidSparse2(ota_tools_files);
-  trace.CompletePhase("Desparse files");
+Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
+                                 bool keep_downloaded_archives) {
+  FetchArtifact otatools = context.Artifact("otatools.zip");
+  CF_EXPECT(otatools.Download());
+  CF_EXPECT(otatools.ExtractAll());
+  if (!keep_downloaded_archives) {
+    CF_EXPECT(otatools.DeleteLocalFile());
+  }
   return {};
 }
 
@@ -487,10 +475,8 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
     CF_EXPECT(FetchAndroidEfiLoaderTarget(*ctx));
   }
 
-  if (builds.otatools) {
-    CF_EXPECT(FetchOtaToolsTarget(build_api, *builds.otatools,
-                                  target_directories, keep_downloaded_archives,
-                                  config, tracer.NewTrace("OTA Tools")));
+  if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
+    CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
   }
 
   if (builds.chrome_os) {
