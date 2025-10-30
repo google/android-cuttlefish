@@ -389,26 +389,12 @@ Result<void> FetchBootTarget(BuildApi& build_api, const Build& boot_build,
   return {};
 }
 
-Result<void> FetchBootloaderTarget(BuildApi& build_api,
-                                   const Build& bootloader_build,
-                                   const std::string& target_directory,
-                                   FetcherConfig& config,
-                                   FetchTracer::Trace trace) {
-  std::string bootloader_filepath = target_directory + "/bootloader";
+Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   // If the bootloader is from an arm/aarch64 build, the artifact will be of
   // filetype bin.
-  std::string downloaded_bootloader_filepath =
-      CF_EXPECT(build_api.DownloadFileWithBackup(
-          bootloader_build, target_directory, "u-boot.rom", "u-boot.bin"));
-  trace.CompletePhase("Download", FileSize(downloaded_bootloader_filepath));
-  CF_EXPECT(RenameFile(downloaded_bootloader_filepath, bootloader_filepath));
-  const auto [bootloader_id, bootloader_target] =
-      GetBuildIdAndTarget(bootloader_build);
-  CF_EXPECT(config.AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_id,
-                                    bootloader_target, {bootloader_filepath},
-                                    target_directory, kOverrideEntries));
-  DeAndroidSparse2({bootloader_filepath});
-  trace.CompletePhase("Desparse image");
+  if (!context.Artifact("u-boot.rom").DownloadTo("bootloader").ok()) {
+    CF_EXPECT(context.Artifact("u-boot.bin").DownloadTo("bootloader"));
+  }
   return {};
 }
 
@@ -516,10 +502,8 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
                               tracer.NewTrace("Boot")));
   }
 
-  if (builds.bootloader) {
-    CF_EXPECT(FetchBootloaderTarget(build_api, *builds.bootloader,
-                                    target_directories.root, config,
-                                    tracer.NewTrace("Bootloader")));
+  if (std::optional<FetchBuildContext> ctx = fetch_context.BootloaderBuild()) {
+    CF_EXPECT(FetchBootloaderTarget(*ctx));
   }
 
   if (builds.android_efi_loader) {
