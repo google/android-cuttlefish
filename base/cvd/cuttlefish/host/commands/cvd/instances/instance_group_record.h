@@ -60,6 +60,7 @@ class LocalInstanceGroup {
   void SetAllStates(cvd::InstanceState state);
 
   std::string AssemblyDir() const;
+  std::string MetricsDir() const;
 
   Result<LocalInstance> FindInstanceById(unsigned id) const;
   /**

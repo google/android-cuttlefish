@@ -147,6 +147,10 @@ std::string LocalInstanceGroup::AssemblyDir() const {
   return AssemblyDirFromHome(HomeDir());
 }
 
+std::string LocalInstanceGroup::MetricsDir() const {
+  return HomeDir() + "/metrics";
+}
+
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
     const Json::Value& group_json) {
   CF_EXPECT(group_json.isMember(kJsonGroupName));

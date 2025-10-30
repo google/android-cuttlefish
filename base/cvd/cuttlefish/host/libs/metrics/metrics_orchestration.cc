@@ -82,7 +82,7 @@ std::vector<std::string> GetProductOutPaths(
 
 MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
   return MetricsPaths{
-      .metrics_directory = instance_group.HomeDir() + "/metrics",
+      .metrics_directory = instance_group.MetricsDir(),
       .guest_paths =
           GuestPaths{
               .host_artifacts = instance_group.HostArtifactsPath(),
