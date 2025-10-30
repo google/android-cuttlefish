@@ -398,33 +398,9 @@ Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
   return {};
 }
 
-Result<void> FetchAndroidEfiLoaderTarget(BuildApi& build_api,
-                                         const Build& android_efi_loader_build,
-                                         const std::string& target_directory,
-                                         FetcherConfig& config,
-                                         FetchTracer::Trace trace) {
-  std::string android_efi_loader_target_filepath =
-      target_directory + "/android_efi_loader.efi";
-  std::optional<std::string> android_efi_loader_filepath =
-      GetFilepath(android_efi_loader_build);
-
-  std::string downloaded_android_efi_loader_filepath =
-      CF_EXPECT(build_api.DownloadFile(
-          android_efi_loader_build, target_directory,
-          android_efi_loader_filepath.value_or("gbl_x86_64.efi")));
-  trace.CompletePhase("Download",
-                      FileSize(downloaded_android_efi_loader_filepath));
-  CF_EXPECT(RenameFile(downloaded_android_efi_loader_filepath,
-                       android_efi_loader_target_filepath));
-
-  const auto [android_efi_loader_id, android_efi_loader_target] =
-      GetBuildIdAndTarget(android_efi_loader_build);
-  CF_EXPECT(config.AddFilesToConfig(
-      FileSource::ANDROID_EFI_LOADER_BUILD, android_efi_loader_id,
-      android_efi_loader_target, {android_efi_loader_target_filepath},
-      target_directory, kOverrideEntries));
-  DeAndroidSparse2({android_efi_loader_target_filepath});
-  trace.CompletePhase("Desparse image");
+Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
+  std::string filename = context.GetFilepath().value_or("gbl_x86_64.efi");
+  CF_EXPECT(context.Artifact(filename).DownloadTo("android_efi_loader.efi"));
   return {};
 }
 
@@ -506,10 +482,9 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
     CF_EXPECT(FetchBootloaderTarget(*ctx));
   }
 
-  if (builds.android_efi_loader) {
-    CF_EXPECT(FetchAndroidEfiLoaderTarget(
-        build_api, *builds.android_efi_loader, target_directories.root, config,
-        tracer.NewTrace("Android EFI Loader")));
+  if (std::optional<FetchBuildContext> ctx =
+          fetch_context.AndroidEfiLoaderBuild()) {
+    CF_EXPECT(FetchAndroidEfiLoaderTarget(*ctx));
   }
 
   if (builds.otatools) {
