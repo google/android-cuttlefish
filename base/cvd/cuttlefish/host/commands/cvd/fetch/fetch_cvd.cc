@@ -327,35 +327,16 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
   return {};
 }
 
-Result<void> FetchKernelTarget(BuildApi& build_api, const Build& kernel_build,
-                               const std::string& target_directory,
-                               FetcherConfig& config,
-                               FetchTracer::Trace trace) {
-  std::string kernel_filepath = target_directory + "/kernel";
+Result<void> FetchKernelTarget(FetchBuildContext context) {
   // If the kernel is from an arm/aarch64 build, the artifact will be called
   // Image.
-  std::string downloaded_kernel_filepath =
-      CF_EXPECT(build_api.DownloadFileWithBackup(kernel_build, target_directory,
-                                                 "bzImage", "Image"));
-  trace.CompletePhase("Download bzImage", FileSize(downloaded_kernel_filepath));
-  CF_EXPECT(RenameFile(downloaded_kernel_filepath, kernel_filepath));
-  const auto [kernel_id, kernel_target] = GetBuildIdAndTarget(kernel_build);
-  CF_EXPECT(config.AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_id,
-                                    kernel_target, {kernel_filepath},
-                                    target_directory));
-  DeAndroidSparse2({kernel_filepath});
-  trace.CompletePhase("Desparse bzImage");
+  if (!context.Artifact("bzImage").DownloadTo("kernel").ok()) {
+    CF_EXPECT(context.Artifact("Image").DownloadTo("kernel"));
+  }
 
   // Certain kernel builds do not have corresponding ramdisks.
-  Result<std::string> initramfs_img_result =
-      build_api.DownloadFile(kernel_build, target_directory, "initramfs.img");
-  if (initramfs_img_result.ok()) {
-    trace.CompletePhase("Download initramfs",
-                        FileSize(initramfs_img_result.value()));
-    CF_EXPECT(config.AddFilesToConfig(
-        FileSource::KERNEL_BUILD, kernel_id, kernel_target,
-        {initramfs_img_result.value()}, target_directory));
-    DeAndroidSparse2({initramfs_img_result.value()});
+  if (!context.Artifact("initramfs.img").Download().ok()) {
+    LOG(DEBUG) << "No initramfs.img for kernel build, ignoring";
   }
   return {};
 }
@@ -525,10 +506,8 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
                                 keep_downloaded_archives));
   }
 
-  if (builds.kernel) {
-    CF_EXPECT(FetchKernelTarget(build_api, *builds.kernel,
-                                target_directories.root, config,
-                                tracer.NewTrace("Kernel")));
+  if (std::optional<FetchBuildContext> context = fetch_context.KernelBuild()) {
+    CF_EXPECT(FetchKernelTarget(*context));
   }
 
   if (builds.boot) {
