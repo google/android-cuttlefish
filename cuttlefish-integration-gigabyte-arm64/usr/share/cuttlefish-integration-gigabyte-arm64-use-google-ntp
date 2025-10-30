@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# This script should be called by postinst of the Gigabyte Servers' package.
+# That's why we don't install this script to usr/bin.
+# Also the metapackage should be installed by Debian installer's preseed.
+# So you should not run this script manually. Nor install the metapackage
+# manually.
+
+if grep "includefile google-time-server.conf" /etc/ntpsec/ntp.conf; then
+    echo "Already have Google's time servers."
+    exit
+fi
+
+if [ -e /etc/ntpsec/ntp.conf ]; then
+    if [ ! -e /var/lib/cuttlefish-integration-gigabyte-arm64/backup/ntp.conf ]; then
+	cp -f -a /etc/ntpsec/ntp.conf /var/lib/cuttlefish-integration-gigabyte-arm64/backup
+    fi
+fi
+
+sed -i 's/^\(# Specify one or more NTP servers.\)/\1\nincludefile google-time-server.conf\n/' /etc/ntpsec/ntp.conf
+

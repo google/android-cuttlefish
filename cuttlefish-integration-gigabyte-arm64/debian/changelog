@@ -1,0 +1,23 @@
+cuttlefish-integration-gigabyte-arm64 (1.31.0) UNRELEASED; urgency=low
+
+  *
+
+ -- Ying-Chun Liu (PaulLiu) <liupa@google.com>  Mon, 10 Nov 2025 12:14:05 +0000
+
+cuttlefish-integration-gigabyte-arm64 (0.0.2) stable; urgency=medium
+
+  [Wei-Chung Hsu]
+  * Added cf docker image build and CO service run in cronjob whenever system
+    reboot.
+  * Added changelog and build info into file system so that system user could
+    read this changelog to know the current version.
+  * Changed default kernel to bookworm 6.7.0, enable Nvidia GPU, install
+    docker container with nvidia container toolkit.
+
+ -- Wei-Chung Hsu <weihsu@google.com>  Thu, 25 Jul 2024 11:04:40 -0700
+
+cuttlefish-integration-gigabyte-arm64 (0.0.1) stable; urgency=low
+
+  * Initial release.
+
+ -- Ying-Chun Liu (PaulLiu) <paulliu@debian.org>  Tue, 30 Jan 2024 12:14:05 +0800
