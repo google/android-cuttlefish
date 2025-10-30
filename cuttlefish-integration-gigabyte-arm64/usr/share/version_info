@@ -1,0 +1,16 @@
+
+Source: cuttlefish-integration-gigabyte-arm64
+Version: 2
+Distribution: stable
+Urgency: medium
+Maintainer: Wei-Chung Hsu <weihsu@google.com>
+Timestamp: 1721930680
+Date: Thu, 25 Jul 2024 11:04:40 -0700
+Changes:
+ cuttlefish-integration-gigabyte-arm64 (2) stable; urgency=medium
+ .
+   [Wei-Chung Hsu]
+   * Added cf docker image build and CO service run in cronjob whenever system reboot.
+   * Added changelog and build info into file system so that system user could read this changelog to know the current version.
+   * Changed default kernel to bookworm 6.7.0, enable Nvidia GPU, install docker container with nvidia container toolkit.
+Image was created at Thu Jul 25 11:05:50 AM PDT 2024
