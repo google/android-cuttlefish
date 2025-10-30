@@ -36,10 +36,8 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_strings.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
-#include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 #include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
-#include "cuttlefish/host/commands/cvd/fetch/extract_image_contents.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_context.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
@@ -49,22 +47,17 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
-#include "cuttlefish/host/libs/web/build_api_zip.h"
-#include "cuttlefish/host/libs/web/build_zip_name.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/zip/zip_cc.h"
-#include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
 namespace {
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
-constexpr bool kOverrideEntries = true;
 
 struct Target {
   BuildStrings build_strings;
