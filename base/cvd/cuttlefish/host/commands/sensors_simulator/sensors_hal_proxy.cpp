@@ -32,7 +32,7 @@ static constexpr uint32_t kIntervalMs = 1000;
 static constexpr SensorsMask kContinuousModeSensors =
     (1 << kAccelerationId) | (1 << kGyroscopeId) | (1 << kMagneticId) |
     (1 << kPressureId) | (1 << kUncalibGyroscopeId) |
-    (1 << kUncalibAccelerationId);
+    (1 << kUncalibAccelerationId) | (1 << kLightId);
 
 Result<std::string> SensorIdToName(int id) {
   switch (id) {
