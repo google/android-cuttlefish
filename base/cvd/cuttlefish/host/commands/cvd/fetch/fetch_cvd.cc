@@ -364,12 +364,9 @@ Result<void> FetchChromeOsTarget(
   return {};
 }
 
-Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
-                         LuciBuildApi& luci_build_api, const Builds& builds,
-                         const TargetDirectories& target_directories,
+Result<void> FetchTarget(FetchContext& fetch_context,
                          const DownloadFlags& flags,
-                         const bool keep_downloaded_archives,
-                         FetcherConfig& config, FetchTracer& tracer) {
+                         const bool keep_downloaded_archives) {
   if (std::optional<FetchBuildContext> context = fetch_context.DefaultBuild()) {
     bool has_system_build = fetch_context.SystemBuild().has_value();
     CF_EXPECT(FetchDefaultTarget(*context, keep_downloaded_archives, flags,
@@ -400,12 +397,6 @@ Result<void> FetchTarget(FetchContext& fetch_context, BuildApi& build_api,
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
     CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
-  }
-
-  if (builds.chrome_os) {
-    CF_EXPECT(FetchChromeOsTarget(luci_build_api, *builds.chrome_os,
-                                  target_directories, keep_downloaded_archives,
-                                  config, tracer.NewTrace("ChromeOS")));
   }
 
   return {};
@@ -448,10 +439,15 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
     FetchContext fetch_context(downloaders.AndroidBuild(), target.directories,
                                target.builds, config, tracer);
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
-    CF_EXPECT(FetchTarget(fetch_context, downloaders.AndroidBuild(),
-                          downloaders.Luci(), target.builds, target.directories,
-                          target.download_flags, flags.keep_downloaded_archives,
-                          config, tracer));
+    CF_EXPECT(FetchTarget(fetch_context, target.download_flags,
+                          flags.keep_downloaded_archives));
+
+    if (target.builds.chrome_os) {
+      CF_EXPECT(FetchChromeOsTarget(
+          downloaders.Luci(), *target.builds.chrome_os, target.directories,
+          flags.keep_downloaded_archives, config, tracer.NewTrace("ChromeOS")));
+    }
+
     const std::string config_path =
         CF_EXPECT(SaveConfig(config, target.directories.root));
     count++;
