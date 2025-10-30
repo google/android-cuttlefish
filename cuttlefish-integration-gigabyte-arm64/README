@@ -1,0 +1,41 @@
+The Debian Package cuttlefish-integration-gigabyte-arm64
+----------------------------
+
+This is the package for Google's Gigabyte Ampere project.
+The purpose of this package is to be used on Gigabye Ampere server
+for running cuttlefish. Other platform doesn't need this package.
+
+Please note that this package is usually not installed manually.
+It should be installed by Debian installer through preseed.
+
+For example, it changes the ntp.conf but not restarting the ntp server.
+Because we assume that it runs by preseed and will have a force reboot
+after the installation completed.
+
+## Add more packages to be installed.
+
+Modify debian/control. Add packages in Depends field.
+After modification, run wrap-and-sort to keep the list sorted.
+
+## Install files.
+
+Put the file into this package. And modify
+debian/cuttlefish-integration-gigabyte-arm64.install to install it to the its
+place.
+
+## Add more customization script.
+
+For developers who wants to add more scripts to run after installation.
+Please follow the instructions.
+
+1. Add a script in ./usr/share. Make sure it is executable.
+2. Run the script in ./debian/cuttlefish-integration-gigabyte-arm64.postinst.
+   In configure case.
+3. Install the script into Debian package. Please modify
+   ./debian/cuttlefish-integration-gigabyte-arm64.install
+
+Please refer ./usr/share/cuttlefish-integration-gigabyte-arm64-use-google-ntp
+as an example.
+It modifies the ntp.conf to add Google's NTP servers.
+
+ -- Ying-Chun Liu (PaulLiu) <liupa@google.com>  Tue, 30 Jan 2024 12:14:05 +0800

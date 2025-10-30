@@ -1,0 +1,10 @@
+cuttlefish-integration-gigabyte-arm64 for Debian
+-----------------------------------
+
+This is the package for Google's Gigabyte Ampere project.
+
+This package is maintained as a native package. Just directly modify the
+source and not creating a quilt patch.
+
+ -- Ying-Chun Liu (PaulLiu) <liupa@google.com>  Tue, 30 Jan 2024 12:14:05 +0800
+
