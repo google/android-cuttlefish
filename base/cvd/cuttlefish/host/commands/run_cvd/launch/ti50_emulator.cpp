@@ -146,7 +146,7 @@ class Ti50Emulator : public vm_manager::VmmDependencyCommand {
 
     auto cl = SharedFD::SocketLocalClient(fifo_sock, false, SOCK_STREAM);
     if (!cl->IsOpen()) {
-      return CF_ERR("Failed to connect to gpioPltRst");
+      return CF_ERR("Failed to connect to direct_tpm_fifo");
     }
 
     const uint32_t kMaxRetryCount = 5;

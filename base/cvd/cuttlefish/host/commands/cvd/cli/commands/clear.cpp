@@ -32,7 +32,7 @@ namespace {
 
 constexpr char kClearCmd[] = "clear";
 constexpr char kSummaryHelpText[] =
-    "Clears the instance databaase, stopping any running instances first.";
+    "Clears the instance database, stopping any running instances first.";
 
 class CvdClearCommandHandler : public CvdCommandHandler {
  public:
