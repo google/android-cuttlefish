@@ -40,6 +40,11 @@ Result<MiscImage> MiscImage::ReuseOrCreate(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::string path = instance.PerInstancePath(Name());
 
+  Result<MiscImage> reuse_res = Reuse(instance);
+  if (reuse_res.ok()) {
+    return reuse_res.value();
+  }
+
   LOG(DEBUG) << "misc partition image: creating empty at '" << path << "'";
   CF_EXPECT(CreateBlankImage(path, 1 /* mb */, "none"),
             "Failed to create misc image");
