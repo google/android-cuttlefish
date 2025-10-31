@@ -1,8 +1,24 @@
-cuttlefish-common (1.31.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.31.0) unstable; urgency=medium
 
-  * 
+  * Mark 1.30 as unstable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1742
+  * Start development of version 1.31 by @jemoreira in https://github.com/google/android-cuttlefish/pull/1744
+  * Improve symlink wrappers by @Databean in https://github.com/google/android-cuttlefish/pull/1740
+  * Support signed build artifacts in web build zip naming by @jagghoshal-blip in https://github.com/google/android-cuttlefish/pull/1741
+  * Migrate more calls to the thread-safe `strerror` wrapper. by @Databean in https://github.com/google/android-cuttlefish/pull/1739
+  * Migrate more calls to the thread-safe strerror wrapper (83 -> 62 remaining) by @Databean in https://github.com/google/android-cuttlefish/pull/1745
+  * Add tool to validate a given GCP cuttlefish image. by @ser-io in https://github.com/google/android-cuttlefish/pull/1743
+  * Remove todo about validating the nvidia driver installation by @jmacnak in https://github.com/google/android-cuttlefish/pull/1747
+  * Update guest config format to protobuf by @thjnk in https://github.com/google/android-cuttlefish/pull/1723
+  * Migrate more calls to the thread-safe strerror wrapper (62 -> 42 remaining) by @Databean in https://github.com/google/android-cuttlefish/pull/1748
+  * Link to assemble_cvd.log only if it exists by @jemoreira in https://github.com/google/android-cuttlefish/pull/1749
+  * Use an array rather than a vector for zip_copy.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1746
+  * Report light sensor readings continously by @chihchiachen in https://github.com/google/android-cuttlefish/pull/1753
+  * Mark v1.29.0 as stable. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1750
+  * Use `ParseFromString` instead of `ParseFromArray` for a string argument by @Databean in https://github.com/google/android-cuttlefish/pull/1752
+  * Fix MiscImage::ReuseOrCreate by @jemoreira in https://github.com/google/android-cuttlefish/pull/1755
+  * Import ag/36668398 and cl/805425731 by @Databean in https://github.com/google/android-cuttlefish/pull/1756
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 24 Oct 2025 16:11:05 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 31 Oct 2025 20:52:53 +0000
 
 cuttlefish-common (1.30.0) unstable; urgency=medium
 
