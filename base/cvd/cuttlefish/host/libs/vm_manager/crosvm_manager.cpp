@@ -544,8 +544,12 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     first_time_argument = "--restore=" + restore_path;
   }
 
-  crosvm_cmd.ApplyProcessRestarter(instance.crosvm_binary(),
-                                   first_time_argument, kCrosvmVmResetExitCode);
+  const bool gpu_capture_enabled = !instance.gpu_capture_binary().empty();
+  if (!gpu_capture_enabled) {
+    crosvm_cmd.ApplyProcessRestarter(
+        instance.crosvm_binary(), first_time_argument, kCrosvmVmResetExitCode);
+  }
+
   crosvm_cmd.Cmd().AddParameter("run");
   crosvm_cmd.AddControlSocket(instance.CrosvmSocketPath(),
                               instance.crosvm_binary());
@@ -616,8 +620,6 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     }
   }
 
-  const auto gpu_capture_enabled = !instance.gpu_capture_binary().empty();
-
   // crosvm_cmd.Cmd().AddParameter("--null-audio");
   crosvm_cmd.Cmd().AddParameter("--mem=", instance.memory_mb());
   if (instance.mte()) {
@@ -674,10 +676,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
   crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
 
-  // GPU capture can only support named files and not file descriptors due to
-  // having to pass arguments to crosvm via a wrapper script.
 #ifdef __linux__
-  if (instance.enable_tap_devices() && !gpu_capture_enabled) {
+  if (instance.enable_tap_devices()) {
     // The PCI ordering of tap devices is important. Make sure any change here
     // is reflected in ethprime u-boot variable.
     // TODO(b/218364216, b/322862402): Crosvm occupies 32 PCI devices first and
