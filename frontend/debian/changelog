@@ -4,12 +4,12 @@ cuttlefish-frontend (1.31.0) unstable; urgency=medium
 
  -- Cody Schuffelen <schuffelen@google.com>  Fri, 31 Oct 2025 20:53:45 +0000
 
-cuttlefish-frontend (1.30.0) unstable; urgency=medium
+cuttlefish-frontend (1.30.0) stable; urgency=medium
 
   * Remove the need to add host-ready tag in e2e orchestration tests. by @ser-io in https://github.com/google/android-cuttlefish/pull/1731
   * Change get request using HTTPHelper.Client.Do to HTTPHelper.NewGetRequest.Do by @k311093 in https://github.com/google/android-cuttlefish/pull/1734
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 24 Oct 2025 14:40:39 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 31 Oct 2025 14:27:58 -0700
 
 cuttlefish-frontend (1.29.0) unstable; urgency=medium
 
