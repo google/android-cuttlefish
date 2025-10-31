@@ -33,7 +33,7 @@ struct MetricsData {
   std::string cf_common_version;
   std::chrono::milliseconds now;
   HostInfo host_metrics;
-  std::vector<GuestInfo> guest_metrics;
+  std::vector<GuestMetrics> guest_metrics;
 };
 
 wireless_android_play_playlog::LogRequest ConstructLogRequest(

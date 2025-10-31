@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -24,16 +25,21 @@
 
 namespace cuttlefish {
 
-struct GuestPaths {
-  std::string host_artifacts;
-  std::vector<std::string> artifacts;
+struct GuestInfo {
+  uint32_t instance_id;
+  std::string product_out;
 };
 
-struct GuestInfo {
-  int instance_number;
+struct Guests {
+  std::string host_artifacts;
+  std::vector<GuestInfo> guest_infos;
+};
+
+struct GuestMetrics {
+  uint32_t instance_id;
   std::string os_version;
 };
 
-Result<std::vector<GuestInfo>> GetGuestInfo(const GuestPaths& guest_paths);
+Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests);
 
 }  // namespace cuttlefish

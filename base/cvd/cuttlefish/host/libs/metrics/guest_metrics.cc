@@ -31,25 +31,23 @@ constexpr char kAvbtool[] = "avbtool";
 
 }  // namespace
 
-Result<std::vector<GuestInfo>> GetGuestInfo(const GuestPaths& guest_paths) {
-  std::vector<GuestInfo> result;
-  result.reserve(guest_paths.artifacts.size());
-  int i = 1;
+Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
+  std::vector<GuestMetrics> result;
+  result.reserve(guests.guest_infos.size());
 
-  for (const std::string& artifact_path : guest_paths.artifacts) {
+  for (const GuestInfo& guest : guests.guest_infos) {
     const std::string boot_image_path =
-        fmt::format("{}/boot.img", artifact_path);
+        fmt::format("{}/boot.img", guest.product_out);
     const std::string avbtool_path =
-        fmt::format("{}/bin/{}", guest_paths.host_artifacts, kAvbtool);
-    result.emplace_back(GuestInfo{
-        .instance_number = i,
+        fmt::format("{}/bin/{}", guests.host_artifacts, kAvbtool);
+    result.emplace_back(GuestMetrics{
+        .instance_id = guest.instance_id,
         .os_version = CF_EXPECTF(
             ReadAndroidVersionFromBootImage(boot_image_path, avbtool_path),
             "Failed to read guest os version from \"{}\" using `{}` at "
             "\"{}\".",
             boot_image_path, kAvbtool, avbtool_path),
     });
-    i++;
   }
   return result;
 }

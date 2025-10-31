@@ -104,11 +104,11 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
 
   MetricsEventV2& metrics_event = *cf_log_event.mutable_metrics_event_v2();
 
-  for (const GuestInfo& guest_info : metrics_data.guest_metrics) {
+  for (const GuestMetrics& guest_info : metrics_data.guest_metrics) {
     CuttlefishGuest& guest = *metrics_event.add_guest();
     guest.set_event_type(ConvertEventType(metrics_data.event_type));
-    guest.set_guest_id(fmt::format("{}-{}", metrics_data.session_id,
-                                   guest_info.instance_number));
+    guest.set_guest_id(
+        fmt::format("{}-{}", metrics_data.session_id, guest_info.instance_id));
     guest.set_guest_os_version(guest_info.os_version);
   }
 
