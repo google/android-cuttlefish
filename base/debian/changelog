@@ -26,7 +26,7 @@ cuttlefish-common (1.31.0) unstable; urgency=medium
 
  -- Cody Schuffelen <schuffelen@google.com>  Fri, 31 Oct 2025 20:52:53 +0000
 
-cuttlefish-common (1.30.0) unstable; urgency=medium
+cuttlefish-common (1.30.0) stable; urgency=medium
 
   * Isolate metrics transmission logic by @cjreynol in https://github.com/google/android-cuttlefish/pull/1717
   * Fix errors around metrics file generation by @cjreynol in https://github.com/google/android-cuttlefish/pull/1728
@@ -43,7 +43,7 @@ cuttlefish-common (1.30.0) unstable; urgency=medium
   * Add missing include and dependency by @jemoreira in https://github.com/google/android-cuttlefish/pull/1736
   * Download super image fragments with a new flag by @Databean in https://github.com/google/android-cuttlefish/pull/1738
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 24 Oct 2025 14:37:04 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 31 Oct 2025 14:28:24 -0700
 
 cuttlefish-common (1.29.0) stable; urgency=medium
 
