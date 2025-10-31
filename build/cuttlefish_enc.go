@@ -5,7 +5,10 @@ package cuttlefish
 import (
 	"android/soong/android"
 	"bytes"
+	"fmt"
 	"github.com/google/blueprint/gobtools"
+	"github.com/google/blueprint/proptools"
+	"reflect"
 )
 
 // begin of cvd-host-package.go
@@ -24,6 +27,60 @@ func (r CvdHostPackageMetadataInfo) Encode(ctx gobtools.EncContext, buf *bytes.B
 		return err
 	}
 	return err
+}
+
+func (r CvdHostPackageMetadataInfo) CustomHash(hasher *proptools.Hasher) error {
+	hasher.WriteString(":cuttlefish.CvdHostPackageMetadataInfo")
+	hasher.WriteInt(2)
+	hasher.WriteString(":cuttlefish.android.Path")
+	val1 := r.TarballMetadata == nil
+	if val1 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.TarballMetadata); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val2 := r.TarballMetadata == nil
+				if val2 {
+					hasher.WriteByte(0)
+				} else {
+					val3 := func(hasher *proptools.Hasher) error {
+						return r.TarballMetadata.(proptools.CustomHash).CustomHash(hasher)
+					}
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val3); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.TarballMetadata.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	hasher.WriteString(":cuttlefish.android.Path")
+	val4 := r.StampMetadata == nil
+	if val4 {
+		hasher.WriteByte(0)
+	} else {
+		if v := reflect.ValueOf(r.StampMetadata); v.Kind() == reflect.Ptr {
+			if v.IsNil() {
+				panic(fmt.Errorf("nil pointer is not supported in interface"))
+			} else {
+				val5 := r.StampMetadata == nil
+				if val5 {
+					hasher.WriteByte(0)
+				} else {
+					val6 := func(hasher *proptools.Hasher) error { return r.StampMetadata.(proptools.CustomHash).CustomHash(hasher) }
+					if err := proptools.HashReference(hasher, uintptr(v.Pointer()), val6); err != nil {
+						return err
+					}
+				}
+			}
+		} else {
+			r.StampMetadata.(proptools.CustomHash).CustomHash(hasher)
+		}
+	}
+	return nil
 }
 
 func (r *CvdHostPackageMetadataInfo) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {

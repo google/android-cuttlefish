@@ -25,7 +25,7 @@ import (
 	"android/soong/cc"
 )
 
-//go:generate go run ../../../../build/blueprint/gobtools/codegen/gob_gen.go
+//go:generate go run ../../../../build/blueprint/gobtools/codegen
 
 func init() {
 	android.RegisterModuleType("cvd_host_package", cvdHostPackageFactory)

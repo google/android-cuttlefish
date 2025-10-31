@@ -1,2 +1,4 @@
 set noparent
 file:device/google/cuttlefish:/OWNERS_techleads
+
+include platform/build/soong:/OWNERS
