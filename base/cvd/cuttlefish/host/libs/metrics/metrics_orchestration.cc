@@ -31,6 +31,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
@@ -58,7 +59,7 @@ constexpr char kReadmeText[] =
 
 struct MetricsPaths {
   std::string metrics_directory;
-  GuestPaths guest_paths;
+  Guests guests;
 };
 
 std::chrono::milliseconds GetEpochTime() {
@@ -66,16 +67,24 @@ std::chrono::milliseconds GetEpochTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(now);
 }
 
-// use as many ProductOut values are available, then pad with the first value up
-// to the number of instances
-std::vector<std::string> GetProductOutPaths(
-    const std::string& group_product_out, const int instance_count) {
-  std::vector<std::string> result =
+std::vector<GuestInfo> GetGuestInfos(
+    const std::string& group_product_out,
+    const std::vector<LocalInstance>& instances) {
+  std::vector<GuestInfo> result;
+
+  // Split always returns at least one element
+  std::vector<std::string> product_out_paths =
       android::base::Split(group_product_out, ",");
-  if (!result.empty() && result.size() < instance_count) {
-    for (int i = result.size(); i < instance_count; i++) {
-      result.emplace_back(result.front());
+  for (int i = 0; i < instances.size(); i++) {
+    auto guest = GuestInfo{
+        .instance_id = instances[i].id(),
+    };
+    if (product_out_paths.size() > i) {
+      guest.product_out = product_out_paths[i];
+    } else {  // pad with the first value
+      guest.product_out = product_out_paths.front();
     }
+    result.emplace_back(guest);
   }
   return result;
 }
@@ -83,12 +92,11 @@ std::vector<std::string> GetProductOutPaths(
 MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
   return MetricsPaths{
       .metrics_directory = instance_group.MetricsDir(),
-      .guest_paths =
-          GuestPaths{
+      .guests =
+          Guests{
               .host_artifacts = instance_group.HostArtifactsPath(),
-              .artifacts =
-                  GetProductOutPaths(instance_group.ProductOutPath(),
-                                     instance_group.Instances().size()),
+              .guest_infos = GetGuestInfos(instance_group.ProductOutPath(),
+                                           instance_group.Instances()),
           },
   };
 }
@@ -110,7 +118,7 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
-      .guest_metrics = CF_EXPECT(GetGuestInfo(metrics_paths.guest_paths)),
+      .guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests)),
   };
 }
 
