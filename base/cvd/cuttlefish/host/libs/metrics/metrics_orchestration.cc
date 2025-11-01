@@ -20,8 +20,10 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -29,9 +31,11 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
@@ -53,14 +57,48 @@ constexpr char kReadmeText[] =
     "step"
     " when it does>";
 
+struct MetricsPaths {
+  std::string metrics_directory;
+  Guests guests;
+};
+
 std::chrono::milliseconds GetEpochTime() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
   return std::chrono::duration_cast<std::chrono::milliseconds>(now);
 }
 
-std::string GetMetricsDirectoryFilepath(
-    const LocalInstanceGroup& instance_group) {
-  return instance_group.HomeDir() + "/metrics";
+std::vector<GuestInfo> GetGuestInfos(
+    const std::string& group_product_out,
+    const std::vector<LocalInstance>& instances) {
+  std::vector<GuestInfo> result;
+
+  // Split always returns at least one element
+  std::vector<std::string> product_out_paths =
+      android::base::Split(group_product_out, ",");
+  for (int i = 0; i < instances.size(); i++) {
+    auto guest = GuestInfo{
+        .instance_id = instances[i].id(),
+    };
+    if (product_out_paths.size() > i) {
+      guest.product_out = product_out_paths[i];
+    } else {  // pad with the first value
+      guest.product_out = product_out_paths.front();
+    }
+    result.emplace_back(guest);
+  }
+  return result;
+}
+
+MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
+  return MetricsPaths{
+      .metrics_directory = instance_group.MetricsDir(),
+      .guests =
+          Guests{
+              .host_artifacts = instance_group.HostArtifactsPath(),
+              .guest_infos = GetGuestInfos(instance_group.ProductOutPath(),
+                                           instance_group.Instances()),
+          },
+  };
 }
 
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
@@ -70,17 +108,24 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
   return {};
 }
 
-Result<void> GatherAndWriteMetrics(EventType event_type,
-                                   const std::string& metrics_directory) {
-  const std::string session_id =
-      CF_EXPECT(ReadSessionIdFile(metrics_directory));
-  const HostInfo host_metrics = GetHostInfo();
-  const std::string cf_common_version = GetVersionIds().ToString();
-  std::chrono::milliseconds now = GetEpochTime();
+Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
+                                  EventType event_type) {
   // TODO: chadreynolds - gather the rest of the data (guest/flag information)
-  const LogRequest log_request = ConstructLogRequest(
-      event_type, host_metrics, session_id, cf_common_version, now);
+  return MetricsData{
+      .event_type = event_type,
+      .session_id =
+          CF_EXPECT(ReadSessionIdFile(metrics_paths.metrics_directory)),
+      .cf_common_version = GetVersionIds().ToString(),
+      .now = GetEpochTime(),
+      .host_metrics = GetHostInfo(),
+      .guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests)),
+  };
+}
 
+Result<void> OutputMetrics(EventType event_type,
+                           const std::string& metrics_directory,
+                           const MetricsData& metrics_data) {
+  const LogRequest log_request = ConstructLogRequest(metrics_data);
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
   if (kEnableCvdMetrics) {
     CF_EXPECT(TransmitMetricsEvent(log_request));
@@ -88,35 +133,45 @@ Result<void> GatherAndWriteMetrics(EventType event_type,
   return {};
 }
 
-void RunMetrics(const std::string& metrics_directory, EventType event_type) {
+void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
   ScopedTeeLogger logger(LogToStderrAndFiles(
-      {fmt::format("{}/{}", metrics_directory, kMetricsLogName)}, "",
-      metadata_level));
+      {fmt::format("{}/{}", metrics_paths.metrics_directory, kMetricsLogName)},
+      "", metadata_level));
 
-  if (!FileExists(metrics_directory)) {
-    LOG(INFO) << "Metrics directory does not exist, perhaps metrics were not "
-                 "initialized.";
+  if (!FileExists(metrics_paths.metrics_directory)) {
+    LOG(DEBUG) << "Metrics directory does not exist, perhaps metrics were not "
+                  "initialized.";
     return;
   }
-  Result<void> event_result =
-      GatherAndWriteMetrics(event_type, metrics_directory);
-  if (!event_result.ok()) {
-    LOG(INFO) << fmt::format("Failed to gather metrics for {}.  Error: {}",
-                             EventTypeString(event_type), event_result.error());
+
+  Result<MetricsData> gather_result = GatherMetrics(metrics_paths, event_type);
+  if (!gather_result.ok()) {
+    LOG(DEBUG) << fmt::format(
+        "Failed to gather all metrics data for {}.  Error: {}",
+        EventTypeString(event_type), gather_result.error().FormatForEnv());
+    return;
+  }
+
+  Result<void> output_result = OutputMetrics(
+      event_type, metrics_paths.metrics_directory, *gather_result);
+  if (!output_result.ok()) {
+    LOG(DEBUG) << fmt::format("Failed to output metrics for {}.  Error: {}",
+                              EventTypeString(event_type),
+                              output_result.error().FormatForEnv());
   }
 }
 
 }  // namespace
 
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  Result<void> metrics_setup_result = SetUpMetrics(metrics_directory);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  Result<void> metrics_setup_result =
+      SetUpMetrics(metrics_paths.metrics_directory);
   if (!metrics_setup_result.ok()) {
-    LOG(ERROR) << fmt::format("Failed to initialize metrics.  Error: {}",
-                              metrics_setup_result.error());
+    LOG(DEBUG) << fmt::format("Failed to initialize metrics.  Error: {}",
+                              metrics_setup_result.error().FormatForEnv());
     return;
   }
   if (kEnableCvdMetrics) {
@@ -124,25 +179,22 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
   }
-  RunMetrics(metrics_directory, EventType::DeviceInstantiation);
+  RunMetrics(metrics_paths, EventType::DeviceInstantiation);
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, EventType::DeviceBootStart);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceBootStart);
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, EventType::DeviceBootComplete);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceBootComplete);
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
-  const std::string metrics_directory =
-      GetMetricsDirectoryFilepath(instance_group);
-  RunMetrics(metrics_directory, EventType::DeviceStop);
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceStop);
 }
 
 }  // namespace cuttlefish

@@ -16,27 +16,30 @@
 
 #pragma once
 
-#include <chrono>
+#include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
-#include "cuttlefish/host/libs/metrics/guest_metrics.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
 
-struct MetricsData {
-  EventType event_type;
-  std::string session_id;
-  std::string cf_common_version;
-  std::chrono::milliseconds now;
-  HostInfo host_metrics;
-  std::vector<GuestMetrics> guest_metrics;
+struct GuestInfo {
+  uint32_t instance_id;
+  std::string product_out;
 };
 
-wireless_android_play_playlog::LogRequest ConstructLogRequest(
-    const MetricsData& metrics_data);
+struct Guests {
+  std::string host_artifacts;
+  std::vector<GuestInfo> guest_infos;
+};
+
+struct GuestMetrics {
+  uint32_t instance_id;
+  std::string os_version;
+};
+
+Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests);
 
 }  // namespace cuttlefish

@@ -534,7 +534,6 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
-  // TODO CJR: is this message specific to metrics?
   LOG(INFO)
       << "By using this Android Virtual Device, you agree to Google Terms of "
          "Service (https://policies.google.com/terms). The Google Privacy "
