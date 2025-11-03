@@ -26,6 +26,8 @@ RUN apt update
 RUN apt install -y --no-install-recommends \
     ca-certificates \
     curl \
+    libvulkan1 \
+    mesa-utils \
     nginx \
     sudo
 RUN update-ca-certificates
