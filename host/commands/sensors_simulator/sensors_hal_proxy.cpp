@@ -62,6 +62,8 @@ Result<std::string> SensorIdToName(int id) {
       return "acceleration-uncalibrated";
     case kRotationVecId:
       return "rotation";
+    case kSensorHandleLowLatencyOffBodyDetect:
+      return "low-latency-off-body-detect";
     default:
       return CF_ERR("Unsupported sensor id: " << id);
   }
@@ -144,6 +146,13 @@ SensorsHalProxy::SensorsHalProxy(SharedFD control_from_guest_fd,
       host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
                              (1 << kUncalibGyroscopeId) |
                              (1 << kUncalibAccelerationId);
+      break;
+    case DeviceType::Wear:
+      host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
+                             (1 << kMagneticId) | (1 << kTemperatureId) |
+                             (1 << kProximityId) | (1 << kLightId) |
+                             (1 << kPressureId) | (1 << kHumidityId) |
+                             (1 << kSensorHandleLowLatencyOffBodyDetect);
       break;
     default:
       host_enabled_sensors = (1 << kAccelerationId) | (1 << kGyroscopeId) |
