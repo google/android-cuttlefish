@@ -92,10 +92,6 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.otatools, kRwxAllMode));
-    CF_EXPECT(EnsureDirectoryExists(target.directories.default_target_files,
-                                    kRwxAllMode));
-    CF_EXPECT(EnsureDirectoryExists(target.directories.system_target_files,
-                                    kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
   return {};

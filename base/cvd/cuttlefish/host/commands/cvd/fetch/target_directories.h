@@ -28,8 +28,6 @@ struct TargetDirectories {
 
   std::string root;
   std::string otatools;
-  std::string default_target_files;
-  std::string system_target_files;
   std::string chrome_os;
 };
 

@@ -33,8 +33,6 @@ TargetDirectories TargetDirectories::Create(
   }
   return TargetDirectories{.root = base_directory,
                            .otatools = base_directory + "/otatools/",
-                           .default_target_files = base_directory + "/default",
-                           .system_target_files = base_directory + "/system",
                            .chrome_os = base_directory + "/chromeos"};
 }
 
