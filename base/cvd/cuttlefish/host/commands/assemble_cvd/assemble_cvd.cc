@@ -453,7 +453,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       std::string vsock_dir = fmt::format("{}/vsock_{}_{}", TempDir(),
                                           instance.vsock_guest_cid(), getuid());
       if (DirectoryExists(vsock_dir, /* follow_symlinks */ false) &&
-          !IsDirectoryEmpty(vsock_dir)) {
+          !CF_EXPECT(IsDirectoryEmpty(vsock_dir))) {
         CF_EXPECT(RecursivelyRemoveDirectory(vsock_dir));
       }
       CF_EXPECT(EnsureDirectoryExists(vsock_dir, default_mode, default_group));
