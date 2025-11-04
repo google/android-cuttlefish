@@ -92,7 +92,7 @@ TEST_F(FilesTests, MoveDirectoryContentsFailsIfSourceIsNotADirectory) {
 TEST_F(FilesTests, MoveDirectoryContents) {
   Result<void> result = MoveDirectoryContents(src_dir_, dst_dir_);
   EXPECT_THAT(result, IsOk());
-  EXPECT_THAT(IsDirectoryEmpty(src_dir_), IsTrue());
+  EXPECT_THAT(IsDirectoryEmpty(src_dir_), IsOkAndValue(true));
   EXPECT_THAT(FileExists(dst_dir_ + "/file1.txt"), IsTrue());
   EXPECT_THAT(FileExists(dst_dir_ + "/sub_dir/file2.txt"), IsTrue());
 }

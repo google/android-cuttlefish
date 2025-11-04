@@ -284,20 +284,14 @@ bool CanAccess(const std::string& path, const int mode) {
   return access(path.c_str(), mode) == 0;
 }
 
-bool IsDirectoryEmpty(const std::string& path) {
+Result<bool> IsDirectoryEmpty(const std::string& path) {
   std::unique_ptr<DIR, int (*)(DIR*)> direc(opendir(path.c_str()), closedir);
-  if (!direc) {
-    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
-               << " as it failed to be open" << std::endl;
-    return false;
-  }
+  CF_EXPECTF(direc.get(), "opendir('{}') failed: {}", path, StrError(errno));
 
-  int cnt {0};
+  int cnt = 0;
   while (::readdir(direc.get())) {
     cnt++;
     if (cnt > 2) {
-    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
-               << " as it exists but not empty" << std::endl;
       return false;
     }
   }

@@ -1359,7 +1359,8 @@ Result<void> SetDefaultFlagsForCrosvm(
   bool default_enable_sandbox =
       supported_archs.find(HostArch()) != supported_archs.end() &&
       EnsureDirectoryExists(kCrosvmVarEmptyDir).ok() &&
-      IsDirectoryEmpty(kCrosvmVarEmptyDir) && !IsRunningInContainer();
+      CF_EXPECT(IsDirectoryEmpty(kCrosvmVarEmptyDir)) &&
+      !IsRunningInContainer();
 
   std::string default_enable_sandbox_str = "";
   for (int instance_index = 0; instance_index < instance_nums.size();
