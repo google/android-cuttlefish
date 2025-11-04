@@ -69,11 +69,17 @@ Result<std::vector<std::string>> ExtractFiles(
   for (const auto& extract : to_extract) {
     bsdtar_cmd.AddParameter(extract);
   }
-  std::string bsdtar_output =
-      CF_EXPECT(RunAndCaptureStdout(std::move(bsdtar_cmd)));
-  LOG(DEBUG) << bsdtar_output;
+  std::string bsdtar_stdout;
+  std::string bsdtar_stderr;
+  int exit_code = RunWithManagedStdio(std::move(bsdtar_cmd), nullptr,
+                                      &bsdtar_stdout, &bsdtar_stderr);
+  CF_EXPECTF(exit_code == 0,
+             "Failed to execute 'bsdtar' <args>: exit code = {}, stdout = "
+             "'{}', stderr = '{}'",
+             exit_code, bsdtar_stdout, bsdtar_stderr);
+  LOG(DEBUG) << bsdtar_stderr;
 
-  std::vector<std::string> outputs = android::base::Split(bsdtar_output, "\n");
+  std::vector<std::string> outputs = android::base::Split(bsdtar_stderr, "\n");
   for (std::string& output : outputs) {
     std::string_view view = output;
     android::base::ConsumePrefix(&view, "x ");
