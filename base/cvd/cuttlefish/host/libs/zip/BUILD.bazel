@@ -198,6 +198,7 @@ cf_cc_library(
     srcs = ["zip_file.cc"],
     hdrs = ["zip_file.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_cc",

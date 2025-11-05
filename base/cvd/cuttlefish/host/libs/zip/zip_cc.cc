@@ -478,6 +478,30 @@ Result<uint64_t> ReadableZip::NumEntries() {
   return entries;
 }
 
+Result<std::string> ReadableZip::EntryName(uint64_t index) {
+  CF_EXPECT(impl_.get());
+  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+
+  const char* name_cstr = zip_get_name(raw_zip, index, 0);
+  CF_EXPECT_NE(name_cstr, nullptr, ZipErrorString(raw_zip));
+
+  return std::string(name_cstr);
+}
+
+Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
+  CF_EXPECT(impl_.get());
+  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+
+  uint8_t opsys;
+  uint32_t attributes;
+  int res =
+      zip_file_get_external_attributes(raw_zip, index, 0, &opsys, &attributes);
+  CF_EXPECT_EQ(res, 0, ZipErrorString(raw_zip));
+  CF_EXPECT_EQ(opsys, ZIP_OPSYS_UNIX);
+
+  return attributes;
+}
+
 Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
   CF_EXPECT(impl_.get());
   zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
