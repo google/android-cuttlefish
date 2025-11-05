@@ -132,3 +132,12 @@ package_files(
     },
     visibility = ["//:android_cuttlefish"],
 )
+
+package_files(
+    name = "defaults",
+    executable = "cuttlefish-integration/bin/defaults",
+    package_file_to_src = {
+        "cuttlefish-integration/bin/defaults": "//cuttlefish/host/commands/defaults",
+    },
+    visibility = ["//:android_cuttlefish"],
+)
