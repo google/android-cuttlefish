@@ -1,0 +1,3 @@
+#!/bin/sh
+
+dpkg-divert --package cuttlefish-defaults --remove --rename /usr/lib/cuttlefish-common/etc/cf_defaults
