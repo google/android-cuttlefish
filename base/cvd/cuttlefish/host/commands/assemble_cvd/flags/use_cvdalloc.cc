@@ -29,10 +29,12 @@ DEFINE_string(use_cvdalloc, "unset", "Acquire static resources with cvdalloc.");
 
 namespace cuttlefish {
 
-Result<UseCvdallocFlag> UseCvdallocFlag::FromGlobalGflags() {
+Result<UseCvdallocFlag> UseCvdallocFlag::FromGlobalGflags(
+    const Defaults &defaults) {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie("use_cvdalloc");
+  bool flag_default = defaults.BoolValue("use_cvdalloc").value_or(false);
   std::vector<bool> flag_values =
-      CF_EXPECT(BoolFromGlobalGflags(flag_info, "use_cvdalloc", false));
+      CF_EXPECT(BoolFromGlobalGflags(flag_info, "use_cvdalloc", flag_default));
   return UseCvdallocFlag(std::move(flag_values));
 }
 

@@ -219,6 +219,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/host/libs/config/defaults",
         "@gflags",
     ],
 )

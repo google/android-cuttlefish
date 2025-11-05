@@ -30,22 +30,27 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
+
+constexpr char kDefaultsFilePath[] =
+    "/usr/lib/cuttlefish-common/etc/cf_defaults";
 
 Result<void> SetFlagDefaultsForVmm(
     const std::vector<GuestConfig>& guest_configs,
     const SystemImageDirFlag& system_image_dir,
     const VmManagerFlag& vm_manager_flag);
+Result<Defaults> GetFlagDefaultsFromConfig();
 // Must be called after ParseCommandLineFlags.
 Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfigs& fetcher_configs,
     const BootImageFlag&, const InitramfsPathFlag&,
     const KernelPathFlag& kernel_path, const SuperImageFlag&,
-    const SystemImageDirFlag&, const VendorBootImageFlag&,
-    const VmManagerFlag&);
+    const SystemImageDirFlag&, const VendorBootImageFlag&, const VmManagerFlag&,
+    const Defaults&);
 
 std::string GetConfigFilePath(const CuttlefishConfig& config);
 

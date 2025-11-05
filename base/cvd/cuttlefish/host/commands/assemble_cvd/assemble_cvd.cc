@@ -56,6 +56,7 @@
 #include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
+#include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/feature/inject.h"
@@ -303,7 +304,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
     const VendorBootImageFlag& vendor_boot_image,
-    const VmManagerFlag& vm_manager_flag) {
+    const VmManagerFlag& vm_manager_flag, const Defaults& defaults) {
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
@@ -313,7 +314,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
         InitializeCuttlefishConfiguration(
             FLAGS_instance_dir, guest_configs, injector, fetcher_configs,
             boot_image, initramfs_path, kernel_path, super_image,
-            system_image_dir, vendor_boot_image, vm_manager_flag),
+            system_image_dir, vendor_boot_image, vm_manager_flag, defaults),
         "cuttlefish configuration initialization failed");
 
     const std::string snapshot_path = FLAGS_snapshot_path;
@@ -658,12 +659,18 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   CF_EXPECT(
       SetFlagDefaultsForVmm(guest_configs, system_image_dir, vm_manager_flag));
 
-  auto config =
-      CF_EXPECT(InitFilesystemAndCreateConfig(
-                    std::move(fetcher_configs), guest_configs, injector, log,
-                    boot_image, initramfs_path, kernel_path, super_image,
-                    system_image_dir, vendor_boot_image, vm_manager_flag),
-                "Failed to create config");
+  Result<Defaults> defaults = GetFlagDefaultsFromConfig();
+  if (!defaults.ok()) {
+    LOG(FATAL) << "assemble_cvd: Couldn't get flag defaults from config; "
+                  "aborting: "
+               << defaults.error().Message();
+  }
+  auto config = CF_EXPECT(
+      InitFilesystemAndCreateConfig(
+          std::move(fetcher_configs), guest_configs, injector, log, boot_image,
+          initramfs_path, kernel_path, super_image, system_image_dir,
+          vendor_boot_image, vm_manager_flag, *defaults),
+      "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
