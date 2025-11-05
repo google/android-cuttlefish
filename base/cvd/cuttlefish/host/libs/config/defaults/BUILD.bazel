@@ -1,0 +1,21 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "defaults",
+    srcs = [
+        "defaults.cc",
+    ],
+    hdrs = [
+        "defaults.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/key_equals_value",
+        "//cuttlefish/common/libs/utils:result",
+        "//libbase",
+        "@abseil-cpp//absl/container:btree",
+    ],
+)

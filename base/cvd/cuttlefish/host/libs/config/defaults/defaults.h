@@ -15,26 +15,27 @@
  */
 #pragma once
 
-#include <stddef.h>
+#include <map>
+#include <optional>
+#include <string>
+#include <string_view>
 
-#include <vector>
-
+#include "absl/container/btree_map.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/config/defaults/defaults.h"
 
 namespace cuttlefish {
 
-/* `--use_cvdalloc` flag */
-class UseCvdallocFlag {
+class Defaults {
  public:
-  static Result<UseCvdallocFlag> FromGlobalGflags(const Defaults &defaults);
+  Defaults() : defaults_() {};
+  Defaults(std::map<std::string, std::string> defaults);
+  static Result<Defaults> FromFile(const std::string &path);
 
-  bool ForIndex(const std::size_t index) const;
+  std::optional<std::string_view> Value(std::string_view k) const;
+  std::optional<bool> BoolValue(std::string_view k) const;
 
  private:
-  UseCvdallocFlag(std::vector<bool> values);
-
-  std::vector<bool> values_;
+  absl::btree_map<std::string, std::string> defaults_;
 };
 
 }  // namespace cuttlefish
