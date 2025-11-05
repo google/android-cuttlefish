@@ -200,9 +200,9 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
   if (vm_manager_ == VmmMode::kCrosvm) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
-    CreateCompositeDisk(partitions_, AbsolutePath(header_path_),
-                        AbsolutePath(footer_path_),
-                        AbsolutePath(composite_disk_path_));
+    CreateOrUpdateCompositeDisk(partitions_, AbsolutePath(header_path_),
+                                AbsolutePath(footer_path_),
+                                AbsolutePath(composite_disk_path_));
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.

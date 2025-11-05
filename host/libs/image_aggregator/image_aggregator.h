@@ -65,19 +65,19 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
  * then the specification file containing the file paths and offsets is saved to
  * `output_composite_path`.
  */
-void CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path);
+void CreateOrUpdateCompositeDisk(std::vector<ImagePartition> partitions,
+                                 const std::string& header_file,
+                                 const std::string& footer_file,
+                                 const std::string& output_composite_path);
 
 /**
  * Overloaded function to generate a composite disk with multiple images for a
  * single partition.
  */
-void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path);
+void CreateOrUpdateCompositeDisk(std::vector<MultipleImagePartition> partitions,
+                                 const std::string& header_file,
+                                 const std::string& footer_file,
+                                 const std::string& output_composite_path);
 /**
  * Generate a qcow overlay backed by a given implementation file.
  *
@@ -94,5 +94,4 @@ void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
 void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path);
-
 }

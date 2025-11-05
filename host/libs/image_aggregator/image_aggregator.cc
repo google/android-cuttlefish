@@ -480,6 +480,47 @@ void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
   }
 }
 
+Result<CompositeDisk> CompositeDiskFromFile(const std::string& composite_path) {
+  std::ifstream composite(composite_path, std::ios::binary | std::ios::in);
+  CF_EXPECT(!!composite, "Failed to open composite file");
+  std::string magic_buf(CDISK_MAGIC.size(), '\0');
+  composite.read(&magic_buf[0], CDISK_MAGIC.size());
+  CF_EXPECT(composite.gcount() == CDISK_MAGIC.size(),
+            "Read an incomplete magic string");
+  CF_EXPECTF(magic_buf == CDISK_MAGIC, "Read incorrect magic string: {}",
+             magic_buf);
+  CompositeDisk composite_disk;
+  CF_EXPECT(composite_disk.ParseFromIstream(&composite));
+  return composite_disk;
+}
+
+void WriteCompositeDiskToFile(const CompositeDisk& composite_proto,
+                              const std::string& path) {
+  std::ofstream composite(path.c_str(), std::ios::binary | std::ios::trunc);
+  composite << CDISK_MAGIC;
+  composite_proto.SerializeToOstream(&composite);
+  composite.flush();
+}
+
+bool CompositeDiskEquals(const CompositeDisk& d1, const CompositeDisk& d2) {
+  // Ideally this comparison would be done with
+  // google::protobuf::util::MessageDifferencer, but it doesn't support the
+  // protobuf Lite version used here, so we just compare field by field instead.
+  if (d1.version() != d2.version() || d1.length() != d2.length() ||
+      d1.component_disks_size() != d2.component_disks_size()) {
+    return false;
+  }
+  for (size_t i = 0; i < d1.component_disks_size(); ++i) {
+    ComponentDisk cd1 = d1.component_disks(i);
+    ComponentDisk cd2 = d2.component_disks(i);
+    if (cd1.file_path() != cd2.file_path() || cd1.offset() != cd2.offset() ||
+        cd1.read_write_capability() != cd2.read_write_capability()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 } // namespace
 
 uint64_t AlignToPartitionSize(uint64_t size) {
@@ -521,27 +562,43 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
   }
 };
 
-void CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path) {
+void CreateOrUpdateCompositeDisk(std::vector<ImagePartition> partitions,
+                                 const std::string& header_file,
+                                 const std::string& footer_file,
+                                 const std::string& output_composite_path) {
   DeAndroidSparse(partitions);
   std::vector<MultipleImagePartition> multiple_image_partitions;
   for (const auto& partition : partitions) {
     multiple_image_partitions.push_back(ToMultipleImagePartition(partition));
   }
-  return CreateCompositeDisk(std::move(multiple_image_partitions), header_file,
-                             footer_file, output_composite_path);
+  return CreateOrUpdateCompositeDisk(std::move(multiple_image_partitions),
+                                     header_file, footer_file,
+                                     output_composite_path);
 }
 
-void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
-                         const std::string& header_file,
-                         const std::string& footer_file,
-                         const std::string& output_composite_path) {
+void CreateOrUpdateCompositeDisk(std::vector<MultipleImagePartition> partitions,
+                                 const std::string& header_file,
+                                 const std::string& footer_file,
+                                 const std::string& output_composite_path) {
   CompositeDiskBuilder builder;
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
   }
+
+  auto composite_proto =
+      builder.MakeCompositeDiskSpec(header_file, footer_file);
+
+  Result<CompositeDisk> composite_res =
+      CompositeDiskFromFile(output_composite_path);
+  if (composite_res.ok() &&
+      CompositeDiskEquals(composite_proto, composite_res.value())) {
+    // The existing composite disk matches the given partitions, no need to
+    // regenerate
+    return;
+  }
+
+  WriteCompositeDiskToFile(composite_proto, output_composite_path);
+
   auto header = SharedFD::Creat(header_file, 0600);
   auto beginning = builder.Beginning();
   if (!WriteBeginning(header, beginning)) {
@@ -553,12 +610,6 @@ void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
     LOG(FATAL) << "Could not write GPT end to \"" << footer_file
                << "\": " << footer->StrError();
   }
-  auto composite_proto = builder.MakeCompositeDiskSpec(header_file, footer_file);
-  std::ofstream composite(output_composite_path.c_str(),
-                          std::ios::binary | std::ios::trunc);
-  composite << CDISK_MAGIC;
-  composite_proto.SerializeToOstream(&composite);
-  composite.flush();
 }
 
 void CreateQcowOverlay(const std::string& crosvm_path,
