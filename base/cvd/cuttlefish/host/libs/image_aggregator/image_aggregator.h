@@ -57,9 +57,8 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
  * then the specification file containing the file paths and offsets is saved to
  * `output_composite_path`.
  */
-Result<void> CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                                 const std::string& header_file,
-                                 const std::string& footer_file,
-                                 const std::string& output_composite_path,
-                                 bool read_only);
-}
+Result<void> CreateOrUpdateCompositeDisk(
+    std::vector<ImagePartition> partitions, const std::string& header_file,
+    const std::string& footer_file, const std::string& output_composite_path,
+    bool read_only);
+}  // namespace cuttlefish
