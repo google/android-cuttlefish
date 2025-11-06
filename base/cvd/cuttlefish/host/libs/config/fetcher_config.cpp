@@ -33,6 +33,8 @@
 #include <json/reader.h>
 #include <json/value.h>
 #include <json/writer.h>
+#include "absl/strings/match.h"
+#include "absl/strings/str_replace.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -253,6 +255,14 @@ std::string FetcherConfig::FindCvdFileWithSuffix(
   return "";
 }
 
+static Result<std::string> NormalizePath(std::string path) {
+  CF_EXPECT(!absl::StrContains(path, ".."));
+  while (absl::StrContains(path, "//")) {
+    absl::StrReplaceAll({{"//", "/"}}, &path);
+  }
+  return path;
+}
+
 Result<void> FetcherConfig::AddFilesToConfig(
     FileSource purpose, const std::string& build_id,
     const std::string& build_target, const std::vector<std::string>& paths,
@@ -262,12 +272,14 @@ Result<void> FetcherConfig::AddFilesToConfig(
     if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
       LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
                  << local_path;
+      return {};
     }
     while (android::base::StartsWith(local_path, "/")) {
       android::base::ConsumePrefix(&local_path, "/");
     }
+    std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
     // TODO(schuffelen): Do better for local builds here.
-    CvdFile file(purpose, build_id, build_target, std::string(local_path));
+    CvdFile file(purpose, build_id, build_target, normalized);
     CF_EXPECT(add_cvd_file(file, override_entry),
               "Duplicate file \""
                   << file << "\", Existing file: \"" << get_cvd_files()[path]
@@ -280,9 +292,10 @@ Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
   if (!dictionary_->isMember(kCvdFiles)) {
     return {};
   }
+  std::string normalized = CF_EXPECT(NormalizePath(std::string(path)));
   auto& json_files = (*dictionary_)[kCvdFiles];
-  CF_EXPECTF(json_files.isMember(path), "Unknown file '{}'", path);
-  json_files.removeMember(path);
+  CF_EXPECTF(json_files.isMember(normalized), "Unknown file '{}'", normalized);
+  json_files.removeMember(normalized);
   return {};
 }
 
