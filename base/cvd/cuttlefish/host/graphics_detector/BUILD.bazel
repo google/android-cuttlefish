@@ -56,6 +56,9 @@ cf_cc_binary(
         "-DVULKAN_HPP_RAII_NO_EXCEPTIONS=1",
         "-DVULKAN_HPP_UNEXPECTED=gfxstream::unexpected",
         "-Wno-module-import-in-extern-c",
+        # The detector is explicitly populating older proto fields for
+        # backwards compatability:
+        "-Wno-deprecated-declarations",
     ],
     deps = [
         ":graphics_detector_cc_proto",
