@@ -57,7 +57,7 @@ CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_INSTANTIATION;
     case EventType::DeviceBootStart:
       return CuttlefishGuest_EventType::
-          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_UNSPECIFIED;
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_START;
     case EventType::DeviceBootComplete:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_COMPLETED;
