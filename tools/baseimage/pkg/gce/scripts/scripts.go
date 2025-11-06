@@ -58,6 +58,11 @@ echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
+# Disable systemd mounting tmpfs at /tmp due backwards compatibility issues.
+# TODO(b/458388172): Remove line if cvd no longer stores artifacts
+# in /tmp by default.
+sudo chroot /mnt/image /usr/bin/systemctl mask tmp.mount
+
 # Avoid automatic updates during tests.
 # https://manpages.debian.org/trixie/unattended-upgrades/unattended-upgrade.8.en.html
 sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
