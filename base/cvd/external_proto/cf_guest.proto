@@ -21,7 +21,7 @@ message CuttlefishGuest {
     // message.
     CUTTLEFISH_GUEST_EVENT_TYPE_UNSPECIFIED = 0;
 
-    // `cvd` is invoking `cvd_internal_start` / `launch_cvd`.
+    // `cvd create`, the device is added to the local instance database
     CUTTLEFISH_GUEST_EVENT_TYPE_VM_INSTANTIATION = 1;
 
     // The guest writes VIRTUAL_DEVICE_BOOT_COMPLETED to the kernel log.
@@ -34,6 +34,9 @@ message CuttlefishGuest {
     // device that is created will necessarily be shut down this way, users may
     // `pkill` or `ctrl-c` these devices.
     CUTTLEFISH_GUEST_EVENT_TYPE_VM_STOP = 4;
+
+    // `cvd` is invoking `cvd_internal_start` / `launch_cvd`.
+    CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_START = 5;
   }
 
   // The newest event to happen to this guest virtual machine that was not
