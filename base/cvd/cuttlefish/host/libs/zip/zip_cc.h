@@ -228,12 +228,11 @@ class ReadableZip {
   Result<SeekableZipSource> GetFile(const std::string& name);
   Result<SeekableZipSource> GetFile(uint64_t index);
 
- private:
-  struct Impl;  // For pimpl: to avoid exposing libzip headers
+ protected:
+  ReadableZip(ManagedZip, WritableZipSource);
 
-  ReadableZip(std::unique_ptr<Impl>);
-
-  std::unique_ptr<Impl> impl_;
+  ManagedZip raw_;
+  WritableZipSource source_;
 };
 
 class WritableZip : public ReadableZip {
@@ -245,9 +244,9 @@ class WritableZip : public ReadableZip {
   static Result<WritableZip> FromSource(
       WritableZipSource, OpenBehavior open_behavior = OpenBehavior::Truncate);
 
-  WritableZip(WritableZip&&);
-  ~WritableZip() override;
-  WritableZip& operator=(WritableZip&&);
+  WritableZip(WritableZip&&) = default;
+  ~WritableZip() override = default;
+  WritableZip& operator=(WritableZip&&) = default;
 
   /* Mutates the archive to add a file. Reading the contents of the sources that
    * are added is deferred until `Finalize` time. */
@@ -257,10 +256,10 @@ class WritableZip : public ReadableZip {
    * and does the archive encoding. */
   static Result<void> Finalize(WritableZip);
 
- private:
+ protected:
   static Result<WritableZip> FromSource(WritableZipSource, int flags);
 
-  WritableZip(std::unique_ptr<Impl>);
+  WritableZip(ManagedZip, WritableZipSource);
 };
 
 }  // namespace cuttlefish

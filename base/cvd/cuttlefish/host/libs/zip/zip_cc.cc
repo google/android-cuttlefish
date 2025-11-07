@@ -180,17 +180,6 @@ std::optional<ZipCompression> CompressionFromRaw(uint16_t method) {
 
 }  // namespace
 
-struct ReadableZip::Impl {
-  // This may not actually be writable. The Impl class is shared between
-  // ReadableZip and WritableZip, and only reading methods will be called from
-  // ReadableZip.
-  Impl(ManagedZip raw, WritableZipSource source)
-      : raw_(std::move(raw)), source_(std::move(source)) {}
-
-  ManagedZip raw_;
-  WritableZipSource source_;
-};
-
 Result<ReadableZipSource> ReadableZipSource::FromCallbacks(
     std::unique_ptr<ReadableZipSourceCallback> callbacks) {
   CF_EXPECT(callbacks.get());
@@ -424,17 +413,17 @@ Result<ReadableZip> ReadableZip::FromSource(SeekableZipSource source) {
 
   WritableZipSource fake_writable_source(std::move(source.raw_));
 
-  return ReadableZip(std::make_unique<Impl>(std::move(zip_ret),
-                                            std::move(fake_writable_source)));
+  return ReadableZip(std::move(zip_ret), std::move(fake_writable_source));
 }
 
+// These have to be defined in the `.cc` file to avoid linker errors because of
+// bazel weirdness around cmake files.
 ReadableZip::ReadableZip(ReadableZip&&) = default;
 ReadableZip::~ReadableZip() = default;
 ReadableZip& ReadableZip::operator=(ReadableZip&&) = default;
 
 Result<uint64_t> ReadableZip::NumEntries() {
-  CF_EXPECT(impl_.get());
-  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   int64_t entries = zip_get_num_entries(raw_zip, 0);
   CF_EXPECT_GE(entries, 0, ZipErrorString(raw_zip));
@@ -443,8 +432,7 @@ Result<uint64_t> ReadableZip::NumEntries() {
 }
 
 Result<std::string> ReadableZip::EntryName(uint64_t index) {
-  CF_EXPECT(impl_.get());
-  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   const char* name_cstr = zip_get_name(raw_zip, index, 0);
   CF_EXPECT_NE(name_cstr, nullptr, ZipErrorString(raw_zip));
@@ -453,8 +441,7 @@ Result<std::string> ReadableZip::EntryName(uint64_t index) {
 }
 
 Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
-  CF_EXPECT(impl_.get());
-  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   uint8_t opsys;
   uint32_t attributes;
@@ -467,8 +454,7 @@ Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
 }
 
 Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
-  CF_EXPECT(impl_.get());
-  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   int64_t index = zip_name_locate(raw_zip, name.c_str(), 0);
   CF_EXPECT_GE(index, 0, ZipErrorString(raw_zip));
@@ -477,8 +463,7 @@ Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
 }
 
 Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
-  CF_EXPECT(impl_.get());
-  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   ManagedZipError error = NewZipError();
   ManagedZipSource raw_source(zip_source_zip_file_create(
@@ -489,7 +474,8 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
   return SeekableZipSource(std::move(raw_source));
 }
 
-ReadableZip::ReadableZip(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+ReadableZip::ReadableZip(ManagedZip raw, WritableZipSource source)
+    : raw_(std::move(raw)), source_(std::move(source)) {}
 
 Result<WritableZip> WritableZip::FromSource(
     WritableZipSource source, WritableZip::OpenBehavior open_behavior) {
@@ -519,18 +505,12 @@ Result<WritableZip> WritableZip::FromSource(WritableZipSource source,
     return CF_ERR(ZipErrorString(error.get()));
   }
 
-  return WritableZip(
-      std::make_unique<Impl>(std::move(zip_ret), std::move(source)));
+  return WritableZip(std::move(zip_ret), std::move(source));
 }
-
-WritableZip::WritableZip(WritableZip&&) = default;
-WritableZip::~WritableZip() = default;
-WritableZip& WritableZip::operator=(WritableZip&&) = default;
 
 Result<void> WritableZip::AddFile(const std::string& name,
                                   ReadableZipSource source) {
-  CF_EXPECT(impl_.get());
-  zip_t* raw_zip = CF_EXPECT(impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   zip_source_t* raw_source = CF_EXPECT(source.raw_.get());
 
@@ -543,27 +523,24 @@ Result<void> WritableZip::AddFile(const std::string& name,
 }
 
 Result<void> WritableZip::Finalize(WritableZip zip_cc) {
-  CF_EXPECT(zip_cc.impl_.get());
-  zip_t* raw_zip = CF_EXPECT(zip_cc.impl_->raw_.get());
+  zip_t* raw_zip = CF_EXPECT(zip_cc.raw_.get());
 
   CF_EXPECT_EQ(zip_close(raw_zip), 0, ZipErrorString(raw_zip));
 
-  zip_cc.impl_->raw_.release();  // Deleted by zip_close
+  zip_cc.raw_.release();  // Deleted by zip_close
 
   return {};
 }
 
 Result<WritableZipSource> WritableZipSource::FromZip(WritableZip zip_cc) {
-  CF_EXPECT(zip_cc.impl_.get());
-
-  WritableZipSource source = std::move(zip_cc.impl_->source_);
+  WritableZipSource source = std::move(zip_cc.source_);
 
   CF_EXPECT(WritableZip::Finalize(std::move(zip_cc)));
 
   return source;
 }
 
-WritableZip::WritableZip(std::unique_ptr<Impl> impl)
-    : ReadableZip(std::move(impl)) {}
+WritableZip::WritableZip(ManagedZip raw, WritableZipSource source)
+    : ReadableZip(std::move(raw), std::move(source)) {}
 
 }  // namespace cuttlefish
