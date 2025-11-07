@@ -10,7 +10,7 @@ cuttlefish-frontend (1.32.0) unstable; urgency=medium
 
  -- Chad Reynolds <chadreynolds@google.com>  Fri, 07 Nov 2025 12:59:15 -0800
 
-cuttlefish-frontend (1.31.0) unstable; urgency=medium
+cuttlefish-frontend (1.31.0) stable; urgency=medium
 
   * N/A
 
