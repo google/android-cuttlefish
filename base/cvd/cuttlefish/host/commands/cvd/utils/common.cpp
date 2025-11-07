@@ -38,6 +38,9 @@ namespace cuttlefish {
 
 namespace {
 
+constexpr char kDefaultCvdDir[] = "/var/tmp/cvd";
+constexpr char kPreviousDefaultCvdDir[] = "/tmp/cvd";
+
 std::string DefaultBaseDir() {
   auto time = std::chrono::system_clock::now().time_since_epoch().count();
   return fmt::format("{}/{}", PerUserDir(), time);
@@ -54,6 +57,29 @@ Result<void> LinkOrMakeDir(const std::string& path,
   return {};
 }
 
+bool ShouldUsePreviousCvdLocation() {
+  // Don't use the old one if the new one already exists
+  if (DirectoryExists(kDefaultCvdDir)) {
+    return false;
+  }
+  // Check the locks directory. Even if /tmp/cvd exists it would only be a
+  // problem if an instance exists, but existing instances would have their
+  // corresponding lock file.
+  // It's still possible for a long running cvd create command to have started
+  // before cvd was updated and not yet gotten to create the instance lock file,
+  // in which case it will wrongfully create it under /tmp. If that happens it
+  // can only be addressed by manually killing the running instance and deleting
+  // /tmp/cvd, or just rebooting. This is hopefully unlikely to occur since cvd
+  // would have to be updated at the same time the first cvd load command after
+  // the last boot runs.
+  const std::string old_locks_path =
+      fmt::format("{}/{}", kPreviousDefaultCvdDir, "lock");
+  if (!DirectoryExists(old_locks_path)) {
+    return false;
+  }
+  Result<bool> is_empty_res = IsDirectoryEmpty(old_locks_path);
+  return is_empty_res.ok() && !is_empty_res.value();
+}
 }  // namespace
 
 /*
@@ -155,7 +181,12 @@ android::base::LogSeverity GetMinimumVerbosity() {
   return android::base::GetMinimumLogSeverity();
 }
 
-std::string CvdDir() { return "/tmp/cvd"; }
+std::string CvdDir() {
+  if (ShouldUsePreviousCvdLocation()) {
+    return kPreviousDefaultCvdDir;
+  }
+  return kDefaultCvdDir;
+}
 
 std::string PerUserDir() { return fmt::format("{}/{}", CvdDir(), getuid()); }
 
