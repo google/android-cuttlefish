@@ -25,21 +25,9 @@
 #include <zip.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 
 namespace cuttlefish {
-
-struct ZipDeleter {
-  void operator()(zip_error_t* error) {
-    zip_error_fini(error);
-    delete error;
-  }
-  void operator()(zip_source_t* source) { zip_source_free(source); }
-  void operator()(zip_t* zip_ptr) { zip_discard(zip_ptr); }
-};
-
-using ManagedZip = std::unique_ptr<zip_t, ZipDeleter>;
-using ManagedZipError = std::unique_ptr<zip_error_t, ZipDeleter>;
-using ManagedZipSource = std::unique_ptr<zip_source_t, ZipDeleter>;
 
 class ReadableZipSourceCallback {
  public:
