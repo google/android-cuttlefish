@@ -31,6 +31,11 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "stat",
+    hdrs = ["stat.h"],
+)
+
+cf_cc_library(
     name = "source_callback",
     hdrs = ["source_callback.h"],
 )
@@ -47,6 +52,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "@libzip",
         "@zlib",
     ],

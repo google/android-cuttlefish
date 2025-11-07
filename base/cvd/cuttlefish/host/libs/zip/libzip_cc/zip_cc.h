@@ -19,7 +19,6 @@
 #include <stdint.h>
 
 #include <memory>
-#include <optional>
 #include <string>
 
 #include <zip.h>
@@ -27,25 +26,9 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 
 namespace cuttlefish {
-
-enum class ZipCompression {
-  kDefault,
-  kStore,
-  kBzip2,
-  kDeflate,
-  kXz,
-  kZstd,
-};
-
-struct ZipStat {
-  std::optional<std::string> name;
-  std::optional<uint64_t> index;
-  std::optional<uint64_t> size;
-  std::optional<uint64_t> compressed_size;
-  std::optional<ZipCompression> compression_method;
-};
 
 class ReadableZipSource {
  public:
