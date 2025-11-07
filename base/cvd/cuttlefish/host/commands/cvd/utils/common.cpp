@@ -160,7 +160,7 @@ std::string CvdDir() { return "/tmp/cvd"; }
 std::string PerUserDir() { return fmt::format("{}/{}", CvdDir(), getuid()); }
 
 std::string PerUserCacheDir() {
-  return fmt::format("{}/{}/cache", CvdDir(), getuid());
+  return fmt::format("{}/cache", PerUserDir(), getuid());
 }
 
 std::string InstanceDatabasePath() {
