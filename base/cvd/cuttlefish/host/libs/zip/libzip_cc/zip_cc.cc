@@ -28,28 +28,11 @@
 #include "zip.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 
 namespace cuttlefish {
 namespace {
-
-ManagedZipError NewZipError() {
-  ManagedZipError error(new zip_error_t);
-  zip_error_init(error.get());
-  return error;
-}
-
-std::string ZipErrorString(zip_error_t* error) {
-  return std::string(zip_error_strerror(error));
-}
-
-std::string ZipErrorString(zip_source_t* source) {
-  return ZipErrorString(zip_source_error(source));
-}
-
-std::string ZipErrorString(zip_t* source) {
-  return ZipErrorString(zip_get_error(source));
-}
 
 struct ReadableCallbackSource {
   ReadableCallbackSource(std::unique_ptr<ReadableZipSourceCallback> callbacks)
