@@ -172,8 +172,9 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
       GflagsCompatFlag("project_id", load_flags.project_id));
   flags.emplace_back(
       GflagsCompatFlag("base_directory", load_flags.base_dir)
-          .Help("Parent directory for artifacts and runtime files. Defaults to "
-                "/tmp/cvd/<uid>/<timestamp>."));
+          .Help(
+              "Parent directory for artifacts and runtime files. Defaults to " +
+              CvdDir() + "<uid>/<timestamp>."));
   flags.emplace_back(GflagsCompatFlagOverride("override", load_flags.overrides)
                          .Help("Use --override=<config_identifier>:<new_value> "
                                "to override config values"));
