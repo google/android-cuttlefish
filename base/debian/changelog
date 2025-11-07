@@ -1,8 +1,19 @@
-cuttlefish-common (1.32.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.32.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.32 by @Databean in https://github.com/google/android-cuttlefish/pull/1760
+  * Mark 1.30 as stable by @jemoreira in https://github.com/google/android-cuttlefish/pull/1759
+  * Report nonexistent directories from `IsDirectoryEmpty` by @Databean in https://github.com/google/android-cuttlefish/pull/1764
+  * Report archive contents from `ExtractFiles` by @Databean in https://github.com/google/android-cuttlefish/pull/1763
+  * Install libvulkan1 & mesa-utils to support GPU by @0405ysj in https://github.com/google/android-cuttlefish/pull/1761
+  * Regenerate composite disk only when it changes by @jemoreira in https://github.com/google/android-cuttlefish/pull/1765
+  * Separate fetching business logic from cross-cutting file download concerns by @Databean in https://github.com/google/android-cuttlefish/pull/1762
+  * Disable /tmp as tmpfs due backwards compatibility issues. by @ser-io in https://github.com/google/android-cuttlefish/pull/1767
+  * Initial guest metrics gathering by @cjreynol in https://github.com/google/android-cuttlefish/pull/1737
+  * Set gpu_mode with `guest_swiftshader` in snapshot_test. by @ser-io in https://github.com/google/android-cuttlefish/pull/1771
+  * Update `CuttlefishGuest::EventType` enum by @cjreynol in https://github.com/google/android-cuttlefish/pull/1768
+  * Validate image script fixes. by @ser-io in https://github.com/google/android-cuttlefish/pull/1770
 
- -- Cody Schuffelen <schuffelen@google.com>  Fri, 31 Oct 2025 21:41:50 +0000
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 07 Nov 2025 12:58:19 -0800
 
 cuttlefish-common (1.31.0) unstable; urgency=medium
 
