@@ -40,7 +40,7 @@
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/web/build_zip_name.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 
 namespace cuttlefish {

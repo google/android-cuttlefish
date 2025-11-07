@@ -23,7 +23,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
