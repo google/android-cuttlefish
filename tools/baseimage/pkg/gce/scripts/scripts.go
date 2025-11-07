@@ -302,7 +302,7 @@ if [ -z "$tests" ]; then
 fi
 for t in "${tests[@]}"; do
   echo "running test: ${t}"
-  bazel test ${t}
+  bazel test --test_timeout 600 --sandbox_writable_path=$HOME ${t}
   res=$(curl --fail -X POST "http://localhost:2080/reset")
   op_name=$(echo "${res}" | jq -r '.name')
   curl --fail -X POST http://localhost:2080/operations/${op_name}/:wait
