@@ -13,6 +13,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
     ],
@@ -39,6 +40,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:lazily_loaded_file",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
     ],
@@ -191,6 +193,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_copy",
+        "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
     ],
 )
