@@ -51,7 +51,7 @@
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {

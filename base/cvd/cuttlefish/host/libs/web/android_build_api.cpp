@@ -49,7 +49,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
 
 namespace cuttlefish {
 namespace {

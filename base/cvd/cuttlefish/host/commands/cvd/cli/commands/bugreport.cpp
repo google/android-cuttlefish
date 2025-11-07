@@ -44,7 +44,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 
 namespace cuttlefish {

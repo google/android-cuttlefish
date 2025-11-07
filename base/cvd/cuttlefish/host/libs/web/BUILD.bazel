@@ -37,7 +37,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:http_file",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/zip:remote_zip",
-        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
         "@jsoncpp",
     ],
@@ -86,7 +86,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
-        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
     ],
 )
 
@@ -99,7 +99,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/zip:buffered_zip_source",
-        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
     ],
 )
 
@@ -128,7 +128,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/zip:cached_zip_source",
-        "//cuttlefish/host/libs/zip:zip_cc",
+        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
         "@fmt",
     ],
