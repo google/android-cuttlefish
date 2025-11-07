@@ -22,9 +22,24 @@
 #include <optional>
 #include <string>
 
+#include <zip.h>
+
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
+
+struct ZipDeleter {
+  void operator()(zip_error_t* error) {
+    zip_error_fini(error);
+    delete error;
+  }
+  void operator()(zip_source_t* source) { zip_source_free(source); }
+  void operator()(zip_t* zip_ptr) { zip_discard(zip_ptr); }
+};
+
+using ManagedZip = std::unique_ptr<zip_t, ZipDeleter>;
+using ManagedZipError = std::unique_ptr<zip_error_t, ZipDeleter>;
+using ManagedZipSource = std::unique_ptr<zip_source_t, ZipDeleter>;
 
 class ReadableZipSourceCallback {
  public:
@@ -65,9 +80,7 @@ struct ZipStat {
 class ReadableZipSource {
  public:
   friend class ReadableZip;
-  friend class SeekableZipSource;
   friend class WritableZip;
-  friend class WritableZipSource;
   friend class ZipSourceReader;
   friend class SeekingZipSourceReader;
   friend class ZipSourceWriter;
@@ -87,12 +100,10 @@ class ReadableZipSource {
    * state. Can fail. Should not outlive this instance. */
   Result<class ZipSourceReader> Reader();
 
- private:
-  struct Impl;  // For pimpl: to avoid exposing libzip headers
+ protected:
+  ManagedZipSource raw_;
 
-  ReadableZipSource(std::unique_ptr<Impl>);
-
-  std::unique_ptr<Impl> impl_;
+  ReadableZipSource(ManagedZipSource);
 };
 
 class SeekableZipSource : public ReadableZipSource {
@@ -103,16 +114,16 @@ class SeekableZipSource : public ReadableZipSource {
   static Result<SeekableZipSource> FromCallbacks(
       std::unique_ptr<SeekableZipSourceCallback>);
 
-  SeekableZipSource(SeekableZipSource&&);
-  ~SeekableZipSource() override;
-  SeekableZipSource& operator=(SeekableZipSource&&);
+  SeekableZipSource(SeekableZipSource&&) = default;
+  ~SeekableZipSource() override = default;
+  SeekableZipSource& operator=(SeekableZipSource&&) = default;
 
   /* Returns a RAII instance that puts this instance in an "open for reading"
    * state. Can fail. Should not outlive this instance. */
   Result<class SeekingZipSourceReader> Reader();
 
- private:
-  SeekableZipSource(std::unique_ptr<Impl>);
+ protected:
+  SeekableZipSource(ManagedZipSource);
 };
 
 class WritableZipSource : public SeekableZipSource {
@@ -125,17 +136,17 @@ class WritableZipSource : public SeekableZipSource {
   /* Data access to an in-memory buffer based on serializing a zip archive. */
   static Result<WritableZipSource> FromZip(class WritableZip);
 
-  WritableZipSource(WritableZipSource&&);
-  virtual ~WritableZipSource();
-  WritableZipSource& operator=(WritableZipSource&&);
+  WritableZipSource(WritableZipSource&&) = default;
+  virtual ~WritableZipSource() = default;
+  WritableZipSource& operator=(WritableZipSource&&) = default;
 
   /* Returns a RAII instance that puts this instance in an "open for writing"
    * state. Can fail. Should not outlive this instance. Cannot be used at the
    * same time as the `Reader()` method from superclasses. */
   Result<class ZipSourceWriter> Writer();
 
- private:
-  WritableZipSource(std::unique_ptr<Impl>);
+ protected:
+  WritableZipSource(ManagedZipSource);
 };
 
 /* A `ReadableZipSource` in an "open for reading" state. */
