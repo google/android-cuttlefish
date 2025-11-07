@@ -12,6 +12,7 @@ cf_cc_library(
     hdrs = ["buffered_zip_source.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
     ],
@@ -37,6 +38,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:lazily_loaded_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
     ],
@@ -107,6 +109,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "//libbase",
         "@abseil-cpp//absl/strings",

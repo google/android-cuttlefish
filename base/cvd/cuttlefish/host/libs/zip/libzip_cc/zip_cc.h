@@ -26,27 +26,9 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 
 namespace cuttlefish {
-
-class ReadableZipSourceCallback {
- public:
-  virtual ~ReadableZipSourceCallback() = default;
-
-  virtual bool Close() = 0;
-  virtual bool Open() = 0;
-  virtual int64_t Read(char* data, uint64_t len) = 0;
-  virtual uint64_t Size() = 0;
-};
-
-/* Callback interface to provide file data to libzip. */
-class SeekableZipSourceCallback : public ReadableZipSourceCallback {
- public:
-  virtual ~SeekableZipSourceCallback() = default;
-
-  virtual bool SetOffset(int64_t offset) = 0;
-  virtual int64_t Offset() = 0;
-};
 
 enum class ZipCompression {
   kDefault,
