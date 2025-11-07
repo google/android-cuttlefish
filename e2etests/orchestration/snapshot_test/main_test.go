@@ -132,6 +132,9 @@ func createDevice(srv hoclient.HostOrchestratorClient, group_name, hostPkgDir, i
         "disk": {
           "default_build": "@image_dirs/` + imageDir + `"
         },
+        "graphics": {
+          "gpu_mode": "guest_swiftshader"
+        },
         "streaming": {
           "device_id": "cvd-1"
         }
