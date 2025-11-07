@@ -39,7 +39,7 @@ struct Light {
 }
 
 const NUM_DEFAULT_LIGHTS: i32 = 1;
-const MAX_UPDATE_FREQUENCY_HZ: f32 = 30.0;
+const MIN_UPDATE_PERIOD_MS: i32 = 33;
 
 /// Defined so we can implement the ILights AIDL interface.
 pub struct LightsService {
@@ -87,7 +87,7 @@ impl LightsService {
         }
 
         // Check that the light supports animations.
-        if light.hw_light.maxUpdateHz == 0.0 {
+        if light.hw_light.minUpdatePeriodMillis == 0 {
             return ExceptionCode::UNSUPPORTED_OPERATION;
         }
 
@@ -112,7 +112,7 @@ impl LightsService {
         }
 
         // Has a valid frame rate.
-        if effect.frameRateHz <= 0.0 || effect.frameRateHz > light.hw_light.maxUpdateHz {
+        if effect.framePeriodMillis < light.hw_light.minUpdatePeriodMillis {
             return ExceptionCode::ILLEGAL_ARGUMENT;
         }
 
@@ -131,7 +131,7 @@ impl Default for LightsService {
             id: light_id,
             ordinal: light_id,
             r#type: LightType::BATTERY,
-            maxUpdateHz: MAX_UPDATE_FREQUENCY_HZ,
+            minUpdatePeriodMillis: MIN_UPDATE_PERIOD_MS,
         };
 
         Self::new((1..=NUM_DEFAULT_LIGHTS).map(id_mapping_closure))
