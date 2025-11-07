@@ -28,6 +28,7 @@
 #include "zip.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 
 namespace cuttlefish {
 namespace {
