@@ -21,8 +21,6 @@
 #include <memory>
 #include <string>
 
-#include <zip.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
