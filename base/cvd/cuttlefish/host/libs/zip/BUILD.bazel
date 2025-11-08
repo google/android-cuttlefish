@@ -129,8 +129,8 @@ cf_cc_test(
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip:zip_string",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:source",
-        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -194,9 +194,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_copy",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:source",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
-        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
     ],
 )
 
@@ -206,7 +206,7 @@ cf_cc_library(
     hdrs = ["zip_string.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:source",
-        "//cuttlefish/host/libs/zip/libzip_cc:zip_cc",
     ],
 )

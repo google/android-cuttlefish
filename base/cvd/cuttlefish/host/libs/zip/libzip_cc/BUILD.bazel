@@ -7,6 +7,23 @@ package(
 exports_files([".clang-tidy"])
 
 cf_cc_library(
+    name = "archive",
+    srcs = ["archive.cc"],
+    hdrs = ["archive.h"],
+    features = ["-layering_check"],  # libzip
+    linkopts = ["-llzma"],  # libzip
+    linkstatic = True,  # libzip
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/zip/libzip_cc:error",
+        "//cuttlefish/host/libs/zip/libzip_cc:managed",
+        "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "@libzip",
+        "@zlib",
+    ],
+)
+
+cf_cc_library(
     name = "error",
     srcs = ["error.cc"],
     hdrs = ["error.h"],
@@ -56,21 +73,4 @@ cf_cc_library(
 cf_cc_library(
     name = "source_callback",
     hdrs = ["source_callback.h"],
-)
-
-cf_cc_library(
-    name = "zip_cc",
-    srcs = ["zip_cc.cc"],
-    hdrs = ["zip_cc.h"],
-    features = ["-layering_check"],  # libzip
-    linkopts = ["-llzma"],  # libzip
-    linkstatic = True,  # libzip
-    deps = [
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/zip/libzip_cc:error",
-        "//cuttlefish/host/libs/zip/libzip_cc:managed",
-        "//cuttlefish/host/libs/zip/libzip_cc:source",
-        "@libzip",
-        "@zlib",
-    ],
 )

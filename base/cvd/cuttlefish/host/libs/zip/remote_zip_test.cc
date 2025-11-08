@@ -34,7 +34,7 @@
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
