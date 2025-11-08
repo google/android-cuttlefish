@@ -22,6 +22,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/buffered_zip_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/zip_cc.h"
 
 namespace cuttlefish {
