@@ -18,147 +18,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <memory>
 #include <string>
 
 #include <zip.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/source.h"
 
 namespace cuttlefish {
-
-class ReadableZipSource {
- public:
-  friend class ReadableZip;
-  friend class WritableZip;
-  friend class ZipSourceReader;
-  friend class SeekingZipSourceReader;
-  friend class ZipSourceWriter;
-
-  static Result<ReadableZipSource> FromCallbacks(
-      std::unique_ptr<ReadableZipSourceCallback>);
-
-  // Can be safely called with a subclass type.
-  ReadableZipSource(ReadableZipSource&&);
-  virtual ~ReadableZipSource();
-  // Can be safely called with a subclass type.
-  ReadableZipSource& operator=(ReadableZipSource&&);
-
-  Result<ZipStat> Stat();
-
-  /* Returns a RAII instance that puts this instance in an "open for reading"
-   * state. Can fail. Should not outlive this instance. */
-  Result<class ZipSourceReader> Reader();
-
- protected:
-  ManagedZipSource raw_;
-
-  ReadableZipSource(ManagedZipSource);
-};
-
-class SeekableZipSource : public ReadableZipSource {
- public:
-  friend class ReadableZip;
-  friend class WritableZipSource;
-
-  static Result<SeekableZipSource> FromCallbacks(
-      std::unique_ptr<SeekableZipSourceCallback>);
-
-  SeekableZipSource(SeekableZipSource&&) = default;
-  ~SeekableZipSource() override = default;
-  SeekableZipSource& operator=(SeekableZipSource&&) = default;
-
-  /* Returns a RAII instance that puts this instance in an "open for reading"
-   * state. Can fail. Should not outlive this instance. */
-  Result<class SeekingZipSourceReader> Reader();
-
- protected:
-  SeekableZipSource(ManagedZipSource);
-};
-
-class WritableZipSource : public SeekableZipSource {
- public:
-  friend class ReadableZip;
-  /* References `data`, may not update it on write but `data` should outlive the
-   * returned instance. */
-  static Result<WritableZipSource> BorrowData(const void* data, size_t size);
-  static Result<WritableZipSource> FromFile(const std::string& path);
-  /* Data access to an in-memory buffer based on serializing a zip archive. */
-  static Result<WritableZipSource> FromZip(class WritableZip);
-
-  WritableZipSource(WritableZipSource&&) = default;
-  virtual ~WritableZipSource() = default;
-  WritableZipSource& operator=(WritableZipSource&&) = default;
-
-  /* Returns a RAII instance that puts this instance in an "open for writing"
-   * state. Can fail. Should not outlive this instance. Cannot be used at the
-   * same time as the `Reader()` method from superclasses. */
-  Result<class ZipSourceWriter> Writer();
-
- protected:
-  WritableZipSource(ManagedZipSource);
-};
-
-/* A `ReadableZipSource` in an "open for reading" state. */
-class ZipSourceReader {
- public:
-  friend class ReadableZipSource;
-  friend class SeekingZipSourceReader;
-
-  ZipSourceReader(ZipSourceReader&&);
-  virtual ~ZipSourceReader();
-  ZipSourceReader& operator=(ZipSourceReader&&);
-
-  /* Returns a failed Result on error, or a successful result with bytes read or
-   * 0 on EOF. */
-  Result<uint64_t> Read(void* data, uint64_t length);
-
- private:
-  ZipSourceReader(ReadableZipSource*);
-
-  ReadableZipSource* source_;
-};
-
-/* A `SeekableZipSource` in an "open for reading" state. */
-class SeekingZipSourceReader : public ZipSourceReader {
- public:
-  friend class SeekableZipSource;
-
-  SeekingZipSourceReader(SeekingZipSourceReader&&);
-  ~SeekingZipSourceReader() override;
-  SeekingZipSourceReader& operator=(SeekingZipSourceReader&&);
-
-  Result<void> SeekFromStart(int64_t offset);
-
- private:
-  SeekingZipSourceReader(SeekableZipSource*);
-};
-
-/* A `WritableZipSource` in an "open for writing" state. */
-class ZipSourceWriter {
- public:
-  friend class WritableZipSource;
-
-  ZipSourceWriter(ZipSourceWriter&&);
-  ~ZipSourceWriter();
-  ZipSourceWriter& operator=(ZipSourceWriter&&);
-
-  /* Writes are not committed until `Finalize` is called. Returns number of
-   * bytes written. */
-  Result<uint64_t> Write(void* data, uint64_t length);
-  Result<void> SeekFromStart(int64_t offset);
-
-  /* Commits writes and closes the writer. */
-  static Result<void> Finalize(ZipSourceWriter);
-
- private:
-  ZipSourceWriter(WritableZipSource*);
-
-  WritableZipSource* source_;
-};
 
 class ReadableZip {
  public:
