@@ -27,5 +27,10 @@ runs:
           --location=us \
           --source=$(find . -name cuttlefish-${var}_*.deb)
       done
+      gcloud --project=android-cuttlefish-artifacts \
+        artifacts apt upload \
+        ${REPO} \
+        --location=us \
+        --source=$(find . -name cuttlefish-integration-gigabyte-arm64_*.deb)
       popd
     shell: bash
