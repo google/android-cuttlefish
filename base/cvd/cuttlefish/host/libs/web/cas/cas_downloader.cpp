@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 
 #include <android-base/strings.h>
+#include <stdint.h>
 
 #include <cstddef>
 #include <cstdio>
