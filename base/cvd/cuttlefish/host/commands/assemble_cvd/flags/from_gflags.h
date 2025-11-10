@@ -27,6 +27,8 @@ namespace cuttlefish {
 
 Result<std::vector<bool>> BoolFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name);
+Result<std::vector<bool>> BoolFromGlobalGflags(
+    const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name, bool default_value);
 Result<std::vector<int>> IntFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name);
 Result<std::vector<std::string>> StringFromGlobalGflags(
