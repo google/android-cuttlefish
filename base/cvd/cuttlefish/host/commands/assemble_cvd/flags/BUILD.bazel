@@ -212,6 +212,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "use_cvdalloc",
+    srcs = ["use_cvdalloc.cc"],
+    hdrs = ["use_cvdalloc.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "vendor_boot_image",
     srcs = ["vendor_boot_image.cc"],
     hdrs = ["vendor_boot_image.h"],

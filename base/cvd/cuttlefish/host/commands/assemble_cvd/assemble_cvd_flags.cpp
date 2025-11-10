@@ -115,9 +115,6 @@ DEFINE_vec(
     "Frame socket path to use when launching a VM "
     "For example, \"--frames_socket_path=${XDG_RUNTIME_DIR}/wayland-0\"");
 
-DEFINE_vec(use_cvdalloc, CF_DEFAULTS_USE_CVDALLOC? "true": "false",
-            "Acquire static resources with cvdalloc.");
-
 DEFINE_vec(
     enable_minimal_mode, CF_DEFAULTS_ENABLE_MINIMAL_MODE ? "true" : "false",
     "Only enable the minimum features to boot a cuttlefish device and "

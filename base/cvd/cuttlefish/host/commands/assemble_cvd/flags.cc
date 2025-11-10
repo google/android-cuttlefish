@@ -60,6 +60,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
@@ -491,7 +492,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(serial_number));
   std::vector<bool> use_random_serial_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(use_random_serial));
-  std::vector<bool> use_cvdalloc_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_cvdalloc));
+  UseCvdallocFlag use_cvdalloc_values =
+      CF_EXPECT(UseCvdallocFlag::FromGlobalGflags());
   std::vector<bool> use_sdcard_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(use_sdcard));
   std::vector<bool> pause_in_bootloader_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       pause_in_bootloader));
@@ -764,7 +766,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto const_instance =
         const_cast<const CuttlefishConfig&>(tmp_config_obj).ForInstance(num);
 
-    instance.set_use_cvdalloc(use_cvdalloc_vec[instance_index]);
+    instance.set_use_cvdalloc(use_cvdalloc_values.ForIndex(instance_index));
 
     IfaceConfig iface_config =
         CF_EXPECT(DefaultNetworkInterfaces(const_instance));
