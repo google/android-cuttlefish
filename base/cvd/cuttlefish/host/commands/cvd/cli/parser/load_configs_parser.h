@@ -16,30 +16,22 @@
 
 #pragma once
 
-#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 
 namespace cuttlefish {
-
-struct LoadDirectories {
-  std::string target_directory;
-  std::vector<std::string> target_subdirectories;
-  std::string launch_home_directory;
-  std::string host_package_directory;
-  std::string system_image_directory_flag_value;
-};
 
 struct CvdFlags {
   std::vector<std::string> launch_cvd_flags;
   std::vector<std::string> selector_flags;
   std::vector<std::string> fetch_cvd_flags;
-  LoadDirectories load_directories;
-  std::optional<std::string> group_name;
-  std::vector<std::string> instance_names;
+  std::string target_directory;
 };
 
 struct Override {
@@ -60,6 +52,15 @@ struct LoadFlags {
 Result<LoadFlags> GetFlags(std::vector<std::string>& args,
                            const std::string& working_directory);
 
-Result<CvdFlags> GetCvdFlags(const LoadFlags& flags);
+Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
+    const LoadFlags& flags);
+
+Result<selector::GroupCreationInfo::Directories> GetGroupCreationDirectories(
+    const std::string& parent_directory,
+    const cvd::config::EnvironmentSpecification& env_spec);
+
+Result<CvdFlags> ParseCvdConfigs(
+    const cvd::config::EnvironmentSpecification& env_spec,
+    const LocalInstanceGroup& group);
 
 };  // namespace cuttlefish

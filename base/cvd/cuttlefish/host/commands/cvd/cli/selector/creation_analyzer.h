@@ -60,10 +60,15 @@ struct PerInstanceInfo {
  * If you want one instance, you should create a group with one instance.
  */
 struct GroupCreationInfo {
-  std::string home;
-  std::string host_artifacts_path;  ///< e.g. out/host/linux-x86
-  // set to host_artifacts_path if no ANDROID_PRODUCT_OUT
-  std::string product_out_path;
+  struct Directories {
+    std::optional<std::string> parent_directory;
+    std::optional<std::string> home;
+    std::optional<std::string>
+        host_artifacts_path;  ///< e.g. out/host/linux-x86
+    // set to host_artifacts_path if no ANDROID_PRODUCT_OUT
+    std::vector<std::optional<std::string>> product_out_paths;
+  };
+  Directories directories;
   std::string group_name;
   std::vector<PerInstanceInfo> instances;
 };
