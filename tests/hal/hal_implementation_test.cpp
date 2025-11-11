@@ -271,7 +271,7 @@ static const std::vector<VersionedAidlPackage> kKnownMissingAidl = {
     {"android.se.omapi.", 2, 266870904},
     {"android.hardware.soundtrigger3.", 4, 266941225},
     {"android.media.soundtrigger.", 4, 266941225},
-    {"android.hardware.weaver.", 3, 262418065},
+    {"android.hardware.weaver.", 2, 262418065},
 
     {"android.automotive.computepipe.registry.", 2, 273549907},
     {"android.automotive.computepipe.runner.", 2, 273549907},
