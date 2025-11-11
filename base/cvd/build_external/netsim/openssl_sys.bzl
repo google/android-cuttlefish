@@ -19,10 +19,10 @@ def _openssl_sys_env_impl(ctx):
     # Create a directory consist of the libraries
     lib_dir = ctx.actions.declare_directory(ctx.attr.name + "/lib_dir")
     args = ctx.actions.args()
-    args.add("-t", lib_dir.path)
+    args.add("--output", lib_dir.path);
     args.add_all(libs, uniquify = True)
     ctx.actions.run(
-        executable = "cp",
+        executable = ctx.executable._copy_openssl_libraries,
         arguments = [args],
         inputs = libs,
         outputs = [lib_dir],
@@ -70,6 +70,11 @@ openssl_sys_env = rule(
         ),
         "_copy_openssl_headers": attr.label(
             default = ":copy_openssl_headers",
+            executable = True,
+            cfg = "exec",
+        ),
+        "_copy_openssl_libraries": attr.label(
+            default = ":copy_openssl_libraries",
             executable = True,
             cfg = "exec",
         ),
