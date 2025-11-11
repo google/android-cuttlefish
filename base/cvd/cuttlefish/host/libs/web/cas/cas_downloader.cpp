@@ -74,18 +74,18 @@ std::vector<std::string> CreateCasFlags(std::string downloader_path,
   std::vector<std::string> cas_flags;
 
   // If cache-dir is set and cache-max-size is absent or smaller than the default,
-  // ensure cache-max-size is at least kDefaultCacheMaxSize.
+  // ensure cache-max-size is at least kMinCacheMaxSize.
   if (!config_flags["cache-dir"].asString().empty()) {
     if (config_flags.isMember("cache-max-size")) {
       int64_t provided = config_flags["cache-max-size"].asInt64();
-      if (provided < kDefaultCacheMaxSize) {
-        LOG(INFO) << "cache-max-size (" << provided
+      if (provided < kMinCacheMaxSize) {
+        LOG(WARNING) << "cache-max-size (" << provided
                   << ") is smaller than default; using default ("
-                  << kDefaultCacheMaxSize << ")";
-        config_flags["cache-max-size"] = Json::Value(kDefaultCacheMaxSize);
+                  << kMinCacheMaxSize << ")";
+        config_flags["cache-max-size"] = kMinCacheMaxSize;
       }
     } else {
-      config_flags["cache-max-size"] = Json::Value(kDefaultCacheMaxSize);
+      config_flags["cache-max-size"] = kMinCacheMaxSize;
     }
   }
   
@@ -166,22 +166,22 @@ inline std::string ToSeconds(int timeout) {
 
 Json::Value ConvertToConfigFlags(const CasDownloaderFlags& flags) {
   Json::Value config_flags;
-  config_flags["cache-dir"] = Json::Value(flags.cache_dir);
-  config_flags["cache-max-size"] = Json::Value(flags.cache_max_size);
-  config_flags["cache-lock"] = Json::Value(flags.cache_lock);
-  config_flags["use-hardlink"] = Json::Value(flags.use_hardlink);
-  config_flags["cas-concurrency"] = Json::Value(flags.cas_concurrency);
-  config_flags["memory-limit"] = Json::Value(flags.memory_limit);
-  config_flags["rpc-timeout"] = Json::Value(ToSeconds(flags.rpc_timeout));
+  config_flags["cache-dir"] = flags.cache_dir;    
+  config_flags["cache-max-size"] = flags.cache_max_size;    
+  config_flags["cache-lock"] = flags.cache_lock;    
+  config_flags["use-hardlink"] = flags.use_hardlink;    
+  config_flags["cas-concurrency"] = flags.cas_concurrency;    
+  config_flags["memory-limit"] = flags.memory_limit;    
+  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout);    
   config_flags["get-capabilities-timeout"] =
-      Json::Value(ToSeconds(flags.get_capabilities_timeout));
+      ToSeconds(flags.get_capabilities_timeout);    
   config_flags["get-tree-timeout"] =
-      Json::Value(ToSeconds(flags.get_tree_timeout));
+      ToSeconds(flags.get_tree_timeout);    
   config_flags["batch-read-blobs-timeout"] =
-      Json::Value(ToSeconds(flags.batch_read_blobs_timeout));
+      ToSeconds(flags.batch_read_blobs_timeout);    
   config_flags["batch-update-blobs-timeout"] =
-      Json::Value(ToSeconds(flags.batch_update_blobs_timeout));
-  config_flags["version"] = Json::Value(flags.version);
+      ToSeconds(flags.batch_update_blobs_timeout);    
+  config_flags["version"] = flags.version;    
   return config_flags;
 }
 

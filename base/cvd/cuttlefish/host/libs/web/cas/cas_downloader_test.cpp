@@ -608,7 +608,7 @@ TEST_F(CasDownloaderTests, CacheMaxSize_DefaultWhenAbsent) {
   EXPECT_THAT(download, IsOk());
   std::string output = ReadFile(cas_output_filepath_);
   EXPECT_THAT(output,
-              HasSubstr(fmt::format("-cache-max-size={}", kDefaultCacheMaxSize)));
+              HasSubstr(fmt::format("-cache-max-size={}", kMinCacheMaxSize)));
 }
 
 TEST_F(CasDownloaderTests, CacheMaxSize_OverriddenWhenTooSmall) {
@@ -629,7 +629,7 @@ TEST_F(CasDownloaderTests, CacheMaxSize_OverriddenWhenTooSmall) {
   std::string output = ReadFile(cas_output_filepath_);
   EXPECT_THAT(output, Not(HasSubstr("-cache-max-size=1")));
   EXPECT_THAT(output,
-              HasSubstr(fmt::format("-cache-max-size={}", kDefaultCacheMaxSize)));
+              HasSubstr(fmt::format("-cache-max-size={}", kMinCacheMaxSize)));
 }
 
 int main(int argc, char** argv) {
