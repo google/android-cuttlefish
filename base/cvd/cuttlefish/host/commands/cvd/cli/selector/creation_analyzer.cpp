@@ -257,20 +257,13 @@ Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo(
   std::string android_product_out_path = Contains(envs_, kAndroidProductOut)
                                              ? envs_.at(kAndroidProductOut)
                                              : android_host_out;
-  std::vector<std::string> target_dirs =
-      android::base::Split(android_product_out_path, ",");
-  std::vector<std::optional<std::string>> target_dir_opts;
-  for (const std::string& target_dir: target_dirs) {
-    target_dir_opts.emplace_back(target_dir);
-  }
-  GroupDirectories group_dirs = CF_EXPECT(
-      GenerateGroupDirectories(std::nullopt, std::move(home),
-                               std::move(android_host_out), target_dir_opts));
-
   return GroupCreationInfo{
-      .home = group_dirs.home(),
-      .host_artifacts_path = group_dirs.host_tools(),
-      .product_out_path = android::base::Join(group_dirs.targets(), ","),
+      .directories =
+          {
+              .home = std::move(home),
+              .host_artifacts_path = std::move(android_host_out),
+              .product_out_paths = {std::move(android_product_out_path)},
+          },
       .group_name = group_info.group_name,
       .instances = std::move(instance_info),
   };

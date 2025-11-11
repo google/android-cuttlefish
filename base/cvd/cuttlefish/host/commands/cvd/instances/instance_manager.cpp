@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,11 +28,13 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -68,6 +71,62 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
   return {};
 }
 
+std::string DefaultBaseDir() {
+  auto time = std::chrono::system_clock::now().time_since_epoch().count();
+  return fmt::format("{}/{}", PerUserDir(), time);
+}
+
+Result<void> LinkOrMakeDir(const std::string& path,
+                           std::optional<std::string> target) {
+  if (target.has_value()) {
+    CF_EXPECT(Symlink(*target, path));
+  } else {
+    CF_EXPECTF(EnsureDirectoryExists(path), "Failed to create directory: {}",
+               path);
+  }
+  return {};
+}
+
+class GroupDirectories {
+ public:
+  GroupDirectories(std::string base, size_t num_instances)
+      : base_(std::move(base)), num_instances_(num_instances) {}
+  std::string base() const { return base_; }
+  std::string home() const { return base_ + "/home"; }
+  std::string artifacts() const { return base_ + "/artifacts"; }
+  std::string host_tools() const { return artifacts() + "/host_tools"; }
+  std::vector<std::string> targets() const {
+    std::vector<std::string> ret;
+    ret.reserve(num_instances_);
+    for (size_t i = 0; i < num_instances_; ++i) {
+      ret.emplace_back(fmt::format("{}/{}", artifacts(), i));
+    }
+    return ret;
+  }
+
+ private:
+  std::string base_;
+  size_t num_instances_;
+};
+
+Result<GroupDirectories> GenerateGroupDirectories(
+    std::optional<std::string> base, std::optional<std::string> home,
+    std::optional<std::string> host_tools,
+    std::vector<std::optional<std::string>> targets) {
+  GroupDirectories ret(DefaultBaseDir(), targets.size());
+
+  CF_EXPECT(LinkOrMakeDir(ret.base(), std::move(base)));
+  CF_EXPECT(LinkOrMakeDir(ret.home(), std::move(home)));
+  CF_EXPECT(EnsureDirectoryExists(ret.artifacts()));
+  CF_EXPECT(LinkOrMakeDir(ret.host_tools(), std::move(host_tools)));
+  auto v = ret.targets();
+  for (size_t i = 0; i < targets.size(); ++i) {
+    CF_EXPECT(LinkOrMakeDir(v[i], std::move(targets[i])));
+  }
+
+  return ret;
+}
+
 }  // namespace
 
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
@@ -86,11 +145,16 @@ Result<bool> InstanceManager::HasInstanceGroups() const {
 
 Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
     const selector::GroupCreationInfo& group_info) {
+  GroupDirectories group_dirs = CF_EXPECT(GenerateGroupDirectories(
+      group_info.directories.parent_directory, group_info.directories.home,
+      group_info.directories.host_artifacts_path,
+      group_info.directories.product_out_paths));
   cvd::InstanceGroup new_group;
   new_group.set_name(group_info.group_name);
-  new_group.set_home_directory(group_info.home);
-  new_group.set_host_artifacts_path(group_info.host_artifacts_path);
-  new_group.set_product_out_path(group_info.product_out_path);
+  new_group.set_home_directory(group_dirs.home());
+  new_group.set_host_artifacts_path(group_dirs.host_tools());
+  new_group.set_product_out_path(
+      android::base::Join(group_dirs.targets(), ","));
   for (const auto& instance : group_info.instances) {
     auto& new_instance = *new_group.add_instances();
     new_instance.set_id(instance.instance_id_);
@@ -172,7 +236,8 @@ Result<void> InstanceManager::IssueStopCommand(
 
 cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
   cvd::Status status;
-  const std::string config_json_name = android::base::Basename(GetGlobalConfigFileLink());
+  const std::string config_json_name =
+      android::base::Basename(GetGlobalConfigFileLink());
   auto instance_groups_res = instance_db_.Clear();
   if (!instance_groups_res.ok()) {
     fmt::print(std::cerr, "Failed to clear instance database: {}",

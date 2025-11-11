@@ -122,6 +122,7 @@ cf_cc_library(
     deps = [
         ":cvd_persistent_data",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
