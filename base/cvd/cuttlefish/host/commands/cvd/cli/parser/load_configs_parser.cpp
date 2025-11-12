@@ -47,9 +47,8 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/selector_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
-#include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -238,7 +237,8 @@ Result<Json::Value> GetOverriddenConfig(
   return result;
 }
 
-void FillEmptyInstanceNames(EnvironmentSpecification& env_spec) {
+EnvironmentSpecification FillEmptyInstanceNames(
+    EnvironmentSpecification env_spec) {
   std::set<std::string_view> used;
   for (const auto& instance : env_spec.instances()) {
     if (instance.name().empty()) {
@@ -258,11 +258,12 @@ void FillEmptyInstanceNames(EnvironmentSpecification& env_spec) {
     instance.set_name(name);
     used.insert(name);
   }
+  return env_spec;
 }
 
 }  // namespace
 
-Result<selector::GroupCreationInfo::Directories> GetGroupCreationDirectories(
+Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,
     const EnvironmentSpecification& env_spec) {
   std::vector<std::string> system_image_path_configs =
@@ -296,8 +297,8 @@ Result<selector::GroupCreationInfo::Directories> GetGroupCreationDirectories(
     host_tools_opt = std::move(system_host_path);
   }
 
-  return selector::GroupCreationInfo::Directories{
-      .parent_directory = std::move(parent_dir_opt),
+  return InstanceManager::GroupDirectories{
+      .base_directory = std::move(parent_dir_opt),
       .home = std::nullopt,
       .host_artifacts_path = std::move(host_tools_opt),
       .product_out_paths = std::move(targets_opt),
@@ -379,8 +380,7 @@ Result<EnvironmentSpecification> GetEnvironmentSpecification(
 
   EnvironmentSpecification env_spec =
       CF_EXPECT(ValidateCfConfigs(json_configs));
-  FillEmptyInstanceNames(env_spec);
-  return env_spec;
+  return FillEmptyInstanceNames(std::move(env_spec));
 }
 
 }  // namespace cuttlefish

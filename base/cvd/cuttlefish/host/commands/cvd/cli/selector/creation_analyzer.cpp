@@ -30,6 +30,7 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/unique_resource_allocator.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
@@ -41,11 +42,6 @@ namespace {
 
 class CreationAnalyzer {
  public:
-  struct GroupInfo {
-    std::string group_name;
-    const bool default_group;
-  };
-
   static Result<CreationAnalyzer> Create(const CreationAnalyzerParam& param,
                                          InstanceLockFileManager&);
 
@@ -61,16 +57,10 @@ class CreationAnalyzer {
   /**
    * calculate n_instances_ and instance_ids_
    */
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIds(
+  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIds(
       bool acquire_file_locks);
-
-  /*
-   * When group name is nil, it is auto-generated using instance ids
-   *
-   * If the instanc group is the default one, the group name is cvd. Otherwise,
-   * for given instance ids, {i}, the group name will be cvd_i.
-   */
-  Result<GroupInfo> ExtractGroup(const std::vector<PerInstanceInfo>&) const;
+  Result<std::vector<InstanceParams>> AnalyzeInstances(
+      const std::vector<unsigned>& instance_ids);
 
   /**
    * Figures out the HOME directory
@@ -83,9 +73,9 @@ class CreationAnalyzer {
    */
   Result<std::optional<std::string>> AnalyzeHome() const;
 
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
+  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsInternal(
       bool acquire_file_locks);
-  Result<std::vector<PerInstanceInfo>> AnalyzeInstanceIdsInternal(
+  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsInternal(
       const std::vector<unsigned>& requested_instance_ids,
       bool acquire_file_locks);
 
@@ -126,34 +116,16 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
   return mapping;
 }
 
-Result<std::vector<PerInstanceInfo>>
+Result<std::vector<InstanceLockFile>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal(
     const std::vector<unsigned>& requested_instance_ids,
     bool acquire_file_locks) {
+  if (!acquire_file_locks) {
+    return {};
+  }
+
   CF_EXPECT(!requested_instance_ids.empty(),
             "Instance IDs were specified, so should be one or more.");
-  std::vector<std::string> per_instance_names;
-  if (selector_options_parser_.PerInstanceNames()) {
-    per_instance_names = *selector_options_parser_.PerInstanceNames();
-    CF_EXPECT_EQ(per_instance_names.size(), requested_instance_ids.size());
-  } else {
-    for (const auto id : requested_instance_ids) {
-      per_instance_names.push_back(std::to_string(id));
-    }
-  }
-
-  std::map<unsigned, std::string> id_name_pairs;
-  for (size_t i = 0; i != requested_instance_ids.size(); i++) {
-    id_name_pairs[requested_instance_ids.at(i)] = per_instance_names.at(i);
-  }
-
-  std::vector<PerInstanceInfo> instance_info;
-  if (!acquire_file_locks) {
-    for (const auto& [id, name] : id_name_pairs) {
-      instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_STARTING);
-    }
-    return instance_info;
-  }
 
   std::set<int> requested(requested_instance_ids.begin(),
                           requested_instance_ids.end());
@@ -161,17 +133,17 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
       CF_EXPECT(instance_lock_file_manager_.TryAcquireLocks(requested));
   auto id_to_lockfile_map =
       ConstructIdLockFileMap(std::move(acquired_all_file_locks));
-  for (const auto& [id, instance_name] : id_name_pairs) {
+  std::vector<InstanceLockFile> instance_locks;
+  for (const auto id : requested_instance_ids) {
     CF_EXPECT(Contains(id_to_lockfile_map, id),
               "Instance ID " << id << " lock file can't be locked.");
     auto& lock_file = id_to_lockfile_map.at(id);
-    instance_info.emplace_back(id, instance_name, cvd::INSTANCE_STATE_PREPARING,
-                               std::move(lock_file));
+    instance_locks.emplace_back(std::move(lock_file));
   }
-  return instance_info;
+  return instance_locks;
 }
 
-Result<std::vector<PerInstanceInfo>>
+Result<std::vector<InstanceLockFile>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal(bool acquire_file_locks) {
   CF_EXPECT(!!acquire_file_locks,  // !! because CF_EXPECT expects rvalue
             "For now, cvd server always acquire the file locks "
@@ -217,22 +189,16 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(bool acquire_file_locks) {
   if (per_instance_names_opt) {
     CF_EXPECT(per_instance_names_opt->size() == allocated_ids.size());
   }
-  std::vector<PerInstanceInfo> instance_info;
+  std::vector<InstanceLockFile> instance_locks;
   for (size_t i = 0; i != allocated_ids.size(); i++) {
     const auto id = allocated_ids.at(i);
 
-    std::string name = std::to_string(id);
-    // Use the user provided instance name only if it's not empty.
-    if (per_instance_names_opt && !(*per_instance_names_opt)[i].empty()) {
-      name = (*per_instance_names_opt)[i];
-    }
-    instance_info.emplace_back(id, name, cvd::INSTANCE_STATE_PREPARING,
-                               std::move(id_to_lockfile_map.at(id)));
+    instance_locks.emplace_back(std::move(id_to_lockfile_map.at(id)));
   }
-  return instance_info;
+  return instance_locks;
 }
 
-Result<std::vector<PerInstanceInfo>> CreationAnalyzer::AnalyzeInstanceIds(
+Result<std::vector<InstanceLockFile>> CreationAnalyzer::AnalyzeInstanceIds(
     bool acquire_file_locks) {
   auto requested_instance_ids = selector_options_parser_.InstanceIds();
   return requested_instance_ids
@@ -241,50 +207,88 @@ Result<std::vector<PerInstanceInfo>> CreationAnalyzer::AnalyzeInstanceIds(
              : CF_EXPECT(AnalyzeInstanceIdsInternal(acquire_file_locks));
 }
 
+Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances(
+    const std::vector<unsigned>& instance_ids) {
+  std::vector<std::string> per_instance_names;
+  if (selector_options_parser_.PerInstanceNames()) {
+    per_instance_names = *selector_options_parser_.PerInstanceNames();
+    CF_EXPECT_EQ(per_instance_names.size(), instance_ids.size());
+  } else {
+    for (const auto id : instance_ids) {
+      per_instance_names.push_back(std::to_string(id));
+    }
+  }
+
+  std::vector<InstanceParams> instance_params;
+  for (size_t i = 0; i != instance_ids.size(); i++) {
+    instance_params.emplace_back(
+        InstanceParams{.instance_id = instance_ids.at(i),
+                       .per_instance_name = per_instance_names.at(i),
+                       .initial_state = cvd::INSTANCE_STATE_STARTING});
+  }
+
+  return instance_params;
+}
+
 Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo(
     bool acquire_file_locks) {
-  auto instance_info = CF_EXPECT(AnalyzeInstanceIds(acquire_file_locks));
-  std::vector<unsigned> ids;
-  ids.reserve(instance_info.size());
-  for (const auto& instance : instance_info) {
-    ids.push_back(instance.instance_id_);
+  InstanceGroupParams group_params;
+  std::vector<InstanceLockFile> instance_file_locks =
+      CF_EXPECT(AnalyzeInstanceIds(acquire_file_locks));
+  std::vector<unsigned> instance_ids;
+  for (const auto& instance_file_lock : instance_file_locks) {
+    instance_ids.emplace_back(instance_file_lock.Instance());
   }
-  auto group_info = CF_EXPECT(ExtractGroup(instance_info));
-
-  std::optional<std::string> home = CF_EXPECT(AnalyzeHome());
-
-  std::string android_host_out = CF_EXPECT(AndroidHostPath(envs_));
-  std::string android_product_out_path = Contains(envs_, kAndroidProductOut)
-                                             ? envs_.at(kAndroidProductOut)
-                                             : android_host_out;
-  return GroupCreationInfo{
-      .directories =
-          {
-              .home = std::move(home),
-              .host_artifacts_path = std::move(android_host_out),
-              .product_out_paths = {std::move(android_product_out_path)},
-          },
-      .group_name = group_info.group_name,
-      .instances = std::move(instance_info),
+  group_params.instances = CF_EXPECT(AnalyzeInstances(instance_ids));
+  group_params.group_name = selector_options_parser_.GroupName().value_or("");
+  InstanceManager::GroupDirectories group_directories{
+      .home = CF_EXPECT(AnalyzeHome()),
+      .host_artifacts_path = CF_EXPECT(AndroidHostPath(envs_)),
   };
-}
+  size_t num_instances = group_params.instances.size();
+  group_directories.product_out_paths.reserve(num_instances);
+  auto it = envs_.find(kAndroidProductOut);
+  if (it != envs_.end()) {
+    std::vector<std::string> env_product_out =
+        android::base::Split(it->second, ",");
+    if (env_product_out.size() > num_instances) {
+      LOG(WARNING) << env_product_out.size()
+                   << " product paths provided, but only " << num_instances
+                   << " are going to be created";
+      env_product_out.resize(num_instances);
+    }
+    for (auto& env_path : env_product_out) {
+      group_directories.product_out_paths.emplace_back(env_path);
+    }
+  } else {
+    group_directories.product_out_paths.emplace_back(
+        group_directories.host_artifacts_path);
+  }
+  while (group_directories.product_out_paths.size() < num_instances) {
+    // Use the first product path when more instances are required than product
+    // paths provided. This supports creating multiple identical instances from
+    // a single set of images.
+    group_directories.product_out_paths.emplace_back(
+        group_directories.product_out_paths[0]);
+  }
 
-Result<CreationAnalyzer::GroupInfo> CreationAnalyzer::ExtractGroup(
-    const std::vector<PerInstanceInfo>& per_instance_infos) const {
-  CreationAnalyzer::GroupInfo group_name_info = {
-      // With an empty group name the instance manager will pick one guaranteed
-      // to be unique.
-      .group_name = selector_options_parser_.GroupName().value_or(""),
-      .default_group = false};
-  return group_name_info;
-}
+  return GroupCreationInfo{
+      .group_creation_params = group_params,
+      .group_directories = group_directories,
+      .instance_file_locks = instance_file_locks,
+  };
+}  // namespace
 
 Result<std::optional<std::string>> CreationAnalyzer::AnalyzeHome() const {
-  auto system_wide_home = CF_EXPECT(SystemWideUserHome());
-  if (Contains(envs_, "HOME") && envs_.at("HOME") != system_wide_home) {
-    return envs_.at("HOME");
+  auto home_it = envs_.find("HOME");
+  if (home_it == envs_.end() ||
+      home_it->second == CF_EXPECT(SystemWideUserHome())) {
+    return std::nullopt;
   }
-  return std::nullopt;
+  std::string home = home_it->second;
+  CF_EXPECT(EnsureDirectoryExists(home),
+            "Provided home directory doesn't exist and can't be created");
+  return home;
 }
 
 }  // namespace

@@ -25,7 +25,6 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
@@ -36,13 +35,17 @@ namespace cuttlefish {
 
 class InstanceManager {
  public:
-  using GroupCreationInfo = selector::GroupCreationInfo;
-
+  struct GroupDirectories {
+    std::optional<std::string> base_directory;
+    std::optional<std::string> home;
+    std::optional<std::string> host_artifacts_path;
+    std::vector<std::optional<std::string>> product_out_paths;
+  };
   InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
 
   Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
-      const selector::GroupCreationInfo& group_info);
+      InstanceGroupParams group_params, GroupDirectories group_directories);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
 

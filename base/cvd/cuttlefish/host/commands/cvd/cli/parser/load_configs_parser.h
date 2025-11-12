@@ -22,8 +22,8 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
@@ -55,7 +55,7 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
 Result<cvd::config::EnvironmentSpecification> GetEnvironmentSpecification(
     const LoadFlags& flags);
 
-Result<selector::GroupCreationInfo::Directories> GetGroupCreationDirectories(
+Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,
     const cvd::config::EnvironmentSpecification& env_spec);
 
