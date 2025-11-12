@@ -166,22 +166,22 @@ inline std::string ToSeconds(int timeout) {
 
 Json::Value ConvertToConfigFlags(const CasDownloaderFlags& flags) {
   Json::Value config_flags;
-  config_flags["cache-dir"] = flags.cache_dir;    
-  config_flags["cache-max-size"] = flags.cache_max_size;    
-  config_flags["cache-lock"] = flags.cache_lock;    
-  config_flags["use-hardlink"] = flags.use_hardlink;    
-  config_flags["cas-concurrency"] = flags.cas_concurrency;    
-  config_flags["memory-limit"] = flags.memory_limit;    
-  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout);    
+  config_flags["cache-dir"] = flags.cache_dir.value;    
+  config_flags["cache-max-size"] = flags.cache_max_size.value;    
+  config_flags["cache-lock"] = flags.cache_lock.value;    
+  config_flags["use-hardlink"] = flags.use_hardlink.value;    
+  config_flags["cas-concurrency"] = flags.cas_concurrency.value;    
+  config_flags["memory-limit"] = flags.memory_limit.value;    
+  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout.value);    
   config_flags["get-capabilities-timeout"] =
-      ToSeconds(flags.get_capabilities_timeout);    
+      ToSeconds(flags.get_capabilities_timeout.value);    
   config_flags["get-tree-timeout"] =
-      ToSeconds(flags.get_tree_timeout);    
+      ToSeconds(flags.get_tree_timeout.value);    
   config_flags["batch-read-blobs-timeout"] =
-      ToSeconds(flags.batch_read_blobs_timeout);    
+      ToSeconds(flags.batch_read_blobs_timeout.value);    
   config_flags["batch-update-blobs-timeout"] =
-      ToSeconds(flags.batch_update_blobs_timeout);    
-  config_flags["version"] = flags.version;    
+      ToSeconds(flags.batch_update_blobs_timeout.value);    
+  config_flags["version"] = flags.version.value;    
   return config_flags;
 }
 
@@ -208,28 +208,131 @@ Command GetCommand(const std::string downloader_path,
 
 }  // namespace
 
+// Helper function to merge CLI values into config flags when CLI takes precedence.
+// This function implements the priority rule: if a flag was specified on the CLI
+// (user_specified=true), its value overrides any value from the config file.
+namespace {
+void MergeCliValuesIntoConfig(const CasDownloaderFlags& flags,
+                              Json::Value& config_flags) {
+  // Merge CLI values (if provided) on top of config file values so CLI wins.
+  // Use the same keys as ConvertToConfigFlags.
+  
+  if (flags.cache_dir.user_specified) {
+    config_flags["cache-dir"] = flags.cache_dir.value;
+  }
+  if (flags.cache_max_size.user_specified) {
+    config_flags["cache-max-size"] = flags.cache_max_size.value;
+  }
+  if (flags.cache_lock.user_specified) {
+    config_flags["cache-lock"] = flags.cache_lock.value;
+  }
+  if (flags.use_hardlink.user_specified) {
+    config_flags["use-hardlink"] = flags.use_hardlink.value;
+  }
+  if (flags.cas_concurrency.user_specified) {
+    config_flags["cas-concurrency"] = flags.cas_concurrency.value;
+  }
+  if (flags.memory_limit.user_specified) {
+    config_flags["memory-limit"] = flags.memory_limit.value;
+  }
+  if (flags.rpc_timeout.user_specified) {
+    config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout.value);
+  }
+  if (flags.get_capabilities_timeout.user_specified) {
+    config_flags["get-capabilities-timeout"] =
+        ToSeconds(flags.get_capabilities_timeout.value);
+  }
+  if (flags.get_tree_timeout.user_specified) {
+    config_flags["get-tree-timeout"] = ToSeconds(flags.get_tree_timeout.value);
+  }
+  if (flags.batch_read_blobs_timeout.user_specified) {
+    config_flags["batch-read-blobs-timeout"] =
+        ToSeconds(flags.batch_read_blobs_timeout.value);
+  }
+  if (flags.batch_update_blobs_timeout.user_specified) {
+    config_flags["batch-update-blobs-timeout"] =
+        ToSeconds(flags.batch_update_blobs_timeout.value);
+  }
+  if (flags.version.user_specified) {
+    config_flags["version"] = flags.version.value;
+  }
+}
+}  // namespace
+
 Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
     const CasDownloaderFlags& cas_downloader_flags,
     const std::string& service_account_filepath) {
-  std::string downloader_path = cas_downloader_flags.downloader_path;
-  bool prefer_uncompressed = cas_downloader_flags.prefer_uncompressed;
+  // Start with values from the FlagValue wrappers (these contain defaults
+  // and reflect any CLI-provided values via .user_specified).
+  std::string downloader_path = cas_downloader_flags.downloader_path.value;
+  bool prefer_uncompressed = cas_downloader_flags.prefer_uncompressed.value;
   std::vector<std::string> cas_flags;
 
-  std::string config_filepath = cas_downloader_flags.cas_config_filepath;
+  // Determine whether there's a config file to load. The `cas_config_filepath`
+  // may contain a default path (empty if none). If the user explicitly
+  // provided a config filepath and it does not exist, that's an error. If a
+  // config file exists (either user-provided or default), we'll load it and
+  // apply its values unless the corresponding CLI flag was provided.
+  std::string config_filepath = cas_downloader_flags.cas_config_filepath.value;
   Json::Value config_flags;
-  if (config_filepath.empty()) {
+  bool has_config_file = false;
+  if (!config_filepath.empty() && FileExists(config_filepath)) {
+    has_config_file = true;
+  } else if (!config_filepath.empty() && cas_downloader_flags.cas_config_filepath.user_specified) {
+    // User requested a config file path that doesn't exist.
+    return CF_ERRF("CAS Config file not found: {}", config_filepath);
+  }
+
+  if (!has_config_file) {
+    // No config file available: use CLI values (or defaults if CLI didn't set
+    // them). Convert current flag values into config_flags for downstream
+    // processing.
+    LOG(INFO) << "Using CAS downloader flags from command line or defaults.";
     config_flags = ConvertToConfigFlags(cas_downloader_flags);
   } else {
+    // Load config file. We'll merge CLI values on top of the config file so
+    // that CLI takes precedence.
+    bool is_default_config = (config_filepath == kDefaultCasConfigFilePath);
+    if (is_default_config) {
+      LOG(INFO) << "Using default CAS config from: " << config_filepath;
+    } else {
+      LOG(INFO) << "Using CAS config from: " << config_filepath;
+    }
     std::string config_contents = CF_EXPECT(ReadFileContents(config_filepath));
     Json::Value config = CF_EXPECT(ParseJson(config_contents));
-    downloader_path = config[kKeyDownloaderPath].asString();
-    prefer_uncompressed = config["prefer-uncompressed"].asBool();
+
+    // Base config flags from file (may be empty object)
     config_flags = config[kKeyFlags];
+
+    // downloader-path and prefer-uncompressed are top-level in the config.
+    // Apply them only if not provided on the CLI.
+    if (!cas_downloader_flags.downloader_path.user_specified) {
+      if (config.isMember(kKeyDownloaderPath)) {
+        downloader_path = config[kKeyDownloaderPath].asString();
+      }
+    }
+    if (!cas_downloader_flags.prefer_uncompressed.user_specified) {
+      if (config.isMember("prefer-uncompressed")) {
+        prefer_uncompressed = config["prefer-uncompressed"].asBool();
+      }
+    }
+
+    // For each supported flag key we merge CLI values (if provided) on top of
+    // the config file values so CLI wins. Use the same keys as
+    // ConvertToConfigFlags.
+    MergeCliValuesIntoConfig(cas_downloader_flags, config_flags);
+
+    // If the config file didn't provide a downloader path and CLI didn't as
+    // well, this will be caught below when we require a non-empty path.
   }
+
+  // Final sanity: ensure we have a downloader path and binary exists.
   CF_EXPECT(!downloader_path.empty(),
-            "No cas downloader path provided in flags or config");
-  CF_EXPECTF(FileExists(downloader_path),
-             "CAS Downloader binary not found: '{}'", downloader_path);
+             "CAS downloader path not provided. Use --cas_downloader_path or set downloader-path in config file.");
+  CF_EXPECT(FileExists(downloader_path),
+             "CAS Downloader binary not found at: " << downloader_path);
+
+  // Create cas_flags from the merged config_flags (CLI-overrides applied above)
   cas_flags = CreateCasFlags(downloader_path, config_flags);
 
   if (!service_account_filepath.empty() &&

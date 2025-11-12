@@ -39,11 +39,24 @@ cf_cc_test(
     ],
 )
 
+cf_cc_test(
+    name = "cas_flags_test",
+    srcs = ["cas_flags_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web/cas:cas_flags",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "cas_flags",
     srcs = ["cas_flags.cc"],
     hdrs = ["cas_flags.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
