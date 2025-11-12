@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 
 namespace cuttlefish {
 namespace {

@@ -27,6 +27,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -168,6 +169,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
     ],
 )
 

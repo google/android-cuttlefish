@@ -77,29 +77,6 @@ class SeekableZipSource : public ReadableZipSource {
   SeekableZipSource(ManagedZipSource);
 };
 
-class WritableZipSource : public SeekableZipSource {
- public:
-  friend class ReadableZip;
-  /* References `data`, may not update it on write but `data` should outlive the
-   * returned instance. */
-  static Result<WritableZipSource> BorrowData(const void* data, size_t size);
-  static Result<WritableZipSource> FromFile(const std::string& path);
-  /* Data access to an in-memory buffer based on serializing a zip archive. */
-  static Result<WritableZipSource> FromZip(class WritableZip);
-
-  WritableZipSource(WritableZipSource&&) = default;
-  virtual ~WritableZipSource() = default;
-  WritableZipSource& operator=(WritableZipSource&&) = default;
-
-  /* Returns a RAII instance that puts this instance in an "open for writing"
-   * state. Can fail. Should not outlive this instance. Cannot be used at the
-   * same time as the `Reader()` method from superclasses. */
-  Result<class ZipSourceWriter> Writer();
-
- protected:
-  WritableZipSource(ManagedZipSource);
-};
-
 /* A `ReadableZipSource` in an "open for reading" state. */
 class ZipSourceReader {
  public:
@@ -133,29 +110,6 @@ class SeekingZipSourceReader : public ZipSourceReader {
 
  private:
   SeekingZipSourceReader(SeekableZipSource*);
-};
-
-/* A `WritableZipSource` in an "open for writing" state. */
-class ZipSourceWriter {
- public:
-  friend class WritableZipSource;
-
-  ZipSourceWriter(ZipSourceWriter&&);
-  ~ZipSourceWriter();
-  ZipSourceWriter& operator=(ZipSourceWriter&&);
-
-  /* Writes are not committed until `Finalize` is called. Returns number of
-   * bytes written. */
-  Result<uint64_t> Write(void* data, uint64_t length);
-  Result<void> SeekFromStart(int64_t offset);
-
-  /* Commits writes and closes the writer. */
-  static Result<void> Finalize(ZipSourceWriter);
-
- private:
-  ZipSourceWriter(WritableZipSource*);
-
-  WritableZipSource* source_;
 };
 
 }  // namespace cuttlefish

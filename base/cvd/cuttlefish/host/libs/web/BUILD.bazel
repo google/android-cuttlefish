@@ -38,6 +38,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//libbase",
         "@jsoncpp",
     ],
