@@ -105,6 +105,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:config_constants",
@@ -118,6 +119,8 @@ cf_cc_library(
         "//libbase",
         "@fmt",
         "@jsoncpp",
+        "@protobuf",
+        "@protobuf//src/google/protobuf/io",
     ],
 )
 

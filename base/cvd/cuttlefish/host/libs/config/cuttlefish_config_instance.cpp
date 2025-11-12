@@ -34,6 +34,8 @@
 #include <json/reader.h>
 #include <json/value.h>
 
+#include <google/protobuf/text_format.h>
+
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flags_validator.h"
@@ -45,6 +47,8 @@
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
+
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 
 namespace cuttlefish {
 namespace {
@@ -1979,6 +1983,24 @@ void CuttlefishConfig::MutableInstanceSpecific::set_audio_output_streams_count(
 }
 int CuttlefishConfig::InstanceSpecific::audio_output_streams_count() const {
   return (*Dictionary())[kAudioOutputStreamsCount].asInt();
+}
+
+static constexpr char kAudioSettingsTextProto[] = "audio_settings_textproto";
+void CuttlefishConfig::MutableInstanceSpecific::set_audio_settings(
+    const ::cuttlefish::config::Audio& audio_settings) {
+  std::string textproto;
+  google::protobuf::TextFormat::PrintToString(audio_settings, &textproto);
+  (*Dictionary())[kAudioSettingsTextProto] = std::move(textproto);
+}
+std::optional<::cuttlefish::config::Audio>
+CuttlefishConfig::InstanceSpecific::audio_settings() const {
+  if (!Dictionary()->isMember(kAudioSettingsTextProto)) {
+    return std::nullopt;
+  }
+  cuttlefish::config::Audio audio_settings;
+  CHECK(google::protobuf::TextFormat::ParseFromString(
+      (*Dictionary())[kAudioSettingsTextProto].asString(), &audio_settings));
+  return audio_settings;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(

@@ -21,42 +21,31 @@
 #include <thread>
 #include <vector>
 
+#include "cuttlefish/host/frontend/webrtc/audio_mixer.h"
+#include "cuttlefish/host/frontend/webrtc/audio_settings.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_source.h"
 #include "cuttlefish/host/frontend/webrtc/libdevice/audio_sink.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
 
 namespace cuttlefish {
-class AudioHandler : public AudioServerExecutor {
-  // TODO(jemoreira): This can probably be avoided if playback goes through the
-  // audio device instead.
-  struct HoldingBuffer {
-    std::vector<uint8_t> buffer;
-    size_t count;
 
-    void Reset(size_t size);
-    size_t Add(const volatile uint8_t* data, size_t max_len);
-    size_t Take(uint8_t* dst, size_t len);
-    bool empty() const;
-    bool full() const;
-    size_t freeCapacity() const;
-    uint8_t* data();
-    uint8_t* end();
-  };
+class AudioHandler : public AudioServerExecutor {
   struct StreamDesc {
     std::mutex mtx;
-    int bits_per_sample = -1;
-    int sample_rate = -1;
-    int channels = -1;
+    std::vector<uint8_t> holding_buffer;
+    uint32_t sample_rate = 0;
+    uint8_t bits_per_sample = 0;
+    uint8_t channels = 0;
     bool active = false;
-    HoldingBuffer buffer;
   };
 
  public:
-  AudioHandler(
-      std::unique_ptr<AudioServer> audio_server,
-      std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_sinks,
-      std::shared_ptr<webrtc_streaming::AudioSource> audio_source);
-  ~AudioHandler() override = default;
+  AudioHandler(std::unique_ptr<AudioServer> audio_server,
+               std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
+               std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
+               const std::vector<AudioStreamSettings>& stream_settings,
+               const AudioMixerSettings& mixer_settings);
+  ~AudioHandler() override;
 
   void Start();
 
@@ -77,11 +66,12 @@ class AudioHandler : public AudioServerExecutor {
   [[noreturn]] void Loop();
   bool IsCapture(uint32_t stream_id) const;
 
-  std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_sinks_;
   std::unique_ptr<AudioServer> audio_server_;
   std::thread server_thread_;
-  std::vector<StreamDesc> stream_descs_ = {};
   std::shared_ptr<webrtc_streaming::AudioSource> audio_source_;
   std::vector<virtio_snd_pcm_info> streams_;
+  std::vector<StreamDesc> stream_descs_ = {};
+  std::vector<virtio_snd_chmap_info> chmaps_;
+  std::unique_ptr<AudioMixer> audio_mixer_;
 };
 }  // namespace cuttlefish
