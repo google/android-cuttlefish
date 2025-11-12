@@ -189,11 +189,10 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
     LOG(INFO) << "Downloading image zip for " << context;
     std::string img_zip_name = context.GetBuildZipName("img");
     FetchArtifact img_zip = context.Artifact(img_zip_name);
-    CF_EXPECT(img_zip.Download());
-    CF_EXPECT(img_zip.ExtractAll());
-    if (!keep_downloaded_archives) {
-      CF_EXPECT(img_zip.DeleteLocalFile());
+    if (keep_downloaded_archives) {
+      CF_EXPECT(img_zip.Download());
     }
+    CF_EXPECT(img_zip.ExtractAll());
   }
   std::string target_files_name = context.GetBuildZipName("target_files");
   FetchArtifact target_files = context.Artifact(target_files_name);
@@ -245,13 +244,11 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
       std::string system_img_zip_name = context.GetBuildZipName("img");
       FetchArtifact system_files = context.Artifact(system_img_zip_name);
 
-      CF_EXPECT(system_files.Download());
+      if (keep_downloaded_archives) {
+        CF_EXPECT(system_files.Download());
+      }
       CF_EXPECT(system_files.ExtractOne("system.img"));
       CF_EXPECT(system_files.ExtractOne("product.img"));
-
-      if (!keep_downloaded_archives) {
-        CF_EXPECT(system_files.DeleteLocalFile());
-      }
     }
 
     static constexpr std::string_view kSystemImageFiles[] = {
@@ -290,14 +287,13 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
   std::string img_zip = context.GetBuildZipName("img");
   std::string to_download = context.GetFilepath().value_or(img_zip);
   FetchArtifact artifact = context.Artifact(to_download);
-  CF_EXPECT(artifact.Download());
+  if (keep_downloaded_archives) {
+    CF_EXPECT(artifact.Download());
+  }
 
   if (to_download == img_zip) {
     CF_EXPECT(artifact.ExtractOne("boot.img"));
     CF_EXPECT(artifact.ExtractOne("vendor_boot.img"));
-    if (!keep_downloaded_archives) {
-      CF_EXPECT(artifact.DeleteLocalFile());
-    }
   }
 
   return {};
@@ -321,11 +317,10 @@ Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
 Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
                                  bool keep_downloaded_archives) {
   FetchArtifact otatools = context.Artifact("otatools.zip");
-  CF_EXPECT(otatools.Download());
-  CF_EXPECT(otatools.ExtractAll());
-  if (!keep_downloaded_archives) {
-    CF_EXPECT(otatools.DeleteLocalFile());
+  if (keep_downloaded_archives) {
+    CF_EXPECT(otatools.Download());
   }
+  CF_EXPECT(otatools.ExtractAll());
   return {};
 }
 
