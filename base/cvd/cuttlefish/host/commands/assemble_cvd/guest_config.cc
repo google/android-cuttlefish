@@ -112,10 +112,8 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
         DefaultHostArtifactsPath(input_config.domkey_mapping_config());
   }
 
-  const auto& audio_config = proto_config.audio();
-  if (audio_config.has_output_audio_streams_count()) {
-    guest_config.output_audio_streams_count =
-        audio_config.output_audio_streams_count();
+  if(proto_config.has_audio()) {
+    guest_config.audio_settings = proto_config.audio();
   }
 
   const auto& network_config = proto_config.network();

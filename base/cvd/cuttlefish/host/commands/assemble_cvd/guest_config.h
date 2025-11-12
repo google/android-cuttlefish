@@ -25,6 +25,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
+
 namespace cuttlefish {
 
 struct GuestConfig {
@@ -44,6 +46,7 @@ struct GuestConfig {
   std::optional<std::string> custom_keyboard_config;
   std::optional<std::string> domkey_mapping_config;
   int output_audio_streams_count = 1;
+  std::optional<::cuttlefish::config::Audio> audio_settings;
   std::optional<bool> enforce_mac80211_hwsim;
   int blank_data_image_mb = 0;
 };

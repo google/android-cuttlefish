@@ -35,8 +35,41 @@ message Graphics {
 }
 
 message Audio {
-  // The number of output audio streams the guest device supports.
-  int32 output_audio_streams_count = 1;
+  enum ChannelLayout {
+    option features.enum_type = CLOSED;
+
+    // Single channel
+    MONO = 0;
+    // Channel order: FL, FR
+    STEREO = 1;
+    // Channel order: FL, FR, FC, LFE, SL, SR
+    SURROUND51 = 2;
+  }
+
+  enum SampleRate {
+    option features.enum_type = CLOSED;
+    RATE_32000 = 0;
+    RATE_44100 = 1;
+    RATE_48000 = 2;
+    RATE_64000 = 3;
+  }
+
+  message AudioMixer {
+    ChannelLayout channel_layout = 1;
+    SampleRate sample_rate = 2;
+  }
+
+  message PCMDevice {
+    message Stream {
+      uint32 id = 1;
+      ChannelLayout channel_layout = 2;
+    }
+    repeated Stream capture_streams = 1;
+    repeated Stream playback_streams = 2;
+    AudioMixer mixer = 3;
+  }
+
+  repeated PCMDevice pcm_devices = 1;
 }
 
 message Input {
@@ -76,14 +109,14 @@ message Virtualization {
 
 // Specifies the type of the emulated device
 enum DeviceType {
-    Phone = 0;
-    Wear = 1;
-    Auto = 2;
-    Foldable = 3;
-    Tv = 4;
-    Minidroid = 5;
-    Go = 6;
-    Unknown = 7;
+  Phone = 0;
+  Wear = 1;
+  Auto = 2;
+  Foldable = 3;
+  Tv = 4;
+  Minidroid = 5;
+  Go = 6;
+  Unknown = 7;
 }
 
 // GuestConfigFile represents the configuration for a Cuttlefish guest device,
@@ -91,7 +124,6 @@ enum DeviceType {
 // device's hardware capabilities, software features, and virtualization
 // settings.
 message GuestConfigFile {
-
   DeviceType device_type = 1;
 
   Graphics graphics = 2;
