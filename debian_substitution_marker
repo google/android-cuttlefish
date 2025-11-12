@@ -1,11 +1,6 @@
 # cuttlefish debian_substitution_marker v1
 
 symlinks {
-  target: "/usr/lib/cuttlefish-common/bin/acloud_translator"
-  link_name: "bin/acloud_translator"
-}
-
-symlinks {
   target: "/usr/lib/cuttlefish-common/bin/adb_connector"
   link_name: "bin/adb_connector"
 }
