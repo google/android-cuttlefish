@@ -123,8 +123,8 @@ class CasDownloaderTests : public ::testing::Test {
       Args... flag_args) {
     std::string cas_config_filepath =
         CreateCasConfig(downloader_path_, prefer_uncompressed, flag_args...);
-    CasDownloaderFlags flags =
-        CasDownloaderFlags{.cas_config_filepath = cas_config_filepath};
+    CasDownloaderFlags flags;
+    flags.cas_config_filepath = cas_config_filepath;
     Result<std::unique_ptr<CasDownloader>> result =
         CasDownloader::Create(flags, service_account_filepath);
     if (result.ok()) {
@@ -232,7 +232,9 @@ using testing::IsTrue;
 using testing::Not;
 
 TEST_F(CasDownloaderTests, FailsToCreateWithInvalidConfigPath) {
-  CasDownloaderFlags flags = {.cas_config_filepath = "invalid_config_path"};
+  CasDownloaderFlags flags;
+  flags.cas_config_filepath = "invalid_config_path";
+  flags.cas_config_filepath.user_specified = true;
   Result<std::unique_ptr<CasDownloader>> result =
       CasDownloader::Create(flags, "");
 
@@ -563,13 +565,17 @@ TEST_F(CasDownloaderTests, PassesCasOptionsFromCommandLine) {
   downloader_path_ = FakeDownloaderForArtifactAndFlags(
       target_dir_ + "/artifact_name", "cache-max-size", "memory-limit",
       "rpc-timeout");
-  CasDownloaderFlags flags{
-      .downloader_path = downloader_path_,
-      .cache_max_size = 85899345920,  // 80 GiB (int64_t)
-      .memory_limit = 200,
-      .rpc_timeout = 120,
-      .batch_read_blobs_timeout = 120,
-  };
+  CasDownloaderFlags flags;
+  flags.downloader_path = downloader_path_;
+  flags.downloader_path.user_specified = true;
+  flags.cache_max_size = 85899345920LL;  // 80 GiB (int64_t)
+  flags.cache_max_size.user_specified = true;
+  flags.memory_limit = 200;
+  flags.memory_limit.user_specified = true;
+  flags.rpc_timeout = 120;
+  flags.rpc_timeout.user_specified = true;
+  flags.batch_read_blobs_timeout = 120;
+  flags.batch_read_blobs_timeout.user_specified = true;
   std::string service_account_filepath = "";
   std::unique_ptr<CasDownloader> cas =
       CasFromCommandLine(service_account_filepath, flags);
