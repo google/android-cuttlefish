@@ -627,6 +627,7 @@ class CuttlefishConfig {
     bool start_vhal_proxy_server() const;
 
     int audio_output_streams_count() const;
+    std::string audio_settings_textproto() const;
 
     bool enable_tap_devices() const;
   };
@@ -857,6 +858,7 @@ class CuttlefishConfig {
     void set_start_vhal_proxy_server(bool start_vhal_proxy_server);
 
     void set_audio_output_streams_count(int count);
+    void set_audio_settings_textproto(const std::string& audio_settings_textproto);
 
     void set_enable_tap_devices(bool);
 

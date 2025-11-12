@@ -33,6 +33,8 @@ cf_cc_binary(
         "adb_handler.h",
         "audio_handler.cpp",
         "audio_handler.h",
+        "audio_mixer.cpp",
+        "audio_mixer.h",
         "bluetooth_handler.cpp",
         "bluetooth_handler.h",
         "client_server.cpp",
@@ -68,6 +70,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
         "//cuttlefish/host/frontend/webrtc/libdevice",
@@ -96,5 +99,6 @@ cf_cc_binary(
         "@libwebrtc",
         "@libwebsockets",
         "@libyuv",
+        "@protobuf",
     ],
 )
