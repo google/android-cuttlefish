@@ -158,7 +158,6 @@ cvd_host_aarch64_swiftshader = [
 ]
 
 cvd_host_tools = [
-    "acloud_translator",
     "adb",
     "adb_connector",
     "allocd_client",
