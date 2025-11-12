@@ -24,7 +24,9 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
@@ -52,6 +54,29 @@ std::vector<LocalInstance> Filter(
   return ret;
 }
 
+std::string DefaultBaseDir() {
+  auto time = std::chrono::system_clock::now().time_since_epoch().count();
+  return fmt::format("{}/{}", PerUserDir(), time);
+}
+
+std::string HomeDirFromBase(const std::string& base_dir) {
+  return base_dir + "/home";
+}
+
+std::string ArtifactsDirFromBase(const std::string& base_dir) {
+  return base_dir + "/artifacts";
+}
+
+std::string HostArtifactsDirFromBase(const std::string& base_dir) {
+  return ArtifactsDirFromBase(base_dir) + "/host_tools";
+}
+
+std::string ProductDirFromBase(const std::string& base_dir,
+                               int instance_index) {
+  return fmt::format("{}/{}", ArtifactsDirFromBase(base_dir),
+                     std::to_string(instance_index));
+}
+
 }  // namespace
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Create(
@@ -76,24 +101,27 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
   return LocalInstanceGroup(group_proto);
 }
 
-void LocalInstanceGroup::SetHomeDir(const std::string& home_dir) {
-  CHECK(group_proto_->home_directory().empty())
-      << "Home directory can't be changed once set";
-  group_proto_->set_home_directory(home_dir);
-}
+Result<LocalInstanceGroup> LocalInstanceGroup::Create(
+    InstanceGroupParams group_params) {
+  std::string base_dir = DefaultBaseDir();
 
-void LocalInstanceGroup::SetHostArtifactsPath(
-    const std::string& host_artifacts_path) {
-  CHECK(group_proto_->host_artifacts_path().empty())
-      << "Host artifacts path can't be changed once set";
-  group_proto_->set_host_artifacts_path(host_artifacts_path);
-}
+  std::vector<std::string> product_out_paths;
+  for (size_t i = 0; i < group_params.instances.size(); ++i) {
+    product_out_paths.emplace_back(ProductDirFromBase(base_dir, i));
+  }
 
-void LocalInstanceGroup::SetProductOutPath(
-    const std::string& product_out_path) {
-  CHECK(group_proto_->product_out_path().empty())
-      << "Product out path can't be changed once set";
-  group_proto_->set_product_out_path(product_out_path);
+  cvd::InstanceGroup proto;
+  proto.set_name(std::move(group_params.group_name));
+  proto.set_home_directory(HomeDirFromBase(base_dir));
+  proto.set_host_artifacts_path(HostArtifactsDirFromBase(base_dir));
+  proto.set_product_out_path(android::base::Join(product_out_paths, ","));
+  for (const auto& instance : group_params.instances) {
+    auto& new_instance = *proto.add_instances();
+    new_instance.set_id(instance.instance_id);
+    new_instance.set_name(std::move(instance.per_instance_name));
+    new_instance.set_state(instance.initial_state);
+  }
+  return CF_EXPECT(Create(proto));
 }
 
 bool LocalInstanceGroup::HasActiveInstances() const {
@@ -149,6 +177,19 @@ std::string LocalInstanceGroup::AssemblyDir() const {
 
 std::string LocalInstanceGroup::MetricsDir() const {
   return HomeDir() + "/metrics";
+}
+
+std::string LocalInstanceGroup::ArtifactsDir() const {
+  return BaseDir() + "/artifacts";
+}
+
+std::string LocalInstanceGroup::ProductDir(int instance_index) const {
+  return fmt::format("{}/{}", ArtifactsDir(), instance_index);
+}
+
+std::string LocalInstanceGroup::BaseDir() const {
+  // The base directory is always the parent of the home directory
+  return android::base::Dirname(HomeDir());
 }
 
 Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(

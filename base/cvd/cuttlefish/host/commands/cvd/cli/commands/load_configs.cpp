@@ -27,7 +27,6 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -35,7 +34,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
@@ -174,7 +172,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
         instance_manager_.UpdateInstanceGroup(group);
       }
       CF_EXPECTF(std::move(fetch_res),
-                 "Failed to fetch build artifacts, check {} for details",
+                 "Failed to fetch build artifacts, check '{}' for details",
                  GetFetchLogsFileName(cvd_flags.target_directory));
     }
 
@@ -209,16 +207,15 @@ class LoadConfigsCommand : public CvdCommandHandler {
   Result<CommandRequest> BuildLaunchCmd(const CommandRequest& request,
                                         const CvdFlags& cvd_flags,
                                         const LocalInstanceGroup& group) {
-    // Add system flag for multi-build scenario
-    std::string system_build_arg =
-        fmt::format("--system_image_dir={}", group.ProductOutPath());
     auto env = request.Env();
     env["HOME"] = group.HomeDir();
     env[kAndroidHostOut] = group.HostArtifactsPath();
     env[kAndroidSoongHostOut] = group.HostArtifactsPath();
-    if (Contains(env, kAndroidProductOut)) {
-      env.erase(kAndroidProductOut);
-    }
+
+    // Add system flag for multi-build scenario
+    std::string system_build_arg =
+        fmt::format("--system_image_dir={}", group.ProductOutPath());
+    env.erase(kAndroidProductOut);
 
     return CF_EXPECT(
         CommandRequestBuilder()
@@ -239,15 +236,18 @@ class LoadConfigsCommand : public CvdCommandHandler {
  private:
   Result<LocalInstanceGroup> CreateGroup(
       const std::string& base_dir, const EnvironmentSpecification& env_spec) {
-    selector::GroupCreationInfo group_info{
-        .directories =
-            CF_EXPECT(GetGroupCreationDirectories(base_dir, env_spec)),
+    InstanceGroupParams group_params{
+        .group_name = env_spec.common().group_name(),
     };
     for (const auto& instance : env_spec.instances()) {
-      group_info.instances.emplace_back(0, instance.name(),
-                                        cvd::INSTANCE_STATE_PREPARING);
+      group_params.instances.emplace_back(
+          InstanceParams{.instance_id = 0,
+                         .per_instance_name = instance.name(),
+                         .initial_state = cvd::INSTANCE_STATE_PREPARING});
     }
-    return CF_EXPECT(instance_manager_.CreateInstanceGroup(group_info));
+    return CF_EXPECT(instance_manager_.CreateInstanceGroup(
+        std::move(group_params),
+        CF_EXPECT(GetGroupCreationDirectories(base_dir, env_spec))));
   }
 
   static constexpr char kLoadSubCmd[] = "load";

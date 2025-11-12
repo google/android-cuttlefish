@@ -71,14 +71,10 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
   return {};
 }
 
-std::string DefaultBaseDir() {
-  auto time = std::chrono::system_clock::now().time_since_epoch().count();
-  return fmt::format("{}/{}", PerUserDir(), time);
-}
-
-Result<void> LinkOrMakeDir(const std::string& path,
-                           std::optional<std::string> target) {
+Result<void> LinkOrMakeDir(std::optional<std::string> target,
+                           const std::string& path) {
   if (target.has_value()) {
+    CF_EXPECT(DirectoryExists(*target));
     CF_EXPECT(Symlink(*target, path));
   } else {
     CF_EXPECTF(EnsureDirectoryExists(path), "Failed to create directory: {}",
@@ -87,44 +83,20 @@ Result<void> LinkOrMakeDir(const std::string& path,
   return {};
 }
 
-class GroupDirectories {
- public:
-  GroupDirectories(std::string base, size_t num_instances)
-      : base_(std::move(base)), num_instances_(num_instances) {}
-  std::string base() const { return base_; }
-  std::string home() const { return base_ + "/home"; }
-  std::string artifacts() const { return base_ + "/artifacts"; }
-  std::string host_tools() const { return artifacts() + "/host_tools"; }
-  std::vector<std::string> targets() const {
-    std::vector<std::string> ret;
-    ret.reserve(num_instances_);
-    for (size_t i = 0; i < num_instances_; ++i) {
-      ret.emplace_back(fmt::format("{}/{}", artifacts(), i));
-    }
-    return ret;
+Result<void> CreateOrLinkGroupDirectories(
+    const LocalInstanceGroup& group,
+    InstanceManager::GroupDirectories directories) {
+  CF_EXPECT(
+      LinkOrMakeDir(std::move(directories.base_directory), group.BaseDir()));
+  CF_EXPECT(LinkOrMakeDir(std::move(directories.home), group.HomeDir()));
+  CF_EXPECT(EnsureDirectoryExists(group.ArtifactsDir()));
+  CF_EXPECT(LinkOrMakeDir(std::move(directories.host_artifacts_path),
+                          group.HostArtifactsPath()));
+  for (size_t i = 0; i < directories.product_out_paths.size(); ++i) {
+    CF_EXPECT(LinkOrMakeDir(std::move(directories.product_out_paths[i]),
+                            group.ProductDir(i)));
   }
-
- private:
-  std::string base_;
-  size_t num_instances_;
-};
-
-Result<GroupDirectories> GenerateGroupDirectories(
-    std::optional<std::string> base, std::optional<std::string> home,
-    std::optional<std::string> host_tools,
-    std::vector<std::optional<std::string>> targets) {
-  GroupDirectories ret(DefaultBaseDir(), targets.size());
-
-  CF_EXPECT(LinkOrMakeDir(ret.base(), std::move(base)));
-  CF_EXPECT(LinkOrMakeDir(ret.home(), std::move(home)));
-  CF_EXPECT(EnsureDirectoryExists(ret.artifacts()));
-  CF_EXPECT(LinkOrMakeDir(ret.host_tools(), std::move(host_tools)));
-  auto v = ret.targets();
-  for (size_t i = 0; i < targets.size(); ++i) {
-    CF_EXPECT(LinkOrMakeDir(v[i], std::move(targets[i])));
-  }
-
-  return ret;
+  return {};
 }
 
 }  // namespace
@@ -144,24 +116,20 @@ Result<bool> InstanceManager::HasInstanceGroups() const {
 }
 
 Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
-    const selector::GroupCreationInfo& group_info) {
-  GroupDirectories group_dirs = CF_EXPECT(GenerateGroupDirectories(
-      group_info.directories.parent_directory, group_info.directories.home,
-      group_info.directories.host_artifacts_path,
-      group_info.directories.product_out_paths));
-  cvd::InstanceGroup new_group;
-  new_group.set_name(group_info.group_name);
-  new_group.set_home_directory(group_dirs.home());
-  new_group.set_host_artifacts_path(group_dirs.host_tools());
-  new_group.set_product_out_path(
-      android::base::Join(group_dirs.targets(), ","));
-  for (const auto& instance : group_info.instances) {
-    auto& new_instance = *new_group.add_instances();
-    new_instance.set_id(instance.instance_id_);
-    new_instance.set_name(instance.per_instance_name_);
-    new_instance.set_state(instance.initial_state_);
-  }
-  return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
+    InstanceGroupParams group_params, GroupDirectories directories) {
+  CF_EXPECT_EQ(
+      group_params.instances.size(), directories.product_out_paths.size(),
+      "Number of product directories doesn't match number of instances");
+  LocalInstanceGroup group =
+      CF_EXPECT(LocalInstanceGroup::Create(std::move(group_params)));
+
+  // The base and other directories are always set to the default location, if
+  // the user provides custom directories the ones in the default locations
+  // become symbolic links to those.
+  CF_EXPECT(CreateOrLinkGroupDirectories(group, std::move(directories)));
+
+  CF_EXPECT(instance_db_.AddInstanceGroup(group));
+  return group;
 }
 
 Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
