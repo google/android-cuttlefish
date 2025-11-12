@@ -17,6 +17,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 
 namespace cuttlefish {
 
