@@ -355,11 +355,13 @@ CasDownloader::CasDownloader(std::string downloader_path,
       prefer_uncompressed_(prefer_uncompressed) {}
 
 Result<void> CasDownloader::DownloadFile(
-    const std::string& build_id, const std::string& build_target,
-    const std::string& artifact_name, const std::string& target_directory,
-    const DigestsFetcher& digests_fetcher,
+    const DeviceBuild& build, const std::string& artifact_name,
+    const std::string& target_directory, const DigestsFetcher& digests_fetcher,
     const std::optional<std::string>& stats_filepath) {
   std::string download_directory = target_directory;
+  // Extract build id and target from DeviceBuild
+  const std::string& build_id = build.id;
+  const std::string& build_target = build.target;
   CasIdentifier cas_identifier = CF_EXPECT(
       GetCasIdentifier(build_id, build_target, artifact_name, digests_fetcher));
   std::string filename = cas_identifier.filename;
