@@ -76,7 +76,7 @@ override_dh_installinit:
 # the `--workspace_status_command` flag path depends on the current working directory of base/cvd
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	cd cvd && bazel build ${remote_cache_arg} ${disk_cache_arg} ${compilation_mode} ${conlyopts} ${copts} ${cxxopts} ${linkopts} 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
+	cd cvd && bazel build ${remote_cache_arg} ${disk_cache_arg} ${compilation_mode} ${conlyopts} ${copts} ${cxxopts} ${linkopts} -c opt 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
 	dh_auto_build
 
 # Only generate optimized DWARF if debug is enabled
