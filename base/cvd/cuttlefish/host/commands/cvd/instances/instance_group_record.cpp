@@ -27,6 +27,7 @@
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include <json/json.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
@@ -35,15 +36,6 @@
 namespace cuttlefish {
 
 namespace {
-
-static constexpr const char kJsonGroupName[] = "Group Name";
-static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
-static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
-static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
-static constexpr const char kJsonStartTime[] = "Start Time";
-static constexpr const char kJsonInstances[] = "Instances";
-static constexpr const char kJsonInstanceId[] = "Instance Id";
-static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
 
 std::vector<LocalInstance> Filter(
     const std::vector<LocalInstance>& instances,
@@ -190,63 +182,6 @@ std::string LocalInstanceGroup::ProductDir(int instance_index) const {
 std::string LocalInstanceGroup::BaseDir() const {
   // The base directory is always the parent of the home directory
   return android::base::Dirname(HomeDir());
-}
-
-Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
-    const Json::Value& group_json) {
-  CF_EXPECT(group_json.isMember(kJsonGroupName));
-  const std::string group_name = group_json[kJsonGroupName].asString();
-  CF_EXPECT(group_json.isMember(kJsonHomeDir));
-  const std::string home_dir = group_json[kJsonHomeDir].asString();
-  CF_EXPECT(group_json.isMember(kJsonHostArtifactPath));
-  const std::string host_artifacts_path =
-      group_json[kJsonHostArtifactPath].asString();
-  CF_EXPECT(group_json.isMember(kJsonProductOutPath));
-  const std::string product_out_path =
-      group_json[kJsonProductOutPath].asString();
-  TimeStamp start_time = CvdServerClock::now();
-
-  // test if the field is available as the field has been added
-  // recently as of b/315855286
-  if (group_json.isMember(kJsonStartTime)) {
-    auto restored_start_time_result =
-        DeserializeTimePoint(group_json[kJsonStartTime]);
-    if (restored_start_time_result.ok()) {
-      start_time = std::move(*restored_start_time_result);
-    } else {
-      LOG(ERROR) << "Start time restoration from json failed, so we use "
-                 << " the current system time. Reasons: "
-                 << restored_start_time_result.error().FormatForEnv();
-    }
-  }
-
-  cvd::InstanceGroup group_proto;
-  group_proto.set_name(group_name);
-  group_proto.set_home_directory(home_dir);
-  group_proto.set_host_artifacts_path(host_artifacts_path);
-  group_proto.set_product_out_path(product_out_path);
-  group_proto.set_start_time_sec(CvdServerClock::to_time_t(start_time));
-
-  CF_EXPECT(group_json.isMember(kJsonInstances));
-  const Json::Value& instances_json_array = group_json[kJsonInstances];
-  CF_EXPECT(instances_json_array.isArray());
-  for (int i = 0; i < (int)instances_json_array.size(); i++) {
-    const Json::Value& instance_json = instances_json_array[i];
-    CF_EXPECT(instance_json.isMember(kJsonInstanceName));
-    const std::string instance_name =
-        instance_json[kJsonInstanceName].asString();
-    CF_EXPECT(instance_json.isMember(kJsonInstanceId));
-    const std::string instance_id = instance_json[kJsonInstanceId].asString();
-
-    int id = -1;
-    CF_EXPECTF(android::base::ParseInt(instance_id, std::addressof(id)),
-               "Invalid instance ID in instance json: {}", instance_id);
-    auto instance = group_proto.add_instances();
-    instance->set_id(id);
-    instance->set_name(instance_name);
-  }
-
-  return Create(group_proto);
 }
 
 Result<Json::Value> LocalInstanceGroup::FetchStatus(

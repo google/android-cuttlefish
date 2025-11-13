@@ -440,57 +440,6 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
 }
 
-TEST_F(CvdInstanceDatabaseJsonTest, DumpLoadDumpCompare) {
-  // starting set up
-  if (!SetUpOk()) {
-    GTEST_SKIP() << Error().msg;
-  }
-  /*
-   * Dumping to json, clearing up the DB, loading from the json,
-   *
-   */
-  auto serialized_db =
-      "{"
-      "  \"Groups\" : ["
-      "    {"
-      "    \"Group Name\" : \"miau\","
-      "    \"Host Tools Dir\" : \"/host/out/path\","
-      "    \"Instances\" : ["
-      "      {"
-      "        \"Instance Id\" : \"1\","
-      "        \"Parent Group\" : \"miau\","
-      "        \"Per-Instance Name\" : \"8\""
-      "      },{"
-      "        \"Instance Id\" : \"10\","
-      "        \"Parent Group\" : \"miau\","
-      "        \"Per-Instance Name\" : \"tv_instance\""
-      "      }"
-      "    ],"
-      "    \"Product Out Dir\" : \"/product/out/path\","
-      "    \"Runtime/Home Dir\" : \"/home/dir\","
-      "    \"Start Time\" : \"123456789\""
-      "    }"
-      "  ]"
-      "}";
-  auto json_parsing = ParseJson(serialized_db);
-  ASSERT_TRUE(json_parsing.ok()) << serialized_db << std::endl
-                                 << " is not a valid json.";
-  auto& db = GetDb();
-  auto load_result = db.LoadFromJson(*json_parsing);
-  ASSERT_TRUE(load_result.ok()) << load_result.error().Trace();
-  {
-    // re-look up the group and the instances
-    auto miau_group = db.FindGroup({.group_name = "miau"});
-    ASSERT_TRUE(miau_group.ok()) << miau_group.error().Trace();
-    auto result_8 = db.FindInstanceWithGroup({.instance_names = {"8"}});
-    auto result_tv =
-        db.FindInstanceWithGroup({.instance_names = {"tv_instance"}});
-
-    ASSERT_TRUE(result_8.ok()) << result_8.error().Trace();
-    ASSERT_TRUE(result_tv.ok()) << result_tv.error().Trace();
-  }
-}
-
 TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;

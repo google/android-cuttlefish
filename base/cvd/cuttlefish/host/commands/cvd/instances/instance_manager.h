@@ -29,7 +29,6 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 
 namespace cuttlefish {
 
@@ -49,7 +48,7 @@ class InstanceManager {
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
 
-  cvd::Status CvdClear(const CommandRequest&);
+  Result<void> CvdClear(const CommandRequest&);
 
   Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
 

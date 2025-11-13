@@ -36,7 +36,6 @@
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -202,18 +201,11 @@ Result<void> InstanceManager::IssueStopCommand(
   return {};
 }
 
-cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
-  cvd::Status status;
+Result<void> InstanceManager::CvdClear(const CommandRequest& request) {
   const std::string config_json_name =
       android::base::Basename(GetGlobalConfigFileLink());
-  auto instance_groups_res = instance_db_.Clear();
-  if (!instance_groups_res.ok()) {
-    fmt::print(std::cerr, "Failed to clear instance database: {}",
-               instance_groups_res.error().Message());
-    status.set_code(cvd::Status::INTERNAL);
-    return status;
-  }
-  auto instance_groups = *instance_groups_res;
+  auto instance_groups =
+      CF_EXPECT(instance_db_.Clear(), "Failed to clear instance database");
   for (auto& group : instance_groups) {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
@@ -242,8 +234,7 @@ cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
   std::cerr << "Stopped all known instances\n";
-  status.set_code(cvd::Status::OK);
-  return status;
+  return {};
 }
 
 Result<std::optional<InstanceLockFile>> InstanceManager::TryAcquireLock(

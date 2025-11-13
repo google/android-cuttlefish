@@ -149,13 +149,6 @@ class CvdResetCommandHandler : public CvdCommandHandler {
       LOG(ERROR) << "Error deleting instance database file";
     }
 
-    // Any responsive cvd server process was stopped nicely when this process
-    // began, kill any unresponsive ones left.
-    auto server_kill_res = KillCvdServerProcess();
-    if (!server_kill_res.ok()) {
-      LOG(ERROR) << "Error trying to kill unresponsive cvd server: "
-                 << server_kill_res.error().Message();
-    }
     CF_EXPECT(KillAllCuttlefishInstances(
         /* clear_instance_dirs*/ options.clean_runtime_dir));
     return {};

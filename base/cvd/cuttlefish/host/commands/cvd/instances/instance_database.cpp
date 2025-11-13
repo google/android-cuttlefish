@@ -40,8 +40,6 @@ namespace cuttlefish {
 
 namespace {
 
-constexpr const char kJsonGroups[] = "Groups";
-
 constexpr const unsigned UNSET_ID = 0;
 
 Result<std::string> GenUniqueGroupName(const cvd::PersistentData& data) {
@@ -266,25 +264,6 @@ Result<std::vector<LocalInstanceGroup>> InstanceDatabase::InstanceGroups()
           ret.push_back(CF_EXPECT(LocalInstanceGroup::Create(group_proto)));
         }
         return ret;
-      });
-}
-
-Result<void> InstanceDatabase::LoadFromJson(const Json::Value& db_json) {
-  std::vector<LocalInstanceGroup> new_groups;
-  CF_EXPECT(db_json.isMember(kJsonGroups));
-  const Json::Value& group_array = db_json[kJsonGroups];
-  CF_EXPECT(group_array.isArray());
-  int n_groups = group_array.size();
-  for (int i = 0; i < n_groups; i++) {
-    new_groups.push_back(
-        CF_EXPECT(LocalInstanceGroup::Deserialize(group_array[i])));
-  }
-  return viewer_.WithExclusiveLock<void>(
-      [&new_groups](cvd::PersistentData& data) -> Result<void> {
-        for (const auto& group : new_groups) {
-          *data.add_instance_groups() = group.Proto();
-        }
-        return {};
       });
 }
 

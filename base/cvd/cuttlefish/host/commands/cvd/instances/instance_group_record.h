@@ -48,8 +48,6 @@ class LocalInstanceGroup {
   LocalInstanceGroup(const LocalInstanceGroup&) = default;
   LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
 
-  static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
-
   const std::string& GroupName() const { return group_proto_->name(); }
   const std::string& HomeDir() const { return group_proto_->home_directory(); }
   const std::string& HostArtifactsPath() const {
