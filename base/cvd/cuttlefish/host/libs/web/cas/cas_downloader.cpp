@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/expected.h>
 #include <android-base/logging.h>
 #include <json/value.h>
 
@@ -36,6 +37,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
