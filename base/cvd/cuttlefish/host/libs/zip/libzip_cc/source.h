@@ -23,39 +23,11 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 
 namespace cuttlefish {
-
-class ReadableZipSource {
- public:
-  friend class ReadableZip;
-  friend class WritableZip;
-  friend class ZipSourceReader;
-  friend class SeekingZipSourceReader;
-  friend class ZipSourceWriter;
-
-  static Result<ReadableZipSource> FromCallbacks(
-      std::unique_ptr<ReadableZipSourceCallback>);
-
-  // Can be safely called with a subclass type.
-  ReadableZipSource(ReadableZipSource&&);
-  virtual ~ReadableZipSource();
-  // Can be safely called with a subclass type.
-  ReadableZipSource& operator=(ReadableZipSource&&);
-
-  Result<ZipStat> Stat();
-
-  /* Returns a RAII instance that puts this instance in an "open for reading"
-   * state. Can fail. Should not outlive this instance. */
-  Result<class ZipSourceReader> Reader();
-
- protected:
-  ManagedZipSource raw_;
-
-  ReadableZipSource(ManagedZipSource);
-};
 
 class SeekableZipSource : public ReadableZipSource {
  public:
@@ -75,26 +47,6 @@ class SeekableZipSource : public ReadableZipSource {
 
  protected:
   SeekableZipSource(ManagedZipSource);
-};
-
-/* A `ReadableZipSource` in an "open for reading" state. */
-class ZipSourceReader {
- public:
-  friend class ReadableZipSource;
-  friend class SeekingZipSourceReader;
-
-  ZipSourceReader(ZipSourceReader&&);
-  virtual ~ZipSourceReader();
-  ZipSourceReader& operator=(ZipSourceReader&&);
-
-  /* Returns a failed Result on error, or a successful result with bytes read or
-   * 0 on EOF. */
-  Result<uint64_t> Read(void* data, uint64_t length);
-
- private:
-  ZipSourceReader(ReadableZipSource*);
-
-  ReadableZipSource* source_;
 };
 
 /* A `SeekableZipSource` in an "open for reading" state. */
