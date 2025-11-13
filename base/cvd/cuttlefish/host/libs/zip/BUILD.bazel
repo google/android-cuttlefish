@@ -168,7 +168,7 @@ cf_cc_library(
     hdrs = ["zip_copy.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
     ],
 )
@@ -197,8 +197,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip:zip_copy",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
-        "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
     ],
 )
 
@@ -209,6 +210,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
-        "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
     ],
 )
