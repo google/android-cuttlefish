@@ -85,6 +85,7 @@ struct CasDownloaderFlags {
   FlagValue<std::string> downloader_path;
   FlagValue<bool> prefer_uncompressed;
   FlagValue<std::string> cache_dir;
+  FlagValue<std::string> invocation_id;
   FlagValue<int64_t> cache_max_size;
   FlagValue<bool> cache_lock;
   FlagValue<bool> use_hardlink;

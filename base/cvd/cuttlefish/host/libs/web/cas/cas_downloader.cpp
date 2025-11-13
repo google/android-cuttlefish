@@ -182,6 +182,7 @@ Json::Value ConvertToConfigFlags(const CasDownloaderFlags& flags) {
   config_flags["batch-update-blobs-timeout"] =
       ToSeconds(flags.batch_update_blobs_timeout.value);    
   config_flags["version"] = flags.version.value;    
+  config_flags["invocation-id"] = flags.invocation_id.value;    
   return config_flags;
 }
 
@@ -219,6 +220,9 @@ void MergeCliValuesIntoConfig(const CasDownloaderFlags& flags,
   
   if (flags.cache_dir.user_specified) {
     config_flags["cache-dir"] = flags.cache_dir.value;
+  }
+  if (flags.invocation_id.user_specified) {
+    config_flags["invocation-id"] = flags.invocation_id.value;
   }
   if (flags.cache_max_size.user_specified) {
     config_flags["cache-max-size"] = flags.cache_max_size.value;
@@ -347,6 +351,40 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
       new CasDownloader{downloader_path, cas_flags, prefer_uncompressed});
 }
 
+void AppendBuildInfoToInvocationId(
+    const DeviceBuild& build, std::vector<std::string>& cas_flags) {
+  // Append build info, including build id, branch, and flavor, to the invocation-id flag.
+  // Do this only if the invocation-id flag is already present and contains `caller` only.
+  size_t found_index = std::string::npos;
+
+  for (size_t i = 0; i < cas_flags.size(); ++i) {
+    if (cas_flags[i].find("-invocation-id=caller=") == 0 &&
+        cas_flags[i].find(",") == std::string::npos) {
+      found_index = i;
+      break;
+    }
+  }
+
+  if (found_index == std::string::npos) {
+    return; // Condition not met; nothing to update/replace.
+  }
+
+  std::string invocation_id_flag = cas_flags[found_index];
+  cas_flags.erase(cas_flags.begin() + found_index);
+
+  if (!build.id.empty()) {
+    invocation_id_flag += ",bid=" + build.id;
+  }
+  if (!build.branch.empty()) {
+    invocation_id_flag += ",branch=" + build.branch;
+  }
+  if (!build.target.empty()) {
+    invocation_id_flag += ",flavor=" + build.target;
+  }
+
+  cas_flags.push_back(invocation_id_flag);
+}
+
 CasDownloader::CasDownloader(std::string downloader_path,
                              std::vector<std::string> flags,
                              bool prefer_uncompressed)
@@ -369,6 +407,7 @@ Result<void> CasDownloader::DownloadFile(
   if (filename.find("_chunked_dir_") == 0) {
     download_directory += "/" + artifact_name;
   }
+  AppendBuildInfoToInvocationId(build, flags_);
   Command cmd = GetCommand(downloader_path_, flags_, cas_identifier,
                            download_directory, stats_filepath);
   LOG(INFO) << "CAS Downloader Command: '" << cmd.AsBashScript() << "'";

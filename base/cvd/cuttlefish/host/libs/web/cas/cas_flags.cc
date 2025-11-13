@@ -77,6 +77,7 @@ CasDownloaderFlags::CasDownloaderFlags() {
   downloader_path.value = GetDefaultDownloaderPath();
   prefer_uncompressed.value = false;
   cache_dir.value = "";
+  invocation_id.value = "";
   cache_max_size.value = kMinCacheMaxSize;
   cache_lock.value = false;
   use_hardlink.value = true;
@@ -132,6 +133,16 @@ std::vector<Flag> CasDownloaderFlags::Flags() {
           })
           .Help("Cache directory to store downloaded files (casdownloader "
                 "flag: cache-dir)."));
+  flags.emplace_back(
+      GflagsCompatFlag("cas_invocation_id")
+          .Getter([this]() { return this->invocation_id.value; })
+          .Setter([this](const FlagMatch& match) -> Result<void> {
+            this->invocation_id.value = match.value;
+            this->invocation_id.user_specified = true;
+            return {};
+          })
+          .Help("Optional invocation identifier to tag CAS downloader runs "
+                "(casdownloader flag: invocation-id)."));
   flags.emplace_back(
       GflagsCompatFlagInt64("cas_cache_max_size", this->cache_max_size.value)
           .Getter([this]() { return std::to_string(this->cache_max_size.value); })
