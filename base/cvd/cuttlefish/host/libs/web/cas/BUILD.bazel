@@ -31,6 +31,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
