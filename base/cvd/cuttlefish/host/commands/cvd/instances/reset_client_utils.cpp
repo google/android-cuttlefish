@@ -19,7 +19,6 @@
 #include <signal.h>
 
 #include <iostream>  // std::endl
-#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -39,7 +38,6 @@
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
-#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -195,60 +193,6 @@ Result<void> ForcefullyStopGroup(const GroupProcInfo& group) {
 }
 
 }  // namespace
-
-Result<void> KillCvdServerProcess() {
-  std::vector<pid_t> self_exe_pids =
-      CF_EXPECT(CollectPidsByArgv0(kServerExecPath));
-  if (self_exe_pids.empty()) {
-    LOG(ERROR) << "cvd server is not running.";
-    return {};
-  }
-  std::vector<pid_t> cvd_server_pids;
-  /**
-   * Finds processes whose executable path is kServerExecPath, and
-   * that is owned by getuid(), and that has the "INTERNAL_server_fd"
-   * in the arguments list.
-   */
-  for (const auto pid : self_exe_pids) {
-    auto proc_info_result = ExtractProcInfo(pid);
-    if (!proc_info_result.ok()) {
-      LOG(ERROR) << "Failed to extract process info for pid " << pid;
-      continue;
-    }
-    auto owner_uid_result = OwnerUid(pid);
-    if (!owner_uid_result.ok()) {
-      LOG(ERROR) << "Failed to find the uid for pid " << pid;
-      continue;
-    }
-    if (getuid() != *owner_uid_result) {
-      continue;
-    }
-    for (const auto& arg : proc_info_result->args_) {
-      if (Contains(arg, kInternalServerFd)) {
-        cvd_server_pids.push_back(pid);
-        break;
-      }
-    }
-  }
-  if (cvd_server_pids.empty()) {
-    LOG(ERROR)
-        << "Cvd server process is not found. Perhaps, it is not running.";
-    return {};
-  }
-  if (cvd_server_pids.size() > 1) {
-    LOG(ERROR) << "There are " << cvd_server_pids.size() << " server processes "
-               << "running while it should be up to 1.";
-  }
-  for (const auto pid : cvd_server_pids) {
-    auto kill_ret = kill(pid, SIGKILL);
-    if (kill_ret == 0) {
-      LOG(ERROR) << "Cvd server process #" << pid << " is killed.";
-    } else {
-      LOG(ERROR) << "kill(" << pid << ", SIGKILL) failed.";
-    }
-  }
-  return {};
-}
 
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
   auto stop_cvd_result = RunStopCvdAll(clear_runtime_dirs);

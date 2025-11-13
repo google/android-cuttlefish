@@ -69,7 +69,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/legacy:cvd_server_cc_proto",
     ],
 )
 
@@ -435,7 +434,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/host/commands/cvd/legacy",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/cvd/version",
         "@fmt",

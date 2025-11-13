@@ -22,8 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include <json/json.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/data_viewer.h"
@@ -50,8 +48,6 @@ class InstanceDatabase {
   InstanceDatabase(const std::string& backing_file);
 
   Result<bool> IsEmpty() const;
-
-  Result<void> LoadFromJson(const Json::Value&);
 
   /** Adds instance group.
    *
