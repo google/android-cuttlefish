@@ -15,6 +15,7 @@
 
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
+#include <fmt/format.h>
 #include <stdint.h>
 
 #include <string>

@@ -61,5 +61,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
+        "@fmt",
     ],
 )
