@@ -203,8 +203,7 @@ fi
                                    text));
   }
 
-  DeviceBuild MakeDeviceBuild(const std::string& id,
-                              const std::string& target,
+  DeviceBuild MakeDeviceBuild(const std::string& id, const std::string& target,
                               const std::string& branch = "") {
     DeviceBuild b;
     b.id = id;
@@ -329,6 +328,24 @@ TEST_F(CasDownloaderTests, HandlesFalseBoolFlag) {
   EXPECT_THAT(download, IsOk());
   std::string output = ReadFile(cas_output_filepath_);
   EXPECT_THAT(output, HasSubstr("-use-hardlink=false"));
+}
+
+TEST_F(CasDownloaderTests, HandlesInvocationIdFlag) {
+  downloader_path_ = FakeDownloaderForArtifactAndFlags(
+      target_dir_ + "/artifact_name", "invocation-id");
+  std::unique_ptr<CasDownloader> cas =
+      CasUsingConfig("invocation-id=caller=caller");
+
+  Result<void> download = cas->DownloadFile(
+      MakeDeviceBuild("build_id", "build_target", "branch"), "artifact_name",
+      target_dir_, [this](std::string filename) -> Result<std::string> {
+        return CasDigestsFile(filename, "_chunked_artifact_name=digest");
+      });
+
+  EXPECT_THAT(download, IsOk());
+  std::string output = ReadFile(cas_output_filepath_);
+  EXPECT_THAT(output, HasSubstr("-invocation-id=caller=caller,bid=build_id,"
+                                "branch=branch,flavor=build_target"));
 }
 
 TEST_F(CasDownloaderTests, HandlesUnexpectedHelpOutput) {
