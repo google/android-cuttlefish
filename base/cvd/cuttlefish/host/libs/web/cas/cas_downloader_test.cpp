@@ -203,6 +203,20 @@ fi
                                    text));
   }
 
+  DeviceBuild MakeDeviceBuild(const std::string& id,
+                              const std::string& target,
+                              const std::string& branch = "") {
+    DeviceBuild b;
+    b.id = id;
+    b.target = target;
+
+    if (!branch.empty()) {
+      b.branch = branch;
+    }
+
+    return b;
+  }
+
   Result<void> CreateTestDirs() {
     target_dir_ = std::string(temp_dir_.path) + "/target_dir";
     CF_EXPECT(EnsureDirectoryExists(target_dir_, 0755));
@@ -254,7 +268,7 @@ TEST_F(CasDownloaderTests, UsesAdcIfServiceAccountUnavailable) {
   std::unique_ptr<CasDownloader> cas = CasUsingConfig();
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -274,7 +288,7 @@ TEST_F(CasDownloaderTests, UsesServiceAccountIfAvailable) {
       CasWithServiceAccountUsingConfig(service_account_filepath_, false);
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -291,7 +305,7 @@ TEST_F(CasDownloaderTests, IgnoresUnsupportedFlags) {
   std::unique_ptr<CasDownloader> cas = CasUsingConfig("unsupported-flag=value");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -307,7 +321,7 @@ TEST_F(CasDownloaderTests, HandlesFalseBoolFlag) {
   std::unique_ptr<CasDownloader> cas = CasUsingConfig("use-hardlink=false");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -335,7 +349,7 @@ fi
   std::unique_ptr<CasDownloader> cas = CasUsingConfig("use-hardlink=false");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -352,7 +366,7 @@ TEST_F(CasDownloaderTests, PassesOptionalStatsFilepathWhenSet) {
   std::string stats_filepath = target_dir_ + "/stats.json";
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       },
@@ -369,7 +383,7 @@ TEST_F(CasDownloaderTests, RecognizesValidFlags) {
   std::unique_ptr<CasDownloader> cas = CasUsingConfig("rpc-timeout=120s");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -384,12 +398,12 @@ TEST_F(CasDownloaderTests, RecognizesValidFlags) {
 }
 
 TEST_F(CasDownloaderTests, DisablesCacheIfCacheDirNotSet) {
-  downloader_path_ = FakeDownloaderForArtifactAndFlags(
-      target_dir_ + "/artifact_name");
+  downloader_path_ =
+      FakeDownloaderForArtifactAndFlags(target_dir_ + "/artifact_name");
   std::unique_ptr<CasDownloader> cas = CasUsingConfig();
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -407,7 +421,7 @@ TEST_F(CasDownloaderTests, CacheEnabledIfCacheDirSet) {
       CasUsingConfig("cache-dir=path/to/cache");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -425,7 +439,7 @@ TEST_F(CasDownloaderTests, FailsIfDigestsFileDoesNotExist) {
   bool digest_fetched = false;
 
   Result<void> download = cas->DownloadFile(
-      "id_1", "target_1", "artifact_3", target_dir_,
+      MakeDeviceBuild("id_1", "target_1"), "artifact_3", target_dir_,
       [&digest_fetched](std::string filename) -> Result<std::string> {
         digest_fetched = true;
         return CF_ERRF("CAS digest for '{}' not found.", filename);
@@ -443,7 +457,7 @@ TEST_F(CasDownloaderTests, FailsIfArtifactNotInDigestsFile) {
   bool digest_fetched = false;
 
   Result<void> download = cas->DownloadFile(
-      "id_1", "target_1", "artifact_3", target_dir_,
+      MakeDeviceBuild("id_1", "target_1"), "artifact_3", target_dir_,
       [&digest_fetched, this](std::string filename) -> Result<std::string> {
         digest_fetched = true;
         return CasDigestsFile(filename, "_chunked_artifact_1=digest_1",
@@ -468,8 +482,9 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
   };
 
   // Download of the digests always occur for the first artifact.
-  Result<void> download = cas->DownloadFile("id_1", "target_1", "artifact_1",
-                                            target_dir_, digests_fetcher);
+  Result<void> download =
+      cas->DownloadFile(MakeDeviceBuild("id_1", "target_1"), "artifact_1",
+                        target_dir_, digests_fetcher);
 
   EXPECT_THAT(download, IsOk());
   std::string output = ReadFile(cas_output_filepath_);
@@ -479,8 +494,10 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
   // No download of the digests file if for the same build id and target.
   digest_fetched = false;
   android::base::RemoveFileIfExists(cas_output_filepath_);
-  download = cas->DownloadFile("id_1", "target_1", "artifact_2", target_dir_,
-                               digests_fetcher);
+  {
+    download = cas->DownloadFile(MakeDeviceBuild("id_1", "target_1"),
+                                 "artifact_2", target_dir_, digests_fetcher);
+  }
   // Skip checking download result as the fake cas downloader is not
   // sophisticated enough to create the artifacts based on the digests.
   output = ReadFile(cas_output_filepath_);
@@ -491,8 +508,10 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
   digest_fetched = false;
   android::base::RemoveFileIfExists(cas_output_filepath_);
   android::base::RemoveFileIfExists(target_dir_ + "/artifact_1");
-  download = cas->DownloadFile("id_2", "target_1", "artifact_1", target_dir_,
-                               digests_fetcher);
+  {
+    download = cas->DownloadFile(MakeDeviceBuild("id_2", "target_1"),
+                                 "artifact_1", target_dir_, digests_fetcher);
+  }
   output = ReadFile(cas_output_filepath_);
   EXPECT_THAT(download, IsOk());
   EXPECT_THAT(output, HasSubstr("digest=digest_1"));
@@ -502,8 +521,10 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
   digest_fetched = false;
   android::base::RemoveFileIfExists(cas_output_filepath_);
   android::base::RemoveFileIfExists(target_dir_ + "/artifact_1");
-  download = cas->DownloadFile("id_2", "target_2", "artifact_1", target_dir_,
-                               digests_fetcher);
+  {
+    download = cas->DownloadFile(MakeDeviceBuild("id_2", "target_2"),
+                                 "artifact_1", target_dir_, digests_fetcher);
+  }
   android::base::RemoveFileIfExists(target_dir_ + "/artifact_1");
   output = ReadFile(cas_output_filepath_);
   EXPECT_THAT(output, HasSubstr("digest=digest_1"));
@@ -516,7 +537,7 @@ TEST_F(CasDownloaderTests, DownloadsUncompressedIfPreferUncompressed) {
   std::unique_ptr<CasDownloader> cas = CasPreferUncompressedUsingConfig();
 
   Result<void> download = cas->DownloadFile(
-      "id_1", "target_1", "artifact", target_dir_,
+      MakeDeviceBuild("id_1", "target_1"), "artifact", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact=digest_compressed",
                               "_chunked_dir_artifact=digest_uncompressed");
@@ -533,7 +554,7 @@ TEST_F(CasDownloaderTests, DownloadsCompressedIfNotPreferUncompressed) {
   std::unique_ptr<CasDownloader> cas = CasUsingConfig();
 
   Result<void> download = cas->DownloadFile(
-      "id_1", "target_1", "artifact", target_dir_,
+      MakeDeviceBuild("id_1", "target_1"), "artifact", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact=digest_compressed",
                               "_chunked_dir_artifact=digest_uncompressed");
@@ -551,7 +572,7 @@ TEST_F(CasDownloaderTests,
   std::unique_ptr<CasDownloader> cas = CasPreferUncompressedUsingConfig();
 
   Result<void> download = cas->DownloadFile(
-      "id_1", "target_1", "artifact", target_dir_,
+      MakeDeviceBuild("id_1", "target_1"), "artifact", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact=digest_compressed");
       });
@@ -581,7 +602,7 @@ TEST_F(CasDownloaderTests, PassesCasOptionsFromCommandLine) {
       CasFromCommandLine(service_account_filepath, flags);
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -603,10 +624,11 @@ TEST_F(CasDownloaderTests, CacheMaxSize_DefaultWhenAbsent) {
   downloader_path_ = FakeDownloaderForArtifactAndFlags(
       target_dir_ + "/artifact_name", "cache-dir", "cache-max-size");
   // Provide cache-dir but omit cache-max-size so default should be used.
-  std::unique_ptr<CasDownloader> cas = CasUsingConfig("cache-dir=path/to/cache");
+  std::unique_ptr<CasDownloader> cas =
+      CasUsingConfig("cache-dir=path/to/cache");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
@@ -626,7 +648,7 @@ TEST_F(CasDownloaderTests, CacheMaxSize_OverriddenWhenTooSmall) {
       CasUsingConfig("cache-dir=path/to/cache", "cache-max-size=1");
 
   Result<void> download = cas->DownloadFile(
-      "build_id", "build_target", "artifact_name", target_dir_,
+      MakeDeviceBuild("build_id", "build_target"), "artifact_name", target_dir_,
       [this](std::string filename) -> Result<std::string> {
         return CasDigestsFile(filename, "_chunked_artifact_name=digest");
       });
