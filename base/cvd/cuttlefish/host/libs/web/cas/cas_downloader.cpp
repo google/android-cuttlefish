@@ -73,22 +73,22 @@ std::vector<std::string> CreateCasFlags(std::string downloader_path,
                                         Json::Value& config_flags) {
   std::vector<std::string> cas_flags;
 
-  // If cache-dir is set and cache-max-size is absent or smaller than the default,
-  // ensure cache-max-size is at least kMinCacheMaxSize.
+  // If cache-dir is set and cache-max-size is absent or smaller than the
+  // default, ensure cache-max-size is at least kMinCacheMaxSize.
   if (!config_flags["cache-dir"].asString().empty()) {
     if (config_flags.isMember("cache-max-size")) {
       int64_t provided = config_flags["cache-max-size"].asInt64();
       if (provided < kMinCacheMaxSize) {
         LOG(WARNING) << "cache-max-size (" << provided
-                  << ") is smaller than default; using default ("
-                  << kMinCacheMaxSize << ")";
+                     << ") is smaller than default; using default ("
+                     << kMinCacheMaxSize << ")";
         config_flags["cache-max-size"] = kMinCacheMaxSize;
       }
     } else {
       config_flags["cache-max-size"] = kMinCacheMaxSize;
     }
   }
-  
+
   // Releasing of casdownloader and cvd can be out of sync. Filter out
   // unsupported flags for casdownloader.
   std::set<std::string> supported_flags = GetSupportedFlags(downloader_path);
@@ -166,23 +166,22 @@ inline std::string ToSeconds(int timeout) {
 
 Json::Value ConvertToConfigFlags(const CasDownloaderFlags& flags) {
   Json::Value config_flags;
-  config_flags["cache-dir"] = flags.cache_dir.value;    
-  config_flags["cache-max-size"] = flags.cache_max_size.value;    
-  config_flags["cache-lock"] = flags.cache_lock.value;    
-  config_flags["use-hardlink"] = flags.use_hardlink.value;    
-  config_flags["cas-concurrency"] = flags.cas_concurrency.value;    
-  config_flags["memory-limit"] = flags.memory_limit.value;    
-  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout.value);    
+  config_flags["cache-dir"] = flags.cache_dir.value;
+  config_flags["cache-max-size"] = flags.cache_max_size.value;
+  config_flags["cache-lock"] = flags.cache_lock.value;
+  config_flags["use-hardlink"] = flags.use_hardlink.value;
+  config_flags["cas-concurrency"] = flags.cas_concurrency.value;
+  config_flags["memory-limit"] = flags.memory_limit.value;
+  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout.value);
   config_flags["get-capabilities-timeout"] =
-      ToSeconds(flags.get_capabilities_timeout.value);    
-  config_flags["get-tree-timeout"] =
-      ToSeconds(flags.get_tree_timeout.value);    
+      ToSeconds(flags.get_capabilities_timeout.value);
+  config_flags["get-tree-timeout"] = ToSeconds(flags.get_tree_timeout.value);
   config_flags["batch-read-blobs-timeout"] =
-      ToSeconds(flags.batch_read_blobs_timeout.value);    
+      ToSeconds(flags.batch_read_blobs_timeout.value);
   config_flags["batch-update-blobs-timeout"] =
-      ToSeconds(flags.batch_update_blobs_timeout.value);    
-  config_flags["version"] = flags.version.value;    
-  config_flags["invocation-id"] = flags.invocation_id.value;    
+      ToSeconds(flags.batch_update_blobs_timeout.value);
+  config_flags["version"] = flags.version.value;
+  config_flags["invocation-id"] = flags.invocation_id.value;
   return config_flags;
 }
 
@@ -209,15 +208,16 @@ Command GetCommand(const std::string downloader_path,
 
 }  // namespace
 
-// Helper function to merge CLI values into config flags when CLI takes precedence.
-// This function implements the priority rule: if a flag was specified on the CLI
-// (user_specified=true), its value overrides any value from the config file.
+// Helper function to merge CLI values into config flags when CLI takes
+// precedence. This function implements the priority rule: if a flag was
+// specified on the CLI (user_specified=true), its value overrides any value
+// from the config file.
 namespace {
 void MergeCliValuesIntoConfig(const CasDownloaderFlags& flags,
                               Json::Value& config_flags) {
   // Merge CLI values (if provided) on top of config file values so CLI wins.
   // Use the same keys as ConvertToConfigFlags.
-  
+
   if (flags.cache_dir.user_specified) {
     config_flags["cache-dir"] = flags.cache_dir.value;
   }
@@ -280,17 +280,20 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
     bool prefer_uncompressed = cas_downloader_flags.prefer_uncompressed.value;
     std::vector<std::string> cas_flags;
 
-    // Determine whether there's a config file to load. The `cas_config_filepath`
-    // may contain a default path (empty if none). If the user explicitly
-    // provided a config filepath and it does not exist, that's an error. If a
-    // config file exists (either user-provided or default), we'll load it and
-    // apply its values unless the corresponding CLI flag was provided.
-    std::string config_filepath = cas_downloader_flags.cas_config_filepath.value;
+    // Determine whether there's a config file to load. The
+    // `cas_config_filepath` may contain a default path (empty if none). If the
+    // user explicitly provided a config filepath and it does not exist, that's
+    // an error. If a config file exists (either user-provided or default),
+    // we'll load it and apply its values unless the corresponding CLI flag was
+    // provided.
+    std::string config_filepath =
+        cas_downloader_flags.cas_config_filepath.value;
     Json::Value config_flags;
     bool has_config_file = false;
     if (!config_filepath.empty() && FileExists(config_filepath)) {
       has_config_file = true;
-    } else if (!config_filepath.empty() && cas_downloader_flags.cas_config_filepath.user_specified) {
+    } else if (!config_filepath.empty() &&
+               cas_downloader_flags.cas_config_filepath.user_specified) {
       // User requested a config file path that doesn't exist.
       return CF_ERRF("CAS Config file not found: {}", config_filepath);
     }
@@ -310,7 +313,8 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
       } else {
         LOG(INFO) << "Using CAS config from: " << config_filepath;
       }
-      std::string config_contents = CF_EXPECT(ReadFileContents(config_filepath));
+      std::string config_contents =
+          CF_EXPECT(ReadFileContents(config_filepath));
       Json::Value config = CF_EXPECT(ParseJson(config_contents));
 
       // Base config flags from file (may be empty object)
@@ -340,11 +344,13 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
 
     // Final sanity: ensure we have a downloader path and binary exists.
     CF_EXPECT(!downloader_path.empty(),
-              "CAS downloader path not provided. Use --cas_downloader_path or set downloader-path in config file.");
+              "CAS downloader path not provided. Use --cas_downloader_path or "
+              "set downloader-path in config file.");
     CF_EXPECT(FileExists(downloader_path),
               "CAS Downloader binary not found at: " << downloader_path);
 
-    // Create cas_flags from the merged config_flags (CLI-overrides applied above)
+    // Create cas_flags from the merged config_flags (CLI-overrides applied
+    // above)
     cas_flags = CreateCasFlags(downloader_path, config_flags);
 
     if (!service_account_filepath.empty() &&
@@ -364,17 +370,17 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
     // Ensure callers and logs clearly indicate that CAS downloading is
     // disabled and why, using the same environment-aware formatting that
     // test helpers use.
-    LOG(INFO) << "CAS downloading disabled: "
-              << result.error().FormatForEnv();
+    LOG(INFO) << "CAS downloading disabled: " << result.error().FormatForEnv();
     return android::base::unexpected(std::move(result).error());
   }
   return result;
 }
 
-void AppendBuildInfoToInvocationId(
-    const DeviceBuild& build, std::vector<std::string>& cas_flags) {
-  // Append build info, including build id, branch, and flavor, to the invocation-id flag.
-  // Do this only if the invocation-id flag is already present and contains `caller` only.
+void AppendBuildInfoToInvocationId(const DeviceBuild& build,
+                                   std::vector<std::string>& cas_flags) {
+  // Append build info, including build id, branch, and flavor, to the
+  // invocation-id flag. Do this only if the invocation-id flag is already
+  // present and contains `caller` only.
   size_t found_index = std::string::npos;
 
   for (size_t i = 0; i < cas_flags.size(); ++i) {
@@ -386,7 +392,7 @@ void AppendBuildInfoToInvocationId(
   }
 
   if (found_index == std::string::npos) {
-    return; // Condition not met; nothing to update/replace.
+    return;  // Condition not met; nothing to update/replace.
   }
 
   std::string invocation_id_flag = cas_flags[found_index];
