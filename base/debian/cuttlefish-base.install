@@ -1,3 +1,5 @@
-cvd/bazel-bin/cuttlefish/package/cuttlefish-common /usr/lib
+#!/usr/bin/dh-exec
+[amd64] cvd/bazel-out/k8-opt/bin/cuttlefish/package/cuttlefish-common /usr/lib
+[arm64] cvd/bazel-out/aarch64-opt/bin/cuttlefish/package/cuttlefish-common /usr/lib
 host/deploy/capability_query.py /usr/lib/cuttlefish-common/bin/
 host/packages/cuttlefish-base/* /
