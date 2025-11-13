@@ -16,6 +16,7 @@ package orchestrator
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -38,6 +39,7 @@ type CreateCVDActionOpts struct {
 	UserArtifactsDirResolver UserArtifactsDirResolver
 	FetchCredentials         cvd.FetchCredentials
 	BuildAPIBaseURL          string
+	VhostUserVsock           string
 }
 
 type CreateCVDAction struct {
@@ -51,6 +53,7 @@ type CreateCVDAction struct {
 	userArtifactsDirResolver UserArtifactsDirResolver
 	fetchCredentials         cvd.FetchCredentials
 	buildAPIBaseURL          string
+	VhostUserVsock           string
 }
 
 func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
@@ -64,6 +67,7 @@ func NewCreateCVDAction(opts CreateCVDActionOpts) *CreateCVDAction {
 		userArtifactsDirResolver: opts.UserArtifactsDirResolver,
 		fetchCredentials:         opts.FetchCredentials,
 		buildAPIBaseURL:          opts.BuildAPIBaseURL,
+		VhostUserVsock:           opts.VhostUserVsock,
 		execContext:              execCtx,
 		cvdCLI:                   cvd.NewCLI(execCtx),
 	}
@@ -97,6 +101,9 @@ func (a *CreateCVDAction) launchCVD(op apiv1.Operation) {
 }
 
 func (a *CreateCVDAction) launchWithCanonicalConfig(op apiv1.Operation) (*apiv1.CreateCVDResponse, error) {
+	if err := a.applyVhostUserVsockOptionIfNeeded(); err != nil {
+		return nil, err
+	}
 	data, err := json.MarshalIndent(a.req.EnvConfig, "", " ")
 	if err != nil {
 		return nil, err
@@ -178,6 +185,7 @@ func (a *CreateCVDAction) launchFromAndroidCI(
 	startParams := startCVDParams{
 		InstanceCount:    instancesCount,
 		MainArtifactsDir: targetDir,
+		VhostUserVsock:   a.VhostUserVsock,
 	}
 	if buildSource.KernelBuild != nil {
 		startParams.KernelDir = targetDir
@@ -229,4 +237,49 @@ func createTempFile(pattern string, data string, mode os.FileMode) (*os.File, er
 		return nil, err
 	}
 	return file, nil
+}
+
+func (a *CreateCVDAction) applyVhostUserVsockOptionIfNeeded() error {
+	if a.VhostUserVsock == "" {
+		// Skip this function if VhostUserVsock option is not specified.
+		return nil
+	}
+	instances, exists := a.req.EnvConfig["instances"]
+	if !exists {
+		return nil
+	}
+	instancesArr, ok := instances.([]interface{})
+	if !ok {
+		return errors.New("unexpected type different from JSON array on 'instances'")
+	}
+	for _, ins := range instancesArr {
+		insMap, ok := ins.(map[string]interface{})
+		if !ok {
+			return errors.New("unexpected type different from JSON object on the member of 'instances'")
+		}
+		vm, exists := insMap["vm"]
+		if !exists {
+			vm = make(map[string]interface{})
+			insMap["vm"] = vm
+		}
+		vmMap, ok := vm.(map[string]interface{})
+		if !ok {
+			return errors.New("unexpected type different from JSON object on 'vm'")
+		}
+		crosvm, exists := vmMap["crosvm"]
+		if !exists {
+			crosvm = make(map[string]interface{})
+			vmMap["crosvm"] = crosvm
+		}
+		crosvmMap, ok := crosvm.(map[string]interface{})
+		if !ok {
+			return errors.New("unexpected type different from JSON object on 'crosvm'")
+		}
+		if _, exists := crosvmMap["vhost_user_vsock"]; !exists {
+			// Specify VhostUserVsock option only when canonical config doesn't
+			// specify any options.
+			crosvmMap["vhost_user_vsock"] = a.VhostUserVsock
+		}
+	}
+	return nil
 }
