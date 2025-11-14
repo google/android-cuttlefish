@@ -18,7 +18,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "@libzip",
         "@zlib",
@@ -68,14 +68,9 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "stat",
-    hdrs = ["stat.h"],
-)
-
-cf_cc_library(
-    name = "source",
-    srcs = ["source.cc"],
-    hdrs = ["source.h"],
+    name = "seekable_source",
+    srcs = ["seekable_source.cc"],
+    hdrs = ["seekable_source.h"],
     features = ["-layering_check"],  # libzip
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
@@ -88,6 +83,11 @@ cf_cc_library(
         "@libzip",
         "@zlib",
     ],
+)
+
+cf_cc_library(
+    name = "stat",
+    hdrs = ["stat.h"],
 )
 
 cf_cc_library(
@@ -106,7 +106,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
-        "//cuttlefish/host/libs/zip/libzip_cc:source",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "@libzip",
         "@zlib",
     ],
