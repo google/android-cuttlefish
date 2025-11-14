@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <android-base/file.h>
@@ -39,7 +40,6 @@
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/build_api_zip.h"
-#include "cuttlefish/host/libs/web/build_zip_name.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 
@@ -175,7 +175,10 @@ FetchBuildContext::FetchBuildContext(FetchContext& fetch_context,
 const Build& FetchBuildContext::Build() const { return build_; }
 
 std::string FetchBuildContext::GetBuildZipName(const std::string& name) const {
-  return ::cuttlefish::GetBuildZipName(build_, name);
+  std::string product =
+      std::visit([](auto&& arg) { return arg.product; }, build_);
+  std::string id = std::get<0>(GetBuildIdAndTarget(build_));
+  return product + "-" + name + "-" + id + ".zip";
 }
 
 std::optional<std::string> FetchBuildContext::GetFilepath() const {
