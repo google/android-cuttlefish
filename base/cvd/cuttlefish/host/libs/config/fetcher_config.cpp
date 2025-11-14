@@ -29,7 +29,6 @@
 #include <android-base/file.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <gflags/gflags.h>
 #include <json/reader.h>
 #include <json/value.h>
 #include <json/writer.h>
@@ -43,7 +42,6 @@ namespace cuttlefish {
 
 namespace {
 
-const char* kFlags = "flags";
 const char* kCvdFiles = "cvd_files";
 const char* kCvdFileSource = "source";
 const char* kCvdFileBuildId = "build_id";
@@ -165,25 +163,6 @@ bool FetcherConfig::LoadFromFile(const std::string& file) {
   }
 
   return true;
-}
-
-void FetcherConfig::RecordFlags() {
-  std::vector<gflags::CommandLineFlagInfo> all_flags;
-  GetAllFlags(&all_flags);
-  Json::Value flags_json(Json::arrayValue);
-  for (const auto& flag : all_flags) {
-    Json::Value flag_json;
-    flag_json["name"] = flag.name;
-    flag_json["type"] = flag.type;
-    flag_json["description"] = flag.description;
-    flag_json["current_value"] = flag.current_value;
-    flag_json["default_value"] = flag.default_value;
-    flag_json["filename"] = flag.filename;
-    flag_json["has_validator_fn"] = flag.has_validator_fn;
-    flag_json["is_default"] = flag.is_default;
-    flags_json.append(flag_json);
-  }
-  (*dictionary_)[kFlags] = flags_json;
 }
 
 namespace {
