@@ -22,22 +22,47 @@ vintf_fragment {
     vendor: true,
 }
 
-cc_binary {
+rust_binary {
     name: "android.hardware.npu@V1-cf-service",
-    vendor: true,
     relative_install_path: "hw",
-    srcs: [
-        "NpuService.cpp",
-        "SchedulingService.cpp",
+    vendor: true,
+    prefer_rlib: true,
+    rustlibs: [
+        "android.hardware.npu-V1-rust",
+        "libanyhow",
+        "libbinder_rs",
+        "liblog_rust",
+        "liblogger",
+        "libnix",
+        "librustutils",
+        "libserde",
+        "libserde_json",
+        "libvsock",
+        "libzerocopy",
     ],
-    shared_libs: [
-        "android.hardware.npu-V1-ndk",
-        "libbase",
-        "libbinder_ndk",
-        "liblog",
-        "libcutils",
-        "libutils",
-    ],
+    srcs: ["main.rs"],
+    installable: false, // installed in APEX
     vintf_fragment_modules: ["android.hardware.npu-service.xml"],
-    min_sdk_version: "37",
+}
+
+rust_binary {
+    name: "run-test-inference",
+    vendor: true,
+    prefer_rlib: true,
+    rustlibs: [
+        "android.hardware.npu-V1-rust",
+        "libanyhow",
+        "libclap",
+        "libbinder_rs",
+        "liblog_rust",
+        "liblogger",
+        "libnix",
+        "librustutils",
+        "libserde",
+        "libserde_json",
+        "libvsock",
+        "libzerocopy",
+    ],
+    srcs: ["run_test_inference.rs"],
+    installable: false, // installed in APEX
 }

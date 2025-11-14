@@ -1,0 +1,7 @@
+starting_at_board_api(202604, `
+  type hal_npu_scheduling_cuttlefish, domain;
+  hal_server_domain(hal_npu_scheduling_cuttlefish, hal_npu_scheduling)
+
+  type hal_npu_scheduling_cuttlefish_exec, exec_type, vendor_file_type, file_type;
+  init_daemon_domain(hal_npu_scheduling_cuttlefish)
+')
