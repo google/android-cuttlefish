@@ -1,7 +1,7 @@
 name: Presubmit 
 
 on:
-  pull_request:
+  workflow_dispatch:
   push:
     branches-ignore:
       - main  # push events to main branch occur after PRs are merged, when the same checks were run
