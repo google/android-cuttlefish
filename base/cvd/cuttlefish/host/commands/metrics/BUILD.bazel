@@ -63,6 +63,71 @@ cf_cc_binary(
 )
 
 cf_cc_library(
+    name = "metrics_conversion",
+    srcs = [
+        "metrics_conversion.cc",
+    ],
+    hdrs = [
+        "metrics_conversion.h",
+    ],
+    deps = [
+        "//cuttlefish/result",
+        "//external_proto:clientanalytics_cc_proto",
+        "//external_proto:log_source_enum_cc_proto",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_flags",
+    srcs = [
+        "metrics_flags.cc",
+    ],
+    hdrs = [
+        "metrics_flags.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/commands/metrics:metrics_transmission",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_transmission",
+    srcs = [
+        "metrics_transmission.cc",
+    ],
+    hdrs = [
+        "metrics_transmission.h",
+    ],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web/http_client:curl_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/result",
+        "//external_proto:clientanalytics_cc_proto",
+    ],
+)
+
+cf_cc_binary(
+    name = "metrics_transmitter",
+    srcs = [
+        "metrics_transmitter.cc",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/metrics:metrics_conversion",
+        "//cuttlefish/host/commands/metrics:metrics_flags",
+        "//cuttlefish/host/commands/metrics:metrics_transmission",
+        "//cuttlefish/result",
+        "//external_proto:clientanalytics_cc_proto",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
     name = "send",
     srcs = ["send.cc"],
     hdrs = ["send.h"],
