@@ -34,6 +34,7 @@ inline constexpr int kUncalibMagneticId = 9;
 inline constexpr int kUncalibGyroscopeId = 10;
 inline constexpr int kHingeAngle0Id = 11;
 inline constexpr int kUncalibAccelerationId = 17;
+inline constexpr int kSensorHandleLowLatencyOffBodyDetect = 19;
 /*
   This is reserved specifically for Cuttlefish to identify the device
   orientation relative to the East-North-Up coordinates frame. This is
