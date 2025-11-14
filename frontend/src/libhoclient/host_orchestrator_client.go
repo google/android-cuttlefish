@@ -400,7 +400,11 @@ func (c *HostOrchestratorClientImpl) FetchArtifacts(req *hoapi.FetchArtifactsReq
 	}
 
 	res := &hoapi.FetchArtifactsResponse{}
-	if err := c.waitForOperation(op.Name, &res); err != nil {
+	if err := c.waitForOperationOpts(op.Name, &res, RetryOptions{
+		StatusCodes: []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout},
+		RetryDelay:  30 * time.Second,
+		MaxWait:     10 * time.Minute,
+	}); err != nil {
 		return nil, err
 	}
 	return res, nil
