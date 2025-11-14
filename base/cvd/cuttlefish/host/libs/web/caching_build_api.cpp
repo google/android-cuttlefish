@@ -30,7 +30,7 @@
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/cached_zip_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 
 namespace cuttlefish {
 namespace {
