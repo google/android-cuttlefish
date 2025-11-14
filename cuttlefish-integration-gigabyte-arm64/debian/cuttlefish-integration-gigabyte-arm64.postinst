@@ -20,7 +20,6 @@ set -e
 
 case "$1" in
     configure)
-	/usr/share/cuttlefish-integration-gigabyte-arm64/cuttlefish-integration-gigabyte-arm64-use-google-ntp
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

@@ -19,18 +19,6 @@ set -e
 
 case "$1" in
     remove)
-	if [ -e /var/lib/cuttlefish-integration-gigabyte-arm64/backup/ntp.conf ]; then
-	    TEMPFILE=$(mktemp)
-	    cp -f /var/lib/cuttlefish-integration-gigabyte-arm64/backup/ntp.conf "${TEMPFILE}"
-	    sed -i 's/^\(# Specify one or more NTP servers.\)/\1\nincludefile google-time-server.conf\n/' "${TEMPFILE}"
-
-	    if cmp /etc/ntpsec/ntp.conf "${TEMPFILE}"; then
-		cp -f -a /var/lib/cuttlefish-integration-gigabyte-arm64/backup/ntp.conf /etc/ntpsec/ntp.conf
-	    fi
-
-	    rm -f /var/lib/cuttlefish-integration-gigabyte-arm64/backup/ntp.conf
-	    rm -f "${TEMPFILE}"
-	fi
     ;;
     upgrade|deconfigure)
     ;;
