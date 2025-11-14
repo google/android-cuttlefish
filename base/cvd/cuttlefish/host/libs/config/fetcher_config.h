@@ -69,9 +69,6 @@ class FetcherConfig {
   bool SaveToFile(const std::string& file) const;
   bool LoadFromFile(const std::string& file);
 
-  // For debugging only, not intended for programmatic access.
-  void RecordFlags();
-
   bool add_cvd_file(const CvdFile& file, bool override_entry = false);
   std::map<std::string, CvdFile> get_cvd_files() const;
 

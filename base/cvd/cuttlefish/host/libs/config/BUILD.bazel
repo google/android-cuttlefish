@@ -192,7 +192,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:file_source",
         "//libbase",
         "@abseil-cpp//absl/strings",
-        "@gflags",
         "@jsoncpp",
     ],
 )
