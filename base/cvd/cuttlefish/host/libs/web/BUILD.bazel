@@ -106,16 +106,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "build_zip_name",
-    srcs = ["build_zip_name.cc"],
-    hdrs = ["build_zip_name.h"],
-    deps = [
-        "//cuttlefish/host/libs/web:android_build",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
     name = "caching_build_api",
     srcs = ["caching_build_api.cpp"],
     hdrs = ["caching_build_api.h"],
