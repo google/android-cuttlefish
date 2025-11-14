@@ -219,7 +219,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
         fmt::format("default/{}", target_files_name);
     CF_EXPECT(target_files.DownloadTo(download_location));
   }
-  if (flags.extract_super_image_fragments) {
+  if (flags.dynamic_super_image) {
     ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
     ReadableZipSource ab_partitions_source =
         CF_EXPECT(target_files_zip->GetFile("META/ab_partitions.txt"));
