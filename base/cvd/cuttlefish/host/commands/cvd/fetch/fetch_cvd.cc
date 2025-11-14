@@ -25,6 +25,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -56,6 +57,14 @@
 
 namespace cuttlefish {
 namespace {
+
+bool IsSignedBuild(const Build& build) {
+  if (!std::holds_alternative<DeviceBuild>(build)) {
+    return false;
+  }
+  const auto& device_build = std::get<DeviceBuild>(build);
+  return device_build.is_signed;
+}
 
 constexpr mode_t kRwxAllMode = S_IRWXU | S_IRWXG | S_IRWXO;
 
@@ -180,6 +189,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
                                 bool keep_downloaded_archives,
                                 const DownloadFlags& flags,
                                 bool has_system_build) {
+  constexpr char kSignedPrefix[] = "signed/signed-";
   // Some older builds might not have misc_info.txt, so permit errors on
   // fetching misc_info.txt
   if (!context.Artifact("misc_info.txt").Download().ok()) {
@@ -188,7 +198,13 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << context;
     std::string img_zip_name = context.GetBuildZipName("img");
-    FetchArtifact img_zip = context.Artifact(img_zip_name);
+    std::string img_zip_artifact_name = img_zip_name;
+    if (IsSignedBuild(context.Build())) {
+      img_zip_artifact_name = kSignedPrefix + img_zip_artifact_name;
+      LOG(INFO) << "Attempting to fetch SIGNED default image zip: "
+                  << img_zip_artifact_name;
+    }
+    FetchArtifact img_zip = context.Artifact(img_zip_artifact_name);
     CF_EXPECT(img_zip.Download());
     CF_EXPECT(img_zip.ExtractAll());
     if (!keep_downloaded_archives) {

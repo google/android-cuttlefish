@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
 #include <iostream>
+#include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -25,6 +26,7 @@
 #include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_helper.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 
 /*
  * SetUp creates a mock ANDROID_HOST_OUT directory where there is
@@ -56,17 +58,19 @@ cvd::Instance InstanceProto(unsigned id, const std::string& name) {
   return instance;
 }
 
-cvd::InstanceGroup GroupProtoWithInstances(
+InstanceGroupParams GroupParamWithInstances(
     const std::string& name, const std::string& home_dir,
-    const std::string& host_path, const std::string& product_path,
+    const std::string& host_path,
+    const std::vector<std::optional<std::string>>& product_paths,
     const std::vector<std::pair<unsigned, std::string>>& instances) {
-  cvd::InstanceGroup group;
-  group.set_name(name);
-  group.set_home_directory(home_dir);
-  group.set_host_artifacts_path(host_path);
-  group.set_product_out_path(product_path);
+  InstanceGroupParams group{
+      .group_name = name,
+  };
   for (const auto& pair : instances) {
-    *group.add_instances() = InstanceProto(pair.first, pair.second);
+    group.instances.emplace_back(InstanceParams{
+        .instance_id = pair.first,
+        .per_instance_name = pair.second,
+    });
   }
   return group;
 }
@@ -99,17 +103,19 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
                  << invalid_host_artifacts_path + "/bin";
   }
 
-  auto group_proto1 =
-      GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
-                              HostArtifactsPath(), {{2, "name"}});
-  auto result_bad_group_name = db.AddInstanceGroup(group_proto1);
+  auto group_params1 =
+      GroupParamWithInstances("0invalid_group_name", home, HostArtifactsPath(),
+                              {HostArtifactsPath()}, {{2, "name"}});
+  auto result_bad_group_name =
+      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params1).value());
 
   // Everything is correct but one thing: the host artifacts directory does not
   // have host tool files such as launch_cvd
-  auto group_proto2 =
-      GroupProtoWithInstances("0invalid_group_name", home, HostArtifactsPath(),
-                              HostArtifactsPath(), {{2, "name"}});
-  auto result_non_qualifying_host_tool_dir = db.AddInstanceGroup(group_proto2);
+  auto group_params2 =
+      GroupParamWithInstances("0invalid_group_name", home, HostArtifactsPath(),
+                              {HostArtifactsPath()}, {{2, "name"}});
+  auto result_non_qualifying_host_tool_dir =
+      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params2).value());
 
   ASSERT_FALSE(result_bad_group_name.ok());
   ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
@@ -129,13 +135,18 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
-  auto group_proto1 = GroupProtoWithInstances(
-      "meow", home0, HostArtifactsPath(), HostArtifactsPath(), {{1, "name"}});
-  ASSERT_TRUE(db.AddInstanceGroup(group_proto1).ok());
+  auto group_params1 = GroupParamWithInstances(
+      "meow", home0, HostArtifactsPath(), {HostArtifactsPath()}, {{1, "name"}});
+  ASSERT_TRUE(
+      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params1).value())
+          .ok());
 
-  auto group_proto2 = GroupProtoWithInstances(
-      "miaou", home1, HostArtifactsPath(), HostArtifactsPath(), {{2, "name"}});
-  ASSERT_TRUE(db.AddInstanceGroup(group_proto2).ok());
+  auto group_params2 =
+      GroupParamWithInstances("miaou", home1, HostArtifactsPath(),
+                              {HostArtifactsPath()}, {{2, "name"}});
+  ASSERT_TRUE(
+      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params2).value())
+          .ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -148,12 +159,16 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
-  auto group_proto1 = GroupProtoWithInstances(
-      "meow", home, HostArtifactsPath(), HostArtifactsPath(), {{1, "name"}});
-  ASSERT_TRUE(db.AddInstanceGroup(group_proto1).ok());
-  auto group_proto2 = GroupProtoWithInstances(
-      "meow", home, HostArtifactsPath(), HostArtifactsPath(), {{2, "name"}});
-  ASSERT_FALSE(db.AddInstanceGroup(group_proto2).ok());
+  auto group_params1 = GroupParamWithInstances(
+      "meow", home, HostArtifactsPath(), {HostArtifactsPath()}, {{1, "name"}});
+  ASSERT_TRUE(
+      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params1).value())
+          .ok());
+  auto group_params2 = GroupParamWithInstances(
+      "meow", home, HostArtifactsPath(), {HostArtifactsPath()}, {{2, "name"}});
+  ASSERT_FALSE(
+      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params2).value())
+          .ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
@@ -162,8 +177,11 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
    *   HostArtifactsPath: Workspace() + "/" + "android_host_out"
    *   group_ := LocalInstanceGroup(name, HOME, HostArtifactsPath)
    */
-  if (!SetUpOk() || !AddGroup("nyah", {InstanceProto(1, "name")}) ||
-      !AddGroup("yah_ong", {InstanceProto(2, "name")})) {
+  if (!SetUpOk() ||
+      !AddGroup("nyah", {InstanceParams{.instance_id = 1,
+                                        .per_instance_name = "name"}}) ||
+      !AddGroup("yah_ong", {InstanceParams{.instance_id = 2,
+                                           .per_instance_name = "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -175,8 +193,11 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
 }
 
 TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
-  if (!SetUpOk() || !AddGroup("myau", {InstanceProto(1, "name")}) ||
-      !AddGroup("miau", {InstanceProto(2, "name")})) {
+  if (!SetUpOk() ||
+      !AddGroup("myau", {InstanceParams{.instance_id = 1,
+                                        .per_instance_name = "name"}}) ||
+      !AddGroup("miau", {InstanceParams{.instance_id = 2,
+                                        .per_instance_name = "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -202,9 +223,12 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  if (!AddGroup("miaaaw", {InstanceProto(1, "name")}) ||
-      !AddGroup("meow", {InstanceProto(2, "name")}) ||
-      !AddGroup("mjau", {InstanceProto(3, "name")})) {
+  if (!AddGroup("miaaaw", {InstanceParams{.instance_id = 1,
+                                          .per_instance_name = "name"}}) ||
+      !AddGroup("meow", {InstanceParams{.instance_id = 2,
+                                        .per_instance_name = "name"}}) ||
+      !AddGroup("mjau", {InstanceParams{.instance_id = 3,
+                                        .per_instance_name = "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto eng_group = db.FindGroup({.group_name = "meow"});
@@ -224,14 +248,22 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  ASSERT_TRUE(AddGroup({"yah_ong1"},
-                       {InstanceProto(1, "yumi"), InstanceProto(2, "tiger")}));
-  ASSERT_FALSE(AddGroup({"yah_ong2"},
-                        {InstanceProto(3, "yumi"), InstanceProto(4, "yumi")}));
-  ASSERT_FALSE(AddGroup({"yah_ong3"},
-                        {InstanceProto(5, "yumi"), InstanceProto(5, "tiger")}));
-  ASSERT_FALSE(AddGroup({"yah_ong4"},
-                        {InstanceProto(1, "yumi"), InstanceProto(6, "tiger")}));
+  ASSERT_TRUE(AddGroup(
+      {"yah_ong1"},
+      {InstanceParams{.instance_id = 1, .per_instance_name = "yumi"},
+       InstanceParams{.instance_id = 2, .per_instance_name = "tiger"}}));
+  ASSERT_FALSE(AddGroup(
+      {"yah_ong2"},
+      {InstanceParams{.instance_id = 3, .per_instance_name = "yumi"},
+       InstanceParams{.instance_id = 4, .per_instance_name = "yumi"}}));
+  ASSERT_FALSE(AddGroup(
+      {"yah_ong3"},
+      {InstanceParams{.instance_id = 5, .per_instance_name = "yumi"},
+       InstanceParams{.instance_id = 5, .per_instance_name = "tiger"}}));
+  ASSERT_FALSE(AddGroup(
+      {"yah_ong4"},
+      {InstanceParams{.instance_id = 1, .per_instance_name = "yumi"},
+       InstanceParams{.instance_id = 6, .per_instance_name = "tiger"}}));
   auto kitty_group = db.FindGroup({.group_name = "yah_ong1"});
   if (!kitty_group.ok()) {
     GTEST_SKIP() << "yah_ong1"
@@ -247,8 +279,12 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesInvalid) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  ASSERT_FALSE(AddGroup("yah_ong", {InstanceProto(1, "!yumi")}));
-  ASSERT_FALSE(AddGroup("yah_ong2", {InstanceProto(2, "ti ger")}));
+  ASSERT_FALSE(AddGroup(
+      "yah_ong",
+      {InstanceParams{.instance_id = 1, .per_instance_name = "!yumi"}}));
+  ASSERT_FALSE(AddGroup(
+      "yah_ong2",
+      {InstanceParams{.instance_id = 2, .per_instance_name = "ti ger"}}));
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
@@ -257,12 +293,18 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
     GTEST_SKIP() << Error().msg;
   }
   if (!AddGroup("miau",
-                {InstanceProto(1, "8"), InstanceProto(10, "tv-instance")})) {
+                {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
+                 InstanceParams{.instance_id = 10,
+                                .per_instance_name = "tv-instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("nyah",
-                {InstanceProto(7, "my_favorite_phone"),
-                 InstanceProto(11, "tv-instance"), InstanceProto(3, "3_")})) {
+  if (!AddGroup(
+          "nyah",
+          {InstanceParams{.instance_id = 7,
+                          .per_instance_name = "my_favorite_phone"},
+           InstanceParams{.instance_id = 11,
+                          .per_instance_name = "tv-instance"},
+           InstanceParams{.instance_id = 3, .per_instance_name = "3_"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -300,11 +342,16 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
     GTEST_SKIP() << Error().msg;
   }
   if (!AddGroup("miau",
-                {InstanceProto(1, "8"), InstanceProto(10, "tv_instance")})) {
+                {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
+                 InstanceParams{.instance_id = 10,
+                                .per_instance_name = "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("nyah", {InstanceProto(7, "my_favorite_phone"),
-                         InstanceProto(11, "tv_instance")})) {
+  if (!AddGroup("nyah",
+                {InstanceParams{.instance_id = 7,
+                                .per_instance_name = "my_favorite_phone"},
+                 InstanceParams{.instance_id = 11,
+                                .per_instance_name = "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -335,11 +382,16 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
     GTEST_SKIP() << Error().msg;
   }
   if (!AddGroup("miau",
-                {InstanceProto(1, "8"), InstanceProto(10, "tv_instance")})) {
+                {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
+                 InstanceParams{.instance_id = 10,
+                                .per_instance_name = "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("nyah", {InstanceProto(7, "my_favorite_phone"),
-                         InstanceProto(11, "tv_instance")})) {
+  if (!AddGroup("nyah",
+                {InstanceParams{.instance_id = 7,
+                                .per_instance_name = "my_favorite_phone"},
+                 InstanceParams{.instance_id = 11,
+                                .per_instance_name = "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -376,7 +428,9 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   auto& db = GetDb();
 
   ASSERT_TRUE(AddGroup(
-      "miau", {InstanceProto(1, "8"), InstanceProto(10, "tv_instance")}));
+      "miau",
+      {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
+       InstanceParams{.instance_id = 10, .per_instance_name = "tv_instance"}}));
 
   auto result_8 = db.FindInstanceWithGroup({.instance_names = {"8"}});
   auto result_tv =
@@ -443,23 +497,29 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   }
   auto& db = GetDb();
 
-  cvd::InstanceGroup grp;
-  grp.set_home_directory(Workspace() + "/grp1_home");
-  grp.set_name("grp1");
-  auto ins1 = grp.add_instances();
-  ins1->set_name("ins1");
-  ins1->set_state(cvd::INSTANCE_STATE_PREPARING);
-  auto ins2 = grp.add_instances();
-  ins2->set_name("ins2");
-  ins2->set_state(cvd::INSTANCE_STATE_PREPARING);
+  InstanceGroupParams grp{
+      .group_name = "grp1",
+      .instances =
+          {
+              {
+                  .per_instance_name = "ins1",
+                  .initial_state = cvd::INSTANCE_STATE_PREPARING,
+              },
+              {
+                  .per_instance_name = "ins2",
+                  .initial_state = cvd::INSTANCE_STATE_PREPARING,
+              },
+          },
+  };
 
-  auto add_res = db.AddInstanceGroup(grp);
+  Result<LocalInstanceGroup> group_res =
+      LocalInstanceGroup::Create(grp).value();
+  ASSERT_THAT(group_res, IsOk());
+  auto add_res = db.AddInstanceGroup(*group_res);
   ASSERT_TRUE(add_res.ok())
       << "Failed to add group to db: " << add_res.error().Message();
 
-  auto instance_group = *(std::move(add_res));
-  ASSERT_TRUE(instance_group.ProductOutPath().empty());
-  instance_group.SetProductOutPath("/path/to/product");
+  auto instance_group = *(std::move(group_res));
   auto& instance1 = instance_group.Instances()[0];
   instance1.set_id(1);
   instance1.set_state(cvd::INSTANCE_STATE_STARTING);
@@ -474,8 +534,6 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   auto find_res = db.FindGroup({.group_name = "grp1"});
   ASSERT_TRUE(find_res.ok()) << find_res.error().Message();
 
-  EXPECT_EQ(find_res->HomeDir(), Workspace() + "/grp1_home");
-  EXPECT_EQ(find_res->ProductOutPath(), "/path/to/product");
   EXPECT_EQ(find_res->Instances()[0].id(), 1);
   EXPECT_EQ(find_res->Instances()[1].id(), 2);
   EXPECT_EQ(find_res->Instances()[0].state(), cvd::INSTANCE_STATE_STARTING);

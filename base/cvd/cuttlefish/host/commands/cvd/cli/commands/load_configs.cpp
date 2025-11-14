@@ -19,7 +19,6 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,22 +27,25 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 
 namespace cuttlefish {
+
+using cvd::config::EnvironmentSpecification;
+
 namespace {
 
 constexpr char kSummaryHelpText[] =
@@ -62,11 +64,10 @@ Optionally fetches remote artifacts prior to launching the cuttlefish environmen
 The --override flag can be used to give new values for properties in the config file without needing to edit the file directly.  Convenient for one-off invocations.
 )";
 
-Result<CvdFlags> GetCvdFlags(const CommandRequest& request) {
+Result<LoadFlags> GetLoadFlags(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   auto working_directory = CurrentDirectory();
-  const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
-  return CF_EXPECT(GetCvdFlags(flags));
+  return CF_EXPECT(GetFlags(args, working_directory));
 }
 
 class LoadConfigsCommand : public CvdCommandHandler {
@@ -80,7 +81,9 @@ class LoadConfigsCommand : public CvdCommandHandler {
     bool can_handle_request = CF_EXPECT(CanHandle(request));
     CF_EXPECT_EQ(can_handle_request, true);
 
-    auto cvd_flags = CF_EXPECT(GetCvdFlags(request));
+    LoadFlags load_flags = CF_EXPECT(GetLoadFlags(request));
+    EnvironmentSpecification env_spec =
+        CF_EXPECT(GetEnvironmentSpecification(load_flags));
 
     std::mutex group_creation_mtx;
     // Have to use the group name because LocalInstanceGroup can't be default
@@ -88,8 +91,8 @@ class LoadConfigsCommand : public CvdCommandHandler {
     // critical section where the group is created.
     std::string group_name = "";
 
-    auto push_result = PushInterruptListener(
-        [this, &group_name, &group_creation_mtx](int) {
+    auto push_result =
+        PushInterruptListener([this, &group_name, &group_creation_mtx](int) {
           // Creating the listener before the group exists has a very low chance
           // that it may run before the group is actually created and fail,
           // that's fine. The alternative is having a very low chance of being
@@ -125,13 +128,15 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
     group_creation_mtx.lock();
     // Don't use CF_EXPECT here or the mutex will be left locked.
-    auto group_res = CreateGroup(cvd_flags);
+    auto group_res = CreateGroup(load_flags.base_dir, env_spec);
     if (group_res.ok()) {
       // Have to initialize the group_name variable before releasing the mutex.
       group_name = (*group_res).GroupName();
     }
     group_creation_mtx.unlock();
     auto group = CF_EXPECT(std::move(group_res));
+
+    auto cvd_flags = CF_EXPECT(ParseCvdConfigs(env_spec, group));
 
     auto res = LoadGroup(request, group, std::move(cvd_flags));
     if (!res.ok()) {
@@ -152,8 +157,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
   Result<void> LoadGroup(const CommandRequest& request,
                          LocalInstanceGroup& group, CvdFlags cvd_flags) {
     auto mkdir_res =
-        EnsureDirectoryExists(cvd_flags.load_directories.launch_home_directory,
-                              0775, /* group_name */ "");
+        EnsureDirectoryExists(group.HomeDir(), 0775, /* group_name */ "");
     if (!mkdir_res.ok()) {
       group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
       instance_manager_.UpdateInstanceGroup(group);
@@ -167,10 +171,9 @@ class LoadConfigsCommand : public CvdCommandHandler {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
         instance_manager_.UpdateInstanceGroup(group);
       }
-      CF_EXPECTF(
-          std::move(fetch_res),
-          "Failed to fetch build artifacts, check {} for details",
-          GetFetchLogsFileName(cvd_flags.load_directories.target_directory));
+      CF_EXPECTF(std::move(fetch_res),
+                 "Failed to fetch build artifacts, check '{}' for details",
+                 GetFetchLogsFileName(cvd_flags.target_directory));
     }
 
     auto launch_cmd = CF_EXPECT(BuildLaunchCmd(request, cvd_flags, group));
@@ -204,18 +207,15 @@ class LoadConfigsCommand : public CvdCommandHandler {
   Result<CommandRequest> BuildLaunchCmd(const CommandRequest& request,
                                         const CvdFlags& cvd_flags,
                                         const LocalInstanceGroup& group) {
-    // Add system flag for multi-build scenario
-    std::string system_build_arg = fmt::format(
-        "--system_image_dir={}",
-        cvd_flags.load_directories.system_image_directory_flag_value);
     auto env = request.Env();
-    env["HOME"] = cvd_flags.load_directories.launch_home_directory;
-    env[kAndroidHostOut] = cvd_flags.load_directories.host_package_directory;
-    env[kAndroidSoongHostOut] =
-        cvd_flags.load_directories.host_package_directory;
-    if (Contains(env, kAndroidProductOut)) {
-      env.erase(kAndroidProductOut);
-    }
+    env["HOME"] = group.HomeDir();
+    env[kAndroidHostOut] = group.HostArtifactsPath();
+    env[kAndroidSoongHostOut] = group.HostArtifactsPath();
+
+    // Add system flag for multi-build scenario
+    std::string system_build_arg =
+        fmt::format("--system_image_dir={}", group.ProductOutPath());
+    env.erase(kAndroidProductOut);
 
     return CF_EXPECT(
         CommandRequestBuilder()
@@ -234,20 +234,20 @@ class LoadConfigsCommand : public CvdCommandHandler {
   }
 
  private:
-  Result<LocalInstanceGroup> CreateGroup(const CvdFlags& cvd_flags) {
-    selector::GroupCreationInfo group_info{
-        .home = cvd_flags.load_directories.launch_home_directory,
-        .host_artifacts_path =
-            cvd_flags.load_directories.host_package_directory,
-        .product_out_path =
-            cvd_flags.load_directories.system_image_directory_flag_value,
-        .group_name = cvd_flags.group_name ? *cvd_flags.group_name : "",
+  Result<LocalInstanceGroup> CreateGroup(
+      const std::string& base_dir, const EnvironmentSpecification& env_spec) {
+    InstanceGroupParams group_params{
+        .group_name = env_spec.common().group_name(),
     };
-    for (const auto& instance_name : cvd_flags.instance_names) {
-      group_info.instances.emplace_back(0, instance_name,
-                                        cvd::INSTANCE_STATE_PREPARING);
+    for (const auto& instance : env_spec.instances()) {
+      group_params.instances.emplace_back(
+          InstanceParams{.instance_id = 0,
+                         .per_instance_name = instance.name(),
+                         .initial_state = cvd::INSTANCE_STATE_PREPARING});
     }
-    return CF_EXPECT(instance_manager_.CreateInstanceGroup(group_info));
+    return CF_EXPECT(instance_manager_.CreateInstanceGroup(
+        std::move(group_params),
+        CF_EXPECT(GetGroupCreationDirectories(base_dir, env_spec))));
   }
 
   static constexpr char kLoadSubCmd[] = "load";

@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,11 +28,13 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -68,6 +71,34 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
   return {};
 }
 
+Result<void> LinkOrMakeDir(std::optional<std::string> target,
+                           const std::string& path) {
+  if (target.has_value()) {
+    CF_EXPECT(DirectoryExists(*target));
+    CF_EXPECT(Symlink(*target, path));
+  } else {
+    CF_EXPECTF(EnsureDirectoryExists(path), "Failed to create directory: {}",
+               path);
+  }
+  return {};
+}
+
+Result<void> CreateOrLinkGroupDirectories(
+    const LocalInstanceGroup& group,
+    InstanceManager::GroupDirectories directories) {
+  CF_EXPECT(
+      LinkOrMakeDir(std::move(directories.base_directory), group.BaseDir()));
+  CF_EXPECT(LinkOrMakeDir(std::move(directories.home), group.HomeDir()));
+  CF_EXPECT(EnsureDirectoryExists(group.ArtifactsDir()));
+  CF_EXPECT(LinkOrMakeDir(std::move(directories.host_artifacts_path),
+                          group.HostArtifactsPath()));
+  for (size_t i = 0; i < directories.product_out_paths.size(); ++i) {
+    CF_EXPECT(LinkOrMakeDir(std::move(directories.product_out_paths[i]),
+                            group.ProductDir(i)));
+  }
+  return {};
+}
+
 }  // namespace
 
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
@@ -85,19 +116,20 @@ Result<bool> InstanceManager::HasInstanceGroups() const {
 }
 
 Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
-    const selector::GroupCreationInfo& group_info) {
-  cvd::InstanceGroup new_group;
-  new_group.set_name(group_info.group_name);
-  new_group.set_home_directory(group_info.home);
-  new_group.set_host_artifacts_path(group_info.host_artifacts_path);
-  new_group.set_product_out_path(group_info.product_out_path);
-  for (const auto& instance : group_info.instances) {
-    auto& new_instance = *new_group.add_instances();
-    new_instance.set_id(instance.instance_id_);
-    new_instance.set_name(instance.per_instance_name_);
-    new_instance.set_state(instance.initial_state_);
-  }
-  return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
+    InstanceGroupParams group_params, GroupDirectories directories) {
+  CF_EXPECT_EQ(
+      group_params.instances.size(), directories.product_out_paths.size(),
+      "Number of product directories doesn't match number of instances");
+  LocalInstanceGroup group =
+      CF_EXPECT(LocalInstanceGroup::Create(std::move(group_params)));
+
+  // The base and other directories are always set to the default location, if
+  // the user provides custom directories the ones in the default locations
+  // become symbolic links to those.
+  CF_EXPECT(CreateOrLinkGroupDirectories(group, std::move(directories)));
+
+  CF_EXPECT(instance_db_.AddInstanceGroup(group));
+  return group;
 }
 
 Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
@@ -172,7 +204,8 @@ Result<void> InstanceManager::IssueStopCommand(
 
 cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
   cvd::Status status;
-  const std::string config_json_name = android::base::Basename(GetGlobalConfigFileLink());
+  const std::string config_json_name =
+      android::base::Basename(GetGlobalConfigFileLink());
   auto instance_groups_res = instance_db_.Clear();
   if (!instance_groups_res.ok()) {
     fmt::print(std::cerr, "Failed to clear instance database: {}",

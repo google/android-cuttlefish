@@ -18,7 +18,6 @@
 
 #include <mutex>
 #include <ostream>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -28,7 +27,6 @@
 #include <android-base/strings.h>
 #include "absl/strings/str_format.h"
 
-#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -40,22 +38,6 @@ namespace {
 
 constexpr char kDefaultCvdDir[] = "/var/tmp/cvd";
 constexpr char kPreviousDefaultCvdDir[] = "/tmp/cvd";
-
-std::string DefaultBaseDir() {
-  auto time = std::chrono::system_clock::now().time_since_epoch().count();
-  return fmt::format("{}/{}", PerUserDir(), time);
-}
-
-Result<void> LinkOrMakeDir(const std::string& path,
-                           std::optional<std::string> target) {
-  if (target.has_value()) {
-    CF_EXPECT(Symlink(*target, path));
-  } else {
-    CF_EXPECTF(EnsureDirectoryExists(path), "Failed to create directory: {}",
-               path);
-  }
-  return {};
-}
 
 bool ShouldUsePreviousCvdLocation() {
   // Don't use the old one if the new one already exists
@@ -80,6 +62,7 @@ bool ShouldUsePreviousCvdLocation() {
   Result<bool> is_empty_res = IsDirectoryEmpty(old_locks_path);
   return is_empty_res.ok() && !is_empty_res.value();
 }
+
 }  // namespace
 
 /*
@@ -214,49 +197,6 @@ Result<std::string> GroupDirFromHome(std::string_view dir) {
 
 std::string AssemblyDirFromHome(const std::string& group_home_dir) {
   return group_home_dir + "/cuttlefish/assembly";
-}
-
-std::string GroupDirectories::base() const {
-  return base_;
-}
-
-std::string GroupDirectories::home() const {
-  return base_ + "/home";
-}
-
-std::string GroupDirectories::artifacts() const {
-  return base_ + "/artifacts";
-}
-
-std::string GroupDirectories::host_tools() const {
-  return artifacts() + "/host_tools";
-}
-
-std::vector<std::string> GroupDirectories::targets() const {
-  std::vector<std::string> ret;
-  ret.reserve(num_instances_);
-  for (size_t i = 0; i < num_instances_; ++i) {
-    ret.emplace_back(fmt::format("{}/{}", artifacts(), i));
-  }
-  return ret;
-}
-
-Result<GroupDirectories> GenerateGroupDirectories(
-    std::optional<std::string> base, std::optional<std::string> home,
-    std::optional<std::string> host_tools,
-    std::vector<std::optional<std::string>> targets) {
-  GroupDirectories ret(DefaultBaseDir(), targets.size());
-
-  CF_EXPECT(LinkOrMakeDir(ret.base(), std::move(base)));
-  CF_EXPECT(LinkOrMakeDir(ret.home(), std::move(home)));
-  CF_EXPECT(EnsureDirectoryExists(ret.artifacts()));
-  CF_EXPECT(LinkOrMakeDir(ret.host_tools(), std::move(host_tools)));
-  auto v = ret.targets();
-  for (size_t i = 0; i < targets.size(); ++i) {
-    CF_EXPECT(LinkOrMakeDir(v[i], std::move(targets[i])));
-  }
-
-  return ret;
 }
 
 }  // namespace cuttlefish

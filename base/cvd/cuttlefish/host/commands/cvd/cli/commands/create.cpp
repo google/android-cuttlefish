@@ -274,7 +274,7 @@ void CvdCreateCommandHandler::MarkLockfiles(
 Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
     const CommandRequest& request, bool acquire_file_locks) {
-  GroupCreationInfo group_creation_info = CF_EXPECT(AnalyzeCreation(
+  GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation(
       {
           .cmd_args = subcmd_args,
           .envs = envs,
@@ -283,39 +283,39 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
       },
       lock_manager_));
 
-  std::vector<InstanceLockFile> lock_files;
-  for (auto& instance : group_creation_info.instances) {
-    CF_EXPECT(instance.instance_file_lock_.has_value(),
-              "Expected instance lock");
-    lock_files.emplace_back(std::move(*instance.instance_file_lock_));
-  }
+  CF_EXPECT_EQ(creation_info.instance_file_locks.size(),
+               creation_info.group_creation_params.instances.size(),
+               "Expected locks for all instances");
 
   auto groups = CF_EXPECT(instance_manager_.FindGroups(
-      {.group_name = group_creation_info.group_name}));
+      {.group_name = creation_info.group_creation_params.group_name}));
   CF_EXPECT_LE(groups.size(), 1u,
                "Expected no more than one group with given name: "
-                   << group_creation_info.group_name);
+                   << creation_info.group_creation_params.group_name);
   // When loading an environment spec file the group is already in the database
   // in PREPARING state. Otherwise the group must be created.
   if (groups.empty()) {
-    groups.push_back(
-        CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info)));
+    groups.push_back(CF_EXPECT(instance_manager_.CreateInstanceGroup(
+        std::move(creation_info.group_creation_params),
+        std::move(creation_info.group_directories))));
   } else {
     auto& group = groups[0];
     CF_EXPECTF((std::size_t)group.Instances().size() ==
-                   group_creation_info.instances.size(),
+                   creation_info.group_creation_params.instances.size(),
                "Mismatch in number of instances from analisys: {} vs {}",
-               group.Instances().size(), group_creation_info.instances.size());
+               group.Instances().size(),
+               creation_info.group_creation_params.instances.size());
     // The instances don't have an id yet
     for (size_t i = 0; i < group.Instances().size(); ++i) {
-      uint32_t id = group_creation_info.instances[i].instance_id_;
+      uint32_t id =
+          creation_info.group_creation_params.instances[i].instance_id;
       group.Instances()[i].set_id(id);
     }
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   }
   // The lock must be held for as long as the group's instances are in the
   // database with the id set.
-  MarkLockfilesInUse(lock_files);
+  MarkLockfilesInUse(creation_info.instance_file_locks);
   return groups[0];
 }
 

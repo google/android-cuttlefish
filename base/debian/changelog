@@ -1,8 +1,24 @@
-cuttlefish-common (1.33.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.33.0) unstable; urgency=medium
 
-  * 
+  * Start development on 1.33.0 release by @cjreynol in https://github.com/google/android-cuttlefish/pull/1774
+  * Clean up "private implementation" artifacts from zip_cc by @Databean in https://github.com/google/android-cuttlefish/pull/1773
+  * Mark 1.31 as stable by @Databean in https://github.com/google/android-cuttlefish/pull/1775
+  * Change the cvd directory location to /var/tmp/cvd by @jemoreira in https://github.com/google/android-cuttlefish/pull/1777
+  * Separate `zip_cc.[cc,h]` into multiple files by @Databean in https://github.com/google/android-cuttlefish/pull/1778
+  * Update crosvm handling for gpu capture by @jmacnak in https://github.com/google/android-cuttlefish/pull/1704
+  * base: cvd: MODULE.bazel: upgrade clang version to 19.1.0 by @grandpaul in https://github.com/google/android-cuttlefish/pull/1599
+  * Let FromGlobalGflags take an explicit default. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1779
+  * Migrate use_cvdalloc to a dedicated flag type. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1781
+  * Condtionally rename boringssl/openssl libraries when building openssl-sys by @Databean in https://github.com/google/android-cuttlefish/pull/1782
+  * Separate `WritableZipSource` into a new file. by @Databean in https://github.com/google/android-cuttlefish/pull/1784
+  * Refactor/strengthen casdownloader flags handling by @frankfeng579 in https://github.com/google/android-cuttlefish/pull/1780
+  * Parse flag defaults from a file in assemble_cvd. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1766
+  * Package the defaults file. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1789
+  * Separate `readable_zip_source.[cc,h]` by @Databean in https://github.com/google/android-cuttlefish/pull/1788
+  * cvd load creates a single group directory by @jemoreira in https://github.com/google/android-cuttlefish/pull/1786
+  * Download the signed image artifact, when the default build request is signed. by @Databean in https://github.com/google/android-cuttlefish/pull/1798
 
- -- Chad Reynolds <chadreynolds@google.com>  Fri, 07 Nov 2025 13:51:15 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 14 Nov 2025 13:15:53 -0800
 
 cuttlefish-common (1.32.0) unstable; urgency=medium
 

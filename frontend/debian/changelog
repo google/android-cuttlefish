@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.33.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.33.0) unstable; urgency=medium
 
-  * 
+  * Give fetching a longer timeout in the HO client by @jemoreira in https://github.com/google/android-cuttlefish/pull/1792
 
- -- Chad Reynolds <chadreynolds@google.com>  Fri, 07 Nov 2025 13:51:40 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 14 Nov 2025 13:19:30 -0800
 
 cuttlefish-frontend (1.32.0) unstable; urgency=medium
 

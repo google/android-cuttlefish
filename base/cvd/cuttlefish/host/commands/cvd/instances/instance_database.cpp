@@ -123,52 +123,54 @@ Result<std::vector<LocalInstanceGroup>> InstanceDatabase::Clear() {
       });
 }
 
-Result<LocalInstanceGroup> InstanceDatabase::AddInstanceGroup(
-    cvd::InstanceGroup& group_proto) {
-  CF_EXPECTF(group_proto.name().empty() || IsValidGroupName(group_proto.name()),
-             "GroupName \"{}\" is ill-formed.", group_proto.name());
-  for (const auto& instance_proto : group_proto.instances()) {
+Result<void> InstanceDatabase::AddInstanceGroup(LocalInstanceGroup group) {
+  CF_EXPECTF(group.group_proto_->name().empty() ||
+                 IsValidGroupName(group.group_proto_->name()),
+             "GroupName \"{}\" is ill-formed.", group.group_proto_->name());
+  for (const auto& instance_proto : group.group_proto_->instances()) {
     CF_EXPECTF(IsValidInstanceName(instance_proto.name()),
                "instance_name \"{}\" is invalid", instance_proto.name());
   }
-  auto add_res = viewer_.WithExclusiveLock<LocalInstanceGroup>(
-      [&group_proto](cvd::PersistentData& data) -> Result<LocalInstanceGroup> {
-        if (group_proto.name().empty()) {
-          group_proto.set_name(CF_EXPECT(GenUniqueGroupName(data)));
+  auto add_res = viewer_.WithExclusiveLock<void>([&group](
+                                                     cvd::PersistentData& data)
+                                                     -> Result<void> {
+    if (group.group_proto_->name().empty()) {
+      group.group_proto_->set_name(CF_EXPECT(GenUniqueGroupName(data)));
+    }
+    CF_EXPECTF(
+        FindGroups(data, {.group_name = group.group_proto_->name()}).empty(),
+        "An instance group already exists with name: {}",
+        group.group_proto_->name());
+    for (const auto& existing_group : data.instance_groups()) {
+      CF_EXPECT_NE(existing_group.home_directory(),
+                   group.group_proto_->home_directory(),
+                   "An instance group already exists with HOME directory: {}"
+                       << group.group_proto_->home_directory());
+    }
+    std::unordered_map<uint32_t, std::string> ids_to_name_map;
+    for (const auto& group_proto : data.instance_groups()) {
+      for (const auto& instance : group_proto.instances()) {
+        if (instance.id() != UNSET_ID) {
+          ids_to_name_map[instance.id()] =
+              fmt::format("{}/{}", group_proto.name(), instance.name());
         }
-        CF_EXPECTF(FindGroups(data, {.group_name = group_proto.name()}).empty(),
-                   "An instance group already exists with name: {}",
-                   group_proto.name());
-        for (const auto& existing_group : data.instance_groups()) {
-          CF_EXPECT_NE(
-              existing_group.home_directory(), group_proto.home_directory(),
-              "An instance group already exists with HOME directory: {}"
-                  << group_proto.home_directory());
-        }
-        std::unordered_map<uint32_t, std::string> ids_to_name_map;
-        for (const auto& group : data.instance_groups()) {
-          for (const auto& instance : group.instances()) {
-            if (instance.id() != UNSET_ID) {
-              ids_to_name_map[instance.id()] =
-                  fmt::format("{}/{}", group.name(), instance.name());
-            }
-          }
-        }
-        for (const auto& instance_proto : group_proto.instances()) {
-          if (instance_proto.id() == UNSET_ID) {
-            continue;
-          }
-          auto find_it = ids_to_name_map.find(instance_proto.id());
-          CF_EXPECTF(
-              find_it == ids_to_name_map.end(),
-              "New instance conflicts with existing instance: {} with id {}",
-              find_it->second, find_it->first);
-        }
-        auto new_group_proto = data.add_instance_groups();
-        *new_group_proto = group_proto;
-        return CF_EXPECT(LocalInstanceGroup::Create(*new_group_proto));
-      });
-  return CF_EXPECT(std::move(add_res));
+      }
+    }
+    for (const auto& instance_proto : group.group_proto_->instances()) {
+      if (instance_proto.id() == UNSET_ID) {
+        continue;
+      }
+      auto find_it = ids_to_name_map.find(instance_proto.id());
+      CF_EXPECTF(find_it == ids_to_name_map.end(),
+                 "New instance conflicts with existing instance: {} with id {}",
+                 find_it->second, find_it->first);
+    }
+    auto new_group_proto = data.add_instance_groups();
+    *new_group_proto = *group.group_proto_;
+    return {};
+  });
+  CF_EXPECT(std::move(add_res));
+  return {};
 }
 
 Result<void> InstanceDatabase::UpdateInstanceGroup(

@@ -24,15 +24,14 @@ namespace selector {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  cvd::InstanceGroup group_proto;
-  group_proto.set_name("super");
-  group_proto.set_home_directory("/home/user");
-  group_proto.set_host_artifacts_path("/home/user/download/bin");
-  group_proto.set_product_out_path("/home/user/download/bin");
-  auto instance_proto = group_proto.add_instances();
-  instance_proto->set_id(3);
-  instance_proto->set_name("phone");
-  auto parent_group_res = LocalInstanceGroup::Create(group_proto);
+  InstanceGroupParams group_params{
+    .group_name = "super",
+    .instances = {{
+      .instance_id = 3,
+      .per_instance_name = "phone",
+    }},
+  };
+  auto parent_group_res = LocalInstanceGroup::Create(group_params);
   if (!parent_group_res.ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
@@ -52,10 +51,6 @@ TEST(CvdInstanceRecordUnitTest, Fields) {
   EXPECT_EQ(instance.id(), 3);
   EXPECT_EQ(instance.name(), "phone");
   EXPECT_EQ(parent_group.Proto().name(), "super");
-  EXPECT_EQ(parent_group.Proto().home_directory(), "/home/user");
-  EXPECT_EQ(parent_group.Proto().host_artifacts_path(),
-            "/home/user/download/bin");
-  EXPECT_EQ(parent_group.Proto().product_out_path(), "/home/user/download/bin");
 }
 
 }  // namespace selector
