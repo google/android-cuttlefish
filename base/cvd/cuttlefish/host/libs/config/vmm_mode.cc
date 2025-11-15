@@ -21,7 +21,7 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 
@@ -47,11 +47,11 @@ std::ostream& operator<<(std::ostream& out, VmmMode vmm) {
 }
 
 Result<VmmMode> ParseVmm(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "crosvm")) {
+  if (absl::EqualsIgnoreCase(str, "crosvm")) {
     return VmmMode::kCrosvm;
-  } else if (android::base::EqualsIgnoreCase(str, "gem5")) {
+  } else if (absl::EqualsIgnoreCase(str, "gem5")) {
     return VmmMode::kGem5;
-  } else if (android::base::EqualsIgnoreCase(str, "qemu_cli")) {
+  } else if (absl::EqualsIgnoreCase(str, "qemu_cli")) {
     return VmmMode::kQemu;
   } else {
     return CF_ERRF("\"{}\" is not a valid Vmm.", str);

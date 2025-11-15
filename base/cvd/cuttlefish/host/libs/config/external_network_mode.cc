@@ -20,7 +20,7 @@
 #include <ostream>
 #include <string_view>
 
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 
@@ -37,9 +37,9 @@ std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
   }
 }
 Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "tap")) {
+  if (absl::EqualsIgnoreCase(str, "tap")) {
     return ExternalNetworkMode::kTap;
-  } else if (android::base::EqualsIgnoreCase(str, "slirp")) {
+  } else if (absl::EqualsIgnoreCase(str, "slirp")) {
     return ExternalNetworkMode::kSlirp;
   } else {
     return CF_ERRF(
