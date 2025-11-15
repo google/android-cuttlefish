@@ -20,7 +20,7 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 
@@ -44,13 +44,13 @@ std::string ToString(GuestRendererPreload preload) {
 }
 
 Result<GuestRendererPreload> ParseGuestRendererPreload(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "auto")) {
+  if (absl::EqualsIgnoreCase(str, "auto")) {
     return GuestRendererPreload::kAuto;
-  } else if (android::base::EqualsIgnoreCase(str, "default")) {
+  } else if (absl::EqualsIgnoreCase(str, "default")) {
     return GuestRendererPreload::kGuestDefault;
-  } else if (android::base::EqualsIgnoreCase(str, "enabled")) {
+  } else if (absl::EqualsIgnoreCase(str, "enabled")) {
     return GuestRendererPreload::kEnabled;
-  } else if (android::base::EqualsIgnoreCase(str, "disabled")) {
+  } else if (absl::EqualsIgnoreCase(str, "disabled")) {
     return GuestRendererPreload::kDisabled;
   } else {
     return CF_ERRF("\"{}\" is not a valid renderer preload.", str);

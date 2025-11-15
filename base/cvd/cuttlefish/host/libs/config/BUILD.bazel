@@ -177,7 +177,7 @@ cf_cc_library(
     hdrs = ["external_network_mode.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -208,7 +208,7 @@ cf_cc_library(
     hdrs = ["guest_hwui_renderer.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -227,7 +227,7 @@ cf_cc_library(
     hdrs = ["guest_renderer_preload.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -326,7 +326,7 @@ cf_cc_library(
     hdrs = ["vmm_mode.h"],
     deps = [
         "//cuttlefish/common/libs/utils:result",
-        "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
