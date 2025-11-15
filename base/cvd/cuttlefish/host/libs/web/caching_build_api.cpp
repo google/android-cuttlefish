@@ -19,9 +19,9 @@
 #include <utility>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -137,7 +137,7 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
   }
   const auto artifact_filepath = CF_EXPECT(build_api_.DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
-  if (android::base::EndsWith(artifact_filepath, artifact_name)) {
+  if (absl::EndsWith(artifact_filepath, artifact_name)) {
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }

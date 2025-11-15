@@ -32,6 +32,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
         "@jsoncpp",
         "@libxml2",

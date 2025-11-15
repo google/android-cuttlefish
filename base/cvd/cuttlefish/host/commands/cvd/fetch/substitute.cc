@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
@@ -47,7 +48,7 @@ Result<void> SubstituteWithFlag(
   // "bin" -> "cuttlefish-common"
   std::string bin_dir_parent =
       android::base::Dirname(android::base::Dirname(self_path));
-  if (!android::base::EndsWith(bin_dir_parent, "cuttlefish-common")) {
+  if (!absl::EndsWith(bin_dir_parent, "cuttlefish-common")) {
     LOG(DEBUG) << "Binary substitution not available, run `cvd fetch` from "
                   "`cuttlefish-common` package to enable.";
     CF_EXPECTF(host_substitutions.empty(),
@@ -110,7 +111,7 @@ Result<void> SubstituteWithFlag(
  */
 Result<std::string> GetCuttlefishCommonDir() {
   std::string cvd_exe = android::base::GetExecutablePath();
-  CF_EXPECTF(android::base::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
+  CF_EXPECTF(absl::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
              "Can't perform substitutions when cvd is not under "
              "cuttlefish-common/bin, it's currently at {}",
              cvd_exe);

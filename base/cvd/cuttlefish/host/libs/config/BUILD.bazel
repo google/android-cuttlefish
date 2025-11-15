@@ -83,6 +83,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fruit",
         "@jsoncpp",
     ],

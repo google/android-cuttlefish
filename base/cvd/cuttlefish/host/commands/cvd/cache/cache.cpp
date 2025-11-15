@@ -25,8 +25,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <fmt/format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -43,8 +43,7 @@ Result<std::vector<std::string>> CacheFilesDesc(
       "Failure retrieving contents of directory at \"{}\"", cache_directory);
 
   auto not_self_or_parent_directory = [](std::string_view filepath) {
-    return !android::base::EndsWith(filepath, ".") &&
-           !android::base::EndsWith(filepath, "..");
+    return !absl::EndsWith(filepath, ".") && !absl::EndsWith(filepath, "..");
   };
   std::vector<std::string> filtered;
   std::copy_if(contents.begin(), contents.end(), std::back_inserter(filtered),

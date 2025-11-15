@@ -24,6 +24,7 @@
 #include <android-base/parseint.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
@@ -300,7 +301,7 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   std::string conf_path;
   for (const auto& line : android::base::Tokenize(assembler_output, "\n")) {
-    if (android::base::EndsWith(line, "cuttlefish_config.json")) {
+    if (absl::EndsWith(line, "cuttlefish_config.json")) {
       conf_path = line;
     }
   }

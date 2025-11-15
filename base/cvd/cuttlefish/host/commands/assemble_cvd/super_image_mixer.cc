@@ -23,8 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/archive.h"
@@ -96,11 +97,11 @@ void FindImports(const std::string& archive,
 
 bool IsTargetFilesImage(const std::string& filename) {
   return android::base::StartsWith(filename, "IMAGES/") &&
-         android::base::EndsWith(filename, ".img");
+         absl::EndsWith(filename, ".img");
 }
 
 bool IsTargetFilesBuildProp(const std::string& filename) {
-  return android::base::EndsWith(filename, "build.prop");
+  return absl::EndsWith(filename, "build.prop");
 }
 
 Result<std::string> GetPartitionNameFromPath(const std::string& path) {

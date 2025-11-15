@@ -27,6 +27,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -221,7 +222,7 @@ Result<MiscInfo> MergeMiscInfos(
       auto system_value = system_info.find(key)->second;
       // avb_<partition>_rollback_index_location values can conflict across
       // different builds
-      if (android::base::EndsWith(key, kRollbackIndexSuffix)) {
+      if (absl::EndsWith(key, kRollbackIndexSuffix)) {
         const auto index = CF_EXPECT(
             ResolveRollbackIndexConflicts(system_value, used_indices));
         used_indices.insert(index);

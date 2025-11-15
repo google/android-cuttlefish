@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "android-base/strings.h"
 #include "grpcpp/security/credentials.h"
 #include "json/json.h"
@@ -32,7 +33,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
-using android::base::EndsWith;
+using absl::EndsWith;
 using android::base::Split;
 using android::base::Trim;
 using grpc::InsecureChannelCredentials;

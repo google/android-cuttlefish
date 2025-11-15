@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <strings.h>
 
+#include "absl/strings/match.h"
 #include "android-base/scopeguard.h"
-#include "android-base/strings.h"
 #include "jpeglib.h"
 #include "libyuv.h"
 #include "png.h"
@@ -184,9 +184,9 @@ Result<void> ScreenshotHandler::Screenshot(std::uint32_t display_number,
 
   SharedFrame frame = frame_future.get();
 
-  if (android::base::EndsWith(screenshot_path, ".jpg")) {
+  if (absl::EndsWith(screenshot_path, ".jpg")) {
     CF_EXPECT(JpegScreenshot(frame, screenshot_path));
-  } else if (android::base::EndsWith(screenshot_path, ".png")) {
+  } else if (absl::EndsWith(screenshot_path, ".png")) {
     CF_EXPECT(PngScreenshot(frame, screenshot_path));
   } else {
     return CF_ERR("Unsupport file format: " << screenshot_path);
