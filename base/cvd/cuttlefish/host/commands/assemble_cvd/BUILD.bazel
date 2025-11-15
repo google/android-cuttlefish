@@ -62,6 +62,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/feature:inject",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -409,6 +410,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:known_paths",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -464,6 +466,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

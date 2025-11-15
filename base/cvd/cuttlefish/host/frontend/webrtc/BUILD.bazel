@@ -84,6 +84,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@fruit",
         "@gflags",

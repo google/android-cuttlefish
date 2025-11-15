@@ -24,6 +24,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -39,7 +40,7 @@ Result<std::vector<std::string>> ExtractHelper(
 
   auto it = files.begin();
   while (it != files.end()) {
-    if (it->empty() || android::base::EndsWith(*it, "/")) {
+    if (it->empty() || absl::EndsWith(*it, "/")) {
       it = files.erase(it);
     } else {
       *it = target_directory + "/" + *it;

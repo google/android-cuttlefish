@@ -247,7 +247,7 @@ std::string FetcherConfig::FindCvdFileWithSuffix(
   const auto& json_files = (*dictionary_)[kCvdFiles];
   for (auto it = json_files.begin(); it != json_files.end(); it++) {
     const auto& file = it.key().asString();
-    if (android::base::EndsWith(file, suffix)) {
+    if (absl::EndsWith(file, suffix)) {
       return file;
     }
   }

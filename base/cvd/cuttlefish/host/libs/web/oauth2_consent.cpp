@@ -33,6 +33,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <json/value.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -290,7 +291,7 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
       CF_EXPECT(FindCvdDataFiles(kCredentials));
 
   for (const std::string& credential_path : credential_paths) {
-    if (!android::base::EndsWith(credential_path, ".json")) {
+    if (!absl::EndsWith(credential_path, ".json")) {
       continue;
     }
     Result<std::unique_ptr<CredentialSource>> credential =
