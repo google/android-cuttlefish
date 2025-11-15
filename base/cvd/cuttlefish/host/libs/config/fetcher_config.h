@@ -22,27 +22,13 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 
 namespace Json {
 class Value;
 }
 
 namespace cuttlefish {
-
-// Order in enum is not guaranteed to be stable, serialized as a string.
-enum class FileSource {
-  UNKNOWN_PURPOSE = 0,
-  DEFAULT_BUILD,
-  SYSTEM_BUILD,
-  KERNEL_BUILD,
-  LOCAL_FILE,
-  GENERATED,
-  BOOTLOADER_BUILD,
-  ANDROID_EFI_LOADER_BUILD,
-  BOOT_BUILD,
-  HOST_PACKAGE_BUILD,
-  CHROME_OS_BUILD,
-};
 
 /*
  * Attempts to answer the general question "where did this file come from, and

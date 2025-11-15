@@ -189,11 +189,18 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:file_source",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@gflags",
         "@jsoncpp",
     ],
+)
+
+cf_cc_library(
+    name = "file_source",
+    srcs = ["file_source.cc"],
+    hdrs = ["file_source.h"],
 )
 
 cf_cc_library(
