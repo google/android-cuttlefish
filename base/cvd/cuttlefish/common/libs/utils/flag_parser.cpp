@@ -40,6 +40,7 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -86,12 +87,11 @@ Flag Flag::UnvalidatedAlias(const FlagAlias& alias) && {
 }
 
 void Flag::ValidateAlias(const FlagAlias& alias) {
-  using android::base::EndsWith;
   using android::base::StartsWith;
 
   CHECK(StartsWith(alias.name, "-")) << "Flags should start with \"-\"";
   if (alias.mode == FlagAliasMode::kFlagPrefix) {
-    CHECK(EndsWith(alias.name, "=")) << "Prefix flags should end with \"=\"";
+    CHECK(absl::EndsWith(alias.name, "=")) << "Prefix flags must end with '='";
   }
 
   CHECK(!HasAlias(alias)) << "Duplicate flag alias: " << alias.name;

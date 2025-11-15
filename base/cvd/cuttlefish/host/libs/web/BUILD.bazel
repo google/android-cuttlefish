@@ -122,6 +122,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip:cached_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -191,6 +192,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
         "@zlib",
