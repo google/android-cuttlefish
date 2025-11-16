@@ -16,6 +16,7 @@
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 #include <stdint.h>
+
 #include <cstddef>
 #include <string>
 
@@ -53,28 +54,22 @@ TEST_F(CasFlagsTests, DefaultValuesAreSet) {
   // downloader_path and cas_config_filepath may be initialized from
   // system defaults; those are environment-dependent and tested
   // elsewhere. Here we check all other deterministic defaults.
-  EXPECT_EQ(flags.prefer_uncompressed, false);
-  EXPECT_EQ(flags.cache_dir, "");
-  EXPECT_EQ(flags.cache_max_size, kMinCacheMaxSize);
-  EXPECT_EQ(flags.cache_lock, false);
-  EXPECT_EQ(flags.use_hardlink, true);
-  EXPECT_EQ(flags.memory_limit, kDefaultMemoryLimit);
-  EXPECT_EQ(flags.cas_concurrency, kDefaultCasConcurrency);
-  EXPECT_EQ(flags.rpc_timeout, kDefaultRpcTimeout);
-  EXPECT_EQ(flags.get_capabilities_timeout, kDefaultGetCapabilitiesTimeout);
-  EXPECT_EQ(flags.get_tree_timeout, kDefaultGetTreeTimeout);
-  EXPECT_EQ(flags.batch_read_blobs_timeout, kDefaultBatchReadBlobsTimeout);
-  EXPECT_EQ(flags.batch_update_blobs_timeout, kDefaultBatchUpdateBlobsTimeout);
-  EXPECT_EQ(flags.version, false);
-}
-
-// Test that CasDownloaderFlags can be manually set even if default exists
-TEST_F(CasFlagsTests, CanOverrideDefaultConfigPath) {
-  CasDownloaderFlags flags;
-  std::string custom_path = "/custom/config/path.json";
-  flags.cas_config_filepath = custom_path;
-
-  EXPECT_EQ(flags.cas_config_filepath, custom_path);
+  EXPECT_EQ(flags.prefer_uncompressed.value(), false);
+  EXPECT_EQ(flags.cache_dir.value(), "");
+  EXPECT_EQ(flags.cache_max_size.value(), kMinCacheMaxSize);
+  EXPECT_EQ(flags.cache_lock.value(), false);
+  EXPECT_EQ(flags.use_hardlink.value(), true);
+  EXPECT_EQ(flags.memory_limit.value(), kDefaultMemoryLimit);
+  EXPECT_EQ(flags.cas_concurrency.value(), kDefaultCasConcurrency);
+  EXPECT_EQ(flags.rpc_timeout.value(), kDefaultRpcTimeout);
+  EXPECT_EQ(flags.get_capabilities_timeout.value(),
+            kDefaultGetCapabilitiesTimeout);
+  EXPECT_EQ(flags.get_tree_timeout.value(), kDefaultGetTreeTimeout);
+  EXPECT_EQ(flags.batch_read_blobs_timeout.value(),
+            kDefaultBatchReadBlobsTimeout);
+  EXPECT_EQ(flags.batch_update_blobs_timeout.value(),
+            kDefaultBatchUpdateBlobsTimeout);
+  EXPECT_EQ(flags.version.value(), false);
 }
 
 // Test that the constructor accepts the expected default config path constant
@@ -100,16 +95,17 @@ TEST_F(CasFlagsTests, MultipleInstancesIndependent) {
   CasDownloaderFlags flags2;
 
   // Modify flags1
-  flags1.downloader_path = "/path/to/downloader";
-  flags1.cache_dir = "/cache/dir";
+  flags1.downloader_path.set_value("/path/to/downloader");
+  flags1.cache_dir.set_value("/cache/dir");
 
   // Verify flags2 is not affected
   if (DefaultDownloaderPathExists()) {
-    EXPECT_EQ(flags2.downloader_path, std::string(kDefaultDownloaderPath));
+    EXPECT_EQ(flags2.downloader_path.value(),
+              std::string(kDefaultDownloaderPath));
   } else {
-    EXPECT_EQ(flags2.downloader_path, "");
+    EXPECT_EQ(flags2.downloader_path.value(), "");
   }
-  EXPECT_EQ(flags2.cache_dir, "");
+  EXPECT_EQ(flags2.cache_dir.value(), "");
 }
 
 // Test that the constructor accepts the expected default downloader path
@@ -119,15 +115,6 @@ TEST_F(CasFlagsTests, DefaultDownloaderPathConstantExists) {
   // the expected path
   const std::string expected_path = "/usr/bin/casdownloader";
   EXPECT_EQ(std::string(kDefaultDownloaderPath), expected_path);
-}
-
-// Test that CasDownloaderFlags can override the default downloader path
-TEST_F(CasFlagsTests, CanOverrideDefaultDownloaderPath) {
-  CasDownloaderFlags flags;
-  std::string custom_downloader = "/custom/path/to/downloader";
-  flags.downloader_path = custom_downloader;
-
-  EXPECT_EQ(flags.downloader_path, custom_downloader);
 }
 
 // Environment-dependent tests: These tests verify that cas_config_filepath and
@@ -147,11 +134,11 @@ TEST_F(CasFlagsTests, CasConfigFilePathInitializedCorrectly) {
 
   if (DefaultConfigPathExists()) {
     // If the default config file exists, it should be used
-    EXPECT_EQ(flags.cas_config_filepath,
+    EXPECT_EQ(flags.cas_config_filepath.value(),
               std::string(kDefaultCasConfigFilePath));
   } else {
     // If it doesn't exist, the field should remain empty
-    EXPECT_TRUE(flags.cas_config_filepath.value.empty());
+    EXPECT_TRUE(flags.cas_config_filepath.value().empty());
   }
 }
 
@@ -161,10 +148,11 @@ TEST_F(CasFlagsTests, DownloaderPathInitializedCorrectly) {
 
   if (DefaultDownloaderPathExists()) {
     // If the default downloader binary exists, it should be used
-    EXPECT_EQ(flags.downloader_path, std::string(kDefaultDownloaderPath));
+    EXPECT_EQ(flags.downloader_path.value(),
+              std::string(kDefaultDownloaderPath));
   } else {
     // If it doesn't exist, the field should remain empty
-    EXPECT_TRUE(flags.downloader_path.value.empty());
+    EXPECT_TRUE(flags.downloader_path.value().empty());
   }
 }
 
@@ -175,273 +163,134 @@ TEST_F(CasFlagsTests, BothDefaultPathsInitializedIndependently) {
 
   // Verify cas_config_filepath initialization (independent of downloader_path)
   if (DefaultConfigPathExists()) {
-    EXPECT_EQ(flags.cas_config_filepath,
+    EXPECT_EQ(flags.cas_config_filepath.value(),
               std::string(kDefaultCasConfigFilePath));
   } else {
-    EXPECT_TRUE(flags.cas_config_filepath.value.empty());
+    EXPECT_TRUE(flags.cas_config_filepath.value().empty());
   }
 
   // Verify downloader_path initialization (independent of cas_config_filepath)
   if (DefaultDownloaderPathExists()) {
-    EXPECT_EQ(flags.downloader_path, std::string(kDefaultDownloaderPath));
+    EXPECT_EQ(flags.downloader_path.value(),
+              std::string(kDefaultDownloaderPath));
   } else {
-    EXPECT_TRUE(flags.downloader_path.value.empty());
+    EXPECT_TRUE(flags.downloader_path.value().empty());
   }
 }
 
 // ============================================================================
-// Tests for FlagValue<T> wrapper behavior (three-tier priority system)
+// Tests for FlagValue<T> wrapper behavior
 // ============================================================================
 
-// Test that FlagValue tracks user_specified correctly for defaults
-TEST_F(CasFlagsTests, FlagValueDefaultNotUserSpecified) {
-  CasDownloaderFlags flags;
+// Test that FlagValue is initialized with a default and not user-specified
+TEST_F(CasFlagsTests, FlagValueInitializesWithDefault) {
+  FlagValue<std::string> string_flag("default_string");
+  EXPECT_EQ(string_flag.value(), "default_string");
+  EXPECT_FALSE(string_flag.user_provided());
 
-  // All defaults should have user_specified = false
-  EXPECT_FALSE(flags.downloader_path.user_specified);
-  EXPECT_FALSE(flags.prefer_uncompressed.user_specified);
-  EXPECT_FALSE(flags.cache_dir.user_specified);
-  EXPECT_FALSE(flags.cache_max_size.user_specified);
-  EXPECT_FALSE(flags.cache_lock.user_specified);
-  EXPECT_FALSE(flags.use_hardlink.user_specified);
-  EXPECT_FALSE(flags.memory_limit.user_specified);
-  EXPECT_FALSE(flags.cas_concurrency.user_specified);
-  EXPECT_FALSE(flags.rpc_timeout.user_specified);
-  EXPECT_FALSE(flags.get_capabilities_timeout.user_specified);
-  EXPECT_FALSE(flags.get_tree_timeout.user_specified);
-  EXPECT_FALSE(flags.batch_read_blobs_timeout.user_specified);
-  EXPECT_FALSE(flags.batch_update_blobs_timeout.user_specified);
-  EXPECT_FALSE(flags.version.user_specified);
+  FlagValue<int> int_flag(42);
+  EXPECT_EQ(int_flag.value(), 42);
+  EXPECT_FALSE(int_flag.user_provided());
+
+  FlagValue<bool> bool_flag(true);
+  EXPECT_TRUE(bool_flag.value());
+  EXPECT_FALSE(bool_flag.user_provided());
+
+  FlagValue<int64_t> int64_flag(12345L);
+  EXPECT_EQ(int64_flag.value(), 12345L);
+  EXPECT_FALSE(int64_flag.user_provided());
 }
 
-// Test that FlagValue can be accessed via implicit conversion
-TEST_F(CasFlagsTests, FlagValueImplicitConversion) {
-  CasDownloaderFlags flags;
-
-  // Test implicit conversion for string
-  std::string path = flags.downloader_path;  // Should call operator T&()
-  // Value should be the default or empty
-
-  // Test implicit conversion for bool
-  bool uncompressed = flags.prefer_uncompressed;  // Should call operator bool()
-  EXPECT_FALSE(uncompressed);
-
-  // Test implicit conversion for int
-  int concurrency = flags.cas_concurrency;  // Should call operator int()
-  EXPECT_EQ(concurrency, kDefaultCasConcurrency);
-
-  // Test implicit conversion for int64_t (cache_max_size)
-  int64_t cache_size = flags.cache_max_size;  // Should call operator int64_t()
-  EXPECT_EQ(cache_size, kMinCacheMaxSize);
+// Test that FlagValue's value can be modified
+TEST_F(CasFlagsTests, FlagValueCanBeModified) {
+  FlagValue<std::string> flag("initial");
+  flag.set_value("modified");
+  EXPECT_EQ(flag.value(), "modified");
+  // value modification should mark the flag as user-provided
+  EXPECT_TRUE(flag.user_provided());
 }
 
-// Test that FlagValue supports comparison operators
+// Test that FlagValue supports converting to its underlying type via value()
+TEST_F(CasFlagsTests, FlagValueConversion) {
+  FlagValue<std::string> string_flag("hello");
+  std::string str = string_flag.value();
+  EXPECT_EQ(str, "hello");
+
+  FlagValue<int> int_flag(123);
+  int i = int_flag.value();
+  EXPECT_EQ(i, 123);
+
+  FlagValue<bool> bool_flag(false);
+  bool b = bool_flag.value();
+  EXPECT_FALSE(b);
+}
+
+// Test that FlagValue supports comparison operators with its underlying type
 TEST_F(CasFlagsTests, FlagValueComparisons) {
-  CasDownloaderFlags flags;
+  FlagValue<std::string> string_flag("test");
+  EXPECT_TRUE(string_flag.value() == "test");
+  EXPECT_FALSE(string_flag.value() != "test");
 
-  // Test string comparison
-  EXPECT_TRUE(flags.cache_dir == "");
-  EXPECT_FALSE(flags.cache_dir != "");
+  FlagValue<int> int_flag(100);
+  EXPECT_TRUE(int_flag.value() == 100);
+  EXPECT_FALSE(int_flag.value() == 99);
 
-  // Test int comparison
-  EXPECT_TRUE(flags.memory_limit == kDefaultMemoryLimit);
-  EXPECT_FALSE(flags.memory_limit > 1000);
-
-  // Test bool comparison
-  EXPECT_FALSE(flags.prefer_uncompressed == true);
-  EXPECT_TRUE(flags.prefer_uncompressed == false);
-
-  // Test int64_t comparison (cache_max_size)
-  EXPECT_TRUE(flags.cache_max_size ==
-              kMinCacheMaxSize);  // Should call operator int64_t()
-  EXPECT_FALSE(flags.cache_max_size != kMinCacheMaxSize);
+  FlagValue<bool> bool_flag(true);
+  EXPECT_TRUE(bool_flag.value() == true);
+  EXPECT_FALSE(bool_flag.value() == false);
 }
 
-// Test that FlagValue supports pointer operator
-TEST_F(CasFlagsTests, FlagValuePointerOperator) {
-  CasDownloaderFlags flags;
-  flags.cache_dir.value = "/cache";
-
-  // Test pointer operator
-  size_t len = flags.cache_dir->length();
-  EXPECT_EQ(len, 6);  // "/cache" has 6 characters
+// Test that FlagValue supports pointer-like operations via value()
+TEST_F(CasFlagsTests, FlagValuePointerLike) {
+  FlagValue<std::string> string_flag("example");
+  EXPECT_EQ(string_flag.value().length(), 7);
 }
 
-// Test FlagValue string value can be set and retrieved
-TEST_F(CasFlagsTests, FlagValueStringSetAndGet) {
-  CasDownloaderFlags flags;
-
-  // Initially should be empty or default
-  std::string original = flags.downloader_path.value;
-
-  // Set a custom value
-  flags.downloader_path.value = "/custom/path";
-  EXPECT_EQ(flags.downloader_path.value, "/custom/path");
-
-  // user_specified should still be false (we manually set .value, not via
-  // setter)
-  EXPECT_FALSE(flags.downloader_path.user_specified);
-}
-
-// Test FlagValue bool value can be set and retrieved
-TEST_F(CasFlagsTests, FlagValueBoolSetAndGet) {
-  CasDownloaderFlags flags;
-
-  EXPECT_FALSE(flags.prefer_uncompressed.value);
-  flags.prefer_uncompressed.value = true;
-  EXPECT_TRUE(flags.prefer_uncompressed.value);
-}
-
-// Test FlagValue int value can be set and retrieved
-TEST_F(CasFlagsTests, FlagValueIntSetAndGet) {
-  CasDownloaderFlags flags;
-
-  EXPECT_EQ(flags.memory_limit.value, kDefaultMemoryLimit);
-  flags.memory_limit.value = 4096;
-  EXPECT_EQ(flags.memory_limit.value, 4096);
-}
-
-// Test FlagValue int64_t value can be set and retrieved
-TEST_F(CasFlagsTests, FlagValueInt64SetAndGet) {
-  CasDownloaderFlags flags;
-
-  EXPECT_EQ(flags.cache_max_size.value, kMinCacheMaxSize);
-  int64_t custom_size = 16LL * 1024 * 1024 * 1024;  // 16 GiB
-  flags.cache_max_size.value = custom_size;
-  EXPECT_EQ(flags.cache_max_size.value, custom_size);
-}
-
-// Test that marking user_specified works for tracking CLI vs defaults
-TEST_F(CasFlagsTests, FlagValueUserSpecifiedTracking) {
-  CasDownloaderFlags flags;
-
-  // Initially not user-specified
-  EXPECT_FALSE(flags.downloader_path.user_specified);
-  EXPECT_FALSE(flags.cache_dir.user_specified);
-
-  // Mark as user-specified
-  flags.downloader_path.user_specified = true;
-  flags.cache_dir.user_specified = true;
-
-  // Now should be marked
-  EXPECT_TRUE(flags.downloader_path.user_specified);
-  EXPECT_TRUE(flags.cache_dir.user_specified);
-}
-
-// Test three-tier priority: all defaults
-TEST_F(CasFlagsTests, ThreeTierPriorityAllDefaults) {
-  CasDownloaderFlags flags;
-
-  // All flags should use defaults and be marked as not user-specified
-  EXPECT_FALSE(flags.downloader_path.user_specified);
-  EXPECT_FALSE(flags.cache_dir.user_specified);
-  EXPECT_FALSE(flags.memory_limit.user_specified);
-  EXPECT_FALSE(flags.rpc_timeout.user_specified);
-
-  // Verify defaults are in place
-  EXPECT_EQ(flags.cache_dir.value, "");
-  EXPECT_EQ(flags.memory_limit.value, kDefaultMemoryLimit);
-  EXPECT_EQ(flags.rpc_timeout.value, kDefaultRpcTimeout);
-}
+// ============================================================================
+// Tests for the three-tier priority logic (Default -> Config -> CLI)
+// These tests verify the logic that *uses* FlagValue, not FlagValue itself.
+// ============================================================================
 
 // Test three-tier priority: CLI values override defaults
-TEST_F(CasFlagsTests, ThreeTierPriorityCliOverridesDefaults) {
-  CasDownloaderFlags flags;
+TEST_F(CasFlagsTests, PriorityLogicCliOverridesDefaults) {
+  FlagValue<int> flag(100);  // Default value
 
-  // Simulate CLI parsing setting values
-  flags.downloader_path.value = "/my/downloader";
-  flags.downloader_path.user_specified = true;
+  // Simulate CLI parsing
+  flag.set_value(200);
 
-  flags.memory_limit.value = 8192;
-  flags.memory_limit.user_specified = true;
-
-  // Verify CLI values are set and marked
-  EXPECT_TRUE(flags.downloader_path.user_specified);
-  EXPECT_EQ(flags.downloader_path.value, "/my/downloader");
-
-  EXPECT_TRUE(flags.memory_limit.user_specified);
-  EXPECT_EQ(flags.memory_limit.value, 8192);
+  // Verify CLI value is present and marked
+  EXPECT_TRUE(flag.user_provided());
+  EXPECT_EQ(flag.value(), 200);
 }
 
-// Test three-tier priority: config values apply when not user-specified
-TEST_F(CasFlagsTests, ThreeTierPriorityConfigAppliesWhenNotCli) {
-  CasDownloaderFlags flags;
+// Test three-tier priority: config values apply only when not set by CLI
+TEST_F(CasFlagsTests, PriorityLogicConfigAppliesWhenNotCli) {
+  FlagValue<std::string> flag("default");  // Default value
 
-  // Defaults: not user-specified
-  EXPECT_FALSE(flags.cache_dir.user_specified);
-  EXPECT_FALSE(flags.rpc_timeout.user_specified);
-
-  // Simulate config file loading
-  // Check that config can override defaults (when not user-specified)
-  if (!flags.cache_dir.user_specified) {
-    flags.cache_dir.value = "/var/cache/cas";
-    flags.cache_dir.user_specified = true;  // Mark as from config
+  // Simulate config loading (flag was not set by CLI)
+  if (!flag.user_provided()) {
+    flag.set_value("config_value");
   }
 
-  if (!flags.rpc_timeout.user_specified) {
-    flags.rpc_timeout.value = 300;
-    flags.rpc_timeout.user_specified = true;  // Mark as from config
-  }
-
-  // Verify config values are now in place
-  EXPECT_EQ(flags.cache_dir.value, "/var/cache/cas");
-  EXPECT_EQ(flags.rpc_timeout.value, 300);
-  EXPECT_TRUE(flags.cache_dir.user_specified);
-  EXPECT_TRUE(flags.rpc_timeout.user_specified);
+  // Verify config value is now in place
+  EXPECT_EQ(flag.value(), "config_value");
 }
 
 // Test three-tier priority: CLI blocks config from overriding
-TEST_F(CasFlagsTests, ThreeTierPriorityCliBlocksConfig) {
-  CasDownloaderFlags flags;
+TEST_F(CasFlagsTests, PriorityLogicCliBlocksConfig) {
+  FlagValue<int> flag(100);  // Default value
 
   // Simulate CLI parsing
-  flags.memory_limit.value = 4096;
-  flags.memory_limit.user_specified = true;
+  flag.set_value(200);
 
   // Simulate config loading attempt
-  if (!flags.memory_limit.user_specified) {
-    // This should NOT execute because CLI already set it
-    flags.memory_limit.value = 2048;
-    flags.memory_limit.user_specified = true;
+  if (!flag.user_provided()) {
+    // This block should NOT execute
+    flag.set_value(300);
   }
 
-  // CLI value should remain (not overridden by config)
-  EXPECT_EQ(flags.memory_limit.value, 4096);
-  EXPECT_TRUE(flags.memory_limit.user_specified);
-}
-
-// Test multiple flags with mixed CLI and config
-TEST_F(CasFlagsTests, ThreeTierPriorityMixedCliAndConfig) {
-  CasDownloaderFlags flags;
-
-  // CLI specifies only some flags
-  flags.downloader_path.value = "/cli/downloader";
-  flags.downloader_path.user_specified = true;
-
-  flags.memory_limit.value = 4096;
-  flags.memory_limit.user_specified = true;
-
-  // Config provides other flags (not overriding CLI)
-  if (!flags.cache_dir.user_specified) {
-    flags.cache_dir.value = "/var/cache";
-    flags.cache_dir.user_specified = true;
-  }
-
-  if (!flags.rpc_timeout.user_specified) {
-    flags.rpc_timeout.value = 300;
-    flags.rpc_timeout.user_specified = true;
-  }
-
-  // Config tries to override CLI (should be blocked)
-  if (!flags.memory_limit.user_specified) {
-    flags.memory_limit.value = 2048;  // Should NOT execute
-  }
-
-  // Verify: CLI wins, config fills in gaps, defaults not used
-  EXPECT_EQ(flags.downloader_path.value, "/cli/downloader");
-  EXPECT_EQ(flags.memory_limit.value, 4096);       // CLI value, not config
-  EXPECT_EQ(flags.cache_dir.value, "/var/cache");  // Config value
-  EXPECT_EQ(flags.rpc_timeout.value, 300);         // Config value
+  // Verify CLI value remains
+  EXPECT_EQ(flag.value(), 200);
 }
 
 }  // namespace cuttlefish

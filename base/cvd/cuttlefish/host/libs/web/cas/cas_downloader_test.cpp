@@ -125,7 +125,7 @@ class CasDownloaderTests : public ::testing::Test {
     std::string cas_config_filepath =
         CreateCasConfig(downloader_path_, prefer_uncompressed, flag_args...);
     CasDownloaderFlags flags;
-    flags.cas_config_filepath = cas_config_filepath;
+    flags.cas_config_filepath.set_value(cas_config_filepath);
     Result<std::unique_ptr<CasDownloader>> result =
         CasDownloader::Create(flags, service_account_filepath);
     if (result.ok()) {
@@ -247,8 +247,7 @@ using testing::Not;
 
 TEST_F(CasDownloaderTests, FailsToCreateWithInvalidConfigPath) {
   CasDownloaderFlags flags;
-  flags.cas_config_filepath = "invalid_config_path";
-  flags.cas_config_filepath.user_specified = true;
+  flags.cas_config_filepath.set_value("invalid_config_path");
   Result<std::unique_ptr<CasDownloader>> result =
       CasDownloader::Create(flags, "");
 
@@ -605,16 +604,11 @@ TEST_F(CasDownloaderTests, PassesCasOptionsFromCommandLine) {
       target_dir_ + "/artifact_name", "cache-max-size", "memory-limit",
       "rpc-timeout");
   CasDownloaderFlags flags;
-  flags.downloader_path = downloader_path_;
-  flags.downloader_path.user_specified = true;
-  flags.cache_max_size = 85899345920LL;  // 80 GiB (int64_t)
-  flags.cache_max_size.user_specified = true;
-  flags.memory_limit = 200;
-  flags.memory_limit.user_specified = true;
-  flags.rpc_timeout = 120;
-  flags.rpc_timeout.user_specified = true;
-  flags.batch_read_blobs_timeout = 120;
-  flags.batch_read_blobs_timeout.user_specified = true;
+  flags.downloader_path.set_value(downloader_path_);
+  flags.cache_max_size.set_value(85899345920LL);  // 80 GiB (int64_t)
+  flags.memory_limit.set_value(200);
+  flags.rpc_timeout.set_value(120);
+  flags.batch_read_blobs_timeout.set_value(120);
   std::string service_account_filepath = "";
   std::unique_ptr<CasDownloader> cas =
       CasFromCommandLine(service_account_filepath, flags);

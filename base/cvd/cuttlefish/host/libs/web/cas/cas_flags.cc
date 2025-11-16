@@ -15,13 +15,13 @@
 
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
-#include <fmt/format.h>
 #include <stdint.h>
 
 #include <string>
 #include <vector>
 
 #include <android-base/parseint.h>
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -44,220 +44,201 @@ std::string GetDefaultDownloaderPath() {
   return "";
 }
 
-Flag GflagsCompatFlagInt64(const std::string& name, int64_t& value) {
+Flag GflagsCompatFlagInt64(const std::string& name, FlagValue<int64_t>& flag) {
   return GflagsCompatFlag(name)
-      .Getter([&value]() { return std::to_string(value); })
-      .Setter([&value](const FlagMatch& match) -> Result<void> {
+      .Getter([&flag]() { return std::to_string(flag.value()); })
+      .Setter([&flag](const FlagMatch& match) -> Result<void> {
         int64_t parsed_int;
         CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
                    "Failed to parse \"{}\" as an integer (int64_t)",
                    match.value);
-        value = parsed_int;
+        flag.set_value(parsed_int);
         return {};
       });
 }
 
-// Helper function to apply config file values while respecting command-line
-// overrides. Call this after parsing command-line flags but before parsing
-// config file values. This ensures the priority:
-//   Command-line > Config File > Defaults
-template <typename T>
-void ApplyConfigValue(FlagValue<T>& flag_val, const T& config_value) {
-  // Only override if user hasn't specified a value on the command-line
-  if (!flag_val.user_specified) {
-    flag_val.value = config_value;
-    flag_val.user_specified = true;  // Mark as coming from config file
-  }
-}
-
 }  // namespace
 
-CasDownloaderFlags::CasDownloaderFlags() {
-  // Set defaults (user_specified = false by default in FlagValue constructor)
-  cas_config_filepath.value = GetDefaultCasConfigFilePath();
-  downloader_path.value = GetDefaultDownloaderPath();
-  prefer_uncompressed.value = false;
-  cache_dir.value = "";
-  invocation_id.value = "";
-  cache_max_size.value = kMinCacheMaxSize;
-  cache_lock.value = false;
-  use_hardlink.value = true;
-  memory_limit.value = kDefaultMemoryLimit;
-  cas_concurrency.value = kDefaultCasConcurrency;
-  rpc_timeout.value = kDefaultRpcTimeout;
-  get_capabilities_timeout.value = kDefaultGetCapabilitiesTimeout;
-  get_tree_timeout.value = kDefaultGetTreeTimeout;
-  batch_read_blobs_timeout.value = kDefaultBatchReadBlobsTimeout;
-  batch_update_blobs_timeout.value = kDefaultBatchUpdateBlobsTimeout;
-  version.value = false;
-}
+CasDownloaderFlags::CasDownloaderFlags()
+    : cas_config_filepath(GetDefaultCasConfigFilePath()),
+      downloader_path(GetDefaultDownloaderPath()),
+      prefer_uncompressed(false),
+      cache_dir(""),
+      invocation_id(""),
+      cache_max_size(kMinCacheMaxSize),
+      cache_lock(false),
+      use_hardlink(true),
+      memory_limit(kDefaultMemoryLimit),
+      cas_concurrency(kDefaultCasConcurrency),
+      rpc_timeout(kDefaultRpcTimeout),
+      get_capabilities_timeout(kDefaultGetCapabilitiesTimeout),
+      get_tree_timeout(kDefaultGetTreeTimeout),
+      batch_read_blobs_timeout(kDefaultBatchReadBlobsTimeout),
+      batch_update_blobs_timeout(kDefaultBatchUpdateBlobsTimeout),
+      version(false) {}
 
 std::vector<Flag> CasDownloaderFlags::Flags() {
   std::vector<Flag> flags;
 
   flags.emplace_back(
       GflagsCompatFlag("cas_config_filepath")
-          .Getter([this]() { return this->cas_config_filepath.value; })
+          .Getter([this]() { return this->cas_config_filepath.value(); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->cas_config_filepath.value = match.value;
-            this->cas_config_filepath.user_specified = true;
+            this->cas_config_filepath.set_value(match.value);
             return {};
           })
           .Help("Path to the CAS downloader config file."));
   flags.emplace_back(
       GflagsCompatFlag("cas_downloader_path")
-          .Getter([this]() { return this->downloader_path.value; })
+          .Getter([this]() { return this->downloader_path.value(); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->downloader_path.value = match.value;
-            this->downloader_path.user_specified = true;
+            this->downloader_path.set_value(match.value);
             return {};
           })
           .Help("Path to the CAS downloader binary. Enables CAS downloading if "
                 "specified."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_prefer_uncompressed", this->prefer_uncompressed.value)
-          .Getter([this]() { return fmt::format("{}", this->prefer_uncompressed.value); })
+      GflagsCompatFlag("cas_prefer_uncompressed")
+          .Getter([this]() {
+            return fmt::format("{}", this->prefer_uncompressed.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->prefer_uncompressed.value = 
-                CF_EXPECT(ParseBool(match.value, "cas_prefer_uncompressed"));
-            this->prefer_uncompressed.user_specified = true;
+            this->prefer_uncompressed.set_value(
+                CF_EXPECT(ParseBool(match.value, "cas_prefer_uncompressed")));
             return {};
           })
           .Help("Download uncompressed artifacts if available."));
   flags.emplace_back(
       GflagsCompatFlag("cas_cache_dir")
-          .Getter([this]() { return this->cache_dir.value; })
+          .Getter([this]() { return this->cache_dir.value(); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->cache_dir.value = match.value;
-            this->cache_dir.user_specified = true;
+            this->cache_dir.set_value(match.value);
             return {};
           })
           .Help("Cache directory to store downloaded files (casdownloader "
                 "flag: cache-dir)."));
   flags.emplace_back(
       GflagsCompatFlag("cas_invocation_id")
-          .Getter([this]() { return this->invocation_id.value; })
+          .Getter([this]() { return this->invocation_id.value(); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->invocation_id.value = match.value;
-            this->invocation_id.user_specified = true;
+            this->invocation_id.set_value(match.value);
             return {};
           })
           .Help("Optional invocation identifier to tag CAS downloader runs "
                 "(casdownloader flag: invocation-id)."));
   flags.emplace_back(
-      GflagsCompatFlagInt64("cas_cache_max_size", this->cache_max_size.value)
-          .Getter([this]() { return std::to_string(this->cache_max_size.value); })
-          .Setter([this](const FlagMatch& match) -> Result<void> {
-            int64_t parsed_int;
-            CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
-                       "Failed to parse \"{}\" as an integer (int64_t)",
-                       match.value);
-            this->cache_max_size.value = parsed_int;
-            this->cache_max_size.user_specified = true;
-            return {};
-          })
+      GflagsCompatFlagInt64("cas_cache_max_size", this->cache_max_size)
           .Help("Cache is trimmed if the cache gets larger than "
                 "this value in bytes (casdownloader flag: cache-max-size)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_cache_lock", this->cache_lock.value)
-          .Getter([this]() { return fmt::format("{}", this->cache_lock.value); })
+      GflagsCompatFlag("cas_cache_lock")
+          .Getter(
+              [this]() { return fmt::format("{}", this->cache_lock.value()); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->cache_lock.value = CF_EXPECT(ParseBool(match.value, "cas_cache_lock"));
-            this->cache_lock.user_specified = true;
+            this->cache_lock.set_value(
+                CF_EXPECT(ParseBool(match.value, "cas_cache_lock")));
             return {};
           })
           .Help("Enable cache lock (casdownloader flag: cache-lock)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_use_hardlink", this->use_hardlink.value)
-          .Getter([this]() { return fmt::format("{}", this->use_hardlink.value); })
+      GflagsCompatFlag("cas_use_hardlink")
+          .Getter([this]() {
+            return fmt::format("{}", this->use_hardlink.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->use_hardlink.value = CF_EXPECT(ParseBool(match.value, "cas_use_hardlink"));
-            this->use_hardlink.user_specified = true;
+            this->use_hardlink.set_value(
+                CF_EXPECT(ParseBool(match.value, "cas_use_hardlink")));
             return {};
           })
           .Help("By default local cache will use hardlink when push and pull "
                 "files (casdownloader flag: use-hardlink)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_concurrency", this->cas_concurrency.value)
-          .Getter([this]() { return std::to_string(this->cas_concurrency.value); })
+      GflagsCompatFlag("cas_concurrency")
+          .Getter([this]() {
+            return std::to_string(this->cas_concurrency.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->cas_concurrency.value = CF_EXPECT(ParseInt(match.value, "cas_concurrency"));
-            this->cas_concurrency.user_specified = true;
+            this->cas_concurrency.set_value(
+                CF_EXPECT(ParseInt(match.value, "cas_concurrency")));
             return {};
           })
           .Help("the maximum number of concurrent download operations "
                 "(casdownloader flag: cas-concurrency)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_memory_limit", this->memory_limit.value)
-          .Getter([this]() { return std::to_string(this->memory_limit.value); })
+      GflagsCompatFlag("cas_memory_limit")
+          .Getter(
+              [this]() { return std::to_string(this->memory_limit.value()); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->memory_limit.value = CF_EXPECT(ParseInt(match.value, "cas_memory_limit"));
-            this->memory_limit.user_specified = true;
+            this->memory_limit.set_value(
+                CF_EXPECT(ParseInt(match.value, "cas_memory_limit")));
             return {};
           })
           .Help("Memory limit in MiB (casdownloader flag: memory-limit)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_rpc_timeout", this->rpc_timeout.value)
-          .Getter([this]() { return std::to_string(this->rpc_timeout.value); })
+      GflagsCompatFlag("cas_rpc_timeout")
+          .Getter(
+              [this]() { return std::to_string(this->rpc_timeout.value()); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->rpc_timeout.value = CF_EXPECT(ParseInt(match.value, "cas_rpc_timeout"));
-            this->rpc_timeout.user_specified = true;
+            this->rpc_timeout.set_value(
+                CF_EXPECT(ParseInt(match.value, "cas_rpc_timeout")));
             return {};
           })
           .Help("Default RPC timeout in seconds (casdownloader flag: "
                 "rpc-timeout)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_get_capabilities_timeout",
-                       this->get_capabilities_timeout.value)
-          .Getter([this]() { return std::to_string(this->get_capabilities_timeout.value); })
+      GflagsCompatFlag("cas_get_capabilities_timeout")
+          .Getter([this]() {
+            return std::to_string(this->get_capabilities_timeout.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->get_capabilities_timeout.value = 
-                CF_EXPECT(ParseInt(match.value, "cas_get_capabilities_timeout"));
-            this->get_capabilities_timeout.user_specified = true;
+            this->get_capabilities_timeout.set_value(CF_EXPECT(
+                ParseInt(match.value, "cas_get_capabilities_timeout")));
             return {};
           })
           .Help("RPC timeout for GetCapabilities in seconds (casdownloader "
                 "flag: get-capabilities-timeout)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_get_tree_timeout", this->get_tree_timeout.value)
-          .Getter([this]() { return std::to_string(this->get_tree_timeout.value); })
+      GflagsCompatFlag("cas_get_tree_timeout")
+          .Getter([this]() {
+            return std::to_string(this->get_tree_timeout.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->get_tree_timeout.value = CF_EXPECT(ParseInt(match.value, "cas_get_tree_timeout"));
-            this->get_tree_timeout.user_specified = true;
+            this->get_tree_timeout.set_value(
+                CF_EXPECT(ParseInt(match.value, "cas_get_tree_timeout")));
             return {};
           })
           .Help("RPC timeout for GetTree in seconds "
                 "(casdownloader flag: get-tree-timeout)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_batch_read_blobs_timeout",
-                       this->batch_read_blobs_timeout.value)
-          .Getter([this]() { return std::to_string(this->batch_read_blobs_timeout.value); })
+      GflagsCompatFlag("cas_batch_read_blobs_timeout")
+          .Getter([this]() {
+            return std::to_string(this->batch_read_blobs_timeout.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->batch_read_blobs_timeout.value = 
-                CF_EXPECT(ParseInt(match.value, "cas_batch_read_blobs_timeout"));
-            this->batch_read_blobs_timeout.user_specified = true;
+            this->batch_read_blobs_timeout.set_value(CF_EXPECT(
+                ParseInt(match.value, "cas_batch_read_blobs_timeout")));
             return {};
           })
           .Help("RPC timeout for BatchReadBlobs in seconds (casdownloader "
                 "flag: batch-read-blobs-timeout)."));
   flags.emplace_back(
-      GflagsCompatFlag("cas_batch_update_blobs_timeout",
-                       this->batch_update_blobs_timeout.value)
-          .Getter([this]() { return std::to_string(this->batch_update_blobs_timeout.value); })
+      GflagsCompatFlag("cas_batch_update_blobs_timeout")
+          .Getter([this]() {
+            return std::to_string(this->batch_update_blobs_timeout.value());
+          })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->batch_update_blobs_timeout.value = 
-                CF_EXPECT(ParseInt(match.value, "cas_batch_update_blobs_timeout"));
-            this->batch_update_blobs_timeout.user_specified = true;
+            this->batch_update_blobs_timeout.set_value(CF_EXPECT(
+                ParseInt(match.value, "cas_batch_update_blobs_timeout")));
             return {};
           })
           .Help("RPC timeout for BatchUpdateBlobs in seconds (casdownloader "
                 "flag: batch-update-blobs-timeout)."));
   flags.emplace_back(
-      GflagsCompatFlag("version", this->version.value)
-          .Getter([this]() { return fmt::format("{}", this->version.value); })
+      GflagsCompatFlag("version")
+          .Getter([this]() { return fmt::format("{}", this->version.value()); })
           .Setter([this](const FlagMatch& match) -> Result<void> {
-            this->version.value = CF_EXPECT(ParseBool(match.value, "version"));
-            this->version.user_specified = true;
+            this->version.set_value(
+                CF_EXPECT(ParseBool(match.value, "version")));
             return {};
           })
           .Help("Print CAS downloader version information "

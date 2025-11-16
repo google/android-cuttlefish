@@ -24,8 +24,8 @@
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 #include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
 
@@ -79,11 +79,16 @@ class CasDownloader {
       const std::string& service_account_filepath);
   virtual ~CasDownloader() = default;
   virtual Result<void> DownloadFile(
-    const DeviceBuild& build, const std::string& artifact_name,
-    const std::string& target_directory, const DigestsFetcher& digests_fetcher,
-    const std::optional<std::string>& stats_filepath = std::nullopt);
+      const DeviceBuild& build, const std::string& artifact_name,
+      const std::string& target_directory,
+      const DigestsFetcher& digests_fetcher,
+      const std::optional<std::string>& stats_filepath = std::nullopt);
 
  private:
+  static Result<std::unique_ptr<CasDownloader>> CreateImpl(
+      const CasDownloaderFlags& cas_downloader_flags,
+      const std::string& service_account_filepath);
+
   Result<CasIdentifier> GetCasIdentifier(const std::string& build_id,
                                          const std::string& build_target,
                                          const std::string& artifact_name,
