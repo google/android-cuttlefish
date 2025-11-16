@@ -18,9 +18,11 @@ syntax = "proto2";
 package gfxstream.proto;
 
 message EglAvailability {
-  optional string vendor = 1;
-  optional string version = 2;
-  optional string extensions = 3;
+  // Use the `PlatformAvailability::*` fields instead.
+  optional string vendor = 1 [deprecated = true];
+  optional string version = 2 [deprecated = true];
+  optional string extensions = 3 [deprecated = true];
+
   optional string client_extensions = 4;
 
   message GlesContextAvailability {
@@ -30,15 +32,38 @@ message EglAvailability {
     optional string extensions = 4;
   }
 
-  // Loading GLES functions via EGL's eglGetProcAddress().
-  optional GlesContextAvailability gles2_availability = 5;
-  optional GlesContextAvailability gles3_availability = 6;
-
-  // Loading GLES functions via GLESv2 library directly.
-  optional GlesContextAvailability gles2_direct_availability = 7;
-  optional GlesContextAvailability gles3_direct_availability = 8;
+  // Use the `PlatformAvailability::*` fields instead.
+  optional GlesContextAvailability gles2_availability = 5 [deprecated = true];
+  optional GlesContextAvailability gles3_availability = 6 [deprecated = true];
+  optional GlesContextAvailability gles2_direct_availability = 7
+      [deprecated = true];
+  optional GlesContextAvailability gles3_direct_availability = 8
+      [deprecated = true];
 
   repeated string errors = 9;
+
+  message PlatformAvailability {
+    optional string vendor = 1;
+    optional string version = 2;
+    optional string extensions = 3;
+
+    // Loading GLES functions via EGL's eglGetProcAddress().
+    optional GlesContextAvailability gles2_availability = 4;
+    optional GlesContextAvailability gles3_availability = 5;
+
+    // Loading GLES functions via GLESv2 library directly.
+    optional GlesContextAvailability gles2_direct_availability = 6;
+    optional GlesContextAvailability gles3_direct_availability = 7;
+
+    repeated string errors = 8;
+  }
+
+  optional PlatformAvailability default_platform_availability = 10;
+  optional PlatformAvailability gbm_platform_availability = 11;
+  optional PlatformAvailability surfaceless_mesa_platform_availability = 12;
+  optional PlatformAvailability wayland_platform_availability = 13;
+  optional PlatformAvailability x11_platform_availability = 14;
+  repeated PlatformAvailability device_platform_availabilities = 15;
 }
 
 message VulkanExternalMemoryHostQuirks {

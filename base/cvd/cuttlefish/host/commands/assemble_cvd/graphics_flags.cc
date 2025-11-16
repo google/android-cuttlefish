@@ -156,13 +156,25 @@ CF_UNUSED_ON_MACOS
 bool ShouldEnableAcceleratedRendering(
     const ::gfxstream::proto::GraphicsAvailability& availability) {
   const bool sufficient_gles2 =
-      availability.has_egl() && availability.egl().has_gles2_availability() &&
-      !IsLikelySoftwareRenderer(
-          availability.egl().gles2_availability().renderer());
+      availability.has_egl() &&
+      availability.egl().has_default_platform_availability() &&
+      availability.egl()
+          .default_platform_availability()
+          .has_gles2_availability() &&
+      !IsLikelySoftwareRenderer(availability.egl()
+                                    .default_platform_availability()
+                                    .gles2_availability()
+                                    .renderer());
   const bool sufficient_gles3 =
-      availability.has_egl() && availability.egl().has_gles3_availability() &&
-      !IsLikelySoftwareRenderer(
-          availability.egl().gles3_availability().renderer());
+      availability.has_egl() &&
+      availability.egl().has_default_platform_availability() &&
+      availability.egl()
+          .default_platform_availability()
+          .has_gles3_availability() &&
+      !IsLikelySoftwareRenderer(availability.egl()
+                                    .default_platform_availability()
+                                    .gles3_availability()
+                                    .renderer());
   const bool has_discrete_gpu =
       availability.has_vulkan() &&
       !availability.vulkan().physical_devices().empty() &&
@@ -413,14 +425,32 @@ Result<std::string> GraphicsDetectorBinaryPath() {
 
 bool IsAmdGpu(const gfxstream::proto::GraphicsAvailability& availability) {
   return (availability.has_egl() &&
-          ((availability.egl().has_gles2_availability() &&
-            availability.egl().gles2_availability().has_vendor() &&
-            availability.egl().gles2_availability().vendor().find("AMD") !=
-                std::string::npos) ||
-           (availability.egl().has_gles3_availability() &&
-            availability.egl().gles3_availability().has_vendor() &&
-            availability.egl().gles3_availability().vendor().find("AMD") !=
-                std::string::npos))) ||
+          ((availability.egl().has_default_platform_availability() &&
+            availability.egl()
+                .default_platform_availability()
+                .has_gles2_availability() &&
+            availability.egl()
+                .default_platform_availability()
+                .gles2_availability()
+                .has_vendor() &&
+            availability.egl()
+                    .default_platform_availability()
+                    .gles2_availability()
+                    .vendor()
+                    .find("AMD") != std::string::npos) ||
+           (availability.egl().has_default_platform_availability() &&
+            availability.egl()
+                .default_platform_availability()
+                .has_gles3_availability() &&
+            availability.egl()
+                .default_platform_availability()
+                .gles3_availability()
+                .has_vendor() &&
+            availability.egl()
+                    .default_platform_availability()
+                    .gles3_availability()
+                    .vendor()
+                    .find("AMD") != std::string::npos))) ||
          (availability.has_vulkan() &&
           !availability.vulkan().physical_devices().empty() &&
           availability.vulkan().physical_devices(0).has_name() &&

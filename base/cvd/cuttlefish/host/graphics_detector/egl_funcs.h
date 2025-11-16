@@ -41,6 +41,7 @@
     X(EGLImage, eglCreateImageKHR, (EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)) \
     X(EGLBoolean, eglDestroyImageKHR, (EGLDisplay dpy, EGLImage image)) \
     X(EGLImage, eglCreateImage, (EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)) \
-    X(EGLBoolean, eglDestroyImage, (EGLDisplay dpy, EGLImage image))
+    X(EGLBoolean, eglDestroyImage, (EGLDisplay dpy, EGLImage image)) \
+    X(EGLBoolean, eglQueryDevicesEXT, (EGLint max_devices, EGLDeviceEXT *devices, EGLint *num_devices))
 
 // clang-format on
