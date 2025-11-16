@@ -27,35 +27,19 @@ namespace cuttlefish {
 // Wrapper for flag values that tracks whether a value was user-specified
 // (via command-line or config file) versus using a default.
 template <typename T>
-struct FlagValue {
-  T value;
-  bool user_specified = false;
+class FlagValue {
+ public:
+  FlagValue() : default_value_{} {}
+  explicit FlagValue(const T& default_value) : default_value_(default_value) {}
 
-  FlagValue() = default;
-  explicit FlagValue(const T& default_val)
-      : value(default_val), user_specified(false) {}
+  // Return by value to avoid dangling references.
+  T value() const { return value_.value_or(default_value_); }
+  void set_value(const T& value) { value_.emplace(value); }
+  bool user_provided() const { return value_.has_value(); }
 
-  // Assignment operator for setting value (preserves user_specified flag)
-  FlagValue& operator=(const T& new_value) {
-    value = new_value;
-    return *this;
-  }
-
-  // Conversion operators for backward compatibility with code expecting T
-  operator const T&() const { return value; }
-  operator T&() { return value; }
-
-  // Pointer operators
-  const T* operator->() const { return &value; }
-  T* operator->() { return &value; }
-
-  // Comparison operators
-  bool operator==(const T& other) const { return value == other; }
-  bool operator!=(const T& other) const { return value != other; }
-  bool operator<(const T& other) const { return value < other; }
-  bool operator>(const T& other) const { return value > other; }
-  bool operator<=(const T& other) const { return value <= other; }
-  bool operator>=(const T& other) const { return value >= other; }
+ private:
+  std::optional<T> value_;
+  T default_value_;
 };
 
 inline constexpr int kDefaultMemoryLimit = 0;  // 0 for no limit.
@@ -71,7 +55,8 @@ inline constexpr int kDefaultBatchUpdateBlobsTimeout = 60;
 inline constexpr int64_t kMinCacheMaxSize = 8LL * 1024 * 1024 * 1024;
 
 // Default path to CAS downloader config file.
-inline constexpr const char kDefaultCasConfigFilePath[] = "/etc/casdownloader/config.json";
+inline constexpr const char kDefaultCasConfigFilePath[] =
+    "/etc/casdownloader/config.json";
 
 // Default path to CAS downloader binary.
 inline constexpr const char kDefaultDownloaderPath[] = "/usr/bin/casdownloader";
