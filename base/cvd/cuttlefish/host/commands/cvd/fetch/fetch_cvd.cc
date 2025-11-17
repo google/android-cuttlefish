@@ -450,7 +450,8 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
   for (const auto& target : targets) {
     FetcherConfig config;
     FetchContext fetch_context(downloaders.AndroidBuild(), target.directories,
-                               target.builds, config, tracer);
+                               host_target.host_tools_directory, target.builds,
+                               host_target_build, config, tracer);
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
     CF_EXPECT(FetchTarget(fetch_context, target.download_flags,
                           flags.keep_downloaded_archives));

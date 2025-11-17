@@ -226,11 +226,15 @@ std::ostream& operator<<(std::ostream& out, const FetchBuildContext& context) {
 
 FetchContext::FetchContext(BuildApi& build_api,
                            const TargetDirectories& target_directories,
-                           const Builds& builds, FetcherConfig& fetcher_config,
-                           FetchTracer& tracer)
+                           const std::string& host_package_directory,
+                           const Builds& builds,
+                           const Build& host_package_build,
+                           FetcherConfig& fetcher_config, FetchTracer& tracer)
     : build_api_(build_api),
       target_directories_(target_directories),
+      host_package_directory_(host_package_directory),
       builds_(builds),
+      host_package_build_(host_package_build),
       fetcher_config_(fetcher_config),
       tracer_(tracer) {}
 
@@ -302,6 +306,12 @@ std::optional<FetchBuildContext> FetchContext::OtaToolsBuild() {
   } else {
     return {};
   }
+}
+
+FetchBuildContext FetchContext::HostPackageBuild() {
+  return FetchBuildContext(*this, host_package_build_, host_package_directory_,
+                           FileSource::HOST_PACKAGE_BUILD,
+                           tracer_.NewTrace("Host package"));
 }
 
 }  // namespace cuttlefish
