@@ -36,6 +36,7 @@
 #include <json/writer.h>
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -156,6 +157,12 @@ Result<std::string> NormalizePath(std::string path) {
   CF_EXPECT(!absl::StrContains(path, ".."));
   while (absl::StrContains(path, "//")) {
     absl::StrReplaceAll({{"//", "/"}}, &path);
+  }
+  if (absl::StartsWith(path, "./")) {
+    std::string_view path_view = path;
+    while (absl::ConsumePrefix(&path_view, "./")) {
+    }
+    path = path_view;
   }
   return path;
 }

@@ -54,6 +54,8 @@ class FetchArtifact {
 
   FetchArtifact(class FetchBuildContext&, std::string artifact_name);
 
+  bool IsZip() const;
+
   FetchBuildContext& fetch_build_context_;
   std::string artifact_name_;
   std::string downloaded_path_;
