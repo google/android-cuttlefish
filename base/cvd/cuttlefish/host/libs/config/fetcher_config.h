@@ -57,6 +57,10 @@ std::ostream& operator<<(std::ostream&, const CvdFile&);
  */
 class FetcherConfig {
  public:
+  FetcherConfig() = default;
+  FetcherConfig(FetcherConfig&&) = default;
+  FetcherConfig& operator=(FetcherConfig&&) = default;
+
   bool SaveToFile(const std::string& file) const;
   bool LoadFromFile(const std::string& file);
 
