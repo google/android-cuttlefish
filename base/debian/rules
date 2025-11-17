@@ -54,6 +54,7 @@ copts += --copt="-gdwarf-4"
 endif
 
 cuttlefish_common := debian/cuttlefish-base/usr/lib/cuttlefish-common
+cuttlefish_integration := debian/cuttlefish-integration/usr/bin
 
 disk_cache_arg :=
 ifneq ($(strip ${BAZEL_DISK_CACHE_DIR}),)
@@ -71,12 +72,13 @@ endif
 .PHONY: override_dh_installinit
 override_dh_installinit:
 	dh_installinit --name=cuttlefish-host-resources
+	dh_installinit --name=cuttlefish-defaults
 	dh_installinit
 
 # the `--workspace_status_command` flag path depends on the current working directory of base/cvd
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	cd cvd && bazel build ${remote_cache_arg} ${disk_cache_arg} ${compilation_mode} ${conlyopts} ${copts} ${cxxopts} ${linkopts} -c opt 'cuttlefish/package:cvd' --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
+	cd cvd && bazel build ${remote_cache_arg} ${disk_cache_arg} ${compilation_mode} ${conlyopts} ${copts} ${cxxopts} ${linkopts} -c opt 'cuttlefish/package:cvd' cuttlefish/package:defaults --spawn_strategy=local --workspace_status_command=../stamp_helper.sh --build_tag_filters=-clang-tidy
 	dh_auto_build
 
 # Only generate optimized DWARF if debug is enabled
@@ -95,6 +97,8 @@ override_dh_install:
 	dh_install
 	rm -rf ${cuttlefish_common}/bin/cvd.repo_mapping
 	rm -rf ${cuttlefish_common}/bin/cvd.runfiles*
+	rm -rf ${cuttlefish_integration}/defaults.repo_mapping
+	rm -rf ${cuttlefish_integration}/defaults.runfiles*
 
 # Repair output files bazel actions made executable
 .PHONY: override_dh_fixperms

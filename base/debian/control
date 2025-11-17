@@ -102,6 +102,8 @@ Description: Utilities for Android cuttlefish devices in the cloud
 
 Package: cuttlefish-defaults
 Architecture: any
+Build-Depends: bazel [amd64],
+               dh-exec
 Depends: cuttlefish-base,
 Description: May potentially enable new or experimental cuttlefish
  features before being enabled by default.
