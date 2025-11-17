@@ -51,11 +51,12 @@ TEST(FetchCvdParserTests, CreatesCasDownloaderFlags) {
 
   EXPECT_THAT(flagsRes, IsOk());
   FetchFlags flags = flagsRes.value();
-  EXPECT_THAT(flags.build_api_flags.cas_downloader_flags.downloader_path,
-              Eq("/tmp/casdownloader"));
-  EXPECT_THAT(flags.build_api_flags.cas_downloader_flags.cache_dir,
+  EXPECT_THAT(
+      flags.build_api_flags.cas_downloader_flags.downloader_path.value(),
+      Eq("/tmp/casdownloader"));
+  EXPECT_THAT(flags.build_api_flags.cas_downloader_flags.cache_dir.value(),
               Eq("/tmp/cas_cache"));
-  EXPECT_THAT(flags.build_api_flags.cas_downloader_flags.cache_max_size,
+  EXPECT_THAT(flags.build_api_flags.cas_downloader_flags.cache_max_size.value(),
               Eq(10000000000));
 }
 
