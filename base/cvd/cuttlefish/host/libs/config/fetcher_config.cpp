@@ -68,19 +68,13 @@ std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
   return os;
 }
 
-FetcherConfig::FetcherConfig() : dictionary_(new Json::Value()) {}
-
-FetcherConfig::FetcherConfig(FetcherConfig&&) = default;
-
-FetcherConfig::~FetcherConfig() {}
-
 bool FetcherConfig::SaveToFile(const std::string& file) const {
   std::ofstream ofs(file);
   if (!ofs.is_open()) {
     LOG(ERROR) << "Unable to write to file " << file;
     return false;
   }
-  ofs << *dictionary_;
+  ofs << dictionary_;
   return !ofs.fail();
 }
 
@@ -93,18 +87,18 @@ bool FetcherConfig::LoadFromFile(const std::string& file) {
   Json::CharReaderBuilder builder;
   std::ifstream ifs(real_file_path);
   std::string errorMessage;
-  if (!Json::parseFromStream(builder, ifs, dictionary_.get(), &errorMessage)) {
+  if (!Json::parseFromStream(builder, ifs, &dictionary_, &errorMessage)) {
     LOG(ERROR) << "Could not read config file " << file << ": " << errorMessage;
     return false;
   }
 
   auto base_dir = android::base::Dirname(file);
-  if (base_dir != "." && dictionary_->isMember(kCvdFiles)) {
+  if (base_dir != "." && dictionary_.isMember(kCvdFiles)) {
     LOG(INFO) << "Adjusting cvd_file paths to directory: " << base_dir;
-    for (const auto& member_name : (*dictionary_)[kCvdFiles].getMemberNames()) {
-      (*dictionary_)[kCvdFiles][base_dir + "/" + member_name] =
-          (*dictionary_)[kCvdFiles][member_name];
-      (*dictionary_)[kCvdFiles].removeMember(member_name);
+    for (const auto& member_name : dictionary_[kCvdFiles].getMemberNames()) {
+      dictionary_[kCvdFiles][base_dir + "/" + member_name] =
+          dictionary_[kCvdFiles][member_name];
+      dictionary_[kCvdFiles].removeMember(member_name);
     }
   }
 
@@ -141,23 +135,23 @@ Json::Value CvdFileToJson(const CvdFile& cvd_file) {
 }  // namespace
 
 bool FetcherConfig::add_cvd_file(const CvdFile& file, bool override_entry) {
-  if (!dictionary_->isMember(kCvdFiles)) {
+  if (!dictionary_.isMember(kCvdFiles)) {
     Json::Value files_json(Json::objectValue);
-    (*dictionary_)[kCvdFiles] = files_json;
+    dictionary_[kCvdFiles] = files_json;
   }
-  if ((*dictionary_)[kCvdFiles].isMember(file.file_path) && !override_entry) {
+  if (dictionary_[kCvdFiles].isMember(file.file_path) && !override_entry) {
     return false;
   }
-  (*dictionary_)[kCvdFiles][file.file_path] = CvdFileToJson(file);
+  dictionary_[kCvdFiles][file.file_path] = CvdFileToJson(file);
   return true;
 }
 
 std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
-  if (!dictionary_->isMember(kCvdFiles)) {
+  if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
   std::map<std::string, CvdFile> files;
-  const auto& json_files = (*dictionary_)[kCvdFiles];
+  const auto& json_files = dictionary_[kCvdFiles];
   for (auto it = json_files.begin(); it != json_files.end(); it++) {
     files[it.key().asString()] = JsonToCvdFile(it.key().asString(), *it);
   }
@@ -166,10 +160,10 @@ std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
 
 std::string FetcherConfig::FindCvdFileWithSuffix(
     const std::string& suffix) const {
-  if (!dictionary_->isMember(kCvdFiles)) {
+  if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
-  const auto& json_files = (*dictionary_)[kCvdFiles];
+  const auto& json_files = dictionary_[kCvdFiles];
   for (auto it = json_files.begin(); it != json_files.end(); it++) {
     const auto& file = it.key().asString();
     if (absl::EndsWith(file, suffix)) {
@@ -214,11 +208,11 @@ Result<void> FetcherConfig::AddFilesToConfig(
 }
 
 Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
-  if (!dictionary_->isMember(kCvdFiles)) {
+  if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
   std::string normalized = CF_EXPECT(NormalizePath(std::string(path)));
-  auto& json_files = (*dictionary_)[kCvdFiles];
+  auto& json_files = dictionary_[kCvdFiles];
   CF_EXPECTF(json_files.isMember(normalized), "Unknown file '{}'", normalized);
   json_files.removeMember(normalized);
   return {};

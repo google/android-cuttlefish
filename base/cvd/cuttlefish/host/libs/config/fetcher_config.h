@@ -16,17 +16,14 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
 
+#include "json/value.h"
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/file_source.h"
-
-namespace Json {
-class Value;
-}
 
 namespace cuttlefish {
 
@@ -59,13 +56,7 @@ std::ostream& operator<<(std::ostream&, const CvdFile&);
  * flags fetch_cvd was invoked with.
  */
 class FetcherConfig {
-  std::unique_ptr<Json::Value> dictionary_;
-
  public:
-  FetcherConfig();
-  FetcherConfig(FetcherConfig&&);
-  ~FetcherConfig();
-
   bool SaveToFile(const std::string& file) const;
   bool LoadFromFile(const std::string& file);
 
@@ -81,6 +72,9 @@ class FetcherConfig {
                                 bool override_entry = false);
 
   Result<void> RemoveFileFromConfig(const std::string& path);
+
+ private:
+  Json::Value dictionary_;
 };
 
 class FetcherConfigs {
