@@ -150,6 +150,7 @@ message Crosvm {
   optional bool enable_sandbox = 1;
   optional bool simple_media_device = 2;
   optional string v4l2_proxy = 3;
+  optional string vhost_user_vsock = 4;
 }
 
 message Gem5 {}

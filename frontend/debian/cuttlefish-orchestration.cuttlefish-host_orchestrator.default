@@ -28,3 +28,7 @@ orchestrator_cvd_artifacts_dir=/var/lib/cuttlefish-common
 # Indicates whether to use the GCE metadata to get the Build API credentials.
 # Defaults to false.
 # build_api_credentials_use_gce_metadata=
+#
+# Select a default option of vhost_user_vsock for launching CVD.
+# Defailts to ""
+# vhost_user_vsock=

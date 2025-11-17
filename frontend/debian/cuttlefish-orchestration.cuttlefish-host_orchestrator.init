@@ -95,6 +95,9 @@ start_orchestrator() {
   if [[ -n "${build_api_credentials_use_gce_metadata}" ]]; then
     args+=("--build_api_credentials_use_gce_metadata=${build_api_credentials_use_gce_metadata}")
   fi
+  if [[ -n "${vhost_user_vsock}" ]]; then
+    args+=("--vhost_user_vsock=${vhost_user_vsock}")
+  fi
 
   start-stop-daemon --start \
     --pidfile "${ORCHESTRATOR_PIDFILE}" \
