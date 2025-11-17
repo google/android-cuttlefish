@@ -16,6 +16,8 @@
 #pragma once
 
 #include <map>
+#include <memory>
+#include <mutex>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -54,12 +56,16 @@ std::ostream& operator<<(std::ostream&, const CvdFile&);
  *
  * The output json also includes data relevant for human debugging, like which
  * flags fetch_cvd was invoked with.
+ *
+ * `FetcherConfig` is thread-safe for reads and writes, but the move constructor
+ * and assignment operator are not thread-safe and cannot be called concurrently
+ * with any other operations.
  */
 class FetcherConfig {
  public:
-  FetcherConfig() = default;
-  FetcherConfig(FetcherConfig&&) = default;
-  FetcherConfig& operator=(FetcherConfig&&) = default;
+  FetcherConfig();
+  FetcherConfig(FetcherConfig&&);
+  FetcherConfig& operator=(FetcherConfig&&);
 
   bool SaveToFile(const std::string& file) const;
   bool LoadFromFile(const std::string& file);
@@ -79,6 +85,7 @@ class FetcherConfig {
 
  private:
   Json::Value dictionary_;
+  std::unique_ptr<std::mutex> mutex_;
 };
 
 class FetcherConfigs {

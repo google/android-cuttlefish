@@ -20,6 +20,8 @@
 #include <cstddef>
 #include <fstream>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -68,7 +70,23 @@ std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
   return os;
 }
 
+FetcherConfig::FetcherConfig() : mutex_(std::make_unique<std::mutex>()) {}
+
+FetcherConfig::FetcherConfig(FetcherConfig&& other) {
+  mutex_ = std::move(other.mutex_);
+  other.mutex_ = std::make_unique<std::mutex>();
+}
+
+FetcherConfig& FetcherConfig::operator=(FetcherConfig&& other) {
+  mutex_ = std::move(other.mutex_);
+  other.mutex_ = std::make_unique<std::mutex>();
+
+  return *this;
+}
+
 bool FetcherConfig::SaveToFile(const std::string& file) const {
+  std::scoped_lock lock(*mutex_);
+
   std::ofstream ofs(file);
   if (!ofs.is_open()) {
     LOG(ERROR) << "Unable to write to file " << file;
@@ -79,6 +97,8 @@ bool FetcherConfig::SaveToFile(const std::string& file) const {
 }
 
 bool FetcherConfig::LoadFromFile(const std::string& file) {
+  std::scoped_lock lock(*mutex_);
+
   auto real_file_path = AbsolutePath(file);
   if (real_file_path.empty()) {
     LOG(ERROR) << "Could not get real path for file " << file;
@@ -135,6 +155,8 @@ Json::Value CvdFileToJson(const CvdFile& cvd_file) {
 }  // namespace
 
 bool FetcherConfig::add_cvd_file(const CvdFile& file, bool override_entry) {
+  std::scoped_lock lock(*mutex_);
+
   if (!dictionary_.isMember(kCvdFiles)) {
     Json::Value files_json(Json::objectValue);
     dictionary_[kCvdFiles] = files_json;
@@ -147,6 +169,8 @@ bool FetcherConfig::add_cvd_file(const CvdFile& file, bool override_entry) {
 }
 
 std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
+  std::scoped_lock lock(*mutex_);
+
   if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
@@ -160,6 +184,8 @@ std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
 
 std::string FetcherConfig::FindCvdFileWithSuffix(
     const std::string& suffix) const {
+  std::scoped_lock lock(*mutex_);
+
   if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
@@ -186,6 +212,9 @@ Result<void> FetcherConfig::AddFilesToConfig(
     FileSource purpose, const std::string& build_id,
     const std::string& build_target, const std::vector<std::string>& paths,
     const std::string& directory_prefix, bool override_entry) {
+  // This neither acesses dictionary_ directly or locks *mutex, but it calls
+  // `add_cvd_file` which does.
+
   for (const std::string& path : paths) {
     std::string_view local_path(path);
     if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
@@ -208,6 +237,8 @@ Result<void> FetcherConfig::AddFilesToConfig(
 }
 
 Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
+  std::scoped_lock lock(*mutex_);
+
   if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
