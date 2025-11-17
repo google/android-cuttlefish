@@ -1,1 +1,4 @@
+#!/usr/bin/dh-exec
+[amd64] cvd/bazel-out/k8-opt/bin/cuttlefish/package/cuttlefish-integration/bin/* /usr/bin
+[arm64] cvd/bazel-out/aarch64-opt/bin/cuttlefish/package/cuttlefish-integration/bin/* /usr/bin
 host/packages/cuttlefish-integration/* /
