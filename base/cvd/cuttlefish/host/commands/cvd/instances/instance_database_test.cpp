@@ -452,11 +452,9 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
           {
               {
                   .per_instance_name = "ins1",
-                  .initial_state = cvd::INSTANCE_STATE_PREPARING,
               },
               {
                   .per_instance_name = "ins2",
-                  .initial_state = cvd::INSTANCE_STATE_PREPARING,
               },
           },
   };

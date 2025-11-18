@@ -33,7 +33,6 @@ namespace cuttlefish {
 struct InstanceParams {
   unsigned instance_id;
   std::optional<std::string> per_instance_name;
-  cvd::InstanceState initial_state;
 };
 
 struct InstanceGroupParams {

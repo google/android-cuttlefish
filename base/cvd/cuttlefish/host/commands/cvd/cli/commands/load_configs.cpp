@@ -240,10 +240,10 @@ class LoadConfigsCommand : public CvdCommandHandler {
         .group_name = env_spec.common().group_name(),
     };
     for (const auto& instance : env_spec.instances()) {
-      group_params.instances.emplace_back(
-          InstanceParams{.instance_id = 0,
-                         .per_instance_name = instance.name(),
-                         .initial_state = cvd::INSTANCE_STATE_PREPARING});
+      group_params.instances.emplace_back(InstanceParams{
+          .instance_id = 0,
+          .per_instance_name = instance.name(),
+      });
     }
     return CF_EXPECT(instance_manager_.CreateInstanceGroup(
         std::move(group_params),

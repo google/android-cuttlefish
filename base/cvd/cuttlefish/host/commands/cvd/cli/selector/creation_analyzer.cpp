@@ -196,8 +196,7 @@ Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances(
   std::vector<InstanceParams> instance_params;
   for (size_t i = 0; i != instance_ids.size(); i++) {
     instance_params.emplace_back(
-        InstanceParams{.instance_id = instance_ids.at(i),
-                       .initial_state = cvd::INSTANCE_STATE_PREPARING});
+        InstanceParams{.instance_id = instance_ids.at(i)});
   }
 
   if (instance_names_opt) {
