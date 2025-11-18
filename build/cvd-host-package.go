@@ -35,6 +35,7 @@ func init() {
 type cvdHostPackage struct {
 	android.ModuleBase
 	android.PackagingBase
+	blueprint.ModuleUsesIncrementalWalkDeps
 	tarballFile android.InstallPath
 	stampFile   android.InstallPath
 }
