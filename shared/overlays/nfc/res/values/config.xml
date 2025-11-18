@@ -16,4 +16,14 @@
 <resources>
   <bool name="nfc_observe_mode_supported">true</bool>
   <bool name="nfc_proprietary_getcaps_supported">true</bool>
+  <!-- NFC Antenna Location API -->
+  <integer name="device_width">70</integer>
+  <integer name="device_height">150</integer>
+  <bool name="device_foldable">false</bool>
+  <integer-array name="antenna_x">
+    <item>20</item>
+  </integer-array>
+  <integer-array name="antenna_y">
+    <item>40</item>
+  </integer-array>
 </resources>
