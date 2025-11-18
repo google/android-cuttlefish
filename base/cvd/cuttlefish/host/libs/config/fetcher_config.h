@@ -38,10 +38,16 @@ struct CvdFile {
   std::string build_id;
   std::string build_target;
   std::string file_path;
+  /* If `cvd fetch` extracted this file from an archive, what was the name of
+   * that archive? */
+  std::string archive_source;
+  /* What was the path that the file was stored at in the archive? */
+  std::string archive_path;
 
   CvdFile();
   CvdFile(FileSource source, std::string build_id, std::string build_target,
-          std::string file_path);
+          std::string file_path, std::string archive_source,
+          std::string archive_path);
 };
 
 std::ostream& operator<<(std::ostream&, const CvdFile&);
@@ -82,11 +88,10 @@ class FetcherConfig {
   std::unique_ptr<std::mutex> mutex_;
 };
 
-Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
-                                         std::string build_id,
-                                         std::string build_target,
-                                         std::string path,
-                                         std::string directory_prefix);
+Result<CvdFile> BuildFetcherConfigMember(
+    FileSource purpose, std::string build_id, std::string build_target,
+    std::string path, std::string directory_prefix,
+    std::string archive_source = "", std::string archive_path = "");
 
 class FetcherConfigs {
  public:

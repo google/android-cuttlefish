@@ -49,24 +49,31 @@ const char* kCvdFiles = "cvd_files";
 const char* kCvdFileSource = "source";
 const char* kCvdFileBuildId = "build_id";
 const char* kCvdFileBuildTarget = "build_target";
+const char* kCvdFileArchiveSource = "archive_source";
+const char* kCvdFileArchivePath = "archive_path";
 
 }  // namespace
 
 CvdFile::CvdFile() {}
 
 CvdFile::CvdFile(FileSource source, std::string build_id,
-                 std::string build_target, std::string file_path)
+                 std::string build_target, std::string file_path,
+                 std::string archive_source, std::string archive_path)
     : source(source),
       build_id(std::move(build_id)),
       build_target(std::move(build_target)),
-      file_path(std::move(file_path)) {}
+      file_path(std::move(file_path)),
+      archive_source(std::move(archive_source)),
+      archive_path(std::move(archive_path)) {}
 
 std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
   os << "CvdFile(";
   os << "source = " << SourceEnumToString(cvd_file.source) << ", ";
   os << "build_id = " << cvd_file.build_id << ", ";
   os << "build_target = " << cvd_file.build_target << ", ";
-  os << "file_path = " << cvd_file.file_path << ")";
+  os << "file_path = " << cvd_file.file_path << ",";
+  os << "archive_source = " << cvd_file.archive_source << ",";
+  os << "archive_path = " << cvd_file.archive_path << ")";
   return os;
 }
 
@@ -141,6 +148,12 @@ CvdFile JsonToCvdFile(const std::string& file_path, const Json::Value& json) {
   if (json.isMember(kCvdFileBuildTarget)) {
     cvd_file.build_target = json[kCvdFileBuildTarget].asString();
   }
+  if (json.isMember(kCvdFileArchiveSource)) {
+    cvd_file.archive_source = json[kCvdFileArchiveSource].asString();
+  }
+  if (json.isMember(kCvdFileArchivePath)) {
+    cvd_file.archive_path = json[kCvdFileArchivePath].asString();
+  }
   return cvd_file;
 }
 
@@ -149,6 +162,8 @@ Json::Value CvdFileToJson(const CvdFile& cvd_file) {
   json[kCvdFileSource] = SourceEnumToString(cvd_file.source);
   json[kCvdFileBuildId] = cvd_file.build_id;
   json[kCvdFileBuildTarget] = cvd_file.build_target;
+  json[kCvdFileArchiveSource] = cvd_file.archive_source;
+  json[kCvdFileArchivePath] = cvd_file.archive_path;
   return json;
 }
 
@@ -221,11 +236,10 @@ Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
   return {};
 }
 
-Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
-                                         std::string build_id,
-                                         std::string build_target,
-                                         std::string path,
-                                         std::string directory_prefix) {
+Result<CvdFile> BuildFetcherConfigMember(
+    FileSource purpose, std::string build_id, std::string build_target,
+    std::string path, std::string directory_prefix, std::string archive_source,
+    std::string archive_path) {
   std::string_view local_path(path);
   if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
     LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
@@ -238,7 +252,8 @@ Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
   std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
   // TODO(schuffelen): Do better for local builds here.
   return CvdFile(std::move(purpose), std::move(build_id),
-                 std::move(build_target), std::move(normalized));
+                 std::move(build_target), std::move(normalized),
+                 std::move(archive_source), std::move(archive_path));
 }
 
 FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {
