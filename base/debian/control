@@ -105,3 +105,8 @@ Architecture: any
 Depends: cuttlefish-base,
 Description: May potentially enable new or experimental cuttlefish
  features before being enabled by default.
+
+Package: cuttlefish-metrics
+Architecture: any
+Depends: cuttlefish-base,
+Description: Installation of this package enables metrics transmissions to Google.
