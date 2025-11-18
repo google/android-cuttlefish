@@ -365,13 +365,13 @@ Result<void> FetchChromeOsTarget(
   CF_EXPECT(luci_build_api.DownloadArtifact(artifacts.artifact_link,
                                             archive_name, archive_path));
   trace.CompletePhase("Download test image", FileSize(archive_path));
-  auto archive_files = CF_EXPECT(ExtractArchiveContents(
+  std::vector<std::string> archive_files = CF_EXPECT(ExtractArchiveContents(
       archive_path, target_directories.chrome_os, keep_downloaded_archives));
   trace.CompletePhase("Extract");
-  for (const std::string& archive_file : archive_files) {
-    CvdFile config_member = CF_EXPECT(
-        BuildFetcherConfigMember(FileSource::CHROME_OS_BUILD, "", "",
-                                 archive_file, target_directories.root));
+  for (std::string& archive_file : archive_files) {
+    CvdFile config_member = CF_EXPECT(BuildFetcherConfigMember(
+        FileSource::CHROME_OS_BUILD, "", "", std::move(archive_file),
+        target_directories.root));
     CF_EXPECT(config.add_cvd_file(std::move(config_member)));
   }
   return {};
