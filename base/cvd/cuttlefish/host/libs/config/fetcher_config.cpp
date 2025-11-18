@@ -54,12 +54,12 @@ const char* kCvdFileBuildTarget = "build_target";
 
 CvdFile::CvdFile() {}
 
-CvdFile::CvdFile(const FileSource& source, const std::string& build_id,
-                 const std::string& build_target, const std::string& file_path)
+CvdFile::CvdFile(FileSource source, std::string build_id,
+                 std::string build_target, std::string file_path)
     : source(source),
-      build_id(build_id),
-      build_target(build_target),
-      file_path(file_path) {}
+      build_id(std::move(build_id)),
+      build_target(std::move(build_target)),
+      file_path(std::move(file_path)) {}
 
 std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
   os << "CvdFile(";
@@ -222,10 +222,10 @@ Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
 }
 
 Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
-                                         const std::string& build_id,
-                                         const std::string& build_target,
-                                         const std::string& path,
-                                         const std::string& directory_prefix) {
+                                         std::string build_id,
+                                         std::string build_target,
+                                         std::string path,
+                                         std::string directory_prefix) {
   std::string_view local_path(path);
   if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
     LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
@@ -237,7 +237,8 @@ Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
   }
   std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
   // TODO(schuffelen): Do better for local builds here.
-  return CvdFile(purpose, build_id, build_target, normalized);
+  return CvdFile(std::move(purpose), std::move(build_id),
+                 std::move(build_target), std::move(normalized));
 }
 
 FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {

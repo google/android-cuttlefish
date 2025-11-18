@@ -40,8 +40,8 @@ struct CvdFile {
   std::string file_path;
 
   CvdFile();
-  CvdFile(const FileSource& source, const std::string& build_id,
-          const std::string& build_target, const std::string& file_path);
+  CvdFile(FileSource source, std::string build_id, std::string build_target,
+          std::string file_path);
 };
 
 std::ostream& operator<<(std::ostream&, const CvdFile&);
@@ -83,10 +83,10 @@ class FetcherConfig {
 };
 
 Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
-                                         const std::string& build_id,
-                                         const std::string& build_target,
-                                         const std::string& path,
-                                         const std::string& directory_prefix);
+                                         std::string build_id,
+                                         std::string build_target,
+                                         std::string path,
+                                         std::string directory_prefix);
 
 class FetcherConfigs {
  public:
