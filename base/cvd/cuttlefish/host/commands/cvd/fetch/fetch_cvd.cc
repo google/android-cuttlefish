@@ -176,8 +176,11 @@ Result<std::string> SaveConfig(FetcherConfig& config,
   // itself was built at.
   // https://android.googlesource.com/platform/build/+/979c9f3/Changes.md#build_number
   const std::string fetcher_path = target_directory + "/fetcher_config.json";
-  CF_EXPECT(config.AddFilesToConfig(FileSource::GENERATED, "", "",
-                                    {fetcher_path}, target_directory));
+
+  CvdFile config_member = CF_EXPECT(BuildFetcherConfigMember(
+      FileSource::GENERATED, "", "", fetcher_path, target_directory));
+  CF_EXPECT(config.add_cvd_file(std::move(config_member)));
+
   config.SaveToFile(fetcher_path);
 
   for (const auto& file : config.get_cvd_files()) {
@@ -365,8 +368,12 @@ Result<void> FetchChromeOsTarget(
   auto archive_files = CF_EXPECT(ExtractArchiveContents(
       archive_path, target_directories.chrome_os, keep_downloaded_archives));
   trace.CompletePhase("Extract");
-  CF_EXPECT(config.AddFilesToConfig(FileSource::CHROME_OS_BUILD, "", "",
-                                    archive_files, target_directories.root));
+  for (const std::string& archive_file : archive_files) {
+    CvdFile config_member = CF_EXPECT(
+        BuildFetcherConfigMember(FileSource::CHROME_OS_BUILD, "", "",
+                                 archive_file, target_directories.root));
+    CF_EXPECT(config.add_cvd_file(std::move(config_member)));
+  }
   return {};
 }
 

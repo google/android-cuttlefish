@@ -209,9 +209,14 @@ Result<void> FetchBuildContext::DesparseFiles(std::vector<std::string> files) {
 
 Result<void> FetchBuildContext::AddFileToConfig(std::string file) {
   auto [build_id, build_target] = GetBuildIdAndTarget(build_);
-  CF_EXPECT(fetch_context_.fetcher_config_.AddFilesToConfig(
-      file_source_, build_id, build_target, {file},
-      fetch_context_.target_directories_.root, true));
+
+  CvdFile config_member = CF_EXPECT(
+      BuildFetcherConfigMember(file_source_, build_id, build_target, file,
+                               fetch_context_.target_directories_.root));
+
+  CF_EXPECT(fetch_context_.fetcher_config_.add_cvd_file(
+      std::move(config_member), /* override_entry = */ true));
+
   return {};
 }
 
