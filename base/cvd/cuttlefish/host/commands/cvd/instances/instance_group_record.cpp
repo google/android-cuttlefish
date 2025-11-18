@@ -112,7 +112,7 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
     new_instance.set_id(instance.instance_id);
     new_instance.set_name(std::move(instance.per_instance_name)
                               .value_or(std::to_string(instance.instance_id)));
-    new_instance.set_state(instance.initial_state);
+    new_instance.set_state(cvd::INSTANCE_STATE_PREPARING);
   }
   return CF_EXPECT(Create(proto));
 }
