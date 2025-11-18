@@ -134,7 +134,8 @@ Result<void> FetchArtifact::ExtractOneTo(const std::string& member_name,
 
   CF_EXPECT(ExtractFile(*zip, member_name, extract_path));
 
-  CF_EXPECT(fetch_build_context_.AddFileToConfig(extract_path));
+  CF_EXPECT(fetch_build_context_.AddFileToConfig(extract_path, artifact_name_,
+                                                 local_path));
 
   std::string phase =
       fmt::format("Extracted '{}' from '{}'", member_name, artifact_name_);
@@ -207,12 +208,15 @@ Result<void> FetchBuildContext::DesparseFiles(std::vector<std::string> files) {
   return {};
 }
 
-Result<void> FetchBuildContext::AddFileToConfig(std::string file) {
+Result<void> FetchBuildContext::AddFileToConfig(std::string file,
+                                                std::string archive_name,
+                                                std::string archive_path) {
   auto [build_id, build_target] = GetBuildIdAndTarget(build_);
 
   CvdFile config_member = CF_EXPECT(BuildFetcherConfigMember(
       file_source_, std::move(build_id), std::move(build_target),
-      std::move(file), fetch_context_.target_directories_.root));
+      std::move(file), fetch_context_.target_directories_.root,
+      std::move(archive_name), std::move(archive_path)));
 
   CF_EXPECT(fetch_context_.fetcher_config_.add_cvd_file(
       std::move(config_member), /* override_entry = */ true));

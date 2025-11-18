@@ -95,7 +95,8 @@ class FetchBuildContext {
 
   Result<void> DesparseFiles(std::vector<std::string> files);
 
-  Result<void> AddFileToConfig(std::string);
+  Result<void> AddFileToConfig(std::string file, std::string archive_name = "",
+                               std::string archive_path = "");
 
   class FetchContext& fetch_context_;
   ::cuttlefish::Build build_;
