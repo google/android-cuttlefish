@@ -64,7 +64,6 @@ package_files(
         "cuttlefish-common/bin/lz4": "@lz4//programs:lz4",
         "cuttlefish-common/bin/make_f2fs": "@f2fs_tools//:make_f2fs",
         "cuttlefish-common/bin/metrics_launcher": "//cuttlefish/host/commands/metrics_launcher",
-        "cuttlefish-common/bin/metrics_transmitter": "//cuttlefish/host/commands/metrics:metrics_transmitter",
         "cuttlefish-common/bin/metrics": "//cuttlefish/host/commands/metrics",
         "cuttlefish-common/bin/mkbootfs": "//mkbootfs",
         "cuttlefish-common/bin/mkbootimg.py": "@mkbootimg//:mkbootimg.py",
@@ -141,6 +140,15 @@ package_files(
     executable = "cuttlefish-integration/bin/cf_defaults",
     package_file_to_src = {
         "cuttlefish-integration/bin/cf_defaults": "//cuttlefish/host/commands/defaults:cf_defaults",
+    },
+    visibility = ["//:android_cuttlefish"],
+)
+
+package_files(
+    name = "metrics",
+    executable = "cuttlefish-metrics/bin/metrics_transmitter",
+    package_file_to_src = {
+        "cuttlefish-metrics/bin/metrics_transmitter": "//cuttlefish/host/commands/metrics:metrics_transmitter",
     },
     visibility = ["//:android_cuttlefish"],
 )

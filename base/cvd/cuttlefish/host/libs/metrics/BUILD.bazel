@@ -14,7 +14,6 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/commands/cvd/metrics:is_enabled",
     ],
 )
 

@@ -16,19 +16,20 @@
 
 #pragma once
 
-#include <string>
 #include <string_view>
 
 namespace cuttlefish {
 
 inline constexpr std::string_view kReadmeText =
     "The existence of records in this directory does"
-    " not mean metrics are being transmitted, the data is always gathered and "
+    " not mean metrics are being transmitted.  The data is always gathered and "
     "written out for debugging purposes.  To enable metrics transmission "
-    "<TODO: chadreynolds - metrics transmission not connected, add triggering "
-    "step when it does>";
+    "the `cuttlefish-metrics` package must be installed.";
+
+inline constexpr char kTransmitterPath[] =
+    "/usr/lib/cuttlefish-metrics/bin/metrics_transmitter";
 
 // trigger check for v2 metrics
-bool AreMetricsEnabled(const std::string& transmitter_path);
+bool AreMetricsEnabled();
 
 }  // namespace cuttlefish
