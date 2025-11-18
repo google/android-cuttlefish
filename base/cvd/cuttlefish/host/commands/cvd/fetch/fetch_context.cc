@@ -136,7 +136,11 @@ Result<void> FetchArtifact::ExtractAll(const std::string& local_path) {
 
     fetch_build_context_.DesparseFiles(extracted);
     for (const std::string& file : extracted) {
-      CF_EXPECT(fetch_build_context_.AddFileToConfig(file));
+      // Hack: avoid assemble_cvd incorrect match against `ti50-emulator-kernel`
+      // file when it looks for files ending in `kernel`. b/461569369#comment2
+      if (!absl::EndsWith(file, "kernel")) {
+        CF_EXPECT(fetch_build_context_.AddFileToConfig(file));
+      }
     }
   }
   return {};
