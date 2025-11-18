@@ -152,6 +152,14 @@ Json::Value CvdFileToJson(const CvdFile& cvd_file) {
   return json;
 }
 
+Result<std::string> NormalizePath(std::string path) {
+  CF_EXPECT(!absl::StrContains(path, ".."));
+  while (absl::StrContains(path, "//")) {
+    absl::StrReplaceAll({{"//", "/"}}, &path);
+  }
+  return path;
+}
+
 }  // namespace
 
 bool FetcherConfig::add_cvd_file(const CvdFile& file, bool override_entry) {
@@ -200,42 +208,6 @@ std::string FetcherConfig::FindCvdFileWithSuffix(
   return "";
 }
 
-static Result<std::string> NormalizePath(std::string path) {
-  CF_EXPECT(!absl::StrContains(path, ".."));
-  while (absl::StrContains(path, "//")) {
-    absl::StrReplaceAll({{"//", "/"}}, &path);
-  }
-  return path;
-}
-
-Result<void> FetcherConfig::AddFilesToConfig(
-    FileSource purpose, const std::string& build_id,
-    const std::string& build_target, const std::vector<std::string>& paths,
-    const std::string& directory_prefix, bool override_entry) {
-  // This neither acesses dictionary_ directly or locks *mutex, but it calls
-  // `add_cvd_file` which does.
-
-  for (const std::string& path : paths) {
-    std::string_view local_path(path);
-    if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
-      LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
-                 << local_path;
-      return {};
-    }
-    while (android::base::StartsWith(local_path, "/")) {
-      android::base::ConsumePrefix(&local_path, "/");
-    }
-    std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
-    // TODO(schuffelen): Do better for local builds here.
-    CvdFile file(purpose, build_id, build_target, normalized);
-    CF_EXPECT(add_cvd_file(file, override_entry),
-              "Duplicate file \""
-                  << file << "\", Existing file: \"" << get_cvd_files()[path]
-                  << "\". Failed to add path \"" << path << "\"");
-  }
-  return {};
-}
-
 Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
   std::scoped_lock lock(*mutex_);
 
@@ -247,6 +219,25 @@ Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
   CF_EXPECTF(json_files.isMember(normalized), "Unknown file '{}'", normalized);
   json_files.removeMember(normalized);
   return {};
+}
+
+Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
+                                         const std::string& build_id,
+                                         const std::string& build_target,
+                                         const std::string& path,
+                                         const std::string& directory_prefix) {
+  std::string_view local_path(path);
+  if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
+    LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
+               << local_path;
+    return {};
+  }
+  while (android::base::StartsWith(local_path, "/")) {
+    android::base::ConsumePrefix(&local_path, "/");
+  }
+  std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
+  // TODO(schuffelen): Do better for local builds here.
+  return CvdFile(purpose, build_id, build_target, normalized);
 }
 
 FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {

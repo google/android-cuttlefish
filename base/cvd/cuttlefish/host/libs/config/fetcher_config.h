@@ -75,18 +75,18 @@ class FetcherConfig {
 
   std::string FindCvdFileWithSuffix(const std::string& suffix) const;
 
-  Result<void> AddFilesToConfig(FileSource purpose, const std::string& build_id,
-                                const std::string& build_target,
-                                const std::vector<std::string>& paths,
-                                const std::string& directory_prefix,
-                                bool override_entry = false);
-
   Result<void> RemoveFileFromConfig(const std::string& path);
 
  private:
   Json::Value dictionary_;
   std::unique_ptr<std::mutex> mutex_;
 };
+
+Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
+                                         const std::string& build_id,
+                                         const std::string& build_target,
+                                         const std::string& path,
+                                         const std::string& directory_prefix);
 
 class FetcherConfigs {
  public:
