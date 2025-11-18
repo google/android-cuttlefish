@@ -52,8 +52,6 @@ int MetricsMain(const MetricsFlags& flags) {
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  // TODO CJR: consider adding filepath flag for the new metrics/metrics.log and
-  // updating logger if it exists
   const cuttlefish::MetricsFlags flags =
       cuttlefish::ProcessMetricsFlags(argc, argv);
   return cuttlefish::MetricsMain(flags);
