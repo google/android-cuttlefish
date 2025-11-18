@@ -42,8 +42,8 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_context.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
-#include "cuttlefish/host/commands/cvd/fetch/host_package.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
+#include "cuttlefish/host/commands/cvd/fetch/substitute.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
@@ -349,6 +349,26 @@ Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
   return {};
 }
 
+Result<void> FetchHostPackage(FetchBuildContext context,
+                              const bool keep_archives) {
+  LOG(INFO) << "Preparing host package for " << context;
+  // This function is called asynchronously, so it may take a while to start.
+  // Complete a phase here to ensure that delay is not counted in the download
+  // time.
+  // The download time will still include time spent waiting for the mutex in
+  // the build_api though.
+  std::string host_tools_name =
+      context.GetFilepath().value_or("cvd-host_package.tar.gz");
+  FetchArtifact artifact = context.Artifact(host_tools_name);
+  CF_EXPECT(artifact.Download());
+  CF_EXPECT(artifact.ExtractAll());
+  if (!keep_archives) {
+    CF_EXPECT(artifact.DeleteLocalFile());
+  }
+
+  return {};
+}
+
 Result<void> FetchChromeOsTarget(
     LuciBuildApi& luci_build_api,
     const ChromeOsBuildString& chrome_os_build_string,
@@ -439,20 +459,23 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
       downloaders.AndroidBuild(), host_target, fallback_host_build));
   prefetch_trace.CompletePhase("GetBuilds");
 
-  auto host_package_future = std::async(
-      std::launch::async, FetchHostPackage,
-      std::ref(downloaders.AndroidBuild()), std::cref(host_target_build),
-      std::cref(host_target.host_tools_directory),
-      std::cref(flags.keep_downloaded_archives),
-      std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
   size_t count = 1;
   std::vector<FetchResult> fetch_results;
   for (const auto& target : targets) {
+    std::future<Result<void>> host_package_future;
     FetcherConfig config;
     FetchContext fetch_context(downloaders.AndroidBuild(), target.directories,
                                host_target.host_tools_directory, target.builds,
                                host_target_build, config, tracer);
     LOG(INFO) << "Starting fetch to \"" << target.directories.root << "\"";
+
+    if (count == 1) {
+      FetchBuildContext host_context = fetch_context.HostPackageBuild();
+      host_package_future =
+          std::async(std::launch::async, FetchHostPackage, host_context,
+                     flags.keep_downloaded_archives);
+    }
+
     CF_EXPECT(FetchTarget(fetch_context, target.download_flags,
                           flags.keep_downloaded_archives));
 
@@ -460,6 +483,11 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
       CF_EXPECT(FetchChromeOsTarget(
           downloaders.Luci(), *target.builds.chrome_os, target.directories,
           flags.keep_downloaded_archives, config, tracer.NewTrace("ChromeOS")));
+    }
+
+    if (count == 1) {
+      CF_EXPECT(host_package_future.valid());
+      CF_EXPECT(host_package_future.get());
     }
 
     const std::string config_path =
@@ -473,7 +501,8 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
               << "' (" << count << " out of " << targets.size() << ")";
   }
   LOG(DEBUG) << "Waiting for host package fetch";
-  CF_EXPECT(host_package_future.get());
+  CF_EXPECT(HostPackageSubstitution(host_target.host_tools_directory,
+                                    flags.host_substitutions));
   LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
 
   LOG(INFO) << "Completed all fetches";

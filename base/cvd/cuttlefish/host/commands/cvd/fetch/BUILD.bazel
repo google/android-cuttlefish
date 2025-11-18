@@ -165,7 +165,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:fetch_context",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
-        "//cuttlefish/host/commands/cvd/fetch:host_package",
         "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
@@ -220,23 +219,6 @@ cf_cc_library(
 cf_cc_library(
     name = "get_optional",
     hdrs = ["get_optional.h"],
-)
-
-cf_cc_library(
-    name = "host_package",
-    srcs = ["host_package.cc"],
-    hdrs = ["host_package.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:archive",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
-        "//cuttlefish/host/commands/cvd/fetch:substitute",
-        "//cuttlefish/host/libs/web:android_build",
-        "//cuttlefish/host/libs/web:android_build_api",
-        "//cuttlefish/host/libs/web:build_api",
-        "//libbase",
-    ],
 )
 
 proto_library(
