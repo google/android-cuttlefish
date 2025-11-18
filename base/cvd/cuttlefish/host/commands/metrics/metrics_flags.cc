@@ -46,15 +46,19 @@ Flag EnvironmentGflagsCompatFlag(const std::string& name,
 
 }  // namespace
 
+// TODO: chadreynolds - add path flag to send logs to metrics/metrics.log
+// TODO: chadreynolds - add debug flag to specify metrics file and transmit
+//    for convenient use with different transmission environments
+
 Result<MetricsFlags> ProcessFlags(int argc, char** argv) {
   MetricsFlags result;
   std::vector<Flag> flags;
   flags.emplace_back(
       EnvironmentGflagsCompatFlag("environment", result.environment)
-          .Help("TODO CJR fill in"));
+          .Help("Specify the environment to transmit to."));
   flags.emplace_back(
       GflagsCompatFlag("serialized_proto", result.serialized_proto)
-          .Help("TODO CJR fill in"));
+          .Help("The serialized proto data to transmit."));
   flags.emplace_back(HelpFlag(flags));
   flags.emplace_back(UnexpectedArgumentGuard());
   std::vector<std::string> args =
