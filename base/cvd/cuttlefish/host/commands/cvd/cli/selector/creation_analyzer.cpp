@@ -191,22 +191,22 @@ Result<std::vector<InstanceLockFile>> CreationAnalyzer::AnalyzeInstanceIds() {
 
 Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances(
     const std::vector<unsigned>& instance_ids) {
-  std::vector<std::string> per_instance_names;
-  if (selector_options_parser_.PerInstanceNames()) {
-    per_instance_names = *selector_options_parser_.PerInstanceNames();
-    CF_EXPECT_EQ(per_instance_names.size(), instance_ids.size());
-  } else {
-    for (const auto id : instance_ids) {
-      per_instance_names.push_back(std::to_string(id));
-    }
-  }
-
+  std::optional<std::vector<std::string>> instance_names_opt =
+      selector_options_parser_.PerInstanceNames();
   std::vector<InstanceParams> instance_params;
   for (size_t i = 0; i != instance_ids.size(); i++) {
     instance_params.emplace_back(
         InstanceParams{.instance_id = instance_ids.at(i),
-                       .per_instance_name = per_instance_names.at(i),
                        .initial_state = cvd::INSTANCE_STATE_STARTING});
+  }
+
+  if (instance_names_opt) {
+    CF_EXPECT_EQ(instance_names_opt.value().size(), instance_ids.size(),
+                 "Number of instance names provided doesn't match number of "
+                 "acquired instance ids");
+    for (size_t i = 0; i < instance_params.size(); ++i) {
+      instance_params[i].per_instance_name = instance_names_opt.value()[i];
+    }
   }
 
   return instance_params;
