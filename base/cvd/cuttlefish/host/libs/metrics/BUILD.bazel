@@ -67,8 +67,6 @@ cf_cc_library(
         "//external_proto:cf_host_cc_proto",
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_v2_cc_proto",
-        "//external_proto:clientanalytics_cc_proto",
-        "//external_proto:log_source_enum_cc_proto",
         "@fmt",
         "@protobuf//:timestamp_cc_proto",
     ],
@@ -100,32 +98,13 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
-        "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",
         "//cuttlefish/host/libs/metrics:session_id",
         "//cuttlefish/result",
-        "//external_proto:clientanalytics_cc_proto",
+        "//external_proto:cf_log_cc_proto",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
-    ],
-)
-
-cf_cc_library(
-    name = "metrics_transmitter",
-    srcs = [
-        "metrics_transmitter.cc",
-    ],
-    hdrs = [
-        "metrics_transmitter.h",
-    ],
-    deps = [
-        "//cuttlefish/host/libs/web/http_client",
-        "//cuttlefish/host/libs/web/http_client:curl_global_init",
-        "//cuttlefish/host/libs/web/http_client:curl_http_client",
-        "//cuttlefish/host/libs/web/http_client:http_string",
-        "//cuttlefish/result",
-        "//external_proto:clientanalytics_cc_proto",
     ],
 )
 
@@ -143,7 +122,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:random",
         "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/result",
-        "//external_proto:clientanalytics_cc_proto",
+        "//external_proto:cf_log_cc_proto",
         "@fmt",
         "@protobuf",
     ],

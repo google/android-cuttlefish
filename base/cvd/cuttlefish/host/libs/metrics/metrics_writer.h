@@ -20,12 +20,13 @@
 
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 
 Result<void> WriteMetricsEvent(
     EventType event_type, const std::string& metrics_directory,
-    const wireless_android_play_playlog::LogRequest& log_request);
+    const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
+        cf_log_event);
 
 }  // namespace cuttlefish

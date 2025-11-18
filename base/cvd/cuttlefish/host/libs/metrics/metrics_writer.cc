@@ -26,9 +26,12 @@
 #include "cuttlefish/common/libs/utils/random.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/result/result.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 namespace {
+
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
 std::string GenerateFilenameSuffix() {
   const std::string nums("0123456789");
@@ -37,14 +40,14 @@ std::string GenerateFilenameSuffix() {
 
 }  // namespace
 
-Result<void> WriteMetricsEvent(
-    EventType event_type, const std::string& metrics_directory,
-    const wireless_android_play_playlog::LogRequest& log_request) {
+Result<void> WriteMetricsEvent(EventType event_type,
+                               const std::string& metrics_directory,
+                               const CuttlefishLogEvent& cf_log_event) {
   const std::string event_filepath = fmt::format(
       "{}/{}_{}_{}.txtpb", metrics_directory, EventTypeString(event_type),
       std::chrono::system_clock::now(), GenerateFilenameSuffix());
   std::string text_proto_out;
-  google::protobuf::TextFormat::PrintToString(log_request, &text_proto_out);
+  google::protobuf::TextFormat::PrintToString(cf_log_event, &text_proto_out);
   CF_EXPECT(WriteNewFile(event_filepath, text_proto_out));
   return {};
 }
