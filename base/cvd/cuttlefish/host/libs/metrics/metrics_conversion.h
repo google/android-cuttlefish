@@ -23,7 +23,7 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 
@@ -36,7 +36,7 @@ struct MetricsData {
   std::vector<GuestMetrics> guest_metrics;
 };
 
-wireless_android_play_playlog::LogRequest ConstructLogRequest(
-    const MetricsData& metrics_data);
+logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent
+BuildCuttlefishLogEvent(const MetricsData& metrics_data);
 
 }  // namespace cuttlefish
