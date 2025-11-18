@@ -41,7 +41,6 @@ struct CreationAnalyzerParam {
   const std::vector<std::string>& cmd_args;
   const std::unordered_map<std::string, std::string>& envs;
   const SelectorOptions& selectors;
-  bool acquire_file_locks;
 };
 
 /**
