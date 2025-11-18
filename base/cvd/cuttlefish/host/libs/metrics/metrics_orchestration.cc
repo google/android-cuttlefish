@@ -34,9 +34,11 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
+#include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
 #include "external_proto/cf_log.pb.h"
@@ -125,8 +127,8 @@ Result<void> OutputMetrics(EventType event_type,
                            const MetricsData& metrics_data) {
   const CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(metrics_data);
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, cf_log_event));
-  if (kEnableCvdMetrics) {
-    // TODO CJR: call new binary if it exists
+  if (kEnableCvdMetrics && FileExists(MetricsTransmitterBinary())) {
+    CF_EXPECT(TransmitMetrics(cf_log_event));
   }
   return {};
 }
