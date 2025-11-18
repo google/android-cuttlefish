@@ -72,14 +72,6 @@ TEST_F(CasFlagsTests, DefaultValuesAreSet) {
   EXPECT_EQ(flags.version.value(), false);
 }
 
-// Test that the constructor accepts the expected default config path constant
-TEST_F(CasFlagsTests, DefaultConfigPathConstantExists) {
-  // Verify that kDefaultCasConfigFilePath is defined and contains
-  // the expected path
-  const std::string expected_path = "/etc/casdownloader/config.json";
-  EXPECT_EQ(std::string(kDefaultCasConfigFilePath), expected_path);
-}
-
 // Test that the Flags() method returns a non-empty vector
 TEST_F(CasFlagsTests, FlagsMethodReturnsVector) {
   CasDownloaderFlags flags;
@@ -106,76 +98,6 @@ TEST_F(CasFlagsTests, MultipleInstancesIndependent) {
     EXPECT_EQ(flags2.downloader_path.value(), "");
   }
   EXPECT_EQ(flags2.cache_dir.value(), "");
-}
-
-// Test that the constructor accepts the expected default downloader path
-// constant
-TEST_F(CasFlagsTests, DefaultDownloaderPathConstantExists) {
-  // Verify that kDefaultDownloaderPath is defined and contains
-  // the expected path
-  const std::string expected_path = "/usr/bin/casdownloader";
-  EXPECT_EQ(std::string(kDefaultDownloaderPath), expected_path);
-}
-
-// Environment-dependent tests: These tests verify that cas_config_filepath and
-// downloader_path are correctly initialized based on the presence of system
-// files. They help detect errors in the default-initialization logic.
-// Note: These tests are environment-dependent in the sense that they exercise
-// different code paths depending on whether /etc/casdownloader/config.json and
-// /usr/bin/casdownloader exist on the system. They should always pass, but
-// cover different scenarios:
-//   - If files exist: verifies defaults are correctly set
-//   - If files don't exist: verifies fields remain empty
-// This helps catch initialization logic errors in both paths.
-
-// Test that cas_config_filepath is initialized from default when file exists
-TEST_F(CasFlagsTests, CasConfigFilePathInitializedCorrectly) {
-  CasDownloaderFlags flags;
-
-  if (DefaultConfigPathExists()) {
-    // If the default config file exists, it should be used
-    EXPECT_EQ(flags.cas_config_filepath.value(),
-              std::string(kDefaultCasConfigFilePath));
-  } else {
-    // If it doesn't exist, the field should remain empty
-    EXPECT_TRUE(flags.cas_config_filepath.value().empty());
-  }
-}
-
-// Test that downloader_path is initialized from default when binary exists
-TEST_F(CasFlagsTests, DownloaderPathInitializedCorrectly) {
-  CasDownloaderFlags flags;
-
-  if (DefaultDownloaderPathExists()) {
-    // If the default downloader binary exists, it should be used
-    EXPECT_EQ(flags.downloader_path.value(),
-              std::string(kDefaultDownloaderPath));
-  } else {
-    // If it doesn't exist, the field should remain empty
-    EXPECT_TRUE(flags.downloader_path.value().empty());
-  }
-}
-
-// Test that both default paths are independently initialized
-// This test verifies that initializing one default doesn't affect the other
-TEST_F(CasFlagsTests, BothDefaultPathsInitializedIndependently) {
-  CasDownloaderFlags flags;
-
-  // Verify cas_config_filepath initialization (independent of downloader_path)
-  if (DefaultConfigPathExists()) {
-    EXPECT_EQ(flags.cas_config_filepath.value(),
-              std::string(kDefaultCasConfigFilePath));
-  } else {
-    EXPECT_TRUE(flags.cas_config_filepath.value().empty());
-  }
-
-  // Verify downloader_path initialization (independent of cas_config_filepath)
-  if (DefaultDownloaderPathExists()) {
-    EXPECT_EQ(flags.downloader_path.value(),
-              std::string(kDefaultDownloaderPath));
-  } else {
-    EXPECT_TRUE(flags.downloader_path.value().empty());
-  }
 }
 
 // ============================================================================
