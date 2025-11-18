@@ -54,6 +54,8 @@ class FetchArtifact {
 
   FetchArtifact(class FetchBuildContext&, std::string artifact_name);
 
+  bool IsZip() const;
+
   FetchBuildContext& fetch_build_context_;
   std::string artifact_name_;
   std::string downloaded_path_;
@@ -112,8 +114,9 @@ std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
  */
 class FetchContext {
  public:
-  FetchContext(BuildApi&, const TargetDirectories&, const Builds&,
-               FetcherConfig&, FetchTracer&);
+  FetchContext(BuildApi&, const TargetDirectories&,
+               const std::string& host_package_directory, const Builds&,
+               const Build& host_package_build, FetcherConfig&, FetchTracer&);
 
   std::optional<FetchBuildContext> DefaultBuild();
   std::optional<FetchBuildContext> SystemBuild();
@@ -122,6 +125,7 @@ class FetchContext {
   std::optional<FetchBuildContext> BootloaderBuild();
   std::optional<FetchBuildContext> AndroidEfiLoaderBuild();
   std::optional<FetchBuildContext> OtaToolsBuild();
+  FetchBuildContext HostPackageBuild();
 
  private:
   friend class FetchArtifact;
@@ -129,7 +133,9 @@ class FetchContext {
 
   BuildApi& build_api_;
   const TargetDirectories& target_directories_;
+  const std::string& host_package_directory_;
   const Builds& builds_;
+  const Build& host_package_build_;
   FetcherConfig& fetcher_config_;
   FetchTracer& tracer_;
 };

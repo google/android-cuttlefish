@@ -36,6 +36,7 @@
 #include <json/writer.h>
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -152,12 +153,42 @@ Json::Value CvdFileToJson(const CvdFile& cvd_file) {
   return json;
 }
 
-Result<std::string> NormalizePath(std::string path) {
-  CF_EXPECT(!absl::StrContains(path, ".."));
+std::string NormalizePath(std::string path) {
+  std::string original_path = path;
+  while (absl::StrContains(path, "/./")) {
+    absl::StrReplaceAll({{"/./", "/"}}, &path);
+  }
   while (absl::StrContains(path, "//")) {
     absl::StrReplaceAll({{"//", "/"}}, &path);
   }
+  if (absl::StartsWith(path, "./")) {
+    std::string_view path_view = path;
+    while (absl::ConsumePrefix(&path_view, "./")) {
+    }
+    path = path_view;
+  }
   return path;
+}
+
+std::string FindRelativePath(std::string_view path, std::string relative_dir) {
+  if (!absl::EndsWith(relative_dir, "/")) {
+    relative_dir += "/";
+  }
+  int num_parents = 0;
+  std::string_view common_parent = relative_dir;
+  while (!absl::StartsWith(path, common_parent)) {
+    num_parents++;
+    size_t last_slash = common_parent.find_last_of("/");
+    CHECK(last_slash != std::string::npos);
+    common_parent = common_parent.substr(0, last_slash);
+    CHECK(!common_parent.empty());
+  }
+  std::stringstream out;
+  for (int i = 0; i < num_parents; i++) {
+    out << "../";
+  }
+  out << absl::StripPrefix(path, common_parent);
+  return out.str();
 }
 
 }  // namespace
@@ -214,7 +245,7 @@ Result<void> FetcherConfig::RemoveFileFromConfig(const std::string& path) {
   if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
-  std::string normalized = CF_EXPECT(NormalizePath(std::string(path)));
+  std::string normalized = NormalizePath(std::string(path));
   auto& json_files = dictionary_[kCvdFiles];
   CF_EXPECTF(json_files.isMember(normalized), "Unknown file '{}'", normalized);
   json_files.removeMember(normalized);
@@ -225,19 +256,12 @@ Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
                                          const std::string& build_id,
                                          const std::string& build_target,
                                          const std::string& path,
-                                         const std::string& directory_prefix) {
-  std::string_view local_path(path);
-  if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
-    LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
-               << local_path;
-    return {};
-  }
-  while (android::base::StartsWith(local_path, "/")) {
-    android::base::ConsumePrefix(&local_path, "/");
-  }
-  std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
+                                         const std::string& relative_dir) {
+  std::string normalized = NormalizePath(path);
+  std::string normalized_dir = NormalizePath(relative_dir);
+  std::string relative_path = FindRelativePath(normalized, normalized_dir);
   // TODO(schuffelen): Do better for local builds here.
-  return CvdFile(purpose, build_id, build_target, normalized);
+  return CvdFile(purpose, build_id, build_target, relative_path);
 }
 
 FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {

@@ -30,6 +30,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
 
+#include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
@@ -54,6 +55,10 @@ FetchArtifact::FetchArtifact(FetchBuildContext& context,
                              std::string artifact_name)
     : fetch_build_context_(context), artifact_name_(artifact_name) {}
 
+bool FetchArtifact::IsZip() const {
+  return absl::EndsWith(artifact_name_, ".zip");
+}
+
 Result<void> FetchArtifact::Download() {
   CF_EXPECT(DownloadTo(artifact_name_));
   return {};
@@ -77,7 +82,7 @@ Result<void> FetchArtifact::DownloadTo(std::string local_path) {
     CF_EXPECT(RenameFile(downloaded, new_path));
 
     downloaded_path_ = new_path;
-    if (absl::EndsWith(downloaded_path_, ".zip")) {
+    if (IsZip()) {
       zip_ = CF_EXPECT(ZipOpenRead(downloaded_path_));
     }
   } else {
@@ -91,6 +96,7 @@ Result<void> FetchArtifact::DownloadTo(std::string local_path) {
 
 Result<ReadableZip*> FetchArtifact::AsZip() {
   if (!zip_) {
+    CF_EXPECT(IsZip(), "File name doesn't end in .zip");
     zip_ = CF_EXPECT(
         ::cuttlefish::OpenZip(fetch_build_context_.fetch_context_.build_api_,
                               fetch_build_context_.build_, artifact_name_));
@@ -104,15 +110,38 @@ Result<void> FetchArtifact::ExtractAll() {
 }
 
 Result<void> FetchArtifact::ExtractAll(const std::string& local_path) {
-  ReadableZip* zip = CF_EXPECT(AsZip());
-  size_t entries = CF_EXPECT(zip->NumEntries());
-  for (uint64_t i = 0; i < entries; i++) {
-    std::string member_name = CF_EXPECT(zip->EntryName(i));
-    CF_EXPECT(!absl::StartsWith(member_name, "."));
-    CF_EXPECT(!absl::StartsWith(member_name, "/"));
-    CF_EXPECT(!absl::StrContains(member_name, "/../"));
-    std::string extract_path = fmt::format("{}/{}", local_path, member_name);
-    CF_EXPECT(ExtractOneTo(member_name, extract_path));
+  if (IsZip()) {
+    ReadableZip* zip = CF_EXPECT(AsZip());
+    size_t entries = CF_EXPECT(zip->NumEntries());
+    for (uint64_t i = 0; i < entries; i++) {
+      std::string member_name = CF_EXPECT(zip->EntryName(i));
+      CF_EXPECT(!absl::StartsWith(member_name, "."));
+      CF_EXPECT(!absl::StartsWith(member_name, "/"));
+      CF_EXPECT(!absl::StrContains(member_name, "/../"));
+      std::string extract_path = fmt::format("{}/{}", local_path, member_name);
+      CF_EXPECT(ExtractOneTo(member_name, extract_path));
+    }
+  } else {
+    if (downloaded_path_.empty()) {
+      CF_EXPECT(Download());
+    }
+    std::string extract_path = fmt::format(
+        "{}/{}", fetch_build_context_.target_directory_, local_path);
+    std::vector<std::string> extracted =
+        CF_EXPECT(ExtractArchiveContents(downloaded_path_, extract_path, true));
+
+    std::string extract_phase =
+        fmt::format("Extracted '{}'", fmt::join(extracted, ","));
+    fetch_build_context_.trace_.CompletePhase(std::move(extract_phase));
+
+    fetch_build_context_.DesparseFiles(extracted);
+    for (const std::string& file : extracted) {
+      // Hack: avoid assemble_cvd incorrect match against `ti50-emulator-kernel`
+      // file when it looks for files ending in `kernel`. b/461569369#comment2
+      if (!absl::EndsWith(file, "kernel")) {
+        CF_EXPECT(fetch_build_context_.AddFileToConfig(file));
+      }
+    }
   }
   return {};
 }
@@ -124,6 +153,8 @@ Result<void> FetchArtifact::ExtractOne(const std::string& member_name) {
 
 Result<void> FetchArtifact::ExtractOneTo(const std::string& member_name,
                                          const std::string& local_path) {
+  CF_EXPECT(IsZip(), "Extracting individual members requires a zip archive.");
+
   ReadableZip* zip = CF_EXPECT(AsZip());
   std::string extract_path =
       fmt::format("{}/{}", fetch_build_context_.target_directory_, local_path);
@@ -226,11 +257,15 @@ std::ostream& operator<<(std::ostream& out, const FetchBuildContext& context) {
 
 FetchContext::FetchContext(BuildApi& build_api,
                            const TargetDirectories& target_directories,
-                           const Builds& builds, FetcherConfig& fetcher_config,
-                           FetchTracer& tracer)
+                           const std::string& host_package_directory,
+                           const Builds& builds,
+                           const Build& host_package_build,
+                           FetcherConfig& fetcher_config, FetchTracer& tracer)
     : build_api_(build_api),
       target_directories_(target_directories),
+      host_package_directory_(host_package_directory),
       builds_(builds),
+      host_package_build_(host_package_build),
       fetcher_config_(fetcher_config),
       tracer_(tracer) {}
 
@@ -302,6 +337,12 @@ std::optional<FetchBuildContext> FetchContext::OtaToolsBuild() {
   } else {
     return {};
   }
+}
+
+FetchBuildContext FetchContext::HostPackageBuild() {
+  return FetchBuildContext(*this, host_package_build_, host_package_directory_,
+                           FileSource::HOST_PACKAGE_BUILD,
+                           tracer_.NewTrace("Host package"));
 }
 
 }  // namespace cuttlefish
