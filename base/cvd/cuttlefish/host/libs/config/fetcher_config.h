@@ -86,7 +86,7 @@ Result<CvdFile> BuildFetcherConfigMember(FileSource purpose,
                                          const std::string& build_id,
                                          const std::string& build_target,
                                          const std::string& path,
-                                         const std::string& directory_prefix);
+                                         const std::string& relative_dir);
 
 class FetcherConfigs {
  public:
