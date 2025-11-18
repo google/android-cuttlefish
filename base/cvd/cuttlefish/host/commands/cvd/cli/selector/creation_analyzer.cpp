@@ -19,7 +19,6 @@
 #include <sys/types.h>
 
 #include <algorithm>
-#include <map>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -45,7 +44,7 @@ class CreationAnalyzer {
   static Result<CreationAnalyzer> Create(const CreationAnalyzerParam& param,
                                          InstanceLockFileManager&);
 
-  Result<GroupCreationInfo> ExtractGroupInfo(bool acquire_file_locks);
+  Result<GroupCreationInfo> ExtractGroupInfo();
 
  private:
   using IdAllocator = UniqueResourceAllocator<unsigned>;
@@ -57,8 +56,7 @@ class CreationAnalyzer {
   /**
    * calculate n_instances_ and instance_ids_
    */
-  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIds(
-      bool acquire_file_locks);
+  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIds();
   Result<std::vector<InstanceParams>> AnalyzeInstances(
       const std::vector<unsigned>& instance_ids);
 
@@ -73,11 +71,9 @@ class CreationAnalyzer {
    */
   Result<std::optional<std::string>> AnalyzeHome() const;
 
+  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsInternal();
   Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsInternal(
-      bool acquire_file_locks);
-  Result<std::vector<InstanceLockFile>> AnalyzeInstanceIdsInternal(
-      const std::vector<unsigned>& requested_instance_ids,
-      bool acquire_file_locks);
+      const std::vector<unsigned>& requested_instance_ids);
 
   // inputs
   std::unordered_map<std::string, std::string> envs_;
@@ -118,12 +114,7 @@ static std::unordered_map<unsigned, InstanceLockFile> ConstructIdLockFileMap(
 
 Result<std::vector<InstanceLockFile>>
 CreationAnalyzer::AnalyzeInstanceIdsInternal(
-    const std::vector<unsigned>& requested_instance_ids,
-    bool acquire_file_locks) {
-  if (!acquire_file_locks) {
-    return {};
-  }
-
+    const std::vector<unsigned>& requested_instance_ids) {
   CF_EXPECT(!requested_instance_ids.empty(),
             "Instance IDs were specified, so should be one or more.");
 
@@ -144,11 +135,7 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(
 }
 
 Result<std::vector<InstanceLockFile>>
-CreationAnalyzer::AnalyzeInstanceIdsInternal(bool acquire_file_locks) {
-  CF_EXPECT(!!acquire_file_locks,  // !! because CF_EXPECT expects rvalue
-            "For now, cvd server always acquire the file locks "
-                << "when IDs are automatically allocated.");
-
+CreationAnalyzer::AnalyzeInstanceIdsInternal() {
   // As this test was done earlier, this line must not fail
   const auto n_instances = selector_options_parser_.RequestedNumInstances();
   auto acquired_all_file_locks =
@@ -195,13 +182,11 @@ CreationAnalyzer::AnalyzeInstanceIdsInternal(bool acquire_file_locks) {
   return instance_locks;
 }
 
-Result<std::vector<InstanceLockFile>> CreationAnalyzer::AnalyzeInstanceIds(
-    bool acquire_file_locks) {
+Result<std::vector<InstanceLockFile>> CreationAnalyzer::AnalyzeInstanceIds() {
   auto requested_instance_ids = selector_options_parser_.InstanceIds();
   return requested_instance_ids
-             ? CF_EXPECT(AnalyzeInstanceIdsInternal(*requested_instance_ids,
-                                                    acquire_file_locks))
-             : CF_EXPECT(AnalyzeInstanceIdsInternal(acquire_file_locks));
+             ? CF_EXPECT(AnalyzeInstanceIdsInternal(*requested_instance_ids))
+             : CF_EXPECT(AnalyzeInstanceIdsInternal());
 }
 
 Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances(
@@ -227,11 +212,10 @@ Result<std::vector<InstanceParams>> CreationAnalyzer::AnalyzeInstances(
   return instance_params;
 }
 
-Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo(
-    bool acquire_file_locks) {
+Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
   InstanceGroupParams group_params;
   std::vector<InstanceLockFile> instance_file_locks =
-      CF_EXPECT(AnalyzeInstanceIds(acquire_file_locks));
+      CF_EXPECT(AnalyzeInstanceIds());
   std::vector<unsigned> instance_ids;
   for (const auto& instance_file_lock : instance_file_locks) {
     instance_ids.emplace_back(instance_file_lock.Instance());
@@ -295,7 +279,7 @@ Result<GroupCreationInfo> AnalyzeCreation(
     InstanceLockFileManager& lock_file_manager) {
   CreationAnalyzer analyzer =
       CF_EXPECT(CreationAnalyzer::Create(params, lock_file_manager));
-  return CF_EXPECT(analyzer.ExtractGroupInfo(params.acquire_file_locks));
+  return CF_EXPECT(analyzer.ExtractGroupInfo());
 }
 
 }  // namespace selector

@@ -26,9 +26,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <optional>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -116,32 +114,11 @@ std::string DefaultProductPath(const cvd_common::Envs& envs) {
   return CurrentDirectory();
 }
 
-static constexpr char kAcquireFileLock[] = "acquire_file_lock";
-static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
-
-static std::optional<bool> GetAcquireFileLockEnvValue(
-    const cvd_common::Envs& env) {
-  auto it = env.find(kAcquireFileLockEnv);
-  if (it == env.end()) {
-    return std::nullopt;
-  }
-  auto env_value = it->second;
-  if (env_value.empty()) {
-    return std::nullopt;
-  }
-  // Convert env_value to lower case.
-  std::transform(env_value.begin(), env_value.end(), env_value.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  const std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
-  return Contains(true_strings, env_value);
-}
-
 struct CreateFlags {
   std::string host_path;
   std::string product_path;
   bool start;
   std::string config_file;
-  bool acquire_file_locks;
 };
 
 Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
@@ -151,14 +128,12 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
       .product_path = DefaultProductPath(envs),
       .start = true,
       .config_file = "",
-      .acquire_file_locks = GetAcquireFileLockEnvValue(envs).value_or(true),
   };
   std::vector<Flag> flags = {
       GflagsCompatFlag("host_path", flag_values.host_path),
       GflagsCompatFlag("product_path", flag_values.product_path),
       GflagsCompatFlag("start", flag_values.start),
       GflagsCompatFlag("config_file", flag_values.config_file),
-      GflagsCompatFlag(kAcquireFileLock, flag_values.acquire_file_locks),
   };
   CF_EXPECT(ConsumeFlags(flags, args));
   return flag_values;
@@ -247,7 +222,7 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
  private:
   Result<LocalInstanceGroup> GetOrCreateGroup(
       const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const CommandRequest& request, bool acquire_file_locks);
+      const CommandRequest& request);
   Result<void> CreateSymlinks(const LocalInstanceGroup& group);
 
   static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
@@ -273,13 +248,12 @@ void CvdCreateCommandHandler::MarkLockfiles(
 
 Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
-    const CommandRequest& request, bool acquire_file_locks) {
+    const CommandRequest& request) {
   GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation(
       {
           .cmd_args = subcmd_args,
           .envs = envs,
           .selectors = request.Selectors(),
-          .acquire_file_locks = acquire_file_locks,
       },
       lock_manager_));
 
@@ -387,8 +361,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
   envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
-  auto group = CF_EXPECT(
-      GetOrCreateGroup(subcmd_args, envs, request, flags.acquire_file_locks));
+  auto group = CF_EXPECT(GetOrCreateGroup(subcmd_args, envs, request));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
