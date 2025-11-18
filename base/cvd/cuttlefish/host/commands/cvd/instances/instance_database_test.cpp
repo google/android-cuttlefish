@@ -51,28 +51,16 @@
 namespace cuttlefish {
 namespace selector {
 
-cvd::Instance InstanceProto(unsigned id, const std::string& name) {
-  cvd::Instance instance;
-  instance.set_id(id);
-  instance.set_name(name);
-  return instance;
-}
-
-InstanceGroupParams GroupParamWithInstances(
+LocalInstanceGroup::Builder GroupParamWithInstances(
     const std::string& name, const std::string& home_dir,
     const std::string& host_path,
     const std::vector<std::optional<std::string>>& product_paths,
     const std::vector<std::pair<unsigned, std::string>>& instances) {
-  InstanceGroupParams group{
-      .group_name = name,
-  };
+  LocalInstanceGroup::Builder builder(name);
   for (const auto& pair : instances) {
-    group.instances.emplace_back(InstanceParams{
-        .instance_id = pair.first,
-        .per_instance_name = pair.second,
-    });
+    builder.AddInstance(pair.first, pair.second);
   }
-  return group;
+  return builder;
 }
 
 TEST_F(CvdInstanceDatabaseTest, Empty) {
@@ -103,19 +91,19 @@ TEST_F(CvdInstanceDatabaseTest, AddWithInvalidGroupInfo) {
                  << invalid_host_artifacts_path + "/bin";
   }
 
-  auto group_params1 =
+  auto group_builder1 =
       GroupParamWithInstances("0invalid_group_name", home, HostArtifactsPath(),
                               {HostArtifactsPath()}, {{2, "name"}});
   auto result_bad_group_name =
-      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params1).value());
+      db.AddInstanceGroup(group_builder1.Build().value());
 
   // Everything is correct but one thing: the host artifacts directory does not
   // have host tool files such as launch_cvd
-  auto group_params2 =
+  auto group_builder2 =
       GroupParamWithInstances("0invalid_group_name", home, HostArtifactsPath(),
                               {HostArtifactsPath()}, {{2, "name"}});
   auto result_non_qualifying_host_tool_dir =
-      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params2).value());
+      db.AddInstanceGroup(group_builder2.Build().value());
 
   ASSERT_FALSE(result_bad_group_name.ok());
   ASSERT_FALSE(result_non_qualifying_host_tool_dir.ok());
@@ -135,18 +123,14 @@ TEST_F(CvdInstanceDatabaseTest, AddWithValidGroupInfo) {
     GTEST_SKIP() << "Failed to find/create " << home1;
   }
 
-  auto group_params1 = GroupParamWithInstances(
+  auto group_builder1 = GroupParamWithInstances(
       "meow", home0, HostArtifactsPath(), {HostArtifactsPath()}, {{1, "name"}});
-  ASSERT_TRUE(
-      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params1).value())
-          .ok());
+  ASSERT_TRUE(db.AddInstanceGroup(group_builder1.Build().value()).ok());
 
-  auto group_params2 =
+  auto group_builder2 =
       GroupParamWithInstances("miaou", home1, HostArtifactsPath(),
                               {HostArtifactsPath()}, {{2, "name"}});
-  ASSERT_TRUE(
-      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params2).value())
-          .ok());
+  ASSERT_TRUE(db.AddInstanceGroup(group_builder2.Build().value()).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
@@ -159,16 +143,12 @@ TEST_F(CvdInstanceDatabaseTest, AddToTakenHome) {
     GTEST_SKIP() << "Failed to find/create " << home;
   }
 
-  auto group_params1 = GroupParamWithInstances(
+  auto group_builder1 = GroupParamWithInstances(
       "meow", home, HostArtifactsPath(), {HostArtifactsPath()}, {{1, "name"}});
-  ASSERT_TRUE(
-      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params1).value())
-          .ok());
-  auto group_params2 = GroupParamWithInstances(
+  ASSERT_TRUE(db.AddInstanceGroup(group_builder1.Build().value()).ok());
+  auto group_builder2 = GroupParamWithInstances(
       "meow", home, HostArtifactsPath(), {HostArtifactsPath()}, {{2, "name"}});
-  ASSERT_FALSE(
-      db.AddInstanceGroup(LocalInstanceGroup::Create(group_params2).value())
-          .ok());
+  ASSERT_FALSE(db.AddInstanceGroup(group_builder2.Build().value()).ok());
 }
 
 TEST_F(CvdInstanceDatabaseTest, Clear) {
@@ -446,21 +426,11 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   }
   auto& db = GetDb();
 
-  InstanceGroupParams grp{
-      .group_name = "grp1",
-      .instances =
-          {
-              {
-                  .per_instance_name = "ins1",
-              },
-              {
-                  .per_instance_name = "ins2",
-              },
-          },
-  };
+  LocalInstanceGroup::Builder builder("grp1");
+  builder.AddInstance(1, "ins1");
+  builder.AddInstance(2, "ins2");
 
-  Result<LocalInstanceGroup> group_res =
-      LocalInstanceGroup::Create(grp).value();
+  Result<LocalInstanceGroup> group_res = builder.Build();
   ASSERT_THAT(group_res, IsOk());
   auto add_res = db.AddInstanceGroup(*group_res);
   ASSERT_TRUE(add_res.ok())
@@ -468,10 +438,8 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
 
   auto instance_group = *(std::move(group_res));
   auto& instance1 = instance_group.Instances()[0];
-  instance1.set_id(1);
   instance1.set_state(cvd::INSTANCE_STATE_STARTING);
   auto& instance2 = instance_group.Instances()[1];
-  instance2.set_id(2);
   instance2.set_state(cvd::INSTANCE_STATE_STARTING);
 
   auto update_res = db.UpdateInstanceGroup(instance_group);

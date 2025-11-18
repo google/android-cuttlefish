@@ -32,6 +32,16 @@
 
 namespace cuttlefish {
 
+struct InstanceParams {
+  unsigned instance_id;
+  std::optional<std::string> per_instance_name;
+};
+
+struct InstanceGroupParams {
+  std::string group_name;
+  std::vector<InstanceParams> instances;
+};
+
 class InstanceManager {
  public:
   struct GroupDirectories {

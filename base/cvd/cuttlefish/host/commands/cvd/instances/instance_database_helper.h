@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace selector {

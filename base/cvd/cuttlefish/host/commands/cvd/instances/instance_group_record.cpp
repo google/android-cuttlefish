@@ -93,28 +93,48 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
   return LocalInstanceGroup(group_proto);
 }
 
-Result<LocalInstanceGroup> LocalInstanceGroup::Create(
-    InstanceGroupParams group_params) {
-  std::string base_dir = DefaultBaseDir();
+LocalInstanceGroup::Builder::Builder(std::string group_name)
+    : base_dir_(DefaultBaseDir()) {
+  group_proto_.set_name(std::move(group_name));
+  group_proto_.set_home_directory(HomeDirFromBase(base_dir_));
+  group_proto_.set_host_artifacts_path(HostArtifactsDirFromBase(base_dir_));
+}
 
+LocalInstanceGroup::Builder& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id) & {
+  return AddInstance(id, std::to_string(id));
+}
+
+LocalInstanceGroup::Builder& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id, std::string name) & {
+  auto& new_instance = *group_proto_.add_instances();
+  new_instance.set_id(id);
+  new_instance.set_name(std::move(name));
+  new_instance.set_state(cvd::INSTANCE_STATE_PREPARING);
+  return *this;
+}
+
+LocalInstanceGroup::Builder&& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id) && {
+  AddInstance(id);
+  return std::move(*this);
+}
+
+LocalInstanceGroup::Builder&& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id, std::string name) && {
+  AddInstance(id, name);
+  return std::move(*this);
+}
+
+Result<LocalInstanceGroup> LocalInstanceGroup::Builder::Build() {
   std::vector<std::string> product_out_paths;
-  for (size_t i = 0; i < group_params.instances.size(); ++i) {
-    product_out_paths.emplace_back(ProductDirFromBase(base_dir, i));
+  for (size_t i = 0; i < group_proto_.instances_size(); ++i) {
+    product_out_paths.emplace_back(ProductDirFromBase(base_dir_, i));
   }
 
-  cvd::InstanceGroup proto;
-  proto.set_name(std::move(group_params.group_name));
-  proto.set_home_directory(HomeDirFromBase(base_dir));
-  proto.set_host_artifacts_path(HostArtifactsDirFromBase(base_dir));
-  proto.set_product_out_path(android::base::Join(product_out_paths, ","));
-  for (const auto& instance : group_params.instances) {
-    auto& new_instance = *proto.add_instances();
-    new_instance.set_id(instance.instance_id);
-    new_instance.set_name(std::move(instance.per_instance_name)
-                              .value_or(std::to_string(instance.instance_id)));
-    new_instance.set_state(cvd::INSTANCE_STATE_PREPARING);
-  }
-  return CF_EXPECT(Create(proto));
+  group_proto_.set_product_out_path(
+      android::base::Join(product_out_paths, ","));
+  return CF_EXPECT(LocalInstanceGroup::Create(group_proto_));
 }
 
 bool LocalInstanceGroup::HasActiveInstances() const {

@@ -119,8 +119,16 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
   CF_EXPECT_EQ(
       group_params.instances.size(), directories.product_out_paths.size(),
       "Number of product directories doesn't match number of instances");
-  LocalInstanceGroup group =
-      CF_EXPECT(LocalInstanceGroup::Create(std::move(group_params)));
+  LocalInstanceGroup::Builder group_builder(std::move(group_params.group_name));
+  for (const auto& instance_params : group_params.instances) {
+    if (instance_params.per_instance_name.has_value()) {
+      group_builder.AddInstance(instance_params.instance_id,
+                                instance_params.per_instance_name.value());
+    } else {
+      group_builder.AddInstance(instance_params.instance_id);
+    }
+  }
+  LocalInstanceGroup group = CF_EXPECT(group_builder.Build());
 
   // The base and other directories are always set to the default location, if
   // the user provides custom directories the ones in the default locations

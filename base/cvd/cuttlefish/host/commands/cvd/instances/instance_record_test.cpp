@@ -24,14 +24,8 @@ namespace selector {
  * Note that invalid inputs must be tested at the InstanceDatabase level
  */
 TEST(CvdInstanceRecordUnitTest, Fields) {
-  InstanceGroupParams group_params{
-    .group_name = "super",
-    .instances = {{
-      .instance_id = 3,
-      .per_instance_name = "phone",
-    }},
-  };
-  auto parent_group_res = LocalInstanceGroup::Create(group_params);
+  auto parent_group_res =
+      LocalInstanceGroup::Builder("super").AddInstance(3, "phone").Build();
   if (!parent_group_res.ok()) {
     /*
      * Here's why we skip the test rather than see it as a failure.
