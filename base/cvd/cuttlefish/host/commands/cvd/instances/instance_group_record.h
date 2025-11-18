@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,9 +31,9 @@
 namespace cuttlefish {
 
 struct InstanceParams {
-  const unsigned instance_id;
-  const std::string per_instance_name;
-  const cvd::InstanceState initial_state;
+  unsigned instance_id;
+  std::optional<std::string> per_instance_name;
+  cvd::InstanceState initial_state;
 };
 
 struct InstanceGroupParams {

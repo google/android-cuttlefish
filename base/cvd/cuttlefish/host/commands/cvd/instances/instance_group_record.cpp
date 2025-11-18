@@ -110,7 +110,8 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
   for (const auto& instance : group_params.instances) {
     auto& new_instance = *proto.add_instances();
     new_instance.set_id(instance.instance_id);
-    new_instance.set_name(std::move(instance.per_instance_name));
+    new_instance.set_name(std::move(instance.per_instance_name)
+                              .value_or(std::to_string(instance.instance_id)));
     new_instance.set_state(instance.initial_state);
   }
   return CF_EXPECT(Create(proto));
