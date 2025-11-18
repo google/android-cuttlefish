@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -129,7 +130,16 @@ bool CvdInstanceDatabaseTest::AddGroup(
     param.instances.emplace_back(instance);
   }
 
-  Result<LocalInstanceGroup> create_res = LocalInstanceGroup::Create(std::move(param));
+  LocalInstanceGroup::Builder builder(param.group_name);
+  for (const auto& instance : instances) {
+    if (instance.per_instance_name.has_value()) {
+      builder.AddInstance(instance.instance_id,
+                          instance.per_instance_name.value());
+    } else {
+      builder.AddInstance(instance.instance_id);
+    }
+  }
+  Result<LocalInstanceGroup> create_res = builder.Build();
   if (!create_res.ok()) {
     return false;
   }

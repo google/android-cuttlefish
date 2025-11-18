@@ -31,30 +31,13 @@ class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
   CvdInstanceGroupUnitTest() {}
   Result<LocalInstanceGroup> Get() {
-    return LocalInstanceGroup::Create(group_params);
+    LocalInstanceGroup::Builder builder(GroupName());
+    builder.AddInstance(1, "tv_instance");
+    builder.AddInstance(2, "2");
+    builder.AddInstance(3, "phone");
+    builder.AddInstance(7, "tv_instances");
+    return builder.Build();
   }
-  InstanceGroupParams group_params{
-      .group_name = GroupName(),
-      .instances =
-          {
-              {
-                  .instance_id = 1,
-                  .per_instance_name = "tv_instance",
-              },
-              {
-                  .instance_id = 2,
-                  .per_instance_name = "2",
-              },
-              {
-                  .instance_id = 3,
-                  .per_instance_name = "phone",
-              },
-              {
-                  .instance_id = 7,
-                  .per_instance_name = "tv_instances",
-              },
-          },
-  };
 };
 
 TEST_F(CvdInstanceGroupUnitTest, AddInstancesAndListAll) {

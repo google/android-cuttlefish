@@ -17,7 +17,6 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,19 +29,24 @@
 
 namespace cuttlefish {
 
-struct InstanceParams {
-  unsigned instance_id;
-  std::optional<std::string> per_instance_name;
-};
-
-struct InstanceGroupParams {
-  std::string group_name;
-  std::vector<InstanceParams> instances;
-};
-
 class LocalInstanceGroup {
  public:
-  static Result<LocalInstanceGroup> Create(InstanceGroupParams params);
+  class Builder {
+   public:
+    Builder(std::string group_name);
+
+    Builder& AddInstance(unsigned id) &;
+    Builder& AddInstance(unsigned id, std::string name) &;
+
+    Builder&& AddInstance(unsigned id) &&;
+    Builder&& AddInstance(unsigned id, std::string name) &&;
+
+    Result<LocalInstanceGroup> Build();
+
+   private:
+    std::string base_dir_;
+    cvd::InstanceGroup group_proto_;
+  };
 
   LocalInstanceGroup(LocalInstanceGroup&&) = default;
   LocalInstanceGroup(const LocalInstanceGroup&) = default;
