@@ -16,15 +16,10 @@
 
 #include "cuttlefish/host/libs/metrics/enabled.h"
 
-#include <string>
-
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 
 namespace cuttlefish {
 
-bool AreMetricsEnabled(const std::string& transmitter_path) {
-  return kEnableCvdMetrics && FileExists(transmitter_path);
-}
+bool AreMetricsEnabled() { return FileExists(kTransmitterPath); }
 
 }  // namespace cuttlefish
