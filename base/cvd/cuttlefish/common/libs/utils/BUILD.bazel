@@ -389,15 +389,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "unique_resource_allocator",
-    hdrs = ["unique_resource_allocator.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:contains",
-        "//libbase",
-    ],
-)
-
-cf_cc_library(
     name = "uuid",
     srcs = [
         "uuid.cpp",
@@ -407,18 +398,6 @@ cf_cc_library(
     ],
     deps = [
         "@libuuid",
-    ],
-)
-
-cf_cc_test(
-    name = "unique_resource_allocator_test",
-    srcs = ["unique_resource_allocator_test.cpp"],
-    deps = [
-        "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:unique_resource_allocator",
-        "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
