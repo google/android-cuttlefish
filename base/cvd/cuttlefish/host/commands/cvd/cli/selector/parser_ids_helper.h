@@ -30,7 +30,7 @@ struct InstanceIdTestInput {
   std::string cmd_args;
   std::string selector_args;
   std::optional<std::string> cuttlefish_instance;
-  std::optional<std::vector<unsigned>> expected_ids;
+  std::vector<unsigned> expected_ids;
   unsigned requested_num_instances;
   bool expected_result;
 };
@@ -41,7 +41,7 @@ class InstanceIdTest : public testing::TestWithParam<InstanceIdTestInput> {
 
   bool expected_result_;
   unsigned requested_num_instances_;
-  std::optional<std::vector<unsigned>> expected_ids_;
+  std::vector<unsigned> expected_ids_;
   cvd_common::Args cmd_args_;
   cvd_common::Args selector_args_;
   cvd_common::Envs envs_;

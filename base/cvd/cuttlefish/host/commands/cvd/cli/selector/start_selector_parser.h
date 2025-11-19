@@ -49,7 +49,7 @@ class StartSelectorParser {
       const cvd_common::Envs& envs);
   std::optional<std::string> GroupName() const;
   std::optional<std::vector<std::string>> PerInstanceNames() const;
-  const std::optional<std::vector<unsigned>>& InstanceIds() const {
+  const std::vector<unsigned>& InstanceIds() const {
     return instance_ids_;
   }
   unsigned RequestedNumInstances() const { return requested_num_instances_; }
@@ -79,10 +79,10 @@ class StartSelectorParser {
         : instance_ids_{instance_ids},
           n_instances_{static_cast<unsigned>(instance_ids.size())} {}
     ParsedInstanceIdsOpt(const unsigned n_instances)
-        : instance_ids_{std::nullopt}, n_instances_{n_instances} {}
+        : n_instances_{n_instances} {}
     auto GetInstanceIds() { return std::move(instance_ids_); }
     unsigned GetNumOfInstances() const { return n_instances_; }
-    std::optional<std::vector<unsigned>> instance_ids_;
+    std::vector<unsigned> instance_ids_;
     const unsigned n_instances_;
   };
 
@@ -134,7 +134,7 @@ class StartSelectorParser {
    * --instance_nums is not given.
    *
    */
-  std::optional<std::vector<unsigned>> instance_ids_;
+  std::vector<unsigned> instance_ids_;
   unsigned requested_num_instances_;
   bool use_cvdalloc_;
 

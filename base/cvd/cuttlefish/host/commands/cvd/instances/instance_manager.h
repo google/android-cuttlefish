@@ -33,7 +33,7 @@
 namespace cuttlefish {
 
 struct InstanceParams {
-  unsigned instance_id;
+  std::optional<unsigned> instance_id;
   std::optional<std::string> per_instance_name;
 };
 
@@ -60,8 +60,6 @@ class InstanceManager {
 
   Result<void> CvdClear(const CommandRequest&);
 
-  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
-
   Result<std::vector<LocalInstanceGroup>> FindGroups(
       const InstanceDatabase::Filter& filter) const;
   Result<LocalInstanceGroup> FindGroup(
@@ -75,7 +73,14 @@ class InstanceManager {
                                 LocalInstanceGroup& group);
 
  private:
+  struct InternalInstanceDesc {
+    InstanceLockFile lock_file;
+    std::optional<std::string> name;
+  };
+
   Result<std::string> StopBin(const std::string& host_android_out);
+  Result<std::vector<InternalInstanceDesc>> AllocateAndLockInstanceIds(
+      std::vector<InstanceParams> instances);
 
   InstanceLockFileManager& lock_manager_;
   InstanceDatabase& instance_db_;

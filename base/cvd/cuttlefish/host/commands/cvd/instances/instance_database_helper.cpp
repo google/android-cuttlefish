@@ -122,22 +122,11 @@ bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
 
 bool CvdInstanceDatabaseTest::AddGroup(
     const std::string& base_name,
-    const std::vector<InstanceParams>& instances) {
-  InstanceGroupParams param{
-      .group_name = base_name,
-  };
+    const std::vector<std::pair<unsigned, std::string>>& instances) {
+  LocalInstanceGroup::Builder builder(base_name);
   for (const auto& instance : instances) {
-    param.instances.emplace_back(instance);
-  }
-
-  LocalInstanceGroup::Builder builder(param.group_name);
-  for (const auto& instance : instances) {
-    if (instance.per_instance_name.has_value()) {
-      builder.AddInstance(instance.instance_id,
-                          instance.per_instance_name.value());
-    } else {
-      builder.AddInstance(instance.instance_id);
-    }
+    builder.AddInstance(instance.first,
+        instance.second);
   }
   Result<LocalInstanceGroup> create_res = builder.Build();
   if (!create_res.ok()) {

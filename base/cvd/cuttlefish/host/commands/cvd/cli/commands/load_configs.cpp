@@ -241,7 +241,6 @@ class LoadConfigsCommand : public CvdCommandHandler {
     };
     for (const auto& instance : env_spec.instances()) {
       group_params.instances.emplace_back(InstanceParams{
-          .instance_id = 0,
           .per_instance_name = instance.name(),
       });
     }

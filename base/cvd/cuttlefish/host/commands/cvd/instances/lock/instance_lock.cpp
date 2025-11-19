@@ -18,27 +18,19 @@
 
 #include <sys/file.h>
 
-#include <algorithm>
 #include <cstring>
-#include <iterator>
 #include <optional>
-#include <regex>
-#include <set>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/posix/strerror.h"
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
 
@@ -57,13 +49,6 @@ Result<void> InstanceLockFile::Status(InUseState state) {
   return {};
 }
 
-bool InstanceLockFile::operator<(const InstanceLockFile& other) const {
-  if (instance_num_ != other.instance_num_) {
-    return instance_num_ < other.instance_num_;
-  }
-  return lock_file_ < other.lock_file_;
-}
-
 InstanceLockFileManager::InstanceLockFileManager(
     std::string instance_locks_path)
     : instance_locks_path_(std::move(instance_locks_path)) {};
@@ -76,21 +61,27 @@ Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   return path.str();
 }
 
+Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
+  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
+  CF_EXPECT(RemoveFile(lock_file_path), StrError(errno));
+  return {};
+}
+
+Result<InstanceLockFile> InstanceLockFileManager::AcquireUnusedLock() {
+  for (int i = 1;; i++) {
+    auto lock = CF_EXPECT(TryAcquireLock(i));
+    if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
+      return *lock;
+    }
+  }
+}
+
 Result<InstanceLockFile> InstanceLockFileManager::AcquireLock(
     int instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
   LockFile lock_file =
       CF_EXPECT(lock_file_manager_.AcquireLock(lock_file_path));
   return InstanceLockFile(std::move(lock_file), instance_num);
-}
-
-Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireLocks(
-    const std::set<int>& instance_nums) {
-  std::set<InstanceLockFile> locks;
-  for (const auto& num : instance_nums) {
-    locks.emplace(CF_EXPECT(AcquireLock(num)));
-  }
-  return locks;
 }
 
 Result<std::optional<InstanceLockFile>> InstanceLockFileManager::TryAcquireLock(
@@ -102,167 +93,6 @@ Result<std::optional<InstanceLockFile>> InstanceLockFileManager::TryAcquireLock(
     return std::nullopt;
   }
   return InstanceLockFile(std::move(*lock_file_opt), instance_num);
-}
-
-Result<std::set<InstanceLockFile>> InstanceLockFileManager::TryAcquireLocks(
-    const std::set<int>& instance_nums) {
-  std::set<InstanceLockFile> locks;
-  for (const auto& num : instance_nums) {
-    auto lock = CF_EXPECT(TryAcquireLock(num));
-    if (lock) {
-      locks.emplace(std::move(*lock));
-    }
-  }
-  return locks;
-}
-
-Result<std::set<InstanceLockFile>>
-InstanceLockFileManager::LockAllAvailable() {
-  if (!all_instance_nums_) {
-    all_instance_nums_ = CF_EXPECT(FindPotentialInstanceNumsFromNetDevices());
-  }
-
-  std::set<InstanceLockFile> acquired_lock_files;
-  for (const auto num : *all_instance_nums_) {
-    auto lock_result = TryAcquireLock(num);
-    if (!lock_result.ok()) {
-      LOG(DEBUG) << "Unable to open lock file for ID #" << num << " but "
-                 << "moving on to the next one as it's not a critical failure.";
-      continue;
-    }
-    auto lock = std::move(*lock_result);
-    if (!lock) {
-      continue;
-    }
-    auto status = CF_EXPECT(lock->Status());
-    if (status != InUseState::kNotInUse) {
-      continue;
-    }
-    acquired_lock_files.emplace(std::move(*lock));
-  }
-  return acquired_lock_files;
-}
-
-static std::string DevicePatternString(
-    const std::unordered_map<std::string, std::set<int>>& device_to_ids_map) {
-  std::string device_pattern_str("^[[:space:]]*cvd-(");
-  for (const auto& [key, _] : device_to_ids_map) {
-    device_pattern_str.append(key).append("|");
-  }
-  if (!device_to_ids_map.empty()) {
-    *device_pattern_str.rbegin() = ')';
-  }
-  device_pattern_str.append("-[0-9]+");
-  return device_pattern_str;
-}
-
-struct TypeAndId {
-  std::string device_type;
-  int id;
-};
-// call this if the line is a network device line
-static Result<TypeAndId> ParseMatchedLine(
-    const std::smatch& device_string_match) {
-  std::string device_string = *device_string_match.begin();
-  auto tokens = android::base::Tokenize(device_string, "-");
-  CF_EXPECT_GE(tokens.size(), 3ul);
-  const auto cvd = tokens.front();
-  int id = 0;
-  CF_EXPECT(android::base::ParseInt(tokens.back(), &id));
-  // '-'.join(tokens[1:-1])
-  tokens.pop_back();
-  tokens.erase(tokens.begin());
-  const auto device_type = android::base::Join(tokens, "-");
-  return TypeAndId{.device_type = device_type, .id = id};
-}
-
-Result<std::set<int>>
-InstanceLockFileManager::FindPotentialInstanceNumsFromNetDevices() {
-  // Estimate this by looking at available tap devices
-  // clang-format off
-  /** Sample format:
-Inter-|   Receive                                                |  Transmit
- face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-cvd-wtap-02:       0       0    0    0    0     0          0         0        0       0    0    0    0     0       0          0
-  */
-  // clang-format on
-  static constexpr char kPath[] = "/proc/net/dev";
-  std::string proc_net_dev;
-  using android::base::ReadFileToString;
-  CF_EXPECT(ReadFileToString(kPath, &proc_net_dev, /* follow_symlinks */ true));
-
-  auto lines = android::base::Split(proc_net_dev, "\n");
-  std::unordered_map<std::string, std::set<int>> device_to_ids_map{
-      {"etap", std::set<int>{}},
-      {"mtap", std::set<int>{}},
-      {"wtap", std::set<int>{}},
-      {"wifiap", std::set<int>{}},
-  };
-  // "^[[:space:]]*cvd-(etap|mtap|wtap|wifiap)-[0-9]+"
-  std::string device_pattern_str = DevicePatternString(device_to_ids_map);
-
-  std::regex device_pattern(device_pattern_str);
-  for (const auto& line : lines) {
-    std::smatch device_string_match;
-    if (!std::regex_search(line, device_string_match, device_pattern)) {
-      continue;
-    }
-    const auto [device_type, id] =
-        CF_EXPECT(ParseMatchedLine(device_string_match));
-    CF_EXPECT(Contains(device_to_ids_map, device_type));
-    device_to_ids_map[device_type].insert(id);
-  }
-
-  std::set<int> result{device_to_ids_map["etap"]};  // any set except "wifiap"
-  for (const auto& [device_type, id_set] : device_to_ids_map) {
-    /*
-     * b/2457509
-     *
-     * Until the debian host packages are sufficiently up-to-date, the wifiap
-     * devices wouldn't show up in /proc/net/dev.
-     */
-    if (device_type == "wifiap" && id_set.empty()) {
-      continue;
-    }
-    std::set<int> tmp;
-    std::set_intersection(result.begin(), result.end(), id_set.begin(),
-                          id_set.end(), std::inserter(tmp, tmp.begin()));
-    result = std::move(tmp);
-  }
-  return result;
-}
-
-Result<std::optional<InstanceLockFile>>
-InstanceLockFileManager::TryAcquireUnusedLock() {
-  if (!all_instance_nums_) {
-    all_instance_nums_ = CF_EXPECT(FindPotentialInstanceNumsFromNetDevices());
-  }
-
-  for (const auto num : *all_instance_nums_) {
-    auto lock = CF_EXPECT(TryAcquireLock(num));
-    if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
-      return std::move(*lock);
-    }
-  }
-  return {};
-}
-
-Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
-  const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
-  CF_EXPECT(RemoveFile(lock_file_path), StrError(errno));
-  return {};
-}
-
-Result<std::set<InstanceLockFile>> InstanceLockFileManager::AcquireUnusedLocks(
-    unsigned int number) {
-  std::set<InstanceLockFile> more;
-  for (int i = 1; more.size() < number; i++) {
-    auto lock = CF_EXPECT(TryAcquireLock(i));
-    if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
-      more.emplace(std::move(*lock));
-    }
-  }
-  return more;
 }
 
 }  // namespace cuttlefish

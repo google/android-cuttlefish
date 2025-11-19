@@ -73,7 +73,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   //    "mkdir" : Workspace() + "/" + base_name, HostArtifactsPath()
   //    db_.AddInstanceGroup()
   bool AddGroup(const std::string& base_name,
-                const std::vector<InstanceParams>& instances);
+                const std::vector<std::pair<unsigned, std::string>>& instances);
   InstanceDatabase& GetDb() { return db_; }
   const SetupError& Error() const { return error_; }
 

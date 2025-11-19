@@ -79,12 +79,11 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
 
   for (const auto& instances : group_proto.instances()) {
     auto id = instances.id();
-    if (id != 0) {
-      // Only non-zero ids are checked, zero means no id has been assigned yet.
-      CF_EXPECTF(ids.find(id) == ids.end(),
-                 "Instances must have unique ids, found '{}' repeated", id);
-      ids.insert(id);
-    }
+    CF_EXPECT_GE(id, 1, "Instance ids must be positive");
+    // Only non-zero ids are checked, zero means no id has been assigned yet.
+    CF_EXPECTF(ids.find(id) == ids.end(),
+               "Instances must have unique ids, found '{}' repeated", id);
+    ids.insert(id);
     auto name = instances.name();
     CF_EXPECTF(names.find(name) == names.end(),
                "Instances must have unique names, found '{}' repeated", name);

@@ -157,11 +157,8 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
    *   HostArtifactsPath: Workspace() + "/" + "android_host_out"
    *   group_ := LocalInstanceGroup(name, HOME, HostArtifactsPath)
    */
-  if (!SetUpOk() ||
-      !AddGroup("nyah", {InstanceParams{.instance_id = 1,
-                                        .per_instance_name = "name"}}) ||
-      !AddGroup("yah_ong", {InstanceParams{.instance_id = 2,
-                                           .per_instance_name = "name"}})) {
+  if (!SetUpOk() || !AddGroup("nyah", {{1, "name"}}) ||
+      !AddGroup("yah_ong", {{2, "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -173,11 +170,8 @@ TEST_F(CvdInstanceDatabaseTest, Clear) {
 }
 
 TEST_F(CvdInstanceDatabaseTest, SearchGroups) {
-  if (!SetUpOk() ||
-      !AddGroup("myau", {InstanceParams{.instance_id = 1,
-                                        .per_instance_name = "name"}}) ||
-      !AddGroup("miau", {InstanceParams{.instance_id = 2,
-                                        .per_instance_name = "name"}})) {
+  if (!SetUpOk() || !AddGroup("myau", {{1, "name"}}) ||
+      !AddGroup("miau", {{2, "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -203,12 +197,8 @@ TEST_F(CvdInstanceDatabaseTest, RemoveGroup) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  if (!AddGroup("miaaaw", {InstanceParams{.instance_id = 1,
-                                          .per_instance_name = "name"}}) ||
-      !AddGroup("meow", {InstanceParams{.instance_id = 2,
-                                        .per_instance_name = "name"}}) ||
-      !AddGroup("mjau", {InstanceParams{.instance_id = 3,
-                                        .per_instance_name = "name"}})) {
+  if (!AddGroup("miaaaw", {{1, "name"}}) || !AddGroup("meow", {{2, "name"}}) ||
+      !AddGroup("mjau", {{3, "name"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto eng_group = db.FindGroup({.group_name = "meow"});
@@ -228,22 +218,10 @@ TEST_F(CvdInstanceDatabaseTest, AddInstances) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
-  ASSERT_TRUE(AddGroup(
-      {"yah_ong1"},
-      {InstanceParams{.instance_id = 1, .per_instance_name = "yumi"},
-       InstanceParams{.instance_id = 2, .per_instance_name = "tiger"}}));
-  ASSERT_FALSE(AddGroup(
-      {"yah_ong2"},
-      {InstanceParams{.instance_id = 3, .per_instance_name = "yumi"},
-       InstanceParams{.instance_id = 4, .per_instance_name = "yumi"}}));
-  ASSERT_FALSE(AddGroup(
-      {"yah_ong3"},
-      {InstanceParams{.instance_id = 5, .per_instance_name = "yumi"},
-       InstanceParams{.instance_id = 5, .per_instance_name = "tiger"}}));
-  ASSERT_FALSE(AddGroup(
-      {"yah_ong4"},
-      {InstanceParams{.instance_id = 1, .per_instance_name = "yumi"},
-       InstanceParams{.instance_id = 6, .per_instance_name = "tiger"}}));
+  ASSERT_TRUE(AddGroup({"yah_ong1"}, {{1, "yumi"}, {2, "tiger"}}));
+  ASSERT_FALSE(AddGroup({"yah_ong2"}, {{3, "yumi"}, {4, "yumi"}}));
+  ASSERT_FALSE(AddGroup({"yah_ong3"}, {{5, "yumi"}, {5, "tiger"}}));
+  ASSERT_FALSE(AddGroup({"yah_ong4"}, {{1, "yumi"}, {6, "tiger"}}));
   auto kitty_group = db.FindGroup({.group_name = "yah_ong1"});
   if (!kitty_group.ok()) {
     GTEST_SKIP() << "yah_ong1"
@@ -259,12 +237,8 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesInvalid) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  ASSERT_FALSE(AddGroup(
-      "yah_ong",
-      {InstanceParams{.instance_id = 1, .per_instance_name = "!yumi"}}));
-  ASSERT_FALSE(AddGroup(
-      "yah_ong2",
-      {InstanceParams{.instance_id = 2, .per_instance_name = "ti ger"}}));
+  ASSERT_FALSE(AddGroup("yah_ong", {{1, "!yumi"}}));
+  ASSERT_FALSE(AddGroup("yah_ong2", {{2, "ti ger"}}));
 }
 
 TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
@@ -272,19 +246,11 @@ TEST_F(CvdInstanceDatabaseTest, FindByInstanceId) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("miau",
-                {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
-                 InstanceParams{.instance_id = 10,
-                                .per_instance_name = "tv-instance"}})) {
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv-instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup(
-          "nyah",
-          {InstanceParams{.instance_id = 7,
-                          .per_instance_name = "my_favorite_phone"},
-           InstanceParams{.instance_id = 11,
-                          .per_instance_name = "tv-instance"},
-           InstanceParams{.instance_id = 3, .per_instance_name = "3_"}})) {
+  if (!AddGroup("nyah",
+                {{7, "my_favorite_phone"}, {11, "tv-instance"}, {3, "3_"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -321,17 +287,10 @@ TEST_F(CvdInstanceDatabaseTest, FindByPerInstanceName) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("miau",
-                {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
-                 InstanceParams{.instance_id = 10,
-                                .per_instance_name = "tv_instance"}})) {
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("nyah",
-                {InstanceParams{.instance_id = 7,
-                                .per_instance_name = "my_favorite_phone"},
-                 InstanceParams{.instance_id = 11,
-                                .per_instance_name = "tv_instance"}})) {
+  if (!AddGroup("nyah", {{7, "my_favorite_phone"}, {11, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -361,17 +320,10 @@ TEST_F(CvdInstanceDatabaseTest, FindGroupByPerInstanceName) {
   if (!SetUpOk()) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("miau",
-                {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
-                 InstanceParams{.instance_id = 10,
-                                .per_instance_name = "tv_instance"}})) {
+  if (!AddGroup("miau", {{1, "8"}, {10, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
-  if (!AddGroup("nyah",
-                {InstanceParams{.instance_id = 7,
-                                .per_instance_name = "my_favorite_phone"},
-                 InstanceParams{.instance_id = 11,
-                                .per_instance_name = "tv_instance"}})) {
+  if (!AddGroup("nyah", {{7, "my_favorite_phone"}, {11, "tv_instance"}})) {
     GTEST_SKIP() << Error().msg;
   }
   auto& db = GetDb();
@@ -407,10 +359,7 @@ TEST_F(CvdInstanceDatabaseTest, AddInstancesTogether) {
   }
   auto& db = GetDb();
 
-  ASSERT_TRUE(AddGroup(
-      "miau",
-      {InstanceParams{.instance_id = 1, .per_instance_name = "8"},
-       InstanceParams{.instance_id = 10, .per_instance_name = "tv_instance"}}));
+  ASSERT_TRUE(AddGroup("miau", {{1, "8"}, {10, "tv_instance"}}));
 
   auto result_8 = db.FindInstanceWithGroup({.instance_names = {"8"}});
   auto result_tv =
