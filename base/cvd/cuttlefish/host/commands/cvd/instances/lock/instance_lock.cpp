@@ -34,10 +34,10 @@
 
 namespace cuttlefish {
 
-InstanceLockFile::InstanceLockFile(LockFile&& lock_file, const int instance_num)
+InstanceLockFile::InstanceLockFile(LockFile&& lock_file, const unsigned instance_num)
     : lock_file_(std::move(lock_file)), instance_num_(instance_num) {}
 
-int InstanceLockFile::Instance() const { return instance_num_; }
+unsigned InstanceLockFile::Instance() const { return instance_num_; }
 
 Result<InUseState> InstanceLockFile::Status() const {
   auto in_use_state = CF_EXPECT(lock_file_.Status());
@@ -53,7 +53,7 @@ InstanceLockFileManager::InstanceLockFileManager(
     std::string instance_locks_path)
     : instance_locks_path_(std::move(instance_locks_path)) {};
 
-Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
+Result<std::string> InstanceLockFileManager::LockFilePath(unsigned instance_num) {
   std::stringstream path;
   path << instance_locks_path_;
   CF_EXPECT(EnsureDirectoryExists(path.str()));
@@ -61,14 +61,14 @@ Result<std::string> InstanceLockFileManager::LockFilePath(int instance_num) {
   return path.str();
 }
 
-Result<void> InstanceLockFileManager::RemoveLockFile(int instance_num) {
+Result<void> InstanceLockFileManager::RemoveLockFile(unsigned instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
   CF_EXPECT(RemoveFile(lock_file_path), StrError(errno));
   return {};
 }
 
 Result<InstanceLockFile> InstanceLockFileManager::AcquireUnusedLock() {
-  for (int i = 1;; i++) {
+  for (unsigned i = 1;; i++) {
     auto lock = CF_EXPECT(TryAcquireLock(i));
     if (lock && CF_EXPECT(lock->Status()) == InUseState::kNotInUse) {
       return *lock;
@@ -77,7 +77,7 @@ Result<InstanceLockFile> InstanceLockFileManager::AcquireUnusedLock() {
 }
 
 Result<InstanceLockFile> InstanceLockFileManager::AcquireLock(
-    int instance_num) {
+    unsigned instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
   LockFile lock_file =
       CF_EXPECT(lock_file_manager_.AcquireLock(lock_file_path));
@@ -85,7 +85,7 @@ Result<InstanceLockFile> InstanceLockFileManager::AcquireLock(
 }
 
 Result<std::optional<InstanceLockFile>> InstanceLockFileManager::TryAcquireLock(
-    int instance_num) {
+    unsigned instance_num) {
   const auto lock_file_path = CF_EXPECT(LockFilePath(instance_num));
   std::optional<LockFile> lock_file_opt =
       CF_EXPECT(lock_file_manager_.TryAcquireLock(lock_file_path));
