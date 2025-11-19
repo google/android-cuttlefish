@@ -80,11 +80,17 @@ std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
 FetcherConfig::FetcherConfig() : mutex_(std::make_unique<std::mutex>()) {}
 
 FetcherConfig::FetcherConfig(FetcherConfig&& other) {
+  dictionary_ = std::move(other.dictionary_);
+  other.dictionary_ = Json::Value();
+
   mutex_ = std::move(other.mutex_);
   other.mutex_ = std::make_unique<std::mutex>();
 }
 
 FetcherConfig& FetcherConfig::operator=(FetcherConfig&& other) {
+  dictionary_ = std::move(other.dictionary_);
+  other.dictionary_ = Json::Value();
+
   mutex_ = std::move(other.mutex_);
   other.mutex_ = std::make_unique<std::mutex>();
 
