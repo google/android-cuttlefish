@@ -23,7 +23,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:unique_resource_allocator",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",

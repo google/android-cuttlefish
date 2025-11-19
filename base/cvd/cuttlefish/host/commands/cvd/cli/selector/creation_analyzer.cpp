@@ -28,7 +28,6 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/unique_resource_allocator.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -44,8 +43,6 @@ class CreationAnalyzer {
   Result<GroupCreationInfo> ExtractGroupInfo();
 
  private:
-  using IdAllocator = UniqueResourceAllocator<unsigned>;
-
   CreationAnalyzer(const CreationAnalyzerParam& param,
                    StartSelectorParser&& selector_options_parser);
 
