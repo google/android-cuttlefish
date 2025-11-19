@@ -1,0 +1,205 @@
+--- b/base/cvd/adb/client/adb_install.cpp
++++ a/base/cvd/adb/client/adb_install.cpp
+@@ -37,14 +37,11 @@
+ #include "adb_utils.h"
+ #include "client/file_sync_client.h"
+ #include "commandline.h"
+-#include "fastdeploy.h"
+ #include "incremental.h"
+ #include "sysdeps.h"
+ 
+ using namespace std::literals;
+ 
+-static constexpr int kFastDeployMinApi = 24;
+-
+ namespace {
+ 
+ enum InstallMode {
+@@ -158,7 +155,7 @@ static unique_fd send_command(const std::vector<std::string>& cmd_args, std::str
+     }
+ }
+ 
+-static int install_app_streamed(int argc, const char** argv, bool use_fastdeploy) {
++static int install_app_streamed(int argc, const char** argv) {
+     printf("Performing Streamed Install\n");
+ 
+     // The last argument must be the APK file
+@@ -176,21 +173,6 @@ static int install_app_streamed(int argc, const char** argv, bool use_fastdeploy
+         error_exit(".apex is not supported on the target device");
+     }
+ 
+-    if (is_apex && use_fastdeploy) {
+-        error_exit("--fastdeploy doesn't support .apex files");
+-    }
+-
+-    if (use_fastdeploy) {
+-        auto metadata = extract_metadata(file);
+-        if (metadata.has_value()) {
+-            // pass all but 1st (command) and last (apk path) parameters through to pm for
+-            // session creation
+-            std::vector<const char*> pm_args{argv + 1, argv + argc - 1};
+-            auto patchFd = install_patch(pm_args.size(), pm_args.data());
+-            return stream_patch(file, std::move(metadata.value()), std::move(patchFd));
+-        }
+-    }
+-
+     struct stat sb;
+     if (stat(file, &sb) == -1) {
+         perror_exit("failed to stat %s", file);
+@@ -247,7 +229,7 @@ static int install_app_streamed(int argc, const char** argv, bool use_fastdeploy
+     return 0;
+ }
+ 
+-static int install_app_legacy(int argc, const char** argv, bool use_fastdeploy) {
++static int install_app_legacy(int argc, const char** argv) {
+     printf("Performing Push Install\n");
+ 
+     // Find last APK argument.
+@@ -270,19 +252,6 @@ static int install_app_legacy(int argc, const char** argv, bool use_fastdeploy)
+     std::string apk_dest = "/data/local/tmp/" + android::base::Basename(argv[last_apk]);
+     argv[last_apk] = apk_dest.c_str(); /* destination name, not source location */
+ 
+-    if (use_fastdeploy) {
+-        auto metadata = extract_metadata(apk_file[0]);
+-        if (metadata.has_value()) {
+-            auto patchFd = apply_patch_on_device(apk_dest.c_str());
+-            int status = stream_patch(apk_file[0], std::move(metadata.value()), std::move(patchFd));
+-
+-            result = pm_command(argc, argv);
+-            delete_device_file(apk_dest);
+-
+-            return status;
+-        }
+-    }
+-
+     if (do_sync_push(apk_file, apk_dest.c_str(), false, CompressionType::Any, false, false)) {
+         result = pm_command(argc, argv);
+         delete_device_file(apk_dest);
+@@ -352,14 +321,7 @@ static int install_app_incremental(int argc, const char** argv, bool wait, bool
+ }
+ 
+ static std::pair<InstallMode, std::optional<InstallMode>> calculate_install_mode(
+-        InstallMode modeFromArgs, bool fastdeploy, CmdlineOption incremental_request) {
+-    if (incremental_request == CmdlineOption::Enable) {
+-        if (fastdeploy) {
+-            error_exit(
+-                    "--incremental and --fast-deploy options are incompatible. "
+-                    "Please choose one");
+-        }
+-    }
++        InstallMode modeFromArgs, CmdlineOption incremental_request) {
+ 
+     if (modeFromArgs != INSTALL_DEFAULT) {
+         if (incremental_request == CmdlineOption::Enable) {
+@@ -446,61 +408,23 @@ static std::vector<const char*> parse_install_mode(std::vector<const char*> argv
+     return passthrough;
+ }
+ 
+-static std::vector<const char*> parse_fast_deploy_mode(
+-        std::vector<const char*> argv, bool* use_fastdeploy,
+-        FastDeploy_AgentUpdateStrategy* agent_update_strategy) {
+-    *use_fastdeploy = false;
+-    *agent_update_strategy = FastDeploy_AgentUpdateDifferentVersion;
+-
+-    std::vector<const char*> passthrough;
+-    for (auto&& arg : argv) {
+-        if (arg == "--fastdeploy"sv) {
+-            *use_fastdeploy = true;
+-        } else if (arg == "--no-fastdeploy"sv) {
+-            *use_fastdeploy = false;
+-        } else if (arg == "--force-agent"sv) {
+-            *agent_update_strategy = FastDeploy_AgentUpdateAlways;
+-        } else if (arg == "--date-check-agent"sv) {
+-            *agent_update_strategy = FastDeploy_AgentUpdateNewerTimeStamp;
+-        } else if (arg == "--version-check-agent"sv) {
+-            *agent_update_strategy = FastDeploy_AgentUpdateDifferentVersion;
+-        } else {
+-            passthrough.push_back(arg);
+-        }
+-    }
+-    return passthrough;
+-}
+-
+ int install_app(int argc, const char** argv) {
+     InstallMode install_mode = INSTALL_DEFAULT;
+     auto incremental_request = CmdlineOption::None;
+     bool incremental_wait = false;
+ 
+-    bool use_fastdeploy = false;
+-    FastDeploy_AgentUpdateStrategy agent_update_strategy = FastDeploy_AgentUpdateDifferentVersion;
+-
+     auto unused_argv = parse_install_mode({argv, argv + argc}, &install_mode, &incremental_request,
+                                           &incremental_wait);
+-    auto passthrough_argv =
+-            parse_fast_deploy_mode(std::move(unused_argv), &use_fastdeploy, &agent_update_strategy);
++    auto passthrough_argv = std::move(unused_argv);
+ 
+     auto [primary_mode, fallback_mode] =
+-            calculate_install_mode(install_mode, use_fastdeploy, incremental_request);
++            calculate_install_mode(install_mode, incremental_request);
+     if ((primary_mode == INSTALL_STREAM ||
+          fallback_mode.value_or(INSTALL_PUSH) == INSTALL_STREAM) &&
+         best_install_mode() == INSTALL_PUSH) {
+         error_exit("Attempting to use streaming install on unsupported device");
+     }
+ 
+-    if (use_fastdeploy && get_device_api_level() < kFastDeployMinApi) {
+-        fprintf(stderr,
+-                "Fast Deploy is only compatible with devices of API version %d or higher, "
+-                "ignoring.\n",
+-                kFastDeployMinApi);
+-        use_fastdeploy = false;
+-    }
+-    fastdeploy_set_agent_update_strategy(agent_update_strategy);
+-
+     if (passthrough_argv.size() < 2) {
+         error_exit("install requires an apk argument");
+     }
+@@ -508,11 +432,9 @@ int install_app(int argc, const char** argv) {
+     auto run_install_mode = [&](InstallMode install_mode, bool silent) {
+         switch (install_mode) {
+             case INSTALL_PUSH:
+-                return install_app_legacy(passthrough_argv.size(), passthrough_argv.data(),
+-                                          use_fastdeploy);
++                return install_app_legacy(passthrough_argv.size(), passthrough_argv.data());
+             case INSTALL_STREAM:
+-                return install_app_streamed(passthrough_argv.size(), passthrough_argv.data(),
+-                                            use_fastdeploy);
++                return install_app_streamed(passthrough_argv.size(), passthrough_argv.data());
+             case INSTALL_INCREMENTAL:
+                 return install_app_incremental(passthrough_argv.size(), passthrough_argv.data(),
+                                                incremental_wait, silent);
+@@ -681,13 +603,12 @@ int install_multiple_app(int argc, const char** argv) {
+     InstallMode install_mode = INSTALL_DEFAULT;
+     auto incremental_request = CmdlineOption::None;
+     bool incremental_wait = false;
+-    bool use_fastdeploy = false;
+ 
+     auto passthrough_argv = parse_install_mode({argv + 1, argv + argc}, &install_mode,
+                                                &incremental_request, &incremental_wait);
+ 
+     auto [primary_mode, fallback_mode] =
+-            calculate_install_mode(install_mode, use_fastdeploy, incremental_request);
++            calculate_install_mode(install_mode, incremental_request);
+     if ((primary_mode == INSTALL_STREAM ||
+          fallback_mode.value_or(INSTALL_PUSH) == INSTALL_STREAM) &&
+         best_install_mode() == INSTALL_PUSH) {
+--- b/base/cvd/adb/client/commandline.cpp
++++ a/base/cvd/adb/client/commandline.cpp
+@@ -66,7 +66,6 @@ using namespace std::string_literals;
+ #include "bugreport.h"
+ #include "client/file_sync_client.h"
+ #include "commandline.h"
+-#include "fastdeploy.h"
+ #include "incremental_server.h"
+ #include "services.h"
+ #include "shell_protocol.h"
+@@ -189,8 +188,6 @@ static void help() {
+         "     --instant: cause the app to be installed as an ephemeral install app\n"
+         "     --no-streaming: always push APK to device and invoke Package Manager as separate steps\n"
+         "     --streaming: force streaming APK directly into Package Manager\n"
+-        "     --fastdeploy: use fast deploy\n"
+-        "     --no-fastdeploy: prevent use of fast deploy\n"
+         "     --force-agent: force update of deployment agent when using fast deploy\n"
+         "     --date-check-agent: update deployment agent when local version is newer and using fast deploy\n"
+         "     --version-check-agent: update deployment agent when local version has different version code and using fast deploy\n"
