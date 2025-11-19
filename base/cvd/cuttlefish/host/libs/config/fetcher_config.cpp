@@ -212,18 +212,23 @@ std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
 }
 
 std::string FetcherConfig::FindCvdFileWithSuffix(
-    const std::string& suffix) const {
+    FileSource source, std::string_view suffix) const {
   std::scoped_lock lock(*mutex_);
 
   if (!dictionary_.isMember(kCvdFiles)) {
     return {};
   }
-  const auto& json_files = dictionary_[kCvdFiles];
+  const Json::Value& json_files = dictionary_[kCvdFiles];
   for (auto it = json_files.begin(); it != json_files.end(); it++) {
-    const auto& file = it.key().asString();
-    if (absl::EndsWith(file, suffix)) {
-      return file;
+    const std::string& file = it.key().asString();
+    if (!absl::EndsWith(file, suffix)) {
+      continue;
     }
+    CvdFile parsed = JsonToCvdFile(file, *it);
+    if (parsed.source != source) {
+      continue;
+    }
+    return file;
   }
   LOG(DEBUG) << "Could not find file ending in " << suffix;
   return "";

@@ -39,9 +39,9 @@ InitramfsPathFlag InitramfsPathFlag::FromGlobalGflags(
   std::vector<std::string> initramfs_paths;
   if (flag_info.is_default) {
     for (size_t i = 0; i < fetcher_configs.Size(); ++i) {
-      initramfs_paths.emplace_back(
-          fetcher_configs.ForInstance(i).FindCvdFileWithSuffix(
-              "initramfs.img"));
+      const FetcherConfig& fetcher_config = fetcher_configs.ForInstance(i);
+      initramfs_paths.emplace_back(fetcher_config.FindCvdFileWithSuffix(
+          FileSource::KERNEL_BUILD, "initramfs.img"));
     }
   } else {
     initramfs_paths = android::base::Split(flag_info.current_value, ",");
