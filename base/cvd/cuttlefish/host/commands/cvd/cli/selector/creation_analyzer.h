@@ -24,9 +24,7 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -34,7 +32,6 @@ namespace selector {
 struct GroupCreationInfo {
   InstanceGroupParams group_creation_params;
   InstanceManager::GroupDirectories group_directories;
-  std::vector<InstanceLockFile> instance_file_locks;
 };
 
 struct CreationAnalyzerParam {
@@ -71,8 +68,7 @@ struct CreationAnalyzerParam {
  *    instance ids --> per_instance_name
  *
  */
-Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam&,
-                                          InstanceLockFileManager&);
+Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam&);
 
 }  // namespace selector
 }  // namespace cuttlefish

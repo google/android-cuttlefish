@@ -114,7 +114,7 @@ StartSelectorParser::InstanceFromEnvironment(
     base = *vsoc_suffix;
   }
   if (!base) {
-    return std::nullopt;
+    return {};
   }
   // this is guaranteed by the caller
   // assert(num_instances != std::nullopt);

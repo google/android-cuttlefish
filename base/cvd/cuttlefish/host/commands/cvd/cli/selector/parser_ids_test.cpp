@@ -43,7 +43,7 @@ INSTANTIATE_TEST_SUITE_P(
     CvdParser, InstanceIdTest,
     testing::Values(
         InstanceIdTestInput{.cuttlefish_instance = std::nullopt,
-                            .expected_ids = std::nullopt,
+                            .expected_ids = {},
                             .requested_num_instances = 1,
                             .expected_result = true},
         InstanceIdTestInput{.cuttlefish_instance = "8",
@@ -51,7 +51,7 @@ INSTANTIATE_TEST_SUITE_P(
                             .requested_num_instances = 1,
                             .expected_result = true},
         InstanceIdTestInput{.cmd_args = "--num_instances=2",
-                            .expected_ids = std::nullopt,
+                            .expected_ids = {},
                             .requested_num_instances = 2,
                             .expected_result = true},
         InstanceIdTestInput{.cmd_args = "--num_instances=2",
@@ -90,7 +90,7 @@ INSTANTIATE_TEST_SUITE_P(
             .expected_result = true},
         InstanceIdTestInput{.selector_args = "--instance_name=c-1,c-3,c-5",
                             .cuttlefish_instance = std::nullopt,
-                            .expected_ids = std::nullopt,
+                            .expected_ids = {},
                             .requested_num_instances = 3,
                             .expected_result = true},
         // CUTTLEFISH_INSTANCE should be ignored

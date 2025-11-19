@@ -16,9 +16,7 @@
 #pragma once
 
 #include <optional>
-#include <set>
 #include <string>
-#include <vector>
 
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 
@@ -34,8 +32,6 @@ class InstanceLockFile {
   Result<InUseState> Status() const;
   Result<void> Status(InUseState);
 
-  bool operator<(const InstanceLockFile&) const;
-
  private:
   InstanceLockFile(LockFile&& lock_file, int instance_num);
   LockFile lock_file_;
@@ -50,16 +46,7 @@ class InstanceLockFileManager {
   InstanceLockFileManager(std::string instance_locks_path);
 
   Result<InstanceLockFile> AcquireLock(int instance_num);
-  Result<std::set<InstanceLockFile>> AcquireLocks(const std::set<int>& nums);
-  Result<std::set<InstanceLockFile>> AcquireUnusedLocks(unsigned int number);
-
-  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
-  Result<std::set<InstanceLockFile>> TryAcquireLocks(const std::set<int>& nums);
-
-  // Best-effort attempt to find a free instance id.
-  Result<std::optional<InstanceLockFile>> TryAcquireUnusedLock();
-
-  Result<std::set<InstanceLockFile>> LockAllAvailable();
+  Result<InstanceLockFile> AcquireUnusedLock();
 
   // TODO: This routine should  be removed and replaced with allocd
   // The caller must check if the instance_num belongs to the user, before
@@ -67,13 +54,10 @@ class InstanceLockFileManager {
   Result<void> RemoveLockFile(int instance_num);
 
  private:
-  /*
-   * Generate value to initialize
-   */
-  Result<std::set<int>> FindPotentialInstanceNumsFromNetDevices();
   Result<std::string> LockFilePath(int instance_num);
+  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
+
   std::string instance_locks_path_;
-  std::optional<std::set<int>> all_instance_nums_;
   LockFileManager lock_file_manager_;
 };
 
