@@ -19,6 +19,7 @@
 #include <string_view>
 
 #include <android-base/file.h>
+#include "absl/container/btree_map.h"
 
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -33,7 +34,13 @@ Defaults::Defaults(std::map<std::string, std::string> defaults) {
 }
 
 std::optional<std::string_view> Defaults::Value(std::string_view k) const {
-  return defaults_.at(k);
+  absl::btree_map<std::string, std::string>::const_iterator it =
+      defaults_.find(k);
+  if (it == defaults_.end()) {
+    return {};
+  } else {
+    return it->second;
+  }
 }
 
 std::optional<bool> Defaults::BoolValue(std::string_view k) const {
