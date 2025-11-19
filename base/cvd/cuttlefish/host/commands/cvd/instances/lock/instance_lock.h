@@ -28,14 +28,14 @@ class InstanceLockFile {
   using LockFile = cvd_impl::LockFile;
 
  public:
-  int Instance() const;
+  unsigned Instance() const;
   Result<InUseState> Status() const;
   Result<void> Status(InUseState);
 
  private:
-  InstanceLockFile(LockFile&& lock_file, int instance_num);
+  InstanceLockFile(LockFile&& lock_file, unsigned instance_num);
   LockFile lock_file_;
-  const int instance_num_;
+  const unsigned instance_num_;
 };
 
 class InstanceLockFileManager {
@@ -45,17 +45,17 @@ class InstanceLockFileManager {
  public:
   InstanceLockFileManager(std::string instance_locks_path);
 
-  Result<InstanceLockFile> AcquireLock(int instance_num);
+  Result<InstanceLockFile> AcquireLock(unsigned instance_num);
   Result<InstanceLockFile> AcquireUnusedLock();
 
   // TODO: This routine should  be removed and replaced with allocd
   // The caller must check if the instance_num belongs to the user, before
   // calling this. It is a quick fix for b/316824572
-  Result<void> RemoveLockFile(int instance_num);
+  Result<void> RemoveLockFile(unsigned instance_num);
 
  private:
-  Result<std::string> LockFilePath(int instance_num);
-  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
+  Result<std::string> LockFilePath(unsigned instance_num);
+  Result<std::optional<InstanceLockFile>> TryAcquireLock(unsigned instance_num);
 
   std::string instance_locks_path_;
   LockFileManager lock_file_manager_;
