@@ -1045,12 +1045,16 @@ Result<std::vector<int>> GetDataImageFlagOrGuestIntValueForInstances(
         if ((flag_vec[instance_index] == "unset" ||
              flag_vec[instance_index] == "\"unset\"") &&
             instance_index == 0) {
-          first_unset = true;
-        } else {
           CF_EXPECT(android::base::ParseInt(default_value,
                                             &value_vec[instance_index]),
                     "Failed to parse value \"" << default_value << "\" for "
                                                << flag_name);
+          first_unset = true;
+        } else {
+          CF_EXPECT(android::base::ParseInt(flag_vec[instance_index],
+                                            &value_vec[instance_index]),
+                    "Failed to parse value \"" << flag_vec[instance_index]
+                                               << "\" for " << flag_name);
           continue;
         }
       } else {
