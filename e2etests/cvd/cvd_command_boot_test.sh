@@ -6,13 +6,16 @@ BRANCH=""
 TARGET=""
 CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
-while getopts "c:b:t:" opt; do
+while getopts "b:c:s:t:" opt; do
   case "${opt}" in
     b)
       BRANCH="${OPTARG}"
       ;;
     c)
       CREDENTIAL_SOURCE="${OPTARG}"
+      ;;
+    s)
+      SUBSTITUTIONS="${OPTARG}"
       ;;
     t)
       TARGET="${OPTARG}"
@@ -59,14 +62,25 @@ credential_arg=""
 if [[ -n "$CREDENTIAL_SOURCE" ]]; then
     credential_arg="--credential_source=${CREDENTIAL_SOURCE}"
 fi
+
 cvd fetch \
   --default_build="${BRANCH}/${TARGET}" \
   --target_directory="${workdir}" \
   ${credential_arg}
 
+# This argument is supported at fetch and create time. Applying it to both
+# invocations would make it replace the debian_substition_marker list, applying
+# it only to one out of two cases makes it additive.
+substitution_arg=""
+if [[ -n "$SUBSTITUTIONS" ]]; then
+  substitution_arg="--host_substitutions=${SUBSTITUTIONS}"
+fi
+
 (
   cd "${workdir}"
-  cvd create --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
-  cvd "$@"
+  cvd create ${substitution_arg} --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
+  if (( $# > 0 )); then
+    cvd "$@"
+  fi
   cvd rm
 )
