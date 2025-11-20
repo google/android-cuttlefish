@@ -31,10 +31,12 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
         ],
     )
 
-def cvd_command_boot_test(name, branch, target, cvd_command, credential_source = ""):
+def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", substitutions = ""):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
+    if substitutions:
+        args += ["-s", ",".join(substitutions)]
     args += cvd_command
     native.sh_test(
         name = name,
