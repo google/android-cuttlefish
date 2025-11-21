@@ -25,6 +25,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 
 DEFINE_string(kernel_path, CF_DEFAULTS_KERNEL_PATH,
               "Path to the kernel. Overrides the one from the boot image");
@@ -40,8 +41,9 @@ KernelPathFlag KernelPathFlag::FromGlobalGflags(
 
   if (flag_info.is_default) {
     for (size_t i = 0; i < fetcher_configs.Size(); ++i) {
-      kernel_paths.emplace_back(
-          fetcher_configs.ForInstance(i).FindCvdFileWithSuffix("kernel"));
+      const FetcherConfig& fetcher_config = fetcher_configs.ForInstance(i);
+      kernel_paths.emplace_back(fetcher_config.FindCvdFileWithSuffix(
+          FileSource::KERNEL_BUILD, "kernel"));
     }
   } else {
     kernel_paths = android::base::Split(flag_info.current_value, ",");

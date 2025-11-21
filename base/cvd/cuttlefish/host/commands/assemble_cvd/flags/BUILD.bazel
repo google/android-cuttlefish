@@ -154,6 +154,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:file_source",
         "//libbase",
         "@gflags",
     ],
@@ -166,6 +167,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:file_source",
         "//libbase",
         "@gflags",
     ],
