@@ -43,6 +43,7 @@ std::string KernelLogMonitorBinary();
 std::string LogcatReceiverBinary();
 std::string McopyBinary();
 std::string MetricsBinary();
+std::string MetricsTransmitterBinary();
 std::string MkbootimgBinary();
 std::string MkfsFat();
 std::string MkuserimgMke2fsBinary();
