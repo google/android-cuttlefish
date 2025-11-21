@@ -48,8 +48,11 @@
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
 #include "cuttlefish/host/libs/screen_connector/screen_connector.h"
+#include "google/protobuf/text_format.h"
 #include "google/rpc/code.pb.h"
 #include "google/rpc/status.pb.h"
+
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 
 DEFINE_bool(multitouch, true,
             "Whether to send multi-touch or single-touch events");
@@ -182,6 +185,66 @@ Result<void> ControlLoop(SharedFD control_socket,
 
     CF_EXPECT(channel.SendResponse(response));
   }
+}
+
+std::shared_ptr<AudioHandler> SetupAudio(
+    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance,
+    cuttlefish::webrtc_streaming::Streamer& streamer) {
+  using ChannelLayout = ::cuttlefish::config::Audio_ChannelLayout;
+  using SampleRate = ::cuttlefish::config::Audio_SampleRate;
+  static const std::unordered_map<ChannelLayout, uint8_t> kChannelLayoutMap = {
+      {ChannelLayout::Audio_ChannelLayout_MONO, 1},
+      {ChannelLayout::Audio_ChannelLayout_STEREO, 2},
+      {ChannelLayout::Audio_ChannelLayout_SURROUND51, 6},
+  };
+  static const std::unordered_map<SampleRate, uint8_t> kSampleRateMap = {
+      {SampleRate::Audio_SampleRate_RATE_32000, 32000},
+      {SampleRate::Audio_SampleRate_RATE_44100, 44100},
+      {SampleRate::Audio_SampleRate_RATE_48000, 48000},
+      {SampleRate::Audio_SampleRate_RATE_64000, 64000},
+  };
+
+  if (!instance.enable_audio()) {
+    return nullptr;
+  }
+
+  MixerSettings mixer_settings;
+  std::vector<cuttlefish::AudioStreamSettings> streams;
+  const auto audio_settings_textproto = instance.audio_settings_textproto();
+  if (audio_settings_textproto.empty()) {
+    const auto output_streams_count = instance.audio_output_streams_count();
+    for (auto i = 0; i < output_streams_count; ++i) {
+      streams[i] = {.id = static_cast<uint8_t>(i), .channels = 2};
+    }
+  } else {
+    cuttlefish::config::Audio audio_settings;
+    CHECK(google::protobuf::TextFormat::ParseFromString(
+        audio_settings_textproto, &audio_settings));
+    for (const auto& stream : audio_settings.pcm_device().stream()) {
+      const auto id = stream.id();
+      CHECK(id <= std::numeric_limits<uint8_t>::max());
+      streams[id] = {.id = static_cast<uint8_t>(id),
+                     .channels = kChannelLayoutMap.at(stream.channel_layout())};
+    }
+    if (audio_settings.has_mixer()) {
+      const auto& mixer = audio_settings.mixer();
+      if (mixer.has_channel_layout()) {
+        mixer_settings.channels = kChannelLayoutMap.at(mixer.channel_layout());
+      }
+      if(mixer.has_sample_rate()){
+        mixer_settings.sample_rate = kSampleRateMap.at(mixer.sample_rate());
+      }
+    }
+  }
+
+  std::shared_ptr<webrtc_streaming::AudioSink> audio_sink =
+      streamer.AddAudioStream("audio-0");
+  auto audio_server = CreateAudioServer();
+  auto audio_source = streamer.GetAudioSource();
+
+  return std::make_shared<AudioHandler>(std::move(audio_server),
+                                        std::move(audio_sink), audio_source,
+                                        streams, mixer_settings);
 }
 
 int CuttlefishMain() {
@@ -364,20 +427,6 @@ int CuttlefishMain() {
   }
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
-  std::shared_ptr<AudioHandler> audio_handler;
-  if (instance.enable_audio()) {
-    int output_streams_count = instance.audio_output_streams_count();
-    std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_streams(
-        output_streams_count);
-    for (int i = 0; i < audio_streams.size(); i++) {
-      audio_streams[i] = streamer->AddAudioStream("audio-" + std::to_string(i));
-    }
-    auto audio_server = CreateAudioServer();
-    auto audio_source = streamer->GetAudioSource();
-    audio_handler = std::make_shared<AudioHandler>(
-        std::move(audio_server), std::move(audio_streams), audio_source);
-  }
-
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
   for (const std::string& action_server :
@@ -460,6 +509,7 @@ int CuttlefishMain() {
     LOG(DEBUG) << "Webrtc control thread exiting.";
   });
 
+  auto audio_handler = SetupAudio(instance, *streamer);
   if (audio_handler) {
     audio_handler->Start();
   }
@@ -483,4 +533,3 @@ int main(int argc, char** argv) {
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
   return cuttlefish::CuttlefishMain();
 }
-
