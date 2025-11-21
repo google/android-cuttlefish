@@ -390,9 +390,6 @@ Result<std::string> AndroidBuildApi::DownloadTargetFileFromCas(
   CF_EXPECT(cas_downloader_ != nullptr, "CAS downloading is not enabled.");
   CF_EXPECT(std::holds_alternative<DeviceBuild>(build),
             "CAS downloading is only supported for DeviceBuild.");
-  std::tuple<std::string, std::string> id_target = GetBuildIdAndTarget(build);
-  std::string build_id = std::get<0>(id_target);
-  std::string build_target = std::get<1>(id_target);
   LOG(INFO) << "Download from CAS: '" << artifact_name << "'";
   std::string target_filepath =
       ConstructTargetFilepath(target_directory, artifact_name);
@@ -403,8 +400,9 @@ Result<std::string> AndroidBuildApi::DownloadTargetFileFromCas(
                "Failed to download '{}' from AB.", filename);
     return ConstructTargetFilepath(target_directory, filename);
   };
-  CF_EXPECT(cas_downloader_->DownloadFile(build_id, build_target, artifact_name,
-                                          target_directory, digests_fetcher));
+  CF_EXPECT(cas_downloader_->DownloadFile(std::get<DeviceBuild>(build),
+                                          artifact_name, target_directory,
+                                          digests_fetcher));
 
   return {target_filepath};
 }

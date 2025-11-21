@@ -92,7 +92,7 @@ TEST_F(FetchCvdTests, CasDownloaderNotCalledIfNoFlags) {
 
 TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetOnCommandLine) {
   BuildApiFlags flags = {};
-  flags.cas_downloader_flags.downloader_path = cas_downloader_path_;
+  flags.cas_downloader_flags.downloader_path.set_value(cas_downloader_path_);
 
   Result<Downloaders> downloaders_res = Downloaders::Create(flags);
 
@@ -102,7 +102,8 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetOnCommandLine) {
 
 TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetInCasConfig) {
   BuildApiFlags flags = {};
-  flags.cas_downloader_flags.cas_config_filepath = cas_config_filepath_;
+  flags.cas_downloader_flags.cas_config_filepath.set_value(
+      cas_config_filepath_);
 
   Result<Downloaders> downloaders_res = Downloaders::Create(flags);
 
