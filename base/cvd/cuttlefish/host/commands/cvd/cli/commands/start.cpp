@@ -545,6 +545,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   // NOLINTNEXTLINE(misc-include-cleaner)
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
     LOG(INFO) << "Device launch failed, cleaning up";
+    GatherVmBootFailedMetrics(group);
     // run_cvd processes may be still running in background
     // the order of the following operations should be kept
     CF_EXPECT(CvdResetGroup(group));
