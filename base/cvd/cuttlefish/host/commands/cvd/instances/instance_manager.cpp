@@ -27,8 +27,8 @@
 
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
-#include <android-base/strings.h>
 #include <fmt/format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -60,7 +60,7 @@ Result<void> RunCommand(Command&& command) {
 
 Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
   std::string per_user_dir = PerUserDir();
-  if (!android::base::StartsWith(group.HomeDir(), per_user_dir)) {
+  if (!absl::StartsWith(group.HomeDir(), per_user_dir)) {
     LOG(WARNING)
         << "Instance group home directory not under user specific directory("
         << per_user_dir << "), artifacts not deleted";

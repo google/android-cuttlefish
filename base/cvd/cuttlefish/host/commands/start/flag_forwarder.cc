@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <libxml/parser.h>
 

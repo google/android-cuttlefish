@@ -87,7 +87,7 @@ Flag Flag::UnvalidatedAlias(const FlagAlias& alias) && {
 }
 
 void Flag::ValidateAlias(const FlagAlias& alias) {
-  using android::base::StartsWith;
+  using absl::StartsWith;
 
   CHECK(StartsWith(alias.name, "-")) << "Flags should start with \"-\"";
   if (alias.mode == FlagAliasMode::kFlagPrefix) {
@@ -152,7 +152,7 @@ Flag Flag::Setter(std::function<Result<void>(const FlagMatch&)> setter) && {
 }
 
 static bool LikelyFlag(const std::string& next_arg) {
-  return android::base::StartsWith(next_arg, "-");
+  return absl::StartsWith(next_arg, "-");
 }
 
 Result<bool> ParseBool(std::string_view value, std::string_view name) {
@@ -210,7 +210,7 @@ Result<Flag::FlagProcessResult> Flag::Process(
         CF_EXPECTF((*setter_)({arg, arg}), "Processing \"{}\" failed", arg);
         return FlagProcessResult::kFlagConsumed;
       case FlagAliasMode::kFlagPrefix:
-        if (!android::base::StartsWith(normalized_arg, normalized_alias)) {
+        if (!absl::StartsWith(normalized_arg, normalized_alias)) {
           continue;
         }
         CF_EXPECTF((*setter_)({alias.name, arg.substr(alias.name.size())}),

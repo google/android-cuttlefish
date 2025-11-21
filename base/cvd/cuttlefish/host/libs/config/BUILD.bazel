@@ -65,6 +65,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

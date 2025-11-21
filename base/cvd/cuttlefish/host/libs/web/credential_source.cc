@@ -25,6 +25,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -39,6 +40,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -285,7 +287,7 @@ RefreshTokenCredentialSource::FromJson(HttpClient& http_client,
 Result<std::unique_ptr<RefreshTokenCredentialSource>>
 RefreshTokenCredentialSource::FromOauth2ClientFile(
     HttpClient& http_client, const std::string& oauth_contents) {
-  if (android::base::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
+  if (absl::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
     std::optional<std::string> client_id;
     std::optional<std::string> client_secret;
     std::optional<std::string> refresh_token;
