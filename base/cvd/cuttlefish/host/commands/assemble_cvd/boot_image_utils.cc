@@ -20,7 +20,6 @@
 #include <unistd.h>
 
 #include <fstream>
-#include <memory>
 #include <optional>
 #include <regex>
 #include <string>

@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
 
 #include <cstddef>
-#include <iostream>
 #include <string>
 #include <vector>
 
