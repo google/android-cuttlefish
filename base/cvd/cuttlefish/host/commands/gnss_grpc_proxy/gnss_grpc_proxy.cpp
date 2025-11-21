@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <signal.h>
-
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -41,9 +39,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
 using gnss_grpc_proxy::GnssGrpcProxy;

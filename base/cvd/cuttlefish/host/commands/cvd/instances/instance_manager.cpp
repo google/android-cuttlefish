@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 #include <iostream>
-#include <map>
 #include <optional>
 #include <set>
 #include <sstream>
