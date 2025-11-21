@@ -59,6 +59,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -680,11 +681,11 @@ Result<std::vector<std::string>> CalculatePrefix(
     working_dir = CurrentDirectory();
   }
   std::vector<std::string> prefix;
-  if (path == "~" || android::base::StartsWith(path, "~/")) {
+  if (path == "~" || absl::StartsWith(path, "~/")) {
     const auto home_dir =
         path_info.home_dir.value_or(CF_EXPECT(SystemWideUserHome()));
     prefix = android::base::Tokenize(home_dir, "/");
-  } else if (!android::base::StartsWith(path, "/")) {
+  } else if (!absl::StartsWith(path, "/")) {
     prefix = android::base::Tokenize(working_dir, "/");
   }
   return prefix;
@@ -700,7 +701,7 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
   } else {
     working_dir = CurrentDirectory();
   }
-  CF_EXPECT(android::base::StartsWith(working_dir, '/'),
+  CF_EXPECT(absl::StartsWith(working_dir, "/"),
             "Current working directory should be given in an absolute path.");
 
   if (path.empty()) {

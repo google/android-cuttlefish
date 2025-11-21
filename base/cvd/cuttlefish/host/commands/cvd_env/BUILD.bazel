@@ -14,5 +14,6 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/control_env",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )

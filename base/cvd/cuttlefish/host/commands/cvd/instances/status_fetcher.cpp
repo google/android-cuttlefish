@@ -23,9 +23,9 @@
 #include <vector>
 
 #include <android-base/parseint.h>
-#include <android-base/strings.h>
 #include <fmt/core.h>
 #include <json/json.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -54,7 +54,7 @@ std::string HumanFriendlyStateName(cvd::InstanceState state) {
   std::string name = cvd::InstanceState_Name(state);
   // Drop the enum name prefix
   std::string_view prefix = "INSTANCE_STATE_";
-  if (android::base::StartsWith(name, prefix)) {
+  if (absl::StartsWith(name, prefix)) {
     name = name.substr(prefix.size());
   }
 

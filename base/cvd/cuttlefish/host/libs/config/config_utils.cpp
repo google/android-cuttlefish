@@ -22,7 +22,7 @@
 #include <string>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -36,9 +36,9 @@
 namespace cuttlefish {
 
 int InstanceFromString(std::string instance_str) {
-  if (android::base::StartsWith(instance_str, kVsocUserPrefix)) {
+  if (absl::StartsWith(instance_str, kVsocUserPrefix)) {
     instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
-  } else if (android::base::StartsWith(instance_str, kCvdNamePrefix)) {
+  } else if (absl::StartsWith(instance_str, kCvdNamePrefix)) {
     instance_str = instance_str.substr(std::string(kCvdNamePrefix).size());
   }
 
@@ -62,7 +62,7 @@ int InstanceFromEnvironment() {
                  << " and USER unset, using instance id " << kDefaultInstance;
       return kDefaultInstance;
     }
-    if (!android::base::StartsWith(instance_str, kVsocUserPrefix)) {
+    if (!absl::StartsWith(instance_str, kVsocUserPrefix)) {
       // No user or we don't recognize this user
       LOG(DEBUG) << "Non-vsoc user, using instance id " << kDefaultInstance;
       return kDefaultInstance;

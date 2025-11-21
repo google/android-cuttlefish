@@ -19,7 +19,7 @@
 #include <string>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -88,7 +88,7 @@ Result<void> CvdEnvMain(int argc, char** argv) {
   std::vector<std::string> args;
   for (int i = 3; i < argc; i++) {
     // Ignore options, not to be applied when calling grpc_cli.
-    if (!android::base::StartsWith(argv[i], '-')) {
+    if (!absl::StartsWith(argv[i], "-")) {
       args.push_back(argv[i]);
     }
   }

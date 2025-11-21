@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 #include <android-base/no_destructor.h>
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include "absl/strings/match.h"

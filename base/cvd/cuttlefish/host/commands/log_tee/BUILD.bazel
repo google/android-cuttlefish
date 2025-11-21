@@ -15,6 +15,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )

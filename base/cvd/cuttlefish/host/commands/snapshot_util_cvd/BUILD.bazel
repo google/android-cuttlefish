@@ -26,6 +26,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@gflags",
         "@protobuf",

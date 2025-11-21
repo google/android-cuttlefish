@@ -26,7 +26,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -208,7 +208,7 @@ bool WaitForAdbAuthorization(const std::string& address) {
     return false;
   }
 
-  return android::base::StartsWith(response, kAdbUnauthorizedMsg);
+  return absl::StartsWith(response, kAdbUnauthorizedMsg);
 }
 
 // There needs to be a gap between the adb commands, the daemon isn't able to

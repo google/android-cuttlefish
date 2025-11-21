@@ -67,6 +67,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:raw",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

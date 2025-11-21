@@ -402,8 +402,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
        * The value of ~ isn't sent to the server. The server can't figure that
        * out as it might be overridden before the cvd start command.
        */
-      CF_EXPECT(!android::base::StartsWith(given_home_dir, "~") &&
-                    !android::base::StartsWith(given_home_dir, "~/"),
+      CF_EXPECT(!absl::StartsWith(given_home_dir, "~") &&
+                    !absl::StartsWith(given_home_dir, "~/"),
                 "The HOME directory should not start with ~");
       envs["HOME"] = CF_EXPECT(
           EmulateAbsolutePath({.current_working_dir = client_pwd,

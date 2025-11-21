@@ -42,6 +42,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/ranges.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -136,7 +137,7 @@ std::set<std::string> TapInterfacesInUse() {
     if (line.empty()) {
       continue;
     }
-    if (!android::base::StartsWith(line, "iff:\t")) {
+    if (!absl::StartsWith(line, "iff:\t")) {
       LOG(ERROR) << "Unexpected line \"" << line << "\"";
       continue;
     }

@@ -103,6 +103,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:known_paths",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

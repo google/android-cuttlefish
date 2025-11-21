@@ -252,7 +252,7 @@ Result<CvdFile> BuildFetcherConfigMember(
                << local_path;
     return {};
   }
-  while (android::base::StartsWith(local_path, "/")) {
+  while (absl::StartsWith(local_path, "/")) {
     android::base::ConsumePrefix(&local_path, "/");
   }
   std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));

@@ -16,11 +16,14 @@
 
 #include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
 
-#include <android-base/logging.h>
 #include <cstddef>
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include <android-base/logging.h>
+#include <android-base/strings.h>
+
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
