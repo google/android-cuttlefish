@@ -64,6 +64,9 @@ CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
     case EventType::DeviceStop:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_STOP;
+    case EventType::DeviceBootFailed:
+      return CuttlefishGuest_EventType::
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED;
   }
 }
 
