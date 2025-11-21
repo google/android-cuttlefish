@@ -30,6 +30,8 @@ std::string EventTypeString(EventType event_type) {
       return "device_boot_complete";
     case EventType::DeviceStop:
       return "device_stop";
+    case EventType::DeviceBootFailed:
+      return "device_failed";
   }
 }
 
