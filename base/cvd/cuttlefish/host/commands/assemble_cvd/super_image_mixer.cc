@@ -96,7 +96,7 @@ void FindImports(const std::string& archive,
 }
 
 bool IsTargetFilesImage(const std::string& filename) {
-  return android::base::StartsWith(filename, "IMAGES/") &&
+  return absl::StartsWith(filename, "IMAGES/") &&
          absl::EndsWith(filename, ".img");
 }
 

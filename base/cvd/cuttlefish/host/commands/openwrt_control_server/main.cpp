@@ -22,13 +22,13 @@
 #include <regex>
 #include <string>
 
-#include <android-base/strings.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -37,7 +37,7 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
 
-using android::base::StartsWith;
+using absl::StartsWith;
 using google::protobuf::Empty;
 using google::protobuf::RepeatedPtrField;
 using grpc::Server;

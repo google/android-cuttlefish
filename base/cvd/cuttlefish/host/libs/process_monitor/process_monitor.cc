@@ -36,7 +36,7 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
-#include "android-base/strings.h"
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/transport/channel.h"
@@ -228,7 +228,7 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
       // secure_env was handled above in a customized way
       continue;
     }
-    if (android::base::StartsWith(prog_name, "cf_vhost_user_")) {
+    if (absl::StartsWith(prog_name, "cf_vhost_user_")) {
       // vhost user backend processes need to continue handling requests from
       // the VMM, which should send them the suspend signal.
       continue;

@@ -30,9 +30,9 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
@@ -172,8 +172,8 @@ Result<cvd_common::Envs> GetEnvs(const CommandRequest& request) {
     auto client_pwd = CurrentDirectory();
     const auto given_home_dir = envs["HOME"];
     // Substituting ~ is not supported by cvd
-    CF_EXPECT(!android::base::StartsWith(given_home_dir, "~") &&
-                  !android::base::StartsWith(given_home_dir, "~/"),
+    CF_EXPECT(!absl::StartsWith(given_home_dir, "~") &&
+                  !absl::StartsWith(given_home_dir, "~/"),
               "The HOME directory should not start with ~");
     envs["HOME"] = CF_EXPECT(
         EmulateAbsolutePath({.current_working_dir = client_pwd,

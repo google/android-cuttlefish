@@ -25,8 +25,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <android-base/logging.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
@@ -59,7 +59,7 @@ std::set<std::string> FallbackDirs() {
 
   for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
     std::string subdir(entity->d_name);
-    if (!android::base::StartsWith(subdir, "cuttlefish_runtime.")) {
+    if (!absl::StartsWith(subdir, "cuttlefish_runtime.")) {
       continue;
     }
     paths.insert(parent_path + "/" + subdir);

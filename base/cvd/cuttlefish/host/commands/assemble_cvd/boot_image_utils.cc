@@ -20,13 +20,13 @@
 #include <unistd.h>
 
 #include <fstream>
-#include <memory>
 #include <optional>
 #include <regex>
 #include <string>
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -248,7 +248,7 @@ bool UnpackVendorBootImageIfNotUnpacked(
   }
   for (const std::string& unpacked : *unpack_files) {
     LOG(ERROR) << "acs: " << unpacked;
-    if (!android::base::StartsWith(unpacked, "vendor_ramdisk")) {
+    if (!absl::StartsWith(unpacked, "vendor_ramdisk")) {
       continue;
     }
     std::string input_path = unpack_dir + "/" + unpacked;

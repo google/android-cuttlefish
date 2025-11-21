@@ -19,7 +19,7 @@
 #include <string>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -51,20 +51,20 @@ Result<std::unique_ptr<DiskImage>> ImageFromFile(const std::string& file_path) {
              file_path, StrError(errno));
 
   // Composite disk image
-  if (android::base::StartsWith(magic, CompositeDiskImage::MagicString())) {
+  if (absl::StartsWith(magic, CompositeDiskImage::MagicString())) {
     CompositeDiskImage image =
         CF_EXPECT(CompositeDiskImage::OpenExisting(file_path));
     return std::make_unique<CompositeDiskImage>(std::move(image));
   }
 
   // Qcow2 image
-  if (android::base::StartsWith(magic, Qcow2Image::MagicString())) {
+  if (absl::StartsWith(magic, Qcow2Image::MagicString())) {
     Qcow2Image image = CF_EXPECT(Qcow2Image::OpenExisting(file_path));
     return std::make_unique<Qcow2Image>(std::move(image));
   }
 
   // Android-Sparse
-  if (android::base::StartsWith(magic, AndroidSparseImage::MagicString())) {
+  if (absl::StartsWith(magic, AndroidSparseImage::MagicString())) {
     AndroidSparseImage image =
         CF_EXPECT(AndroidSparseImage::OpenExisting(file_path));
     return std::make_unique<AndroidSparseImage>(std::move(image));

@@ -18,17 +18,12 @@
 
 #include <cstdlib>
 #include <string>
-#include <string_view>
-#include <unordered_map>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -57,7 +52,7 @@ Result<std::string> HandleHostGroupSnapshot(const std::string& path) {
   CF_EXPECT(cuttlefish_config != nullptr, "Cannot find cuttlefish_config.json");
 
   const auto cuttlefish_root = cuttlefish_config->root_dir();
-  CF_EXPECTF(android::base::StartsWith(cuttlefish_root, cuttlefish_home),
+  CF_EXPECTF(absl::StartsWith(cuttlefish_root, cuttlefish_home),
              "Cuttlefish Root directory \"{}\" "
              "is not subdirectory of cuttlefish home \"{}\".",
              cuttlefish_root, cuttlefish_home);

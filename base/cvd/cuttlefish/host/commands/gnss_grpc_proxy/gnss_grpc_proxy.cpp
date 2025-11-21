@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include <signal.h>
-
 #include <chrono>
 #include <ctime>
 #include <fstream>
@@ -37,12 +35,11 @@
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/server_posix.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/gnss_grpc_proxy/gnss_grpc_proxy.grpc.pb.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
 using gnss_grpc_proxy::GnssGrpcProxy;
@@ -241,14 +238,14 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
           }
 
           // Get data header.
-          if (header.empty() && android::base::StartsWith(line, "# Raw")) {
+          if (header.empty() && absl::StartsWith(line, "# Raw")) {
             header = line;
             LOG(DEBUG) << "Header: " << header;
             continue;
           }
 
           // Ignore not raw measurement data.
-          if (!android::base::StartsWith(line, "Raw")) {
+          if (!absl::StartsWith(line, "Raw")) {
             continue;
           }
 
@@ -371,7 +368,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
 
     bool isGnssRawMeasurement(const std::string& inputStr) {
       // TODO: add more logic check to by pass invalid data.
-      return !inputStr.empty() && android::base::StartsWith(inputStr, "# Raw");
+      return !inputStr.empty() && absl::StartsWith(inputStr, "# Raw");
     }
 
     cuttlefish::SharedFD gnss_in_;

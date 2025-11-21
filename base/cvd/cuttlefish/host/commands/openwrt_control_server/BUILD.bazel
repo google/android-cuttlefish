@@ -39,6 +39,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_json",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@gflags",
         "@grpc",

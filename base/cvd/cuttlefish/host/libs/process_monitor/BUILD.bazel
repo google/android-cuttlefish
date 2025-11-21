@@ -22,5 +22,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )

@@ -25,6 +25,7 @@
 #include <vector>
 
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"

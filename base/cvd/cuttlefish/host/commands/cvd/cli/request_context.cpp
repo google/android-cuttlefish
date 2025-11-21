@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/utils/result.h"
@@ -70,8 +69,7 @@ std::vector<std::string> GetPossibleCommands(
 
   for (auto& handler : handlers) {
     for (const std::string& command : handler->CmdList()) {
-      if (!command.empty() &&
-          android::base::StartsWith(command, request.Subcommand().front())) {
+      if (!command.empty() && command.front() == request.Subcommand().front()) {
         possibilities.push_back(command);
         break;
       }

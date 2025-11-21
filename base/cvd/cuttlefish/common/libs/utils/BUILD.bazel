@@ -100,6 +100,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -211,6 +212,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -355,6 +357,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

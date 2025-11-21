@@ -33,7 +33,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -235,7 +235,7 @@ class Command {
   Command& UnsetFromEnvironment(const std::string& env_var) & {
     auto it = env_.begin();
     while (it != env_.end()) {
-      if (android::base::StartsWith(*it, env_var + "=")) {
+      if (absl::StartsWith(*it, env_var + "=")) {
         it = env_.erase(it);
       } else {
         ++it;

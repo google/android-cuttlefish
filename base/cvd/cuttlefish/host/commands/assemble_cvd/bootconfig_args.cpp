@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_constants.h"

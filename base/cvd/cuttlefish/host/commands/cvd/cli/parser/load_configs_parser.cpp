@@ -36,6 +36,7 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <json/value.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -63,7 +64,7 @@ constexpr std::string_view kCredentialSourceOverride =
 constexpr std::string_view kProjectIDOverride = "fetch.project_id";
 
 bool IsLocalBuild(std::string path) {
-  return android::base::StartsWith(path, "/");
+  return absl::StartsWith(path, "/");
 }
 
 Flag GflagsCompatFlagOverride(const std::string& name,
@@ -350,7 +351,7 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
 
   if (!load_flags.credential_source.empty()) {
     for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(!android::base::StartsWith(flag.config_path,
+      CF_EXPECT(!absl::StartsWith(flag.config_path,
                                            kCredentialSourceOverride),
                 "Specifying both --override=fetch.credential_source and the "
                 "--credential_source flag is not allowed.");
@@ -362,7 +363,7 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
   if (!load_flags.project_id.empty()) {
     for (const auto& flag : load_flags.overrides) {
       CF_EXPECT(
-          !android::base::StartsWith(flag.config_path, kProjectIDOverride),
+          !absl::StartsWith(flag.config_path, kProjectIDOverride),
           "Specifying both --override=fetch.project_id and the "
           "--project_id flag is not allowed.");
     }

@@ -23,6 +23,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
@@ -141,13 +142,13 @@ int main(int argc, char** argv) {
       // These checks attempt to determine the log severity coming from crosvm.
       // There is no guarantee of success all the time since log line boundaries
       // could be out sync with the reads, but that's ok.
-      if (android::base::StartsWith(trimmed, "[INFO")) {
+      if (absl::StartsWith(trimmed, "[INFO")) {
         LOG(DEBUG) << trimmed;
-      } else if (android::base::StartsWith(trimmed, "[ERROR")) {
+      } else if (absl::StartsWith(trimmed, "[ERROR")) {
         LOG(ERROR) << trimmed;
-      } else if (android::base::StartsWith(trimmed, "[WARNING")) {
+      } else if (absl::StartsWith(trimmed, "[WARNING")) {
         LOG(WARNING) << trimmed;
-      } else if (android::base::StartsWith(trimmed, "[VERBOSE")) {
+      } else if (absl::StartsWith(trimmed, "[VERBOSE")) {
         LOG(VERBOSE) << trimmed;
       } else {
         std::smatch match_result;
