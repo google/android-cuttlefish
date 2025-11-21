@@ -1,8 +1,31 @@
-cuttlefish-common (1.34.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.34.0) unstable; urgency=medium
 
-  * N/A
+  * Mark release 1.33.0 as unstable by @jmacnak in https://github.com/google/android-cuttlefish/pull/1801
+  * Start development on v1.34 by @jmacnak in https://github.com/google/android-cuttlefish/pull/1802
+  * Avoid substituting sensors_simulator without run_cvd by @dimorinny in https://github.com/google/android-cuttlefish/pull/1800
+  * Build cuttlefish-base host executables in optimized mode by @Databean in https://github.com/google/android-cuttlefish/pull/1787
+  * Rename `--extract_super_image_fragments` to `--dynamic_super_image` by @Databean in https://github.com/google/android-cuttlefish/pull/1796
+  * Remove remaining references to the cvd server by @jemoreira in https://github.com/google/android-cuttlefish/pull/1799
+  * cuttlefish-integration-gigabyte-arm64: use ntp.d for google time server by @grandpaul in https://github.com/google/android-cuttlefish/pull/1797
+  * Rename `libzip_cc/source.[cc,h]` to `libzip_cc/seekable_source.[cc,h]` by @Databean in https://github.com/google/android-cuttlefish/pull/1795
+  * Inline `GetBuildZipName` into `FetchContext` by @Databean in https://github.com/google/android-cuttlefish/pull/1803
+  * Separate `config/file_source.[cc,h]` by @Databean in https://github.com/google/android-cuttlefish/pull/1805
+  * Remove `FetcherConfig::RecordFlags` by @Databean in https://github.com/google/android-cuttlefish/pull/1804
+  * Switch from `android::base::EqualsIgnoreCase` to `absl::EqualsIgnoreCase` by @Databean in https://github.com/google/android-cuttlefish/pull/1806
+  * Replace `android::base::EndsWith` with `absl::EndsWith` by @Databean in https://github.com/google/android-cuttlefish/pull/1807
+  * Make `FetcherConfig` thread-safe by @Databean in https://github.com/google/android-cuttlefish/pull/1809
+  * Support low latency off-body sensor with multihal by @blueworrybear in https://github.com/google/android-cuttlefish/pull/1793
+  * Replace `FetcherConfig::AddFilesToConfig` with `BuildFetcherConfigMember` by @Databean in https://github.com/google/android-cuttlefish/pull/1811
+  * Always lock incrementally. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1813
+  * Record archive file sources in FetcherConfig by @Databean in https://github.com/google/android-cuttlefish/pull/1814
+  * Use `find` in `Defaults::Value()` to check for presence by @Databean in https://github.com/google/android-cuttlefish/pull/1815
+  * In GCE, derive defaults from metadata. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1808
+  * Include the dictionary in the fetcher config move constructor and assignment operator by @Databean in https://github.com/google/android-cuttlefish/pull/1817
+  * Allocate instance ids and acquire locks in the instance manager by @jemoreira in https://github.com/google/android-cuttlefish/pull/1816
+  * Add a kokoro boot test that substitutes bin/assemble_cvd and bin/run_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/1819
+  * Remove netsimd from `//cuttlefish/package:cvd` by @Databean in https://github.com/google/android-cuttlefish/pull/1821
 
- -- Jason Macnak <natsu@google.com>  Fri, 14 Nov 2025 14:41:40 -0800
+ -- Alistair Delva <adelva@google.com>  Fri, 21 Nov 2025 13:31:44 -0800
 
 cuttlefish-common (1.33.0) unstable; urgency=medium
 

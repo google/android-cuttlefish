@@ -1,8 +1,9 @@
-cuttlefish-frontend (1.34.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.34.0) unstable; urgency=medium
 
+  [ Jason Macnak ]
   * N/A
 
- -- Jason Macnak <natsu@google.com>  Fri, 14 Nov 2025 14:41:56 -0800
+ -- Alistair Delva <adelva@google.com>  Fri, 21 Nov 2025 13:33:10 -0800
 
 cuttlefish-frontend (1.33.0) unstable; urgency=medium
 
