@@ -26,6 +26,8 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group);
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group);
 
+void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group);
+
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group);
 
 }  // namespace cuttlefish

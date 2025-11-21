@@ -37,6 +37,9 @@ message CuttlefishGuest {
 
     // `cvd` is invoking `cvd_internal_start` / `launch_cvd`.
     CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_START = 5;
+
+    // The instance failed to boot for whatever reason.
+    CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED = 6;
   }
 
   // The newest event to happen to this guest virtual machine that was not

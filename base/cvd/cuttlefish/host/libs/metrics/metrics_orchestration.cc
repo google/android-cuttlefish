@@ -192,6 +192,11 @@ void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
   RunMetrics(metrics_paths, EventType::DeviceBootComplete);
 }
 
+void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
+  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  RunMetrics(metrics_paths, EventType::DeviceBootFailed);
+}
+
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
   const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
   RunMetrics(metrics_paths, EventType::DeviceStop);

@@ -25,6 +25,7 @@ enum class EventType {
   DeviceBootStart,
   DeviceBootComplete,
   DeviceStop,
+  DeviceBootFailed,
 };
 
 std::string EventTypeString(EventType event_type);
