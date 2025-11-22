@@ -185,6 +185,23 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fetched_archive",
+    srcs = ["fetched_archive.cc"],
+    hdrs = ["fetched_archive.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "fetcher_config",
     srcs = ["fetcher_config.cpp"],
     hdrs = ["fetcher_config.h"],
