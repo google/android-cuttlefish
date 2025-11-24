@@ -57,7 +57,16 @@ namespace {
 
 bool StatusIsTerminal(const std::string& status) {
   const static std::set<std::string> terminal_statuses = {
-      "abandoned", "complete", "error", "ABANDONED", "COMPLETE", "ERROR",
+      "abandoned",
+      "ABANDONED",
+      "built",
+      "BUILT",
+      // the below values are deprecated in v4
+      // TODO: b/415365146 - keep for compat until migration to v4 complete
+      "complete",
+      "COMPLETE",
+      "error",
+      "ERROR",
   };
   return terminal_statuses.count(status) > 0;
 }
