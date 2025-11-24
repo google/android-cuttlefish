@@ -22,7 +22,7 @@
 namespace cuttlefish {
 
 inline constexpr char kAndroidBuildServiceUrl[] =
-    "https://www.googleapis.com/android/internal/build/v3";
+    "https://androidbuild-pa.googleapis.com/v4";
 
 class AndroidBuildUrl {
  public:
