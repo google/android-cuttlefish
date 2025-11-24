@@ -21,6 +21,9 @@
 
 namespace cuttlefish {
 
+inline constexpr char kAndroidBuildServiceUrl[] =
+    "https://www.googleapis.com/android/internal/build/v3";
+
 class AndroidBuildUrl {
  public:
   AndroidBuildUrl(std::string api_base_url, std::string api_key,
