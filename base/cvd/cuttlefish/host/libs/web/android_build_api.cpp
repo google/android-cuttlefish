@@ -212,15 +212,18 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
           << no_auth_error_message);
 
   bool is_signed = false;
-  if (json.isMember("signed")) {
-    is_signed = json["signed"].asBool();
+  if (HasValue(json, {"build", "buildSigned"})) {
+    is_signed = CF_EXPECT(GetValue<bool>(json, {"build", "buildSigned"}));
   }
 
   return AndroidBuildApi::BuildInfo{
-      .branch = CF_EXPECT(GetValue<std::string>(json, {"branch"})),
-      .product = CF_EXPECT(GetValue<std::string>(json, {"target", "product"})),
-      .status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"})),
-      .target = CF_EXPECT(GetValue<std::string>(json, {"target", "name"})),
+      .branch = CF_EXPECT(GetValue<std::string>(json, {"build", "branch"})),
+      .product = CF_EXPECT(
+          GetValue<std::string>(json, {"build", "target", "product"})),
+      .status = CF_EXPECT(
+          GetValue<std::string>(json, {"build", "buildAttemptStatus"})),
+      .target =
+          CF_EXPECT(GetValue<std::string>(json, {"build", "target", "name"})),
       .is_signed = is_signed,
   };
 }
