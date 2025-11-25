@@ -221,8 +221,8 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
           << no_auth_error_message);
 
   bool is_signed = false;
-  if (json.isMember("signed")) {
-    is_signed = json["signed"].asBool();
+  if (HasValue(json, {"buildSigned"})) {
+    is_signed = CF_EXPECT(GetValue<bool>(json, {"buildSigned"}));
   }
 
   return AndroidBuildApi::BuildInfo{
