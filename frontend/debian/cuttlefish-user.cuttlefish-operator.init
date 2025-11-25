@@ -39,6 +39,7 @@ RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
 DAEMON="/usr/lib/cuttlefish-common/bin/operator"
 PIDFILE="${RUN_DIR}"/operator.pid
+LOGFILE="${RUN_DIR}"/operator.log
 
 gen_cert() {
   operator_tls_cert_dir=${operator_tls_cert_dir:-/etc/cuttlefish-common/operator/cert}
@@ -92,6 +93,7 @@ start() {
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
+    --output ${LOGFILE} \
     --exec "${DAEMON}" -- "${args[@]}"
 }
 

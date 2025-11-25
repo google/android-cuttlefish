@@ -41,6 +41,7 @@ USER="httpcvd"
 RUN_DIR="/run/cuttlefish"
 ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
 ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
+ORCHESTRATOR_LOGFILE="${RUN_DIR}"/host_orchestrator.log
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
 
 set_config_expr() {
@@ -102,6 +103,7 @@ start_orchestrator() {
     --chdir "${ASSET_DIR}" \
     --background --no-close \
     --make-pidfile \
+    --output ${ORCHESTRATOR_LOGFILE} \
     --exec "${ORCHESTRATOR_BIN}" -- "${args[@]}"
 }
 
