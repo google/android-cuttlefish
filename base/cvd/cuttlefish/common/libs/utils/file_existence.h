@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "cuttlefish/common/libs/utils/container.h"
-
-#include <cstdlib>
 #include <string>
-
-#include "cuttlefish/common/libs/utils/file_existence.h"
 
 namespace cuttlefish {
 
-static bool IsRunningInDocker() {
-  // if /.dockerenv exists, it's inside a docker container
-  static std::string docker_env_path("/.dockerenv");
-  static bool ret =
-      FileExists(docker_env_path) || DirectoryExists(docker_env_path);
-  return ret;
-}
-
-bool IsRunningInContainer() {
-  // TODO: add more if we support other containers than docker
-  return IsRunningInDocker();
-}
+bool FileExists(const std::string& path, bool follow_symlinks = true);
+bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 
 }  // namespace cuttlefish

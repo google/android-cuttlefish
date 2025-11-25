@@ -14,26 +14,31 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/common/libs/utils/container.h"
+#include "cuttlefish/common/libs/utils/file_existence.h"
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <cstdlib>
 #include <string>
 
-#include "cuttlefish/common/libs/utils/file_existence.h"
-
 namespace cuttlefish {
 
-static bool IsRunningInDocker() {
-  // if /.dockerenv exists, it's inside a docker container
-  static std::string docker_env_path("/.dockerenv");
-  static bool ret =
-      FileExists(docker_env_path) || DirectoryExists(docker_env_path);
-  return ret;
+bool FileExists(const std::string& path, bool follow_symlinks) {
+  struct stat st{};
+  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
 }
 
-bool IsRunningInContainer() {
-  // TODO: add more if we support other containers than docker
-  return IsRunningInDocker();
+bool DirectoryExists(const std::string& path, bool follow_symlinks) {
+  struct stat st{};
+  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
+    return false;
+  }
+  if ((st.st_mode & S_IFMT) != S_IFDIR) {
+    return false;
+  }
+  return true;
 }
 
 }  // namespace cuttlefish

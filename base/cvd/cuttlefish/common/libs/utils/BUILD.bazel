@@ -46,7 +46,7 @@ cf_cc_library(
     name = "container",
     srcs = ["container.cpp"],
     hdrs = ["container.h"],
-    deps = ["//cuttlefish/common/libs/utils:files"],
+    deps = ["//cuttlefish/common/libs/utils:file_existence"],
 )
 
 cf_cc_library(
@@ -88,6 +88,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "file_existence",
+    srcs = ["file_existence.cpp"],
+    hdrs = ["file_existence.h"],
+    deps = [
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
@@ -95,7 +104,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/posix:symlink",
+        "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:file_existence",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",

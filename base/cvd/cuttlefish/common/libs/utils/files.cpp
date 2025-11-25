@@ -64,7 +64,9 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/file_existence.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -75,11 +77,6 @@
 #endif
 
 namespace cuttlefish {
-
-bool FileExists(const std::string& path, bool follow_symlinks) {
-  struct stat st {};
-  return (follow_symlinks ? stat : lstat)(path.c_str(), &st) == 0;
-}
 
 Result<dev_t> FileDeviceId(const std::string& path) {
   struct stat out;
@@ -216,17 +213,6 @@ Result<std::vector<std::string>> DirectoryContentsPaths(
   return result;
 }
 
-bool DirectoryExists(const std::string& path, bool follow_symlinks) {
-  struct stat st {};
-  if ((follow_symlinks ? stat : lstat)(path.c_str(), &st) == -1) {
-    return false;
-  }
-  if ((st.st_mode & S_IFMT) != S_IFDIR) {
-    return false;
-  }
-  return true;
-}
-
 Result<void> EnsureDirectoryExists(const std::string& directory_path,
                                    const mode_t mode,
                                    const std::string& group_name) {
@@ -330,7 +316,13 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
     return 0;
   };
 
-  if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
+  int flags = FTW_DEPTH | FTW_PHYS;
+
+  if (!IsRunningInContainer()) {
+    flags |= FTW_MOUNT;
+  }
+
+  if (nftw(path.c_str(), callback, 128, flags) < 0) {
     return CF_ERRNO("Failed to remove directory \""
                     << path << "\": " << strerror(errno));
   }

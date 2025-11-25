@@ -24,10 +24,10 @@
 #include <string_view>
 #include <vector>
 
+#include "cuttlefish/common/libs/utils/file_existence.h"
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
-bool FileExists(const std::string& path, bool follow_symlinks = true);
 Result<dev_t> FileDeviceId(const std::string& path);
 Result<bool> CanHardLink(const std::string& source,
                          const std::string& destination);
@@ -51,7 +51,6 @@ bool FileHasContent(const std::string& path);
 Result<std::vector<std::string>> DirectoryContents(const std::string& path);
 Result<std::vector<std::string>> DirectoryContentsPaths(
     const std::string& path);
-bool DirectoryExists(const std::string& path, bool follow_symlinks = true);
 inline bool IsDirectory(const std::string& path) {
   return DirectoryExists(path);
 };
