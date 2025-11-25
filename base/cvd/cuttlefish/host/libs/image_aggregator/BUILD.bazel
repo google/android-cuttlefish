@@ -93,6 +93,7 @@ cf_cc_library(
         "//libbase",
         "//libsparse",
         "@protobuf",
+        "@protobuf//:differencer",
         "@zlib",
     ],
 )

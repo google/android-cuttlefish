@@ -17,6 +17,9 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 #include <iostream>
+#include <map>
+#include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,13 +30,16 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 
+#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
@@ -68,6 +74,34 @@ Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
   return {};
 }
 
+Result<void> LinkOrMakeDir(std::optional<std::string> target,
+                           const std::string& path) {
+  if (target.has_value()) {
+    CF_EXPECT(DirectoryExists(*target));
+    CF_EXPECT(Symlink(*target, path));
+  } else {
+    CF_EXPECTF(EnsureDirectoryExists(path), "Failed to create directory: {}",
+               path);
+  }
+  return {};
+}
+
+Result<void> CreateOrLinkGroupDirectories(
+    const LocalInstanceGroup& group,
+    InstanceManager::GroupDirectories directories) {
+  CF_EXPECT(
+      LinkOrMakeDir(std::move(directories.base_directory), group.BaseDir()));
+  CF_EXPECT(LinkOrMakeDir(std::move(directories.home), group.HomeDir()));
+  CF_EXPECT(EnsureDirectoryExists(group.ArtifactsDir()));
+  CF_EXPECT(LinkOrMakeDir(std::move(directories.host_artifacts_path),
+                          group.HostArtifactsPath()));
+  for (size_t i = 0; i < directories.product_out_paths.size(); ++i) {
+    CF_EXPECT(LinkOrMakeDir(std::move(directories.product_out_paths[i]),
+                            group.ProductDir(i)));
+  }
+  return {};
+}
+
 }  // namespace
 
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
@@ -84,20 +118,77 @@ Result<bool> InstanceManager::HasInstanceGroups() const {
   return !CF_EXPECT(instance_db_.IsEmpty());
 }
 
-Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
-    const selector::GroupCreationInfo& group_info) {
-  cvd::InstanceGroup new_group;
-  new_group.set_name(group_info.group_name);
-  new_group.set_home_directory(group_info.home);
-  new_group.set_host_artifacts_path(group_info.host_artifacts_path);
-  new_group.set_product_out_path(group_info.product_out_path);
-  for (const auto& instance : group_info.instances) {
-    auto& new_instance = *new_group.add_instances();
-    new_instance.set_id(instance.instance_id_);
-    new_instance.set_name(instance.per_instance_name_);
-    new_instance.set_state(instance.initial_state_);
+Result<std::vector<InstanceManager::InternalInstanceDesc>>
+InstanceManager::AllocateAndLockInstanceIds(
+    std::vector<InstanceParams> instances) {
+  std::set<unsigned> requested;
+  std::vector<InstanceLockFile> requested_lock_files;
+  // Acquire requested locks first
+  for (const auto& instance : instances) {
+    if (instance.instance_id.has_value()) {
+      unsigned id = instance.instance_id.value();
+      auto [_, inserted] = requested.insert(id);
+      // This check avoids a possible deadlock when trying to acquire the lock a
+      // second time
+      CF_EXPECTF(std::move(inserted),
+                 "Requested instance ids must be distinct, but {} is repeated",
+                 id);
+      requested_lock_files.emplace_back(
+          CF_EXPECT(lock_manager_.AcquireLock(id)));
+    }
   }
-  return CF_EXPECT(instance_db_.AddInstanceGroup(new_group));
+  std::vector<InternalInstanceDesc> ret;
+  ret.reserve(instances.size());
+  auto requested_it = requested_lock_files.begin();
+  for (auto& instance : instances) {
+    if (instance.instance_id.has_value()) {
+      CF_EXPECT(requested_it != requested_lock_files.end());
+      ret.emplace_back(InternalInstanceDesc{
+          .lock_file = std::move(*requested_it),
+          .name = std::move(instance.per_instance_name),
+      });
+      ++requested_it;
+    } else {
+      ret.emplace_back(InternalInstanceDesc{
+          .lock_file = CF_EXPECT(lock_manager_.AcquireUnusedLock()),
+          .name = std::move(instance.per_instance_name),
+      });
+    }
+  }
+  return ret;
+}
+
+Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
+    InstanceGroupParams group_params, GroupDirectories directories) {
+  CF_EXPECT_EQ(
+      group_params.instances.size(), directories.product_out_paths.size(),
+      "Number of product directories doesn't match number of instances");
+
+  std::vector<InternalInstanceDesc> instance_descs =
+      CF_EXPECT(AllocateAndLockInstanceIds(std::move(group_params.instances)));
+
+  LocalInstanceGroup::Builder group_builder(std::move(group_params.group_name));
+  for (const auto& instance_desc : instance_descs) {
+    if (instance_desc.name.has_value()) {
+      group_builder.AddInstance(instance_desc.lock_file.Instance(),
+                                instance_desc.name.value());
+    } else {
+      group_builder.AddInstance(instance_desc.lock_file.Instance());
+    }
+  }
+  LocalInstanceGroup group = CF_EXPECT(group_builder.Build());
+
+  // The base and other directories are always set to the default location, if
+  // the user provides custom directories the ones in the default locations
+  // become symbolic links to those.
+  CF_EXPECT(CreateOrLinkGroupDirectories(group, std::move(directories)));
+
+  CF_EXPECT(instance_db_.AddInstanceGroup(group));
+  for (auto& instance_desc : instance_descs) {
+    CF_EXPECT(instance_desc.lock_file.Status(InUseState::kInUse));
+  }
+
+  return group;
 }
 
 Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
@@ -160,9 +251,9 @@ Result<void> InstanceManager::IssueStopCommand(
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   instance_db_.UpdateInstanceGroup(group);
   for (const auto& instance : group.Instances()) {
-    auto lock = lock_manager_.TryAcquireLock(instance.id());
-    if (lock.ok() && (*lock)) {
-      (*lock)->Status(InUseState::kNotInUse);
+    auto lock = lock_manager_.AcquireLock(instance.id());
+    if (lock.ok()) {
+      lock->Status(InUseState::kNotInUse);
       continue;
     }
     std::cerr << "InstanceLockFileManager failed to acquire lock";
@@ -170,17 +261,11 @@ Result<void> InstanceManager::IssueStopCommand(
   return {};
 }
 
-cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
-  cvd::Status status;
-  const std::string config_json_name = android::base::Basename(GetGlobalConfigFileLink());
-  auto instance_groups_res = instance_db_.Clear();
-  if (!instance_groups_res.ok()) {
-    fmt::print(std::cerr, "Failed to clear instance database: {}",
-               instance_groups_res.error().Message());
-    status.set_code(cvd::Status::INTERNAL);
-    return status;
-  }
-  auto instance_groups = *instance_groups_res;
+Result<void> InstanceManager::CvdClear(const CommandRequest& request) {
+  const std::string config_json_name =
+      android::base::Basename(GetGlobalConfigFileLink());
+  auto instance_groups =
+      CF_EXPECT(instance_db_.Clear(), "Failed to clear instance database");
   for (auto& group : instance_groups) {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
@@ -209,13 +294,7 @@ cvd::Status InstanceManager::CvdClear(const CommandRequest& request) {
   // TODO(kwstephenkim): we need a better mechanism to make sure that
   // we clear all run_cvd processes.
   std::cerr << "Stopped all known instances\n";
-  status.set_code(cvd::Status::OK);
-  return status;
-}
-
-Result<std::optional<InstanceLockFile>> InstanceManager::TryAcquireLock(
-    int instance_num) {
-  return CF_EXPECT(lock_manager_.TryAcquireLock(instance_num));
+  return {};
 }
 
 Result<std::vector<LocalInstanceGroup>> InstanceManager::FindGroups(

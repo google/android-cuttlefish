@@ -26,38 +26,18 @@ namespace cuttlefish {
 namespace selector {
 
 static std::string GroupName() { return "yah_ong"; }
-static std::string HomeDir() { return "/home/user"; }
-static std::string TestBinDir() { return "/opt/android11"; }
 
 class CvdInstanceGroupUnitTest : public testing::Test {
  protected:
-  CvdInstanceGroupUnitTest() {
-    group_proto.set_name(GroupName());
-    group_proto.set_home_directory(HomeDir());
-    group_proto.set_host_artifacts_path(TestBinDir());
-    group_proto.set_product_out_path(TestBinDir());
-  }
+  CvdInstanceGroupUnitTest() {}
   Result<LocalInstanceGroup> Get() {
-    std::vector<cvd::Instance> instances(4);
-    instances[0].set_id(1);
-    instances[0].set_name("tv_instance");
-    instances[1].set_id(2);
-    instances[1].set_name("2");
-    instances[2].set_id(3);
-    instances[2].set_name("phone");
-    instances[3].set_id(7);
-    instances[3].set_name("tv_instances");
-
-    return WithInstances(instances);
+    LocalInstanceGroup::Builder builder(GroupName());
+    builder.AddInstance(1, "tv_instance");
+    builder.AddInstance(2, "2");
+    builder.AddInstance(3, "phone");
+    builder.AddInstance(7, "tv_instances");
+    return builder.Build();
   }
-  Result<LocalInstanceGroup> WithInstances(
-      const std::vector<cvd::Instance>& instances) {
-    for (const auto& instance : instances) {
-      *group_proto.add_instances() = instance;
-    }
-    return LocalInstanceGroup::Create(group_proto);
-  }
-  cvd::InstanceGroup group_proto;
 };
 
 TEST_F(CvdInstanceGroupUnitTest, AddInstancesAndListAll) {

@@ -22,8 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include <json/json.h>
-
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/data_viewer.h"
@@ -51,8 +49,6 @@ class InstanceDatabase {
 
   Result<bool> IsEmpty() const;
 
-  Result<void> LoadFromJson(const Json::Value&);
-
   /** Adds instance group.
    *
    * A new group name will be generated one is not provided.
@@ -60,7 +56,7 @@ class InstanceDatabase {
    * If group_name or home_dir is already taken or host_artifacts_path is
    * not likely an artifacts path, CF_ERR is returned.
    */
-  Result<LocalInstanceGroup> AddInstanceGroup(cvd::InstanceGroup& group_proto);
+  Result<void> AddInstanceGroup(LocalInstanceGroup group);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
 
   Result<std::vector<LocalInstanceGroup>> InstanceGroups() const;

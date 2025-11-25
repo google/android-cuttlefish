@@ -36,6 +36,7 @@
 #include <android-base/strings.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -356,15 +357,14 @@ static Result<void> ConsumeDaemonModeFlag(cvd_common::Args& args) {
             static constexpr std::string_view kValidTrueStrings[] = {"y", "yes",
                                                                      "true"};
             for (const auto& true_string : kValidTrueStrings) {
-              if (android::base::EqualsIgnoreCase(true_string, match.value)) {
+              if (absl::EqualsIgnoreCase(true_string, match.value)) {
                 return {};
               }
             }
             for (const auto& false_string : kValidFalseStrings) {
-              CF_EXPECTF(
-                  !android::base::EqualsIgnoreCase(false_string, match.value),
-                  "\"{}{} was given and is not supported by {}", match.key,
-                  match.value, kPossibleCmds);
+              CF_EXPECTF(!absl::EqualsIgnoreCase(false_string, match.value),
+                         "\"{}{} was given and is not supported by {}",
+                         match.key, match.value, kPossibleCmds);
             }
             return CF_ERRF(
                 "Invalid --daemon option: {}{}. {} supports only "
@@ -534,7 +534,6 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
 
   CF_EXPECT(subprocess_waiter_.Setup(launch_command));
 
-  // TODO CJR: is this message specific to metrics?
   LOG(INFO)
       << "By using this Android Virtual Device, you agree to Google Terms of "
          "Service (https://policies.google.com/terms). The Google Privacy "

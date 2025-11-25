@@ -22,7 +22,6 @@
 #include <cstring>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -123,14 +122,6 @@ Result<LockFile> LockFileManager::AcquireLock(
   return LockFile(fd, lock_file_path);
 }
 
-Result<std::set<LockFile>> LockFileManager::AcquireLocks(
-    const std::set<std::string>& lock_file_paths) {
-  std::set<LockFile> locks;
-  for (const auto& lock_file_path : lock_file_paths) {
-    locks.emplace(CF_EXPECT(AcquireLock(lock_file_path)));
-  }
-  return locks;
-}
 
 Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
     const std::string& lock_file_path) {
@@ -144,18 +135,6 @@ Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
   }
   CF_EXPECT(std::move(flock_result));
   return {};
-}
-
-Result<std::set<LockFile>> LockFileManager::TryAcquireLocks(
-    const std::set<std::string>& lock_file_paths) {
-  std::set<LockFile> locks;
-  for (const auto& lock_file_path : lock_file_paths) {
-    auto lock = CF_EXPECT(TryAcquireLock(lock_file_path));
-    if (lock) {
-      locks.emplace(std::move(*lock));
-    }
-  }
-  return locks;
 }
 
 }  // namespace cvd_impl

@@ -16,8 +16,8 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_database_helper.h"
 
 #include <cstdlib>
-#include <string>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -26,6 +26,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -65,7 +66,7 @@ CvdInstanceDatabaseTest::CvdInstanceDatabaseTest()
   InitWorkspace() && InitMockAndroidHostOut();
 }
 
-CvdInstanceDatabaseTest::~CvdInstanceDatabaseTest() { 
+CvdInstanceDatabaseTest::~CvdInstanceDatabaseTest() {
   ClearWorkspace();
   close(db_backing_fd_);
 }
@@ -119,28 +120,24 @@ bool CvdInstanceDatabaseTest::InitMockAndroidHostOut() {
   return true;
 }
 
-  bool CvdInstanceDatabaseTest::AddGroup(const std::string& base_name,
-                const std::vector<cvd::Instance>& instances) {
-    const std::string home(Workspace() + "/" + base_name);
-    if (!EnsureDirectoryExists(home).ok()) {
-      SetErrorCode(ErrorCode::kFileError, home + " directory is not found.");
-      return false;
-    }
-    cvd::InstanceGroup param;
-    param.set_name(base_name);
-    param.set_home_directory(home);
-    param.set_host_artifacts_path(android_artifacts_path_);
-    param.set_product_out_path(android_artifacts_path_);
-    for (const auto& instance: instances) {
-      *param.add_instances() = instance;
-    }
-
-    if (!db_.AddInstanceGroup(param).ok()) {
-      SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
-      return false;
-    }
-    return true;
+bool CvdInstanceDatabaseTest::AddGroup(
+    const std::string& base_name,
+    const std::vector<std::pair<unsigned, std::string>>& instances) {
+  LocalInstanceGroup::Builder builder(base_name);
+  for (const auto& instance : instances) {
+    builder.AddInstance(instance.first,
+        instance.second);
   }
+  Result<LocalInstanceGroup> create_res = builder.Build();
+  if (!create_res.ok()) {
+    return false;
+  }
+  if (!db_.AddInstanceGroup(create_res.value()).ok()) {
+    SetErrorCode(ErrorCode::kInstanceDabaseError, "Failed to add group");
+    return false;
+  }
+  return true;
+}
 
 }  // namespace selector
 }  // namespace cuttlefish

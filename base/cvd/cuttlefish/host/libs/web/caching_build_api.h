@@ -20,7 +20,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 
 namespace cuttlefish {
 

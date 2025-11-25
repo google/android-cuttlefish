@@ -72,7 +72,7 @@ class LintCommandHandler : public CvdCommandHandler {
   Result<std::string> ValidateConfig(std::vector<std::string>& args,
                                      const std::string& working_directory) {
     const LoadFlags flags = CF_EXPECT(GetFlags(args, working_directory));
-    CF_EXPECT(GetCvdFlags(flags));
+    CF_EXPECT(GetEnvironmentSpecification(flags));
     return flags.config_path;
   }
 

@@ -17,17 +17,26 @@
 #pragma once
 
 #include <chrono>
-#include <string_view>
+#include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
+struct MetricsData {
+  EventType event_type;
+  std::string session_id;
+  std::string cf_common_version;
+  std::chrono::milliseconds now;
+  HostInfo host_metrics;
+  std::vector<GuestMetrics> guest_metrics;
+};
+
 wireless_android_play_playlog::LogRequest ConstructLogRequest(
-    EventType event_type, const HostInfo& host_metrics,
-    std::string_view session_id, std::string_view cf_common_version,
-    std::chrono::milliseconds now);
+    const MetricsData& metrics_data);
 
 }  // namespace cuttlefish

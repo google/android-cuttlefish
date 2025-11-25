@@ -17,32 +17,18 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "json/value.h"
 
-namespace Json {
-class Value;
-}
+#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 
 namespace cuttlefish {
-
-// Order in enum is not guaranteed to be stable, serialized as a string.
-enum class FileSource {
-  UNKNOWN_PURPOSE = 0,
-  DEFAULT_BUILD,
-  SYSTEM_BUILD,
-  KERNEL_BUILD,
-  LOCAL_FILE,
-  GENERATED,
-  BOOTLOADER_BUILD,
-  ANDROID_EFI_LOADER_BUILD,
-  BOOT_BUILD,
-  HOST_PACKAGE_BUILD,
-  CHROME_OS_BUILD,
-};
 
 /*
  * Attempts to answer the general question "where did this file come from, and
@@ -53,10 +39,16 @@ struct CvdFile {
   std::string build_id;
   std::string build_target;
   std::string file_path;
+  /* If `cvd fetch` extracted this file from an archive, what was the name of
+   * that archive? */
+  std::string archive_source;
+  /* What was the path that the file was stored at in the archive? */
+  std::string archive_path;
 
   CvdFile();
-  CvdFile(const FileSource& source, const std::string& build_id,
-          const std::string& build_target, const std::string& file_path);
+  CvdFile(FileSource source, std::string build_id, std::string build_target,
+          std::string file_path, std::string archive_source,
+          std::string archive_path);
 };
 
 std::ostream& operator<<(std::ostream&, const CvdFile&);
@@ -71,32 +63,37 @@ std::ostream& operator<<(std::ostream&, const CvdFile&);
  *
  * The output json also includes data relevant for human debugging, like which
  * flags fetch_cvd was invoked with.
+ *
+ * `FetcherConfig` is thread-safe for reads and writes, but the move constructor
+ * and assignment operator are not thread-safe and cannot be called concurrently
+ * with any other operations.
  */
 class FetcherConfig {
-  std::unique_ptr<Json::Value> dictionary_;
-
  public:
   FetcherConfig();
   FetcherConfig(FetcherConfig&&);
-  ~FetcherConfig();
+  FetcherConfig& operator=(FetcherConfig&&);
 
   bool SaveToFile(const std::string& file) const;
   bool LoadFromFile(const std::string& file);
 
-  // For debugging only, not intended for programmatic access.
-  void RecordFlags();
-
   bool add_cvd_file(const CvdFile& file, bool override_entry = false);
   std::map<std::string, CvdFile> get_cvd_files() const;
 
-  std::string FindCvdFileWithSuffix(const std::string& suffix) const;
+  std::string FindCvdFileWithSuffix(FileSource source,
+                                    std::string_view suffix) const;
 
-  Result<void> AddFilesToConfig(FileSource purpose, const std::string& build_id,
-                                const std::string& build_target,
-                                const std::vector<std::string>& paths,
-                                const std::string& directory_prefix,
-                                bool override_entry = false);
+  Result<void> RemoveFileFromConfig(const std::string& path);
+
+ private:
+  Json::Value dictionary_;
+  std::unique_ptr<std::mutex> mutex_;
 };
+
+Result<CvdFile> BuildFetcherConfigMember(
+    FileSource purpose, std::string build_id, std::string build_target,
+    std::string path, std::string directory_prefix,
+    std::string archive_source = "", std::string archive_path = "");
 
 class FetcherConfigs {
  public:

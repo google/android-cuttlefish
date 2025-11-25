@@ -69,7 +69,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/parser/instance",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
+        "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
         "//libbase",
         "@fmt",

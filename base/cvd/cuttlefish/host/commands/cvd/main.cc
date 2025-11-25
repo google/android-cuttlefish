@@ -37,8 +37,6 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
-#include "cuttlefish/host/commands/cvd/legacy/client.h"
-#include "cuttlefish/host/commands/cvd/legacy/run_server.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
@@ -78,27 +76,6 @@ android::base::LogSeverity CvdVerbosityOption(const int argc, char** argv) {
   return (encoded_verbosity.ok() ? *encoded_verbosity : GetMinimumVerbosity());
 }
 
-/**
- * Terminates a cvd server listening on "cvd_server"
- *
- * So far, the server processes across users were listing on the "cvd_server"
- * socket. And, so far, we had one user. Now, we have multiple users. Each
- * server listens to cvd_server_<uid>. The thing is if there is a server process
- * started out of an old executable it will be listening to "cvd_server," and
- * thus we should kill the server process first.
- */
-Result<void> KillOldServer() {
-  CvdClient client_to_old_server(kCvdDefaultVerbosity, "cvd_server");
-  auto result = client_to_old_server.StopCvdServer(/*clear=*/true);
-  if (!result.ok()) {
-    LOG(ERROR) << "Old server listening on \"cvd_server\" socket "
-               << "must be killed first but failed to terminate it.";
-    LOG(ERROR) << "Perhaps, try cvd reset -y";
-    CF_EXPECT(std::move(result));
-  }
-  return {};
-}
-
 Result<void> EnsureCvdDirectoriesExist() {
   // This is accessed by all users.
   CF_EXPECT(EnsureDirectoryExists(CvdDir(), 0777));
@@ -108,28 +85,6 @@ Result<void> EnsureCvdDirectoriesExist() {
   return {};
 }
 
-/**
- * Persist a running server's instance database to the file.
- *
- * It works by asking the server to restart itself using our executable file.
- */
-void TryInheritServerDatabase() {
-  CvdClient client(kCvdDefaultVerbosity);
-
-  if (!client.ConnectToServer().ok()) {
-    LOG(VERBOSE) << "No server found";
-    // There seems to be no server running
-    return;
-  }
-  LOG(VERBOSE) << "Asking server to restart";
-  auto res = client.RestartServerMatchClient();
-  if (!res.ok()) {
-    LOG(WARNING) << res.error().FormatForEnv();
-    LOG(WARNING)
-        << "Failed to take over resources of running server.\nSome devices may "
-           "be running outside cvd's control, consider running cvd reset -y";
-  }
-}
 
 /**
  * Increase the file descriptor limit for this process and its descendants.
@@ -164,25 +119,8 @@ Result<void> CvdMain(int argc, char** argv, char** envp) {
   }
   CF_EXPECT(EnsureCvdDirectoriesExist());
 
-  CF_EXPECT(KillOldServer());
-
   cvd_common::Args all_args = ArgsToVec(argc, argv);
   CF_EXPECT(!all_args.empty());
-
-  if (IsServerModeExpected(all_args[0])) {
-    // Persist previous server's instance database to file.
-    ImportResourcesFromRunningServer(std::move(all_args));
-    return {};
-  } else {
-    // Calling this while in "server mode" causes a deadlock because it tries to
-    // connect to its own socket that it hasn't called accept() on (and never
-    // will).
-    // We could close that socket file descriptor immediately, but then a
-    // concurrent execution of the command will not find the socket and proceed
-    // as normal without waiting for this process to persist the instance
-    // database.
-    TryInheritServerDatabase();
-  }
 
   auto env = EnvpToMap(envp);
   // TODO(315772518) Re-enable once metrics send is skipped in a env

@@ -25,30 +25,40 @@
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
-#include "cuttlefish/host/commands/cvd/cli/selector/creation_analyzer.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
-#include "cuttlefish/host/commands/cvd/legacy/cvd_server.pb.h"
 
 namespace cuttlefish {
 
+struct InstanceParams {
+  std::optional<unsigned> instance_id;
+  std::optional<std::string> per_instance_name;
+};
+
+struct InstanceGroupParams {
+  std::string group_name;
+  std::vector<InstanceParams> instances;
+};
+
 class InstanceManager {
  public:
-  using GroupCreationInfo = selector::GroupCreationInfo;
-
+  struct GroupDirectories {
+    std::optional<std::string> base_directory;
+    std::optional<std::string> home;
+    std::optional<std::string> host_artifacts_path;
+    std::vector<std::optional<std::string>> product_out_paths;
+  };
   InstanceManager(InstanceLockFileManager&, InstanceDatabase& instance_db);
 
   Result<bool> HasInstanceGroups() const;
   Result<LocalInstanceGroup> CreateInstanceGroup(
-      const selector::GroupCreationInfo& group_info);
+      InstanceGroupParams group_params, GroupDirectories group_directories);
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
 
-  cvd::Status CvdClear(const CommandRequest&);
-
-  Result<std::optional<InstanceLockFile>> TryAcquireLock(int instance_num);
+  Result<void> CvdClear(const CommandRequest&);
 
   Result<std::vector<LocalInstanceGroup>> FindGroups(
       const InstanceDatabase::Filter& filter) const;
@@ -63,7 +73,14 @@ class InstanceManager {
                                 LocalInstanceGroup& group);
 
  private:
+  struct InternalInstanceDesc {
+    InstanceLockFile lock_file;
+    std::optional<std::string> name;
+  };
+
   Result<std::string> StopBin(const std::string& host_android_out);
+  Result<std::vector<InternalInstanceDesc>> AllocateAndLockInstanceIds(
+      std::vector<InstanceParams> instances);
 
   InstanceLockFileManager& lock_manager_;
   InstanceDatabase& instance_db_;

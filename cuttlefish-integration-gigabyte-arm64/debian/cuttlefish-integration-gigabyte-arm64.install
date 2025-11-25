@@ -1,0 +1,6 @@
+etc/security/limits.d/95-cuttlefish-integration-gigabyte-arm64-nofile.conf etc/security/limits.d
+usr/lib/NetworkManager/conf.d/cuttlefish-integration-gigabyte-arm64.conf usr/lib/NetworkManager/conf.d
+usr/lib/modules-load.d/cuttlefish-integration-gigabyte-arm64.conf usr/lib/modules-load.d
+usr/share/cuttlefish-integration-gigabyte-arm64-use-google-ntp usr/share/cuttlefish-integration-gigabyte-arm64
+usr/share/version_info usr/share/cuttlefish-integration-gigabyte-arm64
+etc/ntpsec/ntp.d/google-time-server.conf etc/ntpsec/ntp.d

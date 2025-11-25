@@ -18,6 +18,8 @@ runs:
             base/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
             frontend/debian/changelog
+          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
+            cuttlefish-integration-gigabyte-arm64/debian/changelog
           ;;
         unstable|nightly)
           # Unstable/nightly version format : X.Y.Z~gitYYYYMMDDHHMM.<Github SHA 8 digit>
@@ -27,6 +29,8 @@ runs:
             base/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             frontend/debian/changelog
+          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
+            cuttlefish-integration-gigabyte-arm64/debian/changelog
           ;;
         *)
           exit 1
@@ -38,4 +42,5 @@ runs:
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
+      sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build cuttlefish-integration-gigabyte-arm64
     shell: bash

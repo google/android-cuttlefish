@@ -38,7 +38,7 @@ std::string Serialize(const DisjointRangeSet& range_set) {
 
 Result<DisjointRangeSet> DeserializeDisjointRangeSet(std::string_view data) {
   DisjointRangeList proto;
-  CF_EXPECT(proto.ParseFromArray(data.data(), data.size()));
+  CF_EXPECT(proto.ParseFromString(data));
   DisjointRangeSet set;
   for (const DisjointRangeListMember& range : proto.ranges()) {
     set.InsertRange(range.start(), range.end());

@@ -17,7 +17,6 @@
 
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -85,16 +84,9 @@ class LockFileManager {
   LockFileManager() = default;
 
   Result<LockFile> AcquireLock(const std::string& lock_file_path);
-  Result<std::set<LockFile>> AcquireLocks(
-      const std::set<std::string>& lock_file_paths);
 
   Result<std::optional<LockFile>> TryAcquireLock(
       const std::string& lock_file_path);
-  Result<std::set<LockFile>> TryAcquireLocks(
-      const std::set<std::string>& lock_file_paths);
-
-  // Best-effort attempt to find a free instance id.
-  Result<std::optional<LockFile>> TryAcquireUnusedLock();
 
   static Result<SharedFD> OpenLockFile(const std::string& file_path);
 };

@@ -1,15 +1,40 @@
-cuttlefish-frontend (1.31.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.35.0) UNRELEASED; urgency=medium
 
   * 
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 24 Oct 2025 16:11:24 -0700
+ -- Alistair Delva <adelva@google.com>  Fri, 21 Nov 2025 15:27:53 -0800
 
-cuttlefish-frontend (1.30.0) unstable; urgency=medium
+cuttlefish-frontend (1.34.0) unstable; urgency=medium
+
+  [ Jason Macnak ]
+  * N/A
+
+ -- Alistair Delva <adelva@google.com>  Fri, 21 Nov 2025 13:33:10 -0800
+
+cuttlefish-frontend (1.33.0) unstable; urgency=medium
+
+  * Give fetching a longer timeout in the HO client by @jemoreira in https://github.com/google/android-cuttlefish/pull/1792
+
+ -- Jason Macnak <natsu@google.com>  Fri, 14 Nov 2025 13:19:30 -0800
+
+cuttlefish-frontend (1.32.0) unstable; urgency=medium
+
+  * N/A
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 07 Nov 2025 12:59:15 -0800
+
+cuttlefish-frontend (1.31.0) stable; urgency=medium
+
+  * N/A
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 31 Oct 2025 20:53:45 +0000
+
+cuttlefish-frontend (1.30.0) stable; urgency=medium
 
   * Remove the need to add host-ready tag in e2e orchestration tests. by @ser-io in https://github.com/google/android-cuttlefish/pull/1731
   * Change get request using HTTPHelper.Client.Do to HTTPHelper.NewGetRequest.Do by @k311093 in https://github.com/google/android-cuttlefish/pull/1734
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 24 Oct 2025 14:40:39 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 31 Oct 2025 14:27:58 -0700
 
 cuttlefish-frontend (1.29.0) unstable; urgency=medium
 

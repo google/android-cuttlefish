@@ -17,10 +17,10 @@
 
 #include <stdint.h>
 
-#include <memory>
 #include <string>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 
 namespace cuttlefish {
@@ -44,12 +44,13 @@ class CompositeDiskImage : public DiskImage {
 
   Result<uint64_t> VirtualSizeBytes() const override;
 
+  const CompositeDisk& GetCompositeDisk() const {
+    return cdisk_;
+  }
+
  private:
-  struct Impl;
-
-  CompositeDiskImage(std::unique_ptr<Impl>);
-
-  std::unique_ptr<Impl> impl_;
+  CompositeDiskImage(CompositeDisk);
+  CompositeDisk cdisk_;
 };
 
 }  // namespace cuttlefish

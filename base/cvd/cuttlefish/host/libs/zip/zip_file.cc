@@ -15,12 +15,20 @@
 
 #include "cuttlefish/host/libs/zip/zip_file.h"
 
+#include <errno.h>
+#include <stdint.h>
+#include <sys/stat.h>
+
 #include <string>
 #include <utility>
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/host/libs/zip/zip_copy.h"
 
 namespace cuttlefish {
@@ -53,6 +61,15 @@ Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
   ReadableZipSource source = CF_EXPECT(zip.GetFile(zip_path));
   WritableZipSource dest = CF_EXPECT(WritableZipSource::FromFile(host_path));
   CF_EXPECT(Copy(source, dest));
+
+  ZipStat stat_out = CF_EXPECT(source.Stat());
+  uint64_t index = CF_EXPECT(std::move(stat_out.index));
+
+  Result<uint32_t> attributes = zip.EntryUnixAttributes(index);
+  if (attributes.ok()) {
+    uint32_t mode = (*attributes >> 16) & 0777;
+    CF_EXPECT_EQ(chmod(host_path.c_str(), mode), 0, StrError(errno));
+  }
   return {};
 }
 

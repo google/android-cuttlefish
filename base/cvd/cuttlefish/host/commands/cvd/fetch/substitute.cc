@@ -27,6 +27,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/posix/symlink.h"
@@ -47,7 +48,7 @@ Result<void> SubstituteWithFlag(
   // "bin" -> "cuttlefish-common"
   std::string bin_dir_parent =
       android::base::Dirname(android::base::Dirname(self_path));
-  if (!android::base::EndsWith(bin_dir_parent, "cuttlefish-common")) {
+  if (!absl::EndsWith(bin_dir_parent, "cuttlefish-common")) {
     LOG(DEBUG) << "Binary substitution not available, run `cvd fetch` from "
                   "`cuttlefish-common` package to enable.";
     CF_EXPECTF(host_substitutions.empty(),
@@ -110,7 +111,7 @@ Result<void> SubstituteWithFlag(
  */
 Result<std::string> GetCuttlefishCommonDir() {
   std::string cvd_exe = android::base::GetExecutablePath();
-  CF_EXPECTF(android::base::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
+  CF_EXPECTF(absl::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
              "Can't perform substitutions when cvd is not under "
              "cuttlefish-common/bin, it's currently at {}",
              cvd_exe);
@@ -140,15 +141,47 @@ Result<void> Substitute(const std::string& target_dir,
   return {};
 }
 
+bool SubstituteCheckTargetExists(const fetch::HostPkgMigrationConfig& config,
+                                 std::string_view target_keyword) {
+  for (int j = 0; j < config.symlinks_size(); j++) {
+    if (config.symlinks(j).target().find(target_keyword) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Result<void> SubstituteWithMarker(const std::string& target_dir,
                                   const std::string& marker_file) {
+  static constexpr std::string_view kRunCvdKeyword = "bin/run_cvd";
+  static constexpr std::string_view kSensorsSimulatorKeyword =
+      "bin/sensors_simulator";
+
   std::string content;
   CF_EXPECTF(android::base::ReadFileToString(marker_file, &content),
              "failed to read '{}'", marker_file);
   fetch::HostPkgMigrationConfig config;
   CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config),
             "failed parsing debian_substitution_marker file");
+  auto run_cvd_substituted =
+      SubstituteCheckTargetExists(config, kRunCvdKeyword);
   for (int j = 0; j < config.symlinks_size(); j++) {
+    // TODO(b/452945156): The sensors simulator is launched by run_cvd, so these
+    // two components must always be substituted together. Between May 2025 and
+    // Oct 2025 we substituted sensors_simulator alone. Restore compatibility by
+    // ignoring the sensors_simulator substitute when run_cvd is not
+    // substituted. This workaround can be removed once compatibility with
+    // mid-2025 images is no longer critical.
+    //
+    // Related discussion: b/459880764.
+    if (!run_cvd_substituted &&
+        config.symlinks(j).target().find(kSensorsSimulatorKeyword) !=
+            std::string::npos) {
+      LOG(WARNING) << "Sensors simulator (" << config.symlinks(j).target()
+                   << ") cannot be substituted on its own; run_cvd must be "
+                      "substituted as well.";
+      continue;
+    }
     CF_EXPECT(Substitute(target_dir, config.symlinks(j).link_name()));
   }
   return {};

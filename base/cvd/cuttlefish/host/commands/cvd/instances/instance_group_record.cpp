@@ -24,7 +24,10 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/parseint.h>
+#include <android-base/strings.h>
+#include <json/json.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
@@ -34,15 +37,6 @@ namespace cuttlefish {
 
 namespace {
 
-static constexpr const char kJsonGroupName[] = "Group Name";
-static constexpr const char kJsonHomeDir[] = "Runtime/Home Dir";
-static constexpr const char kJsonHostArtifactPath[] = "Host Tools Dir";
-static constexpr const char kJsonProductOutPath[] = "Product Out Dir";
-static constexpr const char kJsonStartTime[] = "Start Time";
-static constexpr const char kJsonInstances[] = "Instances";
-static constexpr const char kJsonInstanceId[] = "Instance Id";
-static constexpr const char kJsonInstanceName[] = "Per-Instance Name";
-
 std::vector<LocalInstance> Filter(
     const std::vector<LocalInstance>& instances,
     std::function<bool(const LocalInstance&)> predicate) {
@@ -50,6 +44,29 @@ std::vector<LocalInstance> Filter(
   std::copy_if(instances.begin(), instances.end(), std::back_inserter(ret),
                predicate);
   return ret;
+}
+
+std::string DefaultBaseDir() {
+  auto time = std::chrono::system_clock::now().time_since_epoch().count();
+  return fmt::format("{}/{}", PerUserDir(), time);
+}
+
+std::string HomeDirFromBase(const std::string& base_dir) {
+  return base_dir + "/home";
+}
+
+std::string ArtifactsDirFromBase(const std::string& base_dir) {
+  return base_dir + "/artifacts";
+}
+
+std::string HostArtifactsDirFromBase(const std::string& base_dir) {
+  return ArtifactsDirFromBase(base_dir) + "/host_tools";
+}
+
+std::string ProductDirFromBase(const std::string& base_dir,
+                               int instance_index) {
+  return fmt::format("{}/{}", ArtifactsDirFromBase(base_dir),
+                     std::to_string(instance_index));
 }
 
 }  // namespace
@@ -62,12 +79,11 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
 
   for (const auto& instances : group_proto.instances()) {
     auto id = instances.id();
-    if (id != 0) {
-      // Only non-zero ids are checked, zero means no id has been assigned yet.
-      CF_EXPECTF(ids.find(id) == ids.end(),
-                 "Instances must have unique ids, found '{}' repeated", id);
-      ids.insert(id);
-    }
+    CF_EXPECT_GE(id, 1, "Instance ids must be positive");
+    // Only non-zero ids are checked, zero means no id has been assigned yet.
+    CF_EXPECTF(ids.find(id) == ids.end(),
+               "Instances must have unique ids, found '{}' repeated", id);
+    ids.insert(id);
     auto name = instances.name();
     CF_EXPECTF(names.find(name) == names.end(),
                "Instances must have unique names, found '{}' repeated", name);
@@ -76,24 +92,48 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Create(
   return LocalInstanceGroup(group_proto);
 }
 
-void LocalInstanceGroup::SetHomeDir(const std::string& home_dir) {
-  CHECK(group_proto_->home_directory().empty())
-      << "Home directory can't be changed once set";
-  group_proto_->set_home_directory(home_dir);
+LocalInstanceGroup::Builder::Builder(std::string group_name)
+    : base_dir_(DefaultBaseDir()) {
+  group_proto_.set_name(std::move(group_name));
+  group_proto_.set_home_directory(HomeDirFromBase(base_dir_));
+  group_proto_.set_host_artifacts_path(HostArtifactsDirFromBase(base_dir_));
 }
 
-void LocalInstanceGroup::SetHostArtifactsPath(
-    const std::string& host_artifacts_path) {
-  CHECK(group_proto_->host_artifacts_path().empty())
-      << "Host artifacts path can't be changed once set";
-  group_proto_->set_host_artifacts_path(host_artifacts_path);
+LocalInstanceGroup::Builder& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id) & {
+  return AddInstance(id, std::to_string(id));
 }
 
-void LocalInstanceGroup::SetProductOutPath(
-    const std::string& product_out_path) {
-  CHECK(group_proto_->product_out_path().empty())
-      << "Product out path can't be changed once set";
-  group_proto_->set_product_out_path(product_out_path);
+LocalInstanceGroup::Builder& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id, std::string name) & {
+  auto& new_instance = *group_proto_.add_instances();
+  new_instance.set_id(id);
+  new_instance.set_name(std::move(name));
+  new_instance.set_state(cvd::INSTANCE_STATE_PREPARING);
+  return *this;
+}
+
+LocalInstanceGroup::Builder&& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id) && {
+  AddInstance(id);
+  return std::move(*this);
+}
+
+LocalInstanceGroup::Builder&& LocalInstanceGroup::Builder::AddInstance(
+    unsigned id, std::string name) && {
+  AddInstance(id, name);
+  return std::move(*this);
+}
+
+Result<LocalInstanceGroup> LocalInstanceGroup::Builder::Build() {
+  std::vector<std::string> product_out_paths;
+  for (size_t i = 0; i < group_proto_.instances_size(); ++i) {
+    product_out_paths.emplace_back(ProductDirFromBase(base_dir_, i));
+  }
+
+  group_proto_.set_product_out_path(
+      android::base::Join(product_out_paths, ","));
+  return CF_EXPECT(LocalInstanceGroup::Create(group_proto_));
 }
 
 bool LocalInstanceGroup::HasActiveInstances() const {
@@ -147,61 +187,21 @@ std::string LocalInstanceGroup::AssemblyDir() const {
   return AssemblyDirFromHome(HomeDir());
 }
 
-Result<LocalInstanceGroup> LocalInstanceGroup::Deserialize(
-    const Json::Value& group_json) {
-  CF_EXPECT(group_json.isMember(kJsonGroupName));
-  const std::string group_name = group_json[kJsonGroupName].asString();
-  CF_EXPECT(group_json.isMember(kJsonHomeDir));
-  const std::string home_dir = group_json[kJsonHomeDir].asString();
-  CF_EXPECT(group_json.isMember(kJsonHostArtifactPath));
-  const std::string host_artifacts_path =
-      group_json[kJsonHostArtifactPath].asString();
-  CF_EXPECT(group_json.isMember(kJsonProductOutPath));
-  const std::string product_out_path =
-      group_json[kJsonProductOutPath].asString();
-  TimeStamp start_time = CvdServerClock::now();
+std::string LocalInstanceGroup::MetricsDir() const {
+  return HomeDir() + "/metrics";
+}
 
-  // test if the field is available as the field has been added
-  // recently as of b/315855286
-  if (group_json.isMember(kJsonStartTime)) {
-    auto restored_start_time_result =
-        DeserializeTimePoint(group_json[kJsonStartTime]);
-    if (restored_start_time_result.ok()) {
-      start_time = std::move(*restored_start_time_result);
-    } else {
-      LOG(ERROR) << "Start time restoration from json failed, so we use "
-                 << " the current system time. Reasons: "
-                 << restored_start_time_result.error().FormatForEnv();
-    }
-  }
+std::string LocalInstanceGroup::ArtifactsDir() const {
+  return BaseDir() + "/artifacts";
+}
 
-  cvd::InstanceGroup group_proto;
-  group_proto.set_name(group_name);
-  group_proto.set_home_directory(home_dir);
-  group_proto.set_host_artifacts_path(host_artifacts_path);
-  group_proto.set_product_out_path(product_out_path);
-  group_proto.set_start_time_sec(CvdServerClock::to_time_t(start_time));
+std::string LocalInstanceGroup::ProductDir(int instance_index) const {
+  return fmt::format("{}/{}", ArtifactsDir(), instance_index);
+}
 
-  CF_EXPECT(group_json.isMember(kJsonInstances));
-  const Json::Value& instances_json_array = group_json[kJsonInstances];
-  CF_EXPECT(instances_json_array.isArray());
-  for (int i = 0; i < (int)instances_json_array.size(); i++) {
-    const Json::Value& instance_json = instances_json_array[i];
-    CF_EXPECT(instance_json.isMember(kJsonInstanceName));
-    const std::string instance_name =
-        instance_json[kJsonInstanceName].asString();
-    CF_EXPECT(instance_json.isMember(kJsonInstanceId));
-    const std::string instance_id = instance_json[kJsonInstanceId].asString();
-
-    int id = -1;
-    CF_EXPECTF(android::base::ParseInt(instance_id, std::addressof(id)),
-               "Invalid instance ID in instance json: {}", instance_id);
-    auto instance = group_proto.add_instances();
-    instance->set_id(id);
-    instance->set_name(instance_name);
-  }
-
-  return Create(group_proto);
+std::string LocalInstanceGroup::BaseDir() const {
+  // The base directory is always the parent of the home directory
+  return android::base::Dirname(HomeDir());
 }
 
 Result<Json::Value> LocalInstanceGroup::FetchStatus(

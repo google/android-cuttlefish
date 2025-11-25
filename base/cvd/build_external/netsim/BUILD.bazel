@@ -34,3 +34,8 @@ py_binary(
     name = "copy_openssl_headers",
     srcs = ["copy_openssl_headers.py"],
 )
+
+py_binary(
+    name = "copy_openssl_libraries",
+    srcs = ["copy_openssl_libraries.py"],
+)

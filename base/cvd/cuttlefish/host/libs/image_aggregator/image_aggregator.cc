@@ -20,10 +20,10 @@
 
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <sparse/sparse.h>
 #include <zlib.h>
@@ -37,6 +37,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
+#include <google/protobuf/util/message_differencer.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -220,16 +221,16 @@ class CompositeDiskBuilder {
       CF_EXPECT(type_guid != nullptr, "Could not recognize partition guid");
       memcpy(gpt.entries[i].partition_type_guid, type_guid, 16);
       std::u16string wide_name(partitions_[i].source.label.begin(),
-                              partitions_[i].source.label.end());
-      u16cpy((std::uint16_t*) gpt.entries[i].partition_name,
-            (std::uint16_t*) wide_name.c_str(), 36);
+                               partitions_[i].source.label.end());
+      u16cpy((std::uint16_t*)gpt.entries[i].partition_name,
+             (std::uint16_t*)wide_name.c_str(), 36);
     }
     // Not sure these are right, but it works for bpttool
     gpt.header.partition_entries_crc32 =
-        crc32(0, (std::uint8_t*) gpt.entries,
+        crc32(0, (std::uint8_t*)gpt.entries,
               GPT_NUM_PARTITIONS * sizeof(GptPartitionEntry));
     gpt.header.header_crc32 =
-        crc32(0, (std::uint8_t*) &gpt.header, sizeof(GptHeader));
+        crc32(0, (std::uint8_t*)&gpt.header, sizeof(GptHeader));
     return gpt;
   }
 
@@ -245,7 +246,7 @@ class CompositeDiskBuilder {
     std::swap(gpt.footer.current_lba, gpt.footer.backup_lba);
     gpt.footer.header_crc32 = 0;
     gpt.footer.header_crc32 =
-        crc32(0, (std::uint8_t*) &gpt.footer, sizeof(GptHeader));
+        crc32(0, (std::uint8_t*)&gpt.footer, sizeof(GptHeader));
     return gpt;
   }
 
@@ -256,7 +257,7 @@ class CompositeDiskBuilder {
 };
 
 Result<void> WriteBeginning(SharedFD out, const GptBeginning& beginning) {
-  std::string begin_str((const char*) &beginning, sizeof(GptBeginning));
+  std::string begin_str((const char*)&beginning, sizeof(GptBeginning));
   CF_EXPECT_EQ(WriteAll(out, begin_str), begin_str.size(),
                "Could not write GPT beginning: " << out->StrError());
   return {};
@@ -294,7 +295,18 @@ Result<void> DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
   return {};
 }
 
-} // namespace
+Result<void> WriteCompositeDiskToFile(const CompositeDisk& composite_proto,
+                                      const std::string& path) {
+  std::ofstream composite(path, std::ios::binary | std::ios::trunc);
+  CF_EXPECT(!!composite, "Failed to open composite file");
+  composite << CompositeDiskImage::MagicString();
+  CF_EXPECT(composite_proto.SerializeToOstream(&composite),
+            "Failed to serialize composite spec to file");
+  composite.flush();
+  return {};
+}
+
+}  // namespace
 
 uint64_t AlignToPartitionSize(uint64_t size) {
   return AlignToPowerOf2(size, PARTITION_SIZE_SHIFT);
@@ -340,17 +352,32 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
   return {};
 };
 
-Result<void> CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                                 const std::string& header_file,
-                                 const std::string& footer_file,
-                                 const std::string& output_composite_path,
-                                 bool read_only) {
+Result<void> CreateOrUpdateCompositeDisk(
+    std::vector<ImagePartition> partitions, const std::string& header_file,
+    const std::string& footer_file, const std::string& output_composite_path,
+    bool read_only) {
   CF_EXPECT(DeAndroidSparse(partitions));
 
   CompositeDiskBuilder builder(read_only);
   for (auto& partition : partitions) {
     builder.AppendPartition(partition);
   }
+  CompositeDisk composite_proto =
+      CF_EXPECT(builder.MakeCompositeDiskSpec(header_file, footer_file));
+
+  Result<CompositeDiskImage> composite_image_res =
+      CompositeDiskImage::OpenExisting(output_composite_path);
+
+  if (composite_image_res.ok() &&
+      google::protobuf::util::MessageDifferencer::Equals(
+          composite_proto, composite_image_res->GetCompositeDisk())) {
+    // The existing composite disk matches the given partitions, no need to
+    // regenerate
+    return {};
+  }
+
+  CF_EXPECT(WriteCompositeDiskToFile(composite_proto, output_composite_path));
+
   SharedFD header = SharedFD::Creat(header_file, 0600);
   CF_EXPECTF(header->IsOpen(), "{}", header->StrError());
 
@@ -365,15 +392,8 @@ Result<void> CreateCompositeDisk(std::vector<ImagePartition> partitions,
   CF_EXPECTF(WriteEnd(footer, builder.End(beginning)),
              "Could not write GPT end to '{}': {}", footer_file,
              footer->StrError());
-  CompositeDisk composite_proto =
-      CF_EXPECT(builder.MakeCompositeDiskSpec(header_file, footer_file));
-  std::ofstream composite(output_composite_path.c_str(),
-                          std::ios::binary | std::ios::trunc);
-  composite << CompositeDiskImage::MagicString();
-  composite_proto.SerializeToOstream(&composite);
-  composite.flush();
 
   return {};
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

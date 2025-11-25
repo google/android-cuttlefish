@@ -20,8 +20,8 @@
 
 #include <gtest/gtest.h>
 
-#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace selector {
@@ -73,7 +73,7 @@ class CvdInstanceDatabaseTest : public ::testing::Test {
   //    "mkdir" : Workspace() + "/" + base_name, HostArtifactsPath()
   //    db_.AddInstanceGroup()
   bool AddGroup(const std::string& base_name,
-                const std::vector<cvd::Instance>& instances);
+                const std::vector<std::pair<unsigned, std::string>>& instances);
   InstanceDatabase& GetDb() { return db_; }
   const SetupError& Error() const { return error_; }
 

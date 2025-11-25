@@ -58,6 +58,11 @@ echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt upgrade -y
 
+# Disable systemd mounting tmpfs at /tmp due backwards compatibility issues.
+# TODO(b/458388172): Remove line if cvd no longer stores artifacts
+# in /tmp by default.
+sudo chroot /mnt/image /usr/bin/systemctl mask tmp.mount
+
 # Avoid automatic updates during tests.
 # https://manpages.debian.org/trixie/unattended-upgrades/unattended-upgrade.8.en.html
 sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
@@ -297,7 +302,7 @@ if [ -z "$tests" ]; then
 fi
 for t in "${tests[@]}"; do
   echo "running test: ${t}"
-  bazel test ${t}
+  bazel test --test_timeout 600 --sandbox_writable_path=$HOME ${t}
   res=$(curl --fail -X POST "http://localhost:2080/reset")
   op_name=$(echo "${res}" | jq -r '.name')
   curl --fail -X POST http://localhost:2080/operations/${op_name}/:wait

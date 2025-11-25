@@ -211,7 +211,7 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
   if (vm_manager_ == VmmMode::kCrosvm) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
-    CF_EXPECT(CreateCompositeDisk(
+    CF_EXPECT(CreateOrUpdateCompositeDisk(
         partitions_, AbsolutePath(header_path_), AbsolutePath(footer_path_),
         AbsolutePath(composite_disk_path_), read_only_));
   } else {

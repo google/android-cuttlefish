@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 
 #include <errno.h>
-#include <stdint.h>
 
 #include <algorithm>
 #include <cctype>
@@ -26,9 +25,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <optional>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -55,8 +52,6 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
 
@@ -116,32 +111,11 @@ std::string DefaultProductPath(const cvd_common::Envs& envs) {
   return CurrentDirectory();
 }
 
-static constexpr char kAcquireFileLock[] = "acquire_file_lock";
-static constexpr char kAcquireFileLockEnv[] = "CVD_ACQUIRE_FILE_LOCK";
-
-static std::optional<bool> GetAcquireFileLockEnvValue(
-    const cvd_common::Envs& env) {
-  auto it = env.find(kAcquireFileLockEnv);
-  if (it == env.end()) {
-    return std::nullopt;
-  }
-  auto env_value = it->second;
-  if (env_value.empty()) {
-    return std::nullopt;
-  }
-  // Convert env_value to lower case.
-  std::transform(env_value.begin(), env_value.end(), env_value.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  const std::unordered_set<std::string> true_strings = {"y", "yes", "true"};
-  return Contains(true_strings, env_value);
-}
-
 struct CreateFlags {
   std::string host_path;
   std::string product_path;
   bool start;
   std::string config_file;
-  bool acquire_file_locks;
 };
 
 Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
@@ -151,14 +125,12 @@ Result<CreateFlags> ParseCommandFlags(const cvd_common::Envs& envs,
       .product_path = DefaultProductPath(envs),
       .start = true,
       .config_file = "",
-      .acquire_file_locks = GetAcquireFileLockEnvValue(envs).value_or(true),
   };
   std::vector<Flag> flags = {
       GflagsCompatFlag("host_path", flag_values.host_path),
       GflagsCompatFlag("product_path", flag_values.product_path),
       GflagsCompatFlag("start", flag_values.start),
       GflagsCompatFlag("config_file", flag_values.config_file),
-      GflagsCompatFlag(kAcquireFileLock, flag_values.acquire_file_locks),
   };
   CF_EXPECT(ConsumeFlags(flags, args));
   return flag_values;
@@ -232,11 +204,9 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
 class CvdCreateCommandHandler : public CvdCommandHandler {
  public:
   CvdCreateCommandHandler(InstanceManager& instance_manager,
-                          CommandSequenceExecutor& command_executor,
-                          InstanceLockFileManager& lock_manager)
+                          CommandSequenceExecutor& command_executor)
       : instance_manager_(instance_manager),
-        command_executor_(command_executor),
-        lock_manager_(lock_manager) {}
+        command_executor_(command_executor) {}
 
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
@@ -247,76 +217,42 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
  private:
   Result<LocalInstanceGroup> GetOrCreateGroup(
       const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const CommandRequest& request, bool acquire_file_locks);
+      const CommandRequest& request);
   Result<void> CreateSymlinks(const LocalInstanceGroup& group);
-
-  static void MarkLockfiles(std::vector<InstanceLockFile>& lock_files,
-                            InUseState state);
-  static void MarkLockfilesInUse(std::vector<InstanceLockFile>& lock_files) {
-    MarkLockfiles(lock_files, InUseState::kInUse);
-  }
 
   InstanceManager& instance_manager_;
   CommandSequenceExecutor& command_executor_;
-  InstanceLockFileManager& lock_manager_;
 };
-
-void CvdCreateCommandHandler::MarkLockfiles(
-    std::vector<InstanceLockFile>& lock_files, const InUseState state) {
-  for (auto& lock_file : lock_files) {
-    auto result = lock_file.Status(state);
-    if (!result.ok()) {
-      LOG(ERROR) << result.error().FormatForEnv();
-    }
-  }
-}
 
 Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
-    const CommandRequest& request, bool acquire_file_locks) {
-  GroupCreationInfo group_creation_info = CF_EXPECT(AnalyzeCreation(
-      {
-          .cmd_args = subcmd_args,
-          .envs = envs,
-          .selectors = request.Selectors(),
-          .acquire_file_locks = acquire_file_locks,
-      },
-      lock_manager_));
-
-  std::vector<InstanceLockFile> lock_files;
-  for (auto& instance : group_creation_info.instances) {
-    CF_EXPECT(instance.instance_file_lock_.has_value(),
-              "Expected instance lock");
-    lock_files.emplace_back(std::move(*instance.instance_file_lock_));
-  }
+    const CommandRequest& request) {
+  GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
+      .cmd_args = subcmd_args,
+      .envs = envs,
+      .selectors = request.Selectors(),
+  }));
 
   auto groups = CF_EXPECT(instance_manager_.FindGroups(
-      {.group_name = group_creation_info.group_name}));
+      {.group_name = creation_info.group_creation_params.group_name}));
   CF_EXPECT_LE(groups.size(), 1u,
                "Expected no more than one group with given name: "
-                   << group_creation_info.group_name);
+                   << creation_info.group_creation_params.group_name);
   // When loading an environment spec file the group is already in the database
   // in PREPARING state. Otherwise the group must be created.
   if (groups.empty()) {
-    groups.push_back(
-        CF_EXPECT(instance_manager_.CreateInstanceGroup(group_creation_info)));
-  } else {
-    auto& group = groups[0];
-    CF_EXPECTF((std::size_t)group.Instances().size() ==
-                   group_creation_info.instances.size(),
-               "Mismatch in number of instances from analisys: {} vs {}",
-               group.Instances().size(), group_creation_info.instances.size());
-    // The instances don't have an id yet
-    for (size_t i = 0; i < group.Instances().size(); ++i) {
-      uint32_t id = group_creation_info.instances[i].instance_id_;
-      group.Instances()[i].set_id(id);
-    }
-    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+    return instance_manager_.CreateInstanceGroup(
+        std::move(creation_info.group_creation_params),
+        std::move(creation_info.group_directories));
   }
-  // The lock must be held for as long as the group's instances are in the
-  // database with the id set.
-  MarkLockfilesInUse(lock_files);
-  return groups[0];
+  auto& group = groups[0];
+  CF_EXPECTF((std::size_t)group.Instances().size() ==
+                 creation_info.group_creation_params.instances.size(),
+             "Mismatch in number of instances from analisys: {} vs {}",
+             group.Instances().size(),
+             creation_info.group_creation_params.instances.size());
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  return group;
 }
 
 // For backward compatibility, we add extra symlink in home dir
@@ -387,8 +323,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
   envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
-  auto group = CF_EXPECT(
-      GetOrCreateGroup(subcmd_args, envs, request, flags.acquire_file_locks));
+  auto group = CF_EXPECT(GetOrCreateGroup(subcmd_args, envs, request));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
@@ -430,10 +365,8 @@ Result<std::string> CvdCreateCommandHandler::DetailedHelp(
 }
 
 std::unique_ptr<CvdCommandHandler> NewCvdCreateCommandHandler(
-    InstanceManager& instance_manager, CommandSequenceExecutor& executor,
-    InstanceLockFileManager& lock_manager) {
-  return std::make_unique<CvdCreateCommandHandler>(instance_manager, executor,
-                                                   lock_manager);
+    InstanceManager& instance_manager, CommandSequenceExecutor& executor) {
+  return std::make_unique<CvdCreateCommandHandler>(instance_manager, executor);
 }
 
 }  // namespace cuttlefish

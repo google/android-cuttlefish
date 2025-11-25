@@ -1,0 +1,23 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_binary(
+    name = "defaults",
+    srcs = [
+        "defaults.cpp",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/key_equals_value",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/web/http_client:curl_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
+        "//libbase",
+        "@abseil-cpp//absl/cleanup:cleanup",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:parse",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)

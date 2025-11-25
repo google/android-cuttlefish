@@ -35,6 +35,7 @@
 #include <android-base/logging.h>
 #include <json/value.h>
 
+#include <android-base/file.h>
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -48,8 +49,9 @@
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_file.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/host/libs/zip/remote_zip.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
 
 namespace cuttlefish {
 namespace {
@@ -422,6 +424,8 @@ Result<std::string> AndroidBuildApi::DownloadTargetFile(
     }
     // Fallback to download from AB.
   }
+  CF_EXPECT(EnsureDirectoryExists(
+      std::string(android::base::Dirname(target_filepath))));
   CF_EXPECT(ArtifactToFile(build, artifact_name, target_filepath),
             "Unable to download " << build << ":" << artifact_name << " to "
                                   << target_filepath);

@@ -18,61 +18,26 @@
 
 #include <sys/types.h>
 
-#include <optional>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
-#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 namespace selector {
 
-struct PerInstanceInfo {
-  // for the sake of std::vector::emplace_back
-  PerInstanceInfo(const unsigned id, const std::string& per_instance_name,
-                  cvd::InstanceState initial_state,
-                  InstanceLockFile&& instance_file_lock)
-      : instance_id_(id),
-        per_instance_name_(per_instance_name),
-        initial_state_(initial_state),
-        instance_file_lock_(std::move(instance_file_lock)) {}
-
-  PerInstanceInfo(const unsigned id, const std::string& per_instance_name,
-                  cvd::InstanceState initial_state)
-      : instance_id_(id),
-        per_instance_name_(per_instance_name),
-        initial_state_(initial_state) {}
-
-  const unsigned instance_id_;
-  const std::string per_instance_name_;
-  const cvd::InstanceState initial_state_;
-  std::optional<InstanceLockFile> instance_file_lock_;
-};
-
-/**
- * Creation is currently group by group
- *
- * If you want one instance, you should create a group with one instance.
- */
 struct GroupCreationInfo {
-  std::string home;
-  std::string host_artifacts_path;  ///< e.g. out/host/linux-x86
-  // set to host_artifacts_path if no ANDROID_PRODUCT_OUT
-  std::string product_out_path;
-  std::string group_name;
-  std::vector<PerInstanceInfo> instances;
+  InstanceGroupParams group_creation_params;
+  InstanceManager::GroupDirectories group_directories;
 };
 
 struct CreationAnalyzerParam {
   const std::vector<std::string>& cmd_args;
   const std::unordered_map<std::string, std::string>& envs;
   const SelectorOptions& selectors;
-  bool acquire_file_locks;
 };
 
 /**
@@ -103,8 +68,7 @@ struct CreationAnalyzerParam {
  *    instance ids --> per_instance_name
  *
  */
-Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam&,
-                                          InstanceLockFileManager&);
+Result<GroupCreationInfo> AnalyzeCreation(const CreationAnalyzerParam&);
 
 }  // namespace selector
 }  // namespace cuttlefish

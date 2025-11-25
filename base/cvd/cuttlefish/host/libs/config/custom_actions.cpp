@@ -24,11 +24,11 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
-#include <android-base/strings.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
 #include <json/value.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -190,7 +190,7 @@ std::string DefaultCustomActionConfig() {
                  << custom_action_config_dir << ". Please delete extras.";
     } else if (custom_action_configs.size() == 1) {
       for (const auto& config : custom_action_configs) {
-        if (android::base::EndsWithIgnoreCase(config, ".json")) {
+        if (absl::EndsWithIgnoreCase(config, ".json")) {
           return custom_action_config_dir + "/" + config;
         }
       }

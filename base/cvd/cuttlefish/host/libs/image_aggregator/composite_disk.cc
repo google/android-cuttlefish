@@ -26,10 +26,6 @@
 
 namespace cuttlefish {
 
-struct CompositeDiskImage::Impl {
-  CompositeDisk cdisk;
-};
-
 Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(
     const std::string& path) {
   SharedFD fd = SharedFD::Open(path, O_CLOEXEC, O_RDONLY);
@@ -42,33 +38,29 @@ Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(
   std::string message;
   CF_EXPECTF(ReadAll(fd, &message) >= 0, "{}", fd->StrError());
 
-  std::unique_ptr<Impl> impl(new Impl());
-  CF_EXPECT(impl.get());
+  CompositeDisk cdisk;
+  CF_EXPECTF(cdisk.ParseFromString(message), "Failed to parse '{}': {}", path,
+             StrError(errno));
 
-  CF_EXPECTF(impl->cdisk.ParseFromString(message), "Failed to parse '{}': {}",
-             path, StrError(errno));
-
-  return CompositeDiskImage(std::move(impl));
+  return CompositeDiskImage(std::move(cdisk));
 }
 
 std::string CompositeDiskImage::MagicString() { return "composite_disk\x1d"; }
 
 CompositeDiskImage::CompositeDiskImage(CompositeDiskImage&& other) {
-  impl_ = std::move(other.impl_);
+  cdisk_ = std::move(other.cdisk_);
 }
 CompositeDiskImage::~CompositeDiskImage() = default;
 CompositeDiskImage& CompositeDiskImage::operator=(CompositeDiskImage&& other) {
-  impl_ = std::move(other.impl_);
+  cdisk_ = std::move(other.cdisk_);
   return *this;
 }
 
 Result<uint64_t> CompositeDiskImage::VirtualSizeBytes() const {
-  CF_EXPECT(impl_.get());
-
-  return impl_->cdisk.length();
+  return cdisk_.length();
 }
 
-CompositeDiskImage::CompositeDiskImage(std::unique_ptr<Impl> impl)
-    : impl_(std::move(impl)) {}
+CompositeDiskImage::CompositeDiskImage(CompositeDisk cdisk)
+    : cdisk_(std::move(cdisk)) {}
 
 }  // namespace cuttlefish

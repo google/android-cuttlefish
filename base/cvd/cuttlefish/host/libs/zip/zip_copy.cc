@@ -23,7 +23,8 @@
 #include <utility>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/zip/zip_cc.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 
 namespace cuttlefish {
 

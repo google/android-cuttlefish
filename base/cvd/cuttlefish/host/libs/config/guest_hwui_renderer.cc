@@ -20,7 +20,7 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/strings.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/result.h"
 
@@ -42,11 +42,11 @@ std::string ToString(GuestHwuiRenderer renderer) {
 }
 
 Result<GuestHwuiRenderer> ParseGuestHwuiRenderer(std::string_view str) {
-  if (android::base::EqualsIgnoreCase(str, "unknown")) {
+  if (absl::EqualsIgnoreCase(str, "unknown")) {
     return GuestHwuiRenderer::kUnknown;
-  } else if (android::base::EqualsIgnoreCase(str, "skiagl")) {
+  } else if (absl::EqualsIgnoreCase(str, "skiagl")) {
     return GuestHwuiRenderer::kSkiaGl;
-  } else if (android::base::EqualsIgnoreCase(str, "skiavk")) {
+  } else if (absl::EqualsIgnoreCase(str, "skiavk")) {
     return GuestHwuiRenderer::kSkiaVk;
   } else {
     return CF_ERRF("\"{}\" is not a valid HWUI renderer.", str);

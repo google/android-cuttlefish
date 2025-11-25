@@ -27,9 +27,8 @@ DownloadFlags DownloadFlags::Create(const VectorFlags& flags, const int index) {
       .download_target_files_zip =
           GetOptional(flags.download_target_files_zip, index)
               .value_or(kDefaultDownloadTargetFilesZip),
-      .extract_super_image_fragments =
-          GetOptional(flags.extract_super_image_fragments, index)
-              .value_or(kDefaultExtractSuperImageFragments),
+      .dynamic_super_image = GetOptional(flags.dynamic_super_image, index)
+                                 .value_or(kDefaultDynamicSuperImageFragments),
   };
 }
 

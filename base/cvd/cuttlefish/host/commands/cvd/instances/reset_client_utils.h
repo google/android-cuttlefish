@@ -30,6 +30,4 @@ Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
 
 Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
 
-Result<void> KillCvdServerProcess();
-
 }  // namespace cuttlefish

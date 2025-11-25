@@ -31,26 +31,35 @@ namespace cuttlefish {
 
 class LocalInstanceGroup {
  public:
-  static Result<LocalInstanceGroup> Create(
-      const cvd::InstanceGroup& group_proto);
+  class Builder {
+   public:
+    Builder(std::string group_name);
+
+    Builder& AddInstance(unsigned id) &;
+    Builder& AddInstance(unsigned id, std::string name) &;
+
+    Builder&& AddInstance(unsigned id) &&;
+    Builder&& AddInstance(unsigned id, std::string name) &&;
+
+    Result<LocalInstanceGroup> Build();
+
+   private:
+    std::string base_dir_;
+    cvd::InstanceGroup group_proto_;
+  };
 
   LocalInstanceGroup(LocalInstanceGroup&&) = default;
   LocalInstanceGroup(const LocalInstanceGroup&) = default;
   LocalInstanceGroup& operator=(const LocalInstanceGroup&) = default;
 
-  static Result<LocalInstanceGroup> Deserialize(const Json::Value& group_json);
-
   const std::string& GroupName() const { return group_proto_->name(); }
   const std::string& HomeDir() const { return group_proto_->home_directory(); }
-  void SetHomeDir(const std::string& home_dir);
   const std::string& HostArtifactsPath() const {
     return group_proto_->host_artifacts_path();
   }
-  void SetHostArtifactsPath(const std::string& host_artifacts_path);
   const std::string& ProductOutPath() const {
     return group_proto_->product_out_path();
   }
-  void SetProductOutPath(const std::string& product_out_path);
   TimeStamp StartTime() const;
   void SetStartTime(TimeStamp time);
   const std::vector<LocalInstance>& Instances() const { return instances_; }
@@ -59,7 +68,11 @@ class LocalInstanceGroup {
   const cvd::InstanceGroup& Proto() const { return *group_proto_; }
   void SetAllStates(cvd::InstanceState state);
 
+  std::string BaseDir() const;
   std::string AssemblyDir() const;
+  std::string MetricsDir() const;
+  std::string ArtifactsDir() const;
+  std::string ProductDir(int instance_index) const;
 
   Result<LocalInstance> FindInstanceById(unsigned id) const;
   /**
@@ -77,6 +90,11 @@ class LocalInstanceGroup {
       std::chrono::seconds timeout = std::chrono::seconds(5));
 
  private:
+  friend class InstanceDatabase;
+
+  static Result<LocalInstanceGroup> Create(
+      const cvd::InstanceGroup& group_proto);
+
   LocalInstanceGroup(const cvd::InstanceGroup& group_proto);
 
   // Ownership of the proto is shared between the LocalInstanceGroup and

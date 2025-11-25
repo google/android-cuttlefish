@@ -6,6 +6,7 @@ Build-Depends: bazel [amd64],
                cmake,
                config-package-dev,
                debhelper-compat (= 12),
+               dh-exec,
                git,
                libaom-dev,
                libclang-dev,
@@ -21,7 +22,6 @@ Build-Depends: bazel [amd64],
                libprotobuf-dev,
                libsrtp2-dev,
                libssl-dev,
-               libtinfo5,
                libxml2-dev,
                libz3-dev,
                pkgconf,
@@ -99,3 +99,9 @@ Provides: ${diverted-files}
 Description: Utilities for Android cuttlefish devices in the cloud
  Configuration and utilities for Android cuttlefish devices running on
  Google Compute Engine. Not intended for use on developer machines.
+
+Package: cuttlefish-defaults
+Architecture: any
+Depends: cuttlefish-base,
+Description: May potentially enable new or experimental cuttlefish
+ features before being enabled by default.

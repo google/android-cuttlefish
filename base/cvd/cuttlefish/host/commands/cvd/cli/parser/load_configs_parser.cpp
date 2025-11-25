@@ -45,8 +45,10 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_flags_validator.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/fetch_config_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"
+#include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/selector_parser.h"
-#include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -168,12 +170,12 @@ std::vector<Flag> GetFlagsVector(LoadFlags& load_flags) {
   std::vector<Flag> flags;
   flags.emplace_back(
       GflagsCompatFlag("credential_source", load_flags.credential_source));
-  flags.emplace_back(
-      GflagsCompatFlag("project_id", load_flags.project_id));
+  flags.emplace_back(GflagsCompatFlag("project_id", load_flags.project_id));
   flags.emplace_back(
       GflagsCompatFlag("base_directory", load_flags.base_dir)
-          .Help("Parent directory for artifacts and runtime files. Defaults to "
-                "/tmp/cvd/<uid>/<timestamp>."));
+          .Help(
+              "Parent directory for artifacts and runtime files. Defaults to " +
+              CvdDir() + "<uid>/<timestamp>."));
   flags.emplace_back(GflagsCompatFlagOverride("override", load_flags.overrides)
                          .Help("Use --override=<config_identifier>:<new_value> "
                                "to override config values"));
@@ -201,7 +203,7 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   return root;
 }
 
-Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
+Result<std::vector<std::string>> GetSystemImagePaths(
     const EnvironmentSpecification& config) {
   std::vector<std::string> system_image_paths;
   for (const auto& instance : config.instances()) {
@@ -211,7 +213,7 @@ Result<std::vector<std::string>> GetConfiguredSystemImagePaths(
   return system_image_paths;
 }
 
-std::optional<std::string> GetConfiguredSystemHostPath(
+std::optional<std::string> GetSystemHostPath(
     const EnvironmentSpecification& config) {
   if (config.common().has_host_package()) {
     return config.common().host_package();
@@ -235,15 +237,45 @@ Result<Json::Value> GetOverriddenConfig(
   return result;
 }
 
-Result<LoadDirectories> GenerateLoadDirectories(
+EnvironmentSpecification FillEmptyInstanceNames(
+    EnvironmentSpecification env_spec) {
+  std::set<std::string_view> used;
+  for (const auto& instance : env_spec.instances()) {
+    if (instance.name().empty()) {
+      continue;
+    }
+    used.insert(instance.name());
+  }
+  int index = 1;
+  for (auto& instance : *env_spec.mutable_instances()) {
+    if (!instance.name().empty()) {
+      continue;
+    }
+    while (used.find(std::to_string(index)) != used.end()) {
+      ++index;
+    }
+    std::string name = std::to_string(index++);
+    instance.set_name(name);
+    used.insert(name);
+  }
+  return env_spec;
+}
+
+}  // namespace
+
+Result<InstanceManager::GroupDirectories> GetGroupCreationDirectories(
     const std::string& parent_directory,
-    std::vector<std::string>& system_image_path_configs,
-    std::optional<std::string> system_host_path) {
-  CF_EXPECT(!system_image_path_configs.empty(), "No instances in config to load");
+    const EnvironmentSpecification& env_spec) {
+  std::vector<std::string> system_image_path_configs =
+      CF_EXPECT(GetSystemImagePaths(env_spec));
+  std::optional<std::string> system_host_path = GetSystemHostPath(env_spec);
+
+  CF_EXPECT(!system_image_path_configs.empty(),
+            "No instances in config to load");
 
   std::vector<std::optional<std::string>> targets_opt;
   int num_remote = 0;
-  for (const auto& instance_build_path: system_image_path_configs) {
+  for (const auto& instance_build_path : system_image_path_configs) {
     if (IsLocalBuild(instance_build_path)) {
       targets_opt.emplace_back(instance_build_path);
     } else {
@@ -264,71 +296,35 @@ Result<LoadDirectories> GenerateLoadDirectories(
     // If config specifies a host tools path, we use this.
     host_tools_opt = std::move(system_host_path);
   }
-  GroupDirectories dirs = CF_EXPECT(GenerateGroupDirectories(
-      std::move(parent_dir_opt), std::nullopt, std::move(host_tools_opt),
-      std::move(targets_opt)));
 
-  std::vector<std::string> target_dirs = dirs.targets();
-  auto result = LoadDirectories{
-      .target_directory = dirs.artifacts(),
-      .launch_home_directory = dirs.home(),
-      .host_package_directory = dirs.host_tools(),
-      .system_image_directory_flag_value =
-          android::base::Join(target_dirs, ','),
+  return InstanceManager::GroupDirectories{
+      .base_directory = std::move(parent_dir_opt),
+      .home = std::nullopt,
+      .host_artifacts_path = std::move(host_tools_opt),
+      .product_out_paths = std::move(targets_opt),
   };
-  for (const std::string& target_dir : target_dirs) {
-    result.target_subdirectories.emplace_back(
-        android::base::Basename(target_dir));
-  }
-
-  return result;
 }
 
-std::vector<std::string> FillEmptyInstanceNames(
-    std::vector<std::string> instance_names) {
-  std::set<std::string_view> used;
-  for (const auto& name : instance_names) {
-    if (name.empty()) {
-      continue;
-    }
-    used.insert(name);
+Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& env_spec,
+                                 const LocalInstanceGroup& group) {
+  // TODO(jemoreira): Move this logic to LocalInstanceGroup or InstanceManager
+  // to avoid duplication
+  std::string target_directory =
+      android::base::Dirname(group.HomeDir()) + "/artifacts";
+  std::vector<std::string> target_subdirectories;
+  for (int i = 0; i < group.Instances().size(); ++i) {
+    target_subdirectories.emplace_back(std::to_string(i));
   }
-  int index = 1;
-  for (auto& name : instance_names) {
-    if (!name.empty()) {
-      continue;
-    }
-    while (used.find(std::to_string(index)) != used.end()) {
-      ++index;
-    }
-    name = std::to_string(index++);
-    used.insert(name);
-  }
-  return instance_names;
-}
 
-Result<CvdFlags> ParseCvdConfigs(const EnvironmentSpecification& launch,
-                                 const LoadDirectories& load_directories) {
   CvdFlags flags{
-      .launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(launch)),
-      .selector_flags = ParseSelectorConfigs(launch),
-      .fetch_cvd_flags = CF_EXPECT(
-          ParseFetchCvdConfigs(launch, load_directories.target_directory,
-                               load_directories.target_subdirectories)),
-      .load_directories = load_directories,
+      .launch_cvd_flags = CF_EXPECT(ParseLaunchCvdConfigs(env_spec)),
+      .selector_flags = ParseSelectorConfigs(env_spec),
+      .fetch_cvd_flags = CF_EXPECT(ParseFetchCvdConfigs(
+          env_spec, target_directory, target_subdirectories)),
+      .target_directory = target_directory,
   };
-  if (launch.common().has_group_name()) {
-    flags.group_name = launch.common().group_name();
-  }
-  for (const auto& instance : launch.instances()) {
-    flags.instance_names.push_back(instance.name());
-  }
-  flags.instance_names =
-      FillEmptyInstanceNames(std::move(flags.instance_names));
   return flags;
 }
-
-}  // namespace
 
 std::ostream& operator<<(std::ostream& out, const Override& override) {
   fmt::print(out, "(config_path=\"{}\", new_value=\"{}\")",
@@ -363,12 +359,12 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
         Override{.config_path = std::string(kCredentialSourceOverride),
                  .new_value = load_flags.credential_source});
   }
-  if (!load_flags.project_id.empty()){
+  if (!load_flags.project_id.empty()) {
     for (const auto& flag : load_flags.overrides) {
-      CF_EXPECT(!android::base::StartsWith(flag.config_path,
-                                           kProjectIDOverride),
-                "Specifying both --override=fetch.project_id and the "
-                "--project_id flag is not allowed.");
+      CF_EXPECT(
+          !android::base::StartsWith(flag.config_path, kProjectIDOverride),
+          "Specifying both --override=fetch.project_id and the "
+          "--project_id flag is not allowed.");
     }
     load_flags.overrides.emplace_back(
         Override{.config_path = std::string(kProjectIDOverride),
@@ -377,22 +373,14 @@ Result<LoadFlags> GetFlags(std::vector<std::string>& args,
   return load_flags;
 }
 
-Result<CvdFlags> GetCvdFlags(const LoadFlags& flags) {
+Result<EnvironmentSpecification> GetEnvironmentSpecification(
+    const LoadFlags& flags) {
   Json::Value json_configs =
       CF_EXPECT(GetOverriddenConfig(flags.config_path, flags.overrides));
 
-  auto launch = CF_EXPECT(ValidateCfConfigs(json_configs));
-
-  std::vector<std::string> system_image_path_configs =
-      CF_EXPECT(GetConfiguredSystemImagePaths(launch));
-  std::optional<std::string> host_package_dir =
-      GetConfiguredSystemHostPath(launch);
-
-  const auto load_directories = CF_EXPECT(GenerateLoadDirectories(
-      flags.base_dir, system_image_path_configs, host_package_dir));
-
-  return CF_EXPECT(ParseCvdConfigs(launch, load_directories),
-                   "Parsing json configs failed");
+  EnvironmentSpecification env_spec =
+      CF_EXPECT(ValidateCfConfigs(json_configs));
+  return FillEmptyInstanceNames(std::move(env_spec));
 }
 
 }  // namespace cuttlefish
