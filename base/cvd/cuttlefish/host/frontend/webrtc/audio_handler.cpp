@@ -17,10 +17,14 @@
 #include "cuttlefish/host/frontend/webrtc/audio_handler.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <cstring>
 
 #include <android-base/logging.h>
 #include <rtc_base/time_utils.h>
+
+#include "cuttlefish/host/frontend/webrtc/audio_mixer.h"
 
 namespace cuttlefish {
 namespace {
@@ -28,31 +32,39 @@ namespace {
 const virtio_snd_jack_info JACKS[] = {};
 constexpr uint32_t NUM_JACKS = sizeof(JACKS) / sizeof(JACKS[0]);
 
-const virtio_snd_chmap_info CHMAPS[] = {{
-    .hdr = { .hda_fn_nid = Le32(0), },
-    .direction = (uint8_t) AudioStreamDirection::VIRTIO_SND_D_OUTPUT,
-    .channels = 2,
-    .positions = {
-        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FL,
-        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FR
+const virtio_snd_chmap_info CHMAPS[] = {
+    {
+        .hdr =
+            {
+                .hda_fn_nid = Le32(0),
+            },
+        .direction = (uint8_t)AudioStreamDirection::VIRTIO_SND_D_OUTPUT,
+        .channels = 6,
+        .positions = {(uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_FL,
+                      (uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_FR,
+                      (uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_FC,
+                      (uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_LFE,
+                      (uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_RL,
+                      (uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_RR},
     },
-}, {
-    .hdr = { .hda_fn_nid = Le32(0), },
-    .direction = (uint8_t) AudioStreamDirection::VIRTIO_SND_D_INPUT,
-    .channels = 2,
-    .positions = {
-        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FL,
-        (uint8_t) AudioChannelMap::VIRTIO_SND_CHMAP_FR
-    },
-}};
+    {
+        .hdr =
+            {
+                .hda_fn_nid = Le32(0),
+            },
+        .direction = (uint8_t)AudioStreamDirection::VIRTIO_SND_D_INPUT,
+        .channels = 2,
+        .positions = {(uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_FL,
+                      (uint8_t)AudioChannelMap::VIRTIO_SND_CHMAP_FR},
+    }};
 constexpr uint32_t NUM_CHMAPS = sizeof(CHMAPS) / sizeof(CHMAPS[0]);
 
 virtio_snd_pcm_info GetVirtioSndPcmInfo(AudioStreamDirection direction,
-                                        int streamId) {
+                                        const AudioStreamSettings& settings) {
   return {
       .hdr =
           {
-              .hda_fn_nid = Le32(streamId),
+              .hda_fn_nid = Le32(settings.id),
           },
       .features = Le32(0),
       // webrtc's api is quite primitive and doesn't allow for many different
@@ -96,39 +108,11 @@ virtio_snd_pcm_info GetVirtioSndPcmInfo(AudioStreamDirection direction,
                      << (uint8_t)AudioStreamRate::VIRTIO_SND_PCM_RATE_384000)),
       .direction = (uint8_t)direction,
       .channels_min = 1,
-      .channels_max = 2,
+      .channels_max = settings.channels,
   };
 }
 
 constexpr uint32_t NUM_INPUT_STREAMS = 1;
-
-class CvdAudioFrameBuffer : public webrtc_streaming::AudioFrameBuffer {
- public:
-  CvdAudioFrameBuffer(const uint8_t* buffer, int bits_per_sample,
-                      int sample_rate, int channels, int frames)
-      : buffer_(buffer),
-        bits_per_sample_(bits_per_sample),
-        sample_rate_(sample_rate),
-        channels_(channels),
-        frames_(frames) {}
-
-  int bits_per_sample() const override { return bits_per_sample_; }
-
-  int sample_rate() const override { return sample_rate_; }
-
-  int channels() const override { return channels_; }
-
-  int frames() const override { return frames_; }
-
-  const uint8_t* data() const override { return buffer_; }
-
- private:
-  const uint8_t* buffer_;
-  int bits_per_sample_;
-  int sample_rate_;
-  int channels_;
-  int frames_;
-};
 
 int BitsPerSample(uint8_t virtio_format) {
   switch (virtio_format) {
@@ -255,24 +239,31 @@ int SampleRate(uint8_t virtio_rate) {
 
 AudioHandler::AudioHandler(
     std::unique_ptr<AudioServer> audio_server,
-    std::vector<std::shared_ptr<webrtc_streaming::AudioSink>> audio_sinks,
-    std::shared_ptr<webrtc_streaming::AudioSource> audio_source)
-    : audio_sinks_(std::move(audio_sinks)),
-      audio_server_(std::move(audio_server)),
-      stream_descs_(audio_sinks_.size() + NUM_INPUT_STREAMS),
-      audio_source_(audio_source) {
+    std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
+    std::shared_ptr<webrtc_streaming::AudioSource> audio_source,
+    const std::vector<AudioStreamSettings>& stream_settings,
+    const MixerSettings& mixer_settings
+  )
+    : audio_server_(std::move(audio_server)),
+      audio_source_(audio_source),
+      stream_descs_(stream_settings.size()),
+      audio_mixer_(std::make_unique<AudioMixer>(std::move(audio_sink), mixer_settings)) {
   streams_ = std::vector<virtio_snd_pcm_info>(stream_descs_.size());
-  streams_[0] =
-      GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_INPUT, 0);
-  for (int i = 0; i < audio_sinks_.size(); i++) {
-    int stream_id = NUM_INPUT_STREAMS + i;
-    streams_[stream_id] =
-        GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_OUTPUT, i);
+  streams_[0] = GetVirtioSndPcmInfo(AudioStreamDirection::VIRTIO_SND_D_INPUT,
+                                    {.id = 0, .channels = 2});
+  for (size_t i = 0; i < stream_settings.size(); i++) {
+    const auto& settings = stream_settings[i];
+    const auto stream_id = NUM_INPUT_STREAMS + settings.id;
+    streams_[stream_id] = GetVirtioSndPcmInfo(
+        AudioStreamDirection::VIRTIO_SND_D_OUTPUT, settings);
   }
 }
 
+AudioHandler::~AudioHandler() { audio_mixer_->Stop(); }
+
 void AudioHandler::Start() {
   server_thread_ = std::thread([this]() { Loop(); });
+  audio_mixer_->Start();
 }
 
 [[noreturn]] void AudioHandler::Loop() {
@@ -318,7 +309,7 @@ void AudioHandler::SetStreamParameters(StreamSetParamsCommand& cmd) {
   auto bits_per_sample = BitsPerSample(cmd.format());
   auto sample_rate = SampleRate(cmd.rate());
   auto channels = cmd.channels();
-  if (bits_per_sample < 0 || sample_rate < 0 ||
+  if (bits_per_sample <= 0 || sample_rate <= 0 ||
       channels < stream_info.channels_min ||
       channels > stream_info.channels_max) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
@@ -329,8 +320,6 @@ void AudioHandler::SetStreamParameters(StreamSetParamsCommand& cmd) {
     stream_descs_[cmd.stream_id()].bits_per_sample = bits_per_sample;
     stream_descs_[cmd.stream_id()].sample_rate = sample_rate;
     stream_descs_[cmd.stream_id()].channels = channels;
-    auto len10ms = (channels * (sample_rate / 100) * bits_per_sample) / 8;
-    stream_descs_[cmd.stream_id()].buffer.Reset(len10ms);
   }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
@@ -356,7 +345,11 @@ void AudioHandler::StartStream(StreamControlCommand& cmd) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
-  stream_descs_[cmd.stream_id()].active = true;
+  auto& stream_desc = stream_descs_[cmd.stream_id()];
+  {
+    std::lock_guard<std::mutex> lock(stream_desc.mtx);
+    stream_desc.active = true;
+  }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
 
@@ -365,7 +358,11 @@ void AudioHandler::StopStream(StreamControlCommand& cmd) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
     return;
   }
-  stream_descs_[cmd.stream_id()].active = false;
+  auto& stream_desc = stream_descs_[cmd.stream_id()];
+  {
+    std::lock_guard<std::mutex> lock(stream_desc.mtx);
+    stream_desc.active = false;
+  }
   cmd.Reply(AudioStatus::VIRTIO_SND_S_OK);
 }
 
@@ -381,8 +378,7 @@ void AudioHandler::ChmapsInfo(ChmapInfoCommand& cmd) {
 }
 
 void AudioHandler::JacksInfo(JackInfoCommand& cmd) {
-  if (cmd.start_id() >= NUM_JACKS ||
-      cmd.start_id() + cmd.count() > NUM_JACKS) {
+  if (cmd.start_id() >= NUM_JACKS || cmd.start_id() + cmd.count() > NUM_JACKS) {
     cmd.Reply(AudioStatus::VIRTIO_SND_S_BAD_MSG, {});
     return;
   }
@@ -392,16 +388,21 @@ void AudioHandler::JacksInfo(JackInfoCommand& cmd) {
 }
 
 void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
-  auto stream_id = buffer.stream_id();
-  auto& stream_desc = stream_descs_[stream_id];
+  const auto stream_id = buffer.stream_id();
+  // Invalid or capture streams shouldn't send tx buffers
+  if (stream_id >= streams_.size() || IsCapture(stream_id)) {
+    LOG(ERROR) << "Invalid or capture streams have sent tx buffers";
+    buffer.SendStatus(AudioStatus::VIRTIO_SND_S_BAD_MSG, 0, 0);
+    return;
+  }
+
+  uint32_t sample_rate = 0;
+  uint8_t channels = 0;
+  uint8_t bits_per_channel = 0;
   {
+    auto& stream_desc = stream_descs_[stream_id];
     std::lock_guard<std::mutex> lock(stream_desc.mtx);
-    auto& holding_buffer = stream_descs_[stream_id].buffer;
-    // Invalid or capture streams shouldn't send tx buffers
-    if (stream_id >= streams_.size() || IsCapture(stream_id)) {
-      buffer.SendStatus(AudioStatus::VIRTIO_SND_S_BAD_MSG, 0, 0);
-      return;
-    }
+
     // A buffer may be received for an inactive stream if we were slow to
     // process it and the other side stopped the stream. Quietly ignore it in
     // that case
@@ -409,55 +410,15 @@ void AudioHandler::OnPlaybackBuffer(TxBuffer buffer) {
       buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
       return;
     }
-    auto sink_id = stream_id - NUM_INPUT_STREAMS;
-    if (sink_id >= audio_sinks_.size()) {
-      LOG(ERROR) << "Audio sink for stream id " << stream_id
-                 << " does not exist";
-      buffer.SendStatus(AudioStatus::VIRTIO_SND_S_BAD_MSG, 0, 0);
-      return;
-    }
-    auto audio_sink = audio_sinks_[sink_id];
-    // Webrtc will silently ignore any buffer with a length different than 10ms,
-    // so we must split any buffer bigger than that and temporarily store any
-    // remaining frames that are less than that size.
-    auto current_time = rtc::TimeMillis();
-    // The timestamp of the first 10ms chunk to be sent so that the last one
-    // will have the current time
-    auto base_time =
-        current_time - ((buffer.len() - 1) / holding_buffer.buffer.size()) * 10;
-    // number of frames in a 10 ms buffer
-    const int frames = stream_desc.sample_rate / 100;
-    size_t pos = 0;
-    while (pos < buffer.len()) {
-      if (holding_buffer.empty() &&
-          buffer.len() - pos >= holding_buffer.buffer.size()) {
-        // Avoid the extra copy into holding buffer
-        // This casts away volatility of the pointer, necessary because the
-        // webrtc api doesn't expect volatile memory. This should be safe though
-        // because webrtc will use the contents of the buffer before returning
-        // and only then we release it.
-        CvdAudioFrameBuffer audio_frame_buffer(
-            const_cast<const uint8_t*>(&buffer.get()[pos]),
-            stream_desc.bits_per_sample, stream_desc.sample_rate,
-            stream_desc.channels, frames);
-        // Multiple output streams are mixed on the client side.
-        audio_sink->OnFrame(audio_frame_buffer, base_time);
-        pos += holding_buffer.buffer.size();
-      } else {
-        pos += holding_buffer.Add(buffer.get() + pos, buffer.len() - pos);
-        if (holding_buffer.full()) {
-          auto buffer_ptr = const_cast<const uint8_t*>(holding_buffer.data());
-          CvdAudioFrameBuffer audio_frame_buffer(
-              buffer_ptr, stream_desc.bits_per_sample, stream_desc.sample_rate,
-              stream_desc.channels, frames);
-          audio_sink->OnFrame(audio_frame_buffer, base_time);
-          holding_buffer.count = 0;
-        }
-      }
-      base_time += 10;
-    }
+
+    sample_rate = stream_desc.sample_rate;
+    channels = stream_desc.channels;
+    bits_per_channel = stream_desc.bits_per_sample;
   }
-  buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
+  const auto consumed_bytes = audio_mixer_->OnPlayback(
+      stream_id, sample_rate, channels, bits_per_channel, buffer.get(),
+      buffer.len());
+  buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, consumed_bytes);
 }
 
 void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
@@ -482,15 +443,16 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
     const auto samples_per_channel = stream_desc.sample_rate / 100;
     const auto bytes_per_request =
         samples_per_channel * bytes_per_sample * stream_desc.channels;
-    bool muted = false;
+    auto& holding_buffer = stream_descs_[stream_id].holding_buffer;
     size_t bytes_read = 0;
-    auto& holding_buffer = stream_descs_[stream_id].buffer;
-    auto rx_buffer = const_cast<uint8_t*>(buffer.get());
+    const auto rx_buffer = buffer.get();
     if (!holding_buffer.empty()) {
-      // Consume any bytes remaining from previous requests
-      bytes_read += holding_buffer.Take(rx_buffer + bytes_read,
-                                        buffer.len() - bytes_read);
+      // Fill remaining data from previous iteration
+      bytes_read = holding_buffer.size();
+      std::copy(holding_buffer.cbegin(), holding_buffer.cend(), rx_buffer);
+      holding_buffer.clear();
     }
+    bool muted = false;
     while (buffer.len() - bytes_read >= bytes_per_request) {
       // Skip the holding buffer in as many reads as possible to avoid the extra
       // copies
@@ -516,13 +478,9 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
     if (bytes_read < buffer.len()) {
       // There is some buffer left to fill, but it's less than 10ms, read into
       // holding buffer to ensure the remainder is kept around for future reads
-      auto write_pos = holding_buffer.data();
-      // Holding buffer is the exact size we need to read into and is emptied
-      // before we try to read into it.
-      CHECK(holding_buffer.freeCapacity() >= bytes_per_request)
-          << "Buffer too small for receiving audio";
+      holding_buffer.resize(bytes_per_request);
       auto res = audio_source_->GetMoreAudioData(
-          write_pos, bytes_per_sample, samples_per_channel,
+          holding_buffer.data(), bytes_per_sample, samples_per_channel,
           stream_desc.channels, stream_desc.sample_rate, muted);
       if (res < 0) {
         // This is likely a recoverable error, log the error but don't let the
@@ -532,10 +490,15 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
         // The source is muted, just fill the buffer with zeros and return
         memset(rx_buffer + bytes_read, 0, buffer.len() - bytes_read);
       } else {
-        auto bytes_received = res * bytes_per_sample * stream_desc.channels;
-        holding_buffer.count += bytes_received;
-        bytes_read += holding_buffer.Take(rx_buffer + bytes_read,
-                                          buffer.len() - bytes_read);
+        const auto bytes_to_read = buffer.len() - bytes_read;
+        std::copy(holding_buffer.data(), holding_buffer.data() + bytes_to_read,
+                  rx_buffer + bytes_read);
+        bytes_read += bytes_to_read;
+
+        const auto new_size = holding_buffer.size() - bytes_to_read;
+        std::memmove(holding_buffer.data(),
+                     holding_buffer.data() + bytes_to_read, new_size);
+        holding_buffer.resize(new_size);
         // If the entire buffer is not full by now there is a bug above
         // somewhere
         CHECK(bytes_read == buffer.len()) << "Failed to read entire buffer";
@@ -544,39 +507,6 @@ void AudioHandler::OnCaptureBuffer(RxBuffer buffer) {
   }
   buffer.SendStatus(AudioStatus::VIRTIO_SND_S_OK, 0, buffer.len());
 }
-
-void AudioHandler::HoldingBuffer::Reset(size_t size) {
-  buffer.resize(size);
-  count = 0;
-}
-
-size_t AudioHandler::HoldingBuffer::Add(const volatile uint8_t* data,
-                                        size_t max_len) {
-  auto added_len = std::min(max_len, buffer.size() - count);
-  std::copy(data, data + added_len, &buffer[count]);
-  count += added_len;
-  return added_len;
-}
-
-size_t AudioHandler::HoldingBuffer::Take(uint8_t* dst, size_t len) {
-  auto n = std::min(len, count);
-  std::copy(buffer.begin(), buffer.begin() + n, dst);
-  std::copy(buffer.begin() + n, buffer.begin() + count, buffer.begin());
-  count -= n;
-  return n;
-}
-
-bool AudioHandler::HoldingBuffer::empty() const { return count == 0; }
-
-bool AudioHandler::HoldingBuffer::full() const {
-  return count == buffer.size();
-}
-
-size_t AudioHandler::HoldingBuffer::freeCapacity() const {
-  return buffer.size() - count;
-}
-
-uint8_t* AudioHandler::HoldingBuffer::data() { return buffer.data(); }
 
 bool AudioHandler::IsCapture(uint32_t stream_id) const {
   CHECK(stream_id < streams_.size()) << "Invalid stream id: " << stream_id;

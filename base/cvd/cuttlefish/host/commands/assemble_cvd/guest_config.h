@@ -44,6 +44,7 @@ struct GuestConfig {
   std::optional<std::string> custom_keyboard_config;
   std::optional<std::string> domkey_mapping_config;
   int output_audio_streams_count = 1;
+  std::string audio_settings_textproto;
   std::optional<bool> enforce_mac80211_hwsim;
   int blank_data_image_mb = 0;
 };
