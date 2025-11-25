@@ -41,6 +41,9 @@ $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 # Nested virtualization support
 $(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
 
+# AiSeal feature
+$(call inherit-product, device/google/cuttlefish/shared/aiseal/device_vendor.mk)
+
 #
 # Special settings for the target
 #
