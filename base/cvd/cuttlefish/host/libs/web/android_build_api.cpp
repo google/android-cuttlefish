@@ -275,6 +275,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
                                       "Error fetching last known good build "
                                       "id for:\nbranch \"{}\", target \"{}\"",
                                       branch, target);
+  LOG(INFO) << "\n\n TODO CJR \n\n" << "LatestBuildId response:\n" << json;
   if (!json.isMember("builds")) {
     return std::nullopt;
   }
