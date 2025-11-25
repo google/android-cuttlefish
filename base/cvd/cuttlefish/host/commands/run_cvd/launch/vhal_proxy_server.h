@@ -21,7 +21,6 @@
 namespace cuttlefish {
 
 std::optional<MonitorCommand> VhalProxyServer(
-    const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance);
 
 }  // namespace cuttlefish

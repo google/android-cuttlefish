@@ -460,6 +460,9 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_automotive_proxy(FLAGS_enable_automotive_proxy);
 
+  std::vector<bool> enable_vhal_proxy_server_vec =
+      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_vhal_proxy_server));
+
   std::vector<std::string> gnss_file_paths =
       CF_EXPECT(GET_FLAG_STR_VALUE(gnss_file_path));
   std::vector<std::string> fixed_location_file_paths =
@@ -675,22 +678,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   auto straced = android::base::Tokenize(FLAGS_straced_host_executables, ",");
   std::set<std::string> straced_set(straced.begin(), straced.end());
   tmp_config_obj.set_straced_host_executables(straced_set);
-
-  auto vhal_proxy_server_instance_num = *instance_nums.begin() - 1;
-  if (FLAGS_vhal_proxy_server_instance_num > 0) {
-    vhal_proxy_server_instance_num = FLAGS_vhal_proxy_server_instance_num - 1;
-  }
-  tmp_config_obj.set_vhal_proxy_server_port(
-      cuttlefish::vhal_proxy_server::kDefaultEthPort +
-      vhal_proxy_server_instance_num);
-  std::vector<bool> enable_vhal_proxy_server_vec =
-      CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_vhal_proxy_server));
-  bool enable_vhal_proxy_server =
-      std::any_of(enable_vhal_proxy_server_vec.begin(),
-                  enable_vhal_proxy_server_vec.end(), [](bool e) { return e; });
-  LOG(DEBUG) << "launch vhal proxy server: "
-             << (enable_vhal_proxy_server &&
-                 vhal_proxy_server_instance_num <= 0);
 
   tmp_config_obj.set_kvm_path(FLAGS_kvm_path);
   tmp_config_obj.set_vhost_vsock_path(FLAGS_vhost_vsock_path);
@@ -1041,6 +1028,11 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
     instance.set_fastboot_host_port(const_instance.adb_host_port());
 
+    instance.set_enable_vhal_proxy_server(
+        enable_vhal_proxy_server_vec[instance_index]);
+    instance.set_vhal_proxy_server_port(
+        cuttlefish::vhal_proxy_server::kDefaultEthPort + num - 1);
+
     std::uint8_t ethernet_mac[6] = {};
     std::uint8_t mobile_mac[6] = {};
     std::uint8_t wifi_mac[6] = {};
@@ -1222,9 +1214,6 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_start_pica(is_first_instance && any_not_netsim_uwb &&
                             FLAGS_pica_instance_num <= 0);
-    instance.set_start_vhal_proxy_server(
-        is_first_instance && enable_vhal_proxy_server &&
-        FLAGS_vhal_proxy_server_instance_num <= 0);
 
     // TODO(b/288987294) Remove this when separating environment is done
     bool instance_start_wmediumd = is_first_instance && start_wmediumd;

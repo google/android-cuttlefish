@@ -227,9 +227,9 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
               ? "com.android.hardware.graphics.composer.drm_hwcomposer"
               : "com.android.hardware.graphics.composer.ranchu";
 
-  if (config.vhal_proxy_server_port()) {
+  if (instance.vhal_proxy_server_port()) {
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
-        std::to_string(config.vhal_proxy_server_port());
+        std::to_string(instance.vhal_proxy_server_port());
     int32_t instance_id;
     CF_EXPECT(android::base::ParseInt(instance.id(), &instance_id),
               "instance id: " << instance.id() << " is not a valid int");

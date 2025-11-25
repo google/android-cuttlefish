@@ -193,7 +193,6 @@
 
 // Vhal Proxy Server default parameter
 #define CF_DEFAULTS_ENABLE_VHAL_PROXY_SERVER false
-#define CF_DEFAULTS_VHAL_PROXY_SERVER_INSTANCE_NUM 0
 
 // Bluetooth default parameters
 #define CF_DEFAULTS_ENABLE_HOST_BLUETOOTH true

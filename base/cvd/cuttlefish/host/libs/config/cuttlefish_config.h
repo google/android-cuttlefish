@@ -125,10 +125,6 @@ class CuttlefishConfig {
   void set_enable_automotive_proxy(bool enable_automotive_proxy);
   bool enable_automotive_proxy() const;
 
-  // The vsock port used by vhal_proxy_server
-  void set_vhal_proxy_server_port(int port);
-  int vhal_proxy_server_port() const;
-
   void set_enable_host_nfc(bool enable_host_nfc);
   bool enable_host_nfc() const;
 
@@ -624,7 +620,8 @@ class CuttlefishConfig {
     std::string filename_encryption_mode() const;
     ExternalNetworkMode external_network_mode() const;
 
-    bool start_vhal_proxy_server() const;
+    bool enable_vhal_proxy_server() const;
+    int vhal_proxy_server_port() const;
 
     int audio_output_streams_count() const;
 
@@ -852,9 +849,8 @@ class CuttlefishConfig {
     void set_filename_encryption_mode(const std::string& filename_encryption_mode);
     void set_external_network_mode(ExternalNetworkMode network_mode);
 
-    // Whether we should start vhal_proxy_server for the guest-side VHAL to
-    // connect to.
-    void set_start_vhal_proxy_server(bool start_vhal_proxy_server);
+    void set_enable_vhal_proxy_server(bool enable_vhal_proxy_server);
+    void set_vhal_proxy_server_port(int port);
 
     void set_audio_output_streams_count(int count);
 
