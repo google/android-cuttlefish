@@ -25,6 +25,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -55,12 +56,15 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/config/fetched_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
+namespace {
 
-static uint64_t AvailableSpaceAtPath(const std::string& path) {
+uint64_t AvailableSpaceAtPath(const std::string& path) {
   struct statvfs vfs{};
   if (statvfs(path.c_str(), &vfs) != 0) {
     int error_num = errno;
@@ -72,11 +76,42 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
+Result<FetchedArchive> FindImgZip(const FetcherConfig& fetcher_config,
+                                  std::string_view system_image_dir) {
+  for (const auto& [member_name, member] : fetcher_config.get_cvd_files()) {
+    if (member.source != FileSource::DEFAULT_BUILD) {
+      continue;
+    } else if (absl::StrContains(member_name, "-img-")) {
+      return CF_EXPECT(FetchedArchive::Create(
+          fetcher_config, FileSource::DEFAULT_BUILD, member_name));
+    } else if (absl::StrContains(member.archive_source, "-img-")) {
+      return CF_EXPECT(FetchedArchive::Create(
+          fetcher_config, FileSource::DEFAULT_BUILD, member.archive_source));
+    }
+  }
+  return CF_ERR("No img zip found");
+}
+
+}  // namespace
+
 Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
-    const SystemImageDirFlag& system_image_dir) {
+    const SystemImageDirFlag& system_image_dirs) {
   size_t instance_index = 0;
   for (const auto& instance : config.Instances()) {
+    const FetcherConfig& fetcher_config =
+        fetcher_configs.ForInstance(instance_index);
+    std::string system_image_dir = system_image_dirs.ForIndex(instance_index);
+
+    if (Result<FetchedArchive> img_zip =
+            FindImgZip(fetcher_config, system_image_dir);
+        img_zip.ok()) {
+      LOG(DEBUG) << "Found image zip: " << *img_zip;
+    } else {
+      LOG(DEBUG) << "Error accessing '-img-*.zip', expected for a local build.";
+      LOG(DEBUG) << img_zip.error().FormatForEnv();
+    }
+
     std::optional<ChromeOsStateImage> chrome_os_state =
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
@@ -85,8 +120,7 @@ Result<void> CreateDynamicDiskFiles(
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk
     CF_EXPECT(InitializeEspImage(config, instance));
-    CF_EXPECT(RebuildSuperImageIfNecessary(
-        fetcher_configs.ForInstance(instance_index), instance));
+    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
 
     CF_EXPECT(InitializeAccessKregistryImage(instance));
     CF_EXPECT(InitializeHwcomposerPmemImage(instance));
@@ -128,7 +162,7 @@ Result<void> CreateDynamicDiskFiles(
     MiscImage misc = CF_EXPECT(MiscImage::ReuseOrCreate(instance));
 
     DiskBuilder os_disk_builder = OsCompositeDiskBuilder(
-        config, instance, chrome_os_state, metadata, misc, system_image_dir);
+        config, instance, chrome_os_state, metadata, misc, system_image_dirs);
     const auto os_built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
