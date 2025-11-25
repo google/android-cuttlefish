@@ -246,22 +246,13 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnSensorsMessage(const uint8_t *msg, size_t size) override {
     std::string msgstr(msg, msg + size);
-    std::vector<std::string> xyz = android::base::Split(msgstr, " ");
 
-    if (xyz.size() != 3) {
-      LOG(WARNING) << "Invalid rotation angles: Expected 3, received "
-                   << xyz.size();
-      return;
+    if (msgstr.rfind(kOnSensorLowLatencyOffBodyDetectCmd, 0) == 0) {
+      auto payload = msgstr.substr(kOnSensorLowLatencyOffBodyDetectCmd.size());
+      HandleLowLatencyOffBodySensorMessage(payload);
+    } else {
+      HandleRotationSensorMessage(msgstr);
     }
-
-    double x, y, z;
-    CHECK(android::base::ParseDouble(xyz.at(0), &x))
-        << "X rotation value must be a double";
-    CHECK(android::base::ParseDouble(xyz.at(1), &y))
-        << "Y rotation value must be a double";
-    CHECK(android::base::ParseDouble(xyz.at(2), &z))
-        << "Z rotation value must be a double";
-    sensors_handler_.HandleMessage(x, y, z);
   }
 
   void OnLightsChannelOpen(
@@ -431,6 +422,40 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
   }
 
+  void HandleRotationSensorMessage(const std::string &msg) {
+    std::vector<std::string> xyz = android::base::Split(msg, " ");
+
+    if (xyz.size() != 3) {
+      LOG(WARNING) << "Invalid rotation angles: Expected 3, received "
+                   << xyz.size();
+      return;
+    }
+
+    double x, y, z;
+    if (!android::base::ParseDouble(xyz.at(0), &x)) {
+      LOG(ERROR) << "X rotation value must be a double";
+      return;
+    }
+    if (!android::base::ParseDouble(xyz.at(1), &y)) {
+      LOG(ERROR) << "Y rotation value must be a double";
+      return;
+    }
+    if (!android::base::ParseDouble(xyz.at(2), &z)) {
+      LOG(ERROR) << "Z rotation value must be a double";
+      return;
+    }
+    sensors_handler_.HandleMessage(x, y, z);
+  }
+
+  void HandleLowLatencyOffBodySensorMessage(const std::string &msg) {
+    double value;
+    if (!android::base::ParseDouble(msg, &value)) {
+      LOG(ERROR) << "Low latency off body value must be double";
+      return;
+    }
+    sensors_handler_.HandleLowLatencyOffBodyDetectMessage(value);
+  }
+
   std::unique_ptr<InputConnector::EventSink> input_events_sink_;
   KernelLogEventsHandler &kernel_log_events_handler_;
   int kernel_log_subscription_id_ = -1;
@@ -446,6 +471,8 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   std::shared_ptr<webrtc_streaming::LightsObserver> lights_observer_;
   int sensors_subscription_id = -1;
   int lights_subscription_id_ = -1;
+  static constexpr std::string_view kOnSensorLowLatencyOffBodyDetectCmd =
+      "low-latency-off-body-detect:";
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
