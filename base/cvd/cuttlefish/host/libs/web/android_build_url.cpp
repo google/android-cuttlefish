@@ -143,7 +143,7 @@ std::string AndroidBuildUrl::GetArtifactUrl(
     std::string_view page_token) {
   UrlBuilder builder =
       UrlBuilder::GetArtifactBaseUrl(api_base_url_, id, target);
-  builder.AddQueryParameter("maxResults", "100");
+  builder.AddQueryParameter("pageSize", "100"); // maximum value allowed by API
   if (!artifact_filenames.empty()) {
     builder.AddQueryParameter("nameRegexp",
                               BuildNameRegexp(artifact_filenames));
