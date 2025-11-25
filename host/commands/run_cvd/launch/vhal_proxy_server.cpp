@@ -26,12 +26,11 @@
 namespace cuttlefish {
 
 std::optional<MonitorCommand> VhalProxyServer(
-    const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!instance.start_vhal_proxy_server()) {
+  if (!instance.enable_vhal_proxy_server()) {
     return {};
   }
-  int port = config.vhal_proxy_server_port();
+  int port = instance.vhal_proxy_server_port();
   Command command = Command(VhalProxyServerBinary())
                         .AddParameter(VhalProxyServerConfig())
                         .AddParameter(fmt::format(

@@ -2142,13 +2142,22 @@ void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_prefix(
   (*Dictionary())[kWifiMacPrefix] = wifi_mac_prefix;
 }
 
-static constexpr char kStartVhalProxyServer[] = "start_vhal_proxy_server";
-void CuttlefishConfig::MutableInstanceSpecific::set_start_vhal_proxy_server(
-    bool start_vhal_proxy_server) {
-  (*Dictionary())[kStartVhalProxyServer] = start_vhal_proxy_server;
+static constexpr char kEnableVhalProxyServer[] = "enable_vhal_proxy_server";
+void CuttlefishConfig::MutableInstanceSpecific::set_enable_vhal_proxy_server(
+    bool enable_vhal_proxy_server) {
+  (*Dictionary())[kEnableVhalProxyServer] = enable_vhal_proxy_server;
 }
-bool CuttlefishConfig::InstanceSpecific::start_vhal_proxy_server() const {
-  return (*Dictionary())[kStartVhalProxyServer].asBool();
+bool CuttlefishConfig::InstanceSpecific::enable_vhal_proxy_server() const {
+  return (*Dictionary())[kEnableVhalProxyServer].asBool();
+}
+
+static constexpr char kVhalProxyServerPort[] = "vhal_proxy_server_port";
+void CuttlefishConfig::MutableInstanceSpecific::set_vhal_proxy_server_port(
+    int port) {
+  (*Dictionary())[kVhalProxyServerPort] = port;
+}
+int CuttlefishConfig::InstanceSpecific::vhal_proxy_server_port() const {
+  return (*Dictionary())[kVhalProxyServerPort].asInt();
 }
 
 static constexpr char kAudioOutputStreamsCount[] = "audio_output_streams_count";
