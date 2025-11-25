@@ -120,10 +120,10 @@ std::string AndroidBuildUrl::GetLatestBuildIdUrl(std::string_view branch,
   UrlBuilder builder = UrlBuilder::GetLatestBuildIdBaseUrl(api_base_url_);
   builder.AddQueryParameter("buildAttemptStatus", "complete");
   builder.AddQueryParameter("buildType", "submitted");
-  builder.AddQueryParameter("maxResults", "1");
+  builder.AddQueryParameter("pageSize", "1");
   builder.AddQueryParameter("successful", "true");
-  builder.AddQueryParameter("branch", branch);
-  builder.AddQueryParameter("target", target);
+  builder.AddQueryParameter("branches", branch);
+  builder.AddQueryParameter("targets", target);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);
 
   return builder.GetUrl();
