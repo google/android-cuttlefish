@@ -24,6 +24,7 @@
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
@@ -65,7 +66,7 @@ using DigestsFetcher = std::function<Result<std::string>(std::string)>;
 //       CF_EXPECT(CasDownloader::Create(cas_downloader_flags,
 //                                       service_account_filepath),
 //                 "Failed to create CasDownloader.");
-//   CF_EXPECT(casClient->DownloadFile(build_id, build_target, artifact_name,
+//   CF_EXPECT(casClient->DownloadFile(device_build, artifact_name,
 //                                     target_dir, digests_fetcher),
 //             "Failed to download file from CAS.");
 //
@@ -78,12 +79,16 @@ class CasDownloader {
       const std::string& service_account_filepath);
   virtual ~CasDownloader() = default;
   virtual Result<void> DownloadFile(
-      const std::string& build_id, const std::string& build_target,
-      const std::string& artifact_name, const std::string& target_directory,
+      const DeviceBuild& build, const std::string& artifact_name,
+      const std::string& target_directory,
       const DigestsFetcher& digests_fetcher,
       const std::optional<std::string>& stats_filepath = std::nullopt);
 
  private:
+  static Result<std::unique_ptr<CasDownloader>> CreateImpl(
+      const CasDownloaderFlags& cas_downloader_flags,
+      const std::string& service_account_filepath);
+
   Result<CasIdentifier> GetCasIdentifier(const std::string& build_id,
                                          const std::string& build_target,
                                          const std::string& artifact_name,
