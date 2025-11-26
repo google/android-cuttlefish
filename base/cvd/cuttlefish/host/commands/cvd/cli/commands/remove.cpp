@@ -84,7 +84,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
       return {};
     }
     auto config_path = CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
-    CF_EXPECT(instance_manager_.IssueStopCommand(request, config_path, group));
+    CF_EXPECT(instance_manager_.IssueStopCommand(config_path, group));
     return {};
   }
 

@@ -24,7 +24,6 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
@@ -58,7 +57,7 @@ class InstanceManager {
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
 
-  Result<void> CvdClear(const CommandRequest&);
+  Result<void> CvdClear();
 
   Result<std::vector<LocalInstanceGroup>> FindGroups(
       const InstanceDatabase::Filter& filter) const;
@@ -68,8 +67,7 @@ class InstanceManager {
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase::Filter& filter) const;
 
-  Result<void> IssueStopCommand(const CommandRequest& request,
-                                const std::string& config_file_path,
+  Result<void> IssueStopCommand(const std::string& config_file_path,
                                 LocalInstanceGroup& group);
 
  private:
