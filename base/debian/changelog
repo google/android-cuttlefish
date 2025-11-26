@@ -1,3 +1,9 @@
+cuttlefish-common (1.34.1) UNRELEASED; urgency=medium
+
+  * Pin cxx dependency in netsim to fix build
+
+ -- Chad Reynolds <chadreynolds@google.com>  Wed, 26 Nov 2025 14:49:19 -0800
+
 cuttlefish-common (1.34.0) unstable; urgency=medium
 
   * Mark release 1.33.0 as unstable by @jmacnak in https://github.com/google/android-cuttlefish/pull/1801
