@@ -7,3 +7,9 @@ runtime_resource_overlay {
     sdk_version: "current",
     product_specific: true,
 }
+
+runtime_resource_overlay {
+    name: "cuttlefish_overlay_nfc_gsi",
+    sdk_version: "current",
+    vendor: true,
+}
