@@ -463,13 +463,13 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
 
     const std::string config_path =
         CF_EXPECT(SaveConfig(config, target.directories.root));
-    count++;
     fetch_results.emplace_back(FetchResult{
         .fetcher_config_path = config_path,
         .builds = target.builds,
     });
     LOG(INFO) << "Completed target fetch to '" << target.directories.root
               << "' (" << count << " out of " << targets.size() << ")";
+    count++;
   }
   LOG(DEBUG) << "Waiting for host package fetch";
   CF_EXPECT(host_package_future.get());
