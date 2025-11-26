@@ -52,6 +52,10 @@ static constexpr char kBootSrcPathIA32[] =
     "/usr/lib/grub/i386-efi/monolithic/grubia32.efi";
 static constexpr char kBootDestPathIA32[] = "/EFI/BOOT/BOOTIA32.EFI";
 
+static constexpr char kBootSrcPathX64[] =
+    "/usr/lib/grub/x86_64-efi/monolithic/grubx64.efi";
+static constexpr char kBootDestPathX64[] = "/EFI/BOOT/BOOTX64.EFI";
+
 static constexpr char kBootSrcPathAA64[] =
     "/usr/lib/grub/arm64-efi/monolithic/grubaa64.efi";
 static constexpr char kBootDestPathAA64[] = "/EFI/BOOT/BOOTAA64.EFI";
@@ -61,6 +65,11 @@ static constexpr char kBootDestPathRiscV64[] = "/EFI/BOOT/BOOTRISCV64.EFI";
 static constexpr char kMultibootModuleSrcPathIA32[] =
     "/usr/lib/grub/i386-efi/multiboot.mod";
 static constexpr char kMultibootModuleDestPathIA32[] =
+    "/EFI/modules/multiboot.mod";
+
+static constexpr char kMultibootModuleSrcPathX64[] =
+    "/usr/lib/grub/x86_64-efi/multiboot.mod";
+static constexpr char kMultibootModuleDestPathX64[] =
     "/EFI/modules/multiboot.mod";
 
 static constexpr char kMultibootModuleSrcPathAA64[] =
@@ -85,6 +94,7 @@ static constexpr std::array kGrubModulesX86{
     "cat",    "help",       "fat",   "part_msdos", "part_gpt"};
 static constexpr char kGrubModulesPath[] = "/usr/lib/grub/";
 static constexpr char kGrubModulesX86Name[] = "i386-efi";
+static constexpr char kGrubModulesX64Name[] = "x86_64-efi";
 
 Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
                           int offset_num_mb) {
@@ -310,18 +320,32 @@ EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
     case Arch::RiscV64:
       // FIXME: Implement
       break;
-    case Arch::X86:
-    case Arch::X86_64: {
+    case Arch::X86: {
       const auto x86_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX86Name);
 
       if (GrubMakeImage(kGrubConfigDestDirectoryPath, kGrubModulesX86Name,
                         x86_modules, efi_path, kGrubModulesX86)) {
-        LOG(INFO) << "Loading grub_mkimage generated EFI binary";
+        LOG(INFO) << "Loading grub_mkimage generated EFI binary for X86";
         builder.File(efi_path, kBootDestPathIA32, /* required */ true);
       } else {
-        LOG(INFO) << "Loading prebuilt monolith EFI binary";
+        LOG(INFO) << "Loading prebuilt monolith EFI binary for X86";
         builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
         builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
+                     /* required */ true);
+      }
+      break;
+    }
+    case Arch::X86_64: {
+      const auto x64_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX64Name);
+
+      if (GrubMakeImage(kGrubConfigDestDirectoryPath, kGrubModulesX64Name,
+                        x64_modules, efi_path, kGrubModulesX86)) {
+        LOG(INFO) << "Loading grub_mkimage generated EFI binary for X86_64";
+        builder.File(efi_path, kBootDestPathX64, /* required */ true);
+      } else {
+        LOG(INFO) << "Loading prebuilt monolith EFI binary for X86_64";
+        builder.File(kBootSrcPathX64, kBootDestPathX64, /* required */ true);
+        builder.File(kMultibootModuleSrcPathX64, kMultibootModuleDestPathX64,
                      /* required */ true);
       }
       break;
@@ -378,13 +402,11 @@ bool AndroidEfiLoaderEspBuilder::Build() const {
       dest_path = kBootDestPathRiscV64;
       break;
     case Arch::X86:
-    case Arch::X86_64: {
       dest_path = kBootDestPathIA32;
       break;
-      default:
-        LOG(ERROR) << "Unknown architecture";
-        return false;
-    }
+    case Arch::X86_64:
+      dest_path = kBootDestPathX64;
+      break;
   }
   builder.File(efi_loader_path_, dest_path, /* required */ true);
   return builder.Build();
