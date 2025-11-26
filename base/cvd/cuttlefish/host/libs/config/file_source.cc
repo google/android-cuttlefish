@@ -16,41 +16,40 @@
 
 #include "cuttlefish/host/libs/config/file_source.h"
 
-#include <cctype>
-#include <string>
+#include <ostream>
+#include <string_view>
+
+#include "absl/strings/match.h"
 
 namespace cuttlefish {
 
-FileSource SourceStringToEnum(std::string source) {
-  for (auto& c : source) {
-    c = std::tolower(c);
-  }
-  if (source == "default_build") {
+FileSource SourceStringToEnum(std::string_view source) {
+  if (absl::EqualsIgnoreCase(source, "default_build")) {
     return FileSource::DEFAULT_BUILD;
-  } else if (source == "system_build") {
+  } else if (absl::EqualsIgnoreCase(source, "system_build")) {
     return FileSource::SYSTEM_BUILD;
-  } else if (source == "kernel_build") {
+  } else if (absl::EqualsIgnoreCase(source, "kernel_build")) {
     return FileSource::KERNEL_BUILD;
-  } else if (source == "local_file") {
+  } else if (absl::EqualsIgnoreCase(source, "local_file")) {
     return FileSource::LOCAL_FILE;
-  } else if (source == "generated") {
+  } else if (absl::EqualsIgnoreCase(source, "generated")) {
     return FileSource::GENERATED;
-  } else if (source == "bootloader_build") {
+  } else if (absl::EqualsIgnoreCase(source, "bootloader_build")) {
     return FileSource::BOOTLOADER_BUILD;
-  } else if (source == "android_efi_loader_build") {
+  } else if (absl::EqualsIgnoreCase(source, "android_efi_loader_build")) {
     return FileSource::ANDROID_EFI_LOADER_BUILD;
-  } else if (source == "boot_build") {
+  } else if (absl::EqualsIgnoreCase(source, "boot_build")) {
     return FileSource::BOOT_BUILD;
-  } else if (source == "host_package_build") {
+  } else if (absl::EqualsIgnoreCase(source, "host_package_build")) {
     return FileSource::HOST_PACKAGE_BUILD;
-  } else if (source == "chrome_os_build") {
+  } else if (absl::EqualsIgnoreCase(source, "chrome_os_build")) {
     return FileSource::CHROME_OS_BUILD;
   } else {
     return FileSource::UNKNOWN_PURPOSE;
   }
 }
 
-std::string SourceEnumToString(const FileSource& source) {
+std::string_view SourceEnumToString(FileSource source) {
   if (source == FileSource::DEFAULT_BUILD) {
     return "default_build";
   } else if (source == FileSource::SYSTEM_BUILD) {
@@ -74,6 +73,10 @@ std::string SourceEnumToString(const FileSource& source) {
   } else {
     return "unknown";
   }
+}
+
+std::ostream& operator<<(std::ostream& out, FileSource source) {
+  return out << SourceEnumToString(source);
 }
 
 }  // namespace cuttlefish
