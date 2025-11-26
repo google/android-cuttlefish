@@ -13,7 +13,7 @@ bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "brotli", version = "1.1.0")
 bazel_dep(name = "crc32c", version = "1.1.0")
 bazel_dep(name = "curl", version = "8.8.0.bcr.2")
-bazel_dep(name = "cxx.rs", version = "1.0.168")
+bazel_dep(name = "cxx.rs", version = "1.0.188")
 bazel_dep(name = "fmt", version = "11.2.0.bcr.1")
 bazel_dep(name = "freetype", version = "2.13.3")
 bazel_dep(name = "gflags", version = "2.2.2")
@@ -753,6 +753,7 @@ git_repository(
     patches = [
         "@//build_external/netsim:0001-Drop-pica-from-daemon-Cargo.toml.patch",
         "@//build_external/netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
+        "@//build_external/netsim:0003-Pin-cxx.patch",
     ],
     patch_strip = 1,
 )
