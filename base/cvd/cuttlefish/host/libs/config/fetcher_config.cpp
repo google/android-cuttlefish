@@ -165,7 +165,7 @@ CvdFile JsonToCvdFile(const std::string& file_path, const Json::Value& json) {
 
 Json::Value CvdFileToJson(const CvdFile& cvd_file) {
   Json::Value json;
-  json[kCvdFileSource] = SourceEnumToString(cvd_file.source);
+  json[kCvdFileSource] = std::string(SourceEnumToString(cvd_file.source));
   json[kCvdFileBuildId] = cvd_file.build_id;
   json[kCvdFileBuildTarget] = cvd_file.build_target;
   json[kCvdFileArchiveSource] = cvd_file.archive_source;

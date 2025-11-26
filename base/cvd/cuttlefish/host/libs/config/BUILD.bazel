@@ -202,6 +202,11 @@ cf_cc_library(
     name = "file_source",
     srcs = ["file_source.cc"],
     hdrs = ["file_source.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
+    ],
 )
 
 cf_cc_library(

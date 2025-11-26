@@ -15,11 +15,22 @@
  */
 #pragma once
 
-#include <string>
+#include <ostream>
+#include <string_view>
+
+#include "absl/strings/str_format.h"
+#include "fmt/ostream.h"
 
 namespace cuttlefish {
 
-// Order in enum is not guaranteed to be stable, serialized as a string.
+/**
+ * When a file is downloaded from `cvd fetch`, this is the "reason" the file is
+ * downloaded. More specifically, whether it corresponds to the
+ * `--default_build` argument, the `--system_build` argument, `--kernel_build`,
+ * et cetera.
+ *
+ * Order in enum is not guaranteed to be stable, serialized as a string.
+ */
 enum class FileSource {
   UNKNOWN_PURPOSE = 0,
   DEFAULT_BUILD,
@@ -34,7 +45,21 @@ enum class FileSource {
   CHROME_OS_BUILD,
 };
 
-FileSource SourceStringToEnum(std::string source);
-std::string SourceEnumToString(const FileSource& source);
+FileSource SourceStringToEnum(std::string_view source);
+std::string_view SourceEnumToString(FileSource source);
+
+std::ostream& operator<<(std::ostream&, FileSource);
+
+template <typename Sink>
+void AbslStringify(Sink& sink, FileSource file_source) {
+  sink.Append(SourceEnumToString(file_source));
+}
 
 }  // namespace cuttlefish
+
+namespace fmt {
+
+template <>
+struct formatter<::cuttlefish::FileSource> : ostream_formatter {};
+
+}  // namespace fmt
