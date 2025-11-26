@@ -1,3 +1,9 @@
+cuttlefish-common (1.26.1) UNRELEASED; urgency=medium
+
+  * Pin cxx dependency in netsim to fix build
+
+ -- Chad Reynolds <chadreynolds@google.com>  Wed, 26 Nov 2025 14:42:59 -0800
+
 cuttlefish-common (1.26.0) unstable; urgency=medium
 
   * Homogenize group directory structure by @jemoreira in https://github.com/google/android-cuttlefish/pull/1654
