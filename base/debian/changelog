@@ -1,3 +1,9 @@
+cuttlefish-common (1.27.1) UNRELEASED; urgency=medium
+
+  * Pin cxx dependency in netsim to fix build
+
+ -- Chad Reynolds <chadreynolds@google.com>  Wed, 26 Nov 2025 14:35:06 -0800
+
 cuttlefish-common (1.27.0) stable; urgency=medium
 
   * Add and use flag wrapper template class by @cjreynol in https://github.com/google/android-cuttlefish/pull/1680
