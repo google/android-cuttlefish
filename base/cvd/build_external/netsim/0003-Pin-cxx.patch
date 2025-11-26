@@ -1,0 +1,13 @@
+diff --git a/rust/daemon/Cargo.toml b/rust/daemon/Cargo.toml
+index 30f705ad..3a1819d4 100644
+--- a/rust/daemon/Cargo.toml
++++ b/rust/daemon/Cargo.toml
+@@ -11,7 +11,7 @@ doctest = false
+ [dependencies]
+ bytes = { version = ">=1.4.0"}
+ clap = { version = "4.1.8", default-features = false, features = ["derive", "error-context", "help", "std", "usage", "env" ] }
+-cxx = { version = ">=1.0.85", features = ["c++17"] }
++cxx = { version = "=1.0.188", features = ["c++17"] }
+ data-encoding = "2.4.0"
+ futures = "0.3.30"
+ glam = { version = "0.25.0", features = ["libm"] }
