@@ -113,8 +113,8 @@ Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
                        "--offset=" + std::to_string(offset_size_bytes),
                        data_image}) == 0);
   } else {
-    off_t image_size_sectors = image_size_bytes / 512;
     image_size_bytes -= offset_size_bytes;
+    off_t image_size_sectors = image_size_bytes / 512;
 
     CF_EXPECT(Execute({NewfsMsdos(),
                        "-F",
