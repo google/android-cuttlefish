@@ -230,6 +230,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "netsim_daemon_ffi_cc_library",
+    srcs = ["netsim-daemon/src/ffi.rs.cc"],
+    hdrs = ["netsim-daemon/src/ffi.rs.h"],
+    deps = [
+        ":lib-netsim",
+    ],
+    alwayslink = True,
+    linkstatic = True,
+)
+
 rust_library(
     name = "libnetsim_daemon",
     srcs = glob([
@@ -271,6 +282,7 @@ cc_binary(
     deps = [
         ":lib-netsim",
         ":libnetsim_daemon",
+        ":netsim_daemon_ffi_cc_library",
         ":netsim_cc_proto",
         "@grpc//:grpc++",
         "@netsim_crates//:grpcio-sys",
