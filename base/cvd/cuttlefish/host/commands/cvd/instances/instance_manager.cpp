@@ -220,8 +220,7 @@ Result<void> InstanceManager::UpdateInstanceGroup(
 }
 
 Result<void> InstanceManager::IssueStopCommand(
-    const CommandRequest& request, const std::string& config_file_path,
-    LocalInstanceGroup& group) {
+    const std::string& config_file_path, LocalInstanceGroup& group) {
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
@@ -260,7 +259,7 @@ Result<void> InstanceManager::IssueStopCommand(
   return {};
 }
 
-Result<void> InstanceManager::CvdClear(const CommandRequest& request) {
+Result<void> InstanceManager::CvdClear() {
   const std::string config_json_name =
       android::base::Basename(GetGlobalConfigFileLink());
   auto instance_groups =
@@ -270,7 +269,7 @@ Result<void> InstanceManager::CvdClear(const CommandRequest& request) {
     if (group.HasActiveInstances()) {
       auto config_path = GetCuttlefishConfigPath(group.HomeDir());
       if (config_path.ok()) {
-        auto stop_result = IssueStopCommand(request, *config_path, group);
+        auto stop_result = IssueStopCommand(*config_path, group);
         if (!stop_result.ok()) {
           LOG(ERROR) << stop_result.error().FormatForEnv();
         }
