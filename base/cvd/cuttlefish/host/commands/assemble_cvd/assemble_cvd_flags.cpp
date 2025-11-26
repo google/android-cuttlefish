@@ -166,13 +166,6 @@ DEFINE_bool(enable_automotive_proxy, CF_DEFAULTS_ENABLE_AUTOMOTIVE_PROXY,
 DEFINE_vec(enable_vhal_proxy_server,
            fmt::format("{}", CF_DEFAULTS_ENABLE_VHAL_PROXY_SERVER),
            "Enable the vhal proxy service on the host.");
-DEFINE_int32(vhal_proxy_server_instance_num,
-             CF_DEFAULTS_VHAL_PROXY_SERVER_INSTANCE_NUM,
-             "If it is greater than 0, use an existing vhal proxy server "
-             "instance which is "
-             "launched from cuttlefish instance "
-             "with vhal_proxy_server_instance_num. Else, launch a new vhal "
-             "proxy server instance");
 
 /**
  * crosvm sandbox feature requires /var/empty and seccomp directory
