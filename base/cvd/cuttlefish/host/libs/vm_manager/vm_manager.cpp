@@ -37,20 +37,23 @@
 namespace cuttlefish {
 namespace vm_manager {
 
+static std::unique_ptr<VmManager> Allocate(VmmMode mode, Arch arch) {
+  switch (mode) {
+    case VmmMode::kCrosvm:
+      return std::make_unique<CrosvmManager>();
+    case VmmMode::kQemu:
+      return std::make_unique<QemuManager>(arch);
+    case VmmMode::kGem5:
+      return std::make_unique<Gem5Manager>(arch);
+    case VmmMode::kUnknown:
+      LOG(ERROR) << "Invalid VM manager: " << mode;
+      return {};
+  }
+}
+
 std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
-  std::unique_ptr<VmManager> vmm;
-  if (vmm_mode == VmmMode::kQemu) {
-    vmm.reset(new QemuManager(arch));
-  } else if (vmm_mode == VmmMode::kGem5) {
-    vmm.reset(new Gem5Manager(arch));
-  } else if (vmm_mode == VmmMode::kCrosvm) {
-    vmm.reset(new CrosvmManager());
-  }
-  if (!vmm) {
-    LOG(ERROR) << "Invalid VM manager: " << vmm_mode;
-    return {};
-  }
-  if (!vmm->IsSupported()) {
+  std::unique_ptr<VmManager> vmm = Allocate(vmm_mode, arch);
+  if (vmm.get() != nullptr && !vmm->IsSupported()) {
     LOG(ERROR) << "VM manager " << vmm_mode
                << " is not supported on this machine.";
     return {};

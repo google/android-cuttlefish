@@ -34,7 +34,6 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
@@ -146,7 +145,7 @@ class OpenWrt : public CommandSource {
     auto openwrt_args = OpenwrtArgsFromConfig(instance_);
     switch (instance_.ap_boot_flow()) {
       case APBootFlow::Grub:
-        if (config_.vm_manager() == VmmMode::kQemu) {
+        if (IsQemu(config_)) {
           ap_cmd.AddReadWriteDisk(
               instance_.persistent_ap_composite_overlay_path());
         } else {
@@ -178,8 +177,7 @@ class OpenWrt : public CommandSource {
   // SetupFeature
   std::string Name() const override { return "OpenWrt"; }
   bool Enabled() const override {
-    return instance_.ap_boot_flow() != APBootFlow::None &&
-           config_.vm_manager() == VmmMode::kCrosvm;
+    return instance_.ap_boot_flow() != APBootFlow::None && IsCrosvm(config_);
   }
 
  private:

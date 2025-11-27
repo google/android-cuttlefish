@@ -66,4 +66,10 @@ VmManagerFlag::VmManagerFlag(VmmMode mode) : mode_(mode) {}
 
 VmmMode VmManagerFlag::Mode() const { return mode_; }
 
+bool IsCrosvm(const VmManagerFlag& vmm) { return IsCrosvm(vmm.Mode()); }
+
+bool IsQemu(const VmManagerFlag& vmm) { return IsQemu(vmm.Mode()); }
+
+bool IsGem5(const VmManagerFlag& vmm) { return IsGem5(vmm.Mode()); }
+
 }  // namespace cuttlefish
