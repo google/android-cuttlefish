@@ -967,5 +967,9 @@ class CuttlefishConfig {
 // device would actually perform a restore instead of their respective actions.
 bool IsRestoring(const CuttlefishConfig&);
 
+bool IsCrosvm(const CuttlefishConfig&);
+bool IsQemu(const CuttlefishConfig&);
+bool IsGem5(const CuttlefishConfig&);
+
 }  // namespace cuttlefish
 
