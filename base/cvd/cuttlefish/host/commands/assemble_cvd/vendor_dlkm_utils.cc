@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
+
 #include <fcntl.h>
 
 #include <algorithm>
@@ -407,12 +409,13 @@ Result<void> RepackSuperWithPartition(const std::string& superimg_path,
   return {};
 }
 
-Result<void> BuildVbmetaImage(const std::string& image_path,
+Result<void> BuildVbmetaImage(const std::string& vendor_dlkm_img,
                               const std::string& vbmeta_path) {
-  CF_EXPECT(!image_path.empty());
-  CF_EXPECTF(FileExists(image_path), "'{}' does not exist", image_path);
+  CF_EXPECT(!vendor_dlkm_img.empty());
+  CF_EXPECTF(FileExists(vendor_dlkm_img), "'{}' does not exist",
+             vendor_dlkm_img);
 
-  CF_EXPECT(Avb().MakeVbMetaImage(vbmeta_path, {}, {image_path},
+  CF_EXPECT(Avb().MakeVbMetaImage(vbmeta_path, {}, {vendor_dlkm_img},
                                   {"--padding_size", "4096"}));
   return {};
 }
