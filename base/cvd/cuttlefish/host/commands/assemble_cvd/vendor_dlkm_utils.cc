@@ -423,28 +423,27 @@ std::vector<std::string> Dedup(std::vector<std::string>&& vec) {
   return vec;
 }
 
-bool SplitRamdiskModules(const std::string& ramdisk_path,
-                         const std::string& ramdisk_stage_dir,
-                         const std::string& vendor_dlkm_build_dir,
-                         const std::string& system_dlkm_build_dir) {
-  const auto vendor_modules_dir = vendor_dlkm_build_dir + "/lib/modules";
-  const auto system_modules_dir = system_dlkm_build_dir + "/lib/modules";
-  auto ret = EnsureDirectoryExists(vendor_modules_dir);
-  CHECK(ret.ok()) << ret.error().FormatForEnv();
-  ret = EnsureDirectoryExists(system_modules_dir);
+Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
+                                 const std::string& ramdisk_stage_dir,
+                                 const std::string& vendor_dlkm_build_dir,
+                                 const std::string& system_dlkm_build_dir) {
+  std::string vendor_modules_dir = vendor_dlkm_build_dir + "/lib/modules";
+  std::string system_modules_dir = system_dlkm_build_dir + "/lib/modules";
+
+  CF_EXPECT(EnsureDirectoryExists(vendor_modules_dir));
+  CF_EXPECT(EnsureDirectoryExists(system_modules_dir));
+
   UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
-  auto res = FindFile(ramdisk_stage_dir.c_str(), "modules.load");
-  if (!res.ok()) {
-    LOG(ERROR) << "Failed to find modules.dep file in input ramdisk "
-               << ramdisk_path;
-    return false;
-  }
-  const auto module_load_file = android::base::Trim(res.value());
-  if (module_load_file.empty()) {
-    LOG(ERROR) << "Failed to find modules.dep file in input ramdisk "
-               << ramdisk_path;
-    return false;
-  }
+
+  std::string module_load_file =
+      CF_EXPECT(FindFile(ramdisk_stage_dir, "modules.load"),
+                "Failed to find modules.dep file in input ramdisk");
+  module_load_file = android::base::Trim(module_load_file);
+
+  CF_EXPECTF(!module_load_file.empty(),
+             "Failed to find modules.dep file in input ramdisk '{}'",
+             ramdisk_path);
+
   LOG(INFO) << "modules.load location " << module_load_file;
   const auto module_list =
       Dedup(android::base::Tokenize(ReadFile(module_load_file), "\n"));
@@ -469,30 +468,28 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
     if (IsKernelModuleSigned(module_location)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
-      auto res = EnsureDirectoryExists(
-          android::base::Dirname(system_dlkm_module_location));
-      CHECK(res.ok()) << res.error().FormatForEnv();
-      auto ret = RenameFile(module_location, system_dlkm_module_location);
-      CHECK(ret.ok()) << ret.error().FormatForEnv();
+
+      CF_EXPECT(EnsureDirectoryExists(
+          android::base::Dirname(system_dlkm_module_location)));
+      CF_EXPECT(RenameFile(module_location, system_dlkm_module_location));
+
       system_dlkm_modules.emplace(module_path);
     } else {
       const auto vendor_dlkm_module_location =
           fmt::format("{}/{}", vendor_modules_dir, module_path);
-      auto res = EnsureDirectoryExists(
-          android::base::Dirname(vendor_dlkm_module_location));
-      CHECK(res.ok()) << res.error().FormatForEnv();
-      auto ret = RenameFile(module_location, vendor_dlkm_module_location);
-      CHECK(ret.ok()) << ret.error().FormatForEnv();
+
+      CF_EXPECT(EnsureDirectoryExists(
+          android::base::Dirname(vendor_dlkm_module_location)));
+      CF_EXPECT(RenameFile(module_location, vendor_dlkm_module_location));
+
       vendor_dlkm_modules.emplace(module_path);
     }
   }
   for (const auto& gki_module : system_dlkm_modules) {
     for (const auto& dep : deps.at(gki_module)) {
-      if (vendor_dlkm_modules.count(dep)) {
-        LOG(ERROR) << "GKI module " << gki_module
-                   << " depends on vendor_dlkm module " << dep;
-        return false;
-      }
+      CF_EXPECTF(vendor_dlkm_modules.count(dep) == 0,
+                 "GKI module '{}' depends on vendor_dlkm module '{}'",
+                 gki_module, dep);
     }
   }
   LOG(INFO) << "There are " << ramdisk_modules.size() << " ramdisk modules, "
@@ -507,28 +504,27 @@ bool SplitRamdiskModules(const std::string& ramdisk_path,
   if (FileExists(initramfs_blocklist_path)) {
     const auto vendor_dlkm_blocklist_path =
         fmt::format("{}/{}", vendor_modules_dir, "modules.blocklist");
-    auto ret = RenameFile(initramfs_blocklist_path, vendor_dlkm_blocklist_path);
-    CHECK(ret.ok()) << ret.error().FormatForEnv();
+    CF_EXPECT(RenameFile(initramfs_blocklist_path, vendor_dlkm_blocklist_path));
   }
 
   // Write updated modules.dep and modules.load files
-  CHECK(WriteDepsToFile(FilterDependencies(deps, ramdisk_modules),
-                        module_base_dir + "/modules.dep"));
-  CHECK(WriteLinesToFile(ramdisk_modules, module_load_file.c_str()));
+  CF_EXPECT(WriteDepsToFile(FilterDependencies(deps, ramdisk_modules),
+                            module_base_dir + "/modules.dep"));
+  CF_EXPECT(WriteLinesToFile(ramdisk_modules, module_load_file.c_str()));
 
-  CHECK(WriteDepsToFile(
+  CF_EXPECT(WriteDepsToFile(
       UpdateGKIModulePaths(FilterOutDependencies(deps, ramdisk_modules),
                            system_dlkm_modules),
       vendor_modules_dir + "/modules.dep"));
-  CHECK(WriteLinesToFile(vendor_dlkm_modules,
-                         (vendor_modules_dir + "/modules.load").c_str()));
+  CF_EXPECT(WriteLinesToFile(vendor_dlkm_modules,
+                             (vendor_modules_dir + "/modules.load").c_str()));
 
-  CHECK(WriteDepsToFile(FilterDependencies(deps, system_dlkm_modules),
-                        system_modules_dir + "/modules.dep"));
-  CHECK(WriteLinesToFile(system_dlkm_modules,
-                         (system_modules_dir + "/modules.load").c_str()));
+  CF_EXPECT(WriteDepsToFile(FilterDependencies(deps, system_dlkm_modules),
+                            system_modules_dir + "/modules.dep"));
+  CF_EXPECT(WriteLinesToFile(system_dlkm_modules,
+                             (system_modules_dir + "/modules.load").c_str()));
   PackRamdisk(ramdisk_stage_dir, ramdisk_path);
-  return true;
+  return {};
 }
 
 bool FileEquals(const std::string& file1, const std::string& file2) {
