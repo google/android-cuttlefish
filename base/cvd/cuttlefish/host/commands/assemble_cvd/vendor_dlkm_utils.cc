@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
+
 #include <fcntl.h>
 
 #include <algorithm>
