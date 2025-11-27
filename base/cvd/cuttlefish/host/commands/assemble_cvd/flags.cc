@@ -93,10 +93,10 @@ using vm_manager::GetVmManager;
 
 namespace {
 
-std::pair<uint16_t, uint16_t> ParsePortRange(const std::string& flag) {
+Result<std::pair<uint16_t, uint16_t>> ParsePortRange(const std::string& flag) {
   static const std::regex rgx("[0-9]+:[0-9]+");
-  CHECK(std::regex_match(flag, rgx))
-      << "Port range flag has invalid value: " << flag;
+  CF_EXPECTF(std::regex_match(flag, rgx),
+             "Port range flag has invalid value: '{}'", flag);
   std::pair<uint16_t, uint16_t> port_range;
   std::stringstream ss(flag);
   char c;
@@ -342,8 +342,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }
 
   for (const auto& fragment : injector.getMultibindings<ConfigFragment>()) {
-    CHECK(tmp_config_obj.SaveFragment(*fragment))
-        << "Failed to save fragment " << fragment->Name();
+    CF_EXPECTF(tmp_config_obj.SaveFragment(*fragment),
+               "Failed to save fragment '{}'", fragment->Name());
   }
 
   tmp_config_obj.set_root_dir(root_dir);
@@ -624,9 +624,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::string default_enable_virtiofs = "";
   std::string comma_str = "";
 
-  CHECK(FLAGS_use_overlay || instance_nums.size() == 1)
-      << "`--use_overlay=false` is incompatible with multiple instances";
-  CHECK(!instance_nums.empty()) << "Requires at least one instance.";
+  CF_EXPECT(FLAGS_use_overlay || instance_nums.size() == 1,
+            "`--use_overlay=false` is incompatible with multiple instances");
+  CF_EXPECT(!instance_nums.empty(), "Requires at least one instance.");
+
   auto rootcanal_instance_num = *instance_nums.begin() - 1;
   if (FLAGS_rootcanal_instance_num > 0) {
     rootcanal_instance_num = FLAGS_rootcanal_instance_num - 1;
@@ -859,16 +860,17 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       }
     } else if (vhost_user_vsock_vec[instance_index] ==
                kVhostUserVsockModeTrue) {
-      CHECK(tmp_config_obj.vm_manager() == VmmMode::kCrosvm)
-          << "For now, only crosvm supports vhost_user_vsock";
+      CF_EXPECT_EQ(tmp_config_obj.vm_manager(), VmmMode::kCrosvm,
+                   "For now, only crosvm supports vhost_user_vsock");
       instance.set_vhost_user_vsock(true);
     } else if (vhost_user_vsock_vec[instance_index] ==
                kVhostUserVsockModeFalse) {
       instance.set_vhost_user_vsock(false);
     } else {
-      CHECK(false)
-          << "--vhost_user_vsock should be one of 'auto', 'true', 'false', but "
-          << vhost_user_vsock_vec[instance_index];
+      return CF_ERRF(
+          "--vhost_user_vsock should be one of 'auto', 'true', 'false', but "
+          "got '{}'",
+          vhost_user_vsock_vec[instance_index]);
     }
 
     if (use_random_serial_vec[instance_index]) {
@@ -1197,10 +1199,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // streaming, webrtc setup
     instance.set_webrtc_assets_dir(webrtc_assets_dir_vec[instance_index]);
 
-    auto tcp_range  = ParsePortRange(tcp_port_range_vec[instance_index]);
+    std::pair<uint16_t, uint16_t> tcp_range =
+        CF_EXPECT(ParsePortRange(tcp_port_range_vec[instance_index]));
     instance.set_webrtc_tcp_port_range(tcp_range);
 
-    auto udp_range  = ParsePortRange(udp_port_range_vec[instance_index]);
+    std::pair<uint16_t, uint16_t> udp_range =
+        CF_EXPECT(ParsePortRange(udp_port_range_vec[instance_index]));
     instance.set_webrtc_udp_port_range(udp_range);
 
     // end of streaming, webrtc setup
