@@ -718,4 +718,16 @@ std::vector<std::string> CuttlefishConfig::environment_dirs() const {
   return result;
 }
 
+bool VmManagerIsCrosvm(const CuttlefishConfig& config) {
+  return VmManagerIsCrosvm(config.vm_manager());
+}
+
+bool VmManagerIsQemu(const CuttlefishConfig& config) {
+  return VmManagerIsQemu(config.vm_manager());
+}
+
+bool VmManagerIsGem5(const CuttlefishConfig& config) {
+  return VmManagerIsGem5(config.vm_manager());
+}
+
 }  // namespace cuttlefish
