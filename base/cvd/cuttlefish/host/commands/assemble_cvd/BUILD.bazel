@@ -179,7 +179,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/config:instance_nums",
-        "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/feature:inject",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -220,7 +219,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:instance_nums",
-        "//cuttlefish/host/libs/config:vmm_mode",
         "//libbase",
     ],
 )

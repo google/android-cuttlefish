@@ -115,9 +115,8 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
         std::to_string(instance.openthread_node_id());
   }
 
-  const auto enable_confui = (config.vm_manager() == VmmMode::kQemu ? 0 : 1);
   bootconfig_args["androidboot.enable_confirmationui"] =
-      std::to_string(enable_confui);
+      std::to_string(!VmManagerIsQemu(config));
 
   if (instance.audiocontrol_server_port()) {
     bootconfig_args["androidboot.vendor.audiocontrol.server.cid"] =

@@ -26,7 +26,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 namespace cuttlefish {
@@ -71,10 +70,6 @@ std::vector<ImagePartition> PersistentAPCompositeDiskConfig(
   return partitions;
 }
 
-bool IsVmManagerQemu(const CuttlefishConfig& config) {
-  return config.vm_manager() == VmmMode::kQemu;
-}
-
 }  // namespace
 
 Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
@@ -104,7 +99,7 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
   std::string overlay_path =
       instance.PerInstancePath("persistent_composite_overlay.img");
   persistent_disk_builder.OverlayPath(overlay_path);
-  if (IsVmManagerQemu(config)) {
+  if (VmManagerIsQemu(config)) {
     CF_EXPECT(persistent_disk_builder.BuildOverlayIfNecessary());
   }
   return InstanceCompositeDisk();
@@ -136,7 +131,7 @@ Result<std::optional<ApCompositeDisk>> ApCompositeDisk::Create(
   CF_EXPECT(persistent_ap_disk_builder.BuildCompositeDiskIfNecessary());
   persistent_ap_disk_builder.OverlayPath(
       instance.PerInstancePath("ap_persistent_composite_overlay.img"));
-  if (IsVmManagerQemu(config)) {
+  if (VmManagerIsQemu(config)) {
     CF_EXPECT(persistent_ap_disk_builder.BuildOverlayIfNecessary());
   }
   return ApCompositeDisk();
