@@ -1,8 +1,19 @@
-cuttlefish-common (1.35.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.35.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.34.0 as unstable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1825
+  * Release 1.35 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1827
+  * Pin cxx dependency in netsim to fix build by @Databean in https://github.com/google/android-cuttlefish/pull/1824
+  * Use `FileSource` to filter searching `FetcherConfig` for files by @Databean in https://github.com/google/android-cuttlefish/pull/1820
+  * Replace android::base::StartsWith with absl::StartsWith by @jemoreira in https://github.com/google/android-cuttlefish/pull/1826
+  * cvd checks user is in cvdnetwork and kvm groups by @jemoreira in https://github.com/google/android-cuttlefish/pull/1834
+  * Condense fetch log time trace by @Databean in https://github.com/google/android-cuttlefish/pull/1835
+  * Add a utility to access archives produced by `cvd fetch` by @Databean in https://github.com/google/android-cuttlefish/pull/1831
+  * Don't use `CHECK` in assemble_cvd/flags.cc by @Databean in https://github.com/google/android-cuttlefish/pull/1852
+  * Use `Result` in `SplitRamdiskModules` by @Databean in https://github.com/google/android-cuttlefish/pull/1850
+  * Use fetch.log's absolute path when symlinking by @jemoreira in https://github.com/google/android-cuttlefish/pull/1841
+  * FileSource cleanups by @Databean in https://github.com/google/android-cuttlefish/pull/1849
 
- -- Alistair Delva <adelva@google.com>  Fri, 21 Nov 2025 15:27:32 -0800
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 28 Nov 2025 15:13:47 -0800
 
 cuttlefish-common (1.34.0) unstable; urgency=medium
 
