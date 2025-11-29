@@ -26,9 +26,6 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
                                  const std::string& vendor_dlkm_build_dir,
                                  const std::string& system_dlkm_build_dir);
 
-Result<bool> WriteFsConfig(const char* output_path, const std::string& fs_root,
-                           const std::string& mount_point);
-
 Result<void> RepackSuperWithPartition(const std::string& superimg_path,
                                       const std::string& image_path,
                                       const std::string& partition_name);
