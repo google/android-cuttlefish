@@ -46,6 +46,7 @@ type Config struct {
 	Paths                  IMPaths
 	AndroidBuildServiceURL string
 	BuildAPICredentials    BuildAPICredentialsConfig
+	VhostUserVsock         string
 }
 
 type BuildAPICredentialsConfig struct {
@@ -255,6 +256,7 @@ func (h *createCVDHandler) Handle(r *http.Request) (interface{}, error) {
 		UserArtifactsDirResolver: h.UADirResolver,
 		FetchCredentials:         creds,
 		BuildAPIBaseURL:          h.Config.AndroidBuildServiceURL,
+		VhostUserVsock:           h.Config.VhostUserVsock,
 	}
 	return NewCreateCVDAction(opts).Run()
 }
