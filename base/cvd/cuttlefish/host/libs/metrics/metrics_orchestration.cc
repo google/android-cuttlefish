@@ -34,18 +34,19 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 namespace {
 
-using wireless_android_play_playlog::LogRequest;
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
 constexpr char kMetricsLogName[] = "metrics.log";
 
@@ -54,8 +55,7 @@ constexpr char kReadmeText[] =
     " not mean metrics are being transmitted, the data is always gathered and "
     "written out for debugging purposes.  To enable metrics transmission "
     "<TODO: chadreynolds - metrics transmission not connected, add triggering "
-    "step"
-    " when it does>";
+    "step when it does>";
 
 struct MetricsPaths {
   std::string metrics_directory;
@@ -125,10 +125,10 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
 Result<void> OutputMetrics(EventType event_type,
                            const std::string& metrics_directory,
                            const MetricsData& metrics_data) {
-  const LogRequest log_request = ConstructLogRequest(metrics_data);
-  CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
-  if (kEnableCvdMetrics) {
-    CF_EXPECT(TransmitMetricsEvent(log_request));
+  const CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(metrics_data);
+  CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, cf_log_event));
+  if (kEnableCvdMetrics && FileExists(MetricsTransmitterBinary())) {
+    CF_EXPECT(TransmitMetrics(cf_log_event));
   }
   return {};
 }

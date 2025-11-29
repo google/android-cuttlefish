@@ -16,27 +16,21 @@
 
 #pragma once
 
-#include <chrono>
-#include <string>
-#include <vector>
-
-#include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
-#include "cuttlefish/host/libs/metrics/guest_metrics.h"
-#include "external_proto/cf_log.pb.h"
+#include "cuttlefish/common/libs/utils/result.h"
+#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-struct MetricsData {
-  EventType event_type;
-  std::string session_id;
-  std::string cf_common_version;
-  std::chrono::milliseconds now;
-  HostInfo host_metrics;
-  std::vector<GuestMetrics> guest_metrics;
+enum class ClearcutEnvironment {
+  Local,
+  Staging,
+  Prod,
 };
 
-logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent
-BuildCuttlefishLogEvent(const MetricsData& metrics_data);
+std::string EnvironmentToString(ClearcutEnvironment environment);
+
+Result<void> TransmitMetricsEvent(
+    const wireless_android_play_playlog::LogRequest& log_request,
+    ClearcutEnvironment environment);
 
 }  // namespace cuttlefish
