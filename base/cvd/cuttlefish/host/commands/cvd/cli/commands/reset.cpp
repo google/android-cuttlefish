@@ -27,14 +27,12 @@
 
 #include <android-base/logging.h>
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
@@ -142,15 +140,11 @@ class CvdResetCommandHandler : public CvdCommandHandler {
       return {};
     }
 
-    instance_manager_.CvdClear();
-    // The instance database is obsolete now, clear it.
-    auto instance_db_deleted = RemoveFile(InstanceDatabasePath());
-    if (!instance_db_deleted) {
-      LOG(ERROR) << "Error deleting instance database file";
+    if (options.clean_runtime_dir) {
+      CF_EXPECT(instance_manager_.ResetAndClearInstanceDirs());
+    } else {
+      CF_EXPECT(instance_manager_.Reset());
     }
-
-    CF_EXPECT(KillAllCuttlefishInstances(
-        /* clear_instance_dirs*/ options.clean_runtime_dir));
     return {};
   }
   cvd_common::Args CmdList() const override { return {kResetSubcmd}; }
