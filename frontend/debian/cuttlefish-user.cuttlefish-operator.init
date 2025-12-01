@@ -39,6 +39,7 @@ RUN_DIR="/run/cuttlefish"
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
 DAEMON="/usr/lib/cuttlefish-common/bin/operator"
 PIDFILE="${RUN_DIR}"/operator.pid
+LOGFILE="${RUN_DIR}"/operator.log
 
 gen_cert() {
   operator_tls_cert_dir=${operator_tls_cert_dir:-/etc/cuttlefish-common/operator/cert}
@@ -68,7 +69,7 @@ start() {
   chown _cutf-operator:cvdnetwork "${RUN_DIR}"
   chmod 775 "${RUN_DIR}"
 
-  args=()
+  args=(--log_file="${LOGFILE}")
   if [[ -n "${operator_http_port}" ]]; then
     args+=(--http_port="${operator_http_port}")
   fi
