@@ -53,7 +53,7 @@ CvdClearCommandHandler::CvdClearCommandHandler(
 
 Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
-  CF_EXPECT(instance_manager_.CvdClear());
+  CF_EXPECT(instance_manager_.Clear());
   return {};
 }
 

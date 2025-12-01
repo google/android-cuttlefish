@@ -57,7 +57,12 @@ class InstanceManager {
   Result<void> UpdateInstanceGroup(const LocalInstanceGroup& group);
   Result<bool> RemoveInstanceGroup(LocalInstanceGroup group);
 
-  Result<void> CvdClear();
+  // Stops and removes all known instance instance groups
+  Result<void> Clear();
+  // Similar to Clear(), but also attempts to stop devices owned by the current
+  // user and not tracked in the instance database.
+  Result<void> Reset();
+  Result<void> ResetAndClearInstanceDirs();
 
   Result<std::vector<LocalInstanceGroup>> FindGroups(
       const InstanceDatabase::Filter& filter) const;
