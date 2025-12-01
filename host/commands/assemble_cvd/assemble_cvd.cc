@@ -74,7 +74,12 @@ std::vector<std::string> SystemImageDirsFromArgs(
     std::vector<std::string> args) {
   std::string value;
   Flag flag = GflagsCompatFlag("system_image_dir", value);
-  if (!flag.Parse(args)) {
+  auto parse_res = flag.Parse(args);
+  if (!parse_res.ok()) {
+    LOG(ERROR) << "Failed to parse `system_image_dir` flag"
+               << parse_res.error().FormatForEnv();
+  }
+  if (value.empty()) {
     value = DefaultGuestImagePath("");
   }
   return android::base::Split(value, ",");
