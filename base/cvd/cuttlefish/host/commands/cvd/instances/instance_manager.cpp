@@ -296,22 +296,12 @@ Result<void> InstanceManager::Clear() {
 
 Result<void> InstanceManager::Reset() {
   CF_EXPECT(Clear());
-  auto instance_db_deleted = RemoveFile(InstanceDatabasePath());
-  if (!instance_db_deleted) {
-    LOG(ERROR) << "Error deleting instance database file";
-  }
-
   CF_EXPECT(KillAllCuttlefishInstances(false));
   return {};
 }
 
 Result<void> InstanceManager::ResetAndClearInstanceDirs() {
   CF_EXPECT(Clear());
-  auto instance_db_deleted = RemoveFile(InstanceDatabasePath());
-  if (!instance_db_deleted) {
-    LOG(ERROR) << "Error deleting instance database file";
-  }
-
   CF_EXPECT(KillAllCuttlefishInstances(true));
   return {};
 }
