@@ -102,6 +102,10 @@ Result<void> CreateOrLinkGroupDirectories(
   return {};
 }
 
+Result<std::string> StopBin(const std::string& host_android_out) {
+  return CF_EXPECT(HostToolTarget(host_android_out).GetStopBinName());
+}
+
 }  // namespace
 
 InstanceManager::InstanceManager(InstanceLockFileManager& lock_manager,
@@ -207,11 +211,6 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
   CF_EXPECT(RemoveGroupDirectory(group));
 
   return CF_EXPECT(instance_db_.RemoveInstanceGroup(group.GroupName()));
-}
-
-Result<std::string> InstanceManager::StopBin(
-    const std::string& host_android_out) {
-  return CF_EXPECT(HostToolTarget(host_android_out).GetStopBinName());
 }
 
 Result<void> InstanceManager::UpdateInstanceGroup(
