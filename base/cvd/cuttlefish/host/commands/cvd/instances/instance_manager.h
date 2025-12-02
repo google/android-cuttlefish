@@ -80,7 +80,6 @@ class InstanceManager {
     std::optional<std::string> name;
   };
 
-  Result<std::string> StopBin(const std::string& host_android_out);
   Result<std::vector<InternalInstanceDesc>> AllocateAndLockInstanceIds(
       std::vector<InstanceParams> instances);
 
