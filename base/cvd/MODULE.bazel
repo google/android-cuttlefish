@@ -769,3 +769,11 @@ git_repository(
     commit = "f785e9275ee5ed85f98e7b850783ca0559ee1799",
     remote = "https://github.com/google/casimir",
 )
+
+git_repository(
+    name = "arm_optimized_routines",
+    build_file = "@//:BUILD.arm_optimized_routines.bazel",
+    commit = "3bc8091d03e002e25332fcbbd9a754538cb1109e",
+    remote = "https://github.com/ARM-software/optimized-routines.git",
+)
+
