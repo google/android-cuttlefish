@@ -126,7 +126,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   if (flags.wait_for_launcher_secs > 0) {
     launcher_timeout.emplace(flags.wait_for_launcher_secs);
   }
-  Result<void> stop_outcome = instance_manager_.IssueStopCommand(
+  Result<void> stop_outcome = instance_manager_.StopInstanceGroup(
       group, launcher_timeout,
       flags.clear_instance_dirs ? InstanceDirActionOnStop::Clear
                                 : InstanceDirActionOnStop::Keep);
