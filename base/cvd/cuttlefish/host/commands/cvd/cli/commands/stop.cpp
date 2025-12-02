@@ -19,24 +19,22 @@
 #include <signal.h>  // IWYU pragma: keep
 #include <stdlib.h>
 
+#include <chrono>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
-#include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
@@ -44,8 +42,38 @@
 namespace cuttlefish {
 namespace {
 
-constexpr char kSummaryHelpText[] =
-    "Run cvd stop --help for command description";
+constexpr char kSummaryHelpText[] = "Stop all instances in a group";
+
+constexpr char kDetailedHelpText[] =
+    R"""(
+Stops all instances in an instance group
+
+Usage:
+cvd stop [--wait_for_launcher=SECONDS] [--clear_instance_dirs]
+
+Stops a running cuttlefish instance group.
+
+--wait_for_launcher=SECONDS    The number of seconds to wait for the launcher to
+                     respond to the stop request. If SECONDS is 0 it will wait
+                     indefinitely. Defaults to 5 seconds.
+
+--clear_instance_dirs    If provided the instance directories will be deleted
+                     after stopping.
+)""";
+
+struct StopFlags {
+  size_t wait_for_launcher_secs = 5;
+  bool clear_instance_dirs = false;
+};
+Result<StopFlags> ParseCommandFlags(cvd_common::Args& args) {
+  StopFlags flag_values;
+  std::vector<Flag> flags = {
+      GflagsCompatFlag("wait_for_launcher", flag_values.wait_for_launcher_secs),
+      GflagsCompatFlag("clear_instance_dirs", flag_values.clear_instance_dirs),
+  };
+  CF_EXPECT(ConsumeFlags(flags, args));
+  return flag_values;
+}
 
 class CvdStopCommandHandler : public CvdCommandHandler {
  public:
@@ -54,11 +82,10 @@ class CvdStopCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override;
+  bool ShouldInterceptHelp() const override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<void> HandleHelpCmd(const CommandRequest& request);
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
   // whether the "bin" is cvd bins like stop_cvd or not (e.g. ln, ls, mkdir)
   // The information to fire the command might be different. This information
@@ -78,38 +105,14 @@ class CvdStopCommandHandler : public CvdCommandHandler {
 CvdStopCommandHandler::CvdStopCommandHandler(InstanceManager& instance_manager)
     : instance_manager_(instance_manager) {}
 
-Result<void> CvdStopCommandHandler::HandleHelpCmd(
-    const CommandRequest& request) {
-  std::string subcmd = request.Subcommand();
-  std::vector<std::string> cmd_args = request.SubcommandArguments();
-  const cvd_common::Envs& env = request.Env();
-
-  const auto [bin, bin_path] = CF_EXPECT(CvdHelpBinPath(subcmd, env));
-
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = bin_path,
-      .home = CF_EXPECT(SystemWideUserHome()),
-      .args = cmd_args,
-      .envs = env,
-      .working_dir = CurrentDirectory(),
-      .command_name = bin};
-  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-
-  siginfo_t infop;  // NOLINT(misc-include-cleaner)
-  command.Start().Wait(&infop, WEXITED);
-
-  CF_EXPECT(CheckProcessExitedNormally(infop));
-  return {};
-}
-
 Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
-  if (CF_EXPECT(HasHelpFlag(cmd_args))) {
-    CF_EXPECT(HandleHelpCmd(request));
-    return {};
-  }
+  bool has_help_flag = CF_EXPECT(HasHelpFlag(cmd_args));
+  CF_EXPECT(!has_help_flag,
+            "Help flag should be handled by global cvd as "
+            "ShouldInterceptHelp() returns true");
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
@@ -118,26 +121,15 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   auto group = CF_EXPECT(selector::SelectGroup(instance_manager_, request));
   CF_EXPECT(group.HasActiveInstances(), "Selected group is not running");
 
-  auto android_host_out = group.HostArtifactsPath();
-  auto bin = CF_EXPECT(GetBin(android_host_out));
-
-  ConstructCommandParam construct_cmd_param{
-      .bin_path = ConcatToString(android_host_out, "/bin/", bin),
-      .home = group.HomeDir(),
-      .args = cmd_args,
-      .envs = request.Env(),
-      .working_dir = CurrentDirectory(),
-      .command_name = bin};
-  Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-
-  siginfo_t infop;
-  command.Start().Wait(&infop, WEXITED);
-  Result<void> stop_outcome = CheckProcessExitedNormally(infop);
-
-  if (stop_outcome.ok()) {
-    group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
-    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+  StopFlags flags = CF_EXPECT(ParseCommandFlags(cmd_args));
+  std::optional<std::chrono::seconds> launcher_timeout;
+  if (flags.wait_for_launcher_secs > 0) {
+    launcher_timeout.emplace(flags.wait_for_launcher_secs);
   }
+  Result<void> stop_outcome = instance_manager_.IssueStopCommand(
+      group, launcher_timeout,
+      flags.clear_instance_dirs ? InstanceDirActionOnStop::Clear
+                                : InstanceDirActionOnStop::Keep);
 
   GatherVmStopMetrics(group);
 
@@ -149,11 +141,9 @@ Result<std::string> CvdStopCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-bool CvdStopCommandHandler::ShouldInterceptHelp() const { return false; }
-
 Result<std::string> CvdStopCommandHandler::DetailedHelp(
     std::vector<std::string>& arguments) const {
-  return "Run cvd stop --help for full help text";
+  return kDetailedHelpText;
 }
 
 Result<CvdStopCommandHandler::BinPathInfo>
