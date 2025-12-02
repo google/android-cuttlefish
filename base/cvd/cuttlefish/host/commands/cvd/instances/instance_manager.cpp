@@ -220,8 +220,8 @@ Result<void> InstanceManager::UpdateInstanceGroup(
   return {};
 }
 
-Result<void> InstanceManager::IssueStopCommand(
-    const std::string& config_file_path, LocalInstanceGroup& group) {
+Result<void> InstanceManager::IssueStopCommand(LocalInstanceGroup& group) {
+  auto config_file_path = CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
   Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
   command.AddParameter("--clear_instance_dirs");
@@ -268,12 +268,9 @@ Result<void> InstanceManager::Clear() {
   for (auto& group : instance_groups) {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
-      auto config_path = GetCuttlefishConfigPath(group.HomeDir());
-      if (config_path.ok()) {
-        auto stop_result = IssueStopCommand(*config_path, group);
-        if (!stop_result.ok()) {
-          LOG(ERROR) << stop_result.error().FormatForEnv();
-        }
+      auto stop_result = IssueStopCommand(group);
+      if (!stop_result.ok()) {
+        LOG(ERROR) << stop_result.error().FormatForEnv();
       }
     }
     for (auto instance : group.Instances()) {

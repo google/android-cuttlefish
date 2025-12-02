@@ -29,7 +29,6 @@
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
-#include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
@@ -83,8 +82,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
     if (!group.HasActiveInstances()) {
       return {};
     }
-    auto config_path = CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
-    CF_EXPECT(instance_manager_.IssueStopCommand(config_path, group));
+    CF_EXPECT(instance_manager_.IssueStopCommand(group));
     return {};
   }
 
