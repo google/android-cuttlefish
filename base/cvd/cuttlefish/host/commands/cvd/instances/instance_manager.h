@@ -72,8 +72,7 @@ class InstanceManager {
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase::Filter& filter) const;
 
-  Result<void> IssueStopCommand(const std::string& config_file_path,
-                                LocalInstanceGroup& group);
+  Result<void> IssueStopCommand(LocalInstanceGroup& group);
 
  private:
   struct InternalInstanceDesc {

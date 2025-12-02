@@ -286,7 +286,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/instances:config_path",
         "//libbase",
     ],
 )
