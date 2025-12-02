@@ -16,15 +16,16 @@
 
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
+#include <chrono>
 #include <iostream>
 #include <optional>
 #include <set>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/logging.h>
 #include <android-base/scopeguard.h>
 #include <fmt/format.h>
 #include "absl/strings/match.h"
@@ -104,6 +105,24 @@ Result<void> CreateOrLinkGroupDirectories(
 
 Result<std::string> StopBin(const std::string& host_android_out) {
   return CF_EXPECT(HostToolTarget(host_android_out).GetStopBinName());
+}
+
+Command BuildStopCommand(const std::string& bin,
+                         const std::string& config_file_path,
+                         std::optional<std::chrono::seconds> launcher_timeout,
+                         InstanceDirActionOnStop instance_dir_action) {
+  Command cmd(bin);
+  if (launcher_timeout.has_value()) {
+    cmd.AddParameter("-wait_for_launcher=", launcher_timeout->count());
+  } else {
+    // zero means wait indefinitely
+    cmd.AddParameter("-wait_for_launcher=0");
+  }
+  if (instance_dir_action == InstanceDirActionOnStop::Clear) {
+    cmd.AddParameter("-clear_instance_dirs");
+  }
+  cmd.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
+  return cmd;
 }
 
 }  // namespace
@@ -219,43 +238,41 @@ Result<void> InstanceManager::UpdateInstanceGroup(
   return {};
 }
 
-Result<void> InstanceManager::IssueStopCommand(LocalInstanceGroup& group) {
+Result<void> InstanceManager::IssueStopCommand(
+    LocalInstanceGroup& group,
+    std::optional<std::chrono::seconds> launcher_timeout,
+    InstanceDirActionOnStop instance_dir_action) {
   auto config_file_path = CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
-  Command command(group.HostArtifactsPath() + "/bin/" + stop_bin);
-  command.AddParameter("--clear_instance_dirs");
-  command.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
-  auto wait_result = RunCommand(std::move(command));
+  Command command =
+      BuildStopCommand(group.HostArtifactsPath() + "/bin/" + stop_bin,
+                       config_file_path, launcher_timeout, instance_dir_action);
+  auto cmd_result = RunCommand(std::move(command));
+
   /**
    * --clear_instance_dirs may not be available for old branches. This causes
    * the stop_cvd to terminates with a non-zero exit code due to the parsing
    * error. Then, we will try to re-run it without the flag.
    */
-  if (!wait_result.ok()) {
-    std::stringstream error_msg;
-    std::cout << stop_bin << " was executed internally, and failed. It might "
-              << "be failing to parse the new --clear_instance_dirs. Will try "
-              << "without the flag.\n";
-    Command no_clear_instance_dir_command(group.HostArtifactsPath() + "/bin/" +
-                                          stop_bin);
-    wait_result = RunCommand(std::move(no_clear_instance_dir_command));
+  if (!cmd_result.ok() &&
+      instance_dir_action == InstanceDirActionOnStop::Clear) {
+    LOG(WARNING)
+        << stop_bin << " was executed internally, and failed. It might "
+        << "be failing to parse the new --clear_instance_dirs. Will try "
+        << "without the flag.\n";
+    Command command = BuildStopCommand(
+        group.HostArtifactsPath() + "/bin/" + stop_bin, config_file_path,
+        launcher_timeout, InstanceDirActionOnStop::Keep);
+    cmd_result = RunCommand(std::move(command));
   }
 
-  if (!wait_result.ok()) {
-    std::cerr << "Warning: error stopping instances for dir \"" +
-                     group.HomeDir() +
-                     "\".\nThis can happen if instances are already stopped.\n";
+  if (!cmd_result.ok()) {
+    LOG(WARNING)
+        << "Warning: error stopping instances for dir \"" + group.HomeDir() +
+               "\".\nThis can happen if instances are already stopped.\n";
   }
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   instance_db_.UpdateInstanceGroup(group);
-  for (const auto& instance : group.Instances()) {
-    auto lock = lock_manager_.AcquireLock(instance.id());
-    if (lock.ok()) {
-      lock->Status(InUseState::kNotInUse);
-      continue;
-    }
-    std::cerr << "InstanceLockFileManager failed to acquire lock";
-  }
   return {};
 }
 
@@ -267,7 +284,8 @@ Result<void> InstanceManager::Clear() {
   for (auto& group : instance_groups) {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
-      auto stop_result = IssueStopCommand(group);
+      auto stop_result = IssueStopCommand(group, std::chrono::seconds(5),
+                                          InstanceDirActionOnStop::Clear);
       if (!stop_result.ok()) {
         LOG(ERROR) << stop_result.error().FormatForEnv();
       }

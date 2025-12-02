@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <chrono>
 #include <optional>
 #include <string>
 #include <utility>
@@ -39,6 +40,11 @@ struct InstanceParams {
 struct InstanceGroupParams {
   std::string group_name;
   std::vector<InstanceParams> instances;
+};
+
+enum class InstanceDirActionOnStop {
+  Keep,
+  Clear,
 };
 
 class InstanceManager {
@@ -72,7 +78,12 @@ class InstanceManager {
   Result<std::pair<LocalInstance, LocalInstanceGroup>> FindInstanceWithGroup(
       const InstanceDatabase::Filter& filter) const;
 
-  Result<void> IssueStopCommand(LocalInstanceGroup& group);
+  // Stops the device by asking it over the control socket. If launcher_timeout
+  // has a value, it will wait for at most that time before returning an error.
+  Result<void> IssueStopCommand(
+      LocalInstanceGroup& group,
+      std::optional<std::chrono::seconds> launcher_timeout,
+      InstanceDirActionOnStop instance_dir_action);
 
  private:
   struct InternalInstanceDesc {

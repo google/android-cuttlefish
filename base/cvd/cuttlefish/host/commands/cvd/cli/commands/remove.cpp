@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -82,7 +83,8 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
     if (!group.HasActiveInstances()) {
       return {};
     }
-    CF_EXPECT(instance_manager_.IssueStopCommand(group));
+    CF_EXPECT(instance_manager_.IssueStopCommand(
+        group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
     return {};
   }
 
