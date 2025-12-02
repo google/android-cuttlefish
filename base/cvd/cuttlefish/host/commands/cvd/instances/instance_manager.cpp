@@ -238,7 +238,7 @@ Result<void> InstanceManager::UpdateInstanceGroup(
   return {};
 }
 
-Result<void> InstanceManager::IssueStopCommand(
+Result<void> InstanceManager::StopInstanceGroup(
     LocalInstanceGroup& group,
     std::optional<std::chrono::seconds> launcher_timeout,
     InstanceDirActionOnStop instance_dir_action) {
@@ -284,7 +284,7 @@ Result<void> InstanceManager::Clear() {
   for (auto& group : instance_groups) {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
-      auto stop_result = IssueStopCommand(group, std::chrono::seconds(5),
+      auto stop_result = StopInstanceGroup(group, std::chrono::seconds(5),
                                           InstanceDirActionOnStop::Clear);
       if (!stop_result.ok()) {
         LOG(ERROR) << stop_result.error().FormatForEnv();

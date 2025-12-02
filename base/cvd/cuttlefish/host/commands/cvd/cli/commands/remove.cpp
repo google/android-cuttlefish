@@ -83,7 +83,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
     if (!group.HasActiveInstances()) {
       return {};
     }
-    CF_EXPECT(instance_manager_.IssueStopCommand(
+    CF_EXPECT(instance_manager_.StopInstanceGroup(
         group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
     return {};
   }
