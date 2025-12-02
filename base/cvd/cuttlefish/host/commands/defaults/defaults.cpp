@@ -84,10 +84,13 @@ Result<bool> UseStaticDefaults(const std::optional<std::string> &flag) {
   std::string expected = kv->second;
 
   /* Is the value expected? */ 
-  std::string err = absl::StrFormat(
+  if (actual != expected) {
+    // No error, but do not use static defaults.
+    LOG(WARNING) << absl::StrFormat(
       "Metadata value for %s unexpected, got: '%s', expected '%s'",
       kv->first, actual, expected);
-  return CF_EXPECT_EQ(actual, expected, err);
+  }
+  return actual == expected;
 }
 
 Result<std::map<std::string, std::string>> DefaultsFromMetadata() {
