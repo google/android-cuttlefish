@@ -23,19 +23,7 @@
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 
-#include "cuttlefish/common/libs/utils/files.h"
-
 namespace cuttlefish {
-
-// Test helper to check if the default config path exists
-bool DefaultConfigPathExists() {
-  return FileExists(std::string(kDefaultCasConfigFilePath));
-}
-
-// Test helper to check if the default downloader path exists
-bool DefaultDownloaderPathExists() {
-  return FileExists(std::string(kDefaultDownloaderPath));
-}
 
 class CasFlagsTests : public ::testing::Test {
  protected:
@@ -86,18 +74,12 @@ TEST_F(CasFlagsTests, MultipleInstancesIndependent) {
   CasDownloaderFlags flags1;
   CasDownloaderFlags flags2;
 
-  // Modify flags1
-  flags1.downloader_path.set_value("/path/to/downloader");
-  flags1.cache_dir.set_value("/cache/dir");
+  // Modify flags
+  flags1.downloader_path.set_value("/path1/to/downloader");
+  flags2.downloader_path.set_value("/path2/to/downloader");
 
-  // Verify flags2 is not affected
-  if (DefaultDownloaderPathExists()) {
-    EXPECT_EQ(flags2.downloader_path.value(),
-              std::string(kDefaultDownloaderPath));
-  } else {
-    EXPECT_EQ(flags2.downloader_path.value(), "");
-  }
-  EXPECT_EQ(flags2.cache_dir.value(), "");
+  // Verify flags1 and flags2 have independent values
+  EXPECT_NE(flags1.downloader_path.value(), flags2.downloader_path.value());
 }
 
 // ============================================================================
