@@ -19,6 +19,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@jsoncpp",
     ],
 )

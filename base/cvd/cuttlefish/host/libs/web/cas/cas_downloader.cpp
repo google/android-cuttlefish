@@ -32,6 +32,7 @@
 #include <android-base/logging.h>
 #include <json/value.h>
 
+#include "absl/strings/match.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -295,7 +296,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   // disabled and why, using the same environment-aware formatting that
   // test helpers use.
   LOG(INFO) << "CAS downloading disabled: " << result.error().FormatForEnv();
-  return android::base::unexpected(std::move(result).error());
+  return result;
 }
 
 Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
@@ -384,7 +385,7 @@ void AppendBuildInfoToInvocationId(const DeviceBuild& build,
   // invocation-id flag. Do this only if the invocation-id flag is already
   // present and contains `caller` only.
   for (auto& flag : cas_flags) {
-    if (flag.find("-invocation-id=caller=") == 0 &&
+    if (absl::StartsWith(flag, "-invocation-id=caller=") &&
         flag.find(',') == std::string::npos) {
       if (!build.id.empty()) {
         flag += ",bid=" + build.id;

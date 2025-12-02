@@ -29,7 +29,6 @@ namespace cuttlefish {
 template <typename T>
 class FlagValue {
  public:
-  FlagValue() : default_value_{} {}
   explicit FlagValue(const T& default_value) : default_value_(default_value) {}
 
   // Return by value to avoid dangling references.
