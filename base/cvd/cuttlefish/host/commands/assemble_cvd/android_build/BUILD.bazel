@@ -1,0 +1,18 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+exports_files([".clang-tidy"])
+
+cf_cc_library(
+    name = "android_build",
+    srcs = ["android_build.cc"],
+    hdrs = ["android_build.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+        "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
+    ],
+)
