@@ -69,15 +69,7 @@ type amendImageOpts struct {
 	DebSrcs            []string
 }
 
-func installCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
-	dstSrcs := []string{}
-	for _, src := range debSrcs {
-		dst := "/tmp/" + filepath.Base(src)
-		dstSrcs = append(dstSrcs, dst)
-		if err := gce.UploadFile(project, zone, insName, src, dst); err != nil {
-			return fmt.Errorf("error uploading %s: %v", src, err)
-		}
-	}
+func uploadScripts(project, zone, insName string) error {
 	list := []struct {
 		dstname string
 		content string
@@ -91,15 +83,29 @@ func installCuttlefishDebs(project, zone, insName string, debSrcs []string) erro
 			return fmt.Errorf("error uploading bash script: %v", err)
 		}
 	}
+	return nil
+}
 
-	if err := gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh"); err != nil {
-		return err
-	}
+func fillAvailableSpace(project, zone, insName string) error {
+	return gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh")
+}
 
+func mountAttachedDisk(project, zone, insName string) (string, error) {
 	if err := gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh"); err != nil {
-		return err
+		return "", err
 	}
+	return "/mnt/image/", nil
+}
 
+func installCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
+	dstSrcs := []string{}
+	for _, src := range debSrcs {
+		dst := "/tmp/" + filepath.Base(src)
+		dstSrcs = append(dstSrcs, dst)
+		if err := gce.UploadFile(project, zone, insName, src, dst); err != nil {
+			return fmt.Errorf("error uploading %s: %v", src, err)
+		}
+	}
 	args := strings.Join(dstSrcs, " ")
 	if err := gce.RunCmd(project, zone, insName, "./install.sh "+args); err != nil {
 		return err
@@ -169,6 +175,18 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 
 	if err := gce.WaitForInstance(project, zone, insName); err != nil {
 		return fmt.Errorf("waiting for instance error: %v", err)
+	}
+
+	if err := uploadScripts(project, zone, insName); err != nil {
+		return fmt.Errorf("uploadScripts error: %v", err)
+	}
+
+	if err := fillAvailableSpace(project, zone, insName); err != nil {
+		return fmt.Errorf("fillAvailableSpace error: %v", err)
+	}
+
+	if _, err := mountAttachedDisk(project, zone, insName); err != nil {
+		return fmt.Errorf("mountAttachedDisk error: %v", err)
 	}
 
 	if err := installCuttlefishDebs(project, zone, insName, opts.DebSrcs); err != nil {
