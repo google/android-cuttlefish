@@ -21,10 +21,6 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-./fill_available_disk_space.sh
-
-./mount_attached_disk.sh
-
 kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
