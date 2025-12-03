@@ -33,31 +33,17 @@
 #include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
-#include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
 namespace {
-
-// Returns true only if command terminated normally, and returns 0
-Result<void> RunCommand(Command&& command) {
-  auto subprocess = command.Start();
-  siginfo_t infop{};
-  // This blocks until the process exits, but doesn't reap it.
-  auto result = subprocess.Wait(&infop, WEXITED);
-  CF_EXPECT(result != -1, "Lost track of subprocess pid");
-  CF_EXPECT(infop.si_code == CLD_EXITED && infop.si_status == 0);
-  return {};
-}
 
 Result<void> RemoveGroupDirectory(const LocalInstanceGroup& group) {
   std::string per_user_dir = PerUserDir();
@@ -105,24 +91,6 @@ Result<void> CreateOrLinkGroupDirectories(
 
 Result<std::string> StopBin(const std::string& host_android_out) {
   return CF_EXPECT(HostToolTarget(host_android_out).GetStopBinName());
-}
-
-Command BuildStopCommand(const std::string& bin,
-                         const std::string& config_file_path,
-                         std::optional<std::chrono::seconds> launcher_timeout,
-                         InstanceDirActionOnStop instance_dir_action) {
-  Command cmd(bin);
-  if (launcher_timeout.has_value()) {
-    cmd.AddParameter("-wait_for_launcher=", launcher_timeout->count());
-  } else {
-    // zero means wait indefinitely
-    cmd.AddParameter("-wait_for_launcher=0");
-  }
-  if (instance_dir_action == InstanceDirActionOnStop::Clear) {
-    cmd.AddParameter("-clear_instance_dirs");
-  }
-  cmd.AddEnvironmentVariable(kCuttlefishConfigEnvVarName, config_file_path);
-  return cmd;
 }
 
 }  // namespace
@@ -242,30 +210,19 @@ Result<void> InstanceManager::StopInstanceGroup(
     LocalInstanceGroup& group,
     std::optional<std::chrono::seconds> launcher_timeout,
     InstanceDirActionOnStop instance_dir_action) {
-  auto config_file_path = CF_EXPECT(GetCuttlefishConfigPath(group.HomeDir()));
   const auto stop_bin = CF_EXPECT(StopBin(group.HostArtifactsPath()));
-  Command command =
-      BuildStopCommand(group.HostArtifactsPath() + "/bin/" + stop_bin,
-                       config_file_path, launcher_timeout, instance_dir_action);
-  auto cmd_result = RunCommand(std::move(command));
-
-  /**
-   * --clear_instance_dirs may not be available for old branches. This causes
-   * the stop_cvd to terminates with a non-zero exit code due to the parsing
-   * error. Then, we will try to re-run it without the flag.
-   */
-  if (!cmd_result.ok() &&
-      instance_dir_action == InstanceDirActionOnStop::Clear) {
-    LOG(WARNING)
-        << stop_bin << " was executed internally, and failed. It might "
-        << "be failing to parse the new --clear_instance_dirs. Will try "
-        << "without the flag.\n";
-    Command command = BuildStopCommand(
-        group.HostArtifactsPath() + "/bin/" + stop_bin, config_file_path,
-        launcher_timeout, InstanceDirActionOnStop::Keep);
-    cmd_result = RunCommand(std::move(command));
+  const auto stop_bin_path = group.HostArtifactsPath() + "/bin/" + stop_bin;
+  int wait_for_launcher_secs = 0;
+  if (launcher_timeout.has_value()) {
+    wait_for_launcher_secs = launcher_timeout->count();
   }
-
+  Result<void> cmd_result = RunStopCvd(StopCvdParams{
+      .bin_path = stop_bin_path,
+      .home_dir = group.HomeDir(),
+      .wait_for_launcher_secs = wait_for_launcher_secs,
+      .clear_runtime_dirs =
+          instance_dir_action == InstanceDirActionOnStop::Clear,
+  });
   if (!cmd_result.ok()) {
     LOG(WARNING)
         << "Warning: error stopping instances for dir \"" + group.HomeDir() +
@@ -285,7 +242,7 @@ Result<void> InstanceManager::Clear() {
     // Only stop running instances.
     if (group.HasActiveInstances()) {
       auto stop_result = StopInstanceGroup(group, std::chrono::seconds(5),
-                                          InstanceDirActionOnStop::Clear);
+                                           InstanceDirActionOnStop::Clear);
       if (!stop_result.ok()) {
         LOG(ERROR) << stop_result.error().FormatForEnv();
       }
