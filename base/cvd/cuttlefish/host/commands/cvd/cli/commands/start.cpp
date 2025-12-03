@@ -59,7 +59,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/operator_client.h"
-#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"

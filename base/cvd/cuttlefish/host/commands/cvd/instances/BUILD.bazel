@@ -138,8 +138,8 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/instances:data_viewer",
         "//cuttlefish/host/commands/cvd/instances:device_name",
-        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
+        "//cuttlefish/host/commands/cvd/instances:stop",
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/command_util",
@@ -151,26 +151,6 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
-    ],
-)
-
-cf_cc_library(
-    name = "reset_client_utils",
-    srcs = ["reset_client_utils.cpp"],
-    hdrs = ["reset_client_utils.h"],
-    deps = [
-        "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/common/libs/utils:result",
-        "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
-        "//cuttlefish/host/commands/cvd/instances:config_path",
-        "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
-        "//cuttlefish/host/commands/cvd/utils",
-        "//cuttlefish/host/libs/config:config_constants",
-        "//libbase",
-        "@fmt",
     ],
 )
 
@@ -187,5 +167,25 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
+    ],
+)
+
+cf_cc_library(
+    name = "stop",
+    srcs = ["stop.cpp"],
+    hdrs = ["stop.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:proc_file_utils",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/host/commands/cvd/instances:config_path",
+        "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
+        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/libs/config:config_constants",
+        "//libbase",
+        "@fmt",
     ],
 )

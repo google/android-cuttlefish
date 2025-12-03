@@ -38,7 +38,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_record.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/lock_file.h"
-#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 

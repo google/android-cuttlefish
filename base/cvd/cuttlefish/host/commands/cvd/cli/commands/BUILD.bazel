@@ -366,7 +366,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
-        "//cuttlefish/host/commands/cvd/instances:reset_client_utils",
+        "//cuttlefish/host/commands/cvd/instances:stop",
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",

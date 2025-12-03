@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
+#include "cuttlefish/host/commands/cvd/instances/stop.h"
 
 #include <signal.h>
 
@@ -37,7 +37,6 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/instances/config_path.h"
-#include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
