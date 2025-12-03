@@ -31,50 +31,23 @@ address for each cf_auto clients are 192.168.98.[instance_id + 2], starting
 from 192.168.98.3, 192.168.98.4, etc. This is passed to AAOS using the boot
 argument "ro.boot.auto_eth_guest_addr".
 
-For each launch_cvd command, we start one VHAL proxy server instance by
-default. If multiple cf_auto instances are started in one command via
-'--instance_nums', then they all connect to the same server. The VHAL proxy
-server starts at the port: 9300 + [base_instance_num - 1].
+For each `cvd create` command, we start one VHAL proxy server instance. If multiple
+cf_auto instances are started in one command via '--instance_nums', each instance
+connects to a dedicated VHAL proxy server starting at the port: 9300 +
+[instance_id - 1].
 
-Clients may specify '--vhal_proxy_server_instance_num' to specify which server
-to connect to. If this is specified, no VHAL proxy server will be started,
-instead, the instances will connect to the VHAL proxy server started by
-the 'vhal_proxy-server_instance_num'.
-
-For example, if we want to start two instances that all connects to the same
-VHAL proxy server (meaning they share VHAL data), we can use:
+For example, to launch two cf_auto instances simutaneously (a.k.a. multi-tenancy),
+we can run:
 
 ```
-launch_cvd --instance_nums 2
+cvd create --num_instances=2
 ```
 
-This starts two cf_auto instances and starts a VHAL proxy server running at
-`192.168.98.1:9300`. The two instaces will have IP address: `192.168.98.3`,
-`192.168.98.4`. Their VHALs connect to the VHAL proxy server.
-
-If we want to start a third instance that connects to the same VHAL proxy
-server using a separate command, we can use:
-
-```
-launch_cvd --base_instance_num=3 --vhal_proxy_server_instance_num=1
-```
-
-This starts another cf_auto instance at `192.168.98.5` and connects to the
-VHAL proxy server at `192.168.98.1:9300`.
-
-If we want to start a fourth instance that connects to a new VHAL proxy server,
-we can use:
-
-```
-launch_cvd --base_instance_num=4
-```
-
-This starts another cf_auto instance at `192.168.98.5` and starts a new VHAL
-proxy server at `192.168.98.1:9303`. The new instance connects to this new
-server.
-
-These options apply for 'vsock' as communication as well, except that vsock
-address takes a different format.
+This starts two cf_auto instances and two independent VHAL proxy servers. The VHAL
+client on the first instance has the IP address `192.168.98.3`, connecting to the
+VHAL proxy server at `192.168.98.1:9300`. The VHAL client on the second instance
+has the IP address `192.168.98.4`, connecting to the VHAL proxy server at
+`192.168.98.1:9301`.
 
 ### Vsock as communication channel
 
@@ -86,10 +59,12 @@ The VHAL proxy server implementation serves as both an Ethernet server and
 as a vsock server. In fact, `vhal_proxy_server_cmd` always connects to the
 server using vsock.
 
-The concept is the same except that vsock uses a different address schema.
+The way to manage VHAL clients and servers in multi-tenancy remains the same
+regardless of the communication channel. The only difference is that ethernet
+and vsock utilize different addressing schemas.
 
-The VHAL proxy server address is at `vsock:[VMADDR_CID_HOST]:port`, where port
-is the ethernet port (e.g. 9300).
+The VHAL proxy server address is at `vsock:[VMADDR_CID_HOST]:port`, where the
+port allocation reuses the ethernet setup (i.e. 9300 + [instance_id - 1]).
 
 We do not need to assign vsock address to each client instance.
 

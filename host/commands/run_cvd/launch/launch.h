@@ -142,7 +142,7 @@ fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
 VhostInputDevicesComponent();
 
 std::optional<MonitorCommand> VhalProxyServer(
-    const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
+    const CuttlefishConfig::InstanceSpecific&);
 
 fruit::Component<fruit::Required<const CuttlefishConfig, LogTeeCreator,
                                  const CuttlefishConfig::InstanceSpecific>>
