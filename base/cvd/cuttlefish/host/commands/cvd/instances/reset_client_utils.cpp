@@ -53,8 +53,8 @@ static Command CreateStopCvdCommand(const std::string& stopper_path,
   for (const auto& arg : args) {
     command.AddParameter(arg);
   }
+  command.SetEnvironment({});
   for (const auto& [key, value] : envs) {
-    command.UnsetFromEnvironment(key);
     command.AddEnvironmentVariable(key, value);
   }
   return command;
