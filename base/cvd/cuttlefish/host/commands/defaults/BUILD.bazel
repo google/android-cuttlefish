@@ -5,7 +5,7 @@ package(
 )
 
 cf_cc_binary(
-    name = "defaults",
+    name = "cf_defaults",
     srcs = [
         "defaults.cpp",
     ],
