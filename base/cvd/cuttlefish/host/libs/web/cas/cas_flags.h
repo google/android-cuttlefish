@@ -31,8 +31,8 @@ class FlagValue {
  public:
   explicit FlagValue(const T& default_value) : default_value_(default_value) {}
 
-  // Return by value to avoid dangling references.
-  T value() const { return value_.value_or(default_value_); }
+  // Use ref-qualifier to avoid calling value() on a temporary.
+  const T& value() const& { return value_ ? *value_ : default_value_; }
   void set_value(const T& value) { value_.emplace(value); }
   bool user_provided() const { return value_.has_value(); }
 
