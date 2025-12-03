@@ -31,14 +31,16 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/host/commands/cvd/instances/config_path.h"
 #include "cuttlefish/host/commands/cvd/instances/reset_client_utils.h"
 #include "cuttlefish/host/commands/cvd/instances/run_cvd_proc_collector.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {
 namespace {
@@ -58,56 +60,29 @@ static Command CreateStopCvdCommand(const std::string& stopper_path,
   return command;
 }
 
-Result<void> RunStopCvd(const GroupProcInfo& group_info,
-                        bool clear_runtime_dirs) {
-  const auto& stopper_path = group_info.stop_cvd_path_;
-  cvd_common::Envs stop_cvd_envs;
-  stop_cvd_envs["HOME"] = group_info.home_;
-  if (group_info.android_host_out_) {
-    stop_cvd_envs[kAndroidHostOut] = group_info.android_host_out_.value();
-    stop_cvd_envs[kAndroidSoongHostOut] = group_info.android_host_out_.value();
-  } else {
-    auto android_host_out = StringFromEnv(
-        kAndroidHostOut,
-        android::base::Dirname(android::base::GetExecutableDirectory()));
-    stop_cvd_envs[kAndroidHostOut] = android_host_out;
-    stop_cvd_envs[kAndroidSoongHostOut] = android_host_out;
-  }
+Result<void> RunStopCvdCmd(const std::string& stopper_path,
+                        const cvd_common::Envs& env,
+                        const cvd_common::Args& args) {
+  Command stop_cmd = CreateStopCvdCommand(stopper_path, env, args);
 
-  if (clear_runtime_dirs) {
-    Command first_stop_cvd = CreateStopCvdCommand(
-        stopper_path, stop_cvd_envs, {"--clear_instance_dirs=true"});
-    LOG(INFO) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
-              << stopper_path << " --clear_instance_dirs=true";
-    if (RunAndCaptureStdout(std::move(first_stop_cvd)).ok()) {
-      LOG(INFO) << "\"" << stopper_path << " successfully "
-                << "\" stopped instances at HOME=" << group_info.home_;
-      return {};
-    } else {
-      LOG(ERROR) << "Failed to run " << stopper_path
-                 << " --clear_instance_dirs=true";
-      LOG(ERROR) << "Perhaps --clear_instance_dirs is not taken.";
-      LOG(ERROR) << "Trying again without it";
-    }
-    // TODO(kwstephenkim): deletes manually if `stop_cvd --clear_instance_dirs`
-    // failed.
+  LOG(INFO) << "Running " << stop_cmd.ToString();
+  Result<std::string> cmd_res = RunAndCaptureStdout(std::move(stop_cmd));
+  if (!cmd_res.ok()) {
+    LOG(ERROR) << "Failed to run " << stopper_path;
+    CF_EXPECT(std::move(cmd_res));
   }
-  Command second_stop_cvd =
-      CreateStopCvdCommand(stopper_path, stop_cvd_envs, {});
-  LOG(INFO) << "Running HOME=" << stop_cvd_envs.at("HOME") << " "
-            << stopper_path;
-  if (RunAndCaptureStdout(std::move(second_stop_cvd)).ok()) {
-    LOG(INFO) << "\"" << stopper_path << " successfully "
-              << "\" stopped instances at HOME=" << group_info.home_;
-    return {};
-  }
-  return CF_ERRF("`HOME={} {}` Failed", group_info.home_,
-                 group_info.stop_cvd_path_);
+  LOG(INFO) << "\"" << stopper_path << " successfully ";
+  return {};
 }
 
 Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
   for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
-    auto stop_cvd_result = RunStopCvd(group_info, clear_runtime_dirs);
+    auto stop_cvd_result = RunStopCvd(StopCvdParams{
+        .bin_path = group_info.stop_cvd_path_,
+        .home_dir = group_info.home_,
+        .wait_for_launcher_secs = 5,
+        .clear_runtime_dirs = clear_runtime_dirs,
+    });
     if (!stop_cvd_result.ok()) {
       LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
       continue;
@@ -220,4 +195,42 @@ Result<void> ForcefullyStopGroup(const uid_t any_id_in_group) {
   return {};
 }
 
+Result<void> RunStopCvd(StopCvdParams params) {
+  const auto& stopper_path = params.bin_path;
+  cvd_common::Envs stop_cvd_envs;
+  stop_cvd_envs["HOME"] = params.home_dir;
+  // stop_cvd is located at $ANDROID_HOST_OUT/bin/stop_cvd
+  std::string android_host_out =
+      android::base::Dirname(android::base::Dirname(stopper_path));
+  stop_cvd_envs[kAndroidHostOut] = android_host_out;
+  stop_cvd_envs[kAndroidSoongHostOut] = android_host_out;
+  auto config_file_path = CF_EXPECT(GetCuttlefishConfigPath(params.home_dir));
+  stop_cvd_envs[kCuttlefishConfigEnvVarName] = config_file_path;
+  cvd_common::Args args;
+  std::string wait_flag =
+      fmt::format("--wait_for_launcher={}", params.wait_for_launcher_secs);
+  args.push_back(wait_flag);
+  if (params.clear_runtime_dirs) {
+    args.push_back("--clear_instance_dirs=true");
+  }
+  Result<void> cmd_res = RunStopCvdCmd(stopper_path, stop_cvd_envs, args);
+  if (cmd_res.ok()) {
+    return {};
+  }
+  /**
+   * --clear_instance_dirs may not be available in old branches. This causes
+   * stop_cvd to terminate with a non-zero exit code due to a parsing error. Try
+   * again without that flag.
+   */
+  if (!params.clear_runtime_dirs) {
+    CF_EXPECT(std::move(cmd_res));
+  }
+  // TODO(kwstephenkim): deletes manually if `stop_cvd --clear_instance_dirs`
+  // failed.
+  LOG(ERROR) << "Perhaps --clear_instance_dirs is not supported.";
+  LOG(ERROR) << "Trying again without it";
+
+  CF_EXPECT(RunStopCvdCmd(stopper_path, stop_cvd_envs, {wait_flag}));
+  return {};
+}
 }  // namespace cuttlefish

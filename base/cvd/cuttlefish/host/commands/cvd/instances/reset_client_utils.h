@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 
+#include <string>
+
 #include "cuttlefish/common/libs/utils/result.h"
 
 namespace cuttlefish {
@@ -29,5 +31,13 @@ namespace cuttlefish {
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs);
 
 Result<void> ForcefullyStopGroup(uid_t any_id_in_group);
+
+struct StopCvdParams{
+  std::string bin_path;
+  std::string home_dir;
+  int wait_for_launcher_secs;
+  bool clear_runtime_dirs;
+};
+Result<void> RunStopCvd(StopCvdParams params);
 
 }  // namespace cuttlefish
