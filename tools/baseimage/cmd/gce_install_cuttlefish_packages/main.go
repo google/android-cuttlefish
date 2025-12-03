@@ -91,6 +91,15 @@ func installCuttlefishDebs(project, zone, insName string, debSrcs []string) erro
 			return fmt.Errorf("error uploading bash script: %v", err)
 		}
 	}
+
+	if err := gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh"); err != nil {
+		return err
+	}
+
+	if err := gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh"); err != nil {
+		return err
+	}
+
 	args := strings.Join(dstSrcs, " ")
 	if err := gce.RunCmd(project, zone, insName, "./install.sh "+args); err != nil {
 		return err
