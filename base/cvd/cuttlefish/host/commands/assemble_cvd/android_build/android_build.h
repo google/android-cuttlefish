@@ -21,7 +21,6 @@
 #include <set>
 #include <string_view>
 
-#include "absl/strings/str_format.h"
 #include "fmt/ostream.h"
 
 #include "cuttlefish/result/result.h"
@@ -92,11 +91,6 @@ class AndroidBuild {
 
  private:
   virtual std::ostream& Format(std::ostream&) const = 0;
-
-  template <typename Sink>
-  friend void AbslStringify(Sink& sink, const AndroidBuild& provider) {
-    sink.Append(absl::FormatStreamed(provider));
-  }
 
   friend std::ostream& operator<<(std::ostream&, const AndroidBuild&);
 };
