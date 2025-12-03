@@ -70,12 +70,15 @@ Result<void> RunStopCvdCmd(const std::string& stopper_path,
     LOG(ERROR) << "Failed to run " << stopper_path;
     CF_EXPECT(std::move(cmd_res));
   }
-  LOG(INFO) << "\"" << stopper_path << " successfully ";
+  LOG(VERBOSE) << "\"" << stopper_path << " successfully ";
   return {};
 }
 
 Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
-  for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
+  std::vector<GroupProcInfo> group_infos = CF_EXPECT(CollectRunCvdGroups());
+  LOG(INFO) << "Found " << group_infos.size()
+               << " untracked running instance groups";
+  for (const GroupProcInfo& group_info : group_infos) {
     auto stop_cvd_result = RunStopCvd(StopCvdParams{
         .bin_path = group_info.stop_cvd_path_,
         .home_dir = group_info.home_,
@@ -114,6 +117,7 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
       if (!IsStillRunCvd(parent_run_cvd_pid)) {
         continue;
       }
+      LOG(INFO) << "Sending SIGKILL to process " << parent_run_cvd_pid;
       if (kill(parent_run_cvd_pid, SIGKILL) == 0) {
         LOG(VERBOSE) << "Successfully SIGKILL'ed " << parent_run_cvd_pid;
       } else {
@@ -173,7 +177,13 @@ Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
   if (!stop_cvd_result.ok()) {
     LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
   }
-  for (const GroupProcInfo& group_info : CF_EXPECT(CollectRunCvdGroups())) {
+  std::vector<GroupProcInfo> group_infos = CF_EXPECT(CollectRunCvdGroups());
+  if (group_infos.empty()) {
+    return {};
+  }
+  LOG(INFO) << group_infos.size()
+               << " instance groups still remain, will stop forcefully";
+  for (const GroupProcInfo& group_info : group_infos) {
     auto result = ForcefullyStopGroup(group_info);
     if (!result.ok()) {
       LOG(ERROR) << result.error().FormatForEnv();
