@@ -135,9 +135,9 @@ package_files(
 
 package_files(
     name = "defaults",
-    executable = "cuttlefish-integration/bin/defaults",
+    executable = "cuttlefish-integration/bin/cf_defaults",
     package_file_to_src = {
-        "cuttlefish-integration/bin/defaults": "//cuttlefish/host/commands/defaults",
+        "cuttlefish-integration/bin/cf_defaults": "//cuttlefish/host/commands/defaults:cf_defaults",
     },
     visibility = ["//:android_cuttlefish"],
 )
