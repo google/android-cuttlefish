@@ -28,3 +28,19 @@ cf_cc_library(
         "@fmt",
     ],
 )
+
+cf_cc_library(
+    name = "find_build_archive",
+    srcs = ["find_build_archive.cc"],
+    hdrs = ["find_build_archive.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/libs/config:build_archive",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/host/libs/zip:zip_file",
+        "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "@abseil-cpp//absl/strings",
+    ],
+)
