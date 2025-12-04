@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <functional>
 #include <map>
 #include <optional>
 #include <ostream>
@@ -28,6 +29,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
+#include "android-base/file.h"
 #include "fmt/ostream.h"
 #include "fmt/ranges.h"
 
@@ -44,8 +46,8 @@ Result<FetchedArchive> FetchedArchive::Create(
     const FetcherConfig& fetcher_config, FileSource source,
     std::string_view archive) {
   std::optional<ReadableZip> zip_file;
-  std::set<std::string> members;
-  std::map<std::string, std::string> extracted_members;
+  std::set<std::string, std::less<void>> members;
+  std::map<std::string, std::string, std::less<void>> extracted_members;
 
   // To validate `xyz.zip` only has exact matches and not `/abc-xyz.zip`.
   std::string slash_archive = absl::StrCat("/", archive);
@@ -87,20 +89,39 @@ Result<FetchedArchive> FetchedArchive::Create(
 }
 
 FetchedArchive::FetchedArchive(
-    FileSource source, std::map<std::string, std::string> extracted_members,
-    std::set<std::string> members, std::optional<ReadableZip> zip_file)
+    FileSource source,
+    std::map<std::string, std::string, std::less<void>> extracted,
+    std::set<std::string, std::less<void>> members,
+    std::optional<ReadableZip> zip_file)
     : source_(source),
-      extracted_members_(std::move(extracted_members)),
+      extracted_(std::move(extracted)),
       members_(std::move(members)),
       zip_file_(std::move(zip_file)) {}
 
-const std::set<std::string>& FetchedArchive::Members() const {
+const std::set<std::string, std::less<void>>& FetchedArchive::Members() const {
   return members_;
 }
 
-Result<std::string> FetchedArchive::MemberFilepath(
+Result<std::string_view> FetchedArchive::MemberFilepath(
     std::string_view member_name, std::optional<std::string_view> extract_dir) {
-  return CF_ERR("TODO: schuffelen");
+  CF_EXPECTF(members_.count(member_name), "'{}' not in archive", member_name);
+  if (auto it = extracted_.find(member_name); it != extracted_.end()) {
+    return it->second;
+  }
+  CF_EXPECT(zip_file_.has_value(), "'{}' not extracted, no source archive");
+  CF_EXPECT(extract_dir.has_value(), "'{}' not extracted, need extract_dir");
+
+  std::string dest_path = absl::StrCat(*extract_dir, "/", member_name);
+  CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(dest_path)));
+
+  std::string member_name_str{member_name};
+  CF_EXPECT(ExtractFile(*zip_file_, member_name_str, dest_path));
+
+  auto it =
+      extracted_.emplace(std::move(member_name_str), std::move(dest_path));
+  CF_EXPECTF(!!it.second, "Failed to insert '{}' into map", member_name);
+
+  return it.first->second;
 }
 
 std::ostream& operator<<(std::ostream& out,
@@ -109,7 +130,7 @@ std::ostream& operator<<(std::ostream& out,
   fmt::print(out, "\tsource: '{}'\n",
              SourceEnumToString(fetched_archive.source_));
   fmt::print(out, "\textracted_members: [{}]\n",
-             fmt::join(fetched_archive.extracted_members_, ", "));
+             fmt::join(fetched_archive.extracted_, ", "));
   fmt::print(out, "\tmembers: [{}]\n",
              fmt::join(fetched_archive.members_, ", "));
   bool has_zip = fetched_archive.zip_file_.has_value();

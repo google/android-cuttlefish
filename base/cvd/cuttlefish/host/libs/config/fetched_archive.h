@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <optional>
 #include <ostream>
@@ -54,7 +55,7 @@ class FetchedArchive {
    * If a subset of the archive members were extracted and the archive was
    * deleted, this may be incomplete.
    */
-  const std::set<std::string>& Members() const;
+  const std::set<std::string, std::less<void>>& Members() const;
 
   /**
    * Returns the file path to a member of the archive, extracted on the
@@ -67,19 +68,21 @@ class FetchedArchive {
    * - The file needed to be extracted, but `extract_dir` was not present.
    * - There was a failure to extract the file member.
    */
-  Result<std::string> MemberFilepath(
+  Result<std::string_view> MemberFilepath(
       std::string_view member_name,
       std::optional<std::string_view> extract_dir);
 
   friend std::ostream& operator<<(std::ostream&, const FetchedArchive&);
 
  private:
-  FetchedArchive(FileSource, std::map<std::string, std::string>,
-                 std::set<std::string>, std::optional<ReadableZip>);
+  FetchedArchive(FileSource,
+                 std::map<std::string, std::string, std::less<void>>,
+                 std::set<std::string, std::less<void>>,
+                 std::optional<ReadableZip>);
 
   FileSource source_;
-  std::map<std::string, std::string> extracted_members_;
-  std::set<std::string> members_;
+  std::map<std::string, std::string, std::less<void>> extracted_;
+  std::set<std::string, std::less<void>> members_;
   std::optional<ReadableZip> zip_file_;
 };
 

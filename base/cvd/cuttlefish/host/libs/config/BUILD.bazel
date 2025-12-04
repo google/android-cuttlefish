@@ -197,6 +197,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//libbase",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@fmt",
