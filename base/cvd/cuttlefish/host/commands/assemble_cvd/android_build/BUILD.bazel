@@ -44,3 +44,23 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
     ],
 )
+
+cf_cc_library(
+    name = "img_zip",
+    srcs = ["img_zip.cc"],
+    hdrs = ["img_zip.h"],
+    deps = [
+        "//cuttlefish/common/libs/key_equals_value",
+        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:find_build_archive",
+        "//cuttlefish/host/libs/config:build_archive",
+        "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/host/libs/config:file_source",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
+        "@protobuf",
+    ],
+)
