@@ -31,7 +31,7 @@ use nix::{
     time::{clock_gettime, ClockId},
 };
 use std::{
-    collections::{BinaryHeap, HashMap},
+    collections::{BinaryHeap, HashMap, HashSet},
     sync::{
         atomic::{AtomicI32, Ordering},
         mpsc::{channel, Sender},
@@ -103,7 +103,13 @@ pub struct SchedulingService {
     worker_handle: JoinHandle<()>,
 }
 fn check_configs(configs: &[SchedulingConfig]) -> Result<(), Status> {
+    let mut uids = HashSet::new();
     for config in configs.iter() {
+        if !uids.insert(config.uid) {
+            error!("Duplicate UID found: {}", config.uid);
+            return Err(Status::new_exception(ExceptionCode::ILLEGAL_ARGUMENT, None));
+        }
+
         if config.priority < MIN_PRIORITY || config.priority > MAX_PRIORITY {
             error!("Priority {} is out of range", config.priority);
             return Err(Status::new_exception(ExceptionCode::ILLEGAL_ARGUMENT, None));
