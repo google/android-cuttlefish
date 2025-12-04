@@ -187,9 +187,9 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "fetched_archive",
-    srcs = ["fetched_archive.cc"],
-    hdrs = ["fetched_archive.h"],
+    name = "build_archive",
+    srcs = ["build_archive.cc"],
+    hdrs = ["build_archive.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:result",

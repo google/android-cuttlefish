@@ -34,19 +34,21 @@
 namespace cuttlefish {
 
 /**
- * An archive that was downloaded by `cvd fetch`.
+ * An archive that was downloaded by `cvd fetch` or created by a build system
+ * runnning locally.
  *
  * The archive may be partially or completely extracted, and the archive may
  * have been deleted as part of the fetch process, leaving only extracted files.
  */
-class FetchedArchive {
+class BuildArchive {
  public:
-  static Result<FetchedArchive> FromFetcherConfig(
-      const FetcherConfig&, FileSource, std::string_view archive_name);
-  static Result<FetchedArchive> FromZip(ReadableZip);
+  static Result<BuildArchive> FromFetcherConfig(const FetcherConfig&,
+                                                FileSource,
+                                                std::string_view archive_name);
+  static Result<BuildArchive> FromZip(ReadableZip);
 
   template <typename Sink>
-  friend void AbslStringify(Sink& sink, const FetchedArchive& img) {
+  friend void AbslStringify(Sink& sink, const BuildArchive& img) {
     sink.Append(absl::FormatStreamed(img));
   }
 
@@ -75,13 +77,13 @@ class FetchedArchive {
 
   Result<std::string> MemberContents(std::string_view name);
 
-  friend std::ostream& operator<<(std::ostream&, const FetchedArchive&);
+  friend std::ostream& operator<<(std::ostream&, const BuildArchive&);
 
  private:
-  FetchedArchive(std::optional<FileSource>,
-                 std::map<std::string, std::string, std::less<void>>,
-                 std::set<std::string, std::less<void>>,
-                 std::optional<ReadableZip>);
+  BuildArchive(std::optional<FileSource>,
+               std::map<std::string, std::string, std::less<void>>,
+               std::set<std::string, std::less<void>>,
+               std::optional<ReadableZip>);
 
   std::optional<FileSource> source_;
   std::map<std::string, std::string, std::less<void>> extracted_;
@@ -94,6 +96,6 @@ class FetchedArchive {
 namespace fmt {
 
 template <>
-struct formatter<::cuttlefish::FetchedArchive> : ostream_formatter {};
+struct formatter<::cuttlefish::BuildArchive> : ostream_formatter {};
 
 }  // namespace fmt
