@@ -37,6 +37,7 @@ apex {
     soc_specific: true,
     binaries: [
         "android.hardware.npu@V1-cf-service",
+        "run-test-inference",
     ],
     prebuilts: [
         "com.android.hardware.npu.cf.rc",
