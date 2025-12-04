@@ -54,9 +54,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
-#include "cuttlefish/host/libs/config/fetched_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 
@@ -75,16 +75,16 @@ uint64_t AvailableSpaceAtPath(const std::string& path) {
   return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
-Result<FetchedArchive> FindImgZip(const FetcherConfig& fetcher_config,
-                                  std::string_view system_image_dir) {
+Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
+                                std::string_view system_image_dir) {
   for (const auto& [member_name, member] : fetcher_config.get_cvd_files()) {
     if (member.source != FileSource::DEFAULT_BUILD) {
       continue;
     } else if (absl::StrContains(member_name, "-img-")) {
-      return CF_EXPECT(FetchedArchive::FromFetcherConfig(
+      return CF_EXPECT(BuildArchive::FromFetcherConfig(
           fetcher_config, FileSource::DEFAULT_BUILD, member_name));
     } else if (absl::StrContains(member.archive_source, "-img-")) {
-      return CF_EXPECT(FetchedArchive::FromFetcherConfig(
+      return CF_EXPECT(BuildArchive::FromFetcherConfig(
           fetcher_config, FileSource::DEFAULT_BUILD, member.archive_source));
     }
   }
@@ -102,7 +102,7 @@ Result<void> CreateDynamicDiskFiles(
         fetcher_configs.ForInstance(instance_index);
     std::string system_image_dir = system_image_dirs.ForIndex(instance_index);
 
-    if (Result<FetchedArchive> img_zip =
+    if (Result<BuildArchive> img_zip =
             FindImgZip(fetcher_config, system_image_dir);
         img_zip.ok()) {
       LOG(DEBUG) << "Found image zip: " << *img_zip;

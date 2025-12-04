@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/config/fetched_archive.h"
+#include "cuttlefish/host/libs/config/build_archive.h"
 
 #include <stddef.h>
 
@@ -56,7 +56,7 @@ Result<std::set<std::string, std::less<void>>> ZipMembers(ReadableZip& zip) {
 
 }  // namespace
 
-Result<FetchedArchive> FetchedArchive::FromFetcherConfig(
+Result<BuildArchive> BuildArchive::FromFetcherConfig(
     const FetcherConfig& fetcher_config, FileSource source,
     std::string_view archive) {
   std::optional<ReadableZip> zip_file;
@@ -97,17 +97,17 @@ Result<FetchedArchive> FetchedArchive::FromFetcherConfig(
     members.insert(zip_members.begin(), zip_members.end());
   }
 
-  return FetchedArchive(source, std::move(extracted_members),
-                        std::move(members), std::move(zip_file));
+  return BuildArchive(source, std::move(extracted_members), std::move(members),
+                      std::move(zip_file));
 }
 
-Result<FetchedArchive> FetchedArchive::FromZip(ReadableZip zip_file) {
+Result<BuildArchive> BuildArchive::FromZip(ReadableZip zip_file) {
   std::set<std::string, std::less<void>> members =
       CF_EXPECT(ZipMembers(zip_file));
-  return FetchedArchive({}, {}, std::move(members), std::move(zip_file));
+  return BuildArchive({}, {}, std::move(members), std::move(zip_file));
 }
 
-FetchedArchive::FetchedArchive(
+BuildArchive::BuildArchive(
     std::optional<FileSource> source,
     std::map<std::string, std::string, std::less<void>> extracted,
     std::set<std::string, std::less<void>> members,
@@ -117,11 +117,11 @@ FetchedArchive::FetchedArchive(
       members_(std::move(members)),
       zip_file_(std::move(zip_file)) {}
 
-const std::set<std::string, std::less<void>>& FetchedArchive::Members() const {
+const std::set<std::string, std::less<void>>& BuildArchive::Members() const {
   return members_;
 }
 
-Result<std::string_view> FetchedArchive::MemberFilepath(
+Result<std::string_view> BuildArchive::MemberFilepath(
     std::string_view member_name, std::optional<std::string_view> extract_dir) {
   CF_EXPECTF(members_.count(member_name), "'{}' not in archive", member_name);
   if (auto it = extracted_.find(member_name); it != extracted_.end()) {
@@ -143,7 +143,7 @@ Result<std::string_view> FetchedArchive::MemberFilepath(
   return it.first->second;
 }
 
-Result<std::string> FetchedArchive::MemberContents(std::string_view name) {
+Result<std::string> BuildArchive::MemberContents(std::string_view name) {
   CF_EXPECTF(members_.count(name), "'{}' not in archive", name);
   if (auto it = extracted_.find(name); it != extracted_.end()) {
     std::string contents;
@@ -157,17 +157,15 @@ Result<std::string> FetchedArchive::MemberContents(std::string_view name) {
   return CF_EXPECT(ReadToString(reader));
 }
 
-std::ostream& operator<<(std::ostream& out,
-                         const FetchedArchive& fetched_archive) {
-  out << "FetchedArchive {\n";
-  if (fetched_archive.source_.has_value()) {
-    fmt::print(out, "\tsource: '{}'\n", *fetched_archive.source_);
+std::ostream& operator<<(std::ostream& out, const BuildArchive& build_archive) {
+  out << "BuildArchive {\n";
+  if (build_archive.source_.has_value()) {
+    fmt::print(out, "\tsource: '{}'\n", *build_archive.source_);
   }
   fmt::print(out, "\textracted_members: [{}]\n",
-             fmt::join(fetched_archive.extracted_, ", "));
-  fmt::print(out, "\tmembers: [{}]\n",
-             fmt::join(fetched_archive.members_, ", "));
-  if (fetched_archive.zip_file_.has_value()) {
+             fmt::join(build_archive.extracted_, ", "));
+  fmt::print(out, "\tmembers: [{}]\n", fmt::join(build_archive.members_, ", "));
+  if (build_archive.zip_file_.has_value()) {
     out << "\tzip: present\n";
   }
   return out << "}";
