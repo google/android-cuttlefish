@@ -143,8 +143,7 @@ Result<std::string> FetchedArchive::MemberContents(std::string_view name) {
 std::ostream& operator<<(std::ostream& out,
                          const FetchedArchive& fetched_archive) {
   out << "FetchedArchive {\n";
-  fmt::print(out, "\tsource: '{}'\n",
-             SourceEnumToString(fetched_archive.source_));
+  fmt::print(out, "\tsource: '{}'\n", fetched_archive.source_);
   fmt::print(out, "\textracted_members: [{}]\n",
              fmt::join(fetched_archive.extracted_, ", "));
   fmt::print(out, "\tmembers: [{}]\n",
