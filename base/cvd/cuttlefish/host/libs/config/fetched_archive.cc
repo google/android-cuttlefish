@@ -56,7 +56,7 @@ Result<std::set<std::string, std::less<void>>> ZipMembers(ReadableZip& zip) {
 
 }  // namespace
 
-Result<FetchedArchive> FetchedArchive::Create(
+Result<FetchedArchive> FetchedArchive::FromFetcherConfig(
     const FetcherConfig& fetcher_config, FileSource source,
     std::string_view archive) {
   std::optional<ReadableZip> zip_file;

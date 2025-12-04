@@ -41,8 +41,8 @@ namespace cuttlefish {
  */
 class FetchedArchive {
  public:
-  static Result<FetchedArchive> Create(const FetcherConfig&, FileSource,
-                                       std::string_view archive_name);
+  static Result<FetchedArchive> FromFetcherConfig(
+      const FetcherConfig&, FileSource, std::string_view archive_name);
   static Result<FetchedArchive> FromZip(ReadableZip);
 
   template <typename Sink>

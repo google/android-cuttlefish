@@ -82,10 +82,10 @@ Result<FetchedArchive> FindImgZip(const FetcherConfig& fetcher_config,
     if (member.source != FileSource::DEFAULT_BUILD) {
       continue;
     } else if (absl::StrContains(member_name, "-img-")) {
-      return CF_EXPECT(FetchedArchive::Create(
+      return CF_EXPECT(FetchedArchive::FromFetcherConfig(
           fetcher_config, FileSource::DEFAULT_BUILD, member_name));
     } else if (absl::StrContains(member.archive_source, "-img-")) {
-      return CF_EXPECT(FetchedArchive::Create(
+      return CF_EXPECT(FetchedArchive::FromFetcherConfig(
           fetcher_config, FileSource::DEFAULT_BUILD, member.archive_source));
     }
   }
