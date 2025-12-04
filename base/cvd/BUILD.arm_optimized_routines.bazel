@@ -1,0 +1,51 @@
+package(
+    default_visibility = [
+        "@//:android_cuttlefish",
+    ],
+)
+
+# Some of the `.h` and `.S` files are treated like `.inl` files.
+cc_library(
+    name = "string_internal_textual_headers",
+    includes = select({
+        "@platforms//cpu:arm": ["string/arm"],
+        "@platforms//cpu:aarch64": ["string/aarch64"],
+        "@platforms//cpu:x86_64": ["string/x86_64"],
+        "//conditions:default": [],
+    }),
+    textual_hdrs = select({
+        "@platforms//cpu:arm": glob([
+            "string/arm/*.h",
+            "string/arm/*.S",
+        ]),
+        "@platforms//cpu:aarch64": glob([
+            "string/aarch64/*.h",
+            "string/aarch64/*.S",
+        ]),
+        "@platforms//cpu:x86_64": glob([
+            "string/x86_64/*.S",
+        ]),
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "string",
+    srcs = select({
+        "@platforms//cpu:arm": glob([
+            "string/arm/*.c",
+            "string/arm/*.S",
+        ]),
+        "@platforms//cpu:aarch64": glob([
+            "string/aarch64/*.S",
+        ]),
+        "@platforms//cpu:x86_64": glob([
+            "string/x86_64/*.S",
+        ]),
+        "//conditions:default": [],
+    }),
+    hdrs = glob(["string/include/*.h"]),
+    deps = [":string_internal_textual_headers"],
+    includes = ["string/include"],
+)
