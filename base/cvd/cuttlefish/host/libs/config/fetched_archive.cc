@@ -43,6 +43,18 @@
 #include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
+namespace {
+
+Result<std::set<std::string, std::less<void>>> ZipMembers(ReadableZip& zip) {
+  std::set<std::string, std::less<void>> members;
+  size_t zip_entries = CF_EXPECT(zip.NumEntries());
+  for (size_t i = 0; i < zip_entries; i++) {
+    members.emplace(CF_EXPECT(zip.EntryName(i)));
+  }
+  return members;
+}
+
+}  // namespace
 
 Result<FetchedArchive> FetchedArchive::Create(
     const FetcherConfig& fetcher_config, FileSource source,
@@ -80,18 +92,23 @@ Result<FetchedArchive> FetchedArchive::Create(
   }
 
   if (zip_file.has_value()) {
-    size_t zip_entries = CF_EXPECT(zip_file->NumEntries());
-    for (size_t i = 0; i < zip_entries; i++) {
-      members.insert(CF_EXPECT(zip_file->EntryName(i)));
-    }
+    std::set<std::string, std::less<void>> zip_members =
+        CF_EXPECT(ZipMembers(*zip_file));
+    members.insert(zip_members.begin(), zip_members.end());
   }
 
   return FetchedArchive(source, std::move(extracted_members),
                         std::move(members), std::move(zip_file));
 }
 
+Result<FetchedArchive> FetchedArchive::FromZip(ReadableZip zip_file) {
+  std::set<std::string, std::less<void>> members =
+      CF_EXPECT(ZipMembers(zip_file));
+  return FetchedArchive({}, {}, std::move(members), std::move(zip_file));
+}
+
 FetchedArchive::FetchedArchive(
-    FileSource source,
+    std::optional<FileSource> source,
     std::map<std::string, std::string, std::less<void>> extracted,
     std::set<std::string, std::less<void>> members,
     std::optional<ReadableZip> zip_file)
@@ -143,13 +160,16 @@ Result<std::string> FetchedArchive::MemberContents(std::string_view name) {
 std::ostream& operator<<(std::ostream& out,
                          const FetchedArchive& fetched_archive) {
   out << "FetchedArchive {\n";
-  fmt::print(out, "\tsource: '{}'\n", fetched_archive.source_);
+  if (fetched_archive.source_.has_value()) {
+    fmt::print(out, "\tsource: '{}'\n", *fetched_archive.source_);
+  }
   fmt::print(out, "\textracted_members: [{}]\n",
              fmt::join(fetched_archive.extracted_, ", "));
   fmt::print(out, "\tmembers: [{}]\n",
              fmt::join(fetched_archive.members_, ", "));
-  bool has_zip = fetched_archive.zip_file_.has_value();
-  fmt::print(out, "\tzip: {}\n", has_zip ? "present" : "missing");
+  if (fetched_archive.zip_file_.has_value()) {
+    out << "\tzip: present\n";
+  }
   return out << "}";
 }
 

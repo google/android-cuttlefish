@@ -43,6 +43,7 @@ class FetchedArchive {
  public:
   static Result<FetchedArchive> Create(const FetcherConfig&, FileSource,
                                        std::string_view archive_name);
+  static Result<FetchedArchive> FromZip(ReadableZip);
 
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const FetchedArchive& img) {
@@ -77,12 +78,12 @@ class FetchedArchive {
   friend std::ostream& operator<<(std::ostream&, const FetchedArchive&);
 
  private:
-  FetchedArchive(FileSource,
+  FetchedArchive(std::optional<FileSource>,
                  std::map<std::string, std::string, std::less<void>>,
                  std::set<std::string, std::less<void>>,
                  std::optional<ReadableZip>);
 
-  FileSource source_;
+  std::optional<FileSource> source_;
   std::map<std::string, std::string, std::less<void>> extracted_;
   std::set<std::string, std::less<void>> members_;
   std::optional<ReadableZip> zip_file_;
