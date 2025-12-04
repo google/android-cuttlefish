@@ -46,6 +46,7 @@ class BuildArchive {
                                                 FileSource,
                                                 std::string_view archive_name);
   static Result<BuildArchive> FromZip(ReadableZip);
+  static Result<BuildArchive> FromZipPath(const std::string&);
 
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const BuildArchive& img) {

@@ -87,8 +87,8 @@ Result<BuildArchive> BuildArchive::FromFetcherConfig(
                "'{}' is present in the fetcher config not in the filesystem.",
                path);
 
-    members.insert(std::string(archive_path));
-    extracted_members.emplace(std::string(archive_path), path);
+    members.emplace(archive_path);
+    extracted_members.emplace(archive_path, path);
   }
 
   if (zip_file.has_value()) {
@@ -105,6 +105,11 @@ Result<BuildArchive> BuildArchive::FromZip(ReadableZip zip_file) {
   std::set<std::string, std::less<void>> members =
       CF_EXPECT(ZipMembers(zip_file));
   return BuildArchive({}, {}, std::move(members), std::move(zip_file));
+}
+
+Result<BuildArchive> BuildArchive::FromZipPath(const std::string& path) {
+  ReadableZip zip = CF_EXPECT(ZipOpenRead(path));
+  return CF_EXPECT(FromZip(std::move(zip)));
 }
 
 BuildArchive::BuildArchive(
@@ -160,7 +165,7 @@ Result<std::string> BuildArchive::MemberContents(std::string_view name) {
 std::ostream& operator<<(std::ostream& out, const BuildArchive& build_archive) {
   out << "BuildArchive {\n";
   if (build_archive.source_.has_value()) {
-    fmt::print(out, "\tsource: '{}'\n", *build_archive.source_);
+    fmt::print(out, "\tsource: '{}'\n,", *build_archive.source_);
   }
   fmt::print(out, "\textracted_members: [{}]\n",
              fmt::join(build_archive.extracted_, ", "));
