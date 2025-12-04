@@ -72,6 +72,8 @@ class FetchedArchive {
       std::string_view member_name,
       std::optional<std::string_view> extract_dir);
 
+  Result<std::string> MemberContents(std::string_view name);
+
   friend std::ostream& operator<<(std::ostream&, const FetchedArchive&);
 
  private:

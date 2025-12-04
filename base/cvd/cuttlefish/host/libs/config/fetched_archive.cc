@@ -38,7 +38,9 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/host/libs/zip/zip_string.h"
 
 namespace cuttlefish {
 
@@ -122,6 +124,20 @@ Result<std::string_view> FetchedArchive::MemberFilepath(
   CF_EXPECTF(!!it.second, "Failed to insert '{}' into map", member_name);
 
   return it.first->second;
+}
+
+Result<std::string> FetchedArchive::MemberContents(std::string_view name) {
+  CF_EXPECTF(members_.count(name), "'{}' not in archive", name);
+  if (auto it = extracted_.find(name); it != extracted_.end()) {
+    std::string contents;
+    CF_EXPECTF(android::base::ReadFileToString(it->second, &contents),
+               "Failed to read '{}'", it->second);
+    return contents;
+  }
+  CF_EXPECT(zip_file_.has_value(), "'{}' not extracted, no source archive");
+
+  ReadableZipSource reader = CF_EXPECT(zip_file_->GetFile(std::string(name)));
+  return CF_EXPECT(ReadToString(reader));
 }
 
 std::ostream& operator<<(std::ostream& out,
