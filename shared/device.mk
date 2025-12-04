@@ -49,6 +49,9 @@ ifneq ($(RELEASE_ADBD_OPEN_VSOCK_PORT),)
 PRODUCT_SYSTEM_PROPERTIES += service.adb.listen_addrs=vsock:8382,vsock:5555
 endif
 
+# Increase the HCI timeout to 5 seconds to prevent from timeout.
+PRODUCT_SYSTEM_EXT_PROPERTIES += bluetooth.hci.timeout_milliseconds=5000
+
 # Enable Virtual A/B
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/vabc_features.mk)
 PRODUCT_VIRTUAL_AB_COMPRESSION_METHOD := lz4
