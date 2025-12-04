@@ -14,19 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Mount attached disk `/dev/sdb1` at `/mnt/image`.
+# Mount attached disk `/dev/sdb1` at `/mnt/image` (the argument).
 set -o errexit -o nounset -o pipefail
 
-sudo mkdir -p /mnt/image
-sudo mount /dev/sdb1 /mnt/image
-sudo mount -t sysfs none /mnt/image/sys
-sudo mount -t proc none /mnt/image/proc
-sudo mount --bind /boot/efi /mnt/image/boot/efi
-sudo mount --bind /dev/ /mnt/image/dev
-sudo mount --bind /dev/pts /mnt/image/dev/pts
-sudo mount --bind /run /mnt/image/run
+MOUNTPONT=$1
+
+sudo mkdir -p ${MOUNTPOINT}
+sudo mount /dev/sdb1 ${MOUNTPOINT}
+sudo mount -t sysfs none ${MOUNTPOINT}/sys
+sudo mount -t proc none ${MOUNTPOINT}/proc
+sudo mount --bind /boot/efi ${MOUNTPOINT}/boot/efi
+sudo mount --bind /dev/ ${MOUNTPOINT}/dev
+sudo mount --bind /dev/pts ${MOUNTPOINT}/dev/pts
+sudo mount --bind /run ${MOUNTPOINT}/run
 # resolv.conf is needed on Debian but not Ubuntu
-if [ ! -f /mnt/image/etc/resolv.conf ]; then
-  sudo cp /etc/resolv.conf /mnt/image/etc/
+if [ ! -f ${MOUNTPOINT}/etc/resolv.conf ]; then
+  sudo cp /etc/resolv.conf ${MOUNTPOINT}/etc/
 fi
 `
