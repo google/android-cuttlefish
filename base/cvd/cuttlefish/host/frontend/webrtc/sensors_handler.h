@@ -31,11 +31,13 @@ struct SensorsHandler {
   SensorsHandler(SharedFD sensors_fd);
   ~SensorsHandler();
   void HandleMessage(const double x, const double y, const double z);
+  void HandleLowLatencyOffBodyDetectMessage(double value);
   int Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client);
   void UnSubscribe(int subscriber_id);
 
  private:
   Result<void> RefreshSensors(const double x, const double y, const double z);
+  Result<void> RefreshLowLatencyOffBodyDetect(const double value);
   Result<std::string> GetSensorsData();
   void UpdateSensorsUi();
   std::unordered_map<int, std::function<void(const uint8_t*, size_t)>> client_channels_;
