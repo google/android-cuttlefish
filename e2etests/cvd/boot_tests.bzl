@@ -31,7 +31,7 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
         ],
     )
 
-def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", substitutions = ""):
+def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", substitutions = "", tags = []):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
@@ -47,5 +47,5 @@ def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_sou
             "exclusive",
             "external",
             "no-sandbox",
-        ],
+        ] + tags,
     )

@@ -106,4 +106,14 @@ cvd_command_boot_test(
     target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
+cvd_command_boot_test(
+    name = "this_test_will_fail",
+    branch = "aosp-android-latest-release",
+    cvd_command = [
+        "this_command_does_not_exist",
+    ],
+    target = "aosp_cf_x86_64_only_phone-userdebug",
+    tags = ["requires_gpu"],
+)
+
 # TODO(b/329100411) test loading older branches
