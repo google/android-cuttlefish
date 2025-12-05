@@ -30,7 +30,7 @@ sudo growpart /dev/sdb 1 || /bin/true
 sudo e2fsck -f -y /dev/sdb1 || /bin/true
 sudo resize2fs /dev/sdb1
 
-./mount_attached_disk.sh
+./mount_attached_disk.sh /mnt/image
 
 kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
