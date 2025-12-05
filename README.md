@@ -75,5 +75,5 @@ to obtain the script.
 
 ## Docker
 
-Please read [docker/README.md](docker/README.md) to know how to use docker image
+Please read [container/README.md](container/README.md) to know how to use docker image
 containing Cuttlefish debian packages.

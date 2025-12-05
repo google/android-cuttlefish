@@ -30,7 +30,7 @@ manually.
 
 ```bash
 cd /path/to/android-cuttlefish
-docker/image-builder.sh -m dev
+container/image-builder.sh -m dev
 ```
 
 You can validate if the docker image is successfully built by checking

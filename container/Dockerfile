@@ -32,7 +32,7 @@ RUN apt install -y --no-install-recommends \
     sudo
 RUN update-ca-certificates
 
-COPY ./docker/guest/run_services.sh /root/
+COPY ./container/guest/run_services.sh /root/
 RUN chmod +x /root/run_services.sh
 
 
