@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.36.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.36.0) unstable; urgency=medium
 
-  *  
+  * Provide redirection link to see HO API documentation from README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/1822
 
- -- Ram Muthiah <rammuthiah@google.com>  Fri, 28 Nov 2025 18:25:29 -0800
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 05 Dec 2025 15:54:58 -0500
 
 cuttlefish-frontend (1.35.0) unstable; urgency=medium
 
