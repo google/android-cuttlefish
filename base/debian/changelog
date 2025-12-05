@@ -1,8 +1,23 @@
-cuttlefish-common (1.36.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.36.0) unstable; urgency=medium
 
-  *  
+  * Start development on v1.36 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1855
+  * Cuttlefish host : Add x86-64 EFI boot support by @sungminwon in https://github.com/google/android-cuttlefish/pull/1833
+  * Use embed instead of direct inclusion. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1828
+  * Encapsulate low level reset operations in the instance manager and don't delete the instance database file by @jemoreira in https://github.com/google/android-cuttlefish/pull/1857
+  * Launch one vhal_proxy_server for each instance by @chihchiachen in https://github.com/google/android-cuttlefish/pull/1838
+  * Add dpkg-divert controls to cuttlefish-defaults. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1829
+  * Not finding the static default kv is not an error. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1858
+  * Fix error in fetch output by @cjreynol in https://github.com/google/android-cuttlefish/pull/1836
+  * Add an event type for boot failures. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1823
+  * Use the bcr release of freetype. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1862
+  * Rename defaults to cf_defaults. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1863
+  * Eliminate duplication in calls to stop_cvd by @jemoreira in https://github.com/google/android-cuttlefish/pull/1861
+  * Move invocation of scripts into golang. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1865
+  * Package defaults in cuttlefish-integration. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1859
+  * Split responsibilities on the golang side. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1866
+  * Feat/support default casdownloader and config path by @frankfeng579 in https://github.com/google/android-cuttlefish/pull/1790
 
- -- Ram Muthiah <rammuthiah@google.com>  Fri, 28 Nov 2025 18:25:08 -0800
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 05 Dec 2025 15:51:57 -0500
 
 cuttlefish-common (1.35.0) unstable; urgency=medium
 
