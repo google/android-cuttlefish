@@ -72,7 +72,7 @@ pushd $android_cuttlefish_root_dir
 DOCKER_BUILDKIT=1 docker build \
     --force-rm \
     --no-cache \
-    -f docker/Dockerfile \
+    -f container/Dockerfile \
     -t $name \
     --target runner \
     --build-arg BUILD_OPTION=$build_option \
