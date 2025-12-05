@@ -1,5 +1,5 @@
-# Docker image for running CF instances in the server.
-# Docker image includes HO(Host Orchestrator) inside,
+# Container image for running CF instances in the server.
+# Container image includes HO(Host Orchestrator) inside,
 # so it could execute CF instance with API in HO.
 
 ARG BUILD_OPTION=prod
