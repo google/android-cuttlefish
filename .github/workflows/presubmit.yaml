@@ -240,7 +240,7 @@ jobs:
       shell: bash
       run: |
         tar -xvf debs_amd64.tar
-        docker/image-builder.sh -m dev
+        container/image-builder.sh -m dev
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
     - name: Publish docker image
@@ -262,7 +262,7 @@ jobs:
       shell: bash
       run: |
         tar -xvf debs_arm64.tar
-        docker/image-builder.sh -m dev
+        container/image-builder.sh -m dev
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
     - name: Publish docker image

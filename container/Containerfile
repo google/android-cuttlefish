@@ -1,5 +1,5 @@
-# Docker image for running CF instances in the server.
-# Docker image includes HO(Host Orchestrator) inside,
+# Container image for running CF instances in the server.
+# Container image includes HO(Host Orchestrator) inside,
 # so it could execute CF instance with API in HO.
 
 ARG BUILD_OPTION=prod
@@ -26,13 +26,12 @@ RUN apt update
 RUN apt install -y --no-install-recommends \
     ca-certificates \
     curl \
-    libvulkan1 \
     mesa-utils \
     nginx \
     sudo
 RUN update-ca-certificates
 
-COPY ./docker/guest/run_services.sh /root/
+COPY ./container/guest/run_services.sh /root/
 RUN chmod +x /root/run_services.sh
 
 
@@ -61,7 +60,6 @@ RUN apt install -y --no-install-recommends \
 
 FROM runner-${BUILD_OPTION} AS runner
 
-RUN echo "num_cvd_accounts=100" >> /etc/default/cuttlefish-host-resources
 RUN usermod -aG kvm root
 RUN usermod -aG cvdnetwork root
 ENTRYPOINT ["/root/run_services.sh"]

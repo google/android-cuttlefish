@@ -73,7 +73,7 @@ The following script can be used to build a host image for Google Compute Engine
 [Check out the AOSP tree](https://source.android.com/setup/build/downloading)
 to obtain the script.
 
-## Docker
+## Container images
 
-Please read [docker/README.md](docker/README.md) to know how to use docker image
-containing Cuttlefish debian packages.
+Please read [container/README.md](container/README.md) to know how to build and
+use docker or podman image containing Cuttlefish debian packages.
