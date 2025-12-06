@@ -107,3 +107,8 @@ Build-Depends: bazel [amd64],
 Depends: cuttlefish-base,
 Description: May potentially enable new or experimental cuttlefish
  features before being enabled by default.
+
+Package: cuttlefish-metrics
+Architecture: any
+Depends: cuttlefish-base,
+Description: Enables metrics transmissions to Google.
