@@ -36,6 +36,10 @@ std::ostream& operator<<(std::ostream&, VmmMode);
 std::string ToString(VmmMode mode);
 Result<VmmMode> ParseVmm(std::string_view);
 
+bool VmManagerIsCrosvm(VmmMode);
+bool VmManagerIsQemu(VmmMode);
+bool VmManagerIsGem5(VmmMode);
+
 }  // namespace cuttlefish
 
 template <>

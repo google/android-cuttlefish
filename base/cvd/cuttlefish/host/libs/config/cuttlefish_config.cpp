@@ -126,10 +126,6 @@ void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
-bool CuttlefishConfig::IsCrosvm() const {
-  return vm_manager() == VmmMode::kCrosvm;
-}
-
 static constexpr char kGem5DebugFlags[] = "gem5_debug_flags";
 std::string CuttlefishConfig::gem5_debug_flags() const {
   return (*dictionary_)[kGem5DebugFlags].asString();
@@ -708,6 +704,18 @@ std::vector<std::string> CuttlefishConfig::environment_dirs() const {
   result.push_back(environment.environment_uds_dir());
 
   return result;
+}
+
+bool VmManagerIsCrosvm(const CuttlefishConfig& config) {
+  return VmManagerIsCrosvm(config.vm_manager());
+}
+
+bool VmManagerIsQemu(const CuttlefishConfig& config) {
+  return VmManagerIsQemu(config.vm_manager());
+}
+
+bool VmManagerIsGem5(const CuttlefishConfig& config) {
+  return VmManagerIsGem5(config.vm_manager());
 }
 
 }  // namespace cuttlefish

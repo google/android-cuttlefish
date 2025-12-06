@@ -45,7 +45,6 @@
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 namespace {
@@ -1328,7 +1327,7 @@ bool CuttlefishConfig::InstanceSpecific::console() const {
 std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
   auto can_use_virtio_console = !kgdb() && !use_bootloader();
   std::string console_dev;
-  if (can_use_virtio_console || config_->vm_manager() == VmmMode::kGem5) {
+  if (can_use_virtio_console || VmManagerIsGem5(*config_)) {
     // If kgdb and the bootloader are disabled, the Android serial console
     // spawns on a virtio-console port. If the bootloader is enabled, virtio
     // console can't be used since uboot doesn't support it.
@@ -1338,7 +1337,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
     // architectures emulate ns16550a/uart8250 instead.
     Arch target = target_arch();
     if ((target == Arch::Arm64 || target == Arch::Arm) &&
-        config_->vm_manager() != VmmMode::kCrosvm) {
+        !VmManagerIsCrosvm(*config_)) {
       console_dev = "ttyAMA0";
     } else {
       console_dev = "ttyS0";

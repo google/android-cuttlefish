@@ -27,7 +27,7 @@
 namespace cuttlefish {
 
 Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config) {
-  if (config.vm_manager() != VmmMode::kGem5) {
+  if (!VmManagerIsGem5(config)) {
     return {};
   }
   // TODO: b/281130788 - This should accept InstanceSpecific as an argument

@@ -292,7 +292,7 @@ Result<std::string> SelectGpuMode(
       LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
                 << "rendering support.";
 
-      if (vmm == VmmMode::kQemu && !UseQemuPrebuilt()) {
+      if (VmManagerIsQemu(vmm) && !UseQemuPrebuilt()) {
         LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
         return kGpuModeGuestSwiftshader;
       } else if (guest_config.prefer_drm_virgl_when_supported) {
@@ -325,7 +325,7 @@ Result<std::string> SelectGpuMode(
                     "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
     }
 
-    if (vmm == VmmMode::kQemu && !UseQemuPrebuilt()) {
+    if (VmManagerIsQemu(vmm) && !UseQemuPrebuilt()) {
       LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
       return kGpuModeGuestSwiftshader;
     }
@@ -347,7 +347,7 @@ Result<bool> SelectGpuVhostUserMode(const std::string& gpu_mode,
       return false;
     }
 
-    if (vmm != VmmMode::kCrosvm) {
+    if (!VmManagerIsCrosvm(vmm)) {
       LOG(INFO) << "GPU vhost user auto mode: not yet supported with " << vmm
                 << ". Not enabling vhost user gpu.";
       return false;

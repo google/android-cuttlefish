@@ -38,7 +38,6 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 
@@ -214,7 +213,7 @@ Result<void> DiskImageFlagsVectorization(
     const CuttlefishConfig::InstanceSpecific const_instance =
         const_config.ForInstance(num);
     if (!kernel_path.KernelPathForIndex(instance_index).empty() &&
-        config.vm_manager() != VmmMode::kGem5) {
+        !VmManagerIsGem5(config)) {
       const std::string new_boot_image_path =
           const_instance.PerInstancePath("boot_repacked.img");
       // change the new flag value to corresponding instance

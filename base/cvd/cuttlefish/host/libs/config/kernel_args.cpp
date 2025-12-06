@@ -21,7 +21,6 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 namespace {
@@ -37,7 +36,7 @@ std::vector<std::string> VmManagerKernelCmdline(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> vm_manager_cmdline;
-  if (config.vm_manager() == VmmMode::kQemu) {
+  if (VmManagerIsQemu(config)) {
     Arch target_arch = instance.target_arch();
     if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
       if (instance.enable_kernel_log()) {

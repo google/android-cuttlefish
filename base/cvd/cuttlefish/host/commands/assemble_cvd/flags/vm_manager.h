@@ -36,4 +36,8 @@ class VmManagerFlag {
   VmmMode mode_;
 };
 
+bool VmManagerIsCrosvm(const VmManagerFlag&);
+bool VmManagerIsQemu(const VmManagerFlag&);
+bool VmManagerIsGem5(const VmManagerFlag&);
+
 }  // namespace cuttlefish

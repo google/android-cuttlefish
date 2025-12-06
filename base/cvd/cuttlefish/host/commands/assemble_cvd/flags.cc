@@ -837,7 +837,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       std::set<Arch> default_on_arch = {Arch::Arm64};
       if (guest_configs[instance_index].vhost_user_vsock) {
         instance.set_vhost_user_vsock(true);
-      } else if (tmp_config_obj.vm_manager() == VmmMode::kCrosvm &&
+      } else if (VmManagerIsCrosvm(tmp_config_obj) &&
                  default_on_arch.find(
                      guest_configs[instance_index].target_arch) !=
                      default_on_arch.end()) {
@@ -1142,28 +1142,23 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     std::vector<std::string> virtual_disk_paths;
 
-    bool os_overlay = true;
     // Gem5 already uses CoW wrappers around disk images
-    os_overlay &= vm_manager_flag.Mode() != VmmMode::kGem5;
-    os_overlay &= FLAGS_use_overlay;
-    if (os_overlay) {
+    if (FLAGS_use_overlay && !VmManagerIsGem5(vm_manager_flag)) {
       auto path = const_instance.PerInstancePath("overlay.img");
       virtual_disk_paths.push_back(path);
     } else {
       virtual_disk_paths.push_back(const_instance.os_composite_disk_path());
     }
 
-    bool persistent_disk = vm_manager_flag.Mode() != VmmMode::kGem5;
+    bool persistent_disk = !VmManagerIsGem5(vm_manager_flag);
     if (persistent_disk) {
 #ifdef __APPLE__
       const std::string persistent_composite_img_base =
           "persistent_composite.img";
 #else
-      const bool is_vm_qemu_cli =
-          (tmp_config_obj.vm_manager() == VmmMode::kQemu);
       const std::string persistent_composite_img_base =
-          is_vm_qemu_cli ? "persistent_composite_overlay.img"
-                         : "persistent_composite.img";
+          VmManagerIsQemu(tmp_config_obj) ? "persistent_composite_overlay.img"
+                                          : "persistent_composite.img";
 #endif
       auto path =
           const_instance.PerInstancePath(persistent_composite_img_base.data());
@@ -1174,7 +1169,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     bool sdcard = use_sdcard_vec[instance_index];
     if (sdcard) {
-      if (tmp_config_obj.vm_manager() == VmmMode::kQemu) {
+      if (VmManagerIsQemu(tmp_config_obj)) {
         virtual_disk_paths.push_back(const_instance.sdcard_overlay_path());
       } else {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
@@ -1258,7 +1253,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto external_network_mode = CF_EXPECT(
         ParseExternalNetworkMode(device_external_network_vec[instance_index]));
     CF_EXPECT(external_network_mode == ExternalNetworkMode::kTap ||
-                  vm_manager_flag.Mode() == VmmMode::kQemu,
+                  VmManagerIsQemu(vm_manager_flag),
               "TODO(b/286284441): slirp only works on QEMU");
     instance.set_external_network_mode(external_network_mode);
 
@@ -1322,11 +1317,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   const auto& environment_specific =
       (static_cast<const CuttlefishConfig&>(tmp_config_obj))
           .ForEnvironment(environment_name);
-  CF_EXPECT(CheckSnapshotCompatible(
-                FLAGS_snapshot_compatible &&
-                    (tmp_config_obj.vm_manager() == VmmMode::kCrosvm) &&
-                    instance_nums.size() == 1,
-                calculated_gpu_mode_vec),
+  CF_EXPECT(CheckSnapshotCompatible(FLAGS_snapshot_compatible &&
+                                        VmManagerIsCrosvm(tmp_config_obj) &&
+                                        instance_nums.size() == 1,
+                                    calculated_gpu_mode_vec),
             "The set of flags is incompatible with snapshot");
 
   AndroidEfiLoaderFlag efi_loader =

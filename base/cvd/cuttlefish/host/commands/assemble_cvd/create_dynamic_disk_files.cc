@@ -59,7 +59,6 @@
 #include "cuttlefish/host/libs/config/fetched_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 namespace cuttlefish {
 namespace {
@@ -234,7 +233,7 @@ Result<void> CreateDynamicDiskFiles(
 
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
-    if (config.vm_manager() == VmmMode::kGem5) {
+    if (VmManagerIsGem5(config)) {
       RepackGem5BootImage(instance.PerInstancePath("initrd.img"), boot_config,
                           config.assembly_dir(), instance.initramfs_path());
     }

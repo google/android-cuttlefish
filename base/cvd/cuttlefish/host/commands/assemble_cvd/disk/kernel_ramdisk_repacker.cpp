@@ -109,7 +109,7 @@ Result<void> RepackKernelRamdisk(
   // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
   // able to extract the ramdisk.img in a later stage and so this step must
   // not fail (..and the repacked kernel wouldn't be used anyway).
-  if (!instance.kernel_path().empty() && config.vm_manager() != VmmMode::kGem5) {
+  if (!instance.kernel_path().empty() && !VmManagerIsGem5(config)) {
     CF_EXPECT(
         RepackBootImage(avb, instance.kernel_path(), instance.boot_image(),
                         instance.new_boot_image(), instance.instance_dir()),

@@ -44,7 +44,6 @@
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
@@ -151,9 +150,8 @@ class StreamerSockets : public virtual SetupFeature {
   // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
   bool Enabled() const override {
-    bool is_qemu = config_.vm_manager() == VmmMode::kQemu;
     bool is_accelerated = instance_.gpu_mode() != kGpuModeGuestSwiftshader;
-    return !(is_qemu && is_accelerated);
+    return !(VmManagerIsQemu(config_) && is_accelerated);
   }
 
  private:
@@ -270,17 +268,8 @@ class WebRtcServer : public virtual CommandSource,
 
   // SetupFeature
   bool Enabled() const override {
-    if (!sockets_.Enabled()) {
-      return false;
-    }
-    switch (config_.vm_manager()) {
-      case VmmMode::kCrosvm:
-      case VmmMode::kQemu:
-        return true;
-      case VmmMode::kGem5:
-      case VmmMode::kUnknown:
-        return false;
-    }
+    return sockets_.Enabled() &&
+           (VmManagerIsCrosvm(config_) || VmManagerIsQemu(config_));
   }
 
  private:

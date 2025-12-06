@@ -27,13 +27,9 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
-#include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
-#include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
-#include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {
@@ -106,7 +102,7 @@ Result<void> ServerLoopImpl::SuspendGuest() {
               "failed to suspend openwrt crosvm instance.");
   }
   const auto main_vmm = config_.vm_manager();
-  if (main_vmm == VmmMode::kCrosvm) {
+  if (VmManagerIsCrosvm(main_vmm)) {
     const auto& vm_sock =
         GetSocketPath(ToString(main_vmm), vm_name_to_control_sock_);
     if (vm_sock.empty()) {
@@ -132,7 +128,7 @@ Result<void> ServerLoopImpl::ResumeGuest() {
               "failed to resume openwrt crosvm instance.");
   }
   const auto main_vmm = config_.vm_manager();
-  if (main_vmm == VmmMode::kCrosvm) {
+  if (VmManagerIsCrosvm(main_vmm)) {
     const auto& vm_sock =
         GetSocketPath(ToString(main_vmm), vm_name_to_control_sock_);
     if (vm_sock.empty()) {
@@ -256,7 +252,7 @@ Result<void> ServerLoopImpl::TakeGuestSnapshot(VmmMode vm_manager,
                std::string("Failed to read from ") + json_path);
   Json::Value meta_json = CF_EXPECTF(
       ParseJson(json_contents), "Failed to parse json: \n{}", json_contents);
-  CF_EXPECTF(vm_manager == VmmMode::kCrosvm,
+  CF_EXPECTF(VmManagerIsCrosvm(vm_manager),
              "{}, which is not crosvm, is not yet supported.", vm_manager);
   CF_EXPECT(TakeCrosvmGuestSnapshot(meta_json),
             "TakeCrosvmGuestSnapshot() failed.");

@@ -32,16 +32,11 @@ namespace cuttlefish {
 namespace vm_manager {
 
 Result<CrosvmDisplayController> GetCrosvmDisplayController() {
-  auto config = CuttlefishConfig::Get();
-  if (!config) {
-    return CF_ERR("Failed to get Cuttlefish config.");
-  }
-  auto vm_manager = config->vm_manager();
-  if (vm_manager != VmmMode::kCrosvm) {
-    LOG(ERROR) << "Expected vm_manager is kCrosvm but " << vm_manager;
-    return CF_ERR(
-        "CrosvmDisplayController is only available when VmmMode is kCrosvm");
-  }
+  const CuttlefishConfig* config = CF_EXPECT(CuttlefishConfig::Get());
+
+  CF_EXPECT(VmManagerIsCrosvm(*config),
+            "CrosvmDisplayController is only for crosvm");
+
   return CrosvmDisplayController(config);
 }
 

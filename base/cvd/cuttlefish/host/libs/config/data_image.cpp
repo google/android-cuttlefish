@@ -39,7 +39,6 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/esp.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
 
 // https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=127;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
@@ -372,10 +371,8 @@ Result<void> InitializeEspImage(
     LOG(DEBUG) << "creating esp_image: " << instance.ap_esp_image_path();
     CF_EXPECT(BuildAPImage(config, instance));
   }
-  const auto is_not_gem5 = config.vm_manager() != VmmMode::kGem5;
-  const auto esp_required_for_boot_flow =
-      EspRequiredForBootFlow(instance.boot_flow());
-  if (is_not_gem5 && esp_required_for_boot_flow) {
+  if (EspRequiredForBootFlow(instance.boot_flow()) &&
+      !VmManagerIsGem5(config)) {
     LOG(DEBUG) << "creating esp_image: " << instance.esp_image_path();
     CF_EXPECT(BuildOSImage(instance));
   }

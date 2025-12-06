@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 
-#include <memory>
 #include <optional>
 #include <string>
 
@@ -74,7 +73,7 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
                                 << bootconfig_path
                                 << "` failed:" << bootconfig_fd->StrError());
 
-  if (config.vm_manager() == VmmMode::kGem5) {
+  if (VmManagerIsGem5(config)) {
     const off_t bootconfig_size_bytes_gem5 =
         AlignToPowerOf2(bytesWritten, PARTITION_SIZE_SHIFT);
     CF_EXPECT(bootconfig_fd->Truncate(bootconfig_size_bytes_gem5) == 0);

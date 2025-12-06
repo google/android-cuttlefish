@@ -208,7 +208,7 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
 
   CF_EXPECT(vm_manager_ != VmmMode::kUnknown);
   // TODO: b/346855591 - run with QEMU when crosvm block device is integrated
-  if (vm_manager_ == VmmMode::kCrosvm) {
+  if (VmManagerIsCrosvm(vm_manager_)) {
     CF_EXPECT(!header_path_.empty(), "No header path");
     CF_EXPECT(!footer_path_.empty(), "No footer path");
     CF_EXPECT(CreateOrUpdateCompositeDisk(

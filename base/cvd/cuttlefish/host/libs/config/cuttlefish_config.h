@@ -235,8 +235,6 @@ class CuttlefishConfig {
   std::string vhost_vsock_path() const;
   void set_vhost_vsock_path(const std::string&);
 
-  bool IsCrosvm() const;
-
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
@@ -962,6 +960,10 @@ class CuttlefishConfig {
 // "snapshot_path" existed during boot, where a restart or a powerwash of the
 // device would actually perform a restore instead of their respective actions.
 bool IsRestoring(const CuttlefishConfig&);
+
+bool VmManagerIsCrosvm(const CuttlefishConfig&);
+bool VmManagerIsQemu(const CuttlefishConfig&);
+bool VmManagerIsGem5(const CuttlefishConfig&);
 
 }  // namespace cuttlefish
 

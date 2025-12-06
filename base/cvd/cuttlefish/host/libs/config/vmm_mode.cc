@@ -58,4 +58,10 @@ Result<VmmMode> ParseVmm(std::string_view str) {
   }
 }
 
+bool VmManagerIsCrosvm(VmmMode mode) { return mode == VmmMode::kCrosvm; }
+
+bool VmManagerIsQemu(VmmMode mode) { return mode == VmmMode::kQemu; }
+
+bool VmManagerIsGem5(VmmMode mode) { return mode == VmmMode::kGem5; }
+
 }  // namespace cuttlefish
