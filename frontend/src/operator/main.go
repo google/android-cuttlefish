@@ -17,10 +17,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"sync"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/liboperator/api/v1"
@@ -88,8 +90,19 @@ func main() {
 	tlsCertDir := flag.String("tls_cert_dir", DefaultTLSCertDir, "Directory where the TLS certificates are located.")
 	webUiUrlStr := flag.String("webui_url", DefaultWebUIUrl, "WebUI URL.")
 	address := flag.String("listen_addr", DefaultListenAddress, "IP address to listen for requests.")
+	logFile := flag.String("log_file", "", "Path to file to write logs to.")
 
 	flag.Parse()
+
+	if *logFile != "" {
+		f, err := os.OpenFile(*logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening log file %q: %v", *logFile, err)
+		}
+		defer f.Close()
+		w := io.MultiWriter(os.Stderr, f)
+		log.SetOutput(w)
+	}
 
 	certPath := *tlsCertDir + "/cert.pem"
 	keyPath := *tlsCertDir + "/key.pem"
