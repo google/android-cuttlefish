@@ -1982,6 +1982,15 @@ int CuttlefishConfig::InstanceSpecific::audio_output_streams_count() const {
   return (*Dictionary())[kAudioOutputStreamsCount].asInt();
 }
 
+static constexpr char kAudioSettingsTextProto[] = "audio_settings_textproto";
+void CuttlefishConfig::MutableInstanceSpecific::set_audio_settings_textproto(
+    const std::string& audio_settings_textproto) {
+  (*Dictionary())[kAudioSettingsTextProto] = audio_settings_textproto;
+}
+std::string CuttlefishConfig::InstanceSpecific::audio_settings_textproto() const {
+  return (*Dictionary())[kAudioOutputStreamsCount].asString();
+}
+
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
     const std::string& file_name) const {
   return (instance_dir() + "/") + file_name;
