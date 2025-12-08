@@ -25,7 +25,7 @@
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 
 namespace cuttlefish {
 

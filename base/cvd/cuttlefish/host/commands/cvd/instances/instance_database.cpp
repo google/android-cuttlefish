@@ -33,7 +33,7 @@
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
 #include "cuttlefish/host/commands/cvd/instances/device_name.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 
 namespace cuttlefish {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 
 #include <fstream>
 #include <memory>
@@ -111,7 +111,8 @@ Result<void> LocalInstance::PressPowerBtn() {
     return PressPowerBtnLegacy();
   }
 
-  std::unique_ptr<const CuttlefishConfig> config = CuttlefishConfig::GetFromFile(instance_dir() + "/cuttlefish_config.json");
+  std::unique_ptr<const CuttlefishConfig> config =
+      CuttlefishConfig::GetFromFile(instance_dir() + "/cuttlefish_config.json");
   CF_EXPECT_EQ(config->vm_manager(), VmmMode::kCrosvm,
                "powerbtn not supported in vm manager " << config->vm_manager());
   auto instance = config->ForInstance(id());
@@ -184,10 +185,9 @@ Result<void> LocalInstance::PowerWash(std::chrono::seconds launcher_timeout,
 }
 
 Result<std::vector<std::string>> LocalInstance::ListRecordings() {
-  std::string recordings_dir =
-      fmt::format("{}/recording", instance_dir());
+  std::string recordings_dir = fmt::format("{}/recording", instance_dir());
   std::vector<std::string> files = CF_EXPECT(DirectoryContents(recordings_dir));
-  for (std::string& file: files) {
+  for (std::string& file : files) {
     file = fmt::format("{}/{}", recordings_dir, file);
   }
   return files;
@@ -253,7 +253,8 @@ Result<SharedFD> LocalInstance::GetLauncherMonitor(
   Json::Value config = CF_EXPECT(ReadJsonConfig());
   if (config.isMember("instances_uds_dir") &&
       config["instances_uds_dir"].isString()) {
-    uds_dir = fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(), id());
+    uds_dir =
+        fmt::format("{}/cvd-{}", config["instances_uds_dir"].asString(), id());
   }
   std::string monitor_path = uds_dir + "/launcher_monitor.sock";
   SharedFD monitor = SharedFD::SocketLocalClient(monitor_path, false,
