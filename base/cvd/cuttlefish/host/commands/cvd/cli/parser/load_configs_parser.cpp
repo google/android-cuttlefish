@@ -48,8 +48,8 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/selector_parser.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {

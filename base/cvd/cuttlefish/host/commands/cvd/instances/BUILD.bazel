@@ -47,18 +47,6 @@ cf_cc_library(
     ],
 )
 
-cf_cc_test(
-    name = "group_record_test",
-    srcs = ["group_record_test.cpp"],
-    deps = [
-        "//cuttlefish/common/libs/utils:result_matchers",
-        "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
 cf_cc_library(
     name = "instance_database_helper",
     testonly = True,
@@ -93,18 +81,18 @@ cf_cc_library(
     srcs = [
         "instance_database.cpp",
         "instance_database_types.cpp",
-        "instance_group_record.cpp",
         "instance_manager.cpp",
         "local_instance.cpp",
+        "local_instance_group.cpp",
         "operator_client.cpp",
         "status_fetcher.cpp",
     ],
     hdrs = [
         "instance_database.h",
         "instance_database_types.h",
-        "instance_group_record.h",
         "instance_manager.h",
         "local_instance.h",
+        "local_instance_group.h",
         "operator_client.h",
         "status_fetcher.h",
     ],
@@ -141,6 +129,18 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
+    name = "local_instance_group_test",
+    srcs = ["local_instance_group_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
