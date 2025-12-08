@@ -445,11 +445,12 @@ public class CfVkmsTester implements Closeable {
 
         for (int i = 0; i < displaysCount; i++) {
             createResource(DrmResource.CRTC, i);
+            setCrtcWriteback(i, true);
+
             createResource(DrmResource.ENCODER, i);
             linkToCrtc(DrmResource.ENCODER, i, i);
 
             createResource(DrmResource.CONNECTOR, i);
-
             // Configure connector based on explicit config or defaults
             VkmsConnectorSetup config = null;
             if (isExplicitConfig) {
@@ -528,6 +529,22 @@ public class CfVkmsTester implements Closeable {
 
             latestPlaneId++;
         }
+    }
+
+    private boolean setCrtcWriteback(int index, boolean enable) throws Exception {
+        String crtcDir = VKMS_BASE_DIR + "/" + DrmResource.CRTC.getBasePath() + index;
+        String writebackPath = crtcDir + "/writeback";
+        String value = enable ? "1" : "0";
+        String command = "echo " + value + " > " + writebackPath;
+
+        CommandResult result = executeCommand(command);
+        if (result.getStatus() != CommandStatus.SUCCESS) {
+            CLog.e("Failed to set crtc writeback: %s", result.getStderr());
+            return false;
+        }
+
+        CLog.i("Successfully set crtc %d writeback to %s", index, enable ? "enabled" : "disabled");
+        return true;
     }
 
     private boolean setConnectorStatus(int index, boolean enable) throws Exception {
