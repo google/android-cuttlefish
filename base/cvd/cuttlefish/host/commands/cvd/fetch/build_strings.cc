@@ -31,6 +31,7 @@ BuildStrings BuildStrings::Create(const VectorFlags& flags, const int index) {
       .android_efi_loader_build =
           GetOptional(flags.android_efi_loader_build, index),
       .otatools_build = GetOptional(flags.otatools_build, index),
+      .test_suites_build = GetOptional(flags.test_suites_build, index),
       .chrome_os_build = GetOptional(flags.chrome_os_build, index),
   };
   std::string possible_boot_artifact =

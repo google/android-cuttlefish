@@ -123,6 +123,7 @@ class FetchContext {
   std::optional<FetchBuildContext> BootloaderBuild();
   std::optional<FetchBuildContext> AndroidEfiLoaderBuild();
   std::optional<FetchBuildContext> OtaToolsBuild();
+  std::optional<FetchBuildContext> TestSuitesBuild();
 
  private:
   friend class FetchArtifact;

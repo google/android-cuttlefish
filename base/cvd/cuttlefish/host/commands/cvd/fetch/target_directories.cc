@@ -33,7 +33,8 @@ TargetDirectories TargetDirectories::Create(
   }
   return TargetDirectories{.root = base_directory,
                            .otatools = base_directory + "/otatools/",
-                           .chrome_os = base_directory + "/chromeos"};
+                           .chrome_os = base_directory + "/chromeos",
+                           .test_suites = base_directory + "/test_suites"};
 }
 
 }  // namespace cuttlefish

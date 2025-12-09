@@ -308,4 +308,14 @@ std::optional<FetchBuildContext> FetchContext::OtaToolsBuild() {
   }
 }
 
+std::optional<FetchBuildContext> FetchContext::TestSuitesBuild() {
+  if (builds_.test_suites) {
+    return FetchBuildContext(
+        *this, *builds_.test_suites, target_directories_.test_suites,
+        FileSource::TEST_SUITES_BUILD, tracer_.NewTrace("Test Suites"));
+  } else {
+    return {};
+  }
+}
+
 }  // namespace cuttlefish

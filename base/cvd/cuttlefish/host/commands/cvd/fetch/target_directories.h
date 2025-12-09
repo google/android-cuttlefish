@@ -29,6 +29,7 @@ struct TargetDirectories {
   std::string root;
   std::string otatools;
   std::string chrome_os;
+  std::string test_suites;
 };
 
 }  // namespace cuttlefish
