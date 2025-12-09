@@ -53,6 +53,9 @@ std::vector<Flag> VectorFlags::Flags() {
   flags.emplace_back(GflagsCompatFlag("otatools_build", this->otatools_build)
                          .Help("source for the host ota tools"));
   flags.emplace_back(
+      GflagsCompatFlag("test_suites_build", this->test_suites_build)
+          .Help("source for the test suites build"));
+  flags.emplace_back(
       GflagsCompatFlag("chrome_os_build", this->chrome_os_build)
           .Help("source for a ChromeOS build. Formatted as as a numeric build "
                 "id, or '<project>/<bucket>/<builder>'"));
@@ -82,7 +85,8 @@ Result<int> VectorFlags::NumberOfBuilds() const {
        {this->default_build.size(), this->system_build.size(),
         this->kernel_build.size(), this->boot_build.size(),
         this->bootloader_build.size(), this->android_efi_loader_build.size(),
-        this->otatools_build.size(), this->chrome_os_build.size(),
+        this->otatools_build.size(), this->test_suites_build.size(),
+        this->chrome_os_build.size(),
         this->boot_artifact.size(), this->download_img_zip.size(),
         this->download_target_files_zip.size(),
         this->target_subdirectory.size()}) {

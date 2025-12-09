@@ -102,6 +102,7 @@ Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.otatools, kRwxAllMode));
+    CF_EXPECT(EnsureDirectoryExists(target.directories.test_suites, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.chrome_os, kRwxAllMode));
   }
   return {};
@@ -136,6 +137,8 @@ Result<Builds> GetBuilds(BuildApi& build_api,
                          "gbl_efi_dist_and_test")),
       .otatools = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.otatools_build, kDefaultBuildTarget)),
+      .test_suites = CF_EXPECT(GetBuildHelper(
+          build_api, build_sources.test_suites_build, kDefaultBuildTarget)),
       .chrome_os = build_sources.chrome_os_build,
   };
   if (!result.otatools) {
@@ -349,6 +352,19 @@ Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
   return {};
 }
 
+Result<void> FetchTestSuitesTarget(FetchBuildContext& context,
+                                   bool keep_downloaded_archives) {
+  FetchArtifact android_cts = context.Artifact("android-cts.zip");
+  // TODO(b/468074996): determine what tradefed actually needs and potentially
+  // expose a flag to allow downloading specific parts of the entire zip.
+  CF_EXPECT(android_cts.Download());
+  CF_EXPECT(android_cts.ExtractAll());
+  if (!keep_downloaded_archives) {
+    CF_EXPECT(android_cts.DeleteLocalFile());
+  }
+  return {};
+}
+
 Result<void> FetchChromeOsTarget(
     LuciBuildApi& luci_build_api,
     const ChromeOsBuildString& chrome_os_build_string,
@@ -410,6 +426,10 @@ Result<void> FetchTarget(FetchContext& fetch_context,
 
   if (std::optional<FetchBuildContext> ctx = fetch_context.OtaToolsBuild()) {
     CF_EXPECT(FetchOtaToolsTarget(*ctx, keep_downloaded_archives));
+  }
+
+  if (std::optional<FetchBuildContext> ctx = fetch_context.TestSuitesBuild()) {
+    CF_EXPECT(FetchTestSuitesTarget(*ctx, keep_downloaded_archives));
   }
 
   return {};

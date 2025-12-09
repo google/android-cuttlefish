@@ -33,6 +33,7 @@ struct BuildStrings {
   std::optional<BuildString> bootloader_build;
   std::optional<BuildString> android_efi_loader_build;
   std::optional<BuildString> otatools_build;
+  std::optional<BuildString> test_suites_build;
   std::optional<BuildString> host_package_build;
   std::optional<ChromeOsBuildString> chrome_os_build;
 };

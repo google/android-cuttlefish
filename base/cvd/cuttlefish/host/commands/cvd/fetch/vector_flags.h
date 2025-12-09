@@ -42,6 +42,7 @@ struct VectorFlags {
   std::vector<std::optional<BuildString>> bootloader_build;
   std::vector<std::optional<BuildString>> android_efi_loader_build;
   std::vector<std::optional<BuildString>> otatools_build;
+  std::vector<std::optional<BuildString>> test_suites_build;
   std::vector<std::optional<ChromeOsBuildString>> chrome_os_build;
   std::vector<bool> download_img_zip;
   std::vector<bool> download_target_files_zip;
