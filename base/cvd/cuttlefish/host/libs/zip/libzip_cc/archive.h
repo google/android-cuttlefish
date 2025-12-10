@@ -44,6 +44,7 @@ class ReadableZip {
 
   Result<std::string> EntryName(uint64_t index);
   Result<uint32_t> EntryUnixAttributes(uint64_t index);
+  Result<bool> EntryIsDirectory(uint64_t index);
 
   /* Decompresses and extract a file from the archive. */
   Result<SeekableZipSource> GetFile(const std::string& name);

@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <string>
 #include <utility>
@@ -86,6 +88,19 @@ Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
   CF_EXPECT_EQ(opsys, ZIP_OPSYS_UNIX);
 
   return attributes;
+}
+
+Result<bool> ReadableZip::EntryIsDirectory(uint64_t index) {
+  const uint32_t attributes =
+      CF_EXPECT(EntryUnixAttributes(index),
+                "Failed to get attributes for entry " << index);
+
+  // See
+  //  * https://cs.android.com/android/platform/superproject/main/+/main:build/soong/zip/zip.go;drc=8967d7562557001eb10e216ba7a947fb6054c67c;l=782
+  //  * https://cs.android.com/android/platform/superproject/main/+/main:build/soong/third_party/zip/struct.go;drc=61197364367c9e404c7da6900658f1b16c42d0da;l=225
+  const mode_t mode = (attributes >> 16);
+
+  return S_ISDIR(mode);
 }
 
 Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
