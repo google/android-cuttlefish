@@ -111,8 +111,10 @@ Result<void> FetchArtifact::ExtractAll(const std::string& local_path) {
     CF_EXPECT(!absl::StartsWith(member_name, "."));
     CF_EXPECT(!absl::StartsWith(member_name, "/"));
     CF_EXPECT(!absl::StrContains(member_name, "/../"));
-    std::string extract_path = fmt::format("{}/{}", local_path, member_name);
-    CF_EXPECT(ExtractOneTo(member_name, extract_path));
+    if (!CF_EXPECT(zip->EntryIsDirectory(i))) {
+      std::string extract_path = fmt::format("{}/{}", local_path, member_name);
+      CF_EXPECT(ExtractOneTo(member_name, extract_path));
+    }
   }
   return {};
 }
@@ -132,7 +134,8 @@ Result<void> FetchArtifact::ExtractOneTo(const std::string& member_name,
     CF_EXPECT(EnsureDirectoryExists(dir, kRwxAllMode));
   }
 
-  CF_EXPECT(ExtractFile(*zip, member_name, extract_path));
+  CF_EXPECT(ExtractFile(*zip, member_name, extract_path),
+            "Failed to extract " << member_name << " to " << extract_path);
 
   CF_EXPECT(fetch_build_context_.AddFileToConfig(extract_path, artifact_name_,
                                                  local_path));
