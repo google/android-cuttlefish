@@ -65,3 +65,48 @@ def metrics_test(name, branch, target, credential_source = ""):
             "no-sandbox",
         ],
     )
+
+def cvd_cts_test(
+        name,
+        cuttlefish_branch,
+        cuttlefish_target,
+        cts_branch,
+        cts_target,
+        cts_args,
+        cuttlefish_create_args = [],
+        credential_source = "",
+        substitutions = "",
+        tags = []):
+    """Runs a given set of CTS tests on a given Cuttlefish build."""
+    args = [
+        "--cuttlefish-create-args=\"" + " ".join(cuttlefish_create_args) + "\"",
+        "--cuttlefish-fetch-branch=" + cuttlefish_branch,
+        "--cuttlefish-fetch-target=" + cuttlefish_target,
+        "--xml-test-result-converter-path=$(location //cvd:convert_xts_xml_to_junit_xml_bin)",
+        "--xts-args=\"" + " ".join(cts_args) + "\"",
+        "--xts-fetch-branch=" + cts_branch,
+        "--xts-fetch-target=" + cts_target,
+        "--xts-type=cts",
+    ]
+
+    if credential_source:
+        args.append("--credential-source=" + credential_source)
+
+    if substitutions:
+        args.append("--substitutions=\"" + ",".join(substitutions) + "\"")
+
+    native.sh_test(
+        name = name,
+        size = "enormous",
+        srcs = ["cvd_xts_test.sh"],
+        args = args,
+        data = [
+            "//cvd:convert_xts_xml_to_junit_xml_bin",
+        ],
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ] + tags,
+    )
+
