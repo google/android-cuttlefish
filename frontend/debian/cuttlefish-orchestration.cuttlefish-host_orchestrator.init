@@ -41,6 +41,7 @@ USER="httpcvd"
 RUN_DIR="/run/cuttlefish"
 ORCHESTRATOR_BIN="/usr/lib/cuttlefish-common/bin/host_orchestrator"
 ORCHESTRATOR_PIDFILE="${RUN_DIR}"/host_orchestrator.pid
+ORCHESTRATOR_LOGFILE="${RUN_DIR}"/host_orchestrator.log
 ASSET_DIR="/usr/share/cuttlefish-common/operator"
 
 set_config_expr() {
@@ -75,8 +76,7 @@ start_orchestrator() {
   mkdir -p  "${orchestrator_cvd_artifacts_dir}"
   chown "${USER}:" "${orchestrator_cvd_artifacts_dir}"
 
-  args=()
-
+  args=("--log_file=${ORCHESTRATOR_LOGFILE}")
   if [[ -n "${orchestrator_http_port}" ]]; then
     args+=("--http_port=${orchestrator_http_port}")
   fi
