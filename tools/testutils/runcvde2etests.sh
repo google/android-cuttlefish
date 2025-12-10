@@ -7,7 +7,7 @@ OUTPUT_DIR="$(pwd)"
 CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
 bazel_test_tag_filter_arg="--test_tag_filters=-requires_gpu"
-while getopts "g:" opt; do
+while getopts "g" opt; do
   case "${opt}" in
     g)
       bazel_test_tag_filter_arg=""
@@ -17,7 +17,7 @@ while getopts "g:" opt; do
     echo "Usage: $0 [-g]"
     echo ""
     echo "Options"
-    echo " -g  include tests with the `requires_gpu` tag"
+    echo " -g  include tests with the 'requires_gpu' tag"
     exit 1
     ;;
   esac
