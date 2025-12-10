@@ -34,5 +34,7 @@ go run ./cmd/gce_install_cuttlefish_packages \
   -project <project> \
   -source-image-project <project> \
   -source-image <image-from-step-2> \
-  -cuttlefish-debs-zip-source <path/to/packages.zip>
+  -deb <path/to/cuttlefish-base-deb> \
+  -deb <path/to/cuttlefish-user-deb> \
+  -deb <path/to/cuttlefish-orchestration-deb>
 ```
