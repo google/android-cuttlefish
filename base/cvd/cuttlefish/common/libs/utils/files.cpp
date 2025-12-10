@@ -330,7 +330,7 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
     return 0;
   };
 
-  if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
+  if (nftw(path.c_str(), callback, 128, FTW_DEPTH | FTW_PHYS) < 0) {
     return CF_ERRNO("Failed to remove directory \""
                     << path << "\": " << strerror(errno));
   }
