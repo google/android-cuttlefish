@@ -108,6 +108,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
+        "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",
         "//cuttlefish/host/libs/metrics:session_id",
         "//cuttlefish/result",
@@ -115,6 +116,24 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "metrics_transmitter",
+    srcs = [
+        "metrics_transmitter.cc",
+    ],
+    hdrs = [
+        "metrics_transmitter.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/host/libs/metrics:metrics_environment",
+        "//cuttlefish/result",
+        "//external_proto:cf_log_cc_proto",
     ],
 )
 
