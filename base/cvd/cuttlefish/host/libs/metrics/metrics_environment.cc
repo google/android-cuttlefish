@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 
 #include <string>
 
-#include "cuttlefish/common/libs/utils/result.h"
-#include "cuttlefish/host/libs/metrics/metrics_environment.h"
-
 namespace cuttlefish {
 
-struct MetricsFlags {
-  ClearcutEnvironment environment = ClearcutEnvironment::Production;
-  std::string serialized_proto;
-};
-
-Result<MetricsFlags> ProcessFlags(int argc, char** argv);
+std::string EnvironmentToString(ClearcutEnvironment environment) {
+  switch (environment) {
+    case ClearcutEnvironment::Local:
+      return std::string(kLocal);
+    case ClearcutEnvironment::Staging:
+      return std::string(kStaging);
+    case ClearcutEnvironment::Production:
+      return std::string(kProduction);
+  }
+}
 
 }  // namespace cuttlefish
