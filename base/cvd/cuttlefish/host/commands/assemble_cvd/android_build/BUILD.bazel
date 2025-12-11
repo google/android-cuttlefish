@@ -18,6 +18,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "android_product_dir",
+    srcs = ["android_product_dir.cc"],
+    hdrs = ["android_product_dir.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "combined_android_build",
     srcs = ["combined_android_build.cc"],
     hdrs = ["combined_android_build.h"],
