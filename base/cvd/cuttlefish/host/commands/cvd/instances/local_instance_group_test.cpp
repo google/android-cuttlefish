@@ -20,16 +20,16 @@
 
 #include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_group_record.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
 namespace cuttlefish {
 namespace selector {
 
 static std::string GroupName() { return "yah_ong"; }
 
-class CvdInstanceGroupUnitTest : public testing::Test {
+class LocalInstanceGroupUnitTest : public testing::Test {
  protected:
-  CvdInstanceGroupUnitTest() {}
+  LocalInstanceGroupUnitTest() {}
   Result<LocalInstanceGroup> Get() {
     LocalInstanceGroup::Builder builder(GroupName());
     builder.AddInstance(1, "tv_instance");
@@ -40,7 +40,7 @@ class CvdInstanceGroupUnitTest : public testing::Test {
   }
 };
 
-TEST_F(CvdInstanceGroupUnitTest, AddInstancesAndListAll) {
+TEST_F(LocalInstanceGroupUnitTest, AddInstancesAndListAll) {
   auto group_res = Get();
   auto instances = group_res->Instances();
 
@@ -48,7 +48,7 @@ TEST_F(CvdInstanceGroupUnitTest, AddInstancesAndListAll) {
   ASSERT_EQ(instances.size(), 4);
 }
 
-TEST_F(CvdInstanceGroupUnitTest, SearchById) {
+TEST_F(LocalInstanceGroupUnitTest, SearchById) {
   auto group_res = Get();
   if (!group_res.ok()) {
     /*
@@ -60,7 +60,7 @@ TEST_F(CvdInstanceGroupUnitTest, SearchById) {
      */
     GTEST_SKIP() << "Failed to add instances to the group.";
   }
-  // valid_ids were added in the CvdInstanceGroupSearchUnitTest_SearchById
+  // valid_ids were added in the LocalinstanceGroupUnitTest_SearchById
   // constructor.
   std::vector<unsigned> valid_ids{1, 2, 7};
   std::vector<unsigned> invalid_ids{20, 0, 5};

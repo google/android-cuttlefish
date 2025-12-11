@@ -16,8 +16,10 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@jsoncpp",
     ],
 )
@@ -30,10 +32,23 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
         "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_test(
+    name = "cas_flags_test",
+    srcs = ["cas_flags_test.cpp"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/web/cas:cas_flags",
+        "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -44,8 +59,10 @@ cf_cc_library(
     srcs = ["cas_flags.cc"],
     hdrs = ["cas_flags.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:result",
         "//libbase",
+        "@fmt",
     ],
 )

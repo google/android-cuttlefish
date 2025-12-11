@@ -29,7 +29,9 @@ import (
 )
 
 const (
-	outImageName = "amended-image"
+	outImageName                      = "amended-image"
+	mountpoint                        = "/mnt/image"
+	defaultsCuttlefishIntegrationFile = "/etc/defaults/cuttlefish-integration"
 )
 
 type DebSrcsFlag struct {
@@ -52,11 +54,12 @@ func (v *DebSrcsFlag) Set(s string) error {
 }
 
 var (
-	project              = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                 = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
-	source_image         = flag.String("source-image", "", "Source image name")
-	deb_srcs             = DebSrcsFlag{}
+	project                             = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
+	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
+	source_image                        = flag.String("source-image", "", "Source image name")
+	deb_srcs                            = DebSrcsFlag{}
+	defaults_cuttlefish_integration_src = flag.String("defaults_cuttlefish_integration_src", "", "Path to file which will be written to /etc/defaults/cuttlefish-integration.")
 )
 
 func init() {
@@ -69,15 +72,7 @@ type amendImageOpts struct {
 	DebSrcs            []string
 }
 
-func installCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
-	dstSrcs := []string{}
-	for _, src := range debSrcs {
-		dst := "/tmp/" + filepath.Base(src)
-		dstSrcs = append(dstSrcs, dst)
-		if err := gce.UploadFile(project, zone, insName, src, dst); err != nil {
-			return fmt.Errorf("error uploading %s: %v", src, err)
-		}
-	}
+func uploadScripts(project, zone, insName string) error {
 	list := []struct {
 		dstname string
 		content string
@@ -91,18 +86,39 @@ func installCuttlefishDebs(project, zone, insName string, debSrcs []string) erro
 			return fmt.Errorf("error uploading bash script: %v", err)
 		}
 	}
+	return nil
+}
 
-	if err := gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh"); err != nil {
-		return err
+func fillAvailableSpace(project, zone, insName string) error {
+	return gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh")
+}
+
+func mountAttachedDisk(project, zone, insName, mountpoint string) error {
+	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
+}
+
+func installCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
+	dstSrcs := []string{}
+	for _, src := range debSrcs {
+		dst := "/tmp/" + filepath.Base(src)
+		dstSrcs = append(dstSrcs, dst)
+		if err := gce.UploadFile(project, zone, insName, src, dst); err != nil {
+			return fmt.Errorf("error uploading %s: %v", src, err)
+		}
 	}
-
-	if err := gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh"); err != nil {
-		return err
-	}
-
 	args := strings.Join(dstSrcs, " ")
 	if err := gce.RunCmd(project, zone, insName, "./install.sh "+args); err != nil {
 		return err
+	}
+	return nil
+}
+
+func maybeSetDefaultsCuttlefishIntegrationFile(project, zone, insName string) error {
+	if *defaults_cuttlefish_integration_src != "" {
+		// The disk mountpoint is at /mnt/image, mounted in `installCuttlefishDebs`, and is not unmounted.
+		if err := gce.UploadFile(project, zone, insName, *defaults_cuttlefish_integration_src, mountpoint+defaultsCuttlefishIntegrationFile); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -171,8 +187,24 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
 
+	if err := uploadScripts(project, zone, insName); err != nil {
+		return fmt.Errorf("uploadScripts error: %v", err)
+	}
+
+	if err := fillAvailableSpace(project, zone, insName); err != nil {
+		return fmt.Errorf("fillAvailableSpace error: %v", err)
+	}
+
+	if err := mountAttachedDisk(project, zone, insName, mountpoint); err != nil {
+		return fmt.Errorf("mountAttachedDisk error: %v", err)
+	}
+
 	if err := installCuttlefishDebs(project, zone, insName, opts.DebSrcs); err != nil {
 		return fmt.Errorf("install cuttlefish debs error: %v", err)
+	}
+
+	if err := maybeSetDefaultsCuttlefishIntegrationFile(project, zone, insName); err != nil {
+		return fmt.Errorf("couldn't set %s: %v", defaultsCuttlefishIntegrationFile, err)
 	}
 
 	// Reboot the instance to force a clean umount of the attached disk's file system.

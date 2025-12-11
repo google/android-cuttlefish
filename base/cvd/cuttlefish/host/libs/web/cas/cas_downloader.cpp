@@ -28,14 +28,17 @@
 #include <utility>
 #include <vector>
 
+#include <android-base/expected.h>
 #include <android-base/logging.h>
 #include <json/value.h>
 
+#include "absl/strings/match.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
@@ -73,22 +76,22 @@ std::vector<std::string> CreateCasFlags(std::string downloader_path,
                                         Json::Value& config_flags) {
   std::vector<std::string> cas_flags;
 
-  // If cache-dir is set and cache-max-size is absent or smaller than the default,
-  // ensure cache-max-size is at least kMinCacheMaxSize.
+  // If cache-dir is set and cache-max-size is absent or smaller than the
+  // default, ensure cache-max-size is at least kMinCacheMaxSize.
   if (!config_flags["cache-dir"].asString().empty()) {
     if (config_flags.isMember("cache-max-size")) {
       int64_t provided = config_flags["cache-max-size"].asInt64();
       if (provided < kMinCacheMaxSize) {
         LOG(WARNING) << "cache-max-size (" << provided
-                  << ") is smaller than default; using default ("
-                  << kMinCacheMaxSize << ")";
+                     << ") is smaller than default; using default ("
+                     << kMinCacheMaxSize << ")";
         config_flags["cache-max-size"] = kMinCacheMaxSize;
       }
     } else {
       config_flags["cache-max-size"] = kMinCacheMaxSize;
     }
   }
-  
+
   // Releasing of casdownloader and cvd can be out of sync. Filter out
   // unsupported flags for casdownloader.
   std::set<std::string> supported_flags = GetSupportedFlags(downloader_path);
@@ -166,22 +169,22 @@ inline std::string ToSeconds(int timeout) {
 
 Json::Value ConvertToConfigFlags(const CasDownloaderFlags& flags) {
   Json::Value config_flags;
-  config_flags["cache-dir"] = flags.cache_dir;    
-  config_flags["cache-max-size"] = flags.cache_max_size;    
-  config_flags["cache-lock"] = flags.cache_lock;    
-  config_flags["use-hardlink"] = flags.use_hardlink;    
-  config_flags["cas-concurrency"] = flags.cas_concurrency;    
-  config_flags["memory-limit"] = flags.memory_limit;    
-  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout);    
+  config_flags["cache-dir"] = flags.cache_dir.value();
+  config_flags["cache-max-size"] = flags.cache_max_size.value();
+  config_flags["cache-lock"] = flags.cache_lock.value();
+  config_flags["use-hardlink"] = flags.use_hardlink.value();
+  config_flags["cas-concurrency"] = flags.cas_concurrency.value();
+  config_flags["memory-limit"] = flags.memory_limit.value();
+  config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout.value());
   config_flags["get-capabilities-timeout"] =
-      ToSeconds(flags.get_capabilities_timeout);    
-  config_flags["get-tree-timeout"] =
-      ToSeconds(flags.get_tree_timeout);    
+      ToSeconds(flags.get_capabilities_timeout.value());
+  config_flags["get-tree-timeout"] = ToSeconds(flags.get_tree_timeout.value());
   config_flags["batch-read-blobs-timeout"] =
-      ToSeconds(flags.batch_read_blobs_timeout);    
+      ToSeconds(flags.batch_read_blobs_timeout.value());
   config_flags["batch-update-blobs-timeout"] =
-      ToSeconds(flags.batch_update_blobs_timeout);    
-  config_flags["version"] = flags.version;    
+      ToSeconds(flags.batch_update_blobs_timeout.value());
+  config_flags["version"] = flags.version.value();
+  config_flags["invocation-id"] = flags.invocation_id.value();
   return config_flags;
 }
 
@@ -206,30 +209,162 @@ Command GetCommand(const std::string downloader_path,
   return cmd;
 }
 
+// Helper function to merge CLI values into config flags when CLI takes
+// precedence. This function implements the priority rule: if a flag was
+// specified on the CLI (user_provided()=true), its value overrides any value
+// from the config file.
+void MergeCliValuesIntoConfig(const CasDownloaderFlags& flags,
+                              Json::Value& config_flags) {
+  // Merge CLI values (if provided) on top of config file values so CLI wins.
+  // Use the same keys as ConvertToConfigFlags.
+
+  if (flags.cache_dir.user_provided()) {
+    config_flags["cache-dir"] = flags.cache_dir.value();
+  }
+  if (flags.invocation_id.user_provided()) {
+    config_flags["invocation-id"] = flags.invocation_id.value();
+  }
+  if (flags.cache_max_size.user_provided()) {
+    config_flags["cache-max-size"] = flags.cache_max_size.value();
+  }
+  if (flags.cache_lock.user_provided()) {
+    config_flags["cache-lock"] = flags.cache_lock.value();
+  }
+  if (flags.use_hardlink.user_provided()) {
+    config_flags["use-hardlink"] = flags.use_hardlink.value();
+  }
+  if (flags.cas_concurrency.user_provided()) {
+    config_flags["cas-concurrency"] = flags.cas_concurrency.value();
+  }
+  if (flags.memory_limit.user_provided()) {
+    config_flags["memory-limit"] = flags.memory_limit.value();
+  }
+  if (flags.rpc_timeout.user_provided()) {
+    config_flags["rpc-timeout"] = ToSeconds(flags.rpc_timeout.value());
+  }
+  if (flags.get_capabilities_timeout.user_provided()) {
+    config_flags["get-capabilities-timeout"] =
+        ToSeconds(flags.get_capabilities_timeout.value());
+  }
+  if (flags.get_tree_timeout.user_provided()) {
+    config_flags["get-tree-timeout"] =
+        ToSeconds(flags.get_tree_timeout.value());
+  }
+  if (flags.batch_read_blobs_timeout.user_provided()) {
+    config_flags["batch-read-blobs-timeout"] =
+        ToSeconds(flags.batch_read_blobs_timeout.value());
+  }
+  if (flags.batch_update_blobs_timeout.user_provided()) {
+    config_flags["batch-update-blobs-timeout"] =
+        ToSeconds(flags.batch_update_blobs_timeout.value());
+  }
+  if (flags.version.user_provided()) {
+    config_flags["version"] = flags.version.value();
+  }
+}
+
+Result<bool> HasConfigFile(const FlagValue<std::string>& config_filepath_flag) {
+  // Determine whether there's a config file to load. The
+  // `cas_config_filepath` may contain a default path (empty if none). If the
+  // user explicitly provided a config filepath and it does not exist, that's
+  // an error. If a config file exists (either user-provided or default),
+  // we'll load it and apply its values unless the corresponding CLI flag was
+  // provided.
+  const std::string& config_filepath = config_filepath_flag.value();
+  if (config_filepath.empty()) {
+    return false;
+  }
+  if (FileExists(config_filepath)) {
+    return true;
+  }
+  if (config_filepath_flag.user_provided()) {
+    return CF_ERRF("CAS Config file not found: {}", config_filepath);
+  }
+  return false;  // Path was a default, but file doesn't exist.
+}
+
 }  // namespace
 
 Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
     const CasDownloaderFlags& cas_downloader_flags,
     const std::string& service_account_filepath) {
-  std::string downloader_path = cas_downloader_flags.downloader_path;
-  bool prefer_uncompressed = cas_downloader_flags.prefer_uncompressed;
+  auto result = CreateImpl(cas_downloader_flags, service_account_filepath);
+  if (result.ok()) {
+    return result;
+  }
+  // Ensure callers and logs clearly indicate that CAS downloading is
+  // disabled and why, using the same environment-aware formatting that
+  // test helpers use.
+  LOG(INFO) << "CAS downloading disabled: " << result.error().FormatForEnv();
+  return result;
+}
+
+Result<std::unique_ptr<CasDownloader>> CasDownloader::CreateImpl(
+    const CasDownloaderFlags& cas_downloader_flags,
+    const std::string& service_account_filepath) {
+  // Start with values from the FlagValue wrappers (these contain defaults
+  // and reflect any CLI-provided values via .user_provided()).
+  std::string downloader_path = cas_downloader_flags.downloader_path.value();
+  bool prefer_uncompressed = cas_downloader_flags.prefer_uncompressed.value();
   std::vector<std::string> cas_flags;
 
-  std::string config_filepath = cas_downloader_flags.cas_config_filepath;
   Json::Value config_flags;
-  if (config_filepath.empty()) {
-    config_flags = ConvertToConfigFlags(cas_downloader_flags);
-  } else {
+  bool has_config_file =
+      CF_EXPECT(HasConfigFile(cas_downloader_flags.cas_config_filepath));
+  if (has_config_file) {
+    // A config file exists. Load it, then merge CLI values on top so
+    // that CLI takes precedence.
+    const std::string& config_filepath =
+        cas_downloader_flags.cas_config_filepath.value();
+    bool is_default_config = (config_filepath == kDefaultCasConfigFilePath);
+    if (is_default_config) {
+      LOG(INFO) << "Using default CAS config from: " << config_filepath;
+    } else {
+      LOG(INFO) << "Using CAS config from: " << config_filepath;
+    }
     std::string config_contents = CF_EXPECT(ReadFileContents(config_filepath));
     Json::Value config = CF_EXPECT(ParseJson(config_contents));
-    downloader_path = config[kKeyDownloaderPath].asString();
-    prefer_uncompressed = config["prefer-uncompressed"].asBool();
+
+    // Base config flags from file (may be empty object)
     config_flags = config[kKeyFlags];
+
+    // downloader-path and prefer-uncompressed are top-level in the config.
+    // Apply them only if not provided on the CLI.
+    if (!cas_downloader_flags.downloader_path.user_provided()) {
+      if (config.isMember(kKeyDownloaderPath)) {
+        downloader_path = config[kKeyDownloaderPath].asString();
+      }
+    }
+    if (!cas_downloader_flags.prefer_uncompressed.user_provided()) {
+      if (config.isMember("prefer-uncompressed")) {
+        prefer_uncompressed = config["prefer-uncompressed"].asBool();
+      }
+    }
+
+    // For each supported flag key we merge CLI values (if provided) on top of
+    // the config file values so CLI wins. Use the same keys as
+    // ConvertToConfigFlags.
+    MergeCliValuesIntoConfig(cas_downloader_flags, config_flags);
+
+    // If the config file didn't provide a downloader path and CLI didn't as
+    // well, this will be caught below when we require a non-empty path.
+  } else {
+    // No config file available: use CLI values (or defaults if CLI didn't set
+    // them). Convert current flag values into config_flags for downstream
+    // processing.
+    LOG(INFO) << "Using CAS downloader flags from command line or defaults.";
+    config_flags = ConvertToConfigFlags(cas_downloader_flags);
   }
+
+  // Final sanity: ensure we have a downloader path and binary exists.
   CF_EXPECT(!downloader_path.empty(),
-            "No cas downloader path provided in flags or config");
-  CF_EXPECTF(FileExists(downloader_path),
-             "CAS Downloader binary not found: '{}'", downloader_path);
+            "CAS downloader path not provided. Use --cas_downloader_path or "
+            "set downloader-path in config file.");
+  CF_EXPECT(FileExists(downloader_path),
+            "CAS Downloader binary not found at: " << downloader_path);
+
+  // Create cas_flags from the merged config_flags (CLI-overrides applied
+  // above)
   cas_flags = CreateCasFlags(downloader_path, config_flags);
 
   if (!service_account_filepath.empty() &&
@@ -244,6 +379,28 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
       new CasDownloader{downloader_path, cas_flags, prefer_uncompressed});
 }
 
+void AppendBuildInfoToInvocationId(const DeviceBuild& build,
+                                   std::vector<std::string>& cas_flags) {
+  // Append build info, including build id, branch, and flavor, to the
+  // invocation-id flag. Do this only if the invocation-id flag is already
+  // present and contains `caller` only.
+  for (auto& flag : cas_flags) {
+    if (absl::StartsWith(flag, "-invocation-id=caller=") &&
+        flag.find(',') == std::string::npos) {
+      if (!build.id.empty()) {
+        flag += ",bid=" + build.id;
+      }
+      if (!build.branch.empty()) {
+        flag += ",branch=" + build.branch;
+      }
+      if (!build.target.empty()) {
+        flag += ",flavor=" + build.target;
+      }
+      return;
+    }
+  }
+}
+
 CasDownloader::CasDownloader(std::string downloader_path,
                              std::vector<std::string> flags,
                              bool prefer_uncompressed)
@@ -252,11 +409,13 @@ CasDownloader::CasDownloader(std::string downloader_path,
       prefer_uncompressed_(prefer_uncompressed) {}
 
 Result<void> CasDownloader::DownloadFile(
-    const std::string& build_id, const std::string& build_target,
-    const std::string& artifact_name, const std::string& target_directory,
-    const DigestsFetcher& digests_fetcher,
+    const DeviceBuild& build, const std::string& artifact_name,
+    const std::string& target_directory, const DigestsFetcher& digests_fetcher,
     const std::optional<std::string>& stats_filepath) {
   std::string download_directory = target_directory;
+  // Extract build id and target from DeviceBuild
+  const std::string& build_id = build.id;
+  const std::string& build_target = build.target;
   CasIdentifier cas_identifier = CF_EXPECT(
       GetCasIdentifier(build_id, build_target, artifact_name, digests_fetcher));
   std::string filename = cas_identifier.filename;
@@ -264,6 +423,7 @@ Result<void> CasDownloader::DownloadFile(
   if (filename.find("_chunked_dir_") == 0) {
     download_directory += "/" + artifact_name;
   }
+  AppendBuildInfoToInvocationId(build, flags_);
   Command cmd = GetCommand(downloader_path_, flags_, cas_identifier,
                            download_directory, stats_filepath);
   LOG(INFO) << "CAS Downloader Command: '" << cmd.AsBashScript() << "'";

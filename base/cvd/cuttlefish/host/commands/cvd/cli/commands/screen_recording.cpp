@@ -33,7 +33,7 @@
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_record.h"
+#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 
 namespace cuttlefish {
 namespace {

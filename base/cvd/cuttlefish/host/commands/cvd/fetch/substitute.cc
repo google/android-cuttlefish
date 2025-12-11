@@ -39,26 +39,43 @@
 namespace cuttlefish {
 namespace {
 
+/**
+ * cvd needs to be run from a path ending in cuttlefish-common/bin/cvd. This
+ * function validates that and returns the path to the cuttlefish-common
+ * directory.
+ */
+Result<std::string> GetCuttlefishCommonDir() {
+  std::string cvd_exe = android::base::GetExecutablePath();
+  CF_EXPECTF(absl::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
+             "Can't perform substitutions when cvd is not under "
+             "cuttlefish-common/bin, it's currently at {}",
+             cvd_exe);
+  return cvd_exe.substr(0, cvd_exe.size() - std::string("/bin/cvd").size());
+}
+
+Result<void> Substitute(const std::string& target,
+                        const std::string& full_link_name) {
+  if (!FileExists(target)) {
+    LOG(WARNING) << "Target file " << target << " missing; not making "
+                 << "substitution " << target << " to " << full_link_name;
+    return {};
+  }
+
+  if (FileExists(full_link_name)) {
+    CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", StrError(errno));
+  }
+
+  CF_EXPECT(Symlink(target, full_link_name));
+  return {};
+}
+
 Result<void> SubstituteWithFlag(
     const std::string& target_dir,
     const std::vector<std::string>& host_substitutions) {
-  std::string self_path;
-  CF_EXPECT(android::base::Readlink("/proc/self/exe", &self_path));
-  // In substitution case the inner dirname is "cvd" -> "bin", outer dirname is
-  // "bin" -> "cuttlefish-common"
-  std::string bin_dir_parent =
-      android::base::Dirname(android::base::Dirname(self_path));
-  if (!absl::EndsWith(bin_dir_parent, "cuttlefish-common")) {
-    LOG(DEBUG) << "Binary substitution not available, run `cvd fetch` from "
-                  "`cuttlefish-common` package to enable.";
-    CF_EXPECTF(host_substitutions.empty(),
-               "Error due to being unable to perform requested host tool "
-               "substitutions. This is because `cvd` was not run from a "
-               "`cuttlefish-common/bin` directory (as if from the package). "
-               "`cvd` path: {}",
-               self_path);
+  if (host_substitutions.empty()) {
     return {};
   }
+  const std::string bin_dir_parent = CF_EXPECT(GetCuttlefishCommonDir());
 
   if (host_substitutions == std::vector<std::string>{"all"}) {
     bool substitution_error = false;
@@ -93,51 +110,10 @@ Result<void> SubstituteWithFlag(
     for (const std::string& substitution : host_substitutions) {
       std::string source = fmt::format("{}/{}", bin_dir_parent, substitution);
       std::string to_substitute = fmt::format("{}/{}", target_dir, substitution);
-      // TODO: schuffelen - relax this check after migration completes
-      CF_EXPECTF(FileExists(to_substitute),
-                 "Cannot substitute '{}', does not exist", to_substitute);
-      CF_EXPECTF(unlink(to_substitute.c_str()) == 0, "{}", StrError(errno));
-      CF_EXPECT(Symlink(source, to_substitute));
+      CF_EXPECT(Substitute(source, to_substitute));
     }
   }
 
-  return {};
-}
-
-/**
- * cvd needs to be run from a path ending in cuttlefish-common/bin/cvd. This
- * function validates that and returns the path to the cuttlefish-common
- * directory.
- */
-Result<std::string> GetCuttlefishCommonDir() {
-  std::string cvd_exe = android::base::GetExecutablePath();
-  CF_EXPECTF(absl::EndsWith(cvd_exe, "cuttlefish-common/bin/cvd"),
-             "Can't perform substitutions when cvd is not under "
-             "cuttlefish-common/bin, it's currently at {}",
-             cvd_exe);
-  return cvd_exe.substr(0, cvd_exe.size() - std::string("/bin/cvd").size());
-}
-
-Result<void> Substitute(const std::string& target_dir,
-                        const std::string& link_name) {
-  static const std::string common_dir = CF_EXPECT(GetCuttlefishCommonDir());
-  std::string target = fmt::format("{}/{}", common_dir, link_name);
-  std::string full_link_name = fmt::format("{}/{}", target_dir, link_name);
-
-  if (!FileExists(target)) {
-     LOG(WARNING) << "Target file " << target << "missing; not making "
-         << "substitution " << target << " to " << full_link_name;
-     return {};
-  }
-
-  if (!FileExists(full_link_name)) {
-     LOG(WARNING) << "Link file " << full_link_name << "missing; not making "
-         << "substitution " << target << " to " << full_link_name;
-     return {};
-  }
-
-  CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", StrError(errno));
-  CF_EXPECT(Symlink(target, full_link_name));
   return {};
 }
 
@@ -165,6 +141,7 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
             "failed parsing debian_substitution_marker file");
   auto run_cvd_substituted =
       SubstituteCheckTargetExists(config, kRunCvdKeyword);
+  static const std::string common_dir = CF_EXPECT(GetCuttlefishCommonDir());
   for (int j = 0; j < config.symlinks_size(); j++) {
     // TODO(b/452945156): The sensors simulator is launched by run_cvd, so these
     // two components must always be substituted together. Between May 2025 and
@@ -182,7 +159,11 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
                       "substituted as well.";
       continue;
     }
-    CF_EXPECT(Substitute(target_dir, config.symlinks(j).link_name()));
+
+    std::string link_name = config.symlinks(j).link_name();
+    std::string target = fmt::format("{}/{}", common_dir, link_name);
+    std::string full_link_name = fmt::format("{}/{}", target_dir, link_name);
+    CF_EXPECT(Substitute(target, full_link_name));
   }
   return {};
 }

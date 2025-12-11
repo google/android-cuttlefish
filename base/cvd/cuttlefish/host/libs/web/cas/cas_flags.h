@@ -24,6 +24,23 @@
 
 namespace cuttlefish {
 
+// Wrapper for flag values that tracks whether a value was user-specified
+// (via command-line or config file) versus using a default.
+template <typename T>
+class FlagValue {
+ public:
+  explicit FlagValue(const T& default_value) : default_value_(default_value) {}
+
+  // Use ref-qualifier to avoid calling value() on a temporary.
+  const T& value() const& { return value_ ? *value_ : default_value_; }
+  void set_value(const T& value) { value_.emplace(value); }
+  bool user_provided() const { return value_.has_value(); }
+
+ private:
+  std::optional<T> value_;
+  T default_value_;
+};
+
 inline constexpr int kDefaultMemoryLimit = 0;  // 0 for no limit.
 inline constexpr int kDefaultCasConcurrency = 500;
 inline constexpr int kDefaultRpcTimeout = 120;
@@ -36,25 +53,34 @@ inline constexpr int kDefaultBatchUpdateBlobsTimeout = 60;
 // Note: this is only effective when cache_dir is set.
 inline constexpr int64_t kMinCacheMaxSize = 8LL * 1024 * 1024 * 1024;
 
+// Default path to CAS downloader config file.
+inline constexpr const char kDefaultCasConfigFilePath[] =
+    "/etc/casdownloader/config.json";
+
+// Default path to CAS downloader binary.
+inline constexpr const char kDefaultDownloaderPath[] = "/usr/bin/casdownloader";
+
 // Flags for the CAS downloader binary.
 struct CasDownloaderFlags {
+  CasDownloaderFlags();
   std::vector<Flag> Flags();
 
-  std::string cas_config_filepath = "";
-  std::string downloader_path = "";
-  bool prefer_uncompressed = false;
-  std::string cache_dir = "";
-  int64_t cache_max_size = kMinCacheMaxSize;  // Only effective when cache_dir is set.
-  bool cache_lock = false;
-  bool use_hardlink = true;
-  int memory_limit = kDefaultMemoryLimit;
-  int cas_concurrency = kDefaultCasConcurrency;
-  int rpc_timeout = kDefaultRpcTimeout;
-  int get_capabilities_timeout = kDefaultGetCapabilitiesTimeout;
-  int get_tree_timeout = kDefaultGetTreeTimeout;
-  int batch_read_blobs_timeout = kDefaultBatchReadBlobsTimeout;
-  int batch_update_blobs_timeout = kDefaultBatchUpdateBlobsTimeout;
-  bool version = false;
+  FlagValue<std::string> cas_config_filepath;
+  FlagValue<std::string> downloader_path;
+  FlagValue<bool> prefer_uncompressed;
+  FlagValue<std::string> cache_dir;
+  FlagValue<std::string> invocation_id;
+  FlagValue<int64_t> cache_max_size;
+  FlagValue<bool> cache_lock;
+  FlagValue<bool> use_hardlink;
+  FlagValue<int> memory_limit;
+  FlagValue<int> cas_concurrency;
+  FlagValue<int> rpc_timeout;
+  FlagValue<int> get_capabilities_timeout;
+  FlagValue<int> get_tree_timeout;
+  FlagValue<int> batch_read_blobs_timeout;
+  FlagValue<int> batch_update_blobs_timeout;
+  FlagValue<bool> version;
 };
 
 }  // namespace cuttlefish
