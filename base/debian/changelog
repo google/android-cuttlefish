@@ -1,4 +1,4 @@
-cuttlefish-common (1.35.0) unstable; urgency=medium
+cuttlefish-common (1.35.0) stable; urgency=medium
 
   * Mark release 1.34.0 as unstable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1825
   * Release 1.35 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1827
