@@ -251,7 +251,7 @@ int CuttlefishMain() {
   close(FLAGS_confui_out_fd);
 
   int frames_fd = FLAGS_frame_server_fd;
-  bool frames_are_rgba = true;
+  bool frames_are_rgba = !instance.guest_uses_bgra_framebuffers();
   fruit::Injector<ScreenConnector<DisplayHandler::WebRtcScProcessedFrame>,
                   confui::HostServer, confui::HostVirtualInput>
       conf_ui_components_injector(CreateConfirmationUIComponent,
