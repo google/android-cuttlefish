@@ -73,6 +73,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "metrics_environment",
+    srcs = [
+        "metrics_environment.cc",
+    ],
+    hdrs = [
+        "metrics_environment.h",
+    ],
+)
+
+cf_cc_library(
     name = "metrics_headers",
     hdrs = [
         "metrics_configs.h",

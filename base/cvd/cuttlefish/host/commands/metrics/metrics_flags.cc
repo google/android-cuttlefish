@@ -22,7 +22,7 @@
 
 #include "cuttlefish/common/libs/utils/base64.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/host/commands/metrics/metrics_transmission.h"
+#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -33,12 +33,12 @@ Flag EnvironmentGflagsCompatFlag(const std::string& name,
   return GflagsCompatFlag(name)
       .Getter([&value]() { return EnvironmentToString(value); })
       .Setter([name, &value](const FlagMatch& match) -> Result<void> {
-        if (match.value == "local") {
+        if (match.value == kClearcutLocal) {
           value = ClearcutEnvironment::Local;
-        } else if (match.value == "staging") {
+        } else if (match.value == kClearcutStaging) {
           value = ClearcutEnvironment::Staging;
-        } else if (match.value == "prod") {
-          value = ClearcutEnvironment::Prod;
+        } else if (match.value == kClearcutProduction) {
+          value = ClearcutEnvironment::Production;
         } else {
           return CF_ERRF("Unexpected environment value: \"{}\"", match.value);
         }

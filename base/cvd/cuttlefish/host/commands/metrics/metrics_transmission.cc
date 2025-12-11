@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 
+#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -35,7 +36,7 @@ std::string ClearcutEnvironmentUrl(const ClearcutEnvironment environment) {
       return "http://localhost:27910/log";
     case ClearcutEnvironment::Staging:
       return "https://play.googleapis.com:443/staging/log";
-    case ClearcutEnvironment::Prod:
+    case ClearcutEnvironment::Production:
       return "https://play.googleapis.com:443/log";
   }
 }
@@ -51,17 +52,6 @@ Result<void> PostRequest(HttpClient& http_client, const std::string& output,
 }
 
 }  // namespace
-
-std::string EnvironmentToString(ClearcutEnvironment environment) {
-  switch (environment) {
-    case ClearcutEnvironment::Local:
-      return "local";
-    case ClearcutEnvironment::Staging:
-      return "staging";
-    case ClearcutEnvironment::Prod:
-      return "prod";
-  }
-}
 
 Result<void> TransmitMetricsEvent(
     const wireless_android_play_playlog::LogRequest& log_request,

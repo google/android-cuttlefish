@@ -17,17 +17,20 @@
 #pragma once
 
 #include <string>
-
-#include "cuttlefish/host/libs/metrics/metrics_environment.h"
-#include "cuttlefish/result/result.h"
+#include <string_view>
 
 namespace cuttlefish {
 
-struct MetricsFlags {
-  ClearcutEnvironment environment = ClearcutEnvironment::Production;
-  std::string serialized_proto;
+inline constexpr std::string_view kClearcutLocal = "local";
+inline constexpr std::string_view kClearcutStaging = "staging";
+inline constexpr std::string_view kClearcutProduction = "production";
+
+enum class ClearcutEnvironment {
+  Local,
+  Staging,
+  Production,
 };
 
-Result<MetricsFlags> ProcessFlags(int argc, char** argv);
+std::string EnvironmentToString(ClearcutEnvironment environment);
 
 }  // namespace cuttlefish
