@@ -103,6 +103,10 @@ std::string McopyBinary() { return HostBinaryPath("mcopy"); }
 
 std::string MetricsBinary() { return HostBinaryPath("metrics"); }
 
+std::string MetricsTransmitterBinary() {
+  return HostBinaryPath("metrics-transmitter");
+}
+
 std::string MkbootimgBinary() { return HostBinaryPath("mkbootimg.py"); }
 
 std::string MkfsFat() { return HostBinaryPath("mkfs.fat"); }
