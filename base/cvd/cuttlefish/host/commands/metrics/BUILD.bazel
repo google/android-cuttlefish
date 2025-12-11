@@ -88,7 +88,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/host/commands/metrics:metrics_transmission",
+        "//cuttlefish/host/libs/metrics:metrics_environment",
         "//cuttlefish/result",
     ],
 )
@@ -102,6 +102,7 @@ cf_cc_library(
         "metrics_transmission.h",
     ],
     deps = [
+        "//cuttlefish/host/libs/metrics:metrics_environment",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
