@@ -17,7 +17,7 @@
 # Mount attached disk `/dev/sdb1` at `/mnt/image` (the argument).
 set -o errexit -o nounset -o pipefail
 
-MOUNTPONT=$1
+MOUNTPOINT=$1
 
 sudo mkdir -p ${MOUNTPOINT}
 sudo mount /dev/sdb1 ${MOUNTPOINT}
