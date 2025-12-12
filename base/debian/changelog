@@ -1,3 +1,9 @@
+cuttlefish-common (1.38.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- 3405691582 <dsk@google.com>  Fri, 12 Dec 2025 19:05:46 +0000
+
 cuttlefish-common (1.37.0) unstable; urgency=medium
 
 * Start development on v1.37 by @ser-io in https://github.com/google/android-cuttlefish/pull/1873
