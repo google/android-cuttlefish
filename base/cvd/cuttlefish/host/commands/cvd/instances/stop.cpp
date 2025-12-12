@@ -153,11 +153,12 @@ Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
     lock_file_path_stream << lock_file_prefix << id << ".lock";
     auto lock_file_path = lock_file_path_stream.str();
     if (FileExists(lock_file_path) && !DirectoryExists(lock_file_path)) {
-      if (RemoveFile(lock_file_path)) {
+      if (Result<void> res = RemoveFile(lock_file_path); res.ok()) {
         LOG(DEBUG) << "Reset the lock file: " << lock_file_path;
       } else {
         all_success = false;
-        LOG(ERROR) << "Failed to remove the lock file: " << lock_file_path;
+        LOG(ERROR) << "Failed to remove the lock file '" << lock_file_path
+                   << "': " << res.error().FormatForEnv();
       }
     }
   }
@@ -210,8 +211,8 @@ Result<void> DeleteAllOwnedInstanceLocks() {
                    << "' because it's not owned by current user";
       continue;
     }
-    if (!RemoveFile(lock_file_path)) {
-      LOG(ERROR) << "Failed to remove '" << lock_file_path << "'";
+    if (Result<void> res = RemoveFile(lock_file_path); !res.ok()) {
+      LOG(ERROR) << res.error().FormatForEnv();
     }
   }
   return {};

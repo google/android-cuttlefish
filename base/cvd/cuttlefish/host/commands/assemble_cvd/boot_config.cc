@@ -203,7 +203,9 @@ Result<void> PrepareBootEnvImage(
               "Unable to delete the old env image");
     LOG(DEBUG) << "Updated bootloader environment image.";
   } else {
-    RemoveFile(tmp_boot_env_image_path);
+    if (Result<void> res = RemoveFile(tmp_boot_env_image_path); !res.ok()) {
+      LOG(ERROR) << res.error().FormatForEnv();
+    }
   }
 
   return {};

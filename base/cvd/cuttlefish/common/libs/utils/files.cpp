@@ -490,14 +490,13 @@ Result<std::string> RenameFile(const std::string& current_filepath,
   return target_filepath;
 }
 
-bool RemoveFile(const std::string& file) {
+Result<void> RemoveFile(const std::string& file) {
   LOG(DEBUG) << "Removing file " << file;
-  if (remove(file.c_str()) == 0) {
-    return true;
+  if (remove(file.c_str()) != 0) {
+    return CF_ERRF("Failed to remove file '{}' : {}", file,
+                   StrError(errno));
   }
-  LOG(ERROR) << "Failed to remove file " << file << " : "
-             << std::strerror(errno);
-  return false;
+  return {};
 }
 
 std::string ReadFile(const std::string& file) {

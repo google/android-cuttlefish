@@ -213,8 +213,9 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   LogError(WritableZip::Finalize(std::move(archive)));
 
-  if (!RemoveFile(log_filename)) {
-    LOG(INFO) << "Failed to remove host bug report log file: " << log_filename;
+  if (Result<void> res = RemoveFile(log_filename); !res.ok()) {
+    LOG(INFO) << "Failed to remove host bug report log file '" << log_filename
+              << "': " << res.error().FormatForEnv();
   }
 
   return {};
