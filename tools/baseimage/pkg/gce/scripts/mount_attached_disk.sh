@@ -31,4 +31,3 @@ sudo mount --bind /run ${MOUNTPOINT}/run
 if [ ! -f ${MOUNTPOINT}/etc/resolv.conf ]; then
   sudo cp /etc/resolv.conf ${MOUNTPOINT}/etc/
 fi
-`
