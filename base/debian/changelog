@@ -1,8 +1,25 @@
-cuttlefish-common (1.37.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.37.0) unstable; urgency=medium
 
-  *
+* Start development on v1.37 by @ser-io in https://github.com/google/android-cuttlefish/pull/1873
+* Add memcpy override library for ARM + GPU use cases by @jmacnak in https://github.com/google/android-cuttlefish/pull/1860
+* Support building podman image on image-builder.sh by @0405ysj in https://github.com/google/android-cuttlefish/pull/1870
+* Rename files to match classnames by @cjreynol in https://github.com/google/android-cuttlefish/pull/1875
+* Include the associated header from `vendor_dlkm_utils.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/1851
+* Start to add a kokoro GPU presubmit build config by @jmacnak in https://github.com/google/android-cuttlefish/pull/1872
+* Use arch agnostic bin/graphics_detector by @jmacnak in https://github.com/google/android-cuttlefish/pull/1869
+* Make missing substitution logic common. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1874
+* Re-use some substitution code. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1876
+* Retrieve operator & HO log via http api endpoint, without journald by @0405ysj in https://github.com/google/android-cuttlefish/pull/1832
+* Update tools/baseimage/README.md to describe valid flag by @0405ysj in https://github.com/google/android-cuttlefish/pull/1880
+* Mark 1.35 as stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/1883
+* Define the mountpoint on the golang side. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1867
+* Check cuttlefish config for RGBA vs BGRA by @jmacnak in https://github.com/google/android-cuttlefish/pull/1885
+* Optionally set defaults file when minting images. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1864
+* Remove dirs and files across mounts in containers by @bridadan in https://github.com/google/android-cuttlefish/pull/1879
+* Create VmManagerIs[Crosvm,Qemu,Gem5] utilities by @Databean in https://github.com/google/android-cuttlefish/pull/1853
+* Fix typo error on mount_attached_disk.sh by @0405ysj in https://github.com/google/android-cuttlefish/pull/1886
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 05 Dec 2025 19:03:00 -0500
+ -- 3405691582 <dsk@google.com>  Fri, 12 Dec 2025 17:46:10 +0000
 
 cuttlefish-common (1.36.0) unstable; urgency=medium
 
