@@ -37,7 +37,8 @@ inline double ToRadians(double x) { return x * M_PI / 180; }
 // Check if a given sensor id provides scalar data
 static bool IsScalarSensor(int id) {
   return (id == kTemperatureId) || (id == kProximityId) || (id == kLightId) ||
-         (id == kPressureId) || (id == kHumidityId) || (id == kHingeAngle0Id);
+         (id == kPressureId) || (id == kHumidityId) || (id == kHingeAngle0Id) ||
+         (id == kSensorHandleLowLatencyOffBodyDetect);
 }
 
 // Calculate the rotation matrix of the pitch, roll, and yaw angles.
@@ -132,6 +133,10 @@ void SensorsSimulator::RefreshSensors(double x, double y, double z) {
   sensors_data_[kUncalibAccelerationId].v = acc_update;
   sensors_data_[kUncalibGyroscopeId].v = gyro_update;
   sensors_data_[kUncalibMagneticId].v = mgn_update;
+}
+
+void SensorsSimulator::UpdateLowLatencyOffBodyDetect(double value) {
+  sensors_data_[kSensorHandleLowLatencyOffBodyDetect].f = value;
 }
 
 std::string SensorsSimulator::GetSensorsData(const SensorsMask mask) {

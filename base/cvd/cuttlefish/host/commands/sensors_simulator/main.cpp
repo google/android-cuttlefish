@@ -79,6 +79,12 @@ Result<void> ProcessWebrtcRequest(transport::SharedFdChannel& channel,
                 "Can't send request for cmd: " << cmd);
       break;
     }
+    case kUpdateLowLatencyOffBodyDetect: {
+      double value;
+      CF_EXPECT(static_cast<bool>(ss >> value), kReqMisFormatted);
+      sensors_simulator.UpdateLowLatencyOffBodyDetect(value);
+      break;
+    }
     default: {
       return CF_ERR("Unsupported cmd: " << cmd);
     }
