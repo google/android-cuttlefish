@@ -24,20 +24,18 @@ import (
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
 
-const (
-	outImageName = "cuttlefish-base-image"
-)
-
 var (
 	project              = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone                 = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
 	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
 	source_image         = flag.String("source-image", "", "Source image name")
+	image_name           = flag.String("image_name", "", "output GCE image name")
 )
 
 type createImageOpts struct {
 	SourceImageProject string
 	SourceImage        string
+	ImageName          string
 }
 
 func createImageMain(project, zone string, opts createImageOpts) error {
@@ -45,7 +43,7 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 	if err != nil {
 		return fmt.Errorf("failed to create GCE helper: %w", err)
 	}
-	insName := outImageName
+	insName := opts.ImageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 	defer func() {
 		// DetachDisk
@@ -121,7 +119,7 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 	if err := h.StopInstance(insName); err != nil {
 		return fmt.Errorf("error stopping instance: %v", err)
 	}
-	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
+	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	return nil
@@ -140,17 +138,21 @@ func main() {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
 	if *source_image == "" {
-		log.Fatal("usage: `-source_image` must not be empty")
+		log.Fatal("usage: `-source-image` must not be empty")
+	}
+	if *image_name == "" {
+		log.Fatal("usage: `-image-name` must not be empty")
 	}
 
 	opts := createImageOpts{
 		SourceImageProject: *source_image_project,
 		SourceImage:        *source_image,
+		ImageName:          *image_name,
 	}
 	if err := createImageMain(*project, *zone, opts); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("image %q was created successfully", outImageName)
+	log.Printf("image %q was created successfully", *image_name)
 	fmt.Printf(`Copy the image somewhere else:
 gcloud compute images create \
   --source-image-project=%s \
@@ -159,6 +161,6 @@ gcloud compute images create \
   --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
 `,
 		*project,
-		outImageName,
+		*image_name,
 	)
 }
