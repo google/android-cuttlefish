@@ -415,7 +415,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
   // undesired behavior. Always try to delete the file "restore" if a restart is
   // requested.
   if (IsRestoring(config_)) {
-    CHECK(RemoveFile(config_.AssemblyPath("restore")));
+    CHECK(RemoveFile(config_.AssemblyPath("restore")).ok());
   }
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
   auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");

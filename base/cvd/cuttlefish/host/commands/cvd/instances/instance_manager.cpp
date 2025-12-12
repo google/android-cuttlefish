@@ -257,8 +257,14 @@ Result<void> InstanceManager::Clear() {
                    << res.error().FormatForEnv();
       }
     }
-    RemoveFile(group.HomeDir() + "/cuttlefish_runtime");
-    RemoveFile(group.HomeDir() + config_json_name);
+    std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";
+    if (Result<void> res = RemoveFile(runtime_link);!res.ok()) {
+      LOG(ERROR) << res.error().FormatForEnv();
+    }
+    std::string config_link = group.HomeDir() + config_json_name;
+    if (Result<void> res = RemoveFile(config_link);!res.ok()) {
+      LOG(ERROR) << res.error().FormatForEnv();
+    }
     RemoveGroupDirectory(group);
   }
   std::cerr << "Stopped all known instances\n";
