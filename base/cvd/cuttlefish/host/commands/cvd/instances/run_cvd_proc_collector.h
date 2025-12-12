@@ -51,4 +51,6 @@ struct GroupProcInfo {
 
 Result<std::vector<GroupProcInfo>> CollectRunCvdGroups();
 
+Result<std::vector<pid_t>> CollectRunCvdProcesses();
+
 }  // namespace cuttlefish

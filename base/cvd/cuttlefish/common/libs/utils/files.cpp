@@ -450,6 +450,14 @@ off_t FileSize(const std::string& path) {
   return st.st_size;
 }
 
+Result<uid_t> FileOwner(const std::string& path) {
+  struct stat st{};
+  if (stat(path.c_str(), &st) == -1) {
+    return CF_ERRF("Failed to stat file '{}' : {}", path, StrError(errno));
+  }
+  return st.st_uid;
+}
+
 bool MakeFileExecutable(const std::string& path) {
   LOG(DEBUG) << "Making " << path << " executable";
   return chmod(path.c_str(), S_IRWXU) == 0;
