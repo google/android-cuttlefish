@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.37.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.37.0) unstable; urgency=medium
 
-  *
+* N/A
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 05 Dec 2025 19:03:26 -0500
+ -- 3405691582 <dsk@google.com>  Fri, 12 Dec 2025 17:46:47 +0000
 
 cuttlefish-frontend (1.36.0) unstable; urgency=medium
 
