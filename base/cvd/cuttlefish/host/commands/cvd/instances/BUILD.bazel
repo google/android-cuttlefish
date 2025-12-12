@@ -175,6 +175,7 @@ cf_cc_library(
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
     deps = [
+        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:proc_file_utils",

@@ -236,4 +236,8 @@ Result<std::vector<GroupProcInfo>> CollectRunCvdGroups() {
   return collector.CfGroups();
 }
 
+Result<std::vector<pid_t>> CollectRunCvdProcesses() {
+  return CF_EXPECT(CollectPidsByExecName("run_cvd", getuid()));
+}
+
 }  // namespace cuttlefish

@@ -16,7 +16,10 @@
 
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 
+#include <errno.h>
 #include <signal.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <iostream>  // std::endl
 #include <sstream>
@@ -30,6 +33,7 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
+#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
@@ -110,6 +114,12 @@ static bool IsStillRunCvd(const pid_t pid) {
           "run_cvd");
 }
 
+Result<void> SendSignal(pid_t pid) {
+  int kill_res = kill(pid, SIGKILL);
+  CF_EXPECTF(kill_res == 0, "Failed to kill {}: {}", pid, StrError(errno));
+  return {};
+}
+
 Result<void> SendSignal(const GroupProcInfo& group_info) {
   std::vector<pid_t> failed_pids;
   for (const auto& [unused, instance] : group_info.instances_) {
@@ -118,7 +128,7 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
         continue;
       }
       LOG(INFO) << "Sending SIGKILL to process " << parent_run_cvd_pid;
-      if (kill(parent_run_cvd_pid, SIGKILL) == 0) {
+      if (SendSignal(parent_run_cvd_pid).ok()) {
         LOG(VERBOSE) << "Successfully SIGKILL'ed " << parent_run_cvd_pid;
       } else {
         failed_pids.push_back(parent_run_cvd_pid);
@@ -170,25 +180,58 @@ Result<void> ForcefullyStopGroup(const GroupProcInfo& group) {
   return {};
 }
 
-}  // namespace
-
-Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
-  auto stop_cvd_result = RunStopCvdAll(clear_runtime_dirs);
-  if (!stop_cvd_result.ok()) {
-    LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
-  }
-  std::vector<GroupProcInfo> group_infos = CF_EXPECT(CollectRunCvdGroups());
-  if (group_infos.empty()) {
+Result<void> KillAllRunCvds() {
+  auto run_cvd_pids = CF_EXPECT(CollectRunCvdProcesses());
+  if (run_cvd_pids.empty()) {
     return {};
   }
-  LOG(INFO) << group_infos.size()
-               << " instance groups still remain, will stop forcefully";
-  for (const GroupProcInfo& group_info : group_infos) {
-    auto result = ForcefullyStopGroup(group_info);
-    if (!result.ok()) {
+  LOG(INFO) << run_cvd_pids.size()
+               << " run_cvd processes still remain, will stop forcefully";
+  for (pid_t group_pid : run_cvd_pids) {
+    if (Result<void> result = SendSignal(group_pid); !result.ok()) {
       LOG(ERROR) << result.error().FormatForEnv();
     }
   }
+  return {};
+}
+
+Result<void> DeleteAllOwnedInstanceLocks() {
+  const std::string lock_dir = InstanceLocksPath();
+  uid_t own_uid = geteuid();
+  for (const std::string& lock_file: CF_EXPECT(DirectoryContents(lock_dir))) {
+    std::string lock_file_path = fmt::format("{}/{}", lock_dir, lock_file);
+    Result<uid_t> file_uid_res = FileOwner(lock_file_path);
+    if (!file_uid_res.ok()) {
+      LOG(ERROR) << "Failed to obtain owner of '" << lock_file_path << "'";
+      continue;
+    }
+    if (*file_uid_res != own_uid) {
+      LOG(VERBOSE) << "Skipped '" << lock_file_path
+                   << "' because it's not owned by current user";
+      continue;
+    }
+    if (!RemoveFile(lock_file_path)) {
+      LOG(ERROR) << "Failed to remove '" << lock_file_path << "'";
+    }
+  }
+  return {};
+}
+
+}  // namespace
+
+Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
+  if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.ok()) {
+    LOG(ERROR) << res.error().FormatForEnv();
+  }
+
+  if (Result<void> res = KillAllRunCvds(); !res.ok()) {
+    LOG(ERROR) << res.error().FormatForEnv();
+  }
+
+  if (Result<void> res = DeleteAllOwnedInstanceLocks(); !res.ok()) {
+    LOG(ERROR) << res.error().FormatForEnv();
+  }
+
   return {};
 }
 
