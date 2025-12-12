@@ -13,7 +13,8 @@ Go to Step 2 if you have already an image with the wanted kernel.
 ```
 go run ./cmd/create_gce_x86_64_fixed_kernel \
   -project <project> \
-  -linux-image-deb linux-image-6.1.0-40-cloud-amd64
+  -linux-image-deb linux-image-6.1.0-40-cloud-amd64 \
+  -image-name <fixed_kernel_image_name>
 ```
 
 ## Step 2. Create base image
@@ -24,7 +25,7 @@ Go to Step 3 if you have already a base image.
 go run ./cmd/create_gce_x86_64_image \
   -project <project> \
   -source-image-project <project> \
-  -source-image <image-from-step-1>
+  -source-image <fixed_kernel_image_name>
 ```
 
 ## Step 3. Create image with cuttlefish debian packages installed.
