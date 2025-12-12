@@ -172,7 +172,6 @@ Result<RunCvdProcessCollector> RunCvdProcessCollector::Get() {
 }
 
 Result<std::vector<GroupProcInfo>> RunCvdProcessCollector::CollectInfo() {
-  auto run_cvd_pids = CF_EXPECT(CollectPidsByExecName("run_cvd"));
   std::vector<RunCvdProcInfo> run_cvd_infos =
       CF_EXPECT(ExtractAllRunCvdInfo(getuid()));
 
