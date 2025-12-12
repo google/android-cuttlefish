@@ -29,7 +29,6 @@ import (
 )
 
 const (
-	outImageName                      = "amended-image"
 	mountpoint                        = "/mnt/image"
 	defaultsCuttlefishIntegrationFile = "/etc/defaults/cuttlefish-integration"
 )
@@ -58,6 +57,7 @@ var (
 	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
 	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
 	source_image                        = flag.String("source-image", "", "Source image name")
+	image_name                          = flag.String("image-name", "", "output GCE image name")
 	deb_srcs                            = DebSrcsFlag{}
 	defaults_cuttlefish_integration_src = flag.String("defaults_cuttlefish_integration_src", "", "Path to file which will be written to /etc/defaults/cuttlefish-integration.")
 )
@@ -69,6 +69,7 @@ func init() {
 type amendImageOpts struct {
 	SourceImageProject string
 	SourceImage        string
+	ImageName          string
 	DebSrcs            []string
 }
 
@@ -155,7 +156,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	if err != nil {
 		return fmt.Errorf("failed to create GCE helper: %w", err)
 	}
-	insName := outImageName
+	insName := opts.ImageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 
 	log.Println("creating disk...")
@@ -221,8 +222,8 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	}
 	log.Println("instance deleted")
 
-	log.Printf("creating image %q...", outImageName)
-	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
+	log.Printf("creating image %q...", opts.ImageName)
+	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	log.Println("image created")
@@ -243,7 +244,10 @@ func main() {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
 	if *source_image == "" {
-		log.Fatal("usage: `-source_image` must not be empty")
+		log.Fatal("usage: `-source-image` must not be empty")
+	}
+	if *image_name == "" {
+		log.Fatal("usage: `-image-name` must not be empty")
 	}
 	if len(deb_srcs.Srcs) == 0 {
 		log.Fatal("usage: `-deb` must not be empty")
@@ -252,6 +256,7 @@ func main() {
 	opts := amendImageOpts{
 		SourceImageProject: *source_image_project,
 		SourceImage:        *source_image,
+		ImageName:          *image_name,
 		DebSrcs:            deb_srcs.Srcs,
 	}
 	if err := amendImageMain(*project, *zone, opts); err != nil {
@@ -265,6 +270,6 @@ gcloud compute images create \
   --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
 `,
 		*project,
-		outImageName,
+		*image_name,
 	)
 }
