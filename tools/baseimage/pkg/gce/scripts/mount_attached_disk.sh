@@ -29,4 +29,3 @@ sudo mount --bind /run /mnt/image/run
 if [ ! -f /mnt/image/etc/resolv.conf ]; then
   sudo cp /etc/resolv.conf /mnt/image/etc/
 fi
-`
