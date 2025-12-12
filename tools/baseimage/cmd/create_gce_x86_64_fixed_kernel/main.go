@@ -29,22 +29,19 @@ const (
 	debianSourceImage        = "debian-13-trixie-v20251014"
 )
 
-const (
-	outImageName = "cuttlefish-fixed-kernel-image"
-)
-
 var (
 	project       = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone          = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
 	linuxImageDeb = flag.String("linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
+	imageName     = flag.String("image-name", "", "output GCE image name")
 )
 
-func createImageMain(project, zone, linuxImageDeb string) error {
+func createImageMain(project, zone, linuxImageDeb, imageName string) error {
 	h, err := gce.NewGceHelper(project, zone)
 	if err != nil {
 		return fmt.Errorf("failed to create GCE helper: %w", err)
 	}
-	insName := outImageName
+	insName := imageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 	defer func() {
 		// DetachDisk
@@ -111,7 +108,7 @@ func createImageMain(project, zone, linuxImageDeb string) error {
 	if err := h.StopInstance(insName); err != nil {
 		return fmt.Errorf("error stopping instance: %v", err)
 	}
-	if err := h.CreateImage(insName, attachedDiskName, outImageName); err != nil {
+	if err := h.CreateImage(insName, attachedDiskName, imageName); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	return nil
@@ -129,11 +126,14 @@ func main() {
 	if *linuxImageDeb == "" {
 		log.Fatal("usage: `-linux-image-deb` must not be empty")
 	}
+	if *imageName == "" {
+		log.Fatal("usage: `-image-name` must not be empty")
+	}
 
-	if err := createImageMain(*project, *zone, *linuxImageDeb); err != nil {
+	if err := createImageMain(*project, *zone, *linuxImageDeb, *imageName); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("image %q was created successfully", outImageName)
+	log.Printf("image %q was created successfully", *imageName)
 	fmt.Printf(`Copy the image somewhere else:
 gcloud compute images create \
   --source-image-project=%s \
@@ -142,6 +142,6 @@ gcloud compute images create \
   --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
 `,
 		*project,
-		outImageName,
+		*imageName,
 	)
 }
