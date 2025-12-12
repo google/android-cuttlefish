@@ -79,7 +79,9 @@ Result<int> MkenvimageSlimMain(int argc, char** argv) {
     return CF_ERR("Couldn't open the output file " + FLAGS_output_path);
   } else if (FLAGS_env_size !=
              WriteAll(output_fd, (char*)env_buffer.data(), FLAGS_env_size)) {
-    RemoveFile(FLAGS_output_path);
+    if (Result<void> res = RemoveFile(FLAGS_output_path); !res.ok()) {
+      LOG(ERROR) << res.error().FormatForEnv();
+    }
     return CF_ERR("Couldn't complete write to " + FLAGS_output_path);
   }
 

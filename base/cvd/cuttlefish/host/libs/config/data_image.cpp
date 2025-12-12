@@ -217,7 +217,9 @@ Result<void> InitializeDataImage(
       LOG(DEBUG) << instance.data_image() << " exists. Not creating it.";
       return {};
     case DataImageAction::kCreateBlankImage: {
-      RemoveFile(instance.new_data_image());
+      if (Result<void> res = RemoveFile(instance.new_data_image()); !res.ok()) {
+        LOG(ERROR) << res.error().FormatForEnv();
+      }
       CF_EXPECT(instance.blank_data_image_mb() != 0,
                 "Expected `-blank_data_image_mb` to be set for "
                 "image creation.");
