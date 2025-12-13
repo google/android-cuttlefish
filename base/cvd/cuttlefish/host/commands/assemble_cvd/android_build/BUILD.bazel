@@ -64,3 +64,16 @@ cf_cc_library(
         "@protobuf",
     ],
 )
+
+cf_cc_library(
+    name = "misc_info_metadata",
+    srcs = ["misc_info_metadata.cc"],
+    hdrs = ["misc_info_metadata.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+        "@fmt",
+    ],
+)
