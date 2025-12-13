@@ -66,7 +66,7 @@ Result<bool> IsDirectoryEmpty(const std::string& path);
 Result<void> RecursivelyRemoveDirectory(const std::string& path);
 bool Copy(const std::string& from, const std::string& to);
 off_t FileSize(const std::string& path);
-bool RemoveFile(const std::string& file);
+Result<void> RemoveFile(const std::string& file);
 Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);
 std::string ReadFile(const std::string& file);
@@ -78,6 +78,7 @@ Result<std::chrono::system_clock::time_point> FileModificationTime(
     const std::string& path);
 // Whether a file exists and is a unix socket
 bool FileIsSocket(const std::string& path);
+Result<uid_t> FileOwner(const std::string& path);
 
 // acloud related API
 std::string FindImage(const std::string& search_path,

@@ -450,6 +450,14 @@ off_t FileSize(const std::string& path) {
   return st.st_size;
 }
 
+Result<uid_t> FileOwner(const std::string& path) {
+  struct stat st {};
+  if (stat(path.c_str(), &st) == -1) {
+    return 0;
+  }
+  return st.st_uid;
+}
+
 bool MakeFileExecutable(const std::string& path) {
   LOG(DEBUG) << "Making " << path << " executable";
   return chmod(path.c_str(), S_IRWXU) == 0;
@@ -482,14 +490,13 @@ Result<std::string> RenameFile(const std::string& current_filepath,
   return target_filepath;
 }
 
-bool RemoveFile(const std::string& file) {
+Result<void> RemoveFile(const std::string& file) {
   LOG(DEBUG) << "Removing file " << file;
-  if (remove(file.c_str()) == 0) {
-    return true;
+  if (remove(file.c_str()) != 0) {
+    return CF_ERRF("Failed to remove file '{}' : {}", file,
+                   StrError(errno));
   }
-  LOG(ERROR) << "Failed to remove file " << file << " : "
-             << std::strerror(errno);
-  return false;
+  return {};
 }
 
 std::string ReadFile(const std::string& file) {

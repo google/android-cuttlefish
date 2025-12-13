@@ -172,7 +172,6 @@ Result<RunCvdProcessCollector> RunCvdProcessCollector::Get() {
 }
 
 Result<std::vector<GroupProcInfo>> RunCvdProcessCollector::CollectInfo() {
-  auto run_cvd_pids = CF_EXPECT(CollectPidsByExecName("run_cvd"));
   std::vector<RunCvdProcInfo> run_cvd_infos =
       CF_EXPECT(ExtractAllRunCvdInfo(getuid()));
 
@@ -235,6 +234,10 @@ Result<std::vector<GroupProcInfo>> RunCvdProcessCollector::CollectInfo() {
 Result<std::vector<GroupProcInfo>> CollectRunCvdGroups() {
   RunCvdProcessCollector collector = CF_EXPECT(RunCvdProcessCollector::Get());
   return collector.CfGroups();
+}
+
+Result<std::vector<pid_t>> CollectRunCvdProcesses() {
+  return CF_EXPECT(CollectPidsByExecName("run_cvd"), getuid());
 }
 
 }  // namespace cuttlefish

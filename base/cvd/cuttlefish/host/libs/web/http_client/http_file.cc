@@ -49,7 +49,9 @@ Result<HttpResponse<std::string>> HttpGetToFile(
     // "beginning of download" case, which can come multiple times.
     if (data == nullptr) {
       if (!temp_path.empty()) {
-        RemoveFile(temp_path);
+        if (Result<void> remove_res = RemoveFile(temp_path); !remove_res.ok()) {
+          LOG(ERROR) << remove_res.error().FormatForEnv();
+        }
       }
       total_dl = 0;
       last_log = 0;
