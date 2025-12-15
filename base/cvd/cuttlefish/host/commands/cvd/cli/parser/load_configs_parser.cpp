@@ -257,7 +257,7 @@ EnvironmentSpecification FillEmptyInstanceNames(
     }
     std::string name = std::to_string(index++);
     instance.set_name(name);
-    used.insert(name);
+    used.insert(instance.name());
   }
   return env_spec;
 }
