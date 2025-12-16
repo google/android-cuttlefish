@@ -31,6 +31,8 @@ class AndroidBuilds {
   AndroidBuild& ForIndex(size_t index);
   const AndroidBuild& ForIndex(size_t index) const;
 
+  size_t Size() const;
+
   friend std::ostream& operator<<(std::ostream&, const AndroidBuilds&);
 
  private:

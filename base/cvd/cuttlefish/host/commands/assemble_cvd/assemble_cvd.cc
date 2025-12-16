@@ -605,7 +605,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
   KernelPathFlag kernel_path = KernelPathFlag::FromGlobalGflags(fetcher_configs);
 
-  BootImageFlag boot_image = BootImageFlag::FromGlobalGflags(system_image_dir);
+  BootImageFlag boot_image =
+      CF_EXPECT(BootImageFlag::FromGlobalGflags(android_builds));
   SuperImageFlag super_image =
       SuperImageFlag::FromGlobalGflags(system_image_dir);
 
