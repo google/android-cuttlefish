@@ -55,8 +55,9 @@ cf_cc_library(
     hdrs = ["boot_image.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:android_builds",
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
-        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@gflags",

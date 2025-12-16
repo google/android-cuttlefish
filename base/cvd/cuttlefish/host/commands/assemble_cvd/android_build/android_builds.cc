@@ -53,6 +53,8 @@ const AndroidBuild& AndroidBuilds::ForIndex(size_t index) const {
   }
 }
 
+size_t AndroidBuilds::Size() const { return providers_.size(); }
+
 std::ostream& operator<<(std::ostream& out, const AndroidBuilds& providers) {
   out << "AndroidBuilds {";
   for (const auto& provider : providers.providers_) {

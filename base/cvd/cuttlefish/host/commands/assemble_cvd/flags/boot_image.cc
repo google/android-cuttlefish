@@ -20,11 +20,10 @@
 #include <string>
 #include <vector>
 
-#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "gflags/gflags.h"
 
-#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 
 DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
@@ -34,25 +33,26 @@ DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kName = "boot.img";
+static constexpr std::string_view kName = "boot";
 
-std::vector<std::string> Defaults(const SystemImageDirFlag& system_image_dirs) {
+Result<std::vector<std::string>> Defaults(AndroidBuilds& android_builds) {
   std::vector<std::string> defaults;
-  for (std::string_view system_image_dir : system_image_dirs.AsVector()) {
-    defaults.emplace_back(absl::StrCat(system_image_dir, "/", kName));
+  for (size_t i = 0; i < android_builds.Size(); i++) {
+    AndroidBuild& build = android_builds.ForIndex(i);
+    defaults.emplace_back(CF_EXPECT(build.ImageFile(kName)));
   }
   return defaults;
 }
 
 }  // namespace
 
-BootImageFlag BootImageFlag::FromGlobalGflags(
-    const SystemImageDirFlag& system_image_dir) {
+Result<BootImageFlag> BootImageFlag::FromGlobalGflags(
+    AndroidBuilds& android_builds) {
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("boot_image");
 
   return flag_info.is_default
-             ? BootImageFlag(Defaults(system_image_dir), true)
+             ? BootImageFlag(CF_EXPECT(Defaults(android_builds)), true)
              : BootImageFlag(absl::StrSplit(FLAGS_boot_image, ","), false);
 }
 

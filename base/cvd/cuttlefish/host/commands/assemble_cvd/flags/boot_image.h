@@ -20,15 +20,16 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 /* Android boot image path flag, --boot_image */
 class BootImageFlag : public FlagBase<std::string> {
  public:
-  static BootImageFlag FromGlobalGflags(const SystemImageDirFlag&);
+  static Result<BootImageFlag> FromGlobalGflags(AndroidBuilds&);
 
   bool IsDefault() const;
 
