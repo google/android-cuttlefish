@@ -25,6 +25,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 
 DEFINE_string(kernel_path, CF_DEFAULTS_KERNEL_PATH,

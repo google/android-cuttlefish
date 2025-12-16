@@ -58,6 +58,7 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/config/fetched_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 
 namespace cuttlefish {

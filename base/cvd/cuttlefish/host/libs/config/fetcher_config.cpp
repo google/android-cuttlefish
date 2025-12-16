@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
 #include <cctype>
-#include <cstddef>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -26,7 +25,6 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
@@ -265,23 +263,6 @@ Result<CvdFile> BuildFetcherConfigMember(
   return CvdFile(std::move(purpose), std::move(build_id),
                  std::move(build_target), std::move(normalized),
                  std::move(archive_source), std::move(archive_path));
-}
-
-FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {
-  if (configs.empty()) {
-    configs.emplace_back();
-  }
-  return FetcherConfigs(std::move(configs));
-}
-
-FetcherConfigs::FetcherConfigs(std::vector<FetcherConfig> configs)
-    : fetcher_configs_(std::move(configs)) {}
-
-const FetcherConfig& FetcherConfigs::ForInstance(size_t instance_index) const {
-  if (instance_index < fetcher_configs_.size()) {
-    return fetcher_configs_[instance_index];
-  }
-  return fetcher_configs_[0];
 }
 
 }  // namespace cuttlefish

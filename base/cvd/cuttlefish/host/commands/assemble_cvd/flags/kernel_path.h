@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
 
 namespace cuttlefish {
 

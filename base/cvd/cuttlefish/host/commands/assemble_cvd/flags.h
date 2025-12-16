@@ -31,7 +31,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
-#include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
 
 namespace cuttlefish {
 
