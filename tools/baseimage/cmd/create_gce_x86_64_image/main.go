@@ -24,6 +24,8 @@ import (
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
 
+const mountpoint = "/mnt/image"
+
 var (
 	project              = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone                 = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
@@ -36,6 +38,14 @@ type createImageOpts struct {
 	SourceImageProject string
 	SourceImage        string
 	ImageName          string
+}
+
+func fillAvailableSpace(project, zone, insName string) error {
+	return gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh")
+}
+
+func mountAttachedDisk(project, zone, insName string) error {
+	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
 }
 
 func createImageMain(project, zone string, opts createImageOpts) error {
@@ -94,6 +104,7 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 		dstname string
 		content string
 	}{
+		{"fill_available_disk_space.sh", scripts.FillAvailableDiskSpace},
 		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
 		{"install_nvidia.sh", scripts.InstallNvidia},
 		{"create_base_image_main.sh", scripts.CreateBaseImageMain},
@@ -104,6 +115,12 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 		}
 	}
 	// Execute Scripts
+	if err := fillAvailableSpace(project, zone, insName); err != nil {
+		return fmt.Errorf("fillAvailableSpace error: %v", err)
+	}
+	if err := mountAttachedDisk(project, zone, insName); err != nil {
+		return fmt.Errorf("mountAttachedDisk error: %v", err)
+	}
 	if err := gce.RunCmd(project, zone, insName, "./create_base_image_main.sh"); err != nil {
 		return err
 	}

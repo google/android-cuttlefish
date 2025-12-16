@@ -22,16 +22,6 @@ sudo apt-get upgrade -y
 # Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
 echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
 
-# Resize
-sudo apt install -y cloud-utils
-sudo apt install -y cloud-guest-utils
-sudo apt install -y fdisk
-sudo growpart /dev/sdb 1 || /bin/true
-sudo e2fsck -f -y /dev/sdb1 || /bin/true
-sudo resize2fs /dev/sdb1
-
-./mount_attached_disk.sh /mnt/image
-
 kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"

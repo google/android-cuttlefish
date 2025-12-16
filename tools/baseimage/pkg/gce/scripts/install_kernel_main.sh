@@ -26,8 +26,6 @@ linux_image_deb=$1
 sudo apt-get update
 sudo apt-get upgrade -y
 
-./mount_attached_disk.sh /mnt/image
-
 version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 )
 echo "START VERSION: ${version}"

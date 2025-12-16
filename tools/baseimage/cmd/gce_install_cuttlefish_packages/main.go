@@ -94,7 +94,7 @@ func fillAvailableSpace(project, zone, insName string) error {
 	return gce.RunCmd(project, zone, insName, "./fill_available_disk_space.sh")
 }
 
-func mountAttachedDisk(project, zone, insName, mountpoint string) error {
+func mountAttachedDisk(project, zone, insName string) error {
 	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
 }
 
@@ -196,7 +196,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 		return fmt.Errorf("fillAvailableSpace error: %v", err)
 	}
 
-	if err := mountAttachedDisk(project, zone, insName, mountpoint); err != nil {
+	if err := mountAttachedDisk(project, zone, insName); err != nil {
 		return fmt.Errorf("mountAttachedDisk error: %v", err)
 	}
 
