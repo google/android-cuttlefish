@@ -21,7 +21,6 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <vector>
 
 #include "json/value.h"
 
@@ -94,20 +93,5 @@ Result<CvdFile> BuildFetcherConfigMember(
     FileSource purpose, std::string build_id, std::string build_target,
     std::string path, std::string directory_prefix,
     std::string archive_source = "", std::string archive_path = "");
-
-class FetcherConfigs {
- public:
-  static FetcherConfigs Create(std::vector<FetcherConfig> configs);
-  FetcherConfigs(FetcherConfigs&&) = default;
-  ~FetcherConfigs() = default;
-
-  size_t Size() const { return fetcher_configs_.size(); }
-
-  const FetcherConfig& ForInstance(size_t instance_index) const;
-
- private:
-  FetcherConfigs(std::vector<FetcherConfig> configs);
-  std::vector<FetcherConfig> fetcher_configs_;
-};
 
 }  // namespace cuttlefish

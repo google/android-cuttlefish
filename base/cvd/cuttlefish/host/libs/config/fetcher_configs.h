@@ -15,27 +15,27 @@
  */
 #pragma once
 
-#include <string>
+#include <stddef.h>
+
 #include <vector>
 
-#include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
 
-/* Android initramfs path flag, --initramfs_path */
-class InitramfsPathFlag {
+class FetcherConfigs {
  public:
-  static InitramfsPathFlag FromGlobalGflags(
-      const FetcherConfigs& fetcher_configs);
+  static FetcherConfigs Create(std::vector<FetcherConfig> configs);
+  FetcherConfigs(FetcherConfigs&&) = default;
+  ~FetcherConfigs() = default;
 
-  std::string InitramfsPathForIndex(size_t index) const;
+  size_t Size() const { return fetcher_configs_.size(); }
 
-  bool HasValue() const;
+  const FetcherConfig& ForInstance(size_t instance_index) const;
 
  private:
-  explicit InitramfsPathFlag(std::vector<std::string>);
-
-  std::vector<std::string> initramfs_paths_;
+  FetcherConfigs(std::vector<FetcherConfig> configs);
+  std::vector<FetcherConfig> fetcher_configs_;
 };
 
 }  // namespace cuttlefish

@@ -218,6 +218,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fetcher_configs",
+    srcs = ["fetcher_configs.cc"],
+    hdrs = ["fetcher_configs.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:fetcher_config",
+    ],
+)
+
+cf_cc_library(
     name = "file_source",
     srcs = ["file_source.cc"],
     hdrs = ["file_source.h"],

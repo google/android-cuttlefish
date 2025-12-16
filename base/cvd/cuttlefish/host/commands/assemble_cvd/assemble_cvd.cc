@@ -60,6 +60,7 @@
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 
 namespace cuttlefish {

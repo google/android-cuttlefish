@@ -13,29 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
-
-#include <string>
-#include <vector>
 
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 
+#include <stddef.h>
+
+#include <utility>
+#include <vector>
+
+#include "cuttlefish/host/libs/config/fetcher_config.h"
+
 namespace cuttlefish {
 
-/* Android initramfs path flag, --initramfs_path */
-class InitramfsPathFlag {
- public:
-  static InitramfsPathFlag FromGlobalGflags(
-      const FetcherConfigs& fetcher_configs);
+FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {
+  if (configs.empty()) {
+    configs.emplace_back();
+  }
+  return FetcherConfigs(std::move(configs));
+}
 
-  std::string InitramfsPathForIndex(size_t index) const;
+FetcherConfigs::FetcherConfigs(std::vector<FetcherConfig> configs)
+    : fetcher_configs_(std::move(configs)) {}
 
-  bool HasValue() const;
-
- private:
-  explicit InitramfsPathFlag(std::vector<std::string>);
-
-  std::vector<std::string> initramfs_paths_;
-};
+const FetcherConfig& FetcherConfigs::ForInstance(size_t instance_index) const {
+  if (instance_index < fetcher_configs_.size()) {
+    return fetcher_configs_[instance_index];
+  }
+  return fetcher_configs_[0];
+}
 
 }  // namespace cuttlefish
