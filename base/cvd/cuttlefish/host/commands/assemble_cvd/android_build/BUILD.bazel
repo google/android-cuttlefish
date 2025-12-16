@@ -130,6 +130,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "physical_partitions",
+    srcs = ["physical_partitions.cc"],
+    hdrs = ["physical_partitions.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
