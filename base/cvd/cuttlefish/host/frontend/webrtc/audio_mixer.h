@@ -6,6 +6,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <unordered_map>
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/audio_sink.h"
 #include "cuttlefish/host/frontend/webrtc/audio_settings.h"
