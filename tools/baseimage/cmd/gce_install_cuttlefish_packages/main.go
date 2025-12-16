@@ -184,7 +184,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	defer cleanupDeleteDisk(h, attachedDiskName)
 
 	log.Println("creating instance...")
-	_, err = h.CreateInstance(insName)
+	_, err = h.CreateInstance(insName, gce.ArchX86)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
