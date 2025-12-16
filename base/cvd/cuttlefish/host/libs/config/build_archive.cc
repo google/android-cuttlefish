@@ -92,9 +92,7 @@ Result<BuildArchive> BuildArchive::FromFetcherConfig(
   }
 
   if (zip_file.has_value()) {
-    std::set<std::string, std::less<void>> zip_members =
-        CF_EXPECT(ZipMembers(*zip_file));
-    members.insert(zip_members.begin(), zip_members.end());
+    members.merge(CF_EXPECT(ZipMembers(*zip_file)));
   }
 
   return BuildArchive(source, std::move(extracted_members), std::move(members),
