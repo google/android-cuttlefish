@@ -91,15 +91,25 @@ func (h *GceHelper) DetachDisk(ins, disk string) error {
 	return h.waitForOperation(op)
 }
 
-func (h *GceHelper) CreateInstance(name string) (*compute.Instance, error) {
+func (h *GceHelper) CreateInstance(name string, arch Arch) (*compute.Instance, error) {
+	var machineType, sourceImage string
+	switch arch {
+	case ArchX86:
+		machineType = "n1-standard-16"
+		sourceImage = "debian-12-bookworm-v20250415"
+	case ArchArm:
+		machineType = "t2a-standard-16"
+		sourceImage = "debian-12-bookworm-arm64-v20250415"
+	default:
+		return nil, errors.New("unsupported arch")
+	}
 	payload := &compute.Instance{
-		Name:           name,
-		MachineType:    fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, "n1-standard-16"),
-		MinCpuPlatform: "Intel Haswell",
+		Name:        name,
+		MachineType: fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, machineType),
 		Disks: []*compute.AttachedDisk{
 			{
 				InitializeParams: &compute.AttachedDiskInitializeParams{
-					SourceImage: "projects/debian-cloud/global/images/debian-12-bookworm-v20250415",
+					SourceImage: fmt.Sprintf("projects/debian-cloud/global/images/%s", sourceImage),
 				},
 				Boot:       true,
 				AutoDelete: true,

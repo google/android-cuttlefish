@@ -85,7 +85,7 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 	}
 	log.Printf("disk created: %q", attachedDiskName)
 	log.Println("creating instance...")
-	ins, err := h.CreateInstance(insName)
+	ins, err := h.CreateInstance(insName, gce.ArchX86)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
