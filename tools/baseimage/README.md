@@ -11,7 +11,7 @@ gcloud auth application-default login
 Go to Step 2 if you have already an image with the wanted kernel.
 
 ```
-go run ./cmd/create_gce_x86_64_fixed_kernel \
+go run ./cmd/create_gce_fixed_kernel \
   -project <project> \
   -linux-image-deb linux-image-6.1.0-40-cloud-amd64 \
   -image-name <fixed_kernel_image_name>
