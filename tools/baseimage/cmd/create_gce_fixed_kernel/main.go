@@ -42,12 +42,17 @@ func mountAttachedDisk(project, zone, insName string) error {
 	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
 }
 
-func createImageMain(project, zone, linuxImageDeb, imageName string) error {
+type kernelImageOpts struct {
+	LinuxImageDeb string
+	ImageName     string
+}
+
+func createImageMain(project, zone string, opts kernelImageOpts) error {
 	h, err := gce.NewGceHelper(project, zone)
 	if err != nil {
 		return fmt.Errorf("failed to create GCE helper: %w", err)
 	}
-	insName := imageName
+	insName := opts.ImageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 	defer func() {
 		// DetachDisk
@@ -110,14 +115,14 @@ func createImageMain(project, zone, linuxImageDeb, imageName string) error {
 	if err := mountAttachedDisk(project, zone, insName); err != nil {
 		return fmt.Errorf("mountAttachedDisk error: %v", err)
 	}
-	if err := gce.RunCmd(project, zone, insName, "./install_kernel_main.sh "+linuxImageDeb); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./install_kernel_main.sh "+opts.LinuxImageDeb); err != nil {
 		return err
 	}
 	log.Printf("stopping instance %q...", insName)
 	if err := h.StopInstance(insName); err != nil {
 		return fmt.Errorf("error stopping instance: %v", err)
 	}
-	if err := h.CreateImage(insName, attachedDiskName, imageName); err != nil {
+	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
 		return fmt.Errorf("failed to create image: %w", err)
 	}
 	return nil
@@ -139,7 +144,11 @@ func main() {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
 
-	if err := createImageMain(*project, *zone, *linuxImageDeb, *imageName); err != nil {
+	opts := kernelImageOpts{
+		LinuxImageDeb: *linuxImageDeb,
+		ImageName:     *imageName,
+	}
+	if err := createImageMain(*project, *zone, opts); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("image %q was created successfully", *imageName)
