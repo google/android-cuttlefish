@@ -26,7 +26,8 @@ import (
 // Cuttlefish base images are based on debian images.
 const (
 	debianSourceImageProject = "debian-cloud"
-	debianSourceImage        = "debian-13-trixie-v20251014"
+	debianSourceImageX86     = "debian-13-trixie-v20251014"
+	debianSourceImageArm     = "debian-13-trixie-arm64-v20251014"
 )
 
 const mountpoint = "/mnt/image"
@@ -34,6 +35,7 @@ const mountpoint = "/mnt/image"
 var (
 	project       = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone          = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
+	arch          = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
 	linuxImageDeb = flag.String("linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
 	imageName     = flag.String("image-name", "", "output GCE image name")
 )
@@ -43,6 +45,7 @@ func mountAttachedDisk(project, zone, insName string) error {
 }
 
 type kernelImageOpts struct {
+	Arch          gce.Arch
 	LinuxImageDeb string
 	ImageName     string
 }
@@ -78,13 +81,22 @@ func createImageMain(project, zone string, opts kernelImageOpts) error {
 		}
 	}()
 	log.Println("creating disk...")
-	disk, err := h.CreateDisk(debianSourceImageProject, debianSourceImage, attachedDiskName, gce.CreateDiskOpts{})
+	var sourceImage string
+	switch opts.Arch {
+	case gce.ArchX86:
+		sourceImage = debianSourceImageX86
+	case gce.ArchArm:
+		sourceImage = debianSourceImageArm
+	default:
+		return fmt.Errorf("unsupported arch")
+	}
+	disk, err := h.CreateDisk(debianSourceImageProject, sourceImage, attachedDiskName, gce.CreateDiskOpts{})
 	if err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}
 	log.Printf("disk created: %q", attachedDiskName)
 	log.Println("creating instance...")
-	ins, err := h.CreateInstance(insName, gce.ArchX86)
+	ins, err := h.CreateInstance(insName, opts.Arch)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
@@ -137,14 +149,22 @@ func main() {
 	if *zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
+	if *arch == "" {
+		log.Fatal("usage: `-arch` must not be empty")
+	}
 	if *linuxImageDeb == "" {
 		log.Fatal("usage: `-linux-image-deb` must not be empty")
 	}
 	if *imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
+	architecture, err := gce.ParseArch(*arch)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	opts := kernelImageOpts{
+		Arch:          architecture,
 		LinuxImageDeb: *linuxImageDeb,
 		ImageName:     *imageName,
 	}
