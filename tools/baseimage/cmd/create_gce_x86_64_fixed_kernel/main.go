@@ -29,12 +29,18 @@ const (
 	debianSourceImage        = "debian-13-trixie-v20251014"
 )
 
+const mountpoint = "/mnt/image"
+
 var (
 	project       = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone          = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
 	linuxImageDeb = flag.String("linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
 	imageName     = flag.String("image-name", "", "output GCE image name")
 )
+
+func mountAttachedDisk(project, zone, insName string) error {
+	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
+}
 
 func createImageMain(project, zone, linuxImageDeb, imageName string) error {
 	h, err := gce.NewGceHelper(project, zone)
@@ -101,6 +107,9 @@ func createImageMain(project, zone, linuxImageDeb, imageName string) error {
 		}
 	}
 	// Execute Scripts
+	if err := mountAttachedDisk(project, zone, insName); err != nil {
+		return fmt.Errorf("mountAttachedDisk error: %v", err)
+	}
 	if err := gce.RunCmd(project, zone, insName, "./install_kernel_main.sh "+linuxImageDeb); err != nil {
 		return err
 	}
