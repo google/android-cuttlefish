@@ -101,8 +101,6 @@ class FetcherConfigs {
   FetcherConfigs(FetcherConfigs&&) = default;
   ~FetcherConfigs() = default;
 
-  void Append(FetcherConfig&& config);
-
   size_t Size() const { return fetcher_configs_.size(); }
 
   const FetcherConfig& ForInstance(size_t instance_index) const;
