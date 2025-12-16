@@ -29,7 +29,7 @@ var (
 	zone                 = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
 	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
 	source_image         = flag.String("source-image", "", "Source image name")
-	image_name           = flag.String("image_name", "", "output GCE image name")
+	image_name           = flag.String("image-name", "", "output GCE image name")
 )
 
 type createImageOpts struct {
