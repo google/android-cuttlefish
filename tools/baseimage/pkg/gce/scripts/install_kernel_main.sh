@@ -20,26 +20,29 @@ if [[ $# -eq 0 ]] ; then
   echo "usage: $0 <linux-image-deb>"
   exit 1
 fi
-
 linux_image_deb=$1
+
+arch=$(uname -m)
+[ "${arch}" = "x86_64" ] && arch=amd64
+[ "${arch}" = "aarch64" ] && arch=arm64
 
 sudo apt-get update
 sudo apt-get upgrade -y
 
-version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 )
 echo "START VERSION: ${version}"
 
 sudo chroot /mnt/image /usr/bin/apt-get update
 sudo chroot /mnt/image /usr/bin/apt-get upgrade -y
 
-version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 )
 echo "AFTER UPGRADE VERSION: ${version}"
 
 sudo chroot /mnt/image /usr/bin/apt-get install -y ${linux_image_deb}
 
-version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+version=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2)
 echo "END VERSION: ${version}"
 
