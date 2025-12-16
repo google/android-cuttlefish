@@ -33,6 +33,9 @@
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
@@ -529,6 +532,21 @@ Result<std::vector<std::string>> ReadInputFiles() {
   return android::base::Split(input_files_str, "\n");
 }
 
+Result<AndroidBuilds> FindAndroidBuilds(
+    const SystemImageDirFlag& system_image_dir,
+    const FetcherConfigs& fetcher_configs) {
+  CF_EXPECT_EQ(system_image_dir.Size(), fetcher_configs.Size());
+  std::vector<std::unique_ptr<AndroidBuild>> android_builds;
+
+  for (size_t i = 0; i < system_image_dir.Size(); i++) {
+    android_builds.emplace_back(CF_EXPECT(IdentifyAndroidBuild(
+        system_image_dir.ForIndex(i), fetcher_configs.ForInstance(i),
+        FileSource::DEFAULT_BUILD)));
+  }
+
+  return CF_EXPECT(AndroidBuilds::Create(std::move(android_builds)));
+}
+
 } // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
@@ -577,6 +595,11 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   FetcherConfigs fetcher_configs =
       FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
+
+  AndroidBuilds android_builds =
+      CF_EXPECT(FindAndroidBuilds(system_image_dir, fetcher_configs));
+
+  VLOG(0) << android_builds;
 
   InitramfsPathFlag initramfs_path =
       InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
