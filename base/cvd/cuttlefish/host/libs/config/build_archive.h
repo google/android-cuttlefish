@@ -72,7 +72,7 @@ class BuildArchive {
    * - The file needed to be extracted, but `extract_dir` was not present.
    * - There was a failure to extract the file member.
    */
-  Result<std::string_view> MemberFilepath(
+  Result<std::string> MemberFilepath(
       std::string_view member_name,
       std::optional<std::string_view> extract_dir);
 

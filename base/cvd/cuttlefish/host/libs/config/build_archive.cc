@@ -126,7 +126,7 @@ const std::set<std::string, std::less<void>>& BuildArchive::Members() const {
   return members_;
 }
 
-Result<std::string_view> BuildArchive::MemberFilepath(
+Result<std::string> BuildArchive::MemberFilepath(
     std::string_view member_name, std::optional<std::string_view> extract_dir) {
   CF_EXPECTF(members_.count(member_name), "'{}' not in archive", member_name);
   if (auto it = extracted_.find(member_name); it != extracted_.end()) {
