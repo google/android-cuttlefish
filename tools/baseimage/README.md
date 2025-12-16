@@ -41,3 +41,12 @@ go run ./cmd/gce_install_cuttlefish_packages \
   -deb <path/to/cuttlefish-user-deb> \
   -deb <path/to/cuttlefish-orchestration-deb>
 ```
+
+## Step 4. Validate output image
+
+```
+go run ./cmd/gce_validate_image \
+  -project <project> \
+  -image-project <project> \
+  -image <output_image_name>
+```
