@@ -80,7 +80,7 @@ func uploadScripts(project, zone, insName string) error {
 	}{
 		{"fill_available_disk_space.sh", scripts.FillAvailableDiskSpace},
 		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
-		{"install.sh", scripts.InstallCuttlefishPackages},
+		{"install_cuttlefish_debs.sh", scripts.InstallCuttlefishPackages},
 	}
 	for _, s := range list {
 		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
@@ -108,7 +108,7 @@ func installCuttlefishDebs(project, zone, insName string, debSrcs []string) erro
 		}
 	}
 	args := strings.Join(dstSrcs, " ")
-	if err := gce.RunCmd(project, zone, insName, "./install.sh "+args); err != nil {
+	if err := gce.RunCmd(project, zone, insName, "./install_cuttlefish_debs.sh "+args); err != nil {
 		return err
 	}
 	return nil
