@@ -14,13 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Mount attached disk `/dev/sdb1` at `/mnt/image` (the argument).
+# Mount attached disk at `/mnt/image` (the argument).
 set -o errexit -o nounset -o pipefail
 
 MOUNTPOINT=$1
 
 sudo mkdir -p ${MOUNTPOINT}
-sudo mount /dev/sdb1 ${MOUNTPOINT}
+if [ -b /dev/sdb1 ]; then
+  sudo mount /dev/sdb1 ${MOUNTPOINT}
+elif [ -b /dev/nvme0n2p1 ]; then
+  sudo mount /dev/nvme0n2p1 ${MOUNTPOINT}
+else
+  echo "failed to find source block device"
+  exit 1
+fi
 sudo mount -t sysfs none ${MOUNTPOINT}/sys
 sudo mount -t proc none ${MOUNTPOINT}/proc
 sudo mount --bind /boot/efi ${MOUNTPOINT}/boot/efi
