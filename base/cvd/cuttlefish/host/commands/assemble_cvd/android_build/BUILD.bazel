@@ -130,6 +130,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "super_image",
+    srcs = ["super_image.cc"],
+    hdrs = ["super_image.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@android_system_core//:liblp",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "target_files",
     srcs = ["target_files.cc"],
     hdrs = ["target_files.h"],
