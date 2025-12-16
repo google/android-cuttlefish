@@ -29,7 +29,10 @@ var InstallNvidia string
 var FillAvailableDiskSpace string
 
 //go:embed install_cuttlefish_debs.sh
-var InstallCuttlefishPackages string
+var InstallCuttlefishDebs string
+
+//go:embed load_cuttlefish_container_image.sh
+var LoadCuttlefishContainerImage string
 
 //go:embed install_kernel_main.sh
 var InstallKernelMain string
