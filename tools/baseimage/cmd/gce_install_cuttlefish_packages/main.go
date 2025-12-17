@@ -55,6 +55,7 @@ func (v *DebSrcsFlag) Set(s string) error {
 var (
 	project                             = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
 	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	arch                                = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
 	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
 	source_image                        = flag.String("source-image", "", "Source image name")
 	image_name                          = flag.String("image-name", "", "output GCE image name")
@@ -68,6 +69,7 @@ func init() {
 }
 
 type amendImageOpts struct {
+	Arch               gce.Arch
 	SourceImageProject string
 	SourceImage        string
 	ImageName          string
@@ -184,7 +186,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 	defer cleanupDeleteDisk(h, attachedDiskName)
 
 	log.Println("creating instance...")
-	_, err = h.CreateInstance(insName, gce.ArchX86)
+	_, err = h.CreateInstance(insName, opts.Arch)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
@@ -258,6 +260,9 @@ func main() {
 	if *zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
+	if *arch == "" {
+		log.Fatal("usage: `-arch` must not be empty")
+	}
 	if *source_image_project == "" {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
@@ -273,8 +278,13 @@ func main() {
 	if *container_image_src == "" {
 		log.Fatal("usage: `-container-image-src` must not be empty")
 	}
+	architecture, err := gce.ParseArch(*arch)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	opts := amendImageOpts{
+		Arch:               architecture,
 		SourceImageProject: *source_image_project,
 		SourceImage:        *source_image,
 		ImageName:          *image_name,
