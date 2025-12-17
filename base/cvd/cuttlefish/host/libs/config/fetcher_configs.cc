@@ -18,17 +18,38 @@
 
 #include <stddef.h>
 
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
+
+#include "absl/strings/str_cat.h"
+#include "android-base/logging.h"
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
 namespace cuttlefish {
 
-FetcherConfigs FetcherConfigs::Create(std::vector<FetcherConfig> configs) {
+static constexpr std::string_view kFetcherConfigFile = "fetcher_config.json";
+
+FetcherConfigs FetcherConfigs::ReadFromDirectories(
+    const std::vector<std::string>& directories) {
+  std::vector<FetcherConfig> configs;
+  configs.reserve(directories.size());
+
+  for (std::string_view directory : directories) {
+    FetcherConfig& config = configs.emplace_back();
+
+    std::string config_path = absl::StrCat(directory, "/", kFetcherConfigFile);
+    if (!config.LoadFromFile(config_path)) {
+      LOG(DEBUG) << "No valid fetcher_config in '" << config_path
+                 << "', falling back to default";
+    }
+  }
   if (configs.empty()) {
     configs.emplace_back();
   }
+
   return FetcherConfigs(std::move(configs));
 }
 

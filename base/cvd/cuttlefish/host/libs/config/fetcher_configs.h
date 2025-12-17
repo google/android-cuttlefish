@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <string>
 #include <vector>
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -25,7 +26,7 @@ namespace cuttlefish {
 
 class FetcherConfigs {
  public:
-  static FetcherConfigs Create(std::vector<FetcherConfig> configs);
+  static FetcherConfigs ReadFromDirectories(const std::vector<std::string>&);
   FetcherConfigs(FetcherConfigs&&) = default;
   ~FetcherConfigs() = default;
 
