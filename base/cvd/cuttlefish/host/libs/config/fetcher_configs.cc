@@ -20,10 +20,10 @@
 
 #include <string>
 #include <string_view>
-#include <utility>
-#include <vector>
 
 #include "absl/strings/str_cat.h"
+#include "absl/types/span.h"
+#include "android-base/file.h"
 #include "android-base/logging.h"
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -33,34 +33,52 @@ namespace cuttlefish {
 static constexpr std::string_view kFetcherConfigFile = "fetcher_config.json";
 
 FetcherConfigs FetcherConfigs::ReadFromDirectories(
-    const std::vector<std::string>& directories) {
-  std::vector<FetcherConfig> configs;
-  configs.reserve(directories.size());
+    absl::Span<const std::string> directories) {
+  FetcherConfigs configs;
 
-  for (std::string_view directory : directories) {
-    FetcherConfig& config = configs.emplace_back();
+  configs.directories_.reserve(directories.size());
 
-    std::string config_path = absl::StrCat(directory, "/", kFetcherConfigFile);
-    if (!config.LoadFromFile(config_path)) {
-      LOG(DEBUG) << "No valid fetcher_config in '" << config_path
+  for (const std::string& dir : directories) {
+    std::string real;
+    if (!android::base::Realpath(dir, &real)) {
+      LOG(WARNING) << "Failed to resolve real path for '" << dir << "'";
+      real = dir;
+    }
+
+    auto [it, inserted] =
+        configs.directory_to_config_.emplace(real, FetcherConfig());
+
+    configs.directories_.emplace_back(real);
+
+    if (!inserted) {
+      continue;
+    }
+
+    std::string path = absl::StrCat(real, "/", kFetcherConfigFile);
+
+    if (!it->second.LoadFromFile(path)) {
+      LOG(DEBUG) << "No valid fetcher_config in '" << path
                  << "', falling back to default";
     }
   }
-  if (configs.empty()) {
-    configs.emplace_back();
-  }
 
-  return FetcherConfigs(std::move(configs));
+  return configs;
 }
 
-FetcherConfigs::FetcherConfigs(std::vector<FetcherConfig> configs)
-    : fetcher_configs_(std::move(configs)) {}
-
 const FetcherConfig& FetcherConfigs::ForInstance(size_t instance_index) const {
-  if (instance_index < fetcher_configs_.size()) {
-    return fetcher_configs_[instance_index];
+  // If there is no matching member in the map, either this FetcherConfig is a
+  // moved-from instance without any members, or there is a mistake in
+  // `FetcherConfigs::ReadFromDirectories`.
+  static FetcherConfig* kFallback = new FetcherConfig();
+
+  if (directories_.empty()) {
+    return *kFallback;
   }
-  return fetcher_configs_[0];
+
+  instance_index = instance_index < directories_.size() ? instance_index : 0;
+
+  auto it = directory_to_config_.find(directories_[instance_index]);
+  return it == directory_to_config_.end() ? *kFallback : it->second;
 }
 
 }  // namespace cuttlefish
