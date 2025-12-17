@@ -16,13 +16,17 @@
 
 set -o errexit -o nounset -o pipefail
 
+arch=$(uname -m)
+[ "${arch}" = "x86_64" ] && arch=amd64
+[ "${arch}" = "aarch64" ] && arch=arm64
+
 sudo apt-get update
 sudo apt-get upgrade -y
 
 # Avoids blocking "Default mirror not found" popup prompt when pbuilder is installed.
 echo "pbuilder        pbuilder/mirrorsite     string  https://deb.debian.org/debian" | sudo debconf-set-selections
 
-kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 
@@ -43,14 +47,23 @@ sudo chroot /mnt/image /usr/bin/apt purge -y unattended-upgrades
 # JDK it's not required to launch a CF device. It's required to run
 # some of Tradefed tests that are run from the CF host side like
 # some CF gfx tests, adb tests, etc.
-sudo chroot /mnt/image /usr/bin/wget -P /usr/java https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
-# https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz.sha256
-export JDK21_SHA256SUM=a2def047a73941e01a73739f92755f86b895811afb1f91243db214cff5bdac3f
-if ! echo "$JDK21_SHA256SUM /usr/java/openjdk-21.0.2_linux-x64_bin.tar.gz" | sudo chroot /mnt/image /usr/bin/sha256sum -c ; then
+if [[ "${arch}" == "amd64" ]]; then
+  JDK_ARCH=x64
+  # https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz.sha256
+  export JDK21_SHA256SUM=a2def047a73941e01a73739f92755f86b895811afb1f91243db214cff5bdac3f
+elif [[ "${arch}" == "arm64" ]]; then
+  JDK_ARCH=aarch64
+  # https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-aarch64_bin.tar.gz.sha256
+  export JDK21_SHA256SUM=08db1392a48d4eb5ea5315cf8f18b89dbaf36cda663ba882cf03c704c9257ec2
+else
+  echo "** ERROR: UNEXEPCTED ARCH **"; exit 1;
+fi
+sudo chroot /mnt/image /usr/bin/wget -P /usr/java "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz"
+if ! echo "$JDK21_SHA256SUM /usr/java/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz" | sudo chroot /mnt/image /usr/bin/sha256sum -c ; then
   echo "** ERROR: KEY MISMATCH **"; popd >/dev/null; exit 1;
 fi
-sudo chroot /mnt/image /usr/bin/tar xvzf /usr/java/openjdk-21.0.2_linux-x64_bin.tar.gz -C /usr/java
-sudo chroot /mnt/image /usr/bin/rm /usr/java/openjdk-21.0.2_linux-x64_bin.tar.gz
+sudo chroot /mnt/image /usr/bin/tar xvzf "/usr/java/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz" -C /usr/java
+sudo chroot /mnt/image /usr/bin/rm "/usr/java/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz"
 ENV_JAVA_HOME='/usr/java/jdk-21.0.2'
 echo "JAVA_HOME=$ENV_JAVA_HOME" | sudo chroot /mnt/image /usr/bin/tee -a /etc/environment >/dev/null
 echo "JAVA_HOME=$ENV_JAVA_HOME" | sudo chroot /mnt/image /usr/bin/tee -a /etc/profile >/dev/null
@@ -91,7 +104,7 @@ sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
 kernel.unprivileged_userns_clone=1
 EOF
 
-kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
 
