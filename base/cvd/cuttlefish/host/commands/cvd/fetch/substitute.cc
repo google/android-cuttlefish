@@ -185,6 +185,12 @@ Result<void> HostPackageSubstitution(
     LOG(INFO) << "using local debian substitution marker file: " << marker_file;
   }
 
+  // TODO: remove when we can safely add this to the marker file.
+  std::string cvdalloc_src =
+      fmt::format("{}/bin/{}", CF_EXPECT(GetCuttlefishCommonDir()), "cvdalloc");
+  std::string cvdalloc_name = fmt::format("{}/{}", target_dir, "cvdalloc");
+  CF_EXPECT(Substitute(cvdalloc_src, cvdalloc_name));
+
   if (host_substitutions.empty() && FileExists(marker_file)) {
     CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
   } else {
