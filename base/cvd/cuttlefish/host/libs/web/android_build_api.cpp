@@ -58,7 +58,15 @@ namespace {
 
 bool StatusIsTerminal(const std::string& status) {
   const static std::set<std::string> terminal_statuses = {
-      "abandoned", "complete", "error", "ABANDONED", "COMPLETE", "ERROR",
+      "abandoned",
+      "ABANDONED",
+      "built",
+      "BUILT",
+      // deprecated in v4, but kept around for compatibility until removed
+      "complete",
+      "COMPLETE",
+      "error",
+      "ERROR",
   };
   return terminal_statuses.count(status) > 0;
 }
@@ -213,8 +221,8 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
           << no_auth_error_message);
 
   bool is_signed = false;
-  if (json.isMember("signed")) {
-    is_signed = json["signed"].asBool();
+  if (HasValue(json, {"buildSigned"})) {
+    is_signed = CF_EXPECT(GetValue<bool>(json, {"buildSigned"}));
   }
 
   return AndroidBuildApi::BuildInfo{
@@ -267,6 +275,7 @@ Result<std::optional<std::string>> AndroidBuildApi::LatestBuildId(
                                       "Error fetching last known good build "
                                       "id for:\nbranch \"{}\", target \"{}\"",
                                       branch, target);
+  LOG(INFO) << "\n\n TODO CJR \n\n" << "LatestBuildId response:\n" << json;
   if (!json.isMember("builds")) {
     return std::nullopt;
   }
