@@ -29,12 +29,14 @@ const mountpoint = "/mnt/image"
 var (
 	project              = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone                 = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
+	arch                 = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
 	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
 	source_image         = flag.String("source-image", "", "Source image name")
 	image_name           = flag.String("image-name", "", "output GCE image name")
 )
 
 type createImageOpts struct {
+	Arch               gce.Arch
 	SourceImageProject string
 	SourceImage        string
 	ImageName          string
@@ -85,7 +87,7 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 	}
 	log.Printf("disk created: %q", attachedDiskName)
 	log.Println("creating instance...")
-	ins, err := h.CreateInstance(insName, gce.ArchX86)
+	ins, err := h.CreateInstance(insName, opts.Arch)
 	if err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
@@ -151,6 +153,9 @@ func main() {
 	if *zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
+	if *arch == "" {
+		log.Fatal("usage: `-arch` must not be empty")
+	}
 	if *source_image_project == "" {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
@@ -160,8 +165,13 @@ func main() {
 	if *image_name == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
+	architecture, err := gce.ParseArch(*arch)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	opts := createImageOpts{
+		Arch:               architecture,
 		SourceImageProject: *source_image_project,
 		SourceImage:        *source_image,
 		ImageName:          *image_name,
