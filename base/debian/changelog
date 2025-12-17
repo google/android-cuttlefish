@@ -1,4 +1,4 @@
-cuttlefish-common (1.37.0) unstable; urgency=medium
+cuttlefish-common (1.37.0) stable; urgency=medium
 
 * Start development on v1.37 by @ser-io in https://github.com/google/android-cuttlefish/pull/1873
 * Add memcpy override library for ARM + GPU use cases by @jmacnak in https://github.com/google/android-cuttlefish/pull/1860
