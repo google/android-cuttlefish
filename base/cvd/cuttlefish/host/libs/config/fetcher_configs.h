@@ -17,8 +17,11 @@
 
 #include <stddef.h>
 
+#include <map>
 #include <string>
 #include <vector>
+
+#include "absl/types/span.h"
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
@@ -26,17 +29,20 @@ namespace cuttlefish {
 
 class FetcherConfigs {
  public:
-  static FetcherConfigs ReadFromDirectories(const std::vector<std::string>&);
+  static FetcherConfigs ReadFromDirectories(absl::Span<const std::string>);
+
   FetcherConfigs(FetcherConfigs&&) = default;
   ~FetcherConfigs() = default;
 
-  size_t Size() const { return fetcher_configs_.size(); }
+  size_t Size() const { return directories_.size(); }
 
   const FetcherConfig& ForInstance(size_t instance_index) const;
 
  private:
-  FetcherConfigs(std::vector<FetcherConfig> configs);
-  std::vector<FetcherConfig> fetcher_configs_;
+  FetcherConfigs() = default;
+
+  std::vector<std::string> directories_;
+  std::map<std::string, FetcherConfig> directory_to_config_;
 };
 
 }  // namespace cuttlefish

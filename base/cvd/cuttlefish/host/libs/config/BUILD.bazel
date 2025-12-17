@@ -228,6 +228,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//libbase",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/types:span",
     ],
 )
 
