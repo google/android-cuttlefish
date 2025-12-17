@@ -21,7 +21,11 @@ if [[ $# -eq 0 ]] ; then
   exit 1
 fi
 
-kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+arch=$(uname -m)
+[ "${arch}" = "x86_64" ] && arch=amd64
+[ "${arch}" = "aarch64" ] && arch=arm64
+
+kmodver_begin=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE STARTS WITH KERNEL: ${kmodver_begin}"
 
@@ -40,7 +44,7 @@ do
   sudo chroot /mnt/image /usr/bin/apt install -y "/tmp/install/${name}"
 done
 
-kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-amd64 | grep ^Depends: | \
+kmodver_end=$(sudo chroot /mnt/image/ /usr/bin/dpkg -s linux-image-cloud-${arch} | grep ^Depends: | \
   cut -d: -f2 | cut -d" " -f2 | sed 's/linux-image-//')
 echo "IMAGE ENDS WITH KERNEL: ${kmodver_end}"
 
