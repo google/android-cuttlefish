@@ -21,6 +21,17 @@ sudo apt update
 sudo apt install -y cloud-utils
 sudo apt install -y cloud-guest-utils
 sudo apt install -y fdisk
-sudo growpart /dev/sdb 1 || /bin/true
-sudo e2fsck -f -y /dev/sdb1 || /bin/true
-sudo resize2fs /dev/sdb1
+
+if [ -b /dev/sdb1 ]; then
+  PARTITION_SRC="/dev/sdb1"
+  DISK_SRC="/dev/sdb"
+elif [ -b /dev/nvme0n2p1 ]; then
+  PARTITION_SRC="/dev/nvme0n2p1"
+  DISK_SRC="/dev/nvme0n2"
+else
+  echo "failed to find source block device"
+  exit 1
+fi
+sudo growpart "${DISK_SRC}" 1 || /bin/true
+sudo e2fsck -f -y "${PARTITION_SRC}" || /bin/true
+sudo resize2fs "${PARTITION_SRC}"
