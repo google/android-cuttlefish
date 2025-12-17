@@ -22,7 +22,7 @@ go run ./cmd/create_gce_fixed_kernel \
 Go to Step 3 if you have already a base image.
 
 ```
-go run ./cmd/create_gce_x86_64_image \
+go run ./cmd/create_gce_base_image \
   -project <project> \
   -source-image-project <project> \
   -source-image <fixed_kernel_image_name> \
