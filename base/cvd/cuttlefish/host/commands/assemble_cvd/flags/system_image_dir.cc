@@ -55,6 +55,10 @@ std::string SystemImageDirFlag::ForIndex(size_t argument_index) const {
   return system_image_dirs_[argument_index];
 }
 
+const std::vector<std::string>& SystemImageDirFlag::AsVector() const {
+  return system_image_dirs_;
+}
+
 SystemImageDirFlag::SystemImageDirFlag(
     std::vector<std::string> system_image_dirs)
     : system_image_dirs_(std::move(system_image_dirs)) {}

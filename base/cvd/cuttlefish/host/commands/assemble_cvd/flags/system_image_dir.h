@@ -34,6 +34,8 @@ class SystemImageDirFlag {
 
   size_t Size() const { return system_image_dirs_.size(); }
 
+  const std::vector<std::string>& AsVector() const;
+
  private:
   explicit SystemImageDirFlag(std::vector<std::string> system_image_dirs);
 

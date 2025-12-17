@@ -66,24 +66,6 @@
 namespace cuttlefish {
 namespace {
 
-static constexpr std::string_view kFetcherConfigFile = "fetcher_config.json";
-
-FetcherConfigs FindFetcherConfigs(
-    const SystemImageDirFlag& system_image_dir) {
-  std::vector<FetcherConfig> fetcher_configs;
-  for (size_t i = 0; i < system_image_dir.Size(); ++i) {
-    std::string fetcher_file =
-        fmt::format("{}/{}", system_image_dir.ForIndex(i), kFetcherConfigFile);
-    FetcherConfig fetcher_config;
-    if (!fetcher_config.LoadFromFile(fetcher_file)) {
-      LOG(DEBUG) << "No valid fetcher_config in '" << fetcher_file
-                 << "', falling back to default";
-    }
-    fetcher_configs.emplace_back(std::move(fetcher_config));
-  }
-  return FetcherConfigs::Create(std::move(fetcher_configs));
-}
-
 std::string GetLegacyConfigFilePath(const CuttlefishConfig& config) {
   return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
 }
@@ -606,7 +588,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   SystemImageDirFlag system_image_dir =
       CF_EXPECT(SystemImageDirFlag::FromGlobalGflags());
 
-  FetcherConfigs fetcher_configs = FindFetcherConfigs(system_image_dir);
+  FetcherConfigs fetcher_configs =
+      FetcherConfigs::ReadFromDirectories(system_image_dir.AsVector());
 
   InitramfsPathFlag initramfs_path =
       InitramfsPathFlag::FromGlobalGflags(fetcher_configs);
