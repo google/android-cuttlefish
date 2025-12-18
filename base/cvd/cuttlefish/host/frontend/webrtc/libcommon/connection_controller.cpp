@@ -89,7 +89,8 @@ ConnectionController::ConnectionController(
     ConnectionController::Observer& observer)
     : sig_handler_(sig_handler),
       connection_builder_(connection_builder),
-      observer_(observer) {}
+      observer_(observer),
+      shutting_down_(false) {}
 
 void ConnectionController::CreateOffer() {
   // No memory leak here because this is a ref counted object and the
@@ -114,6 +115,11 @@ Result<void> ConnectionController::RequestOffer(
 }
 
 void ConnectionController::FailConnection(const std::string& message) {
+  if (shutting_down_) {
+    // Don't bother signaling the error during connection teardown
+    LOG(ERROR) << message;
+    return;
+  }
   Json::Value reply;
   reply["type"] = "error";
   reply["error"] = message;
@@ -189,6 +195,7 @@ Result<void> ConnectionController::OnErrorMsg(const std::string& msg) {
 
 Result<void> ConnectionController::OnCreateSDPSuccess(
     webrtc::SessionDescriptionInterface* desc) {
+  CF_EXPECT(!shutting_down_, "Operation aborted during connection teardown.");
   std::string offer_str;
   desc->ToString(&offer_str);
   std::string sdp_type = desc->type();
@@ -225,6 +232,11 @@ void ConnectionController::OnSetLocalDescriptionFailure(
 
 void ConnectionController::OnSetRemoteDescriptionComplete(
     const webrtc::RTCError& error) {
+  if (shutting_down_) {
+    LOG(WARNING) << "OnSetRemoteDescriptionComplete aborted on "
+                 << "connection teardown";
+    return;
+  }
   if (!error.ok()) {
     // The remote description was rejected, can't connect to device.
     FailConnection(
