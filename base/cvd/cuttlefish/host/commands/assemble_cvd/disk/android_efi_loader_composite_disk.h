@@ -18,6 +18,7 @@
 
 #include <vector>
 
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -26,7 +27,7 @@
 
 namespace cuttlefish {
 
-std::vector<ImagePartition> AndroidEfiLoaderCompositeDiskConfig(
+Result<std::vector<ImagePartition>> AndroidEfiLoaderCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance, const MetadataImage&,
     const MiscImage&, const SystemImageDirFlag&);
 

@@ -161,8 +161,8 @@ Result<void> CreateDynamicDiskFiles(
     MetadataImage metadata = CF_EXPECT(MetadataImage::ReuseOrCreate(instance));
     MiscImage misc = CF_EXPECT(MiscImage::ReuseOrCreate(instance));
 
-    DiskBuilder os_disk_builder = OsCompositeDiskBuilder(
-        config, instance, chrome_os_state, metadata, misc, system_image_dirs);
+    DiskBuilder os_disk_builder = CF_EXPECT(OsCompositeDiskBuilder(
+        config, instance, chrome_os_state, metadata, misc, system_image_dirs));
     const auto os_built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 

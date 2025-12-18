@@ -21,6 +21,7 @@
 
 #include <android-base/logging.h>
 
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
@@ -39,18 +40,18 @@
 namespace cuttlefish {
 namespace {
 
-std::vector<ImagePartition> GetOsCompositeDiskConfig(
+Result<std::vector<ImagePartition>> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<ChromeOsStateImage>& chrome_os_state,
     const MetadataImage& metadata, const MiscImage& misc,
     const SystemImageDirFlag& system_image_dir) {
   switch (instance.boot_flow()) {
     case BootFlow::Android:
-      return AndroidCompositeDiskConfig(instance, metadata, misc,
-                                        system_image_dir);
+      return CF_EXPECT(AndroidCompositeDiskConfig(instance, metadata, misc,
+                                                  system_image_dir));
     case BootFlow::AndroidEfiLoader:
-      return AndroidEfiLoaderCompositeDiskConfig(instance, metadata, misc,
-                                                 system_image_dir);
+      return CF_EXPECT(AndroidEfiLoaderCompositeDiskConfig(
+          instance, metadata, misc, system_image_dir));
     case BootFlow::ChromeOs:
       CHECK(chrome_os_state.has_value());
       return ChromeOsCompositeDiskConfig(instance, *chrome_os_state);
@@ -65,7 +66,7 @@ std::vector<ImagePartition> GetOsCompositeDiskConfig(
 
 }  // namespace
 
-DiskBuilder OsCompositeDiskBuilder(
+Result<DiskBuilder> OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<ChromeOsStateImage>& chrome_os_state,
@@ -83,8 +84,8 @@ DiskBuilder OsCompositeDiskBuilder(
         .CompositeDiskPath(instance.chromeos_disk());
   }
   return builder
-      .Partitions(GetOsCompositeDiskConfig(instance, chrome_os_state, metadata,
-                                           misc, system_image_dir))
+      .Partitions(CF_EXPECT(GetOsCompositeDiskConfig(
+          instance, chrome_os_state, metadata, misc, system_image_dir)))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());

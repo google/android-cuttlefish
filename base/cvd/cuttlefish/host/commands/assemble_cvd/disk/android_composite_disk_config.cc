@@ -25,6 +25,7 @@
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -48,7 +49,7 @@ std::optional<ImagePartition> HibernationImage(
 
 }  // namespace
 
-std::vector<ImagePartition> AndroidCompositeDiskConfig(
+Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
     const MetadataImage& metadata_image, const MiscImage& misc_image,
     const SystemImageDirFlag& system_image_dir) {
