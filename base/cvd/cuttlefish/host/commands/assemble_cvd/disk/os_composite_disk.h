@@ -18,6 +18,7 @@
 
 #include <optional>
 
+#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
@@ -27,7 +28,7 @@
 
 namespace cuttlefish {
 
-DiskBuilder OsCompositeDiskBuilder(
+Result<DiskBuilder> OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<ChromeOsStateImage>&, const MetadataImage&,
