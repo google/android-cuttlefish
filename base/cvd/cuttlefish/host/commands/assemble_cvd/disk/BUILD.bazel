@@ -189,6 +189,14 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "image_file",
+    hdrs = ["image_file.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:result",
+    ],
+)
+
+cf_cc_library(
     name = "initialize_instance_composite_disk",
     srcs = ["initialize_instance_composite_disk.cc"],
     hdrs = ["initialize_instance_composite_disk.h"],
