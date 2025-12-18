@@ -85,6 +85,10 @@ ClientHandler::ClientHandler(
       data_channels_handler_(observer),
       camera_track_(new ClientVideoTrackImpl()) {}
 
+ClientHandler::~ClientHandler() {
+  controller_.Shutdown();
+}
+
 rtc::scoped_refptr<webrtc::RtpSenderInterface>
 ClientHandler::AddTrackToConnection(
     rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track,

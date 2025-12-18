@@ -60,7 +60,7 @@ class ClientHandler : public ConnectionController::Observer,
       PeerConnectionBuilder& connection_builder,
       std::function<void(const Json::Value&)> send_to_client_cb,
       std::function<void(bool)> on_connection_changed_cb);
-  ~ClientHandler() override = default;
+  ~ClientHandler() override;
 
   bool AddDisplay(rtc::scoped_refptr<webrtc::VideoTrackInterface> track,
                   const std::string& label);

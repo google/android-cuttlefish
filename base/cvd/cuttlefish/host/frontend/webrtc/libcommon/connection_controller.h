@@ -131,6 +131,8 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   void OnRemoveTrack(
       rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
 
+  void Shutdown() { shutting_down_ = true; }
+
  private:
   friend class CreateSessionDescriptionObserverIntermediate;
   friend class SetSessionDescriptionObserverIntermediate;
@@ -166,6 +168,7 @@ class ConnectionController : public webrtc::PeerConnectionObserver {
   PeerConnectionBuilder& connection_builder_;
   Observer& observer_;
 
+  bool shutting_down_;
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   std::vector<std::unique_ptr<webrtc::IceCandidateInterface>>
       pending_ice_candidates_;
