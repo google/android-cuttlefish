@@ -72,22 +72,22 @@ class CuttlefishConfig {
   void set_root_dir(const std::string& root_dir);
 
   std::string instances_dir() const;
-  std::string InstancesPath(const std::string&) const;
+  std::string InstancesPath(std::string_view) const;
 
   std::string assembly_dir() const;
-  std::string AssemblyPath(const std::string&) const;
+  std::string AssemblyPath(std::string_view) const;
 
   void set_instances_uds_dir(const std::string&);
   std::string instances_uds_dir() const;
-  std::string InstancesUdsPath(const std::string&) const;
+  std::string InstancesUdsPath(std::string_view) const;
 
   void set_environments_dir(const std::string&);
   std::string environments_dir() const;
-  std::string EnvironmentsPath(const std::string&) const;
+  std::string EnvironmentsPath(std::string_view) const;
 
   void set_environments_uds_dir(const std::string&);
   std::string environments_uds_dir() const;
-  std::string EnvironmentsUdsPath(const std::string&) const;
+  std::string EnvironmentsUdsPath(std::string_view) const;
 
   VmmMode vm_manager() const;
   void set_vm_manager(VmmMode vmm);

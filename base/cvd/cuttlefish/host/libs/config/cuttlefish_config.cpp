@@ -24,14 +24,16 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <json/reader.h>
-#include <json/value.h>
+#include "absl/strings/str_cat.h"
+#include "android-base/logging.h"
+#include "android-base/strings.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "json/reader.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -565,18 +567,16 @@ std::string CuttlefishConfig::instances_dir() const {
   return AbsolutePath(root_dir() + "/instances");
 }
 
-std::string CuttlefishConfig::InstancesPath(
-    const std::string& file_name) const {
-  return AbsolutePath(instances_dir() + "/" + file_name);
+std::string CuttlefishConfig::InstancesPath(std::string_view file_name) const {
+  return AbsolutePath(absl::StrCat(instances_dir(), "/", file_name));
 }
 
 std::string CuttlefishConfig::assembly_dir() const {
   return AbsolutePath(root_dir() + "/assembly");
 }
 
-std::string CuttlefishConfig::AssemblyPath(
-    const std::string& file_name) const {
-  return AbsolutePath(assembly_dir() + "/" + file_name);
+std::string CuttlefishConfig::AssemblyPath(std::string_view file_name) const {
+  return AbsolutePath(absl::StrCat(assembly_dir(), "/", file_name));
 }
 
 static constexpr char kInstancesUdsDir[] = "instances_uds_dir";
@@ -588,8 +588,8 @@ std::string CuttlefishConfig::instances_uds_dir() const {
 }
 
 std::string CuttlefishConfig::InstancesUdsPath(
-    const std::string& file_name) const {
-  return AbsolutePath(instances_uds_dir() + "/" + file_name);
+    std::string_view file_name) const {
+  return AbsolutePath(absl::StrCat(instances_uds_dir(), "/", file_name));
 }
 
 std::string CuttlefishConfig::environments_dir() const {
@@ -597,8 +597,8 @@ std::string CuttlefishConfig::environments_dir() const {
 }
 
 std::string CuttlefishConfig::EnvironmentsPath(
-    const std::string& file_name) const {
-  return AbsolutePath(environments_dir() + "/" + file_name);
+    std::string_view file_name) const {
+  return AbsolutePath(absl::StrCat(environments_dir(), "/", file_name));
 }
 
 static constexpr char kEnvironmentsUdsDir[] = "environments_uds_dir";
@@ -610,8 +610,8 @@ std::string CuttlefishConfig::environments_uds_dir() const {
 }
 
 std::string CuttlefishConfig::EnvironmentsUdsPath(
-    const std::string& file_name) const {
-  return AbsolutePath(environments_uds_dir() + "/" + file_name);
+    std::string_view file_name) const {
+  return AbsolutePath(absl::StrCat(environments_uds_dir(), "/", file_name));
 }
 
 CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(int num) {
