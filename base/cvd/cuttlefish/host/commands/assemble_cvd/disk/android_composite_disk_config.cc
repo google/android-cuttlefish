@@ -22,7 +22,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_cat.h"
+#include "android-base/strings.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -34,6 +35,22 @@
 
 namespace cuttlefish {
 namespace {
+
+// Defined as constants to avoid typos in repeated names
+constexpr struct {
+  std::string_view boot = "boot";
+  std::string_view hibernation = "hibernation";
+  std::string_view init_boot = "init_boot";
+  std::string_view misc = "misc";
+  std::string_view super = "super";
+  std::string_view userdata = "userdata";
+  std::string_view vbmeta = "vbmeta";
+  std::string_view vbmeta_system = "vbmeta_system";
+  std::string_view vbmeta_system_dlkm = "vbmeta_system_dlkm";
+  std::string_view vbmeta_vendor_dlkm = "vbmeta_vendor_dlkm";
+  std::string_view vendor_boot = "vendor_boot";
+  std::string_view vvmtruststore = "vvmtruststore";
+} kPartitions;
 
 std::optional<ImagePartition> HibernationImage(
     const SystemImageDirFlag& system_image_dir,
@@ -55,113 +72,80 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     const SystemImageDirFlag& system_image_dir) {
   std::vector<ImagePartition> partitions;
 
-  partitions.push_back(misc_image.Partition());
-  partitions.push_back(ImagePartition{
-      .label = "boot_a",
-      .image_file_path = AbsolutePath(instance.new_boot_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "boot_b",
-      .image_file_path = AbsolutePath(instance.new_boot_image()),
-  });
-  const auto init_boot_path = instance.init_boot_image();
-  if (FileExists(init_boot_path)) {
-    partitions.push_back(ImagePartition{
-        .label = "init_boot_a",
-        .image_file_path = AbsolutePath(init_boot_path),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "init_boot_b",
-        .image_file_path = AbsolutePath(init_boot_path),
-    });
-  }
-  partitions.push_back(ImagePartition{
-      .label = "vendor_boot_a",
-      .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vendor_boot_b",
-      .image_file_path = AbsolutePath(instance.new_vendor_boot_image()),
-  });
-  auto vbmeta_image = instance.new_vbmeta_image();
-  if (!FileExists(vbmeta_image)) {
-    vbmeta_image = instance.vbmeta_image();
-  }
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_a",
-      .image_file_path = AbsolutePath(vbmeta_image),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_b",
-      .image_file_path = AbsolutePath(vbmeta_image),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_system_a",
-      .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vbmeta_system_b",
-      .image_file_path = AbsolutePath(instance.vbmeta_system_image()),
-  });
-  auto vbmeta_vendor_dlkm_img = instance.new_vbmeta_vendor_dlkm_image();
-  if (!FileExists(vbmeta_vendor_dlkm_img)) {
-    vbmeta_vendor_dlkm_img = instance.vbmeta_vendor_dlkm_image();
-  }
-  if (FileExists(vbmeta_vendor_dlkm_img)) {
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_vendor_dlkm_a",
-        .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_vendor_dlkm_b",
-        .image_file_path = AbsolutePath(vbmeta_vendor_dlkm_img),
-    });
-  }
-  auto vbmeta_system_dlkm_img = instance.new_vbmeta_system_dlkm_image();
-  if (!FileExists(vbmeta_system_dlkm_img)) {
-    vbmeta_system_dlkm_img = instance.vbmeta_system_dlkm_image();
-  }
-  if (FileExists(vbmeta_system_dlkm_img)) {
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_system_dlkm_a",
-        .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vbmeta_system_dlkm_b",
-        .image_file_path = AbsolutePath(vbmeta_system_dlkm_img),
-    });
-  }
-  auto super_image = instance.new_super_image();
-  if (!FileExists(super_image)) {
-    super_image = instance.super_image();
-  }
-  partitions.push_back(ImagePartition{
-      .label = "super",
-      .image_file_path = AbsolutePath(super_image),
-  });
-  auto data_image = instance.new_data_image();
-  if (!FileExists(data_image)) {
-    data_image = instance.data_image();
-  }
-  partitions.push_back(ImagePartition{
-      .label = "userdata",
-      .image_file_path = AbsolutePath(data_image),
-  });
+  const std::set<std::string_view> ab_partitions = {
+      kPartitions.boot,
+      kPartitions.init_boot,
+      kPartitions.vbmeta,
+      kPartitions.vbmeta_system,
+      kPartitions.vbmeta_system_dlkm,
+      kPartitions.vbmeta_vendor_dlkm,
+      kPartitions.vendor_boot,
+  };
 
+  const std::set<std::string_view> optional_partitions = {
+      kPartitions.init_boot,          kPartitions.vbmeta_vendor_dlkm,
+      kPartitions.vbmeta_system_dlkm, kPartitions.hibernation,
+      kPartitions.vvmtruststore,
+  };
+
+  const std::map<std::string_view, std::string> primary_paths = {
+      {kPartitions.boot, instance.new_boot_image()},
+      {kPartitions.init_boot, instance.init_boot_image()},
+      {kPartitions.super, instance.new_super_image()},
+      {kPartitions.userdata, instance.new_data_image()},
+      {kPartitions.vbmeta, instance.new_vbmeta_image()},
+      {kPartitions.vbmeta_system, instance.vbmeta_system_image()},
+      {kPartitions.vbmeta_system_dlkm, instance.new_vbmeta_system_dlkm_image()},
+      {kPartitions.vbmeta_vendor_dlkm, instance.new_vbmeta_vendor_dlkm_image()},
+      {kPartitions.vendor_boot, instance.new_vendor_boot_image()},
+      {kPartitions.vvmtruststore, instance.vvmtruststore_path()},
+  };
+
+  const std::map<std::string_view, std::string> fallback_paths = {
+      {kPartitions.super, instance.super_image()},
+      {kPartitions.vbmeta, instance.vbmeta_image()},
+      {kPartitions.vbmeta_vendor_dlkm, instance.vbmeta_vendor_dlkm_image()},
+      {kPartitions.vbmeta_system_dlkm, instance.vbmeta_system_dlkm_image()},
+      {kPartitions.userdata, instance.data_image()},
+  };
+
+  for (const auto& [partition, path] : primary_paths) {
+    std::string path_used;
+    if (FileExists(path)) {
+      path_used = path;
+    } else if (auto it = fallback_paths.find(partition);
+               it != fallback_paths.end() && FileExists(it->second)) {
+      path_used = it->second;
+    } else if (optional_partitions.count(partition)) {
+      continue;
+    } else {
+      return CF_ERRF("Could not find file for partition '{}'", partition);
+    }
+
+    if (ab_partitions.count(partition)) {
+      partitions.push_back(ImagePartition{
+          .label = absl::StrCat(partition, "_a"),
+          .image_file_path = AbsolutePath(path_used),
+      });
+      partitions.push_back(ImagePartition{
+          .label = absl::StrCat(partition, "_b"),
+          .image_file_path = AbsolutePath(path_used),
+      });
+    } else {
+      partitions.push_back(ImagePartition{
+          .label = std::string(partition),
+          .image_file_path = AbsolutePath(path_used),
+      });
+    }
+  }
+
+  partitions.push_back(misc_image.Partition());
   partitions.push_back(metadata_image.Partition());
 
   std::optional<ImagePartition> hibernation_partition =
       HibernationImage(system_image_dir, instance);
   if (hibernation_partition) {
     partitions.push_back(std::move(*hibernation_partition));
-  }
-
-  const auto vvmtruststore_path = instance.vvmtruststore_path();
-  if (!vvmtruststore_path.empty()) {
-    partitions.push_back(ImagePartition{
-        .label = "vvmtruststore",
-        .image_file_path = AbsolutePath(vvmtruststore_path),
-    });
   }
 
   const auto custom_partition_path = instance.custom_partition_path();
