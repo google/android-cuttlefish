@@ -68,7 +68,7 @@ Result<void> CleanPriorFiles(const std::string& path,
       continue;
     }
     std::string entity_path = path + "/" + entity_name;
-    CF_EXPECT(CleanPriorFiles(entity_path.c_str(), preserving),
+    CF_EXPECT(CleanPriorFiles(entity_path, preserving),
               "CleanPriorFiles for \""
                   << path << "\" failed on recursing into \"" << entity_path
                   << "\"");

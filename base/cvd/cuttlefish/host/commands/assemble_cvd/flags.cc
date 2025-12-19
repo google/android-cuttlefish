@@ -221,13 +221,14 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
-        CF_EXPECT(android::base::ParseInt(default_value,
-        &value_vec[instance_index]),
-        "Failed to parse value \"" << default_value << "\" for " << flag_name);
+        CF_EXPECTF(
+            android::base::ParseInt(default_value, &value_vec[instance_index]),
+            "Failed to parse value '{}' for '{}'", default_value, flag_name);
       } else {
-        CF_EXPECT(android::base::ParseInt(flag_vec[instance_index].c_str(),
-        &value_vec[instance_index]),
-        "Failed to parse value \"" << flag_vec[instance_index] << "\" for " << flag_name);
+        CF_EXPECTF(android::base::ParseInt(flag_vec[instance_index],
+                                           &value_vec[instance_index]),
+                   "Failed to parse value '{}' for '{}'",
+                   flag_vec[instance_index], flag_name);
       }
     }
   }

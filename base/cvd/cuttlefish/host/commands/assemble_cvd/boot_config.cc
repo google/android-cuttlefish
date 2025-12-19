@@ -120,7 +120,7 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
   }
 
   std::string env_str = env.str();
-  std::ofstream file_out(env_path.c_str(), std::ios::binary);
+  std::ofstream file_out(env_path, std::ios::binary);
   file_out << env_str;
 
   if (!file_out.good()) {

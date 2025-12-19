@@ -217,7 +217,7 @@ Result<void> DiskImageFlagsVectorization(
       const std::string new_boot_image_path =
           const_instance.PerInstancePath("boot_repacked.img");
       // change the new flag value to corresponding instance
-      instance.set_new_boot_image(new_boot_image_path.c_str());
+      instance.set_new_boot_image(new_boot_image_path);
     }
 
     instance.set_data_image(system_image_dir.ForIndex(instance_index) +
@@ -233,7 +233,7 @@ Result<void> DiskImageFlagsVectorization(
       // Repack the vendor boot images if kernels and/or ramdisks are passed in.
       if (has_initramfs) {
         // change the new flag value to corresponding instance
-        instance.set_new_vendor_boot_image(new_vendor_boot_image_path.c_str());
+        instance.set_new_vendor_boot_image(new_vendor_boot_image_path);
       }
     }
 

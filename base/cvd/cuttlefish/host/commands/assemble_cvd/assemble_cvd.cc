@@ -104,7 +104,7 @@ Result<void> CreateLegacySymlinks(
                              "crosvm_openwrt.log",
                              "crosvm_openwrt_boot.log"};
   for (const auto& log_file : log_files) {
-    auto symlink_location = instance.PerInstancePath(log_file.c_str());
+    auto symlink_location = instance.PerInstancePath(log_file);
     auto log_target = "logs/" + log_file;  // Relative path
     if (FileExists(symlink_location, /* follow_symlinks */ false)) {
       CF_EXPECT(RemoveFile(symlink_location),
