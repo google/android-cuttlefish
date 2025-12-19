@@ -56,9 +56,9 @@ constexpr size_t RoundUp(size_t a, size_t divisor) {
 }
 
 template <typename Container>
-bool WriteLinesToFile(const Container& lines, const char* path) {
+bool WriteLinesToFile(const Container& lines, const std::string& path) {
   android::base::unique_fd fd(
-      open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640));
+      open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640));
   if (!fd.ok()) {
     PLOG(ERROR) << "Failed to open " << path;
     return false;
@@ -78,10 +78,11 @@ bool WriteLinesToFile(const Container& lines, const char* path) {
 }
 
 // Generate a filesystem_config.txt for all files in |fs_root|
-Result<bool> WriteFsConfig(const char* output_path, const std::string& fs_root,
+Result<bool> WriteFsConfig(const std::string& output_path,
+                           const std::string& fs_root,
                            const std::string& mount_point) {
-  android::base::unique_fd fd(
-      open(output_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
+  android::base::unique_fd fd(open(
+      output_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
   if (!fd.ok()) {
     PLOG(ERROR) << "Failed to open " << output_path;
     return false;
@@ -347,15 +348,15 @@ Result<void> BuildDlkmImage(const std::string& src_dir, const bool is_erofs,
 
   const std::string mount_point = "/" + partition_name;
   const std::string fs_config = output_image + ".fs_config";
-  CF_EXPECT(WriteFsConfig(fs_config.c_str(), src_dir, mount_point));
+  CF_EXPECT(WriteFsConfig(fs_config, src_dir, mount_point));
 
   const std::string file_contexts_bin = output_image + ".file_contexts";
   if (partition_name == "system_dlkm") {
-    CF_EXPECT(GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
+    CF_EXPECT(GenerateFileContexts(file_contexts_bin, mount_point,
                                    "system_dlkm_file"));
   } else {
-    CF_EXPECT(GenerateFileContexts(file_contexts_bin.c_str(), mount_point,
-                                   "vendor_file"));
+    CF_EXPECT(
+        GenerateFileContexts(file_contexts_bin, mount_point, "vendor_file"));
   }
 
   // We are using directory size as an estimate of final image size. To avoid
@@ -513,19 +514,19 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
   // Write updated modules.dep and modules.load files
   CF_EXPECT(WriteDepsToFile(FilterDependencies(deps, ramdisk_modules),
                             module_base_dir + "/modules.dep"));
-  CF_EXPECT(WriteLinesToFile(ramdisk_modules, module_load_file.c_str()));
+  CF_EXPECT(WriteLinesToFile(ramdisk_modules, module_load_file));
 
   CF_EXPECT(WriteDepsToFile(
       UpdateGKIModulePaths(FilterOutDependencies(deps, ramdisk_modules),
                            system_dlkm_modules),
       vendor_modules_dir + "/modules.dep"));
   CF_EXPECT(WriteLinesToFile(vendor_dlkm_modules,
-                             (vendor_modules_dir + "/modules.load").c_str()));
+                             vendor_modules_dir + "/modules.load"));
 
   CF_EXPECT(WriteDepsToFile(FilterDependencies(deps, system_dlkm_modules),
                             system_modules_dir + "/modules.dep"));
   CF_EXPECT(WriteLinesToFile(system_dlkm_modules,
-                             (system_modules_dir + "/modules.load").c_str()));
+                             system_modules_dir + "/modules.load"));
   PackRamdisk(ramdisk_stage_dir, ramdisk_path);
   return {};
 }

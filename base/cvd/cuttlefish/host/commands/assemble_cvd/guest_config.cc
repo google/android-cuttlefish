@@ -209,7 +209,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
   if (res_output_audio_streams_count.ok()) {
     std::string output_audio_streams_count_str =
         res_output_audio_streams_count.value();
-    CF_EXPECT(android::base::ParseInt(output_audio_streams_count_str.c_str(),
+    CF_EXPECT(android::base::ParseInt(output_audio_streams_count_str,
                                       &guest_config.output_audio_streams_count),
               "Failed to parse value \"" << output_audio_streams_count_str
                                          << "\" for output audio stream count");
@@ -229,7 +229,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
       GetAndroidInfoConfig(guest_config_path, "blank_data_image_mb");
   if (res_blank_data_image_mb.ok()) {
     std::string res_blank_data_image_mb_str = res_blank_data_image_mb.value();
-    CF_EXPECT(android::base::ParseInt(res_blank_data_image_mb_str.c_str(),
+    CF_EXPECT(android::base::ParseInt(res_blank_data_image_mb_str,
                                       &guest_config.blank_data_image_mb),
               "Failed to parse value \"" << res_blank_data_image_mb_str
                                          << "\" for blank data image size");

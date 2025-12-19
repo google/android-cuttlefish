@@ -77,7 +77,7 @@ Result<Json::Value> McuConfigPathFlag::JsonForIndex(
   CF_EXPECT(FileExists(mcu_cfg_path), "MCU config file does not exist");
 
   std::string content;
-  CF_EXPECTF(ReadFileToString(mcu_cfg_path.c_str(), &content,
+  CF_EXPECTF(ReadFileToString(mcu_cfg_path, &content,
                               /* follow_symlinks */ true),
              "Failed to read mcu config file '{}'", mcu_cfg_path);
 
