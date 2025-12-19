@@ -101,7 +101,12 @@ int ClientFilesServer::port() const {
 
 void ClientFilesServer::Serve() {
   while (running_) {
-    if (lws_service(context_, 0) < 0) {
+    // Set a large timeout so it doesn't unnecessarily wake the thread too
+    // frequently. Newer versions of libwebsockets ignore this value and only
+    // return once some action was taken, but older ones respect it and there is
+    // no way to tell them to wait indefinitely.
+    int poll_timeout_ms = 1000000;
+    if (lws_service(context_, poll_timeout_ms) < 0) {
       LOG(ERROR) << "Error serving client files";
       return;
     }
