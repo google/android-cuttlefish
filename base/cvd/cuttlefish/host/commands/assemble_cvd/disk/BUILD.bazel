@@ -29,6 +29,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
