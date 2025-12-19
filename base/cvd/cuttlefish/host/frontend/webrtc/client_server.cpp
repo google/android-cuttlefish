@@ -62,6 +62,7 @@ ClientFilesServer::ClientFilesServer(std::unique_ptr<Config> config,
 ClientFilesServer::~ClientFilesServer() {
   if (running_) {
     running_ = false;
+    lws_cancel_service(context_);
     server_thread_.join();
   }
   if (context_) {
