@@ -23,32 +23,32 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <fmt/core.h>
-#include <fmt/format.h>
-#include <json/config.h>
-#include <json/reader.h>
-#include <json/value.h>
-
-#include <google/protobuf/text_format.h>
+#include "absl/strings/str_cat.h"
+#include "android-base/logging.h"
+#include "android-base/strings.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
+#include "google/protobuf/text_format.h"
+#include "json/config.h"
+#include "json/reader.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/device_type.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flags_validator.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
-
-#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 
 namespace cuttlefish {
 namespace {
@@ -1915,8 +1915,8 @@ bool CuttlefishConfig::InstanceSpecific::enable_tap_devices() const {
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
     int touch_dev_idx) const {
-  return PerInstanceInternalUdsPath(
-      ("touch_" + std::to_string(touch_dev_idx) + ".sock").c_str());
+  std::string name = absl::StrCat("touch_", touch_dev_idx, ".sock");
+  return PerInstanceInternalUdsPath(name);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::mouse_socket_path() const {
@@ -2004,53 +2004,53 @@ CuttlefishConfig::InstanceSpecific::audio_settings() const {
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
-    const std::string& file_name) const {
-  return (instance_dir() + "/") + file_name;
+    std::string_view file_name) const {
+  return absl::StrCat(instance_dir(), "/", file_name);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
-    const std::string& file_name) const {
-  if (file_name[0] == '\0') {
+    std::string_view file_name) const {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstancePath(kInternalDirName);
   }
-  auto relative_path = (std::string(kInternalDirName) + "/") + file_name;
-  return PerInstancePath(relative_path.c_str());
+  std::string relative_path = absl::StrCat(kInternalDirName, "/", file_name);
+  return PerInstancePath(relative_path);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceUdsPath(
-    const std::string& file_name) const {
-  return (instance_uds_dir() + "/") + file_name;
+    std::string_view file_name) const {
+  return absl::StrCat(instance_uds_dir(), "/", file_name);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalUdsPath(
-    const std::string& file_name) const {
-  if (file_name[0] == '\0') {
+    std::string_view file_name) const {
+  if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstanceUdsPath(kInternalDirName);
   }
-  auto relative_path = (std::string(kInternalDirName) + "/") + file_name;
-  return PerInstanceUdsPath(relative_path.c_str());
+  std::string relative_path = absl::StrCat(kInternalDirName, "/", file_name);
+  return PerInstanceUdsPath(relative_path);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceGrpcSocketPath(
-    const std::string& socket_name) const {
+    std::string_view socket_name) const {
   if (socket_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstanceUdsPath(kGrpcSocketDirName);
   }
-  auto relative_path = (std::string(kGrpcSocketDirName) + "/") + socket_name;
-  return PerInstanceUdsPath(relative_path.c_str());
+  std::string rel_path = absl::StrCat(kGrpcSocketDirName, "/", socket_name);
+  return PerInstanceUdsPath(rel_path);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstanceLogPath(
-    const std::string& file_name) const {
+    std::string_view file_name) const {
   if (file_name.empty()) {
     // Don't append a / if file_name is empty.
     return PerInstancePath(kLogDirName);
   }
-  auto relative_path = (std::string(kLogDirName) + "/") + file_name;
-  return PerInstancePath(relative_path.c_str());
+  std::string relative_path = absl::StrCat(kLogDirName, "/", file_name);
+  return PerInstancePath(relative_path);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_name() const {

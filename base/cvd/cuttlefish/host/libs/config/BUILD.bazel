@@ -117,6 +117,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:vmm_mode",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
         "@protobuf",
