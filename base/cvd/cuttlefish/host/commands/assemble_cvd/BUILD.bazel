@@ -85,6 +85,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
