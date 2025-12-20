@@ -57,6 +57,7 @@ inline constexpr char OUTER_DELIM = ' ';
 inline constexpr int kUpdateRotationVec = 0;
 inline constexpr int kGetSensorsData = 1;
 inline constexpr int kUpdateHal = 2;
+inline constexpr int kUpdateLowLatencyOffBodyDetect = 3;
 
 using SensorsCmd = int;
 
