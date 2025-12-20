@@ -22,9 +22,10 @@
 
 #include <sys/stat.h>
 
-#include <android-base/logging.h>
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
+#include "absl/strings/str_replace.h"
+#include "android-base/logging.h"
+#include "android-base/strings.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/result.h"
@@ -133,14 +134,9 @@ size_t WriteEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
 std::unordered_map<std::string, std::string> ReplaceKernelBootArgs(
     const std::unordered_map<std::string, std::string>& args) {
   std::unordered_map<std::string, std::string> ret;
-  std::transform(std::begin(args), std::end(args),
-                 std::inserter(ret, ret.end()), [](const auto& kv) {
-                   const auto& k = kv.first;
-                   const auto& v = kv.second;
-                   return std::make_pair(
-                       android::base::StringReplace(k, " kernel.", " ", true),
-                       v);
-                 });
+  for (auto& [k, v] : args) {
+    ret[absl::StrReplaceAll(k, {{" kernel.", " "}})] = v;
+  }
   return ret;
 }
 
@@ -181,15 +177,14 @@ Result<void> PrepareBootEnvImage(
   CF_EXPECTF(WriteEnvironment(instance, flow, kernel_cmdline, uboot_env_path),
              "Unable to write out plaintext env '{}'", uboot_env_path);
 
-  auto mkimage_path = HostBinaryPath("mkenvimage_slim");
-  Command cmd(mkimage_path);
-  cmd.AddParameter("-output_path");
-  cmd.AddParameter(tmp_boot_env_image_path);
-  cmd.AddParameter("-input_path");
-  cmd.AddParameter(uboot_env_path);
-  int success = cmd.Start().Wait();
-  CF_EXPECTF(success == 0,
-             "Unable to run mkenvimage_slim. Exited with status {}", success);
+  int mkenvimage_slim_status = Execute({
+      HostBinaryPath("mkenvimage_slim"),
+      "-output_path",
+      tmp_boot_env_image_path,
+      "-input_path",
+      uboot_env_path,
+  });
+  CF_EXPECT_EQ(mkenvimage_slim_status, 0, "mkenvimage_slim failed.");
 
   const off_t boot_env_size_bytes =
       AlignToPowerOf2(kMaxAvbMetadataSize + 4096, PARTITION_SIZE_SHIFT);
@@ -202,10 +197,8 @@ Result<void> PrepareBootEnvImage(
     CF_EXPECT(RenameFile(tmp_boot_env_image_path, image_path),
               "Unable to delete the old env image");
     LOG(DEBUG) << "Updated bootloader environment image.";
-  } else {
-    if (Result<void> res = RemoveFile(tmp_boot_env_image_path); !res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
-    }
+  } else if (Result<void> rs = RemoveFile(tmp_boot_env_image_path); !rs.ok()) {
+    LOG(WARNING) << rs.error().FormatForEnv();
   }
 
   return {};
