@@ -420,6 +420,13 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               .events = POLLIN | POLLHUP,
           },
       };
+      // fg_launcher_pipe will be closed after the exit code is reported.
+      if (fg_launcher_pipe_->IsOpen()) {
+        poll_shared_fd.emplace_back(PollSharedFd{
+            .fd = fg_launcher_pipe_,
+            .events = POLLERR,
+        });
+      }
       int result = SharedFD::Poll(poll_shared_fd, -1);
       // interrupt_fd_read_
       if (poll_shared_fd[2].revents & POLLIN) {
@@ -436,6 +443,15 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         if (MaybeWriteNotification()) {
           break;
         }
+      }
+      // fg_launcher_pipe_
+      if (poll_shared_fd.size() >= 4 && poll_shared_fd[3].revents & POLLERR) {
+        LOG(ERROR)
+            << "Foreground launcher closed the pipe, launch is cancelled";
+        // The foreground process was cancelled (possibly through a SIGINT) if
+        // the pipe was closed. This process needs to exit as result so the
+        // other processes in the group also terminate.
+        std::exit(kPipeIOError);
       }
       if (poll_shared_fd[0].revents & POLLIN) {
         auto sent_code = OnBootEvtReceived(boot_events_pipe);
