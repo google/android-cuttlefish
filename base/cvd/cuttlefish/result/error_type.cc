@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/error_type.h"
 
 #include <optional>
 #include <sstream>
