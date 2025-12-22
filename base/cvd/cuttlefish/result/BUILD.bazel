@@ -19,6 +19,7 @@ cf_cc_library(
     hdrs = ["result.h"],
     deps = [
         "//cuttlefish/result:error_type",
+        "//cuttlefish/result:result_type",
         "//libbase",
         "@fmt",
     ],
@@ -33,6 +34,16 @@ cf_cc_test(
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "result_type",
+    hdrs = ["result_type.h"],
+    deps = [
+        "//cuttlefish/result:error_type",
+        "//libbase",
+        "@fmt",
     ],
 )
 
