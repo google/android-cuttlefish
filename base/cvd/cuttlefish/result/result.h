@@ -24,11 +24,9 @@
 #include <android-base/result.h>  // IWYU pragma: export
 
 #include "cuttlefish/result/error_type.h"
+#include "cuttlefish/result/result_type.h"  // IWYU pragma: export
 
 namespace cuttlefish {
-
-template <typename T>
-using Result = android::base::expected<T, StackTraceError>;
 
 /**
  * Error return macro that includes the location in the file in the error
