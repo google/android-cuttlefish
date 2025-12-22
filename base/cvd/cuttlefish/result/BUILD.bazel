@@ -5,10 +5,20 @@ package(
 )
 
 cf_cc_library(
+    name = "error_type",
+    srcs = ["error_type.cc"],
+    hdrs = ["error_type.h"],
+    deps = [
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "result",
-    srcs = ["result.cc"],
     hdrs = ["result.h"],
     deps = [
+        "//cuttlefish/result:error_type",
         "//libbase",
         "@fmt",
     ],
