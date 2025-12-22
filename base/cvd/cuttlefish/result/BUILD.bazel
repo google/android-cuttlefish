@@ -1,0 +1,38 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "result",
+    srcs = ["result.cc"],
+    hdrs = ["result.h"],
+    deps = [
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "result_test",
+    srcs = ["result_test.cpp"],
+    deps = [
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "result_matchers",
+    testonly = 1,
+    hdrs = ["result_matchers.h"],
+    deps = [
+        "//cuttlefish/result",
+        "//libbase",
+        "@googletest//:gtest",
+    ],
+)
