@@ -15,13 +15,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "result",
-    hdrs = ["result.h"],
+    name = "expect",
+    hdrs = ["expect.h"],
     deps = [
         "//cuttlefish/result:error_type",
         "//cuttlefish/result:result_type",
         "//libbase",
         "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "result",
+    hdrs = ["result.h"],
+    deps = [
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 
