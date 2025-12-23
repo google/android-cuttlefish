@@ -29,12 +29,12 @@ cf_cc_library(
     deps = [
         ":libcuttlefish_run_cvd_proto",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@jsoncpp",

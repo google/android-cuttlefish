@@ -54,9 +54,9 @@ cf_cc_library(
     hdrs = ["instance_database_helper.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/posix:strerror",
         "//libbase",
         "@googletest//:gtest",
     ],
@@ -175,7 +175,6 @@ cf_cc_library(
     srcs = ["stop.cpp"],
     hdrs = ["stop.h"],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:proc_file_utils",
@@ -185,6 +184,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@fmt",

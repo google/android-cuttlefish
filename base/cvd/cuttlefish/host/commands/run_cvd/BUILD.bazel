@@ -10,7 +10,6 @@ cf_cc_library(
     hdrs = ["boot_state_machine.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -21,6 +20,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@gflags",
@@ -147,11 +147,11 @@ cf_cc_library(
     srcs = ["validate.cpp"],
     hdrs = ["validate.h"],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@fruit",

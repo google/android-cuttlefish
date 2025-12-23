@@ -31,7 +31,6 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
+#include "cuttlefish/posix/strerror.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
 

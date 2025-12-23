@@ -29,7 +29,6 @@ cf_cc_binary(
     srcs = ["main.cc"],
     deps = [
         ":libcvd",
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
@@ -37,6 +36,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/cvd/version",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/posix:strerror",
         "//libbase",
         "//libsparse",
         "@fmt",

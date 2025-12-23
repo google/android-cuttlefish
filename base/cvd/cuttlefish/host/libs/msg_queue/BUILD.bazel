@@ -13,7 +13,7 @@ cf_cc_library(
         "msg_queue.h",
     ],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
+        "//cuttlefish/posix:strerror",
         "//libbase",
     ],
 )

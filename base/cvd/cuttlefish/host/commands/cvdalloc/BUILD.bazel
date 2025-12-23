@@ -36,7 +36,7 @@ cf_cc_library(
     ],
     hdrs = ["privilege.h"],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
     ],
@@ -53,7 +53,7 @@ cf_cc_binary(
         ":sem",
         "//allocd:alloc_utils",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:strerror",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/cleanup:cleanup",
