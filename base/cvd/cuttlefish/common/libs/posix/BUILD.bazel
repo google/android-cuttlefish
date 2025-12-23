@@ -5,14 +5,6 @@ package(
 )
 
 cf_cc_library(
-    name = "strerror",
-    hdrs = ["strerror.h"],
-    deps = [
-        "//cuttlefish/posix:strerror",
-    ],
-)
-
-cf_cc_library(
     name = "symlink",
     srcs = ["symlink.cc"],
     hdrs = ["symlink.h"],
