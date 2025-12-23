@@ -15,5 +15,5 @@
 
 #pragma once
 
-#include "cuttlefish/result/expect.h"  // IWYU pragma: export
+#include "cuttlefish/result/expect.h"       // IWYU pragma: export
 #include "cuttlefish/result/result_type.h"  // IWYU pragma: export
