@@ -21,6 +21,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:cf_endian",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )

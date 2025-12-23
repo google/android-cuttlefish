@@ -30,12 +30,12 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -77,12 +77,12 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fruit",
@@ -104,7 +104,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/common/libs/utils:host_info",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:guest_config_cc_proto",
         "//cuttlefish/host/libs/config:ap_boot_flow",
         "//cuttlefish/host/libs/config:boot_flow",
@@ -116,6 +115,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:guest_renderer_preload",
         "//cuttlefish/host/libs/config:secure_hals",
         "//cuttlefish/host/libs/config:vmm_mode",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -133,7 +133,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/config:ap_boot_flow",
@@ -143,6 +142,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/image_aggregator:mbr",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -154,9 +154,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -169,9 +169,9 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -181,7 +181,7 @@ cf_cc_library(
     srcs = ["external_network_mode.cc"],
     hdrs = ["external_network_mode.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
@@ -193,13 +193,13 @@ cf_cc_library(
     hdrs = ["build_archive.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
@@ -213,8 +213,8 @@ cf_cc_library(
     hdrs = ["fetcher_config.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@jsoncpp",
@@ -249,7 +249,7 @@ cf_cc_library(
     srcs = ["guest_hwui_renderer.cc"],
     hdrs = ["guest_hwui_renderer.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -268,7 +268,7 @@ cf_cc_library(
     srcs = ["guest_renderer_preload.cc"],
     hdrs = ["guest_renderer_preload.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -292,8 +292,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
     ],
@@ -343,7 +343,7 @@ cf_cc_library(
     srcs = ["secure_hals.cpp"],
     hdrs = ["secure_hals.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -355,8 +355,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -366,7 +366,7 @@ cf_cc_library(
     srcs = ["vmm_mode.cc"],
     hdrs = ["vmm_mode.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],

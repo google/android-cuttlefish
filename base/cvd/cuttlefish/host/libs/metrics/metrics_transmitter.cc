@@ -16,11 +16,11 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
+#include "cuttlefish/result/result.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {

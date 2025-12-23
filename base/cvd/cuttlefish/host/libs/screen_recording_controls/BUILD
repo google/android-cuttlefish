@@ -14,9 +14,9 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
     ],
 )

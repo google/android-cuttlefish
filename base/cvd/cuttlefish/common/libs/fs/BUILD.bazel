@@ -10,7 +10,7 @@ cf_cc_library(
     hdrs = ["epoll.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 
@@ -29,7 +29,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
         "@fmt",
     ],

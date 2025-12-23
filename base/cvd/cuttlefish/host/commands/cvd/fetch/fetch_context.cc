@@ -31,7 +31,6 @@
 #include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
@@ -43,6 +42,7 @@
 #include "cuttlefish/host/libs/web/build_api_zip.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

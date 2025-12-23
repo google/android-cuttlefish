@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

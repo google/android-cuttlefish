@@ -21,8 +21,8 @@
 
 #include <fmt/format.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

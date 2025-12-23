@@ -24,12 +24,12 @@
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

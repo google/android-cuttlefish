@@ -27,13 +27,13 @@
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(bootloader, CF_DEFAULTS_BOOTLOADER, "Bootloader binary path");
 

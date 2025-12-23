@@ -26,9 +26,9 @@ cf_cc_library(
     hdrs = ["connection_controller.h"],
     deps = [
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_signaling_handler",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/result",
         "//libbase",
         "@fmt",
         "@jsoncpp",
@@ -41,9 +41,9 @@ cf_cc_library(
     srcs = ["peer_connection_utils.cpp"],
     hdrs = ["peer_connection_utils.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
         "//cuttlefish/host/frontend/webrtc/libcommon:vp8only_encoder_factory",
+        "//cuttlefish/result",
         "@libwebrtc",
     ],
 )
@@ -52,7 +52,7 @@ cf_cc_library(
     name = "peer_signaling_handler",
     hdrs = ["peer_signaling_handler.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@jsoncpp",
     ],
 )
@@ -63,7 +63,7 @@ cf_cc_library(
     hdrs = ["utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
         "@fmt",
         "@jsoncpp",

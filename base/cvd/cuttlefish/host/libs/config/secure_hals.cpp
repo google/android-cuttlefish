@@ -24,7 +24,7 @@
 #include <android-base/no_destructor.h>
 #include <android-base/strings.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 using android::base::NoDestructor;
 using android::base::Tokenize;

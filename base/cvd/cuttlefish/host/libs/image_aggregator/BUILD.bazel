@@ -21,9 +21,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/posix:strerror",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -31,7 +31,7 @@ cf_cc_library(
     name = "disk_image",
     hdrs = ["disk_image.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 
@@ -49,7 +49,7 @@ cf_cc_library(
     srcs = ["gpt_type_guid.cc"],
     hdrs = ["gpt_type_guid.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 
@@ -60,12 +60,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:composite_disk",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
         "//cuttlefish/host/libs/image_aggregator:raw",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],
@@ -81,7 +81,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
@@ -91,6 +90,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:image_from_file",
         "//cuttlefish/host/libs/image_aggregator:mbr",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/result",
         "//libbase",
         "//libsparse",
         "@protobuf",
@@ -112,8 +112,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -124,10 +124,10 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/posix:strerror",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/result",
         "//libbase",
         "//libsparse",
     ],
@@ -143,9 +143,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:cf_endian",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/result",
     ],
 )

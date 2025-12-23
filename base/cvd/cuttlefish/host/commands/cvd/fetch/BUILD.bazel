@@ -11,11 +11,11 @@ cf_cc_library(
     hdrs = ["build_api_flags.h"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/fetch:credential_flags",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web/cas:cas_flags",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -55,8 +55,8 @@ cf_cc_library(
     srcs = ["de_android_sparse.cc"],
     hdrs = ["de_android_sparse.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/result",
         "//libbase",
         "//libsparse",
     ],
@@ -78,7 +78,6 @@ cf_cc_library(
     hdrs = ["downloaders.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/web:android_build_api",
@@ -91,6 +90,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:retrying_http_client",
+        "//cuttlefish/result",
     ],
 )
 
@@ -99,10 +99,10 @@ cf_cc_test(
     srcs = ["downloaders_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/result",
         "//libbase",
         "@fmt",
         "@googletest//:gtest",
@@ -117,7 +117,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 
@@ -129,7 +129,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:de_android_sparse",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
@@ -142,6 +141,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api_zip",
         "//cuttlefish/host/libs/zip:zip_file",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -157,7 +157,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:build_strings",
         "//cuttlefish/host/commands/cvd/fetch:builds",
         "//cuttlefish/host/commands/cvd/fetch:download_flags",
@@ -179,6 +178,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],
@@ -191,9 +191,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/commands/cvd/fetch:vector_flags",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -202,9 +202,9 @@ cf_cc_test(
     name = "fetch_cvd_parser_test",
     srcs = ["fetch_cvd_parser_test.cpp"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/result",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -229,12 +229,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:archive",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/fetch:fetch_tracer",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:build_api",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -269,7 +269,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -292,8 +292,8 @@ cf_cc_library(
     hdrs = ["vector_flags.h"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",
+        "//cuttlefish/result",
     ],
 )

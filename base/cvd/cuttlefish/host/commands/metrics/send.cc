@@ -19,12 +19,12 @@
 
 #include <android-base/logging.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_string.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish::metrics {
 namespace {

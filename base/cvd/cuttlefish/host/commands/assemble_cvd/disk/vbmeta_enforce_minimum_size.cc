@@ -17,9 +17,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

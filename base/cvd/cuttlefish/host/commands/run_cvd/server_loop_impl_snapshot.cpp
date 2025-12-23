@@ -26,10 +26,10 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace run_cvd_impl {

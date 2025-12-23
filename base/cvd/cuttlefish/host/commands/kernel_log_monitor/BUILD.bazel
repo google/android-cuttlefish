@@ -14,9 +14,9 @@ cf_cc_binary(
     deps = [
         ":kernel_log_monitor_utils",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
         "@jsoncpp",
@@ -36,9 +36,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
         "//libbase",
         "@jsoncpp",
     ],

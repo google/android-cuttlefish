@@ -10,9 +10,9 @@ cf_cc_binary(
         "record_cvd.cc",
     ],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/screen_recording_controls",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
     ],

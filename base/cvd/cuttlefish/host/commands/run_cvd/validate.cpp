@@ -24,9 +24,9 @@
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/network.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

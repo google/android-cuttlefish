@@ -22,7 +22,7 @@
 #include <grpcpp/channel.h>
 #include <grpcpp/support/status.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 using gnss_grpc_proxy::GnssGrpcProxy;
 using gnss_grpc_proxy::GpsCoordinates;

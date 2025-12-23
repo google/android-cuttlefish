@@ -19,10 +19,10 @@
 #include <chrono>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

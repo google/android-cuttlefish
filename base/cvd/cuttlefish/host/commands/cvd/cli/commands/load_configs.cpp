@@ -28,7 +28,6 @@
 #include <fmt/format.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -41,6 +40,7 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

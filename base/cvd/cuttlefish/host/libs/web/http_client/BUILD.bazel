@@ -16,9 +16,9 @@ cf_cc_library(
     srcs = ["curl_http_client.cc"],
     hdrs = ["curl_http_client.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
+        "//cuttlefish/result",
         "//libbase",
         "@curl",
     ],
@@ -30,8 +30,8 @@ cf_cc_library(
     srcs = ["fake_http_client.cc"],
     hdrs = ["fake_http_client.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result",
     ],
 )
 
@@ -39,11 +39,11 @@ cf_cc_test(
     name = "fake_http_client_test",
     srcs = ["fake_http_client_test.cc"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/result",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -54,7 +54,7 @@ cf_cc_library(
     srcs = ["http_client.cc"],
     hdrs = ["http_client.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@fmt",
         "@jsoncpp",
     ],
@@ -68,8 +68,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/fs:shared_fd_stream",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -80,9 +80,9 @@ cf_cc_library(
     hdrs = ["http_json.h"],
     deps = [
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/result",
         "//libbase",
         "@jsoncpp",
     ],
@@ -93,8 +93,8 @@ cf_cc_library(
     srcs = ["http_string.cc"],
     hdrs = ["http_string.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result",
     ],
 )
 
@@ -103,8 +103,8 @@ cf_cc_library(
     srcs = ["retrying_http_client.cc"],
     hdrs = ["retrying_http_client.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result",
     ],
 )
 

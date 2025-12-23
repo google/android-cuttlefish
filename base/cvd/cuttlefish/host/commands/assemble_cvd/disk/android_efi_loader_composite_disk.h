@@ -18,12 +18,12 @@
 
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

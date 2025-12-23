@@ -27,9 +27,9 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "fmt/ostream.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

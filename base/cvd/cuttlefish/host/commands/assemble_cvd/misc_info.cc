@@ -30,9 +30,9 @@
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

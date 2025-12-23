@@ -17,8 +17,8 @@
 
 #include <stddef.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

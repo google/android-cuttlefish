@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -24,7 +24,6 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
@@ -38,6 +37,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

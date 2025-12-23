@@ -66,8 +66,8 @@
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/result/result.h"
 
 #ifdef __APPLE__
 #define off64_t off_t

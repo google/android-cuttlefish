@@ -18,9 +18,9 @@
 
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

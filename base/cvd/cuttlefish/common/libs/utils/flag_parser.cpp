@@ -40,8 +40,8 @@
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

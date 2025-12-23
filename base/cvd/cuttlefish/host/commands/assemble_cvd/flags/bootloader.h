@@ -20,10 +20,10 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

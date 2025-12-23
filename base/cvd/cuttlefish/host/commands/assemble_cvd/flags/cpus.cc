@@ -21,10 +21,10 @@
 
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(cpus, std::to_string(CF_DEFAULTS_CPUS), "Virtual CPU count.");
 

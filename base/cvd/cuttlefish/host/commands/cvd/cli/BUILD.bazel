@@ -11,8 +11,8 @@ cf_cc_library(
     deps = [
         ":types",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -23,8 +23,8 @@ cf_cc_library(
     hdrs = ["frontline_parser.h"],
     deps = [
         ":types",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli/selector:arguments_separator",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -47,7 +47,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/posix:strerror",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -79,7 +79,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:users",
         "//cuttlefish/host/commands/cvd/cli:command_request",
@@ -116,6 +115,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -138,11 +138,11 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/result",
         "@fmt",
     ],
 )

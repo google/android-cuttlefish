@@ -36,7 +36,6 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
@@ -45,6 +44,7 @@
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/result/result.h"
 
 // This is the QEMU default, but set it explicitly just in case it
 // changes upstream

@@ -26,9 +26,9 @@
 #include <android-base/strings.h>
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

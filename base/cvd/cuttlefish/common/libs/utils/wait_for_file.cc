@@ -31,7 +31,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/inotify.h"
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 #ifdef __linux__
 

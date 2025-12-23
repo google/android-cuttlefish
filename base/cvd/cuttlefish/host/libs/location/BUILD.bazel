@@ -23,9 +23,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/gnss_grpc_proxy:libcvd_gnss_grpc_proxy",
         "//cuttlefish/host/libs/location:string_parse",
+        "//cuttlefish/result",
         "//libbase",
         "@grpc",
         "@grpc//:grpc++",

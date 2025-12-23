@@ -22,8 +22,8 @@
 #include <api/peer_connection_interface.h>
 #include <json/json.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/peer_signaling_handler.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

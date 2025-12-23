@@ -21,7 +21,6 @@
 
 #include <android-base/logging.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
@@ -36,6 +35,7 @@
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
@@ -27,6 +26,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

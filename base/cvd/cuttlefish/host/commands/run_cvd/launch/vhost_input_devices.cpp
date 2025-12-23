@@ -33,7 +33,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
@@ -41,6 +40,7 @@
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

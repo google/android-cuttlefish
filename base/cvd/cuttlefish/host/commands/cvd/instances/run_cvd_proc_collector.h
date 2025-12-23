@@ -27,8 +27,8 @@
 #include <android-base/file.h>
 #include <android-base/parseint.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

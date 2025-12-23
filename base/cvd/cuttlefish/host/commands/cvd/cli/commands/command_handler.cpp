@@ -17,8 +17,8 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

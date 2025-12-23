@@ -14,12 +14,12 @@ cf_cc_library(
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/result",
         "@libzip",
         "@zlib",
     ],
@@ -57,11 +57,11 @@ cf_cc_library(
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
+        "//cuttlefish/result",
         "@libzip",
         "@zlib",
     ],
@@ -75,11 +75,11 @@ cf_cc_library(
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/result",
         "@libzip",
         "@zlib",
     ],
@@ -103,10 +103,10 @@ cf_cc_library(
     linkopts = ["-llzma"],  # libzip
     linkstatic = True,  # libzip
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/zip/libzip_cc:error",
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
         "@libzip",
         "@zlib",
     ],

@@ -19,10 +19,10 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to trigger a power button event.");

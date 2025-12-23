@@ -45,7 +45,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:vsock_connection",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
@@ -56,6 +55,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "//cuttlefish/result",
         "//libbase",
         "@boringssl//:crypto",
         "@jsoncpp",

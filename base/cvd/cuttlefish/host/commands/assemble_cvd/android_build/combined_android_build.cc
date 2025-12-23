@@ -27,8 +27,8 @@
 
 #include "fmt/ostream.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

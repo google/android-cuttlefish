@@ -20,10 +20,10 @@
 #include <utility>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

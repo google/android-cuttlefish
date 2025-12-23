@@ -24,9 +24,9 @@
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/result/result.h"
 
 using google::protobuf::util::JsonStringToMessage;
 using google::protobuf::util::MessageToJsonString;

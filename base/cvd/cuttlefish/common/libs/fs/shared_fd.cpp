@@ -45,7 +45,7 @@
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 

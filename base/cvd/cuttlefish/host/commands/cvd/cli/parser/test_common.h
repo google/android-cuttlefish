@@ -19,7 +19,7 @@
 
 #include <json/value.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

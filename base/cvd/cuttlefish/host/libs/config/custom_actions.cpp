@@ -33,12 +33,12 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

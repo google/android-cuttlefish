@@ -21,10 +21,10 @@
 
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(daemon, CF_DEFAULTS_DAEMON ? "true" : "false",
               "Run cuttlefish in background, the launcher exits on boot "

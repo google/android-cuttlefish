@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 /* Support for parsing individual flags out of a larger list of flags. This
  * supports externally determining the order that flags are evaluated in, and

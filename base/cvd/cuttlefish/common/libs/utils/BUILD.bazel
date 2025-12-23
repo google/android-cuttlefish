@@ -9,9 +9,9 @@ cf_cc_library(
     srcs = ["archive.cpp"],
     hdrs = ["archive.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],
@@ -65,9 +65,9 @@ cf_cc_library(
     srcs = ["disk_usage.cpp"],
     hdrs = ["disk_usage.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -97,8 +97,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],
@@ -121,8 +121,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:files_test_helper",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/result",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -134,8 +134,8 @@ cf_cc_library(
     srcs = ["flag_parser.cpp"],
     hdrs = ["flag_parser.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -151,8 +151,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:result_matchers",
+        "//cuttlefish/result",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -165,7 +165,7 @@ cf_cc_library(
     srcs = ["flags_validator.cpp"],
     hdrs = ["flags_validator.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 
@@ -197,7 +197,7 @@ cf_cc_library(
     hdrs = ["json.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@jsoncpp",
     ],
 )
@@ -208,9 +208,9 @@ cf_cc_library(
     hdrs = ["network.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -234,7 +234,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -247,7 +247,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -331,7 +331,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],
@@ -343,8 +343,8 @@ cf_cc_library(
     hdrs = ["subprocess_managed_stdio.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -357,7 +357,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -386,7 +386,7 @@ cf_cc_library(
     hdrs = ["unix_sockets.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -396,8 +396,8 @@ cf_cc_test(
     srcs = ["unix_sockets_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:unix_sockets",
+        "//cuttlefish/result",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -410,7 +410,7 @@ cf_cc_library(
     hdrs = ["users.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -435,7 +435,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:inotify",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -446,9 +446,9 @@ cf_cc_library(
     hdrs = ["wait_for_unix_socket.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:wait_for_file",
+        "//cuttlefish/result",
     ],
 )

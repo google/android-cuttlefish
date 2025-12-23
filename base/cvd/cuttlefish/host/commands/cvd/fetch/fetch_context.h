@@ -21,7 +21,6 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
@@ -30,6 +29,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

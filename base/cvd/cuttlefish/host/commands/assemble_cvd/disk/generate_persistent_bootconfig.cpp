@@ -22,7 +22,6 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
@@ -30,6 +29,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

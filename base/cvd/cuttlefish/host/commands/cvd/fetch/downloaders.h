@@ -17,10 +17,10 @@
 
 #include <memory>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

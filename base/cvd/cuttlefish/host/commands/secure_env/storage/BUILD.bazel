@@ -12,8 +12,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env/storage",
+        "//cuttlefish/result",
         "//libbase",
         "@jsoncpp",
     ],
@@ -24,6 +24,6 @@ cf_cc_library(
     srcs = ["storage.cpp"],
     hdrs = ["storage.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )

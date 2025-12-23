@@ -25,8 +25,8 @@
 #include <google/protobuf/message.h>
 #include <json/json.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

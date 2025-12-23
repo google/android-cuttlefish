@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

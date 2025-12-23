@@ -27,7 +27,6 @@
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
@@ -37,6 +36,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/kernel_args.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
+#include "cuttlefish/result/result.h"
 
 using cuttlefish::vm_manager::CrosvmManager;
 

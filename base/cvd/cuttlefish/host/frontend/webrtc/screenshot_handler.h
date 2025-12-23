@@ -21,8 +21,8 @@
 
 #include <fmt/format.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

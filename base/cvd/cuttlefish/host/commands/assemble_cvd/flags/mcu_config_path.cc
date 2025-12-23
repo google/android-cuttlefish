@@ -28,9 +28,9 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
               "configuration file for the MCU emulator");

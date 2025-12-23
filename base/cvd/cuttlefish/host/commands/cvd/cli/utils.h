@@ -22,10 +22,10 @@
 #include <string_view>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

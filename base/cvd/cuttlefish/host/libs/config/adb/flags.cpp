@@ -29,9 +29,9 @@
 
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -18,9 +18,9 @@
 #include <optional>
 #include <string>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

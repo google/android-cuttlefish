@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

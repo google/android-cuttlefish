@@ -40,7 +40,6 @@
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -52,6 +51,7 @@
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace vm_manager {

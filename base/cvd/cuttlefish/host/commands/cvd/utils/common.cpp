@@ -29,8 +29,8 @@
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

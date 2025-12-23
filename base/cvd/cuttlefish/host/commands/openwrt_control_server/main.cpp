@@ -31,11 +31,11 @@
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/openwrt_control_server/openwrt_control.grpc.pb.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_json.h"
+#include "cuttlefish/result/result.h"
 
 using absl::StartsWith;
 using google::protobuf::Empty;

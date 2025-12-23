@@ -24,10 +24,10 @@
 #include <google/protobuf/text_format.h>
 
 #include "cuttlefish/common/libs/utils/base64.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(displays_textproto, CF_DEFAULTS_DISPLAYS_TEXTPROTO,
               "Text Proto input for multi-vd multi-displays");
