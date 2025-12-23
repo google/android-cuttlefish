@@ -6,10 +6,9 @@ package(
 
 cf_cc_library(
     name = "strerror",
-    srcs = ["strerror.cc"],
     hdrs = ["strerror.h"],
     deps = [
-        "@abseil-cpp//absl/status",
+        "//cuttlefish/posix:strerror",
     ],
 )
 
