@@ -22,9 +22,9 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/input_connector/input_connection.h"
 #include "cuttlefish/host/libs/input_connector/input_devices.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

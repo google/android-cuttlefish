@@ -10,9 +10,9 @@ cf_cc_binary(
         "metrics_launcher.cpp",
     ],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/msg_queue",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
     ],

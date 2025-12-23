@@ -10,9 +10,9 @@ cf_cc_library(
     hdrs = ["access_kregistry.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -22,12 +22,12 @@ cf_cc_library(
     hdrs = ["android_composite_disk_config.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],
@@ -39,7 +39,6 @@ cf_cc_library(
     hdrs = ["android_efi_loader_composite_disk.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
@@ -47,6 +46,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
+        "//cuttlefish/result",
     ],
 )
 
@@ -71,8 +71,8 @@ cf_cc_library(
     hdrs = ["bootloader_present.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
     ],
 )
 
@@ -95,10 +95,10 @@ cf_cc_library(
     hdrs = ["chromeos_state.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -108,10 +108,10 @@ cf_cc_library(
     hdrs = ["factory_reset_protected.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
     ],
 )
 
@@ -134,9 +134,9 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -148,13 +148,13 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/commands/assemble_cvd:bootconfig_args",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
     ],
 )
 
@@ -164,7 +164,6 @@ cf_cc_library(
     hdrs = ["generate_persistent_vbmeta.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:boot_config",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
@@ -173,6 +172,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
     ],
 )
 
@@ -182,9 +182,9 @@ cf_cc_library(
     hdrs = ["hwcomposer_pmem.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -194,7 +194,6 @@ cf_cc_library(
     hdrs = ["initialize_instance_composite_disk.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
@@ -204,6 +203,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
         "//cuttlefish/host/libs/vm_manager",
+        "//cuttlefish/result",
         "@gflags",
     ],
 )
@@ -240,10 +240,10 @@ cf_cc_library(
     hdrs = ["metadata_image.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
     ],
 )
 
@@ -253,10 +253,10 @@ cf_cc_library(
     hdrs = ["misc_image.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -266,7 +266,6 @@ cf_cc_library(
     srcs = ["os_composite_disk.cc"],
     hdrs = ["os_composite_disk.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
@@ -281,6 +280,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -291,9 +291,9 @@ cf_cc_library(
     hdrs = ["pflash.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -303,9 +303,9 @@ cf_cc_library(
     hdrs = ["pstore.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
+        "//cuttlefish/result",
     ],
 )
 
@@ -315,10 +315,10 @@ cf_cc_library(
     hdrs = ["sd_card.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/image_aggregator:qcow2",
+        "//cuttlefish/result",
     ],
 )
 
@@ -328,8 +328,8 @@ cf_cc_library(
     hdrs = ["vbmeta_enforce_minimum_size.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
     ],
 )

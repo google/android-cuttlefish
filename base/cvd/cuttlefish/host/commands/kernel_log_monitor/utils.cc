@@ -29,8 +29,8 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish::monitor {
 

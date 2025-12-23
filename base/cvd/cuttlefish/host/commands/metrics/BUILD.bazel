@@ -64,12 +64,12 @@ cf_cc_library(
     srcs = ["send.cc"],
     hdrs = ["send.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/metrics:metrics_headers",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )

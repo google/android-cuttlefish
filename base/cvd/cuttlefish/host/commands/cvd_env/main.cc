@@ -21,9 +21,9 @@
 #include <android-base/logging.h>
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/control_env/grpc_service_handler.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

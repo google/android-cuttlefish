@@ -18,10 +18,10 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

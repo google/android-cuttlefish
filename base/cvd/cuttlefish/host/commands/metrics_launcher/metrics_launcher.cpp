@@ -22,8 +22,8 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

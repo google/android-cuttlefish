@@ -25,11 +25,11 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
+#include "cuttlefish/result/result.h"
 
 using google::protobuf::Empty;
 using grpc::Server;

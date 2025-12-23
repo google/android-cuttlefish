@@ -23,8 +23,8 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/common/libs/utils/files_test_helper.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

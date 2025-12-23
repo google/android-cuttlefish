@@ -34,12 +34,12 @@ cf_cc_binary(
     deps = [
         ":libscreen_recording_server",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/host/libs/screen_recording_controls",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
         "@grpc",

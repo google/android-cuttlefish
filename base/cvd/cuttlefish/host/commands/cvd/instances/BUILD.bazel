@@ -10,7 +10,7 @@ cf_cc_library(
     hdrs = ["config_path.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -31,9 +31,9 @@ cf_cc_library(
     hdrs = ["data_viewer.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/result",
     ],
 )
 
@@ -42,7 +42,7 @@ cf_cc_library(
     srcs = ["device_name.cpp"],
     hdrs = ["device_name.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -104,7 +104,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
@@ -125,6 +124,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/screen_recording_controls",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@fmt",
@@ -162,10 +162,10 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -179,13 +179,13 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:proc_file_utils",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/commands/cvd/instances:config_path",
         "//cuttlefish/host/commands/cvd/instances:run_cvd_proc_collector",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/result",
         "//libbase",
         "@fmt",
     ],

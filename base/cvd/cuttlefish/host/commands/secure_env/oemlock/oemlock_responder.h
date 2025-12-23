@@ -18,8 +18,8 @@
 #include <mutex>
 
 #include "cuttlefish/common/libs/transport/channel.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/secure_env/oemlock/oemlock.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace oemlock {

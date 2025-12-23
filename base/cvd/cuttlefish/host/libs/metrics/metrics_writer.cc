@@ -24,8 +24,8 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/random.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/commands/casimir_control_server/hex.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

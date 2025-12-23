@@ -34,7 +34,6 @@
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_strings.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/download_flags.h"
@@ -55,6 +54,7 @@
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -24,7 +24,6 @@
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
@@ -33,6 +32,7 @@
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

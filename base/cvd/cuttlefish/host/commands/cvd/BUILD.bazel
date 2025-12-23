@@ -13,13 +13,13 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
         "//cuttlefish/host/commands/cvd/cli:nesting_commands",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances/lock",
         "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )

@@ -29,9 +29,9 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

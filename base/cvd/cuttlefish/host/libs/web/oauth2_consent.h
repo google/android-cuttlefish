@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

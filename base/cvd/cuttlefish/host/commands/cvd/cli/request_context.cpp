@@ -23,7 +23,6 @@
 #include <android-base/logging.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/command_sequence.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
@@ -54,6 +53,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/version.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/lock/instance_lock.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

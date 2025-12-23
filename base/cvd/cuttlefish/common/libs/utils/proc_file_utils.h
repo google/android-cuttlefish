@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 /**
  * @file Utility functions to retrieve information from proc filesystem

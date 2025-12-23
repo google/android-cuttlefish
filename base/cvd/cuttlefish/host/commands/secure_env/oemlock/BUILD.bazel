@@ -9,8 +9,8 @@ cf_cc_library(
     srcs = ["oemlock.cpp"],
     hdrs = ["oemlock.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env/storage",
+        "//cuttlefish/result",
     ],
 )
 
@@ -21,7 +21,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/security:oemlock",
         "//cuttlefish/common/libs/transport",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env/oemlock",
+        "//cuttlefish/result",
     ],
 )

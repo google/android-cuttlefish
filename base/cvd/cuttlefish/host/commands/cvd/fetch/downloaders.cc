@@ -19,7 +19,6 @@
 #include <string>
 
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
@@ -32,6 +31,7 @@
 #include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

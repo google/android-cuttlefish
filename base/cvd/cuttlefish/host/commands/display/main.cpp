@@ -27,12 +27,12 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

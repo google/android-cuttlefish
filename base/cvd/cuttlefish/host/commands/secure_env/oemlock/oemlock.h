@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 #include "cuttlefish/host/commands/secure_env/storage/storage.h"
 

@@ -24,7 +24,7 @@
 #include "absl/strings/str_format.h"
 #include "fmt/ostream.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

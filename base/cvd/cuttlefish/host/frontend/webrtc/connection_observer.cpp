@@ -34,7 +34,6 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/json.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/frontend/webrtc/adb_handler.h"
 #include "cuttlefish/host/frontend/webrtc/bluetooth_handler.h"
 #include "cuttlefish/host/frontend/webrtc/gpx_locations_handler.h"
@@ -46,6 +45,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/input_connector/input_connector.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_display_controller.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -20,8 +20,8 @@
 #include <string_view>
 #include <utility>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

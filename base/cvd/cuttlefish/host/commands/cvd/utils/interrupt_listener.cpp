@@ -30,8 +30,8 @@
 #include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/posix/strerror.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/signals.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

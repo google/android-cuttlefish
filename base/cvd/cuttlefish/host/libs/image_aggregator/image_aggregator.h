@@ -24,8 +24,8 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

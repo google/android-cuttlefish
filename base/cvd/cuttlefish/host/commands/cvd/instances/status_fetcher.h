@@ -20,8 +20,8 @@
 
 #include <chrono>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

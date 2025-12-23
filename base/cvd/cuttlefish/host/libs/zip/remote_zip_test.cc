@@ -29,13 +29,13 @@
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/libs/web/http_client/fake_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

@@ -19,10 +19,10 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/base64.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

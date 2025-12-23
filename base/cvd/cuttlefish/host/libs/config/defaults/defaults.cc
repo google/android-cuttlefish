@@ -21,9 +21,9 @@
 #include <android-base/file.h>
 #include "absl/container/btree_map.h"
 
-#include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/host/libs/config/defaults/defaults.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

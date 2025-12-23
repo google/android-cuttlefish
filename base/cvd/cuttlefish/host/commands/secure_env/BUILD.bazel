@@ -29,8 +29,8 @@ cf_cc_library(
     hdrs = ["suspend_resume_handler.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/result",
         "//libbase",
     ],
 )
@@ -42,7 +42,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/posix:strerror",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/commands/secure_env:suspend_resume_handler",
+        "//cuttlefish/result",
     ],
 )

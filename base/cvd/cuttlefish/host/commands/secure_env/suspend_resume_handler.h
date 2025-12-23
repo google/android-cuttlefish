@@ -18,8 +18,8 @@
 #include <thread>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

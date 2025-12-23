@@ -22,8 +22,8 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(system_image_dir, CF_DEFAULTS_SYSTEM_IMAGE_DIR,
               "Directory where `.img` files are loaded from");

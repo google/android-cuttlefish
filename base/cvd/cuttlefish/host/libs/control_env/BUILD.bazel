@@ -12,7 +12,7 @@ cf_cc_library(
     hdrs = ["grpc_service_handler.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@grpc//:grpc++",

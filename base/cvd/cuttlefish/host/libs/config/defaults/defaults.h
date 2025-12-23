@@ -21,7 +21,7 @@
 #include <string_view>
 
 #include "absl/container/btree_map.h"
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -19,8 +19,8 @@
 #include <set>
 #include <string>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -30,7 +30,6 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/libs/config/esp.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
+#include "cuttlefish/result/result.h"
 
 // https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=127;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
 #define F2FS_BLOCKSIZE "4096"

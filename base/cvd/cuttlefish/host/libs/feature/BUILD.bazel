@@ -16,9 +16,9 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:type_name",
+        "//cuttlefish/result",
         "//libbase",
         "@fruit",
     ],
@@ -30,7 +30,7 @@ cf_cc_library(
         "inject.h",
     ],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
         "@fruit",
     ],
 )

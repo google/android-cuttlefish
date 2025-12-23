@@ -14,8 +14,8 @@ cf_cc_binary(
         ":libcasimir",
         ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
         "@grpc",
@@ -43,7 +43,7 @@ cf_cc_library(
     deps = [
         ":libcasimir_control_server",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 

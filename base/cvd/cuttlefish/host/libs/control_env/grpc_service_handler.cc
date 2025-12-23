@@ -31,7 +31,7 @@
 #include "test/cpp/util/test_config.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 
 using absl::EndsWith;
 using android::base::Split;

@@ -20,9 +20,9 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace vm_manager {

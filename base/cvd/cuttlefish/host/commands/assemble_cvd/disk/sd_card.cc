@@ -17,10 +17,10 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

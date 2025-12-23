@@ -23,12 +23,12 @@
 
 #include "android-base/strings.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_instances.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_metrics_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/launch_cvd_templates.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

@@ -28,7 +28,6 @@
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
@@ -60,6 +59,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

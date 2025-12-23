@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

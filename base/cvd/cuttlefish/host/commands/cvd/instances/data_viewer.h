@@ -25,9 +25,9 @@
 #include <unordered_map>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/signals.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

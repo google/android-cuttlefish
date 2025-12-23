@@ -29,8 +29,8 @@
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/result/result.h"
 
 // See https://specifications.freedesktop.org/basedir-spec/latest/
 

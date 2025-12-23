@@ -29,12 +29,12 @@
 #include <json/value.h>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

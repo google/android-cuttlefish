@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/utils/result.h"
+#include "cuttlefish/result/result.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {

@@ -27,9 +27,9 @@
 
 #include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/casimir_control_server/casimir_controller.h"
 #include "cuttlefish/host/commands/casimir_control_server/hex.h"
+#include "cuttlefish/result/result.h"
 
 using casimircontrolserver::CasimirControlService;
 using casimircontrolserver::PowerLevel;

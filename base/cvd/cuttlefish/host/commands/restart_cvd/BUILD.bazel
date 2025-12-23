@@ -11,9 +11,9 @@ cf_cc_binary(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
         "//libbase",
         "@gflags",
     ],

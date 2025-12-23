@@ -10,9 +10,9 @@ cf_cc_binary(
         "main.cc",
     ],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/control_env",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
     ],

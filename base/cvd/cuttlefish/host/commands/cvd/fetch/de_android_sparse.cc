@@ -24,8 +24,8 @@
 #include <android-base/strings.h>
 #include <sparse/sparse.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

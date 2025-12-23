@@ -19,7 +19,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/libs/config:config_flag",
@@ -27,6 +26,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/feature",
+        "//cuttlefish/result",
         "//libbase",
         "@fruit",
         "@gflags",

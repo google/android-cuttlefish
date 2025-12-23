@@ -31,7 +31,6 @@
 #include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/misc_info.h"
 #include "cuttlefish/host/libs/avb/avb.h"
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

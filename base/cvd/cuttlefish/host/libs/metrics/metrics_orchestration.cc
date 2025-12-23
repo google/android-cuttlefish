@@ -28,7 +28,6 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
+#include "cuttlefish/result/result.h"
 #include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {

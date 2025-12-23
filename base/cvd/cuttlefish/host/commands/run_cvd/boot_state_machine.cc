@@ -33,7 +33,6 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -43,6 +42,7 @@
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/feature/feature.h"
+#include "cuttlefish/result/result.h"
 
 using grpc::ClientContext;
 using openwrtcontrolserver::LuciRpcReply;

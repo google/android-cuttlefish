@@ -33,9 +33,9 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/disjoint_range_set.h"
 #include "cuttlefish/host/libs/zip/serialize_disjoint_range_set.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

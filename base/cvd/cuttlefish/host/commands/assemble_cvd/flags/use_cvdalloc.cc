@@ -22,8 +22,8 @@
 
 #include <gflags/gflags.h>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
+#include "cuttlefish/result/result.h"
 
 DEFINE_string(use_cvdalloc, "unset", "Acquire static resources with cvdalloc.");
 

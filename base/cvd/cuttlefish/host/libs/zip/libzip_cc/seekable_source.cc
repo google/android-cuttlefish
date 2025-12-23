@@ -25,11 +25,11 @@
 
 #include "zip.h"
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {

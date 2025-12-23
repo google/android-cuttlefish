@@ -23,12 +23,12 @@
 
 #include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/image_aggregator/composite_disk.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
 #include "cuttlefish/host/libs/image_aggregator/raw.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 

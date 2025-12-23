@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
-#include "cuttlefish/common/libs/utils/result.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
