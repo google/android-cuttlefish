@@ -233,7 +233,9 @@ CasimirController::SendBroadcast(std::vector<uint8_t> data, std::string type,
   CF_EXPECT(Write(poll_command), "Failed to send broadcast frame");
 
   if (timeout != 0) {
-    ReadRfPacket(std::chrono::microseconds(timeout));
+    // TODO: b/471069557 - diagnose unused
+    Result<std::shared_ptr<std::vector<uint8_t>>> unused =
+        ReadRfPacket(std::chrono::microseconds(timeout));
   }
 
   return std::make_tuple(data, type, crc, bits, bitrate, timeout, power);

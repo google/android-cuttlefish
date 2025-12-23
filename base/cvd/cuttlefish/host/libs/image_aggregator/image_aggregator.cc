@@ -318,7 +318,8 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
 
   CompositeDiskBuilder builder(false);
   for (auto& partition : partitions) {
-    builder.AppendPartition(partition);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = builder.AppendPartition(partition);
   }
 
   SharedFD output = SharedFD::Creat(output_path, 0600);
@@ -360,7 +361,8 @@ Result<void> CreateOrUpdateCompositeDisk(
 
   CompositeDiskBuilder builder(read_only);
   for (auto& partition : partitions) {
-    builder.AppendPartition(partition);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = builder.AppendPartition(partition);
   }
   CompositeDisk composite_proto =
       CF_EXPECT(builder.MakeCompositeDiskSpec(header_file, footer_file));

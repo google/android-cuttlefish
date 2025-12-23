@@ -73,7 +73,8 @@ CvdInstanceDatabaseTest::~CvdInstanceDatabaseTest() {
 
 void CvdInstanceDatabaseTest::ClearWorkspace() {
   if (!workspace_dir_.empty()) {
-    RecursivelyRemoveDirectory(workspace_dir_);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = RecursivelyRemoveDirectory(workspace_dir_);
   }
 }
 

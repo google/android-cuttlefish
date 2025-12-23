@@ -160,7 +160,8 @@ class LoadConfigsCommand : public CvdCommandHandler {
         EnsureDirectoryExists(group.HomeDir(), 0775, /* group_name */ "");
     if (!mkdir_res.ok()) {
       group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
-      instance_manager_.UpdateInstanceGroup(group);
+      // TODO: b/471069557 - diagnose unused
+      Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
     }
     CF_EXPECT(std::move(mkdir_res));
 
@@ -169,7 +170,8 @@ class LoadConfigsCommand : public CvdCommandHandler {
       auto fetch_res = executor_.ExecuteOne(fetch_cmd, std::cerr);
       if (!fetch_res.ok()) {
         group.SetAllStates(cvd::INSTANCE_STATE_PREPARE_FAILED);
-        instance_manager_.UpdateInstanceGroup(group);
+        // TODO: b/471069557 - diagnose unused
+        Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
       }
       CF_EXPECTF(std::move(fetch_res),
                  "Failed to fetch build artifacts, check '{}' for details",

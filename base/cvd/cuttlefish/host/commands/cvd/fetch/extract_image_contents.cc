@@ -52,7 +52,8 @@ Result<std::vector<std::string>> ExtractImageContents(
   } else {
     CF_EXPECT(MoveDirectoryContents(image_filepath, target_dir));
     // Ignore even if removing directory fails - harmless.
-    RecursivelyRemoveDirectory(image_filepath);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = RecursivelyRemoveDirectory(image_filepath);
   }
   return files;
 }

@@ -228,7 +228,8 @@ Result<void> InstanceManager::StopInstanceGroup(
                "\".\nThis can happen if instances are already stopped.\n";
   }
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
-  instance_db_.UpdateInstanceGroup(group);
+  // TODO: b/471069557 - diagnose unused
+  Result<void> unused = instance_db_.UpdateInstanceGroup(group);
   return {};
 }
 
@@ -264,7 +265,8 @@ Result<void> InstanceManager::Clear() {
     if (Result<void> res = RemoveFile(config_link);!res.ok()) {
       LOG(ERROR) << res.error().FormatForEnv();
     }
-    RemoveGroupDirectory(group);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = RemoveGroupDirectory(group);
   }
   std::cerr << "Stopped all known instances\n";
   return {};

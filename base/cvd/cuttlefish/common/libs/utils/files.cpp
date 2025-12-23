@@ -148,7 +148,9 @@ bool FileHasContent(const std::string& path) {
 Result<void> HardLinkDirecoryContentsRecursively(
     const std::string& source, const std::string& destination) {
   CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
-  EnsureDirectoryExists(destination, 0755);
+
+  // TODO: b/471069557 - diagnose need
+  Result<void> unused = EnsureDirectoryExists(destination, 0755);
 
   const std::function<bool(const std::string&)> linker =
       [&source, &destination](const std::string& filepath) mutable {
@@ -156,7 +158,8 @@ Result<void> HardLinkDirecoryContentsRecursively(
         std::string dst_path =
             destination + "/" + filepath.substr(source.size() + 1);
         if (IsDirectory(src_path)) {
-          EnsureDirectoryExists(dst_path);
+          // TODO: b/471069557 - diagnose need
+          Result<void> unused = EnsureDirectoryExists(dst_path);
           return true;
         }
         bool overwrite_existing = true;
