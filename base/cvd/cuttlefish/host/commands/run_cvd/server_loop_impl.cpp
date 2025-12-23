@@ -363,15 +363,18 @@ bool ServerLoopImpl::PowerwashFiles() {
 
   auto kregistry_path = instance_.access_kregistry_path();
   unlink(kregistry_path.c_str());
-  CreateBlankImage(kregistry_path, 2 /* mb */, "none");
+  // TODO: b/471069557 - diagnose unused
+  Result<void> unused = CreateBlankImage(kregistry_path, 2 /* mb */, "none");
 
   auto hwcomposer_pmem_path = instance_.hwcomposer_pmem_path();
   unlink(hwcomposer_pmem_path.c_str());
-  CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none");
+  // TODO: b/471069557 - diagnose unused
+  unused = CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none");
 
   auto pstore_path = instance_.pstore_path();
   unlink(pstore_path.c_str());
-  CreateBlankImage(pstore_path, 2 /* mb */, "none");
+  // TODO: b/471069557 - diagnose unused
+  unused = CreateBlankImage(pstore_path, 2 /* mb */, "none");
 
   auto sdcard_path = instance_.sdcard_path();
   auto sdcard_size = FileSize(sdcard_path);
@@ -379,7 +382,8 @@ bool ServerLoopImpl::PowerwashFiles() {
   // round up
   auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
   LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
-  CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
+  // TODO: b/471069557 - diagnose unused
+  unused = CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
 
   struct OverlayFile {
     std::string name;

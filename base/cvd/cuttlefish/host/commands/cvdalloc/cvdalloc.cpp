@@ -126,7 +126,9 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
 
   absl::Cleanup teardown = [id]() {
     LOG(INFO) << "cvdalloc: teardown started";
-    Teardown(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused =
+        Teardown(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName);
   };
 
   CF_EXPECT(Allocate(id, kCvdallocEthernetBridgeName, kCvdallocWirelessBridgeName));

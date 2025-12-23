@@ -166,7 +166,8 @@ Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
         CF_EXPECT(selector::SelectGroup(instance_manager_, request));
     status_array = CF_EXPECT(group.FetchStatus(
         std::chrono::seconds(flags.wait_for_launcher_seconds)));
-    instance_manager_.UpdateInstanceGroup(group);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
   } else {
     std::pair<LocalInstance, LocalInstanceGroup> pair =
         flags.instance_name.empty()
@@ -178,7 +179,8 @@ Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
     LocalInstanceGroup group = pair.second;
     status_array.append(CF_EXPECT(instance.FetchStatus(
         std::chrono::seconds(flags.wait_for_launcher_seconds))));
-    instance_manager_.UpdateInstanceGroup(group);
+    // TODO: b/471069557 - diagnose unused
+    Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
   }
 
   if (flags.print) {

@@ -145,7 +145,8 @@ Result<void> FetchArtifact::ExtractOneTo(const std::string& member_name,
   fetch_build_context_.trace_.CompletePhase(std::move(phase),
                                             FileSize(extract_path));
 
-  fetch_build_context_.DesparseFiles({local_path});
+  // TODO: b/471069557 - diagnose unused
+  Result<void> unused = fetch_build_context_.DesparseFiles({local_path});
 
   return {};
 }

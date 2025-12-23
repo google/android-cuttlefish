@@ -327,7 +327,8 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
-  instance_manager_.UpdateInstanceGroup(group);
+  // TODO: b/471069557 - diagnose unused
+  Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
 
   GatherVmInstantiationMetrics(group);
 
