@@ -56,14 +56,11 @@ T OutcomeDereference(std::optional<T>&& value) {
   return std::move(*value);
 }
 
+inline void OutcomeDereference(Result<void>&&) {}
+
 template <typename T>
-typename std::conditional_t<std::is_void_v<T>, bool, T> OutcomeDereference(
-    Result<T>&& result) {
-  if constexpr (std::is_void<T>::value) {
-    return result.ok();
-  } else {
-    return std::move(*result);
-  }
+T OutcomeDereference(Result<T>&& result) {
+  return std::move(*result);
 }
 
 template <typename T>
@@ -84,11 +81,6 @@ bool TypeIsSuccess(Result<T>& value) {
   return value.ok();
 }
 
-template <typename T>
-bool TypeIsSuccess(Result<T>&& value) {
-  return value.ok();
-}
-
 inline auto ErrorFromType(bool) { return StackTraceError(); }
 
 template <typename T>
@@ -98,11 +90,6 @@ inline auto ErrorFromType(std::optional<T>) {
 
 template <typename T>
 auto ErrorFromType(Result<T>& value) {
-  return value.error();
-}
-
-template <typename T>
-auto ErrorFromType(Result<T>&& value) {
   return value.error();
 }
 
