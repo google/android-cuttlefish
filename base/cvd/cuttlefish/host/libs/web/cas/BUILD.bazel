@@ -30,11 +30,11 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "//libbase",
         "@fmt",
         "@googletest//:gtest",

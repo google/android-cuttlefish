@@ -39,8 +39,8 @@ cf_cc_test(
     srcs = ["host_tool_target_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -87,10 +87,10 @@ cf_cc_test(
     name = "parser_names_test",
     srcs = ["parser_names_test.cpp"],
     deps = [
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/cli/selector:parser_names_helper",
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

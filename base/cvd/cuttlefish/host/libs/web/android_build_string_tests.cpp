@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/result_matchers.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 

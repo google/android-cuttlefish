@@ -121,8 +121,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:files_test_helper",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -151,8 +151,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

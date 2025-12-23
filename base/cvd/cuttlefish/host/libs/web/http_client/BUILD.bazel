@@ -39,11 +39,11 @@ cf_cc_test(
     name = "fake_http_client_test",
     srcs = ["fake_http_client_test.cc"],
     deps = [
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:fake_http_client",
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
