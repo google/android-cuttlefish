@@ -16,8 +16,8 @@
 #include "cuttlefish/host/commands/secure_env/worker_thread_loop_body.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/commands/secure_env/suspend_resume_handler.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 namespace secure_env_impl {

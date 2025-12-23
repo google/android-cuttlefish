@@ -26,10 +26,10 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 // See https://specifications.freedesktop.org/basedir-spec/latest/

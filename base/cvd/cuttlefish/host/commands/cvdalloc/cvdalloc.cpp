@@ -28,10 +28,10 @@
 #include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
+#include "cuttlefish/posix/strerror.h"
 
 ABSL_FLAG(int, id, 0, "Id");
 ABSL_FLAG(int, socket, 0, "Socket");

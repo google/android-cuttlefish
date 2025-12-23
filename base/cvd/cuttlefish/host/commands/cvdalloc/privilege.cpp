@@ -31,7 +31,7 @@
 
 #include <android-base/logging.h>
 
-#include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 

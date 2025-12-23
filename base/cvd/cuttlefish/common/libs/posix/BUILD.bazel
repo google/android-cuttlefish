@@ -17,7 +17,7 @@ cf_cc_library(
     srcs = ["symlink.cc"],
     hdrs = ["symlink.h"],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
     ],
 )

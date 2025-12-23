@@ -30,9 +30,9 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/posix/strerror.h"
 
 DEFINE_int32(console_in_fd,
              -1,

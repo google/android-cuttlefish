@@ -30,7 +30,6 @@
 #include <fruit/injector.h>
 #include <fruit/macro.h>
 
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -39,6 +38,7 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

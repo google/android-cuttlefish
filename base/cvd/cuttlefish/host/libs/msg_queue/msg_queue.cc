@@ -28,7 +28,7 @@
 
 #include <android-base/logging.h>
 
-#include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/posix/strerror.h"
 
 #define DEFAULT_MSGQ_KEY 0x1234
 #define HASH_MULTIPLIER 5381

@@ -93,11 +93,11 @@ cf_cc_library(
     hdrs = ["files.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",

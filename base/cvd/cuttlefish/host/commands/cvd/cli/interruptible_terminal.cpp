@@ -24,7 +24,7 @@
 #include <android-base/scopeguard.h>
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 

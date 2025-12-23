@@ -19,8 +19,8 @@
 #include <string>
 #include <utility>
 
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 

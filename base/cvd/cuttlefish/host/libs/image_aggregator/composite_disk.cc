@@ -21,8 +21,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 

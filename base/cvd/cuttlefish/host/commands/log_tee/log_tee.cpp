@@ -26,9 +26,9 @@
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/posix/strerror.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/posix/strerror.h"
 
 using cuttlefish::StrError;
 

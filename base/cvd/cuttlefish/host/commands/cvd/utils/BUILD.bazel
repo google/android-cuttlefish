@@ -38,8 +38,8 @@ cf_cc_library(
     hdrs = ["interrupt_listener.h"],
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:signals",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
     ],
@@ -51,8 +51,8 @@ cf_cc_library(
     hdrs = ["subprocess_waiter.h"],
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
-        "//cuttlefish/common/libs/posix:strerror",
         "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
     ],
 )
