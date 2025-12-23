@@ -15,4 +15,12 @@
  */
 #pragma once
 
-#include "cuttlefish/posix/strerror.h"  // IWYU pragma: export
+#include <string>
+
+namespace cuttlefish {
+
+// Thread-safe equivalent of strerror(3). Not guaranteed to return the same
+// exact strings as strerror(3).
+std::string StrError(int error_num);
+
+}  // namespace cuttlefish

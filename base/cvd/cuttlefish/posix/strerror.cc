@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cuttlefish/common/libs/posix/strerror.h"
+#include "cuttlefish/posix/strerror.h"
 
 #include <string>
 
