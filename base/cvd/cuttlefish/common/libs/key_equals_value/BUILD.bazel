@@ -21,8 +21,8 @@ cf_cc_test(
     srcs = ["key_equals_value_test.cc"],
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

@@ -99,10 +99,10 @@ cf_cc_test(
     srcs = ["downloaders_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/fetch:downloaders",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "//libbase",
         "@fmt",
         "@googletest//:gtest",
@@ -202,9 +202,9 @@ cf_cc_test(
     name = "fetch_cvd_parser_test",
     srcs = ["fetch_cvd_parser_test.cpp"],
     deps = [
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

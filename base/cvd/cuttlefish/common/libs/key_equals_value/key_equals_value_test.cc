@@ -20,8 +20,8 @@
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace {

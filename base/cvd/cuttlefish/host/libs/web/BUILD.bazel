@@ -61,9 +61,9 @@ cf_cc_test(
     srcs = ["android_build_string_tests.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

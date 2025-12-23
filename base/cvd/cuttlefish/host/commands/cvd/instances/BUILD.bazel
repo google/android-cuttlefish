@@ -68,9 +68,9 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_database_helper",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -136,9 +136,9 @@ cf_cc_test(
     name = "local_instance_group_test",
     srcs = ["local_instance_group_test.cpp"],
     deps = [
-        "//cuttlefish/common/libs/utils:result_matchers",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
+        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

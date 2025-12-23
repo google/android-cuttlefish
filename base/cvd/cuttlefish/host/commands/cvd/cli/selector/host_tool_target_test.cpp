@@ -18,8 +18,8 @@
 #include <gtest/gtest.h>
 
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/result_matchers.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
+#include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 
