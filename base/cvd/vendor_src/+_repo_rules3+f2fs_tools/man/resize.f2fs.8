@@ -1,0 +1,89 @@
+.\" Copyright (c) 2015 Jaegeuk Kim <jaegeuk@kernel.org>
+.\"
+.TH RESIZE.F2FS 8
+.SH NAME
+resize.f2fs \- resize filesystem size
+.SH SYNOPSIS
+.B resize.f2fs
+[
+.B \-t
+.I target sectors
+]
+[
+.B \-d
+.I debugging-level
+]
+[
+.B \-o
+.I overprovision-ratio-percentage
+]
+[
+.B \-f
+]
+[
+.B \-F
+]
+[
+.B \-H
+]
+[
+.B \-s
+]
+[
+.B \-V
+]
+.I device
+.SH DESCRIPTION
+.B resize.f2fs
+is used to resize an f2fs file system (usually in a disk partition).
+\fIdevice\fP is the special file corresponding to the device (e.g.
+\fI/dev/sdXX\fP).
+
+Current version only supports expanding the prebuilt filesystem.
+
+.PP
+The exit code returned by
+.B resize.f2fs
+is 0 on success and -1 on failure.
+.SH OPTIONS
+.TP
+.BI \-t " target sectors"
+Specify the size in sectors.
+.TP
+.BI \-d " debug-level"
+Specify the level of debugging options.
+The default number is 0, which shows basic debugging messages.
+.TP
+.BI \-o " overprovision-ratio-percentage"
+Specify the percentage of the volume that will be used as overprovision area.
+This area is hidden to users, and utilized by F2FS cleaner. If not specified, the
+best number will be assigned automatically according to the partition size.
+.TP
+.BI \-f
+Force to fix any inconsistent data during resize.
+.TP
+.BI \-F
+Skip caution dialogue and resize partition directly.
+.TP
+.BI \-H
+Specify support write hint.
+.TP
+.BI \-s
+Enable safe resize, it can only be used w/ shrink resize.
+.TP
+.BI \-V
+Print the version number and exit.
+.TP
+.SH AUTHOR
+This version of
+.B resize.f2fs
+has been written by Jaegeuk Kim <jaegeuk@kernel.org>.
+.SH AVAILABILITY
+.B resize.f2fs
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
+.SH SEE ALSO
+.BR mkfs.f2fs(8),
+.BR fsck.f2fs(8),
+.BR dump.f2fs(8),
+.BR defrag.f2fs(8),
+.BR sload.f2fs(8).

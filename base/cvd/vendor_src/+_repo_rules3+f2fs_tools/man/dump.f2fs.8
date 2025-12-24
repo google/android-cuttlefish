@@ -1,0 +1,109 @@
+.\" Copyright (c) 2013 Samsung Electronics Co., Ltd.
+.\"
+.TH DUMP.F2FS 8
+.SH NAME
+dump.f2fs \- retrieve directory and file entries from an F2FS-formated image
+.SH SYNOPSIS
+.B dump.f2fs
+[
+.B \-i
+.I inode number
+]
+[
+.B \-I
+.I inode number
+]
+[
+.B \-n
+.I NAT range
+]
+[
+.B \-M
+.I Block map
+]
+[
+.B \-s
+.I SIT range
+]
+[
+.B \-a
+.I SSA range
+]
+[
+.B \-b
+.I block address
+]
+[
+.B \-d
+.I debugging-level
+]
+.I device
+.SH DESCRIPTION
+.B dump.f2fs
+is used to retrieve f2fs metadata (usually in a disk partition).
+\fIdevice\fP is the special file corresponding to the device (e.g.
+\fI/dev/sdXX\fP).
+
+Currently, it can retrieve 1) a file or folder given its inode number
+(folders are dumped recursively), 2) NAT
+entries into a file, 3) SIT entries into a file, 4) SSA entries into
+a file, 5) reverse information from the given block address.
+.PP
+The exit code returned by
+.B dump.f2fs
+is 0 on success and -1 on failure.
+.SH OPTIONS
+.TP
+.BI \-i " inode number"
+Specify an inode number to dump out.
+.TP
+.BI \-r
+Dump out from the root inode.
+.TP
+.BI \-f
+Do not prompt before dumping
+.TP
+.BI \-y
+Alias for \-f
+.TP
+.BI \-o " path"
+Dump inodes to the given path
+.BI \-P
+Preserve mode/owner/group for dumped inode
+.TP
+.BI \-L
+Preserves symlinks. Otherwise symlinks are dumped as regular files.
+.TP
+.BI \-I " inode number"
+Specify an inode number and scan full disk to dump out, include history inode block
+.TP
+.BI \-n " NAT range"
+Specify a range presented by nids to dump NAT entries.
+.TP
+.BI \-M " Block map"
+Show all the allocated block addresses given inode number.
+.TP
+.BI \-s " SIT range"
+Specify a range presented by segment numbers to dump SIT entries.
+.TP
+.BI \-a " SSA range"
+Specify a range presented by segment numbers to dump SSA entries.
+.TP
+.BI \-b " block address"
+Specify a block address to retrieve its metadata information.
+.TP
+.BI \-d " debug-level"
+Specify the level of debugging options.
+The default number is 0, which shows basic debugging messages.
+.TP
+.SH AUTHOR
+Initial checking code was written by Byoung Geun Kim <bgbg.kim@samsung.com>.
+.SH AVAILABILITY
+.B dump.f2fs
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
+.SH SEE ALSO
+.BR mkfs.f2fs(8),
+.BR fsck.f2fs(8),
+.BR defrag.f2fs(8),
+.BR resize.f2fs(8),
+.BR sload.f2fs(8).

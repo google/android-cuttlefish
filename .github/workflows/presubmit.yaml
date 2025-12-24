@@ -29,8 +29,8 @@ jobs:
       working-directory: base/cvd
       if: '!cancelled()'
       run: |
-        if [[ $(buildozer '//...:__pkg__' format 2>&1) ]]; then
-          echo "Please format BUILD.bazel files with \"buildozer '//...:__pkg__' format\"";
+        if [[ $(buildozer '//cuttlefish/...:__pkg__' format 2>&1) ]]; then
+          echo "Please format BUILD.bazel files with \"buildozer '//cuttlefish/...:__pkg__' format\"";
           exit 1;
         fi
     - name: Validate no cc_binary targets under //cuttlefish
@@ -64,9 +64,9 @@ jobs:
       if: '!cancelled()'
       working-directory: base/cvd
       run: |
-        if [[ $(buildozer -stdout=true '//...:__pkg__' 'fix unusedLoads') ]]; then
+        if [[ $(buildozer -stdout=true '//cuttlefish/...:__pkg__' 'fix unusedLoads') ]]; then
           buildozer '//...:__pkg__' 'fix unusedLoads'
-          echo "Please remove unused 'load' statements with \"buildozer '//...:__pkg__' 'fix unusedLoads'\"";
+          echo "Please remove unused 'load' statements with \"buildozer '//cuttlefish/...:__pkg__' 'fix unusedLoads'\"";
           exit 1;
         fi
   staticcheck:

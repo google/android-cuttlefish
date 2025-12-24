@@ -1,0 +1,12 @@
+###############################################################################
+# This file is used to configure how external repositories are handled in vendor mode.
+# ONLY the two following functions can be used:
+#
+# ignore('@@<canonical repo name>', ...) is used to completely ignore this repo from vendoring.
+# Bazel will use the normal external cache and fetch process for this repo.
+#
+# pin('@@<canonical repo name>', ...) is used to pin the contents of this repo under the vendor
+# directory as if there is a --override_repository flag for this repo.
+# Note that Bazel will NOT update the vendored source for this repo while running vendor command
+# unless it's unpinned. The user can modify and maintain the vendored source for this repo manually.
+###############################################################################

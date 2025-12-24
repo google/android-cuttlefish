@@ -1,0 +1,223 @@
+-------------------
+Written by Ted T'so
+-------------------
+
+> https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+>
+> I understood that, if there is no interface change but some implementation
+> changes, I need to bump revision. If new interface is added, for example, I
+> need to bump current while revision=0 and age++.
+
+So part of the problem here is that libtool is doing something really
+strange because they are trying to use some abstract concept that is
+OS-independent.  I don't use libtool because I find it horribly
+complex and doesn't add enough value to be worth the complexity.
+
+So I'll tell you how things work with respect to Linux's ELF version
+numbering system.  Translating this to libtool's wierd "current,
+revision, age" terminology is left as an exercise to the reader.  I've
+looked at the libtool documentation, and it confuses me horribly.
+Reading it, I suspect it's wrong, but I don't have the time to
+experiment to confirm that the documentation is wrong and how it
+diverges from the libtool implementation.
+
+So let me explain things using the ELF shared library terminology,
+which is "major version, minor version, patchlevel".  This shows up in
+the library name:
+
+	libudev.so.1.6.11
+
+So in this example, the major version number is 1, the minor version
+is 6, and the patchlevel is 11.  The patchlevel is entirely optional,
+and many packages don't use it at all.  The minor number is also
+mostly useless on Linux, but it's still there for historical reasons.
+The patchlevel and minor version numbers were useful back for SunOS
+(and Linux a.out shared library), back when there weren't rpm and dpkg
+as package managers.
+
+So many modern Linux shared libraries will only use the major and
+minor version numbers, e.g:
+
+	libext2fs.so.2.4
+
+The only thing you really need to worry about is the major version
+number, really.  The minor version is *supposed* to change when new
+interfaces has changed (but I and most other people don't do that any
+more).  But the big deal is that the major number *must* get bumped if
+an existing interface has *changed*.
+
+So let's talk about the major version number, and then we'll talk
+about why the minor version number isn't really a big deal for Linux.
+
+So if you change any of the library's function signatures --- and this
+includes changing a type from a 32-bit integer to a 64-bit integer,
+that's an ABI breakage, and so you must bump the major version number
+so that a program that was linked against libfoo.so.4 doesn't try to
+use libfoo.so.5.  That's really the key --- will a program linked
+against the previous version library break if it links against the
+newer version.  If it does, then you need to bump the version number.
+
+So for structures, if you change any of the existing fields, or if the
+application program allocates the structure --- either by declaring it
+on the stack, or via malloc() --- and you expand the structure,
+obviously that will cause problem, and so that's an ABI break.
+
+If however, you arrange to have structures allocated by the library,
+and struct members are always added at the end, then an older program
+won't have any problems.  You can guarantee this by simply only using
+a pointer to the struct in your public header files, and defining the
+struct in a private header file that is not available to userspace
+programs.
+
+Similarly, adding new functions never breaks the ABI.  That's because
+older program won't try to use the newer interfaces.  So if I need to
+change an interface to a function, what I'll generally do is to define
+a new function, and then implement the older function in terms of the
+newer one.  For example:
+
+extern errcode_t ext2fs_open(const char *name, int flags, int superblock,
+			     unsigned int block_size, io_manager manager,
+			     ext2_filsys *ret_fs);
+
+extern errcode_t ext2fs_open2(const char *name, const char *io_options,
+			      int flags, int superblock,
+			      unsigned int block_size, io_manager manager,
+			      ext2_filsys *hret_fs);
+
+As far as the minor version numbers are concerned, the dynamic linker
+doesn't use it.  In SunOS 4, if you have a DT_NEEDED for libfoo.so.4,
+and the dynamic linker finds in its search path:
+
+    libfoo.so.4.8
+    libfoo.so.4.9
+
+It will preferentially use libfoo.so.4.9.
+
+That's not how it works in Linux, though.  In Linux there will be a
+symlink that points libfoo.so.4 to libfoo.so.4.9, and the linker just
+looks for libfoo.so.4.  One could imagine a package manager which
+adjusts the symlink to point at the library with the highest version,
+but given that libfoo.so.4.9 is supposed to contain a superset of
+libfoo.so.4.8, there's no point.  So we just in practice handle all of
+this in the package manager, or via an ELF symbol map.  Or, we just
+assume that since vast majority of software comes from the
+distribution, the distro package manager will just update libraries to
+the newer version as a matter of course, and nothing special needs to
+be done.
+
+So in practice I don't bump the minor version number for e2fsprogs
+each time I add new interfaces, because in practice it really doesn't
+matter for Linux.  We have a much better system that gets used for
+Debian.
+
+For example in Debian there is a file that contains when each symbol
+was first introduced into a library, by its package version number.
+See:
+
+https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/tree/debian/libext2fs2.symbols
+
+This file contains a version number for each symbol in libext2fs2, and
+it tells us what version of libext2fs you need to guarantee that a
+particular symbol is present in the library.  Then when *other*
+packages are built that depend on libext2fs2, the minimum version of
+libext2fs can be calculated based on which symbols they use.
+
+So for example the libf2fs-format4 package has a Debian dependency of:
+
+Depends: libblkid1 (>= 2.17.2), libc6 (>= 2.14), libf2fs5, libuuid1 (>= 2.16)
+
+The minimum version numbers needed for libblkid1 and libuuid1 are
+determined by figuring out all of the symbols used by the
+libf2fs-format4 package, and determining the minimum version number of
+libblkid1 that supports all of those blkid functions.
+
+This gets done automatically, so I didn't have to figure this out.
+All I have in the debian/control file is:
+
+Depends: ${misc:Depends}, ${shlibs:Depends}
+
+Sorry this got so long, but hopefully you'll find this useful.  How
+you bend libtool to your will is something you'll have to figure out,
+because I don't use libtool in my packages.[1]
+
+Cheers,
+
+					- Ted
+
+
+[1] If you are interested in how I do things in e2fsprogs, take a look
+at the Makefile.elf-lib, Makefile.solaris-lib, Makefile.darwin-lib,
+etc. here:
+
+https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/tree/lib
+
+This these Makefile fragments are then pulled into the generated
+makefile using autoconf's substitution rules, here:
+
+https://git.kernel.org/pub/scm/fs/ext2/e2fsprogs.git/tree/lib/ext2fs/Makefile.in
+
+(Search for "@MAKEFILE_ELF@" in the above Makefile.in).
+
+So when someone runs "configure --enable-elf-shlibs", they get the ELF
+shared libraries built.  On BSD and MacOS systems they just have to
+run "configure --enable-bsd-shlibs", and so on.
+
+Personally, since most people don't bother to write truly portable
+programs, as their C code is full of Linux'isms, using libtool is just
+overkill, because they probably can't build on any other OS *anyway*
+so libtool's slow and complex abstraction layer is totally wasted.
+Might as well not use autoconf, automake, and libtool at all.
+
+On the other hand, if you really *do* worry about portability on other
+OS's (e2fsprogs builds on MacOS, NetBSD, Hurd, Solaris, etc.) then
+using autoconf makes sense --- but I *still* don't think the
+complexity of libtool is worth it.
+
+= Add-on =
+If you are going to be making one less major update, this is the
+perfect time to make sure that data structures are allocated by the
+library, and are (ideally) opaque to the calling application (so they
+only manipulate structure poitners).  That is, the structure
+definition is not exposed in the public header file, and you use
+accessor functions to set and get fields in the structure.
+
+If you can't do that for all data structures, if you can do that with
+your primary data structure that's going to make your life much easier
+in the long term.  For ext2fs, that's the file systme handle.  It's
+created by ext2fs_open(), and it's passed to all other library
+functions as the first argument.
+
+The other thing you might want to consider doing is adding a magic
+number to the beginning of each structure.  That way you can tell if
+the wrong structure gets passed to a library.  It's also helpful for
+doing the equivalent of subclassing in C.
+
+This is how we do it in libext2fs --- we use com_err to define the
+magic numbers:
+
+	error_table ext2
+
+ec	EXT2_ET_BASE,
+	"EXT2FS Library version @E2FSPROGS_VERSION@"
+
+ec	EXT2_ET_MAGIC_EXT2FS_FILSYS,
+	"Wrong magic number for ext2_filsys structure"
+
+ec	EXT2_ET_MAGIC_BADBLOCKS_LIST,
+	"Wrong magic number for badblocks_list structure"
+	...
+
+And then every single structure starts like so:
+
+struct struct_ext2_filsys {
+	errcode_t			magic;
+	...
+
+struct ext2_struct_inode_scan {
+	errcode_t		magic;
+	...
+
+And then before we use any pointer we do this:
+
+	if (file->magic != EXT2_ET_MAGIC_EXT2_FILE)
+		return EXT2_ET_MAGIC_EXT2_FILE;

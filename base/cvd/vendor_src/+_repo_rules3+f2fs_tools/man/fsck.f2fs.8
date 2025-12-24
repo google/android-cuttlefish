@@ -1,0 +1,121 @@
+.\" Copyright (c) 2013 Samsung Electronics Co., Ltd.
+.\"
+.TH FSCK.F2FS 8
+.SH NAME
+fsck.f2fs \- check a Linux F2FS file system
+.SH SYNOPSIS
+.B fsck.f2fs
+[
+.B \-a
+.I enable auto fix
+]
+[
+.B \-f
+.I enable force fix
+]
+[
+.B \-H
+]
+[
+.B \-M
+.I show file map
+]
+[
+.B \-p
+.I enable preen mode
+]
+[
+.B \-t
+.I show stored directory tree
+]
+[
+.B \-d
+.I debugging-level
+]
+.I device
+.SH DESCRIPTION
+.B fsck.f2fs
+is used to check an f2fs file system (usually in a disk partition).
+\fIdevice\fP is the special file corresponding to the device (e.g.
+\fI/dev/sdXX\fP).
+.PP
+The exit code returned by
+.B fsck.f2fs
+is 0 on success and -1 on failure.
+.SH OPTIONS
+.TP
+.BI \-a " enable auto fix"
+Enable to run file system check only if a bug was reported by the F2FS kernel
+module. It is disabled by default.
+.TP
+.BI \-f " enable force fix"
+Enable to fix all the inconsistency in the partition.
+.TP
+.BI \-H
+Specify support write hint.
+.TP
+.BI \-M " show files map"
+Enable to show all the filenames and inode numbers stored in the image
+.TP
+.BI \-p " enable preen mode"
+Same as "-a" to support general fsck convention.
+.TP
+.BI \-t " show stored directory tree"
+Enable to show every directory entries in the partition.
+.TP
+.BI \-d " debug-level"
+Specify the level of debugging options.
+The default number is 0, which shows basic debugging messages.
+.TP
+.BI \--nolinear-lookup
+Tune linear lookup fallback, must specify an argument, 0: enable linear lookup, 1: disable linear lookup.
+.TP
+.BI \-\-fault_injection=%d " enable fault injection"
+Enable fault injection in all supported types with specified injection rate.
+.TP
+.BI \-\-fault_type=%d " configure fault injection type"
+Support configuring fault injection type, should be enabled with
+fault_injection option, fault type value is shown below, it supports
+single or combined type.
+.br
+===========================      ===========
+.br
+Type_Name                        Type_Value
+.br
+===========================      ===========
+.br
+FAULT_SEG_TYPE                   0x00000001
+.br
+FAULT_SUM_TYPE                   0x00000002
+.br
+FAULT_SUM_ENT                    0x00000004
+.br
+FAULT_NAT                        0x00000008
+.br
+FAULT_NODE                       0x00000010
+.br
+FAULT_XATTR_ENT                  0x00000020
+.br
+FAULT_COMPR                      0x00000040
+.br
+FAULT_INODE                      0x00000080
+.br
+FAULT_DENTRY                     0x00000100
+.br
+FAULT_DATA                       0x00000200
+.br
+FAULT_QUOTA                      0x00000400
+.TP
+.SH AUTHOR
+Initial checking code was written by Byoung Geun Kim <bgbg.kim@samsung.com>.
+Jaegeuk Kim <jaegeuk@kernel.org> reworked most parts of the codes to support
+fixing any corrupted images.
+.SH AVAILABILITY
+.B fsck.f2fs
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
+.SH SEE ALSO
+.BR mkfs.f2fs(8),
+.BR dump.f2fs(8),
+.BR defrag.f2fs(8),
+.BR resize.f2fs(8),
+.BR sload.f2fs(8).
