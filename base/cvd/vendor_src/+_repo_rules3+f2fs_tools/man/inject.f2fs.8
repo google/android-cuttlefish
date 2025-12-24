@@ -1,0 +1,225 @@
+.\" Copyright (c) 2024 OPPO Mobile Comm Corp., Ltd.
+.\"
+.TH INJECT.F2FS 8
+.SH NAME
+inject.f2fs \- inject a Linux F2FS file system
+.SH SYNOPSIS
+.B inject.f2fs
+[
+.I options
+]
+.I device
+.SH DESCRIPTION
+.B inject.f2fs
+is used to modify metadata or data (directory entry) of f2fs file system
+image offline flexibly.
+.SH OPTIONS
+.TP
+.BI \-d " debug level [default:0]"
+Specify the level of debugging options.
+.TP
+.BI \-V
+Print the version number and exit.
+.TP
+.BI \-\-mb " member name"
+Specify the member name in a struct that is injected.
+.TP
+.BI \-\-val " new value"
+New value to set if \fImb\fP is a number.
+.TP
+.BI \-\-str " new string"
+New string to set if \fImb\fP is a string.
+.TP
+.BI \-\-idx " slot index"
+Specify which slot is injected if \fImb\fP is an array.
+.TP
+.BI \-\-nid " nid"
+Specify which nid is injected.
+.TP
+.BI \-\-blk " blkaddr"
+Specify which blkaddr is injected.
+.TP
+.BI \-\-sb " 0 or 1 or 2"
+Inject super block, its argument means which sb pack is injected, where 0 choses the current valid sb automatically.
+The available \fImb\fP of \fIsb\fP are:
+.RS 1.2i
+.TP
+.BI magic
+magic numbe.
+.TP
+.BI s_stop_reason
+s_stop_reason array.
+.TP
+.BI s_errors
+s_errors array.
+.TP
+.BI devs.path
+path in devs array.
+.RE
+.TP
+.BI \-\-cp " 0 or 1 or 2"
+Inject checkpoint, its argument means which cp pack is injected, where 0 choses the current valid cp automatically.
+The available \fImb\fP of \fIcp\fP are:
+.RS 1.2i
+.TP
+.BI checkpoint_ver
+checkpoint version.
+.TP
+.BI ckpt_flags
+checkpoint flags.
+.TP
+.BI cur_node_segno
+cur_node_segno array.
+.TP
+.BI cur_node_blkoff
+cur_node_blkoff array.
+.TP
+.BI cur_data_segno
+cur_data_segno array.
+.TP
+.BI cur_data_blkoff
+cur_data_blkoff array.
+.RE
+.TP
+.BI \-\-nat " 0 or 1 or 2"
+Inject nat entry specified by \fInid\fP, its argument means which nat pack is injected, where 0 choses the current valid nat automatically.
+The available \fImb\fP of \fInat\fP are:
+.RS 1.2i
+.TP
+.BI version
+nat entry version.
+.TP
+.BI ino
+nat entry ino.
+.TP
+.BI block_addr
+nat entry block_addr.
+.RE
+.TP
+.BI \-\-sit " 0 or 1 or 2"
+Inject sit entry specified by \fIblk\fP, its argument means which sit pack is injected, where 0 choses the current valid sit automatically.
+The available \fImb\fP of \fIsit\fP are:
+.RS 1.2i
+.TP
+.BI vblocks
+sit entry vblocks.
+.TP
+.BI valid_map
+sit entry valid_map.
+.TP
+.BI mtime
+sit entry mtime.
+.RE
+.TP
+.BI \-\-ssa
+Inject summary block or summary entry specified by \fIblk\fP.
+The available \fImb\fP of \fIssa\fP are:
+.RS 1.2i
+.TP
+.BI entry_type
+summary block footer entry_type.
+.TP
+.BI check_sum
+summary block footer check_sum.
+.TP
+.BI nid
+summary entry nid.
+.TP
+.BI version
+summary entry version.
+.TP
+.BI ofs_in_node
+summary entry ofs_in_node.
+.RE
+.TP
+.BI \-\-node
+Inject node block specified by \fInid\P.
+The available \fImb\fP of \fInode\fP are:
+.RS 1.2i
+.TP
+.BI nid
+node footer nid.
+.TP
+.BI ino
+node footer ino.
+.TP
+.BI flag
+node footer flag.
+.TP
+.BI cp_ver
+node footer cp_ver.
+.TP
+.BI next_blkaddr
+node footer next_blkaddr.
+.TP
+.BI i_mode
+inode i_mode.
+.TP
+.BI i_advise
+inode i_advise.
+.TP
+.BI i_inline
+inode i_inline.
+.TP
+.BI i_links
+inode i_links.
+.TP
+.BI i_size
+inode i_size.
+.TP
+.BI i_blocks
+inode i_blocks.
+.TP
+.BI i_extra_isize
+inode i_extra_isize.
+.TP
+.BI i_inode_checksum
+inode i_inode_checksum.
+.TP
+.BI i_addr
+inode i_addr array specified by \fIidx\fP.
+.TP
+.BI i_nid
+inode i_nid array specified by \fIidx\fP.
+.TP
+.BI addr
+{in}direct node nid/addr array specified by \fIidx\fP.
+.RE
+.TP
+.BI \-\-dent
+Inject dentry block or dir entry specified \fInid\fP.
+The available \fImb\fP of \fIdent\fP are:
+.RS 1.2i
+.TP
+.BI d_bitmap
+dentry block d_bitmap.
+.TP
+.BI d_hash
+dentry hash.
+.TP
+.BI d_ino
+dentry ino.
+.TP
+.BI d_ftype
+dentry ftype.
+.RE
+.TP
+.BI \-\-dry\-run
+Do not really inject.
+
+.PP
+.SH AUTHOR
+This version of
+.B inject.f2fs
+has been written by Sheng Yong <shengyong@oppo.com>.
+.SH AVAILABILITY
+.B inject.f2fs
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
+.SH "SEE ALSO"
+.BR mkfs.f2fs(8),
+.BR fsck.f2fs(8),
+.BR dump.f2fs(8),
+.BR defrag.f2fs(8),
+.BR resize.f2fs(8),
+.BR sload.f2fs(8),
+.BR defrag.f2fs(8).

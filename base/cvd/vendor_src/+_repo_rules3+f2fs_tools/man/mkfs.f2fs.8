@@ -1,0 +1,306 @@
+.\" Copyright (c) 2012 Samsung Electronics Co., Ltd.
+.\"             http://www.samsung.com/
+.\"  Written by Jaegeuk Kim <jaegeuk.kim@samsung.com>
+.\"
+.TH MKFS.F2FS 8
+.SH NAME
+mkfs.f2fs \- create an F2FS file system
+.SH SYNOPSIS
+.B mkfs.f2fs
+[
+.B \-c
+.I device-list
+]
+[
+.B \-d
+.I debug-level
+]
+[
+.B \-e
+.I extension-list
+]
+[
+.B \-E
+.I extension-list
+]
+[
+.B \-f
+]
+[
+.B \-g
+.I default-options
+]
+[
+.B \-H
+]
+[
+.B \-i
+]
+[
+.B \-l
+.I volume-label
+]
+[
+.B \-m
+]
+[
+.B \-o
+.I overprovision-ratio-percentage
+]
+[
+.B \-O
+.I feature-list
+]
+[
+.B \-C
+.I encoding:flags
+]
+[
+.B \-q
+]
+[
+.B \-r
+]
+[
+.B \-R
+.I root_owner
+]
+[
+.B \-s
+.I #-of-segments-per-section
+]
+[
+.B \-S
+]
+[
+.B \-t
+.I nodiscard/discard
+]
+[
+.B \-T
+.I timestamp
+]
+[
+.B \-w
+.I wanted-sector-size
+]
+[
+.B \-z
+.I #-of-sections-per-zone
+]
+[
+.B \-V
+]
+[
+.B \-Z
+.I #-of-reserved-sections
+]
+.I device
+.I [sectors]
+.SH DESCRIPTION
+.B mkfs.f2fs
+is used to create a f2fs file system (usually in a disk partition).
+\fIdevice\fP is the special file corresponding to the device (e.g.
+\fI/dev/sdXX\fP).
+\fIsectors\fP is optionally given for specifying the filesystem size.
+.PP
+The exit code returned by
+.B mkfs.f2fs
+is 0 on success and 1 on failure.
+.SH OPTIONS
+.TP
+.BI \-a " heap-based-allocation" (deprecated)
+Specify 1 or 0 to enable/disable heap based block allocation policy.
+If the value is equal to 1, each of active log areas are initially
+assigned separately according to the whole volume size.
+The default value is 1.
+.TP
+.BI \-b " block size"
+Specify the block size in bytes. Valid blocksizes are powers of 2.
+Currently, the kernel is only able to mount f2fs filesystems where the
+block size matches the page size.
+The default value is 4096.
+.TP
+.BI \-c " device-list"
+Build f2fs with these additional devices, so that the user can
+see all the devices as one big volume.
+Supports up to 7 devices except meta device.
+.TP
+.BI \-d " debug-level"
+Specify the level of debugging options.
+The default number is 0, which shows basic debugging messages.
+.TP
+.BI \-e " extension-list"
+Specify a list of file extensions that f2fs will treat as cold files.
+The data of files with those extensions will be stored in the cold log.
+The default list includes most of the multimedia file extensions such as
+jpg, gif, mpeg, mkv, and so on.
+.TP
+.BI \-E " extension-list"
+Specify a list of file extensions that f2fs will treat as hot files.
+The data of files with those extensions will be stored in the hot log.
+The default list includes database file extensions, such as db.
+.TP
+.BI \-f
+Force overwrite when an existing filesystem is detected on the device.
+By default, mkfs.f2fs will not write to the device if it suspects that
+there is a filesystem or partition table on the device already.
+.TP
+.BI \-g " default-options"
+Use a default set of options.
+The following values are supported:
+.RS 1.2i
+.TP 1.2i
+.B android
+Use default options for Android having "-d1 -f -w 4096 -R 0:0 -O encrypt -O project_quota,extra_attr,{quota} -O verity".
+.RE
+.TP
+.BI \-H
+Specify support write hint.
+.TP
+.BI \-i
+Enable extended node bitmap.
+.TP
+.BI \-l " volume-label"
+Specify the volume label to the partition mounted as F2FS.
+.TP
+.BI \-m
+Specify f2fs filesystem to supports the block zoned feature.
+Without it, the filesystem doesn't support the feature.
+.TP
+.BI \-o " overprovision-ratio-percentage"
+Specify the percentage of the volume that will be used as overprovision area.
+This area is hidden to users, and utilized by F2FS cleaner. If not specified, the
+best number will be assigned automatically according to the partition size.
+.TP
+.BI \-O " feature-list"
+Set additional features for the filesystem. Features are comma separated, and
+the flag can be repeated. The following features are supported:
+.RS 1.2i
+.TP 1.2i
+.B encrypt
+Enable support for filesystem level encryption.
+.TP
+.B extra_attr
+Enable extra attr feature, required for some of the other features.
+.TP
+.B project_quota
+Enable project ID tracking. This is used for projet quota accounting. Requires extra attr.
+.TP
+.B inode_checksum
+Enable inode checksum. Requires extra attr.
+.TP
+.B flexible_inline_xattr
+Enable flexible inline xattr. Requires extra attr.
+.TP
+.B quota
+Enable quotas.
+.TP
+.B inode_crtime
+Enable inode creation time feature. Requires extra attr.
+.TP
+.B lost_found
+Enable lost+found feature.
+.TP
+.B verity
+Enable support for verity protected files (a.k.a. fs-verity).
+.TP
+.B sb_checksum
+Enable superblock checksum.
+.TP
+.B casefold
+Enable casefolding support in the filesystem. Optional flags can be passed with
+.B \-C
+.TP
+.B compression
+Enable support for filesystem level compression. Requires extra attr.
+.TP
+.B ro
+Enable readonly feature to eliminate OVP/SSA on-disk layout for small readonly partition.
+.RE
+.TP
+.BI \-C " encoding:flags"
+Support casefolding with a specific encoding, with optional comma separated flags.
+.RS 1.2i
+.TP 1.2i
+.I encoding:
+.RS 1.2i
+.TP 1.2i
+.B utf8
+Use UTF-8 for casefolding.
+.RE
+.I flags:
+.RS 1.2i
+.TP 1.2i
+.B strict
+This flag specifies that invalid strings should be rejected by the filesystem.
+Default is disabled.
+.RE
+.RE
+.TP
+.BI \-q
+Quiet mode.
+With it, mkfs.f2fs does not show any messages, including the basic messages.
+.TP
+.BI \-r
+Sets the checkpointing srand seed to 0.
+.TP
+.BI \-R
+Give root_owner option for initial uid/gid assignment.
+Default is set by getuid()/getgid(), and assigned by "-R $uid:$gid".
+.TP
+.BI \-s " #-of-segments-per-section"
+Specify the number of segments per section. A section consists of
+multiple consecutive segments, and is the unit of garbage collection.
+The default number is 1, which means one segment is assigned to a section.
+.TP
+.BI \-S
+Enable sparse mode.
+.TP
+.BI \-t " 1/0"
+Specify 1 or 0 to enable or disable discard policy, respectively.
+The default value is 1.
+.TP
+.BI \-T " timestamp"
+Set inodes times to a given timestamp. By default, the current time will be used.
+This behaviour corresponds to the value -1.
+.TP
+.BI \-w " wanted-sector-size"
+Specify the sector size in bytes.
+Without it, the sectors will be calculated by device sector size.
+.TP
+.BI \-z " #-of-sections-per-zone"
+Specify the number of sections per zone. A zone consists of multiple sections.
+F2FS allocates segments for active logs with separated zones as much as possible.
+The default number is 1, which means a zone consists of one section.
+.TP
+.BI sectors
+Number of sectors. Default is determined by device size.
+.TP
+.BI \-V
+Print the version number and exit.
+.TP
+.BI \-Z " #-of-reserved-sections"
+Specify the number of GC reserved sections for zoned device. If specified
+to non-zero, reserved segments count is set to the larger size between 8
+sections and the input value. If specified to zero, the best number will be
+assigned automatically according to the partition size.
+If overprovision-ratio-percentage is not specified, it will set to default
+3.0%. Without '-m' option, the filesystem doesn't support the feature.
+.TP
+.BI \-h,\ \-\-help
+Print usage and exit.
+.SH AUTHOR
+This version of
+.B mkfs.f2fs
+has been written by Jaegeuk Kim <jaegeuk.kim@samsung.com>.
+.SH AVAILABILITY
+.B mkfs.f2fs
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
+.SH SEE ALSO
+.BR mkfs (8),
+.BR fsck.f2fs(8),
+.BR dump.f2fs(8),
+.BR defrag.f2fs(8),
+.BR resize.f2fs(8),
+.BR sload.f2fs(8).

@@ -1,0 +1,15 @@
+cc_defaults {
+    name: "f2fs-io-defaults",
+    cflags: [
+        "-Wno-unused-function"
+    ],
+}
+
+cc_binary {
+    name: "f2fs_io",
+    defaults: [ "f2fs-io-defaults" ],
+    srcs: [
+        "f2fs_io.c",
+    ],
+    product_specific: true,
+}

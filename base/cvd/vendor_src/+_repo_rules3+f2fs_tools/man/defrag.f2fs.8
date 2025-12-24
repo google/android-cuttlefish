@@ -1,0 +1,82 @@
+.\" Copyright (c) 2015 Jaegeuk Kim <jaegeuk@kernel.org>
+.\"
+.TH DEFRAG.F2FS 8
+.SH NAME
+defrag.f2fs \- relocate blocks in a given area to the specified region
+.SH SYNOPSIS
+.B defrag.f2fs
+[
+.B \-s
+.I start block address
+]
+[
+.B \-l
+.I number of blocks
+]
+[
+.B \-t
+.I target block address
+]
+[
+.B \-H
+]
+[
+.B \-i
+.I direction
+]
+[
+.B \-d
+.I debugging-level
+]
+.I device
+.SH DESCRIPTION
+.B defrag.f2fs
+is used to move specified number of blocks starting from a given block address
+to the target block address with a direction.
+\fIdevice\fP is the special file corresponding to the device (e.g.
+\fI/dev/sdXX\fP).
+
+For example,
+# defrag.f2fs -s 0x4000 -l 0x100 -t 0x10000 -i /dev/sdb1
+
+This moves blocks between 0x4000 and 0x4100 to the left-hand area of 0x10000.
+
+.PP
+The exit code returned by
+.B defrag.f2fs
+is 0 on success and -1 on failure.
+.SH OPTIONS
+.TP
+.BI \-s " start block address"
+Specify the starting block address.
+.TP
+.BI \-l " number of blocks"
+Specify the number of blocks to move.
+.TP
+.BI \-t " target block address"
+Specify the destination block address.
+.TP
+.BI \-H
+Specify support write hint.
+.TP
+.BI \-i " direction"
+Set the direction to left. If it is not set, the direction becomes right
+by default.
+.TP
+.BI \-d " debug-level"
+Specify the level of debugging options.
+The default number is 0, which shows basic debugging messages.
+.TP
+.SH AUTHOR
+This version of
+.B defrag.f2fs
+has been written by Jaegeuk Kim <jaegeuk@kernel.org>.
+.SH AVAILABILITY
+.B defrag.f2fs
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
+.SH SEE ALSO
+.BR mkfs.f2fs(8),
+.BR dump.f2fs(8),
+.BR fsck.f2fs(8),
+.BR resize.f2fs(8),
+.BR sload.f2fs(8).

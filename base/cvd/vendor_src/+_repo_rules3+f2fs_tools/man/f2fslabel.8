@@ -1,0 +1,33 @@
+.\" Copyright (c) 2021 Samsung Electronics Co., Ltd.
+.\"
+.TH F2FSLABEL 8
+.SH NAME
+f2fslabel \- Change the label on an f2fs volume
+.SH SYNOPSIS
+.B f2fslabel
+.I device
+[
+.I volume-label
+]
+.SH DESCRIPTION
+.B f2fslabel
+will display or change the volume label on the f2fs located on
+.I device.
+.PP
+If the optional argument
+.I volume-label
+is present, then
+.B f2fslabel
+will set the volume label to be
+.IR volume-label .
+.PP
+Otherwise,
+.B f2fslabel
+will simply show the current label.
+.PP
+.SH AUTHOR
+.B f2fslabel
+was written by Dongwoo Lee (dwoo08.lee@samsung.com).
+.SH AVAILABILITY
+.B f2fslabel
+is available from git://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git.
