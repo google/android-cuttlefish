@@ -211,6 +211,8 @@ inline StackTraceEntry::operator android::base::expected<T,
   return android::base::unexpected(std::move(*this));
 }
 
+std::ostream& operator<<(std::ostream&, const StackTraceError&);
+
 }  // namespace cuttlefish
 
 /**

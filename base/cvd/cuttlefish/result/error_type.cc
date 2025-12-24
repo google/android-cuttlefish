@@ -16,6 +16,7 @@
 #include "cuttlefish/result/error_type.h"
 
 #include <optional>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -208,6 +209,10 @@ std::string ResultErrorFormat(bool color) {
     fmt_str = "v";
   }
   return "{:" + fmt_str + "}";
+}
+
+std::ostream& operator<<(std::ostream& out, const StackTraceError& error) {
+  return out << error.FormatForEnv();
 }
 
 }  // namespace cuttlefish
