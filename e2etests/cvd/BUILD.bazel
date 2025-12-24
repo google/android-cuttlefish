@@ -1,4 +1,25 @@
-load("boot_tests.bzl", "cvd_command_boot_test", "cvd_load_boot_test", "launch_cvd_boot_test")
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
+load("boot_tests.bzl", "cvd_command_boot_test", "cvd_cts_test", "cvd_load_boot_test", "launch_cvd_boot_test")
+
+py_library(
+    name = "convert_xts_xml_to_junit_xml",
+    srcs = ["convert_xts_xml_to_junit_xml.py"],
+    srcs_version = "PY3",
+)
+
+py_test(
+    name = "convert_xts_xml_to_junit_xml_test",
+    srcs = ["convert_xts_xml_to_junit_xml_test.py"],
+    srcs_version = "PY3",
+    deps = [":convert_xts_xml_to_junit_xml"],
+)
+
+py_binary(
+    name = "convert_xts_xml_to_junit_xml_bin",
+    srcs = ["convert_xts_xml_to_junit_xml.py"],
+    srcs_version = "PY3",
+    main = "convert_xts_xml_to_junit_xml.py",
+)
 
 # cvd fetch + launch_cvd tests
 launch_cvd_boot_test(
@@ -106,13 +127,83 @@ cvd_command_boot_test(
     target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
-cvd_command_boot_test(
-    name = "this_test_will_fail",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "this_command_does_not_exist",
+cvd_cts_test(
+    name = "aosp_android_latest_swiftshader_deqp_vk_smoke_tests",
+    cuttlefish_branch = "aosp-android-latest-release",
+    cuttlefish_target = "aosp_cf_x86_64_only_phone-userdebug",
+    cuttlefish_create_args = [
+        "--gpu_mode=guest_swiftshader",
     ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
+    cts_branch = "aosp-android15-tests-release",
+    cts_target = "test_suites_x86_64",
+    cts_args = [
+        "--include-filter=CtsDeqpTestCases",
+        "--module-arg=CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke*",
+    ],
+)
+
+cvd_cts_test(
+    name = "aosp_android_latest_auto_enables_gfxstream_test",
+    cuttlefish_branch = "aosp-android-latest-release",
+    cuttlefish_target = "aosp_cf_x86_64_only_phone-userdebug",
+    cuttlefish_create_args = [
+        "--gpu_mode=auto",
+    ],
+    cts_branch = "aosp-android15-tests-release",
+    cts_target = "test_suites_x86_64",
+    cts_args = [
+        "--include-filter=CuttlefishGraphicsConfigurationTest",
+        "--module-arg=CuttlefishGraphicsConfigurationTest:set-option:expected-egl:emulation",
+    ],
+    tags = ["requires_gpu"],
+)
+
+cvd_cts_test(
+    name = "aosp_android_latest_gfxstream_deqp_vk_smoke_tests",
+    cuttlefish_branch = "aosp-android-latest-release",
+    cuttlefish_target = "aosp_cf_x86_64_only_phone-userdebug",
+    cuttlefish_create_args = [
+        "--gpu_mode=gfxstream",
+    ],
+    cts_branch = "aosp-android15-tests-release",
+    cts_target = "test_suites_x86_64",
+    cts_args = [
+        "--include-filter=CtsDeqpTestCases",
+        "--module-arg=CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke*",
+    ],
+    tags = ["requires_gpu"],
+)
+
+cvd_cts_test(
+    name = "aosp_android_latest_gfxstream_guest_angle_host_swiftshader_deqp_vk_smoke_tests",
+    cuttlefish_branch = "aosp-android-latest-release",
+    cuttlefish_target = "aosp_cf_x86_64_only_phone-userdebug",
+    cuttlefish_create_args = [
+        "--gpu_mode=gfxstream_guest_angle_host_swiftshader",
+    ],
+    cts_branch = "aosp-android15-tests-release",
+    cts_target = "test_suites_x86_64",
+    cts_args = [
+        "--include-filter=CtsDeqpTestCases",
+        "--module-arg=CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke*",
+    ],
+    # TODO: still need vulkan loader available in kokoro images.
+    tags = ["requires_gpu"],
+)
+
+cvd_cts_test(
+    name = "aosp_android_latest_gfxstream_guest_angle_host_swiftshader_graphics_cts_tests",
+    cuttlefish_branch = "aosp-android-latest-release",
+    cuttlefish_target = "aosp_cf_x86_64_only_phone-userdebug",
+    cuttlefish_create_args = [
+        "--gpu_mode=gfxstream_guest_angle_host_swiftshader",
+    ],
+    cts_branch = "aosp-android15-tests-release",
+    cts_target = "test_suites_x86_64",
+    cts_args = [
+        "--include-filter=CtsGraphicsTestCases",
+    ],
+    # TODO: still need vulkan loader available in kokoro images.
     tags = ["requires_gpu"],
 )
 
