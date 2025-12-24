@@ -114,8 +114,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
             Result<void> result =
                 BroadcastLauncherAction(*config, parsed, extended_action);
             if (!result.ok()) {
-              LOG(FATAL) << "RunLauncherAction failed: "
-                         << result.error().FormatForEnv();
+              LOG(FATAL) << "RunLauncherAction failed: " << result.error();
             }
           });
 
@@ -128,7 +127,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
         Result<void> result = RecursivelyRemoveDirectory(parsed.snapshot_path);
         if (!result.ok()) {
           LOG(ERROR) << "Failed to delete incomplete snapshot: "
-                     << result.error().FormatForEnv();
+                     << result.error();
         }
       });
 
@@ -159,7 +158,7 @@ int main(int argc, char** argv) {
   std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
   auto result = cuttlefish::SnapshotCvdMain(std::move(all_args));
   if (!result.ok()) {
-    LOG(ERROR) << result.error().FormatForEnv();
+    LOG(ERROR) << result.error();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

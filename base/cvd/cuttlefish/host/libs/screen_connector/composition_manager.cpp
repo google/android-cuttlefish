@@ -181,7 +181,7 @@ void CompositionManager::OnDisplayCreated(const DisplayCreatedEvent& e) {
       cluster_index_, e.display_number, e.display_width, e.display_height);
 
   if (!result.ok()) {
-    LOG(FATAL) << "OnDisplayCreated failed: " << result.error().FormatForEnv();
+    LOG(FATAL) << "OnDisplayCreated failed: " << result.error();
   }
 }
 

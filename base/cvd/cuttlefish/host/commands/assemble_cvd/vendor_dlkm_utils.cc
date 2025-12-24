@@ -563,7 +563,7 @@ bool MoveIfChanged(const std::string& src, const std::string& dst) {
   }
   const auto ret = RenameFile(src, dst);
   if (!ret.ok()) {
-    LOG(ERROR) << ret.error().FormatForEnv();
+    LOG(ERROR) << ret.error();
     return false;
   }
   return true;

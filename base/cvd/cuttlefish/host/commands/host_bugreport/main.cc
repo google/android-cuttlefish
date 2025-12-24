@@ -215,7 +215,7 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
   if (Result<void> res = RemoveFile(log_filename); !res.ok()) {
     LOG(INFO) << "Failed to remove host bug report log file '" << log_filename
-              << "': " << res.error().FormatForEnv();
+              << "': " << res.error();
   }
 
   return {};
@@ -226,6 +226,6 @@ Result<void> CvdHostBugreportMain(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   auto result = cuttlefish::CvdHostBugreportMain(argc, argv);
-  CHECK(result.ok()) << result.error().FormatForEnv();
+  CHECK(result.ok()) << result.error();
   return 0;
 }

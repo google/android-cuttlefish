@@ -472,8 +472,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     LOG(WARNING) << strsignal(signal) << " signal received, cleanning up";
     auto interrupt_res = subprocess_waiter_.Interrupt();
     if (!interrupt_res.ok()) {
-      LOG(ERROR) << "Failed to stop subprocesses: "
-                 << interrupt_res.error().FormatForEnv();
+      LOG(ERROR) << "Failed to stop subprocesses: " << interrupt_res.error();
       LOG(ERROR) << "Devices may still be executing in the background, run "
                     "`cvd reset` to ensure a clean state";
     }
@@ -481,8 +480,7 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
     group.SetAllStates(cvd::INSTANCE_STATE_CANCELLED);
     auto update_res = instance_manager_.UpdateInstanceGroup(group);
     if (!update_res.ok()) {
-      LOG(ERROR) << "Failed to update group status: "
-                 << update_res.error().FormatForEnv();
+      LOG(ERROR) << "Failed to update group status: " << update_res.error();
     }
     // It's technically possible for the group's state to be set to
     // "running" before abort has a chance to run, but that can only happen
@@ -528,7 +526,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
   if (!conn_res.ok()) {
     LOG(ERROR) << "Failed to pre-register devices with operator, group "
                   "information won't show in the UI: "
-               << conn_res.error().FormatForEnv();
+               << conn_res.error();
   }
   LOG(INFO) << "launch command: " << launch_command;
 
@@ -565,7 +563,7 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   auto symlink_config_res = SymlinkPreviousConfig(group.HomeDir());
   if (!symlink_config_res.ok()) {
     LOG(ERROR) << "Failed to symlink the config file at system wide home: "
-               << symlink_config_res.error().FormatForEnv();
+               << symlink_config_res.error();
   }
   Result<void> start_res =
       LaunchDevice(std::move(command), group, envs, request);

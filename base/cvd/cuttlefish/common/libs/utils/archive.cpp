@@ -141,8 +141,7 @@ std::string ExtractArchiveToMemory(const std::string& archive_filepath,
 
   if (!stdout_str.ok()) {
     LOG(ERROR) << "Could not extract \"" << archive_member << "\" from \""
-               << archive_filepath
-               << "\" to memory: " << stdout_str.error().FormatForEnv();
+               << archive_filepath << "\" to memory: " << stdout_str.error();
     return "";
   }
   return *stdout_str;
@@ -159,7 +158,7 @@ std::vector<std::string> ArchiveContents(const std::string& archive) {
     return android::base::Split(*bsdtar_output, "\n");
   } else {
     LOG(ERROR) << "`bsdtar -tf '" << archive
-               << "'`failed: " << bsdtar_output.error().FormatForEnv();
+               << "'`failed: " << bsdtar_output.error();
     return {};
   }
 }

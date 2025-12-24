@@ -535,7 +535,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   if (!graphics_detector_stdout.ok()) {
     LOG(ERROR)
         << "Failed to run graphics detector, assuming no availability: \n"
-        << graphics_detector_stdout.error().FormatForEnv();
+        << graphics_detector_stdout.error();
     return {};
   }
   LOG(DEBUG) << *graphics_detector_stdout;
@@ -545,7 +545,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
   if (!graphics_availability_content_result.ok()) {
     LOG(ERROR) << "Failed to read graphics availability from file "
                << graphics_availability_file.path << ":"
-               << graphics_availability_content_result.error().FormatForEnv()
+               << graphics_availability_content_result.error()
                << ". Assuming no availability.";
     return {};
   }

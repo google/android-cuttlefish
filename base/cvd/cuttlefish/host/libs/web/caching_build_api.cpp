@@ -73,7 +73,7 @@ bool EnsureCacheDirectory(const std::string& cache_base_path) {
     return true;
   }
   LOG(WARNING) << "Failed to create cache directory \"" << cache_base_path
-               << "\" with error: " << result.error().FormatForEnv();
+               << "\" with error: " << result.error();
   LOG(WARNING) << "Caching disabled";
   return false;
 }

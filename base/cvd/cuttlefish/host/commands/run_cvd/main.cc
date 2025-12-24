@@ -288,6 +288,6 @@ int main(int argc, char** argv) {
   if (result.ok()) {
     return 0;
   }
-  LOG(ERROR) << result.error().FormatForEnv();
+  LOG(ERROR) << result.error();
   abort();
 }

@@ -182,8 +182,7 @@ std::string DefaultCustomActionConfig() {
   if (DirectoryExists(custom_action_config_dir)) {
     auto directory_contents_result =
         DirectoryContents(custom_action_config_dir);
-    CHECK(directory_contents_result.ok())
-        << directory_contents_result.error().FormatForEnv();
+    CHECK(directory_contents_result.ok()) << directory_contents_result.error();
     auto custom_action_configs = std::move(*directory_contents_result);
     if (custom_action_configs.size() > 1) {
       LOG(ERROR) << "Expected at most one custom action config in "

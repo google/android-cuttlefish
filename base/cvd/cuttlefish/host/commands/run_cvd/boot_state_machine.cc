@@ -326,8 +326,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
           [this, restore_complete_pipe_write, restore_complete_stop_read]() {
             const auto result =
                 vm_manager_.WaitForRestoreComplete(restore_complete_stop_read);
-            CHECK(result.ok()) << "Failed to wait for restore complete: "
-                               << result.error().FormatForEnv();
+            CHECK(result.ok())
+                << "Failed to wait for restore complete: " << result.error();
             if (!result.value()) {
               return;
             }
@@ -462,10 +462,10 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               break;
             }
             auto monitor_res = GetLauncherMonitorFromInstance(instance_, 5);
-            CHECK(monitor_res.ok()) << monitor_res.error().FormatForEnv();
+            CHECK(monitor_res.ok()) << monitor_res.error();
             auto fail_res = RunLauncherAction(
                 *monitor_res, LauncherAction::kFail, std::optional<int>());
-            CHECK(fail_res.ok()) << fail_res.error().FormatForEnv();
+            CHECK(fail_res.ok()) << fail_res.error();
           }
           break;
         }
@@ -552,7 +552,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
           if (!instance_.vcpu_config_path().empty()) {
             auto res = WattsonRebalanceThreads(instance_.id());
             if (!res.ok()) {
-              LOG(ERROR) << res.error().FormatForEnv();
+              LOG(ERROR) << res.error();
             }
           }
         }
@@ -566,7 +566,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
         monitor::ReadEvent(boot_events_pipe);
     if (!read_result.ok()) {
       LOG(ERROR) << "Failed to read a complete kernel log boot event: "
-                 << read_result.error().FormatForEnv();
+                 << read_result.error();
       state_ |= kGuestBootFailed;
       return MaybeWriteNotification();
     } else if (!*read_result) {
@@ -581,7 +581,7 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
       if (!instance_.vcpu_config_path().empty()) {
         auto res = WattsonRebalanceThreads(instance_.id());
         if (!res.ok()) {
-          LOG(ERROR) << res.error().FormatForEnv();
+          LOG(ERROR) << res.error();
         }
       }
     } else if ((*read_result)->event == monitor::Event::BootFailed) {

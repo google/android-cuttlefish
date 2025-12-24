@@ -96,7 +96,7 @@ Result<void> StartStopRecording(const RecordingFlags& flags,
     if (!result.ok()) {
       LOG(ERROR) << "Failed to " << flags.subcmd
                  << " screen recording for instance " << instance.name() << ": "
-                 << result.error().FormatForEnv();
+                 << result.error();
       some_failed = true;
     }
   }
@@ -121,7 +121,7 @@ Result<void> ListRecordings(const LocalInstanceGroup& group,
       recordings = std::move(*result);
     } else {
       LOG(ERROR) << "Failed to list screen recording for instance "
-                 << instance.name() << ": " << result.error().FormatForEnv();
+                 << instance.name() << ": " << result.error();
       some_failed = true;
     }
     for (const std::string& recording : recordings) {

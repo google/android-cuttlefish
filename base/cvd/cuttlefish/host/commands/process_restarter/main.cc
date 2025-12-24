@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
   auto result = cuttlefish::RunProcessRestarter(
       cuttlefish::ArgsToVec(argc - 1, argv + 1));
   if (!result.ok()) {
-    LOG(DEBUG) << result.error().FormatForEnv();
+    LOG(DEBUG) << result.error();
     return EXIT_FAILURE;
   }
   return result.value();

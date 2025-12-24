@@ -190,8 +190,7 @@ Result<bool> InstanceManager::RemoveInstanceGroup(LocalInstanceGroup group) {
       continue;
     }
     if (auto res = lock_manager_.RemoveLockFile(instance.id()); !res.ok()) {
-      LOG(ERROR) << "Failed to remove instance id lock: "
-                 << res.error().FormatForEnv();
+      LOG(ERROR) << "Failed to remove instance id lock: " << res.error();
     }
   }
   CF_EXPECT(RemoveGroupDirectory(group));
@@ -244,7 +243,7 @@ Result<void> InstanceManager::Clear() {
       auto stop_result = StopInstanceGroup(group, std::chrono::seconds(5),
                                            InstanceDirActionOnStop::Clear);
       if (!stop_result.ok()) {
-        LOG(ERROR) << stop_result.error().FormatForEnv();
+        LOG(ERROR) << stop_result.error();
       }
     }
     for (auto instance : group.Instances()) {
@@ -254,16 +253,16 @@ Result<void> InstanceManager::Clear() {
       auto res = lock_manager_.RemoveLockFile(instance.id());
       if (!res.ok()) {
         LOG(ERROR) << "Failed to remove lock file for instance: "
-                   << res.error().FormatForEnv();
+                   << res.error();
       }
     }
     std::string runtime_link = group.HomeDir() + "/cuttlefish_runtime";
     if (Result<void> res = RemoveFile(runtime_link);!res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
     }
     std::string config_link = group.HomeDir() + config_json_name;
     if (Result<void> res = RemoveFile(config_link);!res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
     }
     // TODO: b/471069557 - diagnose unused
     Result<void> unused = RemoveGroupDirectory(group);

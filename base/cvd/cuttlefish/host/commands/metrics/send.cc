@@ -64,7 +64,7 @@ MetricsExitCodes PostRequest(HttpClient& http_client, const std::string& output,
   Result<HttpResponse<std::string>> http_res =
       HttpPostToString(http_client, clearcut_url, output);
   if (!http_res.ok()) {
-    LOG(ERROR) << "HTTP command failed: " << http_res.error().FormatForEnv();
+    LOG(ERROR) << "HTTP command failed: " << http_res.error();
     return MetricsExitCodes::kMetricsError;
   }
 

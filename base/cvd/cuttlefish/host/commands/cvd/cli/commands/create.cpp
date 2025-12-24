@@ -346,7 +346,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
       auto symlink_res = CreateSymlinks(group);
       if (!symlink_res.ok()) {
         LOG(ERROR) << "Failed to create symlinks for default group: "
-                   << symlink_res.error().FormatForEnv();
+                   << symlink_res.error();
       }
     }
   }

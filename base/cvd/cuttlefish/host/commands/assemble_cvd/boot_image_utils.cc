@@ -104,7 +104,7 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
   } else {
     LOG(DEBUG) << "Didn't update " << current_file;
     if (Result<void> res = RemoveFile(tmp_file); !res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
     }
   }
 
@@ -176,7 +176,7 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                          << original_ramdisk_path << "'.";
   }
   const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
-  CHECK(ret.ok()) << ret.error().FormatForEnv();
+  CHECK(ret.ok()) << ret.error();
 
   SharedFD input = SharedFD::Open(original_ramdisk_path + kCpioExt, O_RDONLY);
   int cpio_status;
@@ -245,7 +245,7 @@ bool UnpackVendorBootImageIfNotUnpacked(
 
   Result<std::vector<std::string>> unpack_files = DirectoryContents(unpack_dir);
   if (!unpack_files.ok()) {
-    LOG(ERROR) << "No unpacked files: " << unpack_files.error().FormatForEnv();
+    LOG(ERROR) << "No unpacked files: " << unpack_files.error();
     return false;
   }
   for (const std::string& unpacked : *unpack_files) {

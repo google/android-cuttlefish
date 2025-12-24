@@ -214,7 +214,7 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   if (!parse_res.ok()) {
     LOG(ERROR) << "Error extracting system_image_dir from args: "
-               << parse_res.error().FormatForEnv();
+               << parse_res.error();
     return -1;
   } else if (!image_dir.empty()) {
     LOG(INFO) << "Using system_image_dir of: " << image_dir;
@@ -250,7 +250,7 @@ int CvdInternalStartMain(int argc, char** argv) {
 
   auto instance_nums = InstanceNumsCalculator().FromGlobalGflags().Calculate();
   if (!instance_nums.ok()) {
-    LOG(ERROR) << instance_nums.error().FormatForEnv();
+    LOG(ERROR) << instance_nums.error();
     abort();
   }
 
@@ -316,8 +316,7 @@ int CvdInternalStartMain(int argc, char** argv) {
   for (const auto& instance : config->Instances()) {
     Result<void> link_res = LinkLogs2InstanceDir(conf_path, *config, instance);
     if (!link_res.ok()) {
-      LOG(ERROR) << "Failed to link logs to instance dir: "
-                 << link_res.error().FormatForEnv();
+      LOG(ERROR) << "Failed to link logs to instance dir: " << link_res.error();
     }
     SharedFD runner_stdin = SharedFD::Open("/dev/null", O_RDONLY);
     CHECK(runner_stdin->IsOpen()) << runner_stdin->StrError();

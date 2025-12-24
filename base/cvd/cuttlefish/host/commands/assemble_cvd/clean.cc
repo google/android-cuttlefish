@@ -122,7 +122,7 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
           "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
           fmt::join(pids, ", "));
     } else {
-      LOG(ERROR) << "Failed to run `lsof`: " << lsof_out.error().FormatForEnv();
+      LOG(ERROR) << "Failed to run `lsof`: " << lsof_out.error();
     }
   }
 

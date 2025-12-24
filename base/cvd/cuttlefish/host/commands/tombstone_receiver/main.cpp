@@ -73,7 +73,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
   auto parse_res = ConsumeFlags(flags, args);
   CHECK(parse_res.ok()) << "Could not process command line flags. "
-                        << parse_res.error().FormatForEnv();
+                        << parse_res.error();
 
   CHECK(server_fd->IsOpen()) << "Did not receive a server fd";
 

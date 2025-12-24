@@ -150,13 +150,13 @@ int main(int argc, char** argv) {
   cuttlefish::Result<cuttlefish::StatusFlags> flag_result =
       cuttlefish::GetFlagValues(argc, argv);
   if (!flag_result.ok()) {
-    LOG(ERROR) << flag_result.error().FormatForEnv();
+    LOG(ERROR) << flag_result.error();
     return EXIT_FAILURE;
   }
 
   auto result = cuttlefish::CvdStatusMain(flag_result.value());
   if (!result.ok()) {
-    LOG(ERROR) << result.error().FormatForEnv();
+    LOG(ERROR) << result.error();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
