@@ -295,7 +295,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   // Ensure callers and logs clearly indicate that CAS downloading is
   // disabled and why, using the same environment-aware formatting that
   // test helpers use.
-  LOG(INFO) << "CAS downloading disabled: " << result.error().FormatForEnv();
+  LOG(INFO) << "CAS downloading disabled: " << result.error();
   return result;
 }
 
@@ -451,7 +451,7 @@ Result<CasIdentifier> CasDownloader::GetCasIdentifier(
     std::string digests_filepath = CF_EXPECT(digests_fetcher(digests_filename));
     Json::Value cas_digests = CF_EXPECT(ParseJson(ReadFile(digests_filepath)));
     if (Result<void> res = RemoveFile(digests_filepath); !res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
     }
     std::vector<std::string> mandatory_keys{
         "cas_instance",

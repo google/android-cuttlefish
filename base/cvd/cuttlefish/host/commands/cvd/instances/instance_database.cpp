@@ -220,7 +220,7 @@ std::vector<LocalInstanceGroup> InstanceDatabase::FindGroups(
     }
     auto group_res = LocalInstanceGroup::Create(group);
     CHECK(group_res.ok()) << "Instance group from database fails validation: "
-                          << group_res.error().FormatForEnv();
+                          << group_res.error();
     ret.push_back(*group_res);
   }
   return ret;

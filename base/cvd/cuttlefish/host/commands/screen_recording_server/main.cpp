@@ -72,8 +72,7 @@ class ScreenRecordingServiceImpl final
                                          successes_res->end());
       return Status::OK;
     } else {
-      LOG(ERROR) << "Failed to start recording: "
-                 << successes_res.error().FormatForEnv();
+      LOG(ERROR) << "Failed to start recording: " << successes_res.error();
       reply->mutable_successes()->Add(false);
       return Status(StatusCode::ABORTED,
                     successes_res.error().FormatForEnv(false));
@@ -89,7 +88,7 @@ class ScreenRecordingServiceImpl final
       successes.push_back(result.ok());
       if (!result.ok()) {
         LOG(ERROR) << "Failed to communicate with instance " << instance.id()
-                   << ": " << result.error().FormatForEnv();
+                   << ": " << result.error();
       }
     }
     return successes;

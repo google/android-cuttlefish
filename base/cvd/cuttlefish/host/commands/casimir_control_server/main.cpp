@@ -76,7 +76,7 @@ Status ResultToStatus(Result<void> res) {
   if (res.ok()) {
     return Status::OK;
   } else {
-    LOG(ERROR) << "RPC failed: " << res.error().FormatForEnv();
+    LOG(ERROR) << "RPC failed: " << res.error();
     return Status(StatusCode::INTERNAL,
                   res.error().FormatForEnv(/* color = */ false));
   }

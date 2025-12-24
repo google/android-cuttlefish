@@ -109,7 +109,7 @@ Result<void> CreateDynamicDiskFiles(
       LOG(DEBUG) << "Found image zip: " << *img_zip;
     } else {
       LOG(DEBUG) << "Error accessing '-img-*.zip', expected for a local build.";
-      LOG(DEBUG) << img_zip.error().FormatForEnv();
+      LOG(DEBUG) << img_zip.error();
     }
 
     std::optional<ChromeOsStateImage> chrome_os_state =

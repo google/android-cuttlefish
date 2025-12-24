@@ -109,8 +109,7 @@ Result<int> CrosvmDisplayController::RunCrosvmDisplayCommand(
     }
     return 0;
   } else {
-    LOG(ERROR) << "Failed to run crosvm display command:\n"
-               << res.error().FormatForEnv();
+    LOG(ERROR) << "Failed to run crosvm display command:\n" << res.error();
     return 0;
   }
 }

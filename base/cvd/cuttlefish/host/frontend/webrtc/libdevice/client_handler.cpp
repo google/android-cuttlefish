@@ -226,7 +226,7 @@ void ClientHandler::Close() {
 void ClientHandler::OnConnectionStateChange(
     Result<webrtc::PeerConnectionInterface::PeerConnectionState> new_state) {
   if (!new_state.ok()) {
-    LOG(ERROR) << "Connection error: " << new_state.error().FormatForEnv();
+    LOG(ERROR) << "Connection error: " << new_state.error();
     Close();
     return;
   }

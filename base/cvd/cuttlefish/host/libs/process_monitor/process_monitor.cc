@@ -408,8 +408,7 @@ Result<void> ProcessMonitor::StartAndMonitorProcesses() {
     child_channel_ = transport::SharedFdChannel(child_sock, child_sock);
     Result<void> monitor_result = MonitorRoutine();
     if (!monitor_result.ok()) {
-      LOG(ERROR) << "Monitoring processes failed:\n"
-                 << monitor_result.error().FormatForEnv();
+      LOG(ERROR) << "Monitoring processes failed:\n" << monitor_result.error();
     }
     pipe_write->Close();
     std::exit(monitor_result.ok() ? 0 : 1);

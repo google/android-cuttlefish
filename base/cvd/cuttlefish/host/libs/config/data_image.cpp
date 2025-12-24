@@ -108,8 +108,7 @@ std::string GetFsType(const std::string& path) {
 
   Result<std::string> blkid_out = RunAndCaptureStdout(std::move(command));
   if (!blkid_out.ok()) {
-    LOG(ERROR) << "`blkid '" << path
-               << "'` failed: " << blkid_out.error().FormatForEnv();
+    LOG(ERROR) << "`blkid '" << path << "'` failed: " << blkid_out.error();
     return "";
   }
 
@@ -218,7 +217,7 @@ Result<void> InitializeDataImage(
       return {};
     case DataImageAction::kCreateBlankImage: {
       if (Result<void> res = RemoveFile(instance.new_data_image()); !res.ok()) {
-        LOG(ERROR) << res.error().FormatForEnv();
+        LOG(ERROR) << res.error();
       }
       CF_EXPECT(instance.blank_data_image_mb() != 0,
                 "Expected `-blank_data_image_mb` to be set for "

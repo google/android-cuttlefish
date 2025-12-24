@@ -227,7 +227,7 @@ fi
   void SetUp() override {
     Result<void> result = CreateTestDirs();
     if (!result.ok()) {
-      FAIL() << result.error().FormatForEnv();
+      FAIL() << result.error();
     }
   }
 

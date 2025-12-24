@@ -51,7 +51,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
   int64_t Read(char* data, uint64_t len) override {
     LOG(VERBOSE) << "Reading " << len;
     if (Result<void> res = source_.Seek(offset_); !res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
       return -1;
     }
     Result<size_t> res = source_.Read(data, len);
@@ -59,7 +59,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
       offset_ += *res;
       return *res;
     } else {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
       return -1;
     }
   }

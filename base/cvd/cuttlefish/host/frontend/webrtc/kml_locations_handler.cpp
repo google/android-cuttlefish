@@ -59,7 +59,7 @@ void KmlLocationsHandler::HandleMessage(const uint8_t *msg, size_t len) {
 
   Result<void> reply = gpsclient.SendGpsLocations(1000, coordinates);
   if (!reply.ok()) {
-    LOG(ERROR) << reply.error().FormatForEnv();
+    LOG(ERROR) << reply.error();
   }
 }
 

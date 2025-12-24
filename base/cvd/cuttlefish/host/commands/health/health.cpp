@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
   if (res.ok()) {
     return 0;
   } else {
-    LOG(ERROR) << "goldfish battery failed: " << res.error().FormatForEnv();
+    LOG(ERROR) << "goldfish battery failed: " << res.error();
     return 1;
   }
 }

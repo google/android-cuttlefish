@@ -90,7 +90,7 @@ LazilyLoadedFile::~LazilyLoadedFile() {
   }
   Result<void> res = impl_->WriteMetadata();
   if (!res.ok()) {
-    LOG(WARNING) << "fragment update failure: " << res.error().FormatForEnv();
+    LOG(WARNING) << "fragment update failure: " << res.error();
   }
 }
 
@@ -128,7 +128,7 @@ Result<void> LazilyLoadedFile::Impl::ReadMetadata() {
   if (parsed_res.ok()) {
     already_downloaded_ = std::move(*parsed_res);
   } else {
-    LOG(WARNING) << "Invalid fragments: " << parsed_res.error().FormatForEnv();
+    LOG(WARNING) << "Invalid fragments: " << parsed_res.error();
   }
 
   return {};

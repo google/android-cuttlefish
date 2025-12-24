@@ -97,7 +97,7 @@ Result<void> SubstituteWithFlag(
         }
         Result<void> symlink_res = Symlink(path, to_substitute);
         if (!symlink_res.ok()) {
-          LOG(ERROR) << symlink_res.error().FormatForEnv();
+          LOG(ERROR) << symlink_res.error();
           substitution_error = true;
           return false;
         }

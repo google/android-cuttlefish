@@ -135,7 +135,7 @@ Result<int> DefaultsMain(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   auto res = cuttlefish::DefaultsMain(argc, argv);
   if (!res.ok()) {
-    LOG(ERROR) << "defaults failed: \n" << res.error().FormatForEnv();
+    LOG(ERROR) << "defaults failed: \n" << res.error();
     abort();
   }
 

@@ -66,7 +66,7 @@ void KernelLogEventsHandler::ReadLoop() {
           monitor::ReadEvent(kernel_log_fd_);
       if (!read_result.ok()) {
         LOG(ERROR) << "Failed to read kernel log event: "
-                   << read_result.error().FormatForEnv();
+                   << read_result.error();
         break;
       } else if (!(*read_result)) {
         LOG(ERROR) << "EOF from kernel_log_monitor";

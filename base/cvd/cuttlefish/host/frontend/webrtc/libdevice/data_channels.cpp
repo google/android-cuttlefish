@@ -442,7 +442,7 @@ void DataChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   }
   auto res = OnMessageInner(msg);
   if (!res.ok()) {
-    LOG(ERROR) << res.error().FormatForEnv();
+    LOG(ERROR) << res.error();
   }
 }
 

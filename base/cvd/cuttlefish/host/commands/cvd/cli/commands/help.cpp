@@ -103,7 +103,7 @@ class CvdHelpHandler : public CvdCommandHandler {
   CommandRequest GetLookupRequest(const std::string& arg) {
     auto result = CommandRequestBuilder().AddArguments({"cvd", arg}).Build();
     CHECK(result.ok()) << "Failed to build cvd command request"
-                       << result.error().FormatForEnv();
+                       << result.error();
     return result.value();
   }
 

@@ -150,7 +150,7 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   if (!gather_result.ok()) {
     LOG(DEBUG) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
-        EventTypeString(event_type), gather_result.error().FormatForEnv());
+        EventTypeString(event_type), gather_result.error());
     return;
   }
 
@@ -159,7 +159,7 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   if (!output_result.ok()) {
     LOG(DEBUG) << fmt::format("Failed to output metrics for {}.  Error: {}",
                               EventTypeString(event_type),
-                              output_result.error().FormatForEnv());
+                              output_result.error());
   }
 }
 
@@ -171,7 +171,7 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
       SetUpMetrics(metrics_paths.metrics_directory);
   if (!metrics_setup_result.ok()) {
     LOG(DEBUG) << fmt::format("Failed to initialize metrics.  Error: {}",
-                              metrics_setup_result.error().FormatForEnv());
+                              metrics_setup_result.error());
     return;
   }
   if (kEnableCvdMetrics) {

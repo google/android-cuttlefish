@@ -35,7 +35,7 @@ HttpResponse<Json::Value> Parse(HttpResponse<std::string> response) {
   Result<Json::Value> result = ParseJson(response.data);
   if (!result.ok()) {
     Json::Value error_json;
-    LOG(ERROR) << "Could not parse json: " << result.error().FormatForEnv();
+    LOG(ERROR) << "Could not parse json: " << result.error();
     error_json["error"] = "Failed to parse json: " + result.error().Message();
     error_json["response"] = response.data;
     return HttpResponse<Json::Value>{.data = error_json,

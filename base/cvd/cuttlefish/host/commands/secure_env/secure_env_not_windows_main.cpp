@@ -127,7 +127,7 @@ std::thread StartKernelEventMonitor(SharedFD kernel_events_fd,
   return std::thread([kernel_events_fd, &oemlock_lock]() {
     while (kernel_events_fd->IsOpen()) {
       auto read_result = monitor::ReadEvent(kernel_events_fd);
-      CHECK(read_result.ok()) << read_result.error().FormatForEnv();
+      CHECK(read_result.ok()) << read_result.error();
       CHECK(read_result->has_value()) << "EOF in kernel log monitor";
       if ((*read_result)->event == monitor::Event::BootloaderLoaded) {
         LOG(DEBUG) << "secure_env detected guest reboot, restarting.";

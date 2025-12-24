@@ -148,7 +148,7 @@ Result<int> CvdallocMain(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   auto res = cuttlefish::CvdallocMain(argc, argv);
   if (!res.ok()) {
-    LOG(ERROR) << "cvdalloc failed: \n" << res.error().FormatForEnv();
+    LOG(ERROR) << "cvdalloc failed: \n" << res.error();
     abort();
   }
 

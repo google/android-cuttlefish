@@ -127,7 +127,7 @@ int SensorsSimulatorMain(int argc, char** argv) {
   while (true) {
     auto result = ProcessWebrtcRequest(channel, sensors_simulator);
     if (!result.ok()) {
-      LOG(ERROR) << result.error().FormatForEnv();
+      LOG(ERROR) << result.error();
     }
   }
   return 0;

@@ -421,7 +421,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
 
     if (!prerequisiteResult.ok()) {
       LOG(ERROR) << "Failed to check prerequisites: "
-                 << prerequisiteResult.error().FormatForEnv();
+                 << prerequisiteResult.error();
       return Subprocess(-1, {});
     }
   }

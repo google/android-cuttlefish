@@ -78,7 +78,7 @@ static Result<std::string> StopCvdPath(const RunCvdProcInfo& info) {
     if (result.ok()) {
       return *result;
     }
-    LOG(ERROR) << result.error().FormatForEnv();
+    LOG(ERROR) << result.error();
   } else {
     LOG(ERROR) << "run_cvd host tool directory was not able to be guessed.";
   }

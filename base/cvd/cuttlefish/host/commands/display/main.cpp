@@ -164,7 +164,7 @@ Result<int> DoRemove(std::vector<std::string>& args) {
   };
   auto parse_res = ConsumeFlags(remove_displays_flags, args);
   if (!parse_res.ok()) {
-    std::cerr << parse_res.error().FormatForEnv() << std::endl;
+    std::cerr << parse_res.error() << std::endl;
     std::cerr << "Failed to parse flags. Usage:" << std::endl;
     std::cerr << kRemoveUsage << std::endl;
     return 1;
@@ -201,7 +201,7 @@ Result<int> DoScreenshot(std::vector<std::string>& args) {
   };
   auto parse_res = ConsumeFlags(screenshot_flags, args);
   if (!parse_res.ok()) {
-    std::cerr << parse_res.error().FormatForEnv() << std::endl;
+    std::cerr << parse_res.error() << std::endl;
     std::cerr << "Failed to parse flags. Usage:" << std::endl;
     std::cerr << kScreenshotUsage << std::endl;
     return 1;
@@ -257,7 +257,7 @@ int DisplayMain(int argc, char** argv) {
 
   auto result = command_func_it->second(args);
   if (!result.ok()) {
-    std::cerr << result.error().FormatForEnv();
+    std::cerr << result.error();
     return 1;
   }
   return result.value();

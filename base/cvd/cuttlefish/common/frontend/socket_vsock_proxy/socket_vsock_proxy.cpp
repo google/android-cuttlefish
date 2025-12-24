@@ -185,7 +185,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     // recoverable.
     if (!received_event.ok()) {
       LOG(ERROR) << "Failed reading kernel log event: "
-                 << received_event.error().FormatForEnv();
+                 << received_event.error();
       continue;
     }
     if (!(*received_event)) {
@@ -248,7 +248,7 @@ int main(int argc, char* argv[]) {
 
   auto result = cuttlefish::socket_proxy::Main();
   if (!result.ok()) {
-    LOG(FATAL) << "Failed to proxy: " << result.error().FormatForEnv();
+    LOG(FATAL) << "Failed to proxy: " << result.error();
   }
 
   return 0;

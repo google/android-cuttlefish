@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 
   cuttlefish::Result<void> result = cuttlefish::RecordCvdMain(argc, argv);
   if (!result.ok()) {
-    LOG(ERROR) << result.error().FormatForEnv();
+    LOG(ERROR) << result.error();
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

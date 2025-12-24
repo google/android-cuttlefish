@@ -52,7 +52,7 @@ static std::map<std::string, uint32_t> DirectoryCrc(const std::string& path) {
     return {};
   }
   auto files_result = DirectoryContents(full_path);
-  CHECK(files_result.ok()) << files_result.error().FormatForEnv();
+  CHECK(files_result.ok()) << files_result.error();
   std::vector<std::string> files = std::move(*files_result);
   std::vector<std::future<uint32_t>> calculations;
   calculations.reserve(files.size());

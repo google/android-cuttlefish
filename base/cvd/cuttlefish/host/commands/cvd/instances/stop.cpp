@@ -90,7 +90,7 @@ Result<void> RunStopCvdAll(bool clear_runtime_dirs) {
         .clear_runtime_dirs = clear_runtime_dirs,
     });
     if (!stop_cvd_result.ok()) {
-      LOG(ERROR) << stop_cvd_result.error().FormatForEnv();
+      LOG(ERROR) << stop_cvd_result.error();
       continue;
     }
   }
@@ -158,7 +158,7 @@ Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
       } else {
         all_success = false;
         LOG(ERROR) << "Failed to remove the lock file '" << lock_file_path
-                   << "': " << res.error().FormatForEnv();
+                   << "': " << res.error();
       }
     }
   }
@@ -190,7 +190,7 @@ Result<void> KillAllRunCvds() {
                << " run_cvd processes still remain, will stop forcefully";
   for (pid_t group_pid : run_cvd_pids) {
     if (Result<void> result = SendSignal(group_pid); !result.ok()) {
-      LOG(ERROR) << result.error().FormatForEnv();
+      LOG(ERROR) << result.error();
     }
   }
   return {};
@@ -212,7 +212,7 @@ Result<void> DeleteAllOwnedInstanceLocks() {
       continue;
     }
     if (Result<void> res = RemoveFile(lock_file_path); !res.ok()) {
-      LOG(ERROR) << res.error().FormatForEnv();
+      LOG(ERROR) << res.error();
     }
   }
   return {};
@@ -222,15 +222,15 @@ Result<void> DeleteAllOwnedInstanceLocks() {
 
 Result<void> KillAllCuttlefishInstances(bool clear_runtime_dirs) {
   if (Result<void> res = RunStopCvdAll(clear_runtime_dirs); !res.ok()) {
-    LOG(ERROR) << res.error().FormatForEnv();
+    LOG(ERROR) << res.error();
   }
 
   if (Result<void> res = KillAllRunCvds(); !res.ok()) {
-    LOG(ERROR) << res.error().FormatForEnv();
+    LOG(ERROR) << res.error();
   }
 
   if (Result<void> res = DeleteAllOwnedInstanceLocks(); !res.ok()) {
-    LOG(ERROR) << res.error().FormatForEnv();
+    LOG(ERROR) << res.error();
   }
 
   return {};
