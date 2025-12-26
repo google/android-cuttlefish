@@ -24,7 +24,6 @@ cf_cc_binary(
     srcs = ["assemble_cvd.cc"],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -62,6 +61,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config/defaults",
         "//cuttlefish/host/libs/config/fastboot",
         "//cuttlefish/host/libs/feature:inject",
+        "//cuttlefish/posix:symlink",
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@gflags",

@@ -99,7 +99,6 @@ cf_cc_library(
     deps = [
         ":cvd_persistent_data",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:json",
@@ -124,6 +123,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/screen_recording_controls",
+        "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",

@@ -30,7 +30,6 @@
 #include <fmt/format.h>
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/host_tool_target.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

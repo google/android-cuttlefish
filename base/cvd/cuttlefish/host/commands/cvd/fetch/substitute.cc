@@ -29,11 +29,11 @@
 #include <google/protobuf/text_format.h>
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_pkg_migration.pb.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

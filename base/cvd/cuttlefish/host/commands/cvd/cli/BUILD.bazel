@@ -73,7 +73,6 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -115,6 +114,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
