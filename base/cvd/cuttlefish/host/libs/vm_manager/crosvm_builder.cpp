@@ -95,7 +95,11 @@ Result<void> CrosvmBuilder::AddCpus(const Json::Value& vcpu_config_json) {
 }
 
 void CrosvmBuilder::AddCpus(size_t cpus) {
-  command_.AddParameter("--cpus=", cpus);
+  if (HostArch() == Arch::Arm64) {
+    command_.AddParameter("--cpus=", cpus, ",sve=[auto=true]");
+  } else {
+    command_.AddParameter("--cpus=", cpus);
+  }
 }
 
 void CrosvmBuilder::AddHvcSink() {
