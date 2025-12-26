@@ -38,7 +38,6 @@
 #include <fmt/format.h>
 #include "absl/strings/match.h"
 
-#include "cuttlefish/common/libs/posix/symlink.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -65,6 +64,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
+#include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

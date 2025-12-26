@@ -21,7 +21,6 @@ cf_cc_library(
     srcs = ["android_build_api.cpp"],
     hdrs = ["android_build_api.h"],
     deps = [
-        "//cuttlefish/common/libs/posix:symlink",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
@@ -38,6 +37,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip:remote_zip",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
         "@jsoncpp",
