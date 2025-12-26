@@ -21,45 +21,30 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<MiscImage> MiscImage::Reuse(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::string path = instance.PerInstancePath(Name());
-  CF_EXPECT(FileHasContent(path));
-
-  LOG(DEBUG) << "misc partition image already exists";
-
-  return MiscImage(path);
+MiscImage::MiscImage(const CuttlefishConfig::InstanceSpecific& instance) {
+  path_ = instance.PerInstancePath(kName);
+  ready_ = FileHasContent(path_);
 }
 
-Result<MiscImage> MiscImage::ReuseOrCreate(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::string path = instance.PerInstancePath(Name());
+std::string MiscImage::Name() const { return std::string(kName); }
 
-  Result<MiscImage> reuse_res = Reuse(instance);
-  if (reuse_res.ok()) {
-    return reuse_res.value();
+Result<std::string> MiscImage::Generate() {
+  if (!ready_) {
+    CF_EXPECT(CreateBlankImage(path_, 1 /* mb */, "none"),
+              "Failed to create misc image");
+    ready_ = true;
   }
-
-  LOG(DEBUG) << "misc partition image: creating empty at '" << path << "'";
-  CF_EXPECT(CreateBlankImage(path, 1 /* mb */, "none"),
-            "Failed to create misc image");
-  return MiscImage(path);
+  return path_;
 }
 
-MiscImage::MiscImage(std::string path) : path_(std::move(path)) {}
-
-std::string MiscImage::Name() { return "misc.img"; }
-
-ImagePartition MiscImage::Partition() const {
-  return ImagePartition{
-      .label = "misc",
-      .image_file_path = path_,
-  };
+Result<std::string> MiscImage::Path() const {
+  CF_EXPECT(!!ready_);
+  return path_;
 }
+
 
 }  // namespace cuttlefish
