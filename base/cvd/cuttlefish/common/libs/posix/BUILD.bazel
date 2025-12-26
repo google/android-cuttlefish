@@ -6,10 +6,8 @@ package(
 
 cf_cc_library(
     name = "symlink",
-    srcs = ["symlink.cc"],
     hdrs = ["symlink.h"],
     deps = [
-        "//cuttlefish/posix:strerror",
-        "//cuttlefish/result",
+        "//cuttlefish/posix:symlink",
     ],
 )

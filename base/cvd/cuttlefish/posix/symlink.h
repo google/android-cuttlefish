@@ -15,4 +15,13 @@
  */
 #pragma once
 
-#include "cuttlefish/posix/symlink.h"  // IWYU pragma: export
+#include <string>
+
+#include "cuttlefish/result/result.h"
+
+namespace cuttlefish {
+
+// Wrapper for symlink(2).
+Result<void> Symlink(const std::string& target, const std::string& linkpath);
+
+}  // namespace cuttlefish
