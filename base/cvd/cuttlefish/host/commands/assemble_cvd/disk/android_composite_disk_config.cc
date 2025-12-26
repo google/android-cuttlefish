@@ -91,6 +91,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
   const std::map<std::string_view, std::string> primary_paths = {
       {kPartitions.boot, instance.new_boot_image()},
       {kPartitions.init_boot, instance.init_boot_image()},
+      {kPartitions.misc, CF_EXPECT(misc_image.Path())},
       {kPartitions.super, instance.new_super_image()},
       {kPartitions.userdata, instance.new_data_image()},
       {kPartitions.vbmeta, instance.new_vbmeta_image()},
@@ -139,7 +140,6 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     }
   }
 
-  partitions.push_back(misc_image.Partition());
   partitions.push_back(metadata_image.Partition());
 
   std::optional<ImagePartition> hibernation_partition =

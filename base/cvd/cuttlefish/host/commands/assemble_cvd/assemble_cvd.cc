@@ -22,6 +22,7 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -225,7 +226,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert("pflash.img");
   preserving.insert("uboot_env.img");
   preserving.insert(FactoryResetProtectedImage::FileName());
-  preserving.insert(MiscImage::Name());
+  preserving.insert(absl::StrCat(MiscImage::kName, ".img"));
   preserving.insert("vmmtruststore.img");
   preserving.insert(MetadataImage::Name());
   preserving.insert("persistent_vbmeta.img");
@@ -338,13 +339,13 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // then don't preserve any files and delete everything.
     for (const auto& instance : config.Instances()) {
       Result<MetadataImage> metadata = MetadataImage::Reuse(instance);
-      Result<MiscImage> misc = MiscImage::Reuse(instance);
+      MiscImage misc(instance);
       Result<std::optional<ChromeOsStateImage>> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
-      if (chrome_os_state.ok() && metadata.ok() && misc.ok()) {
+      if (chrome_os_state.ok() && metadata.ok()) {
         Result<DiskBuilder> os_builder =
             OsCompositeDiskBuilder(config, instance, *chrome_os_state,
-                                   *metadata, *misc, system_image_dir);
+                                   *metadata, misc, system_image_dir);
         if (!os_builder.ok()) {
           creating_os_disk = true;
         } else {

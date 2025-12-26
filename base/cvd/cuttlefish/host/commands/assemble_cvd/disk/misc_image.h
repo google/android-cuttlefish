@@ -16,25 +16,28 @@
 
 #pragma once
 
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class MiscImage {
+class MiscImage : public ImageFile {
  public:
-  static Result<MiscImage> Reuse(const CuttlefishConfig::InstanceSpecific&);
-  static Result<MiscImage> ReuseOrCreate(
-      const CuttlefishConfig::InstanceSpecific&);
+  static constexpr std::string_view kName = "misc";
 
-  static std::string Name();
+  MiscImage(const CuttlefishConfig::InstanceSpecific&);
 
-  ImagePartition Partition() const;
+  std::string Name() const override;
+
+  Result<std::string> Generate() override;
+
+  Result<std::string> Path() const override;
 
  private:
   MiscImage(std::string);
 
+  bool ready_;
   std::string path_;
 };
 
