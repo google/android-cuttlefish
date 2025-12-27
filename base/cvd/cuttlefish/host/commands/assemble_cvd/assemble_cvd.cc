@@ -228,7 +228,7 @@ Result<std::set<std::string>> PreservingOnResume(
   preserving.insert(FactoryResetProtectedImage::FileName());
   preserving.insert(absl::StrCat(MiscImage::kName, ".img"));
   preserving.insert("vmmtruststore.img");
-  preserving.insert(MetadataImage::Name());
+  preserving.insert(absl::StrCat(MetadataImage::kName, ".img"));
   preserving.insert("persistent_vbmeta.img");
   preserving.insert("oemlock_secure");
   preserving.insert("oemlock_insecure");
@@ -338,14 +338,14 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // if any device needs to rebuild its composite disk,
     // then don't preserve any files and delete everything.
     for (const auto& instance : config.Instances()) {
-      Result<MetadataImage> metadata = MetadataImage::Reuse(instance);
+      MetadataImage metadata(instance);
       MiscImage misc(instance);
       Result<std::optional<ChromeOsStateImage>> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
-      if (chrome_os_state.ok() && metadata.ok()) {
+      if (chrome_os_state.ok()) {
         Result<DiskBuilder> os_builder =
-            OsCompositeDiskBuilder(config, instance, *chrome_os_state,
-                                   *metadata, misc, system_image_dir);
+            OsCompositeDiskBuilder(config, instance, *chrome_os_state, metadata,
+                                   misc, system_image_dir);
         if (!os_builder.ok()) {
           creating_os_disk = true;
         } else {

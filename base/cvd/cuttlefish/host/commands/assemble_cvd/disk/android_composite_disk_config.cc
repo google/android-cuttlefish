@@ -41,6 +41,7 @@ constexpr struct {
   std::string_view boot = "boot";
   std::string_view hibernation = "hibernation";
   std::string_view init_boot = "init_boot";
+  std::string_view metadata = "metadata";
   std::string_view misc = "misc";
   std::string_view super = "super";
   std::string_view userdata = "userdata";
@@ -91,6 +92,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
   const std::map<std::string_view, std::string> primary_paths = {
       {kPartitions.boot, instance.new_boot_image()},
       {kPartitions.init_boot, instance.init_boot_image()},
+      {kPartitions.metadata, CF_EXPECT(metadata_image.Path())},
       {kPartitions.misc, CF_EXPECT(misc_image.Path())},
       {kPartitions.super, instance.new_super_image()},
       {kPartitions.userdata, instance.new_data_image()},
@@ -139,8 +141,6 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
       });
     }
   }
-
-  partitions.push_back(metadata_image.Partition());
 
   std::optional<ImagePartition> hibernation_partition =
       HibernationImage(system_image_dir, instance);
