@@ -23,7 +23,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -31,40 +30,28 @@ namespace cuttlefish {
 static constexpr size_t kMetadataImageMb = 64;
 static constexpr size_t kMetadataImageBytes = kMetadataImageMb << 20;
 
-Result<MetadataImage> MetadataImage::ReuseOrCreate(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  Result<MetadataImage> reused = Reuse(instance);
-  if (reused.ok()) {
-    return reused;
-  }
-
-  std::string path = instance.PerInstancePath(Name());
-
-  CF_EXPECTF(CreateBlankImage(path, kMetadataImageMb, "none"),
-             "Failed to create '{}' with size '{}' MB", path, kMetadataImageMb);
-
-  return MetadataImage(std::move(path));
-}
-
-Result<MetadataImage> MetadataImage::Reuse(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::string path = instance.PerInstancePath(Name());
-
-  CF_EXPECT(FileExists(path));
-  CF_EXPECT_EQ(FileSize(path), kMetadataImageBytes);
-
-  return MetadataImage(std::move(path));
+MetadataImage::MetadataImage(const CuttlefishConfig::InstanceSpecific& ins) {
+  path_ = ins.PerInstancePath(kName);
+  ready_ = FileExists(path_) && FileSize(path_) == kMetadataImageBytes;
 }
 
 MetadataImage::MetadataImage(std::string path) : path_(std::move(path)) {}
 
-std::string MetadataImage::Name() { return "metadata.img"; }
+std::string MetadataImage::Name() const { return std::string(kName); }
 
-ImagePartition MetadataImage::Partition() const {
-  return ImagePartition{
-      .label = "metadata",
-      .image_file_path = path_,
-  };
+Result<std::string> MetadataImage::Path() const {
+  CF_EXPECT(!!ready_);
+  return path_;
+}
+
+Result<std::string> MetadataImage::Generate() {
+  if (!ready_) {
+    CF_EXPECTF(CreateBlankImage(path_, kMetadataImageMb, "none"),
+               "Failed to create '{}' with size '{}' MB", path_,
+               kMetadataImageMb);
+    ready_ = true;
+  }
+  return path_;
 }
 
 }  // namespace cuttlefish

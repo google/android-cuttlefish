@@ -17,26 +17,30 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class MetadataImage {
+class MetadataImage : public ImageFile {
  public:
-  static Result<MetadataImage> ReuseOrCreate(
-      const CuttlefishConfig::InstanceSpecific&);
-  static Result<MetadataImage> Reuse(const CuttlefishConfig::InstanceSpecific&);
+  static constexpr std::string_view kName = "metadata";
 
-  static std::string Name();
+  MetadataImage(const CuttlefishConfig::InstanceSpecific&);
 
-  ImagePartition Partition() const;
+  std::string Name() const override;
+
+  Result<std::string> Generate() override;
+
+  Result<std::string> Path() const override;
 
  private:
   MetadataImage(std::string);
 
+  bool ready_;
   std::string path_;
 };
 

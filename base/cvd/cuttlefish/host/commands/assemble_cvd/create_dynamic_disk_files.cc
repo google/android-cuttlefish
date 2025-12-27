@@ -158,7 +158,8 @@ Result<void> CreateDynamicDiskFiles(
       }
     }
 
-    MetadataImage metadata = CF_EXPECT(MetadataImage::ReuseOrCreate(instance));
+    MetadataImage metadata(instance);
+    CF_EXPECT(metadata.Generate());
 
     MiscImage misc(instance);
     CF_EXPECT(misc.Generate());
