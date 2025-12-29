@@ -18,6 +18,7 @@
 
 #include <sys/statvfs.h>
 
+#include <memory>
 #include <string>
 
 #include <android-base/logging.h>
@@ -39,6 +40,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/hwcomposer_pmem.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
@@ -158,14 +160,17 @@ Result<void> CreateDynamicDiskFiles(
       }
     }
 
-    MetadataImage metadata(instance);
-    CF_EXPECT(metadata.Generate());
+    std::vector<std::unique_ptr<ImageFile>> image_files;
 
-    MiscImage misc(instance);
-    CF_EXPECT(misc.Generate());
+    image_files.emplace_back(std::make_unique<MetadataImage>(instance));
+    image_files.emplace_back(std::make_unique<MiscImage>(instance));
+
+    for (auto& image_file : image_files) {
+      CF_EXPECT(image_file->Generate());
+    }
 
     DiskBuilder os_disk_builder = CF_EXPECT(OsCompositeDiskBuilder(
-        config, instance, chrome_os_state, metadata, misc, system_image_dirs));
+        config, instance, chrome_os_state, image_files, system_image_dirs));
     const auto os_built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 

@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
 
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -27,9 +28,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/fuchsia_composite_disk.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/linux_composite_disk.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
@@ -43,15 +43,15 @@ namespace {
 Result<std::vector<ImagePartition>> GetOsCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<ChromeOsStateImage>& chrome_os_state,
-    const MetadataImage& metadata, const MiscImage& misc,
+    const std::vector<std::unique_ptr<ImageFile>>& image_files,
     const SystemImageDirFlag& system_image_dir) {
   switch (instance.boot_flow()) {
     case BootFlow::Android:
-      return CF_EXPECT(AndroidCompositeDiskConfig(instance, metadata, misc,
-                                                  system_image_dir));
+      return CF_EXPECT(
+          AndroidCompositeDiskConfig(instance, image_files, system_image_dir));
     case BootFlow::AndroidEfiLoader:
       return CF_EXPECT(AndroidEfiLoaderCompositeDiskConfig(
-          instance, metadata, misc, system_image_dir));
+          instance, image_files, system_image_dir));
     case BootFlow::ChromeOs:
       CHECK(chrome_os_state.has_value());
       return ChromeOsCompositeDiskConfig(instance, *chrome_os_state);
@@ -70,7 +70,7 @@ Result<DiskBuilder> OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<ChromeOsStateImage>& chrome_os_state,
-    const MetadataImage& metadata, const MiscImage& misc,
+    const std::vector<std::unique_ptr<ImageFile>>& image_files,
     const SystemImageDirFlag& system_image_dir) {
   auto builder =
       DiskBuilder()
@@ -85,7 +85,7 @@ Result<DiskBuilder> OsCompositeDiskBuilder(
   }
   return builder
       .Partitions(CF_EXPECT(GetOsCompositeDiskConfig(
-          instance, chrome_os_state, metadata, misc, system_image_dir)))
+          instance, chrome_os_state, image_files, system_image_dir)))
       .HeaderPath(instance.PerInstancePath("os_composite_gpt_header.img"))
       .FooterPath(instance.PerInstancePath("os_composite_gpt_footer.img"))
       .CompositeDiskPath(instance.os_composite_disk_path());

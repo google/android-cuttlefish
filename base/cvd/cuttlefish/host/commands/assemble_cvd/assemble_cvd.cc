@@ -37,6 +37,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/ap_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
@@ -338,14 +339,16 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // if any device needs to rebuild its composite disk,
     // then don't preserve any files and delete everything.
     for (const auto& instance : config.Instances()) {
-      MetadataImage metadata(instance);
-      MiscImage misc(instance);
+      std::vector<std::unique_ptr<ImageFile>> image_files;
+
+      image_files.emplace_back(std::make_unique<MetadataImage>(instance));
+      image_files.emplace_back(std::make_unique<MiscImage>(instance));
+
       Result<std::optional<ChromeOsStateImage>> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
       if (chrome_os_state.ok()) {
-        Result<DiskBuilder> os_builder =
-            OsCompositeDiskBuilder(config, instance, *chrome_os_state, metadata,
-                                   misc, system_image_dir);
+        Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
+            config, instance, *chrome_os_state, image_files, system_image_dir);
         if (!os_builder.ok()) {
           creating_os_disk = true;
         } else {
