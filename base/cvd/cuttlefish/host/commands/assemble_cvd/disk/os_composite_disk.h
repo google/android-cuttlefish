@@ -16,11 +16,12 @@
 
 #pragma once
 
+#include <memory>
 #include <optional>
+#include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -31,7 +32,7 @@ namespace cuttlefish {
 Result<DiskBuilder> OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::optional<ChromeOsStateImage>&, const MetadataImage&,
-    const MiscImage&, const SystemImageDirFlag&);
+    const std::optional<ChromeOsStateImage>&,
+    const std::vector<std::unique_ptr<ImageFile>>&, const SystemImageDirFlag&);
 
 }  // namespace cuttlefish
