@@ -18,6 +18,7 @@
 
 #include <stddef.h>
 
+#include <functional>
 #include <map>
 #include <optional>
 #include <ostream>
@@ -196,7 +197,7 @@ class ConfigFlagImpl : public ConfigFlag {
     if (!ReadFileToString(info_path, &android_info)) {
       return {};
     }
-    Result<std::map<std::string, std::string>> parsed_config =
+    Result<std::map<std::string, std::string, std::less<void>>> parsed_config =
         ParseKeyEqualsValue(android_info);
     if (!parsed_config.ok()) {
       return {};

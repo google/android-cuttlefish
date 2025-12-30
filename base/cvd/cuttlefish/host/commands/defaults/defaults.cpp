@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <string.h>
 #include <unistd.h>
 
+#include <functional>
 #include <string_view>
 
-#include <android-base/logging.h>
-#include <android-base/macros.h>
-#include "absl/cleanup/cleanup.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/str_format.h"
+#include "android-base/logging.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
@@ -51,8 +49,8 @@ Result<std::string> MetadataValue(std::string_view key) {
 
 Result<std::pair<std::string, std::string>> ParseKeyValueFlag(
     const std::string &flag) {
-  std::map<std::string, std::string> kvs = CF_EXPECT(
-      ParseKeyEqualsValue(flag));
+  std::map<std::string, std::string, std::less<void>> kvs =
+      CF_EXPECT(ParseKeyEqualsValue(flag));
   CF_EXPECT(kvs.size() == 1);
   return *(kvs.begin());
 }
@@ -93,7 +91,8 @@ Result<bool> UseStaticDefaults(const std::optional<std::string> &flag) {
   return actual == expected;
 }
 
-Result<std::map<std::string, std::string>> DefaultsFromMetadata() {
+Result<std::map<std::string, std::string, std::less<void>>>
+DefaultsFromMetadata() {
   std::string data =
       CF_EXPECT(MetadataValue("instance/attributes/cf-defaults"));
   return ParseKeyEqualsValue(data);
@@ -119,7 +118,8 @@ Result<int> DefaultsMain(int argc, char *argv[]) {
     return 0;
   }
 
-  Result<std::map<std::string, std::string>> m = DefaultsFromMetadata();
+  Result<std::map<std::string, std::string, std::less<void>>> m =
+      DefaultsFromMetadata();
   if (!m.ok()) {
     LOG(INFO) << "Couldn't get defaults from metadata.";
     // Not necessarily an error, so don't report it.

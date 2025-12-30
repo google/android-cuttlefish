@@ -76,7 +76,7 @@ class ImgZipImpl : public AndroidBuild {
   }
 
   // TODO: schuffelen - put in AndroidBuild
-  Result<std::map<std::string, std::string>> AndroidInfoTxt() {
+  Result<std::map<std::string, std::string, std::less<void>>> AndroidInfoTxt() {
     std::string contents =
         CF_EXPECT(archive_.MemberContents("android-info.txt"));
     return CF_EXPECT(ParseKeyEqualsValue(contents));

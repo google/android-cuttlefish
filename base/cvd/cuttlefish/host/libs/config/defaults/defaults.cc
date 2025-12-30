@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "cuttlefish/host/libs/config/defaults/defaults.h"
+
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -22,12 +25,12 @@
 #include "absl/container/btree_map.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
-#include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Defaults::Defaults(std::map<std::string, std::string> defaults) {
+Defaults::Defaults(
+    std::map<std::string, std::string, std::less<void>> defaults) {
   for(const auto &[k, v]: defaults) {
     defaults_[k] = v;
   }
@@ -51,7 +54,7 @@ Result<Defaults> Defaults::FromFile(const std::string &path) {
   std::string defaults_str;
   CF_EXPECT(android::base::ReadFileToString(path, &defaults_str),
             "Couldn't read defaults file.");
-  std::map<std::string, std::string> defaults_map = CF_EXPECT(
+  std::map<std::string, std::string, std::less<void>> defaults_map = CF_EXPECT(
       ParseKeyEqualsValue(defaults_str), "Couldn't parse defaults file.");
   return Defaults(defaults_map);
 }

@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -24,7 +25,7 @@
 
 namespace cuttlefish {
 
-using MiscInfo = std::map<std::string, std::string>;
+using MiscInfo = std::map<std::string, std::string, std::less<void>>;
 
 struct VbmetaArgs {
   std::string algorithm;
