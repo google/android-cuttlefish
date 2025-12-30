@@ -10,10 +10,12 @@ cf_cc_binary(
         "main.cc",
     ],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/location",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",

@@ -17,6 +17,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",

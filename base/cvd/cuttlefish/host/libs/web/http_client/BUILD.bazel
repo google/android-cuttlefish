@@ -20,6 +20,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@curl",
     ],
 )
@@ -71,6 +72,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -84,6 +86,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
 )

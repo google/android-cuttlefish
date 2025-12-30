@@ -117,6 +117,8 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",

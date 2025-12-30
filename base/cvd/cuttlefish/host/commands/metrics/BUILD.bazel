@@ -27,6 +27,7 @@ cf_cc_library(
         "//external_proto:cf_log_cc_proto",
         "//external_proto:cf_metrics_event_cc_proto",
         "//external_proto:clientanalytics_cc_proto",
+        "@abseil-cpp//absl/log",
         "@protobuf//:timestamp_cc_proto",
     ],
 )
@@ -52,6 +53,8 @@ cf_cc_binary(
         "//cuttlefish/host/libs/msg_queue",
         "//external_proto:cf_log_cc_proto",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@fruit",
         "@gflags",
         "@jsoncpp",
@@ -71,6 +74,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -78,7 +82,10 @@ cf_cc_library(
     name = "utils",
     srcs = ["utils.cc"],
     hdrs = ["utils.h"],
-    deps = ["//libbase"],
+    deps = [
+        "//libbase",
+        "@abseil-cpp//absl/log",
+    ],
 )
 
 cf_cc_test(

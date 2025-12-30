@@ -12,8 +12,10 @@ cf_cc_binary(
     deps = [
         ":libcvd_update_security_algorithm_builder",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
     ],
 )

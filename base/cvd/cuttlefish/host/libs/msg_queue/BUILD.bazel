@@ -15,5 +15,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/posix:strerror",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )

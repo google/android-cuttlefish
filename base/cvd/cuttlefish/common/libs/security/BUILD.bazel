@@ -15,6 +15,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 

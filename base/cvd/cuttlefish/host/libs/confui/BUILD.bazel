@@ -86,6 +86,8 @@ cf_cc_library(
         "//libbase",
         "//teeui/libteeui",
         "//teeui/libteeui/prebuilt/localization:libteeui_localization",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@boringssl//:crypto",
         "@freetype",
         "@fruit",

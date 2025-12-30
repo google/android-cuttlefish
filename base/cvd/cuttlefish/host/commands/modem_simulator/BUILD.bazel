@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:client",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -25,6 +26,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -87,6 +89,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -105,6 +108,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:thread_looper",
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -149,6 +153,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@jsoncpp",
         "@tinyxml2",
     ],
@@ -165,6 +170,8 @@ cf_cc_binary(
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_class",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@fmt",
         "@gflags",
     ],
@@ -189,6 +196,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:device_config",
         "//cuttlefish/host/commands/modem_simulator:modem_technology",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
 )
@@ -225,6 +233,7 @@ cf_cc_test(
         "//cuttlefish/host/commands/modem_simulator:modem_simulator_lib",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
@@ -246,6 +255,8 @@ cf_cc_library(
     hdrs = ["thread_looper.h"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 

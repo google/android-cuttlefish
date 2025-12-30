@@ -72,6 +72,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",

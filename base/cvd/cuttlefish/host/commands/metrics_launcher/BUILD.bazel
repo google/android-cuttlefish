@@ -10,10 +10,12 @@ cf_cc_binary(
         "metrics_launcher.cpp",
     ],
     deps = [
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/metrics",
         "//cuttlefish/host/libs/msg_queue",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
     ],
 )

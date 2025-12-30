@@ -13,6 +13,7 @@ cf_cc_binary(
         ":libcvd_send_sms",
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
     ],
 )
@@ -30,6 +31,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@icu//icu4c/source/common:headers",
         "@icu//icu4c/source/common:schriter",
         "@icu//icu4c/source/common:utypes",
@@ -46,6 +48,7 @@ cf_cc_test(
         ":libcvd_send_sms",
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log:check",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],

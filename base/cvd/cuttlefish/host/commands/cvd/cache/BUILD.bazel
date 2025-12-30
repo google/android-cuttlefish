@@ -14,6 +14,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:disk_usage",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",

@@ -13,6 +13,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
     ],
 )

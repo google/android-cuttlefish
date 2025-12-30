@@ -37,6 +37,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@fruit",
@@ -65,6 +66,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -84,6 +86,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fruit",
         "@jsoncpp",
@@ -117,6 +121,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
@@ -144,6 +150,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:mbr",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -173,6 +180,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -216,6 +224,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@jsoncpp",
     ],
@@ -228,6 +237,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/config:fetcher_config",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/types:span",
     ],
@@ -281,6 +291,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:config_utils",
         "//libbase",
+        "@abseil-cpp//absl/log:check",
         "@zlib",
     ],
 )
@@ -324,6 +335,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/log:check",
+        "@fmt",
     ],
 )
 

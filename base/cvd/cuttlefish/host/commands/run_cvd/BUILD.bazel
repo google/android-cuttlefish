@@ -23,6 +23,8 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",
@@ -35,6 +37,7 @@ cf_cc_library(
     hdrs = ["reporting.h"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
     ],
 )
@@ -102,6 +105,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
         "@gflags",
     ],
@@ -137,6 +141,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@fruit",
         "@gflags",
     ],
@@ -154,6 +160,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
     ],
 )

@@ -40,6 +40,7 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
 )
@@ -122,6 +123,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
@@ -152,6 +154,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@boringssl//:crypto",
         "@jsoncpp",

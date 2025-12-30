@@ -39,6 +39,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -59,6 +60,7 @@ cf_cc_binary(
         "@abseil-cpp//absl/cleanup:cleanup",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )

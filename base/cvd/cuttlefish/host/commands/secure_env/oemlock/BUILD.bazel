@@ -11,6 +11,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/secure_env/storage",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -23,5 +25,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/transport",
         "//cuttlefish/host/commands/secure_env/oemlock",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
     ],
 )

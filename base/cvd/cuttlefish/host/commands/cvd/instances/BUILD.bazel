@@ -34,6 +34,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:signals",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -126,6 +127,8 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
@@ -167,6 +170,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -187,6 +191,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )

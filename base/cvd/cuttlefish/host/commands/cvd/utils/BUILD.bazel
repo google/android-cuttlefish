@@ -28,6 +28,7 @@ cf_cc_library(
     copts = COPTS + ["-Werror=sign-compare"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@tinyxml2",
     ],
 )
@@ -42,6 +43,8 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 

@@ -27,6 +27,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
         "@gflags",
         "@jsoncpp",

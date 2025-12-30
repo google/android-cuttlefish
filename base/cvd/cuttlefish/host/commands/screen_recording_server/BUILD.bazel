@@ -41,6 +41,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/screen_recording_controls",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",

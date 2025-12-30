@@ -60,6 +60,7 @@ cf_cc_binary(
     deps = [
         ":graphics_detector_cc_proto",
         "//cuttlefish/host/graphics_detector/shaders:graphics_detector_shaders",
+        "@abseil-cpp//absl/log",
         "@egl_headers",
         "@opengl_headers//:GLES2_headers",
         "@opengl_headers//:GLES3_headers",

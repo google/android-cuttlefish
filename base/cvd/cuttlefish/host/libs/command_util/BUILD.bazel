@@ -37,6 +37,7 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@jsoncpp",
         "@protobuf",
     ],
