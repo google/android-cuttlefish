@@ -27,6 +27,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/location:string_parse",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@grpc",
         "@grpc//:grpc++",
         "@grpc//:grpc++_reflection",

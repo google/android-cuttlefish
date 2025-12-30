@@ -59,6 +59,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "//libsparse",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -180,6 +181,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -191,10 +193,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/commands/cvd/fetch:vector_flags",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -236,6 +240,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -271,6 +276,7 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@protobuf",

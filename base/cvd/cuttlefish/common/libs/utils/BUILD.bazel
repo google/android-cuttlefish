@@ -13,6 +13,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -100,6 +101,8 @@ cf_cc_library(
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -137,6 +140,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
@@ -151,6 +156,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
@@ -175,6 +181,8 @@ cf_cc_library(
     hdrs = ["host_info.h"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -188,7 +196,10 @@ cf_cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
-    deps = ["//libbase"],
+    deps = [
+        "//libbase",
+        "@abseil-cpp//absl/log",
+    ],
 )
 
 cf_cc_library(
@@ -212,6 +223,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
@@ -236,6 +248,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],
@@ -305,7 +318,10 @@ cf_cc_library(
     name = "signals",
     srcs = ["signals.cpp"],
     hdrs = ["signals.h"],
-    deps = ["//libbase"],
+    deps = [
+        "//libbase",
+        "@abseil-cpp//absl/log:check",
+    ],
 )
 
 cf_cc_library(
@@ -320,6 +336,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -333,6 +350,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -346,6 +365,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -357,8 +377,15 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/common/libs/utils:proc_file_utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:globals",
+        "@abseil-cpp//absl/log:initialize",
+        "@abseil-cpp//absl/log:log_entry",
+        "@abseil-cpp//absl/log:log_sink",
+        "@abseil-cpp//absl/log:log_sink_registry",
     ],
 )
 
@@ -388,6 +415,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -399,6 +428,7 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:unix_sockets",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log:check",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -412,6 +442,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -423,6 +454,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@jsoncpp",
     ],
 )
@@ -450,5 +482,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:wait_for_file",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
     ],
 )

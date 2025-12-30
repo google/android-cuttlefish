@@ -16,6 +16,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -44,6 +45,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -68,6 +70,7 @@ cf_cc_library(
     hdrs = ["disjoint_range_set.h"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -102,6 +105,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip:serialize_disjoint_range_set",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -115,6 +119,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@fmt",
     ],

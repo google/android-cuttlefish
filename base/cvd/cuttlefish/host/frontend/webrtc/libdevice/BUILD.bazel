@@ -57,6 +57,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@boringssl//:crypto",
         "@jsoncpp",
         "@libvpx",

@@ -33,6 +33,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@crosvm//:crosvm_gpu_display_wayland_protocols",
         "@libdrm//:libdrm_fourcc",
         "@libffi",

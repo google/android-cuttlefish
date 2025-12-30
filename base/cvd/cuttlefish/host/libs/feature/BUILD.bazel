@@ -20,6 +20,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:type_name",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@fruit",
     ],
 )

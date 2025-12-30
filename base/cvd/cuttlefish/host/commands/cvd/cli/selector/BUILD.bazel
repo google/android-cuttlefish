@@ -31,6 +31,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 

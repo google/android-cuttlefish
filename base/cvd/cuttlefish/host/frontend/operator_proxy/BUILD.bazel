@@ -12,6 +12,8 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:socket2socket_proxy",
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@gflags",
     ],
 )

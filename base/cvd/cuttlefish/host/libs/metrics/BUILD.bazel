@@ -44,6 +44,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/msg_queue",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
         "@gflags",
         "@jsoncpp",
@@ -105,6 +106,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//external_proto:clientanalytics_cc_proto",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )

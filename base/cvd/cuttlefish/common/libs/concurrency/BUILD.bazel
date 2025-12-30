@@ -11,4 +11,5 @@ cf_cc_library(
         "semaphore.h",
         "thread_safe_queue.h",
     ],
+    deps = ["@abseil-cpp//absl/log:check"],
 )

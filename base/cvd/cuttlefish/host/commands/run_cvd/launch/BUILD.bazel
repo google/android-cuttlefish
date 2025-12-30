@@ -128,6 +128,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
     ],
 )
@@ -183,6 +184,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log:check",
         "@fruit",
     ],
 )
@@ -259,6 +261,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -310,6 +313,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
     ],
 )
@@ -448,6 +452,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fmt",
         "@fruit",
     ],
@@ -468,6 +473,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
         "@jsoncpp",
     ],
@@ -487,6 +493,7 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -535,6 +542,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fmt",
         "@fruit",
     ],
@@ -572,6 +580,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fruit",
         "@googleapis//google/rpc:code_cc_proto",
         "@googleapis//google/rpc:status_cc_proto",

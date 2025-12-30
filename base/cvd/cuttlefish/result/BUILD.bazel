@@ -10,6 +10,7 @@ cf_cc_library(
     hdrs = ["error_type.h"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )
@@ -21,6 +22,7 @@ cf_cc_library(
         "//cuttlefish/result:error_type",
         "//cuttlefish/result:result_type",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@fmt",
     ],
 )

@@ -25,6 +25,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//libbase",
         "//teeui/libteeui",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@boringssl//:crypto",
     ],
 )

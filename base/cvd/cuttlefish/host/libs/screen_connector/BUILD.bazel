@@ -16,6 +16,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:size_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/log:check",
     ],
 )
 
@@ -57,6 +58,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/wayland:cuttlefish_wayland_server",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@fruit",
         "@libdrm//:libdrm_fourcc",
         "@libyuv",

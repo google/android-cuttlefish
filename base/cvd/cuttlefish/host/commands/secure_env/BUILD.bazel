@@ -19,6 +19,8 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/config:logging",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@gflags",
     ],
 )
@@ -32,6 +34,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -44,5 +47,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/secure_env:suspend_resume_handler",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
     ],
 )

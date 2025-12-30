@@ -18,6 +18,8 @@ cf_cc_binary(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@fmt",
         "@gflags",
         "@zlib",

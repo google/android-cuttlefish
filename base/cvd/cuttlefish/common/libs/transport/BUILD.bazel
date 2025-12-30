@@ -18,5 +18,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/log",
     ],
 )
