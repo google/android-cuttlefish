@@ -69,17 +69,6 @@ AndroidEfiLoaderFlag AndroidEfiLoaderFlag::FromGlobalGflags(
 }
 
 AndroidEfiLoaderFlag::AndroidEfiLoaderFlag(std::vector<std::string> paths)
-    : paths_(std::move(paths)) {}
-
-std::string AndroidEfiLoaderFlag::AndroidEfiLoaderForInstance(
-    size_t instance_index) const {
-  if (instance_index < paths_.size()) {
-    return paths_[instance_index];
-  } else if (!paths_.empty()) {
-    return paths_[0];
-  } else {
-    return "";
-  }
-}
+    : FlagBase(paths) {}
 
 }  // namespace cuttlefish
