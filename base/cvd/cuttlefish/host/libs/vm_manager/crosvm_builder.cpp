@@ -15,8 +15,6 @@
 
 #include "cuttlefish/host/libs/vm_manager/crosvm_builder.h"
 
-#include <android-base/logging.h>
-
 #include <string>
 #include <vector>
 

@@ -22,8 +22,6 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"

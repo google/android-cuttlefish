@@ -20,8 +20,6 @@
 
 #include <openssl/rand.h>
 
-#include <android-base/logging.h>
-
 namespace cuttlefish {
 
 namespace {

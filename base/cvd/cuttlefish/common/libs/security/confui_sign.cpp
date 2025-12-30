@@ -20,8 +20,6 @@
 #include <optional>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {

@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 

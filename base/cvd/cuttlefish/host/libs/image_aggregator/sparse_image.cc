@@ -24,7 +24,6 @@
 #include <utility>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <sparse/sparse.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"

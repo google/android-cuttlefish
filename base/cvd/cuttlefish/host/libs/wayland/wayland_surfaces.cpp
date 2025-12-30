@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
 
-#include <android-base/logging.h>
 #include <drm/drm_fourcc.h>
 #include <wayland-server-protocol.h>
 

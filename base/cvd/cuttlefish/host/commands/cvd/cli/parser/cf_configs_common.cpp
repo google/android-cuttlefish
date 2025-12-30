@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <json/json.h>

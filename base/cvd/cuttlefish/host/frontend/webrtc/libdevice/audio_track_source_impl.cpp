@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/audio_track_source_impl.h"
 
-#include <android-base/logging.h>
-
 namespace cuttlefish {
 namespace webrtc_streaming {
 

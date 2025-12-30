@@ -20,7 +20,6 @@
 #include <gtest/gtest.h>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/unittests/server/cmd_runner.h"

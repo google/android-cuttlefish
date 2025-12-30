@@ -23,7 +23,6 @@
 #include <unordered_map>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include "absl/strings/str_format.h"
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <string>

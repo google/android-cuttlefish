@@ -23,7 +23,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>

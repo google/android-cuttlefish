@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 
-#include <android-base/logging.h>
-
 namespace cuttlefish {
 namespace {
 

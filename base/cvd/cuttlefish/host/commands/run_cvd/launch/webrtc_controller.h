@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
