@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "android-base/parseint.h"
 #include "fmt/format.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
@@ -240,12 +241,12 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
     const BootImageFlag& boot_image, const KernelPathFlag& kernel_path,
-    const SystemImageDirFlag& system_image_dir) {
+    const SystemImageDirFlag& system_image_dirs) {
   std::vector<GuestConfig> guest_configs;
 
   const std::string env_path = fmt::format(
       "PATH={}:{}", StringFromEnv("PATH", ""), DefaultHostArtifactsPath("bin"));
-  for (int instance_index = 0; instance_index < system_image_dir.Size();
+  for (int instance_index = 0; instance_index < system_image_dirs.Size();
        instance_index++) {
     // extract-ikconfig can be called directly on the boot image since it looks
     // for the ikconfig header in the image before extracting the config list.
@@ -306,18 +307,21 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
           (guest_config.android_version_number != "13");
     }
 
+    const std::string sys_img_dir = system_image_dirs.ForIndex(instance_index);
+
     constexpr char kGuestConfigFilename[] = "cuttlefish-guest-config.txtpb";
+
     const std::string guest_config_path =
-        system_image_dir.ForIndex(instance_index) + "/" + kGuestConfigFilename;
+        absl::StrCat(sys_img_dir, "/", kGuestConfigFilename);
     if (FileExists(guest_config_path)) {
       CF_EXPECT(ParseGuestConfigTextProto(guest_config_path, guest_config));
     } else {
       const std::string android_info_txt_path =
-          system_image_dir.ForIndex(instance_index) + "/android-info.txt";
+          absl::StrCat(sys_img_dir, "/android-info.txt");
       CF_EXPECT(ParseGuestConfigTxt(android_info_txt_path, guest_config));
     }
 
-    guest_configs.push_back(guest_config);
+    guest_configs.push_back(std::move(guest_config));
   }
   return guest_configs;
 }
