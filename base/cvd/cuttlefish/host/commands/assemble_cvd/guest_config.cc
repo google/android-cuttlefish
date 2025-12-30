@@ -20,6 +20,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/match.h"
@@ -137,101 +138,85 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   return {};
 }
 
-Result<std::string> GetAndroidInfoConfig(
-    const std::string& android_info_file_path, const std::string& key) {
-  CF_EXPECT(FileExists(android_info_file_path));
+Result<std::string> MapGetResult(
+    const std::map<std::string, std::string, std::less<void>> android_info,
+    std::string_view key) {
+  auto it = android_info.find(key);
+  CF_EXPECT(it != android_info.end());
+  return it->second;
+}
 
-  std::string android_info_contents = ReadFile(android_info_file_path);
-  auto android_info_map = CF_EXPECT(ParseKeyEqualsValue(android_info_contents));
-  CF_EXPECT(android_info_map.find(key) != android_info_map.end());
-  return android_info_map[key];
+bool MapHasValue(
+    const std::map<std::string, std::string, std::less<void>> android_info,
+    std::string_view key, std::string_view expected_value) {
+  auto it = android_info.find(key);
+  return it == android_info.end() ? false : it->second == expected_value;
 }
 
 Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
                                  GuestConfig& guest_config) {
-  auto res_device_type = GetAndroidInfoConfig(guest_config_path, "device_type");
+  CF_EXPECT(FileExists(guest_config_path));
+  const std::string android_info_contents = ReadFile(guest_config_path);
+  const std::map<std::string, std::string, std::less<void>> info =
+      CF_EXPECT(ParseKeyEqualsValue(android_info_contents));
+
   // If that "device_type" is not explicitly set, fall back to parse "config".
-  if (!res_device_type.ok()) {
-    res_device_type = GetAndroidInfoConfig(guest_config_path, "config");
-  }
-  guest_config.device_type = ParseDeviceType(res_device_type.value_or(""));
+  guest_config.device_type =
+      ParseDeviceType(MapGetResult(info, "device_type")
+                          .value_or(MapGetResult(info, "config").value_or("")));
 
-  auto res = GetAndroidInfoConfig(guest_config_path, "gfxstream");
-  guest_config.gfxstream_supported = res.ok() && res.value() == "supported";
+  guest_config.gfxstream_supported =
+      MapHasValue(info, "gfxstream", "supported");
 
-  res = GetAndroidInfoConfig(guest_config_path,
-                             "gfxstream_gl_program_binary_link_status");
   guest_config.gfxstream_gl_program_binary_link_status_supported =
-      res.ok() && res.value() == "supported";
+      MapHasValue(info, "gfxstream_gl_program_binary_link_status", "supported");
 
-  auto res_mouse_support = GetAndroidInfoConfig(guest_config_path, "mouse");
-  guest_config.mouse_supported =
-      res_mouse_support.ok() && res_mouse_support.value() == "supported";
+  guest_config.mouse_supported = MapHasValue(info, "mouse", "supported");
 
-  auto res_gamepad_support = GetAndroidInfoConfig(guest_config_path, "gamepad");
-  guest_config.gamepad_supported =
-      res_gamepad_support.ok() && res_gamepad_support.value() == "supported";
+  guest_config.gamepad_supported = MapHasValue(info, "gamepad", "supported");
 
-  auto res_custom_keyboard_config =
-      GetAndroidInfoConfig(guest_config_path, "custom_keyboard");
-  if (res_custom_keyboard_config.ok()) {
-    guest_config.custom_keyboard_config =
-        DefaultHostArtifactsPath(res_custom_keyboard_config.value());
+  if (const Result<std::string> res = MapGetResult(info, "custom_keyboard");
+      res.ok()) {
+    guest_config.custom_keyboard_config = DefaultHostArtifactsPath(*res);
   }
 
-  auto res_domkey_mapping_config =
-      GetAndroidInfoConfig(guest_config_path, "domkey_mapping");
-  if (res_domkey_mapping_config.ok()) {
-    guest_config.domkey_mapping_config =
-        DefaultHostArtifactsPath(res_domkey_mapping_config.value());
+  if (const Result<std::string> res = MapGetResult(info, "domkey_mapping");
+      res.ok()) {
+    guest_config.domkey_mapping_config = DefaultHostArtifactsPath(*res);
   }
 
-  auto res_bgra_support =
-      GetAndroidInfoConfig(guest_config_path, "supports_bgra_framebuffers");
   guest_config.supports_bgra_framebuffers =
-      res_bgra_support.value_or("") == "true";
+      MapHasValue(info, "supports_bgra_framebuffers", "true");
 
-  auto res_vhost_user_vsock =
-      GetAndroidInfoConfig(guest_config_path, "vhost_user_vsock");
-  guest_config.vhost_user_vsock = res_vhost_user_vsock.value_or("") == "true";
+  guest_config.vhost_user_vsock = MapHasValue(info, "vhost_user_vsock", "true");
 
-  auto res_prefer_drm_virgl_when_supported = GetAndroidInfoConfig(
-      guest_config_path, "prefer_drm_virgl_when_supported");
   guest_config.prefer_drm_virgl_when_supported =
-      res_prefer_drm_virgl_when_supported.value_or("") == "true";
+      MapHasValue(info, "prefer_drm_virgl_when_supported", "true");
 
-  auto res_ti50_emulator =
-      GetAndroidInfoConfig(guest_config_path, "ti50_emulator");
-  guest_config.ti50_emulator = res_ti50_emulator.value_or("");
-  auto res_output_audio_streams_count =
-      GetAndroidInfoConfig(guest_config_path, "output_audio_streams_count");
-  if (res_output_audio_streams_count.ok()) {
-    std::string output_audio_streams_count_str =
-        res_output_audio_streams_count.value();
-    CF_EXPECT(android::base::ParseInt(output_audio_streams_count_str,
-                                      &guest_config.output_audio_streams_count),
-              "Failed to parse value \"" << output_audio_streams_count_str
-                                         << "\" for output audio stream count");
+  guest_config.ti50_emulator = MapGetResult(info, "ti50_emulator").value_or("");
+
+  if (const Result<std::string> res =
+          MapGetResult(info, "output_audio_streams_count");
+      res.ok()) {
+    CF_EXPECTF(
+        android::base::ParseInt(*res, &guest_config.output_audio_streams_count),
+        "Failed to parse value '{}' for output audio stream count", *res);
   }
 
-  Result<std::string> enforce_mac80211_hwsim =
-      GetAndroidInfoConfig(guest_config_path, "enforce_mac80211_hwsim");
-  if (enforce_mac80211_hwsim.ok()) {
-    if (*enforce_mac80211_hwsim == "true") {
+  if (const Result<std::string> res =
+          MapGetResult(info, "enforce_mac80211_hwsim");
+      res.ok()) {
+    if (*res == "true") {
       guest_config.enforce_mac80211_hwsim = true;
-    } else if (*enforce_mac80211_hwsim == "false") {
+    } else if (*res == "false") {
       guest_config.enforce_mac80211_hwsim = false;
     }
   }
 
-  auto res_blank_data_image_mb =
-      GetAndroidInfoConfig(guest_config_path, "blank_data_image_mb");
-  if (res_blank_data_image_mb.ok()) {
-    std::string res_blank_data_image_mb_str = res_blank_data_image_mb.value();
-    CF_EXPECT(android::base::ParseInt(res_blank_data_image_mb_str,
-                                      &guest_config.blank_data_image_mb),
-              "Failed to parse value \"" << res_blank_data_image_mb_str
-                                         << "\" for blank data image size");
+  if (const Result<std::string> res = MapGetResult(info, "blank_data_image_mb");
+      res.ok()) {
+    CF_EXPECTF(android::base::ParseInt(*res, &guest_config.blank_data_image_mb),
+               "Failed to parse value '{}' for blank data image size", *res);
   }
 
   return {};
