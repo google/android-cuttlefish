@@ -20,8 +20,9 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -31,34 +32,33 @@ DEFINE_string(boot_image, CF_DEFAULTS_BOOT_IMAGE,
               "boot.img in the directory specified by -system_image_dir.");
 
 namespace cuttlefish {
+namespace {
+
+static constexpr std::string_view kName = "boot.img";
+
+std::vector<std::string> Defaults(const SystemImageDirFlag& system_image_dirs) {
+  std::vector<std::string> defaults;
+  for (std::string_view system_image_dir : system_image_dirs.AsVector()) {
+    defaults.emplace_back(absl::StrCat(system_image_dir, "/", kName));
+  }
+  return defaults;
+}
+
+}  // namespace
 
 BootImageFlag BootImageFlag::FromGlobalGflags(
     const SystemImageDirFlag& system_image_dir) {
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("boot_image");
 
-  std::vector<std::string> boot_images =
-      flag_info.is_default ? std::vector<std::string>{}
-                           : android::base::Split(FLAGS_boot_image, ",");
-
-  return BootImageFlag(system_image_dir, boot_images);
+  return flag_info.is_default
+             ? BootImageFlag(Defaults(system_image_dir), true)
+             : BootImageFlag(absl::StrSplit(FLAGS_boot_image, ","), false);
 }
 
-std::string BootImageFlag::BootImageForIndex(size_t index) const {
-  if (boot_images_.empty()) {
-    return system_image_dir_.ForIndex(index) + "/boot.img";
-  } else if (index < boot_images_.size()) {
-    return boot_images_[index];
-  } else {
-    return boot_images_[0];
-  }
-}
+bool BootImageFlag::IsDefault() const { return is_default_; }
 
-bool BootImageFlag::IsDefault() const { return boot_images_.empty(); }
-
-BootImageFlag::BootImageFlag(const SystemImageDirFlag& system_image_dir,
-                             std::vector<std::string> boot_images)
-    : system_image_dir_(system_image_dir),
-      boot_images_(std::move(boot_images)) {}
+BootImageFlag::BootImageFlag(std::vector<std::string> paths, bool is_default)
+    : FlagBase(std::move(paths)), is_default_(is_default) {}
 
 }  // namespace cuttlefish
