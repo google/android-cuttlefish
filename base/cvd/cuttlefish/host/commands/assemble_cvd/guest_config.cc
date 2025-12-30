@@ -244,8 +244,6 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     const BootImageFlag& boot_image, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dir) {
   std::vector<GuestConfig> guest_configs;
-  std::string kernel_image_path = "";
-  std::string cur_boot_image;
 
   std::string current_path = StringFromEnv("PATH", "");
   std::string bin_folder = DefaultHostArtifactsPath("bin");
@@ -263,6 +261,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     // ikconfig header outside the kernel.
     std::string cur_boot_image = boot_image.ForIndex(instance_index);
 
+    std::string kernel_image_path = "";
     if (!kernel_path.KernelPathForIndex(instance_index).empty()) {
       kernel_image_path = kernel_path.KernelPathForIndex(instance_index);
     } else if (!cur_boot_image.empty()) {
