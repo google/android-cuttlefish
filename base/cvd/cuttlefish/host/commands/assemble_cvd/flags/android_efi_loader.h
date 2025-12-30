@@ -34,12 +34,9 @@ class AndroidEfiLoaderFlag {
   std::string AndroidEfiLoaderForInstance(size_t instance_index) const;
 
  private:
-  AndroidEfiLoaderFlag(const SystemImageDirFlag&, std::vector<std::string> flag,
-                       bool enabled);
+  AndroidEfiLoaderFlag(std::vector<std::string>);
 
-  const SystemImageDirFlag& system_image_dir_;
-  std::vector<std::string> flag_;
-  bool enabled_;
+  std::vector<std::string> paths_;
 };
 
 }  // namespace cuttlefish
