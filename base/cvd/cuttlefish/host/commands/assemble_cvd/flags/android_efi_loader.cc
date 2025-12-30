@@ -21,69 +21,65 @@
 #include <utility>
 #include <vector>
 
-#include <gflags/gflags.h>
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
-#include "cuttlefish/host/libs/config/vmm_mode.h"
 
 DEFINE_string(android_efi_loader, CF_DEFAULTS_ANDROID_EFI_LOADER,
               "Location of android EFI loader for android efi load flow.");
 
 namespace cuttlefish {
+namespace {
+
+static constexpr std::string_view kName = "/android_efi_loader.efi";
+
+std::vector<std::string> DefaultPaths(
+    const SystemImageDirFlag& system_image_dirs) {
+  std::vector<std::string> paths;
+  for (std::string_view system_image_dir : system_image_dirs.AsVector()) {
+    // EFI loader isn't present in the output folder by default and can be only
+    // fetched by --android_efi_loader_build in fetch_cvd, so pick it only in
+    // case it's present.
+    std::string path = absl::StrCat(system_image_dir, kName);
+    paths.emplace_back(FileExists(path) ? std::move(path) : "");
+  }
+  return paths;
+}
+
+}  // namespace
 
 /* `--android_efi_loader` flag */
 AndroidEfiLoaderFlag AndroidEfiLoaderFlag::FromGlobalGflags(
     const SystemImageDirFlag& system_image_dir, const VmManagerFlag& vmm) {
-  bool enabled = false;
-  switch (vmm.Mode()) {
-    case VmmMode::kCrosvm:
-    case VmmMode::kQemu:
-      enabled = true;
-      break;
-    case VmmMode::kGem5:
-    case VmmMode::kUnknown:
-      enabled = false;
-      break;
+  if (!VmManagerIsCrosvm(vmm) && !VmManagerIsQemu(vmm)) {
+    return AndroidEfiLoaderFlag({});
   }
   gflags::CommandLineFlagInfo flag_info =
-      gflags::GetCommandLineFlagInfoOrDie("bootloader");
+      gflags::GetCommandLineFlagInfoOrDie("android_efi_loader");
   if (flag_info.is_default) {
-    return AndroidEfiLoaderFlag(system_image_dir, {}, enabled);
+    return AndroidEfiLoaderFlag(DefaultPaths(system_image_dir));
+  } else {
+    return AndroidEfiLoaderFlag(absl::StrSplit(FLAGS_android_efi_loader, ","));
   }
-  std::vector<std::string> loaders =
-      absl::StrSplit(FLAGS_android_efi_loader, ",");
-  return AndroidEfiLoaderFlag(system_image_dir, std::move(loaders), enabled);
 }
 
-AndroidEfiLoaderFlag::AndroidEfiLoaderFlag(
-    const SystemImageDirFlag& system_image_dir, std::vector<std::string> flag,
-    bool enabled)
-    : system_image_dir_(system_image_dir),
-      flag_(std::move(flag)),
-      enabled_(enabled) {}
+AndroidEfiLoaderFlag::AndroidEfiLoaderFlag(std::vector<std::string> paths)
+    : paths_(std::move(paths)) {}
 
 std::string AndroidEfiLoaderFlag::AndroidEfiLoaderForInstance(
     size_t instance_index) const {
-  if (instance_index < flag_.size()) {
-    return flag_[instance_index];
-  } else if (!flag_.empty()) {
-    return flag_[0];
-  } else if (!enabled_) {
+  if (instance_index < paths_.size()) {
+    return paths_[instance_index];
+  } else if (!paths_.empty()) {
+    return paths_[0];
+  } else {
     return "";
   }
-  // EFI loader isn't present in the output folder by default and can be only
-  // fetched by --android_efi_loader_build in fetch_cvd, so pick it only in case
-  // it's present.
-  std::string downloaded =
-      system_image_dir_.ForIndex(instance_index) + "/android_efi_loader.efi";
-  if (FileExists(downloaded)) {
-    return downloaded;
-  }
-  return "";
 }
 
 }  // namespace cuttlefish
