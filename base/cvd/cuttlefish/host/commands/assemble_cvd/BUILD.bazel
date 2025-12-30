@@ -37,6 +37,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/assemble_cvd:flag_feature",
         "//cuttlefish/host/commands/assemble_cvd:flags",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:instance_image_files",
         "//cuttlefish/host/commands/assemble_cvd:resolve_instance_files",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
@@ -151,6 +152,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd:instance_image_files",
         "//cuttlefish/host/commands/assemble_cvd:super_image_mixer",
         "//cuttlefish/host/commands/assemble_cvd/disk:access_kregistry",
         "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
@@ -164,8 +166,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/disk:initialize_instance_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
-        "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
-        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:os_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:pflash",
         "//cuttlefish/host/commands/assemble_cvd/disk:pstore",
@@ -405,6 +405,18 @@ proto_library(
 cc_proto_library(
     name = "guest_config_cc_proto",
     deps = [":guest_config_proto"],
+)
+
+cf_cc_library(
+    name = "instance_image_files",
+    srcs = ["instance_image_files.cc"],
+    hdrs = ["instance_image_files.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
+        "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
+        "//cuttlefish/host/commands/assemble_cvd/disk:misc_image",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
 )
 
 cf_cc_library(

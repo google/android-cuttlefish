@@ -52,6 +52,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
+#include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -338,17 +339,22 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     bool creating_os_disk = false;
     // if any device needs to rebuild its composite disk,
     // then don't preserve any files and delete everything.
-    for (const auto& instance : config.Instances()) {
-      std::vector<std::unique_ptr<ImageFile>> image_files;
 
-      image_files.emplace_back(std::make_unique<MetadataImage>(instance));
-      image_files.emplace_back(std::make_unique<MiscImage>(instance));
+    std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
+        InstanceImageFiles(config);
+
+    size_t index = 0;
+    for (const auto& instance : config.Instances()) {
+      CF_EXPECT_LE(index, image_files.size());
+      const std::vector<std::unique_ptr<ImageFile>>& instance_image_files =
+          image_files[index];
 
       Result<std::optional<ChromeOsStateImage>> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
       if (chrome_os_state.ok()) {
-        Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
-            config, instance, *chrome_os_state, image_files, system_image_dir);
+        Result<DiskBuilder> os_builder =
+            OsCompositeDiskBuilder(config, instance, *chrome_os_state,
+                                   instance_image_files, system_image_dir);
         if (!os_builder.ok()) {
           creating_os_disk = true;
         } else {
@@ -365,6 +371,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       if (instance.modem_simulator_instance_number() > modem_simulator_count) {
         modem_simulator_count = instance.modem_simulator_instance_number();
       }
+      index++;
     }
     // TODO(schuffelen): Add smarter decision for when to delete runtime files.
     // Files like NVChip are tightly bound to Android keymint and should be

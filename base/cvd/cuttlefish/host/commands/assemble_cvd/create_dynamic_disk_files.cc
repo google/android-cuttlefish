@@ -43,8 +43,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/initialize_instance_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/os_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/pflash.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/pstore.h"
@@ -52,6 +50,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
@@ -99,6 +98,8 @@ Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
 Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
     const SystemImageDirFlag& system_image_dirs) {
+  std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
+      InstanceImageFiles(config);
   size_t instance_index = 0;
   for (const auto& instance : config.Instances()) {
     const FetcherConfig& fetcher_config =
@@ -160,17 +161,17 @@ Result<void> CreateDynamicDiskFiles(
       }
     }
 
-    std::vector<std::unique_ptr<ImageFile>> image_files;
+    CF_EXPECT_LE(instance_index, image_files.size());
+    const std::vector<std::unique_ptr<ImageFile>>& instance_image_files =
+        image_files[instance_index];
 
-    image_files.emplace_back(std::make_unique<MetadataImage>(instance));
-    image_files.emplace_back(std::make_unique<MiscImage>(instance));
-
-    for (auto& image_file : image_files) {
+    for (auto& image_file : instance_image_files) {
       CF_EXPECT(image_file->Generate());
     }
 
-    DiskBuilder os_disk_builder = CF_EXPECT(OsCompositeDiskBuilder(
-        config, instance, chrome_os_state, image_files, system_image_dirs));
+    DiskBuilder os_disk_builder = CF_EXPECT(
+        OsCompositeDiskBuilder(config, instance, chrome_os_state,
+                               instance_image_files, system_image_dirs));
     const auto os_built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
