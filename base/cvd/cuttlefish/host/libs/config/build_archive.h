@@ -23,7 +23,6 @@
 #include <string>
 #include <string_view>
 
-#include "absl/strings/str_format.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "fmt/ostream.h"
 
@@ -47,11 +46,6 @@ class BuildArchive {
                                                 std::string_view archive_name);
   static Result<BuildArchive> FromZip(ReadableZip);
   static Result<BuildArchive> FromZipPath(const std::string&);
-
-  template <typename Sink>
-  friend void AbslStringify(Sink& sink, const BuildArchive& img) {
-    sink.Append(absl::FormatStreamed(img));
-  }
 
   /**
    * Returns the filenames of the members held in the archive.
