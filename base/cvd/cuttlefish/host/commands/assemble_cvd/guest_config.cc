@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <format>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,7 +25,7 @@
 #include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
-
+#include <fmt/format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
@@ -245,12 +245,8 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     const SystemImageDirFlag& system_image_dir) {
   std::vector<GuestConfig> guest_configs;
 
-  std::string current_path = StringFromEnv("PATH", "");
-  std::string bin_folder = DefaultHostArtifactsPath("bin");
-  std::string new_path = "PATH=";
-  new_path += current_path;
-  new_path += ":";
-  new_path += bin_folder;
+  const std::string env_path = fmt::format(
+      "PATH={}:{}", StringFromEnv("PATH", ""), DefaultHostArtifactsPath("bin"));
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
   for (int instance_index = 0; instance_index < instance_nums.size();
@@ -282,7 +278,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
       Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
       ikconfig_cmd.AddParameter(kernel_image_path);
       ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable(
-          "PATH", new_path);
+          "PATH", env_path);
       std::string ikconfig_path = FLAGS_early_tmp_dir + "/ikconfig.XXXXXX";
       auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
       CF_EXPECT(ikconfig_fd->IsOpen(),
