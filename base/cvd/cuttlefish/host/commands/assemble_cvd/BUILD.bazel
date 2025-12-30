@@ -351,6 +351,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:display",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@protobuf",
         "@protobuf//src/google/protobuf/io",
