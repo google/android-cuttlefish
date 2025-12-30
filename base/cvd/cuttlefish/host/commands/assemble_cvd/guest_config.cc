@@ -34,7 +34,8 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
-#include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -276,18 +277,9 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
       ikconfig_cmd.AddParameter(kernel_image_path);
       ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable(
           "PATH", env_path);
-      std::string ikconfig_path = FLAGS_early_tmp_dir + "/ikconfig.XXXXXX";
-      auto ikconfig_fd = SharedFD::Mkstemp(&ikconfig_path);
-      CF_EXPECT(ikconfig_fd->IsOpen(),
-                "Unable to create ikconfig file: " << ikconfig_fd->StrError());
-      ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
-                                 ikconfig_fd);
 
-      auto ikconfig_proc = ikconfig_cmd.Start();
-      CF_EXPECT(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0,
-                "Failed to extract ikconfig from " << kernel_image_path);
-
-      std::string config = ReadFile(ikconfig_path);
+      const std::string config =
+          CF_EXPECT(RunAndCaptureStdout(std::move(ikconfig_cmd)));
 
       if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
         guest_config.target_arch = Arch::Arm;
@@ -314,8 +306,6 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
           (guest_config.android_version_number != "13.0.0") &&
           (guest_config.android_version_number != "11") &&
           (guest_config.android_version_number != "13");
-
-      unlink(ikconfig_path.c_str());
     }
 
     constexpr char kGuestConfigFilename[] = "cuttlefish-guest-config.txtpb";
