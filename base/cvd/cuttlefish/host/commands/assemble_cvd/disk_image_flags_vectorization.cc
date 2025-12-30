@@ -99,7 +99,7 @@ Result<void> DiskImageFlagsVectorization(
   for (const auto& num : instance_nums) {
     auto instance = config.ForInstance(num);
     instance.set_images_dir(system_image_dir.ForIndex(instance_index));
-    std::string cur_boot_image = boot_image.BootImageForIndex(instance_index);
+    std::string cur_boot_image = boot_image.ForIndex(instance_index);
     instance.set_boot_image(cur_boot_image);
     instance.set_new_boot_image(cur_boot_image);
 

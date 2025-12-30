@@ -261,7 +261,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
     // for the ikconfig header in the image before extracting the config list.
     // This code is liable to break if the boot image ever includes the
     // ikconfig header outside the kernel.
-    std::string cur_boot_image = boot_image.BootImageForIndex(instance_index);
+    std::string cur_boot_image = boot_image.ForIndex(instance_index);
 
     if (!kernel_path.KernelPathForIndex(instance_index).empty()) {
       kernel_image_path = kernel_path.KernelPathForIndex(instance_index);
