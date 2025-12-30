@@ -139,7 +139,7 @@ Result<void> DiskImageFlagsVectorization(
     }
     instance.set_super_image(super_image.SuperImageForIndex(instance_index));
     instance.set_android_efi_loader(
-        android_efi_loader.AndroidEfiLoaderForInstance(instance_index));
+        android_efi_loader.ForIndex(instance_index));
     if (instance_index >= chromeos_disk.size()) {
       instance.set_chromeos_disk(chromeos_disk[0]);
     } else {

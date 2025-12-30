@@ -20,23 +20,21 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 
 namespace cuttlefish {
 
 /* `--android_efi_loader` flag */
-class AndroidEfiLoaderFlag {
+class AndroidEfiLoaderFlag : public FlagBase<std::string> {
  public:
   static AndroidEfiLoaderFlag FromGlobalGflags(const SystemImageDirFlag&,
                                                const VmManagerFlag&);
-
-  std::string AndroidEfiLoaderForInstance(size_t instance_index) const;
+  ~AndroidEfiLoaderFlag() override = default;
 
  private:
   AndroidEfiLoaderFlag(std::vector<std::string>);
-
-  std::vector<std::string> paths_;
 };
 
 }  // namespace cuttlefish
