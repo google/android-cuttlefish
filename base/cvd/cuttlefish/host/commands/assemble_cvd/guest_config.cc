@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "absl/strings/match.h"
 #include "android-base/parseint.h"
 #include "fmt/format.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
@@ -278,27 +279,27 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
       const std::string config =
           CF_EXPECT(RunAndCaptureStdout(std::move(ikconfig_cmd)));
 
-      if (config.find("\nCONFIG_ARM=y") != std::string::npos) {
+      if (absl::StrContains(config, "\nCONFIG_ARM=y")) {
         guest_config.target_arch = Arch::Arm;
-      } else if (config.find("\nCONFIG_ARM64=y") != std::string::npos) {
+      } else if (absl::StrContains(config, "\nCONFIG_ARM64=y")) {
         guest_config.target_arch = Arch::Arm64;
-      } else if (config.find("\nCONFIG_ARCH_RV64I=y") != std::string::npos) {
+      } else if (absl::StrContains(config, "\nCONFIG_ARCH_RV64I=y")) {
         guest_config.target_arch = Arch::RiscV64;
-      } else if (config.find("\nCONFIG_X86_64=y") != std::string::npos) {
+      } else if (absl::StrContains(config, "\nCONFIG_X86_64=y")) {
         guest_config.target_arch = Arch::X86_64;
-      } else if (config.find("\nCONFIG_X86=y") != std::string::npos) {
+      } else if (absl::StrContains(config, "\nCONFIG_X86=y")) {
         guest_config.target_arch = Arch::X86;
       } else {
         return CF_ERR("Unknown target architecture");
       }
       guest_config.bootconfig_supported =
-          config.find("\nCONFIG_BOOT_CONFIG=y") != std::string::npos;
+          absl::StrContains(config, "\nCONFIG_BOOT_CONFIG=y");
       // Once all Cuttlefish kernel versions are at least 5.15, this code can be
       // removed. CONFIG_CRYPTO_HCTR2=y will always be set.
       // Note there's also a platform dep for hctr2 introduced in Android 14.
       // Hence the version check.
       guest_config.hctr2_supported =
-          (config.find("\nCONFIG_CRYPTO_HCTR2=y") != std::string::npos) &&
+          (absl::StrContains(config, "\nCONFIG_CRYPTO_HCTR2=y")) &&
           (guest_config.android_version_number != "11.0.0") &&
           (guest_config.android_version_number != "13.0.0") &&
           (guest_config.android_version_number != "11") &&
