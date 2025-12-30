@@ -41,7 +41,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
-#include "cuttlefish/host/libs/config/instance_nums.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 
@@ -247,9 +246,7 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
 
   const std::string env_path = fmt::format(
       "PATH={}:{}", StringFromEnv("PATH", ""), DefaultHostArtifactsPath("bin"));
-  auto instance_nums =
-      CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  for (int instance_index = 0; instance_index < instance_nums.size();
+  for (int instance_index = 0; instance_index < system_image_dir.Size();
        instance_index++) {
     // extract-ikconfig can be called directly on the boot image since it looks
     // for the ikconfig header in the image before extracting the config list.
