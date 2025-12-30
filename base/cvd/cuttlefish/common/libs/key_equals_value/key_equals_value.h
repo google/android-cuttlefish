@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <string>
 
@@ -24,8 +25,15 @@ namespace cuttlefish {
 
 Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
     const std::string&);
+
 std::string SerializeKeyEqualsValue(const std::map<std::string, std::string>&);
+std::string SerializeKeyEqualsValue(
+    const std::map<std::string, std::string, std::less<void>>&);
+
 Result<void> WriteKeyEqualsValue(const std::map<std::string, std::string>&,
                                  const std::string& path);
+Result<void> WriteKeyEqualsValue(
+    const std::map<std::string, std::string, std::less<void>>&,
+    const std::string& path);
 
 }  // namespace cuttlefish

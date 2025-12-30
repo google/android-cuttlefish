@@ -15,7 +15,8 @@
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 
-#include <memory>
+#include <functional>
+#include <map>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -28,6 +29,35 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
+
+template <typename Comp>
+std::string GenericSerializeKeyEqualsValue(
+    const std::map<std::string, std::string, Comp>& key_equals_value) {
+  std::stringstream file_content;
+  for (const auto& [key, value] : key_equals_value) {
+    file_content << key << "=" << value << "\n";
+  }
+  return file_content.str();
+}
+
+template <typename Comp>
+Result<void> GenericWriteKeyEqualsValue(
+    const std::map<std::string, std::string, Comp>& key_equals_value,
+    const std::string& path) {
+  SharedFD output = SharedFD::Creat(path, 0644);
+  CF_EXPECTF(output->IsOpen(), "Failed to open '{}': '{}'", path,
+             output->StrError());
+
+  std::string serialized = SerializeKeyEqualsValue(key_equals_value);
+
+  CF_EXPECTF(WriteAll(output, serialized) == serialized.size(),
+             "Failed to write to '{}': '{}'", path, output->StrError());
+
+  return {};
+}
+
+}  // namespace
 
 Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
     const std::string& contents) {
@@ -54,25 +84,26 @@ Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
 
 std::string SerializeKeyEqualsValue(
     const std::map<std::string, std::string>& key_equals_value) {
-  std::stringstream file_content;
-  for (const auto& [key, value] : key_equals_value) {
-    file_content << key << "=" << value << "\n";
-  }
-  return file_content.str();
+  return GenericSerializeKeyEqualsValue(key_equals_value);
+}
+
+std::string SerializeKeyEqualsValue(
+    const std::map<std::string, std::string, std::less<void>>&
+        key_equals_value) {
+  return GenericSerializeKeyEqualsValue(key_equals_value);
 }
 
 Result<void> WriteKeyEqualsValue(
     const std::map<std::string, std::string>& key_equals_value,
     const std::string& path) {
-  SharedFD output = SharedFD::Creat(path, 0644);
-  CF_EXPECTF(output->IsOpen(), "Failed to open '{}': '{}'", path,
-             output->StrError());
+  CF_EXPECT(GenericWriteKeyEqualsValue(key_equals_value, path));
+  return {};
+}
 
-  std::string serialized = SerializeKeyEqualsValue(key_equals_value);
-
-  CF_EXPECTF(WriteAll(output, serialized) == serialized.size(),
-             "Failed to write to '{}': '{}'", path, output->StrError());
-
+Result<void> WriteKeyEqualsValue(
+    const std::map<std::string, std::string, std::less<void>>& key_equals_value,
+    const std::string& path) {
+  CF_EXPECT(GenericWriteKeyEqualsValue(key_equals_value, path));
   return {};
 }
 
