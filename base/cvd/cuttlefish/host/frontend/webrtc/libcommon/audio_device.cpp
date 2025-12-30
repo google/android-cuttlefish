@@ -18,8 +18,6 @@
 
 #include <string.h>
 
-#include <android-base/logging.h>
-
 #include <chrono>
 #include <thread>
 

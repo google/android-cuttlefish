@@ -29,7 +29,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <json/json.h>
 #include <vulkan/vulkan.h>

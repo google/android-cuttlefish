@@ -23,7 +23,6 @@
 #include <type_traits>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/confui/packet_types.h"

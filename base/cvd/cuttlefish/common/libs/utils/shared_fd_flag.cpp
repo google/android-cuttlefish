@@ -18,12 +18,8 @@
 #include <unistd.h>
 
 #include <functional>
-#include <limits>
-#include <memory>
-#include <ostream>
 #include <string>
 
-#include <android-base/logging.h>
 #include <android-base/parseint.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"

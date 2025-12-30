@@ -27,7 +27,6 @@
 #include <string>
 #include <utility>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <vulkan/vulkan.h>
 

@@ -18,6 +18,8 @@
 #include <iostream>
 #include <string>
 
+#include <android-base/macros.h>
+
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {

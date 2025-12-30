@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
 
 #include "cuttlefish/common/libs/utils/subprocess.h"

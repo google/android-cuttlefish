@@ -15,7 +15,6 @@
 
 #include <functional>
 #include <mutex>
-#include <optional>
 #include <thread>
 
 #include <android-base/logging.h>

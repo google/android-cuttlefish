@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>

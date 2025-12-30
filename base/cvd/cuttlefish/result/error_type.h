@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <unistd.h>
+
 #include <optional>
 #include <ostream>
 #include <sstream>
@@ -24,7 +26,6 @@
 #include <vector>
 
 #include <android-base/format.h>  // IWYU pragma: export
-#include <android-base/logging.h>
 #include <android-base/result.h>  // IWYU pragma: export
 
 namespace cuttlefish {

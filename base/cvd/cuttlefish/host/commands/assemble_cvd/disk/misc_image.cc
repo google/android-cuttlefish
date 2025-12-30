@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"

@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"

@@ -18,6 +18,7 @@
 #include <functional>
 #include <string_view>
 
+#include <android-base/macros.h>
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/strings/str_format.h"

@@ -15,7 +15,6 @@
  */
 
 #include <string>
-#include <vector>
 
 #include <android-base/logging.h>
 #include <gflags/gflags.h>

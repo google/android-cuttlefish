@@ -25,8 +25,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"

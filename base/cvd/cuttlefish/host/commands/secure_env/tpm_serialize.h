@@ -22,8 +22,6 @@
 #include "tss2/tss2_rc.h"
 #include "tss2/tss2_tpm2_types.h"
 
-#include <android-base/logging.h>
-
 namespace cuttlefish {
 
 /**

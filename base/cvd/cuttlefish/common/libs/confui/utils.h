@@ -19,7 +19,6 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <vector>
 
 #include <android-base/logging.h>
 

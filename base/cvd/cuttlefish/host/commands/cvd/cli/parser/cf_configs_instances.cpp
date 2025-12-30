@@ -20,8 +20,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_boot_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_connectivity_configs.h"

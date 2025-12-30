@@ -23,7 +23,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"

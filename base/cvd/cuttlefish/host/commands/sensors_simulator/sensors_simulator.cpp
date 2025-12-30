@@ -18,8 +18,6 @@
 
 #include <cmath>
 
-#include <android-base/logging.h>
-
 namespace cuttlefish {
 namespace sensors {
 
