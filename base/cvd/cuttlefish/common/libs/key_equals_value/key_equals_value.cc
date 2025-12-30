@@ -19,6 +19,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "absl/strings/ascii.h"
@@ -59,9 +60,9 @@ Result<void> GenericWriteKeyEqualsValue(
 
 }  // namespace
 
-Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
+Result<std::map<std::string, std::string, std::less<void>>> ParseKeyEqualsValue(
     const std::string& contents) {
-  std::map<std::string, std::string> key_equals_value;
+  std::map<std::string, std::string, std::less<void>> key_equals_value;
   for (std::string_view line : absl::StrSplit(contents, '\n')) {
     std::pair<std::string_view, std::string_view> key_value =
         absl::StrSplit(line, absl::MaxSplits('=', 1));

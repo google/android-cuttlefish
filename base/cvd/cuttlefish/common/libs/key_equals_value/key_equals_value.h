@@ -23,7 +23,7 @@
 
 namespace cuttlefish {
 
-Result<std::map<std::string, std::string>> ParseKeyEqualsValue(
+Result<std::map<std::string, std::string, std::less<void>>> ParseKeyEqualsValue(
     const std::string&);
 
 std::string SerializeKeyEqualsValue(const std::map<std::string, std::string>&);

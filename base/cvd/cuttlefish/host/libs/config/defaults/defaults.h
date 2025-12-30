@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -28,7 +29,7 @@ namespace cuttlefish {
 class Defaults {
  public:
   Defaults() : defaults_() {};
-  Defaults(std::map<std::string, std::string> defaults);
+  Defaults(std::map<std::string, std::string, std::less<void>> defaults);
   static Result<Defaults> FromFile(const std::string &path);
 
   std::optional<std::string_view> Value(std::string_view k) const;

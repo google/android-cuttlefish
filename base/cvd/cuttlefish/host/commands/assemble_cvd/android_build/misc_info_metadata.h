@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -34,6 +35,6 @@ namespace cuttlefish {
  * "vendor" side logical partitions.
  */
 Result<std::unique_ptr<AndroidBuild>> AndroidBuildFromMiscInfo(
-    std::map<std::string, std::string>);
+    std::map<std::string, std::string, std::less<void>>);
 
 }  // namespace cuttlefish

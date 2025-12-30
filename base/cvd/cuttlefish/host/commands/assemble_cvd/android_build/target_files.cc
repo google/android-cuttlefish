@@ -58,7 +58,7 @@ class TargetFilesImpl : public AndroidBuild {
     return std::make_unique<TargetFilesImpl>(std::move(target_files));
   }
 
-  Result<std::map<std::string, std::string>> MiscInfo() {
+  Result<std::map<std::string, std::string, std::less<void>>> MiscInfo() {
     static constexpr std::string_view kMiscInfoTxt = "META/misc_info.txt";
     std::string contents = CF_EXPECT(archive_.MemberContents(kMiscInfoTxt));
     return CF_EXPECT(ParseKeyEqualsValue(contents));
@@ -110,7 +110,8 @@ Result<std::unique_ptr<AndroidBuild>> TargetFiles(BuildArchive archive) {
   std::unique_ptr<TargetFilesImpl> target =
       CF_EXPECT(TargetFilesImpl::FromBuildArchive(std::move(archive)));
 
-  std::map<std::string, std::string> misc_info = CF_EXPECT(target->MiscInfo());
+  std::map<std::string, std::string, std::less<void>> misc_info =
+      CF_EXPECT(target->MiscInfo());
 
   std::unique_ptr<AndroidBuild> misc_info_build =
       CF_EXPECT(AndroidBuildFromMiscInfo(std::move(misc_info)));

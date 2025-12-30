@@ -37,7 +37,8 @@ namespace {
 
 class MetadataFromMiscInfo : public AndroidBuild {
  public:
-  MetadataFromMiscInfo(std::map<std::string, std::string> misc_info)
+  MetadataFromMiscInfo(
+      std::map<std::string, std::string, std::less<void>> misc_info)
       : misc_info_(std::move(misc_info)) {}
 
   Result<std::set<std::string, std::less<void>>> SystemPartitions() override {
@@ -90,13 +91,13 @@ class MetadataFromMiscInfo : public AndroidBuild {
     return out << "}";
   }
 
-  std::map<std::string, std::string> misc_info_;
+  std::map<std::string, std::string, std::less<void>> misc_info_;
 };
 
 }  // namespace
 
 Result<std::unique_ptr<AndroidBuild>> AndroidBuildFromMiscInfo(
-    std::map<std::string, std::string> misc_info) {
+    std::map<std::string, std::string, std::less<void>> misc_info) {
   auto build = std::make_unique<MetadataFromMiscInfo>(std::move(misc_info));
 
   std::set<std::string, std::less<void>> system =

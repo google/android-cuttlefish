@@ -20,7 +20,6 @@
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -29,21 +28,21 @@ namespace {
 TEST(KeyEqualsValue, Deserialize) {
   std::string serialized = "key1 = value1 \n key2 = value2";
 
-  std::map<std::string, std::string> expected = {{"key1", "value1"},
-                                                 {"key2", "value2"}};
+  std::map<std::string, std::string, std::less<void>> expected = {
+      {"key1", "value1"}, {"key2", "value2"}};
   ASSERT_THAT(ParseKeyEqualsValue(serialized), IsOkAndValue(expected));
 }
 
 TEST(KeyEqualsValue, Serialize) {
-  std::map<std::string, std::string> misc_info = {{"key1", "value1"},
-                                                  {"key2", "value2"}};
+  std::map<std::string, std::string, std::less<void>> misc_info = {
+      {"key1", "value1"}, {"key2", "value2"}};
 
   EXPECT_EQ(SerializeKeyEqualsValue(misc_info), "key1=value1\nkey2=value2\n");
 }
 
 TEST(KeyEqualsValue, SerializeDeserialize) {
-  std::map<std::string, std::string> misc_info = {{"key1", "value1"},
-                                                  {"key2", "value2"}};
+  std::map<std::string, std::string, std::less<void>> misc_info = {
+      {"key1", "value1"}, {"key2", "value2"}};
 
   std::string serialized = SerializeKeyEqualsValue(misc_info);
 
@@ -53,7 +52,8 @@ TEST(KeyEqualsValue, SerializeDeserialize) {
 TEST(KeyEqualsValue, DeserializeDuplicateKeySameValue) {
   std::string serialized = "key1=value1\nkey1=value1";
 
-  std::map<std::string, std::string> expected = {{"key1", "value1"}};
+  std::map<std::string, std::string, std::less<void>> expected = {
+      {"key1", "value1"}};
   ASSERT_THAT(ParseKeyEqualsValue(serialized), IsOkAndValue(expected));
 }
 
@@ -66,8 +66,9 @@ TEST(KeyEqualsValue, DeserializeDuplicateKeyDifferentValue) {
 TEST(KeyEqualsValue, EmptyLines) {
   std::string serialized = "\n\n\n\n\n\n";
 
-  ASSERT_THAT(ParseKeyEqualsValue(serialized),
-              IsOkAndValue(std::map<std::string, std::string>()));
+  ASSERT_THAT(
+      ParseKeyEqualsValue(serialized),
+      IsOkAndValue(std::map<std::string, std::string, std::less<void>>()));
 }
 
 }  // namespace
