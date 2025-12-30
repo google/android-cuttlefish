@@ -295,7 +295,8 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   // Ensure callers and logs clearly indicate that CAS downloading is
   // disabled and why, using the same environment-aware formatting that
   // test helpers use.
-  LOG(INFO) << "CAS downloading disabled: " << result.error();
+  LOG(INFO) << "CAS downloading disabled, see log for reason.";
+  LOG(DEBUG) << "CAS downloading disabled: " << result.error();
   return result;
 }
 
