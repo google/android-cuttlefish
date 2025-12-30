@@ -273,10 +273,10 @@ Result<std::vector<GuestConfig>> ReadGuestConfig(
       guest_config.bootconfig_supported = true;
       guest_config.hctr2_supported = true;
     } else {
-      Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
-      ikconfig_cmd.AddParameter(kernel_image_path);
-      ikconfig_cmd.UnsetFromEnvironment("PATH").AddEnvironmentVariable(
-          "PATH", env_path);
+      Command ikconfig_cmd = Command(HostBinaryPath("extract-ikconfig"))
+                                 .AddParameter(kernel_image_path)
+                                 .UnsetFromEnvironment("PATH")
+                                 .AddEnvironmentVariable("PATH", env_path);
 
       const std::string config =
           CF_EXPECT(RunAndCaptureStdout(std::move(ikconfig_cmd)));
