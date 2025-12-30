@@ -22,12 +22,10 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
-#include <fmt/format.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/text_format.h>
+#include "android-base/parseint.h"
+#include "fmt/format.h"
+#include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -40,10 +38,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
-
-#include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 
 namespace cuttlefish {
 namespace {
