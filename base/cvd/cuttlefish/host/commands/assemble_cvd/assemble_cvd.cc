@@ -54,6 +54,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
+#include "cuttlefish/host/commands/assemble_cvd/required_directories.h"
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
@@ -62,7 +63,6 @@
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
-#include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/posix/symlink.h"
@@ -399,18 +399,13 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(CleanPriorFiles(preserving, clean_dirs),
               "Failed to clean prior files");
 
-    auto default_group = "cvdnetwork";
+    std::string default_group = "cvdnetwork";
     const mode_t default_mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 
-    CF_EXPECT(EnsureDirectoryExists(config.root_dir()));
-    CF_EXPECT(EnsureDirectoryExists(config.assembly_dir()));
-    CF_EXPECT(EnsureDirectoryExists(config.instances_dir()));
-    CF_EXPECT(EnsureDirectoryExists(config.instances_uds_dir(), default_mode,
-                                    default_group));
-    CF_EXPECT(EnsureDirectoryExists(config.environments_dir(), default_mode,
-                                    default_group));
-    CF_EXPECT(EnsureDirectoryExists(config.environments_uds_dir(), default_mode,
-                                    default_group));
+    for (const std::string& dir : RequiredDirectories(config)) {
+      CF_EXPECT(EnsureDirectoryExists(dir, default_mode, default_group));
+    }
+
     if (!snapshot_path.empty()) {
       SharedFD temp = SharedFD::Creat(config.AssemblyPath("restore"), 0660);
       if (!temp->IsOpen()) {
@@ -420,41 +415,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
     auto environment =
         const_cast<const CuttlefishConfig&>(config).ForDefaultEnvironment();
-
-    CF_EXPECT(EnsureDirectoryExists(environment.environment_dir(), default_mode,
-                                    default_group));
-    CF_EXPECT(EnsureDirectoryExists(environment.environment_uds_dir(),
-                                    default_mode, default_group));
-    CF_EXPECT(EnsureDirectoryExists(environment.PerEnvironmentLogPath(""),
-                                    default_mode, default_group));
-    CF_EXPECT(
-        EnsureDirectoryExists(environment.PerEnvironmentGrpcSocketPath(""),
-                              default_mode, default_group));
-
     LOG(INFO) << "Path for instance UDS: " << config.instances_uds_dir();
 
-    if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
-      LOG(ERROR) << "Unable to persist assemble_cvd log at "
-                  << config.AssemblyPath("assemble_cvd.log")
-                  << ": " << log->StrError();
-    }
     for (const auto& instance : config.Instances()) {
-      // Create instance directory if it doesn't exist.
-      CF_EXPECT(EnsureDirectoryExists(instance.instance_dir()));
-      auto internal_dir = instance.instance_dir() + "/" + kInternalDirName;
-      CF_EXPECT(EnsureDirectoryExists(internal_dir));
-      auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
-      CF_EXPECT(EnsureDirectoryExists(shared_dir));
-      auto recording_dir = instance.instance_dir() + "/recording";
-      CF_EXPECT(EnsureDirectoryExists(recording_dir));
-      CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceLogPath("")));
-
-      CF_EXPECT(EnsureDirectoryExists(instance.instance_uds_dir(), default_mode,
-                                      default_group));
-      CF_EXPECT(EnsureDirectoryExists(instance.instance_internal_uds_dir(),
-                                      default_mode, default_group));
-      CF_EXPECT(EnsureDirectoryExists(instance.PerInstanceGrpcSocketPath(""),
-                                      default_mode, default_group));
       std::string vsock_dir = fmt::format("{}/vsock_{}_{}", TempDir(),
                                           instance.vsock_guest_cid(), getuid());
       if (DirectoryExists(vsock_dir, /* follow_symlinks */ false) &&
@@ -466,6 +429,13 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       // TODO(schuffelen): Move this code somewhere better
       CF_EXPECT(CreateLegacySymlinks(instance, environment));
     }
+
+    if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
+      LOG(ERROR) << "Unable to persist assemble_cvd log at "
+                 << config.AssemblyPath("assemble_cvd.log") << ": "
+                 << log->StrError();
+    }
+
     CF_EXPECT(SaveConfig(config), "Failed to initialize configuration");
   }
 
