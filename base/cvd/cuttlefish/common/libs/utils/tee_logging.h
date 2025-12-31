@@ -25,6 +25,9 @@
 
 namespace cuttlefish {
 
+constexpr const char* kConsoleSeverityEnvVar = "CF_CONSOLE_SEVERITY";
+constexpr const char* kFileSeverityEnvVar = "CF_FILE_SEVERITY";
+
 enum class LogSeverity : int {
   Verbose = 0,
   Debug,

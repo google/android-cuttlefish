@@ -44,6 +44,8 @@
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
 
+extern char** environ;
+
 namespace cuttlefish {
 namespace {
 
@@ -70,6 +72,16 @@ LogSeverity CvdVerbosityOption(cvd_common::Args& all_args) {
     return LogSeverity::Info;
   }
   LogSeverity verbosity = *to_severity_res;
+  // Set environment variables to the requested verbosity for subcommands and
+  // subprocesses to use.
+  if (int res = setenv(kConsoleSeverityEnvVar, verbosity_flag_value.c_str(), 1);
+      res) {
+    PLOG(ERROR) << "Failed to set console log severity environment variable";
+  }
+  if (int res = setenv(kFileSeverityEnvVar, verbosity_flag_value.c_str(), 1);
+      res) {
+    PLOG(ERROR) << "Failed to set file log severity environment variable";
+  }
   return verbosity;
 }
 
@@ -110,7 +122,7 @@ void IncreaseFileLimit() {
   }
 }
 
-Result<void> CvdMain(cvd_common::Args all_args, char** envp) {
+Result<void> CvdMain(cvd_common::Args all_args) {
   if (!isatty(0)) {
     LOG(INFO) << GetVersionIds().ToString();
   }
@@ -118,7 +130,7 @@ Result<void> CvdMain(cvd_common::Args all_args, char** envp) {
 
   CF_EXPECT(!all_args.empty());
 
-  auto env = EnvpToMap(envp);
+  auto env = EnvpToMap(environ);
   // TODO(315772518) Re-enable once metrics send is skipped in a env
   // without network support
   // CvdMetrics::SendCvdMetrics(all_args);
@@ -205,7 +217,7 @@ bool ValidateHostConfiguration() {
 }  // namespace
 }  // namespace cuttlefish
 
-int main(int argc, char** argv, char** envp) {
+int main(int argc, char** argv) {
   srand(time(NULL));
 
   cuttlefish::cvd_common::Args all_args = cuttlefish::ArgsToVec(argc, argv);
@@ -220,7 +232,7 @@ int main(int argc, char** argv, char** envp) {
   if (!cuttlefish::ValidateHostConfiguration()) {
     return -1;
   }
-  auto result = cuttlefish::CvdMain(std::move(all_args), envp);
+  auto result = cuttlefish::CvdMain(std::move(all_args));
   if (result.ok()) {
     return 0;
   } else {
