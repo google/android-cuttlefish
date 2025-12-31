@@ -24,6 +24,7 @@
 #include <cinttypes>
 #include <cstring>
 #include <ctime>
+#include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -31,21 +32,26 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include <android-base/file.h>
 #include <android-base/macros.h>
 #include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/threads.h>
+#include "absl/log/globals.h"
+#include "absl/log/initialize.h"
+#include "absl/log/log.h"
+#include "absl/log/log_entry.h"
+#include "absl/log/log_sink.h"
+#include "absl/log/log_sink_registry.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
-using android::base::FATAL;
 using android::base::GetThreadId;
-using android::base::LogSeverity;
 using android::base::StringPrintf;
 
 namespace cuttlefish {
@@ -58,95 +64,38 @@ std::string ToUpper(const std::string& input) {
   return output;
 }
 
-}  // namespace
-
-std::string FromSeverity(const android::base::LogSeverity severity) {
-  switch (severity) {
-    case android::base::VERBOSE:
-      return "VERBOSE";
-    case android::base::DEBUG:
-      return "DEBUG";
-    case android::base::INFO:
-      return "INFO";
-    case android::base::WARNING:
-      return "WARNING";
-    case android::base::ERROR:
-      return "ERROR";
-    case android::base::FATAL_WITHOUT_ABORT:
-      return "FATAL_WITHOUT_ABORT";
-    case android::base::FATAL:
-      return "FATAL";
+std::vector<SeverityTarget> SeverityTargetsForFiles(
+    const std::vector<std::string>& files) {
+  std::vector<SeverityTarget> log_severities;
+  for (const auto& file : files) {
+    log_severities.emplace_back(
+        SeverityTarget::FromFile(file, MetadataLevel::FULL, LogFileSeverity()));
   }
-  return "Unexpected severity";
+  return log_severities;
 }
 
-Result<LogSeverity> ToSeverity(const std::string& value) {
-  const std::unordered_map<std::string, android::base::LogSeverity>
-      string_to_severity{
-          {"VERBOSE", android::base::VERBOSE},
-          {"DEBUG", android::base::DEBUG},
-          {"INFO", android::base::INFO},
-          {"WARNING", android::base::WARNING},
-          {"ERROR", android::base::ERROR},
-          {"FATAL_WITHOUT_ABORT", android::base::FATAL_WITHOUT_ABORT},
-          {"FATAL", android::base::FATAL},
-      };
-
-  const auto upper_value = ToUpper(value);
-  if (Contains(string_to_severity, upper_value)) {
-    return string_to_severity.at(value);
-  } else {
-    int value_int;
-    CF_EXPECT(android::base::ParseInt(value, &value_int),
-              "Unable to determine severity from \"" << value << "\"");
-    const auto iter = std::find_if(
-        string_to_severity.begin(), string_to_severity.end(),
-        [&value_int](
-            const std::pair<std::string, android::base::LogSeverity>& entry) {
-          return static_cast<int>(entry.second) == value_int;
-        });
-    CF_EXPECT(iter != string_to_severity.end(),
-              "Unable to determine severity from \"" << value << "\"");
-    return iter->second;
+LogSeverity FromLogEntry(const absl::LogEntry& log_entry) {
+  switch (log_entry.log_severity()) {
+    case absl::LogSeverity::kFatal:
+      return LogSeverity::Fatal;
+    case absl::LogSeverity::kError:
+      return LogSeverity::Error;
+    case absl::LogSeverity::kWarning:
+      return LogSeverity::Warning;
+    case absl::LogSeverity::kInfo:
+      switch (log_entry.verbosity()) {
+        case absl::LogEntry::kNoVerbosityLevel:
+          return LogSeverity::Info;
+        case 0:
+          return LogSeverity::Debug;
+        default:
+          return LogSeverity::Verbose;
+      }
   }
-}
-
-static LogSeverity GuessSeverity(const std::string& env_var,
-                                 LogSeverity default_value) {
-  std::string env_value = StringFromEnv(env_var, "");
-  auto severity_result = ToSeverity(env_value);
-  if (!severity_result.ok()) {
-    return default_value;
-  }
-  return severity_result.value();
-}
-
-LogSeverity ConsoleSeverity() {
-  return GuessSeverity("CF_CONSOLE_SEVERITY", android::base::INFO);
-}
-
-LogSeverity LogFileSeverity() {
-  return GuessSeverity("CF_FILE_SEVERITY", android::base::DEBUG);
-}
-
-TeeLogger::TeeLogger(const std::vector<SeverityTarget>& destinations,
-                     const std::string& prefix)
-    : destinations_(destinations), prefix_(prefix) {}
-
-ScopedTeeLogger::ScopedTeeLogger(TeeLogger tee_logger)
-    // Set the android logger to full verbosity, the tee_logger will choose
-    // whether to write each line.
-    : scoped_severity_(android::base::VERBOSE) {
-  old_logger_ = android::base::SetLogger(tee_logger);
-}
-
-ScopedTeeLogger::~ScopedTeeLogger() {
-  // restore the previous logger
-  android::base::SetLogger(std::move(old_logger_));
 }
 
 // Copied from system/libbase/logging_splitters.h
-static std::pair<int, int> CountSizeAndNewLines(const char* message) {
+std::pair<int, int> CountSizeAndNewLines(const char* message) {
   int size = 0;
   int new_lines = 0;
   while (*message != '\0') {
@@ -164,8 +113,7 @@ static std::pair<int, int> CountSizeAndNewLines(const char* message) {
 // pointer to the start of each line and the size up to the newline character.
 // It sends size = -1 for the final line.
 template <typename F, typename... Args>
-static void SplitByLines(const char* msg, const F& log_function,
-                         Args&&... args) {
+void SplitByLines(const char* msg, const F& log_function, Args&&... args) {
   const char* newline = strchr(msg, '\n');
   while (newline != nullptr) {
     log_function(msg, newline - msg, args...);
@@ -186,10 +134,11 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
   char timestamp[32];
   strftime(timestamp, sizeof(timestamp), "%m-%d %H:%M:%S", &now);
 
-  static const char log_characters[] = "VDIWEFF";
-  static_assert(arraysize(log_characters) - 1 == FATAL + 1,
-                "Mismatch in size of log_characters and values in LogSeverity");
-  char severity_char = log_characters[severity];
+  static const char log_characters[] = "VDIWEF";
+  static_assert(
+      arraysize(log_characters) - 1 == static_cast<int>(LogSeverity::Fatal) + 1,
+      "Mismatch in size of log_characters and values in LogSeverity");
+  char severity_char = log_characters[static_cast<int>(severity)];
   std::string line_prefix;
   if (file != nullptr) {
     line_prefix =
@@ -236,78 +185,186 @@ std::string StripColorCodes(const std::string& str) {
   return sstream.str();
 }
 
-void TeeLogger::operator()(android::base::LogId,
-                           android::base::LogSeverity severity, const char* tag,
-                           const char* file, unsigned int line,
-                           const char* message) {
-  for (const auto& destination : destinations_) {
-    std::string msg_with_prefix = prefix_ + message;
+}  // namespace
+
+SeverityTarget SeverityTarget::FromFile(const std::string& path,
+                                        MetadataLevel metadata_level,
+                                        LogSeverity severity) {
+  auto log_file_fd =
+      SharedFD::Open(path, O_CREAT | O_WRONLY | O_APPEND,
+                     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+  if (!log_file_fd->IsOpen()) {
+    LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
+  }
+  return SeverityTarget{severity, log_file_fd, metadata_level};
+}
+
+SeverityTarget SeverityTarget::FromFd(SharedFD fd, MetadataLevel metadata_level,
+                                      LogSeverity severity) {
+  return SeverityTarget{severity, fd, metadata_level};
+}
+
+class LogSink : public absl::LogSink {
+ public:
+  LogSink(SeverityTarget destination, const std::string& prefix)
+      : destination_(std::move(destination)), prefix_(prefix) {
+    Result<std::string> exe = GetExecutablePath(getpid());
+    if (!exe.ok()) {
+      executable_ = std::to_string(getpid());
+      return;
+    }
+    executable_ =
+        fmt::format("{}({}) ", android::base::Basename(*exe), getpid());
+  }
+
+  void Send(const absl::LogEntry& entry) override {
+    LogSeverity severity = FromLogEntry(entry);
+    if (severity < destination_.severity) {
+      return;
+    }
     std::string output_string;
-    switch (destination.metadata_level) {
+    switch (destination_.metadata_level) {
       case MetadataLevel::ONLY_MESSAGE:
-        output_string = msg_with_prefix + std::string("\n");
+        output_string = fmt::format("{}{}\n", prefix_, entry.text_message());
         break;
       case MetadataLevel::TAG_AND_MESSAGE:
-        output_string = fmt::format("{}] {}{}", tag, msg_with_prefix, "\n");
+        output_string = fmt::format("{}] {}{}{}", executable_, prefix_,
+                                    entry.text_message(), "\n");
         break;
       default:
         struct tm now;
         time_t t = time(nullptr);
         localtime_r(&t, &now);
-        output_string =
-            StderrOutputGenerator(now, getpid(), GetThreadId(), severity, tag,
-                                  file, line, msg_with_prefix.c_str());
+        std::string message_with_prefix =
+            fmt::format("{}{}", prefix_, entry.text_message());
+        output_string = StderrOutputGenerator(
+            now, getpid(), GetThreadId(), severity, executable_.c_str(),
+            std::string(entry.source_basename()).c_str(), entry.source_line(),
+            message_with_prefix.c_str());
         break;
     }
-    if (severity >= destination.severity) {
-      if (destination.target->IsATTY()) {
-        WriteAll(destination.target, output_string);
+    if (severity >= destination_.severity) {
+      if (destination_.target->IsATTY()) {
+        WriteAll(destination_.target, output_string);
       } else {
-        WriteAll(destination.target, StripColorCodes(output_string));
+        WriteAll(destination_.target, StripColorCodes(output_string));
       }
     }
   }
-}
 
-static std::vector<SeverityTarget> SeverityTargetsForFiles(
-    const std::vector<std::string>& files) {
-  std::vector<SeverityTarget> log_severities;
-  for (const auto& file : files) {
-    auto log_file_fd =
-        SharedFD::Open(file, O_CREAT | O_WRONLY | O_APPEND,
-                       S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
-    if (!log_file_fd->IsOpen()) {
-      LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
-    }
-    log_severities.push_back(
-        SeverityTarget{LogFileSeverity(), log_file_fd, MetadataLevel::FULL});
+ private:
+  SeverityTarget destination_;
+  std::string prefix_;
+  std::string executable_;
+};
+
+std::string FromSeverity(LogSeverity severity) {
+  switch (severity) {
+    case LogSeverity::Verbose:
+      return "VERBOSE";
+    case LogSeverity::Debug:
+      return "DEBUG";
+    case LogSeverity::Info:
+      return "INFO";
+    case LogSeverity::Warning:
+      return "WARNING";
+    case LogSeverity::Error:
+      return "ERROR";
+    case LogSeverity::Fatal:
+      return "FATAL";
   }
-  return log_severities;
+  return "Unexpected severity";
 }
 
-TeeLogger LogToStderr(
-    const std::string& log_prefix, MetadataLevel stderr_level,
-    std::optional<android::base::LogSeverity> stderr_severity) {
-  std::vector<SeverityTarget> log_severities{
-      SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
-                     SharedFD::Dup(/* stderr */ 2), stderr_level}};
-  return TeeLogger(log_severities, log_prefix);
+Result<LogSeverity> ToSeverity(const std::string& value) {
+  const std::unordered_map<std::string, LogSeverity> string_to_severity{
+      {"VERBOSE", LogSeverity::Verbose}, {"DEBUG", LogSeverity::Debug},
+      {"INFO", LogSeverity::Info},       {"WARNING", LogSeverity::Warning},
+      {"ERROR", LogSeverity::Error},     {"FATAL", LogSeverity::Fatal},
+  };
+
+  const auto upper_value = ToUpper(value);
+  if (auto it = string_to_severity.find(upper_value);
+      it != string_to_severity.end()) {
+    return it->second;
+  }
+  int value_int;
+  CF_EXPECT(android::base::ParseInt(value, &value_int),
+      "Unable to determine severity from \"" << value << "\"");
+  for (const auto& [name, value]: string_to_severity) {
+    if (static_cast<int>(value) == value_int) {
+      return value;
+    }
+  }
+  return CF_ERRF("Unable to determine severity from \"{}\"", value);
 }
 
-TeeLogger LogToFiles(const std::vector<std::string>& files,
-                     const std::string& log_prefix) {
-  return TeeLogger(SeverityTargetsForFiles(files), log_prefix);
+static LogSeverity GuessSeverity(const std::string& env_var,
+                                 LogSeverity default_value) {
+  std::string env_value = StringFromEnv(env_var, "");
+  return ToSeverity(env_value).value_or(default_value);
 }
 
-TeeLogger LogToStderrAndFiles(
-    const std::vector<std::string>& files, const std::string& log_prefix,
-    MetadataLevel stderr_level,
-    std::optional<android::base::LogSeverity> stderr_severity) {
+LogSeverity ConsoleSeverity() {
+  return GuessSeverity("CF_CONSOLE_SEVERITY", LogSeverity::Info);
+}
+
+LogSeverity LogFileSeverity() {
+  return GuessSeverity("CF_FILE_SEVERITY", LogSeverity::Debug);
+}
+
+void SetLoggers(std::vector<SeverityTarget> destinations,
+                const std::string& log_prefix) {
+  static std::vector<LogSink>& log_sinks = *new std::vector<LogSink>;
+  for (LogSink& log_sink : log_sinks) {
+    // In rare cases this function may called more than once per process
+    absl::RemoveLogSink(&log_sink);
+  }
+  log_sinks.clear();
+  for (SeverityTarget& destination : destinations) {
+    log_sinks.emplace_back(std::move(destination), log_prefix);
+  }
+  for (LogSink& log_sink : log_sinks) {
+    absl::AddLogSink(&log_sink);
+  }
+  // A custom log sink is typically used for stderr too
+  absl::SetStderrThreshold(absl::LogSeverityAtLeast::kInfinity);
+  // Logs are filtered based on the serverity setting of each destination.
+  absl::SetGlobalVLogLevel(std::numeric_limits<int>::max());
+
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    absl::InitializeLog();
+  }
+}
+
+void LogToStderr(const std::string& log_prefix, MetadataLevel metadata_level,
+                 std::optional<LogSeverity> severity) {
+  LogToStderrAndFiles({}, log_prefix, metadata_level, severity);
+}
+
+void LogToFiles(const std::vector<std::string>& files,
+                const std::string& log_prefix) {
+  SetLoggers(SeverityTargetsForFiles(files), log_prefix);
+}
+
+void LogToStderrAndFiles(const std::vector<std::string>& files,
+                         const std::string& log_prefix,
+                         MetadataLevel stderr_level,
+                         std::optional<LogSeverity> stderr_severity) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
   log_severities.push_back(
       SeverityTarget{stderr_severity ? *stderr_severity : ConsoleSeverity(),
                      SharedFD::Dup(/* stderr */ 2), stderr_level});
-  return TeeLogger(log_severities, log_prefix);
+  SetLoggers(log_severities, log_prefix);
 }
+
+ScopedLogger::ScopedLogger(SeverityTarget target, const std::string& prefix)
+    : log_sink_(new LogSink(std::move(target), prefix)) {
+  absl::AddLogSink(log_sink_.get());
+}
+
+ScopedLogger::~ScopedLogger() { absl::RemoveLogSink(log_sink_.get()); }
 
 }  // namespace cuttlefish
