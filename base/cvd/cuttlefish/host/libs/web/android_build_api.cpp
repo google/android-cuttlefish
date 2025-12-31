@@ -31,8 +31,8 @@
 #include <variant>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <json/value.h>
+#include "absl/log/log.h"
 
 #include <android-base/file.h>
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -70,7 +70,7 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
                                     const bool allow_redirect = false) {
   //  debug information in error responses floods stderr with too much text
   //  logged at a level that still ends up in the log file
-  LOG(DEBUG) << "API response data:\n" << response.data;
+  VLOG(0) << "API response data:\n" << response.data;
   const bool response_code_allowed =
       response.HttpSuccess() || (allow_redirect && response.HttpRedirect());
   CF_EXPECTF(std::move(response_code_allowed),
@@ -234,8 +234,8 @@ Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
   std::string status(initial_status);
   while (retry_period_ != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
-    LOG(DEBUG) << "Status is \"" << status << "\". Waiting for "
-               << retry_period_.count() << " seconds and checking again.";
+    VLOG(0) << "Status is \"" << status << "\". Waiting for "
+            << retry_period_.count() << " seconds and checking again.";
     std::this_thread::sleep_for(retry_period_);
     auto response =
         CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));

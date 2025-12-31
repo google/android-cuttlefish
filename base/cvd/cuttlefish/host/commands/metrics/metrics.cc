@@ -15,6 +15,9 @@
 
 #include <gflags/gflags.h>
 
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/metrics/host_receiver.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -26,17 +29,14 @@ namespace {
 
 int MetricsMain(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Could not open cuttlefish config";
   auto instance = config->ForDefaultInstance();
   auto metrics_log_path = instance.PerInstanceLogPath("metrics.log");
   if (instance.run_as_daemon()) {
-    android::base::SetLogger(
-        LogToFiles({metrics_log_path, instance.launcher_log_path()}));
+    LogToFiles({metrics_log_path, instance.launcher_log_path()});
   } else {
-    android::base::SetLogger(
-        LogToStderrAndFiles({metrics_log_path, instance.launcher_log_path()}));
+    LogToStderrAndFiles({metrics_log_path, instance.launcher_log_path()});
   }
   if (config->enable_metrics() != CuttlefishConfig::Answer::kYes) {
     LOG(ERROR) << "metrics not enabled, but metrics were launched.";

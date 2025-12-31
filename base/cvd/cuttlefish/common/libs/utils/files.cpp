@@ -54,11 +54,12 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/macros.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <android-base/unique_fd.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -246,7 +247,7 @@ Result<void> EnsureDirectoryExists(const std::string& directory_path,
   if (parent_dir.size() > 1) {
     CF_EXPECT(EnsureDirectoryExists(parent_dir, mode, group_name));
   }
-  LOG(VERBOSE) << "Setting up " << directory_path;
+  VLOG(1) << "Setting up " << directory_path;
   if (mkdir(directory_path.c_str(), mode) < 0 && errno != EEXIST) {
     return CF_ERRNO("Failed to create directory: \"" << directory_path << "\""
                                                      << strerror(errno));
@@ -462,7 +463,7 @@ Result<uid_t> FileOwner(const std::string& path) {
 }
 
 bool MakeFileExecutable(const std::string& path) {
-  LOG(DEBUG) << "Making " << path << " executable";
+  VLOG(0) << "Making " << path << " executable";
   return chmod(path.c_str(), S_IRWXU) == 0;
 }
 
@@ -494,7 +495,7 @@ Result<std::string> RenameFile(const std::string& current_filepath,
 }
 
 Result<void> RemoveFile(const std::string& file) {
-  LOG(DEBUG) << "Removing file " << file;
+  VLOG(0) << "Removing file " << file;
   if (remove(file.c_str()) != 0) {
     return CF_ERRF("Failed to remove file '{}' : {}", file,
                    StrError(errno));
@@ -568,7 +569,7 @@ FileSizes SparseFileSizes(const std::string& path) {
     return {};
   }
   off_t farthest_seek = fd->LSeek(0, SEEK_END);
-  LOG(VERBOSE) << "Farthest seek: " << farthest_seek;
+  VLOG(1) << "Farthest seek: " << farthest_seek;
   if (farthest_seek == -1) {
     LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
     return {};

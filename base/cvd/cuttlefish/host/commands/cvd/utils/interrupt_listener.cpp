@@ -27,7 +27,8 @@
 #include <thread>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/signals.h"
 #include "cuttlefish/posix/strerror.h"

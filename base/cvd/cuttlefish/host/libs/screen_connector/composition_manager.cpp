@@ -34,6 +34,7 @@
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 #include "libyuv.h"
 
 #include <drm/drm_fourcc.h>

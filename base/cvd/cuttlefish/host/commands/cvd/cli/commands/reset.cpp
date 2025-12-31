@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,7 +29,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
-#include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -74,7 +72,6 @@ description:
 struct ParsedFlags {
   bool clean_runtime_dir = true;
   bool is_confirmed_by_flag = false;
-  std::optional<android::base::LogSeverity> log_level;
 };
 
 static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
@@ -84,7 +81,6 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
   }
 
   ParsedFlags parsed_flags;
-  std::string verbosity_flag_value;
 
   Flag y_flag = Flag()
                     .Alias({FlagAliasMode::kFlagExact, "-y"})
@@ -96,16 +92,9 @@ static Result<ParsedFlags> ParseResetFlags(cvd_common::Args subcmd_args) {
   std::vector<Flag> flags{
       y_flag,
       GflagsCompatFlag("clean-runtime-dir", parsed_flags.clean_runtime_dir),
-      GflagsCompatFlag("verbosity", verbosity_flag_value),
       UnexpectedArgumentGuard()};
   CF_EXPECT(ConsumeFlags(flags, subcmd_args));
 
-  std::optional<android::base::LogSeverity> verbosity;
-  if (!verbosity_flag_value.empty()) {
-    verbosity = CF_EXPECT(EncodeVerbosity(verbosity_flag_value),
-                          "invalid verbosity level");
-  }
-  parsed_flags.log_level = verbosity;
   return parsed_flags;
 }
 
@@ -128,9 +117,6 @@ class CvdResetCommandHandler : public CvdCommandHandler {
     CF_EXPECT(CanHandle(request));
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
     auto options = CF_EXPECT(ParseResetFlags(subcmd_args));
-    if (options.log_level) {
-      SetMinimumVerbosity(options.log_level.value());
-    }
 
     // cvd reset. Give one more opportunity
     if (!options.is_confirmed_by_flag && !GetUserConfirm()) {

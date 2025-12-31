@@ -19,6 +19,8 @@
 #include <string>
 
 #include <android-base/strings.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -71,7 +73,7 @@ SharedFD TcpClient::Start() {
 
   if (client->IsOpen()) {
     last_failure_reason_ = 0;
-    LOG(DEBUG) << "Connected to socket:" << host_ << ":" << port_;
+    VLOG(0) << "Connected to socket:" << host_ << ":" << port_;
     return client;
   } else {
     // Don't log if the previous connection failed with the same error
@@ -97,7 +99,7 @@ SharedFD VsockClient::Start() {
 
   if (vsock_socket->IsOpen()) {
     last_failure_reason_ = 0;
-    LOG(DEBUG) << "Connected to vsock:" << id_ << ":" << port_;
+    VLOG(0) << "Connected to vsock:" << id_ << ":" << port_;
   } else {
     // Don't log if the previous connection failed with the same error
     if (last_failure_reason_ != vsock_socket->GetErrno()) {

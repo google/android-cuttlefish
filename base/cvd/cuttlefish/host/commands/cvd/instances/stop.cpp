@@ -32,6 +32,7 @@
 #include <android-base/strings.h>
 #include <fmt/core.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -74,7 +75,7 @@ Result<void> RunStopCvdCmd(const std::string& stopper_path,
     LOG(ERROR) << "Failed to run " << stopper_path;
     CF_EXPECT(std::move(cmd_res));
   }
-  LOG(VERBOSE) << "\"" << stopper_path << " successfully ";
+  VLOG(1) << "\"" << stopper_path << " successfully ";
   return {};
 }
 
@@ -129,7 +130,7 @@ Result<void> SendSignal(const GroupProcInfo& group_info) {
       }
       LOG(INFO) << "Sending SIGKILL to process " << parent_run_cvd_pid;
       if (SendSignal(parent_run_cvd_pid).ok()) {
-        LOG(VERBOSE) << "Successfully SIGKILL'ed " << parent_run_cvd_pid;
+        VLOG(1) << "Successfully SIGKILL'ed " << parent_run_cvd_pid;
       } else {
         failed_pids.push_back(parent_run_cvd_pid);
       }
@@ -154,7 +155,7 @@ Result<void> DeleteLockFile(const GroupProcInfo& group_info) {
     auto lock_file_path = lock_file_path_stream.str();
     if (FileExists(lock_file_path) && !DirectoryExists(lock_file_path)) {
       if (Result<void> res = RemoveFile(lock_file_path); res.ok()) {
-        LOG(DEBUG) << "Reset the lock file: " << lock_file_path;
+        VLOG(0) << "Reset the lock file: " << lock_file_path;
       } else {
         all_success = false;
         LOG(ERROR) << "Failed to remove the lock file '" << lock_file_path
@@ -207,8 +208,8 @@ Result<void> DeleteAllOwnedInstanceLocks() {
       continue;
     }
     if (*file_uid_res != own_uid) {
-      LOG(VERBOSE) << "Skipped '" << lock_file_path
-                   << "' because it's not owned by current user";
+      VLOG(1) << "Skipped '" << lock_file_path
+              << "' because it's not owned by current user";
       continue;
     }
     if (Result<void> res = RemoveFile(lock_file_path); !res.ok()) {

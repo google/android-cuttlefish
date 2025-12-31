@@ -42,8 +42,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -198,8 +199,7 @@ int Subprocess::Wait() {
     pid_ = -1;
     retval = WEXITSTATUS(wstatus);
     if (retval) {
-      LOG(DEBUG) << "Subprocess " << pid
-                 << " exited with error code: " << retval;
+      VLOG(0) << "Subprocess " << pid << " exited with error code: " << retval;
     }
   } else if (WIFSIGNALED(wstatus)) {
     pid_ = -1;
@@ -473,15 +473,15 @@ Subprocess Command::Start(SubprocessOptions options) const {
   if (pid == -1) {
     LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
   }
-  if (options.Verbose()) {  // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
-    LOG(DEBUG) << "Started (pid: " << pid << "): " << cmd[0];
+  if (options.Verbose()) {  // "more verbose", and VLOG(0) > VLOG(1)
+    VLOG(0) << "Started (pid: " << pid << "): " << cmd[0];
     for (int i = 1; cmd[i]; i++) {
-      LOG(DEBUG) << cmd[i];
+      VLOG(0) << cmd[i];
     }
   } else {
-    LOG(VERBOSE) << "Started (pid: " << pid << "): " << cmd[0];
+    VLOG(1) << "Started (pid: " << pid << "): " << cmd[0];
     for (int i = 1; cmd[i]; i++) {
-      LOG(VERBOSE) << cmd[i];
+      VLOG(1) << cmd[i];
     }
   }
   return Subprocess(pid, subprocess_stopper_);

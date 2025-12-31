@@ -21,7 +21,7 @@
 #include <cstring>
 #include <optional>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -38,7 +38,7 @@ Result<MonitorCommand> TombstoneReceiver(
     const CuttlefishConfig::InstanceSpecific& instance) {
   auto tombstone_dir = instance.PerInstancePath("tombstones");
   if (!DirectoryExists(tombstone_dir)) {
-    LOG(DEBUG) << "Setting up " << tombstone_dir;
+    VLOG(0) << "Setting up " << tombstone_dir;
     CF_EXPECTF(mkdir(tombstone_dir.c_str(),
                      // NOLINTNEXTLINE(misc-include-cleaner)
                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0,

@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
-#include <mutex>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -26,7 +25,6 @@
 #include <android-base/strings.h>
 #include "absl/strings/str_format.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/result/result.h"
@@ -108,59 +106,6 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
   }
   out << v.back() << "}";
   return out;
-}
-
-Result<android::base::LogSeverity> EncodeVerbosity(
-    const std::string& verbosity) {
-  std::unordered_map<std::string, android::base::LogSeverity>
-      verbosity_encode_tab{
-          {"VERBOSE", android::base::VERBOSE},
-          {"DEBUG", android::base::DEBUG},
-          {"INFO", android::base::INFO},
-          {"WARNING", android::base::WARNING},
-          {"ERROR", android::base::ERROR},
-          {"FATAL_WITHOUT_ABORT", android::base::FATAL_WITHOUT_ABORT},
-          {"FATAL", android::base::FATAL},
-      };
-  CF_EXPECT(Contains(verbosity_encode_tab, verbosity),
-            "Verbosity \"" << verbosity << "\" is unrecognized.");
-  return verbosity_encode_tab.at(verbosity);
-}
-
-Result<std::string> VerbosityToString(
-    const android::base::LogSeverity verbosity) {
-  std::unordered_map<android::base::LogSeverity, std::string>
-      verbosity_decode_tab{
-          {android::base::VERBOSE, "VERBOSE"},
-          {android::base::DEBUG, "DEBUG"},
-          {android::base::INFO, "INFO"},
-          {android::base::WARNING, "WARNING"},
-          {android::base::ERROR, "ERROR"},
-          {android::base::FATAL_WITHOUT_ABORT, "FATAL_WITHOUT_ABORT"},
-          {android::base::FATAL, "FATAL"},
-      };
-  CF_EXPECT(Contains(verbosity_decode_tab, verbosity),
-            "Verbosity \"" << verbosity << "\" is unrecognized.");
-  return verbosity_decode_tab.at(verbosity);
-}
-
-static std::mutex verbosity_mutex;
-
-android::base::LogSeverity SetMinimumVerbosity(
-    const android::base::LogSeverity severity) {
-  std::lock_guard lock(verbosity_mutex);
-  return android::base::SetMinimumLogSeverity(severity);
-}
-
-Result<android::base::LogSeverity> SetMinimumVerbosity(
-    const std::string& severity) {
-  std::lock_guard lock(verbosity_mutex);
-  return SetMinimumVerbosity(CF_EXPECT(EncodeVerbosity(severity)));
-}
-
-android::base::LogSeverity GetMinimumVerbosity() {
-  std::lock_guard lock(verbosity_mutex);
-  return android::base::GetMinimumLogSeverity();
 }
 
 std::string CvdDir() {

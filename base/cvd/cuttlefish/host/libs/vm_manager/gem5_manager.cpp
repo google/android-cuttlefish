@@ -30,8 +30,8 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <android-base/logging.h>
 #include <vulkan/vulkan.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"

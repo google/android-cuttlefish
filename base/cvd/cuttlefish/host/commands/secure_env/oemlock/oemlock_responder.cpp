@@ -15,6 +15,8 @@
 
 #include "cuttlefish/host/commands/secure_env/oemlock/oemlock_responder.h"
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/security/oemlock.h"
 
 namespace cuttlefish {
@@ -29,7 +31,7 @@ Result<void> OemLockResponder::ProcessMessage() {
 
   {
     std::lock_guard lock(lock_);
-    LOG(DEBUG) << "Receiving oemlock command";
+    VLOG(0) << "Receiving oemlock command";
     auto request =
         CF_EXPECT(channel_.ReceiveMessage(), "Could not receive message");
 
@@ -81,7 +83,7 @@ Result<void> OemLockResponder::ProcessMessage() {
         CF_EXPECT(transport::CreateMessage(request->command, sizeof(bool)),
                   "Failed to allocate message for oemlock response");
     memcpy(message->payload, &result, sizeof(bool));
-    LOG(DEBUG) << "Sending oemlock response";
+    VLOG(0) << "Sending oemlock response";
     CF_EXPECT(channel_.SendResponse(*message),
               "Could not answer to "
                   << reinterpret_cast<uint32_t>(request->command)

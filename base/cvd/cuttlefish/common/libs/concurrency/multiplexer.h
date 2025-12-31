@@ -20,6 +20,8 @@
 #include <memory>
 #include <vector>
 
+#include "absl/log/check.h"
+
 #include "cuttlefish/common/libs/concurrency/semaphore.h"
 
 namespace cuttlefish {

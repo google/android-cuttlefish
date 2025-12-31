@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"

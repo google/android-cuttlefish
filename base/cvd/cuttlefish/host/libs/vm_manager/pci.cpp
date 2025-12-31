@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/libs/vm_manager/pci.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace pci {

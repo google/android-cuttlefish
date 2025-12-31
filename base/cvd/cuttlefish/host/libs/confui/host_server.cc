@@ -104,7 +104,7 @@ void HostServer::Start() {
   hal_input_fetcher_thread_ =
       thread::RunThread("HalInputLoop", hal_cmd_fetching);
   main_loop_thread_ = thread::RunThread("MainLoop", main);
-  ConfUiLog(DEBUG) << "host service started.";
+  ConfUiLogDebug << "host service started.";
 }
 
 void HostServer::HalCmdFetcherLoop() {
@@ -186,15 +186,15 @@ void HostServer::UserAbortEvent() {
 
     // take input for the Finite States Machine below
     std::string src = input.IsUserInput() ? "input" : "hal";
-    ConfUiLog(VERBOSE) << "In Session " << GetCurrentSessionId() << ", "
-                       << "in state " << GetCurrentState() << ", "
-                       << "received input from " << src << " cmd =" << cmd_str
-                       << " going to session " << session_id;
+    ConfUiLogVerbose << "In Session " << GetCurrentSessionId() << ", "
+                     << "in state " << GetCurrentState() << ", "
+                     << "received input from " << src << " cmd =" << cmd_str
+                     << " going to session " << session_id;
 
     if (!curr_session_) {
       if (cmd != ConfUiCmd::kStart) {
-        ConfUiLog(VERBOSE) << ToString(cmd) << " to " << session_id
-                           << " is ignored as there is no session to receive";
+        ConfUiLogVerbose << ToString(cmd) << " to " << session_id
+                         << " is ignored as there is no session to receive";
         continue;
       }
       // the session is created as kInit
@@ -251,7 +251,7 @@ void HostServer::Transition(std::unique_ptr<ConfUiMessage>& input_ptr) {
   const auto cmd = input.GetType();
   const std::string cmd_str(ToString(cmd));
   FsmInput fsm_input = ToFsmInput(input);
-  ConfUiLog(VERBOSE) << "Handling " << ToString(cmd);
+  ConfUiLogVerbose << "Handling " << ToString(cmd);
   if (IsUserAbort(input)) {
     curr_session_->UserAbort(to_guest_fifo_fd_);
     return;

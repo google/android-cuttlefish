@@ -26,10 +26,10 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

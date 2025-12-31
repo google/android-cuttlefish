@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/secure_env/suspend_resume_handler.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/command_util/util.h"
 
@@ -85,7 +85,7 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
 
   switch (launcher_action.extended_action.actions_case()) {
     case ActionsCase::kSuspend: {
-      LOG(DEBUG) << "Handling suspended...";
+      VLOG(0) << "Handling suspended...";
       // Request all worker threads to suspend.
       CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.rust));
       CF_EXPECT(WriteSuspendRequest(snapshot_sockets_.keymaster));
@@ -104,7 +104,7 @@ Result<void> SnapshotCommandHandler::SuspendResumeHandler() {
       return {};
     };
     case ActionsCase::kResume: {
-      LOG(DEBUG) << "Handling resume...";
+      VLOG(0) << "Handling resume...";
       // Request all worker threads to resume.
       CF_EXPECT(WriteResumeRequest(snapshot_sockets_.rust));
       CF_EXPECT(WriteResumeRequest(snapshot_sockets_.keymaster));

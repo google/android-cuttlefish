@@ -19,8 +19,8 @@
 
 #include <string>
 
-#include <android-base/logging.h>
 #include <fruit/component.h>
+#include "absl/log/log.h"
 #include "google/rpc/code.pb.h"
 #include "google/rpc/status.pb.h"
 
@@ -46,7 +46,7 @@ using webrtc::WebrtcCommandRequest;
 using webrtc::WebrtcCommandResponse;
 
 Result<void> WebRtcController::ResultSetup() {
-  LOG(DEBUG) << "Initializing the WebRTC command sockets.";
+  VLOG(0) << "Initializing the WebRTC command sockets.";
   SharedFD host_socket;
   CF_EXPECT(SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &client_socket_,
                                  &host_socket),

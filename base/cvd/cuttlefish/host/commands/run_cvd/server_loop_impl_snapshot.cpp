@@ -20,6 +20,7 @@
 #include <string>
 
 #include <android-base/file.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -166,14 +167,14 @@ static Result<void> RunAdbShellCommand(
 
 Result<void> ServerLoopImpl::HandleSuspend(ProcessMonitor& process_monitor) {
   // right order: guest -> host
-  LOG(DEBUG) << "Suspending the guest..";
+  VLOG(0) << "Suspending the guest..";
   CF_EXPECT(
       RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_pre_suspend"}));
   CF_EXPECT(SuspendGuest());
-  LOG(DEBUG) << "The guest is suspended.";
+  VLOG(0) << "The guest is suspended.";
   CF_EXPECT(process_monitor.SuspendMonitoredProcesses(),
             "Failed to suspend host processes.");
-  LOG(DEBUG) << "The host processes are suspended.";
+  VLOG(0) << "The host processes are suspended.";
   return {};
 }
 
@@ -181,12 +182,12 @@ Result<void> ServerLoopImpl::HandleResume(ProcessMonitor& process_monitor) {
   // right order: host -> guest
   CF_EXPECT(process_monitor.ResumeMonitoredProcesses(),
             "Failed to resume host processes.");
-  LOG(DEBUG) << "The host processes are resumed.";
-  LOG(DEBUG) << "Resuming the guest..";
+  VLOG(0) << "The host processes are resumed.";
+  VLOG(0) << "Resuming the guest..";
   CF_EXPECT(ResumeGuest());
   CF_EXPECT(
       RunAdbShellCommand(instance_, {"/vendor/bin/snapshot_hook_post_resume"}));
-  LOG(DEBUG) << "The guest resumed.";
+  VLOG(0) << "The guest resumed.";
   return {};
 }
 
@@ -209,32 +210,31 @@ Result<void> ServerLoopImpl::TakeCrosvmGuestSnapshot(
     std::vector<std::string> openwrt_crosvm_command_args{
         crosvm_bin, "snapshot", "take", snapshot_guest_param + "_openwrt",
         openwrt_sock};
-    LOG(DEBUG) << "Running the following command to take snapshot..."
-               << std::endl
-               << "  ";
+    VLOG(0) << "Running the following command to take snapshot..." << std::endl
+            << "  ";
     for (const auto& arg : openwrt_crosvm_command_args) {
-      LOG(DEBUG) << arg << " ";
+      VLOG(0) << arg << " ";
     }
     CF_EXPECT(Execute(openwrt_crosvm_command_args) == 0,
               "Executing openwrt crosvm command returned -1");
-    LOG(DEBUG) << "Guest snapshot for openwrt instance #" << instance_.id()
-               << " should have been stored in " << snapshots_parent_dir
-               << "_openwrt";
+    VLOG(0) << "Guest snapshot for openwrt instance #" << instance_.id()
+            << " should have been stored in " << snapshots_parent_dir
+            << "_openwrt";
   }
   const auto control_socket_path =
       CF_EXPECT(VmControlSocket(), "Failed to find crosvm control.sock path.");
   std::vector<std::string> crosvm_command_args{crosvm_bin, "snapshot", "take",
                                                snapshot_guest_param,
                                                control_socket_path};
-  LOG(DEBUG) << "Running the following command to take snapshot..." << std::endl
-             << "  ";
+  VLOG(0) << "Running the following command to take snapshot..." << std::endl
+          << "  ";
   for (const auto& arg : crosvm_command_args) {
-    LOG(DEBUG) << arg << " ";
+    VLOG(0) << arg << " ";
   }
   CF_EXPECT(Execute(crosvm_command_args) == 0,
             "Executing crosvm command failed");
-  LOG(DEBUG) << "Guest snapshot for instance #" << instance_.id()
-             << " should have been stored in " << snapshots_parent_dir;
+  VLOG(0) << "Guest snapshot for instance #" << instance_.id()
+          << " should have been stored in " << snapshots_parent_dir;
   return {};
 }
 

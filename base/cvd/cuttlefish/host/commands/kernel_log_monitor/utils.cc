@@ -22,9 +22,9 @@
 #include <optional>
 #include <string>
 
-#include <android-base/logging.h>
 #include <json/value.h>
 #include <json/writer.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

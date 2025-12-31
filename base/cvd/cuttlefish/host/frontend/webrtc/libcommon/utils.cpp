@@ -19,6 +19,7 @@
 #include <functional>
 
 #include <json/json.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 
@@ -75,8 +76,7 @@ ParseIceServersMessage(const Json::Value& message) {
   std::vector<webrtc::PeerConnectionInterface::IceServer> ret;
   if (!message.isMember("ice_servers") || !message["ice_servers"].isArray()) {
     // The ice_servers field is optional in some messages
-    LOG(VERBOSE)
-        << "ice_servers field not present in json object or not an array";
+    VLOG(1) << "ice_servers field not present in json object or not an array";
     return ret;
   }
   auto& servers = message["ice_servers"];

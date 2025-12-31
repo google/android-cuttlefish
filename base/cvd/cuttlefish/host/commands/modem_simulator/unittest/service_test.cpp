@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/logging.h>
 #include <gtest/gtest.h>
 #include <stdlib.h>
+#include "absl/log/log.h"
 
 #include <filesystem>
 #include <fstream>
@@ -134,7 +134,7 @@ class ModemServiceTest : public ::testing::Test {
         if (r_pos != std::string::npos) {
           auto command = commands.substr(pos, r_pos - pos);
           if (!command.empty()) {  // "\r\r" ?
-            LOG(DEBUG) << "AT< " << command;
+            VLOG(0) << "AT< " << command;
             if (IsFinalResponseSuccess(command) || IsFinalResponseError(command)) {
               response.push_back(command);
               return;
@@ -147,7 +147,7 @@ class ModemServiceTest : public ::testing::Test {
           pos = r_pos + 1;  // skip '\r'
         } else if (pos < commands.length()) {  // incomplete command
           incomplete_command = commands.substr(pos);
-          LOG(VERBOSE) << "incomplete command: " << incomplete_command;
+          VLOG(1) << "incomplete command: " << incomplete_command;
         }
       }
     } while (true);

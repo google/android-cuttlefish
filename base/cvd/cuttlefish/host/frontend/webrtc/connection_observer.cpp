@@ -28,9 +28,10 @@
 
 #include <json/json.h>
 
-#include <android-base/logging.h>
 #include <android-base/parsedouble.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -151,7 +152,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
                             adb_message_sender) override {
-    LOG(VERBOSE) << "Adb Channel open";
+    VLOG(1) << "Adb Channel open";
     adb_handler_.reset(new webrtc_streaming::AdbHandler(
         CuttlefishConfig::Get()->ForDefaultInstance().adb_ip_and_port(),
         adb_message_sender));
@@ -161,7 +162,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   }
   void OnControlChannelOpen(
       std::function<bool(const Json::Value)> control_message_sender) override {
-    LOG(VERBOSE) << "Control Channel open";
+    VLOG(1) << "Control Channel open";
     if (camera_controller_) {
       camera_controller_->SetMessageSender(control_message_sender);
     }
@@ -222,7 +223,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnBluetoothChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                   bluetooth_message_sender) override {
-    LOG(VERBOSE) << "Bluetooth channel open";
+    VLOG(1) << "Bluetooth channel open";
     auto config = CuttlefishConfig::Get();
     CHECK(config) << "Failed to get config";
     bluetooth_handler_.reset(new webrtc_streaming::BluetoothHandler(
@@ -237,7 +238,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
                                 sensors_message_sender) override {
     sensors_subscription_id =
         sensors_handler_.Subscribe(sensors_message_sender);
-    LOG(VERBOSE) << "Sensors channel open";
+    VLOG(1) << "Sensors channel open";
   }
 
   void OnSensorsChannelClosed() override {
@@ -266,7 +267,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnLightsChannelOpen(
       std::function<bool(const Json::Value &)> lights_message_sender) override {
-    LOG(DEBUG) << "Lights channel open";
+    VLOG(0) << "Lights channel open";
 
     lights_subscription_id_ =
         lights_observer_->Subscribe(lights_message_sender);
@@ -278,7 +279,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnLocationChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                  location_message_sender) override {
-    LOG(VERBOSE) << "Location channel open";
+    VLOG(1) << "Location channel open";
     auto config = CuttlefishConfig::Get();
     CHECK(config) << "Failed to get config";
     location_handler_.reset(
@@ -302,7 +303,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnKmlLocationsChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                      kml_locations_message_sender) override {
-    LOG(VERBOSE) << "Kml Locations channel open";
+    VLOG(1) << "Kml Locations channel open";
     auto config = CuttlefishConfig::Get();
     CHECK(config) << "Failed to get config";
     kml_locations_handler_.reset(new webrtc_streaming::KmlLocationsHandler(
@@ -314,7 +315,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnGpxLocationsChannelOpen(std::function<bool(const uint8_t *, size_t)>
                                      gpx_locations_message_sender) override {
-    LOG(VERBOSE) << "Gpx Locations channel open";
+    VLOG(1) << "Gpx Locations channel open";
     auto config = CuttlefishConfig::Get();
     CHECK(config) << "Failed to get config";
     gpx_locations_handler_.reset(new webrtc_streaming::GpxLocationsHandler(
@@ -328,8 +329,8 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     if (camera_controller_) {
       camera_controller_->HandleMessage(msg);
     } else {
-      LOG(VERBOSE) << "Camera control message received but no camera "
-                      "controller is available";
+      VLOG(1) << "Camera control message received but no camera "
+                 "controller is available";
     }
   }
 
@@ -346,7 +347,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
     const auto display_number =
         static_cast<uint32_t>(display_number_json.asInt());
-    LOG(VERBOSE) << "Refresh display " << display_number;
+    VLOG(1) << "Refresh display " << display_number;
     SendLastFrameAsync(display_number);
   }
 
@@ -402,8 +403,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     if (camera_controller_) {
       camera_controller_->HandleMessage(data);
     } else {
-      LOG(VERBOSE)
-          << "Camera data received but no camera controller is available";
+      VLOG(1) << "Camera data received but no camera controller is available";
     }
   }
 
@@ -471,7 +471,7 @@ void CfConnectionObserverFactory::AddCustomActionServer(
     SharedFD custom_action_server_fd,
     const std::vector<std::string> &commands) {
   for (const std::string &command : commands) {
-    LOG(DEBUG) << "Action server is listening to command: " << command;
+    VLOG(0) << "Action server is listening to command: " << command;
     commands_to_custom_action_servers_[command] = custom_action_server_fd;
   }
 }

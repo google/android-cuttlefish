@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/sensors_handler.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <sstream>
 #include <string>

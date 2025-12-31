@@ -27,11 +27,11 @@
 #include <utility>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <json/reader.h>
 #include <json/value.h>
 #include <json/writer.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
 
@@ -228,7 +228,7 @@ std::string FetcherConfig::FindCvdFileWithSuffix(
     }
     return file;
   }
-  LOG(DEBUG) << "Could not find file ending in " << suffix;
+  VLOG(0) << "Could not find file ending in " << suffix;
   return "";
 }
 

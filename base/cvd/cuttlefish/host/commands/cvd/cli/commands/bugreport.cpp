@@ -28,8 +28,8 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 
+#include "absl/log/log.h"
 #include "android-base/file.h"
-#include "android-base/logging.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"

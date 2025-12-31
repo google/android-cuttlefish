@@ -28,6 +28,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -105,11 +106,11 @@ Result<SharedFD> LockFileManager::OpenLockFile(const std::string& file_path) {
   auto fd = SharedFD::Open(file_path.data(), O_CREAT | O_RDWR, 0666);
   int result = chmod(file_path.c_str(), 0666);
   if (result) {
-    LOG(DEBUG) << "failed: chmod 666 " << file_path;
+    VLOG(0) << "failed: chmod 666 " << file_path;
   }
   result = chmod(parent_dir.c_str(), 0755);
   if (result) {
-    LOG(DEBUG) << "failed: chmod 755 " << parent_dir;
+    VLOG(0) << "failed: chmod 755 " << parent_dir;
   }
   CF_EXPECTF(fd->IsOpen(), "open(\"{}\"): {}", file_path, fd->StrError());
   return fd;

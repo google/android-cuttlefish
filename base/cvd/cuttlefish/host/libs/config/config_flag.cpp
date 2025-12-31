@@ -29,7 +29,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/ranges.h>
 #include <fruit/component.h>
@@ -38,6 +37,7 @@
 #include <gflags/gflags.h>
 #include <json/value.h>
 #include <json/writer.h>
+#include "absl/log/log.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 

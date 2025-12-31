@@ -18,12 +18,12 @@
 #include <memory>
 #include <string>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/screen_recording_server/screen_recording.grpc.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -112,7 +112,7 @@ void RunScreenRecordingServer(int argc, char** argv) {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  LOG(DEBUG) << "Server listening on " << server_address;
+  VLOG(0) << "Server listening on " << server_address;
 
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.

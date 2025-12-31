@@ -21,6 +21,7 @@
 #include <android-base/macros.h>
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 #include "android-base/logging.h"
 

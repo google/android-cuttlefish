@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/secure_env/secure_env_windows_lib.h"
 
 DEFINE_string(keymaster_pipe, "", "Keymaster pipe path");
@@ -23,7 +24,7 @@ DEFINE_string(gatekeeper_pipe, "", "Gatekeeper pipe path");
 DEFINE_bool(use_tpm, false, "Whether to use TPM for cryptography primitives.");
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   std::string keymaster_pipe = FLAGS_keymaster_pipe;

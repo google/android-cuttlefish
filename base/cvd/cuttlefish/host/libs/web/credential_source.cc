@@ -29,7 +29,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <json/reader.h>
 #include <json/value.h>
@@ -40,6 +39,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/base64.h"
@@ -163,14 +163,13 @@ std::unique_ptr<CredentialSource> TryParseServiceAccount(
   if (!reader.parse(file_content, content)) {
     // Don't log the actual content of the file since it could be the actual
     // access token.
-    LOG(DEBUG) << "Could not parse credential file as Service Account";
+    VLOG(0) << "Could not parse credential file as Service Account";
     return {};
   }
   auto result = ServiceAccountOauthCredentialSource::FromJson(
       http_client, content, kAndroidBuildApiScope);
   if (!result.ok()) {
-    LOG(DEBUG) << "Failed to load service account json file: \n"
-               << result.error();
+    VLOG(0) << "Failed to load service account json file: \n" << result.error();
     return {};
   }
   return std::move(*result);
@@ -189,7 +188,7 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
           http_client, oauth_contents);
       if (attempt_load.ok()) {
         result = std::move(*attempt_load);
-        LOG(DEBUG) << "Loaded credentials from '" << oauth_filepath << "'";
+        VLOG(0) << "Loaded credentials from '" << oauth_filepath << "'";
       } else {
         LOG(ERROR) << "Failed to load oauth credentials from \""
                    << oauth_filepath << "\":" << attempt_load.error();
@@ -204,8 +203,8 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceLegacy(
     result = FixedCredentialSource::Make(credential_source);
   } else {
     // Read the file only once in case it's a pipe.
-    LOG(DEBUG) << "Attempting to open credentials file \"" << credential_source
-               << "\"";
+    VLOG(0) << "Attempting to open credentials file \"" << credential_source
+            << "\"";
     auto file_content =
         CF_EXPECTF(ReadFileContents(credential_source),
                    "Failure getting credential file contents from file \"{}\"",

@@ -18,7 +18,7 @@
 
 #include <unistd.h>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/posix/strerror.h"
 

@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include <wayland-server-core.h>
 

@@ -17,9 +17,9 @@
 
 #include <vector>
 
-#include <android-base/logging.h>
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/composite_serialization.h"
 #include "cuttlefish/host/commands/secure_env/encrypted_serializable.h"
@@ -55,7 +55,7 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_ROOT_OF_TRUST:
       case KM_TAG_VENDOR_PATCHLEVEL:
       case KM_TAG_MODULE_HASH:
-        LOG(DEBUG) << "Tag " << entry.tag << " may not be specified";
+        VLOG(0) << "Tag " << entry.tag << " may not be specified";
         return KM_ERROR_INVALID_TAG;
 
       // These are hidden
@@ -72,8 +72,8 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_INVALID:
       case KM_TAG_MAC_LENGTH:
       case KM_TAG_NONCE:
-        LOG(DEBUG) << "Tag " << entry.tag
-                   << " not allowed in key generation/import";
+        VLOG(0) << "Tag " << entry.tag
+                << " not allowed in key generation/import";
         break;
 
       // These are provided to support attestation key generation, but should
@@ -98,14 +98,14 @@ static keymaster_error_t SplitEnforcedProperties(
 
       // strongbox-only tags
       case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
-        LOG(DEBUG) << "Strongbox-only tag: " << entry.tag;
+        VLOG(0) << "Strongbox-only tag: " << entry.tag;
         return KM_ERROR_UNSUPPORTED_TAG;
 
       case KM_TAG_ROLLBACK_RESISTANT:
         return KM_ERROR_UNSUPPORTED_TAG;
 
       case KM_TAG_ROLLBACK_RESISTANCE:
-        LOG(DEBUG) << "Rollback resistance is not implemented.";
+        VLOG(0) << "Rollback resistance is not implemented.";
         return KM_ERROR_ROLLBACK_RESISTANCE_UNAVAILABLE;
 
       // These are nominally HW tags, but we don't actually support HW key
@@ -233,7 +233,7 @@ keymaster_error_t TpmKeyBlobMaker::UnvalidatedCreateKeyBlob(
   HmacSerializable sign_check(resource_manager_, signing_key_fn,
                               TPM2_SHA256_DIGEST_SIZE, &encryption, &hidden);
   auto generated_blob = SerializableToKeyBlob(sign_check);
-  LOG(VERBOSE) << "Keymaster key size: " << generated_blob.key_material_size;
+  VLOG(1) << "Keymaster key size: " << generated_blob.key_material_size;
   if (generated_blob.key_material_size != 0) {
     *blob = generated_blob;
     return KM_ERROR_OK;

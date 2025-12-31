@@ -17,18 +17,14 @@
 
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
-using android::base::SetLogger;
-
 namespace cuttlefish {
 
 void DefaultSubprocessLogging(char* argv[], MetadataLevel stderr_level) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-
   auto config = CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
@@ -41,10 +37,10 @@ void DefaultSubprocessLogging(char* argv[], MetadataLevel stderr_level) {
   }
 
   if (instance.run_as_daemon()) {
-    SetLogger(LogToFiles({instance.launcher_log_path()}));
+    LogToFiles({instance.launcher_log_path()});
   } else {
-    SetLogger(LogToStderrAndFiles({instance.launcher_log_path()}, prefix, stderr_level));
+    LogToStderrAndFiles({instance.launcher_log_path()}, prefix, stderr_level);
   }
 }
 
-} // namespace cuttlefish
+}  // namespace cuttlefish

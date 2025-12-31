@@ -21,8 +21,8 @@
 #include <string>
 #include <utility>
 
-#include <android-base/logging.h>
 #include <fmt/format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -134,7 +134,7 @@ Result<void> LocalInstance::PressPowerBtnLegacy() {
   cmd.SetEnvironment({});
   AddEnvironmentForInstance(cmd, *this);
 
-  LOG(DEBUG) << "Executing: " << cmd.ToString();
+  VLOG(0) << "Executing: " << cmd.ToString();
 
   siginfo_t infop;
   cmd.Start().Wait(&infop, WEXITED);

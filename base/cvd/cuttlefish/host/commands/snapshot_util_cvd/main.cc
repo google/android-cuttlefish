@@ -19,14 +19,15 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/scopeguard.h>
 #include <fmt/core.h>
 #include <google/protobuf/text_format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/parse.h"
 #include "cuttlefish/host/commands/snapshot_util_cvd/snapshot_taker.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
@@ -154,7 +155,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   std::vector<std::string> all_args = cuttlefish::ArgsToVec(argc, argv);
   auto result = cuttlefish::SnapshotCvdMain(std::move(all_args));
   if (!result.ok()) {

@@ -19,7 +19,7 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_format.h"
 
@@ -49,12 +49,12 @@ class NetConfig {
     bool ret = ParseInterfaceAttributes(interface);
     if (ret) {
       ril_dns = dns;
-      LOG(DEBUG) << "Network config:";
-      LOG(DEBUG) << "ipaddr = " << ril_ipaddr;
-      LOG(DEBUG) << "gateway = " << ril_gateway;
-      LOG(DEBUG) << "dns = " << ril_dns;
-      LOG(DEBUG) << "broadcast = " << ril_broadcast;
-      LOG(DEBUG) << "prefix length = " << static_cast<int>(ril_prefixlen);
+      VLOG(0) << "Network config:";
+      VLOG(0) << "ipaddr = " << ril_ipaddr;
+      VLOG(0) << "gateway = " << ril_gateway;
+      VLOG(0) << "dns = " << ril_dns;
+      VLOG(0) << "broadcast = " << ril_broadcast;
+      VLOG(0) << "prefix length = " << static_cast<int>(ril_prefixlen);
     }
     return ret;
   }

@@ -20,7 +20,8 @@
 #include <string>
 #include <type_traits>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 template <typename T>
@@ -58,6 +59,8 @@ inline bool IsOnlyDigits(const std::string& src) {
 
 // note that no () surrounding LOG(level) << "ConfUI:" is crucial
 #define ConfUiLog(LOG_LEVEL) LOG(LOG_LEVEL) << "ConfUI: "
+#define ConfUiLogDebug VLOG(0) << "ConfUI: "
+#define ConfUiLogVerbose VLOG(1) << "ConfUI: "
 
 // TODO(kwstephenkim@google.com): make these look more like LOG(level)
 #define ConfUiCheck(cond) CHECK(cond) << "ConfUI: "

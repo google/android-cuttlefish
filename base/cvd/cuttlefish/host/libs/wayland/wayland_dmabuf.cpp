@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_dmabuf.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <drm/drm_fourcc.h>
 
@@ -28,8 +28,7 @@ namespace wayland {
 namespace {
 
 void buffer_destroy(wl_client*, wl_resource* buffer) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " buffer=" << buffer;
+  VLOG(1) << __FUNCTION__ << " buffer=" << buffer;
 
   wl_resource_destroy(buffer);
 }
@@ -39,8 +38,7 @@ const struct wl_buffer_interface buffer_implementation = {
 };
 
 void linux_buffer_params_destroy(wl_client*, wl_resource* params) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " params=" << params;
+  VLOG(1) << __FUNCTION__ << " params=" << params;
 
   wl_resource_destroy(params);
 }
@@ -55,14 +53,9 @@ void linux_buffer_params_add(wl_client*,
                              uint32_t stride,
                              uint32_t modifier_hi,
                              uint32_t modifier_lo) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " params=" << params
-               << " fd=" << fd
-               << " plane=" << plane
-               << " offset=" << offset
-               << " stride=" << stride
-               << " mod_hi=" << modifier_hi
-               << " mod_lo=" << modifier_lo;
+  VLOG(1) << __FUNCTION__ << " params=" << params << " fd=" << fd
+          << " plane=" << plane << " offset=" << offset << " stride=" << stride
+          << " mod_hi=" << modifier_hi << " mod_lo=" << modifier_lo;
 }
 
 void linux_buffer_params_create(wl_client* client,
@@ -71,12 +64,8 @@ void linux_buffer_params_create(wl_client* client,
                                 int32_t h,
                                 uint32_t format,
                                 uint32_t flags) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " params=" << params
-               << " w=" << w
-               << " h=" << h
-               << " format=" << format
-               << " flags=" << flags;
+  VLOG(1) << __FUNCTION__ << " params=" << params << " w=" << w << " h=" << h
+          << " format=" << format << " flags=" << flags;
 
   wl_resource* buffer_resource =
       wl_resource_create(client, &wl_buffer_interface, 1, 0);
@@ -92,13 +81,8 @@ void linux_buffer_params_create_immed(wl_client* client,
                                       int32_t h,
                                       uint32_t format,
                                       uint32_t flags) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " params=" << params
-               << " id=" << id
-               << " w=" << w
-               << " h=" << h
-               << " format=" << format
-               << " flags=" << flags;
+  VLOG(1) << __FUNCTION__ << " params=" << params << " id=" << id << " w=" << w
+          << " h=" << h << " format=" << format << " flags=" << flags;
 
   wl_resource* buffer_resource =
       wl_resource_create(client, &wl_buffer_interface, 1, id);
@@ -115,8 +99,7 @@ const struct zwp_linux_buffer_params_v1_interface
         .create_immed = linux_buffer_params_create_immed};
 
 void linux_dmabuf_destroy(wl_client*, wl_resource* dmabuf) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " dmabuf=" << dmabuf;
+  VLOG(1) << __FUNCTION__ << " dmabuf=" << dmabuf;
 
   wl_resource_destroy(dmabuf);
 }
@@ -124,9 +107,7 @@ void linux_dmabuf_destroy(wl_client*, wl_resource* dmabuf) {
 void linux_dmabuf_create_params(wl_client* client,
                                 wl_resource* display,
                                 uint32_t id) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " display=" << display
-               << " id=" << id;
+  VLOG(1) << __FUNCTION__ << " display=" << display << " id=" << id;
 
   wl_resource* buffer_params_resource =
       wl_resource_create(client, &zwp_linux_buffer_params_v1_interface, 1, id);

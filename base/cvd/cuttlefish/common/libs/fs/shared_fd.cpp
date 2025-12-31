@@ -38,8 +38,9 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <fmt/format.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -226,7 +227,7 @@ int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
   }
 
   if (GetErrno() != EAGAIN && GetErrno() != EINPROGRESS) {
-    LOG(DEBUG) << "Immediate connection failure: " << StrError();
+    VLOG(0) << "Immediate connection failure: " << StrError();
     if (Fcntl(F_SETFL, original_flags) == -1) {
       LOG(ERROR) << "Failed to restore original flags: " << StrError();
     }

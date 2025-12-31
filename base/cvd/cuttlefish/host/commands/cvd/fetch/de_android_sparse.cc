@@ -23,6 +23,7 @@
 #include <android-base/file.h>
 #include <android-base/strings.h>
 #include <sparse/sparse.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
 #include "cuttlefish/result/result.h"
@@ -88,7 +89,7 @@ Result<void> DeAndroidSparse2(const std::vector<std::string>& image_files) {
       continue;
     }
     if (ConvertToRawImageNoBinary(file)) {
-      LOG(DEBUG) << "De-sparsed '" << file << "'";
+      VLOG(0) << "De-sparsed '" << file << "'";
     } else {
       LOG(ERROR) << "Failed to de-sparse '" << file << "'";
     }

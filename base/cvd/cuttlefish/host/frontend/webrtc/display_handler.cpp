@@ -21,6 +21,7 @@
 
 #include <drm/drm_fourcc.h>
 #include <libyuv.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
@@ -43,9 +44,8 @@ DisplayHandler::DisplayHandler(
         [this](auto&& e) {
           using T = std::decay_t<decltype(e)>;
           if constexpr (std::is_same_v<DisplayCreatedEvent, T>) {
-            LOG(VERBOSE) << "Display:" << e.display_number << " created "
-                         << " w:" << e.display_width
-                         << " h:" << e.display_height;
+            VLOG(1) << "Display:" << e.display_number << " created "
+                    << " w:" << e.display_width << " h:" << e.display_height;
 
             const auto display_number = e.display_number;
             const std::string display_id =
@@ -63,7 +63,7 @@ DisplayHandler::DisplayHandler(
               composition_manager_.value()->OnDisplayCreated(e);
             }
           } else if constexpr (std::is_same_v<DisplayDestroyedEvent, T>) {
-            LOG(VERBOSE) << "Display:" << e.display_number << " destroyed.";
+            VLOG(1) << "Display:" << e.display_number << " destroyed.";
 
             const auto display_number = e.display_number;
             const auto display_id =

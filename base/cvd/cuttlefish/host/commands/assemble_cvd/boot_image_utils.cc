@@ -24,8 +24,9 @@
 #include <regex>
 #include <string>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -100,9 +101,9 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
       LOG(ERROR) << "Unable to delete " << current_file;
       return false;
     }
-    LOG(DEBUG) << "Updated " << current_file;
+    VLOG(0) << "Updated " << current_file;
   } else {
-    LOG(DEBUG) << "Didn't update " << current_file;
+    VLOG(0) << "Didn't update " << current_file;
     if (Result<void> res = RemoveFile(tmp_file); !res.ok()) {
       LOG(ERROR) << res.error();
     }
@@ -201,7 +202,7 @@ Result<std::string> UnpackBootImage(const std::string& boot_image_path,
 
   std::string unpacked = CF_EXPECT(RunAndCaptureStdout(std::move(unpack_cmd)));
 
-  LOG(DEBUG) << "Unpacked boot image:\n" << unpacked;
+  VLOG(0) << "Unpacked boot image:\n" << unpacked;
 
   return unpacked;
 }
@@ -278,7 +279,7 @@ Result<void> RepackBootImage(const Avb& avb,
       CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
 
   auto kernel_cmdline = ExtractValue(boot_params, "command line args: ");
-  LOG(DEBUG) << "Cmdline from boot image is " << kernel_cmdline;
+  VLOG(0) << "Cmdline from boot image is " << kernel_cmdline;
 
   auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
   auto repack_cmd =
@@ -329,8 +330,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   }
 
   std::string bootconfig = ReadFile(unpack_dir + "/bootconfig");
-  LOG(DEBUG) << "Bootconfig parameters from vendor boot image are "
-             << bootconfig;
+  VLOG(0) << "Bootconfig parameters from vendor boot image are " << bootconfig;
   std::string vendor_boot_params = ReadFile(unpack_dir + "/vendor_boot_params");
   auto kernel_cmdline =
       ExtractValue(vendor_boot_params, "vendor command line args: ") +
@@ -345,7 +345,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     kernel_cmdline = android::base::StringReplace(
         kernel_cmdline, " kernel.", " ", true);
   }
-  LOG(DEBUG) << "Cmdline from vendor boot image is " << kernel_cmdline;
+  VLOG(0) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
   auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
 

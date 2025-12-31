@@ -27,6 +27,8 @@
 
 #include <fmt/format.h>
 #include "absl/strings/match.h"
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -99,7 +101,7 @@ Result<PruneResult> PruneCache(const std::string& cache_directory,
 
     std::string next = cache_files.back();
     cache_files.pop_back();
-    LOG(DEBUG) << fmt::format("Deleting \"{}\" for prune", next);
+    VLOG(0) << fmt::format("Deleting \"{}\" for prune", next);
     // handles removal of non-directory top-level files as well
     CF_EXPECT(RecursivelyRemoveDirectory(next));
     cache_size = CF_EXPECT(GetDiskUsageGigabytes(cache_directory));

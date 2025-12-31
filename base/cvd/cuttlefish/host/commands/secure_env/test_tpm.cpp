@@ -16,8 +16,8 @@
 
 #include "cuttlefish/host/commands/secure_env/test_tpm.h"
 
-#include <android-base/logging.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 

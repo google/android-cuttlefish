@@ -19,8 +19,9 @@
 #include <cstring>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 

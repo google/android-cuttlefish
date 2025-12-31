@@ -23,8 +23,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/command_source.h"

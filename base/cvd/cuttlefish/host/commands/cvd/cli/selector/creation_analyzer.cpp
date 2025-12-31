@@ -26,6 +26,7 @@
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"

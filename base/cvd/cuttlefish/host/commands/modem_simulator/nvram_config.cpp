@@ -15,8 +15,8 @@
 
 #include "cuttlefish/host/commands/modem_simulator/nvram_config.h"
 
-#include <android-base/logging.h>
 #include <json/json.h>
+#include "absl/log/log.h"
 
 #include <fstream>
 #include <mutex>

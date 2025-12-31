@@ -22,9 +22,9 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -39,7 +39,7 @@ namespace {
 Result<void> CleanPriorFiles(const std::string& path,
                              const std::set<std::string>& preserving) {
   if (preserving.count(android::base::Basename(path))) {
-    LOG(DEBUG) << "Preserving: " << path;
+    VLOG(0) << "Preserving: " << path;
     return {};
   }
   struct stat statbuf;
@@ -52,7 +52,7 @@ Result<void> CleanPriorFiles(const std::string& path,
     }
   }
   if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
-    LOG(DEBUG) << "Deleting: " << path;
+    VLOG(0) << "Deleting: " << path;
     if (unlink(path.c_str()) < 0) {
       return CF_ERRNO("Could not unlink \"" << path << "\"");
     }
@@ -99,8 +99,8 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
     bool is_directory = (statbuf.st_mode & S_IFMT) == S_IFDIR;
     (is_directory ? prior_dirs : prior_files).emplace_back(path);
   }
-  LOG(DEBUG) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));
-  LOG(DEBUG) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
+  VLOG(0) << fmt::format("Prior dirs: {}", fmt::join(prior_dirs, ", "));
+  VLOG(0) << fmt::format("Prior files: {}", fmt::join(prior_files, ", "));
 
   // TODO(schuffelen): Fix logic for host-sandboxing mode.
   if (!InSandbox() && (!prior_dirs.empty() || !prior_files.empty())) {

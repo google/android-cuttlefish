@@ -21,8 +21,9 @@
 #include <chrono>
 #include <cstring>
 
-#include <android-base/logging.h>
 #include <rtc_base/time_utils.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/frontend/webrtc/audio_mixer.h"
 

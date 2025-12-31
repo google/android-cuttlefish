@@ -34,7 +34,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/util/message_differencer.h>

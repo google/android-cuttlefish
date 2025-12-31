@@ -16,7 +16,8 @@
 
 #include "cuttlefish/host/commands/sensors_simulator/sensors_hal_proxy.h"
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace sensors {

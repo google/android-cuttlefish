@@ -20,13 +20,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/no_destructor.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -230,8 +230,7 @@ Result<int> DoScreenshot(std::vector<std::string>& args) {
 using DisplaySubCommand = Result<int> (*)(std::vector<std::string>&);
 
 int DisplayMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-
+  cuttlefish::LogToStderr();
   const std::unordered_map<std::string, DisplaySubCommand> kSubCommands = {
       {"add", DoAdd},                //
       {"list", DoList},              //

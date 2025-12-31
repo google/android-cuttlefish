@@ -23,8 +23,8 @@
 #include <thread>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"

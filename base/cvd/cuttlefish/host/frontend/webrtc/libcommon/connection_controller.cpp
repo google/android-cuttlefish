@@ -18,8 +18,9 @@
 
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fmt/format.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
@@ -311,19 +312,19 @@ Result<void> ConnectionController::HandleSignalingMessageInner(
 // Triggered when the SignalingState changed.
 void ConnectionController::OnSignalingChange(
     webrtc::PeerConnectionInterface::SignalingState new_state) {
-  LOG(VERBOSE) << "Signaling state changed: " << new_state;
+  VLOG(1) << "Signaling state changed: " << new_state;
 }
 
 // Triggered when media is received on a new stream from remote peer.
 void ConnectionController::OnAddStream(
     rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
-  LOG(VERBOSE) << "Stream added: " << stream->id();
+  VLOG(1) << "Stream added: " << stream->id();
 }
 
 // Triggered when a remote peer closes a stream.
 void ConnectionController::OnRemoveStream(
     rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
-  LOG(VERBOSE) << "Stream removed: " << stream->id();
+  VLOG(1) << "Stream removed: " << stream->id();
 }
 
 // Triggered when a remote peer opens a data channel.
@@ -346,31 +347,31 @@ void ConnectionController::OnStandardizedIceConnectionChange(
     webrtc::PeerConnectionInterface::IceConnectionState new_state) {
   switch (new_state) {
     case webrtc::PeerConnectionInterface::kIceConnectionNew:
-      LOG(DEBUG) << "ICE connection state: New";
+      VLOG(0) << "ICE connection state: New";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionChecking:
-      LOG(DEBUG) << "ICE connection state: Checking";
+      VLOG(0) << "ICE connection state: Checking";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionConnected:
-      LOG(DEBUG) << "ICE connection state: Connected";
+      VLOG(0) << "ICE connection state: Connected";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionCompleted:
-      LOG(DEBUG) << "ICE connection state: Completed";
+      VLOG(0) << "ICE connection state: Completed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionFailed:
-      LOG(DEBUG) << "ICE connection state: Failed";
+      VLOG(0) << "ICE connection state: Failed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionDisconnected:
-      LOG(DEBUG) << "ICE connection state: Disconnected";
+      VLOG(0) << "ICE connection state: Disconnected";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionClosed:
-      LOG(DEBUG) << "ICE connection state: Closed";
+      VLOG(0) << "ICE connection state: Closed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionMax:
-      LOG(DEBUG) << "ICE connection state: Max";
+      VLOG(0) << "ICE connection state: Max";
       break;
     default:
-      LOG(DEBUG) << "ICE connection state: " << new_state;
+      VLOG(0) << "ICE connection state: " << new_state;
   }
 }
 
@@ -399,7 +400,7 @@ void ConnectionController::OnIceGatheringChange(
     default:
       state_str = "UNKNOWN";
   }
-  LOG(VERBOSE) << "ICE Gathering state set to: " << state_str;
+  VLOG(1) << "ICE Gathering state set to: " << state_str;
 }
 
 // A new ICE candidate has been gathered.
@@ -428,9 +429,9 @@ void ConnectionController::OnIceCandidateError(const std::string& address,
                                                int port, const std::string& url,
                                                int error_code,
                                                const std::string& error_text) {
-  LOG(VERBOSE) << "Gathering of an ICE candidate (address: " << address
-               << ", port: " << port << ", url: " << url
-               << ") failed: " << error_text;
+  VLOG(1) << "Gathering of an ICE candidate (address: " << address
+          << ", port: " << port << ", url: " << url
+          << ") failed: " << error_text;
 }
 
 // Ice candidates have been removed.

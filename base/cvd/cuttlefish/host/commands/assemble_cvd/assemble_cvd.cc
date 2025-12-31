@@ -15,12 +15,13 @@
 
 #include <iostream>
 #include <string_view>
+#include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
@@ -275,10 +276,14 @@ Result<SharedFD> SetLogger(std::string runtime_dir_parent) {
   if (!log_file->IsOpen()) {
     LOG(ERROR) << "Could not open initial log file: " << log_file->StrError();
   } else {
-    android::base::SetLogger(TeeLogger({
-        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
-        {LogFileSeverity(), log_file, MetadataLevel::FULL},
-    }));
+    std::vector<SeverityTarget> log_destinations = {
+        SeverityTarget::FromFd(SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE,
+                               ConsoleSeverity()),
+        SeverityTarget::FromFd(log_file, MetadataLevel::FULL,
+                               LogFileSeverity()),
+
+    };
+    SetLoggers(std::move(log_destinations), "");
   }
   return log_file;
 }
@@ -558,7 +563,6 @@ Result<std::vector<std::string>> ReadInputFiles() {
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
 
   auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
 

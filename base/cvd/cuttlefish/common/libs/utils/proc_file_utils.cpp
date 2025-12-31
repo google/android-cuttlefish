@@ -20,7 +20,6 @@
 #include <unistd.h>
 
 #include <regex>
-#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -30,6 +29,7 @@
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -219,7 +219,7 @@ Result<std::vector<pid_t>> CollectPidsByExecName(const std::string& exec_name,
   for (const auto pid : input_pids) {
     auto owner_uids_result = OwnerUids(pid);
     if (!owner_uids_result.ok() || owner_uids_result->real_ != uid) {
-      LOG(VERBOSE) << "Process #" << pid << " does not belong to " << uid;
+      VLOG(1) << "Process #" << pid << " does not belong to " << uid;
       continue;
     }
     if (CheckExecNameFromStatus(exec_name, pid).ok()) {
@@ -268,8 +268,8 @@ Result<uid_t> OwnerUid(const pid_t pid) {
   // parse from /proc/<pid>/status
   auto uids_result = OwnerUids(pid);
   if (!uids_result.ok()) {
-    LOG(DEBUG) << uids_result.error().Trace();
-    LOG(DEBUG) << "Falling back to the old OwnerUid logic";
+    VLOG(0) << uids_result.error().Trace();
+    VLOG(0) << "Falling back to the old OwnerUid logic";
     return CF_EXPECT(FileOwnerUid(PidDirPath(pid)));
   }
   return uids_result->real_;

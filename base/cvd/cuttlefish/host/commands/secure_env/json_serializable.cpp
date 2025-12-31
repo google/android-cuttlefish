@@ -17,8 +17,8 @@
 
 #include <fstream>
 
-#include <android-base/logging.h>
 #include <keymaster/serializable.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/encrypted_serializable.h"
 #include "cuttlefish/host/commands/secure_env/hmac_serializable.h"
@@ -122,7 +122,7 @@ Json::Value ReadProtectedJsonFromFile(
   file_stream.seekg(0, std::ios::beg);
 
   if (size <= 0) {
-    LOG(VERBOSE) << "File " << filename << " was empty.";
+    VLOG(1) << "File " << filename << " was empty.";
     return {};
   }
 

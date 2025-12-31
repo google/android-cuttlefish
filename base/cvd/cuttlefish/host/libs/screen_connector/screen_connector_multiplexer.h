@@ -59,7 +59,7 @@ class ScreenConnectorInputMultiplexer {
     // callback to select the queue index, and update is_discard_frame
     auto selector = [this, &is_discard_frame]() -> int {
       if (multiplexer_.IsEmpty(sc_android_queue_id_)) {
-        ConfUiLog(VERBOSE)
+        ConfUiLogVerbose
             << "Streamer gets Conf UI frame with host ctrl mode = "
             << static_cast<std::uint32_t>(host_mode_ctrl_.GetMode())
             << " and cnd = #" << on_next_frame_cnt_;
@@ -69,20 +69,20 @@ class ScreenConnectorInputMultiplexer {
       if (mode != HostModeCtrl::ModeType::kAndroidMode) {
         // AndroidFrameFetchingLoop could have added 1 or 2 frames
         // before it becomes Conf UI mode.
-        ConfUiLog(VERBOSE)
+        ConfUiLogVerbose
             << "Streamer ignores Android frame with host ctrl mode ="
             << static_cast<std::uint32_t>(mode) << "and cnd = #"
             << on_next_frame_cnt_;
         is_discard_frame = true;
       }
-      ConfUiLog(VERBOSE) << "Streamer gets Android frame with host ctrl mode ="
+      ConfUiLogVerbose << "Streamer gets Android frame with host ctrl mode ="
                          << static_cast<std::uint32_t>(mode) << "and cnd = #"
                          << on_next_frame_cnt_;
       return sc_android_queue_id_;
     };
 
     while (true) {
-      ConfUiLog(VERBOSE) << "Streamer waiting Semaphore with host ctrl mode ="
+      ConfUiLogVerbose << "Streamer waiting Semaphore with host ctrl mode ="
                          << static_cast<std::uint32_t>(
                                 host_mode_ctrl_.GetMode())
                          << " and cnd = #" << on_next_frame_cnt_;

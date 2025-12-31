@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "tinyxml2.h"
 
 using tinyxml2::XMLDocument;

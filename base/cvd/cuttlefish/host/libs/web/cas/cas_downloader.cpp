@@ -29,8 +29,8 @@
 #include <vector>
 
 #include <android-base/expected.h>
-#include <android-base/logging.h>
 #include <json/value.h>
+#include "absl/log/log.h"
 
 #include "absl/strings/match.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -296,7 +296,7 @@ Result<std::unique_ptr<CasDownloader>> CasDownloader::Create(
   // disabled and why, using the same environment-aware formatting that
   // test helpers use.
   LOG(INFO) << "CAS downloading disabled, see log for reason.";
-  LOG(DEBUG) << "CAS downloading disabled: " << result.error();
+  VLOG(0) << "CAS downloading disabled: " << result.error();
   return result;
 }
 

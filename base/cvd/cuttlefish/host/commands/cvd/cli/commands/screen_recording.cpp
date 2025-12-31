@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 #include "json/value.h"
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"

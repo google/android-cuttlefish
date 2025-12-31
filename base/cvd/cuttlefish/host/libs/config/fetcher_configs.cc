@@ -21,10 +21,10 @@
 #include <string>
 #include <string_view>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
 #include "android-base/file.h"
-#include "android-base/logging.h"
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 
@@ -57,8 +57,8 @@ FetcherConfigs FetcherConfigs::ReadFromDirectories(
     std::string path = absl::StrCat(real, "/", kFetcherConfigFile);
 
     if (!it->second.LoadFromFile(path)) {
-      LOG(DEBUG) << "No valid fetcher_config in '" << path
-                 << "', falling back to default";
+      VLOG(0) << "No valid fetcher_config in '" << path
+              << "', falling back to default";
     }
   }
 

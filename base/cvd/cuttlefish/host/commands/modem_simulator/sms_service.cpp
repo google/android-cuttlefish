@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/modem_simulator/sms_service.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/modem_simulator/pdu_parser.h"
 

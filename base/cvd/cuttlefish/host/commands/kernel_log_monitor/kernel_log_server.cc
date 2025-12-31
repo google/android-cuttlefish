@@ -25,8 +25,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -165,7 +165,7 @@ bool KernelLogServer::HandleIncomingMessage() {
               if (field.empty()) {
                 // Expected; android::base::Split() always returns at least
                 // one (possibly empty) string.
-                LOG(DEBUG) << "Empty field for line: " << line_;
+                VLOG(0) << "Empty field for line: " << line_;
                 continue;
               }
               const auto& keyvalue = android::base::Split(field, "=");

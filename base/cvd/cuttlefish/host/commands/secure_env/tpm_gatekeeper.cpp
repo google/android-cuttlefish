@@ -18,10 +18,10 @@
 #include <algorithm>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/log.h"
 
 #ifdef _WIN32
 #include <sysinfoapi.h>
@@ -166,7 +166,7 @@ static Result<void> GetFailureRecordImpl(
     *record = record_decoded;
     return {};
   }
-  LOG(DEBUG) << "User id mismatch for " << uid;
+  VLOG(0) << "User id mismatch for " << uid;
   auto record_to_write = DefaultRecord(secure_user_id);
   auto data = CF_EXPECT(RecordToStorageData(record_to_write));
   CF_EXPECT(storage.Write(key, *data));

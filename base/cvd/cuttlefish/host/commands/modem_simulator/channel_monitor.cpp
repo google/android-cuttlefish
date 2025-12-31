@@ -18,8 +18,8 @@
 
 #include <algorithm>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/modem_simulator/virtual_modem_simulator.h"
@@ -53,7 +53,7 @@ ClientId ChannelMonitor::SetRemoteClient(SharedFD client, bool is_accepted) {
       remote_client->client_write_fd_->IsOpen()) {
     remote_client->first_read_command_ = false;
     remote_clients_.push_back(std::move(remote_client));
-    LOG(DEBUG) << "added one remote client";
+    VLOG(0) << "added one remote client";
   }
 
   // Trigger monitor loop
@@ -71,7 +71,7 @@ void ChannelMonitor::AcceptIncomingConnection() {
     LOG(ERROR) << "Error accepting connection on socket: " << client_fd->StrError();
   } else {
     auto client = std::make_unique<Client>(client_fd);
-    LOG(DEBUG) << "added one RIL client";
+    VLOG(0) << "added one RIL client";
     clients_.push_back(std::move(client));
     if (clients_.size() == 1) {
       // The first connected client default to be the unsolicited commands channel
@@ -90,8 +90,8 @@ void ChannelMonitor::ReadCommand(Client& client) {
           "no new data come.";
       return;
     }
-    LOG(DEBUG) << "Error reading from client fd: "
-               << client.client_read_fd_->StrError();
+    VLOG(0) << "Error reading from client fd: "
+            << client.client_read_fd_->StrError();
     client.client_read_fd_->Close();  // Ignore errors here
     client.client_write_fd_->Close();
     // Erase client from the vector clients
@@ -127,13 +127,13 @@ void ChannelMonitor::ReadCommand(Client& client) {
     if (r_pos != std::string::npos) {
       auto command = commands.substr(pos, r_pos - pos);
       if (!command.empty()) {  // "\r\r" ?
-        LOG(VERBOSE) << "AT> " << command;
+        VLOG(1) << "AT> " << command;
         modem_.DispatchCommand(client, command);
       }
       pos = r_pos + 1;  // Skip '\r'
     } else if (pos < commands.length()) {  // Incomplete command
       incomplete_command = commands.substr(pos);
-      LOG(VERBOSE) << "incomplete command: " << incomplete_command;
+      VLOG(1) << "incomplete command: " << incomplete_command;
     }
   }
 }
@@ -144,7 +144,7 @@ void ChannelMonitor::SendUnsolicitedCommand(std::string& response) {
   if (iter != clients_.end()) {
     iter->get()->SendCommandResponse(response);
   } else {
-    LOG(DEBUG) << "No client connected yet.";
+    VLOG(0) << "No client connected yet.";
   }
 }
 
@@ -156,7 +156,7 @@ void ChannelMonitor::SendRemoteCommand(ClientId client, std::string& response) {
       return;
     }
   }
-  LOG(DEBUG) << "Remote client has closed.";
+  VLOG(0) << "Remote client has closed.";
 }
 
 void ChannelMonitor::CloseRemoteConnection(ClientId client) {
@@ -170,14 +170,14 @@ void ChannelMonitor::CloseRemoteConnection(ClientId client) {
       // Trigger monitor loop
       if (write_pipe_->IsOpen()) {
         write_pipe_->Write("OK", sizeof("OK"));
-        LOG(DEBUG) << "asking to remove clients";
+        VLOG(0) << "asking to remove clients";
       } else {
         LOG(ERROR) << "Pipe created fail, can't trigger monitor loop";
       }
       return;
     }
   }
-  LOG(DEBUG) << "Remote client has been erased.";
+  VLOG(0) << "Remote client has been erased.";
 }
 
 ChannelMonitor::~ChannelMonitor() {
@@ -186,7 +186,7 @@ ChannelMonitor::~ChannelMonitor() {
   }
 
   if (monitor_thread_.joinable()) {
-    LOG(DEBUG) << "waiting for monitor thread to join";
+    VLOG(0) << "waiting for monitor thread to join";
     monitor_thread_.join();
   }
 }
@@ -198,7 +198,7 @@ void ChannelMonitor::removeInvalidClients(
     if (iter->get()->is_valid) {
       ++iter;
     } else {
-      LOG(DEBUG) << "removed 1 client";
+      VLOG(0) << "removed 1 client";
       iter = clients.erase(iter);
     }
   }
@@ -232,7 +232,7 @@ void ChannelMonitor::MonitorLoop() {
         std::string buf(2, ' ');
         read_pipe_->Read(buf.data(), buf.size());  // Empty pipe
         if (buf == std::string("KO")) {
-          LOG(DEBUG) << "requested to exit now";
+          VLOG(0) << "requested to exit now";
           break;
         }
         // clean the lists

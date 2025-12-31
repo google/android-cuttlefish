@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <sys/utsname.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/users.h"
 

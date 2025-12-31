@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_utils.h"

@@ -17,6 +17,8 @@
 
 #include "cuttlefish/host/commands/secure_env/oemlock/oemlock.h"
 
+#include "absl/log/log.h"
+
 namespace cuttlefish {
 namespace oemlock {
 namespace {

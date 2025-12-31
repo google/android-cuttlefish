@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -78,7 +78,7 @@ Result<std::vector<std::string>> ExtractFiles(
              "Failed to execute 'bsdtar' <args>: exit code = {}, stdout = "
              "'{}', stderr = '{}'",
              exit_code, bsdtar_stdout, bsdtar_stderr);
-  LOG(DEBUG) << bsdtar_stderr;
+  VLOG(0) << bsdtar_stderr;
 
   std::vector<std::string> outputs = android::base::Split(bsdtar_stderr, "\n");
   for (std::string& output : outputs) {

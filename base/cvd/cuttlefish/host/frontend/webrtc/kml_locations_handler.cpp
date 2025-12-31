@@ -21,7 +21,7 @@
 #include <iostream>
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"
@@ -35,7 +35,7 @@ KmlLocationsHandler::KmlLocationsHandler(
 KmlLocationsHandler::~KmlLocationsHandler() {}
 
 void KmlLocationsHandler::HandleMessage(const uint8_t *msg, size_t len) {
-  LOG(DEBUG) << "ENTER KmlLocationsHandler handleMessage , size: " << len;
+  VLOG(0) << "ENTER KmlLocationsHandler handleMessage , size: " << len;
   std::string error;
   GpsFixArray coordinates;
   if (!KmlParser::parseString((const char *)&msg[0], len, &coordinates,
@@ -44,7 +44,7 @@ void KmlLocationsHandler::HandleMessage(const uint8_t *msg, size_t len) {
     return;
   }
 
-  LOG(DEBUG) << "Number of parsed points: " << coordinates.size() << std::endl;
+  VLOG(0) << "Number of parsed points: " << coordinates.size() << std::endl;
   auto config = CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";

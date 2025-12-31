@@ -36,6 +36,7 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <json/value.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"

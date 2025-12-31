@@ -26,7 +26,8 @@
 #include <vector>
 
 #include <gflags/gflags.h>
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -190,7 +191,7 @@ class ConsoleForwarder {
                      << client_fd->StrError();
           client_fd->Close();
         } else if (bytes_read == 1) {  // Control message
-          LOG(DEBUG) << "pty control message: " << (int)(*buf_ptr)[0];
+          VLOG(0) << "pty control message: " << (int)(*buf_ptr)[0];
         } else {
           buf_ptr->resize(bytes_read);
           buf_ptr->erase(buf_ptr->begin());

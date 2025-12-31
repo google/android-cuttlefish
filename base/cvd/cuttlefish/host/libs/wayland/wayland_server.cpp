@@ -16,7 +16,8 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_server.h"
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>

@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/metrics/metrics_defs.h"
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"

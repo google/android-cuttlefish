@@ -16,7 +16,8 @@
 
 #include "cuttlefish/host/frontend/webrtc/kernel_log_events_handler.h"
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"

@@ -18,16 +18,15 @@
 
 #include <chrono>
 #include <memory>
-#include <sstream>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/frontend/socket_vsock_proxy/client.h"
 #include "cuttlefish/common/frontend/socket_vsock_proxy/server.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
 #include "cuttlefish/result/result.h"
 
@@ -175,7 +174,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     proxy = CF_EXPECT(StartProxyAsync(server, client));
   }
 
-  LOG(DEBUG) << "Start reading events to start/stop proxying";
+  VLOG(0) << "Start reading events to start/stop proxying";
   while (events->IsOpen()) {
     Result<std::optional<monitor::ReadEventResult>> received_event =
         monitor::ReadEvent(events);
@@ -189,7 +188,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
       continue;
     }
     if (!(*received_event)) {
-      LOG(DEBUG) << "Kernel log message channel closed";
+      VLOG(0) << "Kernel log message channel closed";
       break;
     }
 
@@ -224,7 +223,7 @@ Result<void> Main() {
     CF_EXPECT(ListenEventsAndProxy(FLAGS_events_fd, start_event, stop_event,
                                    *server, *client));
   } else {
-    LOG(DEBUG) << "Starting proxy";
+    VLOG(0) << "Starting proxy";
     Proxy(CF_EXPECT(server->Start()), [&client] { return client->Start(); });
   }
 
@@ -238,12 +237,11 @@ Result<void> Main() {
 int main(int argc, char* argv[]) {
   signal(SIGPIPE, SIG_IGN);
 
-  cuttlefish::DefaultSubprocessLogging(
-      argv, cuttlefish::MetadataLevel::TAG_AND_MESSAGE);
+  cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   if (!FLAGS_label.empty()) {
-    android::base::SetDefaultTag("proxy_" + FLAGS_label);
+    LOG(WARNING) << "Log tags unsupported with abseil logging: " << FLAGS_label;
   }
 
   auto result = cuttlefish::socket_proxy::Main();

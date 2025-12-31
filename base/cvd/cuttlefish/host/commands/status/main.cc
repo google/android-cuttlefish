@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
 #include <json/value.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -146,7 +146,7 @@ Result<void> CvdStatusMain(const StatusFlags& flag_values) {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   cuttlefish::Result<cuttlefish::StatusFlags> flag_result =
       cuttlefish::GetFlagValues(argc, argv);
   if (!flag_result.ok()) {

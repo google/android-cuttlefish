@@ -18,9 +18,9 @@
 
 #include <memory>
 
-#include <android-base/logging.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/support/status.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/result/result.h"
 
@@ -59,7 +59,7 @@ Result<void> GnssClient::SendGpsLocations(int delay,
              status.error_message(),
              static_cast<std::uint32_t>(status.error_code()));
 
-  LOG(DEBUG) << reply.status();
+  VLOG(0) << reply.status();
 
   return {};
 }

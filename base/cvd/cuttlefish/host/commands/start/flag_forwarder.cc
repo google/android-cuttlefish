@@ -23,10 +23,11 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <libxml/parser.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"

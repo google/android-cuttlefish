@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"

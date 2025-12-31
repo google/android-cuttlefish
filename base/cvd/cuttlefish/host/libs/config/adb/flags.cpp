@@ -21,11 +21,11 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"

@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_subcompositor.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
@@ -25,7 +25,7 @@ namespace wayland {
 namespace {
 
 void subsurface_destroy(wl_client*, wl_resource* subsurface) {
-  LOG(VERBOSE) << " subsurface=" << subsurface;
+  VLOG(1) << " subsurface=" << subsurface;
 
   wl_resource_destroy(subsurface);
 }
@@ -34,36 +34,30 @@ void subsurface_set_position(wl_client*,
                              wl_resource* subsurface,
                              int32_t x,
                              int32_t y) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " subsurface=" << subsurface
-               << " x=" << x
-               << " y=" << y;
+  VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface << " x=" << x
+          << " y=" << y;
 }
 
 void subsurface_place_above(wl_client*,
                             wl_resource* subsurface,
                             wl_resource* surface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " subsurface=" << subsurface
-               << " surface=" << surface;
+  VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface
+          << " surface=" << surface;
 }
 
 void subsurface_place_below(wl_client*,
                             wl_resource* subsurface,
                             wl_resource* surface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " subsurface=" << subsurface
-               << " surface=" << surface;
+  VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface
+          << " surface=" << surface;
 }
 
 void subsurface_set_sync(wl_client*, wl_resource* subsurface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " subsurface=" << subsurface;
+  VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface;
 }
 
 void subsurface_set_desync(wl_client*, wl_resource* subsurface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " subsurface=" << subsurface;
+  VLOG(1) << __FUNCTION__ << " subsurface=" << subsurface;
 }
 
 void subsurface_destroy_resource_callback(struct wl_resource*) {}
@@ -78,8 +72,7 @@ const struct wl_subsurface_interface subsurface_implementation = {
 };
 
 void subcompositor_destroy(wl_client*, wl_resource* subcompositor) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " subcompositor=" << subcompositor;
+  VLOG(1) << __FUNCTION__ << " subcompositor=" << subcompositor;
 
   wl_resource_destroy(subcompositor);
 }
@@ -89,10 +82,8 @@ void subcompositor_get_subsurface(wl_client* client,
                                   uint32_t id,
                                   wl_resource* surface,
                                   wl_resource* parent_surface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " display=" << display
-               << " surface=" << surface
-               << " parent_surface=" << parent_surface;
+  VLOG(1) << __FUNCTION__ << " display=" << display << " surface=" << surface
+          << " parent_surface=" << parent_surface;
 
   wl_resource* subsurface_resource =
       wl_resource_create(client, &wl_subsurface_interface, 1, id);

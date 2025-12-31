@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "android-base/strings.h"
 #include "grpcpp/security/credentials.h"
@@ -313,7 +314,7 @@ Result<std::string> HandleCmds(const std::string& grpc_socket_path,
   std::vector<std::string> server_address_list;
   for (const auto& entry :
        std::filesystem::directory_iterator(grpc_socket_path)) {
-    LOG(DEBUG) << "loading " << entry.path();
+    VLOG(0) << "loading " << entry.path();
     server_address_list.emplace_back("unix:" + entry.path().string());
   }
 

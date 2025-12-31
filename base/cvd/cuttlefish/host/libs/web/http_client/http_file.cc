@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd_stream.h"
@@ -36,7 +36,7 @@ namespace cuttlefish {
 Result<HttpResponse<std::string>> HttpGetToFile(
     HttpClient& http_client, const std::string& url, const std::string& path,
     const std::vector<std::string>& headers) {
-  LOG(DEBUG) << "Saving '" << url << "' to '" << path << "'";
+  VLOG(0) << "Saving '" << url << "' to '" << path << "'";
 
   std::string temp_path;
   std::unique_ptr<SharedFDOstream> stream;
@@ -66,7 +66,7 @@ Result<HttpResponse<std::string>> HttpGetToFile(
     }
     total_dl += size;
     if (total_dl / 2 >= last_log) {
-      LOG(DEBUG) << "Downloaded " << total_dl << " bytes";
+      VLOG(0) << "Downloaded " << total_dl << " bytes";
       last_log = total_dl;
     }
     stream->write(data, size);
@@ -82,8 +82,8 @@ Result<HttpResponse<std::string>> HttpGetToFile(
   HttpResponse<void> http_response =
       CF_EXPECT(http_client.DownloadToCallback(request, callback));
 
-  LOG(DEBUG) << "Downloaded '" << total_dl << "' total bytes from '" << url
-             << "' to '" << path << "'.";
+  VLOG(0) << "Downloaded '" << total_dl << "' total bytes from '" << url
+          << "' to '" << path << "'.";
 
   if (http_response.HttpSuccess()) {
     CF_EXPECT(RenameFile(temp_path, path));

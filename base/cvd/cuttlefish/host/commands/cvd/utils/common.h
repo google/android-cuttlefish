@@ -22,8 +22,6 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"
 
@@ -61,18 +59,6 @@ std::string ConcatToString(Args&&... args) {
   std::stringstream concatenator;
   return ConcatToStream(concatenator, std::forward<Args>(args)...).str();
 }
-
-constexpr android::base::LogSeverity kCvdDefaultVerbosity = android::base::INFO;
-
-Result<android::base::LogSeverity> EncodeVerbosity(
-    const std::string& verbosity);
-
-Result<std::string> VerbosityToString(android::base::LogSeverity verbosity);
-
-android::base::LogSeverity SetMinimumVerbosity(android::base::LogSeverity);
-Result<android::base::LogSeverity> SetMinimumVerbosity(const std::string&);
-
-android::base::LogSeverity GetMinimumVerbosity();
 
 std::string CvdDir();
 

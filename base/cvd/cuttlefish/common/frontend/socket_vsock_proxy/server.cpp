@@ -19,6 +19,8 @@
 #include <set>
 #include <thread>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/result/result.h"

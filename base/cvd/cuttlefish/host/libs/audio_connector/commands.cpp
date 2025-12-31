@@ -19,7 +19,7 @@
 #include <cstdint>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/host/libs/audio_connector/shm_layout.h"
 

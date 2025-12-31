@@ -19,12 +19,13 @@
 #include <unordered_set>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/no_destructor.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -33,6 +34,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/start/filesystem_explorer.h"
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
@@ -202,8 +204,7 @@ Result<void> LinkLogs2InstanceDir(
 }
 
 int CvdInternalStartMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-
+  LogToStderr();
   std::vector<std::string> args(argv + 1, argv + argc);
 
   std::vector<std::string> assemble_args;
@@ -298,7 +299,7 @@ int CvdInternalStartMain(int argc, char** argv) {
     LOG(ERROR) << "assemble_cvd returned " << assemble_ret;
     return assemble_ret;
   } else {
-    LOG(DEBUG) << "assemble_cvd exited successfully.";
+    VLOG(0) << "assemble_cvd exited successfully.";
   }
 
   std::string conf_path;
@@ -335,7 +336,7 @@ int CvdInternalStartMain(int argc, char** argv) {
       run_cvd_failure = true;
       LOG(ERROR) << "run_cvd returned " << run_ret;
     } else {
-      LOG(DEBUG) << "run_cvd exited successfully.";
+      VLOG(0) << "run_cvd exited successfully.";
     }
   }
   return run_cvd_failure ? -1 : 0;

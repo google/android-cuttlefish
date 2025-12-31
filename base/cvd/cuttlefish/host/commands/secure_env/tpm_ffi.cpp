@@ -15,7 +15,7 @@
 
 #include "tpm_ffi.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/tpm_hmac.h"
 #include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"

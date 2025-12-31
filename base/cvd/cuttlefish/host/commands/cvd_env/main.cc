@@ -18,9 +18,10 @@
 #include <vector>
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 #include "absl/strings/match.h"
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/control_env/grpc_service_handler.h"
 #include "cuttlefish/result/result.h"
@@ -75,7 +76,7 @@ bool ContainHelpOption(int argc, char** argv) {
 }
 
 Result<void> CvdEnvMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  LogToStderr();
   if (ContainHelpOption(argc, argv)) {
     std::cout << kCvdEnvHelpMessage;
     return {};

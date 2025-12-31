@@ -20,9 +20,10 @@
 
 #include <regex>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -57,7 +58,6 @@ const std::regex kCrosvmLogPattern(
     "(ERROR|WARN|INFO|DEBUG|TRACE)");
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, /* remove_flags */ true);
 
   CHECK(FLAGS_log_fd_in >= 0) << "-log_fd_in is required";
@@ -69,11 +69,9 @@ int main(int argc, char** argv) {
   auto instance = config->ForDefaultInstance();
 
   if (instance.run_as_daemon()) {
-    android::base::SetLogger(
-        cuttlefish::LogToFiles({instance.launcher_log_path()}));
+        cuttlefish::LogToFiles({instance.launcher_log_path()});
   } else {
-    android::base::SetLogger(
-        cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()}));
+        cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()});
   }
 
   auto log_fd = cuttlefish::SharedFD::Dup(FLAGS_log_fd_in);
@@ -81,7 +79,8 @@ int main(int argc, char** argv) {
   close(FLAGS_log_fd_in);
 
   if (!FLAGS_process_name.empty()) {
-    android::base::SetDefaultTag(FLAGS_process_name);
+    LOG(WARNING) << "Log tags unsupported with abseil logging: "
+                 << FLAGS_process_name;
   }
 
   // mask SIGINT and handle it using signalfd
@@ -112,7 +111,7 @@ int main(int argc, char** argv) {
 #endif
   };
 
-  LOG(DEBUG) << "Starting to read from process " << FLAGS_process_name;
+  VLOG(0) << "Starting to read from process " << FLAGS_process_name;
 
   char buf[1 << 16];
   ssize_t chars_read = 0;
@@ -130,8 +129,8 @@ int main(int argc, char** argv) {
     if (poll_fds[0].revents) {
       chars_read = log_fd->Read(buf, sizeof(buf));
       if (chars_read < 0) {
-        LOG(DEBUG) << "Failed to read from process " << FLAGS_process_name
-                   << ": " << log_fd->StrError();
+        VLOG(0) << "Failed to read from process " << FLAGS_process_name << ": "
+                << log_fd->StrError();
         break;
       }
       if (chars_read == 0) {
@@ -143,13 +142,13 @@ int main(int argc, char** argv) {
       // There is no guarantee of success all the time since log line boundaries
       // could be out sync with the reads, but that's ok.
       if (absl::StartsWith(trimmed, "[INFO")) {
-        LOG(DEBUG) << trimmed;
+        VLOG(0) << trimmed;
       } else if (absl::StartsWith(trimmed, "[ERROR")) {
         LOG(ERROR) << trimmed;
       } else if (absl::StartsWith(trimmed, "[WARNING")) {
         LOG(WARNING) << trimmed;
       } else if (absl::StartsWith(trimmed, "[VERBOSE")) {
-        LOG(VERBOSE) << trimmed;
+        VLOG(1) << trimmed;
       } else {
         std::smatch match_result;
         if (std::regex_search(trimmed, match_result, kCrosvmLogPattern)) {
@@ -163,20 +162,20 @@ int main(int argc, char** argv) {
               if (trimmed.find("disk] Disk image file is hosted") !=
                       std::string::npos ||
                   trimmed.find("disk] disk size") != std::string::npos) {
-                LOG(DEBUG) << trimmed;
+                VLOG(0) << trimmed;
               } else {
                 LOG(INFO) << trimmed;
               }
             } else if (level == "DEBUG") {
-              LOG(DEBUG) << trimmed;
+              VLOG(0) << trimmed;
             } else if (level == "TRACE") {
-              LOG(VERBOSE) << trimmed;
+              VLOG(1) << trimmed;
             } else {
-              LOG(DEBUG) << trimmed;
+              VLOG(0) << trimmed;
             }
           }
         } else {
-          LOG(DEBUG) << trimmed;
+          VLOG(0) << trimmed;
         }
       }
 
@@ -197,5 +196,5 @@ int main(int argc, char** argv) {
 #endif
   }
 
-  LOG(DEBUG) << "Finished reading from process " << FLAGS_process_name;
+  VLOG(0) << "Finished reading from process " << FLAGS_process_name;
 }

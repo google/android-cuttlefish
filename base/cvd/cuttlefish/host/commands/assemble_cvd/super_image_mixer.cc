@@ -23,8 +23,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -90,7 +90,7 @@ void FindImports(const std::string& archive,
   for (const auto& line : lines) {
     auto parts = android::base::Split(line, " ");
     if (parts.size() >= 2 && parts[0] == "import") {
-      LOG(DEBUG) << build_prop_file << ": " << line;
+      VLOG(0) << build_prop_file << ": " << line;
     }
   }
 }
@@ -180,7 +180,7 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     } else if (!Contains(kVendorTargetImages, name)) {
       continue;
     }
-    LOG(DEBUG) << "Writing " << name << " from vendor target";
+    VLOG(0) << "Writing " << name << " from vendor target";
     CF_EXPECT(ExtractImage(target_files.vendor_zip, combined_output_path, name),
               "Failed to extract " << name << " from the vendor target zip");
     extracted.images.emplace(CF_EXPECT(GetPartitionNameFromPath(name)));
@@ -192,7 +192,7 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     }
     FindImports(target_files.vendor_zip, name);
-    LOG(DEBUG) << "Writing " << name << " from vendor target";
+    VLOG(0) << "Writing " << name << " from vendor target";
     CF_EXPECT(ExtractImage(target_files.vendor_zip, combined_output_path, name),
               "Failed to extract " << name << " from the vendor target zip");
   }
@@ -204,7 +204,7 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
     } else if (Contains(kVendorTargetImages, name)) {
       continue;
     }
-    LOG(DEBUG) << "Writing " << name << " from system target";
+    VLOG(0) << "Writing " << name << " from system target";
     CF_EXPECT(ExtractImage(target_files.system_zip, combined_output_path, name),
               "Failed to extract " << name << " from the system target zip");
     const auto partition = CF_EXPECT(GetPartitionNameFromPath(name));
@@ -218,7 +218,7 @@ Result<Extracted> ExtractTargetFiles(TargetFiles& target_files,
       continue;
     }
     FindImports(target_files.system_zip, name);
-    LOG(DEBUG) << "Writing " << name << " from system target";
+    VLOG(0) << "Writing " << name << " from system target";
     CF_EXPECT(ExtractImage(target_files.system_zip, combined_output_path, name),
               "Failed to extract " << name << " from the system target zip");
   }

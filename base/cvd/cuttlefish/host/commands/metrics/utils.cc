@@ -28,7 +28,7 @@
 #include <ctime>
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 namespace cuttlefish::metrics {
 

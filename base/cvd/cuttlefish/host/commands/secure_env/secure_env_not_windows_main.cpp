@@ -17,7 +17,6 @@
 #include <mutex>
 #include <thread>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
@@ -26,6 +25,8 @@
 #include <keymaster/soft_keymaster_logger.h>
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/security/confui_sign.h"
@@ -129,7 +130,7 @@ std::thread StartKernelEventMonitor(SharedFD kernel_events_fd,
       CHECK(read_result.ok()) << read_result.error();
       CHECK(read_result->has_value()) << "EOF in kernel log monitor";
       if ((*read_result)->event == monitor::Event::BootloaderLoaded) {
-        LOG(DEBUG) << "secure_env detected guest reboot, restarting.";
+        VLOG(0) << "secure_env detected guest reboot, restarting.";
 
         // secure_env app potentially may become stuck at IO during holding the
         // lock, so limit the waiting time to make sure self-restart is executed

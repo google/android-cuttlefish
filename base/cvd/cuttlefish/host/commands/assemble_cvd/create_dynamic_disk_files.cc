@@ -21,11 +21,11 @@
 #include <memory>
 #include <string>
 
-#include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -109,10 +109,10 @@ Result<void> CreateDynamicDiskFiles(
     if (Result<BuildArchive> img_zip =
             FindImgZip(fetcher_config, system_image_dir);
         img_zip.ok()) {
-      LOG(DEBUG) << "Found image zip: " << *img_zip;
+      VLOG(0) << "Found image zip: " << *img_zip;
     } else {
-      LOG(DEBUG) << "Error accessing '-img-*.zip', expected for a local build.";
-      LOG(DEBUG) << img_zip.error();
+      VLOG(0) << "Error accessing '-img-*.zip', expected for a local build.";
+      VLOG(0) << img_zip.error();
     }
 
     std::optional<ChromeOsStateImage> chrome_os_state =
@@ -153,11 +153,11 @@ Result<void> CreateDynamicDiskFiles(
                       << (existing_sizes.sparse_size - existing_sizes.disk_size)
                       << ", got " << available_space);
       } else {
-        LOG(DEBUG) << "Available space: " << available_space;
-        LOG(DEBUG) << "Sparse size of \"" << data_image
-                   << "\": " << existing_sizes.sparse_size;
-        LOG(DEBUG) << "Disk size of \"" << data_image
-                   << "\": " << existing_sizes.disk_size;
+        VLOG(0) << "Available space: " << available_space;
+        VLOG(0) << "Sparse size of \"" << data_image
+                << "\": " << existing_sizes.sparse_size;
+        VLOG(0) << "Disk size of \"" << data_image
+                << "\": " << existing_sizes.disk_size;
       }
     }
 

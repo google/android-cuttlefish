@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
 #include <json/json.h>
 #include <unistd.h>
+
+#include "absl/log/log.h"
 
 #include <iostream>
 

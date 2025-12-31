@@ -20,7 +20,7 @@
 #include <stdlib.h>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <iostream>
 #include <memory>
@@ -84,7 +84,7 @@ class CvdSnapshotCommandHandler : public CvdCommandHandler {
     for (const auto& arg : subcmd_args) {
       ss << arg << " ";
     }
-    LOG(DEBUG) << "Calling new handler with " << subcmd << ": " << ss.str();
+    VLOG(0) << "Calling new handler with " << subcmd << ": " << ss.str();
 
     // may modify subcmd_args by consuming in parsing
     Command command =

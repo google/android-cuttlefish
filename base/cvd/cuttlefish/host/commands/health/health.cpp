@@ -16,10 +16,13 @@
 
 #include <stdlib.h>
 #include <iostream>
-#include <android-base/logging.h>
+
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 std::string GetControlSocketPath(const cuttlefish::CuttlefishConfig& config) {
@@ -77,7 +80,7 @@ int usage() {
 }
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   gflags::SetUsageMessage(kUsageMessage);
 
   auto config = cuttlefish::CuttlefishConfig::Get();

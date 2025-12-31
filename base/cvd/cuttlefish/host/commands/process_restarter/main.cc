@@ -24,6 +24,7 @@
 
 #include <android-base/strings.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -73,7 +74,7 @@ Result<SubprocessOptions> OptionsForExecutable(std::string_view name) {
 }
 
 Result<int> RunProcessRestarter(std::vector<std::string> args) {
-  LOG(VERBOSE) << "process_restarter starting";
+  VLOG(1) << "process_restarter starting";
   auto parsed = CF_EXPECT(Parser::ConsumeAndParse(args));
 
   // move-assign the remaining args to exec_args
@@ -87,7 +88,7 @@ Result<int> RunProcessRestarter(std::vector<std::string> args) {
 
   for (;;) {
     CF_EXPECT(!exec_args.empty());
-    LOG(VERBOSE) << "Starting monitored process " << exec_args.front();
+    VLOG(1) << "Starting monitored process " << exec_args.front();
     // The Execute() API and all APIs effectively called by it show the proper
     // error message using LOG(ERROR).
     auto options = CF_EXPECT(OptionsForExecutable(exec_args.front()));
@@ -119,7 +120,7 @@ int main(int argc, char** argv) {
   auto result = cuttlefish::RunProcessRestarter(
       cuttlefish::ArgsToVec(argc - 1, argv + 1));
   if (!result.ok()) {
-    LOG(DEBUG) << result.error();
+    VLOG(0) << result.error();
     return EXIT_FAILURE;
   }
   return result.value();

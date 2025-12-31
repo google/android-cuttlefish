@@ -20,10 +20,10 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/run_cvd/launch/cvdalloc.h"
@@ -91,7 +91,7 @@ class OpenWrt : public CommandSource {
     /* TODO(b/305102099): Due to hostapd issue of OpenWRT 22.03.X versions,
      * OpenWRT instance should be rebooted.
      */
-    LOG(DEBUG) << "Restart OpenWRT due to hostapd issue";
+    VLOG(0) << "Restart OpenWRT due to hostapd issue";
     ap_cmd.ApplyProcessRestarter(instance_.crosvm_binary(), first_time_argument,
                                  kOpenwrtVmResetExitCode);
     ap_cmd.Cmd().AddParameter("run");

@@ -15,7 +15,8 @@
 
 #include "confui_sign_server.h"
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
 #include "cuttlefish/host/commands/secure_env/tpm_hmac.h"

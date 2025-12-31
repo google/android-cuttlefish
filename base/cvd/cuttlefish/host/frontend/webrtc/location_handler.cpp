@@ -18,8 +18,8 @@
 
 #include <unistd.h>
 
-#include <android-base/logging.h>
 #include <fmt/format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"

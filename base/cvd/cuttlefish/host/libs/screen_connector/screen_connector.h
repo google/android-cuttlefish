@@ -24,8 +24,8 @@
 #include <type_traits>
 #include <unordered_set>
 
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/confui/confui.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -174,9 +174,9 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
     }
     ProcessedFrameType processed_frame;
     auto this_thread_name = cuttlefish::confui::thread::GetName();
-    ConfUiLog(DEBUG) << this_thread_name
-                     << "is sending a #" + std::to_string(render_confui_cnt_)
-                     << "Conf UI frame";
+    ConfUiLogDebug << this_thread_name
+                   << "is sending a #" + std::to_string(render_confui_cnt_)
+                   << "Conf UI frame";
     callback_from_streamer_(display_number, frame_width, frame_height,
                             frame_fourcc_format, frame_stride_bytes,
                             frame_bytes, processed_frame);

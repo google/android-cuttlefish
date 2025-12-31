@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/modem_simulator/thread_looper.h"
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 namespace cuttlefish {
 

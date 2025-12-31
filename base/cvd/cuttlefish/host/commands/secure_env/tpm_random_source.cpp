@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "tpm_resource_manager.h"
 #include "tss2/tss2_esys.h"
 #include "tss2/tss2_rc.h"

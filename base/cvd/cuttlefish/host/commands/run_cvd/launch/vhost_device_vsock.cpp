@@ -22,12 +22,12 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"

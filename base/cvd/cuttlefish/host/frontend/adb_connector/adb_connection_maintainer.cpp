@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -173,7 +173,7 @@ int RecvGetStatusResult(const SharedFD& sock) {
   }
 
   auto status_str = std::string{status_vec.data(), status_vec.size()};
-  LOG(DEBUG) << "Status received " << status_str;
+  VLOG(0) << "Status received " << status_str;
 
   return 0;
 }
@@ -216,25 +216,25 @@ bool WaitForAdbAuthorization(const std::string& address) {
 static constexpr int kAdbCommandGapTime = 5;
 
 void EstablishConnection(const std::string& address) {
-  LOG(DEBUG) << "Attempting to connect to device with address " << address;
+  VLOG(0) << "Attempting to connect to device with address " << address;
   while (!AdbConnect(address)) {
     sleep(kAdbCommandGapTime);
   }
-  LOG(DEBUG) << "adb connect message for " << address << " successfully sent";
+  VLOG(0) << "adb connect message for " << address << " successfully sent";
   sleep(kAdbCommandGapTime);
 
   while (WaitForAdbAuthorization(address)) {
     LOG(WARNING) << "adb unauthorized, retrying";
     sleep(kAdbCommandGapTime);
   }
-  LOG(DEBUG) << "adb connected to " << address;
+  VLOG(0) << "adb connected to " << address;
   sleep(kAdbCommandGapTime);
 }
 
 void WaitForAdbDisconnection(const std::string& address) {
   // adb daemon doesn't seem to handle quick, successive messages well. The
   // sleeps stabilize the communication.
-  LOG(DEBUG) << "Watching for disconnect on " << address;
+  VLOG(0) << "Watching for disconnect on " << address;
   while (true) {
     // First try uptime
     auto sock = SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
@@ -254,7 +254,7 @@ void WaitForAdbDisconnection(const std::string& address) {
         LOG(WARNING) << "couldn't read uptime result";
         break;
       }
-      LOG(VERBOSE) << "device on " << address << " uptime " << uptime;
+      VLOG(1) << "device on " << address << " uptime " << uptime;
     } else {
       // If uptime fails, maybe we are in trade-in mode
       // Try adb shell tradeinmode getstatus
@@ -278,7 +278,7 @@ void WaitForAdbDisconnection(const std::string& address) {
     }
     sleep(kAdbCommandGapTime);
   }
-  LOG(DEBUG) << "Sending adb disconnect";
+  VLOG(0) << "Sending adb disconnect";
   AdbDisconnect(address);
   sleep(kAdbCommandGapTime);
 }

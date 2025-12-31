@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
 #include <thread>
 
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"
 #include "cuttlefish/host/libs/location/GpxParser.h"
@@ -66,7 +68,7 @@ namespace cuttlefish {
 namespace {
 
 int ImportLocationsCvdMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   auto config = CuttlefishConfig::Get();

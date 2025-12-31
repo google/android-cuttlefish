@@ -27,9 +27,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"

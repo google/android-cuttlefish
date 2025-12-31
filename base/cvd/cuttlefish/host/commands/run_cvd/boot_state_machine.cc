@@ -22,12 +22,13 @@
 #include <thread>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -191,8 +192,8 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
-    ::android::base::SetLogger(
-        TeeLogger({{LogFileSeverity(), log, MetadataLevel::FULL}}));
+    SetLoggers(
+        {SeverityTarget::FromFd(log, MetadataLevel::FULL, LogFileSeverity())});
     auto dev_null = SharedFD::Open("/dev/null", O_RDONLY);
     if (!dev_null->IsOpen()) {
       LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
@@ -361,8 +362,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
             CHECK(status.ok())
                 << "Failed to send network service reset" << status.error_code()
                 << ": " << status.error_message();
-            LOG(DEBUG) << "OpenWRT `service network restart` response: "
-                       << response.result();
+            VLOG(0) << "OpenWRT `service network restart` response: "
+                    << response.result();
 
             auto SubtoolPath = [](const std::string& subtool_name) {
               auto my_own_dir = android::base::GetExecutableDirectory();

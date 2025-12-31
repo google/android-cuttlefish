@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <json/value.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"

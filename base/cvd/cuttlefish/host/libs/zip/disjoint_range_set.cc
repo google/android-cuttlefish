@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 namespace cuttlefish {
 namespace {

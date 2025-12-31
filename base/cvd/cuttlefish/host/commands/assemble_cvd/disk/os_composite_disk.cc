@@ -20,7 +20,7 @@
 #include <optional>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"

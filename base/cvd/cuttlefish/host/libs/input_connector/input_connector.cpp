@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/input_connector/input_connection.h"
 #include "cuttlefish/host/libs/input_connector/input_devices.h"

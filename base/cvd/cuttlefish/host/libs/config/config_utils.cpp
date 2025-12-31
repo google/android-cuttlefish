@@ -21,7 +21,7 @@
 #include <sstream>
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -58,13 +58,13 @@ int InstanceFromEnvironment() {
     instance_str = StringFromEnv("USER", "");
 
     if (instance_str.empty()) {
-      LOG(DEBUG) << kCuttlefishInstanceEnvVarName
-                 << " and USER unset, using instance id " << kDefaultInstance;
+      VLOG(0) << kCuttlefishInstanceEnvVarName
+              << " and USER unset, using instance id " << kDefaultInstance;
       return kDefaultInstance;
     }
     if (!absl::StartsWith(instance_str, kVsocUserPrefix)) {
       // No user or we don't recognize this user
-      LOG(DEBUG) << "Non-vsoc user, using instance id " << kDefaultInstance;
+      VLOG(0) << "Non-vsoc user, using instance id " << kDefaultInstance;
       return kDefaultInstance;
     }
   }
