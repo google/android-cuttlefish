@@ -35,7 +35,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/transport/channel.h"
@@ -119,8 +119,8 @@ Result<void> MonitorLoop(std::atomic_bool& running,
     pid_t pid = wait(&wstatus);
     CF_EXPECTF(pid != -1, "Wait failed: {}", StrError(errno));
     if (!WIFSIGNALED(wstatus) && !WIFEXITED(wstatus)) {
-      LOG(DEBUG) << "Unexpected status from wait: " << wstatus << " for pid "
-                 << pid;
+      VLOG(0) << "Unexpected status from wait: " << wstatus << " for pid "
+              << pid;
       continue;
     }
     if (!running.load()) {  // Avoid extra restarts near the end
@@ -153,7 +153,7 @@ Result<void> MonitorLoop(std::atomic_bool& running,
 }
 
 Result<void> StopSubprocesses(std::vector<MonitorEntry>& monitored) {
-  LOG(DEBUG) << "Stopping monitored subprocesses";
+  VLOG(0) << "Stopping monitored subprocesses";
   auto stop = [](const auto& it) {
     auto stop_result = it.proc->Stop();
     if (stop_result == StopperResult::kStopFailure) {
@@ -256,7 +256,7 @@ Result<void> SuspendResumeImpl(std::vector<MonitorEntry>& monitor_entries,
 
 Result<void> ProcessMonitor::StartSubprocesses(
     ProcessMonitor::Properties& properties) {
-  LOG(DEBUG) << "Starting monitored subprocesses";
+  VLOG(0) << "Starting monitored subprocesses";
   for (auto& monitored : properties.entries_) {
     LOG(INFO) << monitored.cmd->GetShortName();
     auto options = SubprocessOptions().InGroup(true);
@@ -276,7 +276,7 @@ Result<void> ProcessMonitor::StartSubprocesses(
 }
 
 Result<void> ProcessMonitor::ReadMonitorSocketLoop(std::atomic_bool& running) {
-  LOG(DEBUG) << "Waiting for a `stop` message from the parent";
+  VLOG(0) << "Waiting for a `stop` message from the parent";
   while (running.load()) {
     ManagedMessage message = CF_EXPECT(child_channel_->ReceiveMessage());
     if (message->command == ParentToChildMessageType::kStop) {
@@ -428,7 +428,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   prctl(PR_SET_PDEATHSIG, SIGHUP);  // Die when parent dies
 #endif
 
-  LOG(DEBUG) << "Monitoring subprocesses";
+  VLOG(0) << "Monitoring subprocesses";
   CF_EXPECT(StartSubprocesses(properties_));
 
   std::atomic_bool running(true);
@@ -447,7 +447,7 @@ Result<void> ProcessMonitor::MonitorRoutine() {
   CF_EXPECT(parent_comms.get(), "Should have exited if monitoring stopped");
 
   CF_EXPECT(StopSubprocesses(properties_.entries_));
-  LOG(DEBUG) << "Done monitoring subprocesses";
+  VLOG(0) << "Done monitoring subprocesses";
   return {};
 }
 

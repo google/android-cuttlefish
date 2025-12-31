@@ -25,6 +25,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
@@ -136,13 +138,13 @@ Result<std::vector<RunCvdProcInfo>> ExtractAllRunCvdInfo(
   for (const auto run_cvd_pid : run_cvd_pids) {
     auto proc_info_result = ExtractRunCvdInfo(run_cvd_pid);
     if (!proc_info_result.ok()) {
-      LOG(DEBUG) << "Failed to fetch run_cvd process info for " << run_cvd_pid;
+      VLOG(0) << "Failed to fetch run_cvd process info for " << run_cvd_pid;
       // perhaps, not my process
       continue;
     }
     if (uid && uid.value() != proc_info_result->real_owner_uid_) {
-      LOG(DEBUG) << "run_cvd process " << run_cvd_pid << " does not belong to "
-                 << uid.value() << " so skipped.";
+      VLOG(0) << "run_cvd process " << run_cvd_pid << " does not belong to "
+              << uid.value() << " so skipped.";
       continue;
     }
     run_cvd_procs_of_uid.emplace_back(std::move(*proc_info_result));
@@ -208,7 +210,7 @@ Result<std::vector<GroupProcInfo>> RunCvdProcessCollector::CollectInfo() {
       for (const auto run_cvd_pid : instance_run_cvd_pids) {
         auto ppid_result = Ppid(run_cvd_pid);
         if (!ppid_result.ok()) {
-          LOG(VERBOSE) << "Failed to fetch the parent id of " << run_cvd_pid;
+          VLOG(1) << "Failed to fetch the parent id of " << run_cvd_pid;
           continue;
         }
         if (Contains(instance_run_cvd_pids, *ppid_result) &&

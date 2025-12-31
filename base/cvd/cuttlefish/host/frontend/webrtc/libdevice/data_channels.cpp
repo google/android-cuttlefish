@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/data_channels.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/utils.h"
@@ -231,8 +231,7 @@ class ControlChannelHandler : public DataChannelHandler {
     auto button_state =
         CF_EXPECT(GetValue<std::string>(evt, {"button_state"}),
                   "Failed to get 'button_state' property of control message");
-    LOG(VERBOSE) << "Control command: " << command << " (" << button_state
-                 << ")";
+    VLOG(1) << "Control command: " << command << " (" << button_state << ")";
 
     if (command == "power") {
       CF_EXPECT(observer()->OnPowerButton(button_state == "down"));
@@ -429,9 +428,8 @@ bool DataChannelHandler::Send(const Json::Value &message) {
 }
 
 void DataChannelHandler::OnStateChange() {
-  LOG(VERBOSE) << channel()->label() << " channel state changed to "
-               << webrtc::DataChannelInterface::DataStateString(
-                      channel()->state());
+  VLOG(1) << channel()->label() << " channel state changed to "
+          << webrtc::DataChannelInterface::DataStateString(channel()->state());
   OnStateChangeInner(channel()->state());
 }
 
@@ -455,7 +453,7 @@ DataChannelHandlers::~DataChannelHandlers() {}
 void DataChannelHandlers::OnDataChannelOpen(
     rtc::scoped_refptr<webrtc::DataChannelInterface> channel) {
   auto label = channel->label();
-  LOG(VERBOSE) << "Data channel connected: " << label;
+  VLOG(1) << "Data channel connected: " << label;
   if (label == kInputChannelLabel) {
     input_.reset(
         new DataChannelHandlerImpl<InputChannelHandler>(channel, observer_));

@@ -19,6 +19,8 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/check.h"
+
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
 namespace cuttlefish {

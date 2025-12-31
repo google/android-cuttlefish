@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/log/check.h"
+
 namespace cuttlefish {
 namespace confui {
 namespace packet {

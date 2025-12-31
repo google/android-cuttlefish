@@ -15,8 +15,8 @@
 
 #include "gatekeeper_responder.h"
 
-#include <android-base/logging.h>
 #include <gatekeeper/gatekeeper_messages.h>
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 

@@ -20,8 +20,8 @@
 #include <mutex>
 #include <thread>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -84,11 +84,10 @@ void DumpPackets(const char* prefix, char* buf, int size) {
     sprintf(bytes_string + (i * 5), "0x%02x ", buf[i]);
   }
   if (len < size) {
-    LOG(DEBUG) << prefix << ": sz=" << size << ", first " << len << " bytes=["
-               << bytes_string << "...]";
+    VLOG(0) << prefix << ": sz=" << size << ", first " << len << " bytes=["
+            << bytes_string << "...]";
   } else {
-    LOG(DEBUG) << prefix << ": sz=" << size << ", bytes=[" << bytes_string
-               << "]";
+    VLOG(0) << prefix << ": sz=" << size << ", bytes=[" << bytes_string << "]";
   }
 }
 

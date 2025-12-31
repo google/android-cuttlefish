@@ -18,9 +18,10 @@
 #include <iostream>
 #include <string>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/result/result.h"
 
@@ -61,7 +62,7 @@ Result<void> MetricsLauncherMain() {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   cuttlefish::Result<void> result = cuttlefish::MetricsLauncherMain();

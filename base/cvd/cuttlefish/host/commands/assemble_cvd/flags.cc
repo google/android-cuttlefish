@@ -27,9 +27,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/logging.h"
 #include "android-base/parseint.h"
 #include "android-base/strings.h"
 #include "fmt/format.h"
@@ -652,8 +652,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_rootcanal_link_port(7400 + rootcanal_instance_num);
   tmp_config_obj.set_rootcanal_test_port(7500 + rootcanal_instance_num);
   tmp_config_obj.set_rootcanal_link_ble_port(7600 + rootcanal_instance_num);
-  LOG(DEBUG) << "rootcanal_instance_num: " << rootcanal_instance_num;
-  LOG(DEBUG) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
+  VLOG(0) << "rootcanal_instance_num: " << rootcanal_instance_num;
+  VLOG(0) << "launch rootcanal: " << (FLAGS_rootcanal_instance_num <= 0);
 
   tmp_config_obj.set_casimir_args(FLAGS_casimir_args);
   auto casimir_instance_num = *instance_nums.begin() - 1;
@@ -662,12 +662,12 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_casimir_nci_port(7800 + casimir_instance_num);
   tmp_config_obj.set_casimir_rf_port(7900 + casimir_instance_num);
-  LOG(DEBUG) << "casimir_instance_num: " << casimir_instance_num;
-  LOG(DEBUG) << "launch casimir: " << (FLAGS_casimir_instance_num <= 0);
+  VLOG(0) << "casimir_instance_num: " << casimir_instance_num;
+  VLOG(0) << "launch casimir: " << (FLAGS_casimir_instance_num <= 0);
 
   int netsim_instance_num = *instance_nums.begin() - 1;
   tmp_config_obj.set_netsim_instance_num(netsim_instance_num);
-  LOG(DEBUG) << "netsim_instance_num: " << netsim_instance_num;
+  VLOG(0) << "netsim_instance_num: " << netsim_instance_num;
   tmp_config_obj.set_netsim_args(FLAGS_netsim_args);
   // netsim built-in connector will forward packets to another daemon instance,
   // filling the role of bluetooth_connector when is_bt_netsim is true.
@@ -686,7 +686,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_host_uwb(FLAGS_enable_host_uwb || any_netsim_uwb);
 
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
-  LOG(DEBUG) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
+  VLOG(0) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
 
   auto straced = android::base::Tokenize(FLAGS_straced_host_executables, ",");
   std::set<std::string> straced_set(straced.begin(), straced.end());

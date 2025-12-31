@@ -15,8 +15,8 @@
 
 #include "cuttlefish/host/commands/modem_simulator/sim_service.h"
 
-#include <android-base/logging.h>
 #include <tinyxml2.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"

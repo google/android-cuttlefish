@@ -15,7 +15,6 @@
 
 #include "tpm_keymaster_context.h"
 
-#include <android-base/logging.h>
 #include <keymaster/contexts/soft_attestation_cert.h>
 #include <keymaster/km_openssl/aes_key.h>
 #include <keymaster/km_openssl/asymmetric_key.h>
@@ -28,6 +27,8 @@
 #include <keymaster/km_openssl/triple_des_key.h>
 #include <keymaster/operation.h>
 #include <keymaster/wrapped_key.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/primary_key_builder.h"
 #include "cuttlefish/host/commands/secure_env/tpm_attestation_record.h"

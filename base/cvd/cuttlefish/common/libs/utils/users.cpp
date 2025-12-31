@@ -24,12 +24,11 @@
 #include <cerrno>
 #include <cstring>
 #include <mutex>
-#include <ostream>
 #include <string>
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/result/result.h"

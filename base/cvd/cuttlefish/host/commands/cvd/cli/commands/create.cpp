@@ -29,9 +29,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"

@@ -31,13 +31,14 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -479,7 +480,7 @@ bool WriteGflagsCompatXml(const std::vector<Flag>& flags, std::ostream& out) {
   return true;
 }
 
-Flag VerbosityFlag(android::base::LogSeverity& value) {
+Flag VerbosityFlag(LogSeverity& value) {
   return GflagsCompatFlag("verbosity")
       .Getter([&value]() { return FromSeverity(value); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {

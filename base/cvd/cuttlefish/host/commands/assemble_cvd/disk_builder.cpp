@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <android-base/file.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
@@ -169,14 +170,14 @@ Result<bool> DiskBuilder::WillRebuildCompositeDisk() {
 
   CF_EXPECT(!config_path_.empty(), "No config path");
   if (ReadFile(config_path_) != CF_EXPECT(TextConfig())) {
-    LOG(DEBUG) << "Composite disk text config mismatch";
+    VLOG(0) << "Composite disk text config mismatch";
     return true;
   }
 
   CF_EXPECT(!partitions_.empty() ^ !entire_disk_.empty(),
             "Specify either partitions or a whole disk");
   if (!entire_disk_.empty()) {
-    LOG(DEBUG) << "No composite disk to build";
+    VLOG(0) << "No composite disk to build";
     return false;
   }
   auto last_component_mod_time = LastUpdatedInputDisk(partitions_);
@@ -187,10 +188,10 @@ Result<bool> DiskBuilder::WillRebuildCompositeDisk() {
           .value_or(std::chrono::system_clock::time_point());
 
   if (composite_mod_time == decltype(composite_mod_time)()) {
-    LOG(DEBUG) << "No prior composite disk";
+    VLOG(0) << "No prior composite disk";
     return true;
   } else if (last_component_mod_time > composite_mod_time) {
-    LOG(DEBUG) << "Composite disk component file updated";
+    VLOG(0) << "Composite disk component file updated";
     return true;
   }
 
@@ -199,7 +200,7 @@ Result<bool> DiskBuilder::WillRebuildCompositeDisk() {
 
 Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
   if (!entire_disk_.empty()) {
-    LOG(DEBUG) << "No composite disk to build";
+    VLOG(0) << "No composite disk to build";
     return false;
   }
   if (!CF_EXPECT(WillRebuildCompositeDisk())) {
@@ -242,10 +243,10 @@ Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
       FileModificationTime(composite_disk_path_)
           .value_or(std::chrono::system_clock::time_point());
   if (overlay_mod_time == decltype(overlay_mod_time)()) {
-    LOG(DEBUG) << "No prior overlay";
+    VLOG(0) << "No prior overlay";
     can_reuse_overlay = false;
   } else if (overlay_mod_time < composite_disk_mod_time) {
-    LOG(DEBUG) << "Overlay is out of date";
+    VLOG(0) << "Overlay is out of date";
     can_reuse_overlay = false;
   }
 

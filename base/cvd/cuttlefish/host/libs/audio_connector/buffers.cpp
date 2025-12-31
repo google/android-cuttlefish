@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/libs/audio_connector/buffers.h"
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 namespace cuttlefish {
 

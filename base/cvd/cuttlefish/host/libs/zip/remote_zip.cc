@@ -25,8 +25,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/numbers.h"
-#include "android-base/logging.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 
@@ -71,7 +71,7 @@ class RemoteZip : public SeekableZipSourceCallback {
     std::vector<std::string> headers = headers_;
     headers.push_back(
         fmt::format("Range: bytes={}-{}", offset_, offset_ + zip_len - 1));
-    LOG(VERBOSE) << "Requesting " << headers.back();
+    VLOG(1) << "Requesting " << headers.back();
     HttpRequest request = {
         .method = HttpMethod::kGet,
         .url = url_,

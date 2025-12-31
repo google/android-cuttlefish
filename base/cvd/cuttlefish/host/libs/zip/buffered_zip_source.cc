@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
@@ -75,7 +75,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
       if (!reader_->SeekFromStart(offset_).ok()) {
         return false;
       }
-      LOG(VERBOSE) << "Bypassing buffer, reading " << len;
+      VLOG(1) << "Bypassing buffer, reading " << len;
       Result<uint64_t> data_read = reader_->Read(data, len);
       if (data_read.ok()) {
         offset_ += *data_read;
@@ -102,7 +102,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     if (!reader_->SeekFromStart(offset_).ok()) {
       return -1;
     }
-    LOG(VERBOSE) << "Filling buffer with " << buffer_fill;
+    VLOG(1) << "Filling buffer with " << buffer_fill;
     Result<size_t> inner_read = reader_->Read(buffer_.data(), buffer_fill);
     if (!inner_read.ok()) {
       return -1;

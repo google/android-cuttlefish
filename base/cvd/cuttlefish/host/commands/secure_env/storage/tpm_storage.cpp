@@ -15,8 +15,8 @@
 
 #include "cuttlefish/host/commands/secure_env/storage/tpm_storage.h"
 
-#include <android-base/logging.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/json_serializable.h"
 #include "cuttlefish/host/commands/secure_env/tpm_random_source.h"
@@ -36,13 +36,13 @@ TpmStorage::TpmStorage(TpmResourceManager& resource_manager, const std::string& 
   if (!index_.isMember(kEntries)
       || index_[kEntries].type() != Json::arrayValue) {
     if (index_.empty()) {
-      LOG(DEBUG) << "Initializing secure index file";
+      VLOG(0) << "Initializing secure index file";
     } else {
       LOG(WARNING) << "Index file missing entries, likely corrupted.";
     }
     index_[kEntries] = Json::Value(Json::arrayValue);
   } else {
-    LOG(DEBUG) << "Restoring index from file";
+    VLOG(0) << "Restoring index from file";
   }
 }
 
@@ -203,14 +203,14 @@ Result<void> TpmStorage::Allocate(const std::string& key, uint16_t size) {
         /* publicInfo */ &public_info,
         /* nvHandle */ &nv_handle);
     if (rc == TPM2_RC_NV_DEFINED) {
-      LOG(VERBOSE) << "Esys_NV_DefineSpace failed with TPM2_RC_NV_DEFINED";
+      VLOG(1) << "Esys_NV_DefineSpace failed with TPM2_RC_NV_DEFINED";
       continue;
     } else if (rc == TPM2_RC_SUCCESS) {
       Esys_TR_Close(*resource_manager_.Esys(), &nv_handle);
       break;
     } else {
-      LOG(DEBUG) << "Esys_NV_DefineSpace failed with " << rc << ": "
-                 << Tss2_RC_Decode(rc);
+      VLOG(0) << "Esys_NV_DefineSpace failed with " << rc << ": "
+              << Tss2_RC_Decode(rc);
     }
   }
   Json::Value entry(Json::objectValue);

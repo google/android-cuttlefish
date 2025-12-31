@@ -25,6 +25,7 @@
 #include <fmt/core.h>
 #include <json/json.h>
 #include "absl/strings/match.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"

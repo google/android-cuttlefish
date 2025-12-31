@@ -24,11 +24,11 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/injector.h>
 #include <fruit/macro.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"

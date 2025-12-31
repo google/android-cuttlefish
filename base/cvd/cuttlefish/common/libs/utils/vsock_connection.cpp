@@ -31,8 +31,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <json/json.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"

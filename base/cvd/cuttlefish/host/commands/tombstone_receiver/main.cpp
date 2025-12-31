@@ -18,8 +18,9 @@
 #include <chrono>
 #include <fstream>
 
-#include <android-base/logging.h>
 #include <fmt/format.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -45,7 +46,7 @@ static std::string next_tombstone_path(const std::string& dir) {
     num_tombstones_in_last_second = 0;
   }
 
-  LOG(DEBUG) << "Creating " << retval;
+  VLOG(0) << "Creating " << retval;
   return retval;
 }
 
@@ -77,8 +78,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
 
   CHECK(server_fd->IsOpen()) << "Did not receive a server fd";
 
-  LOG(DEBUG) << "Host is starting server on port "
-             << server_fd->VsockServerPort();
+  VLOG(0) << "Host is starting server on port " << server_fd->VsockServerPort();
 
   // Server loop
   while (true) {
@@ -97,7 +97,7 @@ int TombstoneReceiverMain(int argc, char** argv) {
       struct timeval timeout = {TIMEOUT_SEC, 0};
       auto val = Select(&read_set, nullptr, &error_set, &timeout);
       if (val == 0) {
-        LOG(DEBUG) << "timeout";
+        VLOG(0) << "timeout";
         break;
       }
       if (read_set.IsSet(conn)) {
@@ -114,11 +114,11 @@ int TombstoneReceiverMain(int argc, char** argv) {
       }
 
       if (error_set.IsSet(conn)) {
-        LOG(DEBUG) << "error";
+        VLOG(0) << "error";
         break;
       }
     }
-    LOG(DEBUG) << "done: " << acc << " bytes via " << cnt;
+    VLOG(0) << "done: " << acc << " bytes via " << cnt;
   }
 
   return 0;

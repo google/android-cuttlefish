@@ -16,8 +16,9 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/streamer.h"
 
-#include <android-base/logging.h>
 #include <json/json.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include <api/audio_codecs/audio_decoder_factory.h>
 #include <api/audio_codecs/audio_encoder_factory.h>
@@ -702,7 +703,7 @@ Streamer::Impl::Build(
 
 void Streamer::Impl::SendMessageToClient(int client_id,
                                          const Json::Value& msg) {
-  LOG(VERBOSE) << "Sending to client: " << msg.toStyledString();
+  VLOG(1) << "Sending to client: " << msg.toStyledString();
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
   Json::Value wrapper;

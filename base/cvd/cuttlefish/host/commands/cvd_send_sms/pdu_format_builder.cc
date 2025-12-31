@@ -25,7 +25,7 @@
 #include <sstream>
 #include <vector>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 #include "unicode/uchriter.h"
 #include "unicode/unistr.h"
 #include "unicode/ustring.h"

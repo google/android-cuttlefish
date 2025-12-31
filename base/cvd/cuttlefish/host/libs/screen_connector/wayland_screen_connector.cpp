@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/host/libs/wayland/wayland_server.h"
 

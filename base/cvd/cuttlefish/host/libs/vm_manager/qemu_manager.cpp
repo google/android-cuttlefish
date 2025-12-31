@@ -31,8 +31,8 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <android-base/logging.h>
 #include <vulkan/vulkan.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"

@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -107,7 +107,7 @@ Result<size_t> LazilyLoadedFile::Read(char* data, size_t size) {
 
 Result<void> LazilyLoadedFile::Seek(size_t location) {
   CF_EXPECT(impl_.get());
-  LOG(VERBOSE) << "Seeking to " << location;
+  VLOG(1) << "Seeking to " << location;
   impl_->seek_pos_ = location;
   return {};
 }
@@ -150,14 +150,14 @@ Result<void> LazilyLoadedFile::Impl::WriteMetadata() {
 }
 
 Result<size_t> LazilyLoadedFile::Impl::Read(char* data, size_t size) {
-  LOG(VERBOSE) << "Reading " << size << ", seek pos " << seek_pos_;
+  VLOG(1) << "Reading " << size << ", seek pos " << seek_pos_;
   // NOLINTNEXTLINE(misc-include-cleaner): SEEK_SET
   CF_EXPECT_EQ(contents_file_->LSeek(seek_pos_, SEEK_SET), seek_pos_,
                contents_file_->StrError());
   auto all_ranges = already_downloaded_.AllRanges();
   for (const auto& range : all_ranges) {
-    LOG(VERBOSE) << "Already downloaded: [" << range.first << ", "
-                 << range.second << ")";
+    VLOG(1) << "Already downloaded: [" << range.first << ", " << range.second
+            << ")";
   }
   std::optional<uint64_t> end_of_present_data =
       already_downloaded_.EndOfContainingRange(seek_pos_);
@@ -167,36 +167,36 @@ Result<size_t> LazilyLoadedFile::Impl::Read(char* data, size_t size) {
     size_t read_request = std::min(*end_of_present_data - seek_pos_, size);
     ssize_t data_read = contents_file_->Read(data, read_request);
     CF_EXPECT_GE(data_read, 0, contents_file_->StrError());
-    LOG(VERBOSE) << "Read " << data_read << " from local storage, seek pos was "
-                 << seek_pos_;
+    VLOG(1) << "Read " << data_read << " from local storage, seek pos was "
+            << seek_pos_;
     seek_pos_ += data_read;
     return data_read;
   }
   CF_EXPECT(callback_->Seek(seek_pos_));
   if (size < kMinReadSize) {
     size_t extended_read_size = std::min(kMinReadSize, size_ - seek_pos_);
-    LOG(VERBOSE) << "Extending read request from " << size << " to "
-                 << extended_read_size;
+    VLOG(1) << "Extending read request from " << size << " to "
+            << extended_read_size;
     size_t data_read = CF_EXPECT(
         callback_->Read(extended_read_buffer_.data(), extended_read_size));
     CF_EXPECT_EQ(
         WriteAll(contents_file_, extended_read_buffer_.data(), data_read),
         data_read, contents_file_->StrError());
     already_downloaded_.InsertRange(seek_pos_, seek_pos_ + data_read);
-    LOG(VERBOSE) << "Read " << data_read << " from source, seek pos was "
-                 << seek_pos_;
+    VLOG(1) << "Read " << data_read << " from source, seek pos was "
+            << seek_pos_;
     size_t reported_size = std::min(data_read, size);
     memcpy(data, extended_read_buffer_.data(), reported_size);
     seek_pos_ += reported_size;
     return reported_size;
   } else {
-    LOG(VERBOSE) << "Passing down read request of " << size;
+    VLOG(1) << "Passing down read request of " << size;
     size_t data_read = CF_EXPECT(callback_->Read(data, size));
     CF_EXPECT_EQ(WriteAll(contents_file_, data, data_read), data_read,
                  contents_file_->StrError());
     already_downloaded_.InsertRange(seek_pos_, seek_pos_ + data_read);
-    LOG(VERBOSE) << "Read " << data_read << " from source, seek pos was "
-                 << seek_pos_;
+    VLOG(1) << "Read " << data_read << " from source, seek pos was "
+            << seek_pos_;
     seek_pos_ += data_read;
     return data_read;
   }

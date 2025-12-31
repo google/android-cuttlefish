@@ -18,6 +18,7 @@
 #include <sys/utsname.h>
 
 #include "google/protobuf/timestamp.pb.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/metrics/clearcut_protos.h"
 #include "cuttlefish/host/commands/metrics/send.h"

@@ -25,7 +25,6 @@
 #include <thread>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <grpc/grpc.h>
@@ -35,6 +34,7 @@
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/server_posix.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -162,12 +162,12 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
         return;
       } else {
         // Update cached data
-        LOG(DEBUG) << "Skip same record";
+        VLOG(0) << "Skip same record";
         previous_cached_gnss_raw = cached_gnss_raw;
       }
       ssize_t bytes_written =
           cuttlefish::WriteAll(gnss_in_, cached_gnss_raw + END_OF_MSG_MARK);
-      LOG(DEBUG) << "Send Gnss Raw to serial: bytes_written: " << bytes_written;
+      VLOG(0) << "Send Gnss Raw to serial: bytes_written: " << bytes_written;
       if (bytes_written < 0) {
         LOG(ERROR) << "Error writing to fd: " << gnss_in_->StrError();
       }
@@ -240,7 +240,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
           // Get data header.
           if (header.empty() && absl::StartsWith(line, "# Raw")) {
             header = line;
-            LOG(DEBUG) << "Header: " << header;
+            VLOG(0) << "Header: " << header;
             continue;
           }
 
@@ -463,10 +463,10 @@ void RunServer() {
     // Finally assemble the server.
     std::unique_ptr<Server> server(builder.BuildAndStart());
     if (FLAGS_gnss_grpc_port >= 0) {
-      LOG(DEBUG) << "Server listening on port " << FLAGS_gnss_grpc_port;
+      VLOG(0) << "Server listening on port " << FLAGS_gnss_grpc_port;
     }
     if (!FLAGS_gnss_grpc_socket.empty()) {
-      LOG(DEBUG) << "Server listening on at " << FLAGS_gnss_grpc_socket;
+      VLOG(0) << "Server listening on at " << FLAGS_gnss_grpc_socket;
     }
 
     // Wait for the server to shutdown. Note that some other thread must be
@@ -481,7 +481,7 @@ int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  LOG(DEBUG) << "Starting gnss grpc proxy server...";
+  VLOG(0) << "Starting gnss grpc proxy server...";
   RunServer();
 
   return 0;

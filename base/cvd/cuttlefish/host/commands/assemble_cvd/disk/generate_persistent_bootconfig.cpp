@@ -19,6 +19,8 @@
 #include <optional>
 #include <string>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -61,12 +63,12 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
   const auto bootconfig =
       CF_EXPECT(BootconfigArgsString(bootconfig_args, "\n")) + "\n";
 
-  LOG(DEBUG) << "bootconfig size is " << bootconfig.size();
+  VLOG(0) << "bootconfig size is " << bootconfig.size();
   ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
   CF_EXPECT(WriteAll(bootconfig_fd, bootconfig) == bootconfig.size(),
             "Failed to write bootconfig to \"" << bootconfig_path << "\"");
-  LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
-             << ReadFile(bootconfig_path);
+  VLOG(0) << "Bootconfig parameters from vendor boot image and config are "
+          << ReadFile(bootconfig_path);
 
   CF_EXPECT(bootconfig_fd->Truncate(bootconfig.size()) == 0,
             "`truncate --size=" << bootconfig.size() << " bytes "

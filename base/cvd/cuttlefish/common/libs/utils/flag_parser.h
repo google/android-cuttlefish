@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result.h"
 
 /* Support for parsing individual flags out of a larger list of flags. This
@@ -158,7 +159,7 @@ bool WriteGflagsCompatXml(const std::vector<Flag>&, std::ostream&);
 
 /* If -verbosity or --verbosity flags have a value, translates it to an android
  * LogSeverity */
-Flag VerbosityFlag(android::base::LogSeverity& value);
+Flag VerbosityFlag(LogSeverity& value);
 
 /* If any of these are used, they should be evaluated after all other flags, and
  * in the order defined here (help before invalid flags, invalid flags before

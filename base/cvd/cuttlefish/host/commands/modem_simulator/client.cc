@@ -16,8 +16,8 @@
 
 #include "cuttlefish/host/commands/modem_simulator/client.h"
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
@@ -54,14 +54,14 @@ bool Client::operator==(const Client& other) const {
 
 void Client::SendCommandResponse(std::string response) const {
   if (response.empty()) {
-    LOG(DEBUG) << "Invalid response, ignore!";
+    VLOG(0) << "Invalid response, ignore!";
     return;
   }
 
   if (response.back() != '\r') {
     response += '\r';
   }
-  LOG(VERBOSE) << " AT< " << response;
+  VLOG(1) << " AT< " << response;
 
   std::lock_guard<std::mutex> lock(write_mutex);
   WriteAll(client_write_fd_, response);

@@ -21,7 +21,7 @@
 
 #include <string>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/confui/confui.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"

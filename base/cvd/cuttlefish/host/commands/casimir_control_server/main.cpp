@@ -24,9 +24,9 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
-
 #include "cuttlefish/host/commands/casimir_control_server/casimir_controller.h"
 #include "cuttlefish/host/commands/casimir_control_server/hex.h"
 #include "cuttlefish/result/result.h"

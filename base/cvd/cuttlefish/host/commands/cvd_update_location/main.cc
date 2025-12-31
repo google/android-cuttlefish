@@ -17,11 +17,13 @@
 #include <ostream>
 #include <string>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
 #include <grpc/grpc.h>
 #include <grpcpp/create_channel.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"
 
@@ -34,7 +36,7 @@ namespace cuttlefish {
 namespace {
 
 int UpdateLocationCvdMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   auto config = CuttlefishConfig::Get();

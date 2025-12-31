@@ -22,6 +22,7 @@
 #include "GLES2/gl2.h"
 #include "GLES2/gl2ext.h"
 #include "GLES3/gl3.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/graphics_detector/egl.h"
 #include "cuttlefish/host/graphics_detector/gles_funcs.h"

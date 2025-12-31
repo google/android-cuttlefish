@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -65,7 +65,7 @@ static StopperResult StopModemSimulator(int id) {
 Result<std::optional<MonitorCommand>> ModemSimulator(
     const CuttlefishConfig::InstanceSpecific& instance) {
   if (!instance.enable_modem_simulator()) {
-    LOG(DEBUG) << "Modem simulator not enabled";
+    VLOG(0) << "Modem simulator not enabled";
     return {};
   }
   int instance_number = instance.modem_simulator_instance_number();

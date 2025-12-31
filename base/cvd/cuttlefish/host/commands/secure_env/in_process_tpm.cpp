@@ -21,6 +21,8 @@
 #include <tss2/tss2_rc.h>
 
 #include <android-base/endian.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/tpm_commands.h"
 
@@ -41,7 +43,7 @@ typedef int SOCKET;
 #undef DEBUG
 }
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <mutex>
 
@@ -86,8 +88,8 @@ class InProcessTpm::Impl {
       impl->command_queue_.pop_front();
     }
     auto header = reinterpret_cast<tpm_message_header*>(request.data());
-    LOG(VERBOSE) << "Sending TPM command "
-                << TpmCommandName(be32toh(header->ordinal));
+    VLOG(1) << "Sending TPM command "
+            << TpmCommandName(be32toh(header->ordinal));
     _IN_BUFFER input = {
         .BufferSize = static_cast<unsigned long>(request.size()),
         .Buffer = request.data(),
@@ -100,8 +102,8 @@ class InProcessTpm::Impl {
     *size = output.BufferSize;
     header = reinterpret_cast<tpm_message_header*>(response);
     auto rc = be32toh(header->ordinal);
-    LOG(VERBOSE) << "Received TPM response " << Tss2_RC_Decode(rc)
-                << " (" << rc << ")";
+    VLOG(1) << "Received TPM response " << Tss2_RC_Decode(rc) << " (" << rc
+            << ")";
     return TSS2_RC_SUCCESS;
   }
 
@@ -122,7 +124,7 @@ class InProcessTpm::Impl {
     if (_plat__NVNeedsManufacture()) {
       // Can't use android logging here due to a macro conflict with TPM
       // internals
-      LOG(DEBUG) << "Manufacturing TPM state";
+      VLOG(0) << "Manufacturing TPM state";
       if (TPM_Manufacture(1)) {
         LOG(FATAL) << "Failed to manufacture TPM state";
       }

@@ -18,14 +18,13 @@
 
 #include <cerrno>
 #include <cstring>
-#include <ostream>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -146,8 +145,8 @@ Result<std::string> RunAndCaptureStdout(Command command) {
   std::string command_str = command.GetShortName();
   int exit_code = RunWithManagedStdio(std::move(command), nullptr,
                                       &standard_out, &standard_err);
-  LOG(DEBUG) << "Ran " << command_str << " with stdout:\n" << standard_out;
-  LOG(DEBUG) << "Ran " << command_str << " with stderr:\n" << standard_err;
+  VLOG(0) << "Ran " << command_str << " with stdout:\n" << standard_out;
+  VLOG(0) << "Ran " << command_str << " with stderr:\n" << standard_err;
   CF_EXPECTF(exit_code == 0,
              "Failed to execute '{}' <args>: exit code = {}, stdout = '{}', stderr = '{}'",
              command_str, exit_code, standard_out, standard_err);

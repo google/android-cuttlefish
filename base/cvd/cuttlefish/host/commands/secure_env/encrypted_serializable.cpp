@@ -16,8 +16,9 @@
 #include "encrypted_serializable.h"
 
 #include <vector>
-//
-#include <android-base/logging.h>
+
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/secure_env/tpm_auth.h"
 #include "cuttlefish/host/commands/secure_env/tpm_encrypt_decrypt.h"

@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/gem5_image_unpacker.h"
 
 #include <android-base/file.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"

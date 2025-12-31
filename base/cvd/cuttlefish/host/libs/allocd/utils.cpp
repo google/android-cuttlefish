@@ -19,6 +19,8 @@
 #include <cstdint>
 #include <optional>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/allocd/request.h"

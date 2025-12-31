@@ -23,9 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
@@ -61,12 +61,12 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
-  ScopedTeeLogger logger(
-      LogToStderrAndFiles({log_file}, "", metadata_level, flags.verbosity));
+  ScopedLogger logger(
+      SeverityTarget::FromFile(log_file, metadata_level, flags.verbosity), "");
 
   Result<std::vector<FetchResult>> result = FetchCvdMain(flags);
   if (flags.build_api_flags.enable_caching) {
-    LOG(DEBUG) << "Running automatic cache cleanup";
+    VLOG(0) << "Running automatic cache cleanup";
     const std::string cache_directory = PerUserCacheDir();
     const PruneResult prune_result = CF_EXPECTF(
         PruneCache(cache_directory, flags.build_api_flags.max_cache_size_gb),

@@ -22,10 +22,10 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -248,14 +248,13 @@ void ConfigureLogs(const CuttlefishConfig& config,
   if (config.Instances().size() > 1) {
     prefix = instance.instance_name() + ": ";
   }
-  ::android::base::SetLogger(LogToStderrAndFiles({log_path}, prefix));
+  LogToStderrAndFiles({log_path}, prefix);
 }
 
 }  // namespace
 
 Result<void> RunCvdMain(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
   CF_EXPECT(StdinValid(), "Invalid stdin");

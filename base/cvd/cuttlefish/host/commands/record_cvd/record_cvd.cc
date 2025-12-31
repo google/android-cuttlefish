@@ -17,9 +17,10 @@
 #include <cstdlib>
 #include <string>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/screen_recording_controls/screen_recording_controls.h"
 #include "cuttlefish/result/result.h"
@@ -64,7 +65,7 @@ Result<void> RecordCvdMain(int argc, char* argv[]) {
 }  // namespace cuttlefish
 
 int main(int argc, char* argv[]) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   cuttlefish::Result<void> result = cuttlefish::RecordCvdMain(argc, argv);

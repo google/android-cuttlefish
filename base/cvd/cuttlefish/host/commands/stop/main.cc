@@ -25,13 +25,15 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -218,10 +220,9 @@ int StopCvdMain(const std::int32_t wait_for_launcher,
 } // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-
   const auto [wait_for_launcher, clear_instance_dirs, helpxml] =
       cuttlefish::GetFlagValues(argc, argv);
+  cuttlefish::LogToStderr();
 
   if (helpxml) {
     /*

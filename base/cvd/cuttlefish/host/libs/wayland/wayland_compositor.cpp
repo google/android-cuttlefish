@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_compositor.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
@@ -28,8 +28,7 @@ namespace wayland {
 namespace {
 
 void region_destroy(wl_client*, wl_resource* region_resource) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " region=" << region_resource;
+  VLOG(1) << __FUNCTION__ << " region=" << region_resource;
 
   wl_resource_destroy(region_resource);
 }
@@ -40,12 +39,8 @@ void region_add(wl_client*,
                 int32_t y,
                 int32_t w,
                 int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " region=" << region_resource
-               << " x=" << x
-               << " y=" << y
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " region=" << region_resource << " x=" << x
+          << " y=" << y << " w=" << w << " h=" << h;
 
   Surface::Region* region = GetUserData<Surface::Region>(region_resource);
   region->x = x;
@@ -60,12 +55,8 @@ void region_subtract(wl_client*,
                      int32_t y,
                      int32_t w,
                      int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " region=" << region_resource
-               << " x=" << x
-               << " y=" << y
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " region=" << region_resource << " x=" << x
+          << " y=" << y << " w=" << w << " h=" << h;
 }
 
 const struct wl_region_interface region_implementation = {
@@ -75,8 +66,7 @@ const struct wl_region_interface region_implementation = {
 };
 
 void surface_destroy(wl_client*, wl_resource* surface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface;
 
   delete GetUserData<Surface>(surface);
 }
@@ -86,11 +76,8 @@ void surface_attach(wl_client*,
                     wl_resource* buffer,
                     int32_t x,
                     int32_t y) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface
-               << " buffer=" << buffer
-               << " x=" << x
-               << " y=" << y;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface << " buffer=" << buffer
+          << " x=" << x << " y=" << y;
 
   GetUserData<Surface>(surface)->Attach(buffer);
 }
@@ -101,24 +88,19 @@ void surface_damage(wl_client*,
                     int32_t y,
                     int32_t w,
                     int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource
-               << " x=" << x
-               << " y=" << y
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource << " x=" << x
+          << " y=" << y << " w=" << w << " h=" << h;
 }
 
 void surface_frame(wl_client*, wl_resource* surface, uint32_t) {
-  LOG(VERBOSE) << " surface=" << surface;
+  VLOG(1) << " surface=" << surface;
 }
 
 void surface_set_opaque_region(wl_client*,
                                wl_resource* surface_resource,
                                wl_resource* region_resource) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource
-               << " region=" << region_resource;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource
+          << " region=" << region_resource;
 
   Surface* surface = GetUserData<Surface>(surface_resource);
   Surface::Region* region = GetUserData<Surface::Region>(region_resource);
@@ -129,14 +111,12 @@ void surface_set_opaque_region(wl_client*,
 void surface_set_input_region(wl_client*,
                               wl_resource* surface_resource,
                               wl_resource* region_resource) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource
-               << " region=" << region_resource;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource
+          << " region=" << region_resource;
 }
 
 void surface_commit(wl_client*, wl_resource* surface_resource) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource;
 
   GetUserData<Surface>(surface_resource)->Commit();
 }
@@ -144,17 +124,15 @@ void surface_commit(wl_client*, wl_resource* surface_resource) {
 void surface_set_buffer_transform(wl_client*,
                                   wl_resource* surface_resource,
                                   int32_t transform) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource
-               << " transform=" << transform;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource
+          << " transform=" << transform;
 }
 
 void surface_set_buffer_scale(wl_client*,
                               wl_resource* surface_resource,
                               int32_t scale) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource
-               << " scale=" << scale;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource
+          << " scale=" << scale;
 }
 
 void surface_damage_buffer(wl_client*,
@@ -163,12 +141,8 @@ void surface_damage_buffer(wl_client*,
                            int32_t y,
                            int32_t w,
                            int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface_resource
-               << " x=" << x
-               << " y=" << y
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface_resource << " x=" << x
+          << " y=" << y << " w=" << w << " h=" << h;
 }
 
 const struct wl_surface_interface surface_implementation = {
@@ -189,9 +163,7 @@ void surface_destroy_resource_callback(struct wl_resource*) {}
 void compositor_create_surface(wl_client* client,
                                wl_resource* compositor,
                                uint32_t id) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " compositor=" << compositor
-               << " id=" << id;
+  VLOG(1) << __FUNCTION__ << " compositor=" << compositor << " id=" << id;
 
   Surfaces* surfaces = GetUserData<Surfaces>(compositor);
   Surface* surface = new Surface(*surfaces);
@@ -206,9 +178,7 @@ void compositor_create_surface(wl_client* client,
 void compositor_create_region(wl_client* client,
                               wl_resource* compositor,
                               uint32_t id) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " compositor=" << compositor
-               << " id=" << id;
+  VLOG(1) << __FUNCTION__ << " compositor=" << compositor << " id=" << id;
 
   std::unique_ptr<Surface::Region> region(new Surface::Region());
 

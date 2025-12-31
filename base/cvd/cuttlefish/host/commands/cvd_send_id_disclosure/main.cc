@@ -16,11 +16,12 @@
 
 #include <string>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd_send_id_disclosure/cellular_identifier_disclosure_command_builder.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
@@ -47,7 +48,7 @@ void SendDisclosure(SharedFD fd) {
                   GetATCommand(FLAGS_plmn, FLAGS_identifier,
                                FLAGS_protocol_message, FLAGS_is_emergency));
 
-  LOG(DEBUG) << "Attempting to send command: " << command;
+  VLOG(0) << "Attempting to send command: " << command;
 
   long written = WriteAll(fd, command);
   if (written != command.size()) {
@@ -57,8 +58,8 @@ void SendDisclosure(SharedFD fd) {
   }
 }
 
-int SendIdDisclosureMain(int argc, char **argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+int SendIdDisclosureMain(int argc, char** argv) {
+  LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   auto config = CuttlefishConfig::Get();

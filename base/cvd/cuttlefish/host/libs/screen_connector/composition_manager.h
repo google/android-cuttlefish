@@ -20,8 +20,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 #include "cuttlefish/host/libs/wayland/wayland_server_callbacks.h"

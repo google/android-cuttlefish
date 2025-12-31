@@ -22,6 +22,7 @@
 
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -256,8 +257,8 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
 
   std::vector<std::string> args = instance.extra_bootconfig_args();
 
-  LOG(DEBUG) << "Parsing extra_bootconfig_args of size:" << args.size()
-             << "; Contents: " << android::base::Join(args, "\n");
+  VLOG(0) << "Parsing extra_bootconfig_args of size:" << args.size()
+          << "; Contents: " << android::base::Join(args, "\n");
 
   for (const std::string& kv : args) {
     if (kv.empty()) {

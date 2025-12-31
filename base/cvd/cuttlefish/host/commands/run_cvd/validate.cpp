@@ -18,8 +18,8 @@
 
 #include <sys/utsname.h>
 
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/network.h"
@@ -74,13 +74,13 @@ Result<void> ValidateHostConfiguration() {
 Result<void> ValidateHostKernel() {
   struct utsname uname_data;
   CF_EXPECT_EQ(uname(&uname_data), 0, "uname failed: " << StrError(errno));
-  LOG(DEBUG) << "uts.sysname = \"" << uname_data.sysname << "\"";
-  LOG(DEBUG) << "uts.nodename = \"" << uname_data.nodename << "\"";
-  LOG(DEBUG) << "uts.release = \"" << uname_data.release << "\"";
-  LOG(DEBUG) << "uts.version = \"" << uname_data.version << "\"";
-  LOG(DEBUG) << "uts.machine = \"" << uname_data.machine << "\"";
+  VLOG(0) << "uts.sysname = \"" << uname_data.sysname << "\"";
+  VLOG(0) << "uts.nodename = \"" << uname_data.nodename << "\"";
+  VLOG(0) << "uts.release = \"" << uname_data.release << "\"";
+  VLOG(0) << "uts.version = \"" << uname_data.version << "\"";
+  VLOG(0) << "uts.machine = \"" << uname_data.machine << "\"";
 #ifdef _GNU_SOURCE
-  LOG(DEBUG) << "uts.domainname = \"" << uname_data.domainname << "\"";
+  VLOG(0) << "uts.domainname = \"" << uname_data.domainname << "\"";
 #endif
   return {};
 }

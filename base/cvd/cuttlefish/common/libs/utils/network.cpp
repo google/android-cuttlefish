@@ -39,9 +39,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/ranges.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -108,7 +108,7 @@ std::set<std::string> TapInterfacesInUse() {
     std::string fdinfo_path = fmt::format("/proc/{}/fdinfo", process);
     Result<std::vector<std::string>> fdinfos = DirectoryContents(fdinfo_path);
     if (!fdinfos.ok()) {
-      LOG(VERBOSE) << "Failed to get contents of '" << fdinfo_path << "'";
+      VLOG(1) << "Failed to get contents of '" << fdinfo_path << "'";
       continue;
     }
     for (const std::string& fdinfo : *fdinfos) {

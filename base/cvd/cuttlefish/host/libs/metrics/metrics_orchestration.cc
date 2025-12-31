@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -136,19 +136,21 @@ Result<void> OutputMetrics(EventType event_type,
 void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   MetadataLevel metadata_level =
       isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
-  ScopedTeeLogger logger(LogToStderrAndFiles(
-      {fmt::format("{}/{}", metrics_paths.metrics_directory, kMetricsLogName)},
-      "", metadata_level));
+  ScopedLogger logger(SeverityTarget::FromFile(
+                          fmt::format("{}/{}", metrics_paths.metrics_directory,
+                                      kMetricsLogName),
+                          metadata_level),
+                      "");
 
   if (!FileExists(metrics_paths.metrics_directory)) {
-    LOG(DEBUG) << "Metrics directory does not exist, perhaps metrics were not "
-                  "initialized.";
+    VLOG(0) << "Metrics directory does not exist, perhaps metrics were not "
+               "initialized.";
     return;
   }
 
   Result<MetricsData> gather_result = GatherMetrics(metrics_paths, event_type);
   if (!gather_result.ok()) {
-    LOG(DEBUG) << fmt::format(
+    VLOG(0) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
         EventTypeString(event_type), gather_result.error());
     return;
@@ -157,9 +159,8 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   Result<void> output_result = OutputMetrics(
       event_type, metrics_paths.metrics_directory, *gather_result);
   if (!output_result.ok()) {
-    LOG(DEBUG) << fmt::format("Failed to output metrics for {}.  Error: {}",
-                              EventTypeString(event_type),
-                              output_result.error());
+    VLOG(0) << fmt::format("Failed to output metrics for {}.  Error: {}",
+                           EventTypeString(event_type), output_result.error());
   }
 }
 
@@ -170,8 +171,8 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
   Result<void> metrics_setup_result =
       SetUpMetrics(metrics_paths.metrics_directory);
   if (!metrics_setup_result.ok()) {
-    LOG(DEBUG) << fmt::format("Failed to initialize metrics.  Error: {}",
-                              metrics_setup_result.error());
+    VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
+                           metrics_setup_result.error());
     return;
   }
   if (kEnableCvdMetrics) {

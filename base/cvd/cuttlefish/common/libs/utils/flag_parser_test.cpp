@@ -22,12 +22,12 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <libxml/parser.h>
 
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
@@ -328,43 +328,41 @@ TEST(FlagParser, InvalidIntFlag) {
 }
 
 TEST(FlagParser, VerbosityFlag) {
-  android::base::LogSeverity value = android::base::VERBOSE;
+  LogSeverity value = LogSeverity::Verbose;
   auto flag = VerbosityFlag(value);
   ASSERT_THAT(flag.Parse({"-verbosity=DEBUG"}), IsOk());
-  ASSERT_EQ(value, android::base::DEBUG);
+  ASSERT_EQ(value, LogSeverity::Debug);
   ASSERT_THAT(flag.Parse({"--verbosity=INFO"}), IsOk());
-  ASSERT_EQ(value, android::base::INFO);
+  ASSERT_EQ(value, LogSeverity::Info);
   ASSERT_THAT(flag.Parse({"--verbosity=WARNING"}), IsOk());
-  ASSERT_EQ(value, android::base::WARNING);
+  ASSERT_EQ(value, LogSeverity::Warning);
   ASSERT_THAT(flag.Parse({"--verbosity=ERROR"}), IsOk());
-  ASSERT_EQ(value, android::base::ERROR);
-  ASSERT_THAT(flag.Parse({"--verbosity=FATAL_WITHOUT_ABORT"}), IsOk());
-  ASSERT_EQ(value, android::base::FATAL_WITHOUT_ABORT);
+  ASSERT_EQ(value, LogSeverity::Error);
   ASSERT_THAT(flag.Parse({"--verbosity=FATAL"}), IsOk());
-  ASSERT_EQ(value, android::base::FATAL);
+  ASSERT_EQ(value, LogSeverity::Fatal);
   ASSERT_THAT(flag.Parse({"--verbosity=VERBOSE"}), IsOk());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
 }
 
 TEST(FlagParser, InvalidVerbosityFlag) {
-  android::base::LogSeverity value = android::base::VERBOSE;
+  LogSeverity value = LogSeverity::Verbose;
   auto flag = VerbosityFlag(value);
   ASSERT_THAT(flag.Parse({"-verbosity"}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"--verbosity"}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"-verbosity="}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"--verbosity="}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"-verbosity=not_a_severity"}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"--verbosity=not_a_severity"}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"-verbosity", "not_a_severity"}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
   ASSERT_THAT(flag.Parse({"--verbosity", "not_a_severity"}), IsError());
-  ASSERT_EQ(value, android::base::VERBOSE);
+  ASSERT_EQ(value, LogSeverity::Verbose);
 }
 
 TEST(FlagParser, InvalidFlagGuard) {

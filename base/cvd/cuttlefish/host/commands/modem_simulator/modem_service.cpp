@@ -17,7 +17,7 @@
 
 #include <cstring>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/modem_simulator/device_config.h"
 

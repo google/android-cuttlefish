@@ -17,8 +17,9 @@
 
 #include <mutex>
 
-#include <android-base/logging.h>
 #include <rtc_base/time_utils.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/local_recorder.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -40,7 +41,7 @@ void RecordingManager::AddSource(
     size_t width, size_t height,
     std::shared_ptr<webrtc::VideoTrackSourceInterface> video,
     const std::string& label) {
-  LOG(VERBOSE) << "Display source is initiated in recording_manager. ";
+  VLOG(1) << "Display source is initiated in recording_manager. ";
 
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -57,7 +58,7 @@ void RecordingManager::AddSource(
 }
 
 void RecordingManager::RemoveSource(const std::string& label) {
-  LOG(VERBOSE) << "Display source is removed in recording_manager. ";
+  VLOG(1) << "Display source is removed in recording_manager. ";
   std::lock_guard<std::mutex> lock(mutex_);
 
   auto existing_recorder = local_recorders_.find(label);
@@ -73,7 +74,7 @@ void RecordingManager::RemoveSource(const std::string& label) {
 void RecordingManager::Start() {
   std::lock_guard<std::mutex> lock(mutex_);
   if (recording_) {
-    LOG(VERBOSE) << "Video recording has been started! ";
+    VLOG(1) << "Video recording has been started! ";
     return;
   }
 
@@ -86,7 +87,7 @@ void RecordingManager::Start() {
 void RecordingManager::Stop() {
   std::lock_guard<std::mutex> lock(mutex_);
   if (!recording_) {
-    LOG(VERBOSE) << "Video recording is not started, do noting in Stop.";
+    VLOG(1) << "Video recording is not started, do noting in Stop.";
     return;
   }
 

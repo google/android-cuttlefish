@@ -24,7 +24,7 @@
 #include <map>
 #include <vector>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/host/commands/cvd_send_sms/pdu_format_builder.h"
 

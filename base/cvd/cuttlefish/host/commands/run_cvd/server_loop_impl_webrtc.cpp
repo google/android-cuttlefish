@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"

@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace {
@@ -87,7 +87,7 @@ class ProxyPair {
  private:
   void Forward(const std::string& label, SharedFD from, SharedFD to,
                SharedFD stop, std::atomic<bool>& running) {
-    LOG(DEBUG) << label << ": Proxy thread started. Starting copying data";
+    VLOG(0) << label << ": Proxy thread started. Starting copying data";
     auto success = to->CopyAllFrom(*from, &(*stop));
     if (!success) {
       if (from->GetErrno()) {
@@ -99,7 +99,7 @@ class ProxyPair {
     }
     to->Shutdown(SHUT_WR);
     running = false;
-    LOG(DEBUG) << label << ": Proxy thread completed";
+    VLOG(0) << label << ": Proxy thread completed";
   }
 
   bool started_ = false;
@@ -156,11 +156,12 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
       }
       auto target = clients_factory();
       if (target->IsOpen()) {
-        LOG(DEBUG) << "Launching proxy threads";
+        VLOG(0) << "Launching proxy threads";
         watched.push_back(ProxyPair());
         watched.back().Start(client, target);
-        LOG(DEBUG) << "Proxy is launched. Amount of currently tracked proxy pairs: "
-                   << watched.size();
+        VLOG(0)
+            << "Proxy is launched. Amount of currently tracked proxy pairs: "
+            << watched.size();
       } else {
         LOG(ERROR) << "Cannot connect to the target to setup proxying: " << target->StrError();
       }
@@ -169,9 +170,9 @@ ProxyServer::ProxyServer(SharedFD server, std::function<SharedFD()> clients_fact
     }
 
     // Making sure all launched proxy pairs are finished by triggering their destructor
-    LOG(DEBUG) << "Waiting for proxy threads to turn down";
+    VLOG(0) << "Waiting for proxy threads to turn down";
     watched.clear();
-    LOG(DEBUG) << "Proxy threads are successfully turned down";
+    VLOG(0) << "Proxy threads are successfully turned down";
   });
 }
 

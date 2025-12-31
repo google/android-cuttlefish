@@ -28,6 +28,7 @@
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <fmt/format.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"

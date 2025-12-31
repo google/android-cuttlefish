@@ -24,7 +24,7 @@
 #include <string_view>
 #include <utility>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -162,7 +162,7 @@ static Result<DataImageAction> ChooseDataImageAction(
 
 Result<void> CreateBlankImage(const std::string& image, int num_mb,
                               const std::string& image_fmt) {
-  LOG(DEBUG) << "Creating " << image;
+  VLOG(0) << "Creating " << image;
 
   off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
   // MakeFatImage will do the same as below to zero the image files, so we
@@ -213,7 +213,7 @@ Result<void> InitializeDataImage(
   auto action = CF_EXPECT(ChooseDataImageAction(instance));
   switch (action) {
     case DataImageAction::kNoAction:
-      LOG(DEBUG) << instance.data_image() << " exists. Not creating it.";
+      VLOG(0) << instance.data_image() << " exists. Not creating it.";
       return {};
     case DataImageAction::kCreateBlankImage: {
       if (Result<void> res = RemoveFile(instance.new_data_image()); !res.ok()) {
@@ -369,12 +369,12 @@ Result<void> InitializeEspImage(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
   if (EspRequiredForAPBootFlow(instance.ap_boot_flow())) {
-    LOG(DEBUG) << "creating esp_image: " << instance.ap_esp_image_path();
+    VLOG(0) << "creating esp_image: " << instance.ap_esp_image_path();
     CF_EXPECT(BuildAPImage(config, instance));
   }
   if (EspRequiredForBootFlow(instance.boot_flow()) &&
       !VmManagerIsGem5(config)) {
-    LOG(DEBUG) << "creating esp_image: " << instance.esp_image_path();
+    VLOG(0) << "creating esp_image: " << instance.esp_image_path();
     CF_EXPECT(BuildOSImage(instance));
   }
   return {};

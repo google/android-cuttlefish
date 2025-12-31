@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/zip/lazily_loaded_file.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
@@ -49,7 +49,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
   }
 
   int64_t Read(char* data, uint64_t len) override {
-    LOG(VERBOSE) << "Reading " << len;
+    VLOG(1) << "Reading " << len;
     if (Result<void> res = source_.Seek(offset_); !res.ok()) {
       LOG(ERROR) << res.error();
       return -1;
@@ -67,7 +67,7 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
   uint64_t Size() override { return size_; }
 
   bool SetOffset(int64_t offset) override {
-    LOG(VERBOSE) << "Setting offset to " << offset;
+    VLOG(1) << "Setting offset to " << offset;
     offset_ = offset;
     return true;
   }

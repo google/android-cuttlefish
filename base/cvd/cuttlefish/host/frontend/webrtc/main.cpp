@@ -16,12 +16,13 @@
 
 #include <memory>
 
-#include <android-base/logging.h>
 #include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <libyuv.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -98,7 +99,7 @@ class CfOperatorObserver : public webrtc_streaming::OperatorObserver {
  public:
   virtual ~CfOperatorObserver() = default;
   virtual void OnRegistered() override {
-    LOG(VERBOSE) << "Registered with Operator";
+    VLOG(1) << "Registered with Operator";
   }
   virtual void OnClose() override {
     LOG(ERROR) << "Connection with Operator unexpectedly closed";
@@ -523,7 +524,7 @@ int CuttlefishMain() {
     if (!result.ok()) {
       LOG(ERROR) << "Webrtc control loop error: " << result.error().Message();
     }
-    LOG(DEBUG) << "Webrtc control thread exiting.";
+    VLOG(0) << "Webrtc control thread exiting.";
   });
 
   auto audio_handler = SetupAudio(instance, *streamer);
@@ -533,7 +534,7 @@ int CuttlefishMain() {
   host_confui_server.Start();
 
   if (instance.record_screen()) {
-    LOG(VERBOSE) << "Waiting for recording manager initializing.";
+    VLOG(1) << "Waiting for recording manager initializing.";
     recording_manager.WaitForSources(instance.display_configs().size());
     recording_manager.Start();
   }

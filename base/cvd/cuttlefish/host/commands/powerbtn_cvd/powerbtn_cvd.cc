@@ -16,11 +16,12 @@
 
 #include <cstdlib>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/result/result.h"
 
@@ -48,7 +49,7 @@ Result<void> PowerbtnCvdMain() {
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
   cuttlefish::Result<void> result = cuttlefish::PowerbtnCvdMain();
   if (!result.ok()) {

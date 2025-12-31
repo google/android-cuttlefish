@@ -17,6 +17,7 @@
 #include "cuttlefish/host/libs/confui/host_renderer.h"
 
 #include <drm/drm_fourcc.h>
+#include "absl/log/check.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/confui/host_utils.h"
@@ -404,8 +405,8 @@ Result<void> ConfUiRenderer::RenderDialog(
       IsMagnified(ui_options)));
   auto& teeui_frame = renderer_impl_->RenderRawFrame();
   CF_EXPECT(teeui_frame != nullptr, "RenderRawFrame() failed.");
-  ConfUiLog(VERBOSE) << "actually trying to render the frame"
-                     << thread::GetName();
+  ConfUiLogVerbose << "actually trying to render the frame"
+                   << thread::GetName();
   auto frame_width = teeui_frame->Width();
   auto frame_height = teeui_frame->Height();
   auto frame_stride_bytes = teeui_frame->ScreenStrideBytes();

@@ -25,8 +25,8 @@
 #include <unordered_map>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -62,8 +62,8 @@ Result<void> CopyDirectoryImpl(
     const std::function<bool(const std::string&)>& predicate) {
   // create an empty dest_dir_path with the same permission as src_dir_path
   // and then, recursively copy the contents
-  LOG(DEBUG) << "Making sure " << dest_dir_path
-             << " exists and is effectively a directory.";
+  VLOG(0) << "Making sure " << dest_dir_path
+          << " exists and is effectively a directory.";
   CF_EXPECTF(EnsureDirectoryExists(dest_dir_path),
              "Directory {} cannot to be created; it does not exist, either.",
              dest_dir_path);
@@ -75,7 +75,7 @@ Result<void> CopyDirectoryImpl(
     std::string src_path = src_dir_path + "/" + src_base_path;
     std::string dest_path = dest_dir_path + "/" + src_base_path;
 
-    LOG(DEBUG) << "Handling... " << src_path;
+    VLOG(0) << "Handling... " << src_path;
 
     struct stat src_stat;
     CF_EXPECTF(lstat(src_path.data(), &src_stat) != -1, "Failed in lstat({})",
@@ -84,7 +84,7 @@ Result<void> CopyDirectoryImpl(
       std::string target;
       CF_EXPECTF(android::base::Readlink(src_path, &target),
                  "Readlink failed for {}", src_path);
-      LOG(DEBUG) << "Creating link from " << dest_path << " to " << target;
+      VLOG(0) << "Creating link from " << dest_path << " to " << target;
       if (FileExists(dest_path, /* follow_symlink */ false)) {
         CF_EXPECTF(RemoveFile(dest_path), "Failed to unlink/remove file \"{}\"",
                    dest_path);
@@ -94,16 +94,16 @@ Result<void> CopyDirectoryImpl(
     }
 
     if (IsFifo(src_stat) || IsSocket(src_stat)) {
-      LOG(DEBUG) << "Ignoring a named pipe or socket " << src_path;
+      VLOG(0) << "Ignoring a named pipe or socket " << src_path;
       continue;
     }
 
     if (DirectoryExists(src_path)) {
-      LOG(DEBUG) << "Recursively calling CopyDirectoryImpl(" << src_path << ", "
-                 << dest_path << ")";
+      VLOG(0) << "Recursively calling CopyDirectoryImpl(" << src_path << ", "
+              << dest_path << ")";
       CF_EXPECT(CopyDirectoryImpl(src_path, dest_path, predicate));
-      LOG(DEBUG) << "Returned from Recursive call CopyDirectoryImpl("
-                 << src_path << ", " << dest_path << ")";
+      VLOG(0) << "Returned from Recursive call CopyDirectoryImpl(" << src_path
+              << ", " << dest_path << ")";
       continue;
     }
 
@@ -172,8 +172,8 @@ Result<void> CopyDirectoryRecursively(
   std::string dest_final_target = RealpathOrSelf(dest_dir_path);
   std::string src_final_target = RealpathOrSelf(src_dir_path);
   if (dest_final_target == src_final_target) {
-    LOG(DEBUG) << "\"" << src_dir_path << "\" and \"" << dest_dir_path
-               << "\" are effectively the same.";
+    VLOG(0) << "\"" << src_dir_path << "\" and \"" << dest_dir_path
+            << "\" are effectively the same.";
     return {};
   }
 
@@ -202,7 +202,7 @@ Result<std::string> InstanceGuestSnapshotPath(const Json::Value& meta_json,
       "root[\"{}\"][\"{}\"] is missing in \"{}\"", kGuestSnapshotField,
       instance_id, kMetaInfoJsonFileName);
   auto snapshot_path_direct_parent = snapshot_path + "/" + guest_snapshot_dir;
-  LOG(DEBUG) << "Returning snapshot path : " << snapshot_path_direct_parent;
+  VLOG(0) << "Returning snapshot path : " << snapshot_path_direct_parent;
   return snapshot_path_direct_parent;
 }
 

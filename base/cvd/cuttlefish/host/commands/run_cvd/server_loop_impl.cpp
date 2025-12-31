@@ -23,8 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -168,7 +169,7 @@ Result<void> ServerLoopImpl::HandleExtended(
   CF_EXPECT(action_info.action == LauncherAction::kExtended);
   switch (action_info.extended_action.actions_case()) {
     case ActionsCase::kSuspend: {
-      LOG(DEBUG) << "Run_cvd received suspend request.";
+      VLOG(0) << "Run_cvd received suspend request.";
       if (device_status_.load() == DeviceStatus::kActive) {
         CF_EXPECT(HandleSuspend(process_monitor));
       }
@@ -176,7 +177,7 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ActionsCase::kResume: {
-      LOG(DEBUG) << "Run_cvd received resume request.";
+      VLOG(0) << "Run_cvd received resume request.";
       if (device_status_.load() == DeviceStatus::kSuspended) {
         CF_EXPECT(HandleResume(process_monitor));
       }
@@ -184,7 +185,7 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ActionsCase::kSnapshotTake: {
-      LOG(DEBUG) << "Run_cvd received snapshot request.";
+      VLOG(0) << "Run_cvd received snapshot request.";
       CF_EXPECT(device_status_.load() == DeviceStatus::kSuspended,
                 "The device is not suspended, and snapshot cannot be taken");
       CF_EXPECT(
@@ -192,17 +193,17 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ActionsCase::kStartScreenRecording: {
-      LOG(DEBUG) << "Run_cvd received start screen recording request.";
+      VLOG(0) << "Run_cvd received start screen recording request.";
       CF_EXPECT(HandleStartScreenRecording());
       return {};
     }
     case ActionsCase::kStopScreenRecording: {
-      LOG(DEBUG) << "Run_cvd received stop screen recording request.";
+      VLOG(0) << "Run_cvd received stop screen recording request.";
       CF_EXPECT(HandleStopScreenRecording());
       return {};
     }
     case ActionsCase::kScreenshotDisplay: {
-      LOG(DEBUG) << "Run_cvd received screenshot display request.";
+      VLOG(0) << "Run_cvd received screenshot display request.";
       const auto& request = action_info.extended_action.screenshot_display();
       CF_EXPECT(HandleScreenshotDisplay(request));
       return {};
@@ -377,7 +378,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   unlink(sdcard_path.c_str());
   // round up
   auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
-  LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
+  VLOG(0) << "Size in mb is " << sdcard_mb_size;
   // TODO: b/471069557 - diagnose unused
   unused = CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
 

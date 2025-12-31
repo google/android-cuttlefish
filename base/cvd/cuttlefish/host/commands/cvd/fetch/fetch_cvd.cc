@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/archive.h"
@@ -187,7 +188,7 @@ Result<std::string> SaveConfig(FetcherConfig& config,
   config.SaveToFile(fetcher_path);
 
   for (const auto& file : config.get_cvd_files()) {
-    LOG(VERBOSE) << target_directory << "/" << file.second.file_path << "\n";
+    VLOG(1) << target_directory << "/" << file.second.file_path << "\n";
   }
   return fetcher_path;
 }
@@ -200,7 +201,7 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   // Some older builds might not have misc_info.txt, so permit errors on
   // fetching misc_info.txt
   if (!context.Artifact("misc_info.txt").Download().ok()) {
-    LOG(DEBUG) << "Failed to download misc_info.txt, continuing";
+    VLOG(0) << "Failed to download misc_info.txt, continuing";
   }
   if (flags.download_img_zip) {
     LOG(INFO) << "Downloading image zip for " << context;
@@ -287,7 +288,7 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
       std::string member = fmt::format("IMAGES/{}.img", system_image);
       std::string rename_to = fmt::format("{}.img", system_image);
       if (!target_files.ExtractOneTo(member, rename_to).ok()) {
-        LOG(DEBUG) << "Failed to extract " << member;
+        VLOG(0) << "Failed to extract " << member;
       }
     }
   }
@@ -303,7 +304,7 @@ Result<void> FetchKernelTarget(FetchBuildContext context) {
 
   // Certain kernel builds do not have corresponding ramdisks.
   if (!context.Artifact("initramfs.img").Download().ok()) {
-    LOG(DEBUG) << "No initramfs.img for kernel build, ignoring";
+    VLOG(0) << "No initramfs.img for kernel build, ignoring";
   }
   return {};
 }
@@ -491,9 +492,9 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
               << "' (" << count << " out of " << targets.size() << ")";
     count++;
   }
-  LOG(DEBUG) << "Waiting for host package fetch";
+  VLOG(0) << "Waiting for host package fetch";
   CF_EXPECT(host_package_future.get());
-  LOG(DEBUG) << "Performance stats:\n" << tracer.ToStyledString();
+  VLOG(0) << "Performance stats:\n" << tracer.ToStyledString();
 
   LOG(INFO) << "Completed all fetches";
   return fetch_results;

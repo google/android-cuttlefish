@@ -28,8 +28,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <android-base/strings.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/scrub_secrets.h"
@@ -47,16 +47,16 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
                              void*) {
   switch (type) {
     case CURLINFO_TEXT:
-      LOG(VERBOSE) << "CURLINFO_TEXT ";
-      LOG(DEBUG) << ScrubSecrets(TrimWhitespace(data, size));
+      VLOG(1) << "CURLINFO_TEXT ";
+      VLOG(0) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     case CURLINFO_HEADER_IN:
-      LOG(VERBOSE) << "CURLINFO_HEADER_IN ";
-      LOG(DEBUG) << TrimWhitespace(data, size);
+      VLOG(1) << "CURLINFO_HEADER_IN ";
+      VLOG(0) << TrimWhitespace(data, size);
       break;
     case CURLINFO_HEADER_OUT:
-      LOG(VERBOSE) << "CURLINFO_HEADER_OUT ";
-      LOG(DEBUG) << ScrubSecrets(TrimWhitespace(data, size));
+      VLOG(1) << "CURLINFO_HEADER_OUT ";
+      VLOG(0) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     case CURLINFO_DATA_IN:
       break;
@@ -67,8 +67,8 @@ int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,
     case CURLINFO_SSL_DATA_OUT:
       break;
     case CURLINFO_END:
-      LOG(VERBOSE) << "CURLINFO_END ";
-      LOG(DEBUG) << ScrubSecrets(TrimWhitespace(data, size));
+      VLOG(1) << "CURLINFO_END ";
+      VLOG(0) << ScrubSecrets(TrimWhitespace(data, size));
       break;
     default:
       LOG(ERROR) << "Unexpected cURL output type: " << type;
@@ -116,7 +116,7 @@ class CurlClient : public HttpClient {
   Result<HttpResponse<void>> DownloadToCallback(
       HttpRequest request, DataCallback callback) override {
     std::lock_guard<std::mutex> lock(mutex_);
-    LOG(DEBUG) << "Downloading '" << request.url << "'";
+    VLOG(0) << "Downloading '" << request.url << "'";
     CF_EXPECT(
         request.data_to_write.empty() || request.method == HttpMethod::kPost,
         "data must be empty for non POST requests");

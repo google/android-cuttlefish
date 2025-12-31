@@ -22,8 +22,8 @@
 
 #include <sys/stat.h>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
-#include "android-base/logging.h"
 #include "android-base/strings.h"
 #include "gflags/gflags.h"
 
@@ -196,7 +196,7 @@ Result<void> PrepareBootEnvImage(
       ReadFile(image_path) != ReadFile(tmp_boot_env_image_path)) {
     CF_EXPECT(RenameFile(tmp_boot_env_image_path, image_path),
               "Unable to delete the old env image");
-    LOG(DEBUG) << "Updated bootloader environment image.";
+    VLOG(0) << "Updated bootloader environment image.";
   } else if (Result<void> rs = RemoveFile(tmp_boot_env_image_path); !rs.ok()) {
     LOG(WARNING) << rs.error();
   }

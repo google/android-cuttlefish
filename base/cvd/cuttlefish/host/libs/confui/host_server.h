@@ -25,9 +25,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/logging.h>
 #include <fruit/fruit.h>
 #include <teeui/utils.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/concurrency/multiplexer.h"
 #include "cuttlefish/common/libs/concurrency/semaphore.h"

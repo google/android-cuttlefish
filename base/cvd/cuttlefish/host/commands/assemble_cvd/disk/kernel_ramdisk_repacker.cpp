@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"

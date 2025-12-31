@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/cvd_send_sms/sms_sender.h"

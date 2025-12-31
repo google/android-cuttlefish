@@ -20,6 +20,7 @@
 #include <string>
 
 #include <android-base/file.h>
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -68,9 +69,9 @@ Result<std::string> HandleHostGroupSnapshot(const std::string& path) {
       CF_EXPECTF(CreateMetaInfo(*cuttlefish_config, snapshot_path),
                  "Failed to create ", kMetaInfoJsonFileName);
   const auto serialized_meta_json = meta_json.toStyledString();
-  LOG(DEBUG) << "Generated " << kMetaInfoJsonFileName << ": " << std::endl
-             << std::endl
-             << serialized_meta_json;
+  VLOG(0) << "Generated " << kMetaInfoJsonFileName << ": " << std::endl
+          << std::endl
+          << serialized_meta_json;
 
   // write meta_json to file
   const auto meta_json_path = SnapshotMetaJsonPath(snapshot_path);

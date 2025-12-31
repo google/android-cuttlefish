@@ -24,9 +24,10 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/logging.h>
 #include <android-base/no_destructor.h>
 #include <android-base/strings.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace {

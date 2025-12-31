@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include <android-base/logging.h>
 #include <json/json.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "absl/log/log.h"
+
 #include <algorithm>
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <optional>
 #include <string>

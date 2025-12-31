@@ -20,6 +20,8 @@
 #include <regex>
 #include <string>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
@@ -82,7 +84,7 @@ Result<void> WaitForUnixSocketListeningWithoutConnect(const std::string& path,
     lsof.AddParameter(path);
     std::string lsof_out = CF_EXPECT(RunAndCaptureStdout(std::move(lsof)));
 
-    LOG(DEBUG) << "lsof stdout:|" << lsof_out << "|";
+    VLOG(0) << "lsof stdout:|" << lsof_out << "|";
 
     std::smatch socket_state_match;
     if (std::regex_search(lsof_out, socket_state_match, socket_state_regex)) {

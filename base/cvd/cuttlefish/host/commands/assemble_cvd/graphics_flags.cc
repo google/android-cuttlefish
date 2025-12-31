@@ -22,6 +22,7 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -182,7 +183,7 @@ Result<AngleFeatureOverrides> GetNeededAngleFeatures(
     const ::gfxstream::proto::GraphicsAvailability& availability) {
   const AngleFeatures features =
       CF_EXPECT(GetNeededAngleFeaturesBasedOnQuirks(mode, availability));
-  LOG(DEBUG) << features;
+  VLOG(0) << features;
 
   std::vector<std::string> enable_feature_strings;
   std::vector<std::string> disable_feature_strings;
@@ -498,9 +499,9 @@ Result<void> SetGfxstreamFlags(
   const auto feature_overrides =
       CF_EXPECT(ParseGfxstreamRendererFlag(gpu_renderer_features_arg));
   for (const auto& [feature_name, feature_enabled] : feature_overrides) {
-    LOG(DEBUG) << "GPU renderer feature " << feature_name << " overridden to "
-               << (feature_enabled ? "enabled" : "disabled")
-               << " via command line argument.";
+    VLOG(0) << "GPU renderer feature " << feature_name << " overridden to "
+            << (feature_enabled ? "enabled" : "disabled")
+            << " via command line argument.";
     features[feature_name] = feature_enabled;
   }
 
@@ -538,7 +539,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
         << graphics_detector_stdout.error();
     return {};
   }
-  LOG(DEBUG) << *graphics_detector_stdout;
+  VLOG(0) << *graphics_detector_stdout;
 
   auto graphics_availability_content_result =
       ReadFileContents(graphics_availability_file.path);
@@ -561,7 +562,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
     return {};
   }
 
-  LOG(DEBUG) << "Host Graphics Availability:" << availability.DebugString();
+  VLOG(0) << "Host Graphics Availability:" << availability.DebugString();
   return availability;
 #endif
 }

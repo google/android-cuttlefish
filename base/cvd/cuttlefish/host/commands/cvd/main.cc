@@ -25,16 +25,17 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fmt/format.h>
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
+#include <fmt/format.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
@@ -61,20 +62,20 @@ namespace {
  *
  * Thus, we live with the corner case for now.
  */
-android::base::LogSeverity CvdVerbosityOption(const int argc, char** argv) {
+LogSeverity CvdVerbosityOption(const int argc, char** argv) {
   cvd_common::Args all_args = ArgsToVec(argc, argv);
   std::string verbosity_flag_value;
   std::vector<Flag> verbosity_flag{
       GflagsCompatFlag("verbosity", verbosity_flag_value)};
   if (!ConsumeFlags(verbosity_flag, all_args).ok()) {
     LOG(ERROR) << "Verbosity flag parsing failed, so use the default value.";
-    return GetMinimumVerbosity();
+    return LogSeverity::Info;
   }
   if (verbosity_flag_value.empty()) {
-    return GetMinimumVerbosity();
+    return LogSeverity::Info;
   }
-  auto encoded_verbosity = EncodeVerbosity(verbosity_flag_value);
-  return (encoded_verbosity.ok() ? *encoded_verbosity : GetMinimumVerbosity());
+  Result<LogSeverity> encoded_verbosity = ToSeverity(verbosity_flag_value);
+  return (encoded_verbosity.ok() ? *encoded_verbosity : LogSeverity::Info);
 }
 
 Result<void> EnsureCvdDirectoriesExist() {
@@ -102,8 +103,8 @@ void IncreaseFileLimit() {
                     "set too low";
     return;
   }
-  LOG(VERBOSE) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
-               << " hard limit= " << old_lim.rlim_max;
+  VLOG(1) << "Old limits -> soft limit= " << old_lim.rlim_cur << "\t"
+          << " hard limit= " << old_lim.rlim_max;
   // Set new value
   old_lim.rlim_cur = old_lim.rlim_max;
   // Set limits
@@ -213,11 +214,11 @@ bool ValidateHostConfiguration() {
 int main(int argc, char** argv, char** envp) {
   srand(time(NULL));
 
-  android::base::LogSeverity verbosity =
+  cuttlefish::LogSeverity verbosity =
       cuttlefish::CvdVerbosityOption(argc, argv);
-  android::base::InitLogging(argv, android::base::StderrLogger);
   // set verbosity for this process
-  cuttlefish::SetMinimumVerbosity(verbosity);
+  cuttlefish::LogToStderr("", cuttlefish::MetadataLevel::ONLY_MESSAGE,
+                          verbosity);
 
   if (!cuttlefish::ValidateHostConfiguration()) {
     return -1;

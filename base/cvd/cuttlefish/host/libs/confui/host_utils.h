@@ -24,8 +24,6 @@
 #include <string>
 #include <thread>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/common/libs/confui/confui.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
@@ -74,7 +72,7 @@ class ThreadTracer {
     }
     name2id_[name] = th.get_id();
     id2name_[th.get_id()] = name;
-    ConfUiLog(DEBUG) << name << "thread started.";
+    ConfUiLogDebug << name << "thread started.";
     return th;
   }
   std::string Get(const std::thread::id id = std::this_thread::get_id());

@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/confui/session.h"
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/host/libs/confui/secure_input.h"
 
 namespace cuttlefish {
@@ -76,9 +78,9 @@ MainLoopState Session::Transition(SharedFD& hal_cli, const FsmInput fsm_input,
     } break;
     case MainLoopState::kWaitStop: {
       if (IsUserInput(fsm_input)) {
-        ConfUiLog(VERBOSE) << "User input ignored " << ToString(fsm_input)
-                           << " : " << ToString(conf_ui_message)
-                           << " at the state " << ToString(state_);
+        ConfUiLogVerbose << "User input ignored " << ToString(fsm_input)
+                         << " : " << ToString(conf_ui_message)
+                         << " at the state " << ToString(state_);
       }
       should_keep_running = HandleWaitStop(hal_cli, fsm_input);
     } break;
@@ -119,12 +121,12 @@ bool Session::ReportErrorToHal(SharedFD hal_cli, const std::string& msg) {
 }
 
 void Session::Abort() {
-  ConfUiLog(VERBOSE) << "Abort is called";
+  ConfUiLogVerbose << "Abort is called";
   ScheduleToTerminate();
 }
 
 void Session::UserAbort(SharedFD hal_cli) {
-  ConfUiLog(VERBOSE) << "it is a user abort input.";
+  ConfUiLogVerbose << "it is a user abort input.";
   SendAbortCmd(hal_cli, GetId());
   Abort();
   ScheduleToTerminate();
@@ -138,7 +140,7 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
     return true;
   }
 
-  ConfUiLog(VERBOSE) << ToString(fsm_input) << "is handled in HandleInit";
+  ConfUiLogVerbose << ToString(fsm_input) << "is handled in HandleInit";
   if (fsm_input != FsmInput::kHalStart) {
     ConfUiLog(ERROR) << "invalid cmd for Init State:" << ToString(fsm_input);
     // ReportErrorToHal returns true if error report was successful
@@ -148,7 +150,7 @@ bool Session::HandleInit(SharedFD hal_cli, const FsmInput fsm_input,
   }
 
   // Start Session
-  ConfUiLog(VERBOSE) << "Sending ack to hal_cli: "
+  ConfUiLogVerbose << "Sending ack to hal_cli: "
                      << Enum2Base(ConfUiCmd::kCliAck);
   host_mode_ctrl_.SetMode(HostModeCtrl::ModeType::kConfUI_Mode);
 
@@ -218,8 +220,8 @@ bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
   }
   const bool is_secure_input = user_input_msg.IsSecure();
 
-  ConfUiLog(VERBOSE) << "In HandleInSession, session " << session_id_
-                     << " is sending the user input " << ToString(fsm_input);
+  ConfUiLogVerbose << "In HandleInSession, session " << session_id_
+                   << " is sending the user input " << ToString(fsm_input);
 
   bool is_success = false;
   if (response == UserResponse::kCancel) {
@@ -254,7 +256,7 @@ bool Session::HandleWaitStop(SharedFD hal_cli, const FsmInput fsm_input) {
     return true;
   }
   if (fsm_input == FsmInput::kHalStop) {
-    ConfUiLog(VERBOSE) << "Handling Abort in kWaitStop.";
+    ConfUiLogVerbose << "Handling Abort in kWaitStop.";
     ScheduleToTerminate();
     return true;
   }

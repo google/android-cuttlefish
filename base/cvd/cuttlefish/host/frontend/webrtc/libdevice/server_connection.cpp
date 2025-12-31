@@ -20,8 +20,8 @@
 #include <string>
 #include <thread>
 
-#include <android-base/logging.h>
 #include <json/json.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"

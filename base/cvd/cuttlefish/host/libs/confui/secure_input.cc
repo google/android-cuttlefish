@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/confui/secure_input.h"
 
+#include "absl/log/check.h"
+
 namespace cuttlefish {
 namespace confui {
 namespace {

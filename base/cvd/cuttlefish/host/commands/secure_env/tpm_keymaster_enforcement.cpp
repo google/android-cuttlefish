@@ -16,7 +16,7 @@
 #include "cuttlefish/host/commands/secure_env/tpm_keymaster_enforcement.h"
 
 #include <android-base/endian.h>
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #ifdef _WIN32
 #include <sysinfoapi.h>

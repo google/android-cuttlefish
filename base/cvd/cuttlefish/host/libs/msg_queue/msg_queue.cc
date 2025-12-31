@@ -26,7 +26,7 @@
 #include <iostream>
 #include <memory>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/posix/strerror.h"
 

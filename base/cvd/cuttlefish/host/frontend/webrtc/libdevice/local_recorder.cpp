@@ -23,7 +23,9 @@
 #include <thread>
 #include <vector>
 
-#include <android-base/logging.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
+
 #include <api/media_stream_interface.h>
 #include <api/rtp_parameters.h>
 #include <api/task_queue/default_task_queue_factory.h>
@@ -203,7 +205,7 @@ void LocalRecorder::Display::OnFrame(const webrtc::VideoFrame& frame) {
   std::lock_guard queue_lock(encode_queue_mutex_);
   static int kMaxQueuedFrames = 10;
   if (encode_queue_.size() >= kMaxQueuedFrames) {
-    LOG(VERBOSE) << "Dropped frame, encoder queue too long";
+    VLOG(1) << "Dropped frame, encoder queue too long";
     return;
   }
   encode_queue_.push_back(frame);

@@ -25,12 +25,13 @@
 
 #include <vector>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result.h"
 
 #define PAD_VALUE (0xff)
@@ -53,7 +54,7 @@ static constexpr char kUsageMessage[] =
     "to\n";
 
 Result<int> MkenvimageSlimMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cuttlefish::LogToStderr();
   gflags::SetUsageMessage(kUsageMessage);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   CF_EXPECT(!FLAGS_output_path.empty(), "Output env path isn't defined.");

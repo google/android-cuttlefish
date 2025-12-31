@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/libs/confui/host_virtual_input.h"
 
-#include <android-base/logging.h>
-
 namespace cuttlefish {
 namespace confui {
 
@@ -129,7 +127,7 @@ Result<void> HostVirtualInputEventSink::SendKeyboardEvent(uint16_t code,
     CF_EXPECT(android_mode_input_->SendKeyboardEvent(code, down));
     return {};
   }
-  ConfUiLog(VERBOSE) << "keyboard event ignored in confirmation UI mode";
+  ConfUiLogVerbose << "keyboard event ignored in confirmation UI mode";
   return {};
 }
 
@@ -138,7 +136,7 @@ Result<void> HostVirtualInputEventSink::SendRotaryEvent(int pixels) {
     CF_EXPECT(android_mode_input_->SendRotaryEvent(pixels));
     return {};
   }
-  ConfUiLog(VERBOSE) << "rotary event ignored in confirmation UI mode";
+  ConfUiLogVerbose << "rotary event ignored in confirmation UI mode";
   return {};
 }
 
@@ -148,7 +146,7 @@ Result<void> HostVirtualInputEventSink::SendSwitchesEvent(uint16_t code,
     CF_EXPECT(android_mode_input_->SendSwitchesEvent(code, state));
     return {};
   }
-  ConfUiLog(VERBOSE) << "switches event ignored in confirmation UI mode";
+  ConfUiLogVerbose << "switches event ignored in confirmation UI mode";
   return {};
 }
 

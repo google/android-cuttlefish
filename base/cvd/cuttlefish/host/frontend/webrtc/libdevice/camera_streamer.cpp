@@ -15,8 +15,8 @@
  */
 #include "camera_streamer.h"
 
-#include <android-base/logging.h>
 #include <chrono>
+#include "absl/log/log.h"
 #include "cuttlefish/common/libs/utils/vsock_connection.h"
 
 namespace cuttlefish {

@@ -17,10 +17,11 @@
 #include <string>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
@@ -188,18 +189,10 @@ void TakeHostBugreport(const CuttlefishConfig* config, WritableZip& archive) {
 }
 
 Result<void> CvdHostBugreportMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   std::string log_filename = TempDir() + "/cvd_hbr.log.XXXXXX";
-  {
-    auto fd = SharedFD::Mkstemp(&log_filename);
-    CF_EXPECT(fd->IsOpen(), "Unable to create log file: " << fd->StrError());
-    android::base::SetLogger(TeeLogger({
-        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
-        {LogFileSeverity(), fd, MetadataLevel::FULL},
-    }));
-  }
+  LogToStderrAndFiles({log_filename}, "");
 
   auto config = CuttlefishConfig::Get();
   CHECK(config) << "Unable to find the config";

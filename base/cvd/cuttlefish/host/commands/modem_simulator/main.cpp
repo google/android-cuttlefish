@@ -19,6 +19,8 @@
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
+#include "absl/log/check.h"
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -59,7 +61,6 @@ std::vector<SharedFD> ServerFdsFromCmdline() {
 }
 
 int ModemSimulatorMain(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
   // Modem simulator log saved in cuttlefish_runtime
@@ -71,7 +72,7 @@ int ModemSimulatorMain(int argc, char** argv) {
   {
     auto log_path = instance.launcher_log_path();
     std::vector<std::string> log_files{log_path, modem_log_path};
-    android::base::SetLogger(LogToStderrAndFiles(log_files));
+    LogToStderrAndFiles(log_files);
   }
 
   LOG(INFO) << "Start modem simulator, server_fds: " << FLAGS_server_fds

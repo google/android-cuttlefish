@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/modem_simulator/call_service.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <chrono>
 #include <iostream>
@@ -98,8 +98,8 @@ void CallService::SimulatePendingCallsAnswered() {
 }
 
 void CallService::TimerWaitingRemoteCallResponse(CallToken call_token) {
-  LOG(DEBUG) << "Dialing id: " << call_token.first
-             << ", number: " << call_token.second << "timeout, cancel";
+  VLOG(0) << "Dialing id: " << call_token.first
+          << ", number: " << call_token.second << "timeout, cancel";
   auto iter = active_calls_.find(call_token.first);
   if (iter != active_calls_.end() && iter->second.number == call_token.second) {
     if (iter->second.remote_client != std::nullopt) {
@@ -693,7 +693,7 @@ void CallService::HandleRemoteCall(const Client& client,
     case CallStatus::CALL_STATE_INCOMING: {
       if (network_service_) {
         if (network_service_->isRadioOff()) {
-          LOG(DEBUG) << " radio is off, reject incoming call from: " << number;
+          VLOG(0) << " radio is off, reject incoming call from: " << number;
           network_service_->CloseRemoteConnection(client.Id());
           return;
         }

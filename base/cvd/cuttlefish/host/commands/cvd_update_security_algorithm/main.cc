@@ -16,11 +16,12 @@
 
 #include <string>
 
-#include <android-base/logging.h>
 #include <gflags/gflags.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd_update_security_algorithm/update_security_algorithm_command_builder.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
@@ -49,7 +50,7 @@ void UpdateSecurityAlgorithm(SharedFD fd) {
       GetATCommand(FLAGS_connection_event, FLAGS_encryption, FLAGS_integrity,
                    FLAGS_is_unprotected_emergency));
 
-  LOG(DEBUG) << "Attempting to send command: " << command;
+  VLOG(0) << "Attempting to send command: " << command;
 
   long written = WriteAll(fd, command);
   if (written != command.size()) {
@@ -59,8 +60,8 @@ void UpdateSecurityAlgorithm(SharedFD fd) {
   }
 }
 
-int UpdateSecurityAlgorithmMain(int argc, char **argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+int UpdateSecurityAlgorithmMain(int argc, char** argv) {
+  cuttlefish::LogToStderr();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   auto config = CuttlefishConfig::Get();

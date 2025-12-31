@@ -16,7 +16,7 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_shell.h"
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
@@ -26,59 +26,47 @@ namespace wayland {
 namespace {
 
 void xdg_positioner_destroy(wl_client*, wl_resource* positioner) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner;
 
   wl_resource_destroy(positioner);
 }
 
 void xdg_positioner_set_size(wl_client*, wl_resource* positioner, int32_t w,
                              int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner << " w=" << w
+          << " h=" << h;
 }
 
 void xdg_positioner_set_anchor_rect(wl_client*, wl_resource* positioner,
                                     int32_t x, int32_t y, int32_t w,
                                     int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner
-               << " x=" << x
-               << " y=" << y
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner << " x=" << x
+          << " y=" << y << " w=" << w << " h=" << h;
 }
 
 void xdg_positioner_set_anchor(wl_client*, wl_resource* positioner,
                                uint32_t anchor) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner
-               << " anchor=" << anchor;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner
+          << " anchor=" << anchor;
 }
 
 void xdg_positioner_set_gravity(wl_client*, wl_resource* positioner,
                                 uint32_t gravity) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner
-               << " gravity=" << gravity;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner
+          << " gravity=" << gravity;
 }
 
 void xdg_positioner_set_constraint_adjustment(wl_client*,
                                               wl_resource* positioner,
                                               uint32_t adjustment) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner
-               << " adjustment=" << adjustment;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner
+          << " adjustment=" << adjustment;
 }
 
 void xdg_positioner_set_offset(wl_client*, wl_resource* positioner, int32_t x,
                                int32_t y) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " positioner=" << positioner
-               << " x=" << x
-               << " y=" << y;
+  VLOG(1) << __FUNCTION__ << " positioner=" << positioner << " x=" << x
+          << " y=" << y;
 }
 
 const struct xdg_positioner_interface xdg_positioner_implementation = {
@@ -91,101 +79,77 @@ const struct xdg_positioner_interface xdg_positioner_implementation = {
     .set_offset = xdg_positioner_set_offset};
 
 void xdg_toplevel_destroy(wl_client*, wl_resource* toplevel) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel;
 
   wl_resource_destroy(toplevel);
 }
 
 void xdg_toplevel_set_parent(wl_client*, wl_resource* toplevel,
                              wl_resource* parent_toplevel) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " parent_toplevel=" << parent_toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel
+          << " parent_toplevel=" << parent_toplevel;
 }
 
 void xdg_toplevel_set_title(wl_client*, wl_resource* toplevel,
                             const char* title) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " title=" << title;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " title=" << title;
 }
 
 void xdg_toplevel_set_app_id(wl_client*, wl_resource* toplevel,
                              const char* app) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " app=" << app;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " app=" << app;
 }
 
 void xdg_toplevel_show_window_menu(wl_client*, wl_resource* toplevel,
                                    wl_resource* seat, uint32_t serial,
                                    int32_t x, int32_t y) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " seat=" << seat
-               << " serial=" << serial
-               << " x=" << x
-               << " y=" << y;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " seat=" << seat
+          << " serial=" << serial << " x=" << x << " y=" << y;
 }
 
 void xdg_toplevel_move(wl_client*, wl_resource* toplevel, wl_resource* seat,
                        uint32_t serial) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " seat=" << seat
-               << " serial=" << serial;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " seat=" << seat
+          << " serial=" << serial;
 }
 
 void xdg_toplevel_resize(wl_client*, wl_resource* toplevel, wl_resource* seat,
                          uint32_t serial, uint32_t edges) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " seat=" << seat
-               << " serial=" << serial
-               << " edges=" << edges;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " seat=" << seat
+          << " serial=" << serial << " edges=" << edges;
 }
 
 void xdg_toplevel_set_max_size(wl_client*, wl_resource* toplevel, int32_t w,
                                int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " w=" << w
+          << " h=" << h;
 }
 
 void xdg_toplevel_set_min_size(wl_client*, wl_resource* toplevel, int32_t w,
                                int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel << " w=" << w
+          << " h=" << h;
 }
 
 void xdg_toplevel_set_maximized(wl_client*, wl_resource* toplevel) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel;
 }
 
 void xdg_toplevel_unset_maximized(wl_client*, wl_resource* toplevel) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel;
 }
 
 void xdg_toplevel_set_fullscreen(wl_client*, wl_resource* toplevel,
                                  wl_resource*) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel;
 }
 
 void xdg_toplevel_unset_fullscreen(wl_client*, wl_resource* toplevel) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel;
 }
 
 void xdg_toplevel_set_minimized(wl_client*, wl_resource* toplevel) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " toplevel=" << toplevel;
+  VLOG(1) << __FUNCTION__ << " toplevel=" << toplevel;
 }
 
 const struct xdg_toplevel_interface xdg_toplevel_implementation = {
@@ -205,26 +169,22 @@ const struct xdg_toplevel_interface xdg_toplevel_implementation = {
     .set_minimized = xdg_toplevel_set_minimized};
 
 void xdg_popup_destroy(wl_client*, wl_resource* popup) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " popup=" << popup;
+  VLOG(1) << __FUNCTION__ << " popup=" << popup;
 
   wl_resource_destroy(popup);
 }
 
 void xdg_popup_grab(wl_client*, wl_resource* popup, wl_resource* seat,
                     uint32_t serial) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " popup=" << popup
-               << " seat=" << seat
-               << " serial=" << serial;
+  VLOG(1) << __FUNCTION__ << " popup=" << popup << " seat=" << seat
+          << " serial=" << serial;
 }
 
 const struct xdg_popup_interface xdg_popup_implementation = {
     .destroy = xdg_popup_destroy, .grab = xdg_popup_grab};
 
 void xdg_surface_destroy(wl_client*, wl_resource* surface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface;
 
   wl_resource_destroy(surface);
 }
@@ -233,9 +193,7 @@ void toplevel_destroy_resource_callback(struct wl_resource*) {}
 
 void xdg_surface_get_toplevel(wl_client* client, wl_resource* surface,
                               uint32_t id) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface
-               << " id=" << id;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface << " id=" << id;
 
   wl_resource* xdg_toplevel_resource =
       wl_resource_create(client, &xdg_toplevel_interface, 1, id);
@@ -250,11 +208,9 @@ void popup_destroy_resource_callback(struct wl_resource*) {}
 void xdg_surface_get_popup(wl_client* client, wl_resource* surface, uint32_t id,
                            wl_resource* parent_surface,
                            wl_resource* positioner) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface
-               << " id=" << id
-               << " parent_surface=" << parent_surface
-               << " positioner=" << positioner;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface << " id=" << id
+          << " parent_surface=" << parent_surface
+          << " positioner=" << positioner;
 
   wl_resource* xdg_popup_resource =
       wl_resource_create(client, &xdg_popup_interface, 1, id);
@@ -266,19 +222,13 @@ void xdg_surface_get_popup(wl_client* client, wl_resource* surface, uint32_t id,
 void xdg_surface_set_window_geometry(wl_client*, wl_resource* surface,
                                      int32_t x, int32_t y, int32_t w,
                                      int32_t h) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface
-               << " x=" << x
-               << " y=" << y
-               << " w=" << w
-               << " h=" << h;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface << " x=" << x << " y=" << y
+          << " w=" << w << " h=" << h;
 }
 
 void xdg_surface_ack_configure(wl_client*, wl_resource* surface,
                                uint32_t serial) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " surface=" << surface
-               << " serial=" << serial;
+  VLOG(1) << __FUNCTION__ << " surface=" << surface << " serial=" << serial;
 }
 
 const struct xdg_surface_interface xdg_surface_implementation = {
@@ -289,8 +239,7 @@ const struct xdg_surface_interface xdg_surface_implementation = {
     .ack_configure = xdg_surface_ack_configure};
 
 void xdg_shell_destroy(wl_client*, wl_resource* shell) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " shell=" << shell;
+  VLOG(1) << __FUNCTION__ << " shell=" << shell;
 
   wl_resource_destroy(shell);
 }
@@ -299,9 +248,7 @@ void positioner_destroy_resource_callback(struct wl_resource*) {}
 
 void xdg_shell_create_positioner(wl_client* client, wl_resource* shell,
                                  uint32_t id) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " shell=" << shell
-               << " id=" << id;
+  VLOG(1) << __FUNCTION__ << " shell=" << shell << " id=" << id;
 
   wl_resource* positioner_resource =
       wl_resource_create(client, &xdg_positioner_interface, 1, id);
@@ -315,10 +262,8 @@ void surface_destroy_resource_callback(struct wl_resource*) {}
 
 void xdg_shell_get_xdg_surface(wl_client* client, wl_resource* shell,
                                uint32_t id, wl_resource* surface) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " shell=" << shell
-               << " id=" << id
-               << " surface=" << surface;
+  VLOG(1) << __FUNCTION__ << " shell=" << shell << " id=" << id
+          << " surface=" << surface;
 
   wl_resource* surface_resource =
       wl_resource_create(client, &xdg_surface_interface, 1, id);
@@ -328,9 +273,7 @@ void xdg_shell_get_xdg_surface(wl_client* client, wl_resource* shell,
 }
 
 void xdg_shell_pong(wl_client*, wl_resource* shell, uint32_t serial) {
-  LOG(VERBOSE) << __FUNCTION__
-               << " shell=" << shell
-               << " serial=" << serial;
+  VLOG(1) << __FUNCTION__ << " shell=" << shell << " serial=" << serial;
 }
 
 const struct xdg_wm_base_interface xdg_shell_implementation = {

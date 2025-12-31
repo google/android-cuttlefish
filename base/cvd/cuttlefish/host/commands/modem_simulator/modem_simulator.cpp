@@ -15,9 +15,9 @@
 
 #include "cuttlefish/host/commands/modem_simulator/modem_simulator.h"
 
-#include <android-base/logging.h>
-
 #include <memory>
+
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/commands/modem_simulator/call_service.h"
 #include "cuttlefish/host/commands/modem_simulator/data_service.h"
@@ -114,7 +114,7 @@ void ModemSimulator::DispatchCommand(const Client& client, std::string& command)
   }
 
   if (!success && client.Type() != Client::REMOTE) {
-    LOG(DEBUG) << "Not supported AT command: " << command;
+    VLOG(0) << "Not supported AT command: " << command;
     client.SendCommandResponse(ModemService::kCmeErrorOperationNotSupported);
   }
 }

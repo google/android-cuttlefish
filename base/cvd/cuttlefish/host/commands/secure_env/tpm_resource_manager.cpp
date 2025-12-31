@@ -17,9 +17,9 @@
 
 #include <mutex>
 
-#include <android-base/logging.h>
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 
@@ -33,19 +33,19 @@ TpmResourceManager::ObjectSlot::ObjectSlot(TpmResourceManager* resource_manager)
 TpmResourceManager::ObjectSlot::ObjectSlot(TpmResourceManager* resource_manager,
                                            ESYS_TR resource)
     : resource_manager_(resource_manager), resource_(resource) {
-  LOG(VERBOSE) << "Resource allocated";
+  VLOG(1) << "Resource allocated";
 }
 
 TpmResourceManager::ObjectSlot::~ObjectSlot() {
   if (resource_ != ESYS_TR_NONE) {
-    LOG(VERBOSE) << "Freeing resource";
+    VLOG(1) << "Freeing resource";
     auto rc = Esys_FlushContext(resource_manager_->esys_, resource_);
     if (rc != TPM2_RC_SUCCESS) {
       LOG(ERROR) << "Esys_FlushContext failed: " << Tss2_RC_Decode(rc)
                 << "(" << rc << ")";
     }
   } else {
-    LOG(VERBOSE) << "Resource is NONE";
+    VLOG(1) << "Resource is NONE";
   }
   resource_manager_->used_slots_--;
 }

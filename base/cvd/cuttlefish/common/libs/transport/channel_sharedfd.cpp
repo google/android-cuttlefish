@@ -17,7 +17,10 @@
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 
 #include <poll.h>
+
 #include <vector>
+
+#include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 
@@ -41,7 +44,7 @@ Result<ManagedMessage> SharedFdChannel::ReceiveMessage() {
   CF_EXPECT(read == sizeof(RawMessage),
             "Expected " << sizeof(RawMessage) << ", received " << read << "\n"
                         << "Could not read message: " << input_->StrError());
-  LOG(DEBUG) << "Received message with id: " << message_header.command;
+  VLOG(0) << "Received message with id: " << message_header.command;
 
   auto message = CF_EXPECT(CreateMessage(message_header.command,
                                          message_header.is_response,

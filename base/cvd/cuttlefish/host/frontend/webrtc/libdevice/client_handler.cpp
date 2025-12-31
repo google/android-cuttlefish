@@ -21,7 +21,7 @@
 #include <netdb.h>
 #include <openssl/rand.h>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
@@ -232,12 +232,12 @@ void ClientHandler::OnConnectionStateChange(
   }
   switch (*new_state) {
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
-      LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
+      VLOG(1) << "Client " << client_id_ << ": WebRTC connected";
       observer_->OnConnected();
       on_connection_changed_cb_(true);
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
-      LOG(VERBOSE) << "Client " << client_id_ << ": Connection disconnected";
+      VLOG(1) << "Client " << client_id_ << ": Connection disconnected";
       Close();
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kFailed:
@@ -245,14 +245,14 @@ void ClientHandler::OnConnectionStateChange(
       Close();
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kClosed:
-      LOG(VERBOSE) << "Client " << client_id_ << ": Connection closed";
+      VLOG(1) << "Client " << client_id_ << ": Connection closed";
       Close();
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kNew:
-      LOG(VERBOSE) << "Client " << client_id_ << ": Connection new";
+      VLOG(1) << "Client " << client_id_ << ": Connection new";
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnecting:
-      LOG(VERBOSE) << "Client " << client_id_ << ": Connection started";
+      VLOG(1) << "Client " << client_id_ << ": Connection started";
       break;
   }
 }

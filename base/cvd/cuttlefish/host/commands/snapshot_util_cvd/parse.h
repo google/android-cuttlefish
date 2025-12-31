@@ -21,9 +21,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/logging.h>
-
 #include "cuttlefish/result/result.h"
+#include "cuttlefish/common/libs/utils/tee_logging.h"
 
 namespace cuttlefish {
 
@@ -49,7 +48,7 @@ struct Parsed {
   // Ideally we'd detect the suspended state of CF and do this automatically by
   // default.
   bool auto_suspend = false;
-  std::optional<android::base::LogSeverity> verbosity_level;
+  std::optional<LogSeverity> verbosity_level;
 };
 Result<Parsed> Parse(int argc, char** argv);
 Result<Parsed> Parse(std::vector<std::string>& args);

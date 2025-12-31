@@ -17,7 +17,7 @@
 
 #include <cstring>
 
-#include <android-base/logging.h>
+#include "absl/log/log.h"
 #include "tss2/tss2_mu.h"
 #include "tss2/tss2_rc.h"
 
