@@ -258,7 +258,8 @@ Result<void> ProcessMonitor::StartSubprocesses(
     ProcessMonitor::Properties& properties) {
   VLOG(0) << "Starting monitored subprocesses";
   for (auto& monitored : properties.entries_) {
-    LOG(INFO) << monitored.cmd->GetShortName();
+    LOG(INFO) << "Starting monitored subprocess: "
+              << monitored.cmd->GetShortName();
     auto options = SubprocessOptions().InGroup(true);
     std::string short_name = monitored.cmd->GetShortName();
     auto last_slash = short_name.find_last_of('/');
