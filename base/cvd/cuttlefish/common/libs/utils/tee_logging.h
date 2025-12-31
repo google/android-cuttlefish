@@ -15,74 +15,80 @@
 
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <android-base/logging.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-std::string FromSeverity(android::base::LogSeverity severity);
-Result<android::base::LogSeverity> ToSeverity(const std::string& value);
+enum class LogSeverity : int {
+  Verbose = 0,
+  Debug,
+  Info,
+  Warning,
+  Error,
+  Fatal,
+};
 
-std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
-                                  android::base::LogSeverity severity,
-                                  const char* tag, const char* file,
-                                  unsigned int line, const char* message);
+std::string FromSeverity(LogSeverity severity);
+Result<LogSeverity> ToSeverity(const std::string& value);
 
-android::base::LogSeverity ConsoleSeverity();
-android::base::LogSeverity LogFileSeverity();
+LogSeverity ConsoleSeverity();
+LogSeverity LogFileSeverity();
 
 enum class MetadataLevel { FULL, ONLY_MESSAGE, TAG_AND_MESSAGE };
 
 struct SeverityTarget {
-  android::base::LogSeverity severity;
+  LogSeverity severity;
   SharedFD target;
   MetadataLevel metadata_level;
+
+  static SeverityTarget FromFile(
+      const std::string& path,
+      MetadataLevel metadata_level = MetadataLevel::FULL,
+      LogSeverity severity = LogSeverity::Verbose);
+
+  static SeverityTarget FromFd(
+      SharedFD fd, MetadataLevel metadata_level = MetadataLevel::FULL,
+      LogSeverity severity = LogSeverity::Verbose);
 };
 
-class TeeLogger {
- private:
-  std::vector<SeverityTarget> destinations_;
+// Set the new logging destinations, replacing existing ones.
+void SetLoggers(std::vector<SeverityTarget> destinations,
+                const std::string& log_prefix = "");
 
- public:
-  TeeLogger(const std::vector<SeverityTarget>& destinations,
-            const std::string& log_prefix = "");
-  ~TeeLogger() = default;
+// Configure the process to only log to stderr.
+void LogToStderr(const std::string& log_prefix = "",
+                 MetadataLevel metadata_level = MetadataLevel::ONLY_MESSAGE,
+                 std::optional<LogSeverity> severity = std::nullopt);
 
-  void operator()(android::base::LogId log_id,
-                  android::base::LogSeverity severity, const char* tag,
-                  const char* file, unsigned int line, const char* message);
+// Configure process to log to a list of files. Logs of all severities are
+// always written in full.
+void LogToFiles(const std::vector<std::string>& files,
+                const std::string& log_prefix = "");
 
- private:
-  std::string prefix_;
-};
-
-class ScopedTeeLogger {
- public:
-  ScopedTeeLogger(TeeLogger tee_logger);
-  ~ScopedTeeLogger();
-
- private:
-  android::base::LogFunction old_logger_;
-  android::base::ScopedLogSeverity scoped_severity_;
-};
-
-TeeLogger LogToStderr(
-    const std::string& log_prefix = "",
-    MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE,
-    std::optional<android::base::LogSeverity> stderr_severity = std::nullopt);
-TeeLogger LogToFiles(const std::vector<std::string>& files,
-                     const std::string& log_prefix = "");
-TeeLogger LogToStderrAndFiles(
+// Configure the process to log to stderr and some files. Only the severity and
+// metadata for the stderr logger can be configured, full logs will be written
+// to the files.
+void LogToStderrAndFiles(
     const std::vector<std::string>& files, const std::string& log_prefix = "",
     MetadataLevel stderr_level = MetadataLevel::ONLY_MESSAGE,
-    std::optional<android::base::LogSeverity> stderr_severity = std::nullopt);
+    std::optional<LogSeverity> stderr_severity = std::nullopt);
 
-std::string StripColorCodes(const std::string& str);
+class LogSink;
+// Adds an extra destination for this process's logs for the duration of the
+// lifetime of this logger. Existing logging destinations are not affected.
+class ScopedLogger {
+ public:
+  ScopedLogger(SeverityTarget target, const std::string& prefix);
+  ~ScopedLogger();
+
+ private:
+  std::unique_ptr<LogSink> log_sink_;
+};
 
 }  // namespace cuttlefish
