@@ -48,22 +48,13 @@ namespace cuttlefish {
 namespace {
 
 /**
- * Returns --verbosity value if ever exist in the entire commandline args
+ * Extracts --verbosity value if ever exist in the entire commandline args
  *
  * Note that this will also pick up from the subtool arguments:
  *  e.g. cvd start --verbosity=DEBUG
  *
- * This may be incorrect as the verbosity should be ideally applied to the
- * launch_cvd/cvd_internal_start only.
- *
- * However, parsing the --verbosity flag only from the driver is quite
- * complicated as we do not know the full list of the subcommands,
- * the subcommands flags, and even the selector/driver flags.
- *
- * Thus, we live with the corner case for now.
  */
-LogSeverity CvdVerbosityOption(const int argc, char** argv) {
-  cvd_common::Args all_args = ArgsToVec(argc, argv);
+LogSeverity CvdVerbosityOption(cvd_common::Args& all_args) {
   std::string verbosity_flag_value;
   std::vector<Flag> verbosity_flag{
       GflagsCompatFlag("verbosity", verbosity_flag_value)};
@@ -74,8 +65,12 @@ LogSeverity CvdVerbosityOption(const int argc, char** argv) {
   if (verbosity_flag_value.empty()) {
     return LogSeverity::Info;
   }
-  Result<LogSeverity> encoded_verbosity = ToSeverity(verbosity_flag_value);
-  return (encoded_verbosity.ok() ? *encoded_verbosity : LogSeverity::Info);
+  Result<LogSeverity> to_severity_res = ToSeverity(verbosity_flag_value);
+  if (!to_severity_res.ok()) {
+    return LogSeverity::Info;
+  }
+  LogSeverity verbosity = *to_severity_res;
+  return verbosity;
 }
 
 Result<void> EnsureCvdDirectoriesExist() {
@@ -115,13 +110,12 @@ void IncreaseFileLimit() {
   }
 }
 
-Result<void> CvdMain(int argc, char** argv, char** envp) {
+Result<void> CvdMain(cvd_common::Args all_args, char** envp) {
   if (!isatty(0)) {
     LOG(INFO) << GetVersionIds().ToString();
   }
   CF_EXPECT(EnsureCvdDirectoriesExist());
 
-  cvd_common::Args all_args = ArgsToVec(argc, argv);
   CF_EXPECT(!all_args.empty());
 
   auto env = EnvpToMap(envp);
@@ -214,16 +208,19 @@ bool ValidateHostConfiguration() {
 int main(int argc, char** argv, char** envp) {
   srand(time(NULL));
 
+  cuttlefish::cvd_common::Args all_args = cuttlefish::ArgsToVec(argc, argv);
   cuttlefish::LogSeverity verbosity =
-      cuttlefish::CvdVerbosityOption(argc, argv);
+      cuttlefish::CvdVerbosityOption(all_args);
   // set verbosity for this process
-  cuttlefish::LogToStderr("", cuttlefish::MetadataLevel::ONLY_MESSAGE,
-                          verbosity);
+  cuttlefish::MetadataLevel metadata_level =
+      isatty(0) ? cuttlefish::MetadataLevel::ONLY_MESSAGE
+                : cuttlefish::MetadataLevel::FULL;
+  cuttlefish::LogToStderr("", metadata_level, verbosity);
 
   if (!cuttlefish::ValidateHostConfiguration()) {
     return -1;
   }
-  auto result = cuttlefish::CvdMain(argc, argv, envp);
+  auto result = cuttlefish::CvdMain(std::move(all_args), envp);
   if (result.ok()) {
     return 0;
   } else {

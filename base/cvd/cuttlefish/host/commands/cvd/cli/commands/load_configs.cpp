@@ -198,10 +198,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
     return CF_EXPECT(
         CommandRequestBuilder()
             .SetEnv(request.Env())
-            // The fetch operation is too verbose by default, set it to WARNING
-            // unconditionally, the full logs are available in fetch.log
-            // anyways.
-            .AddArguments({"cvd", "fetch", "-verbosity", "WARNING"})
+            .AddArguments({"cvd", "fetch"})
             .AddArguments(cvd_flags.fetch_cvd_flags)
             .Build());
   }
