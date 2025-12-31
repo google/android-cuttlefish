@@ -290,8 +290,8 @@ Result<LogSeverity> ToSeverity(const std::string& value) {
   }
   int value_int;
   CF_EXPECT(android::base::ParseInt(value, &value_int),
-      "Unable to determine severity from \"" << value << "\"");
-  for (const auto& [name, value]: string_to_severity) {
+            "Unable to determine severity from \"" << value << "\"");
+  for (const auto& [name, value] : string_to_severity) {
     if (static_cast<int>(value) == value_int) {
       return value;
     }
@@ -306,11 +306,16 @@ static LogSeverity GuessSeverity(const std::string& env_var,
 }
 
 LogSeverity ConsoleSeverity() {
-  return GuessSeverity("CF_CONSOLE_SEVERITY", LogSeverity::Info);
+  return GuessSeverity(kConsoleSeverityEnvVar, LogSeverity::Info);
 }
 
 LogSeverity LogFileSeverity() {
-  return GuessSeverity("CF_FILE_SEVERITY", LogSeverity::Debug);
+  LogSeverity severity = GuessSeverity(kFileSeverityEnvVar, LogSeverity::Debug);
+  if (severity > LogSeverity::Debug) {
+    // Debug or higher severity logs must always be written to files.
+    return LogSeverity::Debug;
+  }
+  return severity;
 }
 
 void SetLoggers(std::vector<SeverityTarget> destinations,
