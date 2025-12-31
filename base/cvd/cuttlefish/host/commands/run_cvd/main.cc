@@ -254,7 +254,6 @@ void ConfigureLogs(const CuttlefishConfig& config,
 }  // namespace
 
 Result<void> RunCvdMain(int argc, char** argv) {
-  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
   CF_EXPECT(StdinValid(), "Invalid stdin");

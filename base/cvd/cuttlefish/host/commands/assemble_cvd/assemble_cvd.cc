@@ -562,8 +562,6 @@ Result<std::vector<std::string>> ReadInputFiles() {
 } // namespace
 
 Result<int> AssembleCvdMain(int argc, char** argv) {
-  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
-
   auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
 
   CF_EXPECT(CheckNoTTY());
