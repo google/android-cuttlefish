@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/vector_flags.h"
 #include "cuttlefish/result/result.h"
@@ -37,7 +36,6 @@ struct FetchFlags {
   std::string target_directory = kDefaultTargetDirectory;
   std::optional<BuildString> host_package_build;
   bool keep_downloaded_archives = kDefaultKeepDownloadedArchives;
-  LogSeverity verbosity = LogSeverity::Info;
   bool helpxml = false;
   BuildApiFlags build_api_flags;
   VectorFlags vector_flags;

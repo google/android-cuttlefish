@@ -16,8 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
 
-#include <unistd.h>
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -59,10 +57,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
 
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
-  MetadataLevel metadata_level =
-      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
-  ScopedLogger logger(
-      SeverityTarget::FromFile(log_file, metadata_level, flags.verbosity), "");
+  ScopedLogger logger(SeverityTarget::FromFile(log_file), "");
 
   Result<std::vector<FetchResult>> result = FetchCvdMain(flags);
   if (flags.build_api_flags.enable_caching) {

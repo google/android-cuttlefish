@@ -56,7 +56,6 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
   flags.emplace_back(GflagsCompatFlag("keep_downloaded_archives",
                                       fetch_flags.keep_downloaded_archives)
                          .Help("Keep downloaded zip/tar."));
-  flags.emplace_back(VerbosityFlag(fetch_flags.verbosity));
   flags.emplace_back(
       GflagsCompatFlag("host_package_build", fetch_flags.host_package_build)
           .Help("source for the host cvd tools"));
