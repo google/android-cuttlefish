@@ -56,6 +56,20 @@ Result<void> SensorsHandler::RefreshSensors(const double x, const double y,
   return {};
 }
 
+Result<void> SensorsHandler::RefreshLowLatencyOffBodyDetect(
+    const double value) {
+  auto msg = std::to_string(value);
+  auto size = msg.size();
+  auto cmd = sensors::kUpdateLowLatencyOffBodyDetect;
+  auto request = CF_EXPECT(transport::CreateMessage(cmd, size),
+                           "Failed to allocate message for cmd: "
+                               << cmd << " with size: " << size << " bytes. ");
+  std::memcpy(request->payload, msg.data(), size);
+  CF_EXPECT(channel_.SendRequest(*request),
+            "Can't send request for cmd: " << cmd);
+  return {};
+}
+
 Result<std::string> SensorsHandler::GetSensorsData() {
   auto msg = std::to_string(kUiSupportedSensors);
   auto size = msg.size();
@@ -81,6 +95,16 @@ void SensorsHandler::HandleMessage(const double x, const double y, const double 
   auto refresh_result = RefreshSensors(x, y, z);
   if (!refresh_result.ok()) {
     LOG(ERROR) << "Failed to refresh sensors: " << refresh_result.error();
+    return;
+  }
+  UpdateSensorsUi();
+}
+
+void SensorsHandler::HandleLowLatencyOffBodyDetectMessage(double value) {
+  auto refresh_result = RefreshLowLatencyOffBodyDetect(value);
+  if (!refresh_result.ok()) {
+    LOG(ERROR) << "Failed to refresh low latency off body detect: "
+               << refresh_result.error().FormatForEnv();
     return;
   }
   UpdateSensorsUi();
