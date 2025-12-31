@@ -38,6 +38,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/assemble_cvd:flags",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:instance_image_files",
+        "//cuttlefish/host/commands/assemble_cvd:required_directories",
         "//cuttlefish/host/commands/assemble_cvd:resolve_instance_files",
         "//cuttlefish/host/commands/assemble_cvd:touchpad",
         "//cuttlefish/host/commands/assemble_cvd/disk:ap_composite_disk",
@@ -461,6 +462,16 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cf_cc_library(
+    name = "required_directories",
+    srcs = ["required_directories.cc"],
+    hdrs = ["required_directories.h"],
+    deps = [
+        "//cuttlefish/host/libs/config:config_constants",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
     ],
 )
 
