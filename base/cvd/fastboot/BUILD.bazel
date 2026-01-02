@@ -63,9 +63,9 @@ cc_binary(
     ],
     deps = [
         "//libbase",
-        "//libsparse",
         "@android_system_core//:libcutils",
         "@android_system_core//:liblp",
+        "@android_system_core//:libsparse",
         "@avb//:libavb",
         "@googletest//:gtest",
         "@libzip",
