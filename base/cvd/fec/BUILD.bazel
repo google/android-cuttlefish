@@ -36,7 +36,7 @@ cc_binary(
     deps = [
         "//libbase",
         "//libext4_utils",
-        "//libsparse",
+        "@android_system_core//:libsparse",
         "@avb//:libavb",
         "@boringssl//:crypto",
         "@fec_rs//:libfec_rs",

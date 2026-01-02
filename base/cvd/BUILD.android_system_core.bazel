@@ -36,9 +36,9 @@ cc_library(
         "fs_mgr/liblp/include",
     ],
     deps = [
+        ":libsparse",
         "@@//libbase",
         "@@//libext4_utils",
-        "@@//libsparse",
         "@boringssl//:crypto",
     ],
 )
