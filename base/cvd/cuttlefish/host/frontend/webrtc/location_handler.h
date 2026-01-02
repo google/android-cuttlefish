@@ -16,7 +16,10 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/fs/shared_select.h"
+#include <stddef.h>
+#include <stdint.h>
+
+#include <functional>
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -27,9 +30,8 @@ struct LocationHandler {
 
   ~LocationHandler();
 
-  void HandleMessage(const float longitude,
-                           const float latitude,
-                           const float elevation);
+  void HandleMessage(float longitude, float latitude, float elevation);
 };
+
 }  // namespace webrtc_streaming
 }  // namespace cuttlefish

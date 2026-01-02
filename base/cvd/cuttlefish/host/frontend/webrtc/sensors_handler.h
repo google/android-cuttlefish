@@ -16,28 +16,29 @@
 
 #pragma once
 
-#include <chrono>
+#include <functional>
 #include <mutex>
-#include <thread>
 #include <unordered_map>
 
-#include "cuttlefish/common/libs/sensors/sensors.h"
 #include "cuttlefish/common/libs/transport/channel_sharedfd.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-struct SensorsHandler {
-  SensorsHandler(SharedFD sensors_fd);
+class SensorsHandler {
+ public:
+  explicit SensorsHandler(SharedFD sensors_fd);
   ~SensorsHandler();
-  void HandleMessage(const double x, const double y, const double z);
+
+  void HandleMessage(double x, double y, double z);
   int Subscribe(std::function<void(const uint8_t*, size_t)> send_to_client);
   void UnSubscribe(int subscriber_id);
 
  private:
-  Result<void> RefreshSensors(const double x, const double y, const double z);
+  Result<void> RefreshSensors(double x, double y, double z);
   Result<std::string> GetSensorsData();
   void UpdateSensorsUi();
+
   std::unordered_map<int, std::function<void(const uint8_t*, size_t)>> client_channels_;
   int last_client_channel_id_ = -1;
   std::mutex subscribers_mtx_;

@@ -96,6 +96,7 @@ cf_cc_binary(
         "@gflags",
         "@googleapis//google/rpc:code_cc_proto",
         "@googleapis//google/rpc:status_cc_proto",
+        "@grpc//:grpc++",
         "@jsoncpp",
         "@libdrm//:libdrm_fourcc",
         "@libjpeg_turbo//:jpeg",

@@ -16,13 +16,17 @@
 
 #include "cuttlefish/host/frontend/webrtc/location_handler.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include "fmt/format.h"
+#include "grpcpp/create_channel.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish::webrtc_streaming {
 
@@ -31,9 +35,8 @@ LocationHandler::LocationHandler(
 
 LocationHandler::~LocationHandler() {}
 
-void LocationHandler::HandleMessage(const float longitude,
-                                          const float latitude,
-                                          const float elevation) {
+void LocationHandler::HandleMessage(const float longitude, const float latitude,
+                                    const float elevation) {
   auto config = CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";

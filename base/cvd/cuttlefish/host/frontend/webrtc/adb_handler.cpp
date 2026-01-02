@@ -16,11 +16,17 @@
 
 #include "cuttlefish/host/frontend/webrtc/adb_handler.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
+
+#include <functional>
+#include <string>
 
 #include "absl/log/log.h"
 
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/fs/shared_select.h"
 
 using namespace android;
 
