@@ -16,7 +16,10 @@
 
 #pragma once
 
-#include "cuttlefish/common/libs/fs/shared_select.h"
+#include <stddef.h>
+#include <stdint.h>
+
+#include <functional>
 
 namespace cuttlefish {
 namespace webrtc_streaming {

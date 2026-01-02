@@ -16,10 +16,13 @@
 
 #pragma once
 
-#include <future>
-#include <mutex>
+#include <stdint.h>
 
-#include <fmt/format.h>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <unordered_map>
 
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
 #include "cuttlefish/result/result.h"
@@ -35,17 +38,16 @@ class ScreenshotHandler {
   using SharedFrameFuture = std::shared_future<SharedFrame>;
   using SharedFramePromise = std::promise<SharedFrame>;
 
-  Result<void> Screenshot(std::uint32_t display_number,
+  Result<void> Screenshot(uint32_t display_number,
                           const std::string& screenshot_path);
 
-  void OnFrame(std::uint32_t display_number, SharedFrame& frame);
+  void OnFrame(uint32_t display_number, SharedFrame& frame);
 
  private:
   std::mutex pending_screenshot_displays_mutex_;
   // Promises used to share a frame for a given display from the display handler
   // thread to the snapshot thread for processing.
-  std::unordered_map<std::uint32_t, SharedFramePromise>
-      pending_screenshot_displays_;
+  std::unordered_map<uint32_t, SharedFramePromise> pending_screenshot_displays_;
 };
 
 }  // namespace cuttlefish

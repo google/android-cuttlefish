@@ -16,7 +16,10 @@
 
 #pragma once
 
-#include <memory>
+#include <stddef.h>
+#include <stdint.h>
+
+#include <functional>
 #include <thread>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -27,8 +30,8 @@ namespace webrtc_streaming {
 
 struct BluetoothHandler {
   explicit BluetoothHandler(
-      const int rootCanalTestPort,
-      std::function<void(const uint8_t *, size_t)> send_to_client);
+      int rootCanalTestPort,
+      std::function<void(const uint8_t*, size_t)> send_to_client);
 
   ~BluetoothHandler();
 

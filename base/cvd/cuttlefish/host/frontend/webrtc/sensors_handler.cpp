@@ -16,10 +16,15 @@
 
 #include "cuttlefish/host/frontend/webrtc/sensors_handler.h"
 
-#include "absl/log/log.h"
+#include <string.h>
 
+#include <mutex>
 #include <sstream>
 #include <string>
+
+#include "absl/log/log.h"
+
+#include "cuttlefish/common/libs/sensors/sensors.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -50,7 +55,7 @@ Result<void> SensorsHandler::RefreshSensors(const double x, const double y,
   auto request = CF_EXPECT(transport::CreateMessage(cmd, size),
                            "Failed to allocate message for cmd: "
                                << cmd << " with size: " << size << " bytes. ");
-  std::memcpy(request->payload, msg.data(), size);
+  memcpy(request->payload, msg.data(), size);
   CF_EXPECT(channel_.SendRequest(*request),
             "Can't send request for cmd: " << cmd);
   return {};
@@ -63,7 +68,7 @@ Result<std::string> SensorsHandler::GetSensorsData() {
   auto request = CF_EXPECT(transport::CreateMessage(cmd, size),
                            "Failed to allocate message for cmd: "
                                << cmd << " with size: " << size << " bytes. ");
-  std::memcpy(request->payload, msg.data(), size);
+  memcpy(request->payload, msg.data(), size);
   CF_EXPECT(channel_.SendRequest(*request),
             "Can't send request for cmd: " << cmd);
   auto response =

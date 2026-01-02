@@ -16,16 +16,21 @@
 
 #include "cuttlefish/host/frontend/webrtc/gpx_locations_handler.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <iostream>
 #include <string>
 
 #include "absl/log/log.h"
+#include "fmt/format.h"
+#include "grpcpp/create_channel.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"
 #include "cuttlefish/host/libs/location/GpxParser.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish::webrtc_streaming {
 

@@ -16,12 +16,16 @@
 
 #include "cuttlefish/host/frontend/webrtc/kml_locations_handler.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <iostream>
 #include <string>
 
 #include "absl/log/log.h"
+#include "fmt/format.h"
+#include "grpcpp/create_channel.h"
 
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/location/GnssClient.h"

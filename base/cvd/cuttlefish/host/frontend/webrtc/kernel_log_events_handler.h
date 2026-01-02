@@ -17,13 +17,13 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <list>
 #include <map>
-#include <memory>
 #include <mutex>
 #include <thread>
 
-#include <json/json.h>
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 

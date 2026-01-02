@@ -16,7 +16,10 @@
 
 #pragma once
 
-#include <memory>
+#include <stddef.h>
+#include <stdint.h>
+
+#include <functional>
 #include <thread>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
