@@ -16,57 +16,50 @@
 
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 
-#include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
-#include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
-#include "cuttlefish/host/libs/web/http_client/http_client.h"
-#include "cuttlefish/host/libs/web/http_client/http_string.h"
+#include <string>
+
+#include "cuttlefish/common/libs/utils/base64.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 namespace {
 
-// TODO: chadreynolds - create a compilation or runtime flag to swap
-// environments
-enum class ClearcutEnvironment {
-  kLocal = 0,
-  kStaging = 1,
-  kProd = 2,
-};
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
-std::string ClearcutEnvironmentUrl(const ClearcutEnvironment environment) {
-  switch (environment) {
-    case ClearcutEnvironment::kLocal:
-      return "http://localhost:27910/log";
-    case ClearcutEnvironment::kStaging:
-      return "https://play.googleapis.com:443/staging/log";
-    case ClearcutEnvironment::kProd:
-      return "https://play.googleapis.com:443/log";
-  }
+// the serialized string is what is transmitted
+// the binary argument is base64-encoded to avoid string mangling
+Result<std::string> GetSerializedProtoArgument(
+    const CuttlefishLogEvent& cf_log_event) {
+  const std::string serialized_event = cf_log_event.SerializeAsString();
+  std::string encoded_str_out;
+  CF_EXPECTF(EncodeBase64(serialized_event.c_str(), serialized_event.size(),
+                          &encoded_str_out),
+             "Unable to base64-encode string: {}", serialized_event);
+  return encoded_str_out;
 }
 
-Result<void> PostRequest(HttpClient& http_client, const std::string& output,
-                         const ClearcutEnvironment server) {
-  const std::string clearcut_url = ClearcutEnvironmentUrl(server);
-  HttpResponse<std::string> response =
-      CF_EXPECT(HttpPostToString(http_client, clearcut_url, output));
-  CF_EXPECTF(response.HttpSuccess(), "Metrics POST failed ({}): {}",
-             response.http_code, response.data);
-  return {};
+Command BuildCommand(const std::string& transmitter_binary,
+                     const std::string& serialized_proto) {
+  Command command(transmitter_binary);
+  command.AddParameter("--environment");
+  command.AddParameter(kClearcutProduction);
+  command.AddParameter("--serialized_proto");
+  command.AddParameter(serialized_proto);
+  return command;
 }
 
 }  // namespace
 
-Result<void> TransmitMetricsEvent(
-    const wireless_android_play_playlog::LogRequest& log_request) {
-  CurlGlobalInit curl_global_init;
-  const bool use_logging_debug_function = true;
-  std::unique_ptr<HttpClient> http_client =
-      CurlHttpClient(use_logging_debug_function);
-  CF_EXPECT(http_client.get() != nullptr,
-            "Unable to create cURL client for metrics transmission");
-  CF_EXPECT(PostRequest(*http_client, log_request.SerializeAsString(),
-                        ClearcutEnvironment::kProd));
+Result<void> TransmitMetrics(const std::string& transmitter_binary,
+                             const CuttlefishLogEvent& cf_log_event) {
+  Command transmission_command = BuildCommand(
+      transmitter_binary, CF_EXPECT(GetSerializedProtoArgument(cf_log_event)));
+  CF_EXPECT(RunAndCaptureStdout(std::move(transmission_command)),
+            "Failed to transmit metrics.");
   return {};
 }
 

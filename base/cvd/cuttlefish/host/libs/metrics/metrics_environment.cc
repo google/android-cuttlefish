@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 
 #include <string>
 
-#include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
-
 namespace cuttlefish {
 
-Result<void> TransmitMetrics(
-    const std::string& transmitter_binary,
-    const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
-        cf_log_event);
+std::string EnvironmentToString(ClearcutEnvironment environment) {
+  switch (environment) {
+    case ClearcutEnvironment::Local:
+      return std::string(kClearcutLocal);
+    case ClearcutEnvironment::Staging:
+      return std::string(kClearcutStaging);
+    case ClearcutEnvironment::Production:
+      return std::string(kClearcutProduction);
+  }
+}
 
 }  // namespace cuttlefish

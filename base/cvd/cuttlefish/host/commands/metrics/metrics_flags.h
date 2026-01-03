@@ -18,14 +18,16 @@
 
 #include <string>
 
+#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 
-Result<void> TransmitMetrics(
-    const std::string& transmitter_binary,
-    const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
-        cf_log_event);
+struct MetricsFlags {
+  ClearcutEnvironment environment = ClearcutEnvironment::Production;
+  std::string serialized_proto;
+};
+
+Result<MetricsFlags> ProcessFlags(int argc, char** argv);
 
 }  // namespace cuttlefish

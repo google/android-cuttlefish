@@ -17,15 +17,20 @@
 #pragma once
 
 #include <string>
-
-#include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
+#include <string_view>
 
 namespace cuttlefish {
 
-Result<void> TransmitMetrics(
-    const std::string& transmitter_binary,
-    const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
-        cf_log_event);
+inline constexpr std::string_view kClearcutLocal = "local";
+inline constexpr std::string_view kClearcutStaging = "staging";
+inline constexpr std::string_view kClearcutProduction = "production";
+
+enum class ClearcutEnvironment {
+  Local,
+  Staging,
+  Production,
+};
+
+std::string EnvironmentToString(ClearcutEnvironment environment);
 
 }  // namespace cuttlefish

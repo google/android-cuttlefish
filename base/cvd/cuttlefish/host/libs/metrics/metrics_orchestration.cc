@@ -40,12 +40,12 @@
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
 #include "cuttlefish/result/result.h"
-#include "external_proto/clientanalytics.pb.h"
+#include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 namespace {
 
-using wireless_android_play_playlog::LogRequest;
+using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
 constexpr char kMetricsLogName[] = "metrics.log";
 
@@ -54,11 +54,11 @@ constexpr char kReadmeText[] =
     " not mean metrics are being transmitted, the data is always gathered and "
     "written out for debugging purposes.  To enable metrics transmission "
     "<TODO: chadreynolds - metrics transmission not connected, add triggering "
-    "step"
-    " when it does>";
+    "step when it does>";
 
 struct MetricsPaths {
   std::string metrics_directory;
+  std::string transmitter_path;
   Guests guests;
 };
 
@@ -92,6 +92,8 @@ std::vector<GuestInfo> GetGuestInfos(
 MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
   return MetricsPaths{
       .metrics_directory = instance_group.MetricsDir(),
+      .transmitter_path =
+          instance_group.HostArtifactsPath() + "/bin/metrics_transmitter",
       .guests =
           Guests{
               .host_artifacts = instance_group.HostArtifactsPath(),
@@ -123,12 +125,13 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
 }
 
 Result<void> OutputMetrics(EventType event_type,
-                           const std::string& metrics_directory,
+                           const MetricsPaths& metrics_paths,
                            const MetricsData& metrics_data) {
-  const LogRequest log_request = ConstructLogRequest(metrics_data);
-  CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, log_request));
-  if (kEnableCvdMetrics) {
-    CF_EXPECT(TransmitMetricsEvent(log_request));
+  const CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(metrics_data);
+  CF_EXPECT(WriteMetricsEvent(event_type, metrics_paths.metrics_directory,
+                              cf_log_event));
+  if (kEnableCvdMetrics && FileExists(metrics_paths.transmitter_path)) {
+    CF_EXPECT(TransmitMetrics(metrics_paths.transmitter_path, cf_log_event));
   }
   return {};
 }
@@ -156,8 +159,8 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
     return;
   }
 
-  Result<void> output_result = OutputMetrics(
-      event_type, metrics_paths.metrics_directory, *gather_result);
+  Result<void> output_result =
+      OutputMetrics(event_type, metrics_paths, *gather_result);
   if (!output_result.ok()) {
     VLOG(0) << fmt::format("Failed to output metrics for {}.  Error: {}",
                            EventTypeString(event_type), output_result.error());

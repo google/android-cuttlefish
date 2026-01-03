@@ -18,14 +18,11 @@
 
 #include <string>
 
-#include "cuttlefish/result/result.h"
-#include "external_proto/cf_log.pb.h"
+#include "external_proto/clientanalytics.pb.h"
 
 namespace cuttlefish {
 
-Result<void> TransmitMetrics(
-    const std::string& transmitter_binary,
-    const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
-        cf_log_event);
+wireless_android_play_playlog::LogRequest BuildLogRequest(
+    const std::string& serialized_cf_log_event);
 
 }  // namespace cuttlefish
