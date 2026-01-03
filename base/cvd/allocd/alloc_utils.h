@@ -25,8 +25,6 @@
 #include <sstream>
 #include <string_view>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-
 namespace cuttlefish {
 
 constexpr char kEbtablesName[] = "ebtables";
