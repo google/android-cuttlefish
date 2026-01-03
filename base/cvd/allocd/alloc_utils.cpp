@@ -19,7 +19,7 @@
 #include <fstream>
 #include <string_view>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 
 #include "cuttlefish/host/commands/cvd/utils/common.h"

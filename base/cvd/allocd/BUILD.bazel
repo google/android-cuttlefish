@@ -11,10 +11,9 @@ cc_library(
         "alloc_utils.h",
     ],
     deps = [
-        "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
-        "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
