@@ -37,8 +37,8 @@ cc_binary(
         "@//android:log_header",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//libbase",
-        "@//libsparse",
         "@android_system_core//:libcutils",
+        "@android_system_core//:libsparse",
         "@boringssl//:crypto",
         "@selinux//:libselinux",
         "@zlib",
@@ -231,7 +231,7 @@ cc_library(
         ":libext2_e2p_headers",
         "@//build_external/e2fsprogs:e2fsprogs_config",
         "@//build_external/e2fsprogs:libext2fs_generated_private",
-        "@//libsparse",
+        "@android_system_core//:libsparse",
         "@zlib",
     ],
 )
@@ -481,7 +481,7 @@ cc_binary(
         "@//build_external/e2fsprogs:libext2_quota_generated",
         "@//build_external/e2fsprogs:mke2fs_generated",
         "@//libbase",
-        "@//libsparse",
+        "@android_system_core//:libsparse",
         "@zlib",
     ],
 )

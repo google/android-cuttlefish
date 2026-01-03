@@ -92,7 +92,7 @@ package_files(
         # "cuttlefish-common/bin/secure_env": "//cuttlefish/host/commands/secure_env", # TODO: schuffelen - make this more complete
         "cuttlefish-common/bin/sefcontext_compile": "@selinux//:sefcontext_compile",
         "cuttlefish-common/bin/sensors_simulator": "//cuttlefish/host/commands/sensors_simulator",
-        "cuttlefish-common/bin/simg2img": "//libsparse:simg2img",
+        "cuttlefish-common/bin/simg2img": "@android_system_core//:simg2img",
         "cuttlefish-common/bin/snapshot_util_cvd": "//cuttlefish/host/commands/snapshot_util_cvd",
         "cuttlefish-common/bin/socket_vsock_proxy": "//cuttlefish/common/frontend/socket_vsock_proxy",
         "cuttlefish-common/bin/tcp_connector": "//cuttlefish/host/commands/tcp_connector",

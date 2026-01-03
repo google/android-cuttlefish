@@ -58,8 +58,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
         "//cuttlefish/result",
         "//libbase",
-        "//libsparse",
         "@abseil-cpp//absl/log",
+        "@android_system_core//:libsparse",
     ],
 )
 
