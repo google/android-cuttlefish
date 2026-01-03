@@ -15,9 +15,11 @@
  */
 #include "alloc_utils.h"
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <fstream>
 #include <string_view>
+#include <sstream>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"

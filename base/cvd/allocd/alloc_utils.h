@@ -16,13 +16,12 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <pwd.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <atomic>
 #include <optional>
-#include <sstream>
 #include <string_view>
 
 namespace cuttlefish {
