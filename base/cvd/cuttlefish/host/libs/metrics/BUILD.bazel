@@ -5,6 +5,20 @@ package(
 )
 
 cf_cc_library(
+    name = "enabled",
+    srcs = [
+        "enabled.cc",
+    ],
+    hdrs = [
+        "enabled.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/cvd/metrics:is_enabled",
+    ],
+)
+
+cf_cc_library(
     name = "event_type",
     srcs = [
         "event_type.cc",
@@ -103,8 +117,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/metrics:is_enabled",
         "//cuttlefish/host/commands/cvd/version",
+        "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",

@@ -31,8 +31,8 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
-#include "cuttlefish/host/commands/cvd/metrics/is_enabled.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
@@ -48,13 +48,6 @@ namespace {
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
 constexpr char kMetricsLogName[] = "metrics.log";
-
-constexpr char kReadmeText[] =
-    "The existence of records in this directory does"
-    " not mean metrics are being transmitted, the data is always gathered and "
-    "written out for debugging purposes.  To enable metrics transmission "
-    "<TODO: chadreynolds - metrics transmission not connected, add triggering "
-    "step when it does>";
 
 struct MetricsPaths {
   std::string metrics_directory;
@@ -130,7 +123,7 @@ Result<void> OutputMetrics(EventType event_type,
   const CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(metrics_data);
   CF_EXPECT(WriteMetricsEvent(event_type, metrics_paths.metrics_directory,
                               cf_log_event));
-  if (kEnableCvdMetrics && FileExists(metrics_paths.transmitter_path)) {
+  if (AreMetricsEnabled(metrics_paths.transmitter_path)) {
     CF_EXPECT(TransmitMetrics(metrics_paths.transmitter_path, cf_log_event));
   }
   return {};
@@ -178,7 +171,7 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_setup_result.error());
     return;
   }
-  if (kEnableCvdMetrics) {
+  if (AreMetricsEnabled(metrics_paths.transmitter_path)) {
     LOG(INFO) << "This will automatically send diagnostic information to "
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
