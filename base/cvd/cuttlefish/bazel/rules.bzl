@@ -15,6 +15,8 @@
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
 
+visibility(["//..."])
+
 COPTS = BUILD_VAR_COPTS
 
 def _cf_cc_binary_implementation(name, clang_tidy_enabled, copts, **kwargs):
