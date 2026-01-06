@@ -26,9 +26,6 @@
 
 namespace cuttlefish {
 
-constexpr char kEbtablesName[] = "ebtables";
-constexpr char kEbtablesLegacyName[] = "ebtables-legacy";
-
 // Wireless network prefix
 constexpr char kWirelessIp[] = "192.168.96";
 // Mobile network prefix
@@ -43,14 +40,6 @@ constexpr int kSocketMode = 0666;
 // Additionally limited by available netmask values in MobileNetworkName
 // Exceeding 63 would result in an overflow when calculating the netmask
 constexpr uint32_t kMaxIfaceNameId = 63;
-
-// struct for managing configuration state
-struct EthernetNetworkConfig {
-  bool has_broute_ipv4 = false;
-  bool has_broute_ipv6 = false;
-  bool has_tap = false;
-  bool use_ebtables_legacy = false;
-};
 
 // struct for managing configuration state
 struct GatewayConfig {
@@ -74,28 +63,14 @@ bool DeleteIface(std::string_view name);
 bool CreateBridge(std::string_view name);
 bool DestroyBridge(std::string_view name);
 
-bool CreateEbtables(std::string_view name, bool use_ipv,
-                    bool use_ebtables_legacy);
-bool DestroyEbtables(std::string_view name, bool use_ipv4,
-                     bool use_ebtables_legacy);
-bool EbtablesBroute(std::string_view name, bool use_ipv4, bool add,
-                    bool use_ebtables_legacy);
-bool EbtablesFilter(std::string_view name, bool use_ipv4, bool add,
-                    bool use_ebtables_legacy);
-
 bool CreateMobileIface(std::string_view name, uint16_t id,
                        std::string_view ipaddr);
 bool DestroyMobileIface(std::string_view name, uint16_t id,
                         std::string_view ipaddr);
 
-bool CreateEthernetIface(std::string_view name, std::string_view bridge_name,
-                         bool has_ipv4_bridge, bool has_ipv6_bridge,
-                         bool use_ebtables_legacy);
-bool DestroyEthernetIface(std::string_view name,
-                          bool has_ipv4_bridge, bool use_ipv6,
-                          bool use_ebtables_legacy);
-void CleanupEthernetIface(std::string_view name,
-                          const EthernetNetworkConfig& config);
+bool CreateEthernetIface(std::string_view name, std::string_view bridge_name);
+bool DestroyEthernetIface(std::string_view name);
+void CleanupEthernetIface(std::string_view name);
 
 bool IptableConfig(std::string_view network, bool add);
 

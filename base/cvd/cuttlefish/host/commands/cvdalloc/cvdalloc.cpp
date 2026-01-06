@@ -53,13 +53,13 @@ Result<void> Allocate(int id, std::string_view ethernet_bridge_name,
   CF_EXPECT(CreateEthernetBridgeIface(wireless_bridge_name,
                                       kCvdallocWirelessIpPrefix));
   CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("wtap", id),
-                                wireless_bridge_name, true, true, false));
+                                wireless_bridge_name));
   CF_EXPECT(CreateMobileIface(CvdallocInterfaceName("wifiap", id), id,
                               kCvdallocWirelessApIpPrefix));
   CF_EXPECT(CreateEthernetBridgeIface(ethernet_bridge_name,
                                       kCvdallocEthernetIpPrefix));
   CF_EXPECT(CreateEthernetIface(CvdallocInterfaceName("etap", id),
-                                ethernet_bridge_name, true, true, false));
+                                ethernet_bridge_name));
 
   return {};
 }
@@ -74,7 +74,7 @@ Result<void> Teardown(int id, std::string_view ethernet_bridge_name,
                      kCvdallocWirelessIpPrefix);
   DestroyMobileIface(CvdallocInterfaceName("wifiap", id), id,
                      kCvdallocWirelessApIpPrefix);
-  DestroyEthernetIface(CvdallocInterfaceName("etap", id), true, true, false);
+  DestroyEthernetIface(CvdallocInterfaceName("etap", id));
   DestroyBridge(ethernet_bridge_name);
   DestroyBridge(wireless_bridge_name);
 
