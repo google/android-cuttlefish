@@ -84,38 +84,16 @@ bool BringUpIface(std::string_view name) {
   return status == 0;
 }
 
-bool CreateEthernetIface(std::string_view name, std::string_view bridge_name,
-                         bool has_ipv4_bridge, bool has_ipv6_bridge,
-                         bool use_ebtables_legacy) {
+bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
   // assume bridge exists
-
-  EthernetNetworkConfig config{false, false, false};
 
   if (!CreateTap(name)) {
     return false;
   }
 
-  config.has_tap = true;
-
   if (!LinkTapToBridge(name, bridge_name)) {
-    CleanupEthernetIface(name, config);
+    CleanupEthernetIface(name);
     return false;
-  }
-
-  if (!has_ipv4_bridge) {
-    if (!CreateEbtables(name, true, use_ebtables_legacy)) {
-      CleanupEthernetIface(name, config);
-      return false;
-    }
-    config.has_broute_ipv4 = true;
-  }
-
-  if (!has_ipv6_bridge) {
-    if (CreateEbtables(name, false, use_ebtables_legacy)) {
-      CleanupEthernetIface(name, config);
-      return false;
-    }
-    config.has_broute_ipv6 = true;
   }
 
   return true;
@@ -200,82 +178,9 @@ bool DestroyGateway(std::string_view name, std::string_view gateway,
   return status == 0;
 }
 
-bool DestroyEthernetIface(std::string_view name, bool has_ipv4_bridge,
-                          bool has_ipv6_bridge, bool use_ebtables_legacy) {
-  if (!has_ipv6_bridge) {
-    DestroyEbtables(name, false, use_ebtables_legacy);
-  }
+bool DestroyEthernetIface(std::string_view name) { return DestroyIface(name); }
 
-  if (!has_ipv4_bridge) {
-    DestroyEbtables(name, true, use_ebtables_legacy);
-  }
-
-  return DestroyIface(name);
-}
-
-void CleanupEthernetIface(std::string_view name,
-                          const EthernetNetworkConfig& config) {
-  if (config.has_broute_ipv6) {
-    DestroyEbtables(name, false, config.use_ebtables_legacy);
-  }
-
-  if (config.has_broute_ipv4) {
-    DestroyEbtables(name, true, config.use_ebtables_legacy);
-  }
-
-  if (config.has_tap) {
-    DestroyIface(name);
-  }
-}
-
-bool CreateEbtables(std::string_view name, bool use_ipv4,
-                    bool use_ebtables_legacy) {
-  return EbtablesBroute(name, use_ipv4, true, use_ebtables_legacy) &&
-         EbtablesFilter(name, use_ipv4, true, use_ebtables_legacy);
-}
-
-bool DestroyEbtables(std::string_view name, bool use_ipv4,
-                     bool use_ebtables_legacy) {
-  return EbtablesBroute(name, use_ipv4, false, use_ebtables_legacy) &&
-         EbtablesFilter(name, use_ipv4, false, use_ebtables_legacy);
-}
-
-bool EbtablesBroute(std::string_view name, bool use_ipv4, bool add,
-                    bool use_ebtables_legacy) {
-  std::stringstream ss;
-  // we don't know the name of the ebtables program, but since we're going to
-  // exec this program name, make sure they can only choose between the two
-  // options we currently support, and not something they can overwrite
-  if (use_ebtables_legacy) {
-    ss << kEbtablesLegacyName;
-  } else {
-    ss << kEbtablesName;
-  }
-
-  ss << " -t broute " << (add ? "-A" : "-D") << " BROUTING -p "
-     << (use_ipv4 ? "ipv4" : "ipv6") << " --in-if " << name << " -j DROP";
-  auto command = ss.str();
-  int status = RunExternalCommand(command);
-
-  return status == 0;
-}
-
-bool EbtablesFilter(std::string_view name, bool use_ipv4, bool add,
-                    bool use_ebtables_legacy) {
-  std::stringstream ss;
-  if (use_ebtables_legacy) {
-    ss << kEbtablesLegacyName;
-  } else {
-    ss << kEbtablesName;
-  }
-
-  ss << " -t filter " << (add ? "-A" : "-D") << " FORWARD -p "
-     << (use_ipv4 ? "ipv4" : "ipv6") << " --out-if " << name << " -j DROP";
-  auto command = ss.str();
-  int status = RunExternalCommand(command);
-
-  return status == 0;
-}
+void CleanupEthernetIface(std::string_view name) { DestroyIface(name); }
 
 bool LinkTapToBridge(std::string_view tap_name,
                      std::string_view bridge_name) {
