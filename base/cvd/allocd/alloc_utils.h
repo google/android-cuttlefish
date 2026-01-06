@@ -27,19 +27,19 @@
 namespace cuttlefish {
 
 // Wireless network prefix
-constexpr char kWirelessIp[] = "192.168.96";
+inline constexpr char kWirelessIp[] = "192.168.96";
 // Mobile network prefix
-constexpr char kMobileIp[] = "192.168.97";
+inline constexpr char kMobileIp[] = "192.168.97";
 // Ethernet network prefix
-constexpr char kEthernetIp[] = "192.168.98";
+inline constexpr char kEthernetIp[] = "192.168.98";
 // permission bits for socket
-constexpr int kSocketMode = 0666;
+inline constexpr int kSocketMode = 0666;
 
 // Max ID an interface can have
 // Note: Interface names only have 2 digits in addition to the username prefix
 // Additionally limited by available netmask values in MobileNetworkName
 // Exceeding 63 would result in an overflow when calculating the netmask
-constexpr uint32_t kMaxIfaceNameId = 63;
+inline constexpr uint32_t kMaxIfaceNameId = 63;
 
 // struct for managing configuration state
 struct GatewayConfig {
