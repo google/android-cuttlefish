@@ -11,9 +11,25 @@ cc_library(
         "alloc_utils.h",
     ],
     deps = [
+        ":alloc_iproute2",
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cc_library(
+    name = "alloc_iproute2",
+    srcs = [
+        "alloc_iproute2.cpp",
+    ],
+    hdrs = [
+        "alloc_driver.h",
+    ],
+    deps = [
+        "@abseil-cpp//absl/strings:str_format",
+        "@abseil-cpp//absl/log",
     ],
 )

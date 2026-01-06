@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "alloc_utils.h"
+#include "allocd/alloc_utils.h"
 
 #include <stdint.h>
 
@@ -24,67 +24,10 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 
+#include "allocd/alloc_driver.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
-
-int RunExternalCommand(const std::string& command) {
-  FILE* fp;
-  LOG(INFO) << "Running external command: " << command;
-  fp = popen(command.c_str(), "r");
-
-  if (fp == nullptr) {
-    LOG(WARNING) << "Error running external command";
-    return -1;
-  }
-
-  int status = pclose(fp);
-  int ret = -1;
-  if (status == -1) {
-    LOG(WARNING) << "pclose error";
-  } else {
-    if (WIFEXITED(status)) {
-      LOG(INFO) << "child process exited normally";
-      ret = WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-      int sig = WTERMSIG(status);
-      LOG(WARNING) << "child process was terminated by signal "
-                   << strsignal(sig) << " (" << sig << ")";
-    } else {
-      LOG(WARNING) << "child process did not terminate normally";
-    }
-  }
-  return ret;
-}
-
-bool AddTapIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip tuntap add dev " << name << " mode tap group cvdnetwork vnet_hdr";
-  auto add_command = ss.str();
-  LOG(INFO) << "Create tap interface: " << add_command;
-  int status = RunExternalCommand(add_command);
-  return status == 0;
-}
-
-bool ShutdownIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link set dev " << name << " down";
-  auto link_command = ss.str();
-  LOG(INFO) << "Shutdown tap interface: " << link_command;
-  int status = RunExternalCommand(link_command);
-
-  return status == 0;
-}
-
-bool BringUpIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link set dev " << name << " up";
-  auto link_command = ss.str();
-  LOG(INFO) << "Bring up tap interface: " << link_command;
-  int status = RunExternalCommand(link_command);
-
-  return status == 0;
-}
 
 bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
   // assume bridge exists
@@ -158,41 +101,9 @@ bool DestroyMobileIface(std::string_view name, uint16_t id,
   return DestroyIface(name);
 }
 
-bool AddGateway(std::string_view name, std::string_view gateway,
-                std::string_view netmask) {
-  std::stringstream ss;
-  ss << "ip addr add " << gateway << netmask << " broadcast + dev " << name;
-  auto command = ss.str();
-  LOG(INFO) << "setup gateway: " << command;
-  int status = RunExternalCommand(command);
-
-  return status == 0;
-}
-
-bool DestroyGateway(std::string_view name, std::string_view gateway,
-                    std::string_view netmask) {
-  std::stringstream ss;
-  ss << "ip addr del " << gateway << netmask << " broadcast + dev " << name;
-  auto command = ss.str();
-  LOG(INFO) << "removing gateway: " << command;
-  int status = RunExternalCommand(command);
-
-  return status == 0;
-}
-
 bool DestroyEthernetIface(std::string_view name) { return DestroyIface(name); }
 
 void CleanupEthernetIface(std::string_view name) { DestroyIface(name); }
-
-bool LinkTapToBridge(std::string_view tap_name,
-                     std::string_view bridge_name) {
-  std::stringstream ss;
-  ss << "ip link set dev " << tap_name << " master " << bridge_name;
-  auto command = ss.str();
-  int status = RunExternalCommand(command);
-
-  return status == 0;
-}
 
 bool CreateTap(std::string_view name) {
   LOG(INFO) << "Attempt to create tap interface: " << name;
@@ -208,16 +119,6 @@ bool CreateTap(std::string_view name) {
   }
 
   return true;
-}
-
-bool DeleteIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link delete " << name;
-  auto link_command = ss.str();
-  LOG(INFO) << "Delete tap interface: " << link_command;
-  int status = RunExternalCommand(link_command);
-
-  return status == 0;
 }
 
 bool DestroyIface(std::string_view name) {
@@ -243,33 +144,6 @@ std::optional<std::string> GetUserName(uid_t uid) {
     return ret;
   }
   return std::nullopt;
-}
-
-bool BridgeExists(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link show " << name << " >/dev/null";
-
-  auto command = ss.str();
-  LOG(INFO) << "bridge exists: " << command;
-  int status = RunExternalCommand(command);
-
-  return status == 0;
-}
-
-bool CreateBridge(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link add name " << name
-     << " type bridge forward_delay 0 stp_state 0";
-
-  auto command = ss.str();
-  LOG(INFO) << "create bridge: " << command;
-  int status = RunExternalCommand(command);
-
-  if (status != 0) {
-    return false;
-  }
-
-  return BringUpIface(name);
 }
 
 bool DestroyBridge(std::string_view name) { return DeleteIface(name); }
@@ -382,18 +256,6 @@ bool StopDnsmasq(std::string_view name) {
     LOG(WARNING) << "Failed to stop dsnmasq for:" << name;
   }
   return ret;
-}
-
-bool IptableConfig(std::string_view network, bool add) {
-  std::stringstream ss;
-  ss << "iptables -t nat " << (add ? "-A" : "-D") << " POSTROUTING -s "
-     << network << " -j MASQUERADE";
-
-  auto command = ss.str();
-  LOG(INFO) << "iptable_config: " << command;
-  int status = RunExternalCommand(command);
-
-  return status == 0;
 }
 
 bool CreateEthernetBridgeIface(std::string_view name,
