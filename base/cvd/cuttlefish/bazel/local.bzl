@@ -17,6 +17,8 @@ Drop-in replacement for `{new_,}local_repository` such that
 paths are resolved against the module it is called from.
 """
 
+visibility(["//..."])
+
 def _common_attrs():
     return {
         "path": attr.label(
