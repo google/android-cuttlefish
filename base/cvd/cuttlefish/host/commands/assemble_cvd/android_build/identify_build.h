@@ -17,7 +17,6 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -28,6 +27,6 @@ namespace cuttlefish {
 
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const std::string& system_image_dir, const FetcherConfig& config,
-    FileSource source, std::string_view extract_dir);
+    FileSource source);
 
 }  // namespace cuttlefish
