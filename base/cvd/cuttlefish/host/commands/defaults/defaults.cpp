@@ -18,12 +18,10 @@
 #include <functional>
 #include <string_view>
 
-#include <android-base/macros.h>
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"
-#include "android-base/logging.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
