@@ -16,14 +16,12 @@
 #pragma once
 
 #include <memory>
-#include <string_view>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<std::unique_ptr<AndroidBuild>> SuperImageAsBuild(
-    AndroidBuild& build, std::string_view extract_dir);
+Result<std::unique_ptr<AndroidBuild>> SuperImageAsBuild(AndroidBuild& build);
 
 }  // namespace cuttlefish

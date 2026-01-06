@@ -88,7 +88,7 @@ class SuperImageAsBuildImpl : public AndroidBuild {
 };
 
 Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
-    AndroidBuild& build, std::string_view extract_dir) {
+    AndroidBuild& build) {
   static constexpr std::string_view kSuperEmpty = "super_empty";
   static constexpr std::string_view kSuper = "super";
   // Prefer an already extracted file, then prefer extracting super_empty since
@@ -96,8 +96,6 @@ Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
   Result<std::string_view> path;
   if (path = build.ImageFile(kSuperEmpty); path.ok()) {
   } else if (path = build.ImageFile(kSuper); path.ok()) {
-  } else if (path = build.ImageFile(kSuperEmpty, extract_dir); path.ok()) {
-  } else if (path = build.ImageFile(kSuper, extract_dir); path.ok()) {
   } else {
     return CF_ERR("No super.img or super_empty.img could be found");
   }
@@ -109,10 +107,9 @@ Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
 
 }  // namespace
 
-Result<std::unique_ptr<AndroidBuild>> SuperImageAsBuild(
-    AndroidBuild& build, std::string_view extract_dir) {
+Result<std::unique_ptr<AndroidBuild>> SuperImageAsBuild(AndroidBuild& build) {
   std::unique_ptr<android::fs_mgr::LpMetadata> lp_metadata =
-      CF_EXPECT(SuperImageFromAndroidBuild(build, extract_dir));
+      CF_EXPECT(SuperImageFromAndroidBuild(build));
 
   auto super_build =
       std::make_unique<SuperImageAsBuildImpl>(std::move(lp_metadata));

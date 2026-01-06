@@ -36,7 +36,7 @@ namespace cuttlefish {
 
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const std::string& system_image_dir, const FetcherConfig& config,
-    FileSource source, std::string_view extract_dir) {
+    FileSource source) {
   Result<std::unique_ptr<AndroidBuild>> res;
 
   if (res = FetchedAndroidBuild(config, source); res.ok()) {
@@ -48,7 +48,7 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
   }
   std::unique_ptr<AndroidBuild> build = CF_EXPECT(std::move(res));
 
-  if (res = SuperImageAsBuild(*build, extract_dir); res.ok()) {
+  if (res = SuperImageAsBuild(*build); res.ok()) {
     std::vector<std::unique_ptr<AndroidBuild>> builds;
     builds.emplace_back(std::move(build));
     builds.emplace_back(std::move(*res));
