@@ -19,6 +19,7 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/metrics/debug_reader.h"
 #include "cuttlefish/host/commands/metrics/metrics_conversion.h"
 #include "cuttlefish/host/commands/metrics/metrics_flags.h"
 #include "cuttlefish/host/commands/metrics/metrics_transmission.h"
@@ -28,12 +29,22 @@
 namespace cuttlefish {
 namespace {
 
+using wireless_android_play_playlog::LogRequest;
+
+Result<LogRequest> GetLogRequest(const MetricsFlags& flags) {
+  if (!flags.serialized_proto.empty()) {
+    return BuildLogRequest(flags.serialized_proto);
+  }
+  const std::string event_proto_serialized =
+      CF_EXPECT(GetSerializedEventProto(flags.event_filepath));
+  return BuildLogRequest(event_proto_serialized);
+}
+
 Result<void> MetricsMain(int argc, char** argv) {
   const MetricsFlags flags =
       CF_EXPECT(ProcessFlags(argc, argv),
                 "Transmitter could not process command line flags.");
-  const wireless_android_play_playlog::LogRequest log_request =
-      BuildLogRequest(flags.serialized_proto);
+  const LogRequest log_request = CF_EXPECT(GetLogRequest(flags));
   CF_EXPECT(TransmitMetricsEvent(log_request, flags.environment),
             "Transmission of metrics failed.");
   return {};

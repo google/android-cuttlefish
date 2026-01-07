@@ -60,15 +60,16 @@ Flag Base64GflagsCompatFlag(const std::string& name, std::string& value) {
 
 }  // namespace
 
-// TODO: chadreynolds - add debug flag to specify metrics file and transmit
-//    for convenient use with different transmission environments
-
 Result<MetricsFlags> ProcessFlags(int argc, char** argv) {
   MetricsFlags result;
   std::vector<Flag> flags;
   flags.emplace_back(
       EnvironmentGflagsCompatFlag("environment", result.environment)
           .Help("Specify the environment to transmit to."));
+  flags.emplace_back(
+      GflagsCompatFlag("event_filepath", result.event_filepath)
+          .Help("Debug flag to provide a cvd-generated metrics event file "
+                "instead of the serialized proto."));
   // base64 encoded to be passed as command argument without mangling the string
   flags.emplace_back(
       Base64GflagsCompatFlag("serialized_proto", result.serialized_proto)
@@ -79,6 +80,10 @@ Result<MetricsFlags> ProcessFlags(int argc, char** argv) {
   std::vector<std::string> args =
       ArgsToVec(argc - 1, argv + 1);  // Skip argv[0]
   CF_EXPECT(ConsumeFlags(flags, args));
+
+  CF_EXPECT(result.serialized_proto.empty() != result.event_filepath.empty(),
+            "Must specify one and only one of the two input flags.  The event "
+            "file is only intended for debugging the transmitter.");
   return result;
 }
 

@@ -16,6 +16,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "debug_reader",
+    srcs = ["debug_reader.cc"],
+    hdrs = ["debug_reader.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/result",
+        "//external_proto:cf_log_cc_proto",
+        "@protobuf",
+    ],
+)
+
+cf_cc_library(
     name = "events",
     srcs = ["events.cc"],
     hdrs = ["events.h"],
@@ -119,6 +131,7 @@ cf_cc_binary(
     ],
     deps = [
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/metrics:debug_reader",
         "//cuttlefish/host/commands/metrics:metrics_conversion",
         "//cuttlefish/host/commands/metrics:metrics_flags",
         "//cuttlefish/host/commands/metrics:metrics_transmission",
