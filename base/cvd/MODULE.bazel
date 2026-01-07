@@ -412,21 +412,6 @@ casimir_crates.from_cargo(
 )
 use_repo(casimir_crates, "casimir_crates")
 
-http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-# Upstream mtools is in subversion, which bazel doesn't support
-http_archive(
-    name = "mtools",
-    build_file = "@//:BUILD.mtools.bazel",
-    urls = [
-       "https://mirrors.ibiblio.org/gnu/mtools/mtools-4.0.48.tar.bz2",
-       "https://ftp.halifax.rwth-aachen.de/gnu/mtools/mtools-4.0.48.tar.bz2",
-       "http://ftp.gnu.org/gnu/mtools/mtools-4.0.48.tar.bz2",
-    ],
-    sha256 = "03c29aac8735dd7154a989fbc29eaf2b506121ae1c3a35cd0bf2a02e94d271a9",
-    strip_prefix = "mtools-4.0.48",
-)
-
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "fruit",
