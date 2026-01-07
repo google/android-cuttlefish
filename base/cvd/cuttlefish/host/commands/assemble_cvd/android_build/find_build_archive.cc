@@ -43,7 +43,7 @@ bool NameMatches(std::string_view name, std::string_view pattern) {
 Result<BuildArchive> FindBuildArchive(const FetcherConfig& config,
                                       FileSource source,
                                       std::string_view pattern) {
-  std::optional<std::string_view> archive_name;
+  std::optional<std::string> archive_name;
   for (const auto& [file_name, cvd_file] : config.get_cvd_files()) {
     if (cvd_file.source != source) {
       continue;
@@ -68,7 +68,7 @@ Result<BuildArchive> FindBuildArchive(const std::string& directory_path,
   std::vector<std::string> contents =
       CF_EXPECT(DirectoryContents(directory_path));
 
-  std::optional<std::string_view> archive_name;
+  std::optional<std::string> archive_name;
   for (std::string_view member : contents) {
     if (!NameMatches(member, pattern)) {
       continue;
