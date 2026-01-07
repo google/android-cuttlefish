@@ -1,1 +1,2 @@
 include("//build_external/dosfstools:dosfstools.MODULE.bazel")
+include("//build_external/mtools:mtools.MODULE.bazel")
