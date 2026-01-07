@@ -538,13 +538,14 @@ Result<AndroidBuilds> FindAndroidBuilds(
   CF_EXPECT_EQ(system_image_dir.Size(), fetcher_configs.Size());
   std::vector<std::unique_ptr<AndroidBuild>> android_builds;
 
+  std::vector<AndroidBuildKey> keys;
   for (size_t i = 0; i < system_image_dir.Size(); i++) {
-    android_builds.emplace_back(CF_EXPECT(IdentifyAndroidBuild(
-        system_image_dir.ForIndex(i), fetcher_configs.ForInstance(i),
-        FileSource::DEFAULT_BUILD)));
+    keys.emplace_back(system_image_dir.ForIndex(i),
+                      fetcher_configs.ForInstance(i),
+                      FileSource::DEFAULT_BUILD);
   }
 
-  return CF_EXPECT(AndroidBuilds::Create(std::move(android_builds)));
+  return CF_EXPECT(AndroidBuilds::Identify(std::move(keys)));
 }
 
 } // namespace

@@ -17,9 +17,10 @@
 
 #include <memory>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
+
+#include "fmt/ostream.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_dist_build.h"
@@ -33,6 +34,32 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+AndroidBuildKey::AndroidBuildKey(std::string system_image_dir,
+                                 const FetcherConfig& fetcher_config,
+                                 FileSource source)
+    : system_image_dir(std::move(system_image_dir)),
+      fetcher_config(&fetcher_config),
+      source(source) {}
+
+bool operator<(const AndroidBuildKey& left, const AndroidBuildKey& right) {
+  if (left.system_image_dir != right.system_image_dir) {
+    return left.system_image_dir < right.system_image_dir;
+  }
+  if (left.fetcher_config != right.fetcher_config) {
+    return left.fetcher_config < right.fetcher_config;
+  }
+  return left.source < right.source;
+}
+
+std::ostream& operator<<(std::ostream& out, const AndroidBuildKey& key) {
+  fmt::print(out,
+             "AndroidBuildKey {{ .system_image_dir = {}, .fetcher_config = {}, "
+             ".source = {} }}",
+             key.system_image_dir, key.fetcher_config ? "(present)" : "(null)",
+             key.source);
+  return out;
+}
 
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const std::string& system_image_dir, const FetcherConfig& config,
@@ -65,6 +92,14 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
   }
 
   return build;
+}
+
+Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
+    const AndroidBuildKey& android_build_key) {
+  CF_EXPECT_NE(android_build_key.fetcher_config, nullptr);
+  return CF_EXPECT(IdentifyAndroidBuild(android_build_key.system_image_dir,
+                                        *android_build_key.fetcher_config,
+                                        android_build_key.source));
 }
 
 }  // namespace cuttlefish
