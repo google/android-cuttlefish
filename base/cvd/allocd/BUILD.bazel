@@ -1,5 +1,26 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
 package(
     default_visibility = ["//:android_cuttlefish"],
+)
+
+string_flag(
+    name = "driver",
+    build_setting_default = "iproute2",
+)
+
+config_setting(
+  name = "netlink",
+  flag_values = {
+    ":driver": "netlink"
+  }
+)
+
+config_setting(
+  name = "iproute2",
+  flag_values = {
+    ":driver": "iproute2"
+  }
 )
 
 cc_library(
@@ -10,8 +31,10 @@ cc_library(
     hdrs = [
         "alloc_utils.h",
     ],
-    deps = [
-        ":alloc_iproute2",
+    deps = select({
+        ":netlink": [":alloc_netlink"],
+        "//conditions:default": [":alloc_iproute2"],
+    }) + [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
@@ -31,5 +54,25 @@ cc_library(
     deps = [
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/log",
+    ],
+)
+
+cc_library(
+    name = "alloc_netlink",
+    srcs = [
+        "alloc_netlink.cpp",
+    ],
+    hdrs = [
+        "alloc_driver.h",
+    ],
+    deps = [
+        "//allocd/net:netlink",
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
     ],
 )

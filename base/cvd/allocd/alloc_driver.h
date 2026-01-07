@@ -19,6 +19,8 @@
 
 namespace cuttlefish {
 
+inline constexpr char kCvdNetworkGroupName[] = "cvdnetwork";
+
 bool AddTapIface(std::string_view name);
 bool ShutdownIface(std::string_view name);
 bool BringUpIface(std::string_view name);
