@@ -24,34 +24,7 @@
 
 namespace cuttlefish {
 
-int RunExternalCommand(const std::string& command) {
-  FILE* fp;
-  LOG(INFO) << "Running external command: " << command;
-  fp = popen(command.c_str(), "r");
-
-  if (fp == nullptr) {
-    LOG(WARNING) << "Error running external command";
-    return -1;
-  }
-
-  int status = pclose(fp);
-  int ret = -1;
-  if (status == -1) {
-    LOG(WARNING) << "pclose error";
-  } else {
-    if (WIFEXITED(status)) {
-      LOG(INFO) << "child process exited normally";
-      ret = WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-      int sig = WTERMSIG(status);
-      LOG(WARNING) << "child process was terminated by signal "
-                   << strsignal(sig) << " (" << sig << ")";
-    } else {
-      LOG(WARNING) << "child process did not terminate normally";
-    }
-  }
-  return ret;
-}
+extern int RunExternalCommand(const std::string& name);
 
 bool AddTapIface(std::string_view name) {
   std::stringstream ss;
