@@ -22,7 +22,9 @@ cf_cc_library(
     hdrs = ["android_builds.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:identify_build",
         "//cuttlefish/result",
+        "@abseil-cpp//absl/log:check",
         "@fmt",
     ],
 )
@@ -124,6 +126,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
 

@@ -22,45 +22,66 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/check.h"
+#include "fmt/ostream.h"
+#include "fmt/ranges.h"
+
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<AndroidBuilds> AndroidBuilds::Create(
-    std::vector<std::unique_ptr<AndroidBuild>> providers) {
-  CF_EXPECT(!providers.empty());
-  for (const auto& provider : providers) {
-    CF_EXPECT(provider.get());
+Result<AndroidBuilds> AndroidBuilds::Identify(
+    std::vector<AndroidBuildKey> keys) {
+  CF_EXPECT(!keys.empty());
+
+  std::map<AndroidBuildKey, std::unique_ptr<AndroidBuild>> builds_map;
+  for (const AndroidBuildKey& key : keys) {
+    if (builds_map.count(key) > 0) {
+      continue;
+    }
+    std::unique_ptr<AndroidBuild> build = CF_EXPECT(IdentifyAndroidBuild(key));
+    CF_EXPECT(build.get());
+    builds_map[key] = std::move(build);
   }
-  return AndroidBuilds(std::move(providers));
+
+  CF_EXPECT(!builds_map.empty());
+
+  AndroidBuilds builds;
+  builds.keys_ = std::move(keys);
+  builds.builds_ = std::move(builds_map);
+
+  return builds;
 }
 
-AndroidBuilds::AndroidBuilds(
-    std::vector<std::unique_ptr<AndroidBuild>> providers)
-    : providers_(std::move(providers)) {}
-
-AndroidBuild& AndroidBuilds::ForIndex(size_t index) {
+AndroidBuild& AndroidBuilds::ForIndex(const size_t index) {
   const AndroidBuilds& const_this = *this;
   return const_cast<AndroidBuild&>(const_this.ForIndex(index));
 }
 
 const AndroidBuild& AndroidBuilds::ForIndex(size_t index) const {
-  if (index < providers_.size()) {
-    return *providers_[index];
-  } else {
-    return *providers_[0];
+  if (index >= keys_.size()) {
+    CHECK(!keys_.empty());
+    index = 0;
   }
+  const AndroidBuildKey& key = keys_[index];
+  auto it = builds_.find(key);
+  CHECK(it != builds_.end());
+  CHECK(it->second.get() != nullptr);
+  return *it->second;
 }
 
-size_t AndroidBuilds::Size() const { return providers_.size(); }
+size_t AndroidBuilds::Size() const { return keys_.size(); }
 
-std::ostream& operator<<(std::ostream& out, const AndroidBuilds& providers) {
-  out << "AndroidBuilds {";
-  for (const auto& provider : providers.providers_) {
-    out << *provider << ", ";
+std::ostream& operator<<(std::ostream& out, const AndroidBuilds& builds) {
+  fmt::print(out, "AndroidBuilds {{ .keys_ = [{}], .builds_= {{",
+             fmt::join(builds.keys_, ", "));
+  for (const auto& [key, value] : builds.builds_) {
+    CHECK(value.get() != nullptr);
+    fmt::print(out, "{} -> {}, ", key, *value);
   }
-  return out << "}";
+  return out << "}}";
 };
 
 }  // namespace cuttlefish

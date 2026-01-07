@@ -15,18 +15,19 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class AndroidBuilds {
  public:
-  static Result<AndroidBuilds> Create(
-      std::vector<std::unique_ptr<AndroidBuild>>);
+  static Result<AndroidBuilds> Identify(std::vector<AndroidBuildKey>);
 
   AndroidBuild& ForIndex(size_t index);
   const AndroidBuild& ForIndex(size_t index) const;
@@ -36,9 +37,10 @@ class AndroidBuilds {
   friend std::ostream& operator<<(std::ostream&, const AndroidBuilds&);
 
  private:
-  AndroidBuilds(std::vector<std::unique_ptr<AndroidBuild>>);
+  AndroidBuilds() = default;
 
-  std::vector<std::unique_ptr<AndroidBuild>> providers_;
+  std::vector<AndroidBuildKey> keys_;
+  std::map<AndroidBuildKey, std::unique_ptr<AndroidBuild>> builds_;
 };
 
 }  // namespace cuttlefish
