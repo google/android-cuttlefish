@@ -193,7 +193,7 @@ cf_cc_library(
     name = "image_file",
     hdrs = ["image_file.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:result",
+        "//cuttlefish/result",
     ],
 )
 
