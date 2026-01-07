@@ -287,23 +287,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "result",
-    hdrs = ["result.h"],
-    deps = [
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_library(
-    name = "result_matchers",
-    testonly = 1,
-    hdrs = ["result_matchers.h"],
-    deps = [
-        "//cuttlefish/result:result_matchers",
-    ],
-)
-
-cf_cc_library(
     name = "shared_fd_flag",
     srcs = ["shared_fd_flag.cpp"],
     hdrs = ["shared_fd_flag.h"],
