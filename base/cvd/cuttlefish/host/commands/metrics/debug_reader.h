@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,10 @@
 
 #include <string>
 
-#include "cuttlefish/host/libs/metrics/metrics_environment.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-struct MetricsFlags {
-  ClearcutEnvironment environment = ClearcutEnvironment::Production;
-  std::string event_filepath;
-  std::string serialized_proto;
-};
-
-Result<MetricsFlags> ProcessFlags(int argc, char** argv);
+Result<std::string> GetSerializedEventProto(const std::string& event_filepath);
 
 }  // namespace cuttlefish
