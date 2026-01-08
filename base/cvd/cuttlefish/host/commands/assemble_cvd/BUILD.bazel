@@ -11,7 +11,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvdalloc:interface",
-        "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",

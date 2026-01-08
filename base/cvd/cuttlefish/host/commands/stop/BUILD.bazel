@@ -15,7 +15,6 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/libs/allocd:allocd_utils",
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/metrics",
