@@ -95,7 +95,6 @@ MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
 
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
   CF_EXPECT(EnsureDirectoryExists(metrics_directory));
-  CF_EXPECT(WriteNewFile(metrics_directory + "/README", kReadmeText));
   CF_EXPECT(GenerateSessionIdFile(metrics_directory));
   return {};
 }
@@ -117,11 +116,12 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
 Result<void> OutputMetrics(EventType event_type,
                            const MetricsPaths& metrics_paths,
                            const MetricsData& metrics_data) {
-  const CuttlefishLogEvent cf_log_event = BuildCuttlefishLogEvent(metrics_data);
-  CF_EXPECT(WriteMetricsEvent(event_type, metrics_paths.metrics_directory,
-                              cf_log_event));
   if (AreMetricsEnabled()) {
+    const CuttlefishLogEvent cf_log_event =
+        BuildCuttlefishLogEvent(metrics_data);
     CF_EXPECT(TransmitMetrics(kTransmitterPath, cf_log_event));
+    CF_EXPECT(WriteMetricsEvent(event_type, metrics_paths.metrics_directory,
+                                cf_log_event));
   }
   return {};
 }
