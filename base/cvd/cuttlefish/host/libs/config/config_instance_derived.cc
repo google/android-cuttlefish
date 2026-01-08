@@ -26,5 +26,9 @@ std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("logcat-pipe"));
 }
 
+std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstanceInternalPath("restore-pipe-adbd"));
+}
+
 }  // namespace cuttlefish
 
