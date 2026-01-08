@@ -345,6 +345,32 @@ jobs:
         sudo podman info
         sudo podman load --quiet -i android-cuttlefish-e2etest.tar && rm android-cuttlefish-e2etest.tar
         mkdir -p -m 777 /tmp/cw_bazel
+        # Run flaky tests.
+        #
+        # Flaky tests would be executed in clean container everytime, rather than using `cvd reset`
+        # in a tainted container.
+        sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+        targets=$(sudo podman exec --user=testrunner -it tester sh -c "stty -onlcr && bazel --output_user_root=/tmp/cw_bazel/output query --noshow_progress 'attr(flaky, 1, orchestration/...)' 2>/dev/null" | sort)
+        echo "FLAKY TARGETS:"                                                                                                                                                                                              
+        echo "${targets}"                                                                                                                                                                                                  
+        echo ""
+        readonly ATTEMPTS=3
+        for t in ${targets}; do
+          echo "Executing target: ${t}"
+          attempt=1
+          while [[ ${attempt} -le ${ATTEMPTS} ]]; do                                                                                                                                                                       
+            echo "Attempt: ${attempt} of ${ATTEMPTS}"
+            sudo podman rm -f tester
+            sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest
+            sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test --test_timeout 600 --sandbox_writable_path=/home/testrunner --flaky_test_attempts=1 ${t} && break || true 
+            attempt=$((attempt+1))                                                                                                                                                                                         
+          done
+          if [[ ${attempt} -gt ${ATTEMPTS}  ]]; then
+            # Every previous attempt failed.
+            exit 1
+          fi
+        done
+        sudo podman rm -f tester
         # Run create_with_gce_credentials_test
         sudo podman run --name tester -d --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests --add-host="metadata.google.internal:127.0.0.1" android-cuttlefish-e2etest:latest
         sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_credentials_test:create_with_gce_credentials_test_test
