@@ -700,9 +700,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 #endif
 
   const bool pmem_disabled = instance.mte() || !instance.use_pmem();
-  if (!pmem_disabled && FileExists(instance.access_kregistry_path())) {
-    crosvm_cmd.Cmd().AddParameter("--pmem=path=",
-                                  instance.access_kregistry_path());
+  const std::string access_kregistry = AccessKregistryPath(instance);
+  if (!pmem_disabled && FileExists(access_kregistry)) {
+    crosvm_cmd.Cmd().AddParameter("--pmem=path=", access_kregistry);
   }
 
   if (!pmem_disabled && FileExists(instance.pstore_path())) {

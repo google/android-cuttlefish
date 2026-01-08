@@ -353,8 +353,6 @@ class CuttlefishConfig {
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
 
-    std::string access_kregistry_path() const;
-
     std::string hwcomposer_pmem_path() const;
 
     std::string pstore_path() const;

@@ -55,6 +55,7 @@
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -211,10 +212,10 @@ Result<void> CreateDynamicDiskFiles(
     }
 
     if (os_built_composite) {
-      if (FileExists(instance.access_kregistry_path())) {
-        CF_EXPECT(CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */,
-                                   "none"),
-                  "Failed for \"" << instance.access_kregistry_path() << "\"");
+      const std::string access_kregistry = AccessKregistryPath(instance);
+      if (FileExists(access_kregistry)) {
+        CF_EXPECTF(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
+                   "Failed for '{}'", access_kregistry);
       }
       if (FileExists(instance.hwcomposer_pmem_path())) {
         CF_EXPECT(CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */,

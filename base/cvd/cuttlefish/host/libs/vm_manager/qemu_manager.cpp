@@ -326,12 +326,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   bool is_riscv64 = arch_ == Arch::RiscV64;
 
   auto access_kregistry_size_bytes = 0;
-  if (FileExists(instance.access_kregistry_path())) {
-    access_kregistry_size_bytes = FileSize(instance.access_kregistry_path());
-    CF_EXPECT((access_kregistry_size_bytes & (1024 * 1024 - 1)) == 0,
-              instance.access_kregistry_path()
-                  << " file size (" << access_kregistry_size_bytes
-                  << ") not a multiple of 1MB");
+  const std::string access_kregistry = AccessKregistryPath(instance);
+  if (FileExists(access_kregistry)) {
+    access_kregistry_size_bytes = FileSize(access_kregistry);
+    CF_EXPECTF((access_kregistry_size_bytes & (1024 * 1024 - 1)) == 0,
+               "'{}' file size ({}) not a multiple of 1MB",
+               access_kregistry, access_kregistry_size_bytes);
   }
 
   auto hwcomposer_pmem_size_bytes = 0;
@@ -735,7 +735,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       qemu_cmd.AddParameter("-object");
       qemu_cmd.AddParameter(
           "memory-backend-file,id=objpmem1,share=on,mem-path=",
-          instance.access_kregistry_path(),
+          AccessKregistryPath(instance),
           ",size=", access_kregistry_size_bytes);
 
       qemu_cmd.AddParameter("-device");

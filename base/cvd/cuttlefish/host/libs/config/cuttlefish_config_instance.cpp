@@ -1351,10 +1351,6 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
   return console_dev;
 }
 
-std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
-  return AbsolutePath(PerInstancePath("access-kregistry"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::hwcomposer_pmem_path() const {
   return AbsolutePath(PerInstancePath("hwcomposer-pmem"));
 }
