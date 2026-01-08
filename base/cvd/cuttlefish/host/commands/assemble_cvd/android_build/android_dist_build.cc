@@ -32,8 +32,9 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
-static Result<std::unique_ptr<AndroidBuild>> TryDirectory(
+Result<std::unique_ptr<AndroidBuild>> TryDirectory(
     const std::string& dist_dir, const std::string& product_dir) {
   std::vector<std::unique_ptr<AndroidBuild>> builds;
 
@@ -44,11 +45,15 @@ static Result<std::unique_ptr<AndroidBuild>> TryDirectory(
   return CF_EXPECT(CombinedAndroidBuild("AndroidDistBuild", std::move(builds)));
 }
 
+bool IsRoot(std::string_view dir) { return dir == "/" || dir.empty(); }
+
+}  // namespace
+
 Result<std::unique_ptr<AndroidBuild>> AndroidDistBuild(
     const std::string& product_dir) {
   Result<std::unique_ptr<AndroidBuild>> attempt = CF_ERR("No `dist` directory");
 
-  for (std::string dist_parent(product_dir); !dist_parent.empty();
+  for (std::string dist_parent(product_dir); !IsRoot(dist_parent);
        dist_parent = android::base::Dirname(dist_parent)) {
     std::string dist_dir = absl::StrCat(dist_parent, "/dist");
     if (!DirectoryExists(dist_dir)) {
