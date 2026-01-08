@@ -214,6 +214,7 @@ Result<Json::Value> LocalInstanceGroup::FetchStatus(
   }
   Json::Value group_json;
   group_json["group_name"] = GroupName();
+  group_json["metrics_dir"] = MetricsDir();
   group_json["start_time"] = Format(StartTime());
   group_json["instances"] = instances_json;
   return group_json;
