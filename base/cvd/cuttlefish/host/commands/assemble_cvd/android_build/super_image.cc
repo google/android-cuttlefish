@@ -94,13 +94,14 @@ Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
   // Prefer an already extracted file, then prefer extracting super_empty since
   // it is smaller.
   Result<std::string> path;
+  std::unique_ptr<android::fs_mgr::LpMetadata> metadata;
   if (path = build.ImageFile(kSuperEmpty); path.ok()) {
+    metadata = android::fs_mgr::ReadFromImageFile(*path);
   } else if (path = build.ImageFile(kSuper); path.ok()) {
+    metadata = android::fs_mgr::ReadMetadata(*path, 0);
   } else {
     return CF_ERR("No super.img or super_empty.img could be found");
   }
-  std::unique_ptr<android::fs_mgr::LpMetadata> metadata =
-      android::fs_mgr::ReadFromImageFile(*path);
   CF_EXPECTF(metadata.get(), "Failed to parse super image '{}'", *path);
   return metadata;
 }
