@@ -1,4 +1,4 @@
-load("boot_tests.bzl", "cvd_command_boot_test", "cvd_load_boot_test", "launch_cvd_boot_test")
+load("boot_tests.bzl", "cvd_command_boot_test", "cvd_load_boot_test", "launch_cvd_boot_test", "metrics_test")
 
 # cvd fetch + launch_cvd tests
 launch_cvd_boot_test(
@@ -114,6 +114,12 @@ cvd_command_boot_test(
     ],
     target = "aosp_cf_x86_64_only_phone-userdebug",
     tags = ["requires_gpu"],
+)
+
+metrics_test(
+    name = "verify_metrics_transmission",
+    branch = "aosp-android-latest-release",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
 # TODO(b/329100411) test loading older branches
