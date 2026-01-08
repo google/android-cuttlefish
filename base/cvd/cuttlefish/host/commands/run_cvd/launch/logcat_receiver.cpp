@@ -19,6 +19,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -36,7 +37,7 @@ Result<MonitorCommand> LogcatReceiver(
   // due to the usage counters in the kernel reaching zero. If this is not
   // done and the logcat_receiver crashes for some reason the VMM may get
   // SIGPIPE.
-  auto log_name = instance.logcat_pipe_name();
+  const std::string log_name = LogcatPipeName(instance);
 
   return Command(LogcatReceiverBinary())
       .AddParameter("-log_pipe_fd=", CF_EXPECT(SharedFD::Fifo(log_name, 0600)));

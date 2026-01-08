@@ -35,6 +35,7 @@
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -317,7 +318,7 @@ void ServerLoopImpl::DeleteFifos() {
       instance_.kernel_log_pipe_name(),
       instance_.console_in_pipe_name(),
       instance_.console_out_pipe_name(),
-      instance_.logcat_pipe_name(),
+      LogcatPipeName(instance_),
       instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
       instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
       instance_.PerInstanceInternalPath("keymint_fifo_vm.in"),

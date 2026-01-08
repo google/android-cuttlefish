@@ -41,6 +41,7 @@
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
@@ -564,7 +565,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   // /dev/hvc2 = serial logging
   // Serial port for logcat, redirected to a pipe
-  add_hvc_ro(instance.logcat_pipe_name());
+  add_hvc_ro(LogcatPipeName(instance));
 
   // /dev/hvc3 = keymaster (C++ implementation)
   add_hvc(instance.PerInstanceInternalPath("keymaster_fifo_vm"));
