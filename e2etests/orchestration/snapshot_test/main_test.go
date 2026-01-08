@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 	"log"
 	"os/exec"
 	"strings"
@@ -51,7 +52,7 @@ func TestSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	const groupName = "cvd"
+	const groupName = fmt.Sprintf("cvd-%d", time.Now().Unix())
 	cvd, err := createDevice(srv, groupName, hostPkgDir, imageDir)
 	if err != nil {
 		t.Fatal(err)
