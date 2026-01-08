@@ -22,6 +22,7 @@
 namespace cuttlefish {
 
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific&);
+std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific&);
 
 }  // namespace cuttlefish
 

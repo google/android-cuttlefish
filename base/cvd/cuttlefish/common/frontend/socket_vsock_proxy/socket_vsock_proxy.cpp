@@ -28,10 +28,10 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
-#include "cuttlefish/result/result.h"
-
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
+#include "cuttlefish/result/result.h"
 
 constexpr int TCP_SERVER_START_RETRIES_COUNT = 10;
 constexpr std::chrono::milliseconds TCP_SERVER_RETRIES_DELAY(1250);
@@ -156,7 +156,7 @@ static Result<void> ListenEventsAndProxy(int events_fd,
     auto config = CF_EXPECT(CuttlefishConfig::Get());
     auto instance = config->ForDefaultInstance();
     SharedFD restore_pipe_read =
-        SharedFD::Open(instance.restore_adbd_pipe_name(), O_RDONLY);
+        SharedFD::Open(RestoreAdbdPipeName(instance), O_RDONLY);
     if (!restore_pipe_read->IsOpen()) {
       return CF_ERR(
           "Error opening restore pipe: " << restore_pipe_read->StrError());

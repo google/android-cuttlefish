@@ -20,6 +20,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/result",

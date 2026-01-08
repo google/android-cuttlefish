@@ -41,6 +41,8 @@
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/util.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -222,7 +224,7 @@ Result<SharedFD> ProcessLeader(
     const CuttlefishConfig::InstanceSpecific& instance,
     AutoSetup<ValidateTapDevices>::Type& /* dependency */) {
   if (IsRestoring(config)) {
-    CF_EXPECT(SharedFD::Fifo(instance.restore_adbd_pipe_name(), 0600),
+    CF_EXPECT(SharedFD::Fifo(RestoreAdbdPipeName(instance), 0600),
               "Unable to create adbd restore fifo");
   }
 
@@ -333,9 +335,8 @@ class CvdBootStateMachine : public SetupFeature, public KernelLogPipeConsumer {
               return;
             }
 
-            cuttlefish::SharedFD restore_adbd_pipe = cuttlefish::SharedFD::Open(
-                config_.ForDefaultInstance().restore_adbd_pipe_name().c_str(),
-                O_WRONLY);
+            SharedFD restore_adbd_pipe = SharedFD::Open(
+                RestoreAdbdPipeName(config_.ForDefaultInstance()), O_WRONLY);
             CHECK(restore_adbd_pipe->IsOpen())
                 << "Error opening adbd restore pipe: "
                 << restore_adbd_pipe->StrError();
