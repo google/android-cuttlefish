@@ -22,6 +22,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
@@ -49,8 +50,8 @@ int main(int argc, char** argv) {
   cuttlefish::SharedFD pipe;
 
   if (FLAGS_log_pipe_fd < 0) {
-    auto log_name = instance.logcat_pipe_name();
-    pipe = cuttlefish::SharedFD::Open(log_name.c_str(), O_RDONLY);
+    const std::string log_name = cuttlefish::LogcatPipeName(instance);
+    pipe = cuttlefish::SharedFD::Open(log_name, O_RDONLY);
   } else {
     pipe = cuttlefish::SharedFD::Dup(FLAGS_log_pipe_fd);
     close(FLAGS_log_pipe_fd);

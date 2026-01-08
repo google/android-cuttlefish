@@ -53,6 +53,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "config_instance_derived",
+    srcs = ["config_instance_derived.cc"],
+    hdrs = ["config_instance_derived.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+    ],
+)
+
+cf_cc_library(
     name = "config_utils",
     srcs = ["config_utils.cpp"],
     hdrs = ["config_utils.h"],

@@ -42,6 +42,7 @@
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -800,7 +801,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   // /dev/hvc2 = serial logging
   // Serial port for logcat, redirected to a pipe
-  crosvm_cmd.AddHvcReadOnly(instance.logcat_pipe_name());
+  crosvm_cmd.AddHvcReadOnly(LogcatPipeName(instance));
 
   // /dev/hvc3 = keymaster (C++ implementation)
   crosvm_cmd.AddHvcReadWrite(
