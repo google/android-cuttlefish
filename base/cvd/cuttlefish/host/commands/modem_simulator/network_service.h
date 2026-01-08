@@ -62,6 +62,16 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   void OnDataRegisterStateChanged();
   void OnSignalStrengthChanged();
 
+  enum ModemTechnology {
+    M_MODEM_TECH_GSM = 1 << 0,
+    M_MODEM_TECH_WCDMA = 1 << 1,
+    M_MODEM_TECH_CDMA = 1 << 2,
+    M_MODEM_TECH_EVDO = 1 << 3,
+    M_MODEM_TECH_TDSCDMA = 1 << 4,
+    M_MODEM_TECH_LTE = 1 << 5,
+    M_MODEM_TECH_NR = 1 << 6,
+  };
+
   enum RegistrationState {
     NET_REGISTRATION_UNREGISTERED = 0,
     NET_REGISTRATION_HOME         = 1,
@@ -246,26 +256,26 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
     };
 
     enum AccessTechnoloy {
-      ACESS_TECH_GSM          = 0,
-      ACESS_TECH_GSM_COMPACT  = 1,
-      ACESS_TECH_UTRAN        = 2,
-      ACESS_TECH_EGPRS        = 3,
-      ACESS_TECH_HSDPA        = 4,
-      ACESS_TECH_HSUPA        = 5,
-      ACESS_TECH_HSPA         = 6,
-      ACESS_TECH_EUTRAN       = 7,
-      ACESS_TECH_EC_GSM_IoT   = 8,
-      ACESS_TECH_E_UTRAN      = 9,
-      ACESS_TECH_E_UTRA       = 10,
-      ACESS_TECH_NR           = 11,
-      ACESS_TECH_NG_RAN       = 12,
-      ACESS_TECH_E_UTRA_NR    = 13
+      ACCESS_TECH_GSM = 0,
+      ACCESS_TECH_GSM_COMPACT = 1,
+      ACCESS_TECH_UTRAN = 2,
+      ACCESS_TECH_EGPRS = 3,
+      ACCESS_TECH_HSDPA = 4,
+      ACCESS_TECH_HSUPA = 5,
+      ACCESS_TECH_HSPA = 6,
+      ACCESS_TECH_EUTRAN = 7,
+      ACCESS_TECH_EC_GSM_IoT = 8,
+      ACCESS_TECH_E_UTRAN = 9,
+      ACCESS_TECH_E_UTRA = 10,
+      ACCESS_TECH_NR = 11,
+      ACCESS_TECH_NG_RAN = 12,
+      ACCESS_TECH_E_UTRA_NR = 13
     };
 
-    NetworkRegistrationStatus() :
-      unsol_mode(REGISTRATION_UNSOL_ENABLED_FULL),
-      registration_state(NET_REGISTRATION_UNREGISTERED),
-      network_type(ACESS_TECH_EUTRAN) {}
+    NetworkRegistrationStatus()
+        : unsol_mode(REGISTRATION_UNSOL_ENABLED_FULL),
+          registration_state(NET_REGISTRATION_UNREGISTERED),
+          network_type(ACCESS_TECH_EUTRAN) {}
 
     RegistrationUnsolMode unsol_mode;
     RegistrationState registration_state;

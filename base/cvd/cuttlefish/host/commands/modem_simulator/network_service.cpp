@@ -738,41 +738,41 @@ NetworkService::NetworkRegistrationStatus::AccessTechnoloy
 NetworkService::getNetworkTypeFromTech(ModemTechnology modemTech) {
   switch (modemTech) {
    case ModemTechnology::M_MODEM_TECH_GSM:
-     return NetworkRegistrationStatus::ACESS_TECH_EGPRS;
+     return NetworkRegistrationStatus::ACCESS_TECH_EGPRS;
    case ModemTechnology::M_MODEM_TECH_WCDMA:
-     return NetworkRegistrationStatus::ACESS_TECH_HSPA;
+     return NetworkRegistrationStatus::ACCESS_TECH_HSPA;
    case ModemTechnology::M_MODEM_TECH_LTE:
-     return NetworkRegistrationStatus::ACESS_TECH_EUTRAN;
+     return NetworkRegistrationStatus::ACCESS_TECH_EUTRAN;
    case ModemTechnology::M_MODEM_TECH_NR:
-     return NetworkRegistrationStatus::ACESS_TECH_NR;
+     return NetworkRegistrationStatus::ACCESS_TECH_NR;
    default:
-     return NetworkRegistrationStatus::ACESS_TECH_EGPRS;
+     return NetworkRegistrationStatus::ACCESS_TECH_EGPRS;
   }
 }
 
-ModemTechnology NetworkService::getTechFromNetworkType(
+NetworkService::ModemTechnology NetworkService::getTechFromNetworkType(
     NetworkRegistrationStatus::AccessTechnoloy act) {
   switch (act) {
-    case NetworkRegistrationStatus::ACESS_TECH_GSM:
-    case NetworkRegistrationStatus::ACESS_TECH_GSM_COMPACT:
-    case NetworkRegistrationStatus::ACESS_TECH_EGPRS:
-    case NetworkRegistrationStatus::ACESS_TECH_EC_GSM_IoT:
+    case NetworkRegistrationStatus::ACCESS_TECH_GSM:
+    case NetworkRegistrationStatus::ACCESS_TECH_GSM_COMPACT:
+    case NetworkRegistrationStatus::ACCESS_TECH_EGPRS:
+    case NetworkRegistrationStatus::ACCESS_TECH_EC_GSM_IoT:
       return ModemTechnology::M_MODEM_TECH_GSM;
 
-    case NetworkRegistrationStatus::ACESS_TECH_UTRAN:
-    case NetworkRegistrationStatus::ACESS_TECH_HSDPA:
-    case NetworkRegistrationStatus::ACESS_TECH_HSUPA:
-    case NetworkRegistrationStatus::ACESS_TECH_HSPA:
+    case NetworkRegistrationStatus::ACCESS_TECH_UTRAN:
+    case NetworkRegistrationStatus::ACCESS_TECH_HSDPA:
+    case NetworkRegistrationStatus::ACCESS_TECH_HSUPA:
+    case NetworkRegistrationStatus::ACCESS_TECH_HSPA:
       return ModemTechnology::M_MODEM_TECH_WCDMA;
 
-    case NetworkRegistrationStatus::ACESS_TECH_EUTRAN:
-    case NetworkRegistrationStatus::ACESS_TECH_E_UTRAN:
-    case NetworkRegistrationStatus::ACESS_TECH_E_UTRA:
+    case NetworkRegistrationStatus::ACCESS_TECH_EUTRAN:
+    case NetworkRegistrationStatus::ACCESS_TECH_E_UTRAN:
+    case NetworkRegistrationStatus::ACCESS_TECH_E_UTRA:
       return ModemTechnology::M_MODEM_TECH_LTE;
 
-    case NetworkRegistrationStatus::ACESS_TECH_NR:
-    case NetworkRegistrationStatus::ACESS_TECH_NG_RAN:
-    case NetworkRegistrationStatus::ACESS_TECH_E_UTRA_NR:
+    case NetworkRegistrationStatus::ACCESS_TECH_NR:
+    case NetworkRegistrationStatus::ACCESS_TECH_NG_RAN:
+    case NetworkRegistrationStatus::ACCESS_TECH_E_UTRA_NR:
       return ModemTechnology::M_MODEM_TECH_NR;
 
     default:
@@ -1095,7 +1095,7 @@ void NetworkService::OnDataRegisterStateChanged() {
     case NetworkRegistrationStatus::REGISTRATION_UNSOL_ENABLED:
       ss << "+CGREG: " << data_registration_status_.registration_state;
       if (data_registration_status_.network_type ==
-              NetworkRegistrationStatus::ACESS_TECH_EUTRAN) {
+          NetworkRegistrationStatus::ACCESS_TECH_EUTRAN) {
         ss << "\r+CEREG: " << data_registration_status_.registration_state;
       }
       break;
@@ -1109,15 +1109,15 @@ void NetworkService::OnDataRegisterStateChanged() {
            << data_registration_status_.network_type;
       }
       if (data_registration_status_.network_type ==
-                NetworkRegistrationStatus::ACESS_TECH_EUTRAN) {
-          ss << "\r+CEREG: " << data_registration_status_.registration_state;
-          if (data_registration_status_.registration_state ==
-                  NET_REGISTRATION_HOME ||
-              data_registration_status_.registration_state ==
-                  NET_REGISTRATION_ROAMING) {
-            ss << ",\"" << kAreaCode << "\",\"" << kCellId << "\","
-                      << data_registration_status_.network_type;
-          }
+          NetworkRegistrationStatus::ACCESS_TECH_EUTRAN) {
+        ss << "\r+CEREG: " << data_registration_status_.registration_state;
+        if (data_registration_status_.registration_state ==
+                NET_REGISTRATION_HOME ||
+            data_registration_status_.registration_state ==
+                NET_REGISTRATION_ROAMING) {
+          ss << ",\"" << kAreaCode << "\",\"" << kCellId << "\","
+             << data_registration_status_.network_type;
+        }
       }
       break;
     default:
