@@ -22,6 +22,10 @@
 
 namespace cuttlefish {
 
+std::string AccessKregistryPath(const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstancePath("access-kregistry"));
+}
+
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("logcat-pipe"));
 }

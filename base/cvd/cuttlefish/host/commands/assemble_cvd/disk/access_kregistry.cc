@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/result/result.h"
@@ -25,7 +26,7 @@ namespace cuttlefish {
 
 Result<void> InitializeAccessKregistryImage(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  auto access_kregistry = instance.access_kregistry_path();
+  const std::string access_kregistry = AccessKregistryPath(instance);
   if (FileExists(access_kregistry)) {
     return {};
   }

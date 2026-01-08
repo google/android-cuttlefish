@@ -359,7 +359,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   // TODO(schuffelen): Clean up duplication with assemble_cvd
   unlink(instance_.PerInstancePath("NVChip").c_str());
 
-  auto kregistry_path = instance_.access_kregistry_path();
+  const std::string kregistry_path = AccessKregistryPath(instance_);
   unlink(kregistry_path.c_str());
   // TODO: b/471069557 - diagnose unused
   Result<void> unused = CreateBlankImage(kregistry_path, 2 /* mb */, "none");
