@@ -20,6 +20,7 @@
 #include <optional>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
@@ -33,6 +34,7 @@ Result<DiskBuilder> OsCompositeDiskBuilder(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::optional<ChromeOsStateImage>&,
-    const std::vector<std::unique_ptr<ImageFile>>&, const SystemImageDirFlag&);
+    const std::vector<std::unique_ptr<ImageFile>>&, AndroidBuild&,
+    const SystemImageDirFlag&);
 
 }  // namespace cuttlefish

@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -32,9 +33,9 @@ namespace cuttlefish {
 Result<std::vector<ImagePartition>> AndroidEfiLoaderCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::vector<std::unique_ptr<ImageFile>>& image_files,
-    const SystemImageDirFlag& system_image_dir) {
-  std::vector<ImagePartition> partitions = CF_EXPECT(
-      AndroidCompositeDiskConfig(instance, image_files, system_image_dir));
+    AndroidBuild& android_build, const SystemImageDirFlag& system_image_dir) {
+  std::vector<ImagePartition> partitions = CF_EXPECT(AndroidCompositeDiskConfig(
+      instance, image_files, android_build, system_image_dir));
   // Cuttlefish uboot EFI bootflow by default looks at the first partition
   // for EFI application. Thus we put "android_esp" at the beginning.
   partitions.insert(

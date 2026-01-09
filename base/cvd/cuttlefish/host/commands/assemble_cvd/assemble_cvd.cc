@@ -299,7 +299,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
     const VendorBootImageFlag& vendor_boot_image,
-    const VmManagerFlag& vm_manager_flag, const Defaults& defaults) {
+    const VmManagerFlag& vm_manager_flag, const Defaults& defaults,
+    AndroidBuilds& android_builds) {
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
@@ -360,9 +361,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       Result<std::optional<ChromeOsStateImage>> chrome_os_state =
           CF_EXPECT(ChromeOsStateImage::Reuse(instance));
       if (chrome_os_state.ok()) {
-        Result<DiskBuilder> os_builder =
-            OsCompositeDiskBuilder(config, instance, *chrome_os_state,
-                                   instance_image_files, system_image_dir);
+        Result<DiskBuilder> os_builder = OsCompositeDiskBuilder(
+            config, instance, *chrome_os_state, instance_image_files,
+            android_builds.ForIndex(index), system_image_dir);
         if (!os_builder.ok()) {
           creating_os_disk = true;
         } else {
@@ -469,7 +470,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(Symlink(first_instance, double_legacy_instance_dir));
   }
 
-  CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, system_image_dir));
+  CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, android_builds,
+                                   system_image_dir));
 
   return config;
 }
@@ -666,7 +668,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
       InitFilesystemAndCreateConfig(
           std::move(fetcher_configs), guest_configs, injector, log, boot_image,
           initramfs_path, kernel_path, super_image, system_image_dir,
-          vendor_boot_image, vm_manager_flag, *defaults),
+          vendor_boot_image, vm_manager_flag, *defaults, android_builds),
       "Failed to create config");
 
   std::cout << GetConfigFilePath(*config) << "\n";

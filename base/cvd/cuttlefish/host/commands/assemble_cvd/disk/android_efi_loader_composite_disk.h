@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -29,6 +30,7 @@ namespace cuttlefish {
 
 Result<std::vector<ImagePartition>> AndroidEfiLoaderCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::vector<std::unique_ptr<ImageFile>>&, const SystemImageDirFlag&);
+    const std::vector<std::unique_ptr<ImageFile>>&, AndroidBuild&,
+    const SystemImageDirFlag&);
 
 }  // namespace cuttlefish

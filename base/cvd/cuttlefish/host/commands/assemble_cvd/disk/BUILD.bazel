@@ -23,6 +23,7 @@ cf_cc_library(
     hdrs = ["android_composite_disk_config.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:cuttlefish_config",
@@ -39,6 +40,7 @@ cf_cc_library(
     hdrs = ["android_efi_loader_composite_disk.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
@@ -280,6 +282,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_composite_disk_config",
         "//cuttlefish/host/commands/assemble_cvd/disk:android_efi_loader_composite_disk",
         "//cuttlefish/host/commands/assemble_cvd/disk:chromeos_composite_disk",
