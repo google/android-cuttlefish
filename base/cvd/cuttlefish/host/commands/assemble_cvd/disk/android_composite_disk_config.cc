@@ -29,6 +29,7 @@
 #include "android-base/strings.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
@@ -71,7 +72,7 @@ std::optional<ImagePartition> HibernationImage(
 Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::vector<std::unique_ptr<ImageFile>>& image_files,
-    const SystemImageDirFlag& system_image_dir) {
+    AndroidBuild& android_build, const SystemImageDirFlag& system_image_dir) {
   std::vector<ImagePartition> partitions;
 
   const std::set<std::string_view> ab_partitions = {
@@ -90,20 +91,27 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
       kPartitions.vvmtruststore,
   };
 
-  const std::map<std::string_view, std::string> primary_paths = {
-      {kPartitions.boot, instance.new_boot_image()},
-      {kPartitions.init_boot, instance.init_boot_image()},
-      {kPartitions.metadata, ""},
-      {kPartitions.misc, ""},
-      {kPartitions.super, instance.new_super_image()},
-      {kPartitions.userdata, instance.new_data_image()},
-      {kPartitions.vbmeta, instance.new_vbmeta_image()},
-      {kPartitions.vbmeta_system, instance.vbmeta_system_image()},
-      {kPartitions.vbmeta_system_dlkm, instance.new_vbmeta_system_dlkm_image()},
-      {kPartitions.vbmeta_vendor_dlkm, instance.new_vbmeta_vendor_dlkm_image()},
-      {kPartitions.vendor_boot, instance.new_vendor_boot_image()},
-      {kPartitions.vvmtruststore, instance.vvmtruststore_path()},
+  std::map<std::string, std::string> primary_paths = {
+      {std::string(kPartitions.boot), instance.new_boot_image()},
+      {std::string(kPartitions.init_boot), instance.init_boot_image()},
+      {std::string(kPartitions.metadata), ""},
+      {std::string(kPartitions.misc), ""},
+      {std::string(kPartitions.super), instance.new_super_image()},
+      {std::string(kPartitions.userdata), instance.new_data_image()},
+      {std::string(kPartitions.vbmeta), instance.new_vbmeta_image()},
+      {std::string(kPartitions.vbmeta_system), instance.vbmeta_system_image()},
+      {std::string(kPartitions.vbmeta_system_dlkm),
+       instance.new_vbmeta_system_dlkm_image()},
+      {std::string(kPartitions.vbmeta_vendor_dlkm),
+       instance.new_vbmeta_vendor_dlkm_image()},
+      {std::string(kPartitions.vendor_boot), instance.new_vendor_boot_image()},
+      {std::string(kPartitions.vvmtruststore), instance.vvmtruststore_path()},
   };
+
+  for (std::string partition : CF_EXPECT(android_build.PhysicalPartitions())) {
+    std::string path = CF_EXPECT(android_build.ImageFile(partition));
+    primary_paths.try_emplace(std::move(partition), std::move(path));
+  }
 
   const std::map<std::string_view, std::string> fallback_paths = {
       {kPartitions.super, instance.super_image()},

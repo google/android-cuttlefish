@@ -29,6 +29,7 @@
 #include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/access_kregistry.h"
@@ -98,6 +99,7 @@ Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
 
 Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
+    AndroidBuilds& android_builds,
     const SystemImageDirFlag& system_image_dirs) {
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
       InstanceImageFiles(config);
@@ -170,9 +172,9 @@ Result<void> CreateDynamicDiskFiles(
       CF_EXPECT(image_file->Generate());
     }
 
-    DiskBuilder os_disk_builder = CF_EXPECT(
-        OsCompositeDiskBuilder(config, instance, chrome_os_state,
-                               instance_image_files, system_image_dirs));
+    DiskBuilder os_disk_builder = CF_EXPECT(OsCompositeDiskBuilder(
+        config, instance, chrome_os_state, instance_image_files,
+        android_builds.ForIndex(instance_index), system_image_dirs));
     const auto os_built_composite =
         CF_EXPECT(os_disk_builder.BuildCompositeDiskIfNecessary());
 
