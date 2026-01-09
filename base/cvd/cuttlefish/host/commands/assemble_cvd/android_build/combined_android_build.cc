@@ -102,6 +102,7 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
     std::set<std::string, std::less<void>> merged;
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
       if (res = ((*build).*fn)(); res.ok()) {
+        one_succeeded = true;
         merged.merge(std::move(*res));
       }
     }
