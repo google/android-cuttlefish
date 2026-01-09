@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/strip.h"
 #include "liblp/liblp.h"
 #include "liblp/metadata_format.h"
 
@@ -33,6 +34,16 @@
 
 namespace cuttlefish {
 namespace {
+
+bool HasSlotSuffix(const std::string_view name) {
+  return absl::EndsWith(name, "_a") || absl::EndsWith(name, "_b");
+}
+
+std::string WithoutSlotSuffix(std::string_view name) {
+  absl::ConsumeSuffix(&name, "_a");
+  absl::ConsumeSuffix(&name, "_b");
+  return std::string(name);
+}
 
 class SuperImageAsBuildImpl : public AndroidBuild {
  public:
@@ -43,7 +54,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
   Result<std::set<std::string, std::less<void>>> LogicalPartitions() override {
     std::set<std::string, std::less<void>> ret;
     for (const LpMetadataPartition& partition : super_metadata_->partitions) {
-      ret.emplace(android::fs_mgr::GetPartitionName(partition));
+      std::string name = android::fs_mgr::GetPartitionName(partition);
+      ret.emplace(WithoutSlotSuffix(name));
     }
     return ret;
   }
@@ -56,7 +68,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
           super_metadata_->groups[partition.group_index]);
 
       if (absl::StrContains(group_name, match)) {
-        ret.emplace(android::fs_mgr::GetPartitionName(partition));
+        std::string name = android::fs_mgr::GetPartitionName(partition);
+        ret.emplace(WithoutSlotSuffix(name));
       }
     }
     return ret;
@@ -65,8 +78,9 @@ class SuperImageAsBuildImpl : public AndroidBuild {
   Result<std::set<std::string, std::less<void>>> AbPartitions() override {
     std::set<std::string, std::less<void>> ret;
     for (const LpMetadataPartition& partition : super_metadata_->partitions) {
-      if (partition.attributes & LP_PARTITION_ATTR_SLOT_SUFFIXED) {
-        ret.emplace(android::fs_mgr::GetPartitionName(partition));
+      std::string name = android::fs_mgr::GetPartitionName(partition);
+      if (HasSlotSuffix(name)) {
+        ret.emplace(WithoutSlotSuffix(name));
       }
     }
     return ret;
