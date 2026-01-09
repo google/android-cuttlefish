@@ -1,0 +1,27 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "struct",
+    srcs = ["struct.cc"],
+    hdrs = ["struct.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cf_cc_test(
+    name = "struct_test",
+    srcs = ["struct_test.cc"],
+    deps = [
+        "//cuttlefish/pretty:struct",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
