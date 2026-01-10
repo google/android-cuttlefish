@@ -5,6 +5,28 @@ package(
 )
 
 cf_cc_library(
+    name = "container",
+    srcs = ["container.cc"],
+    hdrs = ["container.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/strings:str_format",
+    ],
+)
+
+cf_cc_test(
+    name = "container_test",
+    srcs = ["container_test.cc"],
+    deps = [
+        "//cuttlefish/pretty:container",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "struct",
     srcs = ["struct.cc"],
     hdrs = ["struct.h"],
