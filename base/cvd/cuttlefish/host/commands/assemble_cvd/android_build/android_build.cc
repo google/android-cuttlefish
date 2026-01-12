@@ -16,7 +16,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 
 #include <functional>
-#include <optional>
 #include <ostream>
 #include <set>
 #include <string>
@@ -30,10 +29,14 @@ Result<std::set<std::string, std::less<void>>> AndroidBuild::Images() {
   return CF_ERRF("Unimplemented for '{}'", *this);
 }
 
-Result<std::string> AndroidBuild::ImageFile(
-    std::string_view name, std::optional<std::string_view> extract_dir) {
-  return CF_ERRF("Unimplemented for '{}': (name = '{}', extract_dir = '{}'",
-                 *this, name, extract_dir.value_or("(empty)"));
+Result<std::string> AndroidBuild::ImageFile(std::string_view name,
+                                            bool extract) {
+  return CF_ERRF("Unimplemented for '{}': (name = '{}', extract = {})", *this,
+                 name, extract);
+}
+
+Result<void> AndroidBuild::SetExtractDir(std::string_view dir) {
+  return CF_ERRF("Unimplemented for '{}': (dir = '{}'", *this, dir);
 }
 
 Result<std::set<std::string, std::less<void>>> AndroidBuild::AbPartitions() {

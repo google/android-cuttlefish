@@ -17,7 +17,6 @@
 
 #include <functional>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <set>
 #include <string>
@@ -51,8 +50,7 @@ class AndroidProductDirImpl : public AndroidBuild {
     return images;
   }
 
-  Result<std::string> ImageFile(std::string_view name,
-                                std::optional<std::string_view>) override {
+  Result<std::string> ImageFile(std::string_view name, bool) override {
     std::string image_path = absl::StrCat(path_, "/", name, kImgSuffix);
     CF_EXPECT(FileExists(image_path));
     return image_path;

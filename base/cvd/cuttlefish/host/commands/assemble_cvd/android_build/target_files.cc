@@ -80,11 +80,18 @@ class TargetFilesImpl : public AndroidBuild {
     return partitions;
   }
 
-  Result<std::string> ImageFile(
-      std::string_view name,
-      std::optional<std::string_view> extract_dir) override {
+  Result<std::string> ImageFile(std::string_view name, bool extract) override {
     std::string member_name = absl::StrCat(name, kImgSuffix);
-    return CF_EXPECT(archive_.MemberFilepath(member_name, extract_dir));
+    if (extract) {
+      return CF_EXPECT(archive_.MemberFilepath(member_name, std::nullopt));
+    } else {
+      return CF_EXPECT(archive_.MemberFilepath(member_name, extract_dir_));
+    }
+  }
+
+  Result<void> SetExtractDir(std::string_view dir) override {
+    extract_dir_ = dir;
+    return {};
   }
 
   Result<std::set<std::string, std::less<void>>> AbPartitions() override {
@@ -104,6 +111,7 @@ class TargetFilesImpl : public AndroidBuild {
   }
 
   BuildArchive archive_;
+  std::optional<std::string> extract_dir_;
 };
 
 Result<std::unique_ptr<AndroidBuild>> TargetFiles(BuildArchive archive) {
