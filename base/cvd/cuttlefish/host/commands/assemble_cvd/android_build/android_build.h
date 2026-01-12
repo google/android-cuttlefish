@@ -16,7 +16,6 @@
 #pragma once
 
 #include <functional>
-#include <optional>
 #include <ostream>
 #include <set>
 #include <string_view>
@@ -62,16 +61,28 @@ class AndroidBuild {
   virtual Result<std::set<std::string, std::less<void>>> Images();
   /*
    * A file on the host that represents an image. If the file is not already
-   * stored in a distinct file on the host, it is first saved to `extract_dir`
-   * and returned from there. If the file needs to be extracted and
-   * `extract_dir` is not provided, returns an error.
+   * stored in a distinct file on the host and `extract` is `true`, it is first
+   * saved to the directory provided in `SetExtractDir` and the path to the
+   * generated file is returned.  If `SetExtractDir` was never called and the
+   * file needs to be extracted, returns an error.
    *
    * It's possible for there to be an image file in `Images()` that cannot be
    * extracted to the filesystem, if a metadata file reports that an image or
    * partition should exist, but it's not actually present anywhere.
+   *
+   * In general callers should rely on the default `extract = true`, it is used
+   * inside the implementation to scan all `AndroidBuild` implementations for
+   * any that can provide the file without extracting it.
    */
-  virtual Result<std::string> ImageFile(
-      std::string_view name, std::optional<std::string_view> extract_dir = {});
+  virtual Result<std::string> ImageFile(std::string_view name,
+                                        bool extract = true);
+
+  /**
+   * Stores a directory to use for extracting generated files. `ImageFile` may
+   * store generated files here, and implementations may extract files here as
+   * part of the implementation of other methods.
+   */
+  virtual Result<void> SetExtractDir(std::string_view);
 
   virtual Result<std::set<std::string, std::less<void>>> AbPartitions();
 

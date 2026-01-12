@@ -17,7 +17,6 @@
 
 #include <functional>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <set>
 #include <string>
@@ -43,26 +42,38 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
     return CF_EXPECT(MergeSuccessful(&AndroidBuild::Images));
   }
 
-  Result<std::string> ImageFile(
-      std::string_view name,
-      std::optional<std::string_view> extract_dir) override {
+  Result<std::string> ImageFile(std::string_view name, bool extract) override {
     Result<std::string> res;
 
     // If the file is already extracted somewhere, prefer that version.
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
-      if (res = build->ImageFile(name, std::nullopt); res.ok()) {
+      if (res = CF_EXPECT(build.get())->ImageFile(name, false); res.ok()) {
         return res;
       }
     }
     // Now try to extract if it any of the builds have it.
-    CF_EXPECTF(extract_dir.has_value(), "Need extract_dir for '{}'", name);
+    CF_EXPECTF(!!extract, "'{}' has not been extracted anywhere.", name);
     for (const std::unique_ptr<AndroidBuild>& build : builds_) {
-      if (res = build->ImageFile(name, extract_dir); res.ok()) {
+      if (res = build->ImageFile(name, true); res.ok()) {
         return res;
       }
     }
     return CF_ERRF("Could not extract '{}' from {}", name,
                    static_cast<AndroidBuild&>(*this));
+  }
+
+  Result<void> SetExtractDir(std::string_view dir) override {
+    bool one_succeeded = false;
+    Result<void> res;
+    for (const std::unique_ptr<AndroidBuild>& build : builds_) {
+      res = CF_EXPECT(build.get())->SetExtractDir(dir);
+      one_succeeded |= res.ok();
+    }
+    if (!one_succeeded) {
+      CF_EXPECT(std::move(res));
+      return CF_ERR("unreachable");
+    }
+    return {};
   }
 
   Result<std::set<std::string, std::less<void>>> AbPartitions() override {
