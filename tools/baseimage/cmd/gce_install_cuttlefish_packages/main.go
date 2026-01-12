@@ -103,7 +103,11 @@ func mountAttachedDisk(project, zone, insName string) error {
 	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
 }
 
-func installCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
+func mayInstallCuttlefishDebs(project, zone, insName string, debSrcs []string) error {
+	if len(debSrcs) == 0 {
+		return nil
+	}
+
 	dstSrcs := []string{}
 	for _, src := range debSrcs {
 		dst := "/tmp/" + filepath.Base(src)
@@ -216,7 +220,7 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 		return fmt.Errorf("mountAttachedDisk error: %v", err)
 	}
 
-	if err := installCuttlefishDebs(project, zone, insName, opts.DebSrcs); err != nil {
+	if err := mayInstallCuttlefishDebs(project, zone, insName, opts.DebSrcs); err != nil {
 		return fmt.Errorf("install cuttlefish debs error: %v", err)
 	}
 
@@ -271,9 +275,6 @@ func main() {
 	}
 	if *image_name == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
-	}
-	if len(deb_srcs.Srcs) == 0 {
-		log.Fatal("usage: `-deb` must not be empty")
 	}
 	if *container_image_src == "" {
 		log.Fatal("usage: `-container-image-src` must not be empty")
