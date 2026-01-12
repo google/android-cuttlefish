@@ -242,7 +242,7 @@ jobs:
         tar -xvf debs_amd64.tar
         container/image-builder.sh -m dev
     - name: Save docker image
-      run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
+      run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration:latest
     - name: Publish docker image
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
@@ -264,7 +264,7 @@ jobs:
         tar -xvf debs_arm64.tar
         container/image-builder.sh -m dev
     - name: Save docker image
-      run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration
+      run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration:latest
     - name: Publish docker image
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
@@ -386,6 +386,34 @@ jobs:
       shell: bash
       run: |
         sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
+        # Wait for HO service to start.
+        sleep 10s
+        res=$( curl -v http://localhost:2080/cvds )
+        echo "response: ${res}"
+        test "${res}" = '{"cvds":[]}'
+        # Run create_from_images_zip_test e2e tests
+        cd e2etests
+        bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
+  podman-image-check:
+    runs-on: ubuntu-22.04
+    needs: [build-docker-image-amd64]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Download docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: cuttlefish-orchestration-amd64
+    - name: Load docker image as podman image
+      run: |
+        sudo apt install -y skopeo
+        sudo skopeo copy \
+          docker-archive:cuttlefish-orchestration.tar \
+          containers-storage:localhost/cuttlefish-orchestration:latest
+    - name: Run check
+      shell: bash
+      run: |
+        sudo podman run --privileged -d -p 2080:2080 localhost/cuttlefish-orchestration:latest
         # Wait for HO service to start.
         sleep 10s
         res=$( curl -v http://localhost:2080/cvds )
