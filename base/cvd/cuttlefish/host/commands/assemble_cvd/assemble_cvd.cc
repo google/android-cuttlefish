@@ -64,6 +64,7 @@
 #include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
@@ -408,6 +409,13 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
 
     for (const std::string& dir : RequiredDirectories(config)) {
       CF_EXPECT(EnsureDirectoryExists(dir, default_mode, default_group));
+    }
+
+    for (size_t index = 0; index < android_builds.Size(); index++) {
+      const CuttlefishConfig::InstanceSpecific& instance =
+          const_cast<const CuttlefishConfig&>(config).ForInstance(index);
+      AndroidBuild& build = android_builds.ForIndex(index);
+      CF_EXPECT(build.SetExtractDir(instance.instance_dir()));
     }
 
     if (!snapshot_path.empty()) {
