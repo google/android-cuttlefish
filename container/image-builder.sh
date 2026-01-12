@@ -85,6 +85,8 @@ case "${container_type}" in
     exit 1
 esac
 
+"${container_type}" pull "marketplace.gcr.io/google/debian12:latest"
+
 pushd $android_cuttlefish_root_dir
 "${container_type}" build \
   --force-rm \

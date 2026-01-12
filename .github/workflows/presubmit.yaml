@@ -239,6 +239,10 @@ jobs:
     - name: Build docker image
       shell: bash
       run: |
+        sudo apt install -y skopeo
+        skopeo copy \
+          docker://marketplace.gcr.io/google/debian12:latest \
+          docker-daemon:marketplace.gcr.io/google/debian12:latest
         tar -xvf debs_amd64.tar
         container/image-builder.sh -m dev
     - name: Save docker image
@@ -261,6 +265,10 @@ jobs:
     - name: Build docker image
       shell: bash
       run: |
+        sudo apt install -y skopeo
+        skopeo copy \
+          docker://marketplace.gcr.io/google/debian12:latest \
+          docker-daemon:marketplace.gcr.io/google/debian12:latest
         tar -xvf debs_arm64.tar
         container/image-builder.sh -m dev
     - name: Save docker image

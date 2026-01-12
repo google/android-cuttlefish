@@ -5,7 +5,7 @@
 ARG BUILD_OPTION=prod
 
 
-FROM debian:12 AS runner-base
+FROM marketplace.gcr.io/google/debian12:latest AS runner-base
 
 # Expose Operator Port (HTTP:1080, HTTPS:1443)
 EXPOSE 1080 1443
