@@ -29,6 +29,16 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "map",
+    hdrs = ["map.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:container",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "pretty",
     hdrs = ["pretty.h"],
 )
@@ -38,6 +48,7 @@ cf_cc_test(
     srcs = ["pretty_test.cc"],
     deps = [
         "//cuttlefish/pretty",
+        "//cuttlefish/pretty:map",
         "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:unique_ptr",
@@ -88,6 +99,7 @@ cf_cc_library(
     name = "unique_ptr",
     hdrs = ["unique_ptr.h"],
     deps = [
+        "//cuttlefish/pretty",
         "@abseil-cpp//absl/strings",
     ],
 )
@@ -96,6 +108,7 @@ cf_cc_library(
     name = "vector",
     hdrs = ["vector.h"],
     deps = [
+        "//cuttlefish/pretty",
         "//cuttlefish/pretty:container",
         "@abseil-cpp//absl/strings",
     ],
