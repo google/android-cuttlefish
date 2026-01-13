@@ -385,7 +385,16 @@ jobs:
     - name: Run check
       shell: bash
       run: |
-        sudo docker run --privileged -d -p 2080:2080 cuttlefish-orchestration:latest
+        sudo docker run \
+          -d \
+          --device /dev/kvm \
+          --device /dev/net/tun \
+          --device /dev/vhost-net \
+          --device /dev/vhost-vsock \
+          --cap-add NET_ADMIN \
+          --security-opt seccomp=unconfined \
+          -p 2080:2080 \
+          cuttlefish-orchestration:latest
         # Wait for HO service to start.
         sleep 10s
         res=$( curl -v http://localhost:2080/cvds )
@@ -413,7 +422,15 @@ jobs:
     - name: Run check
       shell: bash
       run: |
-        sudo podman run --privileged -d -p 2080:2080 localhost/cuttlefish-orchestration:latest
+        sudo podman run \
+          -d \
+          --device /dev/kvm \
+          --device /dev/net/tun \
+          --device /dev/vhost-net \
+          --device /dev/vhost-vsock \
+          --cap-add NET_ADMIN \
+          -p 2080:2080 \
+          localhost/cuttlefish-orchestration:latest
         # Wait for HO service to start.
         sleep 10s
         res=$( curl -v http://localhost:2080/cvds )
