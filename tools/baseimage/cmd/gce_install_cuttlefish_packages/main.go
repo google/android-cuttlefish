@@ -61,7 +61,6 @@ var (
 	image_name                          = flag.String("image-name", "", "output GCE image name")
 	deb_srcs                            = DebSrcsFlag{}
 	defaults_cuttlefish_integration_src = flag.String("defaults_cuttlefish_integration_src", "", "Path to file which will be written to /etc/defaults/cuttlefish-integration.")
-	container_image_src                 = flag.String("container-image-src", "", "local path to container image")
 )
 
 func init() {
@@ -74,7 +73,6 @@ type amendImageOpts struct {
 	SourceImage        string
 	ImageName          string
 	DebSrcs            []string
-	ContainerImageSrc  string
 }
 
 func uploadScripts(project, zone, insName string) error {
@@ -85,7 +83,6 @@ func uploadScripts(project, zone, insName string) error {
 		{"fill_available_disk_space.sh", scripts.FillAvailableDiskSpace},
 		{"mount_attached_disk.sh", scripts.MountAttachedDisk},
 		{"install_cuttlefish_debs.sh", scripts.InstallCuttlefishDebs},
-		{"load_cuttlefish_container_image.sh", scripts.LoadCuttlefishContainerImage},
 	}
 	for _, s := range list {
 		if err := gce.UploadBashScript(project, zone, insName, s.dstname, s.content); err != nil {
@@ -125,17 +122,6 @@ func maybeSetDefaultsCuttlefishIntegrationFile(project, zone, insName string) er
 		if err := gce.UploadFile(project, zone, insName, *defaults_cuttlefish_integration_src, mountpoint+defaultsCuttlefishIntegrationFile); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func loadCuttlefishContainerImage(project, zone, insName string, imageSrc string) error {
-	dst := "/tmp/" + filepath.Base(imageSrc)
-	if err := gce.UploadFile(project, zone, insName, imageSrc, dst); err != nil {
-		return fmt.Errorf("error uploading %s: %v", imageSrc, err)
-	}
-	if err := gce.RunCmd(project, zone, insName, "./load_cuttlefish_container_image.sh "+dst); err != nil {
-		return err
 	}
 	return nil
 }
@@ -224,10 +210,6 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 		return fmt.Errorf("couldn't set %s: %v", defaultsCuttlefishIntegrationFile, err)
 	}
 
-	if err := loadCuttlefishContainerImage(project, zone, insName, opts.ContainerImageSrc); err != nil {
-		return fmt.Errorf("install cuttlefish container error: %v", err)
-	}
-
 	// Reboot the instance to force a clean umount of the attached disk's file system.
 	if err := gce.RunCmd(project, zone, insName, "sudo reboot"); err != nil {
 		return err
@@ -275,9 +257,6 @@ func main() {
 	if len(deb_srcs.Srcs) == 0 {
 		log.Fatal("usage: `-deb` must not be empty")
 	}
-	if *container_image_src == "" {
-		log.Fatal("usage: `-container-image-src` must not be empty")
-	}
 	architecture, err := gce.ParseArch(*arch)
 	if err != nil {
 		log.Fatal(err)
@@ -289,7 +268,6 @@ func main() {
 		SourceImage:        *source_image,
 		ImageName:          *image_name,
 		DebSrcs:            deb_srcs.Srcs,
-		ContainerImageSrc:  *container_image_src,
 	}
 	if err := amendImageMain(*project, *zone, opts); err != nil {
 		log.Fatal(err)
