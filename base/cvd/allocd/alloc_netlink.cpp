@@ -70,47 +70,31 @@ int Prefix(std::string_view textual_netmask) {
 
 extern int RunExternalCommand(const std::string& name);
 
-bool AddTapIface(std::string_view name) {
+Result<void> AddTapIface(std::string_view name) {
   SharedFD tunfd = SharedFD::Open("/dev/net/tun", O_RDWR | O_CLOEXEC);
-  if (!tunfd->IsOpen()) {
-    LOG(ERROR) << "AddTapIface: open: " << tunfd->StrError();
-    return false;
-  }
+  CF_EXPECT(tunfd->IsOpen(), "AddTapIface: open: " << tunfd->StrError());
 
   struct ifreq ifr;
   strlcpy(ifr.ifr_name, std::string(name).c_str(), IFNAMSIZ);
   ifr.ifr_flags = IFF_TAP | IFF_VNET_HDR;
   ifr.ifr_flags |= IFF_TUN_EXCL;
   int r = tunfd->Ioctl(TUNSETIFF, (void*)&ifr);
-  if (r == -1) {
-    LOG(ERROR) << "AddTapIface: TUNSETIFF: " << tunfd->StrError();
-    return false;
-  }
+  CF_EXPECT(r != -1, "AddTapIface: TUNSETIFF: " << tunfd->StrError());
 
   struct group* g = getgrnam(kCvdNetworkGroupName);
-  if (g == NULL) {
-    LOG(ERROR) << "AddTapIface: getgrnam: " << tunfd->StrError();
-    return false;
-  }
+  CF_EXPECT(g != NULL, "AddTapIface: getgrnam: " << tunfd->StrError());
 
   r = tunfd->Ioctl(TUNSETGROUP, (void*)(intptr_t)g->gr_gid);
-  if (r == -1) {
-    LOG(ERROR) << "AddTapIface: TUNSETGROUP: " << tunfd->StrError();
-    return false;
-  }
+  CF_EXPECT(r != -1, "AddTapIface: TUNSETGROUP: " << tunfd->StrError());
 
   r = tunfd->Ioctl(TUNSETPERSIST, (void*)1);
-  if (r == -1) {
-    LOG(ERROR) << "AddTapIface: TUNSETPERSIST: " << tunfd->StrError();
-    return false;
-  }
+  CF_EXPECT(r != -1, "AddTapIface: TUNSETPERSIST: " << tunfd->StrError());
 
   tunfd->Close();
-
-  return true;
+  return {};
 }
 
-bool ShutdownIface(std::string_view name) {
+Result<void> ShutdownIface(std::string_view name) {
   VLOG(0) << "ShutdownIface: " << name;
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -118,14 +102,11 @@ bool ShutdownIface(std::string_view name) {
   NetlinkRequest req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
   req.AddIfInfo(0, false);
   req.AddString(IFLA_IFNAME, std::string(name));
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "ShutdownIface: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "ShutdownIface");
+  return {};
 }
 
-bool BringUpIface(std::string_view name) {
+Result<void> BringUpIface(std::string_view name) {
   VLOG(0) << "BringUpIface: " << name;
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -133,15 +114,12 @@ bool BringUpIface(std::string_view name) {
   NetlinkRequest req(RTM_NEWLINK, NLM_F_REQUEST | NLM_F_ACK);
   req.AddIfInfo(0, true);
   req.AddString(IFLA_IFNAME, std::string(name));
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "BringUpIface: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "BringUpIface");
+  return {};
 }
 
-bool AddGateway(std::string_view name, std::string_view gateway,
-                std::string_view netmask) {
+Result<void> AddGateway(std::string_view name, std::string_view gateway,
+                        std::string_view netmask) {
   VLOG(0) << "AddGateway: " << name << ", " << gateway << netmask;
   auto index = Index(name);
   PCHECK(index.ok()) << "Index: " << name;
@@ -155,19 +133,16 @@ bool AddGateway(std::string_view name, std::string_view gateway,
   req.AddInAddr(IFA_LOCAL, &inaddr);
   req.AddInAddr(IFA_ADDRESS, &inaddr);
 
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "AddGateway: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "AddGateway");
+  return {};
 }
 
-bool DestroyGateway(std::string_view name, std::string_view gateway,
-                    std::string_view netmask) {
+Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
+                            std::string_view netmask) {
   VLOG(0) << "DestroyGateway: " << name << ", " << gateway << netmask;
   auto index = Index(name);
   if (!index.ok()) {
-    return false;
+    return {};  // Nothing to delete.
   }
 
   auto factory = NetlinkClientFactory::Default();
@@ -179,14 +154,12 @@ bool DestroyGateway(std::string_view name, std::string_view gateway,
   req.AddInAddr(IFA_LOCAL, &inaddr);
   req.AddInAddr(IFA_ADDRESS, &inaddr);
 
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "DestroyGateway: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "DestroyGateway");
+  return {};
 }
 
-bool LinkTapToBridge(std::string_view tap_name, std::string_view bridge_name) {
+Result<void> LinkTapToBridge(std::string_view tap_name,
+                             std::string_view bridge_name) {
   VLOG(0) << "LinkTapToBridge: " << tap_name << ", " << bridge_name;
   auto tap_index = Index(tap_name);
   PCHECK(tap_index.ok()) << "Index: " << tap_name;
@@ -200,18 +173,15 @@ bool LinkTapToBridge(std::string_view tap_name, std::string_view bridge_name) {
   req.AddIfInfo(*tap_index, true);
   req.AddInt(IFLA_MASTER, *bridge_index);
 
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "LinkTapToBridge: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "LinkTapToBridge");
+  return {};
 }
 
-bool DeleteIface(std::string_view name) {
+Result<void> DeleteIface(std::string_view name) {
   VLOG(0) << "DeleteIface: " << name;
   auto index = Index(name);
   if (!index.ok()) {
-    return false;
+    return {};  // Nothing to delete.
   }
 
   auto factory = NetlinkClientFactory::Default();
@@ -220,24 +190,22 @@ bool DeleteIface(std::string_view name) {
   NetlinkRequest req(RTM_DELLINK, NLM_F_REQUEST | NLM_F_ACK);
   req.AddIfInfo(*index, false);
 
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "DeleteIface: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "DeleteIface");
+  return {};
 }
 
-bool BridgeExists(std::string_view name) {
+Result<bool> BridgeExists(std::string_view name) {
   VLOG(0) << "BridgeExists: " << name;
   auto index = Index(name);
-  if (!index.ok() && errno == ENODEV) {
+  if (!index.ok()) {
+    CF_EXPECT(errno == ENODEV);
     return false;
   }
 
   return true;
 }
 
-bool CreateBridge(std::string_view name) {
+Result<void> CreateBridge(std::string_view name) {
   VLOG(0) << "CreateBridge: " << name;
   auto factory = NetlinkClientFactory::Default();
   std::unique_ptr<NetlinkClient> nl = factory->New(NETLINK_ROUTE);
@@ -255,14 +223,11 @@ bool CreateBridge(std::string_view name) {
   req.PopList();
   req.PopList();
 
-  bool res = nl->Send(req);
-  if (!res) {
-    LOG(ERROR) << "CreateBridge: failed";
-  }
-  return res;
+  CF_EXPECT(nl->Send(req), "CreateBridge");
+  return {};
 }
 
-bool IptableConfig(std::string_view network, bool add) {
+Result<void> IptableConfig(std::string_view network, bool add) {
   // TODO: Use NETLINK_NETFILTER.
   std::stringstream ss;
   ss << "iptables -t nat " << (add ? "-A" : "-D") << " POSTROUTING -s "
@@ -270,9 +235,8 @@ bool IptableConfig(std::string_view network, bool add) {
 
   auto command = ss.str();
   LOG(INFO) << "iptable_config: " << command;
-  int status = RunExternalCommand(command);
-
-  return status == 0;
+  CF_EXPECT(RunExternalCommand(command) == 0, "IptableConfig");
+  return {};
 }
 
 }  // namespace cuttlefish
