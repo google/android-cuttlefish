@@ -65,7 +65,7 @@ bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
     return false;
   }
 
-  if (!LinkTapToBridge(name, bridge_name)) {
+  if (!LinkTapToBridge(name, bridge_name).ok()) {
     CleanupEthernetIface(name);
     return false;
   }
@@ -101,11 +101,11 @@ bool CreateMobileIface(std::string_view name, uint16_t id,
     return false;
   }
 
-  if (!AddGateway(name, gateway, netmask)) {
+  if (!AddGateway(name, gateway, netmask).ok()) {
     DestroyIface(name);
   }
 
-  if (!IptableConfig(network, true)) {
+  if (!IptableConfig(network, true).ok()) {
     DestroyGateway(name, gateway, netmask);
     DestroyIface(name);
     return false;
@@ -136,12 +136,12 @@ void CleanupEthernetIface(std::string_view name) { DestroyIface(name); }
 
 bool CreateTap(std::string_view name) {
   LOG(INFO) << "Attempt to create tap interface: " << name;
-  if (!AddTapIface(name)) {
+  if (!AddTapIface(name).ok()) {
     LOG(WARNING) << "Failed to create tap interface: " << name;
     return false;
   }
 
-  if (!BringUpIface(name)) {
+  if (!BringUpIface(name).ok()) {
     LOG(WARNING) << "Failed to bring up tap interface: " << name;
     DeleteIface(name);
     return false;
@@ -151,14 +151,14 @@ bool CreateTap(std::string_view name) {
 }
 
 bool DestroyIface(std::string_view name) {
-  if (!ShutdownIface(name)) {
+  if (!ShutdownIface(name).ok()) {
     LOG(WARNING) << "Failed to shutdown tap interface: " << name;
     // the interface might have already shutdown ... so ignore and try to remove
     // the interface. In the future we could read from the pipe and handle this
     // case more elegantly
   }
 
-  if (!DeleteIface(name)) {
+  if (!DeleteIface(name).ok()) {
     LOG(WARNING) << "Failed to delete tap interface: " << name;
     return false;
   }
@@ -175,7 +175,7 @@ std::optional<std::string> GetUserName(uid_t uid) {
   return std::nullopt;
 }
 
-bool DestroyBridge(std::string_view name) { return DeleteIface(name); }
+bool DestroyBridge(std::string_view name) { return DeleteIface(name).ok(); }
 
 bool SetupBridgeGateway(std::string_view bridge_name,
                         std::string_view ipaddr) {
@@ -185,7 +185,7 @@ bool SetupBridgeGateway(std::string_view bridge_name,
   auto network = absl::StrFormat("%s.0%s", ipaddr, netmask);
   auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
-  if (!AddGateway(bridge_name, gateway, netmask)) {
+  if (!AddGateway(bridge_name, gateway, netmask).ok()) {
     return false;
   }
 
@@ -198,7 +198,7 @@ bool SetupBridgeGateway(std::string_view bridge_name,
 
   config.has_dnsmasq = true;
 
-  auto ret = IptableConfig(network, true);
+  auto ret = IptableConfig(network, true).ok();
   if (!ret) {
     CleanupBridgeGateway(bridge_name, ipaddr, config);
     LOG(WARNING) << "Failed to setup ip tables";
@@ -289,12 +289,12 @@ bool StopDnsmasq(std::string_view name) {
 
 bool CreateEthernetBridgeIface(std::string_view name,
                                std::string_view ipaddr) {
-  if (BridgeExists(name)) {
+  if (BridgeExists(name).ok()) {
     LOG(INFO) << "Bridge " << name << " exists already, doing nothing.";
     return true;
   }
 
-  if (!CreateBridge(name)) {
+  if (!CreateBridge(name).ok()) {
     return false;
   }
 

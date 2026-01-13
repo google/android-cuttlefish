@@ -17,21 +17,24 @@
 #include <string>
 #include <string_view>
 
+#include "cuttlefish/result/result.h"
+
 namespace cuttlefish {
 
 inline constexpr char kCvdNetworkGroupName[] = "cvdnetwork";
 
-bool AddTapIface(std::string_view name);
-bool ShutdownIface(std::string_view name);
-bool BringUpIface(std::string_view name);
-bool AddGateway(std::string_view name, std::string_view gateway,
-                std::string_view netmask);
-bool DestroyGateway(std::string_view name, std::string_view gateway,
-                    std::string_view netmask);
-bool LinkTapToBridge(std::string_view tap_name, std::string_view bridge_name);
-bool DeleteIface(std::string_view name);
-bool BridgeExists(std::string_view name);
-bool CreateBridge(std::string_view name);
-bool IptableConfig(std::string_view network, bool add);
+Result<void> AddTapIface(std::string_view name);
+Result<void> ShutdownIface(std::string_view name);
+Result<void> BringUpIface(std::string_view name);
+Result<void> AddGateway(std::string_view name, std::string_view gateway,
+                        std::string_view netmask);
+Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
+                            std::string_view netmask);
+Result<void> LinkTapToBridge(std::string_view tap_name,
+                             std::string_view bridge_name);
+Result<void> DeleteIface(std::string_view name);
+Result<bool> BridgeExists(std::string_view name);
+Result<void> CreateBridge(std::string_view name);
+Result<void> IptableConfig(std::string_view network, bool add);
 
 }  // namespace cuttlefish
