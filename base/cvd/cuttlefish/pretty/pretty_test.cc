@@ -16,6 +16,7 @@
 
 #include "cuttlefish/pretty/pretty.h"
 
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -23,6 +24,7 @@
 #include "absl/strings/str_cat.h"
 #include "gtest/gtest.h"
 
+#include "cuttlefish/pretty/map.h"
 #include "cuttlefish/pretty/string.h"
 #include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/pretty/unique_ptr.h"
@@ -49,6 +51,7 @@ struct OuterStruct {
   std::vector<InnerStruct> nested_vector;
   std::unique_ptr<int> int_ptr_set;
   std::unique_ptr<int> int_ptr_unset;
+  std::map<std::string, InnerStruct> nested_map;
 };
 
 PrettyStruct Pretty(const OuterStruct& outer,
@@ -58,7 +61,8 @@ PrettyStruct Pretty(const OuterStruct& outer,
       .Member("nested_member", outer.nested_member)
       .Member("nested_vector", outer.nested_vector)
       .Member("int_ptr_set", outer.int_ptr_set)
-      .Member("int_ptr_unset", outer.int_ptr_unset);
+      .Member("int_ptr_unset", outer.int_ptr_unset)
+      .Member("nested_map", outer.nested_map);
 }
 
 }  // namespace
@@ -84,6 +88,19 @@ TEST(Pretty, OuterInnerStruct) {
           },
       .int_ptr_set = std::make_unique<int>(5),
       .int_ptr_unset = std::unique_ptr<int>(),
+      .nested_map =
+          {
+              {"d",
+               {
+                   .inner_string = "d",
+                   .inner_number = 4,
+               }},
+              {"e",
+               {
+                   .inner_string = "e",
+                   .inner_number = 5,
+               }},
+          },
   };
 
   std::string expected(absl::StripAsciiWhitespace(R"(
@@ -108,7 +125,17 @@ OuterStruct {
     }
   },
   int_ptr_set: 5,
-  int_ptr_unset: (nullptr)
+  int_ptr_unset: (nullptr),
+  nested_map: {
+    "d" => InnerStruct {
+      inner_string: "d",
+      inner_number: 4
+    },
+    "e" => InnerStruct {
+      inner_string: "e",
+      inner_number: 5
+    }
+  }
 }
   )"));
 
