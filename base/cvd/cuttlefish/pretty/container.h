@@ -19,26 +19,16 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/string.h"  // IWYU pragma: export
+
 namespace cuttlefish {
-namespace {
-
-template <typename T>
-constexpr bool ShouldQuote() {
-  using Simplified = std::decay_t<T>;
-  bool is_string = std::is_same_v<Simplified, std::string>;
-  bool is_string_view = std::is_same_v<Simplified, std::string_view>;
-  bool is_char_ptr = std::is_same_v<Simplified, char*>;
-  return is_string || is_string_view || is_char_ptr;
-};
-
-}  // namespace
 
 /**
  * Pretty-prints a container. Invoke this using the `PrettyContainer` overloads.
@@ -87,19 +77,16 @@ PrettyContainerType PrettyContainer(const T& container,
                                     FmtMemberFn format_member_fn) {
   PrettyContainerType pretty;
   for (const auto& member : container) {
-    std::string formatted =
-        ShouldQuote<decltype(member)>()
-            ? absl::StrCat("\"", format_member_fn(member), "\"")
-            : absl::StrCat(format_member_fn(member));
-    pretty.MemberInternal(formatted);
+    pretty.MemberInternal(absl::StrCat(format_member_fn(member)));
   }
   return pretty;
 }
 
 template <typename T>
 PrettyContainerType PrettyContainer(const T& container) {
-  return PrettyContainer(container,
-                         [](auto&& v) { return std::forward<decltype(v)>(v); });
+  return PrettyContainer(container, [](const auto& member) {
+    return Pretty(member, PrettyAdlPlaceholder());
+  });
 }
 
 std::ostream& operator<<(std::ostream& out, const PrettyContainerType&);

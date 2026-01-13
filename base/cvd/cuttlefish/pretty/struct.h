@@ -25,6 +25,9 @@
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/string.h"  // IWYU pragma: export
+
 namespace cuttlefish {
 
 /**
@@ -59,7 +62,8 @@ class PrettyStruct {
 
   template <typename T>
   PrettyStruct& Member(std::string_view name, const T& value) & {
-    MemberInternal(absl::StrCat(name, ": ", value));
+    MemberInternal(
+        absl::StrCat(name, ": ", Pretty(value, PrettyAdlPlaceholder())));
     return *this;
   }
 
@@ -68,14 +72,6 @@ class PrettyStruct {
     this->Member(name, value);
     return std::move(*this);
   }
-
-  // String members are quoted
-  PrettyStruct& Member(std::string_view name, std::string_view value) &;
-  PrettyStruct Member(std::string_view name, std::string_view value) &&;
-  PrettyStruct& Member(std::string_view name, const char* value) &;
-  PrettyStruct Member(std::string_view name, const char* value) &&;
-  PrettyStruct& Member(std::string_view name, const std::string& value) &;
-  PrettyStruct Member(std::string_view name, const std::string& value) &&;
 
   template <typename Sink>
   friend void AbslStringify(Sink& sink, const PrettyStruct& ps) {

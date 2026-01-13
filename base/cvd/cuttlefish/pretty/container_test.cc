@@ -40,11 +40,11 @@ void ExpectFormatsTo(const PrettyContainerType& ps,
 
 }  // namespace
 
-TEST(PrettyStruct, Empty) {
+TEST(PrettyContainer, Empty) {
   ExpectFormatsTo(PrettyContainer(std::vector<int>{}), "{}");
 }
 
-TEST(PrettyStruct, OneMember) {
+TEST(PrettyContainer, OneMember) {
   ExpectFormatsTo(PrettyContainer(std::vector<int>{1}), R"(
 {
   1
@@ -52,7 +52,7 @@ TEST(PrettyStruct, OneMember) {
 )");
 }
 
-TEST(PrettyStruct, StringMember) {
+TEST(PrettyContainer, StringMember) {
   ExpectFormatsTo(PrettyContainer(std::vector<std::string_view>{"abc"}), R"(
 {
   "abc"
@@ -60,7 +60,7 @@ TEST(PrettyStruct, StringMember) {
 )");
 }
 
-TEST(PrettyStruct, TwoMembers) {
+TEST(PrettyContainer, TwoMembers) {
   ExpectFormatsTo(PrettyContainer(std::vector<int>{1, 2}), R"(
 {
   1,
@@ -69,7 +69,7 @@ TEST(PrettyStruct, TwoMembers) {
 )");
 }
 
-TEST(PrettyStruct, MembersWithNewlines) {
+TEST(PrettyContainer, MembersWithNewlines) {
   ExpectFormatsTo(PrettyContainer(std::vector<std::string_view>{"abc\ndef"}),
                   R"(
 {
@@ -79,7 +79,7 @@ TEST(PrettyStruct, MembersWithNewlines) {
 )");
 }
 
-TEST(PrettyStruct, NestedMember) {
+TEST(PrettyContainer, NestedMember) {
   std::vector<std::vector<int>> container = {{1, 2}, {3, 4}};
   ExpectFormatsTo(PrettyContainer(container, PrettyContainer<std::vector<int>>),
                   R"(
