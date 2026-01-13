@@ -48,6 +48,13 @@ namespace cuttlefish {
  */
 class PrettyContainerType {
  public:
+  template <typename Iterator, typename FmtIteratorFn>
+  friend PrettyContainerType PrettyIterable(Iterator begin, Iterator end);
+
+  template <typename Iterator, typename FmtIteratorFn>
+  friend PrettyContainerType PrettyIterable(Iterator begin, Iterator end,
+                                            FmtIteratorFn format_iterator_fn);
+
   template <typename T, typename FmtMemberFn>
   friend PrettyContainerType PrettyContainer(const T& container,
                                              FmtMemberFn format_member_fn);
@@ -72,14 +79,30 @@ class PrettyContainerType {
   std::vector<std::string> members_;
 };
 
+template <typename Iterator, typename FmtIteratorFn>
+PrettyContainerType PrettyIterable(Iterator begin, Iterator end,
+                                   FmtIteratorFn format_iterator_fn) {
+  PrettyContainerType pretty;
+  for (auto it = begin; it != end; it++) {
+    pretty.MemberInternal(absl::StrCat(format_iterator_fn(it)));
+  }
+  return pretty;
+}
+
+template <typename Iterator, typename FmtIteratorFn>
+PrettyContainerType PrettyIterable(Iterator begin, Iterator end) {
+  return PrettyIterable(begin, end, [](const auto& iterator) {
+    return Pretty(*iterator, PrettyAdlPlaceholder());
+  });
+}
+
 template <typename T, typename FmtMemberFn>
 PrettyContainerType PrettyContainer(const T& container,
                                     FmtMemberFn format_member_fn) {
-  PrettyContainerType pretty;
-  for (const auto& member : container) {
-    pretty.MemberInternal(absl::StrCat(format_member_fn(member)));
-  }
-  return pretty;
+  return PrettyIterable(std::begin(container), std::end(container),
+                        [&format_member_fn](const auto& iterator) {
+                          return format_member_fn(*iterator);
+                        });
 }
 
 template <typename T>
