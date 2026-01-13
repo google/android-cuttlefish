@@ -13,27 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/pretty/struct.h"
+#pragma once
 
-#include <ostream>
+#include <string>
 #include <string_view>
 
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_replace.h"
+#include "cuttlefish/pretty/pretty.h"
 
 namespace cuttlefish {
 
-PrettyStruct::PrettyStruct(std::string_view name) : name_(name) {}
+/** Strings are quoted to distinguish them from other text. */
 
-void PrettyStruct::MemberInternal(std::string_view line) {
-  members_.emplace_back(absl::StrReplaceAll(line, {{"\n", "\n  "}}));
-}
+// Necessary for operator overloading precedence on Pretty<...>()
+std::string Pretty(const std::string_view& value,
+                   PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
-std::ostream& operator<<(std::ostream& out, const PrettyStruct& ps) {
-  return out << absl::StreamFormat("%v", ps);
-}
+std::string Pretty(const char* const& value,
+                   PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
-// For libfmt
-std::string format_as(const PrettyStruct& ps) { return absl::StrCat(ps); }
+std::string Pretty(const std::string& value,
+                   PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
 }  // namespace cuttlefish

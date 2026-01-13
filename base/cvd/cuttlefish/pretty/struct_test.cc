@@ -17,10 +17,11 @@
 #include "cuttlefish/pretty/struct.h"
 
 #include <string_view>
-
 #include "absl/strings/ascii.h"
 #include "fmt/format.h"
 #include "gtest/gtest.h"
+
+#include "cuttlefish/pretty/string.h"
 
 namespace cuttlefish {
 namespace {

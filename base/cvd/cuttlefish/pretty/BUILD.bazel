@@ -9,6 +9,8 @@ cf_cc_library(
     srcs = ["container.cc"],
     hdrs = ["container.h"],
     deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:string",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -27,10 +29,43 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "pretty",
+    hdrs = ["pretty.h"],
+)
+
+cf_cc_test(
+    name = "pretty_test",
+    srcs = ["pretty_test.cc"],
+    deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:string",
+        "//cuttlefish/pretty:struct",
+        "//cuttlefish/pretty:unique_ptr",
+        "//cuttlefish/pretty:vector",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "string",
+    srcs = ["string.cc"],
+    hdrs = ["string.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "struct",
     srcs = ["struct.cc"],
     hdrs = ["struct.h"],
     deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:string",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
     ],
@@ -40,10 +75,28 @@ cf_cc_test(
     name = "struct_test",
     srcs = ["struct_test.cc"],
     deps = [
+        "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "unique_ptr",
+    hdrs = ["unique_ptr.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "vector",
+    hdrs = ["vector.h"],
+    deps = [
+        "//cuttlefish/pretty:container",
+        "@abseil-cpp//absl/strings",
     ],
 )
