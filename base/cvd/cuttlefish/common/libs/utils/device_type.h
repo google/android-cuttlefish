@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <ostream>
 #include <string_view>
 
 namespace cuttlefish {
@@ -32,5 +33,16 @@ enum class DeviceType {
 
 // Parse device type android-info.txt config field.
 DeviceType ParseDeviceType(std::string_view type_name);
+std::string_view DeviceTypeToStringView(DeviceType);
+
+std::ostream& operator<<(std::ostream&, DeviceType);
+
+template <typename Sink>
+void AbslStringify(Sink& sink, DeviceType device_type) {
+  sink.Append(DeviceTypeToStringView(device_type));
+}
+
+// for libfmt
+std::string_view format_as(DeviceType);
 
 }  // namespace cuttlefish
