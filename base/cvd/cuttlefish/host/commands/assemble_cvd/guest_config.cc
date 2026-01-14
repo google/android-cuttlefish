@@ -44,6 +44,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
+#include "cuttlefish/pretty/optional.h"
+#include "cuttlefish/pretty/string.h"
 
 namespace cuttlefish {
 namespace {
@@ -223,6 +225,31 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
 }
 
 }  // namespace
+
+PrettyStruct Pretty(const GuestConfig& config, PrettyAdlPlaceholder) {
+  return PrettyStruct("GuestConfig")
+      .Member("target_arch", config.target_arch)
+      .Member("device_type", config.device_type)
+      .Member("bootconfig_supported", config.bootconfig_supported)
+      .Member("hctr2_supported", config.hctr2_supported)
+      .Member("android_version_number", config.android_version_number)
+      .Member("gfxstream_supported", config.gfxstream_supported)
+      .Member("gfxstream_gl_program_binary_link_status_supported",
+              config.gfxstream_gl_program_binary_link_status_supported)
+      .Member("vhost_user_vsock", config.vhost_user_vsock)
+      .Member("supports_bgra_framebuffers", config.supports_bgra_framebuffers)
+      .Member("prefer_drm_virgl_when_supported",
+              config.prefer_drm_virgl_when_supported)
+      .Member("mouse_supported", config.mouse_supported)
+      .Member("gamepad_supported", config.gamepad_supported)
+      .Member("ti50_emulator", config.ti50_emulator)
+      .Member("custom_keyboard_config", config.custom_keyboard_config)
+      .Member("domkey_mapping_config", config.domkey_mapping_config)
+      .Member("output_audio_streams_count", config.output_audio_streams_count)
+      .Member("audio_settings", config.audio_settings)
+      .Member("enforce_mac80211_hwsim", config.enforce_mac80211_hwsim)
+      .Member("blank_data_image_mb", config.blank_data_image_mb);
+}
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
     const BootImageFlag& boot_image, const KernelPathFlag& kernel_path,
