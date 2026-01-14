@@ -75,6 +75,27 @@ Os HostOs(std::string_view os_str) {
 
 }  // namespace
 
+std::string_view ArchToStringView(Arch arch) {
+  switch (arch) {
+    case Arch::Arm64:
+      return "arm64";
+    case Arch::Arm:
+      return "arm";
+    case Arch::RiscV64:
+      return "riscv64";
+    case Arch::X86_64:
+      return "x86_64";
+    case Arch::X86:
+      return "x86";
+  }
+}
+
+std::ostream& operator<<(std::ostream& out, Arch arch) {
+  return out << ArchToStringView(arch);
+}
+
+std::string_view format_as(Arch arch) { return ArchToStringView(arch); }
+
 /** Returns e.g. aarch64, x86_64, etc */
 const std::string& HostArchStr() {
   static android::base::NoDestructor<std::string> arch(
@@ -97,21 +118,6 @@ bool IsHostCompatible(Arch arch) {
   Arch host_arch = HostArch();
   return arch == host_arch || (arch == Arch::Arm && host_arch == Arch::Arm64) ||
          (arch == Arch::X86 && host_arch == Arch::X86_64);
-}
-
-std::ostream& operator<<(std::ostream& out, Arch arch) {
-  switch (arch) {
-    case Arch::Arm:
-      return out << "arm";
-    case Arch::Arm64:
-      return out << "arm64";
-    case Arch::RiscV64:
-      return out << "riscv64";
-    case Arch::X86:
-      return out << "x86";
-    case Arch::X86_64:
-      return out << "x86_64";
-  }
 }
 
 std::ostream& operator<<(std::ostream& out, Os arch) {
