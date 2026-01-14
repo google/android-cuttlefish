@@ -43,4 +43,33 @@ DeviceType ParseDeviceType(std::string_view type_name) {
   }
 }
 
+std::string_view DeviceTypeToStringView(DeviceType device_type) {
+  switch (device_type) {
+    case DeviceType::Unknown:
+      return "unknown";
+    case DeviceType::Phone:
+      return "phone";
+    case DeviceType::Wear:
+      return "wear";
+    case DeviceType::Auto:
+      return "auto";
+    case DeviceType::Foldable:
+      return "foldable";
+    case DeviceType::Tv:
+      return "tv";
+    case DeviceType::Minidroid:
+      return "minidroid";
+    case DeviceType::Go:
+      return "go";
+  }
+}
+
+std::ostream& operator<<(std::ostream& out, DeviceType device_type) {
+  return out << DeviceTypeToStringView(device_type);
+}
+
+std::string_view format_as(DeviceType device_type) {
+  return DeviceTypeToStringView(device_type);
+}
+
 }  // namespace cuttlefish
