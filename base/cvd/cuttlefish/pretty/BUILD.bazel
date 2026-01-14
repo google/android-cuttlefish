@@ -29,6 +29,28 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "json",
+    srcs = ["json.cc"],
+    hdrs = ["json.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
+    name = "json_test",
+    srcs = ["json_test.cc"],
+    deps = [
+        "//cuttlefish/pretty:json",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
     name = "map",
     hdrs = ["map.h"],
     deps = [
