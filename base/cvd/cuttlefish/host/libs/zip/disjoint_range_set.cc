@@ -45,7 +45,10 @@ class Range {
     return Range(std::min(start_, other.start_), std::max(end_, other.end_));
   }
 
-  bool operator<(const Range& other) const { return start_ < other.start_; }
+  bool operator<(const Range& other) const {
+    return start_ < other.start_ ||
+           (start_ == other.start_ && end_ > other.end_);
+  }
   bool operator==(const Range& other) const {
     return start_ == other.start_ && end_ == other.end_;
   }
