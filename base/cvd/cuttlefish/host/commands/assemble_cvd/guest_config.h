@@ -24,8 +24,9 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
-
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 
 namespace cuttlefish {
 
@@ -50,6 +51,9 @@ struct GuestConfig {
   std::optional<bool> enforce_mac80211_hwsim;
   int blank_data_image_mb = 0;
 };
+
+PrettyStruct Pretty(const GuestConfig&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
     const BootImageFlag&, const KernelPathFlag& kernel_path,

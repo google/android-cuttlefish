@@ -70,6 +70,7 @@
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/posix/symlink.h"
+#include "cuttlefish/pretty/vector.h"
 
 namespace cuttlefish {
 namespace {
@@ -660,6 +661,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   // Depends on ResolveInstanceFiles to set flag globals
   std::vector<GuestConfig> guest_configs =
       CF_EXPECT(ReadGuestConfig(boot_image, kernel_path, system_image_dir));
+
+  VLOG(0) << "Guest configs: " << Pretty(guest_configs);
 
   VmManagerFlag vm_manager_flag =
       CF_EXPECT(VmManagerFlag::FromGlobalGflags(guest_configs));
