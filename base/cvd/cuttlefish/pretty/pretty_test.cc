@@ -18,6 +18,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "absl/strings/ascii.h"
@@ -25,6 +26,7 @@
 #include "gtest/gtest.h"
 
 #include "cuttlefish/pretty/map.h"
+#include "cuttlefish/pretty/optional.h"
 #include "cuttlefish/pretty/string.h"
 #include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/pretty/unique_ptr.h"
@@ -52,6 +54,8 @@ struct OuterStruct {
   std::unique_ptr<int> int_ptr_set;
   std::unique_ptr<int> int_ptr_unset;
   std::map<std::string, InnerStruct> nested_map;
+  std::optional<int> int_opt_set;
+  std::optional<int> int_opt_unset;
 };
 
 PrettyStruct Pretty(const OuterStruct& outer,
@@ -62,7 +66,9 @@ PrettyStruct Pretty(const OuterStruct& outer,
       .Member("nested_vector", outer.nested_vector)
       .Member("int_ptr_set", outer.int_ptr_set)
       .Member("int_ptr_unset", outer.int_ptr_unset)
-      .Member("nested_map", outer.nested_map);
+      .Member("nested_map", outer.nested_map)
+      .Member("int_opt_set", outer.int_opt_set)
+      .Member("int_opt_unset", outer.int_opt_unset);
 }
 
 }  // namespace
@@ -101,6 +107,8 @@ TEST(Pretty, OuterInnerStruct) {
                    .inner_number = 5,
                }},
           },
+      .int_opt_set = 6,
+      .int_opt_unset = std::optional<int>(),
   };
 
   std::string expected(absl::StripAsciiWhitespace(R"(
@@ -135,7 +143,9 @@ OuterStruct {
       inner_string: "e",
       inner_number: 5
     }
-  }
+  },
+  int_opt_set: 6,
+  int_opt_unset: (absent)
 }
   )"));
 
