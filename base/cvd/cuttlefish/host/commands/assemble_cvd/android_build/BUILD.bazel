@@ -178,6 +178,7 @@ cf_cc_library(
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
     deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",

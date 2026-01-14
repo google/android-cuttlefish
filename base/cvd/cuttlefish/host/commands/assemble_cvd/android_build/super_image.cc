@@ -15,6 +15,9 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/super_image.h"
 
+#include <stdint.h>
+#include <unistd.h>
+
 #include <functional>
 #include <memory>
 #include <ostream>
@@ -25,10 +28,12 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 #include "liblp/liblp.h"
 #include "liblp/metadata_format.h"
 
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/result/result.h"
 
@@ -45,11 +50,98 @@ std::string WithoutSlotSuffix(std::string_view name) {
   return std::string(name);
 }
 
+Result<std::vector<LpMetadataExtent>> PartitionExtents(
+    const android::fs_mgr::LpMetadata& metadata, std::string_view name) {
+  for (const LpMetadataPartition& partition : metadata.partitions) {
+    std::string partition_name = android::fs_mgr::GetPartitionName(partition);
+    if (name != WithoutSlotSuffix(partition_name)) {
+      continue;
+    }
+    std::vector<LpMetadataExtent> extents;
+    for (uint32_t i = 0; i < partition.num_extents; i++) {
+      CF_EXPECT_LE(i + partition.first_extent_index, metadata.extents.size());
+      extents.emplace_back(metadata.extents[i + partition.first_extent_index]);
+    }
+    return extents;
+  }
+  return CF_ERRF("Could not find partition with name '{}'", name);
+}
+
+Result<void> ExtractPartition(SharedFD source,
+                              const std::vector<LpMetadataExtent>& extents,
+                              SharedFD destination) {
+  CF_EXPECT_EQ(destination->LSeek(0, SEEK_SET), 0, destination->StrError());
+  for (const LpMetadataExtent& extent : extents) {
+    uint64_t length = extent.num_sectors * LP_SECTOR_SIZE;
+    switch (extent.target_type) {
+      case LP_TARGET_TYPE_LINEAR: {
+        uint64_t offset = extent.target_data * LP_SECTOR_SIZE;
+        CF_EXPECT_EQ(source->LSeek(offset, SEEK_SET), offset,
+                     source->StrError());
+        CF_EXPECT(destination->CopyFrom(*source, length));
+        break;
+      };
+      case LP_TARGET_TYPE_ZERO: {
+        CF_EXPECT_GE(destination->LSeek(length, SEEK_CUR), 0,
+                     destination->StrError());
+        break;
+      };
+      default:
+        return CF_ERRF("Unknown target_type '{}'", extent.target_type);
+    }
+  }
+  return {};
+}
+
 class SuperImageAsBuildImpl : public AndroidBuild {
  public:
   SuperImageAsBuildImpl(
+      AndroidBuild& android_build,
       std::unique_ptr<android::fs_mgr::LpMetadata> super_metadata)
-      : super_metadata_(std::move(super_metadata)) {}
+      : android_build_(&android_build),
+        super_metadata_(std::move(super_metadata)) {}
+
+  Result<std::set<std::string, std::less<void>>> Images() override {
+    std::set<std::string, std::less<void>> images =
+        CF_EXPECT(android_build_->Images());
+    CF_EXPECT(images.count("super"), "Can't extract from super_empty");
+    return CF_EXPECT(LogicalPartitions());
+  }
+
+  Result<std::string> ImageFile(std::string_view name, bool extract) override {
+    if (auto it = extracted_.find(name); it != extracted_.end()) {
+      return it->second;
+    }
+    CF_EXPECTF(!!extract, "'{}' was not already extracted", name);
+    CF_EXPECT(!extract_dir_.empty(), "`SetExtractDir` was never called");
+
+    std::string super_path =
+        CF_EXPECT(android_build_->ImageFile("super", true));
+    SharedFD super_fd = SharedFD::Open(super_path, O_RDONLY);
+    CF_EXPECT(super_fd->IsOpen(), super_fd->StrError());
+
+    std::string extract_path = absl::StrCat(extract_dir_, "/", name, ".img");
+    unlink(extract_path.c_str());  // Ignore errors
+    SharedFD extract_fd =
+        SharedFD::Open(extract_path, O_RDWR | O_CREAT | O_EXCL);
+    CF_EXPECTF(extract_fd->IsOpen(), "Failed to open '{}': ", extract_path,
+               extract_fd->StrError());
+
+    CF_EXPECT(super_metadata_.get());
+    std::vector<LpMetadataExtent> extents =
+        CF_EXPECT(PartitionExtents(*super_metadata_, name));
+
+    CF_EXPECT(ExtractPartition(super_fd, extents, extract_fd));
+    auto [it, inserted] = extracted_.emplace(name, extract_path);
+    CF_EXPECT(!!inserted);
+
+    return extract_path;
+  }
+
+  Result<void> SetExtractDir(std::string_view extract_dir) override {
+    extract_dir_ = extract_dir;
+    return {};
+  }
 
   Result<std::set<std::string, std::less<void>>> LogicalPartitions() override {
     std::set<std::string, std::less<void>> ret;
@@ -98,7 +190,10 @@ class SuperImageAsBuildImpl : public AndroidBuild {
     return out << "MetadataFromSuperImage";
   }
 
+  AndroidBuild* android_build_;
   std::unique_ptr<android::fs_mgr::LpMetadata> super_metadata_;
+  std::map<std::string, std::string, std::less<void>> extracted_;
+  std::string extract_dir_;
 };
 
 Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
@@ -127,7 +222,7 @@ Result<std::unique_ptr<AndroidBuild>> SuperImageAsBuild(AndroidBuild& build) {
       CF_EXPECT(SuperImageFromAndroidBuild(build));
 
   auto super_build =
-      std::make_unique<SuperImageAsBuildImpl>(std::move(lp_metadata));
+      std::make_unique<SuperImageAsBuildImpl>(build, std::move(lp_metadata));
 
   CF_EXPECT(super_build->SystemPartitions());
   CF_EXPECT(super_build->VendorPartitions());
