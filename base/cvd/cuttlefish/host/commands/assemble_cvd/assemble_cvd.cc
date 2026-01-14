@@ -411,11 +411,12 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
       CF_EXPECT(EnsureDirectoryExists(dir, default_mode, default_group));
     }
 
-    for (size_t index = 0; index < android_builds.Size(); index++) {
-      const CuttlefishConfig::InstanceSpecific& instance =
-          const_cast<const CuttlefishConfig&>(config).ForInstance(index);
+    index = 0;
+    for (const CuttlefishConfig::InstanceSpecific& instance :
+         config.Instances()) {
       AndroidBuild& build = android_builds.ForIndex(index);
       CF_EXPECT(build.SetExtractDir(instance.instance_dir()));
+      index++;
     }
 
     if (!snapshot_path.empty()) {
