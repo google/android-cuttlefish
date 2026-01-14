@@ -39,6 +39,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "optional",
+    hdrs = ["optional.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "pretty",
     hdrs = ["pretty.h"],
 )
@@ -49,6 +58,7 @@ cf_cc_test(
     deps = [
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:optional",
         "//cuttlefish/pretty:string",
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:unique_ptr",
