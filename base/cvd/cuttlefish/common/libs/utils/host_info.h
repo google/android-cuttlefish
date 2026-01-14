@@ -28,6 +28,17 @@ enum class Arch {
   X86_64,
 };
 
+std::string_view ArchToStringView(Arch);
+std::ostream& operator<<(std::ostream&, Arch);
+
+template <typename Sink>
+void AbslStringify(Sink& sink, Arch arch) {
+  sink.Append(ArchToStringView(arch));
+}
+
+// For libfmt
+std::string_view format_as(Arch);
+
 enum class Os {
   Linux,
   Unknown,
@@ -44,7 +55,6 @@ Arch HostArch();
 bool IsHostCompatible(Arch arch);
 HostInfo GetHostInfo();
 
-std::ostream& operator<<(std::ostream&, Arch);
 std::ostream& operator<<(std::ostream&, Os);
 
 }  // namespace cuttlefish
