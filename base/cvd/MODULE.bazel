@@ -413,11 +413,70 @@ casimir_crates.from_cargo(
 use_repo(casimir_crates, "casimir_crates")
 
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
 git_repository(
-    name = "fruit",
-    build_file = "@//:BUILD.fruit.bazel",
-    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
-    remote = "https://github.com/google/fruit.git",
+    name = "android_system_core",
+    build_file = "@//:BUILD.android_system_core.bazel",
+    commit = "a3b721a32242006b59cb12bd62c9133632af3a2d",
+    remote = "https://android.googlesource.com/platform/system/core",
+)
+
+git_repository(
+    name = "android_system_extras",
+    build_file = "@//:BUILD.android_system_extras.bazel",
+    commit = "fc2494a2abd7ab21774d03deb09c1362bbb0bba8",
+    remote = "https://android.googlesource.com/platform/system/extras",
+)
+
+git_repository(
+    name = "android_tools_netsim",
+    build_file = "@//:BUILD.android_tools_netsim.bazel",
+    commit = "efabf7cb7e63b7466f79e9171907ed1e746ef1a3",
+    remote = "https://android.googlesource.com/platform/tools/netsim",
+    patches = [
+        "@//build_external/netsim:0001-Drop-pica-from-daemon-Cargo.toml.patch",
+        "@//build_external/netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
+        "@//build_external/netsim:0003-Pin-cxx.patch",
+    ],
+    patch_strip = 1,
+)
+
+git_repository(
+    name = "arm_optimized_routines",
+    build_file = "@//:BUILD.arm_optimized_routines.bazel",
+    commit = "3bc8091d03e002e25332fcbbd9a754538cb1109e",
+    remote = "https://github.com/ARM-software/optimized-routines.git",
+)
+
+git_repository(
+    name = "avb",
+    build_file = "@//:BUILD.avb.bazel",
+    commit = "761178607206f4cb2af79ed9eec52d8cbd814adb",
+    remote = "https://android.googlesource.com/platform/external/avb",
+)
+
+git_repository(
+    name = "casimir",
+    build_file = "@//:BUILD.casimir.bazel",
+    commit = "f785e9275ee5ed85f98e7b850783ca0559ee1799",
+    remote = "https://github.com/google/casimir",
+)
+
+git_repository(
+    name = "crosvm",
+    build_file = "@//:BUILD.crosvm.bazel",
+    commit = CROSVM_REV,
+    remote = CROSVM_REMOTE,
+    init_submodules = True,
+    patch_strip = 1,
+    patches = ["@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch"],
+)
+
+git_repository(
+    name = "e2fsprogs",
+    build_file = "@//:BUILD.e2fsprogs.bazel",
+    commit = "ff64357f839071968a727f8b5a08b0ddaedc5bbb",
+    remote = "https://github.com/tytso/e2fsprogs",
 )
 
 git_repository(
@@ -428,17 +487,154 @@ git_repository(
 )
 
 git_repository(
-    name = "opengl_headers",
-    build_file = "@//:BUILD.opengl_headers.bazel",
-    commit = "b53ca669bea4715b6d5fa53c459f47a1fecd7944",
-    remote = "https://github.com/KhronosGroup/OpenGL-Registry.git",
+    name = "expat",
+    build_file = "@//:BUILD.expat.bazel",
+    commit = "2691aff4304a6d7e053199c205620136481b9dd1",  # 2.6.4
+    remote = "https://github.com/libexpat/libexpat/",
 )
 
 git_repository(
-    name = "vulkan_headers",
-    build_file = "@//:BUILD.vulkan_headers.bazel",
-    commit = "952f776f6573aafbb62ea717d871cd1d6816c387",  # v1.4.309
-    remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
+    name = "f2fs_tools",
+    build_file = "@//:BUILD.f2fs_tools.bazel",
+    commit = "d8eac1f8699541416afdf93333772ef2e0509773",
+    remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
+)
+
+git_repository(
+    name = "fec_rs",
+    build_file = "@//:BUILD.fec_rs.bazel",
+    commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
+    remote = "https://android.googlesource.com/platform/external/fec",
+)
+
+git_repository(
+    name = "fruit",
+    build_file = "@//:BUILD.fruit.bazel",
+    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
+    remote = "https://github.com/google/fruit.git",
+)
+
+git_repository(
+    name = "gfxstream",
+    commit = "efbcd112d2cf43b7bca9260f8d81fd948446bcd3",
+    remote = "https://github.com/google/gfxstream.git",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
+    ],
+)
+
+git_repository(
+    name = "libcbor",
+    commit = "ae000f44e8d2a69e1f72a738f7c0b6b4b7cc4fbf",  # v0.12.0
+    build_file = "@//:BUILD.libcbor.bazel",
+    remote = "https://github.com/PJK/libcbor",
+)
+
+git_repository(
+    name = "libconfig",
+    build_file = "@//:BUILD.libconfig.bazel",
+    commit = "81fe4632f01cbf24bf7efcd7ce1913f441c5ea96",
+    remote = "https://github.com/hyperrealm/libconfig",
+)
+
+git_repository(
+    name = "libdrm",
+    build_file = "@//:BUILD.libdrm.bazel",
+    # TODO: b/414448658 - gitlab.freedesktop.org having an outage
+    #commit = "998d2a2e81e11043781672494dc3d294c1ecfce0",
+    #remote = "https://gitlab.freedesktop.org/mesa/drm.git",
+    commit = "f241f822cebbd681e46201b16685a827eb024736",
+    remote = "https://android.googlesource.com/platform/external/libdrm.git",
+)
+
+git_repository(
+    name = "libeigen",
+    commit = "3147391d946bb4b6c68edd901f2add6ac1f31f8c",  # 3.4.0
+    build_file = "@//:BUILD.libeigen.bazel",
+    remote = "https://gitlab.com/libeigen/eigen",
+)
+
+git_repository(
+    name = "libffi",
+    build_file = "@//:BUILD.libffi.bazel",
+    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
+    remote = "https://github.com/libffi/libffi.git",
+)
+
+# Upstream uses autotools, for now use the Android copy
+git_repository(
+    name = "libnl",
+    build_file = "@//:BUILD.libnl.bazel",
+    commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
+    remote = "https://android.googlesource.com/platform/external/libnl",
+)
+
+# Android version is slightly forked from the chromium upstream
+git_repository(
+    name = "libopenscreen",
+    build_file = "@//:BUILD.libopenscreen.bazel",
+    commit = "3f982cf4871df8771c9d4abe6e9a6f8d829b2736",
+    remote = "https://android.googlesource.com/platform/external/openscreen",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/libopenscreen:PATCH.bazelignore.patch",
+    ],
+)
+
+git_repository(
+    name = "libpffft",
+    commit = "e0bf595c98ded55cc457a371c1b29c8cab552628",
+    build_file = "@//:BUILD.libpffft.bazel",
+    remote = "https://github.com/marton78/pffft",
+)
+
+git_repository(
+    name = "libsrtp2",
+    # This is quite old, but it's what libwebrtc depends on
+    commit = "860492290f7d1f25e2bd45da6471bfd4cd4d7add",
+    build_file = "@//:BUILD.libsrtp2.bazel",
+    remote = "https://github.com/cisco/libsrtp",
+)
+
+# Upstream uses autotools, for now use the Android copy
+git_repository(
+    name = "libusb",
+    build_file = "@//:BUILD.libusb.bazel",
+    commit = "7b5267099855d320f6013d667d113e3619f18bf5",
+    remote = "https://android.googlesource.com/platform/external/libusb",
+)
+
+git_repository(
+    name = "libvpx",
+    build_file = "@//:BUILD.libvpx.bazel",
+    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb",  # v1.15.1
+    remote = "https://chromium.googlesource.com/webm/libvpx",
+    patch_strip = 1,
+    # Generate this file with `find . -type f | xargs sed -i -e 's|#include "./|#include "|' && git diff` on the libvpx source
+    patches = ["@//build_external/libvpx:PATCH.libvpx_config.patch"],
+)
+
+git_repository(
+    name = "libwebm",
+    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb",  # libwebm-1.0.0.31
+    build_file = "@//:BUILD.libwebm.bazel",
+    remote = "https://github.com/webmproject/libwebm",
+)
+
+git_repository(
+    name = "libwebrtc",
+    commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
+    build_file = "@//:BUILD.libwebrtc.bazel",
+    remote = "https://webrtc.googlesource.com/src/",
+    patches = ["@//build_external/libwebrtc:PATCH.third_party_libyuv.patch"],
+)
+
+git_repository(
+    name = "libwebsockets",
+    build_file = "@//:BUILD.libwebsockets.bazel",
+    commit = "9075f01e1670e64435f4ea501667982fc911ad6b",  # v4.3-stable
+    remote = "https://github.com/warmcat/libwebsockets",
 )
 
 git_repository(
@@ -449,10 +645,66 @@ git_repository(
 )
 
 git_repository(
-    name = "libffi",
-    build_file = "@//:BUILD.libffi.bazel",
-    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
-    remote = "https://github.com/libffi/libffi.git",
+    name = "mako",
+    build_file = "@//:BUILD.mako.bazel",
+    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc",  # 1.3.0
+    remote = "https://github.com/sqlalchemy/mako",
+)
+
+git_repository(
+    name = "markupsafe",
+    build_file = "@//:BUILD.markupsafe.bazel",
+    commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a",  # 2.0.1
+    remote = "https://github.com/pallets/markupsafe",
+)
+
+git_repository(
+    name = "mesa",
+    build_file = "@//:BUILD.mesa.bazel",
+    commit = "224e91e39836d3ca31f80df2e0379e55c70574f8",
+    remote = "https://android.googlesource.com/platform/external/mesa3d",
+)
+
+git_repository(
+    name = "mkbootimg",
+    build_file = "@//:BUILD.mkbootimg.bazel",
+    commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
+    remote = "https://android.googlesource.com/platform/system/tools/mkbootimg",
+)
+
+git_repository(
+    name = "ms-tpm-20-ref",
+    build_file = "@//:BUILD.ms-tpm-20-ref.bazel",
+    commit = "ee21db0a941decd3cac67925ea3310873af60ab3",  # v1.83r1
+    remote = "https://github.com/microsoft/ms-tpm-20-ref",
+    patches = [
+        "@//build_external/ms-tpm-20-ref:0001-Turn-off-ALG_CAMELLIA.patch",
+        "@//build_external/ms-tpm-20-ref:0002-Use-the-BoringSSL-bignum_st-structure.patch",
+        "@//build_external/ms-tpm-20-ref:0003-Don-t-use-EC_POINTs_mul.patch",
+    ],
+    patch_strip = 1,
+)
+
+git_repository(
+    name = "opengl_headers",
+    build_file = "@//:BUILD.opengl_headers.bazel",
+    commit = "b53ca669bea4715b6d5fa53c459f47a1fecd7944",
+    remote = "https://github.com/KhronosGroup/OpenGL-Registry.git",
+)
+
+git_repository(
+    name = "pyyaml",
+    build_file = "@//:BUILD.pyyaml.bazel",
+    commit = "41309b0bcb4559edb1d691d47199035ef539d785",  # 6.0.2
+    remote = "https://github.com/yaml/pyyaml.git",
+)
+
+# Android version is forked from github upstream
+git_repository(
+    name = "selinux",
+    build_file = "@//:BUILD.selinux.bazel",
+    commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
+    remote = "https://android.googlesource.com/platform/external/selinux",
 )
 
 git_repository(
@@ -475,40 +727,10 @@ git_repository(
 )
 
 git_repository(
-    name = "gfxstream",
-    commit = "efbcd112d2cf43b7bca9260f8d81fd948446bcd3",
-    remote = "https://github.com/google/gfxstream.git",
-    patch_strip = 1,
-    patches = [
-        "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
-    ],
-)
-
-git_repository(
-    name = "libdrm",
-    build_file = "@//:BUILD.libdrm.bazel",
-    # TODO: b/414448658 - gitlab.freedesktop.org having an outage
-    #commit = "998d2a2e81e11043781672494dc3d294c1ecfce0",
-    #remote = "https://gitlab.freedesktop.org/mesa/drm.git",
-    commit = "f241f822cebbd681e46201b16685a827eb024736",
-    remote = "https://android.googlesource.com/platform/external/libdrm.git",
-)
-
-git_repository(
-    name = "crosvm",
-    build_file = "@//:BUILD.crosvm.bazel",
-    commit = CROSVM_REV,
-    remote = CROSVM_REMOTE,
-    init_submodules = True,
-    patch_strip = 1,
-    patches = ["@//build_external/crosvm:PATCH.minijail-sys_common_mk.patch"],
-)
-
-git_repository(
-    name = "expat",
-    build_file = "@//:BUILD.expat.bazel",
-    commit = "2691aff4304a6d7e053199c205620136481b9dd1",  # 2.6.4
-    remote = "https://github.com/libexpat/libexpat/",
+    name = "vulkan_headers",
+    build_file = "@//:BUILD.vulkan_headers.bazel",
+    commit = "952f776f6573aafbb62ea717d871cd1d6816c387",  # v1.4.309
+    remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
 )
 
 git_repository(
@@ -526,230 +748,9 @@ git_repository(
 )
 
 git_repository(
-    name = "libwebsockets",
-    build_file = "@//:BUILD.libwebsockets.bazel",
-    commit = "9075f01e1670e64435f4ea501667982fc911ad6b",  # v4.3-stable
-    remote = "https://github.com/warmcat/libwebsockets",
-)
-
-git_repository(
-    name = "libcbor",
-    commit = "ae000f44e8d2a69e1f72a738f7c0b6b4b7cc4fbf",  # v0.12.0
-    build_file = "@//:BUILD.libcbor.bazel",
-    remote = "https://github.com/PJK/libcbor",
-)
-
-git_repository(
-    name = "libwebm",
-    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb",  # libwebm-1.0.0.31
-    build_file = "@//:BUILD.libwebm.bazel",
-    remote = "https://github.com/webmproject/libwebm",
-)
-
-git_repository(
-    name = "libsrtp2",
-    # This is quite old, but it's what libwebrtc depends on
-    commit = "860492290f7d1f25e2bd45da6471bfd4cd4d7add",
-    build_file = "@//:BUILD.libsrtp2.bazel",
-    remote = "https://github.com/cisco/libsrtp",
-)
-
-git_repository(
-    name = "libpffft",
-    commit = "e0bf595c98ded55cc457a371c1b29c8cab552628",
-    build_file = "@//:BUILD.libpffft.bazel",
-    remote = "https://github.com/marton78/pffft",
-)
-
-git_repository(
-    name = "libwebrtc",
-    commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
-    build_file = "@//:BUILD.libwebrtc.bazel",
-    remote = "https://webrtc.googlesource.com/src/",
-    patches = ["@//build_external/libwebrtc:PATCH.third_party_libyuv.patch"],
-)
-
-git_repository(
-    name = "libeigen",
-    commit = "3147391d946bb4b6c68edd901f2add6ac1f31f8c",  # 3.4.0
-    build_file = "@//:BUILD.libeigen.bazel",
-    remote = "https://gitlab.com/libeigen/eigen",
-)
-
-git_repository(
-    name = "mesa",
-    build_file = "@//:BUILD.mesa.bazel",
-    commit = "224e91e39836d3ca31f80df2e0379e55c70574f8",
-    remote = "https://android.googlesource.com/platform/external/mesa3d",
-)
-
-git_repository(
-    name = "mako",
-    build_file = "@//:BUILD.mako.bazel",
-    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc",  # 1.3.0
-    remote = "https://github.com/sqlalchemy/mako",
-)
-
-git_repository(
-    name = "markupsafe",
-    build_file = "@//:BUILD.markupsafe.bazel",
-    commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a",  # 2.0.1
-    remote = "https://github.com/pallets/markupsafe",
-)
-
-git_repository(
-    name = "pyyaml",
-    build_file = "@//:BUILD.pyyaml.bazel",
-    commit = "41309b0bcb4559edb1d691d47199035ef539d785",  # 6.0.2
-    remote = "https://github.com/yaml/pyyaml.git",
-)
-
-git_repository(
-    name = "avb",
-    build_file = "@//:BUILD.avb.bazel",
-    commit = "761178607206f4cb2af79ed9eec52d8cbd814adb",
-    remote = "https://android.googlesource.com/platform/external/avb",
-)
-
-git_repository(
-    name = "fec_rs",
-    build_file = "@//:BUILD.fec_rs.bazel",
-    commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
-    remote = "https://android.googlesource.com/platform/external/fec",
-)
-
-git_repository(
-    name = "mkbootimg",
-    build_file = "@//:BUILD.mkbootimg.bazel",
-    commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
-    remote = "https://android.googlesource.com/platform/system/tools/mkbootimg",
-)
-
-git_repository(
     name = "wmediumd",
     build_file = "@//:BUILD.wmediumd.bazel",
     commit = "f44d2af28b8045eb31ff045d3c078e60865afa98",
     remote = "https://android.googlesource.com/platform/external/wmediumd",
-)
-
-git_repository(
-    name = "libconfig",
-    build_file = "@//:BUILD.libconfig.bazel",
-    commit = "81fe4632f01cbf24bf7efcd7ce1913f441c5ea96",
-    remote = "https://github.com/hyperrealm/libconfig",
-)
-
-# Upstream uses autotools, for now use the Android copy
-git_repository(
-    name = "libnl",
-    build_file = "@//:BUILD.libnl.bazel",
-    commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
-    remote = "https://android.googlesource.com/platform/external/libnl",
-)
-
-# Upstream uses autotools, for now use the Android copy
-git_repository(
-    name = "libusb",
-    build_file = "@//:BUILD.libusb.bazel",
-    commit = "7b5267099855d320f6013d667d113e3619f18bf5",
-    remote = "https://android.googlesource.com/platform/external/libusb",
-)
-
-# Android version is slightly forked from the chromium upstream
-git_repository(
-    name = "libopenscreen",
-    build_file = "@//:BUILD.libopenscreen.bazel",
-    commit = "3f982cf4871df8771c9d4abe6e9a6f8d829b2736",
-    remote = "https://android.googlesource.com/platform/external/openscreen",
-    patch_strip = 1,
-    patches = [
-        "@//build_external/libopenscreen:PATCH.bazelignore.patch",
-    ],
-)
-
-git_repository(
-    name = "libvpx",
-    build_file = "@//:BUILD.libvpx.bazel",
-    commit = "39e8b9dcd4696d9ac3ebd4722e012488382f1adb",  # v1.15.1
-    remote = "https://chromium.googlesource.com/webm/libvpx",
-    patch_strip = 1,
-    # Generate this file with `find . -type f | xargs sed -i -e 's|#include "./|#include "|' && git diff` on the libvpx source
-    patches = ["@//build_external/libvpx:PATCH.libvpx_config.patch"],
-)
-
-# Android version is forked from github upstream
-git_repository(
-    name = "selinux",
-    build_file = "@//:BUILD.selinux.bazel",
-    commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
-    remote = "https://android.googlesource.com/platform/external/selinux",
-)
-
-git_repository(
-    name = "e2fsprogs",
-    build_file = "@//:BUILD.e2fsprogs.bazel",
-    commit = "ff64357f839071968a727f8b5a08b0ddaedc5bbb",
-    remote = "https://github.com/tytso/e2fsprogs",
-)
-
-git_repository(
-    name = "f2fs_tools",
-    build_file = "@//:BUILD.f2fs_tools.bazel",
-    commit = "d8eac1f8699541416afdf93333772ef2e0509773",
-    remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
-)
-
-git_repository(
-    name = "android_system_core",
-    build_file = "@//:BUILD.android_system_core.bazel",
-    commit = "a3b721a32242006b59cb12bd62c9133632af3a2d",
-    remote = "https://android.googlesource.com/platform/system/core",
-)
-
-git_repository(
-    name = "android_system_extras",
-    build_file = "@//:BUILD.android_system_extras.bazel",
-    commit = "fc2494a2abd7ab21774d03deb09c1362bbb0bba8",
-    remote = "https://android.googlesource.com/platform/system/extras",
-)
-
-git_repository(
-    name = "ms-tpm-20-ref",
-    build_file = "@//:BUILD.ms-tpm-20-ref.bazel",
-    commit = "ee21db0a941decd3cac67925ea3310873af60ab3",  # v1.83r1
-    remote = "https://github.com/microsoft/ms-tpm-20-ref",
-    patches = [
-        "@//build_external/ms-tpm-20-ref:0001-Turn-off-ALG_CAMELLIA.patch",
-        "@//build_external/ms-tpm-20-ref:0002-Use-the-BoringSSL-bignum_st-structure.patch",
-        "@//build_external/ms-tpm-20-ref:0003-Don-t-use-EC_POINTs_mul.patch",
-    ],
-    patch_strip = 1,
-)
-
-git_repository(
-    name = "android_tools_netsim",
-    build_file = "@//:BUILD.android_tools_netsim.bazel",
-    commit = "efabf7cb7e63b7466f79e9171907ed1e746ef1a3",
-    remote = "https://android.googlesource.com/platform/tools/netsim",
-    patches = [
-        "@//build_external/netsim:0001-Drop-pica-from-daemon-Cargo.toml.patch",
-        "@//build_external/netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
-        "@//build_external/netsim:0003-Pin-cxx.patch",
-    ],
-    patch_strip = 1,
-)
-
-git_repository(
-    name = "casimir",
-    build_file = "@//:BUILD.casimir.bazel",
-    commit = "f785e9275ee5ed85f98e7b850783ca0559ee1799",
-    remote = "https://github.com/google/casimir",
-)
-
-git_repository(
-    name = "arm_optimized_routines",
-    build_file = "@//:BUILD.arm_optimized_routines.bazel",
-    commit = "3bc8091d03e002e25332fcbbd9a754538cb1109e",
-    remote = "https://github.com/ARM-software/optimized-routines.git",
 )
 
