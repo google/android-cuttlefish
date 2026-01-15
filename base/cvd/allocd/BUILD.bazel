@@ -38,6 +38,7 @@ cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings:str_format",
     ],
