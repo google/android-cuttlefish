@@ -446,8 +446,8 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
 #endif
   CurlGlobalInit curl_init;
 
-  Downloaders downloaders =
-      CF_EXPECT(Downloaders::Create(flags.build_api_flags));
+  Downloaders downloaders = CF_EXPECT(
+      Downloaders::Create(flags.build_api_flags, flags.target_directory));
 
   FetchTracer tracer;
   FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");

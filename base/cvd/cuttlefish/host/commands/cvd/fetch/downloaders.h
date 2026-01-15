@@ -16,6 +16,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/libs/web/build_api.h"
@@ -26,7 +27,8 @@ namespace cuttlefish {
 
 class Downloaders {
  public:
-  static Result<Downloaders> Create(const BuildApiFlags&);
+  static Result<Downloaders> Create(const BuildApiFlags&,
+                                    const std::string& target_directory);
 
   Downloaders(Downloaders&&);
   ~Downloaders();

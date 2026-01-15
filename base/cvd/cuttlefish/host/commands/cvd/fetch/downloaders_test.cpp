@@ -84,7 +84,8 @@ using testing::IsTrue;
 TEST_F(FetchCvdTests, CasDownloaderNotCalledIfNoFlags) {
   BuildApiFlags flags = {};
 
-  Result<Downloaders> downloaders_res = Downloaders::Create(flags);
+  Result<Downloaders> downloaders_res =
+      Downloaders::Create(flags, temp_dir_.path);
 
   EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsFalse());
@@ -94,7 +95,8 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetOnCommandLine) {
   BuildApiFlags flags = {};
   flags.cas_downloader_flags.downloader_path.set_value(cas_downloader_path_);
 
-  Result<Downloaders> downloaders_res = Downloaders::Create(flags);
+  Result<Downloaders> downloaders_res =
+      Downloaders::Create(flags, temp_dir_.path);
 
   EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
@@ -105,7 +107,8 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetInCasConfig) {
   flags.cas_downloader_flags.cas_config_filepath.set_value(
       cas_config_filepath_);
 
-  Result<Downloaders> downloaders_res = Downloaders::Create(flags);
+  Result<Downloaders> downloaders_res =
+      Downloaders::Create(flags, temp_dir_.path);
 
   EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
