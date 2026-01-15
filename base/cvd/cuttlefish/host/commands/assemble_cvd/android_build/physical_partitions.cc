@@ -36,8 +36,8 @@ class PhysicalPartitionsImpl : public AndroidBuild {
   std::string Name() const override { return "PhysicalPartitions"; }
 
   PrettyStruct Pretty() override {
-    return PrettyStruct(Name())
-        .Member("PhysicalPartitions()", PhysicalPartitions());
+    return PrettyStruct(Name()).Member("PhysicalPartitions()",
+                                       PhysicalPartitions());
   }
 
   Result<std::set<std::string, std::less<void>>> PhysicalPartitions() override {
