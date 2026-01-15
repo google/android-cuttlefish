@@ -15,8 +15,10 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 
+#include <chrono>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
@@ -66,7 +68,8 @@ Downloaders::Downloaders(std::unique_ptr<Downloaders::Impl> impl)
 Downloaders::Downloaders(Downloaders&&) = default;
 Downloaders::~Downloaders() = default;
 
-Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags) {
+Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
+                                        const std::string& target_directory) {
   std::unique_ptr<Downloaders::Impl> impl(new Downloaders::Impl());
 
   const bool use_logging_debug_function = true;
@@ -106,7 +109,8 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags) {
       impl->cas_downloader_.get());
 
   const std::string cache_base_path = PerUserCacheDir();
-  if (flags.enable_caching && EnsureCacheDirectory(cache_base_path)) {
+  if (flags.enable_caching &&
+      CF_EXPECT(CanCache(target_directory, cache_base_path))) {
     impl->caching_build_api_ = std::make_unique<CachingBuildApi>(
         *impl->android_build_api_, cache_base_path);
   }

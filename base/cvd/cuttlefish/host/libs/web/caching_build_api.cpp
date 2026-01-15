@@ -67,24 +67,23 @@ CachingPaths ConstructCachePaths(const std::string& cache_base,
 
 }  // namespace
 
-bool EnsureCacheDirectory(const std::string& cache_base_path) {
-  Result<void> result = EnsureDirectoryExists(cache_base_path);
-  if (result.ok()) {
-    return true;
+Result<bool> CanCache(const std::string& target_directory,
+                      const std::string& cache_base_path) {
+  CF_EXPECT(EnsureDirectoryExists(cache_base_path),
+            "Failed to create cache directory.");
+  const bool result = CF_EXPECT(CanHardLink(target_directory, cache_base_path));
+  if (!result) {
+    LOG(WARNING)
+        << "Caching disabled, unable to hard link between fetch directory \""
+        << target_directory << "\" and cache directory \"" << cache_base_path
+        << "\"";
   }
-  LOG(WARNING) << "Failed to create cache directory \"" << cache_base_path
-               << "\" with error: " << result.error();
-  LOG(WARNING) << "Caching disabled";
-  return false;
+  return result;
 }
 
 CachingBuildApi::CachingBuildApi(BuildApi& build_api,
                                  std::string cache_base_path)
     : build_api_(build_api), cache_base_path_(std::move(cache_base_path)) {};
-
-Result<bool> CachingBuildApi::CanCache(const std::string& target_directory) {
-  return CF_EXPECT(CanHardLink(target_directory, cache_base_path_));
-}
 
 Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
   return CF_EXPECT(build_api_.GetBuild(build_string));
@@ -93,14 +92,6 @@ Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
 Result<std::string> CachingBuildApi::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
-  if (!CF_EXPECT(CanCache(target_directory))) {
-    LOG(WARNING)
-        << "Caching disabled, unable to hard link between fetch directory \""
-        << target_directory << "\" and cache directory \"" << cache_base_path_
-        << "\"";
-    return CF_EXPECT(
-        build_api_.DownloadFile(build, target_directory, artifact_name));
-  }
   const auto paths = ConstructCachePaths(cache_base_path_, build,
                                          target_directory, artifact_name);
   CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
@@ -114,14 +105,6 @@ Result<std::string> CachingBuildApi::DownloadFile(
 Result<std::string> CachingBuildApi::DownloadFileWithBackup(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name, const std::string& backup_artifact_name) {
-  if (!CF_EXPECT(CanCache(target_directory))) {
-    LOG(WARNING)
-        << "Caching disabled, unable to hard link between fetch directory \""
-        << target_directory << "\" and cache directory \"" << cache_base_path_
-        << "\"";
-    return CF_EXPECT(build_api_.DownloadFileWithBackup(
-        build, target_directory, artifact_name, backup_artifact_name));
-  }
   const auto paths =
       ConstructCachePaths(cache_base_path_, build, target_directory,
                           artifact_name, backup_artifact_name);
