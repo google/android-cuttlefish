@@ -36,10 +36,12 @@ cc_library(
         "//conditions:default": [":alloc_iproute2"],
     }) + [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
     ],
 )
@@ -54,6 +56,7 @@ cc_library(
     ],
     deps = [
         "//cuttlefish/result",
+        "//cuttlefish/common/libs/utils:subprocess",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/log",
     ],
@@ -70,6 +73,7 @@ cc_library(
     deps = [
         "//allocd/net:netlink",
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

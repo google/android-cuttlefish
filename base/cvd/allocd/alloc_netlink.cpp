@@ -41,6 +41,7 @@
 
 #include "allocd/net/netlink_client.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -67,8 +68,6 @@ int Prefix(std::string_view textual_netmask) {
 }
 
 }  // namespace
-
-extern int RunExternalCommand(const std::string& name);
 
 Result<void> AddTapIface(std::string_view name) {
   SharedFD tunfd = SharedFD::Open("/dev/net/tun", O_RDWR | O_CLOEXEC);
@@ -233,13 +232,9 @@ Result<void> CreateBridge(std::string_view name) {
 
 Result<void> IptableConfig(std::string_view network, bool add) {
   // TODO: Use NETLINK_NETFILTER.
-  std::stringstream ss;
-  ss << "iptables -t nat " << (add ? "-A" : "-D") << " POSTROUTING -s "
-     << network << " -j MASQUERADE";
-
-  auto command = ss.str();
-  LOG(INFO) << "iptable_config: " << command;
-  CF_EXPECT(RunExternalCommand(command) == 0, "IptableConfig");
+  CF_EXPECT(Execute({"iptables", "-t", "nat", add ? "-A" : "-D", "POSTROUTING",
+                     "-s", std::string(network), "-j", "MASQUERADE"}) == 0,
+            "IptableConfig");
   return {};
 }
 
