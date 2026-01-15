@@ -30,9 +30,11 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/build_super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/host/libs/image_aggregator/super_builder.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -96,7 +98,6 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
       {std::string(kPartitions.init_boot), instance.init_boot_image()},
       {std::string(kPartitions.metadata), ""},
       {std::string(kPartitions.misc), ""},
-      {std::string(kPartitions.super), instance.new_super_image()},
       {std::string(kPartitions.userdata), instance.new_data_image()},
       {std::string(kPartitions.vbmeta), instance.new_vbmeta_image()},
       {std::string(kPartitions.vbmeta_system), instance.vbmeta_system_image()},
@@ -106,6 +107,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
        instance.new_vbmeta_vendor_dlkm_image()},
       {std::string(kPartitions.vendor_boot), instance.new_vendor_boot_image()},
       {std::string(kPartitions.vvmtruststore), instance.vvmtruststore_path()},
+      {std::string(kPartitions.super), instance.new_super_image()},
   };
 
   for (std::string partition : CF_EXPECT(android_build.PhysicalPartitions())) {
@@ -128,9 +130,36 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     CF_EXPECTF(!!inserted, "Duplicate images for '{}'", image_file->Name());
   }
 
+  const BuildSuperImageFlag build_super_image =
+      CF_EXPECT(BuildSuperImageFlag::FromGlobalGflags());
+
   for (const auto& [partition, path] : primary_paths) {
     std::string path_used;
-    if (auto it = dynamic_paths.find(partition); it != dynamic_paths.end()) {
+    if (partition == "super" && build_super_image.ForIndex(instance.index())) {
+      CompositeSuperImageBuilder super_builder;
+
+      const std::string super_from_build =
+          CF_EXPECT(android_build.ImageFile("super"));
+      super_builder.BlockDeviceSize(FileSize(super_from_build));
+
+      const std::set<std::string, std::less<void>> system_partitions =
+          CF_EXPECT(android_build.SystemPartitions());
+      const std::set<std::string, std::less<void>> vendor_partitions =
+          CF_EXPECT(android_build.VendorPartitions());
+      for (const std::string& logical :
+           CF_EXPECT(android_build.LogicalPartitions())) {
+        const std::string path = CF_EXPECT(android_build.ImageFile(logical));
+        if (system_partitions.count(logical)) {
+          super_builder.SystemPartition(logical, path);
+        } else {
+          super_builder.VendorPartition(logical, path);
+        }
+      }
+      // TODO: b/480197663: system_other should be written as system_b
+      path_used = CF_EXPECT(super_builder.WriteToDirectory(
+          instance.instance_dir(), "super_composite.img", "super_header.img"));
+    } else if (auto it = dynamic_paths.find(partition);
+               it != dynamic_paths.end()) {
       path_used = it->second;
     } else if (FileExists(path)) {
       path_used = path;

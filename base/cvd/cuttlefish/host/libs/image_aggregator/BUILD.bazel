@@ -134,6 +134,27 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "super_builder",
+    srcs = ["super_builder.cc"],
+    hdrs = ["super_builder.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config:log_string_to_dir",
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:disk_image",
+        "//cuttlefish/host/libs/image_aggregator:image_from_file",
+        "//cuttlefish/pretty:unique_ptr",
+        "//cuttlefish/pretty/liblp",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@android_system_core//:liblp",
+        "@boringssl//:crypto",
+    ],
+)
+
+cf_cc_library(
     name = "qcow2",
     srcs = ["qcow2.cc"],
     hdrs = ["qcow2.h"],

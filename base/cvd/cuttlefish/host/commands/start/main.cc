@@ -154,6 +154,7 @@ const std::unordered_set<std::string>& BoolFlags() {
       "enable_sandbox",
       "enable_usb",
       "enable_virtiofs",
+      "experimental_build_super_image",
       "fail_fast",
       "guest_enforce_security",
       "kgdb",
