@@ -110,6 +110,10 @@ Result<bool> BridgeExists(std::string_view name) {
   return status == 0;
 }
 
+Result<bool> BridgeInUse(std::string_view name) {
+  return false;
+}
+
 Result<void> CreateBridge(std::string_view name) {
   std::stringstream ss;
   ss << "ip link add name " << name

@@ -26,6 +26,7 @@
 
 #include "allocd/alloc_driver.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -175,7 +176,19 @@ std::optional<std::string> GetUserName(uid_t uid) {
   return std::nullopt;
 }
 
-bool DestroyBridge(std::string_view name) { return DeleteIface(name).ok(); }
+bool DestroyBridge(std::string_view name) {
+  Result<bool> r = BridgeInUse(name);
+  if (!r.ok()) {
+    return false;
+  }
+
+  if (*r) {
+    // Bridge is in use. Don't proceed any further.
+    return true;
+  }
+
+  return DeleteIface(name).ok();
+}
 
 bool SetupBridgeGateway(std::string_view bridge_name,
                         std::string_view ipaddr) {

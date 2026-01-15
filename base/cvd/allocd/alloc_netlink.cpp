@@ -205,6 +205,10 @@ Result<bool> BridgeExists(std::string_view name) {
   return true;
 }
 
+Result<bool> BridgeInUse(std::string_view name) {
+  return false;
+}
+
 Result<void> CreateBridge(std::string_view name) {
   VLOG(0) << "CreateBridge: " << name;
   auto factory = NetlinkClientFactory::Default();
