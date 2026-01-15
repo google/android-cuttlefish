@@ -188,7 +188,7 @@ Result<void> HostPackageSubstitution(
   // TODO: remove when we can safely add this to the marker file.
   std::string cvdalloc_src =
       fmt::format("{}/bin/{}", CF_EXPECT(GetCuttlefishCommonDir()), "cvdalloc");
-  std::string cvdalloc_name = fmt::format("{}/{}", target_dir, "cvdalloc");
+  std::string cvdalloc_name = fmt::format("{}/bin/{}", target_dir, "cvdalloc");
   CF_EXPECT(Substitute(cvdalloc_src, cvdalloc_name));
 
   if (host_substitutions.empty() && FileExists(marker_file)) {
