@@ -22,41 +22,14 @@
 #include <sstream>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 
 #include "allocd/alloc_driver.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 
 namespace cuttlefish {
-
-int RunExternalCommand(const std::string& command) {
-  FILE* fp;
-  LOG(INFO) << "Running external command: " << command;
-  fp = popen(command.c_str(), "r");
-
-  if (fp == nullptr) {
-    LOG(WARNING) << "Error running external command";
-    return -1;
-  }
-
-  int status = pclose(fp);
-  int ret = -1;
-  if (status == -1) {
-    LOG(WARNING) << "pclose error";
-  } else {
-    if (WIFEXITED(status)) {
-      LOG(INFO) << "child process exited normally";
-      ret = WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-      int sig = WTERMSIG(status);
-      LOG(WARNING) << "child process was terminated by signal "
-                   << strsignal(sig) << " (" << sig << ")";
-    } else {
-      LOG(WARNING) << "child process did not terminate normally";
-    }
-  }
-  return ret;
-}
 
 bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
   // assume bridge exists
@@ -231,40 +204,27 @@ bool StartDnsmasq(std::string_view bridge_name, std::string_view gateway,
                   std::string_view dhcp_range) {
   auto dns_servers = "8.8.8.8,8.8.4.4";
   auto dns6_servers = "2001:4860:4860::8888,2001:4860:4860::8844";
-  std::stringstream ss;
 
-  // clang-format off
-  ss << 
-  "dnsmasq"
-    " --port=0"
-    " --strict-order"
-    " --except-interface=lo"
-    " --interface=" << bridge_name << 
-    " --listen-address=" << gateway << 
-    " --bind-interfaces"
-    " --dhcp-range=" << dhcp_range << 
-    " --dhcp-option=\"option:dns-server," << dns_servers << "\""
-    " --dhcp-option=\"option6:dns-server," << dns6_servers << "\""
-    " --conf-file=\"\""
-    " --pid-file=" << CvdDir()
-         << "/cuttlefish-dnsmasq-" << bridge_name << ".pid"
-    " --dhcp-leasefile=" << CvdDir()
-         << "/cuttlefish-dnsmasq-" << bridge_name << ".leases"
-    " --dhcp-no-override ";
-  // clang-format on
-
-  auto command = ss.str();
-  LOG(INFO) << "start_dnsmasq: " << command;
-  int status = RunExternalCommand(command);
-
-  return status == 0;
+  return Execute(
+             {"dnsmasq", "--port=0", "--strict-order", "--except-interface=lo",
+              absl::StrCat("--interface=", bridge_name),
+              absl::StrCat("--listen-address=", gateway), "--bind-interfaces",
+              absl::StrCat("--dhcp-range=", dhcp_range),
+              absl::StrCat("--dhcp-option=option:dns-server,", dns_servers),
+              absl::StrCat("--dhcp-option=option6:dns-server,", dns6_servers),
+              "--conf-file=",
+              absl::StrCat("--pid-file=", CvdDir(), "/cuttlefish-dnsmasq-",
+                           bridge_name, ".pid"),
+              absl::StrCat("--dhcp-leasefile=", CvdDir(),
+                           "/cuttlefish-dnsmasq-", bridge_name, ".leases"),
+              "--dhcp-no-override"}) == 0;
 }
 
 bool StopDnsmasq(std::string_view name) {
   std::ifstream file;
   std::string filename = absl::StrFormat(
       "/var/run/cuttlefish-dnsmasq-%s.pid", name);
-  LOG(INFO) << "stopping dsnmasq for interface: " << name;
+  LOG(INFO) << "stopping dnsmasq for interface: " << name;
   file.open(filename);
   if (file.is_open()) {
     LOG(INFO) << "dnsmasq file:" << filename
@@ -275,21 +235,21 @@ bool StopDnsmasq(std::string_view name) {
   std::string pid;
   file >> pid;
   file.close();
-  std::string command = "kill " + pid;
-  int status = RunExternalCommand(command);
-  auto ret = (status == 0);
 
+  // TODO: Let's use kill(2) instead of subjecting ourselves to this.
+  bool ret = Execute({"kill", pid}) == 0;
   if (ret) {
-    LOG(INFO) << "dsnmasq for:" << name << "successfully stopped";
+    LOG(INFO) << "dnsmasq for:" << name << "successfully stopped";
   } else {
-    LOG(WARNING) << "Failed to stop dsnmasq for:" << name;
+    LOG(WARNING) << "Failed to stop dnsmasq for:" << name;
   }
   return ret;
 }
 
 bool CreateEthernetBridgeIface(std::string_view name,
                                std::string_view ipaddr) {
-  if (BridgeExists(name).ok()) {
+  auto exists = BridgeExists(name);
+  if (exists.ok() && *exists) {
     LOG(INFO) << "Bridge " << name << " exists already, doing nothing.";
     return true;
   }

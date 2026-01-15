@@ -22,116 +22,78 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"
 
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-extern int RunExternalCommand(const std::string& name);
-
 Result<void> AddTapIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip tuntap add dev " << name << " mode tap group cvdnetwork vnet_hdr";
-  auto add_command = ss.str();
-  LOG(INFO) << "Create tap interface: " << add_command;
-  int status = RunExternalCommand(add_command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(Execute({"ip", "tuntap", "add", "dev", std::string(name), "mode",
+                     "tap", "group", kCvdNetworkGroupName, "vnet_hdr"}) == 0,
+            "AddTapIface");
   return {};
 }
 
 Result<void> ShutdownIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link set dev " << name << " down";
-  auto link_command = ss.str();
-  LOG(INFO) << "Shutdown tap interface: " << link_command;
-  int status = RunExternalCommand(link_command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(
+      Execute({"ip", "link", "set", "dev", std::string(name), "down"}) == 0,
+      "ShutdownIface");
   return {};
 }
 
 Result<void> BringUpIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link set dev " << name << " up";
-  auto link_command = ss.str();
-  LOG(INFO) << "Bring up tap interface: " << link_command;
-  int status = RunExternalCommand(link_command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(Execute({"ip", "link", "set", "dev", std::string(name), "up"}) == 0,
+            "ShutdownIface");
   return {};
 }
 
 Result<void> AddGateway(std::string_view name, std::string_view gateway,
                         std::string_view netmask) {
-  std::stringstream ss;
-  ss << "ip addr add " << gateway << netmask << " broadcast + dev " << name;
-  auto command = ss.str();
-  LOG(INFO) << "setup gateway: " << command;
-  int status = RunExternalCommand(command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(
+      Execute({"ip", "addr", "add", std::string(gateway) + std::string(netmask),
+               "broadcast", "+", "dev", std::string(name)}) == 0,
+      "AddGateway");
   return {};
 }
 
 Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
                             std::string_view netmask) {
-  std::stringstream ss;
-  ss << "ip addr del " << gateway << netmask << " broadcast + dev " << name;
-  auto command = ss.str();
-  LOG(INFO) << "removing gateway: " << command;
-  int status = RunExternalCommand(command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(
+      Execute({"ip", "addr", "del", std::string(gateway) + std::string(netmask),
+               "broadcast", "+", "dev", std::string(name)}) == 0,
+      "DestroyGateway");
   return {};
 }
 
 Result<void> LinkTapToBridge(std::string_view tap_name,
                              std::string_view bridge_name) {
-  std::stringstream ss;
-  ss << "ip link set dev " << tap_name << " master " << bridge_name;
-  auto command = ss.str();
-  int status = RunExternalCommand(command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(Execute({"ip", "link", "set", "dev", std::string(tap_name),
+                     "master", std::string(bridge_name)}) == 0,
+            "LinkTapToBridge");
   return {};
 }
 
 Result<void> DeleteIface(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link delete " << name;
-  auto link_command = ss.str();
-  LOG(INFO) << "Delete tap interface: " << link_command;
-  int status = RunExternalCommand(link_command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(Execute({"ip", "link", "delete", std::string(name)}) == 0,
+            "DeleteIface");
   return {};
 }
 
 Result<bool> BridgeExists(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link show " << name << " >/dev/null";
-
-  auto command = ss.str();
-  LOG(INFO) << "bridge exists: " << command;
-  int status = RunExternalCommand(command);
-  return status == 0;
+  return Execute({"ip", "link", "show", std::string(name)}) == 0;
 }
 
 Result<void> CreateBridge(std::string_view name) {
-  std::stringstream ss;
-  ss << "ip link add name " << name
-     << " type bridge forward_delay 0 stp_state 0";
-
-  auto command = ss.str();
-  LOG(INFO) << "create bridge: " << command;
-  int status = RunExternalCommand(command);
-  CF_EXPECT_EQ(status, 0);
-  CF_EXPECT(BringUpIface(name));
+  CF_EXPECT(Execute({"ip", "link", "add", "name", std::string(name), "type",
+                     "bridge", "forward_delay", "0", "stp_state", "0"}) == 0,
+            "CreateBridge");
   return {};
 }
 
 Result<void> IptableConfig(std::string_view network, bool add) {
-  std::stringstream ss;
-  ss << "iptables -t nat " << (add ? "-A" : "-D") << " POSTROUTING -s "
-     << network << " -j MASQUERADE";
-
-  auto command = ss.str();
-  LOG(INFO) << "iptable_config: " << command;
-  int status = RunExternalCommand(command);
-  CF_EXPECT_EQ(status, 0);
+  CF_EXPECT(Execute({"iptables", "-t", "nat", add ? "-A" : "-D", "POSTROUTING",
+                     "-s", std::string(network), "-j", "MASQUERADE"}) == 0,
+            "IptableConfig");
   return {};
 }
 
