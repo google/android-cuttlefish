@@ -237,6 +237,9 @@ class Command {
   Command AddParameter(Args... args) && {
     return std::move(AddParameter(std::forward<Args>(args)...));
   }
+  Command& AddParameter(std::string arg) &;
+  Command AddParameter(std::string arg) &&;
+
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
   template <typename... Args>

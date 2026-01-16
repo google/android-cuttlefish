@@ -364,6 +364,16 @@ Command Command::UnsetFromEnvironment(std::string_view env_var) && {
   return std::move(UnsetFromEnvironment(env_var));
 }
 
+Command& Command::AddParameter(std::string arg) & {
+  command_.emplace_back(std::move(arg));
+  return *this;
+}
+
+Command Command::AddParameter(std::string arg) && {
+  AddParameter(std::move(arg));
+  return std::move(*this);
+}
+
 Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
                                 SharedFD shared_fd) & {
   CHECK(shared_fd->IsOpen());
