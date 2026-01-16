@@ -36,13 +36,24 @@ go run ./cmd/gce_install_cuttlefish_packages \
   -project <project> \
   -source-image-project <project> \
   -source-image <base_image_name> \
-  -image-name <output_image_name> \
   -deb <path/to/cuttlefish-base-deb> \
   -deb <path/to/cuttlefish-user-deb> \
-  -deb <path/to/cuttlefish-orchestration-deb>
+  -deb <path/to/cuttlefish-orchestration-deb> \
+  -image-name <image_with_cvd_name>
 ```
 
-## Step 4. Validate output image
+## Step 4. Create image with cuttlefish container image installed.
+
+```
+go run ./cmd/gce_install_cuttlefish_packages \
+  -project <project> \
+  -source-image-project <project> \
+  -source-image <image_with_cvd_name> \
+  -container-image-src <path/to/cuttlefish-container-img> \
+  -image-name <output_image_name>
+```
+
+## Step 5. Validate output image
 
 ```
 go run ./cmd/gce_validate_image \
