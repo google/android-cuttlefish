@@ -1,3 +1,4 @@
 /src/host_orchestrator/host_orchestrator
+/src/cvdexec/cvdexec
 /src/cvdserver_bootstrapper/cvdserver_bootstrapper
 /src/operator/operator
