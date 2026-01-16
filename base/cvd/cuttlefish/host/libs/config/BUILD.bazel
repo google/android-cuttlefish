@@ -201,7 +201,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
 
@@ -259,8 +258,6 @@ cf_cc_library(
     hdrs = ["file_source.h"],
     deps = [
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
     ],
 )
 
@@ -391,6 +388,5 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
