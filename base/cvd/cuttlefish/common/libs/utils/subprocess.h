@@ -316,13 +316,13 @@ std::ostream& operator<<(std::ostream& out, const Command& command);
  *   For now, too many callsites expects int, and needs quite a lot of changes
  *   if we change the return type.
  */
-int Execute(const std::vector<std::string>& commands);
+int Execute(std::vector<std::string> commands);
 
 /**
  * Similar as the two above but returns CF_ERR instead of -1, and siginfo_t
  * instead of the exit status.
  */
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
+Result<siginfo_t> Execute(std::vector<std::string> commands,
                           SubprocessOptions subprocess_options,
                           int wait_options);
 

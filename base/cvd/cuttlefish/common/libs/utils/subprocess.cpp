@@ -576,13 +576,13 @@ struct ExtraParam {
   int wait_options;
   siginfo_t* infop;
 };
-Result<int> ExecuteImpl(const std::vector<std::string>& command,
-                        std::optional<ExtraParam> extra_param) {
-  Command cmd(command[0]);
+Result<int> ExecuteImpl(std::vector<std::string> command,
+                        std::optional<ExtraParam> extra_param = std::nullopt) {
+  Command cmd(std::move(command[0]));
   for (size_t i = 1; i < command.size(); ++i) {
-    cmd.AddParameter(command[i]);
+    cmd.AddParameter(std::move(command[i]));
   }
-  auto subprocess =
+  Subprocess subprocess =
       (!extra_param ? cmd.Start()
                     : cmd.Start(std::move(extra_param->subprocess_options)));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
@@ -599,21 +599,20 @@ Result<int> ExecuteImpl(const std::vector<std::string>& command,
 
 }  // namespace
 
-int Execute(const std::vector<std::string>& commands) {
-  std::vector<std::string> envs;
-  auto result = ExecuteImpl(commands, /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
+int Execute(std::vector<std::string> commands) {
+  Result<int> result = ExecuteImpl(std::move(commands));
+  return result.ok() ? *result : -1;
 }
 
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
+Result<siginfo_t> Execute(std::vector<std::string> commands,
                           SubprocessOptions subprocess_options,
                           int wait_options) {
   siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, ExtraParam{.subprocess_options = std::move(subprocess_options),
+  int ret_code = CF_EXPECT(ExecuteImpl(
+      std::move(commands), ExtraParam{.subprocess_options = std::move(subprocess_options),
                            .wait_options = wait_options,
                            .infop = &info}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
+  CF_EXPECT_EQ(ret_code, 0);
   return info;
 }
 
