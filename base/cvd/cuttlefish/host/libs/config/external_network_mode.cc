@@ -27,15 +27,9 @@
 namespace cuttlefish {
 
 std::ostream& operator<<(std::ostream& out, ExternalNetworkMode net) {
-  switch (net) {
-    case ExternalNetworkMode::kUnknown:
-      return out << "unknown";
-    case ExternalNetworkMode::kTap:
-      return out << "tap";
-    case ExternalNetworkMode::kSlirp:
-      return out << "slirp";
-  }
+  return out << format_as(net);
 }
+
 Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
   if (absl::EqualsIgnoreCase(str, "tap")) {
     return ExternalNetworkMode::kTap;
@@ -46,6 +40,17 @@ Result<ExternalNetworkMode> ParseExternalNetworkMode(std::string_view str) {
         "\"{}\" is not a valid ExternalNetworkMode. Valid values are \"tap\" "
         "and \"slirp\"",
         str);
+  }
+}
+
+std::string_view format_as(ExternalNetworkMode net) {
+  switch (net) {
+    case ExternalNetworkMode::kUnknown:
+      return "unknown";
+    case ExternalNetworkMode::kTap:
+      return "tap";
+    case ExternalNetworkMode::kSlirp:
+      return "slirp";
   }
 }
 

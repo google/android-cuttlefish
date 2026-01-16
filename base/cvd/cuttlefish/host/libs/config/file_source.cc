@@ -83,4 +83,8 @@ std::ostream& operator<<(std::ostream& out, FileSource source) {
   return out << SourceEnumToString(source);
 }
 
+std::string_view format_as(FileSource source) {
+  return SourceEnumToString(source);
+}
+
 }  // namespace cuttlefish

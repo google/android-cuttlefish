@@ -19,8 +19,6 @@
 #include <string>
 #include <string_view>
 
-#include <fmt/ostream.h>
-
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -40,7 +38,7 @@ bool VmManagerIsCrosvm(VmmMode);
 bool VmManagerIsQemu(VmmMode);
 bool VmManagerIsGem5(VmmMode);
 
-}  // namespace cuttlefish
+// For libfmt
+std::string_view format_as(VmmMode);
 
-template <>
-struct fmt::formatter<cuttlefish::VmmMode> : ostream_formatter {};
+}  // namespace cuttlefish

@@ -18,9 +18,6 @@
 #include <ostream>
 #include <string_view>
 
-#include "absl/strings/str_format.h"
-#include "fmt/ostream.h"
-
 namespace cuttlefish {
 
 /**
@@ -56,11 +53,7 @@ void AbslStringify(Sink& sink, FileSource file_source) {
   sink.Append(SourceEnumToString(file_source));
 }
 
+// For libfmt
+std::string_view format_as(FileSource);
+
 }  // namespace cuttlefish
-
-namespace fmt {
-
-template <>
-struct formatter<::cuttlefish::FileSource> : ostream_formatter {};
-
-}  // namespace fmt
