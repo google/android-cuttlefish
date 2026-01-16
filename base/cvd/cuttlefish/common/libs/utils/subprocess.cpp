@@ -338,7 +338,7 @@ void Command::BuildParameter(std::stringstream* stream, bool arg) {
 
 Command& Command::AddEnvironmentVariable(std::string_view env_var,
                                          std::string_view value) & {
-  AddEnvironmentVariable(absl::StrCat(env_var, "=", value));
+  env_.emplace_back(absl::StrCat(env_var, "=", value));
   return *this;
 }
 
