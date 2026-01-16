@@ -567,52 +567,29 @@ std::string Command::AsBashScript(
   return contents;
 }
 
-namespace {
+int Execute(std::vector<std::string> commands) {
+  const Result<siginfo_t> result =
+      Execute(std::move(commands), SubprocessOptions(), WEXITED);
+  if (result.ok() && result->si_code == CLD_EXITED) {
+    return result->si_status;
+  } else {
+    return -1;
+  }
+}
 
-struct ExtraParam {
-  // option for Subprocess::Start()
-  SubprocessOptions subprocess_options;
-  // options for Subprocess::Wait(...)
-  int wait_options;
-  siginfo_t* infop;
-};
-Result<int> ExecuteImpl(std::vector<std::string> command,
-                        std::optional<ExtraParam> extra_param = std::nullopt) {
+Result<siginfo_t> Execute(std::vector<std::string> command,
+                          SubprocessOptions subprocess_options,
+                          int wait_options) {
   Command cmd(std::move(command[0]));
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(std::move(command[i]));
   }
-  Subprocess subprocess =
-      (!extra_param ? cmd.Start()
-                    : cmd.Start(std::move(extra_param->subprocess_options)));
+  Subprocess subprocess = cmd.Start(std::move(subprocess_options));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
 
-  if (extra_param) {
-    CF_EXPECT(extra_param->infop != nullptr,
-              "When ExtraParam is given, the infop buffer address "
-                  << "must not be nullptr.");
-    return subprocess.Wait(extra_param->infop, extra_param->wait_options);
-  } else {
-    return subprocess.Wait();
-  }
-}
-
-}  // namespace
-
-int Execute(std::vector<std::string> commands) {
-  Result<int> result = ExecuteImpl(std::move(commands));
-  return result.ok() ? *result : -1;
-}
-
-Result<siginfo_t> Execute(std::vector<std::string> commands,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
   siginfo_t info;
-  int ret_code = CF_EXPECT(ExecuteImpl(
-      std::move(commands), ExtraParam{.subprocess_options = std::move(subprocess_options),
-                           .wait_options = wait_options,
-                           .infop = &info}));
-  CF_EXPECT_EQ(ret_code, 0);
+  CF_EXPECT_EQ(subprocess.Wait(&info, wait_options), 0);
+
   return info;
 }
 
