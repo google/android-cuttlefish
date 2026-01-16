@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -212,40 +211,15 @@ class Command {
     return std::move(SetEnvironment(std::move(env)));
   }
 
-  Command& AddEnvironmentVariable(const std::string& env_var,
-                                  const std::string& value) & {
-    return AddEnvironmentVariable(env_var + "=" + value);
-  }
-  Command AddEnvironmentVariable(const std::string& env_var,
-                                 const std::string& value) && {
-    AddEnvironmentVariable(env_var, value);
-    return std::move(*this);
-  }
-
-  Command& AddEnvironmentVariable(std::string env_var) & {
-    env_.emplace_back(std::move(env_var));
-    return *this;
-  }
-  Command AddEnvironmentVariable(std::string env_var) && {
-    return std::move(AddEnvironmentVariable(std::move(env_var)));
-  }
+  Command& AddEnvironmentVariable(std::string_view env_var,
+                                  std::string_view value) &;
+  Command AddEnvironmentVariable(std::string_view env_var,
+                                 std::string_view value) &&;
 
   // Specify an environment variable to be unset from the parent's
   // environment for the subprocesses to be started.
-  Command& UnsetFromEnvironment(const std::string& env_var) & {
-    auto it = env_.begin();
-    while (it != env_.end()) {
-      if (absl::StartsWith(*it, env_var + "=")) {
-        it = env_.erase(it);
-      } else {
-        ++it;
-      }
-    }
-    return *this;
-  }
-  Command UnsetFromEnvironment(const std::string& env_var) && {
-    return std::move(UnsetFromEnvironment(env_var));
-  }
+  Command& UnsetFromEnvironment(std::string_view env_var) &;
+  Command UnsetFromEnvironment(std::string_view env_var) &&;
 
   // Adds a single parameter to the command. All arguments are concatenated into
   // a single string to form a parameter. If one of those arguments is a
@@ -263,6 +237,9 @@ class Command {
   Command AddParameter(Args... args) && {
     return std::move(AddParameter(std::forward<Args>(args)...));
   }
+  Command& AddParameter(std::string arg) &;
+  Command AddParameter(std::string arg) &&;
+
   // Similar to AddParameter, except the args are appended to the last (most
   // recently-added) parameter in the command.
   template <typename... Args>
@@ -339,19 +316,13 @@ std::ostream& operator<<(std::ostream& out, const Command& command);
  *   For now, too many callsites expects int, and needs quite a lot of changes
  *   if we change the return type.
  */
-int Execute(const std::vector<std::string>& commands);
-int Execute(const std::vector<std::string>& commands,
-            const std::vector<std::string>& envs);
+int Execute(std::vector<std::string> commands);
 
 /**
  * Similar as the two above but returns CF_ERR instead of -1, and siginfo_t
  * instead of the exit status.
  */
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          SubprocessOptions subprocess_options,
-                          int wait_options);
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          const std::vector<std::string>& envs,
+Result<siginfo_t> Execute(std::vector<std::string> commands,
                           SubprocessOptions subprocess_options,
                           int wait_options);
 

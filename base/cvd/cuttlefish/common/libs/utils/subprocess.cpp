@@ -42,9 +42,13 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
+#include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -109,15 +113,16 @@ std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
     return env_map;
   }
   for (char** e = envp; *e != nullptr; e++) {
-    std::string env_var_val(*e);
-    auto tokens = android::base::Split(env_var_val, "=");
-    if (tokens.size() <= 1) {
-      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
+    std::vector<std::string_view> key_value =
+        absl::StrSplit(*e, absl::MaxSplits('=', 1));
+    if (key_value.size() != 2) {
+      LOG(WARNING) << "Environment var in unknown format: " << *e;
       continue;
     }
-    const auto var = tokens.at(0);
-    tokens.erase(tokens.begin());
-    env_map[var] = android::base::Join(tokens, "=");
+    auto [it, inserted] = env_map.emplace(key_value[0], key_value[1]);
+    if (!inserted) {
+      LOG(WARNING) << "Duplicate environment variable " << key_value[0];
+    }
   }
   return env_map;
 }
@@ -334,6 +339,44 @@ void Command::BuildParameter(std::stringstream* stream, bool arg) {
   *stream << (arg ? "true" : "false");
 }
 
+Command& Command::AddEnvironmentVariable(std::string_view env_var,
+                                         std::string_view value) & {
+  env_.emplace_back(absl::StrCat(env_var, "=", value));
+  return *this;
+}
+
+Command Command::AddEnvironmentVariable(std::string_view env_var,
+                                        std::string_view value) && {
+  AddEnvironmentVariable(env_var, value);
+  return std::move(*this);
+}
+
+Command& Command::UnsetFromEnvironment(std::string_view env_var) & {
+  const std::string test_value = absl::StrCat(env_var, "=");
+  for (auto it = env_.begin(); it != env_.end();) {
+    if (absl::StartsWith(*it, test_value)) {
+      it = env_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  return *this;
+}
+
+Command Command::UnsetFromEnvironment(std::string_view env_var) && {
+  return std::move(UnsetFromEnvironment(env_var));
+}
+
+Command& Command::AddParameter(std::string arg) & {
+  command_.emplace_back(std::move(arg));
+  return *this;
+}
+
+Command Command::AddParameter(std::string arg) && {
+  AddParameter(std::move(arg));
+  return std::move(*this);
+}
+
 Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
                                 SharedFD shared_fd) & {
   CHECK(shared_fd->IsOpen());
@@ -504,13 +547,11 @@ std::ostream& operator<<(std::ostream& out, const Command& command) {
 }
 
 std::string Command::ToString() const {
-  std::stringstream ss;
-  if (!env_.empty()) {
-    ss << android::base::Join(env_, " ");
-    ss << " ";
-  }
-  ss << android::base::Join(command_, " ");
-  return ss.str();
+  std::vector<std::string_view> elements;
+  elements.reserve(command_.size() + env_.size());
+  elements.insert(elements.end(), env_.begin(), env_.end());
+  elements.insert(elements.end(), command_.begin(), command_.end());
+  return absl::StrJoin(elements, " ");
 }
 
 std::string Command::AsBashScript(
@@ -527,79 +568,29 @@ std::string Command::AsBashScript(
   return contents;
 }
 
-namespace {
+int Execute(std::vector<std::string> commands) {
+  const Result<siginfo_t> result =
+      Execute(std::move(commands), SubprocessOptions(), WEXITED);
+  if (result.ok() && result->si_code == CLD_EXITED) {
+    return result->si_status;
+  } else {
+    return -1;
+  }
+}
 
-struct ExtraParam {
-  // option for Subprocess::Start()
-  SubprocessOptions subprocess_options;
-  // options for Subprocess::Wait(...)
-  int wait_options;
-  siginfo_t* infop;
-};
-Result<int> ExecuteImpl(const std::vector<std::string>& command,
-                        const std::optional<std::vector<std::string>>& envs,
-                        std::optional<ExtraParam> extra_param) {
-  Command cmd(command[0]);
+Result<siginfo_t> Execute(std::vector<std::string> command,
+                          SubprocessOptions subprocess_options,
+                          int wait_options) {
+  Command cmd(std::move(command[0]));
   for (size_t i = 1; i < command.size(); ++i) {
-    cmd.AddParameter(command[i]);
+    cmd.AddParameter(std::move(command[i]));
   }
-  if (envs) {
-    cmd.SetEnvironment(*envs);
-  }
-  auto subprocess =
-      (!extra_param ? cmd.Start()
-                    : cmd.Start(std::move(extra_param->subprocess_options)));
+  Subprocess subprocess = cmd.Start(std::move(subprocess_options));
   CF_EXPECT(subprocess.Started(), "Subprocess failed to start.");
 
-  if (extra_param) {
-    CF_EXPECT(extra_param->infop != nullptr,
-              "When ExtraParam is given, the infop buffer address "
-                  << "must not be nullptr.");
-    return subprocess.Wait(extra_param->infop, extra_param->wait_options);
-  } else {
-    return subprocess.Wait();
-  }
-}
-
-}  // namespace
-
-int Execute(const std::vector<std::string>& commands,
-            const std::vector<std::string>& envs) {
-  auto result = ExecuteImpl(commands, envs, /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
-int Execute(const std::vector<std::string>& commands) {
-  std::vector<std::string> envs;
-  auto result = ExecuteImpl(commands, /* envs */ std::nullopt,
-                            /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
   siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, /* envs */ std::nullopt,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
-  return info;
-}
+  CF_EXPECT_EQ(subprocess.Wait(&info, wait_options), 0);
 
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          const std::vector<std::string>& envs,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
-  siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, envs,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }
 
