@@ -1,4 +1,4 @@
-cuttlefish-common (1.38.0) unstable; urgency=medium
+cuttlefish-common (1.38.0) stable; urgency=medium
 
   * Start development on v1.38 by @3405691582 in https://github.com/google/android-cuttlefish/pull/1890
   * Add a `--test_suite_build` option to `cvd fetch` by @jmacnak in https://github.com/google/android-cuttlefish/pull/1882
