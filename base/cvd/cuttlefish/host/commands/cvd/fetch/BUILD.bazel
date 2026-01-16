@@ -13,7 +13,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/fetch:credential_flags",
-        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
         "//libbase",
