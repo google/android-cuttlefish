@@ -47,6 +47,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -544,13 +545,11 @@ std::ostream& operator<<(std::ostream& out, const Command& command) {
 }
 
 std::string Command::ToString() const {
-  std::stringstream ss;
-  if (!env_.empty()) {
-    ss << android::base::Join(env_, " ");
-    ss << " ";
-  }
-  ss << android::base::Join(command_, " ");
-  return ss.str();
+  std::vector<std::string_view> elements;
+  elements.reserve(command_.size() + env_.size());
+  elements.insert(elements.end(), env_.begin(), env_.end());
+  elements.insert(elements.end(), command_.begin(), command_.end());
+  return absl::StrJoin(elements, " ");
 }
 
 std::string Command::AsBashScript(
