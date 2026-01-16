@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        dir: ["e2etests", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator", "tools/baseimage"]
+        dir: ["e2etests", "frontend/src/cvdexec", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator", "tools/baseimage"]
     steps:
     - name: Checkout repository
       uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
