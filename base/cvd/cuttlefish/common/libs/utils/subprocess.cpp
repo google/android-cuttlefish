@@ -45,6 +45,7 @@
 #include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -345,6 +346,22 @@ Command Command::AddEnvironmentVariable(std::string_view env_var,
                                         std::string_view value) && {
   AddEnvironmentVariable(env_var, value);
   return std::move(*this);
+}
+
+Command& Command::UnsetFromEnvironment(std::string_view env_var) & {
+  const std::string test_value = absl::StrCat(env_var, "=");
+  for (auto it = env_.begin(); it != env_.end();) {
+    if (absl::StartsWith(*it, test_value)) {
+      it = env_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  return *this;
+}
+
+Command Command::UnsetFromEnvironment(std::string_view env_var) && {
+  return std::move(UnsetFromEnvironment(env_var));
 }
 
 Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,
