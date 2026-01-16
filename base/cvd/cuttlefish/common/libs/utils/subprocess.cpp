@@ -577,14 +577,10 @@ struct ExtraParam {
   siginfo_t* infop;
 };
 Result<int> ExecuteImpl(const std::vector<std::string>& command,
-                        const std::optional<std::vector<std::string>>& envs,
                         std::optional<ExtraParam> extra_param) {
   Command cmd(command[0]);
   for (size_t i = 1; i < command.size(); ++i) {
     cmd.AddParameter(command[i]);
-  }
-  if (envs) {
-    cmd.SetEnvironment(*envs);
   }
   auto subprocess =
       (!extra_param ? cmd.Start()
@@ -603,16 +599,9 @@ Result<int> ExecuteImpl(const std::vector<std::string>& command,
 
 }  // namespace
 
-int Execute(const std::vector<std::string>& commands,
-            const std::vector<std::string>& envs) {
-  auto result = ExecuteImpl(commands, envs, /* extra_param */ std::nullopt);
-  return (!result.ok() ? -1 : *result);
-}
-
 int Execute(const std::vector<std::string>& commands) {
   std::vector<std::string> envs;
-  auto result = ExecuteImpl(commands, /* envs */ std::nullopt,
-                            /* extra_param */ std::nullopt);
+  auto result = ExecuteImpl(commands, /* extra_param */ std::nullopt);
   return (!result.ok() ? -1 : *result);
 }
 
@@ -621,24 +610,9 @@ Result<siginfo_t> Execute(const std::vector<std::string>& commands,
                           int wait_options) {
   siginfo_t info;
   auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, /* envs */ std::nullopt,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
-  CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
-  return info;
-}
-
-Result<siginfo_t> Execute(const std::vector<std::string>& commands,
-                          const std::vector<std::string>& envs,
-                          SubprocessOptions subprocess_options,
-                          int wait_options) {
-  siginfo_t info;
-  auto ret_code = CF_EXPECT(ExecuteImpl(
-      commands, envs,
-      ExtraParam{.subprocess_options = std::move(subprocess_options),
-                 .wait_options = wait_options,
-                 .infop = &info}));
+      commands, ExtraParam{.subprocess_options = std::move(subprocess_options),
+                           .wait_options = wait_options,
+                           .infop = &info}));
   CF_EXPECT(ret_code == 0, "Subprocess::Wait() returned " << ret_code);
   return info;
 }
