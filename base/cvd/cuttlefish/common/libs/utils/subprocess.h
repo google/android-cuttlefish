@@ -216,14 +216,6 @@ class Command {
   Command AddEnvironmentVariable(std::string_view env_var,
                                  std::string_view value) &&;
 
-  Command& AddEnvironmentVariable(std::string env_var) & {
-    env_.emplace_back(std::move(env_var));
-    return *this;
-  }
-  Command AddEnvironmentVariable(std::string env_var) && {
-    return std::move(AddEnvironmentVariable(std::move(env_var)));
-  }
-
   // Specify an environment variable to be unset from the parent's
   // environment for the subprocesses to be started.
   Command& UnsetFromEnvironment(std::string_view env_var) &;
