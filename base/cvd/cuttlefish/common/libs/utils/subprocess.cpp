@@ -42,12 +42,13 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
+#include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -112,15 +113,16 @@ std::unordered_map<std::string, std::string> EnvpToMap(char** envp) {
     return env_map;
   }
   for (char** e = envp; *e != nullptr; e++) {
-    std::string env_var_val(*e);
-    auto tokens = android::base::Split(env_var_val, "=");
-    if (tokens.size() <= 1) {
-      LOG(WARNING) << "Environment var in unknown format: " << env_var_val;
+    std::vector<std::string_view> key_value =
+        absl::StrSplit(*e, absl::MaxSplits('=', 1));
+    if (key_value.size() != 2) {
+      LOG(WARNING) << "Environment var in unknown format: " << *e;
       continue;
     }
-    const auto var = tokens.at(0);
-    tokens.erase(tokens.begin());
-    env_map[var] = android::base::Join(tokens, "=");
+    auto [it, inserted] = env_map.emplace(key_value[0], key_value[1]);
+    if (!inserted) {
+      LOG(WARNING) << "Duplicate environment variable " << key_value[0];
+    }
   }
   return env_map;
 }
