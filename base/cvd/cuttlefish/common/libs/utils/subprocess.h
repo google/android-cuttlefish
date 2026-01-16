@@ -33,7 +33,6 @@
 #include <vector>
 
 #include "absl/log/check.h"
-#include "absl/strings/match.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -227,20 +226,8 @@ class Command {
 
   // Specify an environment variable to be unset from the parent's
   // environment for the subprocesses to be started.
-  Command& UnsetFromEnvironment(const std::string& env_var) & {
-    auto it = env_.begin();
-    while (it != env_.end()) {
-      if (absl::StartsWith(*it, env_var + "=")) {
-        it = env_.erase(it);
-      } else {
-        ++it;
-      }
-    }
-    return *this;
-  }
-  Command UnsetFromEnvironment(const std::string& env_var) && {
-    return std::move(UnsetFromEnvironment(env_var));
-  }
+  Command& UnsetFromEnvironment(std::string_view env_var) &;
+  Command UnsetFromEnvironment(std::string_view env_var) &&;
 
   // Adds a single parameter to the command. All arguments are concatenated into
   // a single string to form a parameter. If one of those arguments is a
