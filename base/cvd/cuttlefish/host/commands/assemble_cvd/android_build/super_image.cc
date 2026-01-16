@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
@@ -35,6 +36,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/liblp/liblp.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -220,6 +222,8 @@ Result<std::unique_ptr<android::fs_mgr::LpMetadata>> SuperImageFromAndroidBuild(
 Result<std::unique_ptr<AndroidBuild>> SuperImageAsBuild(AndroidBuild& build) {
   std::unique_ptr<android::fs_mgr::LpMetadata> lp_metadata =
       CF_EXPECT(SuperImageFromAndroidBuild(build));
+
+  VLOG(0) << Pretty(*lp_metadata);
 
   auto super_build =
       std::make_unique<SuperImageAsBuildImpl>(build, std::move(lp_metadata));
