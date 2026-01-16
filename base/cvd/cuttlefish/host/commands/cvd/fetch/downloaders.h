@@ -28,7 +28,8 @@ namespace cuttlefish {
 class Downloaders {
  public:
   static Result<Downloaders> Create(const BuildApiFlags&,
-                                    const std::string& target_directory);
+                                    const std::string& target_directory,
+                                    const std::string& cache_base_path);
 
   Downloaders(Downloaders&&);
   ~Downloaders();

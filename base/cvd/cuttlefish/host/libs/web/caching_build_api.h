@@ -24,8 +24,8 @@
 
 namespace cuttlefish {
 
-Result<bool> CanCache(const std::string& target_directory,
-                      const std::string& cache_base_path);
+bool CanCache(const std::string& target_directory,
+              const std::string& cache_base_path);
 
 class CachingBuildApi : public BuildApi {
  public:
