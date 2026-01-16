@@ -45,6 +45,7 @@
 #include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -332,6 +333,18 @@ void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
 
 void Command::BuildParameter(std::stringstream* stream, bool arg) {
   *stream << (arg ? "true" : "false");
+}
+
+Command& Command::AddEnvironmentVariable(std::string_view env_var,
+                                         std::string_view value) & {
+  AddEnvironmentVariable(absl::StrCat(env_var, "=", value));
+  return *this;
+}
+
+Command Command::AddEnvironmentVariable(std::string_view env_var,
+                                        std::string_view value) && {
+  AddEnvironmentVariable(env_var, value);
+  return std::move(*this);
 }
 
 Command& Command::RedirectStdIO(Subprocess::StdIOChannel channel,

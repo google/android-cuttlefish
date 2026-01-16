@@ -212,15 +212,10 @@ class Command {
     return std::move(SetEnvironment(std::move(env)));
   }
 
-  Command& AddEnvironmentVariable(const std::string& env_var,
-                                  const std::string& value) & {
-    return AddEnvironmentVariable(env_var + "=" + value);
-  }
-  Command AddEnvironmentVariable(const std::string& env_var,
-                                 const std::string& value) && {
-    AddEnvironmentVariable(env_var, value);
-    return std::move(*this);
-  }
+  Command& AddEnvironmentVariable(std::string_view env_var,
+                                  std::string_view value) &;
+  Command AddEnvironmentVariable(std::string_view env_var,
+                                 std::string_view value) &&;
 
   Command& AddEnvironmentVariable(std::string env_var) & {
     env_.emplace_back(std::move(env_var));
