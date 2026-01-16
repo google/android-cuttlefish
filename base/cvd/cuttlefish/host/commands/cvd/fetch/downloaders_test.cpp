@@ -76,6 +76,9 @@ fi
   std::string cas_config_filepath_;
   std::string cas_downloader_path_;
   std::string cas_output_filepath_;
+  // placeholders for dependencies that do not matter for cas_downloader testing
+  std::string target_directory_ = "/target_directory";
+  std::string cache_base_path_ = "/cache_base_path";
 };
 
 using testing::IsFalse;
@@ -83,12 +86,11 @@ using testing::IsTrue;
 
 TEST_F(FetchCvdTests, CasDownloaderNotCalledIfNoFlags) {
   BuildApiFlags flags = {
-      .enable_caching =
-          false,  // TODO: chadreynolds - remove once full refactor is in
+      .enable_caching = false,
   };
 
   Result<Downloaders> downloaders_res =
-      Downloaders::Create(flags, temp_dir_.path);
+      Downloaders::Create(flags, target_directory_, cache_base_path_);
 
   EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsFalse());
@@ -96,13 +98,12 @@ TEST_F(FetchCvdTests, CasDownloaderNotCalledIfNoFlags) {
 
 TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetOnCommandLine) {
   BuildApiFlags flags = {
-      .enable_caching =
-          false,  // TODO: chadreynolds - remove once full refactor is in
+      .enable_caching = false,
   };
   flags.cas_downloader_flags.downloader_path.set_value(cas_downloader_path_);
 
   Result<Downloaders> downloaders_res =
-      Downloaders::Create(flags, temp_dir_.path);
+      Downloaders::Create(flags, target_directory_, cache_base_path_);
 
   EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
@@ -110,14 +111,13 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetOnCommandLine) {
 
 TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetInCasConfig) {
   BuildApiFlags flags = {
-      .enable_caching =
-          false,  // TODO: chadreynolds - remove once full refactor is in
+      .enable_caching = false,
   };
   flags.cas_downloader_flags.cas_config_filepath.set_value(
       cas_config_filepath_);
 
   Result<Downloaders> downloaders_res =
-      Downloaders::Create(flags, temp_dir_.path);
+      Downloaders::Create(flags, target_directory_, cache_base_path_);
 
   EXPECT_THAT(downloaders_res, IsOk());
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
