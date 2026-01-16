@@ -45,6 +45,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/host_package.h"
 #include "cuttlefish/host/commands/cvd/fetch/host_tools_target.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
+#include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
@@ -98,8 +99,10 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
 }
 
 Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
+                                    const std::string& cache_base_path,
                                     const std::vector<Target>& targets) {
   CF_EXPECT(EnsureDirectoryExists(host_tools_directory));
+  CF_EXPECT(EnsureDirectoryExists(cache_base_path));
   for (const auto& target : targets) {
     CF_EXPECT(EnsureDirectoryExists(target.directories.root, kRwxAllMode));
     CF_EXPECT(EnsureDirectoryExists(target.directories.otatools, kRwxAllMode));
@@ -437,6 +440,7 @@ Result<void> FetchTarget(FetchContext& fetch_context,
 }
 
 Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
+                                       const std::string& cache_base_path,
                                        const HostToolsTarget& host_target,
                                        std::vector<Target>& targets) {
 #ifdef __BIONIC__
@@ -446,8 +450,8 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
 #endif
   CurlGlobalInit curl_init;
 
-  Downloaders downloaders = CF_EXPECT(
-      Downloaders::Create(flags.build_api_flags, flags.target_directory));
+  Downloaders downloaders = CF_EXPECT(Downloaders::Create(
+      flags.build_api_flags, flags.target_directory, cache_base_path));
 
   FetchTracer tracer;
   FetchTracer::Trace prefetch_trace = tracer.NewTrace("PreFetch actions");
@@ -511,8 +515,10 @@ Result<std::vector<FetchResult>> FetchCvdMain(const FetchFlags& flags) {
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target =
       HostToolsTarget::Create(flags, append_subdirectory);
-  CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory, targets));
-  return CF_EXPECT(Fetch(flags, host_target, targets));
+  const std::string cache_base_path = PerUserCacheDir();
+  CF_EXPECT(EnsureDirectoriesExist(host_target.host_tools_directory,
+                                   cache_base_path, targets));
+  return CF_EXPECT(Fetch(flags, cache_base_path, host_target, targets));
 }
 
 }  // namespace cuttlefish
