@@ -180,9 +180,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
-        "//cuttlefish/pretty/liblp",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@android_system_core//:liblp",
         "@fmt",
