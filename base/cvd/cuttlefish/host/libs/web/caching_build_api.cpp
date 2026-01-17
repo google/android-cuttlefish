@@ -69,16 +69,18 @@ CachingPaths ConstructCachePaths(const std::string& cache_base,
 
 Result<bool> CanCache(const std::string& target_directory,
                       const std::string& cache_base_path) {
-  CF_EXPECT(EnsureDirectoryExists(cache_base_path),
-            "Failed to create cache directory.");
-  const bool result = CF_EXPECT(CanHardLink(target_directory, cache_base_path));
-  if (!result) {
-    LOG(WARNING)
-        << "Caching disabled, unable to hard link between fetch directory \""
-        << target_directory << "\" and cache directory \"" << cache_base_path
-        << "\"";
+  const Result<bool> result = CanHardLink(target_directory, cache_base_path);
+  if (result.ok() && *result) {
+    return true;
   }
-  return result;
+  if (!result.ok()) {
+    VLOG(1) << "Error during hard link check: " << result.error();
+  }
+  LOG(WARNING)
+      << "Caching disabled, unable to hard link between fetch directory \""
+      << target_directory << "\" and cache directory \"" << cache_base_path
+      << "\"";
+  return false;
 }
 
 CachingBuildApi::CachingBuildApi(BuildApi& build_api,

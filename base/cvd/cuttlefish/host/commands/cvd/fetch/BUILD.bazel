@@ -80,7 +80,6 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
-        "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",
@@ -169,6 +168,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:host_tools_target",
         "//cuttlefish/host/commands/cvd/fetch:substitute",
         "//cuttlefish/host/commands/cvd/fetch:target_directories",
+        "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
