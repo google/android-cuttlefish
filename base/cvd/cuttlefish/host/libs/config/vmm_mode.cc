@@ -17,7 +17,6 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -28,22 +27,11 @@
 namespace cuttlefish {
 
 std::string ToString(VmmMode mode) {
-  std::stringstream ss;
-  ss << mode;
-  return ss.str();
+  return std::string(format_as(mode));
 }
 
 std::ostream& operator<<(std::ostream& out, VmmMode vmm) {
-  switch (vmm) {
-    case VmmMode::kUnknown:
-      return out << "unknown";
-    case VmmMode::kCrosvm:
-      return out << "crosvm";
-    case VmmMode::kGem5:
-      return out << "gem5";
-    case VmmMode::kQemu:
-      return out << "qemu_cli";
-  }
+  return out << format_as(vmm);
 }
 
 Result<VmmMode> ParseVmm(std::string_view str) {
@@ -63,5 +51,19 @@ bool VmManagerIsCrosvm(VmmMode mode) { return mode == VmmMode::kCrosvm; }
 bool VmManagerIsQemu(VmmMode mode) { return mode == VmmMode::kQemu; }
 
 bool VmManagerIsGem5(VmmMode mode) { return mode == VmmMode::kGem5; }
+
+// for libfmt
+std::string_view format_as(VmmMode vmm) {
+  switch (vmm) {
+    case VmmMode::kUnknown:
+      return "unknown";
+    case VmmMode::kCrosvm:
+      return "crosvm";
+    case VmmMode::kGem5:
+      return "gem5";
+    case VmmMode::kQemu:
+      return "qemu_cli";
+  }
+}
 
 }  // namespace cuttlefish
