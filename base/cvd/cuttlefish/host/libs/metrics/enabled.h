@@ -20,12 +20,6 @@
 
 namespace cuttlefish {
 
-inline constexpr std::string_view kReadmeText =
-    "The existence of records in this directory does"
-    " not mean metrics are being transmitted.  The data is always gathered and "
-    "written out for debugging purposes.  To enable metrics transmission "
-    "the `cuttlefish-metrics` package must be installed.";
-
 inline constexpr char kTransmitterPath[] =
     "/usr/lib/cuttlefish-metrics/bin/metrics_transmitter";
 
