@@ -18,13 +18,13 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/str_join.h"
 
+#include "cuttlefish/pretty/numeric.h"  // IWYU pragma: export
 #include "cuttlefish/pretty/pretty.h"
 #include "cuttlefish/pretty/string.h"  // IWYU pragma: export
 
