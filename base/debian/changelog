@@ -1,8 +1,39 @@
-cuttlefish-common (1.39.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.39.0) unstable; urgency=medium
 
-  *
+* Start development on v1.39 by @ser-io in https://github.com/google/android-cuttlefish/pull/1993
+* Introduce a netlink alloc driver . by @3405691582 in https://github.com/google/android-cuttlefish/pull/1981
+* Add pretty-printing for structs, comparable to Rust's std::fmt::DebugStruct by @Databean in https://github.com/google/android-cuttlefish/pull/1994
+* Read additional physical partitions from AndroidBuild by @Databean in https://github.com/google/android-cuttlefish/pull/1991
+* Add pretty printing for containers by @Databean in https://github.com/google/android-cuttlefish/pull/1996
+* Add presubmit check to ensure docker image is running on podman as well by @0405ysj in https://github.com/google/android-cuttlefish/pull/1878
+* Replace --privileged into other options from Github presubmit checks by @0405ysj in https://github.com/google/android-cuttlefish/pull/1998
+* Remove more dead allocd code. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2000
+* Convert all alloc drivers to using Result. by @3405691582 in https://github.com/google/android-cuttlefish/pull/1999
+* gce_install_cuttlefish_container tool by @ser-io in https://github.com/google/android-cuttlefish/pull/2001
+* Create a generic `cuttlefish::Pretty` function overloaded for multiple types. by @Databean in https://github.com/google/android-cuttlefish/pull/2002
+* Support setting the AndroidBuild directory for extracting files after creation by @Databean in https://github.com/google/android-cuttlefish/pull/1997
+* Move `dosfstools` and `mtools` external repo configuration into `base/cvd/build_external` by @Databean in https://github.com/google/android-cuttlefish/pull/1974
+* Port ag/37776360 : "Simplify DeviceType parsing for automotive variants" by @Databean in https://github.com/google/android-cuttlefish/pull/1977
+* Add pretty-printing for `std::map` types by @Databean in https://github.com/google/android-cuttlefish/pull/2003
+* Add pretty-printing for `std::optional` types by @Databean in https://github.com/google/android-cuttlefish/pull/2006
+* Support extracting logical partitions from super images in AndroidBuild by @Databean in https://github.com/google/android-cuttlefish/pull/2005
+* Make Range's operator< and operator== compatible by @jemoreira in https://github.com/google/android-cuttlefish/pull/2004
+* Add pretty-printing for `Json::Value` by @Databean in https://github.com/google/android-cuttlefish/pull/2007
+* Add pretty-printing for GuestConfig by @Databean in https://github.com/google/android-cuttlefish/pull/2008
+* Attemp HO e2e flaky tests multiple times. by @ser-io in https://github.com/google/android-cuttlefish/pull/1987
+* Alphabetize git_repository entries in MODULE.bazel by @jemoreira in https://github.com/google/android-cuttlefish/pull/2011
+* Minimize number of CanCache checks by @cjreynol in https://github.com/google/android-cuttlefish/pull/2009
+* Describe documentation around gce_install_cuttlefish_packages by @0405ysj in https://github.com/google/android-cuttlefish/pull/2015
+* Start to handle bridge teardown properly. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2012
+* Mark v1.38 as stable. by @ser-io in https://github.com/google/android-cuttlefish/pull/2019
+* Use Execute instead of RunExternalCommand. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2010
+* Adjust the `cvdalloc` substitution path by @cjreynol in https://github.com/google/android-cuttlefish/pull/2013
+* Add pretty-printing for liblp types by @Databean in https://github.com/google/android-cuttlefish/pull/2014
+* Fix error case in `cas_downloader` unit tests by @cjreynol in https://github.com/google/android-cuttlefish/pull/2021
+* Revert "Describe documentation around gce_install_cuttlefish_packages" by @ser-io in https://github.com/google/android-cuttlefish/pull/2018
+* Revert "Add pretty-printing for liblp types" by @Databean in https://github.com/google/android-cuttlefish/pull/2025
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 09 Jan 2026 19:01:22 -0500
+ -- Alistair Delva <adelva@google.com>  Mon, 19 Jan 2026 16:31:50 -0800
 
 cuttlefish-common (1.38.0) stable; urgency=medium
 

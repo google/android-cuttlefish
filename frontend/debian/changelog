@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.39.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.39.0) unstable; urgency=medium
 
-  *
+  * Initial implementation of cvdexec by @0405ysj in https://github.com/google/android-cuttlefish/pull/2016
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 09 Jan 2026 19:02:18 -0500
+ -- Alistair Delva <adelva@google.com>  Mon, 19 Jan 2026 16:38:05 -0800
 
 cuttlefish-frontend (1.38.0) stable; urgency=medium
 
