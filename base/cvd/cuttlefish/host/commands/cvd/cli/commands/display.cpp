@@ -26,6 +26,8 @@
 #include <utility>
 #include <vector>
 
+#include "absl/strings/str_cat.h"
+
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -97,9 +99,9 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
   Result<Command> HelpCommand(const CommandRequest& request,
                               const cvd_common::Args& subcmd_args,
                               cvd_common::Envs envs) {
-    auto android_host_out = CF_EXPECT(AndroidHostPath(envs));
-    auto cvd_display_bin_path =
-        ConcatToString(android_host_out, "/bin/", kDisplayBin);
+    const std::string android_host_out = CF_EXPECT(AndroidHostPath(envs));
+    const std::string cvd_display_bin_path =
+        absl::StrCat(android_host_out, "/bin/", kDisplayBin);
     std::string home = Contains(envs, "HOME") ? envs.at("HOME")
                                               : CF_EXPECT(SystemWideUserHome());
     envs["HOME"] = home;
@@ -131,12 +133,12 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
             : CF_EXPECT(selector::SelectInstance(instance_manager_, request));
     const auto& home = group.Proto().home_directory();
 
-    const auto& android_host_out = group.Proto().host_artifacts_path();
-    auto cvd_display_bin_path =
-        ConcatToString(android_host_out, "/bin/", kDisplayBin);
+    const std::string& android_host_out = group.Proto().host_artifacts_path();
+    const std::string cvd_display_bin_path =
+        absl::StrCat(android_host_out, "/bin/", kDisplayBin);
 
     cvd_common::Args cvd_env_args{subcmd_args};
-    cvd_env_args.push_back(ConcatToString("--instance_num=", instance.id()));
+    cvd_env_args.push_back(absl::StrCat("--instance_num=", instance.id()));
     envs["HOME"] = home;
     envs[kAndroidHostOut] = android_host_out;
     envs[kAndroidSoongHostOut] = android_host_out;

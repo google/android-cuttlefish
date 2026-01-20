@@ -23,8 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/format.h>
-#include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
+#include "absl/strings/str_cat.h"
+#include "fmt/format.h"
+#include "fmt/ranges.h"  // NOLINT(misc-include-cleaner): version difference
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -110,8 +111,8 @@ Result<Command> ConstructCvdGenericNonHelpCommand(
   envs["HOME"] = request_form.home;
   envs[kAndroidHostOut] = request_form.android_host_out;
   envs[kAndroidSoongHostOut] = request_form.android_host_out;
-  const auto bin_path = ConcatToString(request_form.android_host_out, "/bin/",
-                                       request_form.bin_file);
+  const std::string bin_path = absl::StrCat(request_form.android_host_out,
+                                            "/bin/", request_form.bin_file);
 
   if (request_form.verbose) {
     std::stringstream verbose_stream;

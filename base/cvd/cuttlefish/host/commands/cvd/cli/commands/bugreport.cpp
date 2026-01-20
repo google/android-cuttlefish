@@ -25,8 +25,9 @@
 #include <utility>
 #include <vector>
 
-#include <fmt/core.h>
-#include <fmt/format.h>
+#include "absl/strings/str_cat.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
 
 #include "absl/log/log.h"
 #include "android-base/file.h"
@@ -138,7 +139,8 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   home = instance_group.HomeDir();
   env["HOME"] = home;
   env[kAndroidHostOut] = android_host_out;
-  auto bin_path = ConcatToString(android_host_out, "/bin/", kHostBugreportBin);
+  const std::string bin_path =
+      absl::StrCat(android_host_out, "/bin/", kHostBugreportBin);
 
   ConstructCommandParam construct_cmd_param{.bin_path = bin_path,
                                             .home = home,

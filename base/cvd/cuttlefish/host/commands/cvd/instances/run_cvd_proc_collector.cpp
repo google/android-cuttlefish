@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -59,8 +60,8 @@ bool IsTrue(std::string value) {
 
 static Result<std::string> SearchFilesInPath(
     const std::string& dir_path, const std::vector<std::string>& files) {
-  for (const auto& bin : files) {
-    std::string file_path = ConcatToString(dir_path, "/", bin);
+  for (std::string_view bin : files) {
+    const std::string file_path = absl::StrCat(dir_path, "/", bin);
     if (!FileExists(file_path)) {
       continue;
     }

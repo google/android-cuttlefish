@@ -23,8 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <fmt/core.h>
-#include <fmt/format.h>
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -111,10 +110,11 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
         CF_EXPECT(selector::SelectInstance(instance_manager_, request));
     const auto& home = group.Proto().home_directory();
 
-    const auto& android_host_out = group.Proto().host_artifacts_path();
-    auto cvd_env_bin_path =
-        ConcatToString(android_host_out, "/bin/", kCvdEnvBin);
-    const auto& internal_device_name = fmt::format("cvd-{}", instance.id());
+    const std::string& android_host_out = group.Proto().host_artifacts_path();
+    const std::string cvd_env_bin_path =
+        absl::StrCat(android_host_out, "/bin/", kCvdEnvBin);
+    const std::string internal_device_name =
+        absl::StrCat("cvd-", instance.id());
 
     cvd_common::Args cvd_env_args{internal_device_name};
     cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
