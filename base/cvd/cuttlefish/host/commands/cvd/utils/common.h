@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -52,12 +51,6 @@ template <typename Ostream, typename... Args>
 Ostream& ConcatToStream(Ostream& out, Args&&... args) {
   (out << ... << std::forward<Args>(args));
   return out;
-}
-
-template <typename... Args>
-std::string ConcatToString(Args&&... args) {
-  std::stringstream concatenator;
-  return ConcatToStream(concatenator, std::forward<Args>(args)...).str();
 }
 
 std::string CvdDir();
