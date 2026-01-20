@@ -237,6 +237,10 @@ int PDUParser::HexCharToInt(char c) {
 }
 
 int PDUParser::Hex2ToByte(const std::string& hex) {
+  if (hex.size() < 2) {
+    return -1;
+  }
+
   int  hi = HexCharToInt(hex[0]);
   int  lo = HexCharToInt(hex[1]);
 
