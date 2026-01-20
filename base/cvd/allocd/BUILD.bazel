@@ -57,6 +57,7 @@ cc_library(
     deps = [
         "//cuttlefish/result",
         "//cuttlefish/common/libs/utils:subprocess",
+        "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
         "@abseil-cpp//absl/log",
     ],
