@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <sys/types.h>
-
 #include <string>
 #include <string_view>
 
@@ -25,15 +23,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-// utility struct for std::variant uses
-template <typename... Ts>
-struct Overload : Ts... {
-  using Ts::operator()...;
-};
-
-template <typename... Ts>
-Overload(Ts...) -> Overload<Ts...>;
 
 // name of environment variable to mark the launch_cvd initiated by the cvd
 // server
@@ -46,12 +35,6 @@ constexpr char kAndroidHostOut[] = "ANDROID_HOST_OUT";
 // kAndroidHostOut for old branches
 constexpr char kAndroidSoongHostOut[] = "ANDROID_SOONG_HOST_OUT";
 constexpr char kAndroidProductOut[] = "ANDROID_PRODUCT_OUT";
-
-template <typename Ostream, typename... Args>
-Ostream& ConcatToStream(Ostream& out, Args&&... args) {
-  (out << ... << std::forward<Args>(args));
-  return out;
-}
 
 std::string CvdDir();
 
