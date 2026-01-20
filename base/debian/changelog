@@ -1,3 +1,9 @@
+cuttlefish-common (1.40.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Alistair Delva <adelva@google.com>  Tue, 20 Jan 2026 10:05:40 -0800
+
 cuttlefish-common (1.39.0) unstable; urgency=medium
 
   * Start development on v1.39 by @ser-io in https://github.com/google/android-cuttlefish/pull/1993
