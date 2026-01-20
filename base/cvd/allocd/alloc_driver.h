@@ -33,6 +33,7 @@ Result<void> DestroyGateway(std::string_view name, std::string_view gateway,
 Result<void> LinkTapToBridge(std::string_view tap_name,
                              std::string_view bridge_name);
 Result<void> DeleteIface(std::string_view name);
+Result<bool> BridgeInUse(std::string_view name);
 Result<bool> BridgeExists(std::string_view name);
 Result<bool> BridgeInUse(std::string_view name);
 Result<void> CreateBridge(std::string_view name);

@@ -36,6 +36,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/strip.h"
 
@@ -205,7 +206,9 @@ Result<bool> BridgeExists(std::string_view name) {
 }
 
 Result<bool> BridgeInUse(std::string_view name) {
-  return false;
+  return Execute({"sh", "-c",
+                  absl::StrCat("[ $(ip link show master ", name,
+                               " | wc -l) -ne 0 ]")}) == 0;
 }
 
 Result<void> CreateBridge(std::string_view name) {
