@@ -10,6 +10,7 @@ cf_cc_library(
     hdrs = ["container.h"],
     deps = [
         "//cuttlefish/pretty",
+        "//cuttlefish/pretty:numeric",
         "//cuttlefish/pretty:string",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
@@ -61,6 +62,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "numeric",
+    srcs = ["numeric.cc"],
+    hdrs = ["numeric.h"],
+    deps = [
+        "//cuttlefish/pretty",
+    ],
+)
+
+cf_cc_library(
     name = "optional",
     hdrs = ["optional.h"],
     deps = [
@@ -108,6 +118,7 @@ cf_cc_library(
     hdrs = ["struct.h"],
     deps = [
         "//cuttlefish/pretty",
+        "//cuttlefish/pretty:numeric",
         "//cuttlefish/pretty:string",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
