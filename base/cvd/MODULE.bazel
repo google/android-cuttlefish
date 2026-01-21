@@ -308,13 +308,6 @@ use_repo(casimir_crates, "casimir_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "arm_optimized_routines",
-    build_file = "@//:BUILD.arm_optimized_routines.bazel",
-    commit = "3bc8091d03e002e25332fcbbd9a754538cb1109e",
-    remote = "https://github.com/ARM-software/optimized-routines.git",
-)
-
-git_repository(
     name = "avb",
     build_file = "@//:BUILD.avb.bazel",
     commit = "761178607206f4cb2af79ed9eec52d8cbd814adb",

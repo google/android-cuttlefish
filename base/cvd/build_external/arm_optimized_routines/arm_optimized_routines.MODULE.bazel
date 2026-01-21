@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "arm_optimized_routines",
+    build_file = "@//build_external/arm_optimized_routines:BUILD.arm_optimized_routines.bazel",
+    commit = "3bc8091d03e002e25332fcbbd9a754538cb1109e",
+    remote = "https://github.com/ARM-software/optimized-routines.git",
+)
