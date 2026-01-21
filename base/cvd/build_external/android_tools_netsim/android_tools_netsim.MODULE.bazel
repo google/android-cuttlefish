@@ -1,0 +1,121 @@
+netsim_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+netsim_crates.spec(
+    package = "grpcio-sys",
+    version = "0.13.0",
+    features = ["openssl"],
+)
+netsim_crates.annotation(
+    crate = "grpcio-sys",
+    gen_build_script = "off",
+
+    # Mimic build.rs to use grpc from bazel_dep()
+    deps = [
+        ":grpc_wrap",
+        "@@//build_external/grpcio-sys:gpr_log_stub",
+    ],
+    rustc_env = {
+        "BINDING_PATH": "$(execpath bindings/bindings.rs)",
+    },
+    additive_build_file_content = """
+
+cc_library(
+    name = "grpc_wrap",
+    srcs = [
+        "grpc_wrap.cc",
+        "@@//build_external/grpcio-sys:gpr_assert",
+    ],
+    copts = [
+        "-include",
+        "$(execpath @@//build_external/grpcio-sys:gpr_assert)",
+    ],
+    deps = ["@@//build_external/grpcio-sys:grpc_wrap_deps"],
+)
+""",
+)
+netsim_crates.spec(
+    package = "pica",
+    git = "https://github.com/google/pica/",
+    rev = "dbcb4e93c352b11bdc7c746665f2fa05bae0f251",  # 0.1.12,
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "pica",
+    gen_all_binaries = True,
+    repositories = ["netsim_crates"],
+)
+# b/413182531 no need to specify .spec() for pdl-compiler because it is already
+# in rootcanal's MODULE.bazel.
+netsim_crates.annotation(
+    crate = "pdl-compiler",
+    gen_all_binaries = True,
+    repositories = ["netsim_crates"],
+)
+netsim_crates.spec(
+    package = "openssl",
+    version = "0.10.73",
+    repositories = ["netsim_crates"],
+)
+netsim_crates.spec(
+    package = "openssl-sys",
+    version = "0.9.109",
+    features = ["bindgen"],
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "openssl",
+    build_script_env = {
+        "DEP_OPENSSL_BORINGSSL": "1",
+    },
+    repositories = ["netsim_crates"],
+)
+netsim_crates.annotation(
+    crate = "openssl-sys",
+    build_script_env = {
+        "OPENSSL_LIB_DIR": "$(execpath @@//build_external/android_tools_netsim:openssl_lib_dir)",
+        "OPENSSL_INCLUDE_DIR": "$(execpath @@//build_external/android_tools_netsim:openssl_include_dir)",
+        # Actual library name in boringssl; see bssl_cc_library.
+        # Skip crypto_cxx because we don't need C++ code for building this Rust crate; only C APIs
+        # for FFI
+        "OPENSSL_LIBS": "ssl_internal:crypto_internal",
+    },
+    build_script_data = [
+        "@@//build_external/android_tools_netsim:openssl_lib_dir",
+        "@@//build_external/android_tools_netsim:openssl_include_dir",
+    ],
+    repositories = ["netsim_crates"],
+)
+netsim_crates.from_cargo(
+    name = "netsim_crates",
+    manifests = [
+        "@android_tools_netsim//:rust/Cargo.toml",
+        "@android_tools_netsim//:rust/capture/Cargo.toml",
+        "@android_tools_netsim//:rust/cli/Cargo.toml",
+        "@android_tools_netsim//:rust/common/Cargo.toml",
+        "@android_tools_netsim//:rust/daemon/Cargo.toml",
+        "@android_tools_netsim//:rust/hostapd-rs/Cargo.toml",
+        "@android_tools_netsim//:rust/http-proxy/Cargo.toml",
+        "@android_tools_netsim//:rust/libslirp-rs/Cargo.toml",
+        "@android_tools_netsim//:rust/packets/Cargo.toml",
+        "@android_tools_netsim//:rust/proto/Cargo.toml",
+    ],
+    # Needed because it shares the extension with crosvm
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools = "@rust_host_tools_nightly",
+)
+
+use_repo(netsim_crates, "netsim_crates")
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "android_tools_netsim",
+    build_file = "@//build_external/android_tools_netsim:BUILD.android_tools_netsim.bazel",
+    commit = "efabf7cb7e63b7466f79e9171907ed1e746ef1a3",
+    remote = "https://android.googlesource.com/platform/tools/netsim",
+    patches = [
+        "@//build_external/android_tools_netsim:0001-Drop-pica-from-daemon-Cargo.toml.patch",
+        "@//build_external/android_tools_netsim:0002-Fix-build-with-tungstenite-0.26.0.patch",
+        "@//build_external/android_tools_netsim:0003-Pin-cxx.patch",
+    ],
+    patch_strip = 1,
+)

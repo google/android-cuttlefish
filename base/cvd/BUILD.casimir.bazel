@@ -1,5 +1,5 @@
-load("@@//build_external/netsim:collect_files_in_dir.bzl", "collect_files_in_dir")
-load("@@//build_external/netsim:pdl_rust.bzl", "pdl_rust")
+load("@@//build_external/android_tools_netsim:collect_files_in_dir.bzl", "collect_files_in_dir")
+load("@@//build_external/android_tools_netsim:pdl_rust.bzl", "pdl_rust")
 load("@casimir_crates//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 
