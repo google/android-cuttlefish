@@ -415,13 +415,6 @@ use_repo(casimir_crates, "casimir_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "android_system_core",
-    build_file = "@//:BUILD.android_system_core.bazel",
-    commit = "a3b721a32242006b59cb12bd62c9133632af3a2d",
-    remote = "https://android.googlesource.com/platform/system/core",
-)
-
-git_repository(
     name = "android_system_extras",
     build_file = "@//:BUILD.android_system_extras.bazel",
     commit = "fc2494a2abd7ab21774d03deb09c1362bbb0bba8",
