@@ -1,0 +1,54 @@
+diff --git a/BUILD b/BUILD
+index 6775c02..14aa30e 100644
+--- a/BUILD
++++ b/BUILD
+@@ -2,7 +2,8 @@
+ 
+ load("@rules_cc//cc:defs.bzl", "cc_binary")
+ load("@rules_cc//cc:defs.bzl", "cc_library")
+-load("@rules_proto//proto:defs.bzl", "proto_library")
++load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
++load("@protobuf//bazel:proto_library.bzl", "proto_library")
+ load("@rules_rust//rust:defs.bzl", "rust_static_library")
+ 
+ package(default_visibility = ["//visibility:private"])
+diff --git a/BUILD.fmtlib b/BUILD.fmtlib
+index d237183..cbe4508 100644
+--- a/BUILD.fmtlib
++++ b/BUILD.fmtlib
+@@ -1,5 +1,7 @@
+ # Copyright 2023 Google Inc. All Rights Reserved.
+ 
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ cc_library(
+     name = "fmtlib",
+     srcs = [
+diff --git a/MODULE.bazel b/MODULE.bazel
+index c888365..588ef50 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -7,10 +7,9 @@ module(
+ 
+ bazel_dep(name = "rules_cc", version = "0.1.0")
+ bazel_dep(name = "rules_rust", version = "0.57.1")
+-bazel_dep(name = "rules_proto", version = "7.1.0")
+ bazel_dep(name = "rules_python", version = "1.1.0")
+ bazel_dep(name = "bazel_skylib", version = "1.7.1")
+-
++bazel_dep(name = "protobuf", version = "33.4")
+ bazel_dep(name = "openssl", version = "3.3.1.bcr.1")
+ bazel_dep(name = "gflags", version = "2.2.2")
+ 
+diff --git a/packets/BUILD b/packets/BUILD
+index 58285d6..83a15dd 100644
+--- a/packets/BUILD
++++ b/packets/BUILD
+@@ -1,6 +1,7 @@
+ # Copyright 2023 Google Inc. All Rights Reserved.
+ 
+ load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
++load("@rules_cc//cc:defs.bzl", "cc_library")
+ 
+ package(default_visibility = ["//visibility:public"])
+ exports_files(["hci_packets.pdl"])

@@ -5,57 +5,186 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
-bazel_dep(name = "abseil-cpp", version = "20250814.0")
-bazel_dep(name = "aspect_bazel_lib", version = "2.14.0")
-bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
-bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
+bazel_dep(name = "abseil-cpp", version = "20260107.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
+bazel_dep(name = "aspect_rules_lint", version = "2.0.0-rc0")
+bazel_dep(name = "bazel_skylib", version = "1.9.0", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
 bazel_dep(name = "brotli", version = "1.1.0")
+bazel_dep(name = "bzip2", version = "1.0.8.bcr.3")
+bazel_dep(name = "c-ares", version = "1.34.6")
 bazel_dep(name = "crc32c", version = "1.1.0")
-bazel_dep(name = "curl", version = "8.8.0.bcr.2")
-bazel_dep(name = "cxx.rs", version = "1.0.188")
+bazel_dep(name = "curl", version = "8.11.0.bcr.4")
+bazel_dep(name = "cxx.rs", version = "1.0.192")
 bazel_dep(name = "fmt", version = "11.2.0.bcr.1")
 bazel_dep(name = "freetype", version = "2.13.3.bcr.1")
 bazel_dep(name = "gflags", version = "2.2.2")
 bazel_dep(name = "googleapis", version = "0.0.0-20241220-5e258e33.bcr.1")
 bazel_dep(name = "googleapis-cc", version = "1.0.0")
 bazel_dep(name = "googletest", version = "1.17.0")
-bazel_dep(name = "grpc", version = "1.71.0")
-bazel_dep(name = "grpc-proto", version = "0.0.0-20240627-ec30f58")
+bazel_dep(name = "grpc", version = "1.78.0-pre1")
+bazel_dep(name = "grpc-proto", version = "0.0.0-20240627-ec30f58.bcr.1")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 bazel_dep(name = "icu", version = "76.1.bcr.1")
 bazel_dep(name = "jsoncpp", version = "1.9.6")
 bazel_dep(name = "libarchive", version = "3.7.9")
 bazel_dep(name = "libevent", version = "2.1.12-stable.bcr.0")
-bazel_dep(name = "libjpeg_turbo", version = "2.1.91")
+bazel_dep(name = "libjpeg_turbo", version = "3.1.3.bcr.2")
 bazel_dep(name = "libpng", version = "1.6.47.bcr.1")
-bazel_dep(name = "libuuid", version = "2.39.3.bcr.1")
+bazel_dep(name = "libunwind", version = "1.8.1")
+bazel_dep(name = "libuuid", version = "2.41.2")
 bazel_dep(name = "libxml2", version = "2.13.5")
 bazel_dep(name = "libzip", version = "1.10.1")
 bazel_dep(name = "lz4", version = "1.9.4.bcr.2")
-bazel_dep(name = "nasm", version = "2.16.03.bcr.1")
+bazel_dep(name = "nasm", version = "2.16.03.bcr.2")
 bazel_dep(name = "pcre2", version = "10.45")
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "protobuf", version = "31.1")
+bazel_dep(name = "protobuf", version = "33.4")
+bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
 bazel_dep(name = "rootcanal")
-bazel_dep(name = "rules_cc", version = "0.2.8")
+bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_flex", version = "0.4")
+bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
 bazel_dep(name = "rules_license", version = "1.0.0")
+bazel_dep(name = "rules_m4", version = "0.3")
+bazel_dep(name = "rules_nodejs", version = "6.7.3")
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")
-bazel_dep(name = "rules_python", version = "1.1.0")
-bazel_dep(name = "rules_rust", version = "0.67.0")
+bazel_dep(name = "rules_python", version = "1.5.0")
+bazel_dep(name = "rules_rust", version = "0.68.1")
+bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
-bazel_dep(name = "toolchains_llvm", version = "1.4.0")
+bazel_dep(name = "toolchains_llvm", version = "1.6.0")
 bazel_dep(name = "sandboxed_api")
+bazel_dep(name = "xz", version = "5.4.5.bcr.7")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.7")
 
 include("//build_external:build_external.MODULE.bazel")
 
+cc_compatibility_proxy = use_extension("@rules_cc//cc:extensions.bzl", "compatibility_proxy")
+use_repo(cc_compatibility_proxy, "cc_compatibility_proxy")
+
 # this needs to be at parity with with build_external/crosvm/crosvm.config.toml
 CROSVM_REMOTE = "https://chromium.googlesource.com/crosvm/crosvm"
 CROSVM_REV = "bc84c8bd6ce078e251594aa1af9e84932c5d0d81"
+
+single_version_override(
+    module_name = "rules_python",
+    version = "1.5.0",
+)
+
+git_override(
+    module_name = "aspect_rules_lint",
+    commit = "2d414974255d3b01d4776f855f2aeb407fe4f016",
+    remote = "https://github.com/aspect-build/rules_lint",
+)
+
+# fix for bazel 9
+git_override(
+    module_name = "grpc",
+    commit = "61fe9b40a986792ab7d4eb8924027b671faf26ba",
+    remote = "https://github.com/grpc/grpc",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/grpc:PATCH.grpc.bazel9.patch",
+    ],
+)
+
+# fix for bazel 9
+git_override(
+    module_name = "brotli",
+    commit = "5fa73e23bee34f84148719576a7a434f0fc43dc8",
+    remote = "https://github.com/google/brotli",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/brotli:PATCH.brotli.bazel9.patch",
+    ],
+)
+
+# fix for bazel 9
+archive_override(
+    module_name = "crc32c",
+    urls = [
+        "https://github.com/google/crc32c/archive/refs/tags/1.1.0.tar.gz",
+    ],
+    strip_prefix = "crc32c-1.1.0",
+    patches = [
+        "@//build_external/crc32c:add_build_file.patch",
+        "@//build_external/crc32c:module_dot_bazel.patch",
+    ],
+)
+
+# fix for bazel 9
+archive_override(
+    module_name = "freetype",
+    urls = [
+        "https://mirrors.ocf.berkeley.edu/nongnu/freetype/freetype-2.13.3.tar.gz",
+        "https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.gz",
+        "https://download-mirror.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.gz",
+        "https://mirror.netcologne.de/savannah/freetype/freetype-2.13.3.tar.gz",
+    ],
+    strip_prefix = "freetype-2.13.3",
+    patches = [
+        "@//build_external/freetype:add_build_file.patch",
+        "@//build_external/freetype:module_dot_bazel.patch",
+    ],
+)
+
+# fix for bazel 9
+archive_override(
+    module_name = "libcap",
+    urls = [
+        "https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.27.tar.gz",
+    ],
+    strip_prefix = "libcap-2.27",
+    build_file = "@//:BUILD.libcap.bazel",
+    patches = [
+        "@//build_external/libcap:module_dot_bazel.patch",
+    ],
+)
+
+# fix for bazel 9
+archive_override(
+    module_name = "libunwind",
+    urls = [
+        "https://github.com/libunwind/libunwind/releases/download/v1.8.1/libunwind-1.8.1.tar.gz",
+    ],
+    strip_prefix = "libunwind-1.8.1",
+    build_file = "@//:BUILD.libunwind.bazel",
+    patches = [
+        "@//build_external/libunwind:module_dot_bazel.patch",
+    ],
+)
+
+# fix for bazel 9
+git_override(
+    module_name = "jsoncpp",
+    commit = "b511d9e64956db998b74909df112ac8c8f41d6ff",
+    remote = "https://github.com/open-source-parsers/jsoncpp",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/jsoncpp:PATCH.jsoncpp.bazel9.patch",
+    ],
+)
+
+# fix for bazel 9
+git_override(
+    module_name = "googletest",
+    commit = "85087857ad10bd407cd6ed2f52f7ea9752db621f",
+    remote = "https://github.com/google/googletest",
+)
+
+# fix for bazel 9
+git_override(
+    module_name = "gflags",
+    commit = "5319350323577cff4c42ab59118531d04f13edf4",
+    remote = "https://github.com/gflags/gflags",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/gflags:PATCH.gflags.bazel9.patch",
+    ],
+)
 
 # Hedron's Compile Commands Extractor for Bazel
 # https://github.com/hedronvision/bazel-compile-commands-extractor
@@ -70,10 +199,11 @@ git_override(
 
 git_override(
     module_name = "sandboxed_api",
-    commit = "c520612b14a472e0b4784e9f9e41f9e822264cc3",
+    commit = "d06ef8831a3e13120178e806254979b675ade844",
     remote = "https://github.com/google/sandboxed-api.git",
     patch_strip = 1,
     patches = [
+        "@//build_external/sandboxed_api:PATCH.sandboxed_api.bazel9.patch",
         # See cl/711879539
         "@//build_external/sandboxed_api:PATCH.sandboxed_api.util.visibility.patch",
     ],
@@ -94,6 +224,7 @@ git_override(
         "@//build_external/rootcanal:0003-Make-rootcanal_proto-public.patch",
         "@//build_external/rootcanal:0004-Add-link_layer_packets_rs.patch",
         "@//build_external/rootcanal:0005-Define-librootcanal_ffi.so-and-librootcanal-librarie.patch",
+        "@//build_external/rootcanal:0006-bazel9.patch",
     ],
 )
 
@@ -104,22 +235,22 @@ llvm.toolchain(
 
 use_repo(llvm, "llvm_toolchain")
 
-file_detector = use_repo_rule("//toolchain:file_detector.bzl", "file_detector")
-
-file_detector(
-    name = "clang_detector",
-    files = {
-        "/usr/bin/clang-11": "clang_11",
-        "/usr/bin/clang-12": "clang_12",
-        "/usr/bin/clang-13": "clang_13",
-        "/usr/bin/clang-14": "clang_14",
-        "/usr/bin/clang-15": "clang_15",
-        "/usr/bin/clang-16": "clang_16",
-        "/usr/bin/clang-17": "clang_17",
-        "/usr/bin/clang-18": "clang_18",
-        "/usr/bin/clang-19": "clang_19",
-    },
-)
+# file_detector = use_repo_rule("//toolchain:file_detector.bzl", "file_detector")
+# 
+# file_detector(
+#     name = "clang_detector",
+#     files = {
+#         "/usr/bin/clang-11": "clang_11",
+#         "/usr/bin/clang-12": "clang_12",
+#         "/usr/bin/clang-13": "clang_13",
+#         "/usr/bin/clang-14": "clang_14",
+#         "/usr/bin/clang-15": "clang_15",
+#         "/usr/bin/clang-16": "clang_16",
+#         "/usr/bin/clang-17": "clang_17",
+#         "/usr/bin/clang-18": "clang_18",
+#         "/usr/bin/clang-19": "clang_19",
+#     },
+# )
 
 # The first toolchain that satisfies platform constraints is chosen.
 # Alternatively, a specific toolchain can be chosen with the
@@ -132,15 +263,15 @@ file_detector(
 # For more information, see https://bazel.build/extending/toolchains
 register_toolchains(
     "@llvm_toolchain//:all",  # TODO: b/407854179 - demote after testing others
-    "//toolchain:linux_local_clang_19",
-    "//toolchain:linux_local_clang_18",
-    "//toolchain:linux_local_clang_17",
-    "//toolchain:linux_local_clang_16",
-    "//toolchain:linux_local_clang_15",
-    "//toolchain:linux_local_clang_14",
-    "//toolchain:linux_local_clang_13",
-    "//toolchain:linux_local_clang_12",
-    "//toolchain:linux_local_clang_11",
+#    "//toolchain:linux_local_clang_19",
+#    "//toolchain:linux_local_clang_18",
+#    "//toolchain:linux_local_clang_17",
+#    "//toolchain:linux_local_clang_16",
+#    "//toolchain:linux_local_clang_15",
+#    "//toolchain:linux_local_clang_14",
+#    "//toolchain:linux_local_clang_13",
+#    "//toolchain:linux_local_clang_12",
+#    "//toolchain:linux_local_clang_11",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
@@ -312,6 +443,7 @@ netsim_crates.annotation(
         "BINDING_PATH": "$(execpath bindings/bindings.rs)",
     },
     additive_build_file_content = """
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 cc_library(
     name = "grpc_wrap",
@@ -510,13 +642,14 @@ git_repository(
 git_repository(
     name = "fruit",
     build_file = "@//:BUILD.fruit.bazel",
-    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
+    commit = "45cc0583a170bc29a41e02e10911b1dee699c60c",  # 2025-12-27
     remote = "https://github.com/google/fruit.git",
+    patch_strip = 1,
 )
 
 git_repository(
     name = "gfxstream",
-    commit = "efbcd112d2cf43b7bca9260f8d81fd948446bcd3",
+    commit = "063d40e141c9db942ad1eb604bce20e6c0415d0d",
     remote = "https://github.com/google/gfxstream.git",
     patch_strip = 1,
     patches = [
@@ -709,14 +842,18 @@ git_repository(
 
 git_repository(
     name = "spirv_headers",
-    commit = "4f7b471f1a66b6d06462cd4ba57628cc0cd087d7",
+    commit = "babee77020ff82b571d723ce2c0262e2ec0ee3f1",
     remote = "https://github.com/KhronosGroup/SPIRV-Headers.git",
 )
 
 git_repository(
     name = "spirv_tools",
-    commit = "dd4b663e13c07fea4fbb3f70c1c91c86731099f7",  # v2024.2
+    commit = "262bdab48146c937467f826699a40da0fdfc0f1a",  # v2025.5
     remote = "https://github.com/KhronosGroup/SPIRV-Tools.git",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/spirv_tools:PATCH.spirv_tools.bazel9.patch",
+    ],
 )
 
 git_repository(
@@ -724,6 +861,10 @@ git_repository(
     build_file = "@//:BUILD.swiftshader.bazel",
     commit = "14f87286123a47207ba25d0d32ebda27b13fe5a3",
     remote = "https://swiftshader.googlesource.com/SwiftShader.git",
+    patch_strip = 1,
+    patches = [
+        "@//build_external/swiftshader:PATCH.swiftshader.bazel9.patch",
+    ],
 )
 
 git_repository(

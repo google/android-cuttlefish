@@ -1,4 +1,7 @@
 load("@//:build_variables.bzl", "COPTS")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("@rules_python//python:py_binary.bzl", "py_binary")
 
 package(
     default_visibility = ["@//:android_cuttlefish"],

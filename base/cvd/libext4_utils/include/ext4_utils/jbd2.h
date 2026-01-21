@@ -12,6 +12,8 @@
 #ifndef _LINUX_JBD2_H
 #define _LINUX_JBD2_H
 
+#include <linux/types.h>
+
 #define JBD2_DEBUG
 #define jfs_debug jbd_debug
 

@@ -2,7 +2,7 @@ diff --git a/build_variables.bzl b/build_variables.bzl
 index 113342840..94e0a8377 100644
 --- a/build_variables.bzl
 +++ b/build_variables.bzl
-@@ -9,7 +9,13 @@ GFXSTREAM_HOST_COPTS = [
+@@ -9,7 +9,15 @@ GFXSTREAM_HOST_COPTS = [
      ],
      "//conditions:default": [
          "-fno-exceptions",
@@ -13,6 +13,8 @@ index 113342840..94e0a8377 100644
 +        "-Wno-unused-const-variable",
 +        "-Wno-unused-function",
 +        "-Wno-unused-private-field",
++        "-Wno-return-type-c-linkage",
++        "-Wno-modules-import-nested-redundant",
 +      ],
  })
  GFXSTREAM_HOST_VK_DEFINES = [

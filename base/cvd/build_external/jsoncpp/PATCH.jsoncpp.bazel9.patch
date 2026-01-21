@@ -1,0 +1,37 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 2227fee..e158405 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1,6 +1,7 @@
+ licenses(["unencumbered"])  # Public Domain or MIT
+ 
+ load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
++load("@rules_cc//cc:cc_library.bzl", "cc_library")
+ 
+ exports_files(["LICENSE"])
+ 
+diff --git a/MODULE.bazel b/MODULE.bazel
+index e60fa06..f8f8993 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -17,3 +17,8 @@ bazel_dep(
+     name = "bazel_skylib",
+     version = "1.7.1",
+ )
++
++bazel_dep(
++    name = "rules_cc",
++    version = "0.2.14",
++)
+diff --git a/include/json/config.h b/include/json/config.h
+index 7f6e243..937813d 100644
+--- a/include/json/config.h
++++ b/include/json/config.h
+@@ -122,7 +122,6 @@ using UInt64 = uint64_t;
+ #endif                // if defined(_MSC_VER)
+ using LargestInt = Int64;
+ using LargestUInt = UInt64;
+-#define JSON_HAS_INT64
+ #endif // if defined(JSON_NO_INT64)
+ 
+ template <typename T>

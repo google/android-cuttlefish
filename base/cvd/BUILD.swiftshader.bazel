@@ -1,4 +1,6 @@
 load("@//:build_variables.bzl", "COPTS")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 
 package(
     default_visibility = [
