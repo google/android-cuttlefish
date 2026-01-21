@@ -105,10 +105,10 @@ def _impl(ctx):
 # Relevant documentation:
 # - https://bazel.build/rules/lib/globals/bzl.html#rule
 # - https://bazel.build/rules/lib/toplevel/attr.html#int
-linux_local_clang_toolchain_config = rule(
-    implementation = _impl,
-    attrs = {
-        "version": attr.int(mandatory = True),
-    },
-    provides = [CcToolchainConfigInfo],
-)
+# linux_local_clang_toolchain_config = rule(
+#     implementation = _impl,
+#     attrs = {
+#         "version": attr.int(mandatory = True),
+#     },
+#     provides = [CcToolchainConfigInfo],
+# )

@@ -1,0 +1,24 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 003c1b9..d6414c0 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -5,6 +5,9 @@ package(
+     default_visibility = ["//visibility:public"],
+ )
+ 
++load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
++load("@rules_cc//cc:cc_library.bzl", "cc_library")
++
+ licenses(["notice"])  # MIT
+ 
+ exports_files(["LICENSE"])
+diff --git a/MODULE.bazel b/MODULE.bazel
+index 489171e..473c7a5 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -10,3 +10,5 @@ module(
+     version = "1.2.0",
+     repo_name = "org_brotli",
+ )
++
++bazel_dep(name = "rules_cc", version = "0.2.16")

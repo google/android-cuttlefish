@@ -1,5 +1,7 @@
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("//:build_variables.bzl", "COPTS")
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 package(
     default_visibility = ["//:android_cuttlefish"],

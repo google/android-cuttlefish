@@ -1,0 +1,10 @@
+diff --git a/bazel/expanded_template/BUILD b/bazel/expanded_template/BUILD
+index e9b6504..ac6c663 100644
+--- a/bazel/expanded_template/BUILD
++++ b/bazel/expanded_template/BUILD
+@@ -1,3 +1,5 @@
++load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
++
+ cc_binary(
+     name = "expand_template",
+     srcs = ["expand_template.cc"],
