@@ -18,17 +18,26 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"maps"
+	"slices"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
 
 // Cuttlefish base images are based on debian images.
-const (
-	debianSourceImageProject = "debian-cloud"
-	debianSourceImageX86     = "debian-13-trixie-v20251014"
-	debianSourceImageArm     = "debian-13-trixie-arm64-v20251014"
-)
+const debianSourceImageProject = "debian-cloud"
+
+var sourceImageMap = map[string]map[int]string{
+	"x86_64": {
+		12: "debian-12-bookworm-v20260114",
+		13: "debian-13-trixie-v20260114",
+	},
+	"arm64": {
+		12: "debian-12-bookworm-arm64-v20260114",
+		13: "debian-13-trixie-arm64-v20260114",
+	},
+}
 
 const mountpoint = "/mnt/image"
 
@@ -36,6 +45,7 @@ var (
 	project       = flag.String("project", "", "GCE project whose resources will be used for creating the image")
 	zone          = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
 	arch          = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	debianVersion = flag.Int("debian-version", 13, "Debian version: https://www.debian.org/releases")
 	linuxImageDeb = flag.String("linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
 	imageName     = flag.String("image-name", "", "output GCE image name")
 )
@@ -46,6 +56,7 @@ func mountAttachedDisk(project, zone, insName string) error {
 
 type kernelImageOpts struct {
 	Arch          gce.Arch
+	SourceImage   string
 	LinuxImageDeb string
 	ImageName     string
 }
@@ -81,16 +92,7 @@ func createImageMain(project, zone string, opts kernelImageOpts) error {
 		}
 	}()
 	log.Println("creating disk...")
-	var sourceImage string
-	switch opts.Arch {
-	case gce.ArchX86:
-		sourceImage = debianSourceImageX86
-	case gce.ArchArm:
-		sourceImage = debianSourceImageArm
-	default:
-		return fmt.Errorf("unsupported arch")
-	}
-	disk, err := h.CreateDisk(debianSourceImageProject, sourceImage, attachedDiskName, gce.CreateDiskOpts{})
+	disk, err := h.CreateDisk(debianSourceImageProject, opts.SourceImage, attachedDiskName, gce.CreateDiskOpts{})
 	if err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}
@@ -158,13 +160,27 @@ func main() {
 	if *imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
+
 	architecture, err := gce.ParseArch(*arch)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	if _, ok := sourceImageMap[*arch]; !ok {
+		log.Fatalf("no source image found for arch %s: supported archs: %v",
+			*arch,
+			slices.Collect(maps.Keys(sourceImageMap)))
+	}
+
+	if _, ok := sourceImageMap[*arch][*debianVersion]; !ok {
+		log.Fatalf("no source image found for debian %d: supported versions: %v",
+			*debianVersion,
+			slices.Collect(maps.Keys(sourceImageMap[*arch])))
+	}
+
 	opts := kernelImageOpts{
 		Arch:          architecture,
+		SourceImage:   sourceImageMap[*arch][*debianVersion],
 		LinuxImageDeb: *linuxImageDeb,
 		ImageName:     *imageName,
 	}
