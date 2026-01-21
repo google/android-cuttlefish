@@ -308,13 +308,6 @@ use_repo(casimir_crates, "casimir_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "avb",
-    build_file = "@//:BUILD.avb.bazel",
-    commit = "761178607206f4cb2af79ed9eec52d8cbd814adb",
-    remote = "https://android.googlesource.com/platform/external/avb",
-)
-
-git_repository(
     name = "casimir",
     build_file = "@//:BUILD.casimir.bazel",
     commit = "f785e9275ee5ed85f98e7b850783ca0559ee1799",
