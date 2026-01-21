@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "android_system_extras",
+    build_file = "@//build_external/android_system_extras:BUILD.android_system_extras.bazel",
+    commit = "fc2494a2abd7ab21774d03deb09c1362bbb0bba8",
+    remote = "https://android.googlesource.com/platform/system/extras",
+)
