@@ -1,4 +1,5 @@
 include("//build_external/android_system_core:android_system_core.MODULE.bazel")
 include("//build_external/android_system_extras:android_system_extras.MODULE.bazel")
+include("//build_external/android_tools_netsim:android_tools_netsim.MODULE.bazel")
 include("//build_external/dosfstools:dosfstools.MODULE.bazel")
 include("//build_external/mtools:mtools.MODULE.bazel")
