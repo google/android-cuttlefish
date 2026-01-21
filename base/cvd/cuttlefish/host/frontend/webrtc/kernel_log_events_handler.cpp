@@ -35,8 +35,11 @@ KernelLogEventsHandler::KernelLogEventsHandler(
     SharedFD kernel_log_fd)
     : kernel_log_fd_(kernel_log_fd),
       eventfd_(SharedFD::Event()),
-      running_(true),
-      read_thread_([this]() { ReadLoop(); }) {}
+      running_(true) {
+  // Start the thread after all class members have been initialized,
+  // since the thread relies on them.
+  read_thread_ = std::thread([this]() { ReadLoop(); });
+}
 
 KernelLogEventsHandler::~KernelLogEventsHandler() {
   running_ = false;
