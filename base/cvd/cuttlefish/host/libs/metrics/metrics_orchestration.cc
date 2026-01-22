@@ -102,7 +102,7 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
 
 Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
                                   EventType event_type) {
-  return MetricsData{
+  auto result = MetricsData{
       .event_type = event_type,
       .session_id =
           CF_EXPECT(ReadSessionIdFile(metrics_paths.metrics_directory)),
@@ -113,6 +113,11 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
       .flag_metrics =
           CF_EXPECT(GetFlagMetrics(metrics_paths.guests.guest_infos.size())),
   };
+
+  CF_EXPECT_EQ(result.guest_metrics.size(), result.flag_metrics.size(),
+               "The gathered guest and flag metrics vectors must be equal, as "
+               "flags are per guest.");
+  return result;
 }
 
 Result<void> OutputMetrics(EventType event_type,
