@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libeigen",
+    commit = "3147391d946bb4b6c68edd901f2add6ac1f31f8c",  # 3.4.0
+    build_file = "@//build_external/libeigen:BUILD.libeigen.bazel",
+    remote = "https://gitlab.com/libeigen/eigen",
+)
