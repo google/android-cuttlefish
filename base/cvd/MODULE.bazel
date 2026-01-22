@@ -191,13 +191,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libeigen",
-    commit = "3147391d946bb4b6c68edd901f2add6ac1f31f8c",  # 3.4.0
-    build_file = "@//:BUILD.libeigen.bazel",
-    remote = "https://gitlab.com/libeigen/eigen",
-)
-
-git_repository(
     name = "libffi",
     build_file = "@//:BUILD.libffi.bazel",
     commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
