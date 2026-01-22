@@ -33,6 +33,7 @@ namespace {
 
 using google::protobuf::Timestamp;
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
+using logs::proto::wireless::android::cuttlefish::events::CuttlefishFlags;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
@@ -86,6 +87,20 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
   }
 }
 
+void PopulateCuttlefishGuest(CuttlefishGuest& guest,
+                             const GuestMetrics& guest_info,
+                             const FlagMetrics& flag_metrics,
+                             const EventType event_type,
+                             std::string_view session_id) {
+  guest.set_event_type(ConvertEventType(event_type));
+  guest.set_guest_id(fmt::format("{}-{}", session_id, guest_info.instance_id));
+  guest.set_guest_os_version(guest_info.os_version);
+
+  CuttlefishFlags& flags = *guest.mutable_flags();
+  flags.set_cpus(flag_metrics.cpus);
+  flags.set_daemon(flag_metrics.daemon);
+}
+
 }  // namespace
 
 CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
@@ -99,19 +114,16 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
 
   MetricsEventV2& metrics_event = *cf_log_event.mutable_metrics_event_v2();
 
-  for (const GuestMetrics& guest_info : metrics_data.guest_metrics) {
+  for (int i = 0; i < metrics_data.guest_metrics.size(); i++) {
     CuttlefishGuest& guest = *metrics_event.add_guest();
-    guest.set_event_type(ConvertEventType(metrics_data.event_type));
-    guest.set_guest_id(
-        fmt::format("{}-{}", metrics_data.session_id, guest_info.instance_id));
-    guest.set_guest_os_version(guest_info.os_version);
+    PopulateCuttlefishGuest(guest, metrics_data.guest_metrics[i],
+                            metrics_data.flag_metrics[i],
+                            metrics_data.event_type, metrics_data.session_id);
   }
 
   CuttlefishHost& host = *metrics_event.mutable_host();
   host.set_host_os(ConvertHostOs(metrics_data.host_metrics));
   host.set_host_os_version(metrics_data.host_metrics.release);
-
-  // TODO: chadreynolds - convert FlagMetrics fields
 
   return cf_log_event;
 }
