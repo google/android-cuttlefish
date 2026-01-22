@@ -40,11 +40,11 @@ COPTS_ARM64 = [
 ]
 
 DEPS_X86_64 = [
-    "@//libffi/linux-x86:libffi_linux_x86",
+    "@//build_external/libffi/linux-x86:libffi_linux_x86",
 ]
 
 DEPS_ARM64 = [
-    "@//libffi/linux-arm64:libffi_linux_arm64",
+    "@//build_external/libffi/linux-arm64:libffi_linux_arm64",
 ]
 
 genrule(

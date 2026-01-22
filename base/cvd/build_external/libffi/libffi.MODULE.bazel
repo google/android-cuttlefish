@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libffi",
+    build_file = "@//build_external/libffi:BUILD.libffi.bazel",
+    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
+    remote = "https://github.com/libffi/libffi.git",
+)
