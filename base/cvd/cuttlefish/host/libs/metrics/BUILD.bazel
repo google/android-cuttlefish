@@ -36,6 +36,8 @@ cf_cc_library(
         "flag_metrics.h",
     ],
     deps = [
+        "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
+        "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
         "//cuttlefish/result",
     ],
 )

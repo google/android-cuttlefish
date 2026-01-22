@@ -35,7 +35,7 @@ struct MetricsData {
   std::chrono::milliseconds now;
   HostInfo host_metrics;
   std::vector<GuestMetrics> guest_metrics;
-  FlagMetrics flag_metrics;
+  std::vector<FlagMetrics> flag_metrics;
 };
 
 logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent

@@ -16,10 +16,18 @@
 
 #pragma once
 
+#include <vector>
+
+#include "cuttlefish/result/result.h"
+
 namespace cuttlefish {
 
-struct FlagMetrics {};  // TODO: chadreynolds - implement
+struct FlagMetrics {
+  int cpus;
+  bool daemon;
+};
 
-FlagMetrics GetFlagMetrics();
+// depends on gflags::ParseCommandLineFlags being called previously
+Result<std::vector<FlagMetrics>> GetFlagMetrics(int guest_count);
 
 }  // namespace cuttlefish

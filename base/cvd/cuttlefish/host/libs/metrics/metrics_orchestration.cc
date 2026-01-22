@@ -110,7 +110,8 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
       .guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests)),
-      .flag_metrics = GetFlagMetrics(),
+      .flag_metrics =
+          CF_EXPECT(GetFlagMetrics(metrics_paths.guests.guest_infos.size())),
   };
 }
 
