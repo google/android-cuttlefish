@@ -181,13 +181,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "expat",
-    build_file = "@//:BUILD.expat.bazel",
-    commit = "2691aff4304a6d7e053199c205620136481b9dd1",  # 2.6.4
-    remote = "https://github.com/libexpat/libexpat/",
-)
-
-git_repository(
     name = "f2fs_tools",
     build_file = "@//:BUILD.f2fs_tools.bazel",
     commit = "d8eac1f8699541416afdf93333772ef2e0509773",

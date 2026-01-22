@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "expat",
+    build_file = "@//build_external/expat:BUILD.expat.bazel",
+    commit = "2691aff4304a6d7e053199c205620136481b9dd1",  # 2.6.4
+    remote = "https://github.com/libexpat/libexpat/",
+)
