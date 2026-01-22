@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "f2fs_tools",
+    build_file = "@//build_external/f2fs_tools:BUILD.f2fs_tools.bazel",
+    commit = "d8eac1f8699541416afdf93333772ef2e0509773",
+    remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
+)
