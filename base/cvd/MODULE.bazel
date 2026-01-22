@@ -6,7 +6,7 @@
 ###############################################################################
 
 bazel_dep(name = "abseil-cpp", version = "20250814.0")
-bazel_dep(name = "aspect_bazel_lib", version = "2.14.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.16.0")
 bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
@@ -41,13 +41,16 @@ bazel_dep(name = "rootcanal")
 bazel_dep(name = "rules_cc", version = "0.2.8")
 bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_license", version = "1.0.0")
+# this is normally an indirect dependency, but for bazel 9 we need a higher version
+bazel_dep(name = "rules_nodejs", version = "6.7.3")
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")
 bazel_dep(name = "rules_python", version = "1.1.0")
 bazel_dep(name = "rules_rust", version = "0.67.0")
+bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
-bazel_dep(name = "toolchains_llvm", version = "1.4.0")
+bazel_dep(name = "toolchains_llvm", version = "1.6.0")
 bazel_dep(name = "sandboxed_api")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.7")
 
@@ -100,43 +103,8 @@ llvm.toolchain(
 
 use_repo(llvm, "llvm_toolchain")
 
-file_detector = use_repo_rule("//toolchain:file_detector.bzl", "file_detector")
-
-file_detector(
-    name = "clang_detector",
-    files = {
-        "/usr/bin/clang-11": "clang_11",
-        "/usr/bin/clang-12": "clang_12",
-        "/usr/bin/clang-13": "clang_13",
-        "/usr/bin/clang-14": "clang_14",
-        "/usr/bin/clang-15": "clang_15",
-        "/usr/bin/clang-16": "clang_16",
-        "/usr/bin/clang-17": "clang_17",
-        "/usr/bin/clang-18": "clang_18",
-        "/usr/bin/clang-19": "clang_19",
-    },
-)
-
-# The first toolchain that satisfies platform constraints is chosen.
-# Alternatively, a specific toolchain can be chosen with the
-# `--extra_toolchains` flag, e.g.
-# ```
-# bazel build //cuttlefish/package:cvd \
-#   --extra_toolchains=//toolchain:linux_local_clang_19
-# ```
-#
-# For more information, see https://bazel.build/extending/toolchains
 register_toolchains(
-    "@llvm_toolchain//:all",  # TODO: b/407854179 - demote after testing others
-    "//toolchain:linux_local_clang_19",
-    "//toolchain:linux_local_clang_18",
-    "//toolchain:linux_local_clang_17",
-    "//toolchain:linux_local_clang_16",
-    "//toolchain:linux_local_clang_15",
-    "//toolchain:linux_local_clang_14",
-    "//toolchain:linux_local_clang_13",
-    "//toolchain:linux_local_clang_12",
-    "//toolchain:linux_local_clang_11",
+    "@llvm_toolchain//:all",
 )
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")

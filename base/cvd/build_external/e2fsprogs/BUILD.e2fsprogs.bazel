@@ -272,10 +272,6 @@ cc_library(
     ],
 )
 
-libext2_com_err_headers = [
-    "lib/et/com_err.h",
-]
-
 cc_library(
     name = "libext2_com_err",
     srcs = [
@@ -287,19 +283,24 @@ cc_library(
         "lib/et/init_et.c",
         "lib/et/internal.h",
     ],
-    hdrs = libext2_com_err_headers,
     includes = [
         "lib",
     ],
     strip_include_prefix = "lib",
+    hdrs = [
+        "lib/et/com_err.h",
+    ],
     deps = [
+        ":libext2_com_err_headers",
         "@//build_external/e2fsprogs:e2fsprogs_config",
     ],
 )
 
 cc_library(
     name = "libext2_com_err_headers",
-    hdrs = libext2_com_err_headers,
+    hdrs = [
+        "lib/et/com_err.h",
+    ],
     strip_include_prefix = "lib",
 )
 
@@ -343,7 +344,7 @@ cc_library(
     ],
     strip_include_prefix = "lib",
     deps = [
-        ":libext2_com_err_headers",
+        ":libext2_com_err",
         ":libext2_quota_headers",
         ":libext2fs_headers",
         "@//build_external/e2fsprogs:e2fsprogs_config",

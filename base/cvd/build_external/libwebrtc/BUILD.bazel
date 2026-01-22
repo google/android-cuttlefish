@@ -45,6 +45,8 @@ cc_library(
         "-lopus",
     ],
     deps = [
+        "@crc32c",
+        "@libevent//:event",
         "@libpffft",
         "@libsrtp2",
         "@libyuv",
