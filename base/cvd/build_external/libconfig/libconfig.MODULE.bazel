@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libconfig",
+    build_file = "@//build_external/libconfig:BUILD.libconfig.bazel",
+    commit = "81fe4632f01cbf24bf7efcd7ce1913f441c5ea96",
+    remote = "https://github.com/hyperrealm/libconfig",
+)
