@@ -34,6 +34,7 @@
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/flag_metrics.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
@@ -101,7 +102,6 @@ Result<void> SetUpMetrics(const std::string& metrics_directory) {
 
 Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
                                   EventType event_type) {
-  // TODO: chadreynolds - gather the rest of the data (guest/flag information)
   return MetricsData{
       .event_type = event_type,
       .session_id =
@@ -110,6 +110,7 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
       .guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests)),
+      .flag_metrics = GetFlagMetrics(),
   };
 }
 
