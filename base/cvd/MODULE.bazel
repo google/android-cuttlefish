@@ -190,13 +190,6 @@ git_repository(
     ],
 )
 
-git_repository(
-    name = "libffi",
-    build_file = "@//:BUILD.libffi.bazel",
-    commit = "5dcb741f1544c5e18c9dbf96aeb8b61cc556a616",  # v3.3
-    remote = "https://github.com/libffi/libffi.git",
-)
-
 # Upstream uses autotools, for now use the Android copy
 git_repository(
     name = "libnl",
