@@ -1,0 +1,20 @@
+casimir_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+casimir_crates.from_cargo(
+    name = "casimir_crates",
+    manifests = [
+        "@casimir//:Cargo.toml",
+    ],
+    # Needed because it shares the extension with crosvm
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    host_tools = "@rust_host_tools_nightly",
+)
+use_repo(casimir_crates, "casimir_crates")
+
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "casimir",
+    build_file = "@//build_external/casimir:BUILD.casimir.bazel",
+    commit = "f785e9275ee5ed85f98e7b850783ca0559ee1799",
+    remote = "https://github.com/google/casimir",
+)
