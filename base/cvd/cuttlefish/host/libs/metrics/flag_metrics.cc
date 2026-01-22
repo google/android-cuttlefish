@@ -16,10 +16,28 @@
 
 #include "cuttlefish/host/libs/metrics/flag_metrics.h"
 
+#include <vector>
+
+#include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
+#include "cuttlefish/result/result.h"
+
 namespace cuttlefish {
 
-FlagMetrics GetFlagMetrics() {
-  return FlagMetrics{};  // TODO: chadreynolds - implement
+Result<std::vector<FlagMetrics>> GetFlagMetrics(const int guest_count) {
+  std::vector<FlagMetrics> result;
+  result.reserve(guest_count);
+
+  CpusFlag cpus_values = CF_EXPECT(CpusFlag::FromGlobalGflags());
+  DaemonFlag daemon_values = CF_EXPECT(DaemonFlag::FromGlobalGflags());
+
+  for (int i = 0; i < guest_count; i++) {
+    result.emplace_back(FlagMetrics{
+      .cpus = cpus_values.ForIndex(i),
+      .daemon = daemon_values.ForIndex(i),
+    });
+  }
+  return result;
 }
 
 }  // namespace cuttlefish
