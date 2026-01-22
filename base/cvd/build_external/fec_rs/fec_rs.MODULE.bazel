@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "fec_rs",
+    build_file = "@//build_external/fec_rs:BUILD.fec_rs.bazel",
+    commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
+    remote = "https://android.googlesource.com/platform/external/fec",
+)

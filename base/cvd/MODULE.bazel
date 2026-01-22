@@ -181,13 +181,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "fec_rs",
-    build_file = "@//:BUILD.fec_rs.bazel",
-    commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
-    remote = "https://android.googlesource.com/platform/external/fec",
-)
-
-git_repository(
     name = "fruit",
     build_file = "@//:BUILD.fruit.bazel",
     commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
