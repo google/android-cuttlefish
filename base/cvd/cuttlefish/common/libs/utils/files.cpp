@@ -139,6 +139,8 @@ Result<std::string> CreateHardLink(const std::string& target,
              "link() failed trying to create hardlink from \"{}\" to \"{}\" "
              "with error: {}",
              target, hardlink, strerror(errno));
+  VLOG(1) << "Created hard link from \"" << target << "\" to \"" << hardlink
+          << "\"";
   return hardlink;
 }
 
