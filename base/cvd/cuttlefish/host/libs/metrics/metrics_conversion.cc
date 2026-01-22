@@ -111,6 +111,8 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
   host.set_host_os(ConvertHostOs(metrics_data.host_metrics));
   host.set_host_os_version(metrics_data.host_metrics.release);
 
+  // TODO: chadreynolds - convert FlagMetrics fields
+
   return cf_log_event;
 }
 
