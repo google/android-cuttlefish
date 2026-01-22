@@ -241,7 +241,8 @@ Result<const CuttlefishConfig*> LocalInstance::LoadConfig() {
 
 Result<const CuttlefishConfig::InstanceSpecific>
 LocalInstance::GetInstanceConfig() {
-  return CF_EXPECT(LoadConfig())->ForInstance(id());
+  const CuttlefishConfig* config = CF_EXPECT(LoadConfig());
+  return config->ForInstance(id());
 }
 
 Result<SharedFD> LocalInstance::GetLauncherMonitor(
