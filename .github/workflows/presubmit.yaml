@@ -179,6 +179,19 @@ jobs:
       with:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
+  bazel-9-readiness:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Free disk space
+      uses: jlumbroso/free-disk-space@v1.3.1
+      with:
+        large-packages: false
+        swap-storage: false
+        tool-cache: true
+    - name: Checkout repository
+      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+    - name: Check bazel 9 readiness
+      uses: ./.github/actions/bazel-9-readiness
   build-debian-package-amd64:
     runs-on: ubuntu-22.04
     steps:

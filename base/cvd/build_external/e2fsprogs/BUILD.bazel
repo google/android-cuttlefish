@@ -33,6 +33,7 @@ cc_library(
     deps = [
         ":libext2fs_generated",
     ],
+    features = ["-parse_headers"],
 )
 
 cc_library(
@@ -49,6 +50,9 @@ cc_library(
     hdrs = [
         "lib/support/prof_err.h",
     ],
+    deps = [
+        "@e2fsprogs//:libext2_com_err_headers",
+    ],
     strip_include_prefix = "//build_external/e2fsprogs/lib",
 )
 
@@ -59,6 +63,9 @@ cc_library(
     ],
     hdrs = [
         "lib/support/prof_err.h",
+    ],
+    deps = [
+        "@e2fsprogs//:libext2_com_err_headers",
     ],
     strip_include_prefix = "//build_external/e2fsprogs/lib/support",
 )
