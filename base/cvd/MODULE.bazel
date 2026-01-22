@@ -181,13 +181,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "egl_headers",
-    build_file = "@//:BUILD.egl_headers.bazel",
-    commit = "29c4314e0ef04c730992d295f91b76635019fbba",
-    remote = "https://github.com/KhronosGroup/EGL-Registry.git",
-)
-
-git_repository(
     name = "expat",
     build_file = "@//:BUILD.expat.bazel",
     commit = "2691aff4304a6d7e053199c205620136481b9dd1",  # 2.6.4

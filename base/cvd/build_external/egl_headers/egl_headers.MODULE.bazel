@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "egl_headers",
+    build_file = "@//build_external/egl_headers:BUILD.egl_headers.bazel",
+    commit = "29c4314e0ef04c730992d295f91b76635019fbba",
+    remote = "https://github.com/KhronosGroup/EGL-Registry.git",
+)
