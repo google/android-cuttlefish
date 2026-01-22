@@ -181,13 +181,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "e2fsprogs",
-    build_file = "@//:BUILD.e2fsprogs.bazel",
-    commit = "ff64357f839071968a727f8b5a08b0ddaedc5bbb",
-    remote = "https://github.com/tytso/e2fsprogs",
-)
-
-git_repository(
     name = "egl_headers",
     build_file = "@//:BUILD.egl_headers.bazel",
     commit = "29c4314e0ef04c730992d295f91b76635019fbba",
