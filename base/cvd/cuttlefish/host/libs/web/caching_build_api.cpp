@@ -71,6 +71,16 @@ Result<CachingPaths> ConstructCachePaths(const std::string& cache_base,
   return result;
 }
 
+bool IsInCache(const std::string& filepath) {
+  const bool exists = FileExists(filepath);
+  if (exists) {
+    VLOG(1) << "Found \"" << filepath << "\" in cache";
+  } else {
+    VLOG(1) << "\"" << filepath << "\" not in cache";
+  }
+  return exists;
+}
+
 }  // namespace
 
 Result<bool> CanCache(const std::string& target_directory,
@@ -100,16 +110,9 @@ Result<std::string> CachingBuildApi::DownloadFile(
     const std::string& artifact_name) {
   const auto paths = CF_EXPECT(ConstructCachePaths(cache_base_path_, build,
                                                    target_directory, artifact_name));
-  if (!FileExists(paths.cache_artifact)) {
-    LOG(INFO) << artifact_name << " not in cache. Downloading to "
-              << paths.build_cache;
+  if (!IsInCache(paths.cache_artifact)) {
     CF_EXPECT(build_api_.DownloadFile(build, paths.build_cache, artifact_name));
-  } else {
-    LOG(INFO) << "Found " << artifact_name << " in cache at "
-              << paths.cache_artifact;
   }
-  LOG(INFO) << "Linking " << paths.cache_artifact << " to "
-            << paths.target_artifact;
   return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                   kOverwriteExistingFile));
 }
@@ -120,35 +123,21 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
   const auto paths =
       CF_EXPECT(ConstructCachePaths(cache_base_path_, build, target_directory,
                                     artifact_name, backup_artifact_name));
-  if (FileExists(paths.cache_artifact)) {
-    LOG(INFO) << "Found " << artifact_name << " in cache at "
-              << paths.cache_artifact;
-    LOG(INFO) << "Linking " << paths.cache_artifact << " to "
-              << paths.target_artifact;
+  if (IsInCache(paths.cache_artifact)) {
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }
-  if (FileExists(paths.cache_backup_artifact)) {
-    LOG(INFO) << "Found " << backup_artifact_name << " in cache at "
-              << paths.cache_backup_artifact;
-    LOG(INFO) << "Linking " << paths.cache_backup_artifact << " to "
-              << paths.target_backup_artifact;
+  if (IsInCache(paths.cache_backup_artifact)) {
     return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                     paths.target_backup_artifact,
                                     kOverwriteExistingFile));
   }
-  LOG(INFO) << artifact_name << " and " << backup_artifact_name
-            << " not in cache. Downloading to " << paths.build_cache;
   const auto artifact_filepath = CF_EXPECT(build_api_.DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
   if (absl::EndsWith(artifact_filepath, artifact_name)) {
-    LOG(INFO) << "Linking " << paths.cache_artifact << " to "
-              << paths.target_artifact;
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }
-  LOG(INFO) << "Linking " << paths.cache_backup_artifact << " to "
-            << paths.target_backup_artifact;
   return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                   paths.target_backup_artifact));
 }
