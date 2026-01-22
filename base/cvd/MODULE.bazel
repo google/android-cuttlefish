@@ -191,16 +191,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libdrm",
-    build_file = "@//:BUILD.libdrm.bazel",
-    # TODO: b/414448658 - gitlab.freedesktop.org having an outage
-    #commit = "998d2a2e81e11043781672494dc3d294c1ecfce0",
-    #remote = "https://gitlab.freedesktop.org/mesa/drm.git",
-    commit = "f241f822cebbd681e46201b16685a827eb024736",
-    remote = "https://android.googlesource.com/platform/external/libdrm.git",
-)
-
-git_repository(
     name = "libeigen",
     commit = "3147391d946bb4b6c68edd901f2add6ac1f31f8c",  # 3.4.0
     build_file = "@//:BUILD.libeigen.bazel",
