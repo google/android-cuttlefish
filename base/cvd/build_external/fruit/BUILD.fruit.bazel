@@ -9,6 +9,6 @@ cc_library(
     linkopts = ["-lm"],
     visibility = ["//visibility:public"],
     deps = [
-        "@//:fruit-headers",
+        "@//build_external/fruit:fruit-headers",
     ],
 )

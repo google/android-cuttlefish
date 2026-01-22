@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "fruit",
+    build_file = "@//build_external/fruit:BUILD.fruit.bazel",
+    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
+    remote = "https://github.com/google/fruit.git",
+)

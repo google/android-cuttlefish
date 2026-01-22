@@ -32,15 +32,6 @@ filegroup(
     ],
 )
 
-cc_library(
-    name = "fruit-headers",
-    hdrs = ["fruit-config-base.h"],
-    # Load-bearing so that angle bracket includes work. See
-    # https://stackoverflow.com/a/51441444
-    include_prefix = "fruit/impl",
-    visibility = ["//visibility:public"],
-)
-
 sh_binary(
     name = "gen_ffi_header",
     srcs = ["gen_ffi_header.sh"],

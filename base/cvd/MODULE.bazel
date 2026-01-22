@@ -181,13 +181,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "fruit",
-    build_file = "@//:BUILD.fruit.bazel",
-    commit = "0af6ffd113ad963dbd2a23e8cbabba13493c015f",  # 2025-02-02
-    remote = "https://github.com/google/fruit.git",
-)
-
-git_repository(
     name = "gfxstream",
     commit = "efbcd112d2cf43b7bca9260f8d81fd948446bcd3",
     remote = "https://github.com/google/gfxstream.git",
