@@ -18,6 +18,7 @@
 #include <string>
 #include <utility>
 
+#include <android-base/file.h>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
@@ -98,6 +99,8 @@ Result<std::string> CachingBuildApi::DownloadFile(
   if (!FileExists(paths.cache_artifact)) {
     CF_EXPECT(build_api_.DownloadFile(build, paths.build_cache, artifact_name));
   }
+  CF_EXPECT(EnsureDirectoryExists(
+      std::string(android::base::Dirname(paths.target_artifact))));
   return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                   kOverwriteExistingFile));
 }
@@ -110,10 +113,14 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
                           artifact_name, backup_artifact_name);
   CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
   if (FileExists(paths.cache_artifact)) {
+    CF_EXPECT(EnsureDirectoryExists(
+        std::string(android::base::Dirname(paths.target_artifact))));
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }
   if (FileExists(paths.cache_backup_artifact)) {
+    CF_EXPECT(EnsureDirectoryExists(
+        std::string(android::base::Dirname(paths.target_backup_artifact))));
     return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                     paths.target_backup_artifact,
                                     kOverwriteExistingFile));
@@ -121,9 +128,13 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
   const auto artifact_filepath = CF_EXPECT(build_api_.DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
   if (absl::EndsWith(artifact_filepath, artifact_name)) {
+    CF_EXPECT(EnsureDirectoryExists(
+        std::string(android::base::Dirname(paths.target_artifact))));
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }
+  CF_EXPECT(EnsureDirectoryExists(
+      std::string(android::base::Dirname(paths.target_backup_artifact))));
   return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                   paths.target_backup_artifact));
 }
