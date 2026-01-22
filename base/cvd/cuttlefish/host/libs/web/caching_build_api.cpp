@@ -46,22 +46,27 @@ struct CachingPaths {
   std::string cache_backup_artifact;
 };
 
-CachingPaths ConstructCachePaths(const std::string& cache_base,
-                                 const Build& build,
-                                 const std::string& target_directory,
-                                 const std::string& artifact,
-                                 const std::string& backup_artifact = "") {
+Result<CachingPaths> ConstructCachePaths(const std::string& cache_base,
+                                         const Build& build,
+                                         const std::string& target_directory,
+                                         const std::string& artifact,
+                                         const std::string& backup_artifact = "") {
   const auto [id, target] = GetBuildIdAndTarget(build);
   auto result = CachingPaths{
       .build_cache = fmt::format("{}/{}/{}", cache_base, id, target),
       .target_artifact = ConstructTargetFilepath(target_directory, artifact),
   };
   result.cache_artifact = ConstructTargetFilepath(result.build_cache, artifact);
+  CF_EXPECT(EnsureDirectoryExists(result.build_cache));
+  CF_EXPECT(
+      EnsureDirectoryExists(android::base::Dirname(result.target_artifact)));
   if (!backup_artifact.empty()) {
     result.target_backup_artifact =
         ConstructTargetFilepath(target_directory, backup_artifact);
     result.cache_backup_artifact =
         ConstructTargetFilepath(result.build_cache, backup_artifact);
+    CF_EXPECT(EnsureDirectoryExists(
+        android::base::Dirname(result.target_backup_artifact)));
   }
   return result;
 }
@@ -93,14 +98,18 @@ Result<Build> CachingBuildApi::GetBuild(const BuildString& build_string) {
 Result<std::string> CachingBuildApi::DownloadFile(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name) {
-  const auto paths = ConstructCachePaths(cache_base_path_, build,
-                                         target_directory, artifact_name);
-  CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
+  const auto paths = CF_EXPECT(ConstructCachePaths(cache_base_path_, build,
+                                                   target_directory, artifact_name));
   if (!FileExists(paths.cache_artifact)) {
+    LOG(INFO) << artifact_name << " not in cache. Downloading to "
+              << paths.build_cache;
     CF_EXPECT(build_api_.DownloadFile(build, paths.build_cache, artifact_name));
+  } else {
+    LOG(INFO) << "Found " << artifact_name << " in cache at "
+              << paths.cache_artifact;
   }
-  CF_EXPECT(EnsureDirectoryExists(
-      std::string(android::base::Dirname(paths.target_artifact))));
+  LOG(INFO) << "Linking " << paths.cache_artifact << " to "
+            << paths.target_artifact;
   return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                   kOverwriteExistingFile));
 }
@@ -109,32 +118,37 @@ Result<std::string> CachingBuildApi::DownloadFileWithBackup(
     const Build& build, const std::string& target_directory,
     const std::string& artifact_name, const std::string& backup_artifact_name) {
   const auto paths =
-      ConstructCachePaths(cache_base_path_, build, target_directory,
-                          artifact_name, backup_artifact_name);
-  CF_EXPECT(EnsureDirectoryExists(paths.build_cache));
+      CF_EXPECT(ConstructCachePaths(cache_base_path_, build, target_directory,
+                                    artifact_name, backup_artifact_name));
   if (FileExists(paths.cache_artifact)) {
-    CF_EXPECT(EnsureDirectoryExists(
-        std::string(android::base::Dirname(paths.target_artifact))));
+    LOG(INFO) << "Found " << artifact_name << " in cache at "
+              << paths.cache_artifact;
+    LOG(INFO) << "Linking " << paths.cache_artifact << " to "
+              << paths.target_artifact;
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }
   if (FileExists(paths.cache_backup_artifact)) {
-    CF_EXPECT(EnsureDirectoryExists(
-        std::string(android::base::Dirname(paths.target_backup_artifact))));
+    LOG(INFO) << "Found " << backup_artifact_name << " in cache at "
+              << paths.cache_backup_artifact;
+    LOG(INFO) << "Linking " << paths.cache_backup_artifact << " to "
+              << paths.target_backup_artifact;
     return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                     paths.target_backup_artifact,
                                     kOverwriteExistingFile));
   }
+  LOG(INFO) << artifact_name << " and " << backup_artifact_name
+            << " not in cache. Downloading to " << paths.build_cache;
   const auto artifact_filepath = CF_EXPECT(build_api_.DownloadFileWithBackup(
       build, paths.build_cache, artifact_name, backup_artifact_name));
   if (absl::EndsWith(artifact_filepath, artifact_name)) {
-    CF_EXPECT(EnsureDirectoryExists(
-        std::string(android::base::Dirname(paths.target_artifact))));
+    LOG(INFO) << "Linking " << paths.cache_artifact << " to "
+              << paths.target_artifact;
     return CF_EXPECT(CreateHardLink(paths.cache_artifact, paths.target_artifact,
                                     kOverwriteExistingFile));
   }
-  CF_EXPECT(EnsureDirectoryExists(
-      std::string(android::base::Dirname(paths.target_backup_artifact))));
+  LOG(INFO) << "Linking " << paths.cache_backup_artifact << " to "
+            << paths.target_backup_artifact;
   return CF_EXPECT(CreateHardLink(paths.cache_backup_artifact,
                                   paths.target_backup_artifact));
 }
