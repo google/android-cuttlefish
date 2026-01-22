@@ -181,13 +181,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "f2fs_tools",
-    build_file = "@//:BUILD.f2fs_tools.bazel",
-    commit = "d8eac1f8699541416afdf93333772ef2e0509773",
-    remote = "https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools",
-)
-
-git_repository(
     name = "fec_rs",
     build_file = "@//:BUILD.fec_rs.bazel",
     commit = "90857deb7973c0ca24c79b9c1809fc9667f32c4f",
