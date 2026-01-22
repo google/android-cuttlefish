@@ -191,13 +191,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libcbor",
-    commit = "ae000f44e8d2a69e1f72a738f7c0b6b4b7cc4fbf",  # v0.12.0
-    build_file = "@//:BUILD.libcbor.bazel",
-    remote = "https://github.com/PJK/libcbor",
-)
-
-git_repository(
     name = "libconfig",
     build_file = "@//:BUILD.libconfig.bazel",
     commit = "81fe4632f01cbf24bf7efcd7ce1913f441c5ea96",

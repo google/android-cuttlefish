@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libcbor",
+    commit = "ae000f44e8d2a69e1f72a738f7c0b6b4b7cc4fbf",  # v0.12.0
+    build_file = "@//build_external/libcbor:BUILD.libcbor.bazel",
+    remote = "https://github.com/PJK/libcbor",
+)
