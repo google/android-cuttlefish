@@ -1,0 +1,9 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+# Upstream uses autotools, for now use the Android copy
+git_repository(
+    name = "libusb",
+    build_file = "@//build_external/libusb:BUILD.libusb.bazel",
+    commit = "7b5267099855d320f6013d667d113e3619f18bf5",
+    remote = "https://android.googlesource.com/platform/external/libusb",
+)
