@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libpffft",
+    commit = "e0bf595c98ded55cc457a371c1b29c8cab552628",
+    build_file = "@//build_external/libpffft:BUILD.libpffft.bazel",
+    remote = "https://github.com/marton78/pffft",
+)

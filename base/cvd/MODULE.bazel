@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libpffft",
-    commit = "e0bf595c98ded55cc457a371c1b29c8cab552628",
-    build_file = "@//:BUILD.libpffft.bazel",
-    remote = "https://github.com/marton78/pffft",
-)
-
-git_repository(
     name = "libsrtp2",
     # This is quite old, but it's what libwebrtc depends on
     commit = "860492290f7d1f25e2bd45da6471bfd4cd4d7add",
