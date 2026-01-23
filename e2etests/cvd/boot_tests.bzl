@@ -49,19 +49,3 @@ def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_sou
             "no-sandbox",
         ] + tags,
     )
-
-def metrics_test(name, branch, target, credential_source = ""):
-    args = ["-b", branch, "-t", target]
-    if credential_source:
-        args += ["-c", credential_source]
-    native.sh_test(
-        name = name,
-        size = "medium",
-        srcs = ["metrics_test.sh"],
-        args = args,
-        tags = [
-            "exclusive",
-            "external",
-            "no-sandbox",
-        ],
-    )
