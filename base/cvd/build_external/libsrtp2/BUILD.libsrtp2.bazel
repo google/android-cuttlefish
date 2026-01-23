@@ -64,6 +64,6 @@ cc_library(
         "include",
     ],
     deps = [
-        "@//build_external/libsrtp2_config",
+        "@//build_external/libsrtp2:libsrtp2_config",
     ],
 )
