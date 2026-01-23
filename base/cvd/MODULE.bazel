@@ -158,14 +158,6 @@ git_repository(
     ],
 )
 
-# Upstream uses autotools, for now use the Android copy
-git_repository(
-    name = "libusb",
-    build_file = "@//:BUILD.libusb.bazel",
-    commit = "7b5267099855d320f6013d667d113e3619f18bf5",
-    remote = "https://android.googlesource.com/platform/external/libusb",
-)
-
 git_repository(
     name = "libvpx",
     build_file = "@//:BUILD.libvpx.bazel",
