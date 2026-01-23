@@ -158,14 +158,6 @@ git_repository(
     ],
 )
 
-# Upstream uses autotools, for now use the Android copy
-git_repository(
-    name = "libnl",
-    build_file = "@//:BUILD.libnl.bazel",
-    commit = "f9682564a48d5ac5ee922de49e81aab4aa984f1e",
-    remote = "https://android.googlesource.com/platform/external/libnl",
-)
-
 # Android version is slightly forked from the chromium upstream
 git_repository(
     name = "libopenscreen",
