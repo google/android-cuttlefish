@@ -95,6 +95,9 @@ cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],
     hdrs = ["files.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",  # SEEK_DATA
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
@@ -199,6 +202,9 @@ cf_cc_library(
     name = "inotify",
     srcs = ["inotify.cpp"],
     hdrs = ["inotify.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -319,6 +325,9 @@ cf_cc_library(
     name = "socket2socket_proxy",
     srcs = ["socket2socket_proxy.cpp"],
     hdrs = ["socket2socket_proxy.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",
@@ -437,6 +446,9 @@ cf_cc_library(
     srcs = ["vsock_connection.cpp"],
     hdrs = ["vsock_connection.h"],
     clang_tidy_enabled = False,  # TODO: b/403278821 - fix warnings and re-enable after migration work
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//libbase",

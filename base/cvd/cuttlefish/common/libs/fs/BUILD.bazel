@@ -8,6 +8,9 @@ cf_cc_library(
     name = "epoll",
     srcs = ["epoll.cpp"],
     hdrs = ["epoll.h"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/result",
@@ -25,7 +28,10 @@ cf_cc_library(
         "shared_fd.h",
         "shared_select.h",
     ],
-    linkopts = ["-lrt"],
+    linkopts = select({
+        "@platforms//os:linux": ["-lrt"],
+        "//conditions:default": [],
+    }),
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/posix:strerror",
