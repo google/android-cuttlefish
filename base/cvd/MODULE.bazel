@@ -158,18 +158,6 @@ git_repository(
     ],
 )
 
-# Android version is slightly forked from the chromium upstream
-git_repository(
-    name = "libopenscreen",
-    build_file = "@//:BUILD.libopenscreen.bazel",
-    commit = "3f982cf4871df8771c9d4abe6e9a6f8d829b2736",
-    remote = "https://android.googlesource.com/platform/external/openscreen",
-    patch_strip = 1,
-    patches = [
-        "@//build_external/libopenscreen:PATCH.bazelignore.patch",
-    ],
-)
-
 git_repository(
     name = "libpffft",
     commit = "e0bf595c98ded55cc457a371c1b29c8cab552628",
