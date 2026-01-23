@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Install go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version: '1.23.1'
     - name: Install buildozer
@@ -76,9 +76,9 @@ jobs:
         dir: ["e2etests", "frontend/src/cvdexec", "frontend/src/host_orchestrator", "frontend/src/libhoclient", "frontend/src/liboperator", "frontend/src/operator", "tools/baseimage"]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Install dependencies
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version: '1.24.2'
     - run: go version
@@ -96,7 +96,7 @@ jobs:
       GOPROJECTS: ('host_orchestrator' 'libhoclient' 'liboperator' 'operator')
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Setup apt
       run: apt update -y && apt upgrade -y
     - name: Install dependencies
@@ -140,7 +140,7 @@ jobs:
     - name: Go version
       run: go version
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Install swag
       run: go install github.com/swaggo/swag/cmd/swag@v1.16.5
     - name: Run swag check
@@ -166,7 +166,7 @@ jobs:
         swap-storage: false
         tool-cache: true
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Mount Bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -175,7 +175,7 @@ jobs:
       uses: ./.github/actions/run-cvd-unit-tests
     - name: Upload test logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: cvd-unit-tests-logs
         path: base/cvd/bazel-out/k8-fastbuild/testlogs
@@ -202,7 +202,7 @@ jobs:
         swap-storage: false
         tool-cache: true
     - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Mount Bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -212,7 +212,7 @@ jobs:
     - name: Build debs_amd64.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_amd64.tar --null --files-from -
     - name: Publish debs_amd64.tar
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: debs_amd64
         path: debs_amd64.tar
@@ -225,7 +225,7 @@ jobs:
         docker-images: false
         swap-storage: false
     - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Mount Bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -235,7 +235,7 @@ jobs:
     - name: Build debs_arm64.tar
       run: find . -name 'cuttlefish-*.deb' -print0 | tar -cvf debs_arm64.tar --null --files-from -
     - name: Publish debs_arm64.tar
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: debs_arm64
         path: debs_arm64.tar
@@ -244,9 +244,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: debs_amd64
     - name: Build docker image
@@ -257,7 +257,7 @@ jobs:
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration:latest
     - name: Publish docker image
-      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
       with:
         name: cuttlefish-orchestration-amd64
         path: cuttlefish-orchestration.tar
@@ -266,9 +266,9 @@ jobs:
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: debs_arm64
     - name: Build docker image
@@ -279,7 +279,7 @@ jobs:
     - name: Save docker image
       run: docker save --output cuttlefish-orchestration.tar cuttlefish-orchestration:latest
     - name: Publish docker image
-      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f  # v6.0.0
       with:
         name: cuttlefish-orchestration-arm64
         path: cuttlefish-orchestration.tar
@@ -288,9 +288,9 @@ jobs:
     needs: [build-debian-package-amd64]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: debs_amd64
         github-token: ${{ github.token }}
@@ -301,7 +301,7 @@ jobs:
         sudo podman build -f "tools/testutils/cw/Containerfile" --tag "android-cuttlefish-e2etest:latest" .
         sudo podman save --quiet -o android-cuttlefish-e2etest.tar localhost/android-cuttlefish-e2etest
     - name: Upload image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: android-cuttlefish-e2etest-image-tar
         path: android-cuttlefish-e2etest.tar
@@ -310,7 +310,7 @@ jobs:
     needs: [e2e-tests-orchestration-build-image]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       - name: Run tests
         uses: ./.github/actions/run-cw-sharded-e2e-test
         with:
@@ -321,7 +321,7 @@ jobs:
     needs: [e2e-tests-orchestration-build-image]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       - name: Run tests
         uses: ./.github/actions/run-cw-sharded-e2e-test
         with:
@@ -332,7 +332,7 @@ jobs:
     needs: [e2e-tests-orchestration-build-image]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
       - name: Run tests
         uses: ./.github/actions/run-cw-sharded-e2e-test
         with:
@@ -347,9 +347,9 @@ jobs:
       with:
         tool-cache: true
     - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: download image
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: android-cuttlefish-e2etest-image-tar
         github-token: ${{ github.token }}
@@ -402,7 +402,7 @@ jobs:
         sudo podman rm -f tester
     - name: Upload test logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: e2e-tests-orchestration-runner-special-testlogs
         path: /tmp/cw_bazel/output/5d2d32753412f49aca3a92f1e1e5e35e/execroot/_main/bazel-out/k8-fastbuild/testlogs
@@ -414,9 +414,9 @@ jobs:
     needs: [build-docker-image-amd64]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download docker image
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: cuttlefish-orchestration-amd64
     - name: Load docker image
@@ -447,9 +447,9 @@ jobs:
     needs: [build-docker-image-amd64]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Download docker image
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: cuttlefish-orchestration-amd64
     - name: Load docker image as podman image

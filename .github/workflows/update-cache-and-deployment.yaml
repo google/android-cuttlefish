@@ -35,7 +35,7 @@ jobs:
         swap-storage: false
         tool-cache: true
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Mount bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -54,7 +54,7 @@ jobs:
         docker-images: false
         swap-storage: false
     - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Mount bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -87,7 +87,7 @@ jobs:
         docker-images: false
         swap-storage: false
     - name: checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Mount bazel cache
       uses: ./.github/actions/mount-bazel-cache
       with:
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build docker image
       run: container/image-builder.sh -m ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-22.04-arm
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build docker image
       run: container/image-builder.sh -m ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
@@ -169,7 +169,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout repository
-      uses: actions/checkout@a81bbbf8298c0fa03ea29cdc473d45769f953675 # aka v2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@v3'
       with:
