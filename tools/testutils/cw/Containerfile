@@ -22,7 +22,6 @@ FROM with_bazel AS with_cuttlefish_packages
 
 RUN --mount=source=.,target=/mnt,type=bind apt-get install -y \
   /mnt/cuttlefish-base_*_*64.deb \
-  /mnt/cuttlefish-metrics_*_*64.deb \
   /mnt/cuttlefish-user_*_*64.deb \
   /mnt/cuttlefish-orchestration_*_*64.deb
 

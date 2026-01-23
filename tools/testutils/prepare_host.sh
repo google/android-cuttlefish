@@ -69,7 +69,7 @@ if [[ "${PKG_DIR}" == "" ]] || ! [[ -d "${PKG_DIR}" ]]; then
 fi
 
 sudo apt-get update
-install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-metrics cuttlefish-user
+install_pkgs "${PKG_DIR}" cuttlefish-base cuttlefish-user
 
 check_service_started cuttlefish-host-resources
 load_kernel_modules kvm vhost-vsock vhost-net bridge
