@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.40.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.40.0) unstable; urgency=medium
 
-  * 
+  *  N/A
 
- -- Alistair Delva <adelva@google.com>  Tue, 20 Jan 2026 10:07:12 -0800
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 24 Jan 2026 07:49:43 -0800
 
 cuttlefish-frontend (1.39.0) unstable; urgency=medium
 
