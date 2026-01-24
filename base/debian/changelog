@@ -1,8 +1,30 @@
-cuttlefish-common (1.40.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.40.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.39.0 as unstable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2027
+  * Use format_as to format some enum types by @Databean in https://github.com/google/android-cuttlefish/pull/2022
+  * Use `std::string_view` more in `subprocess.[cpp,h]`, and other refactoring by @Databean in https://github.com/google/android-cuttlefish/pull/2023
+  * Start v1.40 release by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2030
+  * Replace `ConcatToString` and remove unused `cvd/utils/common.h` functions by @Databean in https://github.com/google/android-cuttlefish/pull/2028
+  * Use a silly little shell command for BridgeInUse. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2029
+  * Pin bazel to version 8 by @Databean in https://github.com/google/android-cuttlefish/pull/2037
+  * Add numeric overloads for `cuttlefish::Pretty`. by @Databean in https://github.com/google/android-cuttlefish/pull/2032
+  * Fix string out-of-bounds access in `PDUParser::Hex2ToByte` by @Databean in https://github.com/google/android-cuttlefish/pull/2033
+  * Move more external build configuration into `build_external` by @Databean in https://github.com/google/android-cuttlefish/pull/2039
+  * Start ReadLoop thread after all members have been initialized by @chiforbogdan in https://github.com/google/android-cuttlefish/pull/2036
+  * Add presubmit test to verify v2 metrics are working when enabled by @cjreynol in https://github.com/google/android-cuttlefish/pull/1980
+  * Allow creating fixed kernel images based on debian 12. by @ser-io in https://github.com/google/android-cuttlefish/pull/2038
+  * Move external build configuration into `build_external` (#2) by @Databean in https://github.com/google/android-cuttlefish/pull/2042
+  * clang-tidy wrongly thinks this pointer is null. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2045
+  * Enhance caching logic with directory checks by @jagghoshal-blip in https://github.com/google/android-cuttlefish/pull/2044
+  * Relax assertion that devices should have displays by @Databean in https://github.com/google/android-cuttlefish/pull/2047
+  * Move external build configuration into `build_external` (#3) by @Databean in https://github.com/google/android-cuttlefish/pull/2049
+  * Use C++20 instead of C++17. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2034
+  * Validate bazel 9 readiness in CI by @Databean in https://github.com/google/android-cuttlefish/pull/2046
+  * Upgrade GitHub Actions to latest versions by @salmanmkc in https://github.com/google/android-cuttlefish/pull/2051
+  * Upgrade GitHub Actions for Node 24 compatibility by @salmanmkc in https://github.com/google/android-cuttlefish/pull/2050
+  * Move external build configuration into `build_external` (#4) by @Databean in https://github.com/google/android-cuttlefish/pull/2053
 
- -- Alistair Delva <adelva@google.com>  Tue, 20 Jan 2026 10:05:40 -0800
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 24 Jan 2026 07:33:20 -0800
 
 cuttlefish-common (1.39.0) unstable; urgency=medium
 
