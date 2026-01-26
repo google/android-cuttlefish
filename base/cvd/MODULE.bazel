@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "mkbootimg",
-    build_file = "@//:BUILD.mkbootimg.bazel",
-    commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
-    remote = "https://android.googlesource.com/platform/system/tools/mkbootimg",
-)
-
-git_repository(
     name = "ms-tpm-20-ref",
     build_file = "@//:BUILD.ms-tpm-20-ref.bazel",
     commit = "ee21db0a941decd3cac67925ea3310873af60ab3",  # v1.83r1

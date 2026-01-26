@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "mkbootimg",
+    build_file = "@//build_external/mkbootimg:BUILD.mkbootimg.bazel",
+    commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
+    remote = "https://android.googlesource.com/platform/system/tools/mkbootimg",
+)
