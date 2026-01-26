@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "opengl_headers",
-    build_file = "@//:BUILD.opengl_headers.bazel",
-    commit = "b53ca669bea4715b6d5fa53c459f47a1fecd7944",
-    remote = "https://github.com/KhronosGroup/OpenGL-Registry.git",
-)
-
-git_repository(
     name = "pyyaml",
     build_file = "@//:BUILD.pyyaml.bazel",
     commit = "41309b0bcb4559edb1d691d47199035ef539d785",  # 6.0.2
