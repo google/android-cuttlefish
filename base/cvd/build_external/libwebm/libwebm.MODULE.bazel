@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libwebm",
+    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb",  # libwebm-1.0.0.31
+    build_file = "@//build_external/libwebm:BUILD.libwebm.bazel",
+    remote = "https://github.com/webmproject/libwebm",
+)
