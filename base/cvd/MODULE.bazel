@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libwebsockets",
-    build_file = "@//:BUILD.libwebsockets.bazel",
-    commit = "9075f01e1670e64435f4ea501667982fc911ad6b",  # v4.3-stable
-    remote = "https://github.com/warmcat/libwebsockets",
-)
-
-git_repository(
     name = "libyuv",
     build_file = "@//:BUILD.libyuv.bazel",
     commit = "af6ac8265bbd07bcf977526458b60305c4304288",
