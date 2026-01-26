@@ -171,13 +171,6 @@ git_repository(
 )
 
 git_repository(
-    name = "vulkan_headers",
-    build_file = "@//:BUILD.vulkan_headers.bazel",
-    commit = "0777a3ad88bad5f4b11cfd509458bbc0ddadc773",  # v1.4.338
-    remote = "https://github.com/KhronosGroup/Vulkan-Headers.git",
-)
-
-git_repository(
     name = "wayland",
     build_file = "@//build_external/wayland:BUILD.wayland.bazel",
     # TODO: b/414448658 - gitlab.freedesktop.org having an outage
