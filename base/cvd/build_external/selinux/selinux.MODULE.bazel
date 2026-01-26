@@ -1,0 +1,9 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+# Android version is forked from github upstream
+git_repository(
+    name = "selinux",
+    build_file = "@//build_external/selinux:BUILD.selinux.bazel",
+    commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
+    remote = "https://android.googlesource.com/platform/external/selinux",
+)
