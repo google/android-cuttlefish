@@ -1,0 +1,10 @@
+git_override(
+    module_name = "sandboxed_api",
+    commit = "c520612b14a472e0b4784e9f9e41f9e822264cc3",
+    remote = "https://github.com/google/sandboxed-api.git",
+    patch_strip = 1,
+    patches = [
+        # See cl/711879539
+        "@//build_external/sandboxed_api:PATCH.sandboxed_api.util.visibility.patch",
+    ],
+)
