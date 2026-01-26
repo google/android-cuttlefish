@@ -158,13 +158,6 @@ git_repository(
     ],
 )
 
-git_repository(
-    name = "pyyaml",
-    build_file = "@//:BUILD.pyyaml.bazel",
-    commit = "41309b0bcb4559edb1d691d47199035ef539d785",  # 6.0.2
-    remote = "https://github.com/yaml/pyyaml.git",
-)
-
 # Android version is forked from github upstream
 git_repository(
     name = "selinux",

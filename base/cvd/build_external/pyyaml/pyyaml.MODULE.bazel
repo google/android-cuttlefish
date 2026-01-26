@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "pyyaml",
+    build_file = "@//build_external/pyyaml:BUILD.pyyaml.bazel",
+    commit = "41309b0bcb4559edb1d691d47199035ef539d785",  # 6.0.2
+    remote = "https://github.com/yaml/pyyaml.git",
+)
