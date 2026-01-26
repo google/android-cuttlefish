@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "markupsafe",
+    build_file = "@//build_external/markupsafe:BUILD.markupsafe.bazel",
+    commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a",  # 2.0.1
+    remote = "https://github.com/pallets/markupsafe",
+)
