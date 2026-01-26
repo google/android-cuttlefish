@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "mako",
-    build_file = "@//:BUILD.mako.bazel",
-    commit = "51505647100b7cf20a79b496bc12dec379ac9cdc",  # 1.3.0
-    remote = "https://github.com/sqlalchemy/mako",
-)
-
-git_repository(
     name = "markupsafe",
     build_file = "@//:BUILD.markupsafe.bazel",
     commit = "63efa5521c5c75d40cfed0b6b8f6528ecce9bc6a",  # 2.0.1
