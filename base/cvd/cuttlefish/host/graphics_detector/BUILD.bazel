@@ -50,11 +50,9 @@ cf_cc_binary(
         "-DVULKAN_HPP_ASSERT_ON_RESULT=",
         "-DVULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1",
         "-DVULKAN_HPP_ENABLE_DYNAMIC_LOADER_TOOL=1",
-        "-DVULKAN_HPP_EXPECTED=gfxstream::expected",
         "-DVULKAN_HPP_NO_CONSTRUCTORS=1",
         "-DVULKAN_HPP_NO_EXCEPTIONS=1",
         "-DVULKAN_HPP_RAII_NO_EXCEPTIONS=1",
-        "-DVULKAN_HPP_UNEXPECTED=gfxstream::unexpected",
         "-Wno-module-import-in-extern-c",
     ],
     deps = [
