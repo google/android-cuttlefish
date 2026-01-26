@@ -103,7 +103,6 @@ cc_library(
         "libcutils/include/**/*.h",
     ]),
     strip_include_prefix = "libcutils/include",
-    visibility = ["//visibility:public"],
     deps = [
         "@//android:log_header",
         "@//libbase",
