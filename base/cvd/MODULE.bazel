@@ -158,14 +158,6 @@ git_repository(
     ],
 )
 
-# Android version is forked from github upstream
-git_repository(
-    name = "selinux",
-    build_file = "@//:BUILD.selinux.bazel",
-    commit = "6f8f496eabd35f28dfa6b4be5fc82e325e1df620",
-    remote = "https://android.googlesource.com/platform/external/selinux",
-)
-
 git_repository(
     name = "spirv_headers",
     commit = "4f7b471f1a66b6d06462cd4ba57628cc0cd087d7",
