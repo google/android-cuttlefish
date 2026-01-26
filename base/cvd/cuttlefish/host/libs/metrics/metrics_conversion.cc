@@ -23,6 +23,7 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
+#include "external_proto/cf_flags.pb.h"
 #include "external_proto/cf_guest.pb.h"
 #include "external_proto/cf_host.pb.h"
 #include "external_proto/cf_log.pb.h"
