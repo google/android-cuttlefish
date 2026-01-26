@@ -19,5 +19,7 @@ runs:
     env:
       OVERRIDE_BAZEL_VERSION: 9.0.0
     run: |
+      bazel aquery @android_system_core//... > /dev/null
       bazel aquery //android:log_header > /dev/null
+      bazel aquery //libbase > /dev/null
     shell: bash
