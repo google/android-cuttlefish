@@ -171,13 +171,6 @@ git_repository(
 )
 
 git_repository(
-    name = "swiftshader",
-    build_file = "@//:BUILD.swiftshader.bazel",
-    commit = "14f87286123a47207ba25d0d32ebda27b13fe5a3",
-    remote = "https://swiftshader.googlesource.com/SwiftShader.git",
-)
-
-git_repository(
     name = "vulkan_headers",
     build_file = "@//:BUILD.vulkan_headers.bazel",
     commit = "0777a3ad88bad5f4b11cfd509458bbc0ddadc773",  # v1.4.338
