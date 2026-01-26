@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "libyuv",
+    build_file = "@//build_external/libyuv:BUILD.libyuv.bazel",
+    commit = "af6ac8265bbd07bcf977526458b60305c4304288",
+    remote = "https://chromium.googlesource.com/libyuv/libyuv.git",
+)

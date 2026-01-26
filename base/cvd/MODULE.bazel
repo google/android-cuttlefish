@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libyuv",
-    build_file = "@//:BUILD.libyuv.bazel",
-    commit = "af6ac8265bbd07bcf977526458b60305c4304288",
-    remote = "https://chromium.googlesource.com/libyuv/libyuv.git",
-)
-
-git_repository(
     name = "mako",
     build_file = "@//:BUILD.mako.bazel",
     commit = "51505647100b7cf20a79b496bc12dec379ac9cdc",  # 1.3.0
