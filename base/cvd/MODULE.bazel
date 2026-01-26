@@ -159,19 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "ms-tpm-20-ref",
-    build_file = "@//:BUILD.ms-tpm-20-ref.bazel",
-    commit = "ee21db0a941decd3cac67925ea3310873af60ab3",  # v1.83r1
-    remote = "https://github.com/microsoft/ms-tpm-20-ref",
-    patches = [
-        "@//build_external/ms-tpm-20-ref:0001-Turn-off-ALG_CAMELLIA.patch",
-        "@//build_external/ms-tpm-20-ref:0002-Use-the-BoringSSL-bignum_st-structure.patch",
-        "@//build_external/ms-tpm-20-ref:0003-Don-t-use-EC_POINTs_mul.patch",
-    ],
-    patch_strip = 1,
-)
-
-git_repository(
     name = "opengl_headers",
     build_file = "@//:BUILD.opengl_headers.bazel",
     commit = "b53ca669bea4715b6d5fa53c459f47a1fecd7944",
