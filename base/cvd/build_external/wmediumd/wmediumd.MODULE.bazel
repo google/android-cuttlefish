@@ -1,0 +1,9 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "wmediumd",
+    build_file = "@//build_external/wmediumd:BUILD.wmediumd.bazel",
+    commit = "f44d2af28b8045eb31ff045d3c078e60865afa98",
+    remote = "https://android.googlesource.com/platform/external/wmediumd",
+)
+

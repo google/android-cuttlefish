@@ -183,11 +183,3 @@ git_repository(
         "@//build_external/wayland:PATCH.wayland.wayland_config.patch",
     ],
 )
-
-git_repository(
-    name = "wmediumd",
-    build_file = "@//:BUILD.wmediumd.bazel",
-    commit = "f44d2af28b8045eb31ff045d3c078e60865afa98",
-    remote = "https://android.googlesource.com/platform/external/wmediumd",
-)
-
