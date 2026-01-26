@@ -1,0 +1,8 @@
+git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "mesa",
+    build_file = "@//build_external/mesa:BUILD.mesa.bazel",
+    commit = "224e91e39836d3ca31f80df2e0379e55c70574f8",
+    remote = "https://android.googlesource.com/platform/external/mesa3d",
+)

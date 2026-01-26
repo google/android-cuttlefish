@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "mesa",
-    build_file = "@//:BUILD.mesa.bazel",
-    commit = "224e91e39836d3ca31f80df2e0379e55c70574f8",
-    remote = "https://android.googlesource.com/platform/external/mesa3d",
-)
-
-git_repository(
     name = "mkbootimg",
     build_file = "@//:BUILD.mkbootimg.bazel",
     commit = "d2bb0af5ba6d3198a3e99529c97eda1be0b5a093",
