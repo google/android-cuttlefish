@@ -159,13 +159,6 @@ git_repository(
 )
 
 git_repository(
-    name = "libwebm",
-    commit = "6745fd29e0245fc584b0bb9f65018ea2366fe7fb",  # libwebm-1.0.0.31
-    build_file = "@//:BUILD.libwebm.bazel",
-    remote = "https://github.com/webmproject/libwebm",
-)
-
-git_repository(
     name = "libwebrtc",
     commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
     build_file = "@//:BUILD.libwebrtc.bazel",
