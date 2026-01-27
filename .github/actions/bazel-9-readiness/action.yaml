@@ -48,4 +48,5 @@ runs:
       bazel aquery //android:log_header > /dev/null
       bazel aquery //libbase > /dev/null
       bazel aquery //linux_headers > /dev/null
+      bazel aquery //teeui/... > /dev/null
     shell: bash

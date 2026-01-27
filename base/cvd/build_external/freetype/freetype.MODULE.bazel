@@ -1,0 +1,6 @@
+single_version_override(
+    module_name = "freetype",
+    version = "2.13.3.bcr.2",
+    # https://github.com/bazelbuild/bazel-central-registry/pull/7337
+    registry = "https://raw.githubusercontent.com/Databean/bazel-central-registry/freetype_2.13.3.bcr.2/",
+)
