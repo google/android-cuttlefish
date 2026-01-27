@@ -1,0 +1,6 @@
+git_override(
+    module_name = "brotli",
+    # https://github.com/google/brotli/pull/1412
+    commit = "e2bb23c8d9e00606ad274ec9efb4970c7402b469",
+    remote = "https://github.com/robinlinden/brotli",
+)
