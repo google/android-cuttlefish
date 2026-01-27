@@ -1,0 +1,10 @@
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+llvm.toolchain(
+    llvm_version = "19.1.7",
+)
+
+use_repo(llvm, "llvm_toolchain")
+
+register_toolchains(
+    "@llvm_toolchain//:all",
+)
