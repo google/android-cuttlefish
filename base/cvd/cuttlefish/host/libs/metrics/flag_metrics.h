@@ -16,8 +16,10 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -25,6 +27,7 @@ namespace cuttlefish {
 struct FlagMetrics {
   int cpus;
   bool daemon;
+  DataImagePolicy data_policy;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously
