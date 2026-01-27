@@ -5,8 +5,8 @@
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
 
-bazel_dep(name = "abseil-cpp", version = "20250814.0")
-bazel_dep(name = "aspect_bazel_lib", version = "2.16.0")
+bazel_dep(name = "abseil-cpp", version = "20250814.1")
+bazel_dep(name = "aspect_bazel_lib", version = "2.19.3")
 bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
@@ -38,7 +38,7 @@ bazel_dep(name = "pcre2", version = "10.45")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "protobuf", version = "31.1")
 bazel_dep(name = "rootcanal")
-bazel_dep(name = "rules_cc", version = "0.2.8")
+bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_flex", version = "0.4")
 bazel_dep(name = "rules_license", version = "1.0.0")
 # this is normally an indirect dependency, but for bazel 9 we need a higher version
@@ -46,7 +46,7 @@ bazel_dep(name = "rules_nodejs", version = "6.7.3")
 bazel_dep(name = "rules_proto", version = "7.1.0")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.1")
 bazel_dep(name = "rules_proto_grpc_go", version = "5.3.0")
-bazel_dep(name = "rules_python", version = "1.1.0")
+bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "rules_rust", version = "0.67.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "tinyxml2", version = "10.0.0")
