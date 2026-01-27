@@ -1,0 +1,17 @@
+git_override(
+    module_name = "rootcanal",
+    # Waiting on it to be registered on BCR:
+    #   https://github.com/bazelbuild/bazel-central-registry/issues/5249
+    commit = "095db64fda743eec1e01a9e6a1d58fc7fa8ba32a",  # v1.11.1
+    remote = "https://github.com/google/rootcanal.git",
+    init_submodules = True,
+    patch_strip = 1,
+    patches = [
+        # https://github.com/bazelbuild/bazel/issues/26578
+        "@//build_external/rootcanal:0001-Use-our-local_repository.patch",
+        "@//build_external/rootcanal:0002-Use-pdlc-from-pdl-compiler-crate.patch",
+        "@//build_external/rootcanal:0003-Make-rootcanal_proto-public.patch",
+        "@//build_external/rootcanal:0004-Add-link_layer_packets_rs.patch",
+        "@//build_external/rootcanal:0005-Define-librootcanal_ffi.so-and-librootcanal-librarie.patch",
+    ],
+)
