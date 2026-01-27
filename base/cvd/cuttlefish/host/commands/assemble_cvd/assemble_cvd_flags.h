@@ -20,7 +20,6 @@
 
 #define DECLARE_vec DECLARE_string
 
-DECLARE_vec(data_policy);
 DECLARE_vec(gdb_port);
 
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
