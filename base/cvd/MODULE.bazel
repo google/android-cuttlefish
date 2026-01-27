@@ -109,12 +109,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "spirv_headers",
-    commit = "4f7b471f1a66b6d06462cd4ba57628cc0cd087d7",
-    remote = "https://github.com/KhronosGroup/SPIRV-Headers.git",
-)
-
-git_repository(
     name = "spirv_tools",
     commit = "dd4b663e13c07fea4fbb3f70c1c91c86731099f7",  # v2024.2
     remote = "https://github.com/KhronosGroup/SPIRV-Tools.git",
