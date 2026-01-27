@@ -20,6 +20,31 @@ runs:
       OVERRIDE_BAZEL_VERSION: 9.0.0
     run: |
       bazel aquery @android_system_core//... > /dev/null
+      bazel aquery @android_system_extras//... > /dev/null
+      bazel aquery @arm_optimized_routines//... > /dev/null
+      bazel aquery @avb//... > /dev/null
+      bazel aquery @dosfstools//... > /dev/null
+      bazel aquery @e2fsprogs//... > /dev/null
+      bazel aquery @egl_headers//... > /dev/null
+      bazel aquery @expat//... > /dev/null
+      bazel aquery @f2fs_tools//... > /dev/null
+      bazel aquery @fec_rs//... > /dev/null
+      bazel aquery @fruit//:fruit > /dev/null
+      bazel aquery @libcbor//:cbor > /dev/null
+      bazel aquery @libconfig//... > /dev/null
+      bazel aquery @libeigen//... > /dev/null
+      bazel aquery @libffi//... > /dev/null
+      bazel aquery @libnl//... > /dev/null
+      bazel aquery @libopenscreen//... > /dev/null
+      bazel aquery @libpffft//... > /dev/null
+      bazel aquery @libsrtp2//... > /dev/null
+      bazel aquery @libusb//... > /dev/null
+      bazel aquery @libvpx//... > /dev/null
+      bazel aquery @libwebm//... > /dev/null
+      bazel aquery @libwebsockets//... > /dev/null
+      bazel aquery @mako//... > /dev/null
+      bazel aquery @markupsafe//... > /dev/null
       bazel aquery //android:log_header > /dev/null
       bazel aquery //libbase > /dev/null
+      bazel aquery //linux_headers > /dev/null
     shell: bash

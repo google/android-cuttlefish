@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 package(
     default_visibility = [
         "//visibility:private",
@@ -573,7 +575,7 @@ cc_library(
     name = "libvpx_sve2",
     srcs = select({
         "@platforms//cpu:aarch64": libvpx_arm64_sve2_c_srcs + libvpx_arm_c_hdrs,
-        "//conditions:default": [] + libvpx_config_c_srcs,
+        "//conditions:default": [],
     }) + libvpx_common_c_hdrs + libvpx_config_c_srcs,
     copts = [
         "-O3",
