@@ -53,8 +53,8 @@ genrule(
     name = "ffi_header",
     srcs = ["include/ffi.h.in"],
     outs = ["ffi_gen.h"],
-    cmd = "$(location @//:gen_ffi_header) < $(SRCS) > $(OUTS)",
-    tools = ["@//:gen_ffi_header"],
+    cmd = "$(location @//build_external/libffi:gen_ffi_header) < $(SRCS) > $(OUTS)",
+    tools = ["@//build_external/libffi:gen_ffi_header"],
 )
 
 cc_library(
