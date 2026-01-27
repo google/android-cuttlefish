@@ -3,6 +3,7 @@ include("//build_external/android_system_extras:android_system_extras.MODULE.baz
 include("//build_external/android_tools_netsim:android_tools_netsim.MODULE.bazel")
 include("//build_external/arm_optimized_routines:arm_optimized_routines.MODULE.bazel")
 include("//build_external/avb:avb.MODULE.bazel")
+include("//build_external/brotli:brotli.MODULE.bazel")
 include("//build_external/casimir:casimir.MODULE.bazel")
 include("//build_external/crosvm:crosvm.MODULE.bazel")
 include("//build_external/dosfstools:dosfstools.MODULE.bazel")

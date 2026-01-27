@@ -44,6 +44,7 @@ runs:
       bazel aquery @libwebsockets//... > /dev/null
       bazel aquery @mako//... > /dev/null
       bazel aquery @markupsafe//... > /dev/null
+      bazel aquery //adb > /dev/null
       bazel aquery //android:log_header > /dev/null
       bazel aquery //libbase > /dev/null
       bazel aquery //linux_headers > /dev/null
