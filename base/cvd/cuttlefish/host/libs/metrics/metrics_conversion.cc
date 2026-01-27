@@ -22,6 +22,7 @@
 #include "google/protobuf/timestamp.pb.h"
 
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "external_proto/cf_flags.pb.h"
 #include "external_proto/cf_guest.pb.h"
@@ -35,12 +36,31 @@ namespace {
 using google::protobuf::Timestamp;
 using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishFlags;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishFlags_DataPolicy;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishHost_OsType;
 using logs::proto::wireless::android::cuttlefish::events::MetricsEventV2;
+
+CuttlefishFlags_DataPolicy ConvertDataPolicy(DataImagePolicy policy) {
+  switch (policy) {
+    case DataImagePolicy::AlwaysCreate:
+      return CuttlefishFlags_DataPolicy::
+          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_ALWAYS_CREATE;
+    case DataImagePolicy::ResizeUpTo:
+      return CuttlefishFlags_DataPolicy::
+          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_RESIZE_UP_TO;
+    case DataImagePolicy::Unknown:
+      return CuttlefishFlags_DataPolicy::
+          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_UNSPECIFIED;
+    case DataImagePolicy::UseExisting:
+      return CuttlefishFlags_DataPolicy::
+          CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_USE_EXISTING;
+  }
+}
 
 CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
   switch (event_type) {
@@ -100,6 +120,7 @@ void PopulateCuttlefishGuest(CuttlefishGuest& guest,
   CuttlefishFlags& flags = *guest.mutable_flags();
   flags.set_cpus(flag_metrics.cpus);
   flags.set_daemon(flag_metrics.daemon);
+  flags.set_data_policy(ConvertDataPolicy(flag_metrics.data_policy));
 }
 
 }  // namespace
