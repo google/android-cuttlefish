@@ -57,16 +57,7 @@ bazel_dep(name = "zlib", version = "1.3.1.bcr.7")
 include("//build_external:build_external.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
-
-rust_host_tools = use_extension("@rules_rust//rust:extensions.bzl", "rust_host_tools")
-rust_host_tools.host_tools(
-    name = "rust_host_tools_nightly",
-    version = "nightly",
-)
-use_repo(
-    rust_host_tools,
-    "rust_host_tools_nightly",
-)
+include("//toolchain:rust.MODULE.bazel")
 
 append_squashfs_overlay_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 append_squashfs_overlay_crates.from_cargo(
