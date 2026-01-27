@@ -1,6 +1,5 @@
 load("@rules_cc//cc:cc_import.bzl", "cc_import")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 package_group(
     name = "android_cuttlefish",
@@ -34,12 +33,6 @@ filegroup(
         "//cuttlefish/host/libs/zip:.clang-tidy",
         "//cuttlefish/host/libs/zip/libzip_cc:.clang-tidy",
     ],
-)
-
-sh_binary(
-    name = "gen_ffi_header",
-    srcs = ["gen_ffi_header.sh"],
-    visibility = ["//visibility:public"],
 )
 
 # for crosvm/jail. Has to be in the base repository, as the @crosvm repository isn't visible.

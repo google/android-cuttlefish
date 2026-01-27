@@ -1,0 +1,7 @@
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+sh_binary(
+    name = "gen_ffi_header",
+    srcs = ["gen_ffi_header.sh"],
+    visibility = ["//visibility:public"],
+)
