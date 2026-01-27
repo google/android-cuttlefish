@@ -1,0 +1,10 @@
+append_squashfs_overlay_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+append_squashfs_overlay_crates.from_cargo(
+    name = "append_squashfs_overlay_crates",
+    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
+    manifests = [
+        "//cuttlefish/host/commands/append_squashfs_overlay:Cargo.toml",
+    ],
+    host_tools = "@rust_host_tools_nightly",
+)
+use_repo(append_squashfs_overlay_crates, "append_squashfs_overlay_crates")
