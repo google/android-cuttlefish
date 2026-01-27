@@ -91,6 +91,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:flag_metrics",
         "//cuttlefish/host/libs/metrics:guest_metrics",
