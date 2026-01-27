@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <fruit/fruit.h>
-
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {

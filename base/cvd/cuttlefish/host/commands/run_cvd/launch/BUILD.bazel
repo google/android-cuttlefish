@@ -4,8 +4,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-exports_files([".clang-tidy"])
-
 cf_cc_library(
     name = "auto_cmd",
     hdrs = ["auto_cmd.h"],

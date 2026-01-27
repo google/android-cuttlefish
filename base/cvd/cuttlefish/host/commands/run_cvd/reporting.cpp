@@ -16,9 +16,8 @@
 
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 
-#include <fruit/fruit.h>
-#include <string>
 #include <vector>
+
 #include "absl/log/log.h"
 
 namespace cuttlefish {

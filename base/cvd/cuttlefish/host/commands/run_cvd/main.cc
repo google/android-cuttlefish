@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <fstream>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
-#include <fruit/fruit.h>
-#include <gflags/gflags.h>
 #include "absl/log/log.h"
+#include "fruit/component.h"
+#include "fruit/injector.h"
+#include "fruit/macro.h"
+#include "gflags/gflags.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/size_utils.h"
-#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/run_cvd/boot_state_machine.h"
 #include "cuttlefish/host/commands/run_cvd/launch/auto_cmd.h"
@@ -60,31 +56,33 @@
 #include "cuttlefish/host/commands/run_cvd/launch/screen_recording_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/secure_env.h"
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_simulator.h"
+#include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
+#include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/streamer.h"
 #include "cuttlefish/host/commands/run_cvd/launch/ti50_emulator.h"
 #include "cuttlefish/host/commands/run_cvd/launch/tombstone_receiver.h"
 #include "cuttlefish/host/commands/run_cvd/launch/uwb_connector.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhal_proxy_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhost_device_vsock.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
 #include "cuttlefish/host/commands/run_cvd/validate.h"
-#include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/config/adb/adb.h"
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
+#include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
-#include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
 namespace {
 
 class CuttlefishEnvironment : public DiagnosticInformation {

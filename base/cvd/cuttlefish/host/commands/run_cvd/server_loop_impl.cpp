@@ -16,30 +16,37 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
+#include <stddef.h>
 #include <unistd.h>
 
+#include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "fruit/injector.h"
+#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
+#include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
+#include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/util.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
-#include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/result/result.h"
 
@@ -422,6 +429,7 @@ void ServerLoopImpl::RestartRunCvd(int notification_fd) {
   auto config_path = config_.AssemblyPath("cuttlefish_config.json");
   auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
   WriteAll(followup_stdin, config_path + "\n");
+  // NOLINTNEXTLINE(misc-include-cleaner): unistd.h provides SEEK_SET
   followup_stdin->LSeek(0, SEEK_SET);
   followup_stdin->UNMANAGED_Dup2(0);
 

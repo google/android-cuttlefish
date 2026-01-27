@@ -4,6 +4,8 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+exports_files([".clang-tidy"])
+
 cf_cc_library(
     name = "boot_state_machine",
     srcs = ["boot_state_machine.cc"],
@@ -11,13 +13,17 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/kernel_log_monitor:kernel_log_monitor_utils",
         "//cuttlefish/host/commands/openwrt_control_server:libopenwrt_control_server",
+        "//cuttlefish/host/commands/openwrt_control_server:openwrt_control_server_cc_proto",
         "//cuttlefish/host/commands/run_cvd:validate",
         "//cuttlefish/host/libs/command_util",
+        "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_instance_derived",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/vm_manager",
@@ -26,6 +32,7 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@fruit",
         "@gflags",
         "@grpc",
         "@grpc//:grpc++",
@@ -47,11 +54,7 @@ cf_cc_binary(
     name = "run_cvd",
     srcs = ["main.cc"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/common/libs/utils:size_utils",
-        "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/run_cvd:boot_state_machine",
         "//cuttlefish/host/commands/run_cvd:reporting",
@@ -81,6 +84,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:screen_recording_server",
         "//cuttlefish/host/commands/run_cvd/launch:secure_env",
         "//cuttlefish/host/commands/run_cvd/launch:sensors_simulator",
+        "//cuttlefish/host/commands/run_cvd/launch:sensors_socket_pair",
         "//cuttlefish/host/commands/run_cvd/launch:snapshot_control_files",
         "//cuttlefish/host/commands/run_cvd/launch:streamer",
         "//cuttlefish/host/commands/run_cvd/launch:ti50_emulator",
@@ -91,7 +95,6 @@ cf_cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
-        "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:custom_actions",
@@ -99,9 +102,9 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/fastboot",
+        "//cuttlefish/host/libs/feature",
         "//cuttlefish/host/libs/feature:inject",
         "//cuttlefish/host/libs/metrics",
-        "//cuttlefish/host/libs/process_monitor",
         "//cuttlefish/host/libs/version",
         "//cuttlefish/host/libs/vm_manager",
         "//cuttlefish/result",
@@ -133,7 +136,9 @@ cf_cc_library(
         "//cuttlefish/host/libs/command_util",
         "//cuttlefish/host/libs/command_util:libcuttlefish_run_cvd_proto",
         "//cuttlefish/host/libs/config:ap_boot_flow",
+        "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_instance_derived",
+        "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/host/libs/config:vmm_mode",
@@ -147,6 +152,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log:check",
         "@fruit",
         "@gflags",
+        "@jsoncpp",
     ],
 )
 
@@ -163,6 +169,5 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
-        "@fruit",
     ],
 )

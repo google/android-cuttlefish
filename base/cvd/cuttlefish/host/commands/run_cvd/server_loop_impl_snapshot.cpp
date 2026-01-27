@@ -16,21 +16,39 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
+#include <fcntl.h>
+#include <sys/wait.h>  // IWYU pragma: keep (siginfo_t)
+
+#include <ostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-#include <android-base/file.h>
 #include "absl/log/log.h"
+#include "android-base/file.h"
+#include "json/value.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
+#include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
 #include "cuttlefish/host/libs/command_util/snapshot_utils.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 #include "cuttlefish/result/result.h"
+
+#ifndef WEXITED
+#define WEXITED 4
+#error "clang-tidy doesn't see this is provided by sys/wait.h"
+#endif
 
 namespace cuttlefish {
 namespace run_cvd_impl {
@@ -73,8 +91,10 @@ static Result<void> SuspendCrosvm(const std::string& vm_sock_path) {
                                         vm_sock_path, "--full"};
   auto infop = CF_EXPECT(Execute(command_args, SubprocessOptions(), WEXITED));
   CF_EXPECT_EQ(infop.si_code, CLD_EXITED);
+  // NOLINTBEGIN(misc-include-cleaner): expects a symbol for si_status
   CF_EXPECTF(infop.si_status == 0, "crosvm suspend returns non zero code {}",
              infop.si_status);
+  // NOLINTEND(misc-include-cleaner)
   return {};
 }
 
@@ -83,9 +103,11 @@ static Result<void> ResumeCrosvm(const std::string& vm_sock_path) {
   std::vector<std::string> command_args{crosvm_bin_path, "resume", vm_sock_path,
                                         "--full"};
   auto infop = CF_EXPECT(Execute(command_args, SubprocessOptions(), WEXITED));
+  // NOLINTBEGIN(misc-include-cleaner): expects a symbol for si_status
   CF_EXPECT_EQ(infop.si_code, CLD_EXITED);
   CF_EXPECTF(infop.si_status == 0, "crosvm resume returns non zero code {}",
              infop.si_status);
+  // NOLINTEND(misc-include-cleaner)
   return {};
 }
 
@@ -102,7 +124,7 @@ Result<void> ServerLoopImpl::SuspendGuest() {
     CF_EXPECT(SuspendCrosvm(openwrt_sock),
               "failed to suspend openwrt crosvm instance.");
   }
-  const auto main_vmm = config_.vm_manager();
+  const VmmMode main_vmm = config_.vm_manager();
   if (VmManagerIsCrosvm(main_vmm)) {
     const auto& vm_sock =
         GetSocketPath(ToString(main_vmm), vm_name_to_control_sock_);
