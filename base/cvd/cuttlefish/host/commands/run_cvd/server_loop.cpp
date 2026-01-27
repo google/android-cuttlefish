@@ -16,8 +16,10 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop.h"
 
-#include <fruit/fruit.h>
+#include "fruit/component.h"
+#include "fruit/fruit_forward_decls.h"
 
+#include "cuttlefish/host/commands/run_cvd/launch/snapshot_control_files.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"

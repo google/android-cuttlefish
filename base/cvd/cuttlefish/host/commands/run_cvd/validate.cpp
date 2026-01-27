@@ -16,15 +16,14 @@
 
 #include "cuttlefish/host/commands/run_cvd/validate.h"
 
+#include <errno.h>
 #include <sys/utsname.h>
 
-#include <fruit/fruit.h>
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 

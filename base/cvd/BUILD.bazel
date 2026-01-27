@@ -28,7 +28,7 @@ filegroup(
         "//cuttlefish/host/commands/cvd/cli/commands:.clang-tidy",
         "//cuttlefish/host/commands/kernel_log_monitor:.clang-tidy",
         "//cuttlefish/host/commands/mkenvimage_slim:.clang-tidy",
-        "//cuttlefish/host/commands/run_cvd/launch:.clang-tidy",
+        "//cuttlefish/host/commands/run_cvd:.clang-tidy",
         "//cuttlefish/host/libs/config:.clang-tidy",
         "//cuttlefish/host/libs/web:.clang-tidy",
         "//cuttlefish/host/libs/zip:.clang-tidy",
