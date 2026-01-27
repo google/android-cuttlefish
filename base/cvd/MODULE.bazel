@@ -109,16 +109,6 @@ use_repo(vhost_user_input_crates, "vhost_user_input_crates")
 git_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-    name = "gfxstream",
-    commit = "efbcd112d2cf43b7bca9260f8d81fd948446bcd3",
-    remote = "https://github.com/google/gfxstream.git",
-    patch_strip = 1,
-    patches = [
-        "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
-    ],
-)
-
-git_repository(
     name = "spirv_headers",
     commit = "4f7b471f1a66b6d06462cd4ba57628cc0cd087d7",
     remote = "https://github.com/KhronosGroup/SPIRV-Headers.git",
