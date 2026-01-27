@@ -1,0 +1,5 @@
+git_override(
+    module_name = "googletest",
+    commit = "56efe3983185e3f37e43415d1afa97e3860f187f",
+    remote = "https://github.com/google/googletest",
+)
