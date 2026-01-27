@@ -39,4 +39,4 @@ fi
 
 # Run as different user without sudo privileges
 sudo -u testrunner CREDENTIAL_SOURCE=gce "${TOOL_DIR}/testutils/runcvde2etests.sh" \
-    "${ANDROID_CUTTLEFISH_KOKORO_PRESUBMIT_SH_OPTIONAL_PASSTHROUGH_ARG_G}"
+    "${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS}"
