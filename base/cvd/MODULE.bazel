@@ -55,20 +55,10 @@ bazel_dep(name = "sandboxed_api")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.7")
 
 include("//build_external:build_external.MODULE.bazel")
+include("//cuttlefish/host/commands/append_squashfs_overlay:append_squashfs_overlay.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
 include("//toolchain:rust.MODULE.bazel")
-
-append_squashfs_overlay_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
-append_squashfs_overlay_crates.from_cargo(
-    name = "append_squashfs_overlay_crates",
-    cargo_config = "@//build_external/crosvm:crosvm.config.toml",
-    manifests = [
-        "//cuttlefish/host/commands/append_squashfs_overlay:Cargo.toml",
-    ],
-    host_tools = "@rust_host_tools_nightly",
-)
-use_repo(append_squashfs_overlay_crates, "append_squashfs_overlay_crates")
 
 vhost_user_input_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 vhost_user_input_crates.from_cargo(
