@@ -1,0 +1,6 @@
+single_version_override(
+    module_name = "crc32c",
+    version = "1.1.0.bcr.1",
+    # https://github.com/bazelbuild/bazel-central-registry/pull/7339
+    registry = "https://raw.githubusercontent.com/Databean/bazel-central-registry/crc32c_1.1.0.bcr.1/",
+)
