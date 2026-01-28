@@ -41,7 +41,9 @@ runs:
       bazel aquery @libusb//... > /dev/null
       bazel aquery @libvpx//... > /dev/null
       bazel aquery @libwebm//... > /dev/null
+      bazel aquery @libwebrtc//... > /dev/null
       bazel aquery @libwebsockets//... > /dev/null
+      bazel aquery @libyuv//:libyuv > /dev/null
       bazel aquery @mako//... > /dev/null
       bazel aquery @markupsafe//... > /dev/null
       bazel aquery @mkbootimg//... > /dev/null

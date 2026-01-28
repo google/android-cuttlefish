@@ -5,6 +5,7 @@ include("//build_external/arm_optimized_routines:arm_optimized_routines.MODULE.b
 include("//build_external/avb:avb.MODULE.bazel")
 include("//build_external/brotli:brotli.MODULE.bazel")
 include("//build_external/casimir:casimir.MODULE.bazel")
+include("//build_external/crc32c:crc32c.MODULE.bazel")
 include("//build_external/crosvm:crosvm.MODULE.bazel")
 include("//build_external/dosfstools:dosfstools.MODULE.bazel")
 include("//build_external/e2fsprogs:e2fsprogs.MODULE.bazel")
