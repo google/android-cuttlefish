@@ -18,8 +18,6 @@
 #include <memory>
 #include <string>
 
-#include "fmt/ostream.h"
-
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
@@ -37,8 +35,6 @@ struct AndroidBuildKey {
 
 bool operator<(const AndroidBuildKey&, const AndroidBuildKey&);
 
-std::ostream& operator<<(std::ostream&, const AndroidBuildKey&);
-
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const std::string& system_image_dir, const FetcherConfig& config,
     FileSource source);
@@ -46,11 +42,9 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
     const AndroidBuildKey&);
 
+// For libfmt
+std::string format_as(const AndroidBuildKey&);
+
+std::ostream& operator<<(std::ostream&, const AndroidBuildKey&);
+
 }  // namespace cuttlefish
-
-namespace fmt {
-
-template <>
-struct formatter<::cuttlefish::AndroidBuildKey> : ostream_formatter {};
-
-}  // namespace fmt

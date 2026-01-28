@@ -23,7 +23,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -103,6 +102,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
       std::unique_ptr<android::fs_mgr::LpMetadata> super_metadata)
       : android_build_(&android_build),
         super_metadata_(std::move(super_metadata)) {}
+
+  std::string Name() const override { return "SuperImageAsBuild"; }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images =
@@ -188,11 +189,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
   Result<std::set<std::string, std::less<void>>> VendorPartitions() override {
     return CF_EXPECT(PartitionsInGroup("vendor"));
   }
- private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "MetadataFromSuperImage";
-  }
 
+ private:
   AndroidBuild* android_build_;
   std::unique_ptr<android::fs_mgr::LpMetadata> super_metadata_;
   std::map<std::string, std::string, std::less<void>> extracted_;

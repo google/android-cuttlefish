@@ -18,7 +18,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -27,7 +26,6 @@
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "fmt/ostream.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/result/result.h"
@@ -40,6 +38,8 @@ class MetadataFromMiscInfo : public AndroidBuild {
   MetadataFromMiscInfo(
       std::map<std::string, std::string, std::less<void>> misc_info)
       : misc_info_(std::move(misc_info)) {}
+
+  std::string Name() const override { return "MetadataFromMiscInfo"; }
 
   Result<std::set<std::string, std::less<void>>> SystemPartitions() override {
     return CF_EXPECT(PartitionsMatchingGroup("system"));
@@ -81,14 +81,6 @@ class MetadataFromMiscInfo : public AndroidBuild {
                key);
 
     return absl::StrSplit(group_it->second, " ", absl::SkipEmpty());
-  }
-
-  std::ostream& Format(std::ostream& out) const override {
-    out << "MetadataFromMiscInfo { ";
-    for (auto& [key, value] : misc_info_) {
-      fmt::print(out, "'{}' => '{}', ", key, value);
-    }
-    return out << "}";
   }
 
   std::map<std::string, std::string, std::less<void>> misc_info_;

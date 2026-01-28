@@ -17,14 +17,13 @@
 
 #include <functional>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
-#include "fmt/ostream.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/result/result.h"
@@ -37,6 +36,11 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
   CombinedAndroidBuildImpl(std::string name,
                            std::vector<std::unique_ptr<AndroidBuild>> builds)
       : name_(std::move(name)), builds_(std::move(builds)) {}
+
+  std::string Name() const override {
+    return absl::StrCat("CombinedAndroidBuild (", name_, builds_.size(),
+                        " members)");
+  }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     return CF_EXPECT(MergeSuccessful(&AndroidBuild::Images));
@@ -97,14 +101,6 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
   }
 
  private:
-  std::ostream& Format(std::ostream& out) const override {
-    fmt::print(out, "CombinedAndroidBuild({}) {{ ", name_);
-    for (const std::unique_ptr<AndroidBuild>& build : builds_) {
-      fmt::print(out, "{}, ", *build);
-    }
-    return out << "}";
-  }
-
   Result<std::set<std::string, std::less<void>>> MergeSuccessful(
       Result<std::set<std::string, std::less<void>>> (AndroidBuild::*fn)()) {
     Result<std::set<std::string, std::less<void>>> res = CF_ERR("No members");

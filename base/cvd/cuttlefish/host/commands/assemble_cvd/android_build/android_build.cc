@@ -64,7 +64,9 @@ AndroidBuild::PhysicalPartitions() {
 }
 
 std::ostream& operator<<(std::ostream& out, const AndroidBuild& build) {
-  return build.Format(out);
+  return out << build.Name();
 }
+
+std::string format_as(const AndroidBuild& build) { return build.Name(); }
 
 }  // namespace cuttlefish
