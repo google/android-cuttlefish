@@ -1,4 +1,4 @@
-module github.com/google/android-cuttlefish/frontend/src/cvdexec
+module github.com/google/android-cuttlefish/frontend/src/podcvd
 
 go 1.24.0
 

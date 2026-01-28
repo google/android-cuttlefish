@@ -75,12 +75,12 @@ jobs:
       matrix:
         dir:
           - "e2etests"
-          - "frontend/src/cvdexec"
           - "frontend/src/host_orchestrator"
           - "frontend/src/libcfcontainer"
           - "frontend/src/libhoclient"
           - "frontend/src/liboperator"
           - "frontend/src/operator"
+          - "frontend/src/podcvd"
           - "tools/baseimage"
     steps:
     - name: Checkout repository
