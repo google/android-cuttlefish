@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -83,4 +85,9 @@ func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name str
 		return fmt.Errorf("failed to pull docker image %q: %w", name, err)
 	}
 	return nil
+}
+
+func RootlessPodmanSocketAddr() string {
+	socketPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "podman/podman.sock")
+	return fmt.Sprintf("unix://%s", socketPath)
 }

@@ -15,9 +15,26 @@
 package main
 
 import (
+	"context"
 	"log"
+
+	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
+)
+
+const (
+	imageName = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable"
 )
 
 func main() {
-	log.Println("Hello, cvdexec!")
+	ctx := context.Background()
+	ccmOpts := libcfcontainer.CuttlefishContainerManagerOpts{
+		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
+	}
+	ccm, err := libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := ccm.PullImage(ctx, imageName); err != nil {
+		log.Fatal(err)
+	}
 }
