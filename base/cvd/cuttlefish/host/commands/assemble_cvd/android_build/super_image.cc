@@ -15,10 +15,13 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/super_image.h"
 
+#include <fcntl.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <set>
