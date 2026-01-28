@@ -340,6 +340,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "log_string_to_dir",
+    srcs = ["log_string_to_dir.cc"],
+    hdrs = ["log_string_to_dir.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "logging",
     srcs = ["logging.cpp"],
     hdrs = ["logging.h"],

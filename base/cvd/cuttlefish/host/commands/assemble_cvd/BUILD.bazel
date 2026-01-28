@@ -63,6 +63,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:fetcher_configs",
+        "//cuttlefish/host/libs/config:log_string_to_dir",
         "//cuttlefish/host/libs/config/adb",
         "//cuttlefish/host/libs/config/defaults",
         "//cuttlefish/host/libs/config/fastboot",
