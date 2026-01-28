@@ -34,6 +34,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -470,7 +471,7 @@ class CuttlefishConfig {
 
     std::string vcpu_config_path() const;
 
-    std::string data_policy() const;
+    DataImagePolicy data_policy() const;
 
     int blank_data_image_mb() const;
 
@@ -707,7 +708,7 @@ class CuttlefishConfig {
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
     void set_vcpu_config_path(const std::string& vcpu_config_path);
-    void set_data_policy(const std::string& data_policy);
+    void set_data_policy(DataImagePolicy data_policy);
     void set_blank_data_image_mb(int blank_data_image_mb);
     void set_gdb_port(int gdb_port);
     void set_display_configs(const std::vector<DisplayConfig>& display_configs);

@@ -72,6 +72,7 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
@@ -983,7 +984,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_camera_server_port(camera_server_port_vec[instance_index]);
     instance.set_gem5_binary_dir(gem5_binary_dir_vec[instance_index]);
     instance.set_gem5_checkpoint_dir(gem5_checkpoint_dir_vec[instance_index]);
-    instance.set_data_policy(data_policy_vec[instance_index]);
+    instance.set_data_policy(
+        DataImagePolicyFromString(data_policy_vec[instance_index]));
 
     instance.set_has_wifi_card(enable_wifi_vec[instance_index]);
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
