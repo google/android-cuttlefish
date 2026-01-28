@@ -4,4 +4,8 @@ git_repository(
     name = "spirv_headers",
     commit = "4f7b471f1a66b6d06462cd4ba57628cc0cd087d7",
     remote = "https://github.com/KhronosGroup/SPIRV-Headers.git",
+    patches = [
+        "//build_external/spirv_headers:bazel9.patch",
+    ],
+    patch_strip = 1,
 )

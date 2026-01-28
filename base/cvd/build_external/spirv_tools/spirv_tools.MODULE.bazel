@@ -4,4 +4,8 @@ git_repository(
     name = "spirv_tools",
     commit = "dd4b663e13c07fea4fbb3f70c1c91c86731099f7",  # v2024.2
     remote = "https://github.com/KhronosGroup/SPIRV-Tools.git",
+    patches = [
+        "//build_external/spirv_tools:bazel9.patch",
+    ],
+    patch_strip = 1,
 )
