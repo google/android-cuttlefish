@@ -46,6 +46,7 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
@@ -576,11 +577,11 @@ std::string CuttlefishConfig::InstanceSpecific::vcpu_config_path() const {
 
 static constexpr char kDataPolicy[] = "data_policy";
 void CuttlefishConfig::MutableInstanceSpecific::set_data_policy(
-    const std::string& data_policy) {
-  (*Dictionary())[kDataPolicy] = data_policy;
+    DataImagePolicy data_policy) {
+  (*Dictionary())[kDataPolicy] = DataImagePolicyString(data_policy);
 }
-std::string CuttlefishConfig::InstanceSpecific::data_policy() const {
-  return (*Dictionary())[kDataPolicy].asString();
+DataImagePolicy CuttlefishConfig::InstanceSpecific::data_policy() const {
+  return DataImagePolicyFromString((*Dictionary())[kDataPolicy].asString());
 }
 
 static constexpr char kBlankDataImageMb[] = "blank_data_image_mb";
