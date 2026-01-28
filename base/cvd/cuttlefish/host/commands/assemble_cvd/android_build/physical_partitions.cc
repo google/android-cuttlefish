@@ -17,7 +17,6 @@
 
 #include <functional>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 
@@ -30,6 +29,8 @@ namespace {
 class PhysicalPartitionsImpl : public AndroidBuild {
  public:
   PhysicalPartitionsImpl(AndroidBuild& build) : build_(build) {}
+
+  std::string Name() const override { return "PhysicalPartitions"; }
 
   Result<std::set<std::string, std::less<void>>> PhysicalPartitions() override {
     if (auto res = build_.PhysicalPartitions(); res.ok()) {
@@ -51,10 +52,6 @@ class PhysicalPartitionsImpl : public AndroidBuild {
   }
 
  private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "PhysicalPartitions";
-  }
-
   AndroidBuild& build_;
 };
 

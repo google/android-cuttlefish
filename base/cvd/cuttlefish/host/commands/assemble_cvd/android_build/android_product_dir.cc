@@ -17,7 +17,6 @@
 
 #include <functional>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -39,6 +38,8 @@ class AndroidProductDirImpl : public AndroidBuild {
  public:
   AndroidProductDirImpl(std::string path) : path_(std::move(path)) {}
 
+  std::string Name() const override { return "AndroidProductDir"; };
+
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images;
     for (std::string_view member : CF_EXPECT(DirectoryContents(path_))) {
@@ -57,10 +58,6 @@ class AndroidProductDirImpl : public AndroidBuild {
   }
 
  private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "AndroidProductDir { .path_ = '" << path_ << "' }";
-  }
-
   std::string path_;
 };
 

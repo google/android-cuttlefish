@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -27,7 +26,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
-#include "fmt/ostream.h"
 #include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -55,6 +53,8 @@ class ImgZipImpl : public AndroidBuild {
 
     return std::move(img_zip);
   }
+
+  std::string Name() const override { return "ImgZip"; }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> partitions;
@@ -103,11 +103,6 @@ class ImgZipImpl : public AndroidBuild {
 
  private:
   ImgZipImpl(BuildArchive archive) : archive_(std::move(archive)) {}
-
-  std::ostream& Format(std::ostream& out) const override {
-    fmt::print(out, "ImgZip {{ {} }}", archive_);
-    return out;
-  }
 
   BuildArchive archive_;
   std::optional<std::string> extract_dir_;

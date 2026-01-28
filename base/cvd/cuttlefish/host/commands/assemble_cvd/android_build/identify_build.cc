@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "fmt/ostream.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_dist_build.h"
@@ -51,15 +51,6 @@ bool operator<(const AndroidBuildKey& left, const AndroidBuildKey& right) {
     return left.fetcher_config < right.fetcher_config;
   }
   return left.source < right.source;
-}
-
-std::ostream& operator<<(std::ostream& out, const AndroidBuildKey& key) {
-  fmt::print(out,
-             "AndroidBuildKey {{ .system_image_dir = {}, .fetcher_config = {}, "
-             ".source = {} }}",
-             key.system_image_dir, key.fetcher_config ? "(present)" : "(null)",
-             key.source);
-  return out;
 }
 
 Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
@@ -101,6 +92,17 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
   return CF_EXPECT(IdentifyAndroidBuild(android_build_key.system_image_dir,
                                         *android_build_key.fetcher_config,
                                         android_build_key.source));
+}
+
+std::string format_as(const AndroidBuildKey& key) {
+  return absl::StrCat(
+      "AndroidBuildKey { .system_image_dir = ", key.system_image_dir,
+      ", .fetcher_config = ", key.fetcher_config ? "(present)" : "(null)",
+      ", .source = ", key.source, " }");
+}
+
+std::ostream& operator<<(std::ostream& out, const AndroidBuildKey& key) {
+  return out << format_as(key);
 }
 
 }  // namespace cuttlefish
