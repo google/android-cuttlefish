@@ -16,6 +16,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>

@@ -19,6 +19,7 @@
 #include <memory>
 #include <ostream>
 #include <set>
+#include <string>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/result/result.h"
