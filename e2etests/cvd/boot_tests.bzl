@@ -1,8 +1,10 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
 def launch_cvd_boot_test(name, branch, target, credential_source = ""):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
-    native.sh_test(
+    sh_test(
         name = name,
         size = "medium",
         srcs = ["launch_cvd_boot_test.sh"],
@@ -18,7 +20,7 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
     args = ["-e", "cvd/" + env_file]
     if credential_source:
         args += ["-c", credential_source]
-    native.sh_test(
+    sh_test(
         name = name,
         size = size,
         srcs = ["cvd_load_boot_test.sh"],
@@ -38,7 +40,7 @@ def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_sou
     if substitutions:
         args += ["-s", ",".join(substitutions)]
     args += cvd_command
-    native.sh_test(
+    sh_test(
         name = name,
         size = "medium",
         srcs = ["cvd_command_boot_test.sh"],
@@ -54,7 +56,7 @@ def metrics_test(name, branch, target, credential_source = ""):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
-    native.sh_test(
+    sh_test(
         name = name,
         size = "medium",
         srcs = ["metrics_test.sh"],
