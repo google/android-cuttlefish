@@ -165,6 +165,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "data_image_policy",
+    srcs = [
+        "data_image_policy.cc",
+    ],
+    hdrs = [
+        "data_image_policy.h",
+    ],
+)
+
+cf_cc_library(
     name = "display",
     srcs = ["display.cpp"],
     hdrs = ["display.h"],
