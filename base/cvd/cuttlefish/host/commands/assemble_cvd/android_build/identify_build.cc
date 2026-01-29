@@ -32,6 +32,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/super_image.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -103,6 +105,13 @@ std::string format_as(const AndroidBuildKey& key) {
 
 std::ostream& operator<<(std::ostream& out, const AndroidBuildKey& key) {
   return out << format_as(key);
+}
+
+PrettyStruct Pretty(const AndroidBuildKey& key, PrettyAdlPlaceholder) {
+  return PrettyStruct("AndroidBuildKey")
+      .Member("system_image_dir", key.system_image_dir)
+      .Member("fetcher_config", key.fetcher_config ? "(present)" : "(null)")
+      .Member("source", key.source);
 }
 
 }  // namespace cuttlefish

@@ -37,6 +37,12 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/liblp/liblp.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/map.h"          // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/result.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"          // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep: overloads
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -104,6 +110,18 @@ class SuperImageAsBuildImpl : public AndroidBuild {
         super_metadata_(std::move(super_metadata)) {}
 
   std::string Name() const override { return "SuperImageAsBuild"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images()", Images())
+        .Member("LogicalPartitions()", LogicalPartitions())
+        .Member("AbPartitions()", AbPartitions())
+        .Member("SystemPartitions()", SystemPartitions())
+        .Member("VendorPartitions()", VendorPartitions())
+        .Member("super_metadata_", super_metadata_)
+        .Member("extracted_", extracted_)
+        .Member("extract_dir", extract_dir_);
+  }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images =
