@@ -36,6 +36,7 @@
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/esp.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
@@ -47,10 +48,6 @@
 namespace cuttlefish {
 
 namespace {
-
-static constexpr std::string_view kDataPolicyUseExisting = "use_existing";
-static constexpr std::string_view kDataPolicyAlwaysCreate = "always_create";
-static constexpr std::string_view kDataPolicyResizeUpTo = "resize_up_to";
 
 const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
@@ -135,24 +132,25 @@ enum class DataImageAction { kNoAction, kResizeImage, kCreateBlankImage };
 
 static Result<DataImageAction> ChooseDataImageAction(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.data_policy() == kDataPolicyAlwaysCreate) {
+  if (instance.data_policy() == DataImagePolicy::AlwaysCreate) {
     return DataImageAction::kCreateBlankImage;
   }
   if (!FileHasContent(instance.data_image())) {
     return DataImageAction::kCreateBlankImage;
   }
-  if (instance.data_policy() == kDataPolicyUseExisting) {
+  if (instance.data_policy() == DataImagePolicy::UseExisting) {
     return DataImageAction::kNoAction;
   }
   auto current_fs_type = GetFsType(instance.data_image());
   if (current_fs_type != instance.userdata_format()) {
-    CF_EXPECT(instance.data_policy() != kDataPolicyResizeUpTo,
-              "Changing the fs format is incompatible with -data_policy="
-                  << kDataPolicyResizeUpTo << " (\"" << current_fs_type
-                  << "\" != \"" << instance.userdata_format() << "\")");
+    CF_EXPECT(instance.data_policy() != DataImagePolicy::ResizeUpTo,
+              "Changing the fs format is incompatible with --data_policy="
+                  << DataImagePolicyString(DataImagePolicy::ResizeUpTo)
+                  << " (\"" << current_fs_type << "\" != \""
+                  << instance.userdata_format() << "\")");
     return DataImageAction::kCreateBlankImage;
   }
-  if (instance.data_policy() == kDataPolicyResizeUpTo) {
+  if (instance.data_policy() == DataImagePolicy::ResizeUpTo) {
     return DataImageAction::kResizeImage;
   }
   return DataImageAction::kNoAction;

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <utility>
 #include <vector>
 
 namespace cuttlefish {
@@ -24,14 +25,27 @@ namespace cuttlefish {
 template <typename T>
 class FlagBase {
  public:
-  T ForIndex(const std::size_t index) const;
+  T ForIndex(const std::size_t index) const {
+    if (index < values_.size()) {
+      return values_[index];
+    } else {
+      return values_[0];
+    }
+  }
 
  protected:
-  FlagBase(std::vector<T> flag_values);
+  FlagBase(std::vector<T> flag_values) : values_(std::move(flag_values)) {}
   virtual ~FlagBase() = 0;
 
  private:
   std::vector<T> values_;
 };
+
+template <typename T>
+FlagBase<T>::~FlagBase() {}
+
+extern template class FlagBase<bool>;
+extern template class FlagBase<int>;
+extern template class FlagBase<std::string>;
 
 }  // namespace cuttlefish

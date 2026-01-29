@@ -124,6 +124,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_fragment",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:external_network_mode",
         "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:guest_renderer_preload",
@@ -155,12 +156,23 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:boot_flow",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:esp",
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/image_aggregator:mbr",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
+    name = "data_image_policy",
+    srcs = [
+        "data_image_policy.cc"
+    ],
+    hdrs = [
+        "data_image_policy.h"
     ],
 )
 

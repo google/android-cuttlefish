@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,23 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
+#pragma once
 
-#include <string>
+#include <vector>
+
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-template class FlagBase<bool>;
-template class FlagBase<int>;
-template class FlagBase<std::string>;
+class DataPolicyFlag : public FlagBase<DataImagePolicy> {
+ public:
+  static Result<DataPolicyFlag> FromGlobalGflags();
+  ~DataPolicyFlag() override = default;
+
+ private:
+  DataPolicyFlag(std::vector<DataImagePolicy>);
+};
 
 }  // namespace cuttlefish
