@@ -103,6 +103,24 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "result",
+    hdrs = ["result.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "set",
+    hdrs = ["set.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:container",
+    ],
+)
+
+cf_cc_library(
     name = "string",
     srcs = ["string.cc"],
     hdrs = ["string.h"],
@@ -153,6 +171,5 @@ cf_cc_library(
     deps = [
         "//cuttlefish/pretty",
         "//cuttlefish/pretty:container",
-        "@abseil-cpp//absl/strings",
     ],
 )
