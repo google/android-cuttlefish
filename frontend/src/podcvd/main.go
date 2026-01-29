@@ -16,25 +16,59 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
+
+	"github.com/docker/docker/api/types/container"
 )
 
 const (
 	imageName = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable"
 )
 
-func main() {
-	ctx := context.Background()
+func cuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, error) {
 	ccmOpts := libcfcontainer.CuttlefishContainerManagerOpts{
 		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
 	}
-	ccm, err := libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
+	return libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
+}
+
+func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager) (string, error) {
+	ctx := context.Background()
+	if err := ccm.PullImage(ctx, imageName); err != nil {
+		return "", err
+	}
+	containerCfg := &container.Config{
+		Env: []string{
+			"ANDROID_HOST_OUT=/host_out",
+			"ANDROID_PRODUCT_OUT=/product_out",
+		},
+		Image: imageName,
+	}
+	pidsLimit := int64(8192)
+	containerHostCfg := &container.HostConfig{
+		Binds: []string{
+			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
+			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
+		},
+		CapAdd:      []string{"NET_RAW"},
+		NetworkMode: container.NetworkMode("pasta:--host-lo-to-ns-lo,-t,1443,-t,6520-6529,-t,15550-15599,-u,15550-15599"),
+		Resources: container.Resources{
+			PidsLimit: &pidsLimit,
+		},
+	}
+	return ccm.CreateAndStartContainer(ctx, containerCfg, containerHostCfg, "")
+}
+
+func main() {
+	ccm, err := cuttlefishContainerManager()
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := ccm.PullImage(ctx, imageName); err != nil {
+	if _, err := prepareCuttlefishHost(ccm); err != nil {
 		log.Fatal(err)
 	}
 }

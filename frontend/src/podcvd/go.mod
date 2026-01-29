@@ -9,6 +9,7 @@ replace github.com/google/android-cuttlefish/frontend/src/libcfcontainer => ../l
 require github.com/google/android-cuttlefish/frontend/src/libcfcontainer v0.0.0-00010101000000-000000000000
 
 require (
+	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect

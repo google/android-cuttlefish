@@ -4,7 +4,10 @@ go 1.24.0
 
 toolchain go1.24.8
 
-require github.com/docker/docker v28.5.2+incompatible
+require (
+	dario.cat/mergo v1.0.2
+	github.com/docker/docker v28.5.2+incompatible
+)
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
