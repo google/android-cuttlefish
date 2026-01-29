@@ -21,6 +21,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"dario.cat/mergo"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
@@ -30,6 +32,8 @@ type CuttlefishContainerManager interface {
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
 	PullImage(ctx context.Context, name string) error
+	// Create adn start a container instance
+	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
 }
 
 type CuttlefishContainerManagerOpts struct {
@@ -85,6 +89,58 @@ func (m *CuttlefishContainerManagerImpl) PullImage(ctx context.Context, name str
 		return fmt.Errorf("failed to pull docker image %q: %w", name, err)
 	}
 	return nil
+}
+
+func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error) {
+	config := &container.Config{
+		AttachStdin: true,
+		Tty:         true,
+	}
+	if additionalConfig != nil {
+		if err := mergo.Merge(config, additionalConfig, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+			return "", fmt.Errorf("failed to merge container configuration: %w", err)
+		}
+	}
+	hostConfig := &container.HostConfig{
+		CapAdd: []string{"NET_ADMIN"},
+		Resources: container.Resources{
+			Devices: []container.DeviceMapping{
+				{
+					CgroupPermissions: "rwm",
+					PathInContainer:   "/dev/kvm",
+					PathOnHost:        "/dev/kvm",
+				},
+				{
+					CgroupPermissions: "rwm",
+					PathInContainer:   "/dev/net/tun",
+					PathOnHost:        "/dev/net/tun",
+				},
+				{
+					CgroupPermissions: "rwm",
+					PathInContainer:   "/dev/vhost-net",
+					PathOnHost:        "/dev/vhost-net",
+				},
+				{
+					CgroupPermissions: "rwm",
+					PathInContainer:   "/dev/vhost-vsock",
+					PathOnHost:        "/dev/vhost-vsock",
+				},
+			},
+		},
+	}
+	if additionalHostConfig != nil {
+		if err := mergo.Merge(hostConfig, additionalHostConfig, mergo.WithAppendSlice, mergo.WithOverride); err != nil {
+			return "", fmt.Errorf("failed to merge container host configuration: %w", err)
+		}
+	}
+	createRes, err := m.cli.ContainerCreate(ctx, config, hostConfig, nil, nil, name)
+	if err != nil {
+		return "", fmt.Errorf("failed to create docker container: %w", err)
+	}
+	if err := m.cli.ContainerStart(ctx, createRes.ID, container.StartOptions{}); err != nil {
+		return "", fmt.Errorf("failed to start docker container: %w", err)
+	}
+	return createRes.ID, nil
 }
 
 func RootlessPodmanSocketAddr() string {
