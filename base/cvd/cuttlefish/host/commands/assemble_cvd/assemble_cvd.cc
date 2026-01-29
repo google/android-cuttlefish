@@ -68,6 +68,7 @@
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
@@ -676,12 +677,15 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
                   "aborting: "
                << defaults.error().Message();
   }
-  auto config = CF_EXPECT(
+  const CuttlefishConfig* config = CF_EXPECT(
       InitFilesystemAndCreateConfig(
           std::move(fetcher_configs), guest_configs, injector, log, boot_image,
           initramfs_path, kernel_path, super_image, system_image_dir,
           vendor_boot_image, vm_manager_flag, *defaults, android_builds),
       "Failed to create config");
+
+  CF_EXPECT(LogStringToDir(config->Instances()[0], "build_info.log",
+                           absl::StrCat(Pretty(android_builds))));
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;

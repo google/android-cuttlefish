@@ -17,11 +17,13 @@
 
 #include <functional>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -30,6 +32,13 @@ namespace {
 class PhysicalPartitionsImpl : public AndroidBuild {
  public:
   PhysicalPartitionsImpl(AndroidBuild& build) : build_(build) {}
+
+  std::string Name() const override { return "PhysicalPartitions"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("PhysicalPartitions()", PhysicalPartitions());
+  }
 
   Result<std::set<std::string, std::less<void>>> PhysicalPartitions() override {
     if (auto res = build_.PhysicalPartitions(); res.ok()) {
@@ -51,10 +60,6 @@ class PhysicalPartitionsImpl : public AndroidBuild {
   }
 
  private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "PhysicalPartitions";
-  }
-
   AndroidBuild& build_;
 };
 

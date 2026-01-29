@@ -20,8 +20,8 @@
 #include <set>
 #include <string_view>
 
-#include "fmt/ostream.h"
-
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -48,6 +48,11 @@ namespace cuttlefish {
 class AndroidBuild {
  public:
   virtual ~AndroidBuild() = default;
+
+  /** The name of the concrete implementation. **/
+  virtual std::string Name() const = 0;
+
+  virtual PrettyStruct Pretty() = 0;
 
   /**
    * Image information, as reported by the Android build system.
@@ -100,17 +105,13 @@ class AndroidBuild {
   /** Entries in the GPT. Disjoint from logical partitions. */
   virtual Result<std::set<std::string, std::less<void>>> PhysicalPartitions();
 
- private:
-  virtual std::ostream& Format(std::ostream&) const = 0;
-
   friend std::ostream& operator<<(std::ostream&, const AndroidBuild&);
+
+  // For libfmt
+  friend std::string format_as(const AndroidBuild&);
 };
 
+PrettyStruct Pretty(AndroidBuild&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
+
 }  // namespace cuttlefish
-
-namespace fmt {
-
-template <>
-struct formatter<::cuttlefish::AndroidBuild> : ostream_formatter {};
-
-}  // namespace fmt

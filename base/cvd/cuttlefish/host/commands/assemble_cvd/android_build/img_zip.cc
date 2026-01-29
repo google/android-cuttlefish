@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -27,7 +26,6 @@
 
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
-#include "fmt/ostream.h"
 #include "google/protobuf/text_format.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
@@ -37,6 +35,11 @@
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/result.h"    // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -54,6 +57,17 @@ class ImgZipImpl : public AndroidBuild {
     CF_EXPECT(img_zip->Images());
 
     return std::move(img_zip);
+  }
+
+  std::string Name() const override { return "ImgZip"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images()", Images())
+        .Member("AndroidInfoTxt()", AndroidInfoTxt())
+        .Member("GuestConfigProto()", GuestConfigProto())
+        .Member("archive_", archive_)
+        .Member("extract_dir_", extract_dir_);
   }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
@@ -103,11 +117,6 @@ class ImgZipImpl : public AndroidBuild {
 
  private:
   ImgZipImpl(BuildArchive archive) : archive_(std::move(archive)) {}
-
-  std::ostream& Format(std::ostream& out) const override {
-    fmt::print(out, "ImgZip {{ {} }}", archive_);
-    return out;
-  }
 
   BuildArchive archive_;
   std::optional<std::string> extract_dir_;

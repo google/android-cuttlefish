@@ -216,6 +216,11 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:optional",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -332,6 +337,18 @@ cf_cc_library(
     srcs = ["known_paths.cpp"],
     hdrs = ["known_paths.h"],
     deps = ["//cuttlefish/host/libs/config:config_utils"],
+)
+
+cf_cc_library(
+    name = "log_string_to_dir",
+    srcs = ["log_string_to_dir.cc"],
+    hdrs = ["log_string_to_dir.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
 )
 
 cf_cc_library(

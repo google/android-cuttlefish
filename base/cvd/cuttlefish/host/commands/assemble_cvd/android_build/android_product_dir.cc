@@ -17,7 +17,6 @@
 
 #include <functional>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -28,6 +27,9 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,6 +40,14 @@ static constexpr std::string_view kImgSuffix = ".img";
 class AndroidProductDirImpl : public AndroidBuild {
  public:
   AndroidProductDirImpl(std::string path) : path_(std::move(path)) {}
+
+  std::string Name() const override { return "AndroidProductDir"; };
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images()", Images())
+        .Member("path_", path_);
+  }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images;
@@ -57,10 +67,6 @@ class AndroidProductDirImpl : public AndroidBuild {
   }
 
  private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "AndroidProductDir { .path_ = '" << path_ << "' }";
-  }
-
   std::string path_;
 };
 

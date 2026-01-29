@@ -17,10 +17,13 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -34,7 +37,10 @@ class AndroidBuilds {
 
   size_t Size() const;
 
-  friend std::ostream& operator<<(std::ostream&, const AndroidBuilds&);
+  // For libfmt
+  friend std::string format_as(const AndroidBuilds&);
+
+  friend PrettyStruct Pretty(AndroidBuilds&, PrettyAdlPlaceholder);
 
  private:
   AndroidBuilds() = default;
@@ -43,11 +49,9 @@ class AndroidBuilds {
   std::map<AndroidBuildKey, std::unique_ptr<AndroidBuild>> builds_;
 };
 
+std::ostream& operator<<(std::ostream&, const AndroidBuilds&);
+
+PrettyStruct Pretty(AndroidBuilds&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
+
 }  // namespace cuttlefish
-
-namespace fmt {
-
-template <>
-struct formatter<::cuttlefish::AndroidBuilds> : ostream_formatter {};
-
-}  // namespace fmt
