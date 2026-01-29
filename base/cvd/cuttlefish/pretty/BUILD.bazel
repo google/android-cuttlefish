@@ -107,6 +107,7 @@ cf_cc_library(
     hdrs = ["result.h"],
     deps = [
         "//cuttlefish/pretty",
+        "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
 )
