@@ -88,6 +88,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerbtnCvdCommand{}))).Methods("POST")
+	router.Handle("/cvds/{group}/{name}/:restart",
+		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &restartCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:start_screen_recording",
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &startScreenRecordingCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop_screen_recording",
