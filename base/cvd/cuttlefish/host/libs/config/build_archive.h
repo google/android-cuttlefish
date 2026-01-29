@@ -24,10 +24,11 @@
 #include <string_view>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-#include "fmt/ostream.h"
 
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -72,7 +73,7 @@ class BuildArchive {
 
   Result<std::string> MemberContents(std::string_view name);
 
-  friend std::ostream& operator<<(std::ostream&, const BuildArchive&);
+  friend PrettyStruct Pretty(const BuildArchive&, PrettyAdlPlaceholder unused);
 
  private:
   BuildArchive(std::optional<FileSource>,
@@ -86,11 +87,12 @@ class BuildArchive {
   std::optional<ReadableZip> zip_file_;
 };
 
+// For libfmt
+std::string format_as(const BuildArchive&);
+
+std::ostream& operator<<(std::ostream&, const BuildArchive&);
+
+PrettyStruct Pretty(const BuildArchive&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
+
 }  // namespace cuttlefish
-
-namespace fmt {
-
-template <>
-struct formatter<::cuttlefish::BuildArchive> : ostream_formatter {};
-
-}  // namespace fmt

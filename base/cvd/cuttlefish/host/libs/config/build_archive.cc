@@ -30,8 +30,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
-#include "fmt/ostream.h"
-#include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -40,6 +38,11 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/set.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -160,18 +163,18 @@ Result<std::string> BuildArchive::MemberContents(std::string_view name) {
   return CF_EXPECT(ReadToString(reader));
 }
 
+std::string format_as(const BuildArchive& archive) { return "BuildArchive"; }
+
 std::ostream& operator<<(std::ostream& out, const BuildArchive& build_archive) {
-  out << "BuildArchive {\n";
-  if (build_archive.source_.has_value()) {
-    fmt::print(out, "\tsource: '{}'\n,", *build_archive.source_);
-  }
-  fmt::print(out, "\textracted_members: [{}]\n",
-             fmt::join(build_archive.extracted_, ", "));
-  fmt::print(out, "\tmembers: [{}]\n", fmt::join(build_archive.members_, ", "));
-  if (build_archive.zip_file_.has_value()) {
-    out << "\tzip: present\n";
-  }
-  return out << "}";
+  return out << format_as(build_archive);
+}
+
+PrettyStruct Pretty(const BuildArchive& archive, PrettyAdlPlaceholder) {
+  return PrettyStruct("BuildArchive")
+      .Member("source_", archive.source_)
+      .Member("extracted_", archive.extracted_)
+      .Member("members_", archive.members_)
+      .Member("zip_file_", archive.zip_file_.has_value());
 }
 
 }  // namespace cuttlefish
