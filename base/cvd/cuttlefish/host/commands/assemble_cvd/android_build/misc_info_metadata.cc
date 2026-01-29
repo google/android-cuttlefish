@@ -28,6 +28,10 @@
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/map.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -40,6 +44,14 @@ class MetadataFromMiscInfo : public AndroidBuild {
       : misc_info_(std::move(misc_info)) {}
 
   std::string Name() const override { return "MetadataFromMiscInfo"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("SystemPartitions()", SystemPartitions())
+        .Member("VendorPartitions()", VendorPartitions())
+        .Member("LogicalPartitions()", LogicalPartitions())
+        .Member("misc_info_", misc_info_);
+  }
 
   Result<std::set<std::string, std::less<void>>> SystemPartitions() override {
     return CF_EXPECT(PartitionsMatchingGroup("system"));

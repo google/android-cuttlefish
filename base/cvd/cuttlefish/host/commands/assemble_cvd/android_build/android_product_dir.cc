@@ -27,6 +27,9 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -39,6 +42,12 @@ class AndroidProductDirImpl : public AndroidBuild {
   AndroidProductDirImpl(std::string path) : path_(std::move(path)) {}
 
   std::string Name() const override { return "AndroidProductDir"; };
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images()", Images())
+        .Member("path_", path_);
+  }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images;

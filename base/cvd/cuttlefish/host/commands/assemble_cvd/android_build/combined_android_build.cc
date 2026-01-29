@@ -26,6 +26,11 @@
 #include "absl/strings/str_cat.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/vector.h"      // IWYU pragma: keep: overloads
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,8 +43,19 @@ class CombinedAndroidBuildImpl : public AndroidBuild {
       : name_(std::move(name)), builds_(std::move(builds)) {}
 
   std::string Name() const override {
-    return absl::StrCat("CombinedAndroidBuild (", name_, builds_.size(),
+    return absl::StrCat("CombinedAndroidBuild (", name_, ", ", builds_.size(),
                         " members)");
+  }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images", Images())
+        .Member("AbPartitions()", AbPartitions())
+        .Member("SystemPartitions()", SystemPartitions())
+        .Member("VendorPartitions()", VendorPartitions())
+        .Member("LogicalPartitions()", LogicalPartitions())
+        .Member("PhysicalPartitions()", PhysicalPartitions())
+        .Member("builds_", builds_);
   }
 
   Result<std::set<std::string, std::less<void>>> Images() override {

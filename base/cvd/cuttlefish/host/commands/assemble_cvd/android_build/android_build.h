@@ -20,6 +20,8 @@
 #include <set>
 #include <string_view>
 
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -49,6 +51,8 @@ class AndroidBuild {
 
   /** The name of the concrete implementation. **/
   virtual std::string Name() const = 0;
+
+  virtual PrettyStruct Pretty() = 0;
 
   /**
    * Image information, as reported by the Android build system.
@@ -106,5 +110,8 @@ class AndroidBuild {
   // For libfmt
   friend std::string format_as(const AndroidBuild&);
 };
+
+PrettyStruct Pretty(AndroidBuild&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
 }  // namespace cuttlefish

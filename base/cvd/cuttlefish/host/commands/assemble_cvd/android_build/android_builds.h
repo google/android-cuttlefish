@@ -22,6 +22,8 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -38,6 +40,8 @@ class AndroidBuilds {
   // For libfmt
   friend std::string format_as(const AndroidBuilds&);
 
+  friend PrettyStruct Pretty(AndroidBuilds&, PrettyAdlPlaceholder);
+
  private:
   AndroidBuilds() = default;
 
@@ -46,5 +50,8 @@ class AndroidBuilds {
 };
 
 std::ostream& operator<<(std::ostream&, const AndroidBuilds&);
+
+PrettyStruct Pretty(AndroidBuilds&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
 }  // namespace cuttlefish

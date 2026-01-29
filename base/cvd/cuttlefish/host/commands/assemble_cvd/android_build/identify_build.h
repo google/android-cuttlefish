@@ -21,6 +21,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -46,5 +48,8 @@ Result<std::unique_ptr<AndroidBuild>> IdentifyAndroidBuild(
 std::string format_as(const AndroidBuildKey&);
 
 std::ostream& operator<<(std::ostream&, const AndroidBuildKey&);
+
+PrettyStruct Pretty(const AndroidBuildKey&,
+                    PrettyAdlPlaceholder unused = PrettyAdlPlaceholder());
 
 }  // namespace cuttlefish

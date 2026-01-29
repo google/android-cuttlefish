@@ -29,6 +29,11 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
+#include "cuttlefish/pretty/map.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/vector.h"      // IWYU pragma: keep: overloads
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -82,6 +87,12 @@ std::ostream& operator<<(std::ostream& out, const AndroidBuilds& builds) {
 std::string format_as(const AndroidBuilds& builds) {
   return absl::StrCat("AndroidBuilds(", builds.keys_.size(), " builds, ",
                       builds.builds_.size(), " distinct)");
+}
+
+PrettyStruct Pretty(AndroidBuilds& builds, PrettyAdlPlaceholder) {
+  return PrettyStruct("AndroidBuilds")
+      .Member("keys_", builds.keys_)
+      .Member("builds_", builds.builds_);
 }
 
 }  // namespace cuttlefish

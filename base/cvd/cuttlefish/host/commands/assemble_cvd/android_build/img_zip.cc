@@ -35,6 +35,11 @@
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/result.h"    // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -55,6 +60,15 @@ class ImgZipImpl : public AndroidBuild {
   }
 
   std::string Name() const override { return "ImgZip"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images()", Images())
+        .Member("AndroidInfoTxt()", AndroidInfoTxt())
+        .Member("GuestConfigProto()", GuestConfigProto())
+        .Member("archive_", archive_)
+        .Member("extract_dir_", extract_dir_);
+  }
 
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> partitions;
