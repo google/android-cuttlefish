@@ -18,8 +18,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"dario.cat/mergo"
 	"github.com/docker/docker/api/types/container"
@@ -34,6 +36,8 @@ type CuttlefishContainerManager interface {
 	PullImage(ctx context.Context, name string) error
 	// Create adn start a container instance
 	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
+	// Execute a command on a running container instance
+	ExecOnContainer(ctx context.Context, ctr string, cmd []string) error
 }
 
 type CuttlefishContainerManagerOpts struct {
@@ -141,6 +145,45 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 		return "", fmt.Errorf("failed to start docker container: %w", err)
 	}
 	return createRes.ID, nil
+}
+
+func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string) error {
+	execConfig := container.ExecOptions{
+		AttachStderr: true,
+		AttachStdin:  true,
+		AttachStdout: true,
+		Cmd:          cmd,
+		Tty:          true,
+	}
+	createRes, err := m.cli.ContainerExecCreate(ctx, ctr, execConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create container execution %q: %w", strings.Join(cmd, " "), err)
+	}
+	attachRes, err := m.cli.ContainerExecAttach(ctx, createRes.ID, container.ExecStartOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
+	}
+	waitCh := make(chan struct{})
+	go func() {
+		defer close(waitCh)
+		if _, err := io.Copy(attachRes.Conn, os.Stdin); err != nil {
+			log.Printf("failed to propagate standard input: %v", err)
+		}
+	}()
+	go func() {
+		defer close(waitCh)
+		if _, err := io.Copy(os.Stdout, attachRes.Reader); err != nil {
+			log.Printf("failed to propagate standard output: %v", err)
+		}
+	}()
+	<-waitCh
+	attachRes.Close()
+	if result, err := m.cli.ContainerExecInspect(ctx, createRes.ID); err != nil {
+		return fmt.Errorf("failed to run command on the container: %w", err)
+	} else if result.ExitCode != 0 {
+		return fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
+	}
+	return nil
 }
 
 func RootlessPodmanSocketAddr() string {
