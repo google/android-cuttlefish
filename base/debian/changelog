@@ -1,8 +1,37 @@
-cuttlefish-common (1.41.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.41.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.41 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2056
+  * Upgrade Vulkan Headers and fix build by @jmacnak in https://github.com/google/android-cuttlefish/pull/2057
+  * Reduce CLI output during fetch invocations by @cjreynol in https://github.com/google/android-cuttlefish/pull/2048
+  * Mark some intrinsically Linux-specific targets. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2052
+  * Add initial flag metrics gathering by @cjreynol in https://github.com/google/android-cuttlefish/pull/2043
+  * Caching directory creation refactor by @cjreynol in https://github.com/google/android-cuttlefish/pull/2024
+  * Move external build configuration into build_external (#5) by @Databean in https://github.com/google/android-cuttlefish/pull/2058
+  * Bazel 9 readiness: libbase by @Databean in https://github.com/google/android-cuttlefish/pull/2059
+  * Move external build configuration into `build_external` (#6) by @Databean in https://github.com/google/android-cuttlefish/pull/2060
+  * Add missing include for CuttlefishFlags by @jmacnak in https://github.com/google/android-cuttlefish/pull/2061
+  * Update some dependencies for bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2063
+  * Bazel 9 readiness: more libraries by @Databean in https://github.com/google/android-cuttlefish/pull/2064
+  * Apply misc-include-cleaner to run_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/2066
+  * Move external build configuration into build_external (#7) by @Databean in https://github.com/google/android-cuttlefish/pull/2062
+  * Make the presubmit "command line flag" envvar more generic by @jmacnak in https://github.com/google/android-cuttlefish/pull/2068
+  * Bazel 9 readiness: //adb by @Databean in https://github.com/google/android-cuttlefish/pull/2069
+  * Move gen_ffi_header into build_external/libffi by @Databean in https://github.com/google/android-cuttlefish/pull/2070
+  * Bazel 9 readiness: teeui by @Databean in https://github.com/google/android-cuttlefish/pull/2071
+  * Bazel 9 readiness: //fastboot by @Databean in https://github.com/google/android-cuttlefish/pull/2072
+  * Bazel 9 readiness: libwebrtc by @Databean in https://github.com/google/android-cuttlefish/pull/2074
+  * Bazel 9 readiness: more targets by @Databean in https://github.com/google/android-cuttlefish/pull/2075
+  * Enforce misc-include-cleaner on assemble_cvd/android_build by @Databean in https://github.com/google/android-cuttlefish/pull/2076
+  * Remove extra registry for freetype by @Databean in https://github.com/google/android-cuttlefish/pull/2081
+  * Reapply "Add pretty-printing for liblp types" by @Databean in https://github.com/google/android-cuttlefish/pull/2083
+  * Make the cf_cc.* rules work with Bazel 9. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2080
+  * Write a pretty-printed `AndroidBuild` to an instance log directory by @Databean in https://github.com/google/android-cuttlefish/pull/2084
+  * Add some graphics e2e tests by @jmacnak in https://github.com/google/android-cuttlefish/pull/2082
+  * Add missing bazel dependency by @jmacnak in https://github.com/google/android-cuttlefish/pull/2090
+  * podcvd can make adb connection after executing cvd create on container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2093
+  * New flag and behavior `--experimental_build_super_image` by @Databean in https://github.com/google/android-cuttlefish/pull/2092
 
- -- Ram Muthiah <rammuthiah@google.com>  Sun, 25 Jan 2026 15:13:16 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 30 Jan 2026 22:53:20 -0800
 
 cuttlefish-common (1.40.0) unstable; urgency=medium
 
