@@ -41,7 +41,7 @@ if [ "${DISABLE_BAZEL_WRAPPER}" != "" ] \
 fi
 
 # Read the bazel version from .bazelversion file in the root of the repository
-BAZELVERSION_FILE_PATH="$(dirname $(readlink -f "$0"))/../.bazelversion"
+BAZELVERSION_FILE_PATH="$(dirname "$0")/../.bazelversion"
 VERSION_FROM_BAZELVERSION_FILE=$(cat ${BAZELVERSION_FILE_PATH})
 VERSION=${OVERRIDE_BAZEL_VERSION:-${VERSION_FROM_BAZELVERSION_FILE}}
 cat << EOF >&2
