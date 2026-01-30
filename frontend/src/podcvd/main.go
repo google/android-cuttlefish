@@ -17,11 +17,13 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
@@ -102,6 +104,40 @@ func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager) (strin
 	return id, nil
 }
 
+func parseAdbPorts(stdout string) ([]int, error) {
+	type Instance struct {
+		AdbPort int `json:"adb_port"`
+	}
+	type InstanceGroup struct {
+		Instances []Instance `json:"instances"`
+	}
+	var instanceGroup InstanceGroup
+	if err := json.Unmarshal([]byte(stdout), &instanceGroup); err != nil {
+		return nil, err
+	}
+	var ports []int
+	for _, instance := range instanceGroup.Instances {
+		ports = append(ports, instance.AdbPort)
+	}
+	return ports, nil
+}
+
+func establishAdbConnection(ports ...int) error {
+	adbBin, err := exec.LookPath("adb")
+	if err != nil {
+		return fmt.Errorf("failed to find adb: %w", err)
+	}
+	if err := exec.Command(adbBin, "start-server").Run(); err != nil {
+		return fmt.Errorf("failed to start server: %w", err)
+	}
+	for _, port := range ports {
+		if err := exec.Command(adbBin, "connect", fmt.Sprintf("localhost:%d", port)).Run(); err != nil {
+			return fmt.Errorf("failed to connect to Cuttlefish device: %w", err)
+		}
+	}
+	return nil
+}
+
 func main() {
 	// Parse selector and driver options before the subcommand argument only.
 	// TODO(seungjaeyoo): Handle selector/driver options properly for
@@ -135,7 +171,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := ccm.ExecOnContainer(context.Background(), id, append([]string{"cvd"}, os.Args[1:]...)); err != nil {
+	stdout, err := ccm.ExecOnContainer(context.Background(), id, append([]string{"cvd"}, os.Args[1:]...))
+	if err != nil {
+		log.Fatal(err)
+	}
+	// TODO(seungjaeyoo): Establish ADB connection only when it's required.
+	ports, err := parseAdbPorts(stdout)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := establishAdbConnection(ports...); err != nil {
 		log.Fatal(err)
 	}
 }

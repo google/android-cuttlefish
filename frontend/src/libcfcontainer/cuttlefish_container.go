@@ -15,6 +15,7 @@
 package libcfcontainer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -27,6 +28,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 )
 
 type CuttlefishContainerManager interface {
@@ -37,7 +39,7 @@ type CuttlefishContainerManager interface {
 	// Create adn start a container instance
 	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
 	// Execute a command on a running container instance
-	ExecOnContainer(ctx context.Context, ctr string, cmd []string) error
+	ExecOnContainer(ctx context.Context, ctr string, cmd []string) (string, error)
 }
 
 type CuttlefishContainerManagerOpts struct {
@@ -147,21 +149,21 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 	return createRes.ID, nil
 }
 
-func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string) error {
+func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string) (string, error) {
 	execConfig := container.ExecOptions{
 		AttachStderr: true,
 		AttachStdin:  true,
 		AttachStdout: true,
 		Cmd:          cmd,
-		Tty:          true,
+		Tty:          false,
 	}
 	createRes, err := m.cli.ContainerExecCreate(ctx, ctr, execConfig)
 	if err != nil {
-		return fmt.Errorf("failed to create container execution %q: %w", strings.Join(cmd, " "), err)
+		return "", fmt.Errorf("failed to create container execution %q: %w", strings.Join(cmd, " "), err)
 	}
 	attachRes, err := m.cli.ContainerExecAttach(ctx, createRes.ID, container.ExecStartOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
+		return "", fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
 	}
 	waitCh := make(chan struct{})
 	go func() {
@@ -170,20 +172,22 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 			log.Printf("failed to propagate standard input: %v", err)
 		}
 	}()
+	var stdoutBuf bytes.Buffer
 	go func() {
 		defer close(waitCh)
-		if _, err := io.Copy(os.Stdout, attachRes.Reader); err != nil {
+		stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
+		if _, err := stdcopy.StdCopy(stdout, os.Stderr, attachRes.Reader); err != nil {
 			log.Printf("failed to propagate standard output: %v", err)
 		}
 	}()
 	<-waitCh
 	attachRes.Close()
 	if result, err := m.cli.ContainerExecInspect(ctx, createRes.ID); err != nil {
-		return fmt.Errorf("failed to run command on the container: %w", err)
+		return "", fmt.Errorf("failed to run command on the container: %w", err)
 	} else if result.ExitCode != 0 {
-		return fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
+		return "", fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
 	}
-	return nil
+	return stdoutBuf.String(), nil
 }
 
 func RootlessPodmanSocketAddr() string {
