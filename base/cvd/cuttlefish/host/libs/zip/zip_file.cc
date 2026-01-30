@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/log.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
@@ -68,7 +70,13 @@ Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
   Result<uint32_t> attributes = zip.EntryUnixAttributes(index);
   if (attributes.ok()) {
     uint32_t mode = (*attributes >> 16) & 0777;
+    LOG(ERROR) << "\n\nTODO CJR\n"
+               << "successful EntryUnixAttributes with mode:" << mode;
     CF_EXPECT_EQ(chmod(host_path.c_str(), mode), 0, StrError(errno));
+  } else {
+    LOG(ERROR) << "\n\nTODO CJR\n"
+               << "failed EntryUnixAttributes with:\n"
+               << attributes.error();
   }
   return {};
 }
