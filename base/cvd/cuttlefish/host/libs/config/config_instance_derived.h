@@ -22,6 +22,7 @@
 namespace cuttlefish {
 
 std::string AccessKregistryPath(const CuttlefishConfig::InstanceSpecific&);
+std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins);
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific&);
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific&);
 

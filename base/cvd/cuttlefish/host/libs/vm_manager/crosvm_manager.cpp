@@ -747,7 +747,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   // kernel log event features working. If an alternative "earlycon" boot
   // console is configured below on a legacy serial port, it will control
   // the main log until the virtio-console takes over.
-  crosvm_cmd.AddHvcReadOnly(instance.kernel_log_pipe_name(),
+  crosvm_cmd.AddHvcReadOnly(KernelLogPipeName(instance),
                             instance.enable_kernel_log());
 
   // /dev/hvc1 = serial console
@@ -778,7 +778,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     // dmesg will go there instead of the kernel.log
     if (instance.enable_kernel_log() &&
         (instance.kgdb() || instance.use_bootloader())) {
-      crosvm_cmd.AddSerialConsoleReadOnly(instance.kernel_log_pipe_name());
+      crosvm_cmd.AddSerialConsoleReadOnly(KernelLogPipeName(instance));
     }
 
     // as above, create a fake virtio-console 'sink' port when the serial

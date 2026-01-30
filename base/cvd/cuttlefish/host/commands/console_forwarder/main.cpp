@@ -31,6 +31,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/posix/strerror.h"
@@ -239,8 +240,8 @@ int ConsoleForwarderMain(int argc, char** argv) {
   auto console_log = instance.PerInstancePath("console_log");
   auto console_log_fd =
       SharedFD::Open(console_log.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
-  auto kernel_log_fd = SharedFD::Open(instance.kernel_log_pipe_name(),
-                                      O_APPEND | O_WRONLY, 0666);
+  SharedFD kernel_log_fd =
+      SharedFD::Open(KernelLogPipeName(instance), O_APPEND | O_WRONLY, 0666);
   ConsoleForwarder console_forwarder(console_path, console_in, console_out,
                                      console_log_fd, kernel_log_fd);
 
