@@ -479,18 +479,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
   (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::gnss_pipe_prefix() const {
-  return AbsolutePath(PerInstanceInternalPath("gnss"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
-  return gnss_pipe_prefix() + ".in";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_out_pipe_name() const {
-  return gnss_pipe_prefix() + ".out";
-}
-
 static constexpr char kGnssGrpcProxyServerPort[] =
     "gnss_grpc_proxy_server_port";
 int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {
