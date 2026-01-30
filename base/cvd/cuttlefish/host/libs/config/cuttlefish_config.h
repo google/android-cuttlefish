@@ -363,8 +363,6 @@ class CuttlefishConfig {
 
     std::string logcat_path() const;
 
-    std::string kernel_log_pipe_name() const;
-
     std::string console_pipe_prefix() const;
     std::string console_in_pipe_name() const;
     std::string console_out_pipe_name() const;

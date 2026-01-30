@@ -478,10 +478,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
   (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
-  return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::console_pipe_prefix() const {
   return AbsolutePath(PerInstanceInternalPath("console"));
 }
