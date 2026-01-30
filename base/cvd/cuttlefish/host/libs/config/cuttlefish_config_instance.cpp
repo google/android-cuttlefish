@@ -478,18 +478,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
   (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::console_pipe_prefix() const {
-  return AbsolutePath(PerInstanceInternalPath("console"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
-  return console_pipe_prefix() + ".in";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
-  return console_pipe_prefix() + ".out";
-}
-
 std::string CuttlefishConfig::InstanceSpecific::gnss_pipe_prefix() const {
   return AbsolutePath(PerInstanceInternalPath("gnss"));
 }
