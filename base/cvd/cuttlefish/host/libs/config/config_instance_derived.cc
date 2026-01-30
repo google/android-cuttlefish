@@ -26,6 +26,18 @@ std::string AccessKregistryPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstancePath("access-kregistry"));
 }
 
+std::string ConsoleInPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
+  return ConsolePipePrefix(ins) + ".in";
+}
+
+std::string ConsoleOutPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
+  return ConsolePipePrefix(ins) + ".out";
+}
+
+std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstanceInternalPath("console"));
+}
+
 std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("kernel-log-pipe"));
 }

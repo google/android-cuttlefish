@@ -20,6 +20,7 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -42,15 +43,12 @@ Result<std::optional<MonitorCommand>> ConsoleForwarder(
   }
   // These fds will only be read from or written to, but open them with
   // read and write access to keep them open in case the subprocesses exit
-  auto console_in_pipe_name = instance.console_in_pipe_name();
-  auto console_forwarder_in_wr =
-      CF_EXPECT(SharedFD::Fifo(console_in_pipe_name, 0600));
+  SharedFD console_forwarder_in_wr =
+      CF_EXPECT(SharedFD::Fifo(ConsoleInPipeName(instance), 0600));
 
-  auto console_out_pipe_name = instance.console_out_pipe_name();
-  auto console_forwarder_out_rd =
-      CF_EXPECT(SharedFD::Fifo(console_out_pipe_name, 0600));
+  SharedFD console_forwarder_out_rd =
+      CF_EXPECT(SharedFD::Fifo(ConsoleOutPipeName(instance), 0600));
 
-  Command console_forwarder_cmd(ConsoleForwarderBinary());
   return Command(ConsoleForwarderBinary())
       .AddParameter("--console_in_fd=", console_forwarder_in_wr)
       .AddParameter("--console_out_fd=", console_forwarder_out_rd);
