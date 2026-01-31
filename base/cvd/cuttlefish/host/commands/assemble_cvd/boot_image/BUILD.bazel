@@ -1,0 +1,17 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "boot_image",
+    srcs = ["boot_image.cc"],
+    hdrs = ["boot_image.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
