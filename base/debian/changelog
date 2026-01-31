@@ -1,3 +1,9 @@
+cuttlefish-common (1.42.0) UNRELEASED; urgency=medium
+
+  * N/A
+
+ -- Jason Macnak <natsu@google.com>  Fri, 30 Jan 2026 22:59:43 -0800
+
 cuttlefish-common (1.41.0) unstable; urgency=medium
 
   * Start development on v1.41 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2056
