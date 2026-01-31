@@ -109,6 +109,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
+        "//cuttlefish/host/commands/assemble_cvd/boot_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:config_utils",

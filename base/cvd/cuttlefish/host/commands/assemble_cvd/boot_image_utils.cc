@@ -33,6 +33,7 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -275,10 +276,10 @@ Result<void> RepackBootImage(const Avb& avb,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
                              const std::string& build_dir) {
-  std::string boot_params =
-      CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
+  CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
 
-  auto kernel_cmdline = ExtractValue(boot_params, "command line args: ");
+  BootImage boot_image = CF_EXPECT(BootImage::Read(boot_image_path));
+  std::string kernel_cmdline = boot_image.KernelCommandLine();
   VLOG(0) << "Cmdline from boot image is " << kernel_cmdline;
 
   auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
