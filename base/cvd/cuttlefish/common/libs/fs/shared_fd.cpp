@@ -934,6 +934,12 @@ ssize_t FileInstance::Read(void* buf, size_t count) {
   return TEMP_FAILURE_RETRY(read(fd_, buf, count));
 }
 
+ssize_t FileInstance::PRead(void* buf, size_t count, size_t offset) {
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
+}
+
 #ifdef __linux__
 int FileInstance::EventfdRead(eventfd_t* value) {
   LocalErrno record_errno(errno_);
@@ -1026,6 +1032,12 @@ ssize_t FileInstance::Write(const void* buf, size_t count) {
   LocalErrno record_errno(errno_);
 
   return TEMP_FAILURE_RETRY(write(fd_, buf, count));
+}
+
+ssize_t FileInstance::PWrite(const void* buf, size_t count, size_t offset) {
+  LocalErrno record_errno(errno_);
+
+  return TEMP_FAILURE_RETRY(pwrite(fd_, buf, count, offset));
 }
 
 #ifdef __linux__
