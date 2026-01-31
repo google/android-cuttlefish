@@ -32,6 +32,7 @@
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -99,7 +100,7 @@ class KernelLogMonitor : public CommandSource,
  private:
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    auto log_name = instance_.kernel_log_pipe_name();
+    std::string log_name = KernelLogPipeName(instance_);
     // Open the pipe here (from the launcher) to ensure the pipe is not deleted
     // due to the usage counters in the kernel reaching zero. If this is not
     // done and the kernel_log_monitor crashes for some reason the VMM may get

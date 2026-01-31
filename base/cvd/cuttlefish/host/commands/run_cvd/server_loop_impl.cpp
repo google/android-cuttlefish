@@ -322,9 +322,9 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
 void ServerLoopImpl::DeleteFifos() {
   // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
   std::vector<std::string> pipes = {
-      instance_.kernel_log_pipe_name(),
-      instance_.console_in_pipe_name(),
-      instance_.console_out_pipe_name(),
+      KernelLogPipeName(instance_),
+      ConsoleInPipeName(instance_),
+      ConsoleOutPipeName(instance_),
       LogcatPipeName(instance_),
       instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
       instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),

@@ -478,34 +478,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
   (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
-  return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_pipe_prefix() const {
-  return AbsolutePath(PerInstanceInternalPath("console"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
-  return console_pipe_prefix() + ".in";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
-  return console_pipe_prefix() + ".out";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_pipe_prefix() const {
-  return AbsolutePath(PerInstanceInternalPath("gnss"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
-  return gnss_pipe_prefix() + ".in";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_out_pipe_name() const {
-  return gnss_pipe_prefix() + ".out";
-}
-
 static constexpr char kGnssGrpcProxyServerPort[] =
     "gnss_grpc_proxy_server_port";
 int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {

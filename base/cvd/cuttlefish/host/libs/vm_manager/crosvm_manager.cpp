@@ -747,7 +747,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   // kernel log event features working. If an alternative "earlycon" boot
   // console is configured below on a legacy serial port, it will control
   // the main log until the virtio-console takes over.
-  crosvm_cmd.AddHvcReadOnly(instance.kernel_log_pipe_name(),
+  crosvm_cmd.AddHvcReadOnly(KernelLogPipeName(instance),
                             instance.enable_kernel_log());
 
   // /dev/hvc1 = serial console
@@ -757,8 +757,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     // only the serial port output is received by the console forwarder as
     // crosvm may print other messages to stdout.
     if (instance.kgdb() || instance.use_bootloader()) {
-      crosvm_cmd.AddSerialConsoleReadWrite(instance.console_out_pipe_name(),
-                                           instance.console_in_pipe_name(),
+      crosvm_cmd.AddSerialConsoleReadWrite(ConsoleOutPipeName(instance),
+                                           ConsoleInPipeName(instance),
                                            instance.enable_kernel_log());
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
@@ -768,8 +768,8 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.AddHvcSink();
     } else {
       crosvm_cmd.AddSerialSink();
-      crosvm_cmd.AddHvcReadWrite(instance.console_out_pipe_name(),
-                                 instance.console_in_pipe_name());
+      crosvm_cmd.AddHvcReadWrite(ConsoleOutPipeName(instance),
+                                 ConsoleInPipeName(instance));
     }
   } else {
     // Use an 8250 UART (ISA or platform device) for earlycon, as the
@@ -778,7 +778,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     // dmesg will go there instead of the kernel.log
     if (instance.enable_kernel_log() &&
         (instance.kgdb() || instance.use_bootloader())) {
-      crosvm_cmd.AddSerialConsoleReadOnly(instance.kernel_log_pipe_name());
+      crosvm_cmd.AddSerialConsoleReadOnly(KernelLogPipeName(instance));
     }
 
     // as above, create a fake virtio-console 'sink' port when the serial

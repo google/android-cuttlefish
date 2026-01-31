@@ -514,7 +514,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     // flags appear in the right order and "append=on" does the right thing
     if (instance.enable_kernel_log() &&
         (instance.kgdb() || instance.use_bootloader())) {
-      add_serial_console_ro(instance.kernel_log_pipe_name());
+      add_serial_console_ro(KernelLogPipeName(instance));
     }
   }
 
@@ -534,12 +534,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // (Note that QEMU does not automatically generate console= parameters for
   //  the bootloader/kernel cmdline, so the control of whether this pipe is
   //  actually managed by the kernel as a console is handled elsewhere.)
-  add_hvc_ro(instance.kernel_log_pipe_name());
+  add_hvc_ro(KernelLogPipeName(instance));
 
   // /dev/hvc1 = serial console
   if (instance.console()) {
     if (instance.kgdb() || instance.use_bootloader()) {
-      add_serial_console(instance.console_pipe_prefix());
+      add_serial_console(ConsolePipePrefix(instance));
 
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
@@ -549,7 +549,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       add_hvc_sink();
     } else {
       add_serial_sink();
-      add_hvc(instance.console_pipe_prefix());
+      add_hvc(ConsolePipePrefix(instance));
     }
   } else {
     if (instance.kgdb() || instance.use_bootloader()) {
