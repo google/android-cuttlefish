@@ -11,3 +11,15 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_library(
+    name = "shared_fd",
+    srcs = ["shared_fd.cc"],
+    hdrs = ["shared_fd.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
