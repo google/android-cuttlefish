@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
+#pragma once
 
 #include <string>
+#include <string_view>
 
 namespace cuttlefish {
 
-template class FlagBase<bool>;
-template class FlagBase<int>;
-template class FlagBase<std::string>;
+enum class DataImagePolicy {
+  AlwaysCreate,
+  ResizeUpTo,
+  Unknown,
+  UseExisting,
+};
+
+DataImagePolicy DataImagePolicyFromString(std::string_view policy);
+
+std::string DataImagePolicyString(DataImagePolicy policy);
 
 }  // namespace cuttlefish
