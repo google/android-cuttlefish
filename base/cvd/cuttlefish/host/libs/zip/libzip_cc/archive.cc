@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 
+#include "absl/log/log.h"
 #include "zip.h"
 
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
@@ -85,7 +86,10 @@ Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
   int res =
       zip_file_get_external_attributes(raw_zip, index, 0, &opsys, &attributes);
   CF_EXPECT_EQ(res, 0, ZipErrorString(raw_zip));
-  CF_EXPECT_EQ(opsys, ZIP_OPSYS_UNIX);
+  if (opsys != ZIP_OPSYS_UNIX) {
+    LOG(WARNING) << "Unexpected zip file external attribute.  Expected: \""
+                 << ZIP_OPSYS_UNIX << "\" and found \"" << opsys << "\"";
+  }
 
   return attributes;
 }
