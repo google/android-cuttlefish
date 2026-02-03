@@ -533,6 +533,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<std::string> extra_bootconfig_args_base64_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(extra_bootconfig_args_base64));
+  std::vector<std::string> extra_bootconfig_args_vec =
+      CF_EXPECT(GET_FLAG_STR_VALUE(extra_bootconfig_args));
 
   std::vector<bool> record_screen_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
       record_screen));
@@ -796,7 +798,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_enable_gnss_grpc_proxy(start_gnss_proxy_vec[instance_index]);
     instance.set_enable_bootanimation(enable_bootanimation_vec[instance_index]);
 
-    instance.set_extra_bootconfig_args(FLAGS_extra_bootconfig_args);
+    instance.set_extra_bootconfig_args(
+        extra_bootconfig_args_vec[instance_index]);
     if (!extra_bootconfig_args_base64_vec[instance_index].empty()) {
       std::vector<uint8_t> decoded_args;
       CF_EXPECT(DecodeBase64(extra_bootconfig_args_base64_vec[instance_index],

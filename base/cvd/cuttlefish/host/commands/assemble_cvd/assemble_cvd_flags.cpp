@@ -50,10 +50,12 @@ DEFINE_string(overlays, "",
               "vm_index2:display_index2 [...]'");
 DEFINE_string(extra_kernel_cmdline, CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
               "Additional flags to put on the kernel command line");
-DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
+DEFINE_vec(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "Space-separated list of extra bootconfig args. "
               "Note: overwriting an existing bootconfig argument "
-              "requires ':=' instead of '='.");
+              "requires ':=' instead of '='. "
+              "If multiple instances are used, use comma as a separator "
+              "for each instance.");
 DEFINE_vec(guest_enforce_security,
            fmt::format("{}", CF_DEFAULTS_GUEST_ENFORCE_SECURITY),
            "Whether to run in enforcing mode (non permissive).");
