@@ -121,6 +121,7 @@ void PopulateCuttlefishGuest(CuttlefishGuest& guest,
   flags.set_cpus(flag_metrics.cpus);
   flags.set_daemon(flag_metrics.daemon);
   flags.set_data_policy(ConvertDataPolicy(flag_metrics.data_policy));
+  flags.set_guest_enforce_security(flag_metrics.guest_enforce_security);
   flags.set_memory_mb(flag_metrics.memory_mb);
   flags.set_restart_subprocesses(flag_metrics.restart_subprocesses);
 }
