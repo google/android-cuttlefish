@@ -61,6 +61,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
@@ -488,7 +489,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       refresh_rate_hz));
   std::vector<std::string> overlays_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(overlays));
-  std::vector<int> memory_mb_vec = CF_EXPECT(GET_FLAG_INT_VALUE(memory_mb));
+  MemoryMbFlag memory_mb_values = CF_EXPECT(MemoryMbFlag::FromGlobalGflags());
   std::vector<int> camera_server_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
       camera_server_port));
   std::vector<int> vsock_guest_cid_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
@@ -968,8 +969,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto touchpad_configs = touchpad_configs_bindings[0]->GetConfigs();
     instance.set_touchpad_configs(touchpad_configs);
 
-    instance.set_memory_mb(memory_mb_vec[instance_index]);
-    instance.set_ddr_mem_mb(memory_mb_vec[instance_index] * 1.2);
+    instance.set_memory_mb(memory_mb_values.ForIndex(instance_index));
+    instance.set_ddr_mem_mb(memory_mb_values.ForIndex(instance_index) * 1.2);
     CF_EXPECT(
         instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]));
     instance.set_userdata_format(userdata_format_vec[instance_index]);
