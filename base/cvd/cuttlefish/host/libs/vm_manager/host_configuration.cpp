@@ -23,6 +23,7 @@
 #include <sys/utsname.h>
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/container.h"
 #include "cuttlefish/common/libs/utils/users.h"
 
 namespace cuttlefish {
@@ -84,6 +85,15 @@ bool ValidateHostConfiguration(std::vector<std::string>* config_commands) {
   auto version = GetLinuxVersion();
   if (version == invalid_linux_version) {
     return false;
+  }
+
+  // Checking host configuration via GID or group name on rootless container
+  // instance is hard as user namespace is separated from the host.
+  if (IsRunningInContainer()) {
+    // TODO(seungjaeyoo): Validate access on actual resources like devices
+    // rather than group name, which is applicable for all host environments
+    // including container.
+    return LinuxVersionAtLeast(config_commands, version, 4, 8);
   }
 
   // the check for cvdnetwork needs to happen even if the user is not in kvm, so
