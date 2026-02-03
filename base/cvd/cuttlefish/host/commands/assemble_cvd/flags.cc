@@ -61,6 +61,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
@@ -585,8 +586,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<std::string> gpu_capture_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_capture_binary));
-  std::vector<bool> restart_subprocesses_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      restart_subprocesses));
+  RestartSubprocessesFlag restart_subprocesses_values =
+      CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags());
   std::vector<std::string> hwcomposer_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(hwcomposer));
   std::vector<bool> enable_gpu_udmabuf_vec =
@@ -1078,7 +1079,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         guest_configs[instance_index], instance));
     calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
 
-    instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
+    instance.set_restart_subprocesses(
+        restart_subprocesses_values.ForIndex(instance_index));
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
     if (!gpu_capture_binary_vec[instance_index].empty()) {
       CF_EXPECT(gpu_mode == kGpuModeGfxstream ||
@@ -1087,8 +1089,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
       // GPU capture runs in a detached mode where the "launcher" process
       // intentionally exits immediately.
-      CF_EXPECT(!restart_subprocesses_vec[instance_index],
-          "GPU capture only supported with --norestart_subprocesses");
+      CF_EXPECT(!restart_subprocesses_values.ForIndex(instance_index),
+                "GPU capture only supported with --norestart_subprocesses");
     }
 
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);

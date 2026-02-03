@@ -224,6 +224,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "restart_subprocesses",
+    srcs = ["restart_subprocesses.cc"],
+    hdrs = ["restart_subprocesses.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/result",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "super_image",
     srcs = ["super_image.cc"],
     hdrs = ["super_image.h"],
