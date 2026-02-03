@@ -156,6 +156,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "extra_kernel_cmdline",
+    srcs = ["extra_kernel_cmdline.cc"],
+    hdrs = ["extra_kernel_cmdline.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "flag_base",
     srcs = ["flag_base.cc"],
     hdrs = ["flag_base.h"],
