@@ -21,6 +21,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -33,12 +34,15 @@ Result<std::vector<FlagMetrics>> GetFlagMetrics(const int guest_count) {
   DaemonFlag daemon_values = CF_EXPECT(DaemonFlag::FromGlobalGflags());
   DataPolicyFlag data_policy_values =
       CF_EXPECT(DataPolicyFlag::FromGlobalGflags());
+  RestartSubprocessesFlag restart_subprocesses_values =
+      CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags());
 
   for (int i = 0; i < guest_count; i++) {
     result.emplace_back(FlagMetrics{
         .cpus = cpus_values.ForIndex(i),
         .daemon = daemon_values.ForIndex(i),
         .data_policy = data_policy_values.ForIndex(i),
+        .restart_subprocesses = restart_subprocesses_values.ForIndex(i),
     });
   }
   return result;

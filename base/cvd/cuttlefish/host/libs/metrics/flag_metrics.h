@@ -28,6 +28,7 @@ struct FlagMetrics {
   int cpus;
   bool daemon;
   DataImagePolicy data_policy;
+  bool restart_subprocesses;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously

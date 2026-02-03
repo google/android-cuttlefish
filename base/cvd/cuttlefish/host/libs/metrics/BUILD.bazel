@@ -39,6 +39,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
         "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
         "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
+        "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/result",
     ],
