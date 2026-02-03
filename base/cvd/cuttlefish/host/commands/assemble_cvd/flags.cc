@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
@@ -504,8 +505,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(setupwizard_mode));
   std::vector<std::string> userdata_format_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(userdata_format));
-  std::vector<bool> guest_enforce_security_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      guest_enforce_security));
+  GuestEnforceSecurityFlag guest_enforce_security_values =
+      CF_EXPECT(GuestEnforceSecurityFlag::FromGlobalGflags());
   std::vector<std::string> serial_number_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(serial_number));
   std::vector<bool> use_random_serial_vec =
@@ -974,7 +975,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     CF_EXPECT(
         instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]));
     instance.set_userdata_format(userdata_format_vec[instance_index]);
-    instance.set_guest_enforce_security(guest_enforce_security_vec[instance_index]);
+    instance.set_guest_enforce_security(
+        guest_enforce_security_values.ForIndex(instance_index));
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
     instance.set_run_as_daemon(daemon_values.ForIndex(instance_index));
     instance.set_enable_modem_simulator(enable_modem_simulator_vec[instance_index] &&
