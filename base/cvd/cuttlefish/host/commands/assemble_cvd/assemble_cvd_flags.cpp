@@ -54,9 +54,6 @@ DEFINE_string(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "Space-separated list of extra bootconfig args. "
               "Note: overwriting an existing bootconfig argument "
               "requires ':=' instead of '='.");
-DEFINE_vec(guest_enforce_security,
-           fmt::format("{}", CF_DEFAULTS_GUEST_ENFORCE_SECURITY),
-           "Whether to run in enforcing mode (non permissive).");
 DEFINE_vec(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
 DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
