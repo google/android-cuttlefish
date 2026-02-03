@@ -32,6 +32,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
