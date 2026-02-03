@@ -58,6 +58,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -396,7 +397,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   CF_EXPECT(ValidateSecureHals(secure_hals));
   tmp_config_obj.set_secure_hals(secure_hals);
 
-  tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
+  ExtraKernelCmdlineFlag extra_kernel_cmdline_value =
+      ExtraKernelCmdlineFlag::FromGlobalGflags();
+  tmp_config_obj.set_extra_kernel_cmdline(
+      extra_kernel_cmdline_value.ForIndex(0));
 
   if (FLAGS_track_host_tools_crc) {
     tmp_config_obj.set_host_tools_version(HostToolsCrc());
