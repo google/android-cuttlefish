@@ -39,7 +39,6 @@ DECLARE_string(overlays);
 DECLARE_string(extra_kernel_cmdline);
 DECLARE_string(extra_bootconfig_args);
 DECLARE_vec(guest_enforce_security);
-DECLARE_vec(memory_mb);
 DECLARE_vec(serial_number);
 DECLARE_vec(use_random_serial);
 DECLARE_vec(gpu_mode);
