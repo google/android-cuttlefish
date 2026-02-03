@@ -307,6 +307,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:initramfs_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:kernel_path",
         "//cuttlefish/host/commands/assemble_cvd/flags:mcu_config_path",
+        "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
         "//cuttlefish/host/commands/assemble_cvd/flags:super_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/commands/assemble_cvd/flags:use_cvdalloc",

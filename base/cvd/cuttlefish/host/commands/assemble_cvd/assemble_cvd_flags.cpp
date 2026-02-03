@@ -236,9 +236,6 @@ DEFINE_vec(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
 DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
               "The debug flags gem5 uses to print debugs to file");
 
-DEFINE_vec(restart_subprocesses,
-           fmt::format("{}", CF_DEFAULTS_RESTART_SUBPROCESSES),
-           "Restart any crashed host process");
 DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
               "Force booting into the given slot. If empty, "
               "the slot will be chosen based on the misc partition if using a "

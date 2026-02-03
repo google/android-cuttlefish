@@ -116,7 +116,6 @@ DECLARE_vec(gem5_checkpoint_dir);
 DECLARE_vec(gem5_debug_file);
 DECLARE_string(gem5_debug_flags);
 
-DECLARE_vec(restart_subprocesses);
 DECLARE_vec(boot_slot);
 DECLARE_int32(num_instances);
 DECLARE_string(instance_nums);
