@@ -28,6 +28,7 @@ struct FlagMetrics {
   int cpus;
   bool daemon;
   DataImagePolicy data_policy;
+  int memory_mb;
   bool restart_subprocesses;
 };
 
