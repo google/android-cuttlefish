@@ -19,10 +19,11 @@
 #include <stdint.h>
 
 #include <memory>
-#include <string>
+#include <mutex>
 
 #include "zip.h"
 
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
@@ -63,7 +64,7 @@ class ReadableZipSource {
 };
 
 /* A `ReadableZipSource` in an "open for reading" state. */
-class ZipSourceReader {
+class ZipSourceReader : public Reader {
  public:
   friend class ReadableZipSource;
   friend class SeekingZipSourceReader;
@@ -74,12 +75,13 @@ class ZipSourceReader {
 
   /* Returns a failed Result on error, or a successful result with bytes read or
    * 0 on EOF. */
-  Result<uint64_t> Read(void* data, uint64_t length);
+  Result<uint64_t> Read(void* data, uint64_t length) override;
 
  private:
   ZipSourceReader(ReadableZipSource*);
 
   ReadableZipSource* source_;
+  mutable std::mutex mutex_;
 };
 
 }  // namespace cuttlefish
