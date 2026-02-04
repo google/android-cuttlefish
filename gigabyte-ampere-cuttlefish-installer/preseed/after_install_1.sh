@@ -1,0 +1,126 @@
+#!/bin/sh
+
+apt-get update
+
+# Install necessary packages
+apt-get install -y debconf-utils
+apt-get install -y ca-certificates
+apt-get install -y wget
+apt-get install -y git
+apt-get install -y python3
+apt-get install -y p7zip-full unzip
+apt-get install -y iptables ebtables
+apt-get install -y curl
+apt-get install -y lsb-release
+apt-get install -y gpg
+apt-get install -y jq
+
+# Adjust user groups
+adduser vsoc-01 kvm
+adduser vsoc-01 render
+adduser vsoc-01 video
+
+# Detect distribution
+DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
+DEBIAN_ARCH="$(dpkg --print-architecture)"
+
+apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 \
+    update
+
+# Install kernel
+DEBIAN_DISTRIBUTION="$(lsb_release -c -s)"
+#apt-get install -y '^linux-image-6.1.*aosp14-linaro.*' '^linux-headers-6.1.*aosp14-linaro.*'
+has_backports=$(apt-cache policy | grep "${DEBIAN_DISTRIBUTION}-backports")
+if [ x"$has_backports" != x"" ]; then
+    apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-headers-arm64
+    apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-image-arm64
+fi
+
+# Install nVidia or AMD GPU driver
+nvidia_gpu=$(lspci | grep -i nvidia)
+amd_gpu=$(lspci | grep VGA | grep AMD)
+if [ x"$amd_gpu" != x"" ]; then
+    # # Install amd firmware
+    # if [ x"$has_backports" != x"" ]; then
+    #     apt-get install -y -t ${DEBIAN_DISTRIBUTION}-backports firmware-amd-graphics
+    # else
+    #     apt-get install -y firmware-amd-graphics
+    # fi
+    # sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT=\"\(.*\)\"/GRUB_CMDLINE_LINUX_DEFAULT=\"\1 amdgpu.runpm=0 amdgpu.dc=0\"/' /etc/default/grub
+    # dpkg-reconfigure -fnoninteractive grub-efi-arm64
+    echo "AMD GPU detected — skipping GPU driver installation."
+elif [ x"$nvidia_gpu" != x"" ]; then
+    # Install nvidia driver
+    if [ x"$has_backports" != x"" ]; then
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes nvidia-kernel-dkms
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes nvidia-driver
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -t "${DEBIAN_DISTRIBUTION}-backports" -q --force-yes firmware-misc-nonfree
+    else
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-open-kernel-dkms
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes nvidia-driver
+        DEBIAN_FRONTEND=noninteractive apt-get install -y -q --force-yes firmware-misc-nonfree
+    fi
+fi
+# End of Install kernel
+
+# Install android cuttlefish packages
+curl -fsSL --retry 7 --retry-all-errors https://us-apt.pkg.dev/doc/repo-signing-key.gpg -o /etc/apt/trusted.gpg.d/artifact-registry.asc
+chmod a+r /etc/apt/trusted.gpg.d/artifact-registry.asc
+echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts android-cuttlefish main" \
+    | tee -a /etc/apt/sources.list.d/artifact-registry.list
+apt-get update
+apt-get install -y cuttlefish-base cuttlefish-user cuttlefish-orchestration -t android-cuttlefish
+adduser vsoc-01 cvdnetwork
+
+# Install gigabyte package
+apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 -o Acquire::Retries=5 install cuttlefish-integration-gigabyte-arm64
+
+# Extra tools
+cd /root
+git clone https://github.com/matthuisman/gdrivedl.git
+cd -
+
+# Use iptables-legacy
+update-alternatives --set iptables /usr/sbin/iptables-legacy
+
+# Install network manager
+apt-get install -y network-manager
+
+# Network-manager workaround
+rm -f '/etc/NetworkManager/system-connections/Wired connection 1'
+
+# Install Docker container
+# Add Docker's official GPG key:
+apt-get update
+curl -fsSL --retry 7 --retry-all-errors https://download.docker.com/linux/debian/gpg -o /etc/apt/trusted.gpg.d/docker.asc
+chmod a+r /etc/apt/trusted.gpg.d/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+usermod -aG docker vsoc-01
+
+# Inastall nvidia-container-toolkit
+curl -fsSL --retry 7 --retry-all-errors https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/nvidia-container-toolkit-keyring.gpg \
+&& curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes nvidia-container-toolkit
+
+# Install container image
+DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes skopeo
+ORCHESTRATION_IMAGE="us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration"
+STABLE_DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:stable --format '{{.Digest}}')
+CANDIDATES=$(skopeo list-tags docker://${ORCHESTRATION_IMAGE} | jq -r '.Tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V -r)
+ORCHESTRATION_TAG=""
+for CANDIDATE in $CANDIDATES; do
+	DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:${CANDIDATE} --format '{{.Digest}}')
+	if [ "$DIGEST" = "$STABLE_DIGEST" ]; then
+		ORCHESTRATION_TAG=${CANDIDATE}
+		break
+	fi
+done
+docker pull ${ORCHESTRATION_IMAGE}:${ORCHESTRATION_TAG}

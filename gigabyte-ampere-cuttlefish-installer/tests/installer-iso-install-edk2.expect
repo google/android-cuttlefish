@@ -1,0 +1,70 @@
+#!/usr/bin/expect --
+
+if {$argc < 2} {
+    set filename1 test_filename1
+    set content1 Eimoh5be
+} else {
+    set filename1 [lindex $argv 0]
+    set content1 [lindex $argv 1]
+}
+
+set timeout 120
+log_file -noappend installer-iso-serial-console.log
+
+spawn ./installer-iso-run-qemu-edk2.sh
+set qemu_pid $spawn_id
+
+# grub select serial console based install
+set timeout 3
+
+expect {
+    # select "Install"
+    -re "\\*(Install)" { sleep 1; send -- "\r" }
+    timeout { send -- "\x1b\[B"; exp_continue }
+}
+
+# after installation
+set timeout -1
+
+expect {
+    "login:" { sleep 1; send -- "vsoc-01\r" }
+    -re "Dependency failed for (.*)ttyAMA0" {
+	send_user "\nttyAMA0 failed, exit earlier.\n"
+	sleep 60
+	spawn sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost "while ! systemctl is-active dev-ttyAMA0.device; do sleep 10; done; echo cuttlefish | sudo -S -k systemctl start serial-getty@ttyAMA0.service"
+	wait $spawn_id
+	exp_continue
+    }
+    timeout { exit 1 }
+}
+
+set timeout 120
+
+expect {
+    "Password:" { sleep 1; send -- "cuttlefish\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    -re "(\\$) $" { send -- "echo $content1 > $filename1 ; sync\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    -re "(\\$) $" { send -- "sudo su\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    "password for vsoc-01" { sleep 1; send -- "cuttlefish\r" }
+    timeout { exit 1 }
+}
+
+set timeout 300
+
+expect {
+    -re "(#) $" { send -- "shutdown -h 1\r" }
+    timeout { exit 1 }
+}
+
+interact
