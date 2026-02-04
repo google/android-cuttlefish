@@ -109,18 +109,3 @@ curl -fsSL --retry 7 --retry-all-errors https://nvidia.github.io/libnvidia-conta
   tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes nvidia-container-toolkit
-
-# Install container image
-DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes skopeo
-ORCHESTRATION_IMAGE="us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration"
-STABLE_DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:stable --format '{{.Digest}}')
-CANDIDATES=$(skopeo list-tags docker://${ORCHESTRATION_IMAGE} | jq -r '.Tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V -r)
-ORCHESTRATION_TAG=""
-for CANDIDATE in $CANDIDATES; do
-	DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:${CANDIDATE} --format '{{.Digest}}')
-	if [ "$DIGEST" = "$STABLE_DIGEST" ]; then
-		ORCHESTRATION_TAG=${CANDIDATE}
-		break
-	fi
-done
-docker pull ${ORCHESTRATION_IMAGE}:${ORCHESTRATION_TAG}
