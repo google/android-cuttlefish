@@ -77,11 +77,12 @@ class ZipSourceReader : public Reader {
    * 0 on EOF. */
   Result<uint64_t> Read(void* data, uint64_t length) override;
 
+ protected:
+  std::recursive_mutex mutex_;
  private:
   ZipSourceReader(ReadableZipSource*);
 
   ReadableZipSource* source_;
-  mutable std::mutex mutex_;
 };
 
 }  // namespace cuttlefish
