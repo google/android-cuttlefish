@@ -279,6 +279,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gpu_mode",
+    srcs = [
+        "gpu_mode.cc",
+    ],
+    hdrs = [
+        "gpu_mode.h",
+    ],
+    deps = [
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "guest_hwui_renderer",
     srcs = ["guest_hwui_renderer.cc"],
     hdrs = ["guest_hwui_renderer.h"],
