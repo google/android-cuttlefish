@@ -1,12 +1,12 @@
 name: Workflow for Gigabyte Ampere Server Cuttlefish Installer
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build-installer-iso-job:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm
     container:
-      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+      image: debian:bookworm-20250407
     env:
       DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso"
       CI_PROJECT_NAME: ${{ github.event.repository.name }}
@@ -39,9 +39,9 @@ jobs:
 
   test-iso-qemu-job:
     needs: build-installer-iso-job
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm
     container:
-      image: debian:trixie # debian:trixie (amd64)
+      image: debian:trixie
     env:
       TEST_DISK_SIZE: "10G"
     steps:
