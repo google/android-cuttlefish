@@ -17,15 +17,18 @@
 
 #include <stdint.h>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include <shared_mutex>
+#include <vector>
+
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-class SharedFdIo : public ReaderSeeker, public WriterSeeker {
+class InMemoryIo : public ReaderSeeker, public WriterSeeker {
  public:
-  explicit SharedFdIo(SharedFD);
+  InMemoryIo() = default;
+  explicit InMemoryIo(std::vector<char>);
 
   Result<size_t> PartialRead(void* buf, size_t count) override;
   Result<size_t> PartialWrite(const void* buf, size_t count) override;
@@ -38,7 +41,12 @@ class SharedFdIo : public ReaderSeeker, public WriterSeeker {
                                 size_t offset) override;
 
  private:
-  SharedFD fd_;
+  size_t ClampRange(size_t begin, size_t length) const;
+  void GrowTo(size_t);
+
+  std::vector<char> data_;
+  size_t cursor_ = 0;
+  mutable std::shared_mutex mutex_;
 };
 
 }  // namespace cuttlefish
