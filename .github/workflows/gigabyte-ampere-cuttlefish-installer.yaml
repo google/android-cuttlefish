@@ -1,0 +1,92 @@
+name: Workflow for Gigabyte Ampere Server Cuttlefish Installer
+
+on: [push]
+
+jobs:
+  build-installer-iso-job:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    env:
+      DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso"
+      CI_PROJECT_NAME: ${{ github.event.repository.name }}
+      CI_PIPELINE_ID: ${{ github.run_id }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setting up build environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y wget libarchive-tools
+        apt-get install -y xorriso
+        apt-get install -y cpio xz-utils
+        apt-get install -y fdisk
+    - name: Build the iso image
+      run: |
+        cd gigabyte-ampere-cuttlefish-installer
+        sed -i "2i CI_PROJECT_NAME=${CI_PROJECT_NAME}" preseed/after_install_1.sh
+        sed -i "3i CI_PIPELINE_ID=${CI_PIPELINE_ID}" preseed/after_install_1.sh
+        wget -nv -c ${DEBIAN_ISO_URL}
+        ./addpreseed.sh
+        xz -9e preseed-mini.iso
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+        path: gigabyte-ampere-cuttlefish-installer/preseed-mini.iso.xz
+
+  test-iso-qemu-job:
+    needs: build-installer-iso-job
+    runs-on: ubuntu-22.04
+    container:
+      image: debian:trixie # debian:trixie (amd64)
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y debconf-utils
+        echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v
+        echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+        dpkg-reconfigure --frontend noninteractive tzdata
+        echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder
+        dpkg-reconfigure --frontend noninteractive pbuilder
+        apt-get install -y util-linux util-linux-extra
+        apt-get install -y xz-utils
+        apt-get install -y qemu-system-arm
+        apt-get install -y expect
+        apt-get install -y e2tools e2fsprogs
+        apt-get install -y guestfish
+        apt-get install -y lvm2
+        apt-get install -y ubuntu-dev-tools
+        apt-get install -y sshpass
+        apt-get install -y u-boot-qemu
+    - name: Run test
+      run: |
+        cd gigabyte-ampere-cuttlefish-installer
+        mv ../preseed-mini.iso.xz .
+        xz -d preseed-mini.iso.xz
+        chmod a-w preseed-mini.iso
+        cp -f tests/installer-iso-* .
+        ./installer-iso-install.expect successful_install sheeFei2
+        ./installer-iso-extract-partitions.sh
+        e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
+        echo sheeFei2 > successful_install_compare
+        cmp successful_install successful_install_compare
+        e2cp boot.img:/$(e2ls boot.img:/vmlinuz-* | tail -1) .
+        test -e vmlinuz-
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+        test '!' -e home.img
