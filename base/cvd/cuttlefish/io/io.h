@@ -53,7 +53,7 @@ class ReaderSeeker : public Reader, virtual public Seeker {
 class WriterSeeker : public Writer, virtual public Seeker {
  public:
   virtual Result<size_t> PartialWriteAt(const void* buf, size_t count,
-                                        size_t offset) const = 0;
+                                        size_t offset) = 0;
 };
 
 }  // namespace cuttlefish

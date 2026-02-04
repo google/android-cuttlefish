@@ -65,7 +65,7 @@ Result<size_t> SharedFdIo::PartialReadAt(void* buf, size_t count,
 }
 
 Result<size_t> SharedFdIo::PartialWriteAt(const void* buf, size_t count,
-                                          size_t offset) const {
+                                          size_t offset) {
   ssize_t data_written = fd_->PWrite(buf, count, offset);
   CF_EXPECT_GE(data_written, 0, fd_->StrError());
   return data_written;

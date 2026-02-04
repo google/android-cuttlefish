@@ -1,7 +1,31 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "in_memory",
+    srcs = ["in_memory.cc"],
+    hdrs = ["in_memory.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "in_memory_test",
+    srcs = ["in_memory_test.cc"],
+    deps = [
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cf_cc_library(
