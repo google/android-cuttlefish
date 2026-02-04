@@ -72,7 +72,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     }
     if (len > buffer_.size()) {
       buffer_remaining_ = 0;
-      if (!reader_->SeekFromStart(offset_).ok()) {
+      if (!reader_->SeekSet(offset_).ok()) {
         return false;
       }
       VLOG(1) << "Bypassing buffer, reading " << len;
@@ -99,7 +99,7 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     if (buffer_fill == 0) {
       return 0;
     }
-    if (!reader_->SeekFromStart(offset_).ok()) {
+    if (!reader_->SeekSet(offset_).ok()) {
       return -1;
     }
     VLOG(1) << "Filling buffer with " << buffer_fill;

@@ -87,7 +87,7 @@ class LazilyLoadedZipSourceFile : public LazilyLoadedFileReadCallback {
       : source_(std::move(source)), reader_(std::move(reader)) {}
 
   Result<size_t> Seek(size_t offset) override {
-    CF_EXPECT(reader_.SeekFromStart(offset));
+    CF_EXPECT(reader_.SeekSet(offset));
     return offset;
   }
   Result<size_t> Read(char* data, size_t size) override {

@@ -19,12 +19,11 @@
 #include <stdint.h>
 
 #include <memory>
-#include <string>
 
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -50,7 +49,7 @@ class SeekableZipSource : public ReadableZipSource {
 };
 
 /* A `SeekableZipSource` in an "open for reading" state. */
-class SeekingZipSourceReader : public ZipSourceReader {
+class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
  public:
   friend class SeekableZipSource;
 
@@ -58,9 +57,16 @@ class SeekingZipSourceReader : public ZipSourceReader {
   ~SeekingZipSourceReader() override;
   SeekingZipSourceReader& operator=(SeekingZipSourceReader&&);
 
-  Result<void> SeekFromStart(int64_t offset);
+  Result<uint64_t> Read(void* data, uint64_t length) override;
+  Result<uint64_t> PRead(void* buf, uint64_t count, uint64_t offset) const override;
+
+  Result<uint64_t> SeekSet(uint64_t offset) override;
+  Result<uint64_t> SeekCur(int64_t offset) override;
+  Result<uint64_t> SeekEnd(int64_t offset) override;
 
  private:
+  Result<uint64_t> Seek(int64_t offset, int whence);
+
   SeekingZipSourceReader(SeekableZipSource*);
 };
 

@@ -83,7 +83,7 @@ TEST(BufferedZipSourceTest, ReadBackwards) {
   std::vector<uint8_t> data_out(data_in.size());
   size_t read_offset = data_out.size() - 4;
   while (true) {
-    ASSERT_THAT(reader->SeekFromStart(read_offset), IsOk());
+    ASSERT_THAT(reader->SeekSet(read_offset), IsOk());
     uint8_t* ptr = &data_out[read_offset];
     Result<size_t> amount_read = reader->Read(ptr, 4);
     ASSERT_THAT(amount_read, IsOkAndValue(4));

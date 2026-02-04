@@ -80,6 +80,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_pread_pwrite",
         "//cuttlefish/result",
         "@libzip",
         "@zlib",
