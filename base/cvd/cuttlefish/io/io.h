@@ -25,35 +25,42 @@ class Reader {
  public:
   virtual ~Reader() = default;
 
-  virtual Result<size_t> PartialRead(void* buf, size_t count) = 0;
+  // Has the semantics of read(2)
+  virtual Result<uint64_t> Read(void* buf, uint64_t count) = 0;
 };
 
 class Writer {
  public:
   virtual ~Writer() = default;
 
-  virtual Result<size_t> PartialWrite(const void* buf, size_t count) = 0;
+  // Has the semantics of write(2)
+  virtual Result<uint64_t> Write(const void* buf, uint64_t count) = 0;
 };
 
 class Seeker {
  public:
   virtual ~Seeker() = default;
 
-  virtual Result<size_t> SeekSet(size_t offset) = 0;
-  virtual Result<size_t> SeekCur(ssize_t offset) = 0;
-  virtual Result<size_t> SeekEnd(ssize_t offset) = 0;
+  // Has the semantics of lseek(2) with SEEK_SET
+  virtual Result<uint64_t> SeekSet(uint64_t offset) = 0;
+  // Has the semantics of lseek(2) with SEEK_CUR
+  virtual Result<uint64_t> SeekCur(int64_t offset) = 0;
+  // Has the semantics of lseek(2) with SEEK_END
+  virtual Result<uint64_t> SeekEnd(int64_t offset) = 0;
 };
 
-class ReaderSeeker : public Reader, virtual public Seeker {
+class ReaderSeeker : public Reader, public Seeker {
  public:
-  virtual Result<size_t> PartialReadAt(void* buf, size_t count,
-                                       size_t offset) const = 0;
+  // Has the semantics of pread(2)
+  virtual Result<uint64_t> PRead(void* buf, uint64_t count,
+                                 uint64_t offset) const = 0;
 };
 
-class WriterSeeker : public Writer, virtual public Seeker {
+class WriterSeeker : public Writer, public Seeker {
  public:
-  virtual Result<size_t> PartialWriteAt(const void* buf, size_t count,
-                                        size_t offset) = 0;
+  // Has the semantics of pwrite(2)
+  virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
+                                  uint64_t offset) = 0;
 };
 
 }  // namespace cuttlefish

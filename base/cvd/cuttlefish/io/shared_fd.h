@@ -27,15 +27,15 @@ class SharedFdIo : public ReaderSeeker, public WriterSeeker {
  public:
   explicit SharedFdIo(SharedFD);
 
-  Result<size_t> PartialRead(void* buf, size_t count) override;
-  Result<size_t> PartialWrite(const void* buf, size_t count) override;
-  Result<size_t> SeekSet(size_t offset) override;
-  Result<size_t> SeekCur(ssize_t offset) override;
-  Result<size_t> SeekEnd(ssize_t offset) override;
-  Result<size_t> PartialReadAt(void* buf, size_t count,
-                               size_t offset) const override;
-  Result<size_t> PartialWriteAt(const void* buf, size_t count,
-                                size_t offset) override;
+  Result<uint64_t> Read(void* buf, uint64_t count) override;
+  Result<uint64_t> Write(const void* buf, uint64_t count) override;
+  Result<uint64_t> SeekSet(uint64_t offset) override;
+  Result<uint64_t> SeekCur(int64_t offset) override;
+  Result<uint64_t> SeekEnd(int64_t offset) override;
+  Result<uint64_t> PRead(void* buf, uint64_t count,
+                         uint64_t offset) const override;
+  Result<uint64_t> PWrite(const void* buf, uint64_t count,
+                          uint64_t offset) override;
 
  private:
   SharedFD fd_;
