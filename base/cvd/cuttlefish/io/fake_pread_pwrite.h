@@ -27,5 +27,12 @@ namespace cuttlefish {
  * Will not call PRead() on the ReaderSeeker instance.
  */
 Result<uint64_t> FakePRead(ReaderSeeker&, void* buf, uint64_t count, uint64_t offset);
+/**
+ * Best-effort fake pwrite(2) using Write() and Seek*() calls.
+ *
+ * Will not call PWrite() on the WriterSeeker instance.
+ */
+Result<uint64_t> FakePWrite(WriterSeeker&, const void* buf, uint64_t count,
+                            uint64_t offset);
 
 }  // namespace cuttlefish
