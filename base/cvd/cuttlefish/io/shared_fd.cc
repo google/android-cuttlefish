@@ -28,45 +28,45 @@ namespace cuttlefish {
 
 SharedFdIo::SharedFdIo(SharedFD fd) : fd_(std::move(fd)) {}
 
-Result<size_t> SharedFdIo::PartialRead(void* buf, size_t count) {
-  ssize_t data_read = fd_->Read(buf, count);
+Result<uint64_t> SharedFdIo::Read(void* buf, uint64_t count) {
+  int64_t data_read = fd_->Read(buf, count);
   CF_EXPECT_GE(data_read, 0, fd_->StrError());
   return data_read;
 }
 
-Result<size_t> SharedFdIo::PartialWrite(const void* buf, size_t count) {
-  ssize_t data_written = fd_->Write(buf, count);
+Result<uint64_t> SharedFdIo::Write(const void* buf, uint64_t count) {
+  int64_t data_written = fd_->Write(buf, count);
   CF_EXPECT_GE(data_written, 0, fd_->StrError());
   return data_written;
 }
 
-Result<size_t> SharedFdIo::SeekSet(size_t offset) {
+Result<uint64_t> SharedFdIo::SeekSet(uint64_t offset) {
   CF_EXPECT_EQ(fd_->LSeek(offset, SEEK_SET), offset, fd_->StrError());
   return offset;
 }
 
-Result<size_t> SharedFdIo::SeekCur(ssize_t offset) {
-  ssize_t new_offset = fd_->LSeek(offset, SEEK_CUR);
+Result<uint64_t> SharedFdIo::SeekCur(int64_t offset) {
+  int64_t new_offset = fd_->LSeek(offset, SEEK_CUR);
   CF_EXPECT_GE(new_offset, 0, fd_->StrError());
   return new_offset;
 }
 
-Result<size_t> SharedFdIo::SeekEnd(ssize_t offset) {
-  ssize_t new_offset = fd_->LSeek(offset, SEEK_END);
+Result<uint64_t> SharedFdIo::SeekEnd(int64_t offset) {
+  int64_t new_offset = fd_->LSeek(offset, SEEK_END);
   CF_EXPECT_GE(new_offset, 0, fd_->StrError());
   return new_offset;
 }
 
-Result<size_t> SharedFdIo::PartialReadAt(void* buf, size_t count,
-                                         size_t offset) const {
-  ssize_t data_read = fd_->PRead(buf, count, offset);
+Result<uint64_t> SharedFdIo::PRead(void* buf, uint64_t count,
+                                   uint64_t offset) const {
+  int64_t data_read = fd_->PRead(buf, count, offset);
   CF_EXPECT_GE(data_read, 0, fd_->StrError());
   return data_read;
 }
 
-Result<size_t> SharedFdIo::PartialWriteAt(const void* buf, size_t count,
-                                          size_t offset) {
-  ssize_t data_written = fd_->PWrite(buf, count, offset);
+Result<uint64_t> SharedFdIo::PWrite(const void* buf, uint64_t count,
+                                    uint64_t offset) {
+  int64_t data_written = fd_->PWrite(buf, count, offset);
   CF_EXPECT_GE(data_written, 0, fd_->StrError());
   return data_written;
 }

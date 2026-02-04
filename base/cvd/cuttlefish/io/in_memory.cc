@@ -30,15 +30,15 @@ namespace cuttlefish {
 
 InMemoryIo::InMemoryIo(std::vector<char> data) : data_(std::move(data)) {}
 
-Result<size_t> InMemoryIo::PartialRead(void* buf, size_t count) {
+Result<uint64_t> InMemoryIo::Read(void* buf, uint64_t count) {
   std::lock_guard lock(mutex_);
-  size_t to_read = ClampRange(cursor_, count);
+  uint64_t to_read = ClampRange(cursor_, count);
   memcpy(buf, &data_[cursor_], to_read);
   cursor_ += to_read;
   return to_read;
 }
 
-Result<size_t> InMemoryIo::PartialWrite(const void* buf, size_t count) {
+Result<uint64_t> InMemoryIo::Write(const void* buf, uint64_t count) {
   std::lock_guard lock(mutex_);
   GrowTo(cursor_ + count);
   memcpy(&data_[cursor_], buf, count);
@@ -46,37 +46,38 @@ Result<size_t> InMemoryIo::PartialWrite(const void* buf, size_t count) {
   return count;
 }
 
-Result<size_t> InMemoryIo::SeekSet(size_t offset) {
+Result<uint64_t> InMemoryIo::SeekSet(uint64_t offset) {
   std::lock_guard lock(mutex_);
   GrowTo(offset);
   return cursor_ = offset;
 }
 
-Result<size_t> InMemoryIo::SeekCur(ssize_t offset) {
+Result<uint64_t> InMemoryIo::SeekCur(int64_t offset) {
   std::lock_guard lock(mutex_);
-  size_t new_pos = std::max<ssize_t>(static_cast<ssize_t>(cursor_) + offset, 0);
+  uint64_t new_pos =
+      std::max<int64_t>(static_cast<int64_t>(cursor_) + offset, 0);
   GrowTo(new_pos);
   return cursor_ = new_pos;
 }
 
-Result<size_t> InMemoryIo::SeekEnd(ssize_t offset) {
+Result<uint64_t> InMemoryIo::SeekEnd(int64_t offset) {
   std::lock_guard lock(mutex_);
-  size_t new_pos =
-      std::max<ssize_t>(static_cast<ssize_t>(data_.size()) + offset, 0);
+  uint64_t new_pos =
+      std::max<int64_t>(static_cast<int64_t>(data_.size()) + offset, 0);
   GrowTo(new_pos);
   return cursor_ = new_pos;
 }
 
-Result<size_t> InMemoryIo::PartialReadAt(void* buf, size_t count,
-                                         size_t offset) const {
+Result<uint64_t> InMemoryIo::PRead(void* buf, uint64_t count,
+                                   uint64_t offset) const {
   std::shared_lock lock(mutex_);
-  size_t to_read = ClampRange(offset, count);
+  uint64_t to_read = ClampRange(offset, count);
   memcpy(buf, &data_[offset], to_read);
   return to_read;
 }
 
-Result<size_t> InMemoryIo::PartialWriteAt(const void* buf, size_t count,
-                                          size_t offset) {
+Result<uint64_t> InMemoryIo::PWrite(const void* buf, uint64_t count,
+                                    uint64_t offset) {
   std::lock_guard lock(mutex_);
   GrowTo(offset + count);
   memcpy(&data_[offset], buf, count);
@@ -84,7 +85,7 @@ Result<size_t> InMemoryIo::PartialWriteAt(const void* buf, size_t count,
 }
 
 // Must be called with the lock held for reading or writing
-size_t InMemoryIo::ClampRange(size_t begin, size_t length) const {
+uint64_t InMemoryIo::ClampRange(uint64_t begin, uint64_t length) const {
   if (begin > data_.size()) {
     return 0;
   }
@@ -92,7 +93,7 @@ size_t InMemoryIo::ClampRange(size_t begin, size_t length) const {
 }
 
 // Must be called with the lock held for writing
-void InMemoryIo::GrowTo(size_t new_size) {
+void InMemoryIo::GrowTo(uint64_t new_size) {
   if (data_.size() < new_size) {
     data_.resize(new_size, '\0');
   }
