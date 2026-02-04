@@ -13,7 +13,7 @@ cuttlefish-frontend (1.41.0) unstable; urgency=medium
 
  -- Jason Macnak <natsu@google.com>  Thu, 29 Jan 2026 13:01:30 -0800
 
-cuttlefish-frontend (1.40.0) unstable; urgency=medium
+cuttlefish-frontend (1.40.0) stable; urgency=medium
 
   *  N/A
 
