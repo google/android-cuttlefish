@@ -37,6 +37,48 @@ const (
 	portOperatorHttps = 1443
 )
 
+type CvdCommonArgs struct {
+	GroupName    string
+	InstanceName string
+	Help         bool
+	Verbosity    string
+}
+
+type CvdArgs struct {
+	CommonArgs     *CvdCommonArgs
+	SubCommandArgs []string
+	flagSet        *flag.FlagSet
+}
+
+func ParseCvdArgs() *CvdArgs {
+	fs := flag.NewFlagSet("podcvd", flag.ExitOnError)
+	commonArgs := CvdCommonArgs{}
+	fs.StringVar(&commonArgs.GroupName, "group_name", "", "Cuttlefish instance group")
+	fs.StringVar(&commonArgs.InstanceName, "instance_name", "", "Cuttlefish instance name or names with comma-separated")
+	fs.BoolVar(&commonArgs.Help, "help", false, "Print help message")
+	fs.StringVar(&commonArgs.Verbosity, "verbosity", "", "Verbosity level of the command")
+	fs.Parse(os.Args[1:])
+	return &CvdArgs{
+		CommonArgs: &commonArgs,
+		// Golang's standard library 'flag' stops parsing just before the first
+		// non-flag argument. As the command 'cvd' expects only selector and driver
+		// options before the subcommand argument, 'subcommandArgs' should be empty
+		// or starting with subcommand name.
+		SubCommandArgs: fs.Args(),
+		flagSet:        fs,
+	}
+}
+
+func (a *CvdArgs) SerializeCommonArgs() []string {
+	var args []string
+	a.flagSet.VisitAll(func(f *flag.Flag) {
+		if f.Value.String() != f.DefValue {
+			args = append(args, fmt.Sprintf("--%s=%s", f.Name, f.Value.String()))
+		}
+	})
+	return args
+}
+
 func cuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, error) {
 	ccmOpts := libcfcontainer.CuttlefishContainerManagerOpts{
 		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
@@ -159,21 +201,12 @@ func main() {
 	// Parse selector and driver options before the subcommand argument only.
 	// TODO(seungjaeyoo): Handle selector/driver options properly for
 	// supporting multiple container instances.
-	flag.String("group_name", "", "Cuttlefish instance group")
-	flag.String("instance_name", "", "Cuttlefish instance name or names with comma-separated")
-	flag.Bool("help", false, "Print help message")
-	flag.String("verbosity", "", "Verbosity level of the command")
-	flag.Parse()
-	// Golang's standard library 'flag' stops parsing just before the first
-	// non-flag argument. As the command 'cvd' expects only selector and driver
-	// options before the subcommand argument, 'subcommandArgs' should be empty
-	// or starting with subcommand name.
-	subcommandArgs := flag.Args()
-	if len(subcommandArgs) == 0 {
+	cvdArgs := ParseCvdArgs()
+	if len(cvdArgs.SubCommandArgs) == 0 {
 		// TODO(seungjaeyoo): Support execution without any subcommand
 		log.Fatal("execution without any subcommand is not implemented yet")
 	}
-	subcommand := flag.Args()[0]
+	subcommand := cvdArgs.SubCommandArgs[0]
 	if subcommand != "create" {
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 		log.Fatalf("subcommand %q is not implemented yet", subcommand)
@@ -188,7 +221,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	stdout, err := ccm.ExecOnContainer(context.Background(), id, append([]string{"cvd"}, os.Args[1:]...))
+
+	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	args = append(args, cvdArgs.SubCommandArgs...)
+	stdout, err := ccm.ExecOnContainer(context.Background(), id, args)
 	if err != nil {
 		log.Fatal(err)
 	}
