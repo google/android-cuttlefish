@@ -29,6 +29,7 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
 )
 
 const (
@@ -41,6 +42,14 @@ func cuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, er
 		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
 	}
 	return libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
+}
+
+func appendPortBindingRange(portMap nat.PortMap, protocol string, portStart int, portEnd int) {
+	for port := portStart; port <= portEnd; port++ {
+		portMap[nat.Port(fmt.Sprintf("%d/%s", port, protocol))] = []nat.PortBinding{
+			{HostPort: fmt.Sprintf("%d", port)},
+		}
+	}
 }
 
 func ensureOperatorHealthy() error {
@@ -89,12 +98,16 @@ func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager) (strin
 			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
 			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
 		},
-		CapAdd:      []string{"NET_RAW"},
-		NetworkMode: container.NetworkMode(fmt.Sprintf("pasta:--host-lo-to-ns-lo,-t,%d,-t,6520-6529,-t,15550-15599,-u,15550-15599", portOperatorHttps)),
+		CapAdd:       []string{"NET_RAW"},
+		PortBindings: nat.PortMap{},
 		Resources: container.Resources{
 			PidsLimit: &pidsLimit,
 		},
 	}
+	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", portOperatorHttps, portOperatorHttps)
+	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 6520, 6529)
+	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 15550, 15599)
+	appendPortBindingRange(containerHostCfg.PortBindings, "udp", 15550, 15599)
 	id, err := ccm.CreateAndStartContainer(ctx, containerCfg, containerHostCfg, "")
 	if err != nil {
 		return "", err
