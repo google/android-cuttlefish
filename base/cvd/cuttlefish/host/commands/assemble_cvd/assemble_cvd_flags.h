@@ -39,7 +39,6 @@ DECLARE_string(overlays);
 DECLARE_string(extra_bootconfig_args);
 DECLARE_vec(serial_number);
 DECLARE_vec(use_random_serial);
-DECLARE_vec(gpu_mode);
 DECLARE_vec(gpu_vhost_user_mode);
 DECLARE_vec(hwcomposer);
 DECLARE_vec(gpu_capture_binary);

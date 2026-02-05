@@ -59,6 +59,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
@@ -280,7 +281,7 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
 
 Result<void> CheckSnapshotCompatible(
     const bool must_be_compatible,
-    const std::map<int, std::string>& calculated_gpu_mode) {
+    const std::map<int, GpuMode>& calculated_gpu_mode) {
   if (!must_be_compatible) {
     return {};
   }
@@ -308,7 +309,7 @@ Result<void> CheckSnapshotCompatible(
    */
   for (const auto& [instance_index, instance_gpu_mode] : calculated_gpu_mode) {
     CF_EXPECTF(
-        instance_gpu_mode == "guest_swiftshader",
+        instance_gpu_mode == GpuMode::GuestSwiftshader,
         "Only 2D guest_swiftshader is supported for snapshot. Consider \"{}\"",
         "--gpu_mode=guest_swiftshader");
   }
@@ -573,9 +574,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> enable_virtiofs_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_virtiofs));
 
-  std::vector<std::string> gpu_mode_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
-  std::map<int, std::string> calculated_gpu_mode_vec;
+  GpuModeFlag gpu_mode_values = CF_EXPECT(GpuModeFlag::FromGlobalGflags());
+  std::map<int, GpuMode> calculated_gpu_mode_vec;
   std::vector<std::string> gpu_vhost_user_mode_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_vhost_user_mode));
   std::vector<std::string> gpu_renderer_features_vec =
@@ -1078,14 +1078,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     // gpu related settings
     const GpuMode gpu_mode = CF_EXPECT(ConfigureGpuSettings(
-        graphics_availability, gpu_mode_vec[instance_index],
+        graphics_availability, gpu_mode_values.ForIndex(instance_index),
         gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
         gpu_context_types_vec[instance_index],
         guest_hwui_renderer_vec[instance_index],
         guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
         guest_configs[instance_index], instance));
-    calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
+    calculated_gpu_mode_vec[instance_index] =
+        gpu_mode_values.ForIndex(instance_index);
 
     instance.set_restart_subprocesses(
         restart_subprocesses_values.ForIndex(instance_index));

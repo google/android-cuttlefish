@@ -31,7 +31,7 @@ GetGraphicsAvailabilityWithSubprocessCheck();
 
 Result<GpuMode> ConfigureGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
+    GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
     std::string& gpu_context_types_arg,
     const std::string& guest_hwui_renderer_arg,
