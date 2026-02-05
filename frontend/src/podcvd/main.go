@@ -52,6 +52,34 @@ func appendPortBindingRange(portMap nat.PortMap, protocol string, portStart int,
 	}
 }
 
+func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager) (string, error) {
+	containerCfg := &container.Config{
+		Env: []string{
+			"ANDROID_HOST_OUT=/host_out",
+			"ANDROID_PRODUCT_OUT=/product_out",
+		},
+		Image: imageName,
+	}
+	pidsLimit := int64(8192)
+	containerHostCfg := &container.HostConfig{
+		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
+		Binds: []string{
+			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
+			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
+		},
+		CapAdd:       []string{"NET_RAW"},
+		PortBindings: nat.PortMap{},
+		Resources: container.Resources{
+			PidsLimit: &pidsLimit,
+		},
+	}
+	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", portOperatorHttps, portOperatorHttps)
+	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 6520, 6529)
+	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 15550, 15599)
+	appendPortBindingRange(containerHostCfg.PortBindings, "udp", 15550, 15599)
+	return ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, "")
+}
+
 func ensureOperatorHealthy() error {
 	client := &http.Client{
 		Timeout: time.Second,
@@ -80,35 +108,10 @@ func ensureOperatorHealthy() error {
 }
 
 func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager) (string, error) {
-	ctx := context.Background()
-	if err := ccm.PullImage(ctx, imageName); err != nil {
+	if err := ccm.PullImage(context.Background(), imageName); err != nil {
 		return "", err
 	}
-	containerCfg := &container.Config{
-		Env: []string{
-			"ANDROID_HOST_OUT=/host_out",
-			"ANDROID_PRODUCT_OUT=/product_out",
-		},
-		Image: imageName,
-	}
-	pidsLimit := int64(8192)
-	containerHostCfg := &container.HostConfig{
-		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
-		Binds: []string{
-			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
-			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
-		},
-		CapAdd:       []string{"NET_RAW"},
-		PortBindings: nat.PortMap{},
-		Resources: container.Resources{
-			PidsLimit: &pidsLimit,
-		},
-	}
-	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", portOperatorHttps, portOperatorHttps)
-	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 6520, 6529)
-	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 15550, 15599)
-	appendPortBindingRange(containerHostCfg.PortBindings, "udp", 15550, 15599)
-	id, err := ccm.CreateAndStartContainer(ctx, containerCfg, containerHostCfg, "")
+	id, err := createAndStartContainer(ccm)
 	if err != nil {
 		return "", err
 	}
