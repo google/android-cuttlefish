@@ -259,12 +259,9 @@ GetNeededVhostUserGpuHostRendererFeatures(
 }
 
 #ifndef __APPLE__
-Result<GpuMode> SelectGpuMode(
-    const std::string& gpu_mode_arg, VmmMode vmm,
-    const GuestConfig& guest_config,
+GpuMode SelectGpuMode(
+    GpuMode gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-  const GpuMode gpu_mode = CF_EXPECT(GpuModeFromString(gpu_mode_arg));
-
   if (gpu_mode == GpuMode::Auto) {
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
       if (HostArch() == Arch::Arm64) {
@@ -307,7 +304,7 @@ Result<GpuMode> SelectGpuMode(
       gpu_mode == GpuMode::GfxstreamGuestAngle ||
       gpu_mode == GpuMode::DrmVirgl) {
     if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(ERROR) << "--gpu_mode=" << gpu_mode_arg
+      LOG(ERROR) << "--gpu_mode=" << GpuModeString(gpu_mode)
                  << " was requested but the prerequisites for accelerated "
                     "rendering were not detected so the device may not "
                     "function correctly. Please consider switching to "
@@ -557,7 +554,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 
 Result<GpuMode> ConfigureGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
-    const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
+    GpuMode gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
     std::string& gpu_context_types_arg,
     const std::string& guest_hwui_renderer_arg,
@@ -569,18 +566,17 @@ Result<GpuMode> ConfigureGpuSettings(
   (void)gpu_vhost_user_mode_arg;
   (void)vmm;
   (void)guest_config;
-  GpuMode gpu_mode = CF_EXPECT(GpuModeFromString(gpu_mode_arg));
   CF_EXPECT(gpu_mode_arg == GpuMode::Auto ||
             gpu_mode_arg == GpuMode::GuestSwiftshader ||
-            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode_arg == GpuMode::None);
-  if (gpu_mode == GpuMode::Auto) {
-    gpu_mode = GpuMode::GuestSwiftshader;
+            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode == GpuMode::None);
+  if (gpu_mode_arg == GpuMode::Auto) {
+    gpu_mode_arg = GpuMode::GuestSwiftshader;
   }
-  instance.set_gpu_mode(gpu_mode);
+  instance.set_gpu_mode(gpu_mode_arg);
   instance.set_enable_gpu_vhost_user(false);
 #else
-  const GpuMode gpu_mode = CF_EXPECT(
-      SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
+  const GpuMode gpu_mode =
+      SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability);
   const bool enable_gpu_vhost_user =
       CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
 

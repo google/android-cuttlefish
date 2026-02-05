@@ -191,6 +191,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gpu_mode",
+    srcs = ["gpu_mode.cc"],
+    hdrs = ["gpu_mode.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/result",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "guest_enforce_security",
     srcs = ["guest_enforce_security.cc"],
     hdrs = ["guest_enforce_security.h"],
