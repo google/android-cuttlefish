@@ -1,0 +1,145 @@
+name: Workflow for Cloud init image for Cuttlefish
+
+on:
+  pull_request:
+    paths:
+      - 'cloud-init-image-for-cuttlefish/**'
+  push:
+    branchs:
+      - '**'
+
+jobs:
+  build-cidata-iso-job:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    defaults:
+      run:
+        working-directory: ./cloud-init-image-for-cuttlefish
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setting up build environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y ca-certificates
+        apt-get install -y cloud-init
+        apt-get install -y xorriso genisoimage
+    - name: Check user-data
+      run: |
+        ./check_user_data.sh
+    - name: Create gigabyte-cidata.iso image
+      run: |
+        ./gen_cidata_iso.sh
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cloud-init-image-for-cuttlefish-artifacts
+        path: cloud-init-image-for-cuttlefish/gigabyte-cidata.iso
+
+  test-qemu-cloud-arm64-cidata-job:
+    needs: build-cidata-iso-job
+    runs-on: ubuntu-22.04
+    container:
+      image: debian:trixie # debian:trixie (amd64)
+    defaults:
+      run:
+        working-directory: ./cloud-init-image-for-cuttlefish
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: cloud-init-image-for-cuttlefish-artifacts
+    - name: Prepare test environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y debconf-utils
+        echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v
+        echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+        dpkg-reconfigure --frontend noninteractive tzdata
+        echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder
+        dpkg-reconfigure --frontend noninteractive pbuilder
+        apt-get install -y util-linux util-linux-extra
+        apt-get install -y xz-utils
+        apt-get install -y qemu-system-arm
+        apt-get install -y expect
+        apt-get install -y e2tools e2fsprogs
+        apt-get install -y guestfish
+        apt-get install -y lvm2
+        apt-get install -y ubuntu-dev-tools
+        apt-get install -y u-boot-qemu
+        apt-get install -y wget curl
+        apt-get install -y openssh-client sshpass
+        apt-get install -y screen
+    - name: Download Debian
+      run: |
+        ./download_debian.sh
+    - name: Download Cuttlefish
+      run: |
+        ../gigabyte-ampere-cuttlefish-installer/utils/download-ci-cf.sh
+    - name: Move artifacts to current working directory.
+      run: |
+        mv ../gigabyte-cidata.iso .
+    - name: Cloud image first boot with qemu
+      run: |
+        screen -d -m -L -Logfile console_001.log ./run_qemu.sh
+        while ! egrep "[^[:space:]]+[[:space:]]login:" console_001.log; do sleep 30; done
+        cp -f console_001.log console_001_p1.log
+        CONSOLELINES=$(cat console_001_p1.log | wc -l)
+        cat console_001_p1.log
+        grep "login:" console_001_p1.log > /dev/null
+        echo "CONSOLELINES=${CONSOLELINES}" >> $GITHUB_ENV
+    - name: Wait for post install script finish
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'while [ ! -e /var/log/custom-startup.log ]; do sleep 30; echo "Check custom-startup.log"; done'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 vsoc-01@localhost:/var/log/custom-startup.log ./custom-startup.log
+        CUSTOM_LOG_LINES=$(wc -l < ./custom-startup.log)
+        cat ./custom-startup.log
+        while ! grep "VM successful" ./custom-startup.log; do sleep 30; sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 vsoc-01@localhost:/var/log/custom-startup.log ./custom-startup.log; tail -n +${CUSTOM_LOG_LINES} ./custom-startup.log; CUSTOM_LOG_LINES=$(wc -l < ./custom-startup.log); done
+    - name: Deploy cuttlefish
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k apt-get install -y unzip'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'mkdir cf'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 cvd-host_package.tar.gz vsoc-01@localhost:/home/vsoc-01/
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; tar -xvf ../cvd-host_package.tar.gz'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'rm -f cvd-host_package.tar.gz'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 aosp_cf_arm64*_phone-*.zip vsoc-01@localhost:/home/vsoc-01/
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; unzip ../aosp_cf_arm64*_phone-*.zip'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'rm -f aosp_cf_arm64*_phone-*.zip'
+    - name: Run cuttlefish command line
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; HOME=$PWD ./bin/launch_cvd -help' || true
+    - name: Run apt-cache policy
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'apt-cache policy'
+    - name: Test for lzop
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'lzop -V'
+    - name: Test for Google NTP server
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p' | grep 'time1.google' && CHECK_GOOGLE_TIME_SERVER=1
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p' | grep '.GOOG.' && CHECK_GOOGLE_TIME_SERVER=1
+        if [ x"${CHECK_GOOGLE_TIME_SERVER}" != x"1" ]; then echo "Google Time Servers not found!"; false; fi
+    - name: Test for ulimit
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -a'
+        test $(sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -n') -ge 2048
+    - name: Test for iptables command
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'update-alternatives --display iptables' | grep "link currently points to /usr/sbin/iptables-legacy"
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
