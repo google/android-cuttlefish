@@ -40,10 +40,12 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
         "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
         "//cuttlefish/host/commands/assemble_cvd/flags:extra_kernel_cmdline",
+        "//cuttlefish/host/commands/assemble_cvd/flags:gpu_mode",
         "//cuttlefish/host/commands/assemble_cvd/flags:guest_enforce_security",
         "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
         "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
         "//cuttlefish/host/libs/config:data_image_policy",
+        "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/result",
     ],
 )
