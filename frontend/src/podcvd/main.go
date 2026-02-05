@@ -84,6 +84,7 @@ func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager) (strin
 	}
 	pidsLimit := int64(8192)
 	containerHostCfg := &container.HostConfig{
+		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
 		Binds: []string{
 			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
 			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
