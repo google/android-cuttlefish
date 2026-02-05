@@ -154,15 +154,9 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.0
         {"androidboot.opengles.version", "196608"},
     };
-  } else if (gpu_mode == GpuMode::Gfxstream ||
-             gpu_mode == GpuMode::GfxstreamGuestAngle ||
-             gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
-             gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
-    const bool uses_angle =
-        gpu_mode == GpuMode::GfxstreamGuestAngle ||
-        gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
-        gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader;
-    const std::string gles_impl = uses_angle ? "angle" : "emulation";
+  } else if (IsGfxstreamMode(gpu_mode)) {
+    const std::string gles_impl =
+        IsGfxstreamGuestAngleMode(gpu_mode) ? "angle" : "emulation";
     const std::string gltransport =
         (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
                                                        : "virtio-gpu-asg";
@@ -451,10 +445,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else if (gpu_mode == GpuMode::GuestSwiftshader ||
-             gpu_mode == GpuMode::Gfxstream ||
-             gpu_mode == GpuMode::GfxstreamGuestAngle ||
-             gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
-             gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+             IsGfxstreamMode(gpu_mode)) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -478,9 +469,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       gpu_device =
           "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"
           "x-gfxstream-composer=on,hostmem=256M";
-    } else if (gpu_mode == GpuMode::GfxstreamGuestAngle ||
-               gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
-               gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+    } else if (IsGfxstreamGuestAngleMode(gpu_mode)) {
       gpu_device =
           "virtio-gpu-rutabaga,gfxstream-vulkan=on,"
           "x-gfxstream-composer=on,hostmem=256M";

@@ -86,4 +86,16 @@ std::string GpuModeString(GpuMode mode) {
   }
 }
 
+bool IsGfxstreamMode(GpuMode mode) {
+  return mode == GpuMode::Gfxstream || mode == GpuMode::GfxstreamGuestAngle ||
+         mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+         mode == GpuMode::GfxstreamGuestAngleHostSwiftshader;
+}
+
+bool IsGfxstreamGuestAngleMode(GpuMode mode) {
+  return mode == GpuMode::GfxstreamGuestAngle ||
+         mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+         mode == GpuMode::GfxstreamGuestAngleHostSwiftshader;
+}
+
 }  // namespace cuttlefish
