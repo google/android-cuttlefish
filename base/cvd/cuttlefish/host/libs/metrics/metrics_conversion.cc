@@ -38,6 +38,8 @@ using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishFlags;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishFlags_DataPolicy;
+using logs::proto::wireless::android::cuttlefish::events::
+    CuttlefishFlags_GpuMode;
 using logs::proto::wireless::android::cuttlefish::events::CuttlefishGuest;
 using logs::proto::wireless::android::cuttlefish::events::
     CuttlefishGuest_EventType;
@@ -59,6 +61,38 @@ CuttlefishFlags_DataPolicy ConvertDataPolicy(DataImagePolicy policy) {
     case DataImagePolicy::UseExisting:
       return CuttlefishFlags_DataPolicy::
           CuttlefishFlags_DataPolicy_CUTTLEFISH_FLAGS_DATA_POLICY_USE_EXISTING;
+  }
+}
+
+CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
+  switch (mode) {
+    case GpuMode::Auto:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_AUTO;
+    case GpuMode::Custom:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_CUSTOM;
+    case GpuMode::DrmVirgl:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER;
+    case GpuMode::Gfxstream:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM;
+    case GpuMode::GfxstreamGuestAngle:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE;
+    case GpuMode::GfxstreamGuestAngleHostLavapipe:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE;
+    case GpuMode::GfxstreamGuestAngleHostSwiftshader:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER;
+    case GpuMode::GuestSwiftshader:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_GUEST_SWIFTSHADER;
+    case GpuMode::None:
+      return CuttlefishFlags_GpuMode::
+          CuttlefishFlags_GpuMode_CUTTLEFISH_FLAGS_GPU_MODE_NONE;
   }
 }
 
@@ -122,6 +156,7 @@ void PopulateCuttlefishGuest(CuttlefishGuest& guest,
   flags.set_daemon(flag_metrics.daemon);
   flags.set_data_policy(ConvertDataPolicy(flag_metrics.data_policy));
   flags.set_extra_kernel_cmdline(flag_metrics.extra_kernel_cmdline);
+  flags.set_gpu_mode_requested(ConvertGpuMode(flag_metrics.gpu_mode));
   flags.set_guest_enforce_security(flag_metrics.guest_enforce_security);
   flags.set_memory_mb(flag_metrics.memory_mb);
   flags.set_restart_subprocesses(flag_metrics.restart_subprocesses);
