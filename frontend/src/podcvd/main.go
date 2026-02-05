@@ -16,25 +16,36 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-connections/nat"
 )
 
 const (
-	imageName         = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable"
-	portOperatorHttps = 1443
+	imageName               = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable"
+	portOperatorHttps       = 1443
+	containerInstanceSubnet = "192.168.80.0/24"
+)
+
+const (
+	labelGroupName = "group_name"
 )
 
 type CvdCommonArgs struct {
@@ -86,21 +97,97 @@ func cuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, er
 	return libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
 }
 
-func appendPortBindingRange(portMap nat.PortMap, protocol string, portStart int, portEnd int) {
+func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string, portStart int, portEnd int) {
 	for port := portStart; port <= portEnd; port++ {
 		portMap[nat.Port(fmt.Sprintf("%d/%s", port, protocol))] = []nat.PortBinding{
-			{HostPort: fmt.Sprintf("%d", port)},
+			{HostIP: hostIP, HostPort: fmt.Sprintf("%d", port)},
 		}
 	}
 }
 
-func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager) (string, error) {
+func containers(ccm libcfcontainer.CuttlefishContainerManager) ([]container.Summary, error) {
+	opts := container.ListOptions{
+		Filters: filters.NewArgs(filters.Arg("label", labelGroupName)),
+	}
+	containers, err := ccm.GetClient().ContainerList(context.Background(), opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list containers: %w", err)
+	}
+	return containers, nil
+}
+
+func ipAddresses(containers []container.Summary) []string {
+	var addrs []string
+	for _, container := range containers {
+		for _, port := range container.Ports {
+			if port.PrivatePort == portOperatorHttps {
+				addrs = append(addrs, port.IP)
+				break
+			}
+		}
+	}
+	return addrs
+}
+
+func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
+	addr := prefix.Masked().Addr().As4()
+	mask := net.CIDRMask(prefix.Bits(), 32)
+	for i := 0; i < 4; i++ {
+		addr[i] |= ^mask[i]
+	}
+	return netip.AddrFrom4(addr)
+}
+
+func findAvailableIPv4Addr(usedIPs []string) (string, error) {
+	prefix, err := netip.ParsePrefix(containerInstanceSubnet)
+	if err != nil {
+		return "", err
+	}
+	usedIPMap := make(map[string]bool)
+	for _, ip := range usedIPs {
+		usedIPMap[ip] = true
+	}
+	usedIPMap[lastIPv4Addr(prefix).String()] = true
+	for ip := prefix.Masked().Addr().Next(); prefix.Contains(ip); ip = ip.Next() {
+		if !usedIPMap[ip.String()] {
+			return ip.String(), nil
+		}
+	}
+	return "", fmt.Errorf("no available IP address found in %q", containerInstanceSubnet)
+}
+
+func instanceGroupNames(containers []container.Summary) []string {
+	var groups []string
+	for _, container := range containers {
+		groups = append(groups, container.Labels[labelGroupName])
+	}
+	return groups
+}
+
+func findAvailableGroupName(usedGroupNames []string) string {
+	const prefix = "cvd_"
+	maxNum := 0
+	for _, name := range usedGroupNames {
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+		num, err := strconv.Atoi(strings.TrimPrefix(name, prefix))
+		if err != nil {
+			continue
+		}
+		maxNum = max(maxNum, num)
+	}
+	return fmt.Sprintf("%s%d", prefix, maxNum+1)
+}
+
+func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, string, error) {
 	containerCfg := &container.Config{
 		Env: []string{
 			"ANDROID_HOST_OUT=/host_out",
 			"ANDROID_PRODUCT_OUT=/product_out",
 		},
-		Image: imageName,
+		Image:  imageName,
+		Labels: map[string]string{},
 	}
 	pidsLimit := int64(8192)
 	containerHostCfg := &container.HostConfig{
@@ -109,20 +196,45 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager) (str
 			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
 			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
 		},
-		CapAdd:       []string{"NET_RAW"},
-		PortBindings: nat.PortMap{},
+		CapAdd: []string{"NET_RAW"},
 		Resources: container.Resources{
 			PidsLimit: &pidsLimit,
 		},
 	}
-	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", portOperatorHttps, portOperatorHttps)
-	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 6520, 6529)
-	appendPortBindingRange(containerHostCfg.PortBindings, "tcp", 15550, 15599)
-	appendPortBindingRange(containerHostCfg.PortBindings, "udp", 15550, 15599)
-	return ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, "")
+	var err error
+	const retryCount = 5
+	for i := 0; i < retryCount; i++ {
+		containers, err := containers(ccm)
+		if err != nil {
+			return "", "", err
+		}
+		ip, err := findAvailableIPv4Addr(ipAddresses(containers))
+		if err != nil {
+			return "", "", err
+		}
+		containerHostCfg.PortBindings = nat.PortMap{}
+		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", portOperatorHttps, portOperatorHttps)
+		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 6520, 6529)
+		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 15550, 15599)
+		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
+		var groupName string
+		if commonArgs.GroupName == "" {
+			groupName = findAvailableGroupName(instanceGroupNames(containers))
+		} else {
+			groupName = commonArgs.GroupName
+		}
+		containerCfg.Labels[labelGroupName] = groupName
+		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(groupName)))[:12]
+		id, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, hash)
+		if err == nil {
+			commonArgs.GroupName = groupName
+			return id, ip, nil
+		}
+	}
+	return "", "", err
 }
 
-func ensureOperatorHealthy() error {
+func ensureOperatorHealthy(ip string) error {
 	client := &http.Client{
 		Timeout: time.Second,
 		Transport: &http.Transport{
@@ -134,7 +246,7 @@ func ensureOperatorHealthy() error {
 	var lastErr error
 	for i := 1; i <= retryCount; i++ {
 		time.Sleep(retryInterval)
-		resp, err := client.Get(fmt.Sprintf("https://localhost:%d/devices", portOperatorHttps))
+		resp, err := client.Get(fmt.Sprintf("https://%s:%d/devices", ip, portOperatorHttps))
 		if err != nil {
 			lastErr = fmt.Errorf("failed to check health of operator: %w", err)
 			continue
@@ -149,18 +261,18 @@ func ensureOperatorHealthy() error {
 	return lastErr
 }
 
-func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager) (string, error) {
+func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, string, error) {
 	if err := ccm.PullImage(context.Background(), imageName); err != nil {
-		return "", err
+		return "", "", err
 	}
-	id, err := createAndStartContainer(ccm)
+	id, ip, err := createAndStartContainer(ccm, commonArgs)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	if err := ensureOperatorHealthy(); err != nil {
-		return "", err
+	if err := ensureOperatorHealthy(ip); err != nil {
+		return "", "", err
 	}
-	return id, nil
+	return id, ip, nil
 }
 
 func parseAdbPorts(stdout string) ([]int, error) {
@@ -181,7 +293,7 @@ func parseAdbPorts(stdout string) ([]int, error) {
 	return ports, nil
 }
 
-func establishAdbConnection(ports ...int) error {
+func establishAdbConnection(ip string, ports ...int) error {
 	adbBin, err := exec.LookPath("adb")
 	if err != nil {
 		return fmt.Errorf("failed to find adb: %w", err)
@@ -190,7 +302,7 @@ func establishAdbConnection(ports ...int) error {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 	for _, port := range ports {
-		if err := exec.Command(adbBin, "connect", fmt.Sprintf("localhost:%d", port)).Run(); err != nil {
+		if err := exec.Command(adbBin, "connect", fmt.Sprintf("%s:%d", ip, port)).Run(); err != nil {
 			return fmt.Errorf("failed to connect to Cuttlefish device: %w", err)
 		}
 	}
@@ -217,7 +329,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// TODO(seungjaeyoo): Prepare a new Cuttlefish host only when it's required.
-	id, err := prepareCuttlefishHost(ccm)
+	id, ip, err := prepareCuttlefishHost(ccm, cvdArgs.CommonArgs)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -233,7 +345,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := establishAdbConnection(ports...); err != nil {
+	if err := establishAdbConnection(ip, ports...); err != nil {
 		log.Fatal(err)
 	}
 }

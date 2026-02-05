@@ -32,6 +32,7 @@ import (
 )
 
 type CuttlefishContainerManager interface {
+	GetClient() *client.Client
 	// Check whether an image with the given name exists on the container engine or not
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
@@ -66,6 +67,10 @@ func NewCuttlefishContainerManager(opts CuttlefishContainerManagerOpts) (*Cuttle
 	return &CuttlefishContainerManagerImpl{
 		cli: cli,
 	}, nil
+}
+
+func (m *CuttlefishContainerManagerImpl) GetClient() *client.Client {
+	return m.cli
 }
 
 func (m *CuttlefishContainerManagerImpl) ImageExists(ctx context.Context, name string) (bool, error) {
