@@ -44,6 +44,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -74,7 +75,7 @@ CrosvmManager::ConfigureGraphics(
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
-  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_3)},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -86,7 +87,7 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "pastel"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+  } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -99,15 +100,15 @@ CrosvmManager::ConfigureGraphics(
         // No "hardware" Vulkan support, yet
         {"androidboot.opengles.version", "196608"},  // OpenGL ES 3.0
     };
-  } else if (instance.gpu_mode() == kGpuModeGfxstream ||
-             instance.gpu_mode() == kGpuModeGfxstreamGuestAngle ||
+  } else if (instance.gpu_mode() == GpuMode::Gfxstream ||
+             instance.gpu_mode() == GpuMode::GfxstreamGuestAngle ||
+             instance.gpu_mode() == GpuMode::GfxstreamGuestAngleHostLavapipe ||
              instance.gpu_mode() ==
-                 kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-             instance.gpu_mode() == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+                 GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     const bool uses_angle =
-        instance.gpu_mode() == kGpuModeGfxstreamGuestAngle ||
-        instance.gpu_mode() == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-        instance.gpu_mode() == kGpuModeGfxstreamGuestAngleHostLavapipe;
+        instance.gpu_mode() == GpuMode::GfxstreamGuestAngle ||
+        instance.gpu_mode() == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+        instance.gpu_mode() == GpuMode::GfxstreamGuestAngleHostSwiftshader;
 
     const std::string gles_impl = uses_angle ? "angle" : "emulation";
 
@@ -129,7 +130,7 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.gltransport", gfxstream_transport},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeCustom) {
+  } else if (instance.gpu_mode() == GpuMode::Custom) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -142,10 +143,10 @@ CrosvmManager::ConfigureGraphics(
         {"androidboot.hardware.gltransport", "virtio-gpu-asg"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeNone) {
+  } else if (instance.gpu_mode() == GpuMode::None) {
     return {};
   } else {
-    return CF_ERR("Unknown GPU mode " << instance.gpu_mode());
+    return CF_ERR("Unknown GPU mode " << GpuModeString(instance.gpu_mode()));
   }
 
   if (auto r = instance.guest_hwui_renderer();
@@ -182,7 +183,7 @@ CrosvmManager::ConfigureBootDevices(
   // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
     int num_gpu_pcis = has_gpu ? 1 : 0;
-    if (instance.gpu_mode() != kGpuModeNone &&
+    if (instance.gpu_mode() != GpuMode::None &&
         !instance.enable_gpu_vhost_user()) {
       // crosvm has an additional PCI device for an ISA bridge when running
       // with a gpu and without vhost user gpu.
@@ -232,8 +233,8 @@ Result<std::string> HostLavapipeIcdPathForArch() {
 
 Result<void> MaybeConfigureVulkanIcd(const CuttlefishConfig& config,
                                      Command* command) {
-  const auto& gpu_mode = config.ForDefaultInstance().gpu_mode();
-  if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+  const GpuMode gpu_mode = config.ForDefaultInstance().gpu_mode();
+  if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     const std::string swiftshader_icd_json_path =
         CF_EXPECT(HostSwiftShaderIcdPathForArch());
 
@@ -242,7 +243,7 @@ Result<void> MaybeConfigureVulkanIcd(const CuttlefishConfig& config,
                                     swiftshader_icd_json_path);
     command->AddEnvironmentVariable("VK_ICD_FILENAMES",
                                     swiftshader_icd_json_path);
-  } else if (gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+  } else if (gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe) {
     const std::string lavapipe_icd_json_path =
         CF_EXPECT(HostLavapipeIcdPathForArch());
 
@@ -306,14 +307,14 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   gpu_device_cmd.Cmd().AddParameter("device");
   gpu_device_cmd.Cmd().AddParameter("gpu");
 
-  const auto& gpu_mode = instance.gpu_mode();
-  CF_EXPECT(
-      gpu_mode == kGpuModeGfxstream ||
-          gpu_mode == kGpuModeGfxstreamGuestAngle ||
-          gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-          gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe ||
-          gpu_mode == kGpuModeGuestSwiftshader,
-      "GPU mode " << gpu_mode << " not yet supported with vhost user gpu.");
+  const GpuMode gpu_mode = instance.gpu_mode();
+  CF_EXPECT(gpu_mode == GpuMode::Gfxstream ||
+                gpu_mode == GpuMode::GfxstreamGuestAngle ||
+                gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+                gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader ||
+                gpu_mode == GpuMode::GuestSwiftshader,
+            "GPU mode " << GpuModeString(gpu_mode)
+                        << " not yet supported with vhost user gpu.");
 
   const std::string gpu_pci_address =
       fmt::format("00:{:0>2x}.0", VmManager::kGpuPciSlotNum);
@@ -321,15 +322,15 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
   // Why does this need JSON instead of just following the normal flags style...
   Json::Value gpu_params_json;
   gpu_params_json["pci-address"] = gpu_pci_address;
-  if (gpu_mode == kGpuModeGuestSwiftshader) {
+  if (gpu_mode == GpuMode::GuestSwiftshader) {
     gpu_params_json["backend"] = "2D";
-  } else if (gpu_mode == kGpuModeGfxstream) {
+  } else if (gpu_mode == GpuMode::Gfxstream) {
     gpu_params_json["context-types"] = "gfxstream-gles:gfxstream-vulkan";
     gpu_params_json["egl"] = true;
     gpu_params_json["gles"] = true;
-  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+  } else if (gpu_mode == GpuMode::GfxstreamGuestAngle ||
+             gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+             gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     gpu_params_json["context-types"] = "gfxstream-vulkan";
     gpu_params_json["egl"] = false;
     gpu_params_json["gles"] = false;
@@ -418,12 +419,12 @@ Result<VhostUserDeviceCommands> BuildVhostUserGpu(
 
 Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
   const auto& instance = config.ForDefaultInstance();
-  const auto& gpu_mode = instance.gpu_mode();
+  const GpuMode gpu_mode = instance.gpu_mode();
 
   const std::string gles_string =
-      gpu_mode == kGpuModeGfxstreamGuestAngle ||
-              gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-              gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe
+      gpu_mode == GpuMode::GfxstreamGuestAngle ||
+              gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+              gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader
           ? ",gles=false"
           : ",gles=true";
 
@@ -472,26 +473,26 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
     crosvm_cmd->AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
 
-  if (gpu_mode == kGpuModeGuestSwiftshader) {
+  if (gpu_mode == GpuMode::GuestSwiftshader) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string, "backend=2D",
                              gpu_common_string);
-  } else if (gpu_mode == kGpuModeDrmVirgl) {
+  } else if (gpu_mode == GpuMode::DrmVirgl) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string,
                              "backend=virglrenderer,context-types=virgl2",
                              gpu_common_3d_string);
-  } else if (gpu_mode == kGpuModeGfxstream) {
+  } else if (gpu_mode == GpuMode::Gfxstream) {
     crosvm_cmd->AddParameter(
         "--gpu=", gpu_displays_string,
         "context-types=gfxstream-gles:gfxstream-vulkan:gfxstream-composer",
         gpu_common_3d_string);
-  } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+  } else if (gpu_mode == GpuMode::GfxstreamGuestAngle ||
+             gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+             gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     crosvm_cmd->AddParameter(
         "--gpu=", gpu_displays_string,
         "context-types=gfxstream-vulkan:gfxstream-composer",
         gpu_common_3d_string);
-  } else if (gpu_mode == kGpuModeCustom) {
+  } else if (gpu_mode == GpuMode::Custom) {
     crosvm_cmd->AddParameter("--gpu=", gpu_displays_string,
                              "context-types=" + instance.gpu_context_types(),
                              gpu_common_string);

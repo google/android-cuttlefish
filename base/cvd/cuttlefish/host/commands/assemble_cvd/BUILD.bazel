@@ -323,6 +323,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:display",
         "//cuttlefish/host/libs/config:external_network_mode",
         "//cuttlefish/host/libs/config:fetcher_configs",
+        "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/config:secure_hals",
@@ -351,6 +352,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/host/libs/config:gpu_mode",
     ],
 )
 
@@ -399,6 +401,7 @@ cf_cc_library(
         "//cuttlefish/host/graphics_detector:graphics_detector_cc_proto",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:guest_renderer_preload",
         "//cuttlefish/host/libs/config:vmm_mode",

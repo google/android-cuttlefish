@@ -20,6 +20,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/guest_config.h"
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/result/result.h"
 
@@ -28,7 +29,7 @@ namespace cuttlefish {
 gfxstream::proto::GraphicsAvailability
 GetGraphicsAvailabilityWithSubprocessCheck();
 
-Result<std::string> ConfigureGpuSettings(
+Result<GpuMode> ConfigureGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,

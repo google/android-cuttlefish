@@ -35,8 +35,8 @@
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/result/result.h"
 
@@ -221,7 +221,7 @@ Gem5Manager::ConfigureGraphics(
 
   std::unordered_map<std::string, std::string> bootconfig_args;
 
-  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     LOG(INFO) << "We are in SwiftShader mode";
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_1)},
@@ -235,7 +235,7 @@ Gem5Manager::ConfigureGraphics(
         {"androidboot.hardware.vulkan", "pastel"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeGfxstream) {
+  } else if (instance.gpu_mode() == GpuMode::Gfxstream) {
     LOG(INFO) << "We are in Gfxstream mode";
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
@@ -249,10 +249,10 @@ Gem5Manager::ConfigureGraphics(
         {"androidboot.hardware.gltransport", "virtio-gpu-pipe"},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeNone) {
+  } else if (instance.gpu_mode() == GpuMode::None) {
     return {};
   } else {
-    return CF_ERR("Unknown GPU mode " << instance.gpu_mode());
+    return CF_ERR("Unknown GPU mode " << GpuModeString(instance.gpu_mode()));
   }
 
   if (!instance.gpu_angle_feature_overrides_enabled().empty()) {

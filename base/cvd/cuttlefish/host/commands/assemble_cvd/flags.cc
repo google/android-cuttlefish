@@ -79,6 +79,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
@@ -1076,7 +1077,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_lights_server_port(calc_vsock_port(6900));
 
     // gpu related settings
-    const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
+    const GpuMode gpu_mode = CF_EXPECT(ConfigureGpuSettings(
         graphics_availability, gpu_mode_vec[instance_index],
         gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
@@ -1090,8 +1091,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
         restart_subprocesses_values.ForIndex(instance_index));
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
     if (!gpu_capture_binary_vec[instance_index].empty()) {
-      CF_EXPECT(gpu_mode == kGpuModeGfxstream ||
-                    gpu_mode == kGpuModeGfxstreamGuestAngle,
+      CF_EXPECT(gpu_mode == GpuMode::Gfxstream ||
+                    gpu_mode == GpuMode::GfxstreamGuestAngle,
                 "GPU capture only supported with --gpu_mode=gfxstream");
 
       // GPU capture runs in a detached mode where the "launcher" process
@@ -1103,15 +1104,15 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);
     if (!hwcomposer_vec[instance_index].empty()) {
       if (hwcomposer_vec[instance_index] == kHwComposerRanchu) {
-        CF_EXPECT(gpu_mode != kGpuModeDrmVirgl,
+        CF_EXPECT(gpu_mode != GpuMode::DrmVirgl,
                   "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
       }
     }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == kGpuModeDrmVirgl) {
+      if (gpu_mode == GpuMode::DrmVirgl) {
         instance.set_hwcomposer(kHwComposerDrm);
-      } else if (gpu_mode == kGpuModeNone) {
+      } else if (gpu_mode == GpuMode::None) {
         instance.set_hwcomposer(kHwComposerNone);
       } else {
         instance.set_hwcomposer(kHwComposerRanchu);
@@ -1142,7 +1143,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // auto-enabling sandbox when gpu is enabled (b/152323505).
     default_enable_sandbox += comma_str;
     default_enable_virtiofs += comma_str;
-    if (gpu_mode != kGpuModeGuestSwiftshader) {
+    if (gpu_mode != GpuMode::GuestSwiftshader) {
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
       default_enable_virtiofs += "false";
@@ -1393,7 +1394,8 @@ Result<void> SetDefaultFlagsForCrosvm(
 
 void SetDefaultFlagsForGem5() {
   // TODO: Add support for gem5 gpu models
-  SetCommandLineOptionWithMode("gpu_mode", kGpuModeGuestSwiftshader,
+  SetCommandLineOptionWithMode("gpu_mode",
+                               GpuModeString(GpuMode::GuestSwiftshader).c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   SetCommandLineOptionWithMode("cpus", "1",

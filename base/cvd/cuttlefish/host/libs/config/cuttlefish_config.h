@@ -31,11 +31,11 @@
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
@@ -529,7 +529,7 @@ class CuttlefishConfig {
     int modem_simulator_instance_number() const;
     int modem_simulator_sim_type() const;
 
-    std::string gpu_mode() const;
+    GpuMode gpu_mode() const;
     std::string gpu_angle_feature_overrides_enabled() const;
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
@@ -768,7 +768,7 @@ class CuttlefishConfig {
     void set_modem_simulator_instance_number(int instance_numbers);
     void set_modem_simulator_sim_type(int sim_type);
 
-    void set_gpu_mode(const std::string& name);
+    void set_gpu_mode(GpuMode mode);
     void set_gpu_angle_feature_overrides_enabled(const std::string& overrides);
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
