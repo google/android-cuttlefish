@@ -36,7 +36,9 @@ enum class GpuMode {
 };
 
 Result<GpuMode> GpuModeFromString(std::string_view mode);
-
 std::string GpuModeString(GpuMode mode);
+
+bool IsGfxstreamMode(GpuMode mode);
+bool IsGfxstreamGuestAngleMode(GpuMode mode);
 
 }  // namespace cuttlefish

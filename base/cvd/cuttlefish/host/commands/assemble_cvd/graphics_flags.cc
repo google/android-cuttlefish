@@ -584,10 +584,7 @@ Result<GpuMode> ConfigureGpuSettings(
   const bool enable_gpu_vhost_user =
       CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
 
-  if (gpu_mode == GpuMode::Gfxstream ||
-      gpu_mode == GpuMode::GfxstreamGuestAngle ||
-      gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
-      gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
+  if (IsGfxstreamMode(gpu_mode)) {
     CF_EXPECT(SetGfxstreamFlags(gpu_mode, gpu_renderer_features_arg,
                                 guest_config, graphics_availability, instance));
   }
