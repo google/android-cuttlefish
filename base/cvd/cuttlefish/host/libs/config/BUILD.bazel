@@ -126,6 +126,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:external_network_mode",
+        "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:guest_renderer_preload",
         "//cuttlefish/host/libs/config:secure_hals",

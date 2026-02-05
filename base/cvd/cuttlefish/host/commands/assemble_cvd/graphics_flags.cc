@@ -31,6 +31,7 @@
 #include "cuttlefish/host/graphics_detector/graphics_detector.pb.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
@@ -56,32 +57,27 @@ enum class RenderingMode {
 };
 
 CF_UNUSED_ON_MACOS
-Result<RenderingMode> GetRenderingMode(const std::string& mode) {
-  if (mode == std::string(kGpuModeDrmVirgl)) {
-    return RenderingMode::kVirglRenderer;
+Result<RenderingMode> GetRenderingMode(const GpuMode gpu_mode) {
+  switch (gpu_mode) {
+    case GpuMode::Auto:
+      return CF_ERR("Unsupported rendering mode: " << GpuModeString(gpu_mode));
+    case GpuMode::Custom:
+      return RenderingMode::kCustom;
+    case GpuMode::DrmVirgl:
+      return RenderingMode::kVirglRenderer;
+    case GpuMode::Gfxstream:
+      return RenderingMode::kGfxstream;
+    case GpuMode::GfxstreamGuestAngle:
+      return RenderingMode::kGfxstreamGuestAngle;
+    case GpuMode::GfxstreamGuestAngleHostLavapipe:
+      return RenderingMode::kGfxstreamGuestAngleHostLavapipe;
+    case GpuMode::GfxstreamGuestAngleHostSwiftshader:
+      return RenderingMode::kGfxstreamGuestAngleHostSwiftshader;
+    case GpuMode::GuestSwiftshader:
+      return RenderingMode::kGuestSwiftShader;
+    case GpuMode::None:
+      return RenderingMode::kNone;
   }
-  if (mode == std::string(kGpuModeGfxstream)) {
-    return RenderingMode::kGfxstream;
-  }
-  if (mode == std::string(kGpuModeGfxstreamGuestAngle)) {
-    return RenderingMode::kGfxstreamGuestAngle;
-  }
-  if (mode == std::string(kGpuModeGfxstreamGuestAngleHostSwiftShader)) {
-    return RenderingMode::kGfxstreamGuestAngleHostSwiftshader;
-  }
-  if (mode == std::string(kGpuModeGfxstreamGuestAngleHostLavapipe)) {
-    return RenderingMode::kGfxstreamGuestAngleHostLavapipe;
-  }
-  if (mode == std::string(kGpuModeGuestSwiftshader)) {
-    return RenderingMode::kGuestSwiftShader;
-  }
-  if (mode == std::string(kGpuModeCustom)) {
-    return RenderingMode::kCustom;
-  }
-  if (mode == std::string(kGpuModeNone)) {
-    return RenderingMode::kNone;
-  }
-  return CF_ERR("Unsupported rendering mode: " << mode);
 }
 
 struct AngleFeatures {
@@ -263,21 +259,13 @@ GetNeededVhostUserGpuHostRendererFeatures(
 }
 
 #ifndef __APPLE__
-Result<std::string> SelectGpuMode(
+Result<GpuMode> SelectGpuMode(
     const std::string& gpu_mode_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-  if (gpu_mode_arg != kGpuModeAuto && gpu_mode_arg != kGpuModeDrmVirgl &&
-      gpu_mode_arg != kGpuModeCustom && gpu_mode_arg != kGpuModeGfxstream &&
-      gpu_mode_arg != kGpuModeGfxstreamGuestAngle &&
-      gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostSwiftShader &&
-      gpu_mode_arg != kGpuModeGfxstreamGuestAngleHostLavapipe &&
-      gpu_mode_arg != kGpuModeGuestSwiftshader &&
-      gpu_mode_arg != kGpuModeNone) {
-    return CF_ERR("Invalid gpu_mode: " << gpu_mode_arg);
-  }
+  const GpuMode gpu_mode = CF_EXPECT(GpuModeFromString(gpu_mode_arg));
 
-  if (gpu_mode_arg == kGpuModeAuto) {
+  if (gpu_mode == GpuMode::Auto) {
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
       if (HostArch() == Arch::Arm64) {
         LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
@@ -287,7 +275,7 @@ Result<std::string> SelectGpuMode(
                      "thoroughly tested. Please explicitly use "
                      "--gpu_mode=gfxstream or "
                      "--gpu_mode=gfxstream_guest_angle to enable for now.";
-        return kGpuModeGuestSwiftshader;
+        return GpuMode::GuestSwiftshader;
       }
 
       LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
@@ -295,29 +283,29 @@ Result<std::string> SelectGpuMode(
 
       if (VmManagerIsQemu(vmm) && !UseQemuPrebuilt()) {
         LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
-        return kGpuModeGuestSwiftshader;
+        return GpuMode::GuestSwiftshader;
       } else if (guest_config.prefer_drm_virgl_when_supported) {
         LOG(INFO) << "GPU mode from guest config: drm_virgl";
-        return kGpuModeDrmVirgl;
+        return GpuMode::DrmVirgl;
       } else if (!guest_config.gfxstream_supported) {
         LOG(INFO) << "GPU auto mode: guest does not support gfxstream, "
                      "enabling --gpu_mode=guest_swiftshader";
-        return kGpuModeGuestSwiftshader;
+        return GpuMode::GuestSwiftshader;
       } else {
         LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
-        return kGpuModeGfxstream;
+        return GpuMode::Gfxstream;
       }
     } else {
       LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
                    "accelerated rendering support, enabling "
                    "--gpu_mode=guest_swiftshader.";
-      return kGpuModeGuestSwiftshader;
+      return GpuMode::GuestSwiftshader;
     }
   }
 
-  if (gpu_mode_arg == kGpuModeGfxstream ||
-      gpu_mode_arg == kGpuModeGfxstreamGuestAngle ||
-      gpu_mode_arg == kGpuModeDrmVirgl) {
+  if (gpu_mode == GpuMode::Gfxstream ||
+      gpu_mode == GpuMode::GfxstreamGuestAngle ||
+      gpu_mode == GpuMode::DrmVirgl) {
     if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
       LOG(ERROR) << "--gpu_mode=" << gpu_mode_arg
                  << " was requested but the prerequisites for accelerated "
@@ -328,23 +316,23 @@ Result<std::string> SelectGpuMode(
 
     if (VmManagerIsQemu(vmm) && !UseQemuPrebuilt()) {
       LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
-      return kGpuModeGuestSwiftshader;
+      return GpuMode::GuestSwiftshader;
     }
   }
 
-  return gpu_mode_arg;
+  return gpu_mode;
 }
 
-Result<bool> SelectGpuVhostUserMode(const std::string& gpu_mode,
+Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
                                     const std::string& gpu_vhost_user_mode_arg,
                                     VmmMode vmm) {
   CF_EXPECT(gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto ||
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOn ||
             gpu_vhost_user_mode_arg == kGpuVhostUserModeOff);
   if (gpu_vhost_user_mode_arg == kGpuVhostUserModeAuto) {
-    if (gpu_mode == kGpuModeGuestSwiftshader) {
+    if (gpu_mode == GpuMode::GuestSwiftshader) {
       LOG(INFO) << "GPU vhost user auto mode: not needed for --gpu_mode="
-                << gpu_mode << ". Not enabling vhost user gpu.";
+                << GpuModeString(gpu_mode) << ". Not enabling vhost user gpu.";
       return false;
     }
 
@@ -373,7 +361,7 @@ Result<bool> SelectGpuVhostUserMode(const std::string& gpu_mode,
 }
 
 Result<GuestRendererPreload> SelectGuestRendererPreload(
-    const std::string& gpu_mode, const GuestHwuiRenderer guest_hwui_renderer,
+    const GpuMode gpu_mode, const GuestHwuiRenderer guest_hwui_renderer,
     const std::string& guest_renderer_preload_arg) {
   GuestRendererPreload guest_renderer_preload =
       GuestRendererPreload::kGuestDefault;
@@ -385,8 +373,8 @@ Result<GuestRendererPreload> SelectGuestRendererPreload(
 
   if (guest_renderer_preload == GuestRendererPreload::kAuto) {
     if (guest_hwui_renderer == GuestHwuiRenderer::kSkiaVk &&
-        (gpu_mode == kGpuModeGfxstreamGuestAngle ||
-         gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader)) {
+        (gpu_mode == GpuMode::GfxstreamGuestAngle ||
+         gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader)) {
       LOG(INFO) << "Disabling guest renderer preload for Gfxstream based mode "
                    "when running with SkiaVk.";
       guest_renderer_preload = GuestRendererPreload::kDisabled;
@@ -460,7 +448,7 @@ std::string GetGfxstreamRendererFeaturesString(
 
 CF_UNUSED_ON_MACOS
 Result<void> SetGfxstreamFlags(
-    const std::string& gpu_mode, const std::string& gpu_renderer_features_arg,
+    const GpuMode gpu_mode, const std::string& gpu_renderer_features_arg,
     const GuestConfig& guest_config,
     const gfxstream::proto::GraphicsAvailability& availability,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
@@ -479,14 +467,14 @@ Result<void> SetGfxstreamFlags(
     //
     // TODO(b/254721007): replace with a kernel version check after KVM patches
     // land.
-    CF_EXPECT(gpu_mode != kGpuModeGfxstreamGuestAngle,
+    CF_EXPECT(gpu_mode != GpuMode::GfxstreamGuestAngle,
               "--gpu_mode=gfxstream_guest_angle is broken on AMD GPUs.");
   }
 
   std::unordered_map<std::string, bool> features;
 
   // Apply features from host/mode requirements.
-  if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+  if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     features["VulkanUseDedicatedAhbMemoryType"] = true;
   }
 
@@ -567,7 +555,7 @@ GetGraphicsAvailabilityWithSubprocessCheck() {
 #endif
 }
 
-Result<std::string> ConfigureGpuSettings(
+Result<GpuMode> ConfigureGpuSettings(
     const gfxstream::proto::GraphicsAvailability& graphics_availability,
     const std::string& gpu_mode_arg, const std::string& gpu_vhost_user_mode_arg,
     const std::string& gpu_renderer_features_arg,
@@ -581,30 +569,30 @@ Result<std::string> ConfigureGpuSettings(
   (void)gpu_vhost_user_mode_arg;
   (void)vmm;
   (void)guest_config;
-  CF_EXPECT(gpu_mode_arg == kGpuModeAuto ||
-            gpu_mode_arg == kGpuModeGuestSwiftshader ||
-            gpu_mode_arg == kGpuModeDrmVirgl || gpu_mode_arg == kGpuModeNone);
-  std::string gpu_mode = gpu_mode_arg;
-  if (gpu_mode == kGpuModeAuto) {
-    gpu_mode = kGpuModeGuestSwiftshader;
+  GpuMode gpu_mode = CF_EXPECT(GpuModeFromString(gpu_mode_arg));
+  CF_EXPECT(gpu_mode_arg == GpuMode::Auto ||
+            gpu_mode_arg == GpuMode::GuestSwiftshader ||
+            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode_arg == GpuMode::None);
+  if (gpu_mode == GpuMode::Auto) {
+    gpu_mode = GpuMode::GuestSwiftshader;
   }
   instance.set_gpu_mode(gpu_mode);
   instance.set_enable_gpu_vhost_user(false);
 #else
-  const std::string gpu_mode = CF_EXPECT(
+  const GpuMode gpu_mode = CF_EXPECT(
       SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
   const bool enable_gpu_vhost_user =
       CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
 
-  if (gpu_mode == kGpuModeGfxstream ||
-      gpu_mode == kGpuModeGfxstreamGuestAngle ||
-      gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-      gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+  if (gpu_mode == GpuMode::Gfxstream ||
+      gpu_mode == GpuMode::GfxstreamGuestAngle ||
+      gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe ||
+      gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     CF_EXPECT(SetGfxstreamFlags(gpu_mode, gpu_renderer_features_arg,
                                 guest_config, graphics_availability, instance));
   }
 
-  if (gpu_mode == kGpuModeCustom) {
+  if (gpu_mode == GpuMode::Custom) {
     auto requested_types = android::base::Split(gpu_context_types_arg, ":");
     for (const std::string& requested : requested_types) {
       CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,

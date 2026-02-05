@@ -29,8 +29,8 @@ enum class GpuMode {
   DrmVirgl,
   Gfxstream,
   GfxstreamGuestAngle,
-  GfxStreamGuestAngleHostLavapipe,
-  GfxStreamGuestAngleHostSwiftshader,
+  GfxstreamGuestAngleHostLavapipe,
+  GfxstreamGuestAngleHostSwiftshader,
   GuestSwiftshader,
   None,
 };

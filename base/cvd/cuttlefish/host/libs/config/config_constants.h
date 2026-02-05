@@ -66,18 +66,6 @@ inline constexpr char kVhostUserVsockModeAuto[] = "auto";
 inline constexpr char kVhostUserVsockModeTrue[] = "true";
 inline constexpr char kVhostUserVsockModeFalse[] = "false";
 
-inline constexpr char kGpuModeAuto[] = "auto";
-inline constexpr char kGpuModeCustom[] = "custom";
-inline constexpr char kGpuModeDrmVirgl[] = "drm_virgl";
-inline constexpr char kGpuModeGfxstream[] = "gfxstream";
-inline constexpr char kGpuModeGfxstreamGuestAngle[] = "gfxstream_guest_angle";
-inline constexpr char kGpuModeGfxstreamGuestAngleHostSwiftShader[] =
-    "gfxstream_guest_angle_host_swiftshader";
-inline constexpr char kGpuModeGfxstreamGuestAngleHostLavapipe[] =
-    "gfxstream_guest_angle_host_lavapipe";
-inline constexpr char kGpuModeGuestSwiftshader[] = "guest_swiftshader";
-inline constexpr char kGpuModeNone[] = "none";
-
 inline constexpr char kGpuVhostUserModeAuto[] = "auto";
 inline constexpr char kGpuVhostUserModeOn[] = "on";
 inline constexpr char kGpuVhostUserModeOff[] = "off";

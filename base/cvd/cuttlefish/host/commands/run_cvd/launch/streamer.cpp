@@ -37,10 +37,10 @@
 #include "cuttlefish/host/commands/run_cvd/launch/sensors_socket_pair.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/custom_actions.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/feature/feature.h"
@@ -150,7 +150,7 @@ class StreamerSockets : public virtual SetupFeature {
   // SetupFeature
   std::string Name() const override { return "StreamerSockets"; }
   bool Enabled() const override {
-    bool is_accelerated = instance_.gpu_mode() != kGpuModeGuestSwiftshader;
+    bool is_accelerated = instance_.gpu_mode() != GpuMode::GuestSwiftshader;
     return !(VmManagerIsQemu(config_) && is_accelerated);
   }
 

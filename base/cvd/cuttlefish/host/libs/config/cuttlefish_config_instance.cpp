@@ -48,6 +48,7 @@
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/result/result.h"
@@ -682,11 +683,16 @@ int CuttlefishConfig::InstanceSpecific::modem_simulator_sim_type() const {
 }
 
 static constexpr char kGpuMode[] = "gpu_mode";
-std::string CuttlefishConfig::InstanceSpecific::gpu_mode() const {
-  return (*Dictionary())[kGpuMode].asString();
+GpuMode CuttlefishConfig::InstanceSpecific::gpu_mode() const {
+  Result<GpuMode> gpu_mode_result =
+      GpuModeFromString((*Dictionary())[kGpuMode].asString());
+  // The value should be already be validated via `set_gpu_mode` and is only a
+  // string internally.  No need for a `Result` on every getter call
+  CHECK(gpu_mode_result.ok());
+  return *gpu_mode_result;
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(const std::string& name) {
-  (*Dictionary())[kGpuMode] = name;
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(GpuMode mode) {
+  (*Dictionary())[kGpuMode] = GpuModeString(mode);
 }
 
 static constexpr char kGpuAngleFeatureOverridesEnabled[] =

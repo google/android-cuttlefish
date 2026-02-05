@@ -40,7 +40,6 @@
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
@@ -429,19 +428,19 @@ int CuttlefishMain() {
                             std::to_string(instance.memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;
-  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
-  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+  } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
     user_friendly_gpu_mode =
         "VirglRenderer (Accelerated Rendering using Host OpenGL)";
-  } else if (instance.gpu_mode() == kGpuModeGfxstream) {
+  } else if (instance.gpu_mode() == GpuMode::Gfxstream) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host OpenGL and Vulkan)";
-  } else if (instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+  } else if (instance.gpu_mode() == GpuMode::GfxstreamGuestAngle) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host Vulkan)";
   } else {
-    user_friendly_gpu_mode = instance.gpu_mode();
+    user_friendly_gpu_mode = GpuModeString(instance.gpu_mode());
   }
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
