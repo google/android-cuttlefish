@@ -22,6 +22,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
@@ -39,6 +40,7 @@ Result<std::vector<FlagMetrics>> GetFlagMetrics(const int guest_count) {
       CF_EXPECT(DataPolicyFlag::FromGlobalGflags());
   ExtraKernelCmdlineFlag extra_kernel_cmdline_value =
       ExtraKernelCmdlineFlag::FromGlobalGflags();
+  GpuModeFlag gpu_mode_values = CF_EXPECT(GpuModeFlag::FromGlobalGflags());
   GuestEnforceSecurityFlag guest_enforce_security_values =
       CF_EXPECT(GuestEnforceSecurityFlag::FromGlobalGflags());
   MemoryMbFlag memory_mb_values = CF_EXPECT(MemoryMbFlag::FromGlobalGflags());
@@ -52,6 +54,7 @@ Result<std::vector<FlagMetrics>> GetFlagMetrics(const int guest_count) {
         .data_policy = data_policy_values.ForIndex(i),
         // the value is used for all guests
         .extra_kernel_cmdline = extra_kernel_cmdline_value.ForIndex(0),
+        .gpu_mode = gpu_mode_values.ForIndex(i),
         .guest_enforce_security = guest_enforce_security_values.ForIndex(i),
         .memory_mb = memory_mb_values.ForIndex(i),
         .restart_subprocesses = restart_subprocesses_values.ForIndex(i),

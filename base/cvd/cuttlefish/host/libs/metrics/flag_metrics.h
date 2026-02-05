@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -29,6 +30,7 @@ struct FlagMetrics {
   bool daemon;
   DataImagePolicy data_policy;
   std::string extra_kernel_cmdline;
+  GpuMode gpu_mode;
   bool guest_enforce_security;
   int memory_mb;
   bool restart_subprocesses;
