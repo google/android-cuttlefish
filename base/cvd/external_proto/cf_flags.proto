@@ -82,7 +82,7 @@ message CuttlefishFlags {
 
   string extra_kernel_cmdline = 9;
 
-  // Next index: 9
+  // Next index: 10
   enum GpuMode {
     CUTTLEFISH_FLAGS_GPU_MODE_UNSPECIFIED = 0;
     CUTTLEFISH_FLAGS_GPU_MODE_AUTO = 1;
@@ -93,6 +93,7 @@ message CuttlefishFlags {
     CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER = 6;
     CUTTLEFISH_FLAGS_GPU_MODE_GUEST_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE = 7;
     CUTTLEFISH_FLAGS_GPU_MODE_GUEST_VIRGL_RENDERER = 8;
+    CUTTLEFISH_FLAGS_GPU_MODE_NONE = 9;
   }
 
   // The graphics backend that the user asked for through flags.
