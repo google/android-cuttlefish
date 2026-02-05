@@ -125,8 +125,8 @@ message CuttlefishFlags {
   // exists.
   bool run_adb_connector = 19;
 
-  // Whether to start a server sharing the screen over VNC.
-  bool start_vnc_server = 20;
+  // start_vnc_server
+  reserved 20;
 
   bool super_image_specified = 21;
 
