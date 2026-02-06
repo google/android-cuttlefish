@@ -105,7 +105,7 @@ func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string,
 	}
 }
 
-func containers(ccm libcfcontainer.CuttlefishContainerManager) ([]container.Summary, error) {
+func ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager) (map[string]string, error) {
 	opts := container.ListOptions{
 		Filters: filters.NewArgs(filters.Arg("label", labelGroupName)),
 	}
@@ -113,20 +113,23 @@ func containers(ccm libcfcontainer.CuttlefishContainerManager) ([]container.Summ
 	if err != nil {
 		return nil, fmt.Errorf("failed to list containers: %w", err)
 	}
-	return containers, nil
-}
-
-func ipAddresses(containers []container.Summary) []string {
-	var addrs []string
+	groupNameIpAddrMap := make(map[string]string)
 	for _, container := range containers {
+		groupName, exists := container.Labels[labelGroupName]
+		if !exists {
+			continue
+		}
 		for _, port := range container.Ports {
 			if port.PrivatePort == portOperatorHttps {
-				addrs = append(addrs, port.IP)
+				groupNameIpAddrMap[groupName] = port.IP
 				break
 			}
 		}
+		if _, exists := groupNameIpAddrMap[groupName]; !exists {
+			return nil, fmt.Errorf("failed to get IPv4 address for group name %q", groupName)
+		}
 	}
-	return addrs
+	return groupNameIpAddrMap, nil
 }
 
 func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
@@ -138,13 +141,13 @@ func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
 	return netip.AddrFrom4(addr)
 }
 
-func findAvailableIPv4Addr(usedIPs []string) (string, error) {
+func findAvailableIPv4Addr(groupNameIpAddrMap map[string]string) (string, error) {
 	prefix, err := netip.ParsePrefix(containerInstanceSubnet)
 	if err != nil {
 		return "", err
 	}
 	usedIPMap := make(map[string]bool)
-	for _, ip := range usedIPs {
+	for _, ip := range groupNameIpAddrMap {
 		usedIPMap[ip] = true
 	}
 	usedIPMap[lastIPv4Addr(prefix).String()] = true
@@ -156,18 +159,10 @@ func findAvailableIPv4Addr(usedIPs []string) (string, error) {
 	return "", fmt.Errorf("no available IP address found in %q", containerInstanceSubnet)
 }
 
-func instanceGroupNames(containers []container.Summary) []string {
-	var groups []string
-	for _, container := range containers {
-		groups = append(groups, container.Labels[labelGroupName])
-	}
-	return groups
-}
-
-func findAvailableGroupName(usedGroupNames []string) string {
+func findAvailableGroupName(groupNameIpAddrMap map[string]string) string {
 	const prefix = "cvd_"
 	maxNum := 0
-	for _, name := range usedGroupNames {
+	for name := range groupNameIpAddrMap {
 		if !strings.HasPrefix(name, prefix) {
 			continue
 		}
@@ -180,7 +175,11 @@ func findAvailableGroupName(usedGroupNames []string) string {
 	return fmt.Sprintf("%s%d", prefix, maxNum+1)
 }
 
-func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, string, error) {
+func containerName(groupName string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(groupName)))[:12]
+}
+
+func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, error) {
 	containerCfg := &container.Config{
 		Env: []string{
 			"ANDROID_HOST_OUT=/host_out",
@@ -204,13 +203,13 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 	var err error
 	const retryCount = 5
 	for i := 0; i < retryCount; i++ {
-		containers, err := containers(ccm)
+		groupNameIpAddrMap, err := ipv4AddressesByGroupNames(ccm)
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
-		ip, err := findAvailableIPv4Addr(ipAddresses(containers))
+		ip, err := findAvailableIPv4Addr(groupNameIpAddrMap)
 		if err != nil {
-			return "", "", err
+			return "", err
 		}
 		containerHostCfg.PortBindings = nat.PortMap{}
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", portOperatorHttps, portOperatorHttps)
@@ -219,19 +218,17 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
 		var groupName string
 		if commonArgs.GroupName == "" {
-			groupName = findAvailableGroupName(instanceGroupNames(containers))
+			groupName = findAvailableGroupName(groupNameIpAddrMap)
 		} else {
 			groupName = commonArgs.GroupName
 		}
 		containerCfg.Labels[labelGroupName] = groupName
-		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(groupName)))[:12]
-		id, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, hash)
-		if err == nil {
+		if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, containerName(groupName)); err == nil {
 			commonArgs.GroupName = groupName
-			return id, ip, nil
+			return ip, nil
 		}
 	}
-	return "", "", err
+	return "", err
 }
 
 func ensureOperatorHealthy(ip string) error {
@@ -261,18 +258,18 @@ func ensureOperatorHealthy(ip string) error {
 	return lastErr
 }
 
-func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, string, error) {
+func prepareCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) error {
 	if err := ccm.PullImage(context.Background(), imageName); err != nil {
-		return "", "", err
+		return err
 	}
-	id, ip, err := createAndStartContainer(ccm, commonArgs)
+	ip, err := createAndStartContainer(ccm, commonArgs)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 	if err := ensureOperatorHealthy(ip); err != nil {
-		return "", "", err
+		return err
 	}
-	return id, ip, nil
+	return nil
 }
 
 func parseAdbPorts(stdout string) ([]int, error) {
@@ -310,16 +307,16 @@ func establishAdbConnection(ip string, ports ...int) error {
 }
 
 func main() {
-	// Parse selector and driver options before the subcommand argument only.
-	// TODO(seungjaeyoo): Handle selector/driver options properly for
-	// supporting multiple container instances.
 	cvdArgs := ParseCvdArgs()
 	if len(cvdArgs.SubCommandArgs) == 0 {
 		// TODO(seungjaeyoo): Support execution without any subcommand
 		log.Fatal("execution without any subcommand is not implemented yet")
 	}
 	subcommand := cvdArgs.SubCommandArgs[0]
-	if subcommand != "create" {
+	switch subcommand {
+	case "bugreport", "create", "display", "env", "screen_recording", "status":
+		// These are supported subcommands on podcvd.
+	default:
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 		log.Fatalf("subcommand %q is not implemented yet", subcommand)
 	}
@@ -328,24 +325,34 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// TODO(seungjaeyoo): Prepare a new Cuttlefish host only when it's required.
-	id, ip, err := prepareCuttlefishHost(ccm, cvdArgs.CommonArgs)
-	if err != nil {
-		log.Fatal(err)
+	if subcommand == "create" {
+		if err := prepareCuttlefishHost(ccm, cvdArgs.CommonArgs); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	stdout, err := ccm.ExecOnContainer(context.Background(), id, args)
+	stdout, err := ccm.ExecOnContainer(context.Background(), containerName(cvdArgs.CommonArgs.GroupName), args)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// TODO(seungjaeyoo): Establish ADB connection only when it's required.
-	ports, err := parseAdbPorts(stdout)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := establishAdbConnection(ip, ports...); err != nil {
-		log.Fatal(err)
+
+	if subcommand == "create" {
+		groupNameIpAddrMap, err := ipv4AddressesByGroupNames(ccm)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ports, err := parseAdbPorts(stdout)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
+		if !exists {
+			log.Fatalf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
+		}
+		if err := establishAdbConnection(ip, ports...); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
