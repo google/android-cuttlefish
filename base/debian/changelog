@@ -1,8 +1,25 @@
-cuttlefish-common (1.42.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.42.0) unstable; urgency=medium
 
-  * N/A
+* Start development on v1.42 by @jmacnak in https://github.com/google/android-cuttlefish/pull/2097
+* Add `data_policy` to list of flags gathered for metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2065
+* Extract some CuttlefishConfig::InstanceSpecific members to be free functions (#2) by @Databean in https://github.com/google/android-cuttlefish/pull/2094
+* Don't mandate that AndroidBuild implementations provide SetExtractDir by @Databean in https://github.com/google/android-cuttlefish/pull/2101
+* Create a generic I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2096
+* Introduce a utility for reading boot images by @Databean in https://github.com/google/android-cuttlefish/pull/2095
+* Gather metrics for `restart_subprocesses` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2098
+* Gather metrics for `memory_mb` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2099
+* Avoid access before initialization in DisplayHandler by @jemoreira in https://github.com/google/android-cuttlefish/pull/2104
+* Gather metrics for `guest_enforce_security` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2100
+* Skip group name check on the container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2102
+* Create an in-memory implementation of the I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2106
+* Gather metrics for `extra_kernel_cmdline` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2103
+* Use more posix-like names in the IO abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2109
+* Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
+* Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
+* Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
+* Mark 1.40 as stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2108
 
- -- Jason Macnak <natsu@google.com>  Fri, 30 Jan 2026 22:59:43 -0800
+ -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:00:34 +0000
 
 cuttlefish-common (1.41.0) unstable; urgency=medium
 
