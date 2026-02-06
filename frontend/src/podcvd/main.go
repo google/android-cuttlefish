@@ -29,7 +29,7 @@ func main() {
 	}
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
-	case "bugreport", "create", "display", "env", "screen_recording", "status":
+	case "bugreport", "create", "display", "env", "powerbtn", "restart", "resume", "screen_recording", "snapshot_take", "status", "suspend":
 		// These are supported subcommands on podcvd.
 	default:
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
