@@ -1,8 +1,10 @@
-cuttlefish-frontend (1.42.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.42.0) unstable; urgency=medium
 
-  * N/A
+* Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
+* Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
+* Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
 
- -- Jason Macnak <natsu@google.com>  Fri, 30 Jan 2026 23:00:14 -0800
+ -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:01:35 +0000
 
 cuttlefish-frontend (1.41.0) unstable; urgency=medium
 
