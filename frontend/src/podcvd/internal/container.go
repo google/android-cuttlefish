@@ -42,7 +42,7 @@ func CuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, er
 }
 
 func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) error {
-	if err := ccm.PullImage(context.Background(), imageName); err != nil {
+	if err := pullContainerImage(ccm); err != nil {
 		return err
 	}
 	ip, err := createAndStartContainer(ccm, commonArgs)
@@ -84,6 +84,15 @@ func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager) (m
 
 func ContainerName(groupName string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(groupName)))[:12]
+}
+
+func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
+	if exists, err := ccm.ImageExists(context.Background(), imageName); err != nil {
+		return err
+	} else if exists {
+		return nil
+	}
+	return ccm.PullImage(context.Background(), imageName)
 }
 
 func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string, portStart int, portEnd int) {
