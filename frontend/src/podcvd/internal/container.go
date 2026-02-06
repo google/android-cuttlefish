@@ -183,6 +183,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 6520, 6529)
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 15550, 15599)
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
+		containerHostCfg.NetworkMode = container.NetworkMode(fmt.Sprintf("pasta:-a,%s", ip))
 		var groupName string
 		if commonArgs.GroupName == "" {
 			groupName = findAvailableGroupName(groupNameIpAddrMap)
