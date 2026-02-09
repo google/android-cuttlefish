@@ -16,7 +16,6 @@ package internal
 
 import (
 	"context"
-	"crypto/sha256"
 	"crypto/tls"
 	"fmt"
 	"net"
@@ -30,16 +29,8 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-connections/nat"
 )
-
-func CuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, error) {
-	ccmOpts := libcfcontainer.CuttlefishContainerManagerOpts{
-		SockAddr: libcfcontainer.RootlessPodmanSocketAddr(),
-	}
-	return libcfcontainer.NewCuttlefishContainerManager(ccmOpts)
-}
 
 func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) error {
 	if err := pullContainerImage(ccm); err != nil {
@@ -53,37 +44,6 @@ func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonA
 		return err
 	}
 	return nil
-}
-
-func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager) (map[string]string, error) {
-	opts := container.ListOptions{
-		Filters: filters.NewArgs(filters.Arg("label", labelGroupName)),
-	}
-	containers, err := ccm.GetClient().ContainerList(context.Background(), opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list containers: %w", err)
-	}
-	groupNameIpAddrMap := make(map[string]string)
-	for _, container := range containers {
-		groupName, exists := container.Labels[labelGroupName]
-		if !exists {
-			continue
-		}
-		for _, port := range container.Ports {
-			if port.PrivatePort == portOperatorHttps {
-				groupNameIpAddrMap[groupName] = port.IP
-				break
-			}
-		}
-		if _, exists := groupNameIpAddrMap[groupName]; !exists {
-			return nil, fmt.Errorf("failed to get IPv4 address for group name %q", groupName)
-		}
-	}
-	return groupNameIpAddrMap, nil
-}
-
-func ContainerName(groupName string) string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(groupName)))[:12]
 }
 
 func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
