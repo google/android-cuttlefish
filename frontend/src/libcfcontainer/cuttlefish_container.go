@@ -40,7 +40,7 @@ type CuttlefishContainerManager interface {
 	// Create adn start a container instance
 	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
 	// Execute a command on a running container instance
-	ExecOnContainer(ctx context.Context, ctr string, cmd []string) (string, error)
+	ExecOnContainer(ctx context.Context, ctr string, interact bool, cmd []string) (string, error)
 }
 
 type CuttlefishContainerManagerOpts struct {
@@ -154,10 +154,10 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 	return createRes.ID, nil
 }
 
-func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string) (string, error) {
+func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, interact bool, cmd []string) (string, error) {
 	execConfig := container.ExecOptions{
-		AttachStderr: true,
-		AttachStdin:  true,
+		AttachStderr: interact,
+		AttachStdin:  interact,
 		AttachStdout: true,
 		Cmd:          cmd,
 		Tty:          false,
@@ -180,7 +180,12 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 	var stdoutBuf bytes.Buffer
 	go func() {
 		defer close(waitCh)
-		stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
+		var stdout io.Writer
+		if interact {
+			stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+		} else {
+			stdout = &stdoutBuf
+		}
 		if _, err := stdcopy.StdCopy(stdout, os.Stderr, attachRes.Reader); err != nil {
 			log.Printf("failed to propagate standard output: %v", err)
 		}
