@@ -29,7 +29,7 @@ func main() {
 	}
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
-	case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
+	case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 		// These are supported subcommands on podcvd.
 	default:
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
@@ -49,7 +49,8 @@ func main() {
 		// TODO(seungjaeyoo): Validate group name argument.
 	}
 
-	if subcommand == "stop" {
+	switch subcommand {
+	case "remove", "stop":
 		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 		args = append(args, "fleet")
 		stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(cvdArgs.CommonArgs.GroupName), false, args)
@@ -63,6 +64,13 @@ func main() {
 		if err := internal.DisconnectAdb(ccm, *instanceGroup); err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	if subcommand == "remove" {
+		if err := internal.DeleteCuttlefishHost(ccm, cvdArgs.CommonArgs.GroupName); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)

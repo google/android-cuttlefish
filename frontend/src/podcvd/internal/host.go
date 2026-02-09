@@ -46,6 +46,13 @@ func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonA
 	return nil
 }
 
+func DeleteCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
+	if err := ccm.StopAndRemoveContainer(context.Background(), ContainerName(groupName)); err != nil {
+		return fmt.Errorf("failed to stop and remove container: %w", err)
+	}
+	return nil
+}
+
 func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
 	if exists, err := ccm.ImageExists(context.Background(), imageName); err != nil {
 		return err
