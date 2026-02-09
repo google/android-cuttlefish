@@ -58,19 +58,11 @@ func main() {
 
 	switch subcommand {
 	case "create", "start":
-		groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
+		instanceGroup, err := internal.ParseInstanceGroup(stdout, cvdArgs.CommonArgs.GroupName)
 		if err != nil {
 			log.Fatal(err)
 		}
-		ports, err := internal.ParseAdbPorts(stdout)
-		if err != nil {
-			log.Fatal(err)
-		}
-		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
-		if !exists {
-			log.Fatalf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
-		}
-		if err := internal.EstablishAdbConnection(ip, ports...); err != nil {
+		if err := internal.ConnectOrDisconnectAdb(ccm, *instanceGroup, true); err != nil {
 			log.Fatal(err)
 		}
 	}
