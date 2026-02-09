@@ -15,30 +15,35 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"os/exec"
+
+	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
 )
 
-func ParseAdbPorts(stdout string) ([]int, error) {
-	type Instance struct {
-		AdbPort int `json:"adb_port"`
+func ConnectOrDisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup, enable bool) error {
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
+	if err != nil {
+		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
-	type InstanceGroup struct {
-		Instances []Instance `json:"instances"`
+	ip, exists := groupNameIpAddrMap[instanceGroup.GroupName]
+	if !exists {
+		return fmt.Errorf("failed to find IPv4 address for group name %q", instanceGroup.GroupName)
 	}
-	var instanceGroup InstanceGroup
-	if err := json.Unmarshal([]byte(stdout), &instanceGroup); err != nil {
-		return nil, err
-	}
-	var ports []int
-	for _, instance := range instanceGroup.Instances {
-		ports = append(ports, instance.AdbPort)
-	}
-	return ports, nil
+	return handleAdbConnection(enable, ip, adbPorts(instanceGroup)...)
 }
 
-func EstablishAdbConnection(ip string, ports ...int) error {
+func adbPorts(instanceGroup InstanceGroup) []int {
+	var ports []int
+	for _, instance := range instanceGroup.Instances {
+		if instance.AdbPort > 0 {
+			ports = append(ports, instance.AdbPort)
+		}
+	}
+	return ports
+}
+
+func handleAdbConnection(enable bool, ip string, ports ...int) error {
 	adbBin, err := exec.LookPath("adb")
 	if err != nil {
 		return fmt.Errorf("failed to find adb: %w", err)
@@ -46,8 +51,9 @@ func EstablishAdbConnection(ip string, ports ...int) error {
 	if err := exec.Command(adbBin, "start-server").Run(); err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
+	subcommandMap := map[bool]string{true: "connect", false: "disconnect"}
 	for _, port := range ports {
-		if err := exec.Command(adbBin, "connect", fmt.Sprintf("%s:%d", ip, port)).Run(); err != nil {
+		if err := exec.Command(adbBin, subcommandMap[enable], fmt.Sprintf("%s:%d", ip, port)).Run(); err != nil {
 			return fmt.Errorf("failed to connect to Cuttlefish device: %w", err)
 		}
 	}
