@@ -30,6 +30,10 @@ type InstanceGroup struct {
 	Instances []Instance `json:"instances" validate:"dive,required"`
 }
 
+type InstanceGroups struct {
+	Groups []InstanceGroup `json:"groups" validate:"dive,required"`
+}
+
 func ParseInstanceGroup(jsonStr, groupName string) (*InstanceGroup, error) {
 	var instanceGroup InstanceGroup
 	if err := json.Unmarshal([]byte(jsonStr), &instanceGroup); err != nil {
@@ -39,6 +43,25 @@ func ParseInstanceGroup(jsonStr, groupName string) (*InstanceGroup, error) {
 	if err := validate.Struct(instanceGroup); err != nil {
 		return nil, fmt.Errorf("invalid JSON object: %w", err)
 	}
+	if instanceGroup.GroupName != groupName {
+		return nil, fmt.Errorf("unexpected group name observed while parsing JSON object (expected: %q, actual: %q)", groupName, instanceGroup.GroupName)
+	}
+	return &instanceGroup, nil
+}
+
+func ParseInstanceGroups(jsonStr, groupName string) (*InstanceGroup, error) {
+	var instanceGroups InstanceGroups
+	if err := json.Unmarshal([]byte(jsonStr), &instanceGroups); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON object: %w", err)
+	}
+	validate := validator.New()
+	if err := validate.Struct(instanceGroups); err != nil {
+		return nil, fmt.Errorf("invalid JSON object: %w", err)
+	}
+	if len(instanceGroups.Groups) != 1 {
+		return nil, fmt.Errorf("unexpected number of groups observed while parsing JSON object: %d", len(instanceGroups.Groups))
+	}
+	instanceGroup := instanceGroups.Groups[0]
 	if instanceGroup.GroupName != groupName {
 		return nil, fmt.Errorf("unexpected group name observed while parsing JSON object (expected: %q, actual: %q)", groupName, instanceGroup.GroupName)
 	}

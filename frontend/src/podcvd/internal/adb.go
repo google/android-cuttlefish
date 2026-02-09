@@ -21,7 +21,15 @@ import (
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
 )
 
-func ConnectOrDisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup, enable bool) error {
+func ConnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup) error {
+	return connectOrDisconnectAdb(ccm, instanceGroup, true)
+}
+
+func DisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup) error {
+	return connectOrDisconnectAdb(ccm, instanceGroup, false)
+}
+
+func connectOrDisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup, enable bool) error {
 	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
