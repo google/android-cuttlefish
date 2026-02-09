@@ -29,7 +29,7 @@ func main() {
 	}
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
-	case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "suspend":
+	case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 		// These are supported subcommands on podcvd.
 	default:
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
@@ -49,6 +49,22 @@ func main() {
 		// TODO(seungjaeyoo): Validate group name argument.
 	}
 
+	if subcommand == "stop" {
+		args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+		args = append(args, "fleet")
+		stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(cvdArgs.CommonArgs.GroupName), false, args)
+		if err != nil {
+			log.Fatal(err)
+		}
+		instanceGroup, err := internal.ParseInstanceGroups(stdout, cvdArgs.CommonArgs.GroupName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := internal.DisconnectAdb(ccm, *instanceGroup); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
 	stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(cvdArgs.CommonArgs.GroupName), true, args)
@@ -62,7 +78,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := internal.ConnectOrDisconnectAdb(ccm, *instanceGroup, true); err != nil {
+		if err := internal.ConnectAdb(ccm, *instanceGroup); err != nil {
 			log.Fatal(err)
 		}
 	}
