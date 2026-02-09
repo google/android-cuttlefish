@@ -37,10 +37,12 @@ type CuttlefishContainerManager interface {
 	ImageExists(ctx context.Context, name string) (bool, error)
 	// Pull the container image
 	PullImage(ctx context.Context, name string) error
-	// Create adn start a container instance
+	// Create and start a container instance
 	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
 	// Execute a command on a running container instance
 	ExecOnContainer(ctx context.Context, ctr string, interact bool, cmd []string) (string, error)
+	// Stop and remove a container instance
+	StopAndRemoveContainer(ctx context.Context, ctr string) error
 }
 
 type CuttlefishContainerManagerOpts struct {
@@ -198,6 +200,16 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 		return "", fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
 	}
 	return stdoutBuf.String(), nil
+}
+
+func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
+	if err := m.cli.ContainerStop(ctx, ctr, container.StopOptions{}); err != nil {
+		return fmt.Errorf("failed to stop docker container: %w", err)
+	}
+	if err := m.cli.ContainerRemove(ctx, ctr, container.RemoveOptions{}); err != nil {
+		return fmt.Errorf("failed to remove docker container: %w", err)
+	}
+	return nil
 }
 
 func RootlessPodmanSocketAddr() string {
