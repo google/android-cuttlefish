@@ -40,10 +40,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if subcommand == "create" {
+	switch subcommand {
+	case "create":
 		if err := internal.CreateCuttlefishHost(ccm, cvdArgs.CommonArgs); err != nil {
 			log.Fatal(err)
 		}
+	default:
+		// TODO(seungjaeyoo): Validate group name argument.
 	}
 
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
