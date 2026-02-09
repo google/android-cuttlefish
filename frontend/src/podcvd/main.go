@@ -29,7 +29,7 @@ func main() {
 	}
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
-	case "bugreport", "create", "display", "env", "powerbtn", "restart", "resume", "screen_recording", "snapshot_take", "status", "suspend":
+	case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "suspend":
 		// These are supported subcommands on podcvd.
 	default:
 		// TODO(seungjaeyoo): Support other subcommands of cvd as well.
@@ -53,7 +53,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if subcommand == "create" {
+	switch subcommand {
+	case "create", "start":
 		groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
 		if err != nil {
 			log.Fatal(err)
