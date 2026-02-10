@@ -22,6 +22,7 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/result/result.h"
 
@@ -29,38 +30,27 @@ DEFINE_string(system_image_dir, CF_DEFAULTS_SYSTEM_IMAGE_DIR,
               "Directory where `.img` files are loaded from");
 
 namespace cuttlefish {
+namespace {
+
+constexpr char kFlagName[] = "system_image_dir";
+
+}
 
 Result<SystemImageDirFlag> SystemImageDirFlag::FromGlobalGflags() {
   gflags::CommandLineFlagInfo flag_info =
-      gflags::GetCommandLineFlagInfoOrDie("system_image_dir");
-
+      gflags::GetCommandLineFlagInfoOrDie(kFlagName);
   std::string system_image_dir_flag = flag_info.is_default
                                           ? DefaultGuestImagePath("")
                                           : flag_info.current_value;
-
-  CF_EXPECT(!system_image_dir_flag.empty(),
-            "--system_image_dir must be specified.");
+  CF_EXPECTF(!system_image_dir_flag.empty(), "--{} must be specified.",
+             kFlagName);
 
   std::vector<std::string> paths =
       android::base::Split(system_image_dir_flag, ",");
-  CF_EXPECT(!paths.empty());
-
   return SystemImageDirFlag(std::move(paths));
 }
 
-std::string SystemImageDirFlag::ForIndex(size_t argument_index) const {
-  if (argument_index >= system_image_dirs_.size()) {
-    argument_index = 0;
-  }
-  return system_image_dirs_[argument_index];
-}
-
-const std::vector<std::string>& SystemImageDirFlag::AsVector() const {
-  return system_image_dirs_;
-}
-
-SystemImageDirFlag::SystemImageDirFlag(
-    std::vector<std::string> system_image_dirs)
-    : system_image_dirs_(std::move(system_image_dirs)) {}
+SystemImageDirFlag::SystemImageDirFlag(std::vector<std::string> flag_values)
+    : FlagBase<std::string>(std::move(flag_values)) {}
 
 }  // namespace cuttlefish

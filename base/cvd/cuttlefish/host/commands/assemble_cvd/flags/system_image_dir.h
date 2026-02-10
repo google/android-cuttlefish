@@ -18,28 +18,18 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class SystemImageDirFlag {
+class SystemImageDirFlag : public FlagBase<std::string> {
  public:
   static Result<SystemImageDirFlag> FromGlobalGflags();
-
-  // Note: While most vectorized arguments are aligned with instance numbers
-  // matching the instance_nums flag (or num_instances in the simple case),
-  // since this is used to derive flag default values for other vectorized
-  // flags, it is accessed directly by index instead.
-  std::string ForIndex(size_t argument_index) const;
-
-  size_t Size() const { return system_image_dirs_.size(); }
-
-  const std::vector<std::string>& AsVector() const;
+  ~SystemImageDirFlag() override = default;
 
  private:
-  explicit SystemImageDirFlag(std::vector<std::string> system_image_dirs);
-
-  std::vector<std::string> system_image_dirs_;
+  explicit SystemImageDirFlag(std::vector<std::string>);
 };
 
 }  // namespace cuttlefish
