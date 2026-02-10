@@ -33,6 +33,9 @@ class FlagBase {
     }
   }
 
+  std::size_t Size() const { return values_.size(); }
+  const std::vector<T>& AsVector() const { return values_; }
+
  protected:
   FlagBase(std::vector<T> flag_values) : values_(std::move(flag_values)) {}
   virtual ~FlagBase() = 0;

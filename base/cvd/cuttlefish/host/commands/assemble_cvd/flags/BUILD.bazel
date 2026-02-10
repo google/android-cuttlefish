@@ -306,6 +306,7 @@ cf_cc_library(
     hdrs = ["system_image_dir.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
         "//libbase",
         "@gflags",
