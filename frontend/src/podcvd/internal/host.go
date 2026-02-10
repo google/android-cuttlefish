@@ -173,7 +173,7 @@ func ensureOperatorHealthy(ip string) error {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
-	const retryCount = 5
+	const retryCount = 10
 	const retryInterval = time.Second
 	var lastErr error
 	for i := 1; i <= retryCount; i++ {
