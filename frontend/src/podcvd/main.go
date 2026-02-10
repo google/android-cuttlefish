@@ -16,9 +16,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
@@ -104,6 +106,55 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	return errors.Join(errs...)
 }
 
+func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) error {
+	type cvdFleetResponse struct {
+		Groups []json.RawMessage `json:"groups"`
+	}
+
+	groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
+	if err != nil {
+		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+	}
+	var wg sync.WaitGroup
+	wg.Add(len(groupNameIpAddrMap))
+	resCh := make(chan cvdFleetResponse, len(groupNameIpAddrMap))
+	errCh := make(chan error, len(groupNameIpAddrMap))
+	for groupName := range groupNameIpAddrMap {
+		go func() {
+			defer wg.Done()
+			stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(groupName), false, []string{"cvd", "fleet"})
+			if err != nil {
+				errCh <- err
+				return
+			}
+			var res cvdFleetResponse
+			errCh <- json.Unmarshal([]byte(stdout), &res)
+			resCh <- res
+		}()
+	}
+	wg.Wait()
+	close(resCh)
+	close(errCh)
+
+	var errs []error
+	for err := range errCh {
+		errs = append(errs, err)
+	}
+	if err := errors.Join(errs...); err != nil {
+		return err
+	}
+	combinedRes := cvdFleetResponse{}
+	for res := range resCh {
+		combinedRes.Groups = append(combinedRes.Groups, res.Groups...)
+	}
+	combinedOutput, err := json.MarshalIndent(combinedRes, "", "        ")
+	if err != nil {
+		return err
+	}
+	os.Stdout.Write(append(combinedOutput, '\n'))
+	return nil
+}
+
 func main() {
 	cvdArgs := internal.ParseCvdArgs()
 	if len(cvdArgs.SubCommandArgs) == 0 {
@@ -124,6 +175,10 @@ func main() {
 		}
 	case "clear", "reset":
 		if err := clearAllCuttlefishHosts(ccm); err != nil {
+			log.Fatal(err)
+		}
+	case "fleet":
+		if err := fleetAllCuttlefishHosts(ccm); err != nil {
 			log.Fatal(err)
 		}
 	default:
