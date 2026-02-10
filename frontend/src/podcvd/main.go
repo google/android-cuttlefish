@@ -47,7 +47,20 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 			return err
 		}
 	default:
-		// TODO(seungjaeyoo): Validate group name argument.
+		if cvdArgs.CommonArgs.GroupName == "" {
+			groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
+			if err != nil {
+				return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+			}
+			if len(groupNameIpAddrMap) != 1 {
+				// TODO(seungjaeyoo): Support to select group name from the terminal.
+				return fmt.Errorf("the number of instance groups isn't 1 (actual: %d)", len(groupNameIpAddrMap))
+			}
+			for groupName := range groupNameIpAddrMap {
+				cvdArgs.CommonArgs.GroupName = groupName
+				break
+			}
+		}
 	}
 	switch subcommand {
 	case "remove", "stop":
