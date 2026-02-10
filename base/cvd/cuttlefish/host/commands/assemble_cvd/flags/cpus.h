@@ -29,7 +29,7 @@ class CpusFlag : public FlagBase<int> {
   ~CpusFlag() override = default;
 
  private:
-  CpusFlag(std::vector<int>);
+  explicit CpusFlag(std::vector<int> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

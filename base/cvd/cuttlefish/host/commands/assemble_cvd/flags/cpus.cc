@@ -37,12 +37,11 @@ constexpr char kFlagName[] = "cpus";
 
 Result<CpusFlag> CpusFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<int> flag_values =
-      CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
-  return CpusFlag(std::move(flag_values));
+  FromGflags<int> result = CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
+  return CpusFlag(std::move(result.values), result.is_default);
 }
 
-CpusFlag::CpusFlag(std::vector<int> flag_values)
-    : FlagBase<int>(std::move(flag_values)) {}
+CpusFlag::CpusFlag(std::vector<int> flag_values, bool is_default)
+    : FlagBase<int>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

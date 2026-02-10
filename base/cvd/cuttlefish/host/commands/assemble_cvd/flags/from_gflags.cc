@@ -37,7 +37,7 @@ Result<std::string> ParseString(const std::string& value, const std::string&) {
 }
 
 template <typename T>
-Result<std::vector<T>> FromGlobalGflags(
+Result<FromGflags<T>> FromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
     std::vector<T> default_values,
     std::function<Result<T>(const std::string& value, const std::string& name)>
@@ -55,11 +55,18 @@ Result<std::vector<T>> FromGlobalGflags(
       values[i] = CF_EXPECT(parse_func(string_values[i], flag_name));
     }
   }
-  return std::move(values);
+  return FromGflags<T>{
+      .values = std::move(values),
+      // TODO: chadreynolds - replace with
+      // gflags::WasPresentOnCommandLine(flag_name) if it becomes available
+      // That function is more accurate at determining if the flag was
+      // user-provided
+      .is_default = flag_info.is_default,
+  };
 }
 
 template <typename T>
-Result<std::vector<T>> FromGlobalGflags(
+Result<FromGflags<T>> FromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
     std::function<Result<T>(const std::string& value, const std::string& name)>
         parse_func) {
@@ -77,26 +84,30 @@ Result<std::vector<T>> FromGlobalGflags(
 
 }  // namespace
 
-Result<std::vector<bool>> BoolFromGlobalGflags(
+template struct FromGflags<bool>;
+template struct FromGflags<int>;
+template struct FromGflags<std::string>;
+
+Result<FromGflags<bool>> BoolFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info,
     const std::string& flag_name) {
   return CF_EXPECT(FromGlobalGflags<bool>(flag_info, flag_name, ParseBool));
 }
 
-Result<std::vector<bool>> BoolFromGlobalGflags(
-    const gflags::CommandLineFlagInfo& flag_info,
-    const std::string& flag_name, bool default_value) {
+Result<FromGflags<bool>> BoolFromGlobalGflags(
+    const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
+    bool default_value) {
   return CF_EXPECT(
       FromGlobalGflags<bool>(flag_info, flag_name, {default_value}, ParseBool));
 }
 
-Result<std::vector<int>> IntFromGlobalGflags(
+Result<FromGflags<int>> IntFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info,
     const std::string& flag_name) {
   return CF_EXPECT(FromGlobalGflags<int>(flag_info, flag_name, ParseInt));
 }
 
-Result<std::vector<std::string>> StringFromGlobalGflags(
+Result<FromGflags<std::string>> StringFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info,
     const std::string& flag_name) {
   return CF_EXPECT(

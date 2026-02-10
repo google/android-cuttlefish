@@ -32,7 +32,7 @@ class UseCvdallocFlag : public FlagBase<bool> {
   ~UseCvdallocFlag() override = default;
 
  private:
-  UseCvdallocFlag(std::vector<bool> flag_values);
+  explicit UseCvdallocFlag(std::vector<bool> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

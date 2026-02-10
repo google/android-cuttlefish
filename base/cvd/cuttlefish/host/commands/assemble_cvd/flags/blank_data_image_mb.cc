@@ -40,20 +40,20 @@ constexpr char kFlagName[] = "blank_data_image_mb";
 Result<BlankDataImageMbFlag> BlankDataImageMbFlag::FromGlobalGflags(
     const std::vector<GuestConfig>& guest_configs) {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<int> flag_values =
-      CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
+  FromGflags<int> result = CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
 
-  if (guest_configs.size() > flag_values.size()) {
-    flag_values.resize(guest_configs.size(), -1);
-    for (int i = flag_values.size(); i < guest_configs.size(); i++) {
-      flag_values[i] = guest_configs[i].blank_data_image_mb;
+  if (guest_configs.size() > result.values.size()) {
+    result.values.resize(guest_configs.size(), -1);
+    for (int i = result.values.size(); i < guest_configs.size(); i++) {
+      result.values[i] = guest_configs[i].blank_data_image_mb;
     }
   }
 
-  return BlankDataImageMbFlag(std::move(flag_values));
+  return BlankDataImageMbFlag(std::move(result.values), result.is_default);
 }
 
-BlankDataImageMbFlag::BlankDataImageMbFlag(std::vector<int> flag_values)
-    : FlagBase<int>(std::move(flag_values)) {}
+BlankDataImageMbFlag::BlankDataImageMbFlag(std::vector<int> flag_values,
+                                           bool is_default)
+    : FlagBase<int>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

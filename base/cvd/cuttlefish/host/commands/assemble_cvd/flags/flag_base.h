@@ -33,15 +33,19 @@ class FlagBase {
     }
   }
 
+  bool IsDefault() const { return is_default_; }
+
   std::size_t Size() const { return values_.size(); }
   const std::vector<T>& AsVector() const { return values_; }
 
  protected:
-  FlagBase(std::vector<T> flag_values) : values_(std::move(flag_values)) {}
+  explicit FlagBase(std::vector<T> flag_values, bool is_default)
+      : values_(std::move(flag_values)), is_default_(is_default) {}
   virtual ~FlagBase() = 0;
 
  private:
   std::vector<T> values_;
+  bool is_default_;
 };
 
 template <typename T>
