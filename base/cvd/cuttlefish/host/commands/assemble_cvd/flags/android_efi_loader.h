@@ -34,7 +34,8 @@ class AndroidEfiLoaderFlag : public FlagBase<std::string> {
   ~AndroidEfiLoaderFlag() override = default;
 
  private:
-  AndroidEfiLoaderFlag(std::vector<std::string>);
+  explicit AndroidEfiLoaderFlag(std::vector<std::string> flag_values,
+                                bool is_default);
 };
 
 }  // namespace cuttlefish

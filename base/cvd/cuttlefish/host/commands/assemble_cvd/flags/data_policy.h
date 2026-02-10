@@ -30,7 +30,8 @@ class DataPolicyFlag : public FlagBase<DataImagePolicy> {
   ~DataPolicyFlag() override = default;
 
  private:
-  DataPolicyFlag(std::vector<DataImagePolicy>);
+  explicit DataPolicyFlag(std::vector<DataImagePolicy> flag_values,
+                          bool is_default);
 };
 
 }  // namespace cuttlefish

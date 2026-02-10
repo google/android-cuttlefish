@@ -42,15 +42,16 @@ constexpr char kFlagName[] = "data_policy";
 
 Result<DataPolicyFlag> DataPolicyFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<std::string> flag_string_values =
+  FromGflags<std::string> result =
       CF_EXPECT(StringFromGlobalGflags(flag_info, kFlagName));
   std::vector<DataImagePolicy> flag_values;
-  std::transform(flag_string_values.cbegin(), flag_string_values.cend(),
+  std::transform(result.values.cbegin(), result.values.cend(),
                  std::back_inserter(flag_values), DataImagePolicyFromString);
-  return DataPolicyFlag(std::move(flag_values));
+  return DataPolicyFlag(std::move(flag_values), result.is_default);
 }
 
-DataPolicyFlag::DataPolicyFlag(std::vector<DataImagePolicy> flag_values)
-    : FlagBase<DataImagePolicy>(std::move(flag_values)) {}
+DataPolicyFlag::DataPolicyFlag(std::vector<DataImagePolicy> flag_values,
+                               bool is_default)
+    : FlagBase<DataImagePolicy>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

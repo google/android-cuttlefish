@@ -39,12 +39,11 @@ constexpr char kFlagName[] = "memory_mb";
 
 Result<MemoryMbFlag> MemoryMbFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<int> flag_values =
-      CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
-  return MemoryMbFlag(std::move(flag_values));
+  FromGflags<int> result = CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
+  return MemoryMbFlag(std::move(result.values), result.is_default);
 }
 
-MemoryMbFlag::MemoryMbFlag(std::vector<int> flag_values)
-    : FlagBase<int>(std::move(flag_values)) {}
+MemoryMbFlag::MemoryMbFlag(std::vector<int> flag_values, bool is_default)
+    : FlagBase<int>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

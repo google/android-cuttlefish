@@ -34,12 +34,12 @@ Result<UseCvdallocFlag> UseCvdallocFlag::FromGlobalGflags(
     const Defaults &defaults) {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie("use_cvdalloc");
   bool flag_default = defaults.BoolValue("use_cvdalloc").value_or(false);
-  std::vector<bool> flag_values =
+  FromGflags<bool> result =
       CF_EXPECT(BoolFromGlobalGflags(flag_info, "use_cvdalloc", flag_default));
-  return UseCvdallocFlag(std::move(flag_values));
+  return UseCvdallocFlag(std::move(result.values), result.is_default);
 }
 
-UseCvdallocFlag::UseCvdallocFlag(std::vector<bool> flag_values)
-    : FlagBase<bool>(std::move(flag_values)) {}
+UseCvdallocFlag::UseCvdallocFlag(std::vector<bool> flag_values, bool is_default)
+    : FlagBase<bool>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

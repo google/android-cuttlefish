@@ -38,12 +38,13 @@ constexpr char kFlagName[] = "experimental_build_super_image";
 
 Result<BuildSuperImageFlag> BuildSuperImageFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<bool> flag_values =
+  FromGflags<bool> result =
       CF_EXPECT(BoolFromGlobalGflags(flag_info, kFlagName));
-  return BuildSuperImageFlag(std::move(flag_values));
+  return BuildSuperImageFlag(std::move(result.values), result.is_default);
 }
 
-BuildSuperImageFlag::BuildSuperImageFlag(std::vector<bool> flag_values)
-    : FlagBase<bool>(std::move(flag_values)) {}
+BuildSuperImageFlag::BuildSuperImageFlag(std::vector<bool> flag_values,
+                                         bool is_default)
+    : FlagBase<bool>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

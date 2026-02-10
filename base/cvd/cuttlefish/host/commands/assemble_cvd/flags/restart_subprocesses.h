@@ -29,7 +29,8 @@ class RestartSubprocessesFlag : public FlagBase<bool> {
   ~RestartSubprocessesFlag() override = default;
 
  private:
-  RestartSubprocessesFlag(std::vector<bool>);
+  explicit RestartSubprocessesFlag(std::vector<bool> flag_values,
+                                   bool is_default);
 };
 
 }  // namespace cuttlefish

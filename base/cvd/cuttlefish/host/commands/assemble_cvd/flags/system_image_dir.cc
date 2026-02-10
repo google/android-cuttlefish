@@ -47,10 +47,11 @@ Result<SystemImageDirFlag> SystemImageDirFlag::FromGlobalGflags() {
 
   std::vector<std::string> paths =
       android::base::Split(system_image_dir_flag, ",");
-  return SystemImageDirFlag(std::move(paths));
+  return SystemImageDirFlag(std::move(paths), flag_info.is_default);
 }
 
-SystemImageDirFlag::SystemImageDirFlag(std::vector<std::string> flag_values)
-    : FlagBase<std::string>(std::move(flag_values)) {}
+SystemImageDirFlag::SystemImageDirFlag(std::vector<std::string> flag_values,
+                                       bool is_default)
+    : FlagBase<std::string>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

@@ -29,7 +29,8 @@ class SystemImageDirFlag : public FlagBase<std::string> {
   ~SystemImageDirFlag() override = default;
 
  private:
-  explicit SystemImageDirFlag(std::vector<std::string>);
+  explicit SystemImageDirFlag(std::vector<std::string> flag_values,
+                              bool is_default);
 };
 
 }  // namespace cuttlefish
