@@ -18,7 +18,6 @@
 
 #include <sys/epoll.h>
 
-#include <memory>
 #include <optional>
 #include <set>
 #include <shared_mutex>
@@ -36,7 +35,7 @@ struct EpollEvent {
 class Epoll {
  public:
   static Result<Epoll> Create();
-  Epoll(); // Invalid instance
+  Epoll();  // Invalid instance
   Epoll(Epoll&&);
   Epoll& operator=(Epoll&&);
 
@@ -49,16 +48,6 @@ class Epoll {
  private:
   Epoll(SharedFD);
 
-  /**
-   * This read-write mutex is read-locked to perform epoll operations, and
-   * write-locked to replace the file descriptor.
-   *
-   * A read-write mutex is used here to make it possible to update the watched
-   * set while the epoll resource is being waited on by another thread, while
-   * excluding the possibility of the move constructor or assignment constructor
-   * from stealing the file descriptor out from under waiting threads.
-   */
-  std::shared_mutex epoll_mutex_;
   SharedFD epoll_fd_;
   /**
    * This read-write mutex is read-locked when interacting with it as a const
