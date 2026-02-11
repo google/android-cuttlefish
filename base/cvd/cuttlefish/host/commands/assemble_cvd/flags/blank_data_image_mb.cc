@@ -44,7 +44,7 @@ Result<BlankDataImageMbFlag> BlankDataImageMbFlag::FromGlobalGflags(
       CF_EXPECT(IntFromGlobalGflags(flag_info, kFlagName));
 
   if (guest_configs.size() > flag_values.size()) {
-    flag_values.reserve(guest_configs.size());
+    flag_values.resize(guest_configs.size(), -1);
     for (int i = flag_values.size(); i < guest_configs.size(); i++) {
       flag_values[i] = guest_configs[i].blank_data_image_mb;
     }
