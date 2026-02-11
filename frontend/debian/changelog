@@ -1,9 +1,9 @@
-cuttlefish-frontend (1.41.0) unstable; urgency=medium
+cuttlefish-frontend (1.41.0) stable; urgency=medium
 
   * cvdexec is available to pull our container image into local podman engine by @0405ysj in https://github.com/google/android-cuttlefish/pull/2017
   * Rename cvdexec into podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2077
   * podcvd can create Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2078
-  * podcvd can execute cvd create on Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2085 
+  * podcvd can execute cvd create on Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2085
 
  -- Jason Macnak <natsu@google.com>  Thu, 29 Jan 2026 13:01:30 -0800
 
