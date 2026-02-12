@@ -319,6 +319,7 @@ cf_cc_library(
     hdrs = ["use_cvdalloc.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
         "//cuttlefish/host/libs/config/defaults",
         "//cuttlefish/result",

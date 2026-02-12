@@ -22,6 +22,7 @@
 
 #include <gflags/gflags.h>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/from_gflags.h"
 #include "cuttlefish/result/result.h"
 
@@ -38,15 +39,7 @@ Result<UseCvdallocFlag> UseCvdallocFlag::FromGlobalGflags(
   return UseCvdallocFlag(std::move(flag_values));
 }
 
-bool UseCvdallocFlag::ForIndex(const std::size_t index) const {
-  if (index < values_.size()) {
-    return values_[index];
-  } else {
-    return values_[0];
-  }
-}
-
-UseCvdallocFlag::UseCvdallocFlag(std::vector<bool> values)
-    : values_(std::move(values)) {}
+UseCvdallocFlag::UseCvdallocFlag(std::vector<bool> flag_values)
+    : FlagBase<bool>(std::move(flag_values)) {}
 
 }  // namespace cuttlefish

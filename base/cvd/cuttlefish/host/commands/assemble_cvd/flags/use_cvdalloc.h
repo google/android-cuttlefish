@@ -19,22 +19,20 @@
 
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 /* `--use_cvdalloc` flag */
-class UseCvdallocFlag {
+class UseCvdallocFlag : public FlagBase<bool> {
  public:
   static Result<UseCvdallocFlag> FromGlobalGflags(const Defaults &defaults);
-
-  bool ForIndex(const std::size_t index) const;
+  ~UseCvdallocFlag() override = default;
 
  private:
-  UseCvdallocFlag(std::vector<bool> values);
-
-  std::vector<bool> values_;
+  UseCvdallocFlag(std::vector<bool> flag_values);
 };
 
 }  // namespace cuttlefish
