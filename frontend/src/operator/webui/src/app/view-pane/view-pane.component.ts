@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject} from '@angular/core';
+import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject, DOCUMENT} from '@angular/core';
 import {DisplaysService} from '../displays.service';
 import {
   asyncScheduler,
@@ -15,7 +15,6 @@ import {
   KtdGridLayoutItem,
   ktdTrackById,
 } from '@katoid/angular-grid-layout';
-import {DOCUMENT} from '@angular/common';
 import {DisplayInfo} from '../../../../intercept/js/server_connector'
 
 interface DeviceGridItem extends KtdGridLayoutItem {
