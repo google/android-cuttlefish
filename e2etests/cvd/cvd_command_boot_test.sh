@@ -36,6 +36,10 @@ if [[ "${TARGET}" == "" ]]; then
   echo "Missing required -t argument"
 fi
 
+if [[ "${LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE}" != "" ]]; then
+  LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE=$(readlink -f "${LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE}")
+fi
+
 workdir="$(mktemp -d -t cvd_command_test.XXXXXX)"
 
 function collect_logs_and_cleanup() {
@@ -68,17 +72,9 @@ cvd fetch \
   --target_directory="${workdir}" \
   ${credential_arg}
 
-# This argument is supported at fetch and create time. Applying it to both
-# invocations would make it replace the debian_substition_marker list, applying
-# it only to one out of two cases makes it additive.
-substitution_arg=""
-if [[ -n "$SUBSTITUTIONS" ]]; then
-  substitution_arg="--host_substitutions=${SUBSTITUTIONS}"
-fi
-
 (
   cd "${workdir}"
-  cvd create ${substitution_arg} --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
+  cvd create --report_anonymous_usage_stats=y --undefok=report_anonymous_usage_stats
   if (( $# > 0 )); then
     cvd "$@"
   fi

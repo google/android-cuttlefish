@@ -41,9 +41,6 @@ for arg in "$@"; do
     --credential-source=*)
       CREDENTIAL_SOURCE="${arg#*=}"
       ;;
-    --substitutions=*)
-      SUBSTITUTIONS="${arg#*=}"
-      ;;
     --xml-test-result-converter-path=*)
       XML_CONVERTER_PATH="${arg#*=}"
       ;;
@@ -199,14 +196,6 @@ sed -i 's|_kernel"|_kernel_zzz"|g' ${workdir}/fetcher_config.json
 echo "$(date +'%Y-%m-%dT%H:%M:%S%z')"
 echo "Creating a Cuttlefish device with: ${CUTTLEFISH_CREATE_ARGS}"
 
-# This argument is supported at fetch and create time. Applying it to both
-# invocations would make it replace the debian_substition_marker list,
-# applying it only to one out of two cases makes it additive.
-substitution_arg=""
-if [[ -n "$SUBSTITUTIONS" ]]; then
-  substitution_arg="--host_substitutions=${SUBSTITUTIONS}"
-fi
-
 # Note: `eval` used because `CUTTLEFISH_CREATE_ARGS` might have been
 # escaped by Bazel.
 eval \
@@ -214,7 +203,6 @@ HOME="$(pwd)" \
 cvd create \
   --report_anonymous_usage_stats=y \
   --undefok=report_anonymous_usage_stats \
-  "${substitution_arg}" \
   "${CUTTLEFISH_CREATE_ARGS}" \
   2>&1 | tee "${CVD_CREATE_LOG_FILE}"
 
