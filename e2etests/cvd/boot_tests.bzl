@@ -132,4 +132,20 @@ def cvd_cts_test(
             "no-sandbox",
         ] + tags,
     )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = "enormous",
+        srcs = ["cvd_xts_test.sh"],
+        args = args,
+        data = [
+            "//:debian_substitution_marker",
+            "//cvd:convert_xts_xml_to_junit_xml_bin",
+        ],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ] + tags,
+    )
 
