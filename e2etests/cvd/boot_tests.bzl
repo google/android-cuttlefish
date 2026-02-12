@@ -31,12 +31,10 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
         ],
     )
 
-def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", substitutions = "", tags = []):
+def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", tags = [], env = {}, data = []):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
-    if substitutions:
-        args += ["-s", ",".join(substitutions)]
     args += cvd_command
     native.sh_test(
         name = name,
@@ -48,6 +46,8 @@ def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_sou
             "external",
             "no-sandbox",
         ] + tags,
+        env = env,
+        data = data,
     )
 
 def metrics_test(name, branch, target, credential_source = ""):
@@ -75,7 +75,6 @@ def cvd_cts_test(
         cts_args,
         cuttlefish_create_args = [],
         credential_source = "",
-        substitutions = "",
         tags = []):
     """Runs a given set of CTS tests on a given Cuttlefish build."""
     args = [
@@ -91,9 +90,6 @@ def cvd_cts_test(
 
     if credential_source:
         args.append("--credential-source=" + credential_source)
-
-    if substitutions:
-        args.append("--substitutions=\"" + ",".join(substitutions) + "\"")
 
     native.sh_test(
         name = name,

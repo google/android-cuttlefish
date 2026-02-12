@@ -1,0 +1,286 @@
+# cuttlefish debian_substitution_marker v1
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/adb_connector"
+  link_name: "bin/adb_connector"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/allocd_client"
+  link_name: "bin/allocd_client"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/assemble_cvd"
+  link_name: "bin/assemble_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/casimir_control_server"
+  link_name: "bin/casimir_control_server"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cf_vhost_user_input"
+  link_name: "bin/cf_vhost_user_input"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/console_forwarder"
+  link_name: "bin/console_forwarder"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_import_locations"
+  link_name: "bin/cvd_import_locations"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_internal_display"
+  link_name: "bin/cvd_internal_display"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_internal_host_bugreport"
+  link_name: "bin/cvd_internal_host_bugreport"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_internal_start"
+  link_name: "bin/cvd_internal_start"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_internal_status"
+  link_name: "bin/cvd_internal_status"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_internal_stop"
+  link_name: "bin/cvd_internal_stop"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_send_id_disclosure"
+  link_name: "bin/cvd_send_id_disclosure"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_update_location"
+  link_name: "bin/cvd_update_location"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/cvd_update_security_algorithm"
+  link_name: "bin/cvd_update_security_algorithm"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/cvdalloc"
+  link_name: "bin/cvdalloc"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/echo_server"
+  link_name: "bin/echo_server"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/extract-ikconfig"
+  link_name: "bin/extract-ikconfig"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/extract-vmlinux"
+  link_name: "bin/extract-vmlinux"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/gnss_grpc_proxy"
+  link_name: "bin/gnss_grpc_proxy"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/graphics_detector"
+  link_name: "bin/graphics_detector"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/health"
+  link_name: "bin/health"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/kernel_log_monitor"
+  link_name: "bin/kernel_log_monitor"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/log_tee"
+  link_name: "bin/log_tee"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/logcat_receiver"
+  link_name: "bin/logcat_receiver"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/metrics_launcher"
+  link_name: "bin/metrics_launcher"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/mkbootfs"
+  link_name: "bin/mkbootfs"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/mkenvimage_slim"
+  link_name: "bin/mkenvimage_slim"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/modem_simulator"
+  link_name: "bin/modem_simulator"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/openwrt_control_server"
+  link_name: "bin/openwrt_control_server"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/operator_proxy"
+  link_name: "bin/operator_proxy"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/powerbtn_cvd"
+  link_name: "bin/powerbtn_cvd"
+}
+
+symlinks {
+  target: "/usr/lib/cuttlefish-common/bin/powerwash_cvd"
+  link_name: "bin/powerwash_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/process_restarter"
+  link_name: "bin/process_restarter"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/record_cvd"
+  link_name: "bin/record_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/restart_cvd"
+  link_name: "bin/restart_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/run_cvd"
+  link_name: "bin/run_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/screen_recording_server"
+  link_name: "bin/screen_recording_server"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/sensors_simulator"
+  link_name: "bin/sensors_simulator"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/simg2img"
+  link_name: "bin/simg2img"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/snapshot_util_cvd"
+  link_name: "bin/snapshot_util_cvd"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/socket_vsock_proxy"
+  link_name: "bin/socket_vsock_proxy"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/tcp_connector"
+  link_name: "bin/tcp_connector"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/tombstone_receiver"
+  link_name: "bin/tombstone_receiver"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/bin/webRTC"
+  link_name: "bin/webRTC"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/keyboard.json"
+  link_name: "etc/default_input_devices/keyboard.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/mouse.json"
+  link_name: "etc/default_input_devices/mouse.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/multi_touchpad_template.json"
+  link_name: "etc/default_input_devices/multi_touchpad_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/multi_touchscreen_template.json"
+  link_name: "etc/default_input_devices/multi_touchscreen_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/rotary_wheel.json"
+  link_name: "etc/default_input_devices/rotary_wheel.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/single_touchpad_template.json"
+  link_name: "etc/default_input_devices/single_touchpad_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/single_touchscreen_template.json"
+  link_name: "etc/default_input_devices/single_touchscreen_template.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/default_input_devices/switches.json"
+  link_name: "etc/default_input_devices/switches.json"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
+  link_name: "etc/modem_simulator/files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/iccprofile_for_sim0.xml"
+  link_name: "etc/modem_simulator/files/iccprofile_for_sim0.xml"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/etc/modem_simulator/files/numeric_operator.xml"
+  link_name: "etc/modem_simulator/files/numeric_operator.xml"
+}
+
+symlinks: {
+  target: "/usr/lib/cuttlefish-common/lib64/vulkan.pastel.so"
+  link_name: "lib64/vulkan.pastel.so"
+}
