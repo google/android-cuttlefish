@@ -33,6 +33,10 @@ if [[ "${TARGET}" == "" ]]; then
   echo "Missing required -t argument"
 fi
 
+if [[ "${LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE}" != "" ]]; then
+  LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE=$(readlink -f "${LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE}")
+fi
+
 workdir="$(mktemp -d -t cvd_command_test.XXXXXX)"
 
 function collect_logs_and_cleanup() {

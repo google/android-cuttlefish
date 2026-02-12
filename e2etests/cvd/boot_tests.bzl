@@ -92,6 +92,19 @@ def metrics_test(name, branch, target, credential_source = ""):
             "no-sandbox",
         ],
     )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = "medium",
+        srcs = ["metrics_test.sh"],
+        args = args,
+        data = ["//:debian_substitution_marker"],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ],
+    )
 
 def cvd_cts_test(
         name,
