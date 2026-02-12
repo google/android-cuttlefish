@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.42.0) unstable; urgency=medium
+cuttlefish-frontend (1.42.0) stable; urgency=medium
 
 * Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
 * Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
