@@ -25,6 +25,10 @@ if [[ -z "${ENV_FILE}" ]]; then
   exit 1
 fi
 
+if [[ "${LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE}" != "" ]]; then
+  LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE=$(readlink -f "${LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE}")
+fi
+
 CMD_OUT="cvd_load_stdout.txt"
 CMD_ERR="cvd_load_stderr.txt"
 
