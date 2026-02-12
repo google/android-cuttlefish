@@ -30,6 +30,22 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
             "no-sandbox",
         ],
     )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = size,
+        srcs = ["cvd_load_boot_test.sh"],
+        args = args,
+        data = [
+            env_file,
+            "//:debian_substitution_marker",
+        ],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ],
+    )
 
 def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", tags = [], env = {}, data = []):
     args = ["-b", branch, "-t", target]
