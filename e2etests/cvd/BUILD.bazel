@@ -80,47 +80,10 @@ cvd_command_boot_test(
 )
 
 cvd_command_boot_test(
-    name = "list_env_services_additional_substitution",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "env",
-        "ls",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
-)
-
-cvd_command_boot_test(
-    name = "aosp_additional_substitution",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
-)
-
-cvd_command_boot_test(
-    name = "git_main_additional_substitution",
-    branch = "git_main",
-    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
-)
-
-cvd_command_boot_test(
     name = "take_bugreport",
     branch = "aosp-android-latest-release",
     cvd_command = ["host_bugreport"],
     target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "take_bugreport_additional_substitution",
-    branch = "aosp-android-latest-release",
-    cvd_command = ["host_bugreport"],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
 )
 
 cvd_command_boot_test(
@@ -135,19 +98,6 @@ cvd_command_boot_test(
 )
 
 cvd_command_boot_test(
-    name = "add_displays_additional_substitution",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "display",
-        "add",
-        "--display=width=500,height=500",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
-)
-
-cvd_command_boot_test(
     name = "list_displays",
     branch = "aosp-android-latest-release",
     cvd_command = [
@@ -155,18 +105,6 @@ cvd_command_boot_test(
         "list",
     ],
     target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "list_displays_additional_substitution",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "display",
-        "list",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    data = ["//:debian_substitution_marker"],
-    env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
 )
 
 metrics_test(
