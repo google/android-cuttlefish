@@ -4,7 +4,7 @@ cuttlefish-common (1.43.0) UNRELEASED; urgency=medium
 
  -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:39:31 +0000
 
-cuttlefish-common (1.42.0) unstable; urgency=medium
+cuttlefish-common (1.42.0) stable; urgency=medium
 
 * Start development on v1.42 by @jmacnak in https://github.com/google/android-cuttlefish/pull/2097
 * Add `data_policy` to list of flags gathered for metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2065
