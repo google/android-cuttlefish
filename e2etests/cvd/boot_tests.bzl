@@ -47,7 +47,7 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
         ],
     )
 
-def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", tags = [], env = {}, data = []):
+def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", tags = []):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
@@ -62,8 +62,19 @@ def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_sou
             "external",
             "no-sandbox",
         ] + tags,
-        env = env,
-        data = data,
+    )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = "medium",
+        srcs = ["cvd_command_boot_test.sh"],
+        args = args,
+        data = ["//:debian_substitution_marker"],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ] + tags,
     )
 
 def metrics_test(name, branch, target, credential_source = ""):
