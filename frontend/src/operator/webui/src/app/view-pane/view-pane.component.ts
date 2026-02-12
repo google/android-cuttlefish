@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject, DOCUMENT} from '@angular/core';
+import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject, DOCUMENT, ChangeDetectionStrategy} from '@angular/core';
 import {DisplaysService} from '../displays.service';
 import {
   asyncScheduler,
@@ -39,6 +39,7 @@ interface DeviceGridItemUpdate {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Default,
   standalone: false,
   selector: 'app-view-pane',
   templateUrl: './view-pane.component.html',
