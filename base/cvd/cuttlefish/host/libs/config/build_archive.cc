@@ -69,9 +69,12 @@ Result<BuildArchive> BuildArchive::FromFetcherConfig(
   // To validate `xyz.zip` only has exact matches and not `/abc-xyz.zip`.
   std::string slash_archive = absl::StrCat("/", archive);
   for (const auto& [path, member] : fetcher_config.get_cvd_files()) {
-    if (member.source != source) {
-      continue;
-    }
+    // TODO: schuffelen - actually limit to `source`.
+    // This is disabled as a hack right now since BuildArchive is currently only
+    // created once for the default build, but that is incomplete in scenarios
+    // where another file like boot.img is provided by the boot build and not
+    // the default build. This is a possible scenario based on `cvd fetch`
+    // flags.
 
     bool name_matches = path == archive || absl::EndsWith(path, slash_archive);
     if (name_matches && absl::EndsWith(archive, ".zip")) {

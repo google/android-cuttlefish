@@ -95,7 +95,7 @@ class TargetFilesImpl : public AndroidBuild {
   }
 
   Result<std::string> ImageFile(std::string_view name, bool extract) override {
-    std::string member_name = absl::StrCat(name, kImgSuffix);
+    std::string member_name = absl::StrCat("IMAGES/", name, kImgSuffix);
     if (extract) {
       return CF_EXPECT(archive_.MemberFilepath(member_name, std::nullopt));
     } else {
