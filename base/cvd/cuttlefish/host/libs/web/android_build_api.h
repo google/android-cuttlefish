@@ -35,9 +35,6 @@
 
 namespace cuttlefish {
 
-inline constexpr char kAndroidBuildServiceUrl[] =
-    "https://www.googleapis.com/android/internal/build/v3";
-
 class AndroidBuildApi : public BuildApi {
  public:
   AndroidBuildApi() = delete;
