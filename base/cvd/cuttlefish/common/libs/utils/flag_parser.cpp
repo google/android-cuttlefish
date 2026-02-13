@@ -31,7 +31,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/parsebool.h>
 #include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
@@ -40,6 +39,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result.h"
@@ -155,13 +155,10 @@ static bool LikelyFlag(const std::string& next_arg) {
 }
 
 Result<bool> ParseBool(std::string_view value, std::string_view name) {
-  auto result = android::base::ParseBool(value);
-  CF_EXPECT(result != android::base::ParseBoolResult::kError,
-            "Failed to parse value \"" << value << "\" for " << name);
-  if (result == android::base::ParseBoolResult::kTrue) {
-    return true;
-  }
-  return false;
+  bool result;
+  CF_EXPECTF(absl::SimpleAtob(value, &result),
+             "Failed to parse value \"{}\" for {}", value, name);
+  return result;
 }
 
 Result<int> ParseInt(const std::string& value, std::string_view name) {
