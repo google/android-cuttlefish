@@ -121,12 +121,12 @@ Result<void> CreateDynamicDiskFiles(
     std::optional<ChromeOsStateImage> chrome_os_state =
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
+    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
     CF_EXPECT(RepackKernelRamdisk(config, instance, Avb()));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk
     CF_EXPECT(InitializeEspImage(config, instance));
-    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
 
     CF_EXPECT(InitializeAccessKregistryImage(instance));
     CF_EXPECT(InitializeHwcomposerPmemImage(instance));
