@@ -45,9 +45,30 @@ class PhysicalPartitionsImpl : public AndroidBuild {
       return *res;
     }
 
-    std::set<std::string, std::less<void>> partitions =
-        CF_EXPECT(build_.Images());
-    for (std::string logical : CF_EXPECT(build_.LogicalPartitions())) {
+    std::set<std::string, std::less<void>> partitions = CF_EXPECT(build_.Images());
+    Result<std::set<std::string, std::less<void>>> logical_partitions =
+        build_.LogicalPartitions();
+    if (!logical_partitions.ok()) {
+      if (partitions.count("super")) {
+        // Best effort attempt to remove all partitions we know that could be in
+        // the super image, since we both couldn't read the super image and have
+        // no other metadata, from e.g. the misc info text file.
+        logical_partitions = std::set<std::string, std::less<void>>{
+            "odm",
+            "odm_dlkm",
+            "product",
+            "system",
+            "system_dlkm",
+            "system_ext",
+            "vendor",
+            "vendor_dlkm",
+        };
+      } else {
+        // Assume every image is a physical partition.
+        logical_partitions = std::set<std::string, std::less<void>>();
+      }
+    }
+    for (std::string logical : *logical_partitions) {
       partitions.erase(logical);
     }
 
