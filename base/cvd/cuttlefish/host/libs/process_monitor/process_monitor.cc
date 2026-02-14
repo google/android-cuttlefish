@@ -16,16 +16,15 @@
 
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
 
+#include <errno.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
 #ifdef __linux__
 #include <sys/prctl.h>
 #endif
-
 #include <sys/types.h>
 #include <sys/wait.h>
-
-#include <errno.h>
-#include <signal.h>
-#include <stdio.h>
 
 #include <algorithm>
 #include <atomic>
@@ -54,14 +53,14 @@ using transport::Channel;
 using transport::CreateMessage;
 using transport::ManagedMessage;
 
-enum ParentToChildMessageType : std::uint8_t {
+enum ParentToChildMessageType : uint8_t {
   kStop = 1,
   kHostResume = 2,
   kHostSuspend = 3,
   kError = 4,
 };
 
-enum ChildToParentResponseType : std::uint8_t {
+enum ChildToParentResponseType : uint8_t {
   kSuccess = 0,
   kFailure = 1,
 };

@@ -15,7 +15,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <string>
 #include <utility>
 #include <vector>
@@ -32,7 +33,7 @@ namespace cuttlefish {
 namespace confui {
 // When you update this, please update all the utility functions
 // in conf.cpp: e.g. ToString, etc
-enum class ConfUiCmd : std::uint32_t {
+enum class ConfUiCmd : uint32_t {
   kUnknown = 100,
   kStart = 111,   // start rendering, send confirmation msg, & wait respond
   kStop = 112,    // start rendering, send confirmation msg, & wait respond
@@ -49,7 +50,7 @@ constexpr const ssize_t kMaxMessageLength = packet::kMaxPayloadLength;
 std::string ToString(const ConfUiCmd& cmd);
 std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose);
 ConfUiCmd ToCmd(const std::string& cmd_str);
-ConfUiCmd ToCmd(std::uint32_t i);
+ConfUiCmd ToCmd(uint32_t i);
 
 std::string ToString(const teeui::UIOption ui_opt);
 std::optional<teeui::UIOption> ToUiOption(const std::string&);
@@ -136,8 +137,8 @@ class ConfUiCliResponseMessage : public ConfUiMessage {
  public:
   ConfUiCliResponseMessage(const std::string& session_id,
                            const UserResponse::type& response,
-                           const std::vector<std::uint8_t>& sign = {},
-                           const std::vector<std::uint8_t>& msg = {})
+                           const std::vector<uint8_t>& sign = {},
+                           const std::vector<uint8_t>& msg = {})
       : ConfUiMessage(session_id),
         response_(response),
         sign_(sign),
@@ -152,16 +153,16 @@ class ConfUiCliResponseMessage : public ConfUiMessage {
 
  private:
   UserResponse::type response_;     // plain format
-  std::vector<std::uint8_t> sign_;  // signed format
+  std::vector<uint8_t> sign_;       // signed format
   // second argument to pass via resultCB of promptUserConfirmation
-  std::vector<std::uint8_t> message_;
+  std::vector<uint8_t> message_;
 };
 
 class ConfUiStartMessage : public ConfUiMessage {
  public:
   ConfUiStartMessage(const std::string session_id,
                      const std::string& prompt_text = "",
-                     const std::vector<std::uint8_t>& extra_data = {},
+                     const std::vector<uint8_t>& extra_data = {},
                      const std::string& locale = "C",
                      const std::vector<teeui::UIOption> ui_opts = {})
       : ConfUiMessage(session_id),
@@ -173,14 +174,14 @@ class ConfUiStartMessage : public ConfUiMessage {
   std::string ToString() const override;
   ConfUiCmd GetType() const override { return ConfUiCmd::kStart; }
   std::string GetPromptText() const { return prompt_text_; }
-  std::vector<std::uint8_t> GetExtraData() const { return extra_data_; }
+  std::vector<uint8_t> GetExtraData() const { return extra_data_; }
   std::string GetLocale() const { return locale_; }
   std::vector<teeui::UIOption> GetUiOpts() const { return ui_opts_; }
   bool SendOver(SharedFD fd) override;
 
  private:
   std::string prompt_text_;
-  std::vector<std::uint8_t> extra_data_;
+  std::vector<uint8_t> extra_data_;
   std::string locale_;
   std::vector<teeui::UIOption> ui_opts_;
 

@@ -16,14 +16,15 @@
 
 #include "tpm_commands.h"
 
-#include <tss2/tss2_tpm2_types.h>
+#include <stdint.h>
 
-#include <cstddef>
 #include <string>
+
+#include <tss2/tss2_tpm2_types.h>
 
 namespace cuttlefish {
 
-std::string TpmCommandName(std::uint32_t command_num) {
+std::string TpmCommandName(uint32_t command_num) {
   switch(command_num) {
     #define MATCH_TPM_COMMAND(name) case name: return #name;
     MATCH_TPM_COMMAND(TPM2_CC_NV_UndefineSpaceSpecial)

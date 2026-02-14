@@ -15,7 +15,10 @@
 
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
 
+#include <stddef.h>
+
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -29,6 +32,7 @@ struct BooleanFlag {
   bool bool_flag_value;
   std::string name;
 };
+
 BooleanFlag IsBoolArg(const std::string& argument,
                       const std::unordered_set<std::string>& flag_set) {
   // Validate format
@@ -40,7 +44,7 @@ BooleanFlag IsBoolArg(const std::string& argument,
     return {false, false, ""};
   }
   android::base::ConsumePrefix(&name, "-");
-  std::size_t found = name.find('=');
+  size_t found = name.find('=');
   if (found != std::string::npos) {
     // found "=", --flag=value case, it doesn't need convert
     return {false, false, ""};

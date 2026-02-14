@@ -15,7 +15,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -25,10 +26,10 @@ namespace cuttlefish {
 namespace confui {
 namespace packet {
 struct PayloadHeader {
-  std::uint32_t payload_length_;
+  uint32_t payload_length_;
 };
 
-using BufferType = std::vector<std::uint8_t>;
+using BufferType = std::vector<uint8_t>;
 
 // PayloadHeader + the byte size sent over the channel
 using Payload = std::tuple<PayloadHeader, BufferType>;
@@ -36,7 +37,7 @@ using Payload = std::tuple<PayloadHeader, BufferType>;
 // this is for short messages
 constexpr const ssize_t kMaxPayloadLength = 10000;
 
-using ConfUiPacketInfo = std::vector<std::vector<std::uint8_t>>;
+using ConfUiPacketInfo = std::vector<std::vector<uint8_t>>;
 struct ParsedPacket {
   std::string session_id_;
   std::string type_;

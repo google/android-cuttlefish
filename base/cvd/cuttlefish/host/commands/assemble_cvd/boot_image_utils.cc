@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -77,9 +78,9 @@ void RunLz4(const std::string& input, const std::string& output) {
 }
 
 std::string ExtractValue(const std::string& dictionary, const std::string& key) {
-  std::size_t index = dictionary.find(key);
+  size_t index = dictionary.find(key);
   if (index != std::string::npos) {
-    std::size_t end_index = dictionary.find('\n', index + key.length());
+    size_t end_index = dictionary.find('\n', index + key.length());
     if (end_index != std::string::npos) {
       return dictionary.substr(index + key.length(),
           end_index - index - key.length());

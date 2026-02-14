@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "cuttlefish/host/commands/process_sandboxer/sandbox_manager.h"
 
 #include <poll.h>
 #include <signal.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/eventfd.h>
 #include <sys/resource.h>
@@ -28,8 +31,6 @@
 
 #include <algorithm>
 #include <cerrno>
-#include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -165,10 +166,10 @@ class SandboxManager::SandboxedProcess : public SandboxManager::ManagedProcess {
   std::unique_ptr<Sandbox2> sandbox_;
 };
 
-std::string RandomString(absl::BitGenRef gen, std::size_t size) {
+std::string RandomString(absl::BitGenRef gen, size_t size) {
   std::stringstream output;
   absl::uniform_int_distribution<char> distribution;
-  for (std::size_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     output << distribution(gen);
   }
   return output.str();
@@ -218,7 +219,7 @@ class SandboxManager::SocketClient {
           return absl::InternalError(err);
         }
         pingback_ = RandomString(manager_.bit_gen_, 32);
-        absl::StatusOr<std::size_t> stat =
+        absl::StatusOr<size_t> stat =
             SendStringMsg(client_fd_.get(), pingback_);
         if (stat.ok()) {
           client_state_ = ClientState::kIgnoredFd;

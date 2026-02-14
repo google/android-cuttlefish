@@ -16,6 +16,12 @@
 
 #include "cuttlefish/host/libs/confui/session.h"
 
+#include <stdint.h>
+
+#include <chrono>
+#include <string>
+#include <vector>
+
 #include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/confui/secure_input.h"
@@ -23,9 +29,9 @@
 namespace cuttlefish {
 namespace confui {
 
-Session::Session(const std::string& session_name,
-                 const std::uint32_t display_num, ConfUiRenderer& host_renderer,
-                 HostModeCtrl& host_mode_ctrl, const std::string& locale)
+Session::Session(const std::string& session_name, const uint32_t display_num,
+                 ConfUiRenderer& host_renderer, HostModeCtrl& host_mode_ctrl,
+                 const std::string& locale)
     : session_id_{session_name},
       display_num_{display_num},
       renderer_{host_renderer},
@@ -226,9 +232,8 @@ bool Session::HandleInSession(SharedFD hal_cli, const FsmInput fsm_input,
   bool is_success = false;
   if (response == UserResponse::kCancel) {
     // no need to sign
-    is_success =
-        SendResponse(hal_cli, session_id_, UserResponse::kCancel,
-                     std::vector<std::uint8_t>{}, std::vector<std::uint8_t>{});
+    is_success = SendResponse(hal_cli, session_id_, UserResponse::kCancel,
+                              std::vector<uint8_t>{}, std::vector<uint8_t>{});
   } else {
     message_ = std::move(cbor_->GetMessage());
     auto message_opt = (is_secure_input ? Sign(message_) : TestSign(message_));

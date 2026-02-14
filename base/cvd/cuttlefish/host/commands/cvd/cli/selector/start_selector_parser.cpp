@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 
+#include <stdint.h>
 #include <unistd.h>
 
 #include <optional>
@@ -208,7 +209,7 @@ StartSelectorParser::HandleInstanceIds(
   }
 
   InstanceNumsCalculator calculator;
-  calculator.NumInstances(static_cast<std::int32_t>(num_instances));
+  calculator.NumInstances(static_cast<int32_t>(num_instances));
   if (instance_nums) {
     CF_EXPECT(base_instance_num == std::nullopt,
               "-base_instance_num and -instance_nums are mutually exclusive.");
@@ -218,7 +219,7 @@ StartSelectorParser::HandleInstanceIds(
   }
   if (base_instance_num) {
     unsigned base = CF_EXPECT(ParsePositiveNumber(*base_instance_num));
-    calculator.BaseInstanceNum(static_cast<std::int32_t>(base));
+    calculator.BaseInstanceNum(static_cast<int32_t>(base));
   }
   auto instance_ids = CF_EXPECT(calculator.CalculateFromFlags());
   CF_EXPECT(!instance_ids.empty(),

@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -46,12 +47,12 @@ class TeeUiFrameWrapper {
   bool IsEmpty() const { return teeui_frame_.empty(); }
   auto Size() const { return teeui_frame_.size(); }
   auto& operator[](const int idx) { return teeui_frame_[idx]; }
-  std::uint32_t ScreenStrideBytes() const {
+  uint32_t ScreenStrideBytes() const {
     return ScreenConnectorInfo::ComputeScreenStrideBytes(w_);
   }
 
  private:
-  static std::uint32_t ScreenSizeInBytes(const int w, const int h) {
+  static uint32_t ScreenSizeInBytes(const int w, const int h) {
     return ScreenConnectorInfo::ComputeScreenSizeInBytes(w, h);
   }
 
@@ -65,12 +66,12 @@ class ConfUiRenderer {
  public:
   INJECT(ConfUiRenderer(ScreenConnectorFrameRenderer& screen_connector));
   ~ConfUiRenderer();
-  Result<void> RenderDialog(const std::uint32_t display_num,
+  Result<void> RenderDialog(const uint32_t display_num,
                             const std::string& prompt_text,
                             const std::string& locale,
                             const std::vector<teeui::UIOption>& ui_options);
-  bool IsInConfirm(const std::uint32_t x, const std::uint32_t y);
-  bool IsInCancel(const std::uint32_t x, const std::uint32_t y);
+  bool IsInConfirm(const uint32_t x, const uint32_t y);
+  bool IsInCancel(const uint32_t x, const uint32_t y);
 
  private:
   bool IsInverted(const std::vector<teeui::UIOption>& ui_options) const;

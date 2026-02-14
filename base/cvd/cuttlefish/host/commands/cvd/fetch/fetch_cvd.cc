@@ -15,10 +15,9 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 
-#include <android-base/file.h>
+#include <stddef.h>
 #include <sys/stat.h>
 
-#include <cstddef>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -28,6 +27,7 @@
 #include <variant>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/strings.h>
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
@@ -86,7 +86,7 @@ bool ShouldAppendSubdirectory(const FetchFlags& flags) {
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
                                     const bool append_subdirectory) {
   std::vector<Target> result(flags.vector_flags.NumberOfBuilds().value_or(1));
-  for (std::size_t i = 0; i < result.size(); ++i) {
+  for (size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
         .build_strings = BuildStrings::Create(flags.vector_flags, i),
         .download_flags = DownloadFlags::Create(flags.vector_flags, i),

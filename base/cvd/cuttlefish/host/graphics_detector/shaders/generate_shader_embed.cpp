@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <stddef.h>
+
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -65,8 +67,8 @@ int main(int argc, char** argv) {
     std::exit(1);
   }
 
-  const std::size_t input_spirv_bytes_size =
-      static_cast<std::size_t>(input_spirv_file.tellg());
+  const size_t input_spirv_bytes_size =
+      static_cast<size_t>(input_spirv_file.tellg());
   std::vector<unsigned char> input_spirv_bytes(input_spirv_bytes_size);
   input_spirv_file.seekg(0);
   input_spirv_file.read(reinterpret_cast<char*>(input_spirv_bytes.data()),
@@ -88,8 +90,8 @@ int main(int argc, char** argv) {
                     << " = {";
 
   const unsigned char* spirv_data = input_spirv_bytes.data();
-  for (std::size_t i = 0; i < input_spirv_bytes_size; i++) {
-    constexpr const std::size_t kNumBytesPerLine = 16;
+  for (size_t i = 0; i < input_spirv_bytes_size; i++) {
+    constexpr const size_t kNumBytesPerLine = 16;
 
     if (i % kNumBytesPerLine == 0) {
       output_embed_file << "\n\t";

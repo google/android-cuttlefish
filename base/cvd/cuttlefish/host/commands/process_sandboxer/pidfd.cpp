@@ -19,13 +19,13 @@
 #include <fcntl.h>
 #include <linux/sched.h>
 #include <signal.h>
+#include <stdint.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <cerrno>
-#include <cstdint>
 #include <fstream>
 #include <ios>
 #include <memory>
@@ -67,7 +67,7 @@ absl::StatusOr<PidFd> PidFd::LaunchSubprocess(
   int pidfd;
   clone_args args_for_clone = clone_args{
       .flags = CLONE_PIDFD,
-      .pidfd = reinterpret_cast<std::uintptr_t>(&pidfd),
+      .pidfd = reinterpret_cast<uintptr_t>(&pidfd),
   };
 
   pid_t res = syscall(__NR_clone3, &args_for_clone, sizeof(args_for_clone));

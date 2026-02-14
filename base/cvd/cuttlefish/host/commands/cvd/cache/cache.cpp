@@ -16,9 +16,10 @@
 
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 
+#include <stddef.h>
+
 #include <algorithm>
 #include <chrono>
-#include <cstddef>
 #include <iterator>
 #include <string>
 #include <string_view>
@@ -79,15 +80,15 @@ Result<void> EmptyCache(const std::string& cache_directory) {
   return {};
 }
 
-Result<std::size_t> GetCacheSize(const std::string& cache_directory) {
+Result<size_t> GetCacheSize(const std::string& cache_directory) {
   CF_EXPECT(EnsureDirectoryExists(cache_directory));
   return CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
 }
 
 Result<PruneResult> PruneCache(const std::string& cache_directory,
-                               const std::size_t allowed_size_gb) {
+                               const size_t allowed_size_gb) {
   CF_EXPECT(EnsureDirectoryExists(cache_directory));
-  std::size_t cache_size = CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
+  size_t cache_size = CF_EXPECT(GetDiskUsageGigabytes(cache_directory));
   PruneResult result{
       .before = cache_size,
   };

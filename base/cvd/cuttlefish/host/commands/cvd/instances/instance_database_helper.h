@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 
@@ -45,7 +47,7 @@ namespace selector {
  */
 class CvdInstanceDatabaseTest : public ::testing::Test {
  protected:
-  enum class ErrorCode : std::int32_t {
+  enum class ErrorCode : int32_t {
     kOk,
     kFileError,
     kInstanceDabaseError,

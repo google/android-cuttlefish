@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <cstddef>
+#include <stddef.h>
 #include <stdint.h>
 
 namespace cuttlefish {
@@ -33,9 +33,9 @@ class VideoFrameBuffer {
   virtual uint8_t* DataY() = 0;
   virtual uint8_t* DataU() = 0;
   virtual uint8_t* DataV() = 0;
-  virtual std::size_t DataSizeY() const = 0;
-  virtual std::size_t DataSizeU() const = 0;
-  virtual std::size_t DataSizeV() const = 0;
+  virtual size_t DataSizeY() const = 0;
+  virtual size_t DataSizeU() const = 0;
+  virtual size_t DataSizeV() const = 0;
 };
 
 }  // namespace cuttlefish

@@ -16,10 +16,13 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <teeui/msg_formatting.h>
 
@@ -42,7 +45,7 @@ namespace confui {
  */
 class Session {
  public:
-  Session(const std::string& session_name, const std::uint32_t display_num,
+  Session(const std::string& session_name, const uint32_t display_num,
           ConfUiRenderer& host_renderer, HostModeCtrl& host_mode_ctrl,
           const std::string& locale = "en");
 
@@ -112,7 +115,7 @@ class Session {
   void ScheduleToTerminate();
 
   const std::string session_id_;
-  const std::uint32_t display_num_;
+  const uint32_t display_num_;
   ConfUiRenderer& renderer_;
   HostModeCtrl& host_mode_ctrl_;
 
@@ -120,10 +123,10 @@ class Session {
   std::string prompt_text_;
   std::string locale_;
   std::vector<teeui::UIOption> ui_options_;
-  std::vector<std::uint8_t> extra_data_;
+  std::vector<uint8_t> extra_data_;
   // the second argument for resultCB of promptUserConfirmation
-  std::vector<std::uint8_t> signed_confirmation_;
-  std::vector<std::uint8_t> message_;
+  std::vector<uint8_t> signed_confirmation_;
+  std::vector<uint8_t> message_;
 
   std::unique_ptr<Cbor> cbor_;
 

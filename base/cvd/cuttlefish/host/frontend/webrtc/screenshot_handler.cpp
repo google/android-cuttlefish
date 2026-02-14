@@ -17,8 +17,13 @@
 #include "cuttlefish/host/frontend/webrtc/screenshot_handler.h"
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <strings.h>
+
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "absl/strings/match.h"
 #include "android-base/scopeguard.h"
@@ -159,7 +164,7 @@ Result<void> JpegScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
 
 }  // namespace
 
-Result<void> ScreenshotHandler::Screenshot(std::uint32_t display_number,
+Result<void> ScreenshotHandler::Screenshot(uint32_t display_number,
                                            const std::string& screenshot_path) {
   SharedFrameFuture frame_future;
   {
@@ -194,8 +199,7 @@ Result<void> ScreenshotHandler::Screenshot(std::uint32_t display_number,
   return {};
 }
 
-void ScreenshotHandler::OnFrame(std::uint32_t display_number,
-                                SharedFrame& frame) {
+void ScreenshotHandler::OnFrame(uint32_t display_number, SharedFrame& frame) {
   std::lock_guard<std::mutex> lock(pending_screenshot_displays_mutex_);
 
   auto pending_screenshot_it =
