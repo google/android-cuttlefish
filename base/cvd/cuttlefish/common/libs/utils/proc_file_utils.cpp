@@ -26,11 +26,11 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -75,7 +75,7 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
     uids.reserve(4);
     for (int i = 1; i < 5; i++) {
       unsigned uid = 0;
-      CF_EXPECT(android::base::ParseUint(matches[i], &uid));
+      CF_EXPECT(absl::SimpleAtoi(matches[i].str(), &uid));
       uids.push_back(uid);
     }
     break;
@@ -155,9 +155,9 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
       continue;
     }
     int pid;
-    // Shouldn't failed here. If failed, either regex or
-    // android::base::ParseInt needs serious fixes
-    CF_EXPECT(android::base::ParseInt(subdir, &pid));
+    // Shouldn't fail here. If failed, either regex or
+    // absl::SimpleAtoi needs serious fixes
+    CF_EXPECT(absl::SimpleAtoi(subdir, &pid));
     auto owner_uid_result = OwnerUids(pid);
     if (owner_uid_result.ok() && owner_uid_result->real_ == uid) {
       pids.push_back(pid);
@@ -318,7 +318,7 @@ Result<pid_t> Ppid(const pid_t pid) {
       continue;
     }
     unsigned ppid;
-    CF_EXPECT(android::base::ParseUint(matches[1], &ppid));
+    CF_EXPECT(absl::SimpleAtoi(matches[1].str(), &ppid));
     return static_cast<pid_t>(ppid);
   }
   return CF_ERR("Status file does not have PPid: line in the right format");

@@ -188,6 +188,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -344,6 +345,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -398,6 +400,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvdalloc:interface",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -421,6 +424,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

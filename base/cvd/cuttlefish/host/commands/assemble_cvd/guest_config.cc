@@ -24,8 +24,8 @@
 #include <vector>
 
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
-#include "android-base/parseint.h"
 #include "fmt/format.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/text_format.h"
@@ -201,7 +201,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
           MapGetResult(info, "output_audio_streams_count");
       res.ok()) {
     CF_EXPECTF(
-        android::base::ParseInt(*res, &guest_config.output_audio_streams_count),
+        absl::SimpleAtoi(*res, &guest_config.output_audio_streams_count),
         "Failed to parse value '{}' for output audio stream count", *res);
   }
 
@@ -217,7 +217,7 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
 
   if (const Result<std::string> res = MapGetResult(info, "blank_data_image_mb");
       res.ok()) {
-    CF_EXPECTF(android::base::ParseInt(*res, &guest_config.blank_data_image_mb),
+    CF_EXPECTF(absl::SimpleAtoi(*res, &guest_config.blank_data_image_mb),
                "Failed to parse value '{}' for blank data image size", *res);
   }
 

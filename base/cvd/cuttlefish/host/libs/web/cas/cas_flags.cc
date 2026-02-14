@@ -20,8 +20,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <fmt/format.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -49,7 +49,7 @@ Flag GflagsCompatFlagInt64(const std::string& name, FlagValue<int64_t>& flag) {
       .Getter([&flag]() { return std::to_string(flag.value()); })
       .Setter([&flag](const FlagMatch& match) -> Result<void> {
         int64_t parsed_int;
-        CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
+        CF_EXPECTF(absl::SimpleAtoi(match.value, &parsed_int),
                    "Failed to parse \"{}\" as an integer (int64_t)",
                    match.value);
         flag.set_value(parsed_int);

@@ -20,8 +20,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -53,9 +53,9 @@ Result<CuttlefishConfig::TouchpadConfig> ParseTouchpadConfig(
       "Touchpad configuration should only have width and height properties");
 
   CuttlefishConfig::TouchpadConfig config = {};
-  CF_EXPECT(android::base::ParseInt(props["width"], &config.width),
+  CF_EXPECT(absl::SimpleAtoi(props["width"], &config.width),
             "Touchpad configuration invalid 'width' in \"" << flag << "\"");
-  CF_EXPECT(android::base::ParseInt(props["height"], &config.height),
+  CF_EXPECT(absl::SimpleAtoi(props["height"], &config.height),
             "Touchpad configuration invalid 'height' in \"" << flag << "\"");
 
   return config;

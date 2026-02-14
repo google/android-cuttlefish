@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/result/result.h"
@@ -34,7 +34,7 @@ Flag GflagsCompatFlagSeconds(const std::string& name,
       .Getter([&value]() { return std::to_string(value.count()); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
         int parsed_int;
-        CF_EXPECTF(android::base::ParseInt(match.value, &parsed_int),
+        CF_EXPECTF(absl::SimpleAtoi(match.value, &parsed_int),
                    "Failed to parse \"{}\" as an integer", match.value);
         value = std::chrono::seconds(parsed_int);
         return {};

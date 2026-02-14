@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/android_efi_loader.h"
@@ -194,14 +194,13 @@ Result<void> DiskImageFlagsVectorization(
     instance.set_initramfs_path(
         initramfs_path.InitramfsPathForIndex(instance_index));
 
-    using android::base::ParseInt;
-
     if (instance_index >= blank_sdcard_image_mb.size()) {
-      CF_EXPECTF(ParseInt(blank_sdcard_image_mb[0], &value), "'{}'",
+      CF_EXPECTF(absl::SimpleAtoi(blank_sdcard_image_mb[0], &value), "'{}'",
                  blank_sdcard_image_mb[0]);
     } else {
-      CF_EXPECTF(ParseInt(blank_sdcard_image_mb[instance_index], &value),
-                 "'{}'", blank_sdcard_image_mb[instance_index]);
+      CF_EXPECTF(
+          absl::SimpleAtoi(blank_sdcard_image_mb[instance_index], &value),
+          "'{}'", blank_sdcard_image_mb[instance_index]);
     }
     instance.set_blank_sdcard_image_mb(value);
 

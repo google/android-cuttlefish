@@ -31,7 +31,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
@@ -163,9 +162,8 @@ Result<bool> ParseBool(std::string_view value, std::string_view name) {
 
 Result<int> ParseInt(const std::string& value, std::string_view name) {
   int result;
-  CF_EXPECTF(android::base::ParseInt(value, &result),
-             "Failed to parse value \"{}\" as integer for \"{}\"",
-             value, name);
+  CF_EXPECTF(absl::SimpleAtoi(value, &result),
+             "Failed to parse value \"{}\" as integer for \"{}\"", value, name);
   return result;
 }
 
@@ -641,7 +639,7 @@ static Flag GflagsCompatUnsignedNumericFlagGeneric(const std::string& name,
       .Getter([&value]() { return std::to_string(value); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
         T result;
-        CF_EXPECTF(android::base::ParseUint<T>(match.value, &result),
+        CF_EXPECTF(absl::SimpleAtoi(match.value, &result),
                    "Failed to parse \"{}\" as an unsigned integer",
                    match.value);
         value = result;

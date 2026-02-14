@@ -27,6 +27,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -115,8 +116,8 @@ Result<RunCvdProcInfo> ExtractRunCvdInfo(const pid_t pid) {
 
   CF_EXPECT(Contains(info.envs_, kCuttlefishInstanceEnvVarName));
 
-  CF_EXPECT(android::base::ParseUint(
-      info.envs_.at(kCuttlefishInstanceEnvVarName), &info.id_));
+  CF_EXPECT(absl::SimpleAtoi(info.envs_.at(kCuttlefishInstanceEnvVarName),
+                             &info.id_));
 
   if (Contains(info.envs_, kCvdMarkEnv) && IsTrue(info.envs_.at(kCvdMarkEnv))) {
     info.is_cvd_server_started_ = true;
