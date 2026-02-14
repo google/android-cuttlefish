@@ -15,8 +15,9 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <chrono>
-#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -44,7 +45,7 @@ struct BuildApiFlags {
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
-  std::size_t max_cache_size_gb = kDefaultCacheSizeGb;
+  size_t max_cache_size_gb = kDefaultCacheSizeGb;
   CasDownloaderFlags cas_downloader_flags;
 };
 

@@ -15,6 +15,7 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -123,7 +124,7 @@ std::string StrForInstance(const std::string& prefix, int num) {
 
 Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     const CuttlefishConfig& tmp_config_obj,
-    const std::vector<std::int32_t>& instance_nums,
+    const std::vector<int32_t>& instance_nums,
     const std::string& webrtc_device_id_flag) {
   std::unordered_map<int, std::string> output_map;
   if (webrtc_device_id_flag.empty()) {
@@ -1057,10 +1058,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_vhal_proxy_server_port(
         cuttlefish::vhal_proxy_server::kDefaultEthPort + num - 1);
 
-    std::uint8_t ethernet_mac[6] = {};
-    std::uint8_t mobile_mac[6] = {};
-    std::uint8_t wifi_mac[6] = {};
-    std::uint8_t ethernet_ipv6[16] = {};
+    uint8_t ethernet_mac[6] = {};
+    uint8_t mobile_mac[6] = {};
+    uint8_t wifi_mac[6] = {};
+    uint8_t ethernet_ipv6[16] = {};
     GenerateEthMacForInstance(num - 1, ethernet_mac);
     GenerateMobileMacForInstance(num - 1, mobile_mac);
     GenerateWifiMacForInstance(num - 1, wifi_mac);

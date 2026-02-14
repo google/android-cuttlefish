@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <functional>
 #include <mutex>
 #include <string>
@@ -87,9 +88,9 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
    *
    */
   using GenerateProcessedFrameCallback = std::function<void(
-      std::uint32_t /*display_number*/, std::uint32_t /*frame_width*/,
-      std::uint32_t /*frame_height*/, std::uint32_t /*frame_fourcc_format*/,
-      std::uint32_t /*frame_stride_bytes*/, std::uint8_t* /*frame_bytes*/,
+      uint32_t /*display_number*/, uint32_t /*frame_width*/,
+      uint32_t /*frame_height*/, uint32_t /*frame_fourcc_format*/,
+      uint32_t /*frame_stride_bytes*/, uint8_t* /*frame_bytes*/,
       /* ScImpl enqueues this type into the Q */
       ProcessedFrameType& msg)>;
 
@@ -106,18 +107,17 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
     streamer_callback_set_cv_.notify_all();
 
     sc_android_src_.SetFrameCallback(
-        [this](std::uint32_t display_number, std::uint32_t frame_w,
-               std::uint32_t frame_h, std::uint32_t frame_fourcc_format,
-               std::uint32_t frame_stride_bytes, std::uint8_t* frame_bytes) {
+        [this](uint32_t display_number, uint32_t frame_w, uint32_t frame_h,
+               uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
+               uint8_t* frame_bytes) {
           InjectFrame(display_number, frame_w, frame_h, frame_fourcc_format,
                       frame_stride_bytes, frame_bytes);
         });
   }
 
-  void InjectFrame(std::uint32_t display_number, std::uint32_t frame_w,
-                   std::uint32_t frame_h, std::uint32_t frame_fourcc_format,
-                   std::uint32_t frame_stride_bytes,
-                   std::uint8_t* frame_bytes) {
+  void InjectFrame(uint32_t display_number, uint32_t frame_w, uint32_t frame_h,
+                   uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
+                   uint8_t* frame_bytes) {
     const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
     if (is_confui_mode) {
       return;
@@ -160,12 +160,10 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
    * Android guest frames if Confirmation UI HAL is not active.
    *
    */
-  bool RenderConfirmationUi(std::uint32_t display_number,
-                            std::uint32_t frame_width,
-                            std::uint32_t frame_height,
-                            std::uint32_t frame_fourcc_format,
-                            std::uint32_t frame_stride_bytes,
-                            std::uint8_t* frame_bytes) override {
+  bool RenderConfirmationUi(uint32_t display_number, uint32_t frame_width,
+                            uint32_t frame_height, uint32_t frame_fourcc_format,
+                            uint32_t frame_stride_bytes,
+                            uint8_t* frame_bytes) override {
     render_confui_cnt_++;
     // wait callback is not set, the streamer is not ready
     // return with LOG(ERROR)

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
 #include <memory>
 
@@ -27,7 +27,7 @@
 
 namespace cuttlefish {
 namespace confui {
-enum class ConfUiKeys : std::uint32_t { Confirm = 7, Cancel = 8 };
+enum class ConfUiKeys : uint32_t { Confirm = 7, Cancel = 8 };
 
 /**
  * webrtc will deliver the user inputs from their client

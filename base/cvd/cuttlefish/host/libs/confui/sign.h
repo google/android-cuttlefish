@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <optional>
 #include <vector>
 
@@ -24,12 +25,11 @@ namespace cuttlefish {
 namespace confui {
 
 // sign with the local test key
-std::optional<std::vector<std::uint8_t>> TestSign(
-    const std::vector<std::uint8_t>& message);
+std::optional<std::vector<uint8_t>> TestSign(
+    const std::vector<uint8_t>& message);
 
 // sign with secure_env
-std::optional<std::vector<std::uint8_t>> Sign(
-    const std::vector<std::uint8_t>& message);
+std::optional<std::vector<uint8_t>> Sign(const std::vector<uint8_t>& message);
 
 }  // namespace confui
 }  // end of namespace cuttlefish

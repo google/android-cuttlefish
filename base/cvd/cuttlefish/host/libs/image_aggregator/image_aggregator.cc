@@ -21,12 +21,11 @@
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include <sparse/sparse.h>
-#include <zlib.h>
 
 #include <fstream>
 #include <random>
@@ -37,6 +36,8 @@
 #include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/util/message_differencer.h>
+#include <sparse/sparse.h>
+#include <zlib.h>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -55,10 +56,10 @@ namespace {
 
 struct PartitionInfo {
   ImagePartition source;
-  std::uint64_t size;
-  std::uint64_t offset;
+  uint64_t size;
+  uint64_t offset;
 
-  std::uint64_t AlignedSize() const { return AlignToPartitionSize(size); }
+  uint64_t AlignedSize() const { return AlignToPartitionSize(size); }
 };
 
 /*
@@ -82,7 +83,7 @@ Result<uint64_t> ExpandedStorageSize(const std::string& file_path) {
 /*
  * strncpy equivalent for u16 data. GPT disks use UTF16-LE for disk labels.
  */
-void u16cpy(std::uint16_t* dest, std::uint16_t* src, std::size_t size) {
+void u16cpy(uint16_t* dest, uint16_t* src, size_t size) {
   while (size > 0 && *src) {
     *dest = *src;
     dest++;
@@ -94,7 +95,7 @@ void u16cpy(std::uint16_t* dest, std::uint16_t* src, std::size_t size) {
   }
 }
 
-void SetRandomUuid(std::uint8_t uuid[16]) {
+void SetRandomUuid(uint8_t uuid[16]) {
   // https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_(random)
   std::random_device dev;
   std::mt19937 rng(dev());
@@ -131,7 +132,7 @@ class CompositeDiskBuilder {
     return {};
   }
 
-  std::uint64_t DiskSize() const {
+  uint64_t DiskSize() const {
     return AlignToPowerOf2(next_disk_offset_ + sizeof(GptEnd), DISK_SIZE_SHIFT);
   }
 
@@ -207,7 +208,7 @@ class CompositeDiskBuilder {
             },
     };
     SetRandomUuid(gpt.header.disk_guid);
-    for (std::size_t i = 0; i < partitions_.size(); i++) {
+    for (size_t i = 0; i < partitions_.size(); i++) {
       const auto& partition = partitions_[i];
       gpt.entries[i] = GptPartitionEntry{
           .first_lba = partition.offset / kSectorSize,
@@ -215,21 +216,21 @@ class CompositeDiskBuilder {
               (partition.offset + partition.AlignedSize()) / kSectorSize - 1,
       };
       SetRandomUuid(gpt.entries[i].unique_partition_guid);
-      const std::uint8_t* const type_guid =
+      const uint8_t* const type_guid =
           CF_EXPECT(GetPartitionGUID(partition.source.type));
       CF_EXPECT(type_guid != nullptr, "Could not recognize partition guid");
       memcpy(gpt.entries[i].partition_type_guid, type_guid, 16);
       std::u16string wide_name(partitions_[i].source.label.begin(),
                                partitions_[i].source.label.end());
-      u16cpy((std::uint16_t*)gpt.entries[i].partition_name,
-             (std::uint16_t*)wide_name.c_str(), 36);
+      u16cpy((uint16_t*)gpt.entries[i].partition_name,
+             (uint16_t*)wide_name.c_str(), 36);
     }
     // Not sure these are right, but it works for bpttool
     gpt.header.partition_entries_crc32 =
-        crc32(0, (std::uint8_t*)gpt.entries,
+        crc32(0, (uint8_t*)gpt.entries,
               GPT_NUM_PARTITIONS * sizeof(GptPartitionEntry));
     gpt.header.header_crc32 =
-        crc32(0, (std::uint8_t*)&gpt.header, sizeof(GptHeader));
+        crc32(0, (uint8_t*)&gpt.header, sizeof(GptHeader));
     return gpt;
   }
 
@@ -245,13 +246,13 @@ class CompositeDiskBuilder {
     std::swap(gpt.footer.current_lba, gpt.footer.backup_lba);
     gpt.footer.header_crc32 = 0;
     gpt.footer.header_crc32 =
-        crc32(0, (std::uint8_t*)&gpt.footer, sizeof(GptHeader));
+        crc32(0, (uint8_t*)&gpt.footer, sizeof(GptHeader));
     return gpt;
   }
 
  private:
   std::vector<PartitionInfo> partitions_;
-  std::uint64_t next_disk_offset_ = sizeof(GptBeginning);
+  uint64_t next_disk_offset_ = sizeof(GptBeginning);
   bool read_only_ = true;
 };
 
@@ -338,7 +339,7 @@ Result<void> AggregateImage(const std::vector<ImagePartition>& partitions,
                "Could not copy from '{}' to '{}': {}", disk.image_file_path,
                output_path, output->StrError());
     // Handle disk images that are not aligned to PARTITION_SIZE_SHIFT
-    std::uint64_t padding = AlignToPartitionSize(file_size) - file_size;
+    uint64_t padding = AlignToPartitionSize(file_size) - file_size;
     std::string padding_str;
     padding_str.resize(padding, '\0');
 

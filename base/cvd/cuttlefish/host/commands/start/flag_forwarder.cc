@@ -15,7 +15,9 @@
 
 #include "cuttlefish/host/commands/start/flag_forwarder.h"
 
-#include <cstring>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 #include <map>
 #include <sstream>
@@ -344,7 +346,7 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
         continue;
       }
       android::base::ConsumePrefix(&argument, "-");
-      std::size_t qual_pos = argument.find('=');
+      size_t qual_pos = argument.find('=');
       if (qual_pos == std::string::npos) {
         // to handle error cases: --flag value and -flag value
         // but it only apply to repeatable flag case

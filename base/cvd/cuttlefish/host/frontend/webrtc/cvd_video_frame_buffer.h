@@ -16,7 +16,9 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <vector>
 
 #include "cuttlefish/host/libs/screen_connector/video_frame_buffer.h"
@@ -46,16 +48,16 @@ class CvdVideoFrameBuffer : public VideoFrameBuffer {
   uint8_t *DataU() override { return u_.data(); }
   uint8_t *DataV() override { return v_.data(); }
 
-  std::size_t DataSizeY() const override { return y_.size(); }
-  std::size_t DataSizeU() const override { return u_.size(); }
-  std::size_t DataSizeV() const override { return v_.size(); }
+  size_t DataSizeY() const override { return y_.size(); }
+  size_t DataSizeU() const override { return u_.size(); }
+  size_t DataSizeV() const override { return v_.size(); }
 
  private:
   const int width_;
   const int height_;
-  std::vector<std::uint8_t> y_;
-  std::vector<std::uint8_t> u_;
-  std::vector<std::uint8_t> v_;
+  std::vector<uint8_t> y_;
+  std::vector<uint8_t> u_;
+  std::vector<uint8_t> v_;
 };
 
 }

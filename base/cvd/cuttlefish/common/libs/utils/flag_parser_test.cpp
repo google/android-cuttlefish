@@ -16,6 +16,8 @@
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 
+#include <stdint.h>
+
 #include <map>
 #include <optional>
 #include <sstream>
@@ -154,7 +156,7 @@ TEST(FlagParser, FlagRemoval) {
 }
 
 TEST(FlagParser, IntFlag) {
-  std::int32_t value = 0;
+  int32_t value = 0;
   auto flag = GflagsCompatFlag("myflag", value);
   ASSERT_THAT(flag.Parse({"-myflag=5"}), IsOk());
   ASSERT_EQ(value, 5);
@@ -230,7 +232,7 @@ TEST(FlagParser, BoolFlagXml) {
 }
 
 TEST(FlagParser, StringIntFlag) {
-  std::int32_t int_value = 0;
+  int32_t int_value = 0;
   std::string string_value;
   auto int_flag = GflagsCompatFlag("int", int_value);
   auto string_flag = GflagsCompatFlag("string", string_value);

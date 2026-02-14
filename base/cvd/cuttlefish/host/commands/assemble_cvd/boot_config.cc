@@ -16,11 +16,12 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 
+#include <stdint.h>
+#include <sys/stat.h>
+
 #include <fstream>
 #include <sstream>
 #include <string>
-
-#include <sys/stat.h>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
@@ -72,7 +73,7 @@ void WriteAndroidEnvironment(
 }
 
 void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
-                         std::optional<std::uint16_t> partition_num,
+                         std::optional<uint16_t> partition_num,
                          std::ostream& env) {
   std::string partition_str =
       partition_num ? fmt::format("setenv devplist {:x};", *partition_num) : "";

@@ -16,8 +16,9 @@
 
 #include "cuttlefish/common/libs/utils/base64.h"
 
-#include <cstddef>
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 
@@ -25,16 +26,15 @@
 
 namespace cuttlefish {
 
-bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
-  std::size_t max_length = 0;
+bool EncodeBase64(const void* data, size_t size, std::string* out) {
+  size_t max_length = 0;
   if (EVP_EncodedLength(&max_length, size) == 0) {
     return false;
   }
 
   out->resize(max_length);
-  auto enc_res =
-      EVP_EncodeBlock(reinterpret_cast<std::uint8_t *>(out->data()),
-                      reinterpret_cast<const std::uint8_t *>(data), size);
+  auto enc_res = EVP_EncodeBlock(reinterpret_cast<uint8_t*>(out->data()),
+                                 reinterpret_cast<const uint8_t*>(data), size);
   if (enc_res < 0) {
     return false;
   }
@@ -42,9 +42,9 @@ bool EncodeBase64(const void *data, std::size_t size, std::string *out) {
   return true;
 }
 
-bool DecodeBase64(const std::string &data, std::vector<std::uint8_t> *buffer) {
+bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer) {
   buffer->resize(data.size());
-  std::size_t actual_len = 0;
+  size_t actual_len = 0;
   int success = EVP_DecodeBase64(buffer->data(), &actual_len, buffer->size(),
                                  reinterpret_cast<const uint8_t *>(data.data()),
                                  data.size());

@@ -15,6 +15,8 @@
  */
 #include <sys/socket.h>
 
+#include <stddef.h>
+
 #include <cstdlib>
 #include <string>
 
@@ -26,7 +28,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 // Messages are always 128 bytes.
-static constexpr std::size_t kMessageSize = 128;
+static constexpr size_t kMessageSize = 128;
 
 int main(int argc, char** argv) {
   if (argc <= 1) {

@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdlib>
+#include <stddef.h>
+
 #include <utility>
 #include <vector>
 
@@ -25,7 +26,7 @@ namespace cuttlefish {
 template <typename T>
 class FlagBase {
  public:
-  T ForIndex(const std::size_t index) const {
+  T ForIndex(const size_t index) const {
     if (index < values_.size()) {
       return values_[index];
     } else {
@@ -35,7 +36,7 @@ class FlagBase {
 
   bool IsDefault() const { return is_default_; }
 
-  std::size_t Size() const { return values_.size(); }
+  size_t Size() const { return values_.size(); }
   const std::vector<T>& AsVector() const { return values_; }
 
  protected:

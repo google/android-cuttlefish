@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <cstddef>
+#include <stdint.h>
+
 #include <string>
 
 namespace cuttlefish {
 
-std::string TpmCommandName(std::uint32_t command_num);
-
+std::string TpmCommandName(uint32_t command_num);
 }

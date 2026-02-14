@@ -16,12 +16,15 @@
 
 #include <sys/types.h>
 
+#include <stdint.h>
+
 #include <cinttypes>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <future>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 

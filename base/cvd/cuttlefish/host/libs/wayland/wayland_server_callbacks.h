@@ -16,18 +16,19 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <functional>
 #include <variant>
 
 struct DisplayCreatedEvent {
-  std::uint32_t display_number;
-  std::uint32_t display_width;
-  std::uint32_t display_height;
+  uint32_t display_number;
+  uint32_t display_width;
+  uint32_t display_height;
 };
 
 struct DisplayDestroyedEvent {
-  std::uint32_t display_number;
+  uint32_t display_number;
 };
 
 using DisplayEvent = std::variant<DisplayCreatedEvent, DisplayDestroyedEvent>;
