@@ -1,29 +1,40 @@
-cuttlefish-common (1.43.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.43.0) unstable; urgency=medium
 
-  *
+  * Add .0 suffix on version described at */debian/changelog by @0405ysj in https://github.com/google/android-cuttlefish/pull/2119
+  * Delete unused field, matching internal changes by @cjreynol in https://github.com/google/android-cuttlefish/pull/2113
+  * Implement the standard IO interfaces for the zip types by @Databean in https://github.com/google/android-cuttlefish/pull/2112
+  * Update file time of composite disk when powerwashing by @Databean in https://github.com/google/android-cuttlefish/pull/2123
+  * Replace `reserve` with `resize` call in BlankDataImageMbFlag by @Databean in https://github.com/google/android-cuttlefish/pull/2126
+  * Add gigabyte-ampere-cuttlefish-installer subdirectory by @grandpaul in https://github.com/google/android-cuttlefish/pull/2067
+  * Mark 1.41.0 as stable by @jmacnak in https://github.com/google/android-cuttlefish/pull/2127
+  * Support default values containing commas in FromGlobalFlags by @Databean in https://github.com/google/android-cuttlefish/pull/2125
+  * Unblock copybara by @jemoreira in https://github.com/google/android-cuttlefish/pull/2124
+  * Mark 1.42 as stable. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2134
+  * Always apply common ubsan checks by @Databean in https://github.com/google/android-cuttlefish/pull/2129
+  * Update GPU config to *only* run `requires_gpu` tagged tests by @jmacnak in https://github.com/google/android-cuttlefish/pull/2137
 
- -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:39:31 +0000
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 18:10:17 -0800
 
 cuttlefish-common (1.42.0) stable; urgency=medium
 
-* Start development on v1.42 by @jmacnak in https://github.com/google/android-cuttlefish/pull/2097
-* Add `data_policy` to list of flags gathered for metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2065
-* Extract some CuttlefishConfig::InstanceSpecific members to be free functions (#2) by @Databean in https://github.com/google/android-cuttlefish/pull/2094
-* Don't mandate that AndroidBuild implementations provide SetExtractDir by @Databean in https://github.com/google/android-cuttlefish/pull/2101
-* Create a generic I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2096
-* Introduce a utility for reading boot images by @Databean in https://github.com/google/android-cuttlefish/pull/2095
-* Gather metrics for `restart_subprocesses` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2098
-* Gather metrics for `memory_mb` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2099
-* Avoid access before initialization in DisplayHandler by @jemoreira in https://github.com/google/android-cuttlefish/pull/2104
-* Gather metrics for `guest_enforce_security` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2100
-* Skip group name check on the container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2102
-* Create an in-memory implementation of the I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2106
-* Gather metrics for `extra_kernel_cmdline` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2103
-* Use more posix-like names in the IO abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2109
-* Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
-* Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
-* Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
-* Mark 1.40 as stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2108
+  * Start development on v1.42 by @jmacnak in https://github.com/google/android-cuttlefish/pull/2097
+  * Add `data_policy` to list of flags gathered for metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2065
+  * Extract some CuttlefishConfig::InstanceSpecific members to be free functions (#2) by @Databean in https://github.com/google/android-cuttlefish/pull/2094
+  * Don't mandate that AndroidBuild implementations provide SetExtractDir by @Databean in https://github.com/google/android-cuttlefish/pull/2101
+  * Create a generic I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2096
+  * Introduce a utility for reading boot images by @Databean in https://github.com/google/android-cuttlefish/pull/2095
+  * Gather metrics for `restart_subprocesses` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2098
+  * Gather metrics for `memory_mb` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2099
+  * Avoid access before initialization in DisplayHandler by @jemoreira in https://github.com/google/android-cuttlefish/pull/2104
+  * Gather metrics for `guest_enforce_security` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2100
+  * Skip group name check on the container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2102
+  * Create an in-memory implementation of the I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2106
+  * Gather metrics for `extra_kernel_cmdline` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2103
+  * Use more posix-like names in the IO abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2109
+  * Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
+  * Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
+  * Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
+  * Mark 1.40 as stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2108
 
  -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:00:34 +0000
 
