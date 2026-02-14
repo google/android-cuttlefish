@@ -1,4 +1,4 @@
-import {Component, inject} from '@angular/core';
+import {Component, inject, ChangeDetectionStrategy} from '@angular/core';
 import {DeviceService} from '../device.service';
 import {DisplaysService} from '../displays.service';
 import {filter, first, mergeMap} from 'rxjs/operators';
@@ -6,6 +6,7 @@ import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 import {DeviceItem} from '../device-item.interface';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Default,
   standalone: false,
   selector: 'app-device-pane',
   templateUrl: './device-pane.component.html',

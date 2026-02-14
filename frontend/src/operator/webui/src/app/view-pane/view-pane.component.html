@@ -8,44 +8,46 @@
     [layout]="(resultLayout | async)!"
     [scrollableParent]="document"
     (layoutUpdated)="layoutUpdated$.next($event)"
-  >
-    <ktd-grid-item
-      *ngFor="let display of resultLayout | async; trackBy: trackById"
-      class="device-viewer"
-      dragStartThreshold="0"
-      transition="transform 500ms ease, width 500ms ease, height 500ms ease"
-      [id]="display.id"
     >
-      <div class="device-viewer-display">
-        <div ktdGridDragHandle class="viewer-header">
-          {{ display.id }}
-          <div
-            class="grid-item-remove-handle"
-            (click)="displaysService.toggleVisibility(display.id)"
-          ></div>
-        </div>
-        <div
-          class="fit-panel loading-message"
-          *ngIf="
-            display.display_width === null || display.display_height === null
-          "
-          (click)="forceShowDevice(display.id)"
+    @for (display of resultLayout | async; track trackById($index, display)) {
+      <ktd-grid-item
+        class="device-viewer"
+        dragStartThreshold="0"
+        transition="transform 500ms ease, width 500ms ease, height 500ms ease"
+        [id]="display.id"
         >
-          Waiting for the display to be turned on.<br />
-          Click to show the device anyway.
-        </div>
-        <div class="fit-panel">
-          <iframe
+        <div class="device-viewer-display">
+          <div ktdGridDragHandle class="viewer-header">
+            {{ display.id }}
+            <div
+              class="grid-item-remove-handle"
+              (click)="displaysService.toggleVisibility(display.id)"
+            ></div>
+          </div>
+          @if (
+            display.display_width === null || display.display_height === null
+            ) {
+            <div
+              class="fit-panel loading-message"
+              (click)="forceShowDevice(display.id)"
+              >
+              Waiting for the display to be turned on.<br />
+              Click to show the device anyway.
+            </div>
+          }
+          <div class="fit-panel">
+            <iframe
             [ngClass]="{
               hidden:
                 display.display_width === null ||
                 display.display_height === null
             }"
-            [src]="display.id | safedeviceurl"
-            [title]="display.id"
-          ></iframe>
+              [src]="display.id | safedeviceurl"
+              [title]="display.id"
+            ></iframe>
+          </div>
         </div>
-      </div>
-    </ktd-grid-item>
+      </ktd-grid-item>
+    }
   </ktd-grid>
 </div>

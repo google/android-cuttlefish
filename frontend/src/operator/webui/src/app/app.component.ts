@@ -1,10 +1,11 @@
-import {Component, HostListener, Injectable} from '@angular/core';
+import {Component, HostListener, Injectable, ChangeDetectionStrategy} from '@angular/core';
 
 import {DisplaysService} from './displays.service';
 import {BUILD_VERSION} from '../environments/version'
 
 @Injectable()
 @Component({
+  changeDetection: ChangeDetectionStrategy.Default,
   standalone: false,
   selector: 'app-root',
   templateUrl: './app.component.html',
