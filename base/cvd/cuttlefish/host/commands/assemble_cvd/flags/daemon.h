@@ -29,7 +29,7 @@ class DaemonFlag : public FlagBase<bool> {
   ~DaemonFlag() override = default;
 
  private:
-  DaemonFlag(std::vector<bool>);
+  explicit DaemonFlag(std::vector<bool> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

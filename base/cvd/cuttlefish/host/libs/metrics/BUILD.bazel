@@ -44,6 +44,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:guest_enforce_security",
         "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
         "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/result",

@@ -40,13 +40,13 @@ constexpr char kFlagName[] = "guest_enforce_security";
 
 Result<GuestEnforceSecurityFlag> GuestEnforceSecurityFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<bool> flag_values =
+  FromGflags<bool> result =
       CF_EXPECT(BoolFromGlobalGflags(flag_info, kFlagName));
-  return GuestEnforceSecurityFlag(std::move(flag_values));
+  return GuestEnforceSecurityFlag(std::move(result.values), result.is_default);
 }
 
 GuestEnforceSecurityFlag::GuestEnforceSecurityFlag(
-    std::vector<bool> flag_values)
-    : FlagBase<bool>(std::move(flag_values)) {}
+    std::vector<bool> flag_values, bool is_default)
+    : FlagBase<bool>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

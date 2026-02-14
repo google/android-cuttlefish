@@ -43,16 +43,16 @@ constexpr char kFlagName[] = "gpu_mode";
 
 Result<GpuModeFlag> GpuModeFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<std::string> flag_string_values =
+  FromGflags<std::string> result =
       CF_EXPECT(StringFromGlobalGflags(flag_info, kFlagName));
   std::vector<GpuMode> flag_values;
-  for (const auto& value : flag_string_values) {
+  for (const auto& value : result.values) {
     flag_values.emplace_back(CF_EXPECT(GpuModeFromString(value)));
   }
-  return GpuModeFlag(std::move(flag_values));
+  return GpuModeFlag(std::move(flag_values), result.is_default);
 }
 
-GpuModeFlag::GpuModeFlag(std::vector<GpuMode> flag_values)
-    : FlagBase<GpuMode>(std::move(flag_values)) {}
+GpuModeFlag::GpuModeFlag(std::vector<GpuMode> flag_values, bool is_default)
+    : FlagBase<GpuMode>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

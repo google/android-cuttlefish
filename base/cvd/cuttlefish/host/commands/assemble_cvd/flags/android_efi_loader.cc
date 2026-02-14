@@ -56,19 +56,21 @@ std::vector<std::string> DefaultPaths(
 /* `--android_efi_loader` flag */
 AndroidEfiLoaderFlag AndroidEfiLoaderFlag::FromGlobalGflags(
     const SystemImageDirFlag& system_image_dir, const VmManagerFlag& vmm) {
-  if (!VmManagerIsCrosvm(vmm) && !VmManagerIsQemu(vmm)) {
-    return AndroidEfiLoaderFlag({});
-  }
-  gflags::CommandLineFlagInfo flag_info =
+  const gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("android_efi_loader");
+  if (!VmManagerIsCrosvm(vmm) && !VmManagerIsQemu(vmm)) {
+    return AndroidEfiLoaderFlag({}, flag_info.is_default);
+  }
   if (flag_info.is_default) {
-    return AndroidEfiLoaderFlag(DefaultPaths(system_image_dir));
+    return AndroidEfiLoaderFlag(DefaultPaths(system_image_dir), true);
   } else {
-    return AndroidEfiLoaderFlag(absl::StrSplit(FLAGS_android_efi_loader, ","));
+    return AndroidEfiLoaderFlag(absl::StrSplit(FLAGS_android_efi_loader, ","),
+                                false);
   }
 }
 
-AndroidEfiLoaderFlag::AndroidEfiLoaderFlag(std::vector<std::string> paths)
-    : FlagBase(paths) {}
+AndroidEfiLoaderFlag::AndroidEfiLoaderFlag(std::vector<std::string> flag_values,
+                                           bool is_default)
+    : FlagBase(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

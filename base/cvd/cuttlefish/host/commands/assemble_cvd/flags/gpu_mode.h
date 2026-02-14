@@ -30,7 +30,7 @@ class GpuModeFlag : public FlagBase<GpuMode> {
   ~GpuModeFlag() override = default;
 
  private:
-  GpuModeFlag(std::vector<GpuMode>);
+  explicit GpuModeFlag(std::vector<GpuMode> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish
