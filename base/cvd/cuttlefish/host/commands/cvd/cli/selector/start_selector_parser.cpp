@@ -25,8 +25,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -46,7 +46,7 @@ static bool Unique(const std::vector<unsigned>& v) {
 
 static Result<unsigned> ParseNaturalNumber(const std::string& token) {
   std::int32_t value;
-  CF_EXPECT(android::base::ParseInt(token, &value));
+  CF_EXPECT(absl::SimpleAtoi(token, &value));
   CF_EXPECT(value > 0);
   return static_cast<unsigned>(value);
 }

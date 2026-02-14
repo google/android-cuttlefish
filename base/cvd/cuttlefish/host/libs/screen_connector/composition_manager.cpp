@@ -32,9 +32,9 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 #include "libyuv.h"
 
 #include <drm/drm_fourcc.h>
@@ -94,9 +94,8 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
       DisplayOverlay docfg;
 
       if (overlay_tuple.size() == 2) {
-        if (!(android::base::ParseInt(overlay_tuple[0], &docfg.src_vm_index) &&
-              android::base::ParseInt(overlay_tuple[1],
-                                      &docfg.src_display_index))) {
+        if (!(absl::SimpleAtoi(overlay_tuple[0], &docfg.src_vm_index) &&
+              absl::SimpleAtoi(overlay_tuple[1], &docfg.src_display_index))) {
           LOG(FATAL) << "Failed to parse display overlay directive: "
                      << overlay_tuple_str;
         } else {

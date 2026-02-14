@@ -23,10 +23,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/libs/avb/avb.h"
@@ -113,7 +113,7 @@ Result<int> ResolveRollbackIndexConflicts(
     const std::string& index_string,
     const std::unordered_set<int> used_indices) {
   int index;
-  CF_EXPECTF(android::base::ParseInt(index_string, &index),
+  CF_EXPECTF(absl::SimpleAtoi(index_string, &index),
              "Unable to parse value {} to string.  Maybe a wrong or bad value "
              "read for the rollback index?",
              index_string);
