@@ -28,9 +28,9 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/parseint.h"
 #include "android-base/strings.h"
 #include "fmt/format.h"
 #include "fruit/fruit.h"
@@ -236,10 +236,10 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
           default_value = default_value_vec[instance_index];
         }
         CF_EXPECTF(
-            android::base::ParseInt(default_value, &value_vec[instance_index]),
+            absl::SimpleAtoi(default_value, &value_vec[instance_index]),
             "Failed to parse value '{}' for '{}'", default_value, flag_name);
       } else {
-        CF_EXPECTF(android::base::ParseInt(flag_vec[instance_index],
+        CF_EXPECTF(absl::SimpleAtoi(flag_vec[instance_index],
                                            &value_vec[instance_index]),
                    "Failed to parse value '{}' for '{}'",
                    flag_vec[instance_index], flag_name);

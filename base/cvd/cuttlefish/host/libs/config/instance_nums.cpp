@@ -23,9 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -70,7 +70,7 @@ static Result<std::vector<std::int32_t>> ParseInstanceNums(
   std::set<std::int32_t> duplication_check_set;
   for (const auto& instance_num_str : split_str) {
     std::int32_t instance_num;
-    CF_EXPECT(android::base::ParseInt(instance_num_str.c_str(), &instance_num),
+    CF_EXPECT(absl::SimpleAtoi(instance_num_str.c_str(), &instance_num),
               "Unable to parse \"" << instance_num_str << "\" in "
                                    << "`--instance_nums=\"" << instance_nums_str
                                    << "\"`");

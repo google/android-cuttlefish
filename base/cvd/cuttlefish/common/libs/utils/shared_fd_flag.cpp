@@ -20,7 +20,7 @@
 #include <functional>
 #include <string>
 
-#include <android-base/parseint.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -29,7 +29,7 @@ namespace cuttlefish {
 
 static Result<void> Set(const FlagMatch& match, SharedFD& out) {
   int raw_fd;
-  CF_EXPECTF(android::base::ParseInt(match.value.c_str(), &raw_fd),
+  CF_EXPECTF(absl::SimpleAtoi(match.value, &raw_fd),
              "Failed to parse value \"{}\" for fd flag \"{}\"", match.value,
              match.key);
   out = SharedFD::Dup(raw_fd);

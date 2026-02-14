@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -232,7 +232,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
         std::to_string(instance.vhal_proxy_server_port());
     int32_t instance_id;
-    CF_EXPECT(android::base::ParseInt(instance.id(), &instance_id),
+    CF_EXPECT(absl::SimpleAtoi(instance.id(), &instance_id),
               "instance id: " << instance.id() << " is not a valid int");
     // The static ethernet IP address assigned for the guest.
     bootconfig_args["androidboot.auto_eth_guest_addr"] =

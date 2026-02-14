@@ -24,8 +24,8 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
@@ -59,7 +59,7 @@ Result<InstanceDatabase::Filter> BuildFilterFromSelectors(
   if (it != env.end()) {
     unsigned id;
     auto cuttlefish_instance = it->second;
-    CF_EXPECT(android::base::ParseUint(cuttlefish_instance, &id));
+    CF_EXPECT(absl::SimpleAtoi(cuttlefish_instance, &id));
   }
 
   return filter;
@@ -103,7 +103,7 @@ Result<LocalInstanceGroup> PromptUserForGroup(
     std::string input_line = CF_EXPECT(terminal_->ReadLine());
     int selection = -1;
     std::string chosen_group_name;
-    if (android::base::ParseInt(input_line, &selection)) {
+    if (absl::SimpleAtoi(input_line, &selection)) {
       const int n_groups = groups.size();
       if (n_groups <= selection || selection < 0) {
         fmt::print(std::cerr,

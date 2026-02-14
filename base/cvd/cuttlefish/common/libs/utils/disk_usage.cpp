@@ -20,8 +20,8 @@
 #include <string>
 #include <utility>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
@@ -50,7 +50,7 @@ Result<std::size_t> GetDiskUsage(const std::string& path,
   std::string total = split_out.front();
 
   std::size_t result;
-  CF_EXPECTF(android::base::ParseUint(total, &result),
+  CF_EXPECTF(absl::SimpleAtoi(total, &result),
              "Failure parsing \"{}\" to integer.", total);
   return result;
 }

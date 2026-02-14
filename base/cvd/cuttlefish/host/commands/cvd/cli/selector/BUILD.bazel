@@ -110,6 +110,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -158,5 +159,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )

@@ -27,6 +27,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -92,11 +93,11 @@ static Result<std::string> StopCvdPath(const RunCvdProcInfo& info) {
 }
 
 static std::optional<std::string> HostOut(const cvd_common::Envs& envs) {
-  if (Contains(envs, kAndroidHostOut)) {
-    return envs.at(kAndroidHostOut);
+  if (auto it = envs.find(kAndroidHostOut); it != envs.end()) {
+    return it->second;
   }
-  if (Contains(envs, kAndroidSoongHostOut)) {
-    return envs.at(kAndroidSoongHostOut);
+  if (auto it = envs.find(kAndroidSoongHostOut); it != envs.end()) {
+    return it->second;
   }
   return std::nullopt;
 }
@@ -109,16 +110,25 @@ Result<RunCvdProcInfo> ExtractRunCvdInfo(const pid_t pid) {
   info.exec_path_ = proc_info.actual_exec_path_;
   info.cmd_args_ = std::move(proc_info.args_);
   info.envs_ = std::move(proc_info.envs_);
-  CF_EXPECT(Contains(info.envs_, "HOME"));
-  info.home_ = info.envs_.at("HOME");
+  if (auto it = info.envs_.find("HOME"); it == info.envs_.end()) {
+    return CF_ERR("HOME not present in environment");
+  } else {
+    info.home_ = it->second;
+  }
   info.android_host_out_ = HostOut(info.envs_);
 
   CF_EXPECT(Contains(info.envs_, kCuttlefishInstanceEnvVarName));
 
-  CF_EXPECT(android::base::ParseUint(
-      info.envs_.at(kCuttlefishInstanceEnvVarName), &info.id_));
+  if (auto it = info.envs_.find(kCuttlefishInstanceEnvVarName);
+      it == info.envs_.end()) {
+    return CF_ERRF("{} not present in environment",
+                   kCuttlefishInstanceEnvVarName);
+  } else {
+    CF_EXPECT(absl::SimpleAtoi(it->second, &info.id_));
+  }
 
-  if (Contains(info.envs_, kCvdMarkEnv) && IsTrue(info.envs_.at(kCvdMarkEnv))) {
+  if (auto it = info.envs_.find(kCvdMarkEnv);
+      it != info.envs_.end() && IsTrue(it->second)) {
     info.is_cvd_server_started_ = true;
   }
 

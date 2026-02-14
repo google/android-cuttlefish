@@ -32,12 +32,12 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <json/value.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -135,7 +135,7 @@ Json::Value OverrideToJson(const std::string& key,
   Json::Value leaf;
   if (GetArgValueType(leafValue) == UINTEGER) {
     std::uint32_t leaf_val{};
-    if (!android::base::ParseUint(leafValue, &leaf_val)) {
+    if (!absl::SimpleAtoi(leafValue, &leaf_val)) {
       LOG(ERROR) << "Failed to parse unsigned integer " << leafValue;
       return Json::Value::null;
     };
@@ -152,7 +152,7 @@ Json::Value OverrideToJson(const std::string& key,
 
     if (GetArgValueType(index) == UINTEGER) {
       std::uint32_t index_val{};
-      if (!android::base::ParseUint(index, &index_val)) {
+      if (!absl::SimpleAtoi(index, &index_val)) {
         LOG(ERROR) << "Failed to parse unsigned integer " << index;
         return Json::Value::null;
       }

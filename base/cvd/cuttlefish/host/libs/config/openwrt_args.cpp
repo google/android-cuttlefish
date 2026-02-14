@@ -19,7 +19,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <android-base/parseint.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/host/commands/cvdalloc/interface.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -38,7 +38,8 @@ std::unordered_map<std::string, std::string> OpenwrtArgsFromConfig(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::unordered_map<std::string, std::string> openwrt_args;
   int instance_num;
-  if (!android::base::ParseInt(instance.id(), &instance_num, 1, 128)) {
+  if (!absl::SimpleAtoi(instance.id(), &instance_num) || instance_num < 1 ||
+      instance_num > 128) {
     return openwrt_args;
   }
   openwrt_args["webrtc_device_id"] = instance.webrtc_device_id();

@@ -20,8 +20,8 @@
 #include <iostream>
 #include <unordered_map>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -99,7 +99,7 @@ static Result<std::vector<int>> InstanceNums() {
   instance_nums.reserve(instances.size());
   for (const auto& instance : instances) {
     int id;
-    CF_EXPECTF(android::base::ParseInt(instance.id(), &id),
+    CF_EXPECTF(absl::SimpleAtoi(instance.id(), &id),
                "Parsing filed for {}", id);
     instance_nums.push_back(id);
   }

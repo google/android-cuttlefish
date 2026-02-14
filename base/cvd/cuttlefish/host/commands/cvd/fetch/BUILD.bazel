@@ -17,6 +17,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
