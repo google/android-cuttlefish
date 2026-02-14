@@ -1,3 +1,9 @@
+cuttlefish-common (1.44.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 19:09:39 -0800
+
 cuttlefish-common (1.43.0) unstable; urgency=medium
 
   * Add .0 suffix on version described at */debian/changelog by @0405ysj in https://github.com/google/android-cuttlefish/pull/2119
