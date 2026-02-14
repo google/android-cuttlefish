@@ -15,8 +15,9 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <atomic>
-#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -77,8 +78,8 @@ class TpmResourceManager {
  private:
   std::mutex mu_;
   ESYS_CONTEXT* esys_;
-  const std::uint32_t maximum_object_slots_;
-  std::atomic<std::uint32_t> used_slots_;
+  const uint32_t maximum_object_slots_;
+  std::atomic<uint32_t> used_slots_;
 };
 
 using TpmObjectSlot = std::shared_ptr<TpmResourceManager::ObjectSlot>;

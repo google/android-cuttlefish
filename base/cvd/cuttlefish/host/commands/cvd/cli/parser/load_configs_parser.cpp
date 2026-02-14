@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/parser/load_configs_parser.h"
 
+#include <stddef.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -73,7 +75,7 @@ Flag GflagsCompatFlagOverride(const std::string& name,
   return GflagsCompatFlag(name)
       .Getter([&values]() { return android::base::Join(values, ','); })
       .Setter([&values](const FlagMatch& match) -> Result<void> {
-        std::size_t separator_index = match.value.find(kOverrideSeparator);
+        size_t separator_index = match.value.find(kOverrideSeparator);
         CF_EXPECTF(separator_index != std::string::npos,
                    "Unable to find separator \"{}\" in input \"{}\"",
                    kOverrideSeparator, match.value);
@@ -134,7 +136,7 @@ Json::Value OverrideToJson(const std::string& key,
   // assign the leaf value based on the type of input value
   Json::Value leaf;
   if (GetArgValueType(leafValue) == UINTEGER) {
-    std::uint32_t leaf_val{};
+    uint32_t leaf_val{};
     if (!android::base::ParseUint(leafValue, &leaf_val)) {
       LOG(ERROR) << "Failed to parse unsigned integer " << leafValue;
       return Json::Value::null;
@@ -151,7 +153,7 @@ Json::Value OverrideToJson(const std::string& key,
     std::string index = levels.top();
 
     if (GetArgValueType(index) == UINTEGER) {
-      std::uint32_t index_val{};
+      uint32_t index_val{};
       if (!android::base::ParseUint(index, &index_val)) {
         LOG(ERROR) << "Failed to parse unsigned integer " << index;
         return Json::Value::null;

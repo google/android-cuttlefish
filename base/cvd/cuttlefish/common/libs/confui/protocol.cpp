@@ -15,6 +15,8 @@
 
 #include "cuttlefish/common/libs/confui/protocol.h"
 
+#include <stdint.h>
+
 #include <sstream>
 #include <vector>
 
@@ -132,8 +134,8 @@ bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
 
 bool SendResponse(SharedFD fd, const std::string& session_id,
                   const UserResponse::type& plain_selection,
-                  const std::vector<std::uint8_t>& signed_response,
-                  const std::vector<std::uint8_t>& message) {
+                  const std::vector<uint8_t>& signed_response,
+                  const std::vector<uint8_t>& message) {
   ConfUiCliResponseMessage confui_msg{session_id, plain_selection,
                                       signed_response, message};
   return confui_msg.SendOver(fd);
@@ -141,7 +143,7 @@ bool SendResponse(SharedFD fd, const std::string& session_id,
 
 bool SendStartCmd(SharedFD fd, const std::string& session_id,
                   const std::string& prompt_text,
-                  const std::vector<std::uint8_t>& extra_data,
+                  const std::vector<uint8_t>& extra_data,
                   const std::string& locale,
                   const std::vector<teeui::UIOption>& ui_opts) {
   ConfUiStartMessage confui_msg{session_id, prompt_text, extra_data, locale,

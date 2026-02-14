@@ -16,12 +16,14 @@
 
 #include "cuttlefish/host/frontend/adb_connector/adb_connection_maintainer.h"
 
+#include <stddef.h>
 #include <unistd.h>
 
 #include <cctype>
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -66,12 +68,11 @@ std::string MakeGetStateMessage(const std::string& address) {
 
 // Response will either be OKAY or FAIL
 constexpr char kAdbOkayStatusResponse[] = "OKAY";
-constexpr std::size_t kAdbStatusResponseLength =
-    sizeof kAdbOkayStatusResponse - 1;
+constexpr size_t kAdbStatusResponseLength = sizeof kAdbOkayStatusResponse - 1;
 constexpr std::string_view kAdbUnauthorizedMsg = "device unauthorized.";
 // adb sends the length of what is to follow as a 4 characters string of hex
 // digits
-constexpr std::size_t kAdbMessageLengthLength = 4;
+constexpr size_t kAdbMessageLengthLength = 4;
 
 constexpr int kAdbDaemonPort = 5037;
 

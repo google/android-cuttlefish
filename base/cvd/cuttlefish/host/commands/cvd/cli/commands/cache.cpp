@@ -16,7 +16,8 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/cache.h"
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <memory>
 #include <string>
 #include <string_view>
@@ -50,7 +51,7 @@ enum class Action {
 
 struct CacheArguments {
   Action action = Action::Info;
-  std::size_t allowed_size_gb = kDefaultCacheSizeGb;
+  size_t allowed_size_gb = kDefaultCacheSizeGb;
   bool json_formatted = false;
 };
 
@@ -117,7 +118,7 @@ Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
       break;
     }
     case Action::Info: {
-      const std::size_t cache_size =
+      const size_t cache_size =
           CF_EXPECTF(GetCacheSize(cache_directory),
                      "Error retrieving size of cache at {}", cache_directory);
       if (arguments.json_formatted) {

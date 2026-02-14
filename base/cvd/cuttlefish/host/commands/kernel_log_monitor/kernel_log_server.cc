@@ -17,9 +17,9 @@
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 
 #include <fcntl.h>
+#include <stddef.h>
 #include <sys/types.h>
 
-#include <cstddef>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -79,7 +79,7 @@ constexpr struct {
 void ProcessSubscriptions(Json::Value message,
                           std::vector<EventCallback>* subscribers) {
   auto active_subscription_count = subscribers->size();
-  std::size_t idx = 0;
+  size_t idx = 0;
   while (idx < active_subscription_count) {
     // Call the callback
     auto action = (*subscribers)[idx](message);

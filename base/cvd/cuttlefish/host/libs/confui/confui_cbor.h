@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -56,8 +57,7 @@ class Cbor {
   };
 
  public:
-  Cbor(const std::string& prompt_text,
-       const std::vector<std::uint8_t>& extra_data)
+  Cbor(const std::string& prompt_text, const std::vector<uint8_t>& extra_data)
       : prompt_text_(prompt_text),
         extra_data_(extra_data),
         buffer_status_{Error::OK},
@@ -72,12 +72,12 @@ class Cbor {
     return buffer_status_ == Error::MALFORMED_UTF8;
   }
   // call this only when IsOk() returns true
-  std::vector<std::uint8_t>&& GetMessage();
+  std::vector<uint8_t>&& GetMessage();
 
   /** When encoded, the Cbor object should not exceed this limit in terms of
    * size in bytes
    */
-  const std::uint32_t kMax = static_cast<std::uint32_t>(MessageSize::MAX);
+  const uint32_t kMax = static_cast<uint32_t>(MessageSize::MAX);
 
  private:
   class CborDeleter {
@@ -87,9 +87,9 @@ class Cbor {
 
   std::unique_ptr<cbor_item_t, CborDeleter> cb_map_;
   std::string prompt_text_;
-  std::vector<std::uint8_t> extra_data_;
+  std::vector<uint8_t> extra_data_;
   Error buffer_status_;
-  std::vector<std::uint8_t> buffer_;
+  std::vector<uint8_t> buffer_;
 
   void Init();
   Error CheckUTF8Copy(const std::string& text);

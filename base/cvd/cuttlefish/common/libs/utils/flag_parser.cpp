@@ -16,9 +16,10 @@
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 
+#include <stddef.h>
+
 #include <algorithm>
 #include <cerrno>
-#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
@@ -652,7 +653,7 @@ static Flag GflagsCompatUnsignedNumericFlagGeneric(const std::string& name,
       });
 }
 
-Flag GflagsCompatFlag(const std::string& name, std::size_t& value) {
+Flag GflagsCompatFlag(const std::string& name, size_t& value) {
   return GflagsCompatUnsignedNumericFlagGeneric(name, value);
 }
 

@@ -37,11 +37,12 @@ constexpr char kFlagName[] = "extra_kernel_cmdline";
 
 ExtraKernelCmdlineFlag ExtraKernelCmdlineFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  return ExtraKernelCmdlineFlag({flag_info.current_value});
+  return ExtraKernelCmdlineFlag({flag_info.current_value},
+                                flag_info.is_default);
 }
 
 ExtraKernelCmdlineFlag::ExtraKernelCmdlineFlag(
-    std::vector<std::string> flag_values)
-    : FlagBase<std::string>(std::move(flag_values)) {}
+    std::vector<std::string> flag_values, bool is_default)
+    : FlagBase<std::string>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

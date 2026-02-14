@@ -29,7 +29,7 @@ class MemoryMbFlag : public FlagBase<int> {
   ~MemoryMbFlag() override = default;
 
  private:
-  MemoryMbFlag(std::vector<int>);
+  explicit MemoryMbFlag(std::vector<int> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

@@ -29,7 +29,8 @@ class ExtraKernelCmdlineFlag : public FlagBase<std::string> {
   ~ExtraKernelCmdlineFlag() override = default;
 
  private:
-  ExtraKernelCmdlineFlag(std::vector<std::string>);
+  explicit ExtraKernelCmdlineFlag(std::vector<std::string> flag_values,
+                                  bool is_default);
 };
 
 }  // namespace cuttlefish

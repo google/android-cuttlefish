@@ -15,8 +15,9 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <algorithm>
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -91,7 +92,7 @@ Payload ToPayload(const std::string& cmd_str, const std::string& session_id,
     ss << sz << ":";
   }
   std::string header = ss.str();
-  std::vector<std::uint8_t> payload_buffer{header.begin(), header.end()};
+  std::vector<uint8_t> payload_buffer{header.begin(), header.end()};
   impl::AppendToBuffer(payload_buffer, std::forward<Args>(args)...);
 
   PayloadHeader ph;

@@ -16,7 +16,8 @@
 
 #include "cuttlefish/common/libs/utils/disk_usage.h"
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <string>
 #include <utility>
 
@@ -33,8 +34,8 @@ namespace {
 static constexpr char kWhitespaceCharacters[] = " \n\t\r\v\f";
 
 // return unit determined by the `--block-size` argument
-Result<std::size_t> GetDiskUsage(const std::string& path,
-                                 const std::string& size_arg) {
+Result<size_t> GetDiskUsage(const std::string& path,
+                            const std::string& size_arg) {
   Command du_cmd("du");
   du_cmd.AddParameter("-s");  // summarize, only output total
   du_cmd.AddParameter(
@@ -49,7 +50,7 @@ Result<std::size_t> GetDiskUsage(const std::string& path,
              "No valid output read from `du` command in \"{}\"", out);
   std::string total = split_out.front();
 
-  std::size_t result;
+  size_t result;
   CF_EXPECTF(android::base::ParseUint(total, &result),
              "Failure parsing \"{}\" to integer.", total);
   return result;
@@ -57,12 +58,12 @@ Result<std::size_t> GetDiskUsage(const std::string& path,
 
 }  // namespace
 
-Result<std::size_t> GetDiskUsageBytes(const std::string& path) {
+Result<size_t> GetDiskUsageBytes(const std::string& path) {
   return CF_EXPECTF(GetDiskUsage(path, "1"),
                     "Unable to determine disk usage of file \"{}\"", path);
 }
 
-Result<std::size_t> GetDiskUsageGigabytes(const std::string& path) {
+Result<size_t> GetDiskUsageGigabytes(const std::string& path) {
   return CF_EXPECTF(GetDiskUsage(path, "1G"),
                     "Unable to determine disk usage of file \"{}\"", path);
 }

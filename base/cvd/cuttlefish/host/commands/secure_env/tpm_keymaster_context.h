@@ -15,7 +15,13 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include <keymaster/keymaster_context.h>
@@ -117,7 +123,7 @@ class TpmKeymasterContext : public keymaster::KeymasterContext {
       keymaster::KeymasterKeyBlob* wrapped_key_material) const override;
 
   keymaster_error_t CheckConfirmationToken(
-      const std::uint8_t* input_data, size_t input_data_size,
+      const uint8_t* input_data, size_t input_data_size,
       const uint8_t confirmation_token[keymaster::kConfirmationTokenSize])
       const;
 

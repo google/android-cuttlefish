@@ -16,9 +16,10 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <atomic>
 #include <condition_variable>
-#include <cstdint>
 #include <functional>
 #include <mutex>
 
@@ -37,7 +38,7 @@ namespace cuttlefish {
  */
 class HostModeCtrl {
  public:
-  enum class ModeType : std::uint8_t { kAndroidMode = 55, kConfUI_Mode = 77 };
+  enum class ModeType : uint8_t { kAndroidMode = 55, kConfUI_Mode = 77 };
   INJECT(HostModeCtrl()) : atomic_mode_(ModeType::kAndroidMode) {}
   /**
    * The thread that enqueues Android frames will call this to wait until

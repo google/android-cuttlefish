@@ -16,10 +16,10 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <sys/types.h>
 
-#include <cstddef>
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -111,14 +111,14 @@ std::string GetFsType(const std::string& path) {
 
   static constexpr std::string_view kTypePrefix = "TYPE=\"";
 
-  std::size_t type_begin = blkid_out->find(kTypePrefix);
+  size_t type_begin = blkid_out->find(kTypePrefix);
   if (type_begin == std::string::npos) {
     LOG(ERROR) << "blkid did not report a TYPE. stdout='" << *blkid_out << "'";
     return "";
   }
   type_begin += kTypePrefix.size();
 
-  std::size_t type_end = blkid_out->find('"', type_begin);
+  size_t type_end = blkid_out->find('"', type_begin);
   if (type_end == std::string::npos) {
     LOG(ERROR) << "unable to find the end of the blkid TYPE. stdout='"
                << *blkid_out << "'";
@@ -191,8 +191,8 @@ Result<void> CreateBlankImage(const std::string& image, int num_mb,
     MasterBootRecord mbr = {
         .partitions = {{
             .partition_type = 0xC,
-            .first_lba = (std::uint32_t)offset_size_bytes / kSectorSize,
-            .num_sectors = (std::uint32_t)image_size_bytes / kSectorSize,
+            .first_lba = (uint32_t)offset_size_bytes / kSectorSize,
+            .num_sectors = (uint32_t)image_size_bytes / kSectorSize,
         }},
         .boot_signature = {0x55, 0xAA},
     };

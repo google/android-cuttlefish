@@ -15,17 +15,20 @@
  */
 
 #include "GpxParser.h"
-#include <libxml/parser.h>
 #include <string.h>
 #include <time.h>
-#include <algorithm>
-#include "StringParse.h"
 
-using std::string;
+#include <algorithm>
+#include <string>
+#include <utility>
+
+#include <libxml/parser.h>
+
+#include "StringParse.h"
 
 // format an error message
 template <class... Args>
-static string formatError(const char *format, Args &&...args) {
+static std::string formatError(const char* format, Args&&... args) {
   char buf[100] = {};
   snprintf(buf, sizeof(buf) - 1, format, std::forward<Args>(args)...);
   return buf;
@@ -36,8 +39,8 @@ static void cleanupXmlDoc(xmlDoc *doc) {
   xmlCleanupParser();
 }
 
-static bool parseLocation(xmlNode *ptNode, xmlDoc *doc, GpsFix *result,
-                          string *error) {
+static bool parseLocation(xmlNode* ptNode, xmlDoc* doc, GpsFix* result,
+                          std::string* error) {
   float latitude;
   float longitude;
 
@@ -140,7 +143,7 @@ static bool parseLocation(xmlNode *ptNode, xmlDoc *doc, GpsFix *result,
   return true;
 }
 
-static bool parse(xmlDoc *doc, GpsFixArray *fixes, string *error) {
+static bool parse(xmlDoc* doc, GpsFixArray* fixes, std::string* error) {
   xmlNode *root = xmlDocGetRootElement(doc);
   GpsFix location;
   bool isOk;
@@ -200,8 +203,8 @@ static bool parse(xmlDoc *doc, GpsFixArray *fixes, string *error) {
   return true;
 }
 
-bool GpxParser::parseFile(const char *filePath, GpsFixArray *fixes,
-                          string *error) {
+bool GpxParser::parseFile(const char* filePath, GpsFixArray* fixes,
+                          std::string* error) {
   xmlDocPtr doc = xmlReadFile(filePath, nullptr, 0);
   if (doc == nullptr) {
     cleanupXmlDoc(doc);
@@ -211,8 +214,8 @@ bool GpxParser::parseFile(const char *filePath, GpsFixArray *fixes,
   return parse(doc, fixes, error);
 }
 
-bool GpxParser::parseString(const char *str, int len, GpsFixArray *fixes,
-                            string *error) {
+bool GpxParser::parseString(const char* str, int len, GpsFixArray* fixes,
+                            std::string* error) {
   xmlDocPtr doc = xmlReadMemory(str, len, NULL, NULL, 0);
   if (doc == nullptr) {
     cleanupXmlDoc(doc);

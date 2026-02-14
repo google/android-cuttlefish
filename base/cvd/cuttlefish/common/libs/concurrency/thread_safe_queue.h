@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -15,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#pragma once
+
+#include <stddef.h>
 
 #include <condition_variable>
 #include <deque>
@@ -38,7 +40,7 @@ class ThreadSafeQueue {
   using QueueFullHandler = std::function<void(QueueImpl*)>;
 
   ThreadSafeQueue() = default;
-  explicit ThreadSafeQueue(std::size_t max_elements,
+  explicit ThreadSafeQueue(size_t max_elements,
                            QueueFullHandler max_elements_handler)
       : max_elements_{max_elements},
         max_elements_handler_{std::move(max_elements_handler)} {}
@@ -99,7 +101,7 @@ class ThreadSafeQueue {
   }
 
   std::mutex m_;
-  std::size_t max_elements_{};
+  size_t max_elements_{};
   QueueFullHandler max_elements_handler_{};
   std::condition_variable new_item_;
   QueueImpl items_;

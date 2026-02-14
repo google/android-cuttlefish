@@ -18,7 +18,6 @@
 #include <stdint.h>
 #include <zlib.h>
 
-#include <cstdint>
 #include <fstream>
 #include <future>
 #include <map>
@@ -30,8 +29,6 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
-
-using std::uint32_t;
 
 namespace cuttlefish {
 

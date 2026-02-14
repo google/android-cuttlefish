@@ -16,6 +16,12 @@
 
 #include "cuttlefish/host/libs/confui/confui_cbor.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include <string>
+#include <vector>
+
 #include "cbor.h"
 
 #include "cuttlefish/common/libs/confui/confui.h"
@@ -68,7 +74,7 @@ void Cbor::Init() {
   (void)cbor_serialize_map(cb_map_.get(), buffer_.data(), buffer_.size());
 }
 
-std::vector<std::uint8_t>&& Cbor::GetMessage() { return std::move(buffer_); }
+std::vector<uint8_t>&& Cbor::GetMessage() { return std::move(buffer_); }
 
 Cbor::Error Cbor::CheckUTF8Copy(const std::string& text) {
   auto begin = text.cbegin();

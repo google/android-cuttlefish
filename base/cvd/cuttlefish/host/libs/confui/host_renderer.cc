@@ -16,6 +16,11 @@
 
 #include "cuttlefish/host/libs/confui/host_renderer.h"
 
+#include <stdint.h>
+
+#include <string>
+#include <vector>
+
 #include <drm/drm_fourcc.h>
 #include "absl/log/check.h"
 
@@ -24,7 +29,7 @@
 
 namespace cuttlefish {
 namespace confui {
-static teeui::Color alfaCombineChannel(std::uint32_t shift, double alfa,
+static teeui::Color alfaCombineChannel(uint32_t shift, double alfa,
                                        teeui::Color a, teeui::Color b) {
   a >>= shift;
   a &= 0xff;
@@ -34,7 +39,7 @@ static teeui::Color alfaCombineChannel(std::uint32_t shift, double alfa,
   if (acc <= 0) {
     return 0;
   }
-  std::uint32_t result = acc;
+  uint32_t result = acc;
   if (result > 255) {
     return 255 << shift;
   }
@@ -55,7 +60,7 @@ class ConfUiRendererImpl {
 
  private:
   static Result<std::unique_ptr<ConfUiRendererImpl>> GenerateRenderer(
-      std::uint32_t display, const std::string& confirmation_msg,
+      uint32_t display, const std::string& confirmation_msg,
       const std::string& locale, bool inverted, bool magnified);
 
   /**
@@ -68,20 +73,19 @@ class ConfUiRendererImpl {
 
   bool IsFrameReady() const { return raw_frame_ && !raw_frame_->IsEmpty(); }
 
-  bool IsInConfirm(std::uint32_t x, std::uint32_t y) {
+  bool IsInConfirm(uint32_t x, uint32_t y) {
     return IsInside<teeui::LabelOK>(x, y);
   }
-  bool IsInCancel(std::uint32_t x, std::uint32_t y) {
+  bool IsInCancel(uint32_t x, uint32_t y) {
     return IsInside<teeui::LabelCancel>(x, y);
   }
 
   bool IsSetUpSuccessful() const { return is_setup_well_; }
-  ConfUiRendererImpl(std::uint32_t display, const std::string& confirmation_msg,
-                     const std::string& locale, bool inverted,
-                     bool magnified);
+  ConfUiRendererImpl(uint32_t display, const std::string& confirmation_msg,
+                     const std::string& locale, bool inverted, bool magnified);
 
   struct Boundary {            // inclusive but.. LayoutElement's size is float
-    std::uint32_t x, y, w, h;  // (x, y) is the top left
+    uint32_t x, y, w, h;       // (x, y) is the top left
   };
 
   template <typename LayoutElement>
@@ -91,15 +95,15 @@ class ConfUiRendererImpl {
     // (x,y) is left top. so floor() makes sense
     // w, h are width and height in float. perhaps ceiling makes more
     // sense
-    b.x = static_cast<std::uint32_t>(box.x().floor().count());
-    b.y = static_cast<std::uint32_t>(box.y().floor().count());
-    b.w = static_cast<std::uint32_t>(box.w().ceil().count());
-    b.h = static_cast<std::uint32_t>(box.h().ceil().count());
+    b.x = static_cast<uint32_t>(box.x().floor().count());
+    b.y = static_cast<uint32_t>(box.y().floor().count());
+    b.w = static_cast<uint32_t>(box.w().ceil().count());
+    b.h = static_cast<uint32_t>(box.h().ceil().count());
     return b;
   }
 
   template <typename Element>
-  bool IsInside(std::uint32_t x, std::uint32_t y) const {
+  bool IsInside(uint32_t x, uint32_t y) const {
     auto box = GetBoundary(std::get<Element>(layout_));
     if (x >= box.x && x <= box.x + box.w && y >= box.y && y <= box.y + box.h) {
       return true;
@@ -117,8 +121,8 @@ class ConfUiRendererImpl {
                         bool is_inverted, bool is_magnified);
 
   // a callback function to be effectively sent to TeeUI library
-  teeui::Error UpdatePixels(TeeUiFrameWrapper& raw_frame, std::uint32_t x,
-                            std::uint32_t y, teeui::Color color);
+  teeui::Error UpdatePixels(TeeUiFrameWrapper& raw_frame, uint32_t x,
+                            uint32_t y, teeui::Color color);
 
   // second param is for type deduction
   template <typename... Elements>
@@ -139,7 +143,7 @@ class ConfUiRendererImpl {
   template <typename Label>
   teeui::Error UpdateString();
 
-  std::uint32_t display_num_;
+  uint32_t display_num_;
   teeui::layout_t<teeui::ConfUILayout> layout_;
   std::string lang_id_;
   std::string prompt_text_;  // confirmation ui message
@@ -152,8 +156,8 @@ class ConfUiRendererImpl {
    *
    */
   std::unique_ptr<TeeUiFrameWrapper> raw_frame_;
-  std::uint32_t current_height_;
-  std::uint32_t current_width_;
+  uint32_t current_height_;
+  uint32_t current_width_;
   teeui::Color color_bg_;
   teeui::Color color_text_;
   teeui::Color shield_color_;
@@ -175,10 +179,9 @@ class ConfUiRendererImpl {
 };
 
 Result<std::unique_ptr<ConfUiRendererImpl>>
-ConfUiRendererImpl::GenerateRenderer(std::uint32_t display,
+ConfUiRendererImpl::GenerateRenderer(uint32_t display,
                                      const std::string& confirmation_msg,
-                                     const std::string& locale,
-                                     bool inverted,
+                                     const std::string& locale, bool inverted,
                                      bool magnified) {
   ConfUiRendererImpl* raw_ptr = new ConfUiRendererImpl(
       display, confirmation_msg, locale, inverted, magnified);
@@ -212,10 +215,9 @@ static int GetDpi(int display_num = 0) {
  * proportionally
  *
  */
-ConfUiRendererImpl::ConfUiRendererImpl(std::uint32_t display,
+ConfUiRendererImpl::ConfUiRendererImpl(uint32_t display,
                                        const std::string& confirmation_msg,
-                                       const std::string& locale,
-                                       bool inverted,
+                                       const std::string& locale, bool inverted,
                                        bool magnified)
     : display_num_{display},
       lang_id_{locale},
@@ -310,7 +312,7 @@ void ConfUiRendererImpl::SetDeviceContext(unsigned long long w,
 }
 
 teeui::Error ConfUiRendererImpl::UpdatePixels(TeeUiFrameWrapper& raw_frame,
-                                              std::uint32_t x, std::uint32_t y,
+                                              uint32_t x, uint32_t y,
                                               teeui::Color color) {
   auto buffer = raw_frame.data();
   const auto height = raw_frame.Height();
@@ -377,7 +379,7 @@ std::unique_ptr<TeeUiFrameWrapper> ConfUiRendererImpl::RepaintRawFrame(
   auto new_raw_frame =
       std::make_unique<TeeUiFrameWrapper>(w, h, background_color);
   auto draw_pixel = teeui::makePixelDrawer(
-      [this, &new_raw_frame](std::uint32_t x, std::uint32_t y,
+      [this, &new_raw_frame](uint32_t x, uint32_t y,
                              teeui::Color color) -> teeui::Error {
         return this->UpdatePixels(*new_raw_frame, x, y, color);
       });
@@ -398,7 +400,7 @@ ConfUiRenderer::ConfUiRenderer(ScreenConnectorFrameRenderer& screen_connector)
 ConfUiRenderer::~ConfUiRenderer() {}
 
 Result<void> ConfUiRenderer::RenderDialog(
-    std::uint32_t display_num, const std::string& prompt_text,
+    uint32_t display_num, const std::string& prompt_text,
     const std::string& locale, const std::vector<teeui::UIOption>& ui_options) {
   renderer_impl_ = CF_EXPECT(ConfUiRendererImpl::GenerateRenderer(
       display_num, prompt_text, locale, IsInverted(ui_options),
@@ -410,7 +412,7 @@ Result<void> ConfUiRenderer::RenderDialog(
   auto frame_width = teeui_frame->Width();
   auto frame_height = teeui_frame->Height();
   auto frame_stride_bytes = teeui_frame->ScreenStrideBytes();
-  auto frame_bytes = reinterpret_cast<std::uint8_t*>(teeui_frame->data());
+  auto frame_bytes = reinterpret_cast<uint8_t*>(teeui_frame->data());
   CF_EXPECT(screen_connector_.RenderConfirmationUi(
       display_num, frame_width, frame_height, DRM_FORMAT_ABGR8888,
       frame_stride_bytes, frame_bytes));
@@ -427,13 +429,13 @@ bool ConfUiRenderer::IsMagnified(
   return Contains(ui_options, teeui::UIOption::AccessibilityMagnified);
 }
 
-bool ConfUiRenderer::IsInConfirm(std::uint32_t x, std::uint32_t y) {
+bool ConfUiRenderer::IsInConfirm(uint32_t x, uint32_t y) {
   if (!renderer_impl_) {
     ConfUiLog(INFO) << "renderer_impl_ is nullptr";
   }
   return renderer_impl_ && renderer_impl_->IsInConfirm(x, y);
 }
-bool ConfUiRenderer::IsInCancel(std::uint32_t x, std::uint32_t y) {
+bool ConfUiRenderer::IsInCancel(uint32_t x, uint32_t y) {
   if (!renderer_impl_) {
     ConfUiLog(INFO) << "renderer_impl_ is nullptr";
   }

@@ -15,7 +15,8 @@
 
 #include "cuttlefish/host/libs/web/android_build_string.h"
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <optional>
 #include <ostream>
 #include <sstream>
@@ -39,8 +40,8 @@ Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
     const std::string& build_string) {
   std::string remaining_build_string = build_string;
   std::optional<std::string> filepath;
-  std::size_t open_bracket = build_string.find('{');
-  std::size_t close_bracket = build_string.find('}');
+  size_t open_bracket = build_string.find('{');
+  size_t close_bracket = build_string.find('}');
 
   bool has_open = open_bracket != std::string::npos;
   bool has_close = close_bracket != std::string::npos;
@@ -54,7 +55,7 @@ Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
         !remaining_substring.empty(),
         "The build string excluding filepath cannot be empty.  Input: {}",
         build_string);
-    std::size_t filepath_start = open_bracket + 1;
+    size_t filepath_start = open_bracket + 1;
     std::string filepath_substring =
         build_string.substr(filepath_start, close_bracket - filepath_start);
     CF_EXPECTF(
@@ -70,12 +71,12 @@ Result<std::pair<std::string, std::optional<std::string>>> ParseFilepath(
 Result<BuildString> ParseDeviceBuildString(
     const std::string& build_string,
     const std::optional<std::string>& filepath) {
-  std::size_t slash_pos = build_string.find('/');
+  size_t slash_pos = build_string.find('/');
   std::string branch_or_id = build_string.substr(0, slash_pos);
   auto result = DeviceBuildString{
       .branch_or_id = build_string.substr(0, slash_pos), .filepath = filepath};
   if (slash_pos != std::string::npos) {
-    std::size_t next_slash_pos = build_string.find('/', slash_pos + 1);
+    size_t next_slash_pos = build_string.find('/', slash_pos + 1);
     CF_EXPECTF(next_slash_pos == std::string::npos,
                "Build string argument cannot have more than one '/'.  Found at "
                "positions {},{}.",

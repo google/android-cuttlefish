@@ -16,8 +16,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <atomic>
 #include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/result/result.h"
@@ -28,13 +34,12 @@ namespace cuttlefish {
 // elements here is to allow to compute the valid read/write address for
 // current frame from an external process.
 struct DisplayRingBufferHeader {
-  volatile std::uint32_t display_width_;
-  volatile std::uint32_t display_height_;
-  volatile std::uint32_t bpp_;
-  std::atomic<std::uint32_t> last_valid_frame_index_;
+  volatile uint32_t display_width_;
+  volatile uint32_t display_height_;
+  volatile uint32_t bpp_;
+  std::atomic<uint32_t> last_valid_frame_index_;
 
-  void set(std::uint32_t w, std::uint32_t h, std::uint32_t bpp,
-           std::uint32_t index);
+  void set(uint32_t w, uint32_t h, uint32_t bpp, uint32_t index);
 };
 
 class DisplayRingBuffer {
@@ -48,9 +53,9 @@ class DisplayRingBuffer {
 
   void* GetAddress();
 
-  std::uint8_t* WriteNextFrame(std::uint8_t* frame_data, int size);
-  std::uint8_t* CurrentFrame();
-  std::uint8_t* ComputeFrameAddressForIndex(std::uint32_t index);
+  uint8_t* WriteNextFrame(uint8_t* frame_data, int size);
+  uint8_t* CurrentFrame();
+  uint8_t* ComputeFrameAddressForIndex(uint32_t index);
 
  private:
   DisplayRingBuffer(void* addr, std::string name, bool owned, ScopedMMap shm);
@@ -67,10 +72,10 @@ class DisplayRingBufferManager {
   DisplayRingBufferManager(int vm_index, std::string group_uuid);
   Result<void> CreateLocalDisplayBuffer(int vm_index, int display_index,
                                         int display_width, int display_height);
-  std::uint8_t* WriteFrame(int vm_index, int display_index,
-                           std::uint8_t* frame_data, int size);
-  std::uint8_t* ReadFrame(int vm_index, int display_index, int frame_width,
-                          int frame_height);
+  uint8_t* WriteFrame(int vm_index, int display_index, uint8_t* frame_data,
+                      int size);
+  uint8_t* ReadFrame(int vm_index, int display_index, int frame_width,
+                     int frame_height);
 
  private:
   std::string MakeLayerName(int display_index, int vm_index = -1);

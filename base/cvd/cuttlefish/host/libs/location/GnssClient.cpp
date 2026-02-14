@@ -16,6 +16,8 @@
 
 #include "cuttlefish/host/libs/location/GnssClient.h"
 
+#include <stdint.h>
+
 #include <memory>
 
 #include <grpcpp/channel.h>
@@ -57,7 +59,7 @@ Result<void> GnssClient::SendGpsLocations(int delay,
   // Act upon its status.
   CF_EXPECTF(status.ok(), "GPS data sending failed: {} ({})",
              status.error_message(),
-             static_cast<std::uint32_t>(status.error_code()));
+             static_cast<uint32_t>(status.error_code()));
 
   VLOG(0) << reply.status();
 

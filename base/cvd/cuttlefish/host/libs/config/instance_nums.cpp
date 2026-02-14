@@ -15,7 +15,8 @@
 
 #include "cuttlefish/host/libs/config/instance_nums.h"
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <cstdlib>
 #include <optional>
 #include <set>
@@ -37,39 +38,39 @@ namespace cuttlefish {
 // Failed result: The flag was specified in an invalid way
 // Empty optional: The flag was not specified
 // Present optional: The flag was specified with a valid value
-static Result<std::optional<std::int32_t>> ParseBaseInstanceFlag(
+static Result<std::optional<int32_t>> ParseBaseInstanceFlag(
     std::vector<std::string>& flags) {
   int value = -1;
   auto flag = GflagsCompatFlag("base_instance_num", value);
   CF_EXPECT(flag.Parse(flags), "Flag parsing error");
-  return value > 0 ? value : std::optional<std::int32_t>();
+  return value > 0 ? value : std::optional<int32_t>();
 }
 
 // Failed result: The flag was specified in an invalid way
 // Empty optional: The flag was not specified
 // Present optional: The flag was specified with a valid value
-static Result<std::optional<std::int32_t>> ParseNumInstancesFlag(
+static Result<std::optional<int32_t>> ParseNumInstancesFlag(
     std::vector<std::string>& flags) {
   int value = -1;
   auto flag = GflagsCompatFlag("num_instances", value);
   CF_EXPECT(flag.Parse(flags), "Flag parsing error");
-  return value > 0 ? value : std::optional<std::int32_t>();
+  return value > 0 ? value : std::optional<int32_t>();
 }
 
 // Failed result: The flag was specified in an invalid way
 // Empty set: The flag was not specified
 // Set with members: The flag was specified with a valid value
-static Result<std::vector<std::int32_t>> ParseInstanceNums(
+static Result<std::vector<int32_t>> ParseInstanceNums(
     const std::string& instance_nums_str) {
   if (instance_nums_str.empty()) {
     return {};
   }
-  std::vector<std::int32_t> instance_nums;
+  std::vector<int32_t> instance_nums;
   std::vector<std::string> split_str =
       android::base::Split(instance_nums_str, ",");
-  std::set<std::int32_t> duplication_check_set;
+  std::set<int32_t> duplication_check_set;
   for (const auto& instance_num_str : split_str) {
-    std::int32_t instance_num;
+    int32_t instance_num;
     CF_EXPECT(android::base::ParseInt(instance_num_str.c_str(), &instance_num),
               "Unable to parse \"" << instance_num_str << "\" in "
                                    << "`--instance_nums=\"" << instance_nums_str
@@ -85,7 +86,7 @@ static Result<std::vector<std::int32_t>> ParseInstanceNums(
 // Failed result: The flag was specified in an invalid way
 // Empty set: The flag was not specified
 // Set with members: The flag was specified with a valid value
-static Result<std::vector<std::int32_t>> ParseInstanceNumsFlag(
+static Result<std::vector<int32_t>> ParseInstanceNumsFlag(
     std::vector<std::string>& flags) {
   std::string value;
   auto flag = GflagsCompatFlag("instance_nums", value);
@@ -114,7 +115,7 @@ InstanceNumsCalculator InstanceNumsCalculator::FromFlags(
 // Failed result: The flag was specified in an invalid way
 // Empty optional: The flag was not specified
 // Present optional: The flag was specified with a valid value
-static Result<std::optional<std::int32_t>> GflagsBaseInstanceFlag() {
+static Result<std::optional<int32_t>> GflagsBaseInstanceFlag() {
   gflags::CommandLineFlagInfo info;
   if (!gflags::GetCommandLineFlagInfo("base_instance_num", &info)) {
     return {};
@@ -129,7 +130,7 @@ static Result<std::optional<std::int32_t>> GflagsBaseInstanceFlag() {
 // Failed result: The flag was specified in an invalid way
 // Empty optional: The flag was not specified
 // Present optional: The flag was specified with a valid value
-static Result<std::optional<std::int32_t>> GflagsNumInstancesFlag() {
+static Result<std::optional<int32_t>> GflagsNumInstancesFlag() {
   gflags::CommandLineFlagInfo info;
   if (!gflags::GetCommandLineFlagInfo("num_instances", &info)) {
     return {};
@@ -144,7 +145,7 @@ static Result<std::optional<std::int32_t>> GflagsNumInstancesFlag() {
 // Failed result: The flag was specified in an invalid way
 // Empty set: The flag was not specified
 // Set with members: The flag was specified with a valid value
-static Result<std::vector<std::int32_t>> GflagsInstanceNumsFlag() {
+static Result<std::vector<int32_t>> GflagsInstanceNumsFlag() {
   gflags::CommandLineFlagInfo info;
   if (!gflags::GetCommandLineFlagInfo("instance_nums", &info)) {
     return {};
@@ -168,23 +169,19 @@ InstanceNumsCalculator InstanceNumsCalculator::FromGlobalGflags() && {
   return FromGlobalGflags();
 }
 
-InstanceNumsCalculator& InstanceNumsCalculator::BaseInstanceNum(
-    std::int32_t num) & {
+InstanceNumsCalculator& InstanceNumsCalculator::BaseInstanceNum(int32_t num) & {
   base_instance_num_ = num;
   return *this;
 }
-InstanceNumsCalculator InstanceNumsCalculator::BaseInstanceNum(
-    std::int32_t num) && {
+InstanceNumsCalculator InstanceNumsCalculator::BaseInstanceNum(int32_t num) && {
   return BaseInstanceNum(num);
 }
 
-InstanceNumsCalculator& InstanceNumsCalculator::NumInstances(
-    std::int32_t num) & {
+InstanceNumsCalculator& InstanceNumsCalculator::NumInstances(int32_t num) & {
   num_instances_ = num;
   return *this;
 }
-InstanceNumsCalculator InstanceNumsCalculator::NumInstances(
-    std::int32_t num) && {
+InstanceNumsCalculator InstanceNumsCalculator::NumInstances(int32_t num) && {
   return NumInstances(num);
 }
 
@@ -199,12 +196,12 @@ InstanceNumsCalculator InstanceNumsCalculator::InstanceNums(
 }
 
 InstanceNumsCalculator& InstanceNumsCalculator::InstanceNums(
-    std::vector<std::int32_t> set) & {
+    std::vector<int32_t> set) & {
   instance_nums_ = std::move(set);
   return *this;
 }
 InstanceNumsCalculator InstanceNumsCalculator::InstanceNums(
-    std::vector<std::int32_t> set) && {
+    std::vector<int32_t> set) && {
   return InstanceNums(std::move(set));
 }
 
@@ -218,9 +215,9 @@ void InstanceNumsCalculator::TrySet(T& field, Result<T> result) {
   }
 }
 
-Result<std::vector<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
+Result<std::vector<int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
   CF_EXPECT(Result<void>(setter_result_));
-  std::optional<std::vector<std::int32_t>> instance_nums_opt;
+  std::optional<std::vector<int32_t>> instance_nums_opt;
   if (!instance_nums_.empty()) {
     instance_nums_opt = instance_nums_;
   }
@@ -239,21 +236,21 @@ Result<std::vector<std::int32_t>> InstanceNumsCalculator::CalculateFromFlags() {
     return instance_nums_;
   }
 
-  std::vector<std::int32_t> instance_nums;
+  std::vector<int32_t> instance_nums;
   for (int i = 0; i < num_instances_.value_or(1); i++) {
     instance_nums.push_back(i + *base_instance_num_);
   }
   return instance_nums;
 }
 
-Result<std::vector<std::int32_t>> InstanceNumsCalculator::Calculate() {
+Result<std::vector<int32_t>> InstanceNumsCalculator::Calculate() {
   CF_EXPECT(Result<void>(setter_result_));
 
   if (!instance_nums_.empty() || base_instance_num_) {
     return CalculateFromFlags();
   }
 
-  std::vector<std::int32_t> instance_nums;
+  std::vector<int32_t> instance_nums;
   for (int i = 0; i < num_instances_.value_or(1); i++) {
     instance_nums.push_back(i + GetInstance());
   }

@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 
 #include <errno.h>
+#include <stddef.h>
 
 #include <algorithm>
 #include <cctype>
@@ -246,7 +247,7 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
         std::move(creation_info.group_directories));
   }
   auto& group = groups[0];
-  CF_EXPECTF((std::size_t)group.Instances().size() ==
+  CF_EXPECTF((size_t)group.Instances().size() ==
                  creation_info.group_creation_params.instances.size(),
              "Mismatch in number of instances from analisys: {} vs {}",
              group.Instances().size(),

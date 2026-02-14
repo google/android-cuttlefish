@@ -29,7 +29,8 @@ class GuestEnforceSecurityFlag : public FlagBase<bool> {
   ~GuestEnforceSecurityFlag() override = default;
 
  private:
-  GuestEnforceSecurityFlag(std::vector<bool>);
+  explicit GuestEnforceSecurityFlag(std::vector<bool> flag_values,
+                                    bool is_default);
 };
 
 }  // namespace cuttlefish

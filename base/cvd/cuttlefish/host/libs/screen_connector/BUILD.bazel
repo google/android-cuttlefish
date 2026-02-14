@@ -61,6 +61,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@fruit",
+        "@fmt",
         "@libdrm//:libdrm_fourcc",
         "@libyuv",
     ],

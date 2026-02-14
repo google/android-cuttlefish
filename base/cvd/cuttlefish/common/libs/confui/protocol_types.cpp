@@ -15,7 +15,8 @@
 
 #include "cuttlefish/common/libs/confui/protocol_types.h"
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <map>
 #include <sstream>
 #include <unordered_map>
@@ -51,7 +52,7 @@ std::string ToDebugString(const ConfUiCmd& cmd, const bool is_verbose) {
 
 std::string ToString(const ConfUiCmd& cmd) { return ToDebugString(cmd, false); }
 
-ConfUiCmd ToCmd(std::uint32_t i) {
+ConfUiCmd ToCmd(uint32_t i) {
   std::vector<ConfUiCmd> all_cmds{
       ConfUiCmd::kStart,          ConfUiCmd::kStop,
       ConfUiCmd::kCliAck,         ConfUiCmd::kCliRespond,

@@ -34,6 +34,7 @@ struct FlagMetrics {
   bool guest_enforce_security;
   int memory_mb;
   bool restart_subprocesses;
+  bool system_image_dir_specified;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously

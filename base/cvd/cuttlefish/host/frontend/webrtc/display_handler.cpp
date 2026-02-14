@@ -16,8 +16,12 @@
 
 #include "cuttlefish/host/frontend/webrtc/display_handler.h"
 
+#include <stdint.h>
+
 #include <chrono>
 #include <memory>
+#include <optional>
+#include <string>
 
 #include <drm/drm_fourcc.h>
 #include <libyuv.h>
@@ -96,10 +100,9 @@ DisplayHandler::GetScreenConnectorCallback() {
   auto& composition_manager = composition_manager_;
   DisplayHandler::GenerateProcessedFrameCallback callback =
       [&composition_manager](
-          std::uint32_t display_number, std::uint32_t frame_width,
-          std::uint32_t frame_height, std::uint32_t frame_fourcc_format,
-          std::uint32_t frame_stride_bytes, std::uint8_t* frame_pixels,
-          WebRtcScProcessedFrame& processed_frame) {
+          uint32_t display_number, uint32_t frame_width, uint32_t frame_height,
+          uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
+          uint8_t* frame_pixels, WebRtcScProcessedFrame& processed_frame) {
         processed_frame.display_number_ = display_number;
         processed_frame.buf_ =
             std::make_unique<CvdVideoFrameBuffer>(frame_width, frame_height);

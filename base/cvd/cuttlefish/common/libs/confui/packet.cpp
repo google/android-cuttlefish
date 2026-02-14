@@ -15,8 +15,9 @@
 
 #include "cuttlefish/common/libs/confui/packet.h"
 
+#include <stdint.h>
+
 #include <algorithm>
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,7 +27,7 @@
 namespace cuttlefish {
 namespace confui {
 namespace packet {
-static std::optional<std::vector<std::uint8_t>> ReadRawData(SharedFD s) {
+static std::optional<std::vector<uint8_t>> ReadRawData(SharedFD s) {
   if (!s->IsOpen()) {
     ConfUiLog(ERROR) << "file, socket, etc, is not open to read";
     return std::nullopt;
@@ -56,13 +57,13 @@ static std::optional<std::vector<std::uint8_t>> ReadRawData(SharedFD s) {
     ConfUiLog(ERROR) << "The length ReadRawData read does not match.";
     return std::nullopt;
   }
-  std::vector<std::uint8_t> result{buf.get(), buf.get() + nread};
+  std::vector<uint8_t> result{buf.get(), buf.get() + nread};
 
   return {result};
 }
 
 static std::optional<ParsedPacket> ParseRawData(
-    const std::vector<std::uint8_t>& data_to_parse) {
+    const std::vector<uint8_t>& data_to_parse) {
   /*
    * data_to_parse has 0 in it, so it is not exactly "your (text) std::string."
    * If we type-cast data_to_parse to std::string and use 3rd party std::string-
@@ -133,7 +134,7 @@ static std::optional<ParsedPacket> ParseRawData(
     if (len == 0) {
       // push null vector or whatever empty, appropriately-typed
       // container
-      data_to_return.emplace_back(std::vector<std::uint8_t>{});
+      data_to_return.emplace_back(std::vector<uint8_t>{});
       continue;
     }
     data_to_return.emplace_back(data_to_parse.begin() + pos,

@@ -16,23 +16,24 @@
 
 #pragma once
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <string>
 
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-inline constexpr std::size_t kDefaultCacheSizeGb = 25;
+inline constexpr size_t kDefaultCacheSizeGb = 25;
 
 struct PruneResult {
-  std::size_t before;
-  std::size_t after;
+  size_t before;
+  size_t after;
 };
 
 Result<void> EmptyCache(const std::string& cache_directory);
-Result<std::size_t> GetCacheSize(const std::string& cache_directory);
+Result<size_t> GetCacheSize(const std::string& cache_directory);
 Result<PruneResult> PruneCache(const std::string& cache_directory,
-                               std::size_t allowed_size_GB);
+                               size_t allowed_size_GB);
 
 }  // namespace cuttlefish

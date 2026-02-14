@@ -18,7 +18,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <cstddef>
 #include <chrono>
 #include <memory>
 #include <mutex>
@@ -440,7 +439,7 @@ ServiceAccountOauthCredentialSource::ServiceAccountOauthCredentialSource(
     HttpClient& http_client)
     : http_client_(http_client), private_key_(nullptr, EVP_PKEY_free) {}
 
-static Result<std::string> Base64Url(const char* data, std::size_t size) {
+static Result<std::string> Base64Url(const char* data, size_t size) {
   std::string base64;
   CF_EXPECT(EncodeBase64(data, size, &base64));
   base64 = android::base::StringReplace(base64, "+", "-", /* all */ true);

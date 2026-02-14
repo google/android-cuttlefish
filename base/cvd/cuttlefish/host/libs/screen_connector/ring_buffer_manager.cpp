@@ -16,9 +16,16 @@
 
 #include "cuttlefish/host/libs/screen_connector/ring_buffer_manager.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <memory>
+#include <optional>
+#include <string>
+
+#include <fmt/format.h>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
@@ -84,33 +91,30 @@ DisplayRingBuffer::DisplayRingBuffer(void* addr, std::string name, bool owned,
   header_ = (DisplayRingBufferHeader*)addr;
 }
 
-std::uint8_t* DisplayRingBuffer::WriteNextFrame(std::uint8_t* frame_data,
-                                                int size) {
+uint8_t* DisplayRingBuffer::WriteNextFrame(uint8_t* frame_data, int size) {
   int new_frame_index =
       (header_->last_valid_frame_index_ + 1) % kNumberOfRingBufferFrames;
 
-  std::uint8_t* frame_memory_address =
-      ComputeFrameAddressForIndex(new_frame_index);
+  uint8_t* frame_memory_address = ComputeFrameAddressForIndex(new_frame_index);
   memcpy(frame_memory_address, frame_data, size);
 
   header_->last_valid_frame_index_ = new_frame_index;
   return frame_memory_address;
 }
 
-std::uint8_t* DisplayRingBuffer::CurrentFrame() {
+uint8_t* DisplayRingBuffer::CurrentFrame() {
   return ComputeFrameAddressForIndex(header_->last_valid_frame_index_);
 }
 
-std::uint8_t* DisplayRingBuffer::ComputeFrameAddressForIndex(
-    std::uint32_t index) {
+uint8_t* DisplayRingBuffer::ComputeFrameAddressForIndex(uint32_t index) {
   int frame_memory_index = (index * (header_->display_width_ *
                                      header_->display_height_ * header_->bpp_));
-  return ((std::uint8_t*)addr_) + sizeof(DisplayRingBufferHeader) +
+  return ((uint8_t*)addr_) + sizeof(DisplayRingBufferHeader) +
          frame_memory_index;
 }
 
-void DisplayRingBufferHeader::set(std::uint32_t w, std::uint32_t h,
-                                  std::uint32_t bpp, std::uint32_t index) {
+void DisplayRingBufferHeader::set(uint32_t w, uint32_t h, uint32_t bpp,
+                                  uint32_t index) {
   display_width_ = w;
   display_height_ = h;
   bpp_ = bpp;
@@ -130,7 +134,7 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
 
     auto shm_buffer = CF_EXPECT(DisplayRingBuffer::Create(
         shmem_name, RingBufferMemorySize(display_width, display_height)));
-    std::uint8_t* shmem_local_display = (std::uint8_t*)shm_buffer->GetAddress();
+    uint8_t* shmem_local_display = (uint8_t*)shm_buffer->GetAddress();
 
     // Here we coerce the IPC buffer into having a header with metadata
     // containing DisplayRingBufferHeader struct.  Then copy the values over
@@ -146,10 +150,8 @@ Result<void> DisplayRingBufferManager::CreateLocalDisplayBuffer(
   return {};
 }
 
-std::uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index,
-                                                   int display_index,
-                                                   std::uint8_t* frame_data,
-                                                   int size) {
+uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index, int display_index,
+                                              uint8_t* frame_data, int size) {
   auto buffer_key = std::make_pair(vm_index, display_index);
   if (display_buffer_cache_.count(buffer_key)) {
     return display_buffer_cache_[buffer_key]->WriteNextFrame(frame_data, size);
@@ -158,10 +160,9 @@ std::uint8_t* DisplayRingBufferManager::WriteFrame(int vm_index,
   return nullptr;
 }
 
-std::uint8_t* DisplayRingBufferManager::ReadFrame(int vm_index,
-                                                  int display_index,
-                                                  int frame_width,
-                                                  int frame_height) {
+uint8_t* DisplayRingBufferManager::ReadFrame(int vm_index, int display_index,
+                                             int frame_width,
+                                             int frame_height) {
   auto buffer_key = std::make_pair(vm_index, display_index);
 
   // If this buffer was read successfully in the past, that valid pointer is

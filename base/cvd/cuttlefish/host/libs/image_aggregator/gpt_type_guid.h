@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -24,6 +26,6 @@ enum class GptPartitionType {
   kEfiSystemPartition,
 };
 
-Result<const std::uint8_t*> GetPartitionGUID(GptPartitionType);
+Result<const uint8_t*> GetPartitionGUID(GptPartitionType);
 
 }  // namespace cuttlefish

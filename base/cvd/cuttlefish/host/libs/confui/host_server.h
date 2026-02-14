@@ -16,8 +16,9 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <atomic>
-#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -134,7 +135,7 @@ class HostServer {
     return ToString(curr_session_->GetState());
   }
 
-  const std::uint32_t display_num_;
+  const uint32_t display_num_;
   ConfUiRenderer& host_renderer_;
   HostModeCtrl& host_mode_ctrl_;
 

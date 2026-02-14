@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstddef>
+#include <stddef.h>
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -35,7 +36,7 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
                                 const std::string& flag_name,
                                 std::optional<T>& value_opt) {
   value_opt = std::nullopt;
-  const std::size_t args_initial_size = args.size();
+  const size_t args_initial_size = args.size();
   if (args_initial_size == 0) {
     return {};
   }

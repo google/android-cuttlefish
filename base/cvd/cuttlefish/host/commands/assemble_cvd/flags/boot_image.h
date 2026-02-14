@@ -31,12 +31,8 @@ class BootImageFlag : public FlagBase<std::string> {
  public:
   static Result<BootImageFlag> FromGlobalGflags(AndroidBuilds&);
 
-  bool IsDefault() const;
-
  private:
-  BootImageFlag(std::vector<std::string>, bool is_default);
-
-  bool is_default_;
+  explicit BootImageFlag(std::vector<std::string> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

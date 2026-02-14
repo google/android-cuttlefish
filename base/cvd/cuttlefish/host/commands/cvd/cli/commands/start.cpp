@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -71,7 +72,7 @@ namespace cuttlefish {
 namespace {
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
-  std::size_t initial_size = args.size();
+  size_t initial_size = args.size();
   std::string config_file;
   std::vector<Flag> config_flags = {
       GflagsCompatFlag("config_file", config_file)};

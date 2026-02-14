@@ -16,6 +16,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd_stream.h"
 
+#include <stddef.h>
+
 #include <cstdio>
 #include <streambuf>
 
@@ -87,7 +89,7 @@ int SharedFDStreambuf::overflow(int c) {
 std::streamsize SharedFDStreambuf::xsputn(const char* source,
                                           std::streamsize count) {
   return static_cast<std::streamsize>(
-      WriteAll(shared_fd_, source, static_cast<std::size_t>(count)));
+      WriteAll(shared_fd_, source, static_cast<size_t>(count)));
 }
 
 int SharedFDStreambuf::pbackfail(int c) {

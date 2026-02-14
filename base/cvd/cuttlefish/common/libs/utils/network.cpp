@@ -30,8 +30,8 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <net/if.h>
+#include <stdint.h>
 
-#include <cstdint>
 #include <cstring>
 #include <ostream>
 #include <set>
@@ -59,14 +59,14 @@ namespace {
  *    |      |          |
  *    |       type (e0, e1, etc)
 */
-void GenerateMacForInstance(int index, uint8_t type, std::uint8_t out[6]) {
+void GenerateMacForInstance(int index, uint8_t type, uint8_t out[6]) {
   // the first octet must be even
   out[0] = 0x00;
   out[1] = 0x1a;
   out[2] = 0x11;
   out[3] = type;
   out[4] = 0xcf;
-  out[5] = static_cast<std::uint8_t>(index);
+  out[5] = static_cast<uint8_t>(index);
 }
 
 }  // namespace
@@ -147,26 +147,26 @@ std::set<std::string> TapInterfacesInUse() {
 }
 #endif
 
-std::string MacAddressToString(const std::uint8_t mac[6]) {
-  std::vector<std::uint8_t> mac_vec(mac, mac + 6);
+std::string MacAddressToString(const uint8_t mac[6]) {
+  std::vector<uint8_t> mac_vec(mac, mac + 6);
   return fmt::format("{:0>2x}", fmt::join(mac_vec, ":"));
 }
 
-std::string Ipv6ToString(const std::uint8_t ip[16]) {
+std::string Ipv6ToString(const uint8_t ip[16]) {
   char ipv6_str[INET6_ADDRSTRLEN + 1];
   inet_ntop(AF_INET6, ip, ipv6_str, sizeof(ipv6_str));
   return std::string(ipv6_str);
 }
 
-void GenerateMobileMacForInstance(int index, std::uint8_t out[6]) {
+void GenerateMobileMacForInstance(int index, uint8_t out[6]) {
   GenerateMacForInstance(index, 0xe0, out);
 }
 
-void GenerateEthMacForInstance(int index, std::uint8_t out[6]) {
+void GenerateEthMacForInstance(int index, uint8_t out[6]) {
   GenerateMacForInstance(index, 0xe1, out);
 }
 
-void GenerateWifiMacForInstance(int index, std::uint8_t out[6]) {
+void GenerateWifiMacForInstance(int index, uint8_t out[6]) {
   GenerateMacForInstance(index, 0xe2, out);
 }
 
@@ -179,7 +179,7 @@ void GenerateWifiMacForInstance(int index, std::uint8_t out[6]) {
  * 4. Use IPv6 format (021a:11ff:feee:cf01)
  * 5. Add prefix fe80:: (fe80::021a:11ff:feee:cf01 or fe80:0000:0000:0000:021a:11ff:feee:cf00)
 */
-void GenerateCorrespondingIpv6ForMac(const std::uint8_t mac[6], std::uint8_t out[16]) {
+void GenerateCorrespondingIpv6ForMac(const uint8_t mac[6], uint8_t out[16]) {
   out[0] = 0xfe;
   out[1] = 0x80;
 
