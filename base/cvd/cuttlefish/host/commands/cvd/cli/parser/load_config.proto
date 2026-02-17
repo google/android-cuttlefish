@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// LINT: LEGACY_NAMES
 
 syntax = "proto3";
 
@@ -25,6 +26,18 @@ package cuttlefish.cvd.config;
 option go_package = "github.com/google/android_cuttlefish/base/cvd/cuttlefish/host/commands/cvd/cli/parser/golang/";
 option java_package = "com.google.android_cuttlefish.base.cvd.cuttlefish.host.commands.cvd.cli.parser";
 option java_outer_classname = "CvdConfig";
+
+// Specifies the emulated user space page size.
+enum UserPageSize {
+  // Kernel page size will be used.
+  USER_PAGE_SIZE_UNSPECIFIED = 0;
+  // Request a 16KB page size.
+  // On x86_64, this implies emulation via kernel command line (e.g.,
+  // page_shift=14).
+  USER_PAGE_SIZE_16KB = 1;
+  // Request a 64KB page size.
+  USER_PAGE_SIZE_64KB = 2;
+}
 
 message EnvironmentSpecification {
   repeated Instance instances = 1;
@@ -144,6 +157,8 @@ message Vm {
     Qemu qemu = 8;
   }
   repeated CustomAction custom_actions = 9;
+  // Desired user space page size.
+  optional UserPageSize page_size = 10;
 }
 
 message Crosvm {
