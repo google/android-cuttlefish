@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -79,6 +79,23 @@ cf_cc_library(
         "//cuttlefish/pretty:struct",
         "//cuttlefish/pretty:unique_ptr",
         "//cuttlefish/pretty:vector",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
+    name = "fake_android_build",
+    testonly = True,
+    srcs = ["fake_android_build.cc"],
+    hdrs = ["fake_android_build.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:optional",
+        "//cuttlefish/pretty:pair",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
     ],
