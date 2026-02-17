@@ -15,16 +15,19 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <utility>
 
+#include <openssl/evp.h>
+
+#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-
-constexpr char kAndroidBuildApiScope[] =
-    "https://www.googleapis.com/auth/androidbuild.internal";
 
 class CredentialSource {
  public:
@@ -32,13 +35,100 @@ class CredentialSource {
   virtual Result<std::string> Credential() = 0;
 };
 
-Result<std::unique_ptr<CredentialSource>> GetCredentialSource(
-    HttpClient& http_client, const std::string& credential_source,
-    const std::string& oauth_filepath, bool use_gce_metadata,
-    const std::string& credential_filepath,
-    const std::string& service_account_filepath);
+// Credentials with known expiration times with behavior to load new
+// credentials.
+class RefreshingCredentialSource : public CredentialSource {
+ public:
+  RefreshingCredentialSource();
+
+  virtual Result<std::string> Credential() final override;
+
+ private:
+  virtual Result<std::pair<std::string, std::chrono::seconds>> Refresh() = 0;
+
+  std::string latest_credential_;
+  std::mutex latest_credential_mutex_;
+  std::chrono::steady_clock::time_point expiration_;
+};
+
+// OAuth2 credentials from the GCE metadata server.
+//
+// -
+// https://cloud.google.com/compute/docs/access/authenticate-workloads#applications
+// - https://cloud.google.com/compute/docs/metadata/overview
+class GceMetadataCredentialSource : public RefreshingCredentialSource {
+ public:
+  GceMetadataCredentialSource(HttpClient&);
+
+  static std::unique_ptr<CredentialSource> Make(HttpClient&);
+
+ private:
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
+
+  HttpClient& http_client_;
+};
+
+// Pass through a string as an authentication token with unknown expiration.
+class FixedCredentialSource : public CredentialSource {
+ public:
+  FixedCredentialSource(const std::string& credential);
+
+  Result<std::string> Credential() override;
+
+  static std::unique_ptr<CredentialSource> Make(const std::string& credential);
+
+ private:
+  std::string credential_;
+};
+
+// OAuth2 tokens from a desktop refresh token.
+//
+// https://developers.google.com/identity/protocols/oauth2/native-app
+class RefreshTokenCredentialSource : public RefreshingCredentialSource {
+ public:
+  static Result<std::unique_ptr<RefreshTokenCredentialSource>>
+  FromOauth2ClientFile(HttpClient& http_client,
+                       const std::string& oauth_contents);
+
+  RefreshTokenCredentialSource(HttpClient& http_client,
+                               const std::string& client_id,
+                               const std::string& client_secret,
+                               const std::string& refresh_token);
+
+ private:
+  static Result<std::unique_ptr<RefreshTokenCredentialSource>> FromJson(
+      HttpClient& http_client, const Json::Value& credential);
+
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
+
+  HttpClient& http_client_;
+  std::string client_id_;
+  std::string client_secret_;
+  std::string refresh_token_;
+};
+
+// OAuth2 tokens from service account files.
+//
+// https://developers.google.com/identity/protocols/oauth2/service-account
+class ServiceAccountOauthCredentialSource : public RefreshingCredentialSource {
+ public:
+  static Result<std::unique_ptr<ServiceAccountOauthCredentialSource>> FromJson(
+      HttpClient& http_client, const Json::Value& service_account_json,
+      const std::string& scope);
+
+ private:
+  ServiceAccountOauthCredentialSource(HttpClient& http_client);
+
+  Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
+
+  HttpClient& http_client_;
+  std::string email_;
+  std::string scope_;
+  std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
+};
 
 Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
     HttpClient& http_client, const std::string& client_id,
     const std::string& client_secret, const std::string& refresh_token);
-}
+
+}  // namespace cuttlefish

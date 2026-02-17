@@ -21,6 +21,8 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/environment.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_api_credentials.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
@@ -35,19 +37,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-namespace {
-
-Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
-    HttpClient& http_client, const BuildApiFlags& flags,
-    const std::string& oauth_filepath) {
-  return CF_EXPECT(
-      GetCredentialSource(http_client, flags.credential_source, oauth_filepath,
-                          flags.credential_flags.use_gce_metadata,
-                          flags.credential_flags.credential_filepath,
-                          flags.credential_flags.service_account_filepath));
-}
-
-}  // namespace
 
 struct Downloaders::Impl {
   std::unique_ptr<HttpClient> curl_;
