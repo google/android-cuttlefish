@@ -39,9 +39,10 @@ class CredentialSource {
 // credentials.
 class RefreshingCredentialSource : public CredentialSource {
  public:
-  RefreshingCredentialSource();
-
   virtual Result<std::string> Credential() final override;
+
+ protected:
+  RefreshingCredentialSource();
 
  private:
   virtual Result<std::pair<std::string, std::chrono::seconds>> Refresh() = 0;
@@ -58,11 +59,11 @@ class RefreshingCredentialSource : public CredentialSource {
 // - https://cloud.google.com/compute/docs/metadata/overview
 class GceMetadataCredentialSource : public RefreshingCredentialSource {
  public:
-  GceMetadataCredentialSource(HttpClient&);
-
   static std::unique_ptr<CredentialSource> Make(HttpClient&);
 
  private:
+  GceMetadataCredentialSource(HttpClient&);
+
   Result<std::pair<std::string, std::chrono::seconds>> Refresh() override;
 
   HttpClient& http_client_;
@@ -71,13 +72,12 @@ class GceMetadataCredentialSource : public RefreshingCredentialSource {
 // Pass through a string as an authentication token with unknown expiration.
 class FixedCredentialSource : public CredentialSource {
  public:
-  FixedCredentialSource(const std::string& credential);
-
   Result<std::string> Credential() override;
 
   static std::unique_ptr<CredentialSource> Make(const std::string& credential);
 
  private:
+  FixedCredentialSource(const std::string& credential);
   std::string credential_;
 };
 
@@ -90,12 +90,16 @@ class RefreshTokenCredentialSource : public RefreshingCredentialSource {
   FromOauth2ClientFile(HttpClient& http_client,
                        const std::string& oauth_contents);
 
+  static Result<std::unique_ptr<CredentialSource>> Make(
+      HttpClient& http_client, const std::string& client_id,
+      const std::string& client_secret, const std::string& refresh_token);
+
+ private:
   RefreshTokenCredentialSource(HttpClient& http_client,
                                const std::string& client_id,
                                const std::string& client_secret,
                                const std::string& refresh_token);
 
- private:
   static Result<std::unique_ptr<RefreshTokenCredentialSource>> FromJson(
       HttpClient& http_client, const Json::Value& credential);
 
@@ -126,9 +130,5 @@ class ServiceAccountOauthCredentialSource : public RefreshingCredentialSource {
   std::string scope_;
   std::unique_ptr<EVP_PKEY, void (*)(EVP_PKEY*)> private_key_;
 };
-
-Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
-    HttpClient& http_client, const std::string& client_id,
-    const std::string& client_secret, const std::string& refresh_token);
 
 }  // namespace cuttlefish

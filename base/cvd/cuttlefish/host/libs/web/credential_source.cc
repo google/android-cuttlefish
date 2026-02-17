@@ -193,9 +193,10 @@ RefreshTokenCredentialSource::FromJson(HttpClient& http_client,
   auto& refresh_token = credential["refresh_token"];
   CF_EXPECT(refresh_token.type() == Json::ValueType::stringValue);
 
-  return std::make_unique<RefreshTokenCredentialSource>(
-      http_client, client_id.asString(), client_secret.asString(),
-      refresh_token.asString());
+  return std::unique_ptr<RefreshTokenCredentialSource>(
+      new RefreshTokenCredentialSource(http_client, client_id.asString(),
+                                       client_secret.asString(),
+                                       refresh_token.asString()));
 }
 
 Result<std::unique_ptr<RefreshTokenCredentialSource>>
@@ -225,10 +226,11 @@ RefreshTokenCredentialSource::FromOauth2ClientFile(
         continue;
       }
     }
-    return std::make_unique<RefreshTokenCredentialSource>(
-        http_client, CF_EXPECT(std::move(client_id)),
-        CF_EXPECT(std::move(client_secret)),
-        CF_EXPECT(std::move(refresh_token)));
+    return std::unique_ptr<RefreshTokenCredentialSource>(
+        new RefreshTokenCredentialSource(http_client,
+                                         CF_EXPECT(std::move(client_id)),
+                                         CF_EXPECT(std::move(client_secret)),
+                                         CF_EXPECT(std::move(refresh_token))));
   }
   auto json = CF_EXPECT(ParseJson(oauth_contents));
   if (json.isMember("refresh_token")) {
@@ -270,8 +272,9 @@ RefreshTokenCredentialSource::FromOauth2ClientFile(
     static constexpr char kClientSecret[] =
         "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";
 
-    return std::make_unique<RefreshTokenCredentialSource>(
-        http_client, kClientId, kClientSecret, refresh_token.asString());
+    return std::unique_ptr<RefreshTokenCredentialSource>(
+        new RefreshTokenCredentialSource(http_client, kClientId, kClientSecret,
+                                         refresh_token.asString()));
   }
   return CF_ERR("Unknown credential file format");
 }
@@ -283,6 +286,13 @@ RefreshTokenCredentialSource::RefreshTokenCredentialSource(
       client_id_(client_id),
       client_secret_(client_secret),
       refresh_token_(refresh_token) {}
+
+Result<std::unique_ptr<CredentialSource>> RefreshTokenCredentialSource::Make(
+    HttpClient& http_client, const std::string& client_id,
+    const std::string& client_secret, const std::string& refresh_token) {
+  return std::unique_ptr<CredentialSource>(new RefreshTokenCredentialSource(
+      http_client, client_id, client_secret, refresh_token));
+}
 
 Result<std::pair<std::string, std::chrono::seconds>>
 RefreshTokenCredentialSource::Refresh() {
@@ -375,13 +385,6 @@ ServiceAccountOauthCredentialSource::Refresh() {
       json["access_token"].asString(),
       std::chrono::seconds(json["expires_in"].asInt()),
   }};
-}
-
-Result<std::unique_ptr<CredentialSource>> CreateRefreshTokenCredentialSource(
-    HttpClient& http_client, const std::string& client_id,
-    const std::string& client_secret, const std::string& refresh_token) {
-  return std::make_unique<RefreshTokenCredentialSource>(
-      http_client, client_id, client_secret, refresh_token);
 }
 
 }  // namespace cuttlefish
