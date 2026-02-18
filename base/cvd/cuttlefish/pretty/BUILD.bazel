@@ -80,6 +80,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "pair",
+    hdrs = ["pair.h"],
+    deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:struct",
+    ],
+)
+
+cf_cc_library(
     name = "pretty",
     hdrs = ["pretty.h"],
 )
