@@ -12,4 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(b/329100411) test loading older branches
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "cvd_load_tests",
+    srcs = ["main_test.go"],
+    deps = [
+        "//cvd/common:common",
+    ],
+    size = "enormous",
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+    ],
+)
