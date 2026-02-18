@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2025 The Android Open Source Project
+// Copyright (C) 2026 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <string>
 
-#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::string> ReadToString(ReadableZipSource&);
-
-Result<void> AddStringAt(WritableZip&, const std::string& data,
-                         const std::string& zip_path);
+Result<std::string> ReadToString(Reader&, size_t buffer_size = 1 << 16);
 
 }  // namespace cuttlefish

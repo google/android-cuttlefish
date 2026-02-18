@@ -15,16 +15,13 @@
 
 #include "cuttlefish/host/libs/zip/zip_string.h"
 
-#include <stdint.h>
-
-#include <sstream>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -32,17 +29,6 @@ namespace cuttlefish {
 Result<std::string> ReadToString(ReadableZipSource& source) {
   ZipSourceReader reader = CF_EXPECT(source.Reader());
   return CF_EXPECT(ReadToString(reader));
-}
-
-Result<std::string> ReadToString(ZipSourceReader& reader) {
-  std::stringstream out;
-
-  std::vector<char> buf(1 << 16);
-  uint64_t data_read;
-  while ((data_read = CF_EXPECT(reader.Read(buf.data(), buf.size()))) > 0) {
-    out.write(buf.data(), data_read);
-  }
-  return out.str();
 }
 
 Result<void> AddStringAt(WritableZip& zip, const std::string& data,

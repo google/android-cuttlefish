@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2025 The Android Open Source Project
+// Copyright (C) 2026 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,19 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/io/string.h"
 
+#include <stdint.h>
+
+#include <sstream>
 #include <string>
 
-#include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::string> ReadToString(ReadableZipSource&);
+Result<std::string> ReadToString(Reader& reader, size_t buffer_size) {
+  std::stringstream out;
 
-Result<void> AddStringAt(WritableZip&, const std::string& data,
-                         const std::string& zip_path);
+  std::vector<char> buf(1 << 16);
+  uint64_t data_read;
+  while ((data_read = CF_EXPECT(reader.Read(buf.data(), buf.size()))) > 0) {
+    out.write(buf.data(), data_read);
+  }
+  return out.str();
+}
 
 }  // namespace cuttlefish
