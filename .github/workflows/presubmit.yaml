@@ -174,7 +174,7 @@ jobs:
         cat .config/cache-config.env >> $GITHUB_ENV
         echo "JOB_HASH=$(yq .jobs[\"run-cvd-unit-tests\"] .github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate cache key prefix
-      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-unit-test-${{ env.JOB_HASH }}" >> $GITHUB_ENV
+      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${CACHE_VERSION}-unit-test-${JOB_HASH}" >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache/restore@v4
       with:
@@ -218,7 +218,7 @@ jobs:
         cat android-cuttlefish/.config/cache-config.env >> $GITHUB_ENV
         echo "JOB_HASH=$(yq .jobs[\"build-debian-package\"] android-cuttlefish/.github/workflows/presubmit.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate cache key prefix
-      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-debian-package-${{ env.JOB_HASH }}" >> $GITHUB_ENV
+      run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${CACHE_VERSION}-debian-package-${JOB_HASH}" >> $GITHUB_ENV
     - name: Mount Bazel cache
       uses: actions/cache/restore@v4
       with:
