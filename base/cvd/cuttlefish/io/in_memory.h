@@ -15,38 +15,12 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include <shared_mutex>
-#include <vector>
-
+#include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-class InMemoryIo : public ReaderSeeker, public WriterSeeker {
- public:
-  InMemoryIo() = default;
-  explicit InMemoryIo(std::vector<char>);
-
-  Result<uint64_t> Read(void* buf, uint64_t count) override;
-  Result<uint64_t> Write(const void* buf, uint64_t count) override;
-  Result<uint64_t> SeekSet(uint64_t offset) override;
-  Result<uint64_t> SeekCur(int64_t offset) override;
-  Result<uint64_t> SeekEnd(int64_t offset) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
-  Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                          uint64_t offset) override;
-
- private:
-  uint64_t ClampRange(uint64_t begin, uint64_t length) const;
-  void GrowTo(uint64_t);
-
-  std::vector<char> data_;
-  uint64_t cursor_ = 0;
-  mutable std::shared_mutex mutex_;
-};
+std::unique_ptr<ReaderWriterSeeker> InMemoryIo();
+std::unique_ptr<ReadWriteFilesystem> InMemoryFilesystem();
 
 }  // namespace cuttlefish
