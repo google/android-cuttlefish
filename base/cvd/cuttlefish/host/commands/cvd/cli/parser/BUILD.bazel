@@ -86,15 +86,27 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "launch_cvd_templates",
+    srcs = ["launch_cvd_templates.cpp"],
+    hdrs = ["launch_cvd_templates.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/result",
+        "@jsoncpp",
+        "@protobuf//:json_util",
+    ],
+)
+
+cf_cc_library(
     name = "parser",
     srcs = [
         "launch_cvd_parser.cpp",
-        "launch_cvd_templates.cpp",
         "load_configs_parser.cpp",
     ],
     hdrs = [
         "launch_cvd_parser.h",
-        "launch_cvd_templates.h",
         "load_configs_parser.h",
     ],
     deps = [
@@ -107,6 +119,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_metrics_configs",
         "//cuttlefish/host/commands/cvd/cli/parser:fetch_config_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_templates",
         "//cuttlefish/host/commands/cvd/cli/parser:selector_parser",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
@@ -116,7 +129,6 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
-        "@protobuf//:json_util",
     ],
 )
 
