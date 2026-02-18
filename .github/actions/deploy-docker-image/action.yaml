@@ -11,22 +11,22 @@ runs:
   steps:
   - name: Deploy docker image into Artifact Registry
     run: |
-      case "${{ inputs.deploy-channel }}" in
+      case "${INPUTS_DEPLOY_CHANNEL}" in
         stable)
           # Stable version tag : X.Y.Z-<amd64|arm64>
-          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
-          TAG="${SEMVER}-${{ inputs.arch }}"
+          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
+          TAG="${SEMVER}-${INPUTS_ARCH}"
           ;;
         unstable)
           # Unstable version tag : X.Y-<Github SHA 8 digit>-<amd64|arm64>
-          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+')
+          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          TAG="${SEMVER}-${SHORT_SHA}-${{ inputs.arch }}"
+          TAG="${SEMVER}-${SHORT_SHA}-${INPUTS_ARCH}"
           ;;
         nightly)
           # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>-<amd64|arm64>
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          TAG="git${{ inputs.yyyymmddhhmm }}-${SHORT_SHA}-${{ inputs.arch }}"
+          TAG="git${INPUTS_YYYYMMDDHHMM}-${SHORT_SHA}-${INPUTS_ARCH}"
           ;;
         *)
           exit 1
@@ -37,3 +37,7 @@ runs:
       docker tag cuttlefish-orchestration ${REMOTE_IMAGE_TAG}
       docker push ${REMOTE_IMAGE_TAG}
     shell: bash
+    env:
+      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+      INPUTS_ARCH: ${{ inputs.arch }}
+      INPUTS_YYYYMMDDHHMM: ${{ inputs.yyyymmddhhmm }}

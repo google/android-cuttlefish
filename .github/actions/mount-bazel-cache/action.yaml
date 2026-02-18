@@ -11,11 +11,15 @@ runs:
   - name: Load cache config
     run: |
       cat .config/cache-config.env >> $GITHUB_ENV
-      echo "JOB_HASH=$(yq . .github/actions/${{ inputs.action-name }}/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+      echo "JOB_HASH=$(yq . .github/actions/${INPUTS_ACTION_NAME}/action.yaml | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
     shell: bash
+    env:
+      INPUTS_ACTION_NAME: ${{ inputs.action-name }}
   - name: Generate cache key prefix
-    run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${{ env.CACHE_VERSION }}-${{ inputs.action-name }}-${{ env.JOB_HASH }}" >> $GITHUB_ENV
+    run: echo "CACHE_KEY_PREFIX=${{ runner.os }}-${{ runner.arch }}-bazel-disk-cache-${CACHE_VERSION}-${INPUTS_ACTION_NAME}-${JOB_HASH}" >> $GITHUB_ENV
     shell: bash
+    env:
+      INPUTS_ACTION_NAME: ${{ inputs.action-name }}
   - name: Restore cache
     if: inputs.writable != 'true'
     uses: actions/cache/restore@v4

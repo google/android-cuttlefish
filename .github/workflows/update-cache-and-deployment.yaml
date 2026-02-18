@@ -23,7 +23,9 @@ jobs:
       id: yyyymmddhhmm
       run: echo "time=$(date -u +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
     - name: Echo YYYYMMDDHHMM
-      run: echo ${{ steps.yyyymmddhhmm.outputs.time }}
+      run: echo ${STEPS_YYYYMMDDHHMM_OUTPUTS_TIME}
+      env:
+        STEPS_YYYYMMDDHHMM_OUTPUTS_TIME: ${{ steps.yyyymmddhhmm.outputs.time }}
   update-cvd-test-bazel-cache:
     if: inputs.update-cache
     runs-on: ubuntu-24.04
@@ -119,7 +121,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build docker image
-      run: container/image-builder.sh -m ${{ inputs.deploy-channel }}
+      run: container/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
+      env:
+        INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@v3'
       with:
@@ -145,7 +149,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build docker image
-      run: container/image-builder.sh -m ${{ inputs.deploy-channel }}
+      run: container/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
+      env:
+        INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@v3'
       with:
@@ -182,22 +188,22 @@ jobs:
         password: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy manifests
       run: |
-        case "${{ inputs.deploy-channel }}" in
+        case "${INPUTS_DEPLOY_CHANNEL}" in
           stable)
             # Stable version tag : X.Y.Z
-            SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
+            SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
             TAG="${SEMVER}"
             ;;
           unstable)
             # Unstable version tag : X.Y-<Github SHA 8 digit>
-            SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+')
+            SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
             TAG="${SEMVER}-${SHORT_SHA}"
             ;;
           nightly)
             # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-            TAG="git${{ needs.set-variables.outputs.yyyymmddhhmm }}-${SHORT_SHA}"
+            TAG="git${NEEDS_SET_VARIABLES_OUTPUTS_YYYYMMDDHHMM}-${SHORT_SHA}"
             ;;
           *)
             exit 1
@@ -205,9 +211,12 @@ jobs:
         esac
         IMAGE=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration
 
-        for MANIFEST_TAG in ${TAG} ${{ inputs.deploy-channel }}; do
+        for MANIFEST_TAG in ${TAG} ${INPUTS_DEPLOY_CHANNEL}; do
           docker manifest create ${IMAGE}:${MANIFEST_TAG} \
             --amend ${IMAGE}:${TAG}-amd64 \
             --amend ${IMAGE}:${TAG}-arm64
           docker manifest push ${IMAGE}:${MANIFEST_TAG}
         done
+      env:
+        INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+        NEEDS_SET_VARIABLES_OUTPUTS_YYYYMMDDHHMM: ${{ needs.set-variables.outputs.yyyymmddhhmm }}

@@ -13,13 +13,13 @@ runs:
       version: '>= 363.0.0'
   - name: Deploy deb packages into Artifact Registry
     run: |
-      if [[ ${{ inputs.deploy-channel }} == "stable" ]]; then
+      if [[ ${INPUTS_DEPLOY_CHANNEL} == "stable" ]]; then
         REPO=android-cuttlefish
       else
-        REPO=android-cuttlefish-${{ inputs.deploy-channel }}
+        REPO=android-cuttlefish-${INPUTS_DEPLOY_CHANNEL}
       fi
 
-      pushd ${{ inputs.path }}
+      pushd ${INPUTS_PATH}
       for var in base user orchestration; do
         gcloud --project=android-cuttlefish-artifacts \
           artifacts apt upload \
@@ -34,3 +34,6 @@ runs:
         --source=$(find . -name cuttlefish-integration-gigabyte-arm64_*.deb)
       popd
     shell: bash
+    env:
+      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+      INPUTS_PATH: ${{ inputs.path }}
