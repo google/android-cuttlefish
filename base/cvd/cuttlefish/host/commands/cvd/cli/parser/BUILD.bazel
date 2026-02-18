@@ -163,15 +163,9 @@ cf_cc_library(
 )
 
 cf_cc_test(
-    name = "parser_test",
-    srcs = [
-        "metrics_configs_test.cc",
-    ],
+    name = "metrics_configs_test",
+    srcs = ["metrics_configs_test.cc"],
     deps = [
-        "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
-        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
-        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -179,8 +173,6 @@ cf_cc_test(
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@jsoncpp",
-        "@protobuf",
-        "@protobuf//:differencer",
     ],
 )
 
