@@ -73,16 +73,27 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fetch_config_parser",
+    srcs = ["fetch_config_parser.cpp"],
+    hdrs = ["fetch_config_parser.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/result",
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
     name = "parser",
     srcs = [
-        "fetch_config_parser.cpp",
         "launch_cvd_parser.cpp",
         "launch_cvd_templates.cpp",
         "load_configs_parser.cpp",
         "selector_parser.cpp",
     ],
     hdrs = [
-        "fetch_config_parser.h",
         "launch_cvd_parser.h",
         "launch_cvd_templates.h",
         "load_configs_parser.h",
@@ -97,7 +108,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_metrics_configs",
-        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:fetch_config_parser",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/result",
