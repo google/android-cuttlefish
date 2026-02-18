@@ -5,25 +5,6 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
-proto_library(
-    name = "load_config_proto",
-    srcs = ["load_config.proto"],
-    visibility = ["//visibility:public"],
-)
-
-# This will generate a build artifact in bazel-bin. To update ./golang/,
-# you must build this target and copy the artifact generated back to
-# ./golang/load_config.pb.go.
-go_proto_compile(
-    name = "load_config_go_proto",
-    protos = [":load_config_proto"],
-)
-
-cc_proto_library(
-    name = "load_config_cc_proto",
-    deps = [":load_config_proto"],
-)
-
 cf_cc_library(
     name = "cf_configs_instances",
     srcs = ["cf_configs_instances.cpp"],
@@ -49,16 +30,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "cf_metrics_configs",
-    srcs = ["cf_metrics_configs.cpp"],
-    hdrs = ["cf_metrics_configs.h"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
-        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
-    ],
-)
-
-cf_cc_library(
     name = "cf_configs_common",
     srcs = ["cf_configs_common.cpp"],
     hdrs = ["cf_configs_common.h"],
@@ -69,6 +40,16 @@ cf_cc_library(
         "@fmt",
         "@jsoncpp",
         "@protobuf",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_metrics_configs",
+    srcs = ["cf_metrics_configs.cpp"],
+    hdrs = ["cf_metrics_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
     ],
 )
 
@@ -135,6 +116,25 @@ cf_cc_library(
         "@jsoncpp",
         "@protobuf//:json_util",
     ],
+)
+
+cc_proto_library(
+    name = "load_config_cc_proto",
+    deps = [":load_config_proto"],
+)
+
+# This will generate a build artifact in bazel-bin. To update ./golang/,
+# you must build this target and copy the artifact generated back to
+# ./golang/load_config.pb.go.
+go_proto_compile(
+    name = "load_config_go_proto",
+    protos = [":load_config_proto"],
+)
+
+proto_library(
+    name = "load_config_proto",
+    srcs = ["load_config.proto"],
+    visibility = ["//visibility:public"],
 )
 
 cf_cc_library(
