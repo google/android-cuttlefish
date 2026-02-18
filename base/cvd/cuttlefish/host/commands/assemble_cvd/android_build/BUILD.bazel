@@ -84,6 +84,20 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "combined_android_build_test",
+    srcs = ["combined_android_build_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:combined_android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:fake_android_build",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "fake_android_build",
     testonly = True,
