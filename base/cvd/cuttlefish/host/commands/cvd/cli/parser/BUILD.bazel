@@ -37,6 +37,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "cf_flags_validator",
+    srcs = ["cf_flags_validator.cpp"],
+    hdrs = ["cf_flags_validator.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/result",
+        "@jsoncpp",
+        "@protobuf//:json_util",
+    ],
+)
+
+cf_cc_library(
     name = "configs_common",
     srcs = ["cf_configs_common.cpp"],
     hdrs = ["cf_configs_common.h"],
@@ -53,7 +65,6 @@ cf_cc_library(
 cf_cc_library(
     name = "parser",
     srcs = [
-        "cf_flags_validator.cpp",
         "cf_metrics_configs.cpp",
         "fetch_config_parser.cpp",
         "launch_cvd_parser.cpp",
@@ -62,7 +73,6 @@ cf_cc_library(
         "selector_parser.cpp",
     ],
     hdrs = [
-        "cf_flags_validator.h",
         "cf_metrics_configs.h",
         "fetch_config_parser.h",
         "launch_cvd_parser.h",
@@ -77,6 +87,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/utils",
@@ -121,6 +132,7 @@ cf_cc_library(
     hdrs = ["test_common.h"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/result",
         "@jsoncpp",
     ],
