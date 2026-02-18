@@ -97,6 +97,17 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "flags_parser_test",
+    srcs = ["flags_parser_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "launch_cvd_parser",
     srcs = ["launch_cvd_parser.cpp"],
@@ -154,7 +165,6 @@ cf_cc_library(
 cf_cc_test(
     name = "parser_test",
     srcs = [
-        "flags_parser_test.cc",
         "metrics_configs_test.cc",
     ],
     deps = [
