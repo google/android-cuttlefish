@@ -16,11 +16,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "filesystem",
+    hdrs = ["filesystem.h"],
+    deps = [
+        "//cuttlefish/io",
+    ],
+)
+
+cf_cc_library(
     name = "in_memory",
     srcs = ["in_memory.cc"],
     hdrs = ["in_memory.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:filesystem",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
