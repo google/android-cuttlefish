@@ -12,4 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(b/329100411) test loading older branches
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "common",
+    srcs = ["common.go"],
+    importpath = "github.com/google/android-cuttlefish/e2etests/cvd/common",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_go//go/runfiles",
+    ],
+)
