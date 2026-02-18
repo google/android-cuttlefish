@@ -16,8 +16,10 @@
 
 #include "cuttlefish/host/commands/run_cvd/server_loop_impl.h"
 
+#include <errno.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -48,6 +50,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -405,8 +408,8 @@ bool ServerLoopImpl::PowerwashFiles() {
         OverlayFile("ap_overlay.img", instance_.ap_composite_disk_path()));
   }
   for (const auto& overlay_file : overlay_files) {
-    auto overlay_path = instance_.PerInstancePath(overlay_file.name.c_str());
-    auto composite_disk_path = overlay_file.composite_disk_path.c_str();
+    std::string overlay_path = instance_.PerInstancePath(overlay_file.name);
+    const std::string& composite_disk_path = overlay_file.composite_disk_path;
 
     unlink(overlay_path.c_str());
     if (!CreateQcowOverlay(instance_.crosvm_binary(), composite_disk_path,
@@ -414,7 +417,15 @@ bool ServerLoopImpl::PowerwashFiles() {
       LOG(ERROR) << "CreateQcowOverlay failed";
       return false;
     }
+
+    // Fixes an error in the snapshot-restore-powerwash-snapshot-restore flow,
+    // where otherwise the composite disk looks older than the member partitions
+    // which were regenerated above.
+    if (utime(composite_disk_path.c_str(), nullptr) < 0) {
+      LOG(ERROR) << "Failed to update composite disk time" << StrError(errno);
+    }
   }
+
   return true;
 }
 

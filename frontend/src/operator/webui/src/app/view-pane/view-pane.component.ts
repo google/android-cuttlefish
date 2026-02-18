@@ -1,4 +1,4 @@
-import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject} from '@angular/core';
+import {Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject, DOCUMENT, ChangeDetectionStrategy} from '@angular/core';
 import {DisplaysService} from '../displays.service';
 import {
   asyncScheduler,
@@ -15,7 +15,6 @@ import {
   KtdGridLayoutItem,
   ktdTrackById,
 } from '@katoid/angular-grid-layout';
-import {DOCUMENT} from '@angular/common';
 import {DisplayInfo} from '../../../../intercept/js/server_connector'
 
 interface DeviceGridItem extends KtdGridLayoutItem {
@@ -40,6 +39,7 @@ interface DeviceGridItemUpdate {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.Default,
   standalone: false,
   selector: 'app-view-pane',
   templateUrl: './view-pane.component.html',

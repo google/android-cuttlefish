@@ -37,12 +37,13 @@ constexpr char kFlagName[] = "restart_subprocesses";
 
 Result<RestartSubprocessesFlag> RestartSubprocessesFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<bool> flag_values =
+  FromGflags<bool> result =
       CF_EXPECT(BoolFromGlobalGflags(flag_info, kFlagName));
-  return RestartSubprocessesFlag(std::move(flag_values));
+  return RestartSubprocessesFlag(std::move(result.values), result.is_default);
 }
 
-RestartSubprocessesFlag::RestartSubprocessesFlag(std::vector<bool> flag_values)
-    : FlagBase<bool>(std::move(flag_values)) {}
+RestartSubprocessesFlag::RestartSubprocessesFlag(std::vector<bool> flag_values,
+                                                 bool is_default)
+    : FlagBase<bool>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

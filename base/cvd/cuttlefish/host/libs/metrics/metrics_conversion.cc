@@ -160,6 +160,7 @@ void PopulateCuttlefishGuest(CuttlefishGuest& guest,
   flags.set_guest_enforce_security(flag_metrics.guest_enforce_security);
   flags.set_memory_mb(flag_metrics.memory_mb);
   flags.set_restart_subprocesses(flag_metrics.restart_subprocesses);
+  flags.set_system_image_dir_specified(flag_metrics.system_image_dir_specified);
 }
 
 }  // namespace

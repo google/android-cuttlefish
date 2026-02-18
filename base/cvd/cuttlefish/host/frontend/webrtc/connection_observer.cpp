@@ -28,10 +28,10 @@
 
 #include <json/json.h>
 
-#include <android-base/parsedouble.h>
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -256,11 +256,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
 
     double x, y, z;
-    CHECK(android::base::ParseDouble(xyz.at(0), &x))
+    CHECK(absl::SimpleAtod(xyz.at(0), &x))
         << "X rotation value must be a double";
-    CHECK(android::base::ParseDouble(xyz.at(1), &y))
+    CHECK(absl::SimpleAtod(xyz.at(1), &y))
         << "Y rotation value must be a double";
-    CHECK(android::base::ParseDouble(xyz.at(2), &z))
+    CHECK(absl::SimpleAtod(xyz.at(2), &z))
         << "Z rotation value must be a double";
     sensors_handler_.HandleMessage(x, y, z);
   }

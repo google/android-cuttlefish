@@ -80,26 +80,6 @@ cvd_command_boot_test(
 )
 
 cvd_command_boot_test(
-    name = "aosp_additional_substitution",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    substitutions = [
-        "bin/assemble_cvd",
-        "bin/run_cvd",
-    ],
-)
-
-cvd_command_boot_test(
-    name = "git_main_additional_substitution",
-    branch = "git_main",
-    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-    substitutions = [
-        "bin/assemble_cvd",
-        "bin/run_cvd",
-    ],
-)
-
-cvd_command_boot_test(
     name = "take_bugreport",
     branch = "aosp-android-latest-release",
     cvd_command = ["host_bugreport"],

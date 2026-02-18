@@ -233,8 +233,8 @@ Result<std::unique_ptr<CredentialSource>> Oauth2Login(
 
   CF_EXPECT(WriteCvdDataFile(filename, std::move(contents)));
 
-  return CreateRefreshTokenCredentialSource(
-      http_client, request.client_id, request.client_secret, refresh_token);
+  return CF_EXPECT(RefreshTokenCredentialSource::Make(
+      http_client, request.client_id, request.client_secret, refresh_token));
 }
 
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
@@ -269,8 +269,8 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
   CF_EXPECT_EQ(json[kRefreshToken].type(), Json::ValueType::stringValue);
   std::string refresh_token = json[kRefreshToken].asString();
 
-  return CreateRefreshTokenCredentialSource(http_client, client_id,
-                                            client_secret, refresh_token);
+  return CF_EXPECT(RefreshTokenCredentialSource::Make(
+      http_client, client_id, client_secret, refresh_token));
 }
 
 }  // namespace

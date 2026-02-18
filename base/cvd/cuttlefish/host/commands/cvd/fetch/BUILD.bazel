@@ -6,6 +6,26 @@ package(
 )
 
 cf_cc_library(
+    name = "build_api_credentials",
+    srcs = [
+        "build_api_credentials.cc",
+    ],
+    hdrs = [
+        "build_api_credentials.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
+        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cf_cc_library(
     name = "build_api_flags",
     srcs = ["build_api_flags.cc"],
     hdrs = ["build_api_flags.h"],
@@ -17,6 +37,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -79,6 +100,8 @@ cf_cc_library(
     hdrs = ["downloaders.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/web:android_build_api",
         "//cuttlefish/host/libs/web:android_build_url",

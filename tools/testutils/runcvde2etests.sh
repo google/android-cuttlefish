@@ -10,14 +10,14 @@ bazel_test_tag_filter_arg="--test_tag_filters=-requires_gpu"
 while getopts "g" opt; do
   case "${opt}" in
     g)
-      bazel_test_tag_filter_arg=""
+      bazel_test_tag_filter_arg="--test_tag_filters=requires_gpu"
       ;;
     *)
     echo "Invalid option: -${opt}"
     echo "Usage: $0 [-g]"
     echo ""
     echo "Options"
-    echo " -g  include tests with the 'requires_gpu' tag"
+    echo " -g  only run tests with the 'requires_gpu' tag"
     exit 1
     ;;
   esac

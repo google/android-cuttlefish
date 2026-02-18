@@ -29,7 +29,7 @@ class BuildSuperImageFlag : public FlagBase<bool> {
   ~BuildSuperImageFlag() override = default;
 
  private:
-  BuildSuperImageFlag(std::vector<bool>);
+  explicit BuildSuperImageFlag(std::vector<bool> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

@@ -30,19 +30,46 @@ def cvd_load_boot_test(name, env_file, size = "medium", credential_source = ""):
             "no-sandbox",
         ],
     )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = size,
+        srcs = ["cvd_load_boot_test.sh"],
+        args = args,
+        data = [
+            env_file,
+            "//:debian_substitution_marker",
+        ],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ],
+    )
 
-def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", substitutions = "", tags = []):
+def cvd_command_boot_test(name, branch, target, cvd_command = [], credential_source = "", tags = []):
     args = ["-b", branch, "-t", target]
     if credential_source:
         args += ["-c", credential_source]
-    if substitutions:
-        args += ["-s", ",".join(substitutions)]
     args += cvd_command
     native.sh_test(
         name = name,
         size = "medium",
         srcs = ["cvd_command_boot_test.sh"],
         args = args,
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ] + tags,
+    )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = "medium",
+        srcs = ["cvd_command_boot_test.sh"],
+        args = args,
+        data = ["//:debian_substitution_marker"],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
         tags = [
             "exclusive",
             "external",
@@ -65,6 +92,19 @@ def metrics_test(name, branch, target, credential_source = ""):
             "no-sandbox",
         ],
     )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = "medium",
+        srcs = ["metrics_test.sh"],
+        args = args,
+        data = ["//:debian_substitution_marker"],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ],
+    )
 
 def cvd_cts_test(
         name,
@@ -75,7 +115,6 @@ def cvd_cts_test(
         cts_args,
         cuttlefish_create_args = [],
         credential_source = "",
-        substitutions = "",
         tags = []):
     """Runs a given set of CTS tests on a given Cuttlefish build."""
     args = [
@@ -92,9 +131,6 @@ def cvd_cts_test(
     if credential_source:
         args.append("--credential-source=" + credential_source)
 
-    if substitutions:
-        args.append("--substitutions=\"" + ",".join(substitutions) + "\"")
-
     native.sh_test(
         name = name,
         size = "enormous",
@@ -103,6 +139,22 @@ def cvd_cts_test(
         data = [
             "//cvd:convert_xts_xml_to_junit_xml_bin",
         ],
+        tags = [
+            "exclusive",
+            "external",
+            "no-sandbox",
+        ] + tags,
+    )
+    native.sh_test(
+        name = name + "_additional_substitution",
+        size = "enormous",
+        srcs = ["cvd_xts_test.sh"],
+        args = args,
+        data = [
+            "//:debian_substitution_marker",
+            "//cvd:convert_xts_xml_to_junit_xml_bin",
+        ],
+        env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(execpath //:debian_substitution_marker)"},
         tags = [
             "exclusive",
             "external",

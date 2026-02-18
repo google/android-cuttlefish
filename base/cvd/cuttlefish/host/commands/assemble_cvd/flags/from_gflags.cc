@@ -37,57 +37,77 @@ Result<std::string> ParseString(const std::string& value, const std::string&) {
 }
 
 template <typename T>
-Result<std::vector<T>> FromGlobalGflags(
+Result<FromGflags<T>> FromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
-    T default_value,
+    std::vector<T> default_values,
     std::function<Result<T>(const std::string& value, const std::string& name)>
         parse_func) {
+  CF_EXPECT(!default_values.empty());
+
   std::vector<std::string> string_values =
       android::base::Split(flag_info.current_value, ",");
   std::vector<T> values(string_values.size());
 
   for (int i = 0; i < string_values.size(); i++) {
     if (string_values[i] == "unset" || string_values[i] == "\"unset\"") {
-      values[i] = default_value;
+      values[i] = default_values[i < default_values.size() ? i : 0];
     } else {
       values[i] = CF_EXPECT(parse_func(string_values[i], flag_name));
     }
   }
-  return std::move(values);
+  return FromGflags<T>{
+      .values = std::move(values),
+      // TODO: chadreynolds - replace with
+      // gflags::WasPresentOnCommandLine(flag_name) if it becomes available
+      // That function is more accurate at determining if the flag was
+      // user-provided
+      .is_default = flag_info.is_default,
+  };
 }
 
 template <typename T>
-Result<std::vector<T>> FromGlobalGflags(
+Result<FromGflags<T>> FromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
     std::function<Result<T>(const std::string& value, const std::string& name)>
         parse_func) {
-  T default_value = CF_EXPECT(parse_func(flag_info.default_value, flag_name));
-  return std::move(FromGlobalGflags<T>(
-      flag_info, flag_name, default_value, parse_func));
+  std::vector<std::string> default_string_values =
+      android::base::Split(flag_info.default_value, ",");
+  std::vector<T> default_values;
+  default_values.reserve(default_string_values.size());
+  for (const std::string& default_string_value : default_string_values) {
+    default_values.emplace_back(
+        CF_EXPECT(parse_func(default_string_value, flag_name)));
+  }
+  return std::move(
+      FromGlobalGflags<T>(flag_info, flag_name, default_values, parse_func));
 }
 
 }  // namespace
 
-Result<std::vector<bool>> BoolFromGlobalGflags(
+template struct FromGflags<bool>;
+template struct FromGflags<int>;
+template struct FromGflags<std::string>;
+
+Result<FromGflags<bool>> BoolFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info,
     const std::string& flag_name) {
   return CF_EXPECT(FromGlobalGflags<bool>(flag_info, flag_name, ParseBool));
 }
 
-Result<std::vector<bool>> BoolFromGlobalGflags(
-    const gflags::CommandLineFlagInfo& flag_info,
-    const std::string& flag_name, bool default_value) {
-  return CF_EXPECT(FromGlobalGflags<bool>(
-       flag_info, flag_name, default_value, ParseBool));
+Result<FromGflags<bool>> BoolFromGlobalGflags(
+    const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
+    bool default_value) {
+  return CF_EXPECT(
+      FromGlobalGflags<bool>(flag_info, flag_name, {default_value}, ParseBool));
 }
 
-Result<std::vector<int>> IntFromGlobalGflags(
+Result<FromGflags<int>> IntFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info,
     const std::string& flag_name) {
   return CF_EXPECT(FromGlobalGflags<int>(flag_info, flag_name, ParseInt));
 }
 
-Result<std::vector<std::string>> StringFromGlobalGflags(
+Result<FromGflags<std::string>> StringFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info,
     const std::string& flag_name) {
   return CF_EXPECT(

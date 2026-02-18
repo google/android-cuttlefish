@@ -22,8 +22,8 @@
 #include <string>
 #include <utility>
 
-#include <android-base/parseint.h>
 #include <fmt/core.h>
+#include "absl/strings/numbers.h"
 
 namespace cuttlefish {
 
@@ -32,8 +32,8 @@ Result<TimeStamp> DeserializeTimePoint(const Json::Value& time_point_json) {
 
   using CountType = decltype(std::declval<std::chrono::milliseconds>().count());
   CountType count = 0;
-  CF_EXPECTF(android::base::ParseInt(serialized, &count),
-             "Failed to serialize: {}", serialized);
+  CF_EXPECTF(absl::SimpleAtoi(serialized, &count), "Failed to serialize: {}",
+             serialized);
   std::chrono::milliseconds duration(count);
   TimeStamp restored_time(duration);
   return restored_time;

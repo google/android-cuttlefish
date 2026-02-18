@@ -17,8 +17,6 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/parsebool.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include "absl/log/log.h"
@@ -481,6 +479,9 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(Symlink(first_instance, double_legacy_instance_dir));
   }
 
+  CF_EXPECT(LogStringToDir(config->Instances()[0], "build_info.log",
+                           absl::StrCat(Pretty(android_builds))));
+
   CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, android_builds,
                                    system_image_dir));
 
@@ -683,9 +684,6 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
           initramfs_path, kernel_path, super_image, system_image_dir,
           vendor_boot_image, vm_manager_flag, *defaults, android_builds),
       "Failed to create config");
-
-  CF_EXPECT(LogStringToDir(config->Instances()[0], "build_info.log",
-                           absl::StrCat(Pretty(android_builds))));
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;

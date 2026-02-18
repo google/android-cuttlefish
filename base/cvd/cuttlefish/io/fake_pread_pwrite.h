@@ -1,0 +1,38 @@
+//
+// Copyright (C) 2026 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "cuttlefish/io/io.h"
+
+#include <stdint.h>
+
+#include "cuttlefish/result/result_type.h"
+
+namespace cuttlefish {
+
+/**
+ * Best-effort fake pread(2) using Read() and Seek*() calls.
+ *
+ * Will not call PRead() on the ReaderSeeker instance.
+ */
+Result<uint64_t> FakePRead(ReaderSeeker&, void* buf, uint64_t count, uint64_t offset);
+/**
+ * Best-effort fake pwrite(2) using Write() and Seek*() calls.
+ *
+ * Will not call PWrite() on the WriterSeeker instance.
+ */
+Result<uint64_t> FakePWrite(WriterSeeker&, const void* buf, uint64_t count,
+                            uint64_t offset);
+
+}  // namespace cuttlefish

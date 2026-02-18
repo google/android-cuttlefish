@@ -1,23 +1,36 @@
-cuttlefish-frontend (1.43.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.44.0) UNRELEASED; urgency=medium
 
-  *
+  * 
 
- -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:39:52 +0000
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 19:09:45 -0800
 
-cuttlefish-frontend (1.42.0) unstable; urgency=medium
+cuttlefish-frontend (1.43.0) unstable; urgency=medium
 
-* Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
-* Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
-* Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
+  [ 3405691582 ]
+  * Support powerwash/remove/start/stop on cvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2118
+  * Support podcvd to execute cvd clear/fleet/reset by @0405ysj in https://github.com/google/android-cuttlefish/pull/2120
+  * Auto-select group name from podcvd, if there's only one group by @0405ysj in https://github.com/google/android-cuttlefish/pull/2121
+  * Replace --host_substitution in e2e tests with LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE by @Databean in https://github.com/google/android-cuttlefish/pull/2130
+  * Import sh_binary for e2etests/orchestration/artifacts by @k311093 in https://github.com/google/android-cuttlefish/pull/2133
+  * Add `_additional_substitution` versions of all `cvd_load_boot_test`s `cvd_command_boot_test`s, `metrics_test`s, and `cvd_cts_test`s by @Databean in https://github.com/google/android-cuttlefish/pull/2131
+  * Upgrade go version for staticcheck by @Databean in https://github.com/google/android-cuttlefish/pull/2140
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 18:16:14 -0800
+
+cuttlefish-frontend (1.42.0) stable; urgency=medium
+
+  * Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
+  * Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
+  * Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
 
  -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:01:35 +0000
 
-cuttlefish-frontend (1.41.0) unstable; urgency=medium
+cuttlefish-frontend (1.41.0) stable; urgency=medium
 
   * cvdexec is available to pull our container image into local podman engine by @0405ysj in https://github.com/google/android-cuttlefish/pull/2017
   * Rename cvdexec into podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2077
   * podcvd can create Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2078
-  * podcvd can execute cvd create on Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2085 
+  * podcvd can execute cvd create on Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2085
 
  -- Jason Macnak <natsu@google.com>  Thu, 29 Jan 2026 13:01:30 -0800
 

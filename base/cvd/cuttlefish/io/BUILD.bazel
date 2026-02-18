@@ -5,6 +5,17 @@ package(
 )
 
 cf_cc_library(
+    name = "fake_pread_pwrite",
+    srcs = ["fake_pread_pwrite.cc"],
+    hdrs = ["fake_pread_pwrite.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "in_memory",
     srcs = ["in_memory.cc"],
     hdrs = ["in_memory.h"],

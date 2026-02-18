@@ -16,13 +16,13 @@
 
 #include <memory>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <libyuv.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -280,7 +280,7 @@ int CuttlefishMain() {
          "and touchpads";
   for (int i = 0; i < touch_fds.size(); i++) {
     int touch_fd;
-    CHECK(android::base::ParseInt(touch_fds[i], &touch_fd))
+    CHECK(absl::SimpleAtoi(touch_fds[i], &touch_fd))
         << "Invalid touch_fd: " << touch_fds[i];
     // Displays are listed first, then touchpads
     auto label_prefix =

@@ -1,0 +1,308 @@
+name: Workflow for Gigabyte Ampere Server Cuttlefish Installer
+
+on:
+  pull_request:
+    paths:
+      - 'gigabyte-ampere-cuttlefish-installer/**'
+  push:
+    branchs:
+      - '**'
+
+jobs:
+  build-installer-iso-job:
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    env:
+      DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso"
+      CI_PROJECT_NAME: ${{ github.event.repository.name }}
+      CI_PIPELINE_ID: ${{ github.run_id }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setting up build environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y wget libarchive-tools
+        apt-get install -y xorriso
+        apt-get install -y cpio xz-utils
+        apt-get install -y fdisk
+    - name: Build the iso image
+      run: |
+        sed -i "2i CI_PROJECT_NAME=${CI_PROJECT_NAME}" preseed/after_install_1.sh
+        sed -i "3i CI_PIPELINE_ID=${CI_PIPELINE_ID}" preseed/after_install_1.sh
+        wget -nv -c ${DEBIAN_ISO_URL}
+        ./addpreseed.sh
+        xz -9e preseed-mini.iso
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+        path: gigabyte-ampere-cuttlefish-installer/preseed-mini.iso.xz
+
+  test-iso-qemu-job:
+    needs: [build-installer-iso-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-prepare-testbed
+    - name: Copy test scripts
+      run: |
+        cp -f tests/installer-iso-* .
+    - name: Run installer on qemu
+      run: |
+        ./installer-iso-install.expect successful_install sheeFei2
+    - name: Extract partitions
+      run: |
+        ./installer-iso-extract-partitions.sh
+    - name: Check if installation is successful
+      run: |
+        e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
+        echo sheeFei2 > successful_install_compare
+        cmp successful_install successful_install_compare
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l boot.img:/vmlinuz-*
+        e2cp boot.img:/$(e2ls boot.img:/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+    - name: Check we don't have home partition
+      run: |
+        test '!' -e home.img
+
+  test-iso-multidisk-qemu-empty-disk-job:
+    needs: [build-installer-iso-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-prepare-testbed
+    - name: Copy test scripts
+      run: |
+        cp -f tests/installer-iso-* .
+        cp -f tests/multidisk/installer-iso-* .
+    - name: Create Empty 2 disks
+      run: |
+        ./tests/multidisk/installer-create-empty-disk2.sh
+    - name: Run installer on qemu
+      run: |
+        ./installer-iso-install.expect successful_install eD4uvei1
+    - name: Extract partitions
+      run: |
+        ./installer-iso-extract-partitions-multidisk.sh
+    - name: Check if rootfs is larger than 8G.
+      run: |
+        test $(stat -c '%s' rootfs.img) '-gt' 8589934592
+    - name: Check if installation is successful
+      run: |
+        e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
+        echo eD4uvei1 > successful_install_compare
+        cmp successful_install successful_install_compare
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l boot.img:/vmlinuz-*
+        e2cp boot.img:/$(e2ls boot.img:/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-multidisk-qemu-disk2-with-data-job:
+    needs: [build-installer-iso-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-prepare-testbed
+    - name: Copy test scripts
+      run: |
+        cp -f tests/installer-iso-* .
+        cp -f tests/multidisk/installer-iso-* .
+    - name: Create 2 disks with preinstalled partitions.
+      run: |
+        ./tests/multidisk/installer-create-preinstalled-disk2.sh
+    - name: Run installer on qemu
+      run: |
+        ./installer-iso-install.expect successful_install Daiyaik0
+    - name: Extract partitions
+      run: |
+        ./installer-iso-extract-partitions-multidisk.sh
+    - name: Check if rootfs is larger than 8G.
+      run: |
+        test $(stat -c '%s' rootfs.img) '-gt' 8589934592
+    - name: Check if installation is successful
+      run: |
+        e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
+        echo Daiyaik0 > successful_install_compare
+        cmp successful_install successful_install_compare
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l boot.img:/vmlinuz-*
+        e2cp boot.img:/$(e2ls boot.img:/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-multidisk-qemu-disk5-with-data-job:
+    needs: [build-installer-iso-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-prepare-testbed
+    - name: Copy test scripts
+      run: |
+        cp -f tests/installer-iso-* .
+        cp -f tests/multidisk/installer-iso-* .
+    - name: Create 5 disks with preinstalled partitions.
+      run: |
+        ./tests/multidisk/installer-create-preinstalled-disk5.sh
+    - name: Run installer on qemu
+      run: |
+        ./installer-iso-install.expect successful_install AiT7eipi
+    - name: Extract partitions
+      run: |
+        ./installer-iso-extract-partitions-multidisk.sh
+    - name: Check if rootfs is larger than 8G.
+      run: |
+        test $(stat -c '%s' rootfs.img) '-gt' 8589934592
+    - name: Check if installation is successful
+      run: |
+        e2cp rootfs.img:/home/vsoc-01/successful_install successful_install
+        echo AiT7eipi > successful_install_compare
+        cmp successful_install successful_install_compare
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l boot.img:/vmlinuz-*
+        e2cp boot.img:/$(e2ls boot.img:/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-cf-qemu-job:
+    needs: [build-installer-iso-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-prepare-testbed
+    - name: Copy test scripts
+      run: |
+        cp -f tests/installer-iso-* .
+    - name: Run installer on qemu
+      run: |
+        ./installer-iso-install.expect
+    - name: Download Cuttlefish
+      run: |
+        ./utils/download-ci-cf.sh
+    - name: Start qemu again. Normal boot.
+      run: |
+        screen -d -m -L -Logfile console_001.log ./installer-iso-run-qemu.sh
+        while ! egrep "[^[:space:]]+[[:space:]]login:" console_001.log; do sleep 30; done
+        cp -f console_001.log console_001_p1.log
+        CONSOLELINES=$(cat console_001_p1.log | wc -l)
+        cat console_001_p1.log
+        grep "login:" console_001_p1.log > /dev/null
+        echo "CONSOLELINES=${CONSOLELINES}" >> $GITHUB_ENV
+    - name: Deploy cuttlefish
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k apt-get install -y unzip'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'mkdir cf'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 cvd-host_package.tar.gz vsoc-01@localhost:/home/vsoc-01/
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; tar -xvf ../cvd-host_package.tar.gz'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'rm -f cvd-host_package.tar.gz'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 aosp_cf_arm64*_phone-*.zip vsoc-01@localhost:/home/vsoc-01/
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; unzip ../aosp_cf_arm64*_phone-*.zip'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'rm -f aosp_cf_arm64*_phone-*.zip'
+    - name: Run cuttlefish command line
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; HOME=$PWD ./bin/launch_cvd -help' || true
+    - name: Run apt-cache policy
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'apt-cache policy'
+    - name: Test for lzop
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'lzop -V'
+    - name: Test for Google NTP server
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p'
+        CHECK_GOOGLE_TIME_SERVER=0
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p' | grep 'time1.google' && CHECK_GOOGLE_TIME_SERVER=1
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p' | grep '.GOOG.' && CHECK_GOOGLE_TIME_SERVER=1
+        if [ x"${CHECK_GOOGLE_TIME_SERVER}" != x"1" ]; then echo "Google Time Servers not found!"; false; fi
+    - name: Test for ulimit
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -a'
+        test $(sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -n') -ge 2048
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'update-alternatives --display iptables' | grep "link currently points to /usr/sbin/iptables-legacy"
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
