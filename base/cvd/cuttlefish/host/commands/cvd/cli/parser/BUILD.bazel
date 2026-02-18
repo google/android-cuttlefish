@@ -72,6 +72,18 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "configs_inheritance_test",
+    srcs = ["configs_inheritance_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cf_cc_library(
     name = "fetch_config_parser",
     srcs = ["fetch_config_parser.cpp"],
@@ -142,7 +154,6 @@ cf_cc_library(
 cf_cc_test(
     name = "parser_test",
     srcs = [
-        "configs_inheritance_test.cc",
         "flags_parser_test.cc",
         "metrics_configs_test.cc",
     ],
