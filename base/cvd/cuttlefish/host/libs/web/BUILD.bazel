@@ -47,6 +47,16 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "android_build_api_key",
+    srcs = [
+        "android_build_api_key.cc",
+    ],
+    hdrs = [
+        "android_build_api_key.h",
+    ],
+)
+
+cf_cc_library(
     name = "android_build_string",
     srcs = ["android_build_string.cpp"],
     hdrs = ["android_build_string.h"],
