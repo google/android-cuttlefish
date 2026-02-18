@@ -17,28 +17,24 @@
 
 #include <stdint.h>
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-class SharedFdIo : public ReaderWriterSeeker {
+class NativeFilesystem : public ReadWriteFilesystem {
  public:
-  explicit SharedFdIo(SharedFD);
+  Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
+      std::string_view path) override;
 
-  Result<uint64_t> Read(void* buf, uint64_t count) override;
-  Result<uint64_t> Write(const void* buf, uint64_t count) override;
-  Result<uint64_t> SeekSet(uint64_t offset) override;
-  Result<uint64_t> SeekCur(int64_t offset) override;
-  Result<uint64_t> SeekEnd(int64_t offset) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
-  Result<uint64_t> PWrite(const void* buf, uint64_t count,
-                          uint64_t offset) override;
+  Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
+      std::string_view path) override;
 
- private:
-  SharedFD fd_;
+  Result<void> DeleteFile(std::string_view path) override;
+
+  Result<std::unique_ptr<ReaderWriterSeeker>> OpenReadWrite(
+      std::string_view path) override;
 };
 
 }  // namespace cuttlefish
