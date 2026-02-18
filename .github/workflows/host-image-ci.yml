@@ -33,7 +33,9 @@ jobs:
     - name: Prepare building environment
       run: apt-get update && apt-get upgrade -y && apt-get install -y sudo wget libarchive-tools xorriso cpio xz-utils fdisk
     - name: Inject name and ID into preseed 
-      run: echo "CI_PROJECT_NAME=${{ github.event.repository.name }}" >> tools/cuttlefish-host-image-installer/preseed/after_install_1.sh && echo "CI_PIPELINE_ID=${{ github.repository}}/${{ github.workflow }}" >> tools/cuttlefish-host-image-installer/preseed//after_install_1.sh
+      run: echo "CI_PROJECT_NAME=${GITHUB_EVENT_REPOSITORY_NAME}" >> tools/cuttlefish-host-image-installer/preseed/after_install_1.sh && echo "CI_PIPELINE_ID=${{ github.repository}}/${GITHUB_WORKFLOW}" >> tools/cuttlefish-host-image-installer/preseed//after_install_1.sh
+      env:
+        GITHUB_EVENT_REPOSITORY_NAME: ${{ github.event.repository.name }}
     - name: Download Debian installer
       run: cd tools/cuttlefish-host-image-installer && wget -nv -c ${DEBIAN_ISO_URL} && ./addpreseed.sh && xz -9e preseed-mini.iso
     - name: Publish preseed-mini.iso.xz

@@ -63,9 +63,9 @@ jobs:
         echo "x86_64_image_path=orchestration-image-x86_64-${short_sha}.tar" >> $GITHUB_ENV
         echo "image_name=cuttlefish-orchestration:${short_sha}" >> $GITHUB_ENV
     - name: Build docker image
-      run: docker/image-builder.sh -t ${{ env.image_name }}
+      run: docker/image-builder.sh -t ${IMAGE_NAME}
     - name: Save docker image
-      run: docker save --output ${{ env.x86_64_image_path }} ${{ env.image_name }}
+      run: docker save --output ${X86_64_IMAGE_PATH} ${IMAGE_NAME}
     - name: Publish docker image
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
@@ -82,9 +82,9 @@ jobs:
         echo "arm64_image_path=orchestration-image-arm64-${short_sha}.tar" >> $GITHUB_ENV
         echo "image_name=cuttlefish-orchestration:${short_sha}" >> $GITHUB_ENV
     - name: Build docker image
-      run: docker/image-builder.sh -t ${{ env.image_name }}
+      run: docker/image-builder.sh -t ${IMAGE_NAME}
     - name: Save docker image
-      run: docker save --output ${{ env.arm64_image_path }} ${{ env.image_name }}
+      run: docker save --output ${ARM64_IMAGE_PATH} ${IMAGE_NAME}
     - name: Publish docker image
       uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # aka v4.0.0
       with:
