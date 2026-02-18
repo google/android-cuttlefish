@@ -58,3 +58,14 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_library(
+    name = "string",
+    srcs = ["string.cc"],
+    hdrs = ["string.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
