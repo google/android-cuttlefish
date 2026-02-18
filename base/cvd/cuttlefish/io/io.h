@@ -63,4 +63,19 @@ class WriterSeeker : public Writer, public Seeker {
                                   uint64_t offset) = 0;
 };
 
+class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
+ public:
+  // Members redeclared to avoid compilation errors like "non-static member
+  // 'Xyz' found in multiple base-class subobjects"
+  virtual Result<uint64_t> Read(void* buf, uint64_t count) = 0;
+  virtual Result<uint64_t> Write(const void* buf, uint64_t count) = 0;
+  virtual Result<uint64_t> SeekSet(uint64_t offset) = 0;
+  virtual Result<uint64_t> SeekCur(int64_t offset) = 0;
+  virtual Result<uint64_t> SeekEnd(int64_t offset) = 0;
+  virtual Result<uint64_t> PRead(void* buf, uint64_t count,
+                                 uint64_t offset) const = 0;
+  virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
+                                  uint64_t offset) = 0;
+};
+
 }  // namespace cuttlefish
