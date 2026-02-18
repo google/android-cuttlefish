@@ -18,11 +18,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <cstddef>
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -203,9 +202,9 @@ Result<std::unique_ptr<RefreshTokenCredentialSource>>
 RefreshTokenCredentialSource::FromOauth2ClientFile(
     HttpClient& http_client, const std::string& oauth_contents) {
   if (absl::StartsWith(oauth_contents, "[OAuth2]")) {  // .boto file
-    std::optional<std::string> client_id;
-    std::optional<std::string> client_secret;
-    std::optional<std::string> refresh_token;
+    std::string client_id = "";
+    std::string client_secret = "";
+    std::string refresh_token = "";
     auto lines = android::base::Tokenize(oauth_contents, "\n");
     for (auto line : lines) {
       std::string_view line_view = line;
@@ -226,11 +225,12 @@ RefreshTokenCredentialSource::FromOauth2ClientFile(
         continue;
       }
     }
+    CF_EXPECT(!client_id.empty());
+    CF_EXPECT(!client_secret.empty());
+    CF_EXPECT(!refresh_token.empty());
     return std::unique_ptr<RefreshTokenCredentialSource>(
-        new RefreshTokenCredentialSource(http_client,
-                                         CF_EXPECT(std::move(client_id)),
-                                         CF_EXPECT(std::move(client_secret)),
-                                         CF_EXPECT(std::move(refresh_token))));
+        new RefreshTokenCredentialSource(http_client, client_id, client_secret,
+                                         refresh_token));
   }
   auto json = CF_EXPECT(ParseJson(oauth_contents));
   if (json.isMember("refresh_token")) {
