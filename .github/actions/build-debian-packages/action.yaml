@@ -10,10 +10,10 @@ runs:
   - name: Modify version format
     if: inputs.deploy-channel != ''
     run: |
-      case "${{ inputs.deploy-channel }}" in
+      case "${INPUTS_DEPLOY_CHANNEL}" in
         stable)
           # Stable version format : X.Y.Z
-          SEMVER=$(echo ${{ github.ref_name }} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
+          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
             base/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
@@ -24,7 +24,7 @@ runs:
         unstable|nightly)
           # Unstable/nightly version format : X.Y.Z~gitYYYYMMDDHHMM.<Github SHA 8 digit>
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          SUFFIX="~git${{ inputs.yyyymmddhhmm }}.${SHORT_SHA}"
+          SUFFIX="~git${INPUTS_YYYYMMDDHHMM}.${SHORT_SHA}"
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             base/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
@@ -37,6 +37,9 @@ runs:
           ;;
       esac
     shell: bash
+    env:
+      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+      INPUTS_YYYYMMDDHHMM: ${{ inputs.yyyymmddhhmm }}
   - name: Build CF debian packages
     run: |
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
