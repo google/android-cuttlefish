@@ -115,28 +115,21 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "parser",
-    srcs = [
-        "load_configs_parser.cpp",
-    ],
-    hdrs = [
-        "load_configs_parser.h",
-    ],
+    name = "load_configs_parser",
+    srcs = ["load_configs_parser.cpp"],
+    hdrs = ["load_configs_parser.h"],
     deps = [
-        ":configs_common",
-        ":load_config_cc_proto",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_instances",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
-        "//cuttlefish/host/commands/cvd/cli/parser:cf_metrics_configs",
+        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:fetch_config_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_parser",
-        "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_templates",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:selector_parser",
         "//cuttlefish/host/commands/cvd/instances",
-        "//cuttlefish/host/commands/cvd/utils",
+        "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -156,8 +149,8 @@ cf_cc_test(
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
-        "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
@@ -186,9 +179,9 @@ cf_cc_library(
     srcs = ["test_common.cc"],
     hdrs = ["test_common.h"],
     deps = [
-        "//cuttlefish/host/commands/cvd/cli/parser",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_flags_validator",
         "//cuttlefish/host/commands/cvd/cli/parser:launch_cvd_parser",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_configs_parser",
         "//cuttlefish/result",
         "@jsoncpp",
     ],
