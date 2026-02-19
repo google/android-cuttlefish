@@ -20,6 +20,7 @@ cf_cc_library(
     hdrs = ["filesystem.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/result:result_type",
     ],
 )
 
