@@ -18,9 +18,18 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "cf_connectivity_configs",
+    srcs = ["cf_connectivity_configs.cpp"],
+    hdrs = ["cf_connectivity_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+    ],
+)
+
+cf_cc_library(
     name = "instance",
     srcs = [
-        "cf_connectivity_configs.cpp",
         "cf_disk_configs.cpp",
         "cf_graphics_configs.cpp",
         "cf_security_configs.cpp",
@@ -28,7 +37,6 @@ cf_cc_library(
         "cf_vm_configs.cpp",
     ],
     hdrs = [
-        "cf_connectivity_configs.h",
         "cf_disk_configs.h",
         "cf_graphics_configs.h",
         "cf_security_configs.h",
@@ -43,6 +51,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_boot_configs",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_connectivity_configs",
         "//cuttlefish/result",
         "//libbase",
         "@fmt",
