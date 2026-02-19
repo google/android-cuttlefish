@@ -15,6 +15,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/parser/instance",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_boot_configs",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_connectivity_configs",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_disk_configs",
         "//cuttlefish/result",
     ],
 )
