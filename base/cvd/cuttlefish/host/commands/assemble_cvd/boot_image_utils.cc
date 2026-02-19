@@ -38,6 +38,8 @@
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -279,7 +281,12 @@ Result<void> RepackBootImage(const Avb& avb,
                              const std::string& build_dir) {
   CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
 
-  BootImage boot_image = CF_EXPECT(BootImage::Read(boot_image_path));
+  SharedFD boot_image_fd = SharedFD::Open(boot_image_path, O_RDONLY);
+  CF_EXPECTF(boot_image_fd->IsOpen(), "Failed to open '{}': '{}'",
+             boot_image_path, boot_image_fd->StrError());
+  auto bootimg_reader = std::make_unique<SharedFdIo>(boot_image_fd);
+  BootImage boot_image = CF_EXPECT(BootImage::Read(std::move(bootimg_reader)));
+
   std::string kernel_cmdline = boot_image.KernelCommandLine();
   VLOG(0) << "Cmdline from boot image is " << kernel_cmdline;
 

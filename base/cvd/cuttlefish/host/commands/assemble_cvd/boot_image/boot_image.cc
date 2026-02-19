@@ -18,68 +18,48 @@
 #include <stdint.h>
 
 #include <string>
-#include <string_view>
+#include <utility>
 #include <variant>
 
 #include "absl/strings/str_cat.h"
 #include "bootimg.h"
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/result/result.h"
-
-namespace cuttlefish {
 
 // https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 
-Result<BootImage> BootImage::Read(std::string_view path) {
-  const SharedFD fd = SharedFD::Open(std::string(path), O_RDONLY);
-  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", path, fd->StrError());
+namespace cuttlefish {
 
-  std::string magic(BOOT_MAGIC_SIZE, ' ');
-  CF_EXPECT_EQ(ReadExact(fd, &magic), BOOT_MAGIC_SIZE, fd->StrError());
-  CF_EXPECT_EQ(magic, BOOT_MAGIC);
+static_assert(sizeof(boot_img_hdr_v2) >= sizeof(boot_img_hdr_v4));
+static_assert(sizeof(boot_img_hdr_v2) >= sizeof(boot_img_hdr_v3));
+static_assert(sizeof(boot_img_hdr_v2) >= sizeof(boot_img_hdr_v1));
+static_assert(sizeof(boot_img_hdr_v2) >= sizeof(boot_img_hdr_v0));
 
-  const off_t version_off = BOOT_MAGIC_SIZE + (sizeof(uint32_t) * 8);
-  CF_EXPECT_EQ(fd->LSeek(version_off, SEEK_SET), version_off, fd->StrError());
-  uint32_t version;
-  CF_EXPECT_EQ(ReadExactBinary(fd, &version), sizeof(version), fd->StrError());
+Result<BootImage> BootImage::Read(std::unique_ptr<ReaderSeeker> rd) {
+  // `magic` and `header_version` are always in the same place, v2 is largest
+  boot_img_hdr_v2 v2 = CF_EXPECT(PReadExactBinary<boot_img_hdr_v2>(*rd, 0));
+  CF_EXPECT_EQ(memcmp(v2.magic, BOOT_MAGIC, BOOT_MAGIC_SIZE), 0);
 
-  CF_EXPECT_EQ(fd->LSeek(SEEK_SET, 0), 0, fd->StrError());
-
-  switch (version) {
-    case 0: {
-      boot_img_hdr_v0 v0;
-      CF_EXPECT_EQ(ReadExactBinary(fd, &v0), sizeof(v0), fd->StrError());
-      return BootImage(fd, v0);
-    }
-    case 1: {
-      boot_img_hdr_v1 v1;
-      CF_EXPECT_EQ(ReadExactBinary(fd, &v1), sizeof(v1), fd->StrError());
-      return BootImage(fd, v1);
-    }
-    case 2: {
-      boot_img_hdr_v2 v2;
-      CF_EXPECT_EQ(ReadExactBinary(fd, &v2), sizeof(v2), fd->StrError());
-      return BootImage(fd, v2);
-    }
-    case 3: {
-      boot_img_hdr_v3 v3;
-      CF_EXPECT_EQ(ReadExactBinary(fd, &v3), sizeof(v3), fd->StrError());
-      return BootImage(fd, v3);
-    }
-    case 4: {
-      boot_img_hdr_v4 v4;
-      CF_EXPECT_EQ(ReadExactBinary(fd, &v4), sizeof(v4), fd->StrError());
-      return BootImage(fd, v4);
-    }
+  switch (v2.header_version) {
+    case 0:
+      return BootImage(std::move(rd), *reinterpret_cast<boot_img_hdr_v0*>(&v2));
+    case 1:
+      return BootImage(std::move(rd), *reinterpret_cast<boot_img_hdr_v1*>(&v2));
+    case 2:
+      return BootImage(std::move(rd), v2);
+    case 3:
+      return BootImage(std::move(rd), *reinterpret_cast<boot_img_hdr_v3*>(&v2));
+    case 4:
+      return BootImage(std::move(rd), *reinterpret_cast<boot_img_hdr_v4*>(&v2));
     default:
-      return CF_ERRF("Unknown header version {}", version);
+      return CF_ERRF("Unknown header version '{}'", v2.header_version);
   }
 }
 
-BootImage::BootImage(SharedFD fd, HeaderVariant header)
-    : fd_(fd), header_(header) {}
+BootImage::BootImage(std::unique_ptr<ReaderSeeker> reader, HeaderVariant header)
+    : reader_(std::move(reader)), header_(header) {}
 
 static std::string KernelCommandLineImpl(const boot_img_hdr_v0& v0) {
   const char* cmdline = reinterpret_cast<const char*>(v0.cmdline);

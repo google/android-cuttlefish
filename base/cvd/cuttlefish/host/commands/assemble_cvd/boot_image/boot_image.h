@@ -15,19 +15,18 @@
 
 #pragma once
 
-#include <string_view>
 #include <variant>
 
 #include "bootimg.h"
 
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 class BootImage {
  public:
-  static Result<BootImage> Read(std::string_view path);
+  static Result<BootImage> Read(std::unique_ptr<ReaderSeeker>);
 
   std::string KernelCommandLine() const;
 
@@ -36,9 +35,9 @@ class BootImage {
       std::variant<boot_img_hdr_v0, boot_img_hdr_v1, boot_img_hdr_v2,
                    boot_img_hdr_v3, boot_img_hdr_v4>;
 
-  BootImage(SharedFD, HeaderVariant);
+  BootImage(std::unique_ptr<ReaderSeeker>, HeaderVariant);
 
-  SharedFD fd_;
+  std::unique_ptr<ReaderSeeker> reader_;
   HeaderVariant header_;
 };
 
