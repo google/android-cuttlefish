@@ -43,7 +43,7 @@ class ReadableZip {
   Result<uint64_t> NumEntries();
 
   Result<std::string> EntryName(uint64_t index);
-  Result<uint32_t> EntryUnixAttributes(uint64_t index);
+  Result<uint32_t> EntryAttributes(uint64_t index);
   Result<bool> EntryIsDirectory(uint64_t index);
 
   /* Decompresses and extract a file from the archive. */
