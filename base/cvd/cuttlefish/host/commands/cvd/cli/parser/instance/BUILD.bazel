@@ -114,11 +114,28 @@ cf_cc_test(
 )
 
 cf_cc_test(
-    name = "instance_test",
-    srcs = [
-        "graphics_configs_test.cc",
-        "vm_configs_test.cc",
+    name = "graphics_configs_test",
+    srcs = ["graphics_configs_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+        "@protobuf",
+        "@protobuf//:differencer",
     ],
+)
+
+cf_cc_test(
+    name = "instance_test",
+    srcs = ["vm_configs_test.cc"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flag_parser",
