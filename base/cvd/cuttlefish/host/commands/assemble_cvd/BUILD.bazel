@@ -114,6 +114,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/io",
+        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
