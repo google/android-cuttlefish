@@ -5,9 +5,21 @@ package(
 )
 
 cf_cc_library(
+    name = "cf_boot_configs",
+    srcs = ["cf_boot_configs.cpp"],
+    hdrs = ["cf_boot_configs.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "instance",
     srcs = [
-        "cf_boot_configs.cpp",
         "cf_connectivity_configs.cpp",
         "cf_disk_configs.cpp",
         "cf_graphics_configs.cpp",
@@ -16,7 +28,6 @@ cf_cc_library(
         "cf_vm_configs.cpp",
     ],
     hdrs = [
-        "cf_boot_configs.h",
         "cf_connectivity_configs.h",
         "cf_disk_configs.h",
         "cf_graphics_configs.h",
@@ -31,6 +42,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_boot_configs",
         "//cuttlefish/result",
         "//libbase",
         "@fmt",
