@@ -103,7 +103,7 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 usermod -aG docker vsoc-01
 
-# Inastall nvidia-container-toolkit
+# Install nvidia-container-toolkit
 curl -fsSL --retry 7 --retry-all-errors https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/nvidia-container-toolkit-keyring.gpg \
 && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
   tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
