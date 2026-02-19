@@ -65,7 +65,7 @@ Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
   ZipStat stat_out = CF_EXPECT(source.Stat());
   uint64_t index = CF_EXPECT(std::move(stat_out.index));
 
-  Result<uint32_t> attributes = zip.EntryUnixAttributes(index);
+  Result<uint32_t> attributes = zip.EntryAttributes(index);
   if (attributes.ok()) {
     uint32_t mode = (*attributes >> 16) & 0777;
     CF_EXPECT_EQ(chmod(host_path.c_str(), mode), 0, StrError(errno));

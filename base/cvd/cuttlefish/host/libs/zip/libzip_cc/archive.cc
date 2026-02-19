@@ -77,7 +77,7 @@ Result<std::string> ReadableZip::EntryName(uint64_t index) {
   return std::string(name_cstr);
 }
 
-Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
+Result<uint32_t> ReadableZip::EntryAttributes(uint64_t index) {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   uint8_t opsys;
@@ -85,14 +85,18 @@ Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
   int res =
       zip_file_get_external_attributes(raw_zip, index, 0, &opsys, &attributes);
   CF_EXPECT_EQ(res, 0, ZipErrorString(raw_zip));
-  CF_EXPECT_EQ(opsys, ZIP_OPSYS_UNIX);
+
+  // The fetcher must occasionally download archives from Android 10 or 11
+  // which had incorrectly set the extents for the smaller files to DOS.
+  // Don't error out for those.
+  CF_EXPECT(opsys == ZIP_OPSYS_UNIX || opsys == ZIP_OPSYS_DOS);
 
   return attributes;
 }
 
 Result<bool> ReadableZip::EntryIsDirectory(uint64_t index) {
   const uint32_t attributes =
-      CF_EXPECT(EntryUnixAttributes(index),
+      CF_EXPECT(EntryAttributes(index),
                 "Failed to get attributes for entry " << index);
 
   // See
