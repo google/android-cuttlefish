@@ -103,9 +103,19 @@ cf_cc_library(
 )
 
 cf_cc_test(
+    name = "disk_configs_test",
+    srcs = ["disk_configs_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_test(
     name = "instance_test",
     srcs = [
-        "disk_configs_test.cc",
         "graphics_configs_test.cc",
         "vm_configs_test.cc",
     ],
