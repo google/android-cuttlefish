@@ -4,6 +4,17 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_cc_test(
+    name = "boot_configs_test",
+    srcs = ["boot_configs_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
 cf_cc_library(
     name = "cf_boot_configs",
     srcs = ["cf_boot_configs.cpp"],
@@ -94,7 +105,6 @@ cf_cc_library(
 cf_cc_test(
     name = "instance_test",
     srcs = [
-        "boot_configs_test.cc",
         "disk_configs_test.cc",
         "graphics_configs_test.cc",
         "vm_configs_test.cc",
