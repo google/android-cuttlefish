@@ -76,27 +76,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "instance",
+    name = "cf_vm_configs",
     srcs = ["cf_vm_configs.cpp"],
     hdrs = ["cf_vm_configs.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flags_validator",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
-        "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_boot_configs",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_connectivity_configs",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_disk_configs",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_graphics_configs",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_security_configs",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_streaming_configs",
         "//cuttlefish/result",
         "//libbase",
         "@fmt",
-        "@jsoncpp",
-        "@protobuf",
         "@protobuf//:json_util",
     ],
 )

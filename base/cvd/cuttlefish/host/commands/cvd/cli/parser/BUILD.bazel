@@ -12,13 +12,13 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
-        "//cuttlefish/host/commands/cvd/cli/parser/instance",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_boot_configs",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_connectivity_configs",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_disk_configs",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_graphics_configs",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_security_configs",
         "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_streaming_configs",
+        "//cuttlefish/host/commands/cvd/cli/parser/instance:cf_vm_configs",
         "//cuttlefish/result",
     ],
 )
