@@ -134,7 +134,7 @@ cf_cc_test(
 )
 
 cf_cc_test(
-    name = "instance_test",
+    name = "vm_configs_test",
     srcs = ["vm_configs_test.cc"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
