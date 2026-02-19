@@ -72,6 +72,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "read_exact",
+    srcs = ["read_exact.cc"],
+    hdrs = ["read_exact.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "shared_fd",
     srcs = ["shared_fd.cc"],
     hdrs = ["shared_fd.h"],
