@@ -120,7 +120,7 @@ cuttlefish-frontend (1.27.0) stable; urgency=medium
 
  -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 20:23:38 +0100
 
-cuttlefish-frontend (1.26.0) unstable; urgency=medium
+cuttlefish-frontend (1.26.0) stable; urgency=medium
 
   * No changes.
 
