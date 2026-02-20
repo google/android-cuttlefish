@@ -1,8 +1,29 @@
-cuttlefish-common (1.44.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.44.0) unstable; urgency=medium
 
-  * 
+  * Add fallback physical partition calculation by @Databean in https://github.com/google/android-cuttlefish/pull/2139
+  * Update Angular to 21, Add explicit ChangeDetectionStrategy for components by @k311093 in https://github.com/google/android-cuttlefish/pull/2132
+  * Start development of version 1.44 by @jemoreira in https://github.com/google/android-cuttlefish/pull/2144
+  * Replace android::base::Parse* with absl::SimpleAto* by @jemoreira in https://github.com/google/android-cuttlefish/pull/2141
+  * Gather `system_image_dir_specified` metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2136
+  * Isolate `CredentialSource` construction decision logic by @cjreynol in https://github.com/google/android-cuttlefish/pull/2148
+  * Refactor Github Action per b/485167538 by @google-admin in https://github.com/google/android-cuttlefish/pull/2153
+  * Add adb to the host image by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2138
+  * Add user page size configuration to Cuttlefish environment spec by @Kalesh-Singh in https://github.com/google/android-cuttlefish/pull/2146
+  * Add a test for `CombinedAndroidBuild` by @Databean in https://github.com/google/android-cuttlefish/pull/2149
+  * Prefer no `std::` prefixes on integer types by @cjreynol in https://github.com/google/android-cuttlefish/pull/2142
+  * Lift ReadToString(ReadableZipSource&) to be ReadToString(Reader&) by @Databean in https://github.com/google/android-cuttlefish/pull/2155
+  * Create a filesystem abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2150
+  * Expanding file extent check in cvd fetch by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2160
+  * Support dmabuf in Cuttlefish wayland server by @jmacnak in https://github.com/google/android-cuttlefish/pull/1602
+  * Split up `//cuttlefish/host/commands/cvd/cli/parser` targets by @Databean in https://github.com/google/android-cuttlefish/pull/2156
+  * Upgrade cxx to a version supporting bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2157
+  * Switch BootImage::Read to use ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/2159
+  * Add missing build dependency for internal build by @Databean in https://github.com/google/android-cuttlefish/pull/2162
+  * Lift `Copy` to be over generic IO types rather than zip IO types by @Databean in https://github.com/google/android-cuttlefish/pull/2163
+  * Split up `//cuttlefish/host/commands/cvd/cli/parser/instance` targets by @Databean in https://github.com/google/android-cuttlefish/pull/2161
+  * Don't perform zero-length memcpy operations in InMemoryIo by @Databean in https://github.com/google/android-cuttlefish/pull/2165
 
- -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 19:09:39 -0800
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 20 Feb 2026 14:27:29 -0800
 
 cuttlefish-common (1.43.0) unstable; urgency=medium
 
