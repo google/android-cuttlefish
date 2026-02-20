@@ -439,6 +439,13 @@ func (i *Instance) PowerWash() error {
 	return err
 }
 
+func (i *Instance) Restart() error {
+	args := i.selectorArgs()
+	args = append(args, "restart")
+	_, err := i.cli.exec(CVDBin, args...)
+	return err
+}
+
 func (i *Instance) Resume() error {
 	args := i.selectorArgs()
 	args = append(args, "resume")
