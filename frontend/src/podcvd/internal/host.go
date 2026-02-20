@@ -30,6 +30,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
+	"github.com/vishvananda/netlink"
 )
 
 func CreateCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) error {
@@ -70,6 +71,24 @@ func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string,
 	}
 }
 
+func findCidr() (string, error) {
+	link, err := netlink.LinkByName(ifName)
+	if err != nil {
+		return "", fmt.Errorf("failed to find interface %q: %w", ifName, err)
+	}
+	routes, err := netlink.RouteListFiltered(netlink.FAMILY_V4, &netlink.Route{}, netlink.RT_FILTER_TABLE)
+	if err != nil {
+		return "", fmt.Errorf("failed to list routes: %w", err)
+	}
+	for _, route := range routes {
+		if route.LinkIndex != link.Attrs().Index || route.Dst == nil {
+			continue
+		}
+		return route.Dst.String(), nil
+	}
+	return "", fmt.Errorf("failed to find route for interface %q", ifName)
+}
+
 func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
 	addr := prefix.Masked().Addr().As4()
 	mask := net.CIDRMask(prefix.Bits(), 32)
@@ -80,9 +99,13 @@ func lastIPv4Addr(prefix netip.Prefix) netip.Addr {
 }
 
 func findAvailableIPv4Addr(groupNameIpAddrMap map[string]string) (string, error) {
-	prefix, err := netip.ParsePrefix(containerInstanceSubnet)
+	cidr, err := findCidr()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to find CIDR: %w", err)
+	}
+	prefix, err := netip.ParsePrefix(cidr)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse CIDR: %w", err)
 	}
 	usedIPMap := make(map[string]bool)
 	for _, ip := range groupNameIpAddrMap {
@@ -94,7 +117,7 @@ func findAvailableIPv4Addr(groupNameIpAddrMap map[string]string) (string, error)
 			return ip.String(), nil
 		}
 	}
-	return "", fmt.Errorf("no available IP address found in %q", containerInstanceSubnet)
+	return "", fmt.Errorf("no available IP address found in %q", cidr)
 }
 
 func findAvailableGroupName(groupNameIpAddrMap map[string]string) string {
