@@ -40,7 +40,9 @@ class InMemoryIo : public ReaderWriterSeeker {
   Result<uint64_t> Read(void* buf, uint64_t count) override {
     std::lock_guard lock(mutex_);
     uint64_t to_read = ClampRange(cursor_, count);
-    memcpy(buf, &data_[cursor_], to_read);
+    if (to_read > 0) {
+      memcpy(buf, &data_[cursor_], to_read);
+    }
     cursor_ += to_read;
     return to_read;
   }
@@ -48,7 +50,9 @@ class InMemoryIo : public ReaderWriterSeeker {
   Result<uint64_t> Write(const void* buf, uint64_t count) override {
     std::lock_guard lock(mutex_);
     GrowTo(cursor_ + count);
-    memcpy(&data_[cursor_], buf, count);
+    if (count > 0) {
+      memcpy(&data_[cursor_], buf, count);
+    }
     cursor_ += count;
     return count;
   }
@@ -79,7 +83,9 @@ class InMemoryIo : public ReaderWriterSeeker {
                          uint64_t offset) const override {
     std::shared_lock lock(mutex_);
     uint64_t to_read = ClampRange(offset, count);
-    memcpy(buf, &data_[offset], to_read);
+    if (to_read > 0) {
+      memcpy(buf, &data_[offset], to_read);
+    }
     return to_read;
   }
 
@@ -87,7 +93,9 @@ class InMemoryIo : public ReaderWriterSeeker {
                           uint64_t offset) override {
     std::lock_guard lock(mutex_);
     GrowTo(offset + count);
-    memcpy(&data_[offset], buf, count);
+    if (count > 0) {
+      memcpy(&data_[offset], buf, count);
+    }
     return count;
   }
 
