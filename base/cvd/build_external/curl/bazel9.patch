@@ -1,0 +1,21 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index d920390..44c9b13 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1,6 +1,7 @@
+ # Copyright The OpenTelemetry Authors
+ # SPDX-License-Identifier: Apache-2.0
+ 
++load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+ load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
+ load("@bazel_skylib//lib:selects.bzl", "selects")
+ 
+diff --git a/MODULE.bazel b/MODULE.bazel
+index d81a5d6..f9e1e8b 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -8,3 +8,4 @@ bazel_dep(name = "bazel_skylib", version = "1.7.1")
+ bazel_dep(name = "mbedtls", version = "3.6.0")
+ bazel_dep(name = "platforms", version = "0.0.10")
+ bazel_dep(name = "boringssl", version = "0.20241024.0")
++bazel_dep(name = "rules_cc", version = "0.0.9")

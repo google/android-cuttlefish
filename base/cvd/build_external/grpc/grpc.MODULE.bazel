@@ -2,4 +2,6 @@ git_override(
     module_name = "grpc",
     remote = "https://github.com/grpc/grpc.git",
     commit = "f7931aae144a330cd38912315eae2417de1fb614",
+    patch_strip = 1,
+    patches = ["@//build_external/grpc:bazel9.patch"],
 )

@@ -7,5 +7,6 @@ git_repository(
     patch_strip = 1,
     patches = [
         "@//build_external/gfxstream:PATCH.gfxstream.build_variables.patch",
+        "@//build_external/gfxstream:bazel9.patch",
     ],
 )

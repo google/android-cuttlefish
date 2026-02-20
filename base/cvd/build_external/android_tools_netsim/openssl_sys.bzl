@@ -13,6 +13,7 @@ def _openssl_sys_env_impl(ctx):
                 libs.append(library.pic_static_library)
 
         compilation_context = src[CcInfo].compilation_context
+        all_include_directories_depsets.append(compilation_context.includes)
         all_include_directories_depsets.append(compilation_context.system_includes)
         headers_depsets.append(compilation_context.headers)
 

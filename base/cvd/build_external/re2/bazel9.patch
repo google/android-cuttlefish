@@ -1,0 +1,13 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 45f448e..8f14f11 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -4,6 +4,8 @@
+ 
+ # Bazel (http://bazel.build/) BUILD file for RE2.
+ 
++load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
++
+ licenses(["notice"])
+ 
+ exports_files(["LICENSE"])
