@@ -13,27 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/zip/zip_copy.h"
+#include "cuttlefish/io/copy.h"
 
 #include <stddef.h>
 #include <stdint.h>
 
-#include <array>
 #include <memory>
-#include <utility>
+#include <vector>
 
-#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 static constexpr size_t kBufferSize = 1 << 26;
 
-Result<void> Copy(ReadableZipSource& input, WritableZipSource& output) {
-  ZipSourceReader reader = CF_EXPECT(input.Reader());
-  ZipSourceWriter writer = CF_EXPECT(output.Writer());
-
+Result<void> Copy(Reader& reader, Writer& writer, const size_t buffer_size) {
+  std::vector<char> buffer(buffer_size);
   std::unique_ptr<std::array<char, kBufferSize>> buf(
       new std::array<char, kBufferSize>);
   uint64_t chunk_read;
@@ -46,7 +43,6 @@ Result<void> Copy(ReadableZipSource& input, WritableZipSource& output) {
       chunk_written += written;
     }
   }
-  CF_EXPECT(ZipSourceWriter::Finalize(std::move(writer)));
   return {};
 }
 

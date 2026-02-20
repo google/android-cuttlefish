@@ -5,6 +5,31 @@ package(
 )
 
 cf_cc_library(
+    name = "copy",
+    srcs = ["copy.cc"],
+    hdrs = ["copy.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "copy_test",
+    srcs = ["copy_test.cc"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:copy",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "fake_pread_pwrite",
     srcs = ["fake_pread_pwrite.cc"],
     hdrs = ["fake_pread_pwrite.h"],

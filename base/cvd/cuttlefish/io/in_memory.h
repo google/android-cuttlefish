@@ -15,12 +15,15 @@
 
 #pragma once
 
+#include <vector>
+
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
 
 namespace cuttlefish {
 
 std::unique_ptr<ReaderWriterSeeker> InMemoryIo();
+std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::vector<char>);
 std::unique_ptr<ReadWriteFilesystem> InMemoryFilesystem();
 
 }  // namespace cuttlefish
