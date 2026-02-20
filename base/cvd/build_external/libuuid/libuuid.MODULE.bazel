@@ -1,5 +1,6 @@
 single_version_override(
     module_name = "libuuid",
+    version = "2.39.3.bcr.1",
     patch_strip = 1,
     patches = ["@//build_external/libuuid:bazel9.patch"],
 )
