@@ -42,6 +42,7 @@ bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_flex", version = "0.4")
 # this is normally an indirect dependency, but for bazel 9 we need a higher version
 bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
+bazel_dep(name = "rules_java", version = "7.12.2")
 bazel_dep(name = "rules_license", version = "1.0.0")
 # this is normally an indirect dependency, but for bazel 9 we need a higher version
 bazel_dep(name = "rules_nodejs", version = "6.7.3")
