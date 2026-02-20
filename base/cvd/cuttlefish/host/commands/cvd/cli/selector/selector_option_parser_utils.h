@@ -53,7 +53,7 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
 }
 
 /*
- * android::base::Split by delimiter but returns CF_ERR if any split token is
+ * absl::StrSplit by delimiter but returns CF_ERR if any split token is
  * empty
  */
 Result<std::vector<std::string>> SeparateButWithNoEmptyToken(

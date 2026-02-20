@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
@@ -60,8 +60,8 @@ Result<void> ResolveInstanceFiles(
   std::string comma_str = "";
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  auto default_vvmtruststore_file_name =
-      android::base::Split(FLAGS_default_vvmtruststore_file_name, ",");
+  std::vector<std::string> default_vvmtruststore_file_name =
+      absl::StrSplit(FLAGS_default_vvmtruststore_file_name, ',');
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
     if (instance_index > 0) {

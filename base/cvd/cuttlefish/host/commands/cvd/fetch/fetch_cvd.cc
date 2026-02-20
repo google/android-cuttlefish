@@ -28,7 +28,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 

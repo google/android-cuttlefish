@@ -39,10 +39,10 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <fmt/ranges.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -131,7 +131,7 @@ std::set<std::string> TapInterfacesInUse() {
 
   std::string stdout_str = RunAndCaptureStdout(std::move(*cmd)).value_or("");
 
-  auto lines = android::base::Split(stdout_str, "\n");
+  std::vector<std::string> lines = absl::StrSplit(stdout_str, '\n');
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
     if (line.empty()) {

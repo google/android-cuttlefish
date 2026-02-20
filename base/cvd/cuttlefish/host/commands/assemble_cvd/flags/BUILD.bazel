@@ -78,6 +78,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@gflags",
     ],
@@ -186,6 +187,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -228,6 +230,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_configs",
         "//cuttlefish/host/libs/config:file_source",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -242,6 +245,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_configs",
         "//cuttlefish/host/libs/config:file_source",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -257,6 +261,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
         "@jsoncpp",
     ],
@@ -296,6 +301,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -309,6 +315,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -335,6 +342,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -349,6 +357,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )

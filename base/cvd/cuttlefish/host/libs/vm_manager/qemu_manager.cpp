@@ -30,9 +30,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <vulkan/vulkan.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -105,7 +105,8 @@ Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
     qemu_version_output.resize(space_pos);
   }
 
-  auto qemu_version_bits = android::base::Split(qemu_version_output, ".");
+  std::vector<std::string> qemu_version_bits =
+      absl::StrSplit(qemu_version_output, '.');
   return {{std::stoi(qemu_version_bits[0]), std::stoi(qemu_version_bits[1])}};
 }
 

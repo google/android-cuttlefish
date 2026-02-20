@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
@@ -140,7 +141,8 @@ Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
                                             const std::string& target_path) {
   std::string_view trim_link = artifact_link;
   CF_EXPECT(android::base::ConsumePrefix(&trim_link, "gs://"));
-  auto path_fragments = android::base::Split(std::string(trim_link), "/");
+  std::vector<std::string> path_fragments =
+      absl::StrSplit(std::string(trim_link), '/');
   CF_EXPECT(!path_fragments.empty());
   auto bucket = path_fragments[0];
   path_fragments.erase(path_fragments.begin());

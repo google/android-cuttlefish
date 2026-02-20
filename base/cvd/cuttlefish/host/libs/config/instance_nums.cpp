@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include "absl/strings/numbers.h"
 
@@ -67,7 +67,7 @@ static Result<std::vector<int32_t>> ParseInstanceNums(
   }
   std::vector<int32_t> instance_nums;
   std::vector<std::string> split_str =
-      android::base::Split(instance_nums_str, ",");
+      absl::StrSplit(instance_nums_str, ',');
   std::set<int32_t> duplication_check_set;
   for (const auto& instance_num_str : split_str) {
     int32_t instance_num;

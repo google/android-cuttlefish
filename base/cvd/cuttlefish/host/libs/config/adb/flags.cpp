@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
@@ -51,7 +51,8 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
     mode_flag_.Setter([this](const FlagMatch& match) -> Result<void> {
       // TODO(schuffelen): Error on unknown types?
       std::set<AdbMode> modes;
-      for (auto& mode : android::base::Split(match.value, ",")) {
+      for (auto& mode :
+           std::vector<std::string>(absl::StrSplit(match.value, ','))) {
         modes.insert(StringToAdbMode(mode));
       }
       CF_EXPECT(config_.SetModes(modes));

@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -158,17 +159,18 @@ bool KernelLogServer::HandleIncomingMessage() {
 
           if (format == kKeyValuePair) {
             // Expect space-separated key=value pairs in the log message.
-            const auto& fields =
-                android::base::Split(line_.substr(pos + stage.size()), " ");
+            const std::vector<std::string> fields =
+                absl::StrSplit(line_.substr(pos + stage.size()), ' ');
             for (std::string field : fields) {
               field = android::base::Trim(field);
               if (field.empty()) {
-                // Expected; android::base::Split() always returns at least
+                // Expected; absl::StrSplit() always returns at least
                 // one (possibly empty) string.
                 VLOG(0) << "Empty field for line: " << line_;
                 continue;
               }
-              const auto& keyvalue = android::base::Split(field, "=");
+              const std::vector<std::string> keyvalue =
+                  absl::StrSplit(field, '=');
               if (keyvalue.size() != 2) {
                 LOG(WARNING) << "Field is not in key=value format: " << field;
                 continue;

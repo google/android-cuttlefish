@@ -29,6 +29,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "android-base/strings.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
@@ -238,7 +239,8 @@ int CuttlefishConfig::casimir_instance_num() const {
 static constexpr char kCasimirArgs[] = "casimir_args";
 void CuttlefishConfig::set_casimir_args(const std::string& casimir_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(casimir_args, " ")) {
+  for (const auto& arg :
+       std::vector<std::string>(absl::StrSplit(casimir_args, ' '))) {
     if (!arg.empty()) {
       args_json_obj.append(arg);
     }
@@ -367,7 +369,8 @@ static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
 void CuttlefishConfig::set_extra_kernel_cmdline(
     const std::string& extra_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(extra_cmdline, " ")) {
+  for (const auto& arg :
+       std::vector<std::string>(absl::StrSplit(extra_cmdline, ' '))) {
     args_json_obj.append(arg);
   }
   (*dictionary_)[kExtraKernelCmdline] = args_json_obj;
@@ -407,7 +410,8 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
 static constexpr char kRootcanalArgs[] = "rootcanal_args";
 void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(rootcanal_args, " ")) {
+  for (const auto& arg :
+       std::vector<std::string>(absl::StrSplit(rootcanal_args, ' '))) {
     args_json_obj.append(arg);
   }
   (*dictionary_)[kRootcanalArgs] = args_json_obj;

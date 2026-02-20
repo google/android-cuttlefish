@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 
@@ -90,7 +91,7 @@ Result<DirectoryBuildString> ParseDirectoryBuildString(
     const std::string& build_string,
     const std::optional<std::string>& filepath) {
   auto result = DirectoryBuildString{.filepath = filepath};
-  std::vector<std::string> split = android::base::Split(build_string, ":");
+  std::vector<std::string> split = absl::StrSplit(build_string, ':');
   result.target = split.back();
   split.pop_back();
   result.paths = std::move(split);
@@ -197,7 +198,7 @@ Flag GflagsCompatFlag(const std::string& name,
           return {};
         }
         std::vector<std::string> str_vals =
-            android::base::Split(match.value, ",");
+            absl::StrSplit(match.value, ',');
         value.clear();
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {

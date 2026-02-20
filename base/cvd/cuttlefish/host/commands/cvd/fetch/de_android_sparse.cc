@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
 #include <sparse/sparse.h>
 #include "absl/log/log.h"
 

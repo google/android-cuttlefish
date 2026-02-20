@@ -25,6 +25,7 @@
 #include <android-base/strings.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
@@ -80,7 +81,7 @@ Result<std::vector<std::string>> ExtractFiles(
              exit_code, bsdtar_stdout, bsdtar_stderr);
   VLOG(0) << bsdtar_stderr;
 
-  std::vector<std::string> outputs = android::base::Split(bsdtar_stderr, "\n");
+  std::vector<std::string> outputs = absl::StrSplit(bsdtar_stderr, '\n');
   for (std::string& output : outputs) {
     std::string_view view = output;
     android::base::ConsumePrefix(&view, "x ");
@@ -155,7 +156,7 @@ std::vector<std::string> ArchiveContents(const std::string& archive) {
   Result<std::string> bsdtar_output =
       RunAndCaptureStdout(std::move(bsdtar_cmd));
   if (bsdtar_output.ok()) {
-    return android::base::Split(*bsdtar_output, "\n");
+    return absl::StrSplit(*bsdtar_output, '\n');
   } else {
     LOG(ERROR) << "`bsdtar -tf '" << archive
                << "'`failed: " << bsdtar_output.error();

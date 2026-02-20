@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -35,8 +35,8 @@ Result<CuttlefishConfig::TouchpadConfig> ParseTouchpadConfig(
   CF_EXPECT(!flag.empty(), "Touchpad configuration empty");
 
   std::unordered_map<std::string, std::string> props;
-  for (const auto& pair : android::base::Split(flag, ",")) {
-    const std::vector<std::string> keyvalue = android::base::Split(pair, "=");
+  for (const auto& pair : std::vector<std::string>(absl::StrSplit(flag, ','))) {
+    const std::vector<std::string> keyvalue = absl::StrSplit(pair, '=');
     CF_EXPECT_EQ(keyvalue.size(), 2,
                  "Invalid touchpad flag key-value: \"" << flag << "\"");
     const std::string& prop_key = keyvalue[0];

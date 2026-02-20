@@ -20,6 +20,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
@@ -408,14 +409,14 @@ Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
     const std::string& gpu_renderer_features_arg) {
   std::unordered_map<std::string, bool> features;
 
-  for (const std::string& feature :
-       android::base::Split(gpu_renderer_features_arg, ";")) {
+  for (const std::string& feature : std::vector<std::string>(
+           absl::StrSplit(gpu_renderer_features_arg, ';'))) {
     if (feature.empty()) {
       continue;
     }
 
     const std::vector<std::string> feature_parts =
-        android::base::Split(feature, ":");
+        absl::StrSplit(feature, ':');
     CF_EXPECT(feature_parts.size() == 2,
               "Failed to parse renderer features from --gpu_renderer_features="
                   << gpu_renderer_features_arg);
@@ -586,7 +587,8 @@ Result<GpuMode> ConfigureGpuSettings(
   }
 
   if (gpu_mode == GpuMode::Custom) {
-    auto requested_types = android::base::Split(gpu_context_types_arg, ":");
+    std::vector<std::string> requested_types =
+        absl::StrSplit(gpu_context_types_arg, ':');
     for (const std::string& requested : requested_types) {
       CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
                 "unsupported context type: " + requested);

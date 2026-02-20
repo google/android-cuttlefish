@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 
@@ -86,9 +87,9 @@ struct Extracted {
 void FindImports(const std::string& archive,
                  const std::string& build_prop_file) {
   auto contents = ExtractArchiveToMemory(archive, build_prop_file);
-  auto lines = android::base::Split(contents, "\n");
+  std::vector<std::string> lines = absl::StrSplit(contents, "\n");
   for (const auto& line : lines) {
-    auto parts = android::base::Split(line, " ");
+    std::vector<std::string> parts = absl::StrSplit(line, ' ');
     if (parts.size() >= 2 && parts[0] == "import") {
       VLOG(0) << build_prop_file << ": " << line;
     }

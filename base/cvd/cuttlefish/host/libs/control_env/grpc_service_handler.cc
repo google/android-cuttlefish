@@ -24,6 +24,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
 #include "android-base/strings.h"
 #include "grpcpp/security/credentials.h"
 #include "json/json.h"
@@ -35,7 +36,7 @@
 #include "cuttlefish/result/result.h"
 
 using absl::EndsWith;
-using android::base::Split;
+using absl::StrSplit;
 using android::base::Trim;
 using grpc::InsecureChannelCredentials;
 
@@ -195,13 +196,15 @@ Result<std::string> HandleLsCmd(
 
       Json::Value json;
       json["services"] = Json::Value(Json::arrayValue);
-      for (auto& full_service_name : Split(Trim(command_output), "\n")) {
+      for (auto& full_service_name :
+           std::vector<std::string>(StrSplit(Trim(command_output), "\n"))) {
         if (full_service_name == kServiceServerReflection ||
             full_service_name == kServiceHealth ||
             full_service_name == kServiceControlEnvProxyFull) {
           continue;
         }
-        json["services"].append(Split(full_service_name, ".").back());
+        json["services"].append(
+            std::vector<std::string>(StrSplit(full_service_name, ".")).back());
       }
       Json::StreamWriterBuilder builder;
       return Json::writeString(builder, json) + "\n";
@@ -221,7 +224,8 @@ Result<std::string> HandleLsCmd(
 
       Json::Value json;
       json["methods"] = Json::Value(Json::arrayValue);
-      for (auto& method_name : Split(Trim(command_output), "\n")) {
+      for (auto& method_name :
+           std::vector<std::string>(StrSplit(Trim(command_output), "\n"))) {
         json["methods"].append(method_name);
       }
       Json::StreamWriterBuilder builder;
@@ -247,7 +251,7 @@ Result<std::string> HandleLsCmd(
       //   rpc SetTxpower(wmediumdserver.SetTxpowerRequest) returns
       // (google.protobuf.Empty) {}
       std::vector<std::string> parsed_output =
-          Split(Trim(command_output), "()");
+          StrSplit(Trim(command_output), "()");
       CF_EXPECT(parsed_output.size() == 5, "Unexpected parsing result");
       Json::Value json;
       json["request_type"] = parsed_output[1];

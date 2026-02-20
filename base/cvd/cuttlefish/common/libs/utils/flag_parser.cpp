@@ -40,6 +40,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/result/result.h"
@@ -670,7 +671,7 @@ Flag GflagsCompatFlag(const std::string& name,
           return {};
         }
         std::vector<std::string> str_vals =
-            android::base::Split(match.value, ",");
+            absl::StrSplit(match.value, ',');
         value = std::move(str_vals);
         return {};
       });
@@ -686,8 +687,7 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
           value.clear();
           return {};
         }
-        std::vector<std::string> str_vals =
-            android::base::Split(match.value, ",");
+        std::vector<std::string> str_vals = absl::StrSplit(match.value, ',');
         value.clear();
         std::vector<bool> output_vals;
         output_vals.reserve(str_vals.size());
