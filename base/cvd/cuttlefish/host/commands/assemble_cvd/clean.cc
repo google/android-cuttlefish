@@ -23,6 +23,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
 
@@ -116,7 +117,7 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
 
     Result<std::string> lsof_out = RunAndCaptureStdout(std::move(lsof));
     if (lsof_out.ok()) {
-      std::vector<std::string> pids = android::base::Split(*lsof_out, "\n");
+      std::vector<std::string> pids = absl::StrSplit(*lsof_out, "\n");
       CF_EXPECTF(
           lsof_out->empty(),
           "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",

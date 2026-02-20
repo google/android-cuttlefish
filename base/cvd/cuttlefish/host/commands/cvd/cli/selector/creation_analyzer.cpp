@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -116,7 +116,7 @@ Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
   auto it = envs_.find(kAndroidProductOut);
   if (it != envs_.end()) {
     std::vector<std::string> env_product_out =
-        android::base::Split(it->second, ",");
+        absl::StrSplit(it->second, ',');
     if (env_product_out.size() > num_instances) {
       LOG(WARNING) << env_product_out.size()
                    << " product paths provided, but only " << num_instances

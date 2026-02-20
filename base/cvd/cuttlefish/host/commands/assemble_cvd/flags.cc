@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -432,7 +433,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // all instances
   std::string ap_rootfs_image = "";
   if (!FLAGS_ap_rootfs_image.empty()) {
-    ap_rootfs_image = android::base::Split(FLAGS_ap_rootfs_image, ",")[0];
+    ap_rootfs_image =
+        std::vector<std::string>(absl::StrSplit(FLAGS_ap_rootfs_image, ','))[0];
   }
 
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
@@ -758,7 +760,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, instance_nums,
                                              FLAGS_webrtc_device_id));
   size_t provided_serials_cnt =
-      android::base::Split(FLAGS_serial_number, ",").size();
+      std::count(FLAGS_serial_number.begin(), FLAGS_serial_number.end(), ',') +
+      1;
   CF_EXPECTF(
       provided_serials_cnt == 1 || provided_serials_cnt == instances_size,
       "Must have a single serial number prefix or one serial number per "

@@ -20,7 +20,7 @@
 #include <sstream>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/confui/packet.h"
 #include "cuttlefish/common/libs/confui/utils.h"
@@ -204,7 +204,7 @@ std::unique_ptr<ConfUiMessage> ToConfUiMessage<ConfUiCmd::kStart>(
   if (has_ui_option) {
     std::string ui_opts_string{message.additional_info_[3].begin(),
                                message.additional_info_[3].end()};
-    auto tokens = android::base::Split(ui_opts_string, ",");
+    std::vector<std::string> tokens = absl::StrSplit(ui_opts_string, ',');
     for (auto token : tokens) {
       auto ui_opt_optional = ToUiOption(token);
       if (!ui_opt_optional) {

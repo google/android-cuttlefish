@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -55,7 +56,8 @@ Result<std::string> HandleGroupName(const std::string& group_name) {
 
 Result<std::vector<std::string>> HandleInstanceNames(
     const std::string& per_instance_names) {
-  auto instance_names = android::base::Split(per_instance_names, ",");
+  std::vector<std::string> instance_names =
+      absl::StrSplit(per_instance_names, ',');
   std::unordered_set<std::string> duplication_check;
   for (const auto& instance_name : instance_names) {
     CF_EXPECT(IsValidInstanceName(instance_name));

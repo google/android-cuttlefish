@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 
@@ -64,7 +64,7 @@ Result<BootloaderFlag> BootloaderFlag::FromGlobalGflags(
   gflags::CommandLineFlagInfo flag_info =
       gflags::GetCommandLineFlagInfoOrDie("bootloader");
   if (!flag_info.is_default) {
-    return BootloaderFlag(android::base::Split(FLAGS_bootloader, ","));
+    return BootloaderFlag(absl::StrSplit(FLAGS_bootloader, ','));
   }
 
   std::string_view vmm;

@@ -20,8 +20,8 @@
 #include <cstdlib>
 #include <string>
 
-#include <android-base/strings.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
       LOG(WARNING) << "Failed to read the correct number of bytes.";
       break;
     }
-    auto split = android::base::Split(buf, ":");
+    std::vector<std::string> split = absl::StrSplit(buf, ':');
     std::string command = split[0];
     std::string state = split[1];
 

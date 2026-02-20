@@ -19,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -42,7 +42,7 @@ Result<VmManagerFlag> VmManagerFlag::FromGlobalGflags(
   }
 
   std::vector<std::string> vm_manager_str_vec =
-      android::base::Split(FLAGS_vm_manager, ",");
+      absl::StrSplit(FLAGS_vm_manager, ',');
 
   VmmMode default_vmm = IsHostCompatible(guest_configs[0].target_arch)
                             ? VmmMode::kCrosvm

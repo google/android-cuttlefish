@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -45,7 +45,7 @@ InitramfsPathFlag InitramfsPathFlag::FromGlobalGflags(
           FileSource::KERNEL_BUILD, "initramfs.img"));
     }
   } else {
-    initramfs_paths = android::base::Split(flag_info.current_value, ",");
+    initramfs_paths = absl::StrSplit(flag_info.current_value, ',');
   }
 
   return InitramfsPathFlag(std::move(initramfs_paths));

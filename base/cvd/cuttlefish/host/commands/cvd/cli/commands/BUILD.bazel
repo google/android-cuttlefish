@@ -426,6 +426,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

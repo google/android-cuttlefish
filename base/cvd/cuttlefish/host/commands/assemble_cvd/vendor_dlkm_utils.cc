@@ -28,6 +28,7 @@
 #include <android-base/file.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include "absl/log/log.h"
 
@@ -238,7 +239,7 @@ std::map<std::string, std::vector<std::string>> LoadModuleDeps(
     const std::string& filename) {
   std::map<std::string, std::vector<std::string>> dependency_map;
   const auto dep_str = android::base::Trim(ReadFile(filename));
-  const auto dep_lines = android::base::Split(dep_str, "\n");
+  const std::vector<std::string> dep_lines = absl::StrSplit(dep_str, "\n");
   for (const auto& line : dep_lines) {
     const auto mod_name = line.substr(0, line.find(":"));
     auto deps = android::base::Tokenize(line.substr(mod_name.size() + 1), " ");

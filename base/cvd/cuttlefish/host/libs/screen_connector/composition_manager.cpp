@@ -34,6 +34,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 #include "libyuv.h"
@@ -84,11 +85,11 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
     std::vector<DisplayOverlay>& display_overlays = overlays[display_index];
 
     std::vector<std::string> overlay_list =
-        android::base::Split(overlay_item, " ");
+        absl::StrSplit(overlay_item, ' ');
 
     for (const auto& overlay_tuple_str : overlay_list) {
       std::vector<std::string> overlay_tuple =
-          android::base::Split(overlay_tuple_str, ":");
+          absl::StrSplit(overlay_tuple_str, ':');
 
       DisplayOverlay docfg;
 

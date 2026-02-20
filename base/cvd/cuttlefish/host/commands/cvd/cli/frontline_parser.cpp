@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
 
 #include "cuttlefish/host/commands/cvd/cli/selector/arguments_separator.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"

@@ -21,7 +21,6 @@
 #include <memory>
 #include <string>
 
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
