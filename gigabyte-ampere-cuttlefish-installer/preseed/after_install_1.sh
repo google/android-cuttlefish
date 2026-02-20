@@ -125,10 +125,10 @@ for CANDIDATE in $CANDIDATES; do
 done
 
 # Run dockerd for a moment and pull container image
-mount -t cgroup2 none /sys/fs/cgroup
+mount -t cgroup2 none /sys/fs/cgroup || mount -t cgroup none /sys/fs/cgroup
 dockerd >/dev/null 2>&1 &
 DOCKER_PID=$!
-timeout=10 sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+timeout=60 sh -c 'until [ -S /var/run/docker.sock ]; do sleep 1; done'
 docker pull ${ORCHESTRATION_IMAGE}:${ORCHESTRATION_TAG}
 kill $DOCKER_PID
 wait $DOCKER_PID
