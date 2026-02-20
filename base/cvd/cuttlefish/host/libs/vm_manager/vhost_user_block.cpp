@@ -27,7 +27,6 @@
 #include <string>
 #include <utility>
 
-#include <android-base/strings.h>
 #include <vulkan/vulkan.h>
 
 #include "cuttlefish/common/libs/utils/files.h"

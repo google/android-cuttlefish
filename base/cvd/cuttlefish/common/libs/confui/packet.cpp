@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "absl/log/check.h"
+#include "absl/strings/str_split.h"
 
 namespace cuttlefish {
 namespace confui {
@@ -69,11 +70,11 @@ static std::optional<ParsedPacket> ParseRawData(
    * If we type-cast data_to_parse to std::string and use 3rd party std::string-
    * processing libraries, the outcome might be incorrect. However, the header
    * part has no '\0' in it, and is actually a sequence of letters, or a text.
-   * So, we use android::base::Split() to take the header
+   * So, we use absl::StrSplit() to take the header
    *
    */
   std::string as_string{data_to_parse.begin(), data_to_parse.end()};
-  auto tokens = android::base::Split(as_string, ":");
+  std::vector<std::string> tokens = absl::StrSplit(as_string, ':');
   CHECK(tokens.size() >= 3)
       << "Raw packet for confirmation UI must have at least"
       << " three components.";

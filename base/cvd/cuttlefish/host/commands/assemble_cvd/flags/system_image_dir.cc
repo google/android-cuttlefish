@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
@@ -46,7 +46,7 @@ Result<SystemImageDirFlag> SystemImageDirFlag::FromGlobalGflags() {
              kFlagName);
 
   std::vector<std::string> paths =
-      android::base::Split(system_image_dir_flag, ",");
+      absl::StrSplit(system_image_dir_flag, ',');
   return SystemImageDirFlag(std::move(paths), flag_info.is_default);
 }
 

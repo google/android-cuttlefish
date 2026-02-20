@@ -157,6 +157,7 @@ cf_cc_library(
         "//external_proto:cf_log_cc_proto",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )

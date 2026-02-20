@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <libxml/parser.h>

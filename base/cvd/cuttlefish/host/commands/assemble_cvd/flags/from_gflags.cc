@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -45,7 +45,7 @@ Result<FromGflags<T>> FromGlobalGflags(
   CF_EXPECT(!default_values.empty());
 
   std::vector<std::string> string_values =
-      android::base::Split(flag_info.current_value, ",");
+      absl::StrSplit(flag_info.current_value, ',');
   std::vector<T> values(string_values.size());
 
   for (int i = 0; i < string_values.size(); i++) {
@@ -71,7 +71,7 @@ Result<FromGflags<T>> FromGlobalGflags(
     std::function<Result<T>(const std::string& value, const std::string& name)>
         parse_func) {
   std::vector<std::string> default_string_values =
-      android::base::Split(flag_info.default_value, ",");
+      absl::StrSplit(flag_info.default_value, ',');
   std::vector<T> default_values;
   default_values.reserve(default_string_values.size());
   for (const std::string& default_string_value : default_string_values) {

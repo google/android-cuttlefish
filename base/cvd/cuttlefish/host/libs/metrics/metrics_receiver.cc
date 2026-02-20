@@ -26,7 +26,6 @@
 #include <iostream>
 #include <memory>
 
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include "absl/log/log.h"
 

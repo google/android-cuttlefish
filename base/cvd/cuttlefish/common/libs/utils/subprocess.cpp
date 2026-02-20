@@ -48,8 +48,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include <android-base/strings.h>
-
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 
@@ -538,12 +536,13 @@ std::ostream& operator<<(std::ostream& out, const Command& command) {
                                           "CUTTLEFISH_CONFIG_FILE",
                                           "CUTTLEFISH_INSTANCE"};
   for (const std::string& env_var : command.env_) {
-    std::vector<std::string> env_split = android::base::Split(env_var, "=");
+    std::vector<std::string> env_split =
+        absl::StrSplit(env_var, absl::MaxSplits('=', 1));
     if (!env_split.empty() && Contains(to_show, env_split.front())) {
       out << env_var << " ";
     }
   }
-  return out << android::base::Join(command.command_, " ");
+  return out << absl::StrJoin(command.command_, " ");
 }
 
 std::string Command::ToString() const {
@@ -561,7 +560,7 @@ std::string Command::AsBashScript(
   CHECK(redirects_.empty()) << "Bash wrapper will not have redirected stdio.";
 
   std::string contents =
-      "#!/usr/bin/env bash\n\n" + android::base::Join(command_, " \\\n");
+      "#!/usr/bin/env bash\n\n" + absl::StrJoin(command_, " \\\n");
   if (!redirected_stdio_path.empty()) {
     contents += " &> " + AbsolutePath(redirected_stdio_path);
   }

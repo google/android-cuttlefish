@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/modem_simulator/client.h"
 
-#include <android-base/strings.h>
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"

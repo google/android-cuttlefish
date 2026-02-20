@@ -16,7 +16,7 @@
 
 #include <memory>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <libyuv.h>
@@ -274,7 +274,8 @@ int CuttlefishMain() {
   cuttlefish::InputConnectorBuilder inputs_builder;
 
   const auto display_count = instance.display_configs().size();
-  const auto touch_fds = android::base::Split(FLAGS_touch_fds, ",");
+  const std::vector<std::string> touch_fds =
+      absl::StrSplit(FLAGS_touch_fds, ',');
   CHECK(touch_fds.size() == display_count + instance.touchpad_configs().size())
       << "Number of touch FDs does not match the number of configured displays "
          "and touchpads";
@@ -447,12 +448,12 @@ int CuttlefishMain() {
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
   for (const std::string& action_server :
-       android::base::Split(FLAGS_action_servers, ",")) {
+       std::vector<std::string>(absl::StrSplit(FLAGS_action_servers, ','))) {
     if (action_server.empty()) {
       continue;
     }
     const std::vector<std::string> server_and_fd =
-        android::base::Split(action_server, ":");
+        absl::StrSplit(action_server, ':');
     CHECK(server_and_fd.size() == 2)
         << "Wrong format for action server flag: " << action_server;
     std::string server = server_and_fd[0];

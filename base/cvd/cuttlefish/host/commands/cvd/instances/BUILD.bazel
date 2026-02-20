@@ -47,6 +47,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

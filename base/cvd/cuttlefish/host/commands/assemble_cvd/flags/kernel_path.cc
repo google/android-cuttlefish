@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
@@ -47,7 +47,7 @@ KernelPathFlag KernelPathFlag::FromGlobalGflags(
           FileSource::KERNEL_BUILD, "kernel"));
     }
   } else {
-    kernel_paths = android::base::Split(flag_info.current_value, ",");
+    kernel_paths = absl::StrSplit(flag_info.current_value, ',');
   }
 
   return KernelPathFlag(std::move(kernel_paths));

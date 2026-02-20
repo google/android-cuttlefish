@@ -25,7 +25,7 @@
 #include <thread>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include <grpc/grpc.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -362,7 +362,7 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
 
     std::string getTimeNanosFromLine(const std::string& line) {
       // TimeNanos is in column #3.
-      std::vector<std::string> vals = android::base::Split(line, ",");
+      std::vector<std::string> vals = absl::StrSplit(line, ',');
       return vals.size() >= 3 ? vals[2] : "-1";
     }
 

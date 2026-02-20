@@ -16,7 +16,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
@@ -48,7 +48,7 @@ std::vector<SharedFD> ServerFdsFromCmdline() {
     }
   }
 
-  auto fds = android::base::Split(fd_list, ",");
+  std::vector<std::string> fds = absl::StrSplit(fd_list, ',');
   std::vector<SharedFD> shared_fds;
   for (auto& fd_str: fds) {
     auto fd = std::stoi(fd_str);

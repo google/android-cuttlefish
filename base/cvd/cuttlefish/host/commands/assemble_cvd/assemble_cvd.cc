@@ -17,7 +17,7 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -543,7 +543,7 @@ Result<std::vector<std::string>> ReadInputFiles() {
   auto bytes_read = ReadAll(input_fd, &input_files_str);
   CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
                                  << input_fd->StrError() << "\"");
-  return android::base::Split(input_files_str, "\n");
+  return absl::StrSplit(input_files_str, "\n");
 }
 
 Result<AndroidBuilds> FindAndroidBuilds(

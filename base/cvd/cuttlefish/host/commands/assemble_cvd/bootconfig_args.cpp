@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 
@@ -264,7 +265,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     if (kv.empty()) {
       continue;
     }
-    const auto& parts = android::base::Split(kv, "=");
+    const std::vector<std::string> parts = absl::StrSplit(kv, '=');
     CF_EXPECT_EQ(parts.size(), 2,
                  "Failed to parse --extra_bootconfig_args: \"" << kv << "\"");
     bootconfig_args[parts[0]] = parts[1];
