@@ -1,5 +1,6 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load("@rules_python//python:defs.bzl", "py_library", "py_test")
-load("boot_tests.bzl", "cvd_command_boot_test", "cvd_cts_test", "cvd_load_boot_test", "launch_cvd_boot_test", "metrics_test")
+load("xts_test.bzl", "cvd_cts_test")
 
 py_library(
     name = "convert_xts_xml_to_junit_xml",
@@ -21,112 +22,50 @@ py_binary(
     main = "convert_xts_xml_to_junit_xml.py",
 )
 
-# cvd fetch + launch_cvd tests
-launch_cvd_boot_test(
-    name = "fetch_and_launch_git_main_x64_phone",
-    branch = "git_main",
-    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
+# TODO(b/329100411) test loading older branches
+
+go_library(
+    name = "cvd_common",
+    srcs = ["cvd_common.go"],
+    importpath = "github.com/google/android-cuttlefish/e2etests/cvd/cvd_common",
+    visibility = ["//visibility:public"],
 )
 
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_main_x64_phone",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android14_phone",
-    branch = "aosp-android14-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android13_phone",
-    branch = "aosp-android13-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android12_phone",
-    branch = "aosp-android12-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
-
-# cvd load tests
-cvd_load_boot_test(
-    name = "load_git_main_x64_phone",
-    env_file = "environment_specs/git_main_x64_phone.json",
-)
-
-cvd_load_boot_test(
-    name = "load_aosp_main_x64_phone",
-    env_file = "environment_specs/aosp_main_x64_phone.json",
-)
-
-cvd_load_boot_test(
-    name = "load_aosp_main_x64_phone_x2",
+go_test(
+    name = "cvd_tests",
+    srcs = ["cvd_tests.go"],
+    deps = [
+        ":cvd_common",
+    ],
     size = "enormous",
-    env_file = "environment_specs/aosp_main_x64_phone_x2.json",
-)
-
-cvd_command_boot_test(
-    name = "list_env_services",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "env",
-        "ls",
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
     ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
 )
 
-cvd_command_boot_test(
-    name = "take_bugreport",
-    branch = "aosp-android-latest-release",
-    cvd_command = ["host_bugreport"],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "add_displays",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "display",
-        "add",
-        "--display=width=500,height=500",
+go_test(
+    name = "cvd_gpu_tests",
+    srcs = ["cvd_gpu_tests.go"],
+    deps = [
+        ":cvd_common",
     ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
+    size = "enormous",
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        "requires_gpu",
+    ],
 )
 
-cvd_command_boot_test(
-    name = "list_displays",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "display",
-        "list",
+go_binary(
+    name = "cvd_xts_test_runner",
+    srcs = ["cvd_xts_test_runner.go"],
+        deps = [
+        ":cvd_common",
     ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-metrics_test(
-    name = "verify_metrics_transmission",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_cts_test(
-    name = "aosp_android_latest_auto_enables_gfxstream_test",
-    cuttlefish_branch = "aosp-android-latest-release",
-    cuttlefish_target = "aosp_cf_x86_64_only_phone-userdebug",
-    cuttlefish_create_args = [
-        "--gpu_mode=auto",
-    ],
-    cts_branch = "aosp-android15-tests-release",
-    cts_target = "test_suites_x86_64",
-    cts_args = [
-        "--include-filter=CuttlefishGraphicsConfigurationTest",
-        "--module-arg=CuttlefishGraphicsConfigurationTest:set-option:expected-egl:emulation",
-    ],
-    tags = ["requires_gpu"],
 )
 
 cvd_cts_test(
@@ -142,7 +81,14 @@ cvd_cts_test(
         "--include-filter=CtsDeqpTestCases",
         "--module-arg=CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke*",
     ],
-    tags = ["requires_gpu"],
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        # This does not actually require a GPU but currently only the GPU image
+        # has the XTS requirements preinstalled.
+        "requires_gpu"
+    ],
 )
 
 cvd_cts_test(
@@ -158,9 +104,14 @@ cvd_cts_test(
         "--include-filter=CtsDeqpTestCases",
         "--module-arg=CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke*",
     ],
-    # This does not actually require a GPU but currently only the GPU image
-    # has the XTS requirements preinstalled.
-    tags = ["requires_gpu"],
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        # This does not actually require a GPU but currently only the GPU image
+        # has the XTS requirements preinstalled.
+        "requires_gpu"
+    ],
 )
 
 cvd_cts_test(
@@ -177,9 +128,12 @@ cvd_cts_test(
         "--include-filter=CtsNativeHardwareTestCases",
         "--include-filter=CtsUiRenderingTestCases",
     ],
-    # This does not actually require a GPU but currently only the GPU image
-    # has the XTS requirements preinstalled.
-    tags = ["requires_gpu"],
+    tags = [
+        "exclusive",
+        "external",
+        "no-sandbox",
+        # This does not actually require a GPU but currently only the GPU image
+        # has the XTS requirements preinstalled.
+        "requires_gpu"
+    ],
 )
-
-# TODO(b/329100411) test loading older branches
