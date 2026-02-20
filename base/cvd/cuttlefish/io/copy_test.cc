@@ -13,39 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/zip/zip_copy.h"
+#include "cuttlefish/io/copy.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
-#include "cuttlefish/host/libs/zip/zip_string.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/io/in_memory.h"
+#include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
 namespace {
 
-TEST(ZipCopyTest, CopySmallBuffer) {
-  std::string data_in = "test string";
-  Result<WritableZipSource> in_source =
-      WritableZipSource::BorrowData(data_in.data(), data_in.size());
-  ASSERT_THAT(in_source, IsOk());
+TEST(CopyTest, CopySmallBuffer) {
+  std::vector<char> data = {1, 2, 3, 4, 5};
 
-  std::vector<char> buffer(data_in.size());
-  Result<WritableZipSource> out_source =
-      WritableZipSource::BorrowData(buffer.data(), buffer.size());
-  ASSERT_THAT(out_source, IsOk());
+  std::unique_ptr<ReaderWriterSeeker> in = InMemoryIo(data);
+  std::unique_ptr<ReaderWriterSeeker> out = InMemoryIo();
 
-  EXPECT_THAT(Copy(*in_source, *out_source), IsOk());
+  EXPECT_THAT(Copy(*in, *out), IsOk());
 
-  Result<std::string> data_out = ReadToString(*out_source);
-  ASSERT_THAT(data_out, IsOk());
+  std::vector<char> data_out(data.size());
 
-  EXPECT_EQ(data_in, *data_out);
+  EXPECT_THAT(PReadExact(*out, data_out.data(), data_out.size(), 0), IsOk());
+  EXPECT_EQ(data, data_out);
 }
 
 }  // namespace

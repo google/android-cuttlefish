@@ -15,12 +15,16 @@
 
 #pragma once
 
-#include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
-#include "cuttlefish/result/result.h"
+#include <stddef.h>
+
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> Copy(ReadableZipSource& input, WritableZipSource& output);
+// Moves data from the Reader to the Writer, without doing additional seeking on
+// either. This means if either has seek pointers set somewhere in the middle of
+// the data, reading and writing starts from that point.
+Result<void> Copy(Reader&, Writer&, size_t buffer_size = 1 << 26);
 
 }  // namespace cuttlefish

@@ -27,7 +27,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
-#include "cuttlefish/host/libs/zip/zip_copy.h"
+#include "cuttlefish/io/copy.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -60,7 +60,12 @@ Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
                          const std::string& host_path) {
   ReadableZipSource source = CF_EXPECT(zip.GetFile(zip_path));
   WritableZipSource dest = CF_EXPECT(WritableZipSource::FromFile(host_path));
-  CF_EXPECT(Copy(source, dest));
+
+  ZipSourceReader reader = CF_EXPECT(source.Reader());
+  ZipSourceWriter writer = CF_EXPECT(dest.Writer());
+
+  CF_EXPECT(Copy(reader, writer));
+  CF_EXPECT(ZipSourceWriter::Finalize(std::move(writer)));
 
   ZipStat stat_out = CF_EXPECT(source.Stat());
   uint64_t index = CF_EXPECT(std::move(stat_out.index));

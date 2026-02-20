@@ -115,6 +115,8 @@ class InMemoryIo : public ReaderWriterSeeker {
 class OwningInMemoryIo : public InMemoryIo {
  public:
   OwningInMemoryIo() : InMemoryIo(data_, mutex_) {}
+  OwningInMemoryIo(std::vector<char> data)
+      : InMemoryIo(data_, mutex_), data_(std::move(data)) {}
 
  private:
   std::vector<char> data_;
@@ -163,6 +165,10 @@ class InMemoryFilesystemImpl : public ReadWriteFilesystem {
 
 std::unique_ptr<ReaderWriterSeeker> InMemoryIo() {
   return std::make_unique<OwningInMemoryIo>();
+}
+
+std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::vector<char> data) {
+  return std::make_unique<OwningInMemoryIo>(std::move(data));
 }
 
 std::unique_ptr<ReadWriteFilesystem> InMemoryFilesystem() {
