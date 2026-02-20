@@ -23,6 +23,16 @@
 
 namespace cuttlefish {
 
+Result<void> ReadExact(Reader& reader, char* buf, size_t size) {
+  while (size > 0) {
+    size_t data_read = CF_EXPECT(reader.Read((void*)buf, size));
+    CF_EXPECT_GT(data_read, 0, "EOF, still want to read " << size);
+    buf += data_read;
+    size -= data_read;
+  }
+  return {};
+}
+
 Result<void> PReadExact(ReaderSeeker& reader, char* buf, size_t size,
                         uint64_t offset) {
   while (size > 0) {

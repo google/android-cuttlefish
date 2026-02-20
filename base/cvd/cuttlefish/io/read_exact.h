@@ -23,6 +23,8 @@
 
 namespace cuttlefish {
 
+Result<void> ReadExact(Reader&, char* buf, size_t size);
+
 Result<void> PReadExact(ReaderSeeker&, char* buf, size_t size, uint64_t offset);
 
 template <typename T>
