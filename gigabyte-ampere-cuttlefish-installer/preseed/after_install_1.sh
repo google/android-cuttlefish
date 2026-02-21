@@ -103,9 +103,33 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 usermod -aG docker vsoc-01
 
-# Inastall nvidia-container-toolkit
+# Install nvidia-container-toolkit
 curl -fsSL --retry 7 --retry-all-errors https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /etc/apt/trusted.gpg.d/nvidia-container-toolkit-keyring.gpg \
 && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
   tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes nvidia-container-toolkit
+
+# Find container image tagged with most recent stable version
+DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes skopeo
+ORCHESTRATION_IMAGE="us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration"
+STABLE_DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:stable --format '{{.Digest}}')
+CANDIDATES=$(skopeo list-tags docker://${ORCHESTRATION_IMAGE} | jq -r '.Tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V -r)
+ORCHESTRATION_TAG=""
+for CANDIDATE in $CANDIDATES; do
+	DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:${CANDIDATE} --format '{{.Digest}}')
+	if [ "$DIGEST" = "$STABLE_DIGEST" ]; then
+		ORCHESTRATION_TAG=${CANDIDATE}
+		break
+	fi
+done
+
+# Run dockerd for a moment and pull container image
+mount -t cgroup2 none /sys/fs/cgroup || mount -t cgroup none /sys/fs/cgroup
+dockerd >/dev/null 2>&1 &
+DOCKER_PID=$!
+timeout=60 sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+docker pull ${ORCHESTRATION_IMAGE}:${ORCHESTRATION_TAG}
+kill $DOCKER_PID
+wait $DOCKER_PID
+umount /sys/fs/cgroup
