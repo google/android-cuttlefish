@@ -21,6 +21,7 @@
 
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
 #include "cuttlefish/host/libs/image_aggregator/disk_image.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -28,6 +29,7 @@ namespace cuttlefish {
 /** File representing a virtual disk made of separate component files.  */
 class CompositeDiskImage : public DiskImage {
  public:
+  static Result<CompositeDiskImage> OpenExisting(Reader&);
   static Result<CompositeDiskImage> OpenExisting(const std::string& path);
 
   CompositeDiskImage(CompositeDiskImage&&);
