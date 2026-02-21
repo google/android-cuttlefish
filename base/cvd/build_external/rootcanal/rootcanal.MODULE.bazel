@@ -13,5 +13,6 @@ git_override(
         "@//build_external/rootcanal:0003-Make-rootcanal_proto-public.patch",
         "@//build_external/rootcanal:0004-Add-link_layer_packets_rs.patch",
         "@//build_external/rootcanal:0005-Define-librootcanal_ffi.so-and-librootcanal-librarie.patch",
+        "@//build_external/rootcanal:bazel9.patch",
     ],
 )

@@ -5,4 +5,6 @@ git_repository(
     build_file = "@//build_external/swiftshader:BUILD.swiftshader.bazel",
     commit = "14f87286123a47207ba25d0d32ebda27b13fe5a3",
     remote = "https://swiftshader.googlesource.com/SwiftShader.git",
+    patch_strip = 1,
+    patches = ["@//build_external/swiftshader:bazel9.patch"],
 )

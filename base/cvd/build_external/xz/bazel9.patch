@@ -1,0 +1,38 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index d920390..44c9b13 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -3,4 +3,5 @@
+ #    Public Domain
+ 
++load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+ load("@bazel_skylib//lib:selects.bzl", "selects")
+ load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+diff --git a/MODULE.bazel b/MODULE.bazel
+index d81a5d6..f9e1e8b 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -1,7 +1,8 @@
+ module(
+     name = "xz",
+     version = "5.4.5.bcr.5",
+ )
+ 
+ bazel_dep(name = "platforms", version = "0.0.8")
+ bazel_dep(name = "bazel_skylib", version = "1.5.0")
++bazel_dep(name = "rules_cc", version = "0.0.9")
+diff --git a/tools.bzl b/tools.bzl
+index de8588f..f3e1b1d 100644
+--- a/tools.bzl
++++ b/tools.bzl
+@@ -1,6 +1,8 @@
++load("@rules_cc//cc:defs.bzl", "cc_test")
++
+ def multi_test(names = [], **kwargs):
+     tests = []
+     for name in names:
+-        native.cc_test(
++        cc_test(
+             name = name,
+             srcs = ["tests/" + name + ".c"],
+             **kwargs

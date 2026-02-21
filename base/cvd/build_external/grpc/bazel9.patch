@@ -1,0 +1,54 @@
+diff --git a/bazel/grpc_build_system.bzl b/bazel/grpc_build_system.bzl
+index 6902271..027d14a 100644
+--- a/bazel/grpc_build_system.bzl
++++ b/bazel/grpc_build_system.bzl
+@@ -294,7 +294,7 @@ def ios_cc_test(name, tags = [], **kwargs):
+         name = test_runner,
+         device_type = "iPhone X",
+     )
+     if not any([t for t in tags if t.startswith("no_test_ios")]):
+-        native.objc_library(
++        cc_library(
+             name = test_lib_ios,
+             srcs = kwargs.get("srcs"),
+             deps = kwargs.get("deps"),
+--- a/bazel/grpc_build_system.bzl
++++ b/bazel/grpc_build_system.bzl
+@@ -798,7 +798,7 @@ def grpc_objc_library(name, srcs = [], hdrs = [], non_arc_srcs = [],
+         visibility: visibility, default to public
+     """
+ 
+-    native.objc_library(
++    cc_library(
+         name = name,
+         hdrs = hdrs,
+         srcs = srcs,
+diff --git a/third_party/address_sorting/address_sorting.bzl b/third_party/address_sorting/address_sorting.bzl
+index 6902271..027d14a 100644
+--- a/third_party/address_sorting/address_sorting.bzl
++++ b/third_party/address_sorting/address_sorting.bzl
+@@ -1,3 +1,5 @@
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ #	$NetBSD: getaddrinfo.c,v 1.82 2006/03/25 12:09:40 rpaulo Exp $	*/
+ #	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
+ #
+@@ -29,7 +31,7 @@
+ # SUCH DAMAGE.
+ 
+ def address_sorting_cc_library(name, srcs, hdrs, copts, includes, linkopts=[]):
+-    native.cc_library(
++    cc_library(
+         name = name,
+         srcs = srcs,
+         hdrs = hdrs,
+diff --git a/third_party/xxhash/BUILD b/third_party/xxhash/BUILD
+index de8588f..f3e1b1d 100644
+--- a/third_party/xxhash/BUILD
++++ b/third_party/xxhash/BUILD
+@@ -1,3 +1,5 @@
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ # TODO(donnadionne): describe this package.
+ cc_library(
+     name = "xxhash",

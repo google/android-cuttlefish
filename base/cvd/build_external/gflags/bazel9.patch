@@ -1,0 +1,29 @@
+diff --git a/MODULE.bazel b/MODULE.bazel
+index d81a5d6..f9e1e8b 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -3,3 +3,5 @@ module(
+     version = "2.2.2",
+     compatibility_level = 1,
+ )
++
++bazel_dep(name = "rules_cc", version = "0.0.9")
+diff --git a/bazel/gflags.bzl b/bazel/gflags.bzl
+index 6902271..027d14a 100644
+--- a/bazel/gflags.bzl
++++ b/bazel/gflags.bzl
+@@ -1,3 +1,5 @@
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ # ------------------------------------------------------------------------------
+ # Add native rules to configure source files
+ def gflags_sources(namespace=["google", "gflags"]):
+@@ -92,7 +94,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
+     else:
+         name += "_nothreads"
+         copts += ["-DNO_THREADS"]
+-    native.cc_library(
++    cc_library(
+         name       = name,
+         hdrs       = hdrs,
+         srcs       = srcs,

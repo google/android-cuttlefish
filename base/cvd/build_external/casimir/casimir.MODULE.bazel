@@ -1,4 +1,11 @@
 casimir_crates = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+casimir_crates.annotation(
+    crate = "grpcio-sys",
+    version = "0.13.0",
+    additive_build_file_content = """
+load("@rules_cc//cc:defs.bzl", "cc_library")
+""",
+)
 casimir_crates.from_cargo(
     name = "casimir_crates",
     manifests = [

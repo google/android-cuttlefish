@@ -1,0 +1,23 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index d920390..44c9b13 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1,3 +1,4 @@
++load("@rules_cc//cc:defs.bzl", "cc_library")
+ load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+ 
+ config_setting(
+diff --git a/MODULE.bazel b/MODULE.bazel
+index d81a5d6..f9e1e8b 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -1,8 +1,9 @@
+ module(
+     name = "c-ares",
+     version = "1.19.1",
+     bazel_compatibility = [">=7.2.1"],
+     compatibility_level = 1,
+ )
+ bazel_dep(name = "bazel_skylib", version = "1.0.3")
+ bazel_dep(name = "platforms", version = "0.0.4")
++bazel_dep(name = "rules_cc", version = "0.0.9")
