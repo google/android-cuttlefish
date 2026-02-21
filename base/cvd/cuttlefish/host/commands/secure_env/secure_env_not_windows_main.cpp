@@ -17,7 +17,6 @@
 #include <mutex>
 #include <thread>
 
-#include <android-base/strings.h>
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <keymaster/android_keymaster.h>

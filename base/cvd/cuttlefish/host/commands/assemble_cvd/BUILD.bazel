@@ -153,6 +153,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -413,6 +414,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@protobuf",
     ],
@@ -515,6 +517,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -553,6 +556,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:touchpad",
         "//cuttlefish/host/libs/feature",
+        "@abseil-cpp//absl/strings",
         "@fruit",
     ],
 )
@@ -575,6 +579,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )

@@ -34,6 +34,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
@@ -117,7 +118,7 @@ Result<std::vector<std::string>> ExtractWebRTCDeviceIds(
   if (flag_value.empty()) {
     return {};
   }
-  return android::base::Split(flag_value, ",");
+  return absl::StrSplit(flag_value, ',');
 }
 
 // Some webrtc device ids could be empty (for example, when not specified in the

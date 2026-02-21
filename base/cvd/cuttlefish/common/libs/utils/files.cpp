@@ -48,7 +48,6 @@
 #include <iosfwd>
 #include <memory>
 #include <numeric>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -60,6 +59,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -426,12 +426,12 @@ bool Copy(const std::string& from, const std::string& to) {
   return true;
 }
 
-std::string AbsolutePath(const std::string& path) {
+std::string AbsolutePath(std::string_view path) {
   if (path.empty()) {
     return {};
   }
   if (path[0] == '/') {
-    return path;
+    return std::string(path);
   }
   if (path[0] == '~') {
     LOG(WARNING) << "Tilde expansion in path " << path <<" is not supported";
@@ -444,7 +444,7 @@ std::string AbsolutePath(const std::string& path) {
                  << ": " << strerror(errno);
     return {};
   }
-  return std::string{buffer.data()} + "/" + path;
+  return fmt::format("{}/{}", buffer.data(), path);
 }
 
 off_t FileSize(const std::string& path) {

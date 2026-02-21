@@ -13,6 +13,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:environment",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -53,6 +54,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -137,6 +139,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
@@ -173,6 +176,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:url_escape",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@jsoncpp",
     ],

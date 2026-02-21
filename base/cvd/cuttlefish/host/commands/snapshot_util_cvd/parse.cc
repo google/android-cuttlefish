@@ -20,7 +20,6 @@
 #include <iostream>
 #include <unordered_map>
 
-#include <android-base/strings.h>
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"

@@ -17,9 +17,11 @@
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
 
 #include <ostream>
+#include <string_view>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
@@ -408,25 +410,25 @@ Result<std::unordered_map<std::string, bool>> ParseGfxstreamRendererFlag(
     const std::string& gpu_renderer_features_arg) {
   std::unordered_map<std::string, bool> features;
 
-  for (const std::string& feature :
-       android::base::Split(gpu_renderer_features_arg, ";")) {
+  for (const std::string_view feature : std::vector<std::string_view>(
+           absl::StrSplit(gpu_renderer_features_arg, ';'))) {
     if (feature.empty()) {
       continue;
     }
 
-    const std::vector<std::string> feature_parts =
-        android::base::Split(feature, ":");
+    const std::vector<std::string_view> feature_parts =
+        absl::StrSplit(feature, ':');
     CF_EXPECT(feature_parts.size() == 2,
               "Failed to parse renderer features from --gpu_renderer_features="
                   << gpu_renderer_features_arg);
 
-    const std::string& feature_name = feature_parts[0];
-    const std::string& feature_enabled = feature_parts[1];
+    const std::string_view feature_name = feature_parts[0];
+    const std::string_view feature_enabled = feature_parts[1];
     CF_EXPECT(feature_enabled == "enabled" || feature_enabled == "disabled",
               "Failed to parse renderer features from --gpu_renderer_features="
                   << gpu_renderer_features_arg);
 
-    features[feature_name] = (feature_enabled == "enabled");
+    features.emplace(feature_name, feature_enabled == "enabled");
   }
 
   return features;
@@ -586,7 +588,8 @@ Result<GpuMode> ConfigureGpuSettings(
   }
 
   if (gpu_mode == GpuMode::Custom) {
-    auto requested_types = android::base::Split(gpu_context_types_arg, ":");
+    std::vector<std::string> requested_types =
+        absl::StrSplit(gpu_context_types_arg, ':');
     for (const std::string& requested : requested_types) {
       CF_EXPECT(kSupportedGpuContexts.count(requested) == 1,
                 "unsupported context type: " + requested);

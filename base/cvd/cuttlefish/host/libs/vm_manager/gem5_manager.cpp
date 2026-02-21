@@ -29,7 +29,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <vulkan/vulkan.h>
 #include "absl/log/log.h"
 

@@ -21,12 +21,13 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -45,7 +46,7 @@ static bool Unique(const std::vector<unsigned>& v) {
   return v.size() == hash_set.size();
 }
 
-static Result<unsigned> ParsePositiveNumber(const std::string& token) {
+static Result<unsigned> ParsePositiveNumber(std::string_view token) {
   unsigned value;
   CF_EXPECT(absl::SimpleAtoi(token, &value));
   CF_EXPECT(value > 0);
@@ -147,8 +148,8 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
     num_instances = implied_n_instances;
   }
   if (instance_nums_flag) {
-    std::vector<std::string> tokens =
-        android::base::Split(*instance_nums_flag, ",");
+    std::vector<std::string_view> tokens =
+        absl::StrSplit(*instance_nums_flag, ',');
     for (const auto& t : tokens) {
       CF_EXPECT(ParsePositiveNumber(t), t << " must be a natural number");
     }
@@ -164,8 +165,8 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
 static Result<std::vector<unsigned>> ParseInstanceNums(
     const std::string& instance_nums_flag) {
   std::vector<unsigned> nums;
-  std::vector<std::string> tokens =
-      android::base::Split(instance_nums_flag, ",");
+  std::vector<std::string_view> tokens =
+      absl::StrSplit(instance_nums_flag, ',');
   for (const auto& t : tokens) {
     unsigned num =
         CF_EXPECT(ParsePositiveNumber(t), t << " must be a natural number");

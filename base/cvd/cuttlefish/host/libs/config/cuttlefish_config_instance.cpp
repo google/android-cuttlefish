@@ -30,7 +30,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-#include "android-base/strings.h"
+#include "absl/strings/str_split.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "google/protobuf/text_format.h"
@@ -937,9 +937,9 @@ CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
       (*Dictionary())[kExtraBootconfigArgsInstanced].asString();
   std::vector<std::string> bootconfig;
   if (!extra_bootconfig_args_str.empty()) {
-    for (const auto& arg :
-         android::base::Split(extra_bootconfig_args_str, " ")) {
-      bootconfig.push_back(arg);
+    for (std::string_view arg :
+         absl::StrSplit(extra_bootconfig_args_str, ' ')) {
+      bootconfig.emplace_back(arg);
     }
   }
   return bootconfig;

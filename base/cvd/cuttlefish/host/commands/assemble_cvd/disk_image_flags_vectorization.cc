@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
@@ -48,46 +48,47 @@ Result<void> DiskImageFlagsVectorization(
     const SystemImageDirFlag& system_image_dir,
     const VendorBootImageFlag& vendor_boot_image) {
   std::vector<std::string> vbmeta_image =
-      android::base::Split(FLAGS_vbmeta_image, ",");
+      absl::StrSplit(FLAGS_vbmeta_image, ',');
   std::vector<std::string> vbmeta_system_image =
-      android::base::Split(FLAGS_vbmeta_system_image, ",");
-  auto vbmeta_vendor_dlkm_image =
-      android::base::Split(FLAGS_vbmeta_vendor_dlkm_image, ",");
-  auto vbmeta_system_dlkm_image =
-      android::base::Split(FLAGS_vbmeta_system_dlkm_image, ",");
-  auto vvmtruststore_path = android::base::Split(FLAGS_vvmtruststore_path, ",");
+      absl::StrSplit(FLAGS_vbmeta_system_image, ',');
+  std::vector<std::string> vbmeta_vendor_dlkm_image =
+      absl::StrSplit(FLAGS_vbmeta_vendor_dlkm_image, ',');
+  std::vector<std::string> vbmeta_system_dlkm_image =
+      absl::StrSplit(FLAGS_vbmeta_system_dlkm_image, ',');
+  std::vector<std::string> vvmtruststore_path =
+      absl::StrSplit(FLAGS_vvmtruststore_path, ',');
 
   std::vector<std::string> default_target_zip_vec =
-      android::base::Split(FLAGS_default_target_zip, ",");
+      absl::StrSplit(FLAGS_default_target_zip, ',');
   std::vector<std::string> system_target_zip_vec =
-      android::base::Split(FLAGS_system_target_zip, ",");
+      absl::StrSplit(FLAGS_system_target_zip, ',');
 
   std::vector<std::string> chromeos_disk =
-      android::base::Split(FLAGS_chromeos_disk, ",");
+      absl::StrSplit(FLAGS_chromeos_disk, ',');
   std::vector<std::string> chromeos_kernel_path =
-      android::base::Split(FLAGS_chromeos_kernel_path, ",");
+      absl::StrSplit(FLAGS_chromeos_kernel_path, ',');
   std::vector<std::string> chromeos_root_image =
-      android::base::Split(FLAGS_chromeos_root_image, ",");
+      absl::StrSplit(FLAGS_chromeos_root_image, ',');
 
   std::vector<std::string> linux_kernel_path =
-      android::base::Split(FLAGS_linux_kernel_path, ",");
+      absl::StrSplit(FLAGS_linux_kernel_path, ',');
   std::vector<std::string> linux_initramfs_path =
-      android::base::Split(FLAGS_linux_initramfs_path, ",");
+      absl::StrSplit(FLAGS_linux_initramfs_path, ',');
   std::vector<std::string> linux_root_image =
-      android::base::Split(FLAGS_linux_root_image, ",");
+      absl::StrSplit(FLAGS_linux_root_image, ',');
 
   std::vector<std::string> fuchsia_zedboot_path =
-      android::base::Split(FLAGS_fuchsia_zedboot_path, ",");
+      absl::StrSplit(FLAGS_fuchsia_zedboot_path, ',');
   std::vector<std::string> fuchsia_multiboot_bin_path =
-      android::base::Split(FLAGS_fuchsia_multiboot_bin_path, ",");
+      absl::StrSplit(FLAGS_fuchsia_multiboot_bin_path, ',');
   std::vector<std::string> fuchsia_root_image =
-      android::base::Split(FLAGS_fuchsia_root_image, ",");
+      absl::StrSplit(FLAGS_fuchsia_root_image, ',');
 
   std::vector<std::string> custom_partition_path =
-      android::base::Split(FLAGS_custom_partition_path, ",");
+      absl::StrSplit(FLAGS_custom_partition_path, ',');
 
   std::vector<std::string> blank_sdcard_image_mb =
-      android::base::Split(FLAGS_blank_sdcard_image_mb, ",");
+      absl::StrSplit(FLAGS_blank_sdcard_image_mb, ',');
 
   std::string cur_boot_image;
   int value{};

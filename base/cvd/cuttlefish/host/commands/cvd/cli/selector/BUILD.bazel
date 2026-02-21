@@ -32,6 +32,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -126,6 +127,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -136,12 +138,13 @@ cf_cc_library(
 
 cf_cc_library(
     name = "selector_option_parser_utils",
-    srcs = ["selector_option_parser_utils.cpp"],
+    srcs = [],
     hdrs = ["selector_option_parser_utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

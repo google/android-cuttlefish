@@ -23,10 +23,11 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
-#include "android-base/strings.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
@@ -197,8 +198,8 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
 
   const auto custom_partition_path = instance.custom_partition_path();
   if (!custom_partition_path.empty()) {
-    auto custom_partition_paths =
-        android::base::Split(custom_partition_path, ";");
+    std::vector<std::string_view> custom_partition_paths =
+        absl::StrSplit(custom_partition_path, ';');
     for (int i = 0; i < custom_partition_paths.size(); i++) {
       partitions.push_back(ImagePartition{
           .label = i > 0 ? "custom_" + std::to_string(i) : "custom",
