@@ -16,9 +16,9 @@ package internal
 
 // TODO(seungjaeyoo): Propagate these constant values from the debian package wrapping podcvd.
 const (
-	imageName               = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable"
-	portOperatorHttps       = 1443
-	containerInstanceSubnet = "192.168.80.0/24"
+	imageName         = "us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:stable"
+	portOperatorHttps = 1443
+	ifName            = "podcvd"
 )
 
 const (
