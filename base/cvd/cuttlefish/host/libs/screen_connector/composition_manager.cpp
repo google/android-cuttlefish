@@ -31,6 +31,7 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -84,11 +85,11 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
 
     std::vector<DisplayOverlay>& display_overlays = overlays[display_index];
 
-    std::vector<std::string> overlay_list =
+    std::vector<std::string_view> overlay_list =
         absl::StrSplit(overlay_item, ' ');
 
     for (const auto& overlay_tuple_str : overlay_list) {
-      std::vector<std::string> overlay_tuple =
+      std::vector<std::string_view> overlay_tuple =
           absl::StrSplit(overlay_tuple_str, ':');
 
       DisplayOverlay docfg;

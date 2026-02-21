@@ -670,9 +670,7 @@ Flag GflagsCompatFlag(const std::string& name,
           value.clear();
           return {};
         }
-        std::vector<std::string> str_vals =
-            absl::StrSplit(match.value, ',');
-        value = std::move(str_vals);
+        value = absl::StrSplit(match.value, ',');
         return {};
       });
 }
@@ -687,7 +685,8 @@ Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,
           value.clear();
           return {};
         }
-        std::vector<std::string> str_vals = absl::StrSplit(match.value, ',');
+        std::vector<std::string_view> str_vals =
+            absl::StrSplit(match.value, ',');
         value.clear();
         std::vector<bool> output_vals;
         output_vals.reserve(str_vals.size());

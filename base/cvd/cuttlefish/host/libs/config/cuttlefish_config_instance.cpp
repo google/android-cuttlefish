@@ -937,9 +937,9 @@ CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
       (*Dictionary())[kExtraBootconfigArgsInstanced].asString();
   std::vector<std::string> bootconfig;
   if (!extra_bootconfig_args_str.empty()) {
-    for (const auto& arg : std::vector<std::string>(
-             absl::StrSplit(extra_bootconfig_args_str, ' '))) {
-      bootconfig.push_back(arg);
+    for (std::string_view arg :
+         absl::StrSplit(extra_bootconfig_args_str, ' ')) {
+      bootconfig.emplace_back(arg);
     }
   }
   return bootconfig;

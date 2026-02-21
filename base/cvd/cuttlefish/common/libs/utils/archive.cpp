@@ -81,11 +81,12 @@ Result<std::vector<std::string>> ExtractFiles(
              exit_code, bsdtar_stdout, bsdtar_stderr);
   VLOG(0) << bsdtar_stderr;
 
-  std::vector<std::string> outputs = absl::StrSplit(bsdtar_stderr, '\n');
-  for (std::string& output : outputs) {
-    std::string_view view = output;
+  std::vector<std::string_view> split = absl::StrSplit(bsdtar_stderr, '\n');
+  std::vector<std::string> outputs;
+  outputs.reserve(split.size());
+  for (std::string_view& view: split) {
     android::base::ConsumePrefix(&view, "x ");
-    output = view;
+    outputs.emplace_back(view);
   }
 
   return outputs;

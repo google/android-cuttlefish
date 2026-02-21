@@ -18,6 +18,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -48,14 +49,13 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
 
   std::unordered_map<std::string, std::string> props;
 
-  const std::vector<std::string> pairs = absl::StrSplit(flag, ',');
-  for (const std::string& pair : pairs) {
-    const std::vector<std::string> keyvalue = absl::StrSplit(pair, '=');
+  for (std::string_view pair : absl::StrSplit(flag, ',')) {
+    const std::vector<std::string_view> keyvalue = absl::StrSplit(pair, '=');
     CF_EXPECT_EQ(keyvalue.size(), 2,
                  "Invalid display flag key-value: \"" << flag << "\"");
-    const std::string& prop_key = keyvalue[0];
-    const std::string& prop_val = keyvalue[1];
-    props[prop_key] = prop_val;
+    std::string_view prop_key = keyvalue[0];
+    std::string_view prop_val = keyvalue[1];
+    props.emplace(prop_key, prop_val);
   }
 
   CF_EXPECT(Contains(props, "width"),

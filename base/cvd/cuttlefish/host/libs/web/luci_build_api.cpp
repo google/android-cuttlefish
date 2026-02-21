@@ -141,8 +141,7 @@ Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
                                             const std::string& target_path) {
   std::string_view trim_link = artifact_link;
   CF_EXPECT(android::base::ConsumePrefix(&trim_link, "gs://"));
-  std::vector<std::string> path_fragments =
-      absl::StrSplit(std::string(trim_link), '/');
+  std::vector<std::string_view> path_fragments = absl::StrSplit(trim_link, '/');
   CF_EXPECT(!path_fragments.empty());
   auto bucket = path_fragments[0];
   path_fragments.erase(path_fragments.begin());

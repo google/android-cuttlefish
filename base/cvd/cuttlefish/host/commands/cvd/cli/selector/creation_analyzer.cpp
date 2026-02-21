@@ -20,6 +20,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -115,7 +116,7 @@ Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
   group_directories.product_out_paths.reserve(num_instances);
   auto it = envs_.find(kAndroidProductOut);
   if (it != envs_.end()) {
-    std::vector<std::string> env_product_out =
+    std::vector<std::string_view> env_product_out =
         absl::StrSplit(it->second, ',');
     if (env_product_out.size() > num_instances) {
       LOG(WARNING) << env_product_out.size()

@@ -15,7 +15,6 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 
-#include <string>
 #include <string_view>
 #include <vector>
 
@@ -41,7 +40,7 @@ Result<VmManagerFlag> VmManagerFlag::FromGlobalGflags(
                  "All instance target architectures should be the same");
   }
 
-  std::vector<std::string> vm_manager_str_vec =
+  std::vector<std::string_view> vm_manager_str_vec =
       absl::StrSplit(FLAGS_vm_manager, ',');
 
   VmmMode default_vmm = IsHostCompatible(guest_configs[0].target_arch)
