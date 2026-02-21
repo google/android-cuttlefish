@@ -1,3 +1,9 @@
+cuttlefish-common (1.45.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 20 Feb 2026 16:36:53 -0800
+
 cuttlefish-common (1.44.0) unstable; urgency=medium
 
   * Add fallback physical partition calculation by @Databean in https://github.com/google/android-cuttlefish/pull/2139
