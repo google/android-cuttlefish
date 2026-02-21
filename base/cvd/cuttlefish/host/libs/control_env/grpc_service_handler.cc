@@ -19,6 +19,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -196,8 +197,8 @@ Result<std::string> HandleLsCmd(
 
       Json::Value json;
       json["services"] = Json::Value(Json::arrayValue);
-      for (auto& full_service_name :
-           std::vector<std::string>(StrSplit(Trim(command_output), "\n"))) {
+      for (std::string_view full_service_name :
+           StrSplit(Trim(command_output), "\n")) {
         if (full_service_name == kServiceServerReflection ||
             full_service_name == kServiceHealth ||
             full_service_name == kServiceControlEnvProxyFull) {
@@ -224,7 +225,7 @@ Result<std::string> HandleLsCmd(
 
       Json::Value json;
       json["methods"] = Json::Value(Json::arrayValue);
-      for (auto& method_name :
+      for (const auto& method_name :
            std::vector<std::string>(StrSplit(Trim(command_output), "\n"))) {
         json["methods"].append(method_name);
       }

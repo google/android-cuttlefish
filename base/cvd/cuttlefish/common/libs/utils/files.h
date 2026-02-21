@@ -88,7 +88,7 @@ std::string FindImage(const std::string& search_path,
 // The returned value may contain .. or . if these are present in the path
 // argument.
 // path must not contain ~
-std::string AbsolutePath(const std::string& path);
+std::string AbsolutePath(std::string_view path);
 
 std::string CurrentDirectory();
 

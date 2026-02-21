@@ -19,7 +19,9 @@
 
 #include <cstdlib>
 #include <string>
+#include <string_view>
 
+#include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 
@@ -63,9 +65,10 @@ int main(int argc, char** argv) {
       LOG(WARNING) << "Failed to read the correct number of bytes.";
       break;
     }
-    std::vector<std::string> split = absl::StrSplit(buf, ':');
-    std::string command = split[0];
-    std::string state = split[1];
+    std::vector<std::string_view> split = absl::StrSplit(buf, ':');
+    CHECK(split.size() == 2) << "Malformed message: " << buf;
+    std::string_view command = split[0];
+    std::string_view state = split[1];
 
     // Ignore button-release events, when state != down.
     if (state != "down") {

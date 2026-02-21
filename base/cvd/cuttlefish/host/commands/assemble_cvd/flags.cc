@@ -220,12 +220,12 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
     const std::string& flag_values, int32_t instances_size,
     const std::string& flag_name,
     const std::map<std::string, std::string>& name_to_default_value) {
-  std::vector<std::string> flag_vec = absl::StrSplit(flag_values, ",");
+  std::vector<std::string_view> flag_vec = absl::StrSplit(flag_values, ",");
   std::vector<int> value_vec(instances_size);
 
   auto default_value_it = name_to_default_value.find(flag_name);
   CF_EXPECT(default_value_it != name_to_default_value.end());
-  std::vector<std::string> default_value_vec =
+  std::vector<std::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
@@ -233,7 +233,7 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
       value_vec[instance_index] = value_vec[0];
     } else {
       if (flag_vec[instance_index] == "unset" || flag_vec[instance_index] == "\"unset\"") {
-        std::string default_value = default_value_vec[0];
+        std::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }

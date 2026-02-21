@@ -117,11 +117,10 @@ Result<void> CleanPriorFiles(const std::vector<std::string>& paths,
 
     Result<std::string> lsof_out = RunAndCaptureStdout(std::move(lsof));
     if (lsof_out.ok()) {
-      std::vector<std::string> pids = absl::StrSplit(*lsof_out, "\n");
       CF_EXPECTF(
           lsof_out->empty(),
           "Instance directory files in use. Try `cvd reset`? Observed PIDs: {}",
-          fmt::join(pids, ", "));
+          fmt::join(absl::StrSplit(*lsof_out, "\n"), ", "));
     } else {
       LOG(ERROR) << "Failed to run `lsof`: " << lsof_out.error();
     }

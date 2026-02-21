@@ -15,6 +15,7 @@
  */
 
 #include <memory>
+#include <string_view>
 
 #include "absl/strings/str_split.h"
 #include <fruit/fruit.h>
@@ -274,7 +275,7 @@ int CuttlefishMain() {
   cuttlefish::InputConnectorBuilder inputs_builder;
 
   const auto display_count = instance.display_configs().size();
-  const std::vector<std::string> touch_fds =
+  const std::vector<std::string_view> touch_fds =
       absl::StrSplit(FLAGS_touch_fds, ',');
   CHECK(touch_fds.size() == display_count + instance.touchpad_configs().size())
       << "Number of touch FDs does not match the number of configured displays "
@@ -447,8 +448,8 @@ int CuttlefishMain() {
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
-  for (const std::string& action_server :
-       std::vector<std::string>(absl::StrSplit(FLAGS_action_servers, ','))) {
+  for (const std::string_view action_server :
+       absl::StrSplit(FLAGS_action_servers, ',')) {
     if (action_server.empty()) {
       continue;
     }

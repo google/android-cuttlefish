@@ -23,6 +23,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
@@ -197,7 +198,7 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
 
   const auto custom_partition_path = instance.custom_partition_path();
   if (!custom_partition_path.empty()) {
-    std::vector<std::string> custom_partition_paths =
+    std::vector<std::string_view> custom_partition_paths =
         absl::StrSplit(custom_partition_path, ';');
     for (int i = 0; i < custom_partition_paths.size(); i++) {
       partitions.push_back(ImagePartition{

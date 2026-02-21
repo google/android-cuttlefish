@@ -17,6 +17,7 @@
 #include "cuttlefish/host/libs/config/touchpad.h"
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -35,13 +36,13 @@ Result<CuttlefishConfig::TouchpadConfig> ParseTouchpadConfig(
   CF_EXPECT(!flag.empty(), "Touchpad configuration empty");
 
   std::unordered_map<std::string, std::string> props;
-  for (const auto& pair : std::vector<std::string>(absl::StrSplit(flag, ','))) {
-    const std::vector<std::string> keyvalue = absl::StrSplit(pair, '=');
+  for (std::string_view pair : absl::StrSplit(flag, ',')) {
+    const std::vector<std::string_view> keyvalue = absl::StrSplit(pair, '=');
     CF_EXPECT_EQ(keyvalue.size(), 2,
                  "Invalid touchpad flag key-value: \"" << flag << "\"");
-    const std::string& prop_key = keyvalue[0];
-    const std::string& prop_val = keyvalue[1];
-    props[prop_key] = prop_val;
+    std::string_view prop_key = keyvalue[0];
+    std::string_view prop_val = keyvalue[1];
+    props.emplace(prop_key, prop_val);
   }
 
   CF_EXPECT(Contains(props, "width"),

@@ -18,6 +18,7 @@
 #include <ostream>
 #include <set>
 #include <sstream>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
 
@@ -51,8 +52,7 @@ class AdbConfigFlagImpl : public AdbConfigFlag {
     mode_flag_.Setter([this](const FlagMatch& match) -> Result<void> {
       // TODO(schuffelen): Error on unknown types?
       std::set<AdbMode> modes;
-      for (auto& mode :
-           std::vector<std::string>(absl::StrSplit(match.value, ','))) {
+      for (std::string_view mode : absl::StrSplit(match.value, ',')) {
         modes.insert(StringToAdbMode(mode));
       }
       CF_EXPECT(config_.SetModes(modes));

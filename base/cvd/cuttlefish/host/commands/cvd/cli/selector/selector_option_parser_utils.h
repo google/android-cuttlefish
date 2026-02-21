@@ -52,12 +52,5 @@ Result<void> FilterSelectorFlag(std::vector<std::string>& args,
   return {};
 }
 
-/*
- * absl::StrSplit by delimiter but returns CF_ERR if any split token is
- * empty
- */
-Result<std::vector<std::string>> SeparateButWithNoEmptyToken(
-    const std::string& input, const std::string& delimiter);
-
 }  // namespace selector
 }  // namespace cuttlefish
