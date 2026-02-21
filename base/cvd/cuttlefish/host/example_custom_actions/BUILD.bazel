@@ -20,6 +20,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
     ],
 )

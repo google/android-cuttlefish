@@ -23,6 +23,7 @@
 #include <chrono>
 #include <map>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
@@ -248,7 +249,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnSensorsMessage(const uint8_t *msg, size_t size) override {
     std::string msgstr(msg, msg + size);
-    std::vector<std::string> xyz = absl::StrSplit(msgstr, ' ');
+    std::vector<std::string_view> xyz = absl::StrSplit(msgstr, ' ');
 
     if (xyz.size() != 3) {
       LOG(WARNING) << "Invalid rotation angles: Expected 3, received "

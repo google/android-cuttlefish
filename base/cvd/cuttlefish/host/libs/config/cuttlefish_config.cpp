@@ -239,10 +239,9 @@ int CuttlefishConfig::casimir_instance_num() const {
 static constexpr char kCasimirArgs[] = "casimir_args";
 void CuttlefishConfig::set_casimir_args(const std::string& casimir_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg :
-       std::vector<std::string>(absl::StrSplit(casimir_args, ' '))) {
+  for (std::string_view arg : absl::StrSplit(casimir_args, ' ')) {
     if (!arg.empty()) {
-      args_json_obj.append(arg);
+      args_json_obj.append(std::string(arg));
     }
   }
   (*dictionary_)[kCasimirArgs] = args_json_obj;
@@ -369,9 +368,8 @@ static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
 void CuttlefishConfig::set_extra_kernel_cmdline(
     const std::string& extra_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg :
-       std::vector<std::string>(absl::StrSplit(extra_cmdline, ' '))) {
-    args_json_obj.append(arg);
+  for (std::string_view arg : absl::StrSplit(extra_cmdline, ' ')) {
+    args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kExtraKernelCmdline] = args_json_obj;
 }
@@ -410,9 +408,8 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
 static constexpr char kRootcanalArgs[] = "rootcanal_args";
 void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg :
-       std::vector<std::string>(absl::StrSplit(rootcanal_args, ' '))) {
-    args_json_obj.append(arg);
+  for (std::string_view arg : absl::StrSplit(rootcanal_args, ' ')) {
+    args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kRootcanalArgs] = args_json_obj;
 }

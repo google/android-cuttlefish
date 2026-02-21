@@ -36,6 +36,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -131,7 +132,7 @@ std::set<std::string> TapInterfacesInUse() {
 
   std::string stdout_str = RunAndCaptureStdout(std::move(*cmd)).value_or("");
 
-  std::vector<std::string> lines = absl::StrSplit(stdout_str, '\n');
+  std::vector<std::string_view> lines = absl::StrSplit(stdout_str, '\n');
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
     if (line.empty()) {
@@ -141,7 +142,7 @@ std::set<std::string> TapInterfacesInUse() {
       LOG(ERROR) << "Unexpected line \"" << line << "\"";
       continue;
     }
-    tap_interfaces.insert(line.substr(std::string("iff:\t").size()));
+    tap_interfaces.emplace(line.substr(std::string("iff:\t").size()));
   }
   return tap_interfaces;
 }

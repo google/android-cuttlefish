@@ -21,6 +21,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -28,7 +29,6 @@
 #include <gflags/gflags.h>
 #include "absl/strings/numbers.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/result/result.h"
@@ -66,18 +66,18 @@ static Result<std::vector<int32_t>> ParseInstanceNums(
     return {};
   }
   std::vector<int32_t> instance_nums;
-  std::vector<std::string> split_str =
+  std::vector<std::string_view> split_str =
       absl::StrSplit(instance_nums_str, ',');
   std::set<int32_t> duplication_check_set;
   for (const auto& instance_num_str : split_str) {
     int32_t instance_num;
-    CF_EXPECT(absl::SimpleAtoi(instance_num_str.c_str(), &instance_num),
+    CF_EXPECT(absl::SimpleAtoi(instance_num_str, &instance_num),
               "Unable to parse \"" << instance_num_str << "\" in "
                                    << "`--instance_nums=\"" << instance_nums_str
                                    << "\"`");
-    CF_EXPECT(!Contains(duplication_check_set, instance_num),
-              instance_num << " is duplicated in -instance_nums flag.");
-    duplication_check_set.insert(instance_num);
+    const auto[_, inserted] = duplication_check_set.insert(instance_num);
+    CF_EXPECTF(!!inserted, "{} is duplicated in -instance_nums flag.",
+               instance_num);
     instance_nums.push_back(instance_num);
   }
   return instance_nums;

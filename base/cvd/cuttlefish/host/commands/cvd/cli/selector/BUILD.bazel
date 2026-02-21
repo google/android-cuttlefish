@@ -138,7 +138,7 @@ cf_cc_library(
 
 cf_cc_library(
     name = "selector_option_parser_utils",
-    srcs = ["selector_option_parser_utils.cpp"],
+    srcs = [],
     hdrs = ["selector_option_parser_utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",

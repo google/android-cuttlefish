@@ -18,11 +18,12 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <string_view>
 
 namespace cuttlefish {
 
-AdbMode StringToAdbMode(const std::string& mode_cased) {
-  std::string mode = mode_cased;
+AdbMode StringToAdbMode(std::string_view mode_cased) {
+  std::string mode(mode_cased);
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
   if (mode == "vsock_tunnel") {
     return AdbMode::VsockTunnel;

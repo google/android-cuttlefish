@@ -37,6 +37,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -536,7 +537,7 @@ std::ostream& operator<<(std::ostream& out, const Command& command) {
                                           "CUTTLEFISH_CONFIG_FILE",
                                           "CUTTLEFISH_INSTANCE"};
   for (const std::string& env_var : command.env_) {
-    std::vector<std::string> env_split =
+    std::vector<std::string_view> env_split =
         absl::StrSplit(env_var, absl::MaxSplits('=', 1));
     if (!env_split.empty() && Contains(to_show, env_split.front())) {
       out << env_var << " ";

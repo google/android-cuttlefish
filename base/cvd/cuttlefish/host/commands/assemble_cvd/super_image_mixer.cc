@@ -87,9 +87,8 @@ struct Extracted {
 void FindImports(const std::string& archive,
                  const std::string& build_prop_file) {
   auto contents = ExtractArchiveToMemory(archive, build_prop_file);
-  std::vector<std::string> lines = absl::StrSplit(contents, "\n");
-  for (const auto& line : lines) {
-    std::vector<std::string> parts = absl::StrSplit(line, ' ');
+  for (const auto& line : absl::StrSplit(contents, "\n")) {
+    std::vector<std::string_view> parts = absl::StrSplit(line, ' ');
     if (parts.size() >= 2 && parts[0] == "import") {
       VLOG(0) << build_prop_file << ": " << line;
     }

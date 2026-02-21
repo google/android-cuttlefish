@@ -18,6 +18,7 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -265,10 +266,10 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     if (kv.empty()) {
       continue;
     }
-    const std::vector<std::string> parts = absl::StrSplit(kv, '=');
+    const std::vector<std::string_view> parts = absl::StrSplit(kv, '=');
     CF_EXPECT_EQ(parts.size(), 2,
                  "Failed to parse --extra_bootconfig_args: \"" << kv << "\"");
-    bootconfig_args[parts[0]] = parts[1];
+    bootconfig_args.emplace(parts[0], parts[1]);
   }
 
   return bootconfig_args;
