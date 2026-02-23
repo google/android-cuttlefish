@@ -83,8 +83,6 @@ void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
           "&& bootefi ${loadaddr} ${fdtcontroladdr}; "
           "load virtio 0:${devplist} ${loadaddr} efi/boot/bootx64.efi && "
           "bootefi ${loadaddr} ${fdtcontroladdr}; "
-          "load virtio 0:${devplist} ${loadaddr} efi/boot/bootia32.efi && "
-          "bootefi ${loadaddr} ${fdtcontroladdr}; "
           "load virtio 0:${devplist} ${loadaddr} efi/boot/bootriscv64.efi && "
           "bootefi ${loadaddr} ${fdtcontroladdr}",
       instance, env);

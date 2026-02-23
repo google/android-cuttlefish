@@ -91,6 +91,6 @@ class FuchsiaEspBuilder {
 Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
                           int offset_num_mb);
 
-bool CanGenerateEsp(Arch arch);
+bool CanGenerateGrubEsp(Arch arch);
 
 } // namespace cuttlefish

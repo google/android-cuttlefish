@@ -25,10 +25,12 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -45,23 +47,14 @@ namespace cuttlefish {
 // automatically generated ESP. If the user wants their own bootloaders,
 // they can use -esp_image=/path/to/esp.img to override, so we don't need
 // to accommodate customizations of this packing process.
-
+//
 // Currently we only support Debian based distributions, and GRUB is built
 // for those distros to always load grub.cfg from EFI/debian/grub.cfg, and
 // nowhere else. If you want to add support for other distros, make the
 // extra directories below and copy the initial grub.cfg there as well
 //
-// Currently the Cuttlefish bootloaders are built only for x86 (32-bit),
-// ARM (QEMU only, 32-bit) and AArch64 (64-bit), and U-Boot will hard-code
-// these search paths. Install all bootloaders to one of these paths.
 // NOTE: For now, just ignore the 32-bit ARM version, as Debian doesn't
 //       build an EFI monolith for this architecture.
-// These are the paths Debian installs the monoliths to. If another distro
-// uses an alternative monolith path, add it to this table
-static constexpr char kBootSrcPathIA32[] =
-    "/usr/lib/grub/i386-efi/monolithic/grubia32.efi";
-static constexpr char kBootDestPathIA32[] = "/EFI/BOOT/BOOTIA32.EFI";
-
 static constexpr char kBootSrcPathX64[] =
     "/usr/lib/grub/x86_64-efi/monolithic/grubx64.efi";
 static constexpr char kBootDestPathX64[] = "/EFI/BOOT/BOOTX64.EFI";
@@ -72,20 +65,11 @@ static constexpr char kBootDestPathAA64[] = "/EFI/BOOT/BOOTAA64.EFI";
 
 static constexpr char kBootDestPathRiscV64[] = "/EFI/BOOT/BOOTRISCV64.EFI";
 
-static constexpr char kMultibootModuleSrcPathIA32[] =
-    "/usr/lib/grub/i386-efi/multiboot.mod";
-static constexpr char kMultibootModuleDestPathIA32[] =
-    "/EFI/modules/multiboot.mod";
-
 static constexpr char kMultibootModuleSrcPathX64[] =
     "/usr/lib/grub/x86_64-efi/multiboot.mod";
-static constexpr char kMultibootModuleDestPathX64[] =
-    "/EFI/modules/multiboot.mod";
-
 static constexpr char kMultibootModuleSrcPathAA64[] =
     "/usr/lib/grub/arm64-efi/multiboot.mod";
-static constexpr char kMultibootModuleDestPathAA64[] =
-    "/EFI/modules/multiboot.mod";
+static constexpr char kMultibootModuleDestPath[] = "/EFI/modules/multiboot.mod";
 
 static constexpr char kKernelDestPath[] = "/vmlinuz";
 static constexpr char kInitrdDestPath[] = "/initrd";
@@ -99,11 +83,10 @@ static constexpr char kGrubUbuntuConfigDestPath[] = "/EFI/ubuntu/grub.cfg";
 static constexpr char kGrubConfigDestDirectoryPath[] = "/boot/grub";
 static constexpr char kGrubConfigDestPath[] = "/boot/grub/grub.cfg";
 
-static constexpr std::array kGrubModulesX86{
-    "normal", "configfile", "linux", "linuxefi",   "multiboot", "ls",
+static constexpr std::array kGrubModules{
+    "normal", "configfile", "linux", "multiboot",  "ls",
     "cat",    "help",       "fat",   "part_msdos", "part_gpt"};
-static constexpr char kGrubModulesPath[] = "/usr/lib/grub/";
-static constexpr char kGrubModulesX86Name[] = "i386-efi";
+static constexpr char kGrubModulesPath[] = "/usr/lib/grub";
 static constexpr char kGrubModulesX64Name[] = "x86_64-efi";
 
 Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
@@ -163,30 +146,27 @@ Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
   return {};
 }
 
-bool CanGenerateEsp(Arch arch) {
+bool CanGenerateGrubEsp(Arch arch) {
   switch (arch) {
-    case Arch::Arm:
-    case Arch::Arm64:
     case Arch::RiscV64:
-      // TODO(b/260960328) : Migrate openwrt image for arm64 into
-      // APBootFlow::Grub.
       return false;
+    case Arch::Arm:
+    case Arch::Arm64: {
+      return FileExists(kBootSrcPathAA64);
+    }
     case Arch::X86:
     case Arch::X86_64: {
-      const auto x86_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX86Name);
-      const auto modules_presented = std::all_of(
-          kGrubModulesX86.begin(), kGrubModulesX86.end(),
-          [&](const std::string& m) { return FileExists(x86_modules + m); });
-      if (modules_presented) {
-        return true;
+      for (std::string_view module_name : kGrubModules) {
+        const std::string path =
+            absl::StrCat(kGrubModulesPath, "/", kGrubModulesX64Name, "/",
+                         module_name, ".mod");
+        if (!FileExists(path)) {
+          return FileExists(kBootSrcPathX64);
+        }
       }
-
-      const auto monolith_presented = FileExists(kBootSrcPathIA32);
-      return monolith_presented;
+      return true;
     }
   }
-
-  return false;
 }
 
 static bool MsdosMakeDirectories(const std::string& image_path,
@@ -309,51 +289,36 @@ class EspBuilder final {
   std::vector<FileToAdd> files_;
 };
 
-EspBuilder PrepareESP(const std::string& image_path, Arch arch) {
+EspBuilder PrepareGrubESP(const std::string& image_path, Arch arch) {
   auto builder = EspBuilder(image_path);
-  builder.Directory("EFI")
-         .Directory("EFI/BOOT")
-         .Directory("EFI/modules");
+  builder.Directory("EFI").Directory("EFI/BOOT").Directory("EFI/modules");
 
-  const auto efi_path = image_path + ".efi";
   switch (arch) {
     case Arch::Arm:
     case Arch::Arm64:
       builder.File(kBootSrcPathAA64, kBootDestPathAA64, /* required */ true);
       // Not required for arm64 due missing it in deb package, so fuchsia is
       // not supported for it.
-      builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPathAA64,
-                    /* required */ false);
+      builder.File(kMultibootModuleSrcPathAA64, kMultibootModuleDestPath,
+                   /* required */ false);
       break;
     case Arch::RiscV64:
       // FIXME: Implement
       break;
-    case Arch::X86: {
-      const auto x86_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX86Name);
-
-      if (GrubMakeImage(kGrubConfigDestDirectoryPath, kGrubModulesX86Name,
-                        x86_modules, efi_path, kGrubModulesX86)) {
-        LOG(INFO) << "Loading grub_mkimage generated EFI binary for X86";
-        builder.File(efi_path, kBootDestPathIA32, /* required */ true);
-      } else {
-        LOG(INFO) << "Loading prebuilt monolith EFI binary for X86";
-        builder.File(kBootSrcPathIA32, kBootDestPathIA32, /* required */ true);
-        builder.File(kMultibootModuleSrcPathIA32, kMultibootModuleDestPathIA32,
-                     /* required */ true);
-      }
-      break;
-    }
+    case Arch::X86:
     case Arch::X86_64: {
-      const auto x64_modules = std::string(kGrubModulesPath) + std::string(kGrubModulesX64Name);
+      const auto efi_path = image_path + ".efi";
+      const auto x64_modules =
+          absl::StrCat(kGrubModulesPath, "/", kGrubModulesX64Name);
 
       if (GrubMakeImage(kGrubConfigDestDirectoryPath, kGrubModulesX64Name,
-                        x64_modules, efi_path, kGrubModulesX86)) {
+                        x64_modules, efi_path, kGrubModules)) {
         LOG(INFO) << "Loading grub_mkimage generated EFI binary for X86_64";
         builder.File(efi_path, kBootDestPathX64, /* required */ true);
       } else {
         LOG(INFO) << "Loading prebuilt monolith EFI binary for X86_64";
         builder.File(kBootSrcPathX64, kBootDestPathX64, /* required */ true);
-        builder.File(kMultibootModuleSrcPathX64, kMultibootModuleDestPathX64,
+        builder.File(kMultibootModuleSrcPathX64, kMultibootModuleDestPath,
                      /* required */ true);
       }
       break;
@@ -410,8 +375,6 @@ bool AndroidEfiLoaderEspBuilder::Build() const {
       dest_path = kBootDestPathRiscV64;
       break;
     case Arch::X86:
-      dest_path = kBootDestPathIA32;
-      break;
     case Arch::X86_64:
       dest_path = kBootDestPathX64;
       break;
@@ -464,7 +427,7 @@ bool LinuxEspBuilder::Build() const {
     return false;
   }
 
-  auto builder = PrepareESP(image_path_, *arch_);
+  auto builder = PrepareGrubESP(image_path_, *arch_);
 
   const auto tmp_grub_config = image_path_ + ".grub.cfg";
   const auto config_file = SharedFD::Creat(tmp_grub_config, 0644);
@@ -541,7 +504,7 @@ bool FuchsiaEspBuilder::Build() const {
     return false;
   }
 
-  auto builder = PrepareESP(image_path_, *arch_);
+  auto builder = PrepareGrubESP(image_path_, *arch_);
 
   const auto tmp_grub_config = image_path_ + ".grub.cfg";
   const auto config_file = SharedFD::Creat(tmp_grub_config, 0644);
@@ -568,7 +531,7 @@ std::string FuchsiaEspBuilder::DumpConfig() const {
 
   o << "set timeout=0" << std::endl
     << "menuentry \"Fuchsia\" {" << std::endl
-    << "  insmod " << kMultibootModuleDestPathIA32 << std::endl
+    << "  insmod " << kMultibootModuleDestPath << std::endl
     << "  multiboot " << kMultibootBinDestPath << std::endl
     << "  module " << kZedbootDestPath << std::endl
     << "}" << std::endl;

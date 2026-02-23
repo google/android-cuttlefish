@@ -205,6 +205,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
