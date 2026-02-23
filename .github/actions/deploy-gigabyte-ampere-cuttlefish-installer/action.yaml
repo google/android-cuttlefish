@@ -1,0 +1,61 @@
+name: 'Deploy installer for Gigabyte Ampere server'
+inputs:
+  deploy-channel:
+    required: true
+  yyyymmddhhmm:
+    required: false
+  path:
+    required: true
+runs:
+  using: "composite"
+  steps:
+  - name: 'Set up Cloud SDK'
+    uses: 'google-github-actions/setup-gcloud@v3.0.0'
+    with:
+      version: '>= 363.0.0'
+  - name: Deploy installer image into Artifact Registry
+    run: |
+      REPO=gigabyte-ampere-server-installer
+      case "${INPUTS_DEPLOY_CHANNEL}" in
+        stable)
+          # Stable version tag : X.Y.Z
+          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
+          TAG="${SEMVER}"
+          ;;
+        unstable)
+          # Unstable version tag : X.Y-<Github SHA 8 digit>
+          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+          TAG="${SEMVER}-${SHORT_SHA}"
+          ;;
+        nightly)
+          # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+          TAG="git${INPUTS_YYYYMMDDHHMM}-${SHORT_SHA}-${INPUTS_ARCH}"
+          ;;
+        *)
+          exit 1
+          ;;
+      esac
+      pushd ${INPUTS_PATH}
+      gcloud artifacts versions delete ${INPUTS_DEPLOY_CHANNEL} \
+        --location=us \
+        --package="debian-installer" \
+        --project="android-cuttlefish-artifacts" \
+        --quiet \
+        --repository="${REPO}"
+      for VERSION in ${TAG} ${INPUTS_DEPLOY_CHANNEL}; do
+        gcloud artifacts generic upload \
+          --location=us \
+          --package="debian-installer" \
+          --project="android-cuttlefish-artifacts" \
+          --repository="${REPO}" \
+          --version="${VERSION}" \
+          --source=$(find . -name *.iso.xz)
+      done
+      popd
+    shell: bash
+    env:
+      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+      INPUTS_YYYYMMDDHHMM: ${{ inputs.yyyymmddhhmm }}
+      INPUTS_PATH: ${{ inputs.path }}

@@ -13,32 +13,11 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
-    defaults:
-      run:
-        working-directory: ./gigabyte-ampere-cuttlefish-installer
-    env:
-      DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso"
-      CI_PROJECT_NAME: ${{ github.event.repository.name }}
-      CI_PIPELINE_ID: ${{ github.run_id }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    - name: Setting up build environment
-      run: |
-        apt-get update
-        apt-get upgrade -y
-        apt-get install -y sudo
-        apt-get install -y wget libarchive-tools
-        apt-get install -y xorriso
-        apt-get install -y cpio xz-utils
-        apt-get install -y fdisk
-    - name: Build the iso image
-      run: |
-        sed -i "2i CI_PROJECT_NAME=${CI_PROJECT_NAME}" preseed/after_install_1.sh
-        sed -i "3i CI_PIPELINE_ID=${CI_PIPELINE_ID}" preseed/after_install_1.sh
-        wget -nv -c ${DEBIAN_ISO_URL}
-        ./addpreseed.sh
-        xz -9e preseed-mini.iso
+    - name: Build iso installer
+      uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:

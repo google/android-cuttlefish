@@ -111,6 +111,31 @@ jobs:
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
         path: .
+  deploy-gigabyte-ampere-installer-arm64:
+    needs: [set-variables]
+    environment: deployment
+    runs-on: ubuntu-22.04
+    container:
+      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+    - name: Build Gigabyte Ampere installer
+      uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
+      with:
+        deploy-channel: ${{ inputs.deploy-channel }}
+        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+    - name: Authentication on GCP project android-cuttlefish-artifacts
+      if: inputs.deploy-channel != ''
+      uses: 'google-github-actions/auth@v3'
+      with:
+        credentials_json: '${{ secrets.artifact-registry-uploader-json-creds }}'
+    - name: Deploy Gigabyte Ampere server iso installer image.
+      if: inputs.deploy-channel != ''
+      uses: ./.github/actions/deploy-gigabyte-ampere-cuttlefish-installer
+      with:
+        deploy-channel: ${{ inputs.deploy-channel }}
+        path: ./gigabyte-ampere-cuttlefish-installer
 
   deploy-docker-image-amd64:
     if: inputs.deploy-channel != ''

@@ -1,0 +1,27 @@
+name: 'Build iso installer for Gigabyte Ampere server'
+runs:
+  using: "composite"
+  steps:
+  - name: Setting up build environment
+    shell: bash
+    run: |
+      apt-get update
+      apt-get upgrade -y
+      apt-get install -y sudo
+      apt-get install -y wget libarchive-tools
+      apt-get install -y xorriso
+      apt-get install -y cpio xz-utils
+      apt-get install -y fdisk
+  - name: Build the iso image
+    env:
+      DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso"
+      CI_PROJECT_NAME: ${{ github.event.repository.name }}
+      CI_PIPELINE_ID: ${{ github.run_id }}
+    shell: bash
+    working-directory: ./gigabyte-ampere-cuttlefish-installer
+    run: |
+      sed -i "2i CI_PROJECT_NAME=${CI_PROJECT_NAME}" preseed/after_install_1.sh
+      sed -i "3i CI_PIPELINE_ID=${CI_PIPELINE_ID}" preseed/after_install_1.sh
+      wget -nv -c ${DEBIAN_ISO_URL}
+      ./addpreseed.sh
+      xz -9e preseed-mini.iso
