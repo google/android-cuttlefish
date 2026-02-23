@@ -1254,7 +1254,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to
       // boot 64 bit kernel using 32 bit u-boot / grub. Enable this code back
       // after making sure it works across all popular environments if
-      // (CanGenerateEsp(guest_configs[0].target_arch)) {
+      // (CanGenerateGrubEsp(guest_configs[0].target_arch)) {
       //   instance.set_ap_boot_flow(APBootFlow::Grub);
       // } else {
       //   instance.set_ap_boot_flow(APBootFlow::LegacyDirect);
