@@ -26,6 +26,14 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
+type Arch int
+
+const (
+	ArchUnknown Arch = iota
+	ArchX86
+	ArchArm
+)
+
 type GceHelper struct {
 	Service *compute.Service
 	Project string

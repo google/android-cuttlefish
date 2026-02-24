@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/android-cuttlefish/tools/baseimage/pkg/cli"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
@@ -29,7 +30,7 @@ const mountpoint = "/mnt/image"
 var (
 	project            string
 	zone               string
-	arch               string
+	arch               cli.Arch
 	sourceImageProject string
 	sourceImage        string
 	imageName          string
@@ -38,7 +39,7 @@ var (
 func init() {
 	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
 	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	flag.StringVar(&arch, "arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	flag.Var(&arch, "arch", "architecture of GCE image. Supports either x86_64 or arm64")
 	flag.StringVar(&sourceImageProject, "source-image-project", "", "Source image GCP project")
 	flag.StringVar(&sourceImage, "source-image", "", "Source image name")
 	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
@@ -161,9 +162,6 @@ func main() {
 	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
-	if arch == "" {
-		log.Fatal("usage: `-arch` must not be empty")
-	}
 	if sourceImageProject == "" {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
@@ -173,13 +171,9 @@ func main() {
 	if imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
-	architecture, err := gce.ParseArch(arch)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	opts := createImageOpts{
-		Arch:               architecture,
+		Arch:               arch.GceArch(),
 		SourceImageProject: sourceImageProject,
 		SourceImage:        sourceImage,
 		ImageName:          imageName,
