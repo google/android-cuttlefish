@@ -26,11 +26,14 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
 #include "android-base/strings.h"
@@ -135,7 +138,8 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     }
     return output_map;
   }
-  auto tokens = android::base::Tokenize(webrtc_device_id_flag, ",");
+  std::vector<std::string_view> tokens =
+      absl::StrSplit(webrtc_device_id_flag, ',', absl::SkipEmpty());
   CF_EXPECT(tokens.size() == 1 || tokens.size() == instance_nums.size(),
             "--webrtc_device_ids provided " << tokens.size()
                                             << " tokens"
@@ -144,7 +148,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
                                             << " is expected.");
   CF_EXPECT(!tokens.empty(), "--webrtc_device_ids is ill-formatted");
 
-  std::vector<std::string> device_ids;
+  std::vector<std::string_view> device_ids;
   if (tokens.size() != instance_nums.size()) {
     /* this is only possible when tokens.size() == 1
      * and instance_nums.size() > 1. The token must include {num}
@@ -154,7 +158,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     CF_EXPECT(device_id.find("{num}") != std::string::npos,
               "If one webrtc_device_ids is given for multiple instances, "
                   << " {num} should be included in webrtc_device_id.");
-    device_ids = std::vector<std::string>(instance_nums.size(), tokens.front());
+    device_ids = std::vector<std::string_view>(instance_nums.size(), tokens.front());
   }
 
   if (tokens.size() == instance_nums.size()) {
@@ -700,9 +704,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
   VLOG(0) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
 
-  auto straced = android::base::Tokenize(FLAGS_straced_host_executables, ",");
-  std::set<std::string> straced_set(straced.begin(), straced.end());
-  tmp_config_obj.set_straced_host_executables(straced_set);
+  tmp_config_obj.set_straced_host_executables(
+      absl::StrSplit(FLAGS_straced_host_executables, ',', absl::SkipEmpty()));
 
   tmp_config_obj.set_kvm_path(FLAGS_kvm_path);
   tmp_config_obj.set_vhost_vsock_path(FLAGS_vhost_vsock_path);

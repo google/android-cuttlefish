@@ -27,6 +27,8 @@
 #include <fmt/format.h>
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/host/libs/avb/avb.h"
@@ -71,10 +73,9 @@ std::string MergePartitionLists(const std::string& vendor,
                                 const std::string& system,
                                 const std::set<std::string>& extracted_images) {
   const std::string full_string = fmt::format("{} {}", vendor, system);
-  const std::vector<std::string> full_list =
-      android::base::Tokenize(full_string, " ");
   // std::set removes duplicates and orders the elements, which we want
-  const std::set<std::string> full_set(full_list.begin(), full_list.end());
+  const std::set<std::string> full_set =
+      absl::StrSplit(full_string, ' ', absl::SkipEmpty());
   std::set<std::string> filtered_set;
   std::set_intersection(full_set.cbegin(), full_set.cend(),
                         extracted_images.cbegin(), extracted_images.cend(),
@@ -173,22 +174,24 @@ Result<MiscInfo> GetCombinedDynamicPartitions(
       GetExpected(vendor_info, kSuperBlockDevices);
   if (block_devices_result.ok()) {
     result[kSuperBlockDevices] = *block_devices_result;
-    for (const auto& block_device :
-         android::base::Tokenize(result[kSuperBlockDevices], " ")) {
-      const auto key = "super_" + block_device + "_device_size";
+    for (std::string_view block_device :
+         absl::StrSplit(result[kSuperBlockDevices], ' ', absl::SkipEmpty())) {
+      const std::string key =
+          absl::StrCat("super_", block_device, "_device_size");
       result[key] = CF_EXPECT(GetExpected(vendor_info, key));
     }
   }
 
   result[kSuperPartitionGroups] =
       CF_EXPECT(GetExpected(vendor_info, kSuperPartitionGroups));
-  for (const auto& group :
-       android::base::Tokenize(result[kSuperPartitionGroups], " ")) {
-    const auto group_size_key = "super_" + group + "_group_size";
+  for (std::string_view group :
+       absl::StrSplit(result[kSuperPartitionGroups], ' ', absl::SkipEmpty())) {
+    const auto group_size_key = absl::StrCat("super_", group, "_group_size");
     result[group_size_key] =
         CF_EXPECT(GetExpected(vendor_info, group_size_key));
 
-    const auto partition_list_key = "super_" + group + "_partition_list";
+    const auto partition_list_key =
+        absl::StrCat("super_", group, "_partition_list");
     result[partition_list_key] = GetPartitionList(
         vendor_info, system_info, partition_list_key, extracted_images);
   }
@@ -256,7 +259,8 @@ Result<VbmetaArgs> GetVbmetaArgs(const MiscInfo& misc_info,
   // due to how Command.AddParameter handles each argument
   const auto extra_args_result = GetExpected(misc_info, kAvbVbmetaArgs);
   if (extra_args_result.ok()) {
-    for (const auto& arg : android::base::Tokenize(*extra_args_result, " ")) {
+    for (std::string_view arg :
+         absl::StrSplit(*extra_args_result, ' ', absl::SkipEmpty())) {
       result.extra_arguments.emplace_back(arg);
     }
   }

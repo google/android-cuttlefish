@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/host/libs/config/config_constants.h"
 
@@ -30,8 +30,8 @@ InstanceIdTest::InstanceIdTest() {
   if (cuttlefish_instance) {
     envs_[kCuttlefishInstanceEnvVarName] = cuttlefish_instance.value();
   }
-  cmd_args_ = android::base::Tokenize(GetParam().cmd_args, " ");
-  selector_args_ = android::base::Tokenize(GetParam().selector_args, " ");
+  cmd_args_ = absl::StrSplit(GetParam().cmd_args, ' ', absl::SkipEmpty());
+  selector_args_ = absl::StrSplit(GetParam().selector_args, ' ', absl::SkipEmpty());
   expected_ids_ = GetParam().expected_ids;
   expected_result_ = GetParam().expected_result;
   requested_num_instances_ = GetParam().requested_num_instances;

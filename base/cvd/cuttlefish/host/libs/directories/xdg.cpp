@@ -23,8 +23,10 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -69,14 +71,14 @@ std::string XdgRuntimeDir() {
 Result<std::vector<std::string>> XdgDataDirs() {
   static constexpr char kDefault[] = "/usr/local/share/:/usr/share/";
   std::string str = NonEmptyEnv("XDG_DATA_DIRS").value_or(kDefault);
-  std::vector<std::string> dirs = android::base::Tokenize(str, ":");
+  std::vector<std::string> dirs = absl::StrSplit(str, ':', absl::SkipEmpty());
   dirs.emplace(dirs.begin(), CF_EXPECT(XdgDataHome()));
   return dirs;
 }
 
 Result<std::vector<std::string>> XdgConfigDirs() {
   std::string str = NonEmptyEnv("XDG_CONFIG_DIRS").value_or("/etc/xdg");
-  std::vector<std::string> dirs = android::base::Tokenize(str, ":");
+  std::vector<std::string> dirs = absl::StrSplit(str, ':', absl::SkipEmpty());
   dirs.emplace(dirs.begin(), CF_EXPECT(XdgConfigHome()));
   return dirs;
 }

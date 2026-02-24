@@ -19,9 +19,10 @@
 #include <stddef.h>
 
 #include <string>
+#include <string_view>
 #include <utility>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -44,11 +45,11 @@ Result<size_t> GetDiskUsage(const std::string& path,
   du_cmd.AddParameter(path);
 
   std::string out = CF_EXPECT(RunAndCaptureStdout(std::move(du_cmd)));
-  std::vector<std::string> split_out =
-      android::base::Tokenize(out, kWhitespaceCharacters);
+  std::vector<std::string_view> split_out = absl::StrSplit(
+      out, absl::ByAnyChar(kWhitespaceCharacters), absl::SkipEmpty());
   CF_EXPECTF(!split_out.empty(),
              "No valid output read from `du` command in \"{}\"", out);
-  std::string total = split_out.front();
+  std::string_view total = split_out.front();
 
   size_t result;
   CF_EXPECTF(absl::SimpleAtoi(total, &result),

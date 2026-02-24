@@ -17,7 +17,7 @@
 
 #include <utility>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gtest/gtest.h>
 
 namespace cuttlefish {
@@ -27,12 +27,12 @@ ValidNamesTest::ValidNamesTest() { Init(); }
 
 void ValidNamesTest::Init() {
   auto [input, expected_output] = GetParam();
-  selector_args_ = android::base::Tokenize(input, " ");
+  selector_args_ = absl::StrSplit(input, ' ', absl::SkipEmpty());
   expected_output_ = std::move(expected_output);
 }
 
 InvalidNamesTest::InvalidNamesTest() {
-  selector_args_ = android::base::Tokenize(GetParam(), " ");
+  selector_args_ = absl::StrSplit(GetParam(), ' ', absl::SkipEmpty());
 }
 
 }  // namespace selector

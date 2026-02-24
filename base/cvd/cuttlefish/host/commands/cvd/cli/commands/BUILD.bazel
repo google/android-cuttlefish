@@ -212,6 +212,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:curl_http_client",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@zlib",
     ],
 )

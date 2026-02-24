@@ -15,7 +15,6 @@
 
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 
-#include <android-base/strings.h>
 #include <stdint.h>
 
 #include <cstddef>
@@ -25,14 +24,17 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <android-base/expected.h>
+#include <android-base/strings.h>
 #include <json/value.h>
 #include "absl/log/log.h"
-
 #include "absl/strings/match.h"
+#include "absl/strings/str_split.h"
+
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -54,8 +56,9 @@ std::set<std::string> GetSupportedFlags(const std::string& go_binary_path) {
   std::string err;
   RunWithManagedStdio(std::move(command), nullptr, &out, &err);
   // "casdownloader -help" outputs to stderr.
-  std::vector<std::string> lines = android::base::Tokenize(err, "\n");
-  for (std::string& line : lines) {
+  std::vector<std::string_view> lines =
+      absl::StrSplit(err, '\n', absl::SkipEmpty());
+  for (std::string_view& line : lines) {
     // Sample help output line: "  -version=false: Print version information"
     if (line.find("  -") != std::string::npos) {
       size_t start = line.find("  -") + 3;
@@ -64,7 +67,7 @@ std::set<std::string> GetSupportedFlags(const std::string& go_binary_path) {
         end = line.size();
       }
       if (end > start) {
-        flags.insert(line.substr(start, end - start));
+        flags.emplace(line.substr(start, end - start));
       }
     }
   }

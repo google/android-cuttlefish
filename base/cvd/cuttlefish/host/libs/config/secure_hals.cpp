@@ -22,12 +22,11 @@
 #include <unordered_map>
 
 #include <android-base/no_destructor.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/result/result.h"
 
 using android::base::NoDestructor;
-using android::base::Tokenize;
 
 namespace cuttlefish {
 namespace {
@@ -68,8 +67,9 @@ Result<SecureHal> ParseSecureHal(std::string mode) {
 
 Result<std::set<SecureHal>> ParseSecureHals(const std::string& hals) {
   std::set<SecureHal> args_set;
-  for (auto& hal : Tokenize(hals, ",:;|/\\+")) {
-    args_set.emplace(CF_EXPECT(ParseSecureHal(hal)));
+  for (std::string_view hal :
+       absl::StrSplit(hals, absl::ByAnyChar(",:;|/\\+"), absl::SkipEmpty())) {
+    args_set.emplace(CF_EXPECT(ParseSecureHal(std::string(hal))));
   }
   return args_set;
 }

@@ -22,12 +22,13 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/scopeguard.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include "absl/log/log.h"
 
@@ -172,15 +173,15 @@ std::string ColoredUrl(const std::string& url) {
   std::string coloring_prefix = "\033[01;31m";
   std::string output;
   auto ls_colors = StringFromEnv("LS_COLORS", "");
-  std::vector<std::string> colors_vec = android::base::Tokenize(ls_colors, ":");
+  std::vector<std::string_view> colors_vec = absl::StrSplit(ls_colors, ':', absl::SkipEmpty());
   std::unordered_map<std::string, std::string> colors;
   for (const auto& color_entry : colors_vec) {
-    std::vector<std::string> tokenized =
-        android::base::Tokenize(color_entry, "=");
+    std::vector<std::string_view> tokenized =
+        absl::StrSplit(color_entry, '=', absl::SkipEmpty());
     if (tokenized.size() != 2) {
       continue;
     }
-    colors[tokenized.front()] = tokenized.back();
+    colors.emplace(tokenized.front(), tokenized.back());
   }
 
   android::base::ScopeGuard return_action([&coloring_prefix, url, &output]() {

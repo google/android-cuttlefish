@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/cvd/unittests/selector/creation_analyzer_helper.h"
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 
@@ -50,9 +50,9 @@ CommandInvocation MockParseInvocation(const std::vector<std::string>& args) {
 CreationInfoGenTest::CreationInfoGenTest() { Init(); }
 void CreationInfoGenTest::Init() {
   const auto& input_param = GetParam();
-  selector_args_ = android::base::Tokenize(input_param.selector_args, " ");
+  selector_args_ = absl::StrSplit(input_param.selector_args, ' ', absl::SkipEmpty());
   auto cmd_invocation =
-      MockParseInvocation(android::base::Tokenize(input_param.cmd_args, " "));
+      MockParseInvocation(absl::StrSplit(input_param.cmd_args, ' ', absl::SkipEmpty()));
   sub_cmd_ = cmd_invocation.command;
   cmd_args_ = std::move(cmd_invocation.arguments);
   if (!input_param.home.empty()) {
