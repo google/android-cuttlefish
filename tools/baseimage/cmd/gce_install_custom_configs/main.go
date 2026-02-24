@@ -31,15 +31,26 @@ const (
 	cuttlefishIntegrationDefaultsPath = "/etc/defaults/cuttlefish-integration"
 )
 
+// Flags
 var (
-	project                             = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
-	source_image                        = flag.String("source-image", "", "Source image name")
-	image_name                          = flag.String("image-name", "", "output GCE image name")
-	cuttlefish_ho_defaults_src          = flag.String("cuttlefish-ho-defaults-src", "", "Local path to custom HO defaults")
-	cuttlefish_integration_defaults_src = flag.String("cuttlefish-integration-defaults-src", "", "Local path to cuttlefish integration defaults")
+	project                          string
+	zone                             string
+	sourceImageProject               string
+	sourceImage                      string
+	imageName                        string
+	cuttlefishHODefaultsSrc          string
+	cuttlefishIntegrationDefaultsSrc string
 )
+
+func init() {
+	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
+	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	flag.StringVar(&sourceImageProject, "source-image-project", "", "Source image GCP project")
+	flag.StringVar(&sourceImage, "source-image", "", "Source image name")
+	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
+	flag.StringVar(&cuttlefishHODefaultsSrc, "cuttlefish-ho-defaults-src", "", "Local path to custom HO defaults")
+	flag.StringVar(&cuttlefishIntegrationDefaultsSrc, "cuttlefish-integration-defaults-src", "", "Local path to cuttlefish integration defaults")
+}
 
 type createImageOpts struct {
 	SourceImageProject               string
@@ -184,33 +195,33 @@ func main() {
 
 	flag.Parse()
 
-	if *project == "" {
+	if project == "" {
 		log.Fatal(usage("`-project` must not be empty"))
 	}
-	if *zone == "" {
+	if zone == "" {
 		log.Fatal(usage("`-zone` must not be empty"))
 	}
-	if *source_image_project == "" {
+	if sourceImageProject == "" {
 		log.Fatal(usage("`-source-image-project` must not be empty"))
 	}
-	if *source_image == "" {
+	if sourceImage == "" {
 		log.Fatal(usage("`-source-image` must not be empty"))
 	}
-	if *image_name == "" {
+	if imageName == "" {
 		log.Fatal(usage("`-image-name` must not be empty"))
 	}
-	if *cuttlefish_ho_defaults_src == "" && *cuttlefish_integration_defaults_src == "" {
+	if cuttlefishHODefaultsSrc == "" && cuttlefishIntegrationDefaultsSrc == "" {
 		log.Fatal(usage("one or more custom configurations are required"))
 	}
 
 	opts := createImageOpts{
-		SourceImageProject:      *source_image_project,
-		SourceImage:             *source_image,
-		ImageName:               *image_name,
-		CuttlefishHODefaultsSrc: *cuttlefish_ho_defaults_src,
+		SourceImageProject:      sourceImageProject,
+		SourceImage:             sourceImage,
+		ImageName:               imageName,
+		CuttlefishHODefaultsSrc: cuttlefishHODefaultsSrc,
 	}
 
-	if err := createImage(*project, *zone, opts); err != nil {
+	if err := createImage(project, zone, opts); err != nil {
 		log.Fatal(err)
 	}
 }
