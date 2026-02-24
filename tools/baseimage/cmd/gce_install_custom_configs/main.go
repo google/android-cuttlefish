@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
@@ -27,23 +28,26 @@ import (
 const (
 	mountpoint = "/mnt/image"
 
-	cuttlefishHODefaultsPath = "/etc/default/cuttlefish-host_orchestrator"
+	cuttlefishHODefaultsPath          = "/etc/default/cuttlefish-host_orchestrator"
+	cuttlefishIntegrationDefaultsPath = "/etc/defaults/cuttlefish-integration"
 )
 
 var (
-	project                    = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                       = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	source_image_project       = flag.String("source-image-project", "", "Source image GCP project")
-	source_image               = flag.String("source-image", "", "Source image name")
-	image_name                 = flag.String("image-name", "", "output GCE image name")
-	cuttlefish_ho_defaults_src = flag.String("cuttlefish-ho-defaults-src", "", "Local path to custom HO defaults")
+	project                             = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
+	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
+	source_image                        = flag.String("source-image", "", "Source image name")
+	image_name                          = flag.String("image-name", "", "output GCE image name")
+	cuttlefish_ho_defaults_src          = flag.String("cuttlefish-ho-defaults-src", "", "Local path to custom HO defaults")
+	cuttlefish_integration_defaults_src = flag.String("cuttlefish-integration-defaults-src", "", "Local path to cuttlefish integration defaults")
 )
 
 type createImageOpts struct {
-	SourceImageProject      string
-	SourceImage             string
-	ImageName               string
-	CuttlefishHODefaultsSrc string
+	SourceImageProject               string
+	SourceImage                      string
+	ImageName                        string
+	CuttlefishHODefaultsSrc          string
+	CuttlefishIntegrationDefaultsSrc string
 }
 
 func mountAttachedDisk(project, zone, insName string) error {
@@ -75,6 +79,18 @@ func cleanupDetachDisk(h *gce.GceHelper, ins, disk string) {
 	} else {
 		log.Println("cleanup: disk detached")
 	}
+}
+
+func uploadConfig(project, zone, insName, src, dst string) error {
+	tmp := filepath.Join("/tmp", filepath.Base(src))
+	if err := gce.UploadFile(project, zone, insName, src, tmp); err != nil {
+		return err
+	}
+	cmd := fmt.Sprintf("sudo cp %s %s", tmp, mountpoint+dst)
+	if err := gce.RunCmd(project, zone, insName, cmd); err != nil {
+		return err
+	}
+	return nil
 }
 
 func createImage(project, zone string, opts createImageOpts) error {
@@ -118,12 +134,13 @@ func createImage(project, zone string, opts createImageOpts) error {
 	}
 
 	if opts.CuttlefishHODefaultsSrc != "" {
-		const tmpDst = "/tmp/cuttlefish-host_orchestrator"
-		if err := gce.UploadFile(project, zone, insName, opts.CuttlefishHODefaultsSrc, tmpDst); err != nil {
+		if err := uploadConfig(project, zone, insName, opts.CuttlefishHODefaultsSrc, cuttlefishHODefaultsPath); err != nil {
 			return err
 		}
-		cmd := fmt.Sprintf("sudo cp %s %s", tmpDst, mountpoint+cuttlefishHODefaultsPath)
-		if err := gce.RunCmd(project, zone, insName, cmd); err != nil {
+	}
+
+	if opts.CuttlefishIntegrationDefaultsSrc != "" {
+		if err := uploadConfig(project, zone, insName, opts.CuttlefishIntegrationDefaultsSrc, cuttlefishIntegrationDefaultsPath); err != nil {
 			return err
 		}
 	}
@@ -160,7 +177,8 @@ func usage(msg string) string {
   -source-image-project SRC_IMG_PROJECT \
   -source-image SRC_IMG \
   -image-name IMG_NAME \
-  -cuttlefish-ho-defaults-src SRC
+  [ -cuttlefish-ho-defaults-src SRC ] \
+  [ -cuttlefish-integration-defaults-src SRC ] \
 `
 }
 
@@ -183,8 +201,8 @@ func main() {
 	if *image_name == "" {
 		log.Fatal(usage("`-image-name` must not be empty"))
 	}
-	if *cuttlefish_ho_defaults_src == "" {
-		log.Fatal(usage("`-cuttlefish-ho-defaults-src` must not be empty"))
+	if *cuttlefish_ho_defaults_src == "" && *cuttlefish_integration_defaults_src == "" {
+		log.Fatal(usage("one or more custom configurations are required"))
 	}
 
 	opts := createImageOpts{
