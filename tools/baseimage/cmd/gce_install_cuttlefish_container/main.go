@@ -29,15 +29,26 @@ const (
 	defaultsCuttlefishIntegrationFile = "/etc/defaults/cuttlefish-integration"
 )
 
+// Flags
 var (
-	project              = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                 = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	arch                 = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
-	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
-	source_image         = flag.String("source-image", "", "Source image name")
-	image_name           = flag.String("image-name", "", "output GCE image name")
-	container_image_src  = flag.String("container-image-src", "", "local path to container image")
+	project            string
+	zone               string
+	arch               string
+	sourceImageProject string
+	sourceImage        string
+	imageName          string
+	containerImageSrc  string
 )
+
+func init() {
+	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
+	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	flag.StringVar(&arch, "arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	flag.StringVar(&sourceImageProject, "source-image-project", "", "Source image GCP project")
+	flag.StringVar(&sourceImage, "source-image", "", "Source image name")
+	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
+	flag.StringVar(&containerImageSrc, "container-image-src", "", "local path to container image")
+}
 
 type amendImageOpts struct {
 	Arch               gce.Arch
@@ -188,40 +199,40 @@ func main() {
 
 	flag.Parse()
 
-	if *project == "" {
+	if project == "" {
 		log.Fatal("usage: `-project` must not be empty")
 	}
-	if *zone == "" {
+	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
-	if *arch == "" {
+	if arch == "" {
 		log.Fatal("usage: `-arch` must not be empty")
 	}
-	if *source_image_project == "" {
+	if sourceImageProject == "" {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
-	if *source_image == "" {
+	if sourceImage == "" {
 		log.Fatal("usage: `-source-image` must not be empty")
 	}
-	if *image_name == "" {
+	if imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
-	if *container_image_src == "" {
+	if containerImageSrc == "" {
 		log.Fatal("usage: `-container-image-src` must not be empty")
 	}
-	architecture, err := gce.ParseArch(*arch)
+	architecture, err := gce.ParseArch(arch)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	opts := amendImageOpts{
 		Arch:               architecture,
-		SourceImageProject: *source_image_project,
-		SourceImage:        *source_image,
-		ImageName:          *image_name,
-		ContainerImageSrc:  *container_image_src,
+		SourceImageProject: sourceImageProject,
+		SourceImage:        sourceImage,
+		ImageName:          imageName,
+		ContainerImageSrc:  containerImageSrc,
 	}
-	if err := amendImageMain(*project, *zone, opts); err != nil {
+	if err := amendImageMain(project, zone, opts); err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf(`Copy the image somewhere else:
@@ -231,7 +242,7 @@ gcloud compute images create \
   --project=[DEST_PROJECT] \
   --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
 `,
-		*project,
-		*image_name,
+		project,
+		imageName,
 	)
 }
