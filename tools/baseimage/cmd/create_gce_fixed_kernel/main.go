@@ -41,14 +41,24 @@ var sourceImageMap = map[string]map[int]string{
 
 const mountpoint = "/mnt/image"
 
+// Flags
 var (
-	project       = flag.String("project", "", "GCE project whose resources will be used for creating the image")
-	zone          = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
-	arch          = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
-	debianVersion = flag.Int("debian-version", 13, "Debian version: https://www.debian.org/releases")
-	linuxImageDeb = flag.String("linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
-	imageName     = flag.String("image-name", "", "output GCE image name")
+	project       string
+	zone          string
+	arch          string
+	debianVersion int
+	linuxImageDeb string
+	imageName     string
 )
+
+func init() {
+	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
+	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	flag.StringVar(&arch, "arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	flag.IntVar(&debianVersion, "debian-version", 13, "Debian version: https://www.debian.org/releases")
+	flag.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
+	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
+}
 
 func mountAttachedDisk(project, zone, insName string) error {
 	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
@@ -145,49 +155,49 @@ func createImageMain(project, zone string, opts kernelImageOpts) error {
 func main() {
 	flag.Parse()
 
-	if *project == "" {
+	if project == "" {
 		log.Fatal("usage: `-project` must not be empty")
 	}
-	if *zone == "" {
+	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
-	if *arch == "" {
+	if arch == "" {
 		log.Fatal("usage: `-arch` must not be empty")
 	}
-	if *linuxImageDeb == "" {
+	if linuxImageDeb == "" {
 		log.Fatal("usage: `-linux-image-deb` must not be empty")
 	}
-	if *imageName == "" {
+	if imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
 
-	architecture, err := gce.ParseArch(*arch)
+	architecture, err := gce.ParseArch(arch)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if _, ok := sourceImageMap[*arch]; !ok {
+	if _, ok := sourceImageMap[arch]; !ok {
 		log.Fatalf("no source image found for arch %s: supported archs: %v",
-			*arch,
+			arch,
 			slices.Collect(maps.Keys(sourceImageMap)))
 	}
 
-	if _, ok := sourceImageMap[*arch][*debianVersion]; !ok {
+	if _, ok := sourceImageMap[arch][debianVersion]; !ok {
 		log.Fatalf("no source image found for debian %d: supported versions: %v",
-			*debianVersion,
-			slices.Collect(maps.Keys(sourceImageMap[*arch])))
+			debianVersion,
+			slices.Collect(maps.Keys(sourceImageMap[arch])))
 	}
 
 	opts := kernelImageOpts{
 		Arch:          architecture,
-		SourceImage:   sourceImageMap[*arch][*debianVersion],
-		LinuxImageDeb: *linuxImageDeb,
-		ImageName:     *imageName,
+		SourceImage:   sourceImageMap[arch][debianVersion],
+		LinuxImageDeb: linuxImageDeb,
+		ImageName:     imageName,
 	}
-	if err := createImageMain(*project, *zone, opts); err != nil {
+	if err := createImageMain(project, zone, opts); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("image %q was created successfully", *imageName)
+	log.Printf("image %q was created successfully", imageName)
 	fmt.Printf(`Copy the image somewhere else:
 gcloud compute images create \
   --source-image-project=%s \
@@ -195,7 +205,7 @@ gcloud compute images create \
   --project=[DEST_PROJECT] \
   --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
 `,
-		*project,
-		*imageName,
+		project,
+		imageName,
 	)
 }
