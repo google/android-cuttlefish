@@ -31,13 +31,13 @@ const (
 )
 
 var (
-	project                             = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	arch                                = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
-	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
-	source_image                        = flag.String("source-image", "", "Source image name")
-	image_name                          = flag.String("image-name", "", "output GCE image name")
-	container_image_src                 = flag.String("container-image-src", "", "local path to container image")
+	project              = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
+	zone                 = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	arch                 = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
+	source_image         = flag.String("source-image", "", "Source image name")
+	image_name           = flag.String("image-name", "", "output GCE image name")
+	container_image_src  = flag.String("container-image-src", "", "local path to container image")
 )
 
 type amendImageOpts struct {
