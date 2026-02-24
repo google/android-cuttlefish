@@ -21,6 +21,7 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/google/android-cuttlefish/tools/baseimage/pkg/cli"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
@@ -28,12 +29,12 @@ import (
 // Cuttlefish base images are based on debian images.
 const debianSourceImageProject = "debian-cloud"
 
-var sourceImageMap = map[string]map[int]string{
-	"x86_64": {
+var sourceImageMap = map[gce.Arch]map[int]string{
+	gce.ArchX86: {
 		12: "debian-12-bookworm-v20260114",
 		13: "debian-13-trixie-v20260114",
 	},
-	"arm64": {
+	gce.ArchArm: {
 		12: "debian-12-bookworm-arm64-v20260114",
 		13: "debian-13-trixie-arm64-v20260114",
 	},
@@ -45,7 +46,7 @@ const mountpoint = "/mnt/image"
 var (
 	project       string
 	zone          string
-	arch          string
+	arch          cli.Arch
 	debianVersion int
 	linuxImageDeb string
 	imageName     string
@@ -54,7 +55,7 @@ var (
 func init() {
 	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
 	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	flag.StringVar(&arch, "arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	flag.Var(&arch, "arch", "architecture of GCE image. Supports either x86_64 or arm64")
 	flag.IntVar(&debianVersion, "debian-version", 13, "Debian version: https://www.debian.org/releases")
 	flag.StringVar(&linuxImageDeb, "linux-image-deb", "", "linux-image-* package name. E.g. linux-image-6.1.0-40-cloud-amd64")
 	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
@@ -161,9 +162,6 @@ func main() {
 	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
-	if arch == "" {
-		log.Fatal("usage: `-arch` must not be empty")
-	}
 	if linuxImageDeb == "" {
 		log.Fatal("usage: `-linux-image-deb` must not be empty")
 	}
@@ -171,26 +169,21 @@ func main() {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
 
-	architecture, err := gce.ParseArch(arch)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, ok := sourceImageMap[arch]; !ok {
+	if _, ok := sourceImageMap[arch.GceArch()]; !ok {
 		log.Fatalf("no source image found for arch %s: supported archs: %v",
 			arch,
 			slices.Collect(maps.Keys(sourceImageMap)))
 	}
 
-	if _, ok := sourceImageMap[arch][debianVersion]; !ok {
+	if _, ok := sourceImageMap[arch.GceArch()][debianVersion]; !ok {
 		log.Fatalf("no source image found for debian %d: supported versions: %v",
 			debianVersion,
-			slices.Collect(maps.Keys(sourceImageMap[arch])))
+			slices.Collect(maps.Keys(sourceImageMap[arch.GceArch()])))
 	}
 
 	opts := kernelImageOpts{
-		Arch:          architecture,
-		SourceImage:   sourceImageMap[arch][debianVersion],
+		Arch:          arch.GceArch(),
+		SourceImage:   sourceImageMap[arch.GceArch()][debianVersion],
 		LinuxImageDeb: linuxImageDeb,
 		ImageName:     imageName,
 	}
