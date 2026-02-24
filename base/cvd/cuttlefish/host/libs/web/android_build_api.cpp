@@ -231,12 +231,23 @@ Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
   const std::string url = android_build_url_->GetBuildUrl(build_id, target);
   CF_EXPECTF(!initial_status.empty(),
              "\"{}\" is not a valid branch or build id.", build_id);
+
   std::string status(initial_status);
+  bool has_retried = false;
   while (retry_period_ != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
-    VLOG(0) << "Status is \"" << status << "\". Waiting for "
-            << retry_period_.count() << " seconds and checking again.";
+    LOG(INFO) << build_id << " build status is \"" << status
+              << "\".  Waiting for " << retry_period_.count()
+              << " seconds to check again.";
+    if (!has_retried) {
+      LOG(WARNING)
+          << "Retries will continue indefinitely until a terminal build status "
+             "is detected.  Consider using a <branch>/<target> build specifier "
+             "to default to the latest green build completed.";
+      has_retried = true;
+    }
     std::this_thread::sleep_for(retry_period_);
+
     auto response =
         CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
     Json::Value json = CF_EXPECT(GetResponseJson(response),
