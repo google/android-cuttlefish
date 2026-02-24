@@ -25,14 +25,24 @@ import (
 
 const mountpoint = "/mnt/image"
 
+// Flags
 var (
-	project              = flag.String("project", "", "GCE project whose resources will be used for creating the image")
-	zone                 = flag.String("zone", "us-central1-a", "GCE zone used for creating relevant resources")
-	arch                 = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
-	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
-	source_image         = flag.String("source-image", "", "Source image name")
-	image_name           = flag.String("image-name", "", "output GCE image name")
+	project            string
+	zone               string
+	arch               string
+	sourceImageProject string
+	sourceImage        string
+	imageName          string
 )
+
+func init() {
+	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
+	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	flag.StringVar(&arch, "arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	flag.StringVar(&sourceImageProject, "source-image-project", "", "Source image GCP project")
+	flag.StringVar(&sourceImage, "source-image", "", "Source image name")
+	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
+}
 
 type createImageOpts struct {
 	Arch               gce.Arch
@@ -145,39 +155,39 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 func main() {
 	flag.Parse()
 
-	if *project == "" {
+	if project == "" {
 		log.Fatal("usage: `-project` must not be empty")
 	}
-	if *zone == "" {
+	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
-	if *arch == "" {
+	if arch == "" {
 		log.Fatal("usage: `-arch` must not be empty")
 	}
-	if *source_image_project == "" {
+	if sourceImageProject == "" {
 		log.Fatal("usage: `-source-image-project` must not be empty")
 	}
-	if *source_image == "" {
+	if sourceImage == "" {
 		log.Fatal("usage: `-source-image` must not be empty")
 	}
-	if *image_name == "" {
+	if imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
-	architecture, err := gce.ParseArch(*arch)
+	architecture, err := gce.ParseArch(arch)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	opts := createImageOpts{
 		Arch:               architecture,
-		SourceImageProject: *source_image_project,
-		SourceImage:        *source_image,
-		ImageName:          *image_name,
+		SourceImageProject: sourceImageProject,
+		SourceImage:        sourceImage,
+		ImageName:          imageName,
 	}
-	if err := createImageMain(*project, *zone, opts); err != nil {
+	if err := createImageMain(project, zone, opts); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("image %q was created successfully", *image_name)
+	log.Printf("image %q was created successfully", imageName)
 	fmt.Printf(`Copy the image somewhere else:
 gcloud compute images create \
   --source-image-project=%s \
@@ -185,7 +195,7 @@ gcloud compute images create \
   --project=[DEST_PROJECT] \
   --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
 `,
-		*project,
-		*image_name,
+		project,
+		imageName,
 	)
 }
