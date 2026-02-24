@@ -17,8 +17,9 @@
 
 #include <chrono>
 #include <string>
+#include <string_view>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
@@ -37,14 +38,16 @@ SharedFD StartIpv4(const std::string& host, int port, std::chrono::seconds timeo
 }
 
 SharedFD StartIpv6(const std::string& host, int port, std::chrono::seconds timeout) {
-  const auto host_parsed = android::base::Tokenize(host, "%");
+  const std::vector<std::string_view> host_parsed =
+      absl::StrSplit(host, '%', absl::SkipEmpty());
   const auto host_interface_tokens_count = host_parsed.size();
 
   CHECK(host_interface_tokens_count == 1 || host_interface_tokens_count == 2)
-      << "Cannot parse passed host " << host << " to extract the network interface separated by %";
+      << "Cannot parse passed host " << host
+      << " to extract the network interface separated by %";
 
-  std::string host_name;
-  std::string interface_name;
+  std::string_view host_name;
+  std::string_view interface_name;
   if (host_parsed.size() == 2) {
     host_name = host_parsed[0];
     interface_name = host_parsed[1];
@@ -52,7 +55,9 @@ SharedFD StartIpv6(const std::string& host, int port, std::chrono::seconds timeo
     host_name = host;
   }
 
-  return SharedFD::Socket6Client(host_name, interface_name, port, SOCK_STREAM, timeout);
+  return SharedFD::Socket6Client(std::string(host_name),
+                                 std::string(interface_name), port, SOCK_STREAM,
+                                 timeout);
 }
 
 }

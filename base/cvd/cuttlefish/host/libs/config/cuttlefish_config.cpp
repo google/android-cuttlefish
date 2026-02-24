@@ -30,7 +30,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "android-base/strings.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "json/reader.h"
@@ -306,8 +305,9 @@ void CuttlefishConfig::set_netsim_connector_instance_num(
 static constexpr char kNetsimArgs[] = "netsim_args";
 void CuttlefishConfig::set_netsim_args(const std::string& netsim_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Tokenize(netsim_args, " ")) {
-    args_json_obj.append(arg);
+  for (std::string_view arg :
+       absl::StrSplit(netsim_args, ' ', absl::SkipEmpty())) {
+    args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kNetsimArgs] = args_json_obj;
 }

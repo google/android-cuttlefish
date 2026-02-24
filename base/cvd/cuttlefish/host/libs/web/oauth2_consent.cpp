@@ -22,14 +22,17 @@
 
 #include <iostream>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <json/value.h>
@@ -51,7 +54,6 @@ namespace cuttlefish {
 namespace {
 
 using android::base::Join;
-using android::base::Tokenize;
 
 Result<std::string> AuthorizationCodeFromUrl(const std::string_view url) {
   std::string_view code = url;
@@ -98,8 +100,10 @@ class HttpServer {
     }
     CF_EXPECT_EQ(client->GetErrno(), 0, client->StrError());
 
-    CF_EXPECT(request.str().find("\r\n") != std::string::npos);
-    std::vector<std::string> request_lines = Tokenize(request.str(), "\r\n");
+    std::string request_str = request.str();
+    CF_EXPECT(request_str.find("\r\n") != std::string::npos);
+    std::vector<std::string_view> request_lines =
+        absl::StrSplit(request_str, absl::ByAnyChar("\r\n"), absl::SkipEmpty());
     CF_EXPECT(!request_lines.empty(), "no lines in input");
 
     std::string code = CF_EXPECT(AuthorizationCodeFromUrl(request_lines[0]));
@@ -198,8 +202,9 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   CF_EXPECTF(token_json.isMember(kScope), "No '{}'", kScope);
   CF_EXPECT_EQ(token_json[kScope].type(), Json::ValueType::stringValue);
   std::string response_scope = token_json[kScope].asString();
-  std::vector<std::string> response_scopes = Tokenize(response_scope, " ");
-  for (const std::string& scope : request.scopes) {
+  std::set<std::string_view> response_scopes =
+      absl::StrSplit(response_scope, ' ', absl::SkipEmpty());
+  for (std::string_view scope : request.scopes) {
     CF_EXPECTF(Contains(response_scopes, scope), "Response missing '{}'",
                scope);
   }

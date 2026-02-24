@@ -20,5 +20,6 @@ cf_cc_library(
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )

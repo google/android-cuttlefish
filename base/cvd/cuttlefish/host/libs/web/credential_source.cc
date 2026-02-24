@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <json/value.h>
 #include <json/writer.h>
 #include <openssl/base.h>
@@ -205,23 +206,22 @@ RefreshTokenCredentialSource::FromOauth2ClientFile(
     std::string client_id = "";
     std::string client_secret = "";
     std::string refresh_token = "";
-    auto lines = android::base::Tokenize(oauth_contents, "\n");
-    for (auto line : lines) {
-      std::string_view line_view = line;
+    for (std::string_view line :
+         absl::StrSplit(oauth_contents, '\n', absl::SkipEmpty())) {
       static constexpr std::string_view kClientIdPrefix = "client_id =";
-      if (android::base::ConsumePrefix(&line_view, kClientIdPrefix)) {
-        client_id = android::base::Trim(line_view);
+      if (android::base::ConsumePrefix(&line, kClientIdPrefix)) {
+        client_id = android::base::Trim(line);
         continue;
       }
       static constexpr std::string_view kClientSecretPrefix = "client_secret =";
-      if (android::base::ConsumePrefix(&line_view, kClientSecretPrefix)) {
-        client_secret = android::base::Trim(line_view);
+      if (android::base::ConsumePrefix(&line, kClientSecretPrefix)) {
+        client_secret = android::base::Trim(line);
         continue;
       }
       static constexpr std::string_view kRefreshTokenPrefix =
           "gs_oauth2_refresh_token =";
-      if (android::base::ConsumePrefix(&line_view, kRefreshTokenPrefix)) {
-        refresh_token = android::base::Trim(line_view);
+      if (android::base::ConsumePrefix(&line, kRefreshTokenPrefix)) {
+        refresh_token = android::base::Trim(line);
         continue;
       }
     }

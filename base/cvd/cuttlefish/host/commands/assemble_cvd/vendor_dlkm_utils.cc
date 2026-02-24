@@ -115,7 +115,7 @@ Result<bool> WriteFsConfig(const std::string& output_path,
 }
 
 std::vector<std::string> GetRamdiskModules(
-    const std::vector<std::string>& all_modules) {
+    const std::set<std::string>& all_modules) {
   static constexpr auto kRamdiskModules = {
       "failover.ko",
       "nd_virtio.ko",
@@ -239,11 +239,12 @@ std::map<std::string, std::vector<std::string>> LoadModuleDeps(
     const std::string& filename) {
   std::map<std::string, std::vector<std::string>> dependency_map;
   const auto dep_str = android::base::Trim(ReadFile(filename));
-  const std::vector<std::string> dep_lines = absl::StrSplit(dep_str, "\n");
+  const std::vector<std::string_view> dep_lines = absl::StrSplit(dep_str, "\n");
   for (const auto& line : dep_lines) {
     const auto mod_name = line.substr(0, line.find(":"));
-    auto deps = android::base::Tokenize(line.substr(mod_name.size() + 1), " ");
-    dependency_map[mod_name] = std::move(deps);
+    std::vector<std::string> deps = absl::StrSplit(
+        line.substr(mod_name.size() + 1), ' ', absl::SkipEmpty());
+    dependency_map.emplace(mod_name, std::move(deps));
   }
 
   return dependency_map;
@@ -422,12 +423,6 @@ Result<void> BuildVbmetaImage(const std::string& vendor_dlkm_img,
   return {};
 }
 
-std::vector<std::string> Dedup(std::vector<std::string>&& vec) {
-  std::sort(vec.begin(), vec.end());
-  vec.erase(unique(vec.begin(), vec.end()), vec.end());
-  return vec;
-}
-
 Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
                                  const std::string& ramdisk_stage_dir,
                                  const std::string& vendor_dlkm_build_dir,
@@ -450,8 +445,8 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
              ramdisk_path);
 
   LOG(INFO) << "modules.load location " << module_load_file;
-  const auto module_list =
-      Dedup(android::base::Tokenize(ReadFile(module_load_file), "\n"));
+  const std::set<std::string> module_list =
+      absl::StrSplit(ReadFile(module_load_file), '\n', absl::SkipEmpty());
   const auto module_base_dir = android::base::Dirname(module_load_file);
   const auto deps = LoadModuleDeps(module_base_dir + "/modules.dep");
   const auto ramdisk_modules =

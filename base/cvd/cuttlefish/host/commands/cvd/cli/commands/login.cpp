@@ -20,8 +20,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
-
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -36,8 +34,6 @@
 
 namespace cuttlefish {
 namespace {
-
-using android::base::Tokenize;
 
 constexpr char kSummaryHelpText[] = "Acquire credentials";
 

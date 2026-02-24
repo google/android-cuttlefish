@@ -55,6 +55,7 @@
 #include <android-base/file.h>
 #include <android-base/macros.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <android-base/unique_fd.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -696,9 +697,9 @@ Result<std::vector<std::string>> CalculatePrefix(
   if (path == "~" || absl::StartsWith(path, "~/")) {
     const auto home_dir =
         path_info.home_dir.value_or(CF_EXPECT(SystemWideUserHome()));
-    prefix = android::base::Tokenize(home_dir, "/");
+    prefix = absl::StrSplit(home_dir, '/', absl::SkipEmpty());
   } else if (!absl::StartsWith(path, "/")) {
-    prefix = android::base::Tokenize(working_dir, "/");
+    prefix = absl::StrSplit(working_dir, '/', absl::SkipEmpty());
   }
   return prefix;
 }
@@ -724,9 +725,9 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
   auto prefix = CF_EXPECT(CalculatePrefix(path_info));
   std::vector<std::string> components;
   components.insert(components.end(), prefix.begin(), prefix.end());
-  auto tokens = android::base::Tokenize(path, "/");
+  std::vector<std::string_view> tokens = absl::StrSplit(path, '/', absl::SkipEmpty());
   // remove first ~
-  if (!tokens.empty() && tokens.at(0) == "~") {
+  if (!tokens.empty() && tokens[0] == "~") {
     tokens.erase(tokens.begin());
   }
   components.insert(components.end(), tokens.begin(), tokens.end());

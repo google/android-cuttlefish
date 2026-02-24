@@ -20,7 +20,7 @@
 
 #include <android-base/file.h>
 #include <android-base/no_destructor.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
@@ -304,7 +304,8 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   std::string conf_path;
-  for (const auto& line : android::base::Tokenize(assembler_output, "\n")) {
+  for (std::string_view line :
+       absl::StrSplit(assembler_output, '\n', absl::SkipEmpty())) {
     if (absl::EndsWith(line, "cuttlefish_config.json")) {
       conf_path = line;
     }
