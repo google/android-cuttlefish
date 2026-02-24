@@ -246,10 +246,9 @@ func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
 }
 
 func WaitForInstance(project, zone, ins string) error {
-	for attempt := 0; attempt < 3; attempt++ {
+	for attempt := 0; attempt < 10; attempt++ {
 		time.Sleep(30 * time.Second)
-		log.Printf("wait for instance: uptime attempt number: %d", attempt)
-		if err := RunCmd(project, zone, ins, "uptime"); err == nil {
+		if err := RunCmdWithOpts(project, zone, ins, "uptime", RunCmdOpts{PrintOutput: false}); err == nil {
 			return nil
 		}
 	}
@@ -274,17 +273,27 @@ func UploadBashScript(project, zone, ins, scriptName, scriptContent string) erro
 }
 
 func UploadFile(project, zone, ins, src string, dst string) error {
-	return runCmd("gcloud", "compute", "scp", "--project", project, "--zone", zone, src, ins+":"+dst)
+	return runCmd(RunCmdOpts{PrintOutput: true}, "gcloud", "compute", "scp", "--project", project, "--zone", zone, src, ins+":"+dst)
 }
 
 func RunCmd(project, zone, ins, cmd string) error {
-	return runCmd("gcloud", "compute", "ssh", "--project", project, "--zone", zone, ins, "--command", cmd)
+	return runCmd(RunCmdOpts{PrintOutput: true}, "gcloud", "compute", "ssh", "--project", project, "--zone", zone, ins, "--command", cmd)
 }
 
-func runCmd(name string, args ...string) error {
+type RunCmdOpts struct {
+	PrintOutput bool
+}
+
+func RunCmdWithOpts(project, zone, ins, cmd string, opts RunCmdOpts) error {
+	return runCmd(opts, "gcloud", "compute", "ssh", "--project", project, "--zone", zone, ins, "--command", cmd)
+}
+
+func runCmd(opts RunCmdOpts, name string, args ...string) error {
 	cmd := exec.CommandContext(context.TODO(), name, args...)
-	cmd.Stdout = log.Writer()
-	cmd.Stderr = log.Writer()
+	if opts.PrintOutput {
+		cmd.Stdout = log.Writer()
+		cmd.Stderr = log.Writer()
+	}
 	log.Printf("Executing command: `%s`\n", cmd.String())
 	return cmd.Run()
 }

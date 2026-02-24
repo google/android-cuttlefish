@@ -18,7 +18,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
@@ -130,7 +129,6 @@ func createImageMain(project, zone string, opts createImageOpts) error {
 	if err := gce.RunCmd(project, zone, insName, "sudo reboot"); err != nil {
 		return err
 	}
-	time.Sleep(2 * time.Minute)
 	if err := gce.WaitForInstance(project, zone, insName); err != nil {
 		return fmt.Errorf("waiting for instance error: %v", err)
 	}
