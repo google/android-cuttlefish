@@ -24,12 +24,20 @@ import (
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
 
+// Flags
 var (
-	project      = flag.String("project", "", "GCE project whose resources will be used for creating the image")
-	zone         = flag.String("zone", "us-west1-b", "GCE zone used for creating relevant resources")
-	imageProject = flag.String("image-project", "", "Image GCP project")
-	image        = flag.String("image", "", "Image name")
+	project      string
+	zone         string
+	imageProject string
+	image        string
 )
+
+func init() {
+	flag.StringVar(&project, "project", "", "GCP project whose resources will be used for creating the amended image")
+	flag.StringVar(&zone, "zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	flag.StringVar(&imageProject, "image-project", "", "Image GCP project")
+	flag.StringVar(&image, "image", "", "Image name")
+}
 
 func username() (string, error) {
 	u, err := user.Current()
@@ -78,20 +86,20 @@ func validateImageMain(project, zone, imageProject, image string) error {
 func main() {
 	flag.Parse()
 
-	if *project == "" {
+	if project == "" {
 		log.Fatal("usage: `-project` must not be empty")
 	}
-	if *zone == "" {
+	if zone == "" {
 		log.Fatal("usage: `-zone` must not be empty")
 	}
-	if *imageProject == "" {
+	if imageProject == "" {
 		log.Fatal("usage: `-image-project` must not be empty")
 	}
-	if *image == "" {
+	if image == "" {
 		log.Fatal("usage: `-image` must not be empty")
 	}
 
-	if err := validateImageMain(*project, *zone, *imageProject, *image); err != nil {
+	if err := validateImageMain(project, zone, imageProject, image); err != nil {
 		log.Fatal(err)
 	}
 }
