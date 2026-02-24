@@ -261,14 +261,4 @@ func main() {
 	if err := amendImageMain(project, zone, opts); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf(`Copy the image somewhere else:
-gcloud compute images create \
-  --source-image-project=%s \
-  --source-image=%s \
-  --project=[DEST_PROJECT] \
-  --family=[DEST_IMAGE_FAMILY] [DEST_IMAGE_NAME]
-`,
-		project,
-		imageName,
-	)
 }
