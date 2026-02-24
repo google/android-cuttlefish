@@ -29,8 +29,7 @@ import (
 )
 
 const (
-	mountpoint                        = "/mnt/image"
-	defaultsCuttlefishIntegrationFile = "/etc/defaults/cuttlefish-integration"
+	mountpoint = "/mnt/image"
 )
 
 type DebSrcsFlag struct {
@@ -53,14 +52,13 @@ func (v *DebSrcsFlag) Set(s string) error {
 }
 
 var (
-	project                             = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
-	zone                                = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
-	arch                                = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
-	source_image_project                = flag.String("source-image-project", "", "Source image GCP project")
-	source_image                        = flag.String("source-image", "", "Source image name")
-	image_name                          = flag.String("image-name", "", "output GCE image name")
-	deb_srcs                            = DebSrcsFlag{}
-	defaults_cuttlefish_integration_src = flag.String("defaults_cuttlefish_integration_src", "", "Path to file which will be written to /etc/defaults/cuttlefish-integration.")
+	project              = flag.String("project", "", "GCP project whose resources will be used for creating the amended image")
+	zone                 = flag.String("zone", "us-central1-a", "GCP zone used for creating relevant resources")
+	arch                 = flag.String("arch", "x86_64", "architecture of GCE image. Supports either x86_64 or arm64")
+	source_image_project = flag.String("source-image-project", "", "Source image GCP project")
+	source_image         = flag.String("source-image", "", "Source image name")
+	image_name           = flag.String("image-name", "", "output GCE image name")
+	deb_srcs             = DebSrcsFlag{}
 )
 
 func init() {
@@ -112,16 +110,6 @@ func installCuttlefishDebs(project, zone, insName string, debSrcs []string) erro
 	args := strings.Join(dstSrcs, " ")
 	if err := gce.RunCmd(project, zone, insName, "./install_cuttlefish_debs.sh "+args); err != nil {
 		return err
-	}
-	return nil
-}
-
-func maybeSetDefaultsCuttlefishIntegrationFile(project, zone, insName string) error {
-	if *defaults_cuttlefish_integration_src != "" {
-		// The disk mountpoint is at /mnt/image, mounted in `installCuttlefishDebs`, and is not unmounted.
-		if err := gce.UploadFile(project, zone, insName, *defaults_cuttlefish_integration_src, mountpoint+defaultsCuttlefishIntegrationFile); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -204,10 +192,6 @@ func amendImageMain(project, zone string, opts amendImageOpts) error {
 
 	if err := installCuttlefishDebs(project, zone, insName, opts.DebSrcs); err != nil {
 		return fmt.Errorf("install cuttlefish debs error: %v", err)
-	}
-
-	if err := maybeSetDefaultsCuttlefishIntegrationFile(project, zone, insName); err != nil {
-		return fmt.Errorf("couldn't set %s: %v", defaultsCuttlefishIntegrationFile, err)
 	}
 
 	// Reboot the instance to force a clean umount of the attached disk's file system.
