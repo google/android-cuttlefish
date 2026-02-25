@@ -125,7 +125,8 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
   for (const auto& dir : CF_EXPECT(CvdDataDirs())) {
     std::string contents;
     if (android::base::ReadFileToString(fmt::format("{}/{}", dir, path),
-                                        &contents)) {
+                                        &contents,
+                                        /* follow_symlinks */ true)) {
       return contents;
     }
   }
