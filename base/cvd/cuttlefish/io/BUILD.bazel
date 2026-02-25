@@ -83,6 +83,30 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "length",
+    srcs = ["length.cc"],
+    hdrs = ["length.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "length_test",
+    srcs = ["length_test.cc"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:length",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "native_filesystem",
     srcs = ["native_filesystem.cc"],
     hdrs = ["native_filesystem.h"],
