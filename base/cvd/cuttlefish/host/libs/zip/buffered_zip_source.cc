@@ -29,7 +29,8 @@
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/length.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -37,12 +38,27 @@ namespace {
 
 class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
  public:
-  static Result<BufferedZipSourceCallbacks> Create(SeekableZipSource inner,
-                                                   size_t buffer_size) {
-    BufferedZipSourceCallbacks callbacks(std::move(inner), buffer_size);
+  static Result<std::unique_ptr<BufferedZipSourceCallbacks>> Create(
+      std::unique_ptr<ReaderSeeker> data_provider, size_t buffer_size) {
+    CF_EXPECT(data_provider.get());
+    std::unique_ptr<BufferedZipSourceCallbacks> callbacks(
+        new BufferedZipSourceCallbacks(buffer_size));
 
-    ZipStat zip_stat = CF_EXPECT(callbacks.inner_.Stat());
-    callbacks.size_ = CF_EXPECT(std::move(zip_stat.size));
+    callbacks->size_ = CF_EXPECT(Length(*data_provider));
+    callbacks->data_provider_ = std::move(data_provider);
+
+    return callbacks;
+  }
+
+  static Result<std::unique_ptr<BufferedZipSourceCallbacks>> Create(
+      SeekableZipSource source, size_t buffer_size) {
+    std::unique_ptr<BufferedZipSourceCallbacks> callbacks(
+        new BufferedZipSourceCallbacks(buffer_size));
+
+    callbacks->source_ = std::move(source);
+    callbacks->data_provider_ = std::make_unique<SeekingZipSourceReader>(
+        CF_EXPECT(callbacks->source_->Reader()));
+    callbacks->size_ = CF_EXPECT(Length(*callbacks->data_provider_));
 
     return callbacks;
   }
@@ -50,36 +66,30 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
   bool Close() override {
     offset_ = 0;
     buffer_remaining_ = 0;
-    reader_ = std::nullopt;
+    offset_in_buffer_ = 0;
+    buffer_remaining_ = 0;
+
     return true;
   }
   bool Open() override {
     offset_ = 0;
     buffer_remaining_ = 0;
+    offset_in_buffer_ = 0;
+    buffer_remaining_ = 0;
 
-    Result<SeekingZipSourceReader> reader = inner_.Reader();
-    if (reader.ok()) {
-      reader_ = std::move(*reader);
-      return true;
-    } else {
-      reader_ = std::nullopt;
-      return false;
-    }
+    return data_provider_->SeekSet(0).ok();
   }
   int64_t Read(char* data, uint64_t len) override {
-    if (!reader_) {
-      return -1;
-    }
     if (len > buffer_.size()) {
       buffer_remaining_ = 0;
-      if (!reader_->SeekSet(offset_).ok()) {
+      if (!data_provider_->SeekSet(offset_).ok()) {
         return false;
       }
       VLOG(1) << "Bypassing buffer, reading " << len;
-      Result<uint64_t> data_read = reader_->Read(data, len);
-      if (data_read.ok()) {
-        offset_ += *data_read;
-        return *data_read;
+      if (Result<uint64_t> read_len = data_provider_->Read(data, len);
+          read_len.ok()) {
+        offset_ += *read_len;
+        return *read_len;
       } else {
         return -1;
       }
@@ -99,15 +109,16 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
     if (buffer_fill == 0) {
       return 0;
     }
-    if (!reader_->SeekSet(offset_).ok()) {
+    if (!data_provider_->SeekSet(offset_).ok()) {
       return -1;
     }
     VLOG(1) << "Filling buffer with " << buffer_fill;
-    Result<size_t> inner_read = reader_->Read(buffer_.data(), buffer_fill);
-    if (!inner_read.ok()) {
+    Result<size_t> data_provider_read =
+        data_provider_->Read(buffer_.data(), buffer_fill);
+    if (!data_provider_read.ok()) {
       return -1;
     }
-    buffer_remaining_ = *inner_read;
+    buffer_remaining_ = *data_provider_read;
     offset_in_buffer_ = 0;
     return Read(data, len);
   }
@@ -125,27 +136,35 @@ class BufferedZipSourceCallbacks : public SeekableZipSourceCallback {
   int64_t Offset() override { return offset_; }
 
  private:
-  BufferedZipSourceCallbacks(SeekableZipSource inner, size_t buffer_size)
-      : inner_(std::move(inner)), buffer_(buffer_size) {}
+  explicit BufferedZipSourceCallbacks(size_t buffer_size)
+      : buffer_(buffer_size) {}
 
-  SeekableZipSource inner_;
-  std::optional<SeekingZipSourceReader> reader_;
+  std::unique_ptr<ReaderSeeker> data_provider_;
+  std::optional<SeekableZipSource> source_;
   std::vector<char> buffer_;
-  uint64_t size_;
-  int64_t offset_;
-  size_t offset_in_buffer_;
-  size_t buffer_remaining_;
+  uint64_t size_ = 0;
+  int64_t offset_ = 0;
+  size_t offset_in_buffer_ = 0;
+  size_t buffer_remaining_ = 0;
 };
 
 }  // namespace
 
-Result<SeekableZipSource> BufferZipSource(SeekableZipSource inner,
+Result<SeekableZipSource> BufferZipSource(
+    std::unique_ptr<ReaderSeeker> data_provider, size_t buffer_size) {
+  std::unique_ptr<BufferedZipSourceCallbacks> callbacks =
+      CF_EXPECT(BufferedZipSourceCallbacks::Create(std::move(data_provider),
+                                                   buffer_size));
+
+  return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
+}
+
+Result<SeekableZipSource> BufferZipSource(SeekableZipSource source,
                                           size_t buffer_size) {
-  BufferedZipSourceCallbacks callbacks = CF_EXPECT(
-      BufferedZipSourceCallbacks::Create(std::move(inner), buffer_size));
-  std::unique_ptr<SeekableZipSourceCallback> callbacks_ptr =
-      std::make_unique<BufferedZipSourceCallbacks>(std::move(callbacks));
-  return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks_ptr)));
+  std::unique_ptr<BufferedZipSourceCallbacks> callbacks = CF_EXPECT(
+      BufferedZipSourceCallbacks::Create(std::move(source), buffer_size));
+
+  return CF_EXPECT(SeekableZipSource::FromCallbacks(std::move(callbacks)));
 }
 
 }  // namespace cuttlefish

@@ -15,7 +15,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
-        "//cuttlefish/host/libs/zip/libzip_cc:stat",
+        "//cuttlefish/io",
+        "//cuttlefish/io:length",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
