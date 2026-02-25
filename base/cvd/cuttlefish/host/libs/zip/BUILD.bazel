@@ -30,6 +30,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/io:in_memory",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
