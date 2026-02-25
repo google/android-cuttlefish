@@ -140,7 +140,7 @@ type AdbHelper struct {
 
 func NewAdbHelper() *AdbHelper {
 	return &AdbHelper{
-		bin: "/usr/lib/cuttlefish-common/bin/adb",
+		bin: "/usr/bin/adb",
 	}
 }
 
