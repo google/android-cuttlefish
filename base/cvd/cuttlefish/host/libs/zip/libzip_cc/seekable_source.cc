@@ -26,11 +26,12 @@
 
 #include "zip.h"
 
-#include "cuttlefish/io/fake_pread_pwrite.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/source_callback.h"
+#include "cuttlefish/io/fake_pread_pwrite.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -81,6 +82,38 @@ int64_t SeekableZipSourceCallbackFn(void* userdata, void* data, uint64_t len,
   return HandleCallback(*source->callbacks_, source->error_.get(), data, len,
                         cmd);
 }
+
+class ZipSourceAsReaderSeekerImpl : public ReaderSeeker {
+ public:
+  ZipSourceAsReaderSeekerImpl(std::unique_ptr<SeekableZipSource> source,
+                              SeekingZipSourceReader reader)
+      : source_(std::move(source)), reader_(std::move(reader)) {}
+
+  Result<size_t> Read(void* buf, size_t size) override {
+    return CF_EXPECT(reader_.Read(buf, size));
+  }
+
+  Result<uint64_t> SeekSet(uint64_t offset) override {
+    return CF_EXPECT(reader_.SeekSet(offset));
+  }
+
+  Result<uint64_t> SeekCur(int64_t offset) override {
+    return CF_EXPECT(reader_.SeekCur(offset));
+  }
+
+  Result<uint64_t> SeekEnd(int64_t offset) override {
+    return CF_EXPECT(reader_.SeekEnd(offset));
+  }
+
+  Result<uint64_t> PRead(void* buf, uint64_t count,
+                         uint64_t offset) const override {
+    return CF_EXPECT(reader_.PRead(buf, count, offset));
+  }
+
+ private:
+  std::unique_ptr<SeekableZipSource> source_;
+  SeekingZipSourceReader reader_;
+};
 
 }  // namespace
 
@@ -155,6 +188,18 @@ Result<uint64_t> SeekingZipSourceReader::PRead(void* buf, uint64_t count,
   auto& non_const = const_cast<SeekingZipSourceReader&>(*this);
   std::lock_guard lock(non_const.mutex_);
   return CF_EXPECT(FakePRead(non_const, buf, count, offset));
+}
+
+Result<std::unique_ptr<ReaderSeeker>> ZipSourceAsReaderSeeker(
+    SeekableZipSource inner) {
+  std::unique_ptr<SeekableZipSource> unique_inner =
+      std::make_unique<SeekableZipSource>(std::move(inner));
+  CF_EXPECT(unique_inner.get());
+
+  SeekingZipSourceReader reader = CF_EXPECT(unique_inner->Reader());
+
+  return std::make_unique<ZipSourceAsReaderSeekerImpl>(std::move(unique_inner),
+                                                       std::move(reader));
 }
 
 }  // namespace cuttlefish
