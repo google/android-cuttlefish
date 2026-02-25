@@ -35,13 +35,12 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/zip/disjoint_range_set.h"
 #include "cuttlefish/host/libs/zip/serialize_disjoint_range_set.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 static constexpr size_t kMinReadSize = 1 << 26;
-
-LazilyLoadedFileReadCallback::~LazilyLoadedFileReadCallback() = default;
 
 struct LazilyLoadedFile::Impl {
   std::string MetadataFile() const;
@@ -52,7 +51,7 @@ struct LazilyLoadedFile::Impl {
 
   std::string filename_;
   SharedFD contents_file_;
-  std::unique_ptr<LazilyLoadedFileReadCallback> callback_;
+  std::unique_ptr<ReaderSeeker> callback_;
   DisjointRangeSet already_downloaded_;
   size_t seek_pos_;
   size_t size_;
@@ -60,8 +59,7 @@ struct LazilyLoadedFile::Impl {
 };
 
 Result<LazilyLoadedFile> LazilyLoadedFile::Create(
-    std::string filename, size_t size,
-    std::unique_ptr<LazilyLoadedFileReadCallback> callback) {
+    std::string filename, size_t size, std::unique_ptr<ReaderSeeker> callback) {
   std::unique_ptr<Impl> impl = std::make_unique<Impl>();
   CF_EXPECT(impl.get());
 
@@ -172,7 +170,7 @@ Result<size_t> LazilyLoadedFile::Impl::Read(char* data, size_t size) {
     seek_pos_ += data_read;
     return data_read;
   }
-  CF_EXPECT(callback_->Seek(seek_pos_));
+  CF_EXPECT(callback_->SeekSet(seek_pos_));
   if (size < kMinReadSize) {
     size_t extended_read_size = std::min(kMinReadSize, size_ - seek_pos_);
     VLOG(1) << "Extending read request from " << size << " to "

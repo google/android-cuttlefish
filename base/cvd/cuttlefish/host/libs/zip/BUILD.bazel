@@ -45,8 +45,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
+        "//cuttlefish/io",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -105,8 +105,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/zip:disjoint_range_set",
         "//cuttlefish/host/libs/zip:serialize_disjoint_range_set",
+        "//cuttlefish/io",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
