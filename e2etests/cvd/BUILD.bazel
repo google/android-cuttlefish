@@ -52,6 +52,12 @@ launch_cvd_boot_test(
     target = "aosp_cf_x86_64_phone-userdebug",
 )
 
+launch_cvd_boot_test(
+    name = "fetch_and_launch_aosp_android11_phone",
+    branch = "aosp-android11-gsi",
+    target = "aosp_cf_x86_64_only_phone-userdebug",
+)
+
 # cvd load tests
 cvd_load_boot_test(
     name = "load_git_main_x64_phone",
