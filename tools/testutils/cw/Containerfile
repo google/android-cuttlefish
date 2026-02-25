@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV OVERRIDE_BAZEL_WRAPPER_DOWNLOAD_DIR=/tmp/cw_bazel
 
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y sudo systemd init systemd-journal-remote nginx jq
+RUN apt-get install -y sudo systemd init systemd-journal-remote nginx jq adb
 
 RUN groupadd kvm
 COPY tools/testutils/cw/setup.service /etc/systemd/system/setup.service
