@@ -134,7 +134,8 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
       "bin/sensors_simulator";
 
   std::string content;
-  CF_EXPECTF(android::base::ReadFileToString(marker_file, &content),
+  CF_EXPECTF(android::base::ReadFileToString(marker_file, &content,
+                                             /* follow_symlinks */ true),
              "failed to read '{}'", marker_file);
   fetch::HostPkgMigrationConfig config;
   CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config),

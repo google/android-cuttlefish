@@ -156,7 +156,8 @@ Result<std::string> BuildArchive::MemberContents(std::string_view name) {
   CF_EXPECTF(members_.count(name), "'{}' not in archive", name);
   if (auto it = extracted_.find(name); it != extracted_.end()) {
     std::string contents;
-    CF_EXPECTF(android::base::ReadFileToString(it->second, &contents),
+    CF_EXPECTF(android::base::ReadFileToString(it->second, &contents,
+                                               /* follow_symlinks */ true),
                "Failed to read '{}'", it->second);
     return contents;
   }

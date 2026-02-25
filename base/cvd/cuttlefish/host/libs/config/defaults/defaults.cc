@@ -52,7 +52,8 @@ std::optional<bool> Defaults::BoolValue(std::string_view k) const {
 
 Result<Defaults> Defaults::FromFile(const std::string &path) {
   std::string defaults_str;
-  CF_EXPECT(android::base::ReadFileToString(path, &defaults_str),
+  CF_EXPECT(android::base::ReadFileToString(path, &defaults_str,
+                                            /* follow_symlinks */ true),
             "Couldn't read defaults file.");
   std::map<std::string, std::string, std::less<void>> defaults_map = CF_EXPECT(
       ParseKeyEqualsValue(defaults_str), "Couldn't parse defaults file.");

@@ -246,7 +246,8 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     HttpClient& http_client, const std::vector<std::string>& scopes,
     const std::string& file_path) {
   std::string contents;
-  CF_EXPECTF(android::base::ReadFileToString(file_path, &contents),
+  CF_EXPECTF(android::base::ReadFileToString(file_path, &contents,
+                                             /* follow_symlinks */ true),
              "Failed to read '{}'", file_path);
 
   Json::Value json = CF_EXPECT(ParseJson(contents));

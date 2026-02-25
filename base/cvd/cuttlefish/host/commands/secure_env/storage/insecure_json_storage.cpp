@@ -30,7 +30,8 @@ namespace {
 
 Result<Json::Value> ReadJson(const std::string& path) {
   std::string json;
-  CF_EXPECT(android::base::ReadFileToString(path, &json));
+  CF_EXPECT(
+      android::base::ReadFileToString(path, &json, /* follow_symlinks */ true));
   return CF_EXPECT(ParseJson(json));
 }
 
