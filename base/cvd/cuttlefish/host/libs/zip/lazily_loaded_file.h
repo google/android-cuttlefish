@@ -19,23 +19,15 @@
 #include <memory>
 #include <string>
 
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class LazilyLoadedFileReadCallback {
- public:
-  virtual ~LazilyLoadedFileReadCallback();
-
-  virtual Result<size_t> Read(char* buf, size_t count) = 0;
-  virtual Result<size_t> Seek(size_t offset) = 0;
-};
-
 class LazilyLoadedFile {
  public:
-  static Result<LazilyLoadedFile> Create(
-      std::string filename, size_t size,
-      std::unique_ptr<LazilyLoadedFileReadCallback>);
+  static Result<LazilyLoadedFile> Create(std::string filename, size_t size,
+                                         std::unique_ptr<ReaderSeeker>);
 
   LazilyLoadedFile(LazilyLoadedFile&&);
   ~LazilyLoadedFile();
