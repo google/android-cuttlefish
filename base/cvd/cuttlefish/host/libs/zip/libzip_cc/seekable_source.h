@@ -70,4 +70,7 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
   SeekingZipSourceReader(SeekableZipSource*);
 };
 
+Result<std::unique_ptr<ReaderSeeker>> ZipSourceAsReaderSeeker(
+    SeekableZipSource inner);
+
 }  // namespace cuttlefish

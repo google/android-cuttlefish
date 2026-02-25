@@ -81,38 +81,6 @@ class CachedZipSourceCallbacks : public SeekableZipSourceCallback {
   const size_t size_;
 };
 
-class ZipSourceAsReaderSeeker : public ReaderSeeker {
- public:
-  ZipSourceAsReaderSeeker(std::unique_ptr<SeekableZipSource> source,
-                          SeekingZipSourceReader reader)
-      : source_(std::move(source)), reader_(std::move(reader)) {}
-
-  Result<size_t> Read(void* buf, size_t size) override {
-    return CF_EXPECT(reader_.Read(buf, size));
-  }
-
-  Result<uint64_t> SeekSet(uint64_t offset) override {
-    return CF_EXPECT(reader_.SeekSet(offset));
-  }
-
-  Result<uint64_t> SeekCur(int64_t offset) override {
-    return CF_EXPECT(reader_.SeekCur(offset));
-  }
-
-  Result<uint64_t> SeekEnd(int64_t offset) override {
-    return CF_EXPECT(reader_.SeekEnd(offset));
-  }
-
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override {
-    return CF_EXPECT(reader_.PRead(buf, count, offset));
-  }
-
- private:
-  std::unique_ptr<SeekableZipSource> source_;
-  SeekingZipSourceReader reader_;
-};
-
 }  // namespace
 
 Result<SeekableZipSource> CacheZipSource(SeekableZipSource inner,
@@ -120,18 +88,11 @@ Result<SeekableZipSource> CacheZipSource(SeekableZipSource inner,
   ZipStat zip_stat = CF_EXPECT(inner.Stat());
   size_t size = CF_EXPECT(std::move(zip_stat.size));
 
-  std::unique_ptr<SeekableZipSource> unique_inner =
-      std::make_unique<SeekableZipSource>(std::move(inner));
-  CF_EXPECT(unique_inner.get());
+  std::unique_ptr<ReaderSeeker> reader =
+      CF_EXPECT(ZipSourceAsReaderSeeker(std::move(inner)));
 
-  SeekingZipSourceReader reader = CF_EXPECT(unique_inner->Reader());
-
-  std::unique_ptr<ZipSourceAsReaderSeeker> file_callbacks =
-      std::make_unique<ZipSourceAsReaderSeeker>(std::move(unique_inner),
-                                                std::move(reader));
-
-  LazilyLoadedFile file = CF_EXPECT(LazilyLoadedFile::Create(
-      std::move(file_path), size, std::move(file_callbacks)));
+  LazilyLoadedFile file = CF_EXPECT(
+      LazilyLoadedFile::Create(std::move(file_path), size, std::move(reader)));
 
   CachedZipSourceCallbacks callbacks(std::move(file), size);
 
