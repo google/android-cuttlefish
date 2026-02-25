@@ -21,12 +21,9 @@ import (
 	"path/filepath"
 
 	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce"
-	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 )
 
 const (
-	mountpoint = "/mnt/image"
-
 	cuttlefishHODefaultsPath          = "/etc/default/cuttlefish-host_orchestrator"
 	cuttlefishIntegrationDefaultsPath = "/etc/defaults/cuttlefish-integration"
 )
@@ -52,127 +49,15 @@ func init() {
 	flag.StringVar(&cuttlefishIntegrationDefaultsSrc, "cuttlefish-integration-defaults-src", "", "Local path to cuttlefish integration defaults")
 }
 
-type createImageOpts struct {
-	SourceImageProject               string
-	SourceImage                      string
-	ImageName                        string
-	CuttlefishHODefaultsSrc          string
-	CuttlefishIntegrationDefaultsSrc string
-}
-
-func mountAttachedDisk(project, zone, insName string) error {
-	return gce.RunCmd(project, zone, insName, "./mount_attached_disk.sh "+mountpoint)
-}
-
-func cleanupDeleteDisk(h *gce.GceHelper, disk string) {
-	log.Printf("cleanup: deleting disk %q...", disk)
-	if err := h.DeleteDisk(disk); err != nil {
-		log.Printf("cleanup: error deleting disk: %v", err)
-	} else {
-		log.Println("cleanup: disk deleted")
-	}
-}
-
-func cleanupDeleteInstance(h *gce.GceHelper, ins string) {
-	log.Printf("cleanup: deleting instance %q...", ins)
-	if err := h.DeleteInstance(ins); err != nil {
-		log.Printf("cleanup: error deleting instance: %v", err)
-	} else {
-		log.Println("cleanup: instance deleted")
-	}
-}
-
-func cleanupDetachDisk(h *gce.GceHelper, ins, disk string) {
-	log.Printf("cleanup: detaching disk %q from instance %q...", ins, disk)
-	if err := h.DetachDisk(ins, disk); err != nil {
-		log.Printf("cleanup: error detaching disk: %v", err)
-	} else {
-		log.Println("cleanup: disk detached")
-	}
-}
-
 func uploadConfig(project, zone, insName, src, dst string) error {
 	tmp := filepath.Join("/tmp", filepath.Base(src))
 	if err := gce.UploadFile(project, zone, insName, src, tmp); err != nil {
 		return err
 	}
-	cmd := fmt.Sprintf("sudo cp %s %s", tmp, mountpoint+dst)
+	cmd := fmt.Sprintf("sudo cp %s %s", tmp, filepath.Join(gce.BuildImageMountPoint, dst))
 	if err := gce.RunCmd(project, zone, insName, cmd); err != nil {
 		return err
 	}
-	return nil
-}
-
-func createImage(project, zone string, opts createImageOpts) error {
-	h, err := gce.NewGceHelper(project, zone)
-	if err != nil {
-		return fmt.Errorf("failed to create GCE helper: %w", err)
-	}
-	insName := opts.ImageName
-	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
-
-	log.Println("creating disk...")
-	if _, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName, gce.CreateDiskOpts{}); err != nil {
-		return fmt.Errorf("failed to create disk: %w", err)
-	}
-	defer cleanupDeleteDisk(h, attachedDiskName)
-	log.Printf("disk created: %q", attachedDiskName)
-
-	log.Println("creating instance...")
-	if _, err := h.CreateInstance(insName, gce.ArchX86); err != nil {
-		return fmt.Errorf("failed to create instance: %w", err)
-	}
-	defer cleanupDeleteInstance(h, insName)
-	log.Printf("instance created: %q", insName)
-
-	log.Println("attaching disk...")
-	if err := h.AttachDisk(insName, attachedDiskName); err != nil {
-		log.Fatalf("failed to attach disk %q to instance %q: %v", attachedDiskName, insName, err)
-	}
-	defer cleanupDetachDisk(h, insName, attachedDiskName)
-	log.Println("disk attached")
-
-	if err := gce.WaitForInstance(project, zone, insName); err != nil {
-		return fmt.Errorf("waiting for instance error: %v", err)
-	}
-
-	if err := gce.UploadBashScript(project, zone, insName, "mount_attached_disk.sh", scripts.MountAttachedDisk); err != nil {
-		return fmt.Errorf("error uploading script: %v", err)
-	}
-	if err := mountAttachedDisk(project, zone, insName); err != nil {
-		return fmt.Errorf("mountAttachedDisk error: %v", err)
-	}
-
-	if opts.CuttlefishHODefaultsSrc != "" {
-		if err := uploadConfig(project, zone, insName, opts.CuttlefishHODefaultsSrc, cuttlefishHODefaultsPath); err != nil {
-			return err
-		}
-	}
-
-	if opts.CuttlefishIntegrationDefaultsSrc != "" {
-		if err := uploadConfig(project, zone, insName, opts.CuttlefishIntegrationDefaultsSrc, cuttlefishIntegrationDefaultsPath); err != nil {
-			return err
-		}
-	}
-
-	// Reboot the instance to force a clean umount of the attached disk's file system.
-	if err := gce.RunCmd(project, zone, insName, "sudo reboot"); err != nil {
-		return err
-	}
-	if err := gce.WaitForInstance(project, zone, insName); err != nil {
-		return fmt.Errorf("waiting for instance error: %v", err)
-	}
-	log.Printf("deleting instance %q...", insName)
-	if err := h.StopInstance(insName); err != nil {
-		return fmt.Errorf("error deleting instance: %v", err)
-	}
-	log.Println("instance deleted")
-
-	log.Printf("creating image %q...", opts.ImageName)
-	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
-		return fmt.Errorf("failed to create image: %w", err)
-	}
-	log.Println("image created")
 	return nil
 }
 
@@ -214,14 +99,33 @@ func main() {
 		log.Fatal(usage("one or more custom configurations are required"))
 	}
 
-	opts := createImageOpts{
-		SourceImageProject:      sourceImageProject,
-		SourceImage:             sourceImage,
-		ImageName:               imageName,
-		CuttlefishHODefaultsSrc: cuttlefishHODefaultsSrc,
+	buildImageOpts := gce.BuildImageOpts{
+		Arch:               gce.ArchX86,
+		SourceImageProject: sourceImageProject,
+		SourceImage:        sourceImage,
+		ImageName:          imageName,
+		ModifyFunc: func(project, zone, insName string) error {
+			if cuttlefishHODefaultsSrc != "" {
+				if err := uploadConfig(project, zone, insName, cuttlefishHODefaultsSrc, cuttlefishHODefaultsPath); err != nil {
+					return err
+				}
+			}
+
+			if cuttlefishIntegrationDefaultsSrc != "" {
+				if err := uploadConfig(project, zone, insName, cuttlefishIntegrationDefaultsSrc, cuttlefishIntegrationDefaultsPath); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
 	}
 
-	if err := createImage(project, zone, opts); err != nil {
+	h, err := gce.NewGceHelper(project, zone)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := h.BuildImage(project, zone, buildImageOpts); err != nil {
 		log.Fatal(err)
 	}
 }

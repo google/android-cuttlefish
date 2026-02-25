@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/android-cuttlefish/tools/baseimage/pkg/gce/scripts"
 	"google.golang.org/api/compute/v1"
 )
 
@@ -223,6 +224,77 @@ func (h *GceHelper) CreateImage(ins, disk, name string) error {
 	return h.waitForGlobalOperation(op)
 }
 
+type BuildImageOpts struct {
+	Arch               Arch
+	SourceImageProject string
+	SourceImage        string
+	ImageName          string
+	ModifyFunc         func(project, zone, insName string) error
+}
+
+const BuildImageMountPoint = "/mnt/image"
+
+func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error {
+	insName := opts.ImageName
+	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
+
+	log.Println("creating disk...")
+	if _, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName, CreateDiskOpts{}); err != nil {
+		return fmt.Errorf("failed to create disk: %w", err)
+	}
+	defer h.cleanupDeleteDisk(attachedDiskName)
+	log.Printf("disk created: %q", attachedDiskName)
+
+	log.Println("creating instance...")
+	if _, err := h.CreateInstance(insName, opts.Arch); err != nil {
+		return fmt.Errorf("failed to create instance: %w", err)
+	}
+	defer h.cleanupDeleteInstance(insName)
+	log.Printf("instance created: %q", insName)
+
+	log.Println("attaching disk...")
+	if err := h.AttachDisk(insName, attachedDiskName); err != nil {
+		log.Fatalf("failed to attach disk %q to instance %q: %v", attachedDiskName, insName, err)
+	}
+	defer h.cleanupDetachDisk(insName, attachedDiskName)
+	log.Println("disk attached")
+
+	if err := WaitForInstance(project, zone, insName); err != nil {
+		return fmt.Errorf("waiting for instance error: %v", err)
+	}
+
+	if err := UploadBashScript(project, zone, insName, "mount_attached_disk.sh", scripts.MountAttachedDisk); err != nil {
+		return fmt.Errorf("error uploading script: %v", err)
+	}
+	if err := RunCmd(project, zone, insName, "./mount_attached_disk.sh "+BuildImageMountPoint); err != nil {
+		return fmt.Errorf("mounting attached disk error: %v", err)
+	}
+
+	if err := opts.ModifyFunc(project, zone, insName); err != nil {
+		return fmt.Errorf("modify func failed: %v", err)
+	}
+
+	// Reboot the instance to force a clean umount of the attached disk's file system.
+	if err := RunCmd(project, zone, insName, "sudo reboot"); err != nil {
+		return err
+	}
+	if err := WaitForInstance(project, zone, insName); err != nil {
+		return fmt.Errorf("waiting for instance error: %v", err)
+	}
+	log.Printf("deleting instance %q...", insName)
+	if err := h.StopInstance(insName); err != nil {
+		return fmt.Errorf("error deleting instance: %v", err)
+	}
+	log.Println("instance deleted")
+
+	log.Printf("creating image %q...", opts.ImageName)
+	if err := h.CreateImage(insName, attachedDiskName, opts.ImageName); err != nil {
+		return fmt.Errorf("failed to create image: %w", err)
+	}
+	log.Println("image created")
+	return nil
+}
+
 func (h *GceHelper) waitForOperation(op *compute.Operation) error {
 	for attempt := 0; attempt < 3 && op.Status != "DONE"; attempt++ {
 		var err error
@@ -251,6 +323,33 @@ func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
 		return fmt.Errorf("wait for operation %q: timed out", op.Name)
 	}
 	return nil
+}
+
+func (h *GceHelper) cleanupDeleteDisk(disk string) {
+	log.Printf("cleanup: deleting disk %q...", disk)
+	if err := h.DeleteDisk(disk); err != nil {
+		log.Printf("cleanup: error deleting disk: %v", err)
+	} else {
+		log.Println("cleanup: disk deleted")
+	}
+}
+
+func (h *GceHelper) cleanupDeleteInstance(ins string) {
+	log.Printf("cleanup: deleting instance %q...", ins)
+	if err := h.DeleteInstance(ins); err != nil {
+		log.Printf("cleanup: error deleting instance: %v", err)
+	} else {
+		log.Println("cleanup: instance deleted")
+	}
+}
+
+func (h *GceHelper) cleanupDetachDisk(ins, disk string) {
+	log.Printf("cleanup: detaching disk %q from instance %q...", ins, disk)
+	if err := h.DetachDisk(ins, disk); err != nil {
+		log.Printf("cleanup: error detaching disk: %v", err)
+	} else {
+		log.Println("cleanup: disk detached")
+	}
 }
 
 func WaitForInstance(project, zone, ins string) error {
