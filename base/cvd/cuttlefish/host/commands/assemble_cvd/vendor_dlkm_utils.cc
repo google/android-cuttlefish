@@ -465,7 +465,7 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
     if (!FileExists(module_location)) {
       continue;
     }
-    if (IsKernelModuleSigned(module_location)) {
+    if (IsKernelModuleSigned(module_location).value_or(false)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
 
