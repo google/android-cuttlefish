@@ -39,6 +39,12 @@ Result<std::unique_ptr<ReaderWriterSeeker>> NativeFilesystem::CreateFile(
   return std::make_unique<SharedFdIo>(fd);
 }
 
+Result<uint32_t> NativeFilesystem::FileAttributes(std::string_view path) const {
+  struct stat st;
+  CF_EXPECT_GE(stat(std::string(path).c_str(), &st), 0, StrError(errno));
+  return st.st_mode;
+}
+
 Result<void> NativeFilesystem::DeleteFile(std::string_view path) {
   CF_EXPECT_GE(unlink(std::string(path).c_str()), 0, StrError(errno));
   return {};
