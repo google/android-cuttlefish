@@ -18,6 +18,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:managed",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/io",
         "//cuttlefish/io:filesystem",

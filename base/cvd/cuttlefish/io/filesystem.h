@@ -31,6 +31,8 @@ class ReadFilesystem {
 
   virtual Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
       std::string_view path) = 0;
+
+  virtual Result<uint32_t> FileAttributes(std::string_view path) const = 0;
 };
 
 class ReadWriteFilesystem : public ReadFilesystem {

@@ -31,6 +31,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
@@ -79,7 +80,7 @@ Result<std::string> ReadableZip::EntryName(uint64_t index) {
   return std::string(name_cstr);
 }
 
-Result<uint32_t> ReadableZip::EntryAttributes(uint64_t index) {
+Result<uint32_t> ReadableZip::EntryAttributes(uint64_t index) const {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   uint8_t opsys;
@@ -109,7 +110,7 @@ Result<bool> ReadableZip::EntryIsDirectory(uint64_t index) {
   return S_ISDIR(mode);
 }
 
-Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
+Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) const {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   int64_t index = zip_name_locate(raw_zip, name.c_str(), 0);
@@ -118,7 +119,7 @@ Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
   return CF_EXPECT(GetFile(index));
 }
 
-Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
+Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) const {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   ManagedZipError error = NewZipError();
@@ -134,6 +135,15 @@ Result<std::unique_ptr<ReaderSeeker>> ReadableZip::OpenReadOnly(
     std::string_view path) {
   SeekableZipSource source = CF_EXPECT(GetFile(std::string(path)));
   return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
+}
+
+Result<uint32_t> ReadableZip::FileAttributes(std::string_view path) const {
+  ReadableZipSource source = CF_EXPECT(GetFile(std::string(path)));
+  ZipStat stat_out = CF_EXPECT(source.Stat());
+  uint64_t index = CF_EXPECT(std::move(stat_out.index));
+  uint32_t attributes = CF_EXPECT(EntryAttributes(index));
+  uint32_t mode = (attributes >> 16) & 0777;
+  return mode;
 }
 
 ReadableZip::ReadableZip(ManagedZip raw, WritableZipSource source)

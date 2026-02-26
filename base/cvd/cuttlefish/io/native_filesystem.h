@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include <string_view>
+
 #include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
@@ -27,6 +29,8 @@ class NativeFilesystem : public ReadWriteFilesystem {
  public:
   Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
       std::string_view path) override;
+
+  Result<uint32_t> FileAttributes(std::string_view path) const override;
 
   Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
       std::string_view path) override;

@@ -47,15 +47,17 @@ class ReadableZip : public ReadFilesystem {
   Result<uint64_t> NumEntries();
 
   Result<std::string> EntryName(uint64_t index);
-  Result<uint32_t> EntryAttributes(uint64_t index);
+  Result<uint32_t> EntryAttributes(uint64_t index) const;
   Result<bool> EntryIsDirectory(uint64_t index);
 
   /* Decompresses and extract a file from the archive. */
-  Result<SeekableZipSource> GetFile(const std::string& name);
-  Result<SeekableZipSource> GetFile(uint64_t index);
+  Result<SeekableZipSource> GetFile(const std::string& name) const;
+  Result<SeekableZipSource> GetFile(uint64_t index) const;
 
   Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
       std::string_view path) override;
+
+  Result<uint32_t> FileAttributes(std::string_view path) const override;
 
  protected:
   ReadableZip(ManagedZip, WritableZipSource);

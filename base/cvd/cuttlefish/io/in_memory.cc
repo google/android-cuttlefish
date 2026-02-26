@@ -138,6 +138,10 @@ class InMemoryFilesystemImpl : public ReadWriteFilesystem {
     return CF_EXPECT(OpenReadWrite(path));
   }
 
+  Result<uint32_t> FileAttributes(std::string_view path) const override {
+    return 0644;
+  }
+
   Result<std::unique_ptr<ReaderWriterSeeker>> CreateFile(
       std::string_view path) override {
     std::lock_guard lock(mutex_);
