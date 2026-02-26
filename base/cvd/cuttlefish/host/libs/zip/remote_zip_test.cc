@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -34,6 +35,8 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 #include "cuttlefish/result/result_matchers.h"
 
@@ -123,13 +126,17 @@ TEST(RemoteZipTest, TwoFiles) {
   Result<ReadableZip> remote_zip = ReadableZip::FromSource(std::move(*source));
   ASSERT_THAT(remote_zip, IsOk());
 
-  Result<SeekableZipSource> file_a(remote_zip->GetFile("a.txt"));
+  Result<std::unique_ptr<ReaderSeeker>> file_a =
+      remote_zip->OpenReadOnly("a.txt");
   ASSERT_THAT(file_a, IsOk());
-  ASSERT_THAT(ReadToString(*file_a), IsOkAndValue("abc"));
+  ASSERT_NE(file_a->get(), nullptr);
+  ASSERT_THAT(ReadToString(**file_a), IsOkAndValue("abc"));
 
-  Result<SeekableZipSource> file_b(remote_zip->GetFile("b.txt"));
+  Result<std::unique_ptr<ReaderSeeker>> file_b =
+      remote_zip->OpenReadOnly("b.txt");
   ASSERT_THAT(file_b, IsOk());
-  ASSERT_THAT(ReadToString(*file_b), IsOkAndValue("def"));
+  ASSERT_NE(file_b->get(), nullptr);
+  ASSERT_THAT(ReadToString(**file_b), IsOkAndValue("def"));
 }
 
 }  // namespace
