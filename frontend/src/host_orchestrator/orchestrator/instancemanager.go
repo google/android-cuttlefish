@@ -19,8 +19,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -241,24 +239,4 @@ func runAcloudSetup(execContext hoexec.ExecContext, artifactsRootDir, artifactsD
 	}
 	// Creates symbolic link `acloud_link` which points to the passed device artifacts directory.
 	go run(execContext(context.TODO(), "ln", "-s", artifactsDir, artifactsRootDir+"/acloud_link"))
-}
-
-func isRunningOnGCE() bool {
-	_, err := net.LookupIP("metadata.google.internal")
-	return err == nil
-}
-
-// For instances running on GCE, checks whether the instance was created with a service account having an access token.
-func hasServiceAccountAccessToken() (bool, error) {
-	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", nil)
-	if err != nil {
-		return false, err
-	}
-	req.Header.Set("Metadata-Flavor", "Google")
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return false, err
-	}
-	return res.StatusCode == http.StatusOK, nil
 }
