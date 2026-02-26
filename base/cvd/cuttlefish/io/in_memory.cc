@@ -175,6 +175,11 @@ std::unique_ptr<ReaderWriterSeeker> InMemoryIo() {
   return std::make_unique<OwningInMemoryIo>();
 }
 
+std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::string_view str) {
+  std::vector<char> data(str.begin(), str.end());
+  return std::make_unique<OwningInMemoryIo>(std::move(data));
+}
+
 std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::vector<char> data) {
   return std::make_unique<OwningInMemoryIo>(std::move(data));
 }

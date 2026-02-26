@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/io/filesystem.h"
@@ -23,6 +24,7 @@
 namespace cuttlefish {
 
 std::unique_ptr<ReaderWriterSeeker> InMemoryIo();
+std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::string_view);
 std::unique_ptr<ReaderWriterSeeker> InMemoryIo(std::vector<char>);
 std::unique_ptr<ReadWriteFilesystem> InMemoryFilesystem();
 
