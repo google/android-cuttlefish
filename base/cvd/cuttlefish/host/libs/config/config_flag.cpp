@@ -194,7 +194,7 @@ class ConfigFlagImpl : public ConfigFlag {
       return {};
     }
     std::string android_info;
-    if (!ReadFileToString(info_path, &android_info)) {
+    if (!ReadFileToString(info_path, &android_info, /* follow_symlinks */ true)) {
       return {};
     }
     Result<std::map<std::string, std::string, std::less<void>>> parsed_config =
