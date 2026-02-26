@@ -13,35 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/io/read_window_view.h"
 
 #include <stdint.h>
 
-#include "cuttlefish/io/io.h"
+#include <algorithm>
+
+#include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-/**
- * Simulates a seek cursor over a data source with no native seeking state.
- *
- * This makes it possible to satisfy the full `ReaderSeeker` interface by
- * implementing only `PRead`. It's useful for data sources that don't correspond
- * to files.
- */
-class ReaderFakeSeeker : public ReaderSeeker {
- public:
-  ReaderFakeSeeker(uint64_t length);
+ReadWindowView::ReadWindowView(const ReaderSeeker& data_provider,
+                               const uint64_t begin, const uint64_t length)
+    : ReaderFakeSeeker(length),
+      data_provider_(&data_provider),
+      begin_(begin),
+      length_(length) {}
 
-  Result<uint64_t> Read(void* buf, uint64_t count) final override;
-  Result<uint64_t> SeekSet(uint64_t) final override;
-  Result<uint64_t> SeekCur(int64_t) final override;
-  Result<uint64_t> SeekEnd(int64_t) final override;
-
-  // Subclasses only need to implement PRead
- private:
-  uint64_t seek_pos_ = 0;
-  uint64_t length_;
-};
+Result<uint64_t> ReadWindowView::PRead(void* const buf, uint64_t count,
+                                       uint64_t offset) const {
+  if (offset >= length_) {
+    return 0;
+  }
+  count = std::min(count, length_ - offset);
+  offset += begin_;
+  return CF_EXPECT(data_provider_->PRead(buf, count, offset));
+}
 
 }  // namespace cuttlefish

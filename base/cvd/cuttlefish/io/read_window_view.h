@@ -17,31 +17,26 @@
 
 #include <stdint.h>
 
-#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/fake_seek.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
 /**
- * Simulates a seek cursor over a data source with no native seeking state.
- *
- * This makes it possible to satisfy the full `ReaderSeeker` interface by
- * implementing only `PRead`. It's useful for data sources that don't correspond
- * to files.
+ * Wraps another `ReaderSeeker` implementation and presents a view to a subset
+ * of the data that can be read from the wrapped instance.
  */
-class ReaderFakeSeeker : public ReaderSeeker {
+class ReadWindowView : public ReaderFakeSeeker {
  public:
-  ReaderFakeSeeker(uint64_t length);
+  ReadWindowView(const ReaderSeeker&, uint64_t begin, uint64_t length);
 
-  Result<uint64_t> Read(void* buf, uint64_t count) final override;
-  Result<uint64_t> SeekSet(uint64_t) final override;
-  Result<uint64_t> SeekCur(int64_t) final override;
-  Result<uint64_t> SeekEnd(int64_t) final override;
+  Result<uint64_t> PRead(void* buf, uint64_t count,
+                         uint64_t offset) const override;
 
-  // Subclasses only need to implement PRead
  private:
-  uint64_t seek_pos_ = 0;
-  uint64_t length_;
+  ReaderSeeker const* data_provider_;
+  uint64_t begin_ = 0;
+  uint64_t length_ = 0;
 };
 
 }  // namespace cuttlefish

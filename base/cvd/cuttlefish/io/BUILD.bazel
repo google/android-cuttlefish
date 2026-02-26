@@ -156,6 +156,32 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "read_window_view",
+    srcs = ["read_window_view.cc"],
+    hdrs = ["read_window_view.h"],
+    deps = [
+        "//cuttlefish/io:fake_seek",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "read_window_view_test",
+    srcs = ["read_window_view_test.cc"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "shared_fd",
     srcs = ["shared_fd.cc"],
     hdrs = ["shared_fd.h"],
