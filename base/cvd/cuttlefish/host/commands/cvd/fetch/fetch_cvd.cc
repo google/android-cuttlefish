@@ -20,7 +20,7 @@
 
 #include <functional>
 #include <future>
-#include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -54,7 +54,8 @@
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-#include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -231,10 +232,11 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   }
   if (flags.dynamic_super_image) {
     ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
-    ReadableZipSource ab_partitions_source =
-        CF_EXPECT(target_files_zip->GetFile("META/ab_partitions.txt"));
+    std::unique_ptr<ReaderSeeker> ab_partitions_source =
+        CF_EXPECT(target_files_zip->OpenReadOnly("META/ab_partitions.txt"));
+    CF_EXPECT(ab_partitions_source.get());
     std::string ab_partitions_contents =
-        CF_EXPECT(ReadToString(ab_partitions_source));
+        CF_EXPECT(ReadToString(*ab_partitions_source));
 
     CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
                                         "default/ab_partitions.txt"));
