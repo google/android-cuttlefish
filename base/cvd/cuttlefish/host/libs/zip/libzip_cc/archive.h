@@ -18,17 +18,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/filesystem.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class ReadableZip {
+class ReadableZip : public ReadFilesystem {
  public:
   friend class WritableZip;
   friend class WritableZipSource;
@@ -49,6 +53,9 @@ class ReadableZip {
   /* Decompresses and extract a file from the archive. */
   Result<SeekableZipSource> GetFile(const std::string& name);
   Result<SeekableZipSource> GetFile(uint64_t index);
+
+  Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
+      std::string_view path) override;
 
  protected:
   ReadableZip(ManagedZip, WritableZipSource);

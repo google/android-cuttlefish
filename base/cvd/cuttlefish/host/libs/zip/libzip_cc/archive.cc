@@ -17,11 +17,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "zip.h"
@@ -31,6 +32,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -126,6 +128,12 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
   CF_EXPECT(raw_source.get(), ZipErrorString(error.get()));
 
   return SeekableZipSource(std::move(raw_source));
+}
+
+Result<std::unique_ptr<ReaderSeeker>> ReadableZip::OpenReadOnly(
+    std::string_view path) {
+  SeekableZipSource source = CF_EXPECT(GetFile(std::string(path)));
+  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
 }
 
 ReadableZip::ReadableZip(ManagedZip raw, WritableZipSource source)
