@@ -1,6 +1,6 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_cc_binary", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_cc_binary", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -431,6 +431,19 @@ cf_cc_library(
         "//cuttlefish/io:string",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "kernel_module_parser_test",
+    srcs = ["kernel_module_parser_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
+        "//cuttlefish/io",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
