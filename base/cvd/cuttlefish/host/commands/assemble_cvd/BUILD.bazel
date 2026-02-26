@@ -427,7 +427,8 @@ cf_cc_library(
     srcs = ["kernel_module_parser.cc"],
     hdrs = ["kernel_module_parser.h"],
     deps = [
-        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/io",
+        "//cuttlefish/io:string",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
@@ -580,6 +581,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

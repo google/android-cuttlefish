@@ -15,10 +15,8 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 
-#include <fcntl.h>
-
-#include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -27,17 +25,10 @@ static constexpr std::string_view kSignatureFooter =
 
 namespace cuttlefish {
 
-Result<bool> IsKernelModuleSigned(std::string_view path) {
-  SharedFD fd = SharedFD::Open(std::string(path), O_RDONLY);
-  CF_EXPECT(fd->IsOpen(), fd->StrError());
-
-  CF_EXPECT_GE(fd->LSeek(-kSignatureFooter.size(), SEEK_END), 0, fd->StrError());
-
-  std::array<char, kSignatureFooter.size()> buf{};
-  CF_EXPECT_EQ(ReadExact(fd, buf.data(), buf.size()), buf.size(), fd->StrError());
-
-  return memcmp(buf.data(), kSignatureFooter.data(), kSignatureFooter.size()) ==
-         0;
+Result<bool> IsKernelModuleSigned(ReaderSeeker& file) {
+  CF_EXPECT(file.SeekEnd(-kSignatureFooter.size()));
+  return CF_EXPECT(ReadToString(file, kSignatureFooter.size())) ==
+         kSignatureFooter;
 }
 
 }  // namespace cuttlefish

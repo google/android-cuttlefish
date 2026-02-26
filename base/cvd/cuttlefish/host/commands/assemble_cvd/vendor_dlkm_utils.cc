@@ -25,12 +25,13 @@
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/stringprintf.h>
-#include <android-base/strings.h>
-#include "absl/strings/str_split.h"
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
+#include "android-base/file.h"
+#include "android-base/stringprintf.h"
+#include "android-base/strings.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -43,6 +44,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/io/shared_fd.h"
 
 namespace cuttlefish {
 
@@ -460,12 +462,16 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
       continue;
     }
 
-    const auto module_location =
-        fmt::format("{}/{}", module_base_dir, module_path);
+    const std::string module_location =
+        absl::StrCat(module_base_dir, "/", module_path);
     if (!FileExists(module_location)) {
       continue;
     }
-    if (IsKernelModuleSigned(module_location).value_or(false)) {
+    SharedFD module_fd = SharedFD::Open(module_location, O_RDONLY);
+    CF_EXPECT(module_fd->IsOpen(), module_fd->StrError());
+    SharedFdIo module_io(module_fd);
+
+    if (IsKernelModuleSigned(module_io).value_or(false)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
 
