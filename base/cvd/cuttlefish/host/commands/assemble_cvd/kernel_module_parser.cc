@@ -13,23 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kernel_module_parser.h"
+#include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
 
 #include <fcntl.h>
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 
-static constexpr std::string_view SIGNATURE_FOOTER =
+#include "cuttlefish/common/libs/fs/shared_buf.h"
+#include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
+
+static constexpr std::string_view kSignatureFooter =
     "~Module signature appended~\n";
 
 namespace cuttlefish {
 
-bool IsKernelModuleSigned(const char *path) {
-  auto fd = SharedFD::Open(path, O_RDONLY);
-  fd->LSeek(-SIGNATURE_FOOTER.size(), SEEK_END);
-  std::array<char, SIGNATURE_FOOTER.size()> buf{};
-  fd->Read(buf.data(), buf.size());
+Result<bool> IsKernelModuleSigned(std::string_view path) {
+  SharedFD fd = SharedFD::Open(std::string(path), O_RDONLY);
+  CF_EXPECT(fd->IsOpen(), fd->StrError());
 
-  return memcmp(buf.data(), SIGNATURE_FOOTER.data(), SIGNATURE_FOOTER.size()) ==
+  CF_EXPECT_GE(fd->LSeek(-kSignatureFooter.size(), SEEK_END), 0, fd->StrError());
+
+  std::array<char, kSignatureFooter.size()> buf{};
+  CF_EXPECT_EQ(ReadExact(fd, buf.data(), buf.size()), buf.size(), fd->StrError());
+
+  return memcmp(buf.data(), kSignatureFooter.data(), kSignatureFooter.size()) ==
          0;
 }
 

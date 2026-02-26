@@ -428,6 +428,8 @@ cf_cc_library(
     hdrs = ["kernel_module_parser.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
     ],
 )
 

@@ -15,14 +15,12 @@
 
 #pragma once
 
-#include <string>
+#include <string_view>
+
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-bool IsKernelModuleSigned(const char* path);
-
-constexpr bool IsKernelModuleSigned(const std::string& path) {
-  return IsKernelModuleSigned(path.c_str());
-}
+Result<bool> IsKernelModuleSigned(std::string_view path);
 
 }  // namespace cuttlefish
