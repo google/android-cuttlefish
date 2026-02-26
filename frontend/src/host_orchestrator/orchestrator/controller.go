@@ -953,18 +953,6 @@ func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.
 			UseGCEServiceAccountCredentials: true,
 		}
 	}
-	// TODO(b/425716010): Remove the following block, and use `config.UseGCEMetadata` instead
-	if isRunningOnGCE() {
-		log.Println("fetch credentials: running on gce")
-		if ok, err := hasServiceAccountAccessToken(); err != nil {
-			log.Printf("fetch credentials: service account token check failed: %s", err)
-		} else if ok {
-			log.Println("fetch credentials: using gce service account credentials")
-			return cvd.FetchCredentials{
-				UseGCEServiceAccountCredentials: true,
-			}
-		}
-	}
 	log.Println("fetch credentials: using no credentials")
 	return cvd.FetchCredentials{}
 }

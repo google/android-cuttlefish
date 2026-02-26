@@ -10,9 +10,6 @@ RUN groupadd kvm
 COPY tools/testutils/cw/setup.service /etc/systemd/system/setup.service
 RUN systemctl enable setup
 
-# Enabled with `podman run --add-host="metadata.google.internal:127.0.0.1"`
-COPY tools/testutils/cw/fake_gce_metadata_nginx.conf /etc/nginx/conf.d/fake_gce_metadata_nginx.conf
-
 FROM base AS with_bazel
 
 RUN --mount=source=.,target=/mnt,type=bind \
