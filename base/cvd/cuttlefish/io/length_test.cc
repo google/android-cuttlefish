@@ -28,7 +28,7 @@ namespace cuttlefish {
 namespace {
 
 TEST(LengthTest, LengthEmpty) {
-  ASSERT_THAT(Length(*InMemoryIo({})), IsOkAndValue(0));
+  ASSERT_THAT(Length(*InMemoryIo()), IsOkAndValue(0));
 }
 
 TEST(LengthTest, LengthWithData) {
