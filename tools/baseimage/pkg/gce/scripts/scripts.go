@@ -25,9 +25,6 @@ var CreateBaseImageMain string
 //go:embed install_nvidia.sh
 var InstallNvidia string
 
-//go:embed fill_available_disk_space.sh
-var FillAvailableDiskSpace string
-
 //go:embed install_cuttlefish_debs.sh
 var InstallCuttlefishDebs string
 
