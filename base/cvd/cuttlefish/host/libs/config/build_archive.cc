@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -37,7 +38,8 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
-#include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
 #include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
 #include "cuttlefish/pretty/pretty.h"
@@ -162,8 +164,10 @@ Result<std::string> BuildArchive::MemberContents(std::string_view name) {
   }
   CF_EXPECT(zip_file_.has_value(), "'{}' not extracted, no source archive");
 
-  ReadableZipSource reader = CF_EXPECT(zip_file_->GetFile(std::string(name)));
-  return CF_EXPECT(ReadToString(reader));
+  std::unique_ptr<ReaderSeeker> reader =
+      CF_EXPECT(zip_file_->OpenReadOnly(name));
+  CF_EXPECT(reader.get());
+  return CF_EXPECT(ReadToString(*reader));
 }
 
 std::string format_as(const BuildArchive& archive) { return "BuildArchive"; }
