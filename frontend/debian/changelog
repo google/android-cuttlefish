@@ -1,8 +1,20 @@
-cuttlefish-frontend (1.45.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.45.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.45 by @Databean in https://github.com/google/android-cuttlefish/pull/2172
+  * podcvd checks host's routing table to find CIDR by @0405ysj in https://github.com/google/android-cuttlefish/pull/2166
+  * Support building `//cuttlefish/package:cvd` with bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2164
+  * host image: install custom configs by @ser-io in https://github.com/google/android-cuttlefish/pull/2176
+  * baseimage tools refactoring by @ser-io in https://github.com/google/android-cuttlefish/pull/2184
+  * Use nightly tag for podcvd development by @0405ysj in https://github.com/google/android-cuttlefish/pull/2190
+  * Remove unused fill_available_disk_space script. by @ser-io in https://github.com/google/android-cuttlefish/pull/2192
+  * Cleanup stale logic around using service account credentials in cvd fetch calls. by @ser-io in https://github.com/google/android-cuttlefish/pull/2193
+  * Suppress error on variable version though artifact doesn't exist by @0405ysj in https://github.com/google/android-cuttlefish/pull/2195
+  * Put appropriate inputs to actions for deployment towards AR of GCP by @0405ysj in https://github.com/google/android-cuttlefish/pull/2196
+  * tools/buildutils/cw/Containerfile installs go from bookworm backports by @0405ysj in https://github.com/google/android-cuttlefish/pull/2197
+  * Podcvd can execute cvd help/version, and also help flags for most subcommands by @0405ysj in https://github.com/google/android-cuttlefish/pull/2191
+  * Revert for internal import blockage by @cjreynol in https://github.com/google/android-cuttlefish/pull/2199
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 20 Feb 2026 16:37:13 -0800
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 27 Feb 2026 14:41:13 -0800
 
 cuttlefish-frontend (1.44.0) unstable; urgency=medium
 

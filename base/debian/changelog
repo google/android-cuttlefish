@@ -1,8 +1,34 @@
-cuttlefish-common (1.45.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.45.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.45 by @Databean in https://github.com/google/android-cuttlefish/pull/2172
+  * Support generic IO types in `CompositeDisk` by @Databean in https://github.com/google/android-cuttlefish/pull/2168
+  * Support building `//cuttlefish/package:cvd` with bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2164
+  * Delete local toolchain logic by @Databean in https://github.com/google/android-cuttlefish/pull/2174
+  * Replace android::base::Split with absl::StrSplit by @jemoreira in https://github.com/google/android-cuttlefish/pull/2171
+  * host image: install custom configs by @ser-io in https://github.com/google/android-cuttlefish/pull/2176
+  * Expand on the message for fetch status blocking by @cjreynol in https://github.com/google/android-cuttlefish/pull/2178
+  * Replace android::base::Tokenize with absl::StrSplit by @jemoreira in https://github.com/google/android-cuttlefish/pull/2177
+  * Create a Length method based on the Seeker& interface by @Databean in https://github.com/google/android-cuttlefish/pull/2180
+  * otheros: Drops ia32 Grub support by @dimorinny in https://github.com/google/android-cuttlefish/pull/2173
+  * Replace LazilyLoadedFileReadCallback with ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/2182
+  * Support creating a BufferedZipSource from a ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/2181
+  * Use adb fron debian package in e2etests. by @ser-io in https://github.com/google/android-cuttlefish/pull/2185
+  * baseimage tools refactoring by @ser-io in https://github.com/google/android-cuttlefish/pull/2184
+  * Make sure to follow symlinks when reading files by @jemoreira in https://github.com/google/android-cuttlefish/pull/2186
+  * Implement ReadFilesystem for ReadableZip by @Databean in https://github.com/google/android-cuttlefish/pull/2187
+  * Remove unused fill_available_disk_space script. by @ser-io in https://github.com/google/android-cuttlefish/pull/2192
+  * Implement IsKernelModuleSigned using IO types and add test coverage by @Databean in https://github.com/google/android-cuttlefish/pull/2188
+  * Support Reader implementations with only PRead by @Databean in https://github.com/google/android-cuttlefish/pull/2189
+  * Migrate `cvd fetch` to the V4 Android Build API by @cjreynol in https://github.com/google/android-cuttlefish/pull/1830
+  * Cleanup stale logic around using service account credentials in cvd fetch calls. by @ser-io in https://github.com/google/android-cuttlefish/pull/2193
+  * .github/workflows: deploy Gigabyte Ampere server image to artifactory by @grandpaul in https://github.com/google/android-cuttlefish/pull/2183
+  * Create a ReadWindow type that presents a subset of another ReaderSeeker type by @Databean in https://github.com/google/android-cuttlefish/pull/2194
+  * Suppress error on variable version though artifact doesn't exist by @0405ysj in https://github.com/google/android-cuttlefish/pull/2195
+  * Put appropriate inputs to actions for deployment towards AR of GCP by @0405ysj in https://github.com/google/android-cuttlefish/pull/2196
+  * tools/buildutils/cw/Containerfile installs go from bookworm backports by @0405ysj in https://github.com/google/android-cuttlefish/pull/2197
+  * Pre-installed docker image on on-premise arm64 image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2158
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 20 Feb 2026 16:36:53 -0800
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 27 Feb 2026 14:39:34 -0800
 
 cuttlefish-common (1.44.0) unstable; urgency=medium
 
