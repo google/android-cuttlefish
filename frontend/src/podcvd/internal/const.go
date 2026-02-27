@@ -22,5 +22,6 @@ const (
 )
 
 const (
-	labelGroupName = "group_name"
+	labelGroupName       = "group_name"
+	ToolingContainerName = "tooling"
 )
