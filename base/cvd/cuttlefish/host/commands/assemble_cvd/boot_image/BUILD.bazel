@@ -10,7 +10,11 @@ cf_cc_library(
     hdrs = ["boot_image.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:copy",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:length",
         "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:read_window_view",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@mkbootimg//:bootimg_header",
