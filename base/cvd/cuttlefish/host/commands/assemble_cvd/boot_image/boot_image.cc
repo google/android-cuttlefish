@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 
+#include <map>
 #include <string>
 #include <utility>
 #include <variant>
@@ -24,6 +25,8 @@
 #include "absl/strings/str_cat.h"
 #include "bootimg.h"
 
+#include "cuttlefish/io/copy.h"
+#include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
 #include "cuttlefish/result/result.h"
@@ -72,8 +75,80 @@ static std::string KernelCommandLineImpl(const boot_img_hdr_v3& v3) {
 }
 
 std::string BootImage::KernelCommandLine() const {
-  auto visitor = [](const auto& hdr) { return KernelCommandLineImpl(hdr); };
+  const auto visitor = [](const auto& hdr) {
+    return KernelCommandLineImpl(hdr);
+  };
   return std::visit(visitor, header_);
+}
+
+static uint32_t PageSizeImpl(const boot_img_hdr_v0& v0) { return v0.page_size; }
+static uint32_t PageSizeImpl(const boot_img_hdr_v3&) { return 4096; }
+
+uint32_t BootImage::PageSize() const {
+  const auto visitor = [](const auto& hdr) { return PageSizeImpl(hdr); };
+  return std::visit(visitor, header_);
+}
+
+static uint32_t KernelSize(const boot_img_hdr_v0& v0) { return v0.kernel_size; }
+static uint32_t KernelSize(const boot_img_hdr_v3& v3) { return v3.kernel_size; }
+
+uint64_t BootImage::KernelPages() const {
+  const auto visitor = [](const auto& hdr) { return KernelSize(hdr); };
+  const uint64_t kernel_size = std::visit(visitor, header_);
+  return (kernel_size + PageSize() - 1) / PageSize();
+}
+
+ReadWindowView BootImage::Kernel() const {
+  const auto visitor = [](const auto& hdr) { return KernelSize(hdr); };
+  const uint64_t kernel_size = std::visit(visitor, header_);
+  return ReadWindowView(*reader_, PageSize(), kernel_size);
+}
+
+static uint32_t RamdiskSize(const boot_img_hdr_v0& v0) {
+  return v0.ramdisk_size;
+}
+static uint32_t RamdiskSize(const boot_img_hdr_v3& v3) {
+  return v3.ramdisk_size;
+}
+
+uint64_t BootImage::RamdiskPages() const {
+  const auto visitor = [](const auto& hdr) { return RamdiskSize(hdr); };
+  const uint64_t ramdisk_size = std::visit(visitor, header_);
+  return (ramdisk_size + PageSize() - 1) / PageSize();
+}
+
+ReadWindowView BootImage::Ramdisk() const {
+  const uint64_t start = (1 + KernelPages()) * PageSize();
+  const auto visitor = [](const auto& hdr) { return RamdiskSize(hdr); };
+  const uint64_t ramdisk_size = std::visit(visitor, header_);
+  return ReadWindowView(*reader_, start, ramdisk_size);
+}
+
+std::optional<ReadWindowView> BootImage::Signature() const {
+  const boot_img_hdr_v4* v4 = std::get_if<boot_img_hdr_v4>(&header_);
+  if (v4 == nullptr) {
+    return std::nullopt;
+  }
+  const uint64_t start = (1 + KernelPages() + RamdiskPages()) * PageSize();
+  return ReadWindowView(*reader_, start, v4->signature_size);
+}
+
+Result<void> BootImage::Unpack(ReadWriteFilesystem& fs) {
+  std::map<std::string_view, ReadWindowView> files = {
+      {"/kernel", Kernel()},
+      {"/ramdisk", Ramdisk()},
+  };
+  if (std::optional<ReadWindowView> signature = Signature(); signature) {
+    files.emplace("/boot_signature", std::move(*signature));
+  }
+  for (auto& [target, source] : files) {
+    Result<void> unused = fs.DeleteFile(target);
+    std::unique_ptr<ReaderWriterSeeker> target_out =
+        CF_EXPECTF(fs.CreateFile(target), "Failed to create '{}'.", target);
+    CF_EXPECTF(target_out.get(), "Failed to create '{}'", target);
+    CF_EXPECTF(Copy(source, *target_out), "Failed to write '{}'.", target);
+  }
+  return {};
 }
 
 }  // namespace cuttlefish
