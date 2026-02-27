@@ -43,7 +43,7 @@ runs:
         --package="debian-installer" \
         --project="android-cuttlefish-artifacts" \
         --quiet \
-        --repository="${REPO}"
+        --repository="${REPO}" || true
       for VERSION in ${TAG} ${INPUTS_DEPLOY_CHANNEL}; do
         gcloud artifacts generic upload \
           --location=us \
