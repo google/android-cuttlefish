@@ -31,7 +31,7 @@ runs:
         nightly)
           # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
           SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          TAG="git${INPUTS_YYYYMMDDHHMM}-${SHORT_SHA}-${INPUTS_ARCH}"
+          TAG="git${INPUTS_YYYYMMDDHHMM}-${SHORT_SHA}"
           ;;
         *)
           exit 1
