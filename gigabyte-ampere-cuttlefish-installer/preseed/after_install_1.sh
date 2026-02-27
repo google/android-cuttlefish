@@ -109,3 +109,27 @@ curl -fsSL --retry 7 --retry-all-errors https://nvidia.github.io/libnvidia-conta
   tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes nvidia-container-toolkit
+
+# Find container image tagged with most recent stable version
+DEBIAN_FRONTEND=noninteractive apt-get install -y  -q --force-yes skopeo
+ORCHESTRATION_IMAGE="us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration"
+STABLE_DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:stable --format '{{.Digest}}')
+CANDIDATES=$(skopeo list-tags docker://${ORCHESTRATION_IMAGE} | jq -r '.Tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' | sort -V -r)
+ORCHESTRATION_TAG=""
+for CANDIDATE in $CANDIDATES; do
+	DIGEST=$(skopeo inspect docker://${ORCHESTRATION_IMAGE}:${CANDIDATE} --format '{{.Digest}}')
+	if [ "$DIGEST" = "$STABLE_DIGEST" ]; then
+		ORCHESTRATION_TAG=${CANDIDATE}
+		break
+	fi
+done
+
+# Run dockerd for a moment and pull container image
+mount -t cgroup2 none /sys/fs/cgroup
+dockerd >/dev/null 2>&1 &
+DOCKER_PID=$!
+timeout=10 sh -c 'until [ -S /var/run/docker.sock ]; do sleep 1; done'
+docker pull ${ORCHESTRATION_IMAGE}:${ORCHESTRATION_TAG}
+kill $DOCKER_PID
+wait $DOCKER_PID
+umount /sys/fs/cgroup
