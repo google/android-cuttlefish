@@ -122,9 +122,6 @@ jobs:
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build Gigabyte Ampere installer
       uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
-      with:
-        deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v3'
@@ -135,6 +132,7 @@ jobs:
       uses: ./.github/actions/deploy-gigabyte-ampere-cuttlefish-installer
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
+        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
         path: ./gigabyte-ampere-cuttlefish-installer
 
   deploy-docker-image-amd64:
