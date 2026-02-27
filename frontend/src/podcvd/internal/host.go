@@ -28,7 +28,6 @@ import (
 
 	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
 
-	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/vishvananda/netlink"
@@ -53,28 +52,6 @@ func DeleteCuttlefishHost(ccm libcfcontainer.CuttlefishContainerManager, groupNa
 		return fmt.Errorf("failed to stop and remove container: %w", err)
 	}
 	return nil
-}
-
-func CreateToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
-	if err := pullContainerImage(ccm); err != nil {
-		return err
-	}
-	if _, err := ccm.GetClient().ContainerInspect(context.Background(), ToolingContainerName); err == nil {
-		return nil
-	} else if !errdefs.IsNotFound(err) {
-		return err
-	}
-	return createAndStartToolingContainer(ccm)
-}
-
-func DeleteToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
-	if err := ccm.StopAndRemoveContainer(context.Background(), ToolingContainerName); err == nil {
-		return nil
-	} else if errdefs.IsNotFound(err) {
-		return nil
-	} else {
-		return fmt.Errorf("failed to stop and remove container: %w", err)
-	}
 }
 
 func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
@@ -237,14 +214,4 @@ func ensureOperatorHealthy(ip string) error {
 		return nil
 	}
 	return lastErr
-}
-
-func createAndStartToolingContainer(ccm libcfcontainer.CuttlefishContainerManager) error {
-	containerCfg := &container.Config{
-		Image: imageName,
-	}
-	if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, nil, ToolingContainerName); err != nil {
-		return err
-	}
-	return nil
 }
