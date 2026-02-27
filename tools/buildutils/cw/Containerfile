@@ -5,6 +5,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update -y && apt upgrade -y
 RUN apt install -y sudo devscripts
 
+# Download newer version of golang with keep using bookworm for building debian
+# packages.
+RUN echo "deb http://deb.debian.org/debian bookworm-backports main" > /etc/apt/sources.list.d/backports.list
+RUN apt update
+RUN apt install -t bookworm-backports -y golang
+
 COPY ./tools/buildutils/installbazel.sh /installbazel.sh
 RUN /installbazel.sh && rm /installbazel.sh
 
