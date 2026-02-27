@@ -203,7 +203,12 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 }
 
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
-	if err := m.cli.ContainerStop(ctx, ctr, container.StopOptions{}); err != nil {
+	timeout := int(30)
+	stopConfig := container.StopOptions{
+		Signal: "SIGKILL",
+		Timeout: &timeout,
+	}
+	if err := m.cli.ContainerStop(ctx, ctr, stopConfig); err != nil {
 		return fmt.Errorf("failed to stop docker container: %w", err)
 	}
 	if err := m.cli.ContainerRemove(ctx, ctr, container.RemoveOptions{}); err != nil {
