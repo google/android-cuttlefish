@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+#
+### BEGIN INIT INFO
+# Provides:          cuttlefish-podcvd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Setup initial environment to use podcvd
+# Description:       This script sets up initial environment to launch
+#                    Cuttlefish instances on the container instance via podcvd,
+#                    such as network interface preparation.
+### END INIT INFO
+#
+# Copyright (C) 2026 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if [ -f /etc/default/cuttlefish-podcvd ]; then
+    . /etc/default/cuttlefish-podcvd
+fi
+podcvd_cidr=${podcvd_cidr:-192.168.80.0/24}
+
+podcvd_ifname="podcvd"
+
+start() {
+    ip link add "${podcvd_ifname}" type dummy
+    ip link set "${podcvd_ifname}" up
+    ip route add local "${podcvd_cidr}" dev "${podcvd_ifname}"
+}
+
+stop() {
+    for cidr in $(ip route show table local dev ${podcvd_ifname} | awk '{print $2}'); do
+        ip route del local "${cidr}" dev "${podcvd_ifname}" || true
+    done
+    ip link set dev "${podcvd_ifname}" down || true
+    ip link del "${podcvd_ifname}" || true
+}
+
+usage() {
+    echo $0: start\|stop\|status
+}
+
+if test $# != 1; then
+    usage
+fi
+case "$1" in
+    condrestart|force-reload|reload|restart|try-restart)
+        stop && start
+        ;;
+    shutdown|stop)
+        stop
+        ;;
+    start)
+        start
+        ;;
+    status)
+        rh_status
+        ;;
+    *)
+        usage
+        ;;
+esac
+exit $RETVAL

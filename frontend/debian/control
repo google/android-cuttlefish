@@ -34,3 +34,14 @@ Depends: cuttlefish-user,
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
  Contains the host orchestrator.
+
+Package: cuttlefish-podcvd
+Architecture: any
+Depends: adb,
+         android-sdk-platform-tools-common,
+         podman
+Pre-Depends: ${misc:Pre-Depends}
+Description: Cuttlefish Android Virtual Device companion package
+ Contains a binary named 'podcvd' needed to launch Cuttlefish Android
+ Virtual Device on the isolated host environment prepared on rootless
+ container instances.
