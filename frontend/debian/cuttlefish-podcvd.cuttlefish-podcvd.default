@@ -1,0 +1,5 @@
+# defaults for cuttlefish-podcvd
+
+# CIDR of 'podcvd' network interface used for routing into IP addresses of
+# Cuttlefish container instances.
+#podcvd_cidr=192.168.80.0/24
