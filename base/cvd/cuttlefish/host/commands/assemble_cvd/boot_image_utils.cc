@@ -25,10 +25,10 @@
 #include <regex>
 #include <string>
 
-#include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "android-base/strings.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -38,8 +38,10 @@
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/io/chroot.h"
+#include "cuttlefish/io/copy.h"
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -196,19 +198,21 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
   } while (cpio_status == 0);
 }
 
-Result<std::string> UnpackBootImage(const std::string& boot_image_path,
-                                    const std::string& unpack_dir) {
-  Command unpack_cmd = Command(UnpackBootimgBinary())
-                           .AddParameter("--boot_img")
-                           .AddParameter(boot_image_path)
-                           .AddParameter("--out")
-                           .AddParameter(unpack_dir);
+Result<void> UnpackBootImage(const std::string& boot_image_path,
+                             const std::string& unpack_dir) {
+  NativeFilesystem native_filesystem;
 
-  std::string unpacked = CF_EXPECT(RunAndCaptureStdout(std::move(unpack_cmd)));
+  std::unique_ptr<ReaderSeeker> boot_image_reader =
+      CF_EXPECT(native_filesystem.OpenReadOnly(boot_image_path));
+  BootImage boot_image =
+      CF_EXPECT(BootImage::Read(std::move(boot_image_reader)));
 
-  VLOG(0) << "Unpacked boot image:\n" << unpacked;
+  ChrootReadWriteFilesystem build_dir_chroot(native_filesystem,
+                                             unpack_dir + "/");
 
-  return unpacked;
+  CF_EXPECT(boot_image.Unpack(build_dir_chroot));
+
+  return {};
 }
 
 bool UnpackVendorBootImageIfNotUnpacked(
@@ -279,30 +283,39 @@ Result<void> RepackBootImage(const Avb& avb,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
                              const std::string& build_dir) {
-  CF_EXPECT(UnpackBootImage(boot_image_path, build_dir));
+  NativeFilesystem native_filesystem;
 
-  SharedFD boot_image_fd = SharedFD::Open(boot_image_path, O_RDONLY);
-  CF_EXPECTF(boot_image_fd->IsOpen(), "Failed to open '{}': '{}'",
-             boot_image_path, boot_image_fd->StrError());
-  auto bootimg_reader = std::make_unique<SharedFdIo>(boot_image_fd);
-  BootImage boot_image = CF_EXPECT(BootImage::Read(std::move(bootimg_reader)));
+  std::unique_ptr<ReaderSeeker> boot_image_reader =
+      CF_EXPECT(native_filesystem.OpenReadOnly(boot_image_path));
+  BootImage boot_image =
+      CF_EXPECT(BootImage::Read(std::move(boot_image_reader)));
+
+  std::string ramdisk_path = build_dir + "/ramdisk";
+  {
+    ReadWindowView ramdisk_in = boot_image.Ramdisk();
+
+    (void)native_filesystem.DeleteFile(ramdisk_path);
+    std::unique_ptr<ReaderWriterSeeker> ramdisk_out =
+        CF_EXPECT(native_filesystem.CreateFile(ramdisk_path));
+    CF_EXPECT(ramdisk_out.get());
+    CF_EXPECT(Copy(ramdisk_in, *ramdisk_out));
+  }
 
   std::string kernel_cmdline = boot_image.KernelCommandLine();
   VLOG(0) << "Cmdline from boot image is " << kernel_cmdline;
 
-  auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
-  auto repack_cmd =
-      Command(MkbootimgBinary())
-          .AddParameter("--kernel")
-          .AddParameter(new_kernel_path)
-          .AddParameter("--ramdisk")
-          .AddParameter(build_dir + "/ramdisk")
-          .AddParameter("--header_version")
-          .AddParameter("4")
-          .AddParameter("--cmdline")
-          .AddParameter(kernel_cmdline)
-          .AddParameter("-o")
-          .AddParameter(tmp_boot_image_path);
+  std::string tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
+  Command repack_cmd = Command(MkbootimgBinary())
+                           .AddParameter("--kernel")
+                           .AddParameter(new_kernel_path)
+                           .AddParameter("--ramdisk")
+                           .AddParameter(ramdisk_path)
+                           .AddParameter("--header_version")
+                           .AddParameter("4")
+                           .AddParameter("--cmdline")
+                           .AddParameter(kernel_cmdline)
+                           .AddParameter("-o")
+                           .AddParameter(tmp_boot_image_path);
   int result = repack_cmd.Start().Wait();
   CF_EXPECT(result == 0, "Unable to run mkbootimg. Exited with status " << result);
 
