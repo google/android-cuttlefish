@@ -18,6 +18,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type CvdCommonArgs struct {
@@ -60,4 +61,29 @@ func (a *CvdArgs) SerializeCommonArgs() []string {
 		}
 	})
 	return args
+}
+
+func HasHelpFlag(subCommandArgs []string) bool {
+	helpFlagNames := []string{
+		"h",
+		"help",
+		"helpfull",
+		"helpmatch",
+		"helpon",
+		"helppackage",
+		"helpshort",
+		"helpxml",
+		"version",
+	}
+	helpFlags := make(map[string]struct{})
+	for _, name := range helpFlagNames {
+		helpFlags["-"+name] = struct{}{}
+		helpFlags["--"+name] = struct{}{}
+	}
+	for _, arg := range subCommandArgs {
+		if _, exists := helpFlags[strings.Split(arg, "=")[0]]; exists {
+			return true
+		}
+	}
+	return false
 }
