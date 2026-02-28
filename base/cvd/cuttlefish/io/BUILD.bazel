@@ -5,6 +5,19 @@ package(
 )
 
 cf_cc_library(
+    name = "chroot",
+    srcs = ["chroot.cc"],
+    hdrs = ["chroot.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_library(
     name = "copy",
     srcs = ["copy.cc"],
     hdrs = ["copy.h"],
