@@ -19,7 +19,9 @@
 
 #include "bootimg.h"
 
+#include "cuttlefish/io/filesystem.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -30,12 +32,22 @@ class BootImage {
 
   std::string KernelCommandLine() const;
 
+  ReadWindowView Kernel() const;
+  ReadWindowView Ramdisk() const;
+  std::optional<ReadWindowView> Signature() const;
+
+  Result<void> Unpack(ReadWriteFilesystem&);
+
  private:
   using HeaderVariant =
       std::variant<boot_img_hdr_v0, boot_img_hdr_v1, boot_img_hdr_v2,
                    boot_img_hdr_v3, boot_img_hdr_v4>;
 
   BootImage(std::unique_ptr<ReaderSeeker>, HeaderVariant);
+
+  uint32_t PageSize() const;
+  uint64_t KernelPages() const;
+  uint64_t RamdiskPages() const;
 
   std::unique_ptr<ReaderSeeker> reader_;
   HeaderVariant header_;

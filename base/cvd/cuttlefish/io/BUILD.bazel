@@ -5,6 +5,35 @@ package(
 )
 
 cf_cc_library(
+    name = "chroot",
+    srcs = ["chroot.cc"],
+    hdrs = ["chroot.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "chroot_test",
+    srcs = ["chroot_test.cc"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:chroot",
+        "//cuttlefish/io:copy",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "copy",
     srcs = ["copy.cc"],
     hdrs = ["copy.h"],

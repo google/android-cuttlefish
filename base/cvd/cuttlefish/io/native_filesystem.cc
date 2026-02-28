@@ -31,8 +31,8 @@ namespace cuttlefish {
 
 Result<std::unique_ptr<ReaderWriterSeeker>> NativeFilesystem::CreateFile(
     std::string_view path) {
-  SharedFD fd =
-      SharedFD::Open(std::string(path), O_CLOEXEC | O_CREAT | O_EXCL | O_RDWR);
+  SharedFD fd = SharedFD::Open(std::string(path),
+                               O_CLOEXEC | O_CREAT | O_EXCL | O_RDWR, 0644);
   CF_EXPECTF(fd->IsOpen(),
              "Failed to open '{}' with O_CREAT | O_EXCL | O_RDWR: '{}'", path,
              fd->StrError());
