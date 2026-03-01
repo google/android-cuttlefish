@@ -105,10 +105,10 @@ func (h *GceHelper) CreateInstance(name string, arch Arch) (*compute.Instance, e
 	switch arch {
 	case ArchX86:
 		machineType = "n1-standard-16"
-		sourceImage = "debian-12-bookworm-v20250415"
+		sourceImage = "debian-13-trixie-v20260210"
 	case ArchArm:
 		machineType = "t2a-standard-16"
-		sourceImage = "debian-12-bookworm-arm64-v20250415"
+		sourceImage = "debian-13-trixie-arm64-v20260210"
 	default:
 		return nil, errors.New("unsupported arch")
 	}
