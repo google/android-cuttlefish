@@ -27,14 +27,13 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "android-base/strings.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -42,6 +41,7 @@
 #include "cuttlefish/io/copy.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/native_filesystem.h"
+#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -215,52 +215,49 @@ Result<void> UnpackBootImage(const std::string& boot_image_path,
   return {};
 }
 
-Result<void> UnpackVendorBootImageIfNotUnpacked(
+Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir) {
-  // the vendor boot params file is created during the first unpack. If it's
-  // already there, a unpack has occurred and there's no need to repeat the
-  // process.
-  if (FileExists(unpack_dir + "/vendor_boot_params")) {
-    return {};
+  SharedFD vendor_boot_fd = SharedFD::Open(vendor_boot_image_path, O_RDONLY);
+  CF_EXPECTF(vendor_boot_fd->IsOpen(), "Failed to open '{}': '{}'",
+             vendor_boot_image_path, vendor_boot_fd->StrError());
+
+  VendorBootImage vendor_boot = CF_EXPECT(
+      VendorBootImage::Read(std::make_unique<SharedFdIo>(vendor_boot_fd)));
+  // The ramdisk file is created during the first unpack. If it's already there,
+  // a unpack has occurred and there's no need to repeat the process.
+  std::string concat_file_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;
+  if (FileExists(concat_file_path)) {
+    return vendor_boot;
   }
 
-  Command unpack_cmd = Command(UnpackBootimgBinary())
-                           .AddParameter("--boot_img")
-                           .AddParameter(vendor_boot_image_path)
-                           .AddParameter("--out")
-                           .AddParameter(unpack_dir);
-  SharedFD output_file =
-      SharedFD::Creat(unpack_dir + "/vendor_boot_params", 0666);
-  CF_EXPECTF(output_file->IsOpen(),
-             "Unable to create intermediate vendor boot params file: '{}'",
-             output_file->StrError());
-
-  unpack_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
-  CF_EXPECT_EQ(unpack_cmd.Start().Wait(), 0, "Unable to run unpack_bootimg.");
-
   // Concatenates all vendor ramdisk into one single ramdisk.
-  std::string concat_file_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;
   SharedFD concat_file = SharedFD::Creat(concat_file_path, 0666);
   CF_EXPECTF(concat_file->IsOpen(),
              "Unable to create concatenated vendor ramdisk file: '{}'",
              concat_file->StrError());
+  SharedFdIo concat_file_io(concat_file);
+  ReadWindowView ramdisk_in = vendor_boot.VendorRamdisk();
+  CF_EXPECT(Copy(ramdisk_in, concat_file_io));
 
-  std::vector<std::string> unpack_files =
-      CF_EXPECT(DirectoryContents(unpack_dir));
-  for (const std::string& unpacked : unpack_files) {
-    if (!absl::StartsWith(unpacked, "vendor_ramdisk")) {
-      continue;
-    }
-    std::string input_path = unpack_dir + "/" + unpacked;
-    SharedFD input = SharedFD::Open(input_path, O_RDONLY);
-    CF_EXPECTF(input->IsOpen(), "Failed to open '{}': '{}'", input_path,
-               input->StrError());
+  std::string dtb_path = unpack_dir + "/dtb";
+  SharedFD dtb_fd = SharedFD::Creat(dtb_path, 0644);
+  CF_EXPECTF(dtb_fd->IsOpen(), "Failed to open '{}': '{}'", dtb_path,
+             dtb_fd->StrError());
+  SharedFdIo dtb_io(dtb_fd);
+  ReadWindowView dtb_in = vendor_boot.Dtb();
+  CF_EXPECT(Copy(dtb_in, dtb_io));
 
-    CF_EXPECTF(concat_file->CopyAllFrom(*input),
-               "Failed to copy from '{}' to '{}'", input_path,
-               concat_file_path);
+  std::string bootconfig_path = unpack_dir + "/bootconfig";
+  SharedFD bootconfig_fd = SharedFD::Creat(bootconfig_path, 0644);
+  CF_EXPECTF(bootconfig_fd->IsOpen(), "Failed to open '{}': '{}'",
+             bootconfig_path, bootconfig_fd->StrError());
+  SharedFdIo bootconfig_io(bootconfig_fd);
+  std::optional<ReadWindowView> bootconfig_in = vendor_boot.Bootconfig();
+  if (bootconfig_in.has_value()) {
+    CF_EXPECT(Copy(*bootconfig_in, bootconfig_io));
   }
-  return {};
+
+  return vendor_boot;
 }
 
 Result<void> RepackBootImage(const Avb& avb,
@@ -319,9 +316,9 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& unpack_dir,
                            bool bootconfig_supported) {
-  if (Result<void> unpack = UnpackVendorBootImageIfNotUnpacked(
-          vendor_boot_image_path, unpack_dir);
-      !unpack.ok()) {
+  Result<VendorBootImage> unpack =
+      UnpackVendorBootImageIfNotUnpacked(vendor_boot_image_path, unpack_dir);
+  if (!unpack.ok()) {
     LOG(ERROR) << unpack.error();
     return false;
   }

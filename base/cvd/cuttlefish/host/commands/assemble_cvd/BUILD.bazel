@@ -110,8 +110,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/commands/assemble_cvd/boot_image",
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:config_utils",
@@ -120,11 +120,11 @@ cf_cc_library(
         "//cuttlefish/io:chroot",
         "//cuttlefish/io:copy",
         "//cuttlefish/io:native_filesystem",
+        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
-        "@abseil-cpp//absl/strings",
     ],
 )
 
