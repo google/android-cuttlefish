@@ -1,0 +1,70 @@
+name: Build Debian Packages  
+  
+on:  
+  push:  
+    branches: [ main ]  
+  pull_request:  
+    branches: [ main ]  
+  workflow_dispatch:  
+  
+jobs:  
+  build:  
+    runs-on: ubuntu-22.04  
+    architecture: amd64  
+      
+    steps:  
+    - name: Checkout repository  
+      uses: actions/checkout@v4  
+        
+    - name: Install system dependencies  
+      run: |  
+        sudo apt-get update  
+        sudo apt-get install -y \  
+          build-essential \  
+          devscripts \  
+          debhelper \  
+          dh-exec \  
+          python3 \  
+          curl \  
+          wget \  
+          git \  
+          pkg-config \  
+          libssl-dev \  
+          libffi-dev \  
+          libxml2-dev \  
+          libz3-dev \  
+          libx11-dev \  
+          libxext-dev \  
+          libgl1-mesa-dev \  
+          libglu1-mesa-dev  
+            
+    - name: Cache Bazel  
+      uses: actions/cache@v3  
+      with:  
+        path: ~/.cache/bazel  
+        key: ${{ runner.os }}-bazel-${{ hashFiles('base/cvd/MODULE.bazel', 'base/cvd/WORKSPACE') }}  
+        restore-keys: |  
+          ${{ runner.os }}-bazel-  
+            
+    - name: Build base packages  
+      run: |  
+        cd base  
+        sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'  
+        debuild --prepend-path /usr/local/bin -i -uc -us -b  
+        cd ..  
+          
+    - name: Build frontend packages  
+      run: |  
+        cd frontend  
+        sudo mk-build-deps -i -t 'apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y'  
+        debuild --prepend-path /usr/local/bin -i -uc -us -b  
+        cd ..  
+          
+    - name: Upload artifacts  
+      uses: actions/upload-artifact@v3  
+      with:  
+        name: cuttlefish-deb-packages-amd64  
+        path: |  
+          ../*.deb  
+          *.deb  
+        retention-days: 30
