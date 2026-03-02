@@ -12,7 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "cuttlefish/host/libs/zip/lazily_loaded_file.h"
+
+#include "cuttlefish/io/lazily_loaded_file.h"
 
 #include <fcntl.h>
 #include <stddef.h>
@@ -33,9 +34,9 @@
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/libs/zip/disjoint_range_set.h"
-#include "cuttlefish/host/libs/zip/serialize_disjoint_range_set.h"
+#include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/serialize_disjoint_range_set.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
