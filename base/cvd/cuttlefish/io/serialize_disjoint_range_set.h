@@ -17,7 +17,7 @@
 #include <string>
 #include <string_view>
 
-#include "cuttlefish/host/libs/zip/disjoint_range_set.h"
+#include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {

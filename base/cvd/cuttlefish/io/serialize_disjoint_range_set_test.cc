@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuttlefish/host/libs/zip/serialize_disjoint_range_set.h"
+#include "cuttlefish/io/serialize_disjoint_range_set.h"
 
 #include <string>
 
 #include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
-#include "cuttlefish/host/libs/zip/disjoint_range_set.h"
+#include "cuttlefish/io/disjoint_range_set.h"
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
