@@ -20,3 +20,18 @@ cf_cc_library(
         "@mkbootimg//:bootimg_header",
     ],
 )
+
+cf_cc_library(
+    name = "vendor_boot_image",
+    srcs = ["vendor_boot_image.cc"],
+    hdrs = ["vendor_boot_image.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
