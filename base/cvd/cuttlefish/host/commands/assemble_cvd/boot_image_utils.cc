@@ -215,67 +215,52 @@ Result<void> UnpackBootImage(const std::string& boot_image_path,
   return {};
 }
 
-bool UnpackVendorBootImageIfNotUnpacked(
+Result<void> UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir) {
   // the vendor boot params file is created during the first unpack. If it's
   // already there, a unpack has occurred and there's no need to repeat the
   // process.
   if (FileExists(unpack_dir + "/vendor_boot_params")) {
-    return true;
+    return {};
   }
 
-  auto unpack_cmd =
-      Command(UnpackBootimgBinary())
-          .AddParameter("--boot_img")
-          .AddParameter(vendor_boot_image_path)
-          .AddParameter("--out")
-          .AddParameter(unpack_dir);
-  auto output_file = SharedFD::Creat(unpack_dir + "/vendor_boot_params", 0666);
-  if (!output_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create intermediate vendor boot params file: "
-               << output_file->StrError();
-    return false;
-  }
+  Command unpack_cmd = Command(UnpackBootimgBinary())
+                           .AddParameter("--boot_img")
+                           .AddParameter(vendor_boot_image_path)
+                           .AddParameter("--out")
+                           .AddParameter(unpack_dir);
+  SharedFD output_file =
+      SharedFD::Creat(unpack_dir + "/vendor_boot_params", 0666);
+  CF_EXPECTF(output_file->IsOpen(),
+             "Unable to create intermediate vendor boot params file: '{}'",
+             output_file->StrError());
+
   unpack_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
-  int success = unpack_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run unpack_bootimg. Exited with status " << success;
-    return false;
-  }
+  CF_EXPECT_EQ(unpack_cmd.Start().Wait(), 0, "Unable to run unpack_bootimg.");
 
   // Concatenates all vendor ramdisk into one single ramdisk.
   std::string concat_file_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;
   SharedFD concat_file = SharedFD::Creat(concat_file_path, 0666);
-  if (!concat_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create concatenated vendor ramdisk file: "
-               << concat_file->StrError();
-    return false;
-  }
+  CF_EXPECTF(concat_file->IsOpen(),
+             "Unable to create concatenated vendor ramdisk file: '{}'",
+             concat_file->StrError());
 
-  Result<std::vector<std::string>> unpack_files = DirectoryContents(unpack_dir);
-  if (!unpack_files.ok()) {
-    LOG(ERROR) << "No unpacked files: " << unpack_files.error();
-    return false;
-  }
-  for (const std::string& unpacked : *unpack_files) {
-    LOG(ERROR) << "acs: " << unpacked;
+  std::vector<std::string> unpack_files =
+      CF_EXPECT(DirectoryContents(unpack_dir));
+  for (const std::string& unpacked : unpack_files) {
     if (!absl::StartsWith(unpacked, "vendor_ramdisk")) {
       continue;
     }
     std::string input_path = unpack_dir + "/" + unpacked;
     SharedFD input = SharedFD::Open(input_path, O_RDONLY);
-    if (!input->IsOpen()) {
-      LOG(ERROR) << "Failed to open '" << input_path << ": "
-                 << input->StrError();
-      return false;
-    }
-    if (!concat_file->CopyAllFrom(*input)) {
-      LOG(ERROR) << "Failed to copy from '" << input_path << "' to '"
-                 << concat_file_path << "'";
-      return false;
-    }
+    CF_EXPECTF(input->IsOpen(), "Failed to open '{}': '{}'", input_path,
+               input->StrError());
+
+    CF_EXPECTF(concat_file->CopyAllFrom(*input),
+               "Failed to copy from '{}' to '{}'", input_path,
+               concat_file_path);
   }
-  return true;
+  return {};
 }
 
 Result<void> RepackBootImage(const Avb& avb,
@@ -334,8 +319,10 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& unpack_dir,
                            bool bootconfig_supported) {
-  if (UnpackVendorBootImageIfNotUnpacked(vendor_boot_image_path, unpack_dir) ==
-      false) {
+  if (Result<void> unpack = UnpackVendorBootImageIfNotUnpacked(
+          vendor_boot_image_path, unpack_dir);
+      !unpack.ok()) {
+    LOG(ERROR) << unpack.error();
     return false;
   }
 
