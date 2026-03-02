@@ -18,6 +18,7 @@
 #include <optional>
 #include <string>
 
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/result/result.h"
@@ -42,7 +43,7 @@ bool RepackVendorBootImageWithEmptyRamdisk(
 Result<void> UnpackBootImage(const std::string& boot_image_path,
                              const std::string& unpack_dir);
 
-Result<void> UnpackVendorBootImageIfNotUnpacked(
+Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir);
 void RepackGem5BootImage(const std::string& initrd_path,
                          const std::optional<BootConfigPartition>&,
