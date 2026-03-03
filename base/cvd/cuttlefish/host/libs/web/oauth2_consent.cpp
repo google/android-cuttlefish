@@ -257,6 +257,11 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
 
 }  // namespace
 
+bool IsPopulated(const Oauth2ConsentRequest& request) {
+  return !request.client_id.empty() && !request.client_secret.empty() &&
+         !request.scopes.empty();
+}
+
 Result<std::unique_ptr<CredentialSource>> Oauth2Login(
     HttpClient& http_client, const Oauth2ConsentRequest& request) {
   std::string refresh_token = CF_EXPECT(GetRefreshToken(http_client, request));
