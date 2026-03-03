@@ -136,11 +136,10 @@ static constexpr char kRefreshToken[] = "refresh_token";
 static constexpr char kScope[] = "scope";
 
 Result<std::string> GetRefreshToken(HttpClient& http_client,
-                                    const Oauth2ConsentRequest& request,
-                                    bool ssh) {
+                                    const Oauth2ConsentRequest& request) {
   std::unique_ptr<HttpServer> http_server;
   uint16_t port;
-  if (ssh) {
+  if (request.is_ssh) {
     port = 1024 + (rand() % ((1 << 16) - 1024));
   } else {
     http_server = std::make_unique<HttpServer>(CF_EXPECT(HttpServer::Create()));
@@ -160,7 +159,7 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
 
   std::string code;
 
-  if (ssh) {
+  if (request.is_ssh) {
     http_server.reset(nullptr);
 
     std::cout << "Open this URL in your browser: " << consent.rdbuf();
@@ -219,29 +218,6 @@ static constexpr char kClientId[] = "client_id";
 static constexpr char kClientSecret[] = "client_secret";
 static constexpr char kCredentials[] = "credentials";
 
-Result<std::unique_ptr<CredentialSource>> Oauth2Login(
-    HttpClient& http_client, const Oauth2ConsentRequest& request, bool ssh) {
-  std::string refresh_token =
-      CF_EXPECT(GetRefreshToken(http_client, request, ssh));
-
-  Json::Value serialized;
-  serialized[kClientId] = request.client_id;
-  serialized[kClientSecret] = request.client_secret;
-  serialized[kRefreshToken] = refresh_token;
-  for (const std::string& scope : request.scopes) {
-    serialized[kScope].append(scope);
-  }
-
-  uint32_t checksum = ScopeChecksum(request.scopes);
-  std::string filename = fmt::format("{}/{}.json", kCredentials, checksum);
-  std::string contents = serialized.toStyledString();
-
-  CF_EXPECT(WriteCvdDataFile(filename, std::move(contents)));
-
-  return CF_EXPECT(RefreshTokenCredentialSource::Make(
-      http_client, request.client_id, request.client_secret, refresh_token));
-}
-
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     HttpClient& http_client, const std::vector<std::string>& scopes,
     const std::string& file_path) {
@@ -281,14 +257,26 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
 
 }  // namespace
 
-Result<std::unique_ptr<CredentialSource>> Oauth2LoginLocal(
+Result<std::unique_ptr<CredentialSource>> Oauth2Login(
     HttpClient& http_client, const Oauth2ConsentRequest& request) {
-  return CF_EXPECT(Oauth2Login(http_client, request, false));
-}
+  std::string refresh_token = CF_EXPECT(GetRefreshToken(http_client, request));
 
-Result<std::unique_ptr<CredentialSource>> Oauth2LoginSsh(
-    HttpClient& http_client, const Oauth2ConsentRequest& request) {
-  return CF_EXPECT(Oauth2Login(http_client, request, true));
+  Json::Value serialized;
+  serialized[kClientId] = request.client_id;
+  serialized[kClientSecret] = request.client_secret;
+  serialized[kRefreshToken] = refresh_token;
+  for (const std::string& scope : request.scopes) {
+    serialized[kScope].append(scope);
+  }
+
+  uint32_t checksum = ScopeChecksum(request.scopes);
+  std::string filename = fmt::format("{}/{}.json", kCredentials, checksum);
+  std::string contents = serialized.toStyledString();
+
+  CF_EXPECT(WriteCvdDataFile(filename, std::move(contents)));
+
+  return CF_EXPECT(RefreshTokenCredentialSource::Make(
+      http_client, request.client_id, request.client_secret, refresh_token));
 }
 
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
