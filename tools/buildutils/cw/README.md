@@ -32,6 +32,12 @@ Persist bazel cache among executions.
 docker run -v=$HOME/.cache/bazel:/root/.cache/bazel  -v=$PWD:/mnt/build -w /mnt/build  android-cuttlefish-build:latest base
 ```
 
+### container
+
+```
+docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build:latest container
+```
+
 ### frontend
 
 ```
