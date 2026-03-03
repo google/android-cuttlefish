@@ -49,32 +49,30 @@ class CvdLoginCommand : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
-    std::vector<std::string> args = request.SubcommandArguments();
-
     // Imperfect detection: the user may ssh into an existing `screen` or `tmux`
     // session.
-    bool ssh = StringFromEnv("SSH_CLIENT").has_value() ||
-               StringFromEnv("SSH_TTY").has_value();
-    Oauth2ConsentRequest oauth2_request;
-
+    const bool is_ssh = StringFromEnv("SSH_CLIENT").has_value() ||
+                        StringFromEnv("SSH_TTY").has_value();
+    auto oauth2_request = Oauth2ConsentRequest{
+        .is_ssh = is_ssh,
+    };
     std::vector<Flag> flags = {
         GflagsCompatFlag("client_id", oauth2_request.client_id),
         GflagsCompatFlag("client_secret", oauth2_request.client_secret),
         GflagsCompatFlag("scopes", oauth2_request.scopes),
-        GflagsCompatFlag("ssh", ssh),
+        GflagsCompatFlag("ssh", oauth2_request.is_ssh),
     };
+    std::vector<std::string> args = request.SubcommandArguments();
     CF_EXPECT(ConsumeFlags(flags, args), "Failed to parse arguments");
 
     CurlGlobalInit init;
     std::unique_ptr<HttpClient> http_client = CurlHttpClient(true);
     CF_EXPECT(http_client.get(), "Failed to create a http client");
 
-    if (ssh) {
-      CF_EXPECT(Oauth2LoginSsh(*http_client, oauth2_request));
-    } else {
+    if (!oauth2_request.is_ssh) {
       std::cout << "Using SSH? Please run this command again with `--ssh`.\n";
-      CF_EXPECT(Oauth2LoginLocal(*http_client, oauth2_request));
     }
+    CF_EXPECT(Oauth2Login(*http_client, oauth2_request));
 
     return {};
   }

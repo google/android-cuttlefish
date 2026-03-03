@@ -30,19 +30,16 @@ struct Oauth2ConsentRequest {
   std::string client_id;
   std::string client_secret;
   std::vector<std::string> scopes;
+  bool is_ssh = false;
 };
 
 // Run the user through a consent flow and save the output in local credential
 // storage.
-
-Result<std::unique_ptr<CredentialSource>> Oauth2LoginLocal(
-    HttpClient&, const Oauth2ConsentRequest&);
-Result<std::unique_ptr<CredentialSource>> Oauth2LoginSsh(
+Result<std::unique_ptr<CredentialSource>> Oauth2Login(
     HttpClient&, const Oauth2ConsentRequest&);
 
 // Retrieve the credential for a particular set of scopes from local credential
 // storage.
-
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     HttpClient&, const std::vector<std::string>&);
 
