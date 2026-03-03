@@ -33,6 +33,8 @@ struct Oauth2ConsentRequest {
   bool is_ssh = false;
 };
 
+bool IsPopulated(const Oauth2ConsentRequest& request);
+
 // Run the user through a consent flow and save the output in local credential
 // storage.
 Result<std::unique_ptr<CredentialSource>> Oauth2Login(
