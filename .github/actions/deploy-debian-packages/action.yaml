@@ -20,7 +20,7 @@ runs:
       fi
 
       pushd ${INPUTS_PATH}
-      for var in base user orchestration; do
+      for var in base metrics user orchestration; do
         gcloud --project=android-cuttlefish-artifacts \
           artifacts apt upload \
           ${REPO} \
