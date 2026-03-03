@@ -75,6 +75,24 @@ void ChmapInfoCommand::Reply(AudioStatus status,
   }
 }
 
+ControlInfoCommand::ControlInfoCommand(uint32_t start_id, size_t count,
+                                       virtio_snd_ctl_info* ctl_info)
+    : InfoCommand(AudioCommandType::VIRTIO_SND_R_CTL_INFO, start_id, count,
+                  ctl_info) {}
+
+void ControlInfoCommand::Reply(
+    AudioStatus status, std::span<const virtio_snd_ctl_info> reply) {
+  MarkReplied(status);
+  if (status != AudioStatus::VIRTIO_SND_S_OK) {
+    return;
+  }
+  CHECK(reply.size() == count())
+      << "Returned unmatching info count: " << reply.size() << " vs "
+      << count();
+
+  std::copy(reply.begin(), reply.end(), info_reply());
+}
+
 StreamInfoCommand::StreamInfoCommand(uint32_t start_id, size_t count,
                                      virtio_snd_pcm_info* pcm_info)
     : InfoCommand(AudioCommandType::VIRTIO_SND_R_PCM_INFO, start_id, count,
@@ -123,5 +141,11 @@ StreamSetParamsCommand::StreamSetParamsCommand(
       channels_(channels),
       format_(format),
       rate_(rate) {}
+
+ControlCommand::ControlCommand(AudioCommandType type, uint32_t control_id,
+                               virtio_snd_ctl_value* value)
+    : AudioCommand(type), control_id_(control_id), value_(value) {}
+
+void ControlCommand::Reply(AudioStatus status) { MarkReplied(status); }
 
 }  // namespace cuttlefish
