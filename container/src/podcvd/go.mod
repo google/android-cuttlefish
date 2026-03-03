@@ -1,12 +1,12 @@
-module github.com/google/android-cuttlefish/frontend/src/podcvd
+module github.com/google/android-cuttlefish/container/src/podcvd
 
 go 1.24.0
 
 toolchain go1.24.8
 
-replace github.com/google/android-cuttlefish/frontend/src/libcfcontainer => ../libcfcontainer
+replace github.com/google/android-cuttlefish/container/src/libcfcontainer => ../libcfcontainer
 
-require github.com/google/android-cuttlefish/frontend/src/libcfcontainer v0.0.0-00010101000000-000000000000
+require github.com/google/android-cuttlefish/container/src/libcfcontainer v0.0.0-00010101000000-000000000000
 
 require (
 	dario.cat/mergo v1.0.2 // indirect

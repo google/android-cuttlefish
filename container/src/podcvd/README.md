@@ -8,7 +8,7 @@ podcvd is experimental project. A lot of features may be unstable today.
 
 ```bash
 cd /path/to/android-cuttlefish
-cd frontend/src/podcvd
+cd container/src/podcvd
 go build .
 ```
 

@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
+	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 
 	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"

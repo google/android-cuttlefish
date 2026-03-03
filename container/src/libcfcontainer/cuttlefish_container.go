@@ -205,7 +205,7 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
 	timeout := int(30)
 	stopConfig := container.StopOptions{
-		Signal: "SIGKILL",
+		Signal:  "SIGKILL",
 		Timeout: &timeout,
 	}
 	if err := m.cli.ContainerStop(ctx, ctr, stopConfig); err != nil {
