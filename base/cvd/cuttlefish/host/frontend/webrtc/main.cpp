@@ -205,6 +205,31 @@ std::shared_ptr<AudioHandler> SetupAudio(
       {SampleRate::Audio_SampleRate_RATE_64000, 64000},
   };
 
+  static const auto parse_stream_settings =
+      [](const ::cuttlefish::config::Audio_PCMDevice_Stream& stream,
+         AudioStreamSettings::Direction direction)
+      -> cuttlefish::AudioStreamSettings {
+    const auto id = stream.id();
+    CHECK(id <= std::numeric_limits<uint8_t>::max());
+    cuttlefish::AudioStreamSettings settings = {
+        .id = static_cast<uint8_t>(id),
+        .channels_layout = kChannelLayoutMap.at(stream.channel_layout()),
+        .direction = direction};
+    if (stream.has_controls()) {
+      const auto& controls = stream.controls();
+      settings.has_mute_control = controls.mute_control_enabled();
+      if (controls.has_volume_control()) {
+        const auto& volume = controls.volume_control();
+        settings.master_volume_control = {{
+            .min = volume.min(),
+            .max = volume.max(),
+            .step = volume.step(),
+        }};
+      }
+    }
+    return settings;
+  };
+
   if (!instance.enable_audio()) {
     return nullptr;
   }
@@ -214,9 +239,10 @@ std::shared_ptr<AudioHandler> SetupAudio(
   const auto audio_settings = instance.audio_settings();
   if (!audio_settings.has_value()) {
     const auto output_streams_count = instance.audio_output_streams_count();
-    streams.push_back({.id = 0,
-                       .channels_layout = AudioChannelsLayout::Stereo,
-                       .direction = AudioStreamSettings::Direction::Capture});
+    streams.push_back({
+        .id = 0,
+        .channels_layout = AudioChannelsLayout::Stereo,
+        .direction = AudioStreamSettings::Direction::Capture});
     for (auto i = 0; i < output_streams_count; ++i) {
       streams.push_back({.id = static_cast<uint8_t>(i),
                          .channels_layout = AudioChannelsLayout::Stereo,
@@ -229,20 +255,12 @@ std::shared_ptr<AudioHandler> SetupAudio(
     }
     const auto& pcm = audio_settings->pcm_devices()[0];
     for (const auto& stream : pcm.playback_streams()) {
-      const auto id = stream.id();
-      CHECK(id <= std::numeric_limits<uint8_t>::max());
-      streams.push_back(
-          {.id = static_cast<uint8_t>(id),
-           .channels_layout = kChannelLayoutMap.at(stream.channel_layout()),
-           .direction = AudioStreamSettings::Direction::Playback});
+      streams.push_back(parse_stream_settings(
+          stream, AudioStreamSettings::Direction::Playback));
     }
     for (const auto& stream : pcm.capture_streams()) {
-      const auto id = stream.id();
-      CHECK(id <= std::numeric_limits<uint8_t>::max());
-      streams.push_back(
-          {.id = static_cast<uint8_t>(id),
-           .channels_layout = kChannelLayoutMap.at(stream.channel_layout()),
-           .direction = AudioStreamSettings::Direction::Capture});
+      streams.push_back(parse_stream_settings(
+          stream, AudioStreamSettings::Direction::Capture));
     }
     if (pcm.has_mixer()) {
       const auto& mixer = pcm.mixer();

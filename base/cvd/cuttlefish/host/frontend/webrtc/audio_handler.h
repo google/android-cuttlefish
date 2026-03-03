@@ -16,8 +16,11 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -37,6 +40,30 @@ class AudioHandler : public AudioServerExecutor {
     uint8_t bits_per_sample = 0;
     uint8_t channels = 0;
     bool active = false;
+
+    // Controls
+    struct Volume {
+      uint32_t min = 0;
+      uint32_t max = 1;
+      uint32_t current = max;
+
+      float GetCurrentVolumeLevel() {
+        return static_cast<float>(current - min) /
+               static_cast<float>(max - min);
+      };
+    };
+    Volume volume;
+    bool muted = false;
+  };
+
+  struct ControlDesc {
+    enum class Type {
+      Mute,
+      Volume,
+    };
+
+    Type type = Type::Mute;
+    size_t stream_id = 0;
   };
 
  public:
@@ -58,6 +85,8 @@ class AudioHandler : public AudioServerExecutor {
   void StopStream(StreamControlCommand& cmd) override;
   void ChmapsInfo(ChmapInfoCommand& cmd) override;
   void JacksInfo(JackInfoCommand& cmd) override;
+  void ControlsInfo(ControlInfoCommand& cmd) override;
+  void OnControlCommand(ControlCommand& cmd) override;
 
   void OnPlaybackBuffer(TxBuffer buffer) override;
   void OnCaptureBuffer(RxBuffer buffer) override;
@@ -72,6 +101,8 @@ class AudioHandler : public AudioServerExecutor {
   std::vector<virtio_snd_pcm_info> streams_;
   std::vector<StreamDesc> stream_descs_ = {};
   std::vector<virtio_snd_chmap_info> chmaps_;
+  std::vector<virtio_snd_ctl_info> controls_;
+  std::vector<ControlDesc> controls_to_streams_map_;
   std::unique_ptr<AudioMixer> audio_mixer_;
 };
 }  // namespace cuttlefish
