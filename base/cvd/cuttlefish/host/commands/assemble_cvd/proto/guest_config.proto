@@ -75,9 +75,21 @@ message Audio {
   }
 
   message PCMDevice {
+
+    message Controls {
+      message Volume {
+        uint32 min = 1;
+        uint32 max = 2;
+        uint32 step = 3;
+      }
+      bool mute_control_enabled = 1;
+      Volume volume_control = 2;
+    }
+    
     message Stream {
       uint32 id = 1;
       ChannelLayout channel_layout = 2;
+      Controls controls = 3;
     }
     repeated Stream capture_streams = 1;
     repeated Stream playback_streams = 2;
@@ -138,7 +150,7 @@ enum DeviceType {
 message Lights {}
 
 // GuestConfigFile represents the configuration for a Cuttlefish guest device,
-// typically parsed from an cuttlefish-guest-config.txtpb file. It defines the
+// typically parsed from a cuttlefish-guest-config.txtpb file. It defines the
 // device's hardware capabilities, software features, and virtualization
 // settings.
 message GuestConfigFile {
