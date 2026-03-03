@@ -1,0 +1,20 @@
+Source: cuttlefish-container
+Maintainer: Cuttlefish Team <cloud-android-ext@google.com>
+Section: misc
+Priority: optional
+Build-Depends: config-package-dev,
+               debhelper-compat (= 12),
+               golang (>= 2:1.23~) | golang-1.23,
+Standards-Version: 4.5.0
+Rules-Requires-Root: no
+
+Package: cuttlefish-podcvd
+Architecture: any
+Depends: adb,
+         android-sdk-platform-tools-common,
+         podman,
+Pre-Depends: ${misc:Pre-Depends}
+Description: Cuttlefish Android Virtual Device companion package
+ Contains a binary named 'podcvd' needed to launch Cuttlefish Android
+ Virtual Device on the isolated host environment prepared on rootless
+ container instances.

@@ -1,0 +1,42 @@
+#!/usr/bin/make -f
+
+# Start build by executing:
+# $ debuild --prepend-path /usr/local/bin -i -us -uc
+
+# Uncomment this line out to make installation process more chatty.
+# Keep it on until we know there's no outstanding problems with installation.
+# export DH_VERBOSE=1
+
+GOBIN := $$(which go || echo /usr/lib/$$(ls /usr/lib | grep "^go-1." | sort -V | tail -1)/bin/go)
+PODCVD_SOURCE_DIR := src/podcvd
+
+%:
+	dh $@ --with=config-package
+
+.PHONY: override_dh_auto_build
+override_dh_auto_build:
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w")
+
+.PHONY: override_dh_auto_test
+override_dh_auto_test:
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) test)
+	dh_auto_test
+
+.PHONY: override_dh_installinit
+override_dh_installinit:
+	dh_installinit --name=cuttlefish-podcvd
+	dh_installinit
+
+.PHONY: override_dh_auto_clean
+override_dh_auto_clean:
+	rm -f $(PODCVD_SOURCE_DIR)/podcvd
+	dh_auto_clean
+
+# Debug info was stripped by ldflags=-w
+.PHONY: override_dh_dwz
+override_dh_dwz:
+
+# Debug info was stripped by ldflags=-w
+.PHONY: override_dh_strip
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
