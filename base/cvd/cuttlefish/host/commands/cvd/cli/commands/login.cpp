@@ -44,26 +44,31 @@ usage: cvd login --client_id=CLIENT_ID --client_secret=SECRET --scopes=SCOPES [-
   persistent local storage.
 )";
 
+Result<Oauth2ConsentRequest> ParseFlags(std::vector<std::string>& args) {
+  // Imperfect detection: the user may ssh into an existing `screen` or `tmux`
+  // session.
+  const bool is_ssh = StringFromEnv("SSH_CLIENT").has_value() ||
+                      StringFromEnv("SSH_TTY").has_value();
+  auto oauth2_request = Oauth2ConsentRequest{
+      .is_ssh = is_ssh,
+  };
+  std::vector<Flag> flags = {
+      GflagsCompatFlag("client_id", oauth2_request.client_id),
+      GflagsCompatFlag("client_secret", oauth2_request.client_secret),
+      GflagsCompatFlag("scopes", oauth2_request.scopes),
+      GflagsCompatFlag("ssh", oauth2_request.is_ssh),
+  };
+
+  CF_EXPECT(ConsumeFlags(flags, args), "Failed to parse arguments");
+  return oauth2_request;
+}
+
 class CvdLoginCommand : public CvdCommandHandler {
  public:
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-
-    // Imperfect detection: the user may ssh into an existing `screen` or `tmux`
-    // session.
-    const bool is_ssh = StringFromEnv("SSH_CLIENT").has_value() ||
-                        StringFromEnv("SSH_TTY").has_value();
-    auto oauth2_request = Oauth2ConsentRequest{
-        .is_ssh = is_ssh,
-    };
-    std::vector<Flag> flags = {
-        GflagsCompatFlag("client_id", oauth2_request.client_id),
-        GflagsCompatFlag("client_secret", oauth2_request.client_secret),
-        GflagsCompatFlag("scopes", oauth2_request.scopes),
-        GflagsCompatFlag("ssh", oauth2_request.is_ssh),
-    };
     std::vector<std::string> args = request.SubcommandArguments();
-    CF_EXPECT(ConsumeFlags(flags, args), "Failed to parse arguments");
+    const Oauth2ConsentRequest oauth2_request = CF_EXPECT(ParseFlags(args));
 
     CurlGlobalInit init;
     std::unique_ptr<HttpClient> http_client = CurlHttpClient(true);
