@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include "cuttlefish/common/libs/utils/cf_endian.h"
 
 namespace cuttlefish {
@@ -35,6 +36,15 @@ enum class AudioCommandType : uint32_t {
 
   /* channel map control request types */
   VIRTIO_SND_R_CHMAP_INFO = 0x0200,
+
+  /* control element request types */
+  VIRTIO_SND_R_CTL_INFO = 0x0300,
+  VIRTIO_SND_R_CTL_ENUM_ITEMS,
+  VIRTIO_SND_R_CTL_READ,
+  VIRTIO_SND_R_CTL_WRITE,
+  VIRTIO_SND_R_CTL_TLV_READ,
+  VIRTIO_SND_R_CTL_TLV_WRITE,
+  VIRTIO_SND_R_CTL_TLV_COMMAND,
 };
 
 enum class AudioStatus : uint32_t {
@@ -217,14 +227,91 @@ struct virtio_snd_pcm_status {
   Le32 latency_bytes;
 };
 
-// Update this value when the msg layouts change
-const uint32_t VIOS_VERSION = 2;
+enum class AudioControlRole : uint8_t {
+  VIRTIO_SND_CTL_ROLE_UNDEFINED = 0,
+  VIRTIO_SND_CTL_ROLE_VOLUME,
+  VIRTIO_SND_CTL_ROLE_MUTE,
+  VIRTIO_SND_CTL_ROLE_GAIN,
+};
+
+enum class AudioControlType : uint8_t {
+  VIRTIO_SND_CTL_TYPE_BOOLEAN = 0,
+  VIRTIO_SND_CTL_TYPE_INTEGER,
+  VIRTIO_SND_CTL_TYPE_INTEGER64,
+  VIRTIO_SND_CTL_TYPE_ENUMERATED,
+  VIRTIO_SND_CTL_TYPE_BYTES,
+  VIRTIO_SND_CTL_TYPE_IEC958,
+};
+
+enum AudioControlAccess : uint8_t {
+  VIRTIO_SND_CTL_ACCESS_READ = 0,
+  VIRTIO_SND_CTL_ACCESS_WRITE,
+  VIRTIO_SND_CTL_ACCESS_VOLATILE,
+  VIRTIO_SND_CTL_ACCESS_INACTIVE,
+  VIRTIO_SND_CTL_ACCESS_TLV_READ,
+  VIRTIO_SND_CTL_ACCESS_TLV_WRITE,
+  VIRTIO_SND_CTL_ACCESS_TLV_COMMAND
+};
+
+struct virtio_snd_ctl_info {
+  struct virtio_snd_info hdr;
+  Le32 role;
+  Le32 type;
+  Le32 access;  // 1 << VIRTIO_SND_CTL_ACCESS_XXX
+  Le32 count;
+  Le32 index;
+  uint8_t name[44];
+  union {
+    struct {
+      Le32 min;
+      Le32 max;
+      Le32 step;
+    } integer;
+    struct {
+      Le64 min;
+      Le64 max;
+      Le64 step;
+    } integer64;
+    struct {
+      Le32 items;
+    } enumerated;
+  } value;
+};
+
+struct virtio_snd_ctl_hdr {
+  struct virtio_snd_hdr hdr;
+  Le32 control_id;
+};
+
+struct virtio_snd_ctl_value {
+  union {
+    Le32 integer[128];
+    Le64 integer64[64];
+    Le32 enumerated[128];
+    uint8_t bytes[512];
+    struct virtio_snd_ctl_iec958 {
+      uint8_t status[24];      /* AES/IEC958 channel status bits */
+      uint8_t subcode[147];    /* AES/IEC958 subcode bits */
+      uint8_t pad;             /* nothing */
+      uint8_t dig_subframe[4]; /* AES/IEC958 subframe bits */
+    } iec958;
+  } value;
+};
+
+struct virtio_snd_ctl_event {
+  struct virtio_snd_hdr hdr;
+  Le16 control_id;
+  Le16 mask;
+};
+
+inline constexpr uint32_t VIOS_VERSION = 3;
 
 struct VioSConfig {
   uint32_t version;
   uint32_t jacks;
   uint32_t streams;
   uint32_t chmaps;
+  uint32_t controls;
 };
 
 struct IoTransferMsg {
@@ -248,6 +335,9 @@ ASSERT_VALID_MSG_TYPE(virtio_snd_chmap_info, 24);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_info, 32);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_set_params, 24);
 ASSERT_VALID_MSG_TYPE(virtio_snd_pcm_hdr, 8);
+ASSERT_VALID_MSG_TYPE(virtio_snd_ctl_info, 96);
+ASSERT_VALID_MSG_TYPE(virtio_snd_ctl_hdr, 8);
+ASSERT_VALID_MSG_TYPE(virtio_snd_ctl_value, 512);
 ASSERT_VALID_MSG_TYPE(IoTransferMsg, 12);
 ASSERT_VALID_MSG_TYPE(IoStatusMsg, 16);
 #undef ASSERT_VALID_MSG_TYPE
