@@ -19,7 +19,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
+	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"

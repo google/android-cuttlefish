@@ -1,4 +1,4 @@
-module github.com/google/android-cuttlefish/frontend/src/libcfcontainer
+module github.com/google/android-cuttlefish/container/src/libcfcontainer
 
 go 1.24.0
 

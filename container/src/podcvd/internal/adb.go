@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
+	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 )
 
 func ConnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup) error {

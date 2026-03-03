@@ -23,8 +23,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/google/android-cuttlefish/frontend/src/libcfcontainer"
-	"github.com/google/android-cuttlefish/frontend/src/podcvd/internal"
+	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
+	"github.com/google/android-cuttlefish/container/src/podcvd/internal"
 )
 
 func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {

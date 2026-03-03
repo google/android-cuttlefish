@@ -22,6 +22,8 @@ cuttlefish-*_*.*.*.tar.xz
 /*/debian/debhelper-build-stamp
 /*/debian/*.log
 
+container/src/podcvd/podcvd
+
 frontend/src/operator/webui/src/environments/version.ts
 
 /bazel-*
