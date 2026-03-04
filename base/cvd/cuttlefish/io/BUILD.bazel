@@ -36,6 +36,33 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "concat",
+    srcs = ["concat.cc"],
+    hdrs = ["concat.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_seek",
+        "//cuttlefish/io:length",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "concat_test",
+    srcs = ["concat_test.cc"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
     name = "copy",
     srcs = ["copy.cc"],
     hdrs = ["copy.h"],
