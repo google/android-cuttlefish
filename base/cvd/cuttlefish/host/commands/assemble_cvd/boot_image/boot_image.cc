@@ -151,4 +151,16 @@ Result<void> BootImage::Unpack(ReadWriteFilesystem& fs) {
   return {};
 }
 
+static uint32_t OsVersionImpl(const boot_img_hdr_v0& v0) {
+  return v0.os_version;
+}
+static uint32_t OsVersionImpl(const boot_img_hdr_v3& v3) {
+  return v3.os_version;
+}
+
+uint32_t BootImage::OsVersion() const {
+  const auto visitor = [](const auto& hdr) { return OsVersionImpl(hdr); };
+  return std::visit(visitor, header_);
+}
+
 }  // namespace cuttlefish
