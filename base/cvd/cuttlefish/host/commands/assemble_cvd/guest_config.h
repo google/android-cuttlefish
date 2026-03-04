@@ -50,6 +50,7 @@ struct GuestConfig {
   std::optional<::cuttlefish::config::Audio> audio_settings;
   std::optional<bool> enforce_mac80211_hwsim;
   int blank_data_image_mb = 0;
+  bool lights_server_enabled = true; // true for backwards compatibility
 };
 
 PrettyStruct Pretty(const GuestConfig&,

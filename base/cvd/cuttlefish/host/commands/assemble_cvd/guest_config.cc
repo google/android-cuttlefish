@@ -137,6 +137,10 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
     guest_config.ti50_emulator = virtualization_config.ti50_emulator_path();
   }
 
+  // Unlike with android-info.txt, this defaults to false if not provided in the
+  // proto file.
+  guest_config.lights_server_enabled = proto_config.has_lights();
+
   return {};
 }
 
@@ -221,6 +225,15 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
                "Failed to parse value '{}' for blank data image size", *res);
   }
 
+  if (const Result<std::string> res =
+          MapGetResult(info, "lights_server_enabled");
+      res.ok()) {
+    bool value;
+    if (absl::SimpleAtob(*res, &value)) {
+      guest_config.lights_server_enabled = value;
+    }
+  }
+
   return {};
 }
 
@@ -248,7 +261,8 @@ PrettyStruct Pretty(const GuestConfig& config, PrettyAdlPlaceholder) {
       .Member("output_audio_streams_count", config.output_audio_streams_count)
       .Member("audio_settings", config.audio_settings)
       .Member("enforce_mac80211_hwsim", config.enforce_mac80211_hwsim)
-      .Member("blank_data_image_mb", config.blank_data_image_mb);
+      .Member("blank_data_image_mb", config.blank_data_image_mb)
+      .Member("lights_server_enabled", config.lights_server_enabled);
 }
 
 Result<std::vector<GuestConfig>> ReadGuestConfig(
