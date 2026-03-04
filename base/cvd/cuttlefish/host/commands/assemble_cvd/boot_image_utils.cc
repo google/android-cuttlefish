@@ -337,9 +337,8 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
 
   std::string bootconfig = ReadFile(unpack_dir + "/bootconfig");
   VLOG(0) << "Bootconfig parameters from vendor boot image are " << bootconfig;
-  std::string vendor_boot_params = ReadFile(unpack_dir + "/vendor_boot_params");
-  auto kernel_cmdline =
-      ExtractValue(vendor_boot_params, "vendor command line args: ") +
+  std::string kernel_cmdline =
+      unpack->KernelCommandLine() +
       (bootconfig_supported
            ? ""
            : " " + android::base::StringReplace(bootconfig, "\n", " ", true));
