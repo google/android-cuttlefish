@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -32,6 +32,23 @@ cf_cc_library(
         "//cuttlefish/io:length",
         "//cuttlefish/result",
         "@mkbootimg//:bootimg_header",
+    ],
+)
+
+cf_cc_test(
+    name = "boot_image_test",
+    srcs = ["boot_image_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/boot_image",
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:boot_image_builder",
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 

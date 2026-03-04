@@ -28,6 +28,8 @@
 
 namespace cuttlefish {
 
+inline constexpr uint32_t kBootImagePageSize = 4096;
+
 class BootImage {
  public:
   static Result<BootImage> Read(std::unique_ptr<ReaderSeeker>);
