@@ -119,6 +119,9 @@ enum DeviceType {
   Unknown = 7;
 }
 
+// The presence of this field in the proto indicates the lights HAL is enabled.
+message Lights {}
+
 // GuestConfigFile represents the configuration for a Cuttlefish guest device,
 // typically parsed from an cuttlefish-guest-config.txtpb file. It defines the
 // device's hardware capabilities, software features, and virtualization
@@ -137,4 +140,6 @@ message GuestConfigFile {
   Storage storage = 6;
 
   Virtualization virtualization = 7;
+
+  Lights lights = 8;
 }
