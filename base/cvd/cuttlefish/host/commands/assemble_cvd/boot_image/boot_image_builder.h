@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
@@ -40,14 +41,14 @@ class BootImageBuilder {
   BootImageBuilder& OsVersion(uint32_t) &;
   BootImageBuilder OsVersion(uint32_t) &&;
 
-  Result<std::unique_ptr<ReaderSeeker>> BuildV4();
+  Result<ConcatReaderSeeker> BuildV4();
 
  private:
   std::string kernel_command_line_;
   std::unique_ptr<ReaderSeeker> kernel_;
   std::unique_ptr<ReaderSeeker> ramdisk_;
   std::unique_ptr<ReaderSeeker> signature_;
-  uint32_t os_version_;
+  uint32_t os_version_ = 0;
 };
 
 }  // namespace cuttlefish

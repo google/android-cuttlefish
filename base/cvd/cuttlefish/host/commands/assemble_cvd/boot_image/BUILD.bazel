@@ -27,6 +27,9 @@ cf_cc_library(
     hdrs = ["boot_image_builder.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:length",
         "//cuttlefish/result",
         "@mkbootimg//:bootimg_header",
     ],
