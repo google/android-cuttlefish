@@ -210,6 +210,9 @@ func main() {
 			log.Fatalf("unknown subcommand %q", subcommand)
 		}
 	} else {
+		if err := internal.CheckDeviceAccessible(); err != nil {
+			log.Fatal(err)
+		}
 		switch subcommand {
 		case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 			if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
