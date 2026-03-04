@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package provides common functionality for launching and interacting
+// with Cuttlefish instances for tests.
 package e2etests
 
 import (
@@ -32,6 +34,7 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 )
 
+// Checks if a file exists.
 func FileExists(f string) bool {
 	info, err := os.Stat(f)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -43,6 +46,7 @@ func FileExists(f string) bool {
 	return true
 }
 
+// Checks if a directory exists.
 func DirectoryExists(d string) bool {
 	info, err := os.Stat(d)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -54,6 +58,7 @@ func DirectoryExists(d string) bool {
 	return true
 }
 
+// Common state while running an e2etest.
 type TestContext struct {
 	t *testing.T
 	tempdir string
@@ -65,6 +70,7 @@ type TestContext struct {
 	teardownCalled bool
 }
 
+// Runs the given command with the given set of envvars overrided.
 func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string) (string, error) {
 	cmd := exec.CommandContext(tc.t.Context(), command[0], command[1:]...)
 
@@ -89,6 +95,7 @@ func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string
 	return cmdOutputBuf.String(), nil
 }
 
+// Waits for a device to be available via adb.
 func (tc *TestContext) RunAdbWaitForDevice() error {
 	adbCommand := []string{
 		"timeout",
@@ -103,12 +110,14 @@ func (tc *TestContext) RunAdbWaitForDevice() error {
 	return nil
 }
 
+// Runs the given command with the existing envvars.
 func (tc *TestContext) RunCmd(args... string) (string, error) {
 	command := []string{}
 	command = append(command, args...)
 	return tc.RunCmdWithEnv(command, map[string]string{})
 }
 
+// Common parameters passed to `cvd fetch`.
 type FetchArgs struct {
     DefaultBuildBranch string
 	DefaultBuildTarget string
@@ -116,33 +125,18 @@ type FetchArgs struct {
 	TestSuiteBuildTarget string
 }
 
-type CreateRunner int
-
-const (
-	CvdCreate CreateRunner = iota
-	LaunchCvd
-)
-
-type StringSliceFlag []string
-
-func (s *StringSliceFlag) String() string {
-	return fmt.Sprintf("%s", *s)
-}
-
-func (s *StringSliceFlag) Set(value string) error {
-	*s = append(*s, value)
-	return nil
-}
-
+// Common parameters passed to `cvd create`.
 type CreateArgs struct {
-	Args StringSliceFlag
+	Args []string
 }
 
+// Common parameters to fetch and create a Cuttlefish device.
 type FetchAndCreateArgs struct {
 	Fetch FetchArgs
 	Create CreateArgs
 }
 
+// Performs `cvd fetch <args>`.
 func (tc *TestContext) CVDFetch(args FetchArgs) error {
 	log.Printf("Fetching...")
 	fetchCmd := []string{
@@ -175,6 +169,7 @@ func (tc *TestContext) CVDFetch(args FetchArgs) error {
 	return nil
 }
 
+// Performs `cvd create <args>`.
 func (tc *TestContext) CVDCreate(args CreateArgs) error {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
@@ -195,6 +190,7 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 	return nil
 }
 
+// Performs `cvd stop`.
 func (tc *TestContext) CVDStop() error {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
@@ -209,6 +205,7 @@ func (tc *TestContext) CVDStop() error {
 	return nil
 }
 
+// Performs `HOME=<testdir> bin/launch_cvd <args>`.
 func (tc *TestContext) LaunchCVD(args CreateArgs) error {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
@@ -230,6 +227,7 @@ func (tc *TestContext) LaunchCVD(args CreateArgs) error {
 	return nil
 }
 
+// Performs `HOME=<testdir> bin/stop_cvd`.
 func (tc *TestContext) StopCVD() error {
 	tempdirEnv := map[string]string{
 		"HOME": tc.tempdir,
@@ -244,10 +242,12 @@ func (tc *TestContext) StopCVD() error {
 	return nil
 }
 
+// Common parameters for `cvd load`.
 type LoadArgs struct {
 	LoadConfig string
 }
 
+// Performs `cvd load`.
 func  (tc *TestContext) CVDLoad(load LoadArgs) error {
 	configpath := path.Join(tc.tempdir, "cvd_load_config.json")
 
@@ -279,6 +279,7 @@ func  (tc *TestContext) CVDLoad(load LoadArgs) error {
 	return nil
 }
 
+// Creates a standard environment for an e2etests.
 func (tc *TestContext) SetUp(t *testing.T) {
 	tc.t = t
 	tc.teardownCalled = false
@@ -320,10 +321,12 @@ func (tc *TestContext) SetUp(t *testing.T) {
 	})
 }
 
+// Registers a callback to run during test teardown.
 func (tc *TestContext) Cleanup(f func()) {
 	tc.cleanups = append(tc.cleanups, f)
 }
 
+// Destroys a standard environment for an e2etests.
 func (tc *TestContext) TearDown() {
 	log.Printf("Cleaning up after test...")
 	tc.teardownCalled = true
@@ -419,39 +422,40 @@ func findLocalXTS(cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) string {
 	return possibleDir
 }
 
-type XtsTest struct {
+type xtsTest struct {
 	Name string `xml:"name,attr"`
 	Result string `xml:"result,attr"`
 }
 
-type XtsTestCase struct {
+type xtsTestCase struct {
 	Name string `xml:"name,attr"`
-	Tests []XtsTest `xml:"Test"`
+	Tests []xtsTest `xml:"Test"`
 }
 
-type XtsModule struct {
+type xtsModule struct {
 	Name string `xml:"name,attr"`
-	TestCases []XtsTestCase `xml:"TestCase"`
+	TestCases []xtsTestCase `xml:"TestCase"`
 }
 
-type XtsSummary struct {
+type xtsSummary struct {
 	Pass int `xml:"pass,attr"`
 	Failed int `xml:"failed,attr"`
 	ModulesDone int `xml:"modules_done,attr"`
 	ModulesTotal int `xml:"modules_total,attr"`
 }
 
-type XtsResult struct {
-    Summary XtsSummary `xml:"Summary"`
-	Modules []XtsModule `xml:"Module"`
+type xtsResult struct {
+    Summary xtsSummary `xml:"Summary"`
+	Modules []xtsModule `xml:"Module"`
 }
 
+// Common parameters for running CTS/VTS/etc.
 type XtsArgs struct {
-	XtsArgs StringSliceFlag
+	XtsArgs []string
 	XtsType string
-	XtsXmlConverterBinary string
 }
 
+// Fetches a given Cuttlefish build, creates a Cufflefish instance, and runs CTS/VTS/etc against the device.
 func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 	tc := TestContext{}
 	tc.SetUp(t)
@@ -506,7 +510,7 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 		t.Fatalf("failed to read XTS XML results from %s: %w", xtsResultsPath, err)
 	}
 
-	var xtsResult XtsResult
+	var xtsResult xtsResult
     if err := xml.Unmarshal([]byte(xtsResultsBytes), &xtsResult); err != nil {
 		t.Fatalf("failed to parse XTS XML results from %s: %w", xtsResultsPath, err)
     }
