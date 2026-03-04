@@ -22,6 +22,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "boot_image_builder",
+    srcs = ["boot_image_builder.cc"],
+    hdrs = ["boot_image_builder.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
+
+cf_cc_library(
     name = "vendor_boot_image",
     srcs = ["vendor_boot_image.cc"],
     hdrs = ["vendor_boot_image.h"],
