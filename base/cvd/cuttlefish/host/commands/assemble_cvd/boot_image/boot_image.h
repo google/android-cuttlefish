@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <variant>
 
 #include "bootimg.h"
@@ -35,6 +37,7 @@ class BootImage {
   ReadWindowView Kernel() const;
   ReadWindowView Ramdisk() const;
   std::optional<ReadWindowView> Signature() const;
+  uint32_t OsVersion() const;
 
   Result<void> Unpack(ReadWriteFilesystem&);
 

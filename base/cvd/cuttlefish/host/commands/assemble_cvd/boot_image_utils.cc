@@ -33,13 +33,16 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/io/chroot.h"
+#include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/copy.h"
 #include "cuttlefish/io/io.h"
+#include "cuttlefish/io/length.h"
 #include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
@@ -272,36 +275,27 @@ Result<void> RepackBootImage(const Avb& avb,
   BootImage boot_image =
       CF_EXPECT(BootImage::Read(std::move(boot_image_reader)));
 
-  std::string ramdisk_path = build_dir + "/ramdisk";
-  {
-    ReadWindowView ramdisk_in = boot_image.Ramdisk();
+  BootImageBuilder builder =
+      BootImageBuilder()
+          .OsVersion(boot_image.OsVersion())
+          .KernelCommandLine(boot_image.KernelCommandLine())
+          .Kernel(CF_EXPECT(native_filesystem.OpenReadOnly(new_kernel_path)))
+          .Ramdisk(std::make_unique<ReadWindowView>(boot_image.Ramdisk()));
 
-    (void)native_filesystem.DeleteFile(ramdisk_path);
-    std::unique_ptr<ReaderWriterSeeker> ramdisk_out =
-        CF_EXPECT(native_filesystem.CreateFile(ramdisk_path));
-    CF_EXPECT(ramdisk_out.get());
-    CF_EXPECT(Copy(ramdisk_in, *ramdisk_out));
+  if (std::optional<ReadWindowView> sig = boot_image.Signature(); sig) {
+    builder.Signature(std::make_unique<ReadWindowView>(*sig));
   }
-
-  std::string kernel_cmdline = boot_image.KernelCommandLine();
-  VLOG(0) << "Cmdline from boot image is " << kernel_cmdline;
+  ConcatReaderSeeker new_boot_image = CF_EXPECT(builder.BuildV4());
+  uint64_t new_boot_image_size = CF_EXPECT(Length(new_boot_image));
 
   std::string tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
-  Command repack_cmd = Command(MkbootimgBinary())
-                           .AddParameter("--kernel")
-                           .AddParameter(new_kernel_path)
-                           .AddParameter("--ramdisk")
-                           .AddParameter(ramdisk_path)
-                           .AddParameter("--header_version")
-                           .AddParameter("4")
-                           .AddParameter("--cmdline")
-                           .AddParameter(kernel_cmdline)
-                           .AddParameter("-o")
-                           .AddParameter(tmp_boot_image_path);
-  int result = repack_cmd.Start().Wait();
-  CF_EXPECT(result == 0, "Unable to run mkbootimg. Exited with status " << result);
+  (void)native_filesystem.DeleteFile(tmp_boot_image_path);
+  std::unique_ptr<ReaderWriterSeeker> tmp_boot_image =
+      CF_EXPECT(native_filesystem.CreateFile(tmp_boot_image_path));
+  CF_EXPECT(tmp_boot_image.get());
+  CF_EXPECT(Copy(new_boot_image, *tmp_boot_image));
 
-  if (FileSize(tmp_boot_image_path) <= FileSize(boot_image_path)) {
+  if (new_boot_image_size <= FileSize(boot_image_path)) {
     CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", FileSize(boot_image_path)));
   } else {
     CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", 0));
