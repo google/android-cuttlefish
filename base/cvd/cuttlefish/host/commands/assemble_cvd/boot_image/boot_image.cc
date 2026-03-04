@@ -82,7 +82,9 @@ std::string BootImage::KernelCommandLine() const {
 }
 
 static uint32_t PageSizeImpl(const boot_img_hdr_v0& v0) { return v0.page_size; }
-static uint32_t PageSizeImpl(const boot_img_hdr_v3&) { return 4096; }
+static uint32_t PageSizeImpl(const boot_img_hdr_v3&) {
+  return kBootImagePageSize;
+}
 
 uint32_t BootImage::PageSize() const {
   const auto visitor = [](const auto& hdr) { return PageSizeImpl(hdr); };
