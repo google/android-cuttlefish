@@ -133,3 +133,34 @@ docker pull ${ORCHESTRATION_IMAGE}:${ORCHESTRATION_TAG}
 kill $DOCKER_PID
 wait $DOCKER_PID
 umount /sys/fs/cgroup
+
+# Install JDK.
+#
+# JDK it's not required to launch a CF device. It's required to run
+# some of Tradefed tests that are run from the CF host side like
+# some CF gfx tests, adb tests, etc.
+DEBARCH=$(dpkg-architecture -qDEB_BUILD_ARCH)
+
+if [[ "${DEBARCH}" == "amd64" ]]; then
+  JDK_ARCH=x64
+  # https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz.sha256
+  export JDK21_SHA256SUM=a2def047a73941e01a73739f92755f86b895811afb1f91243db214cff5bdac3f
+elif [[ "${DEBARCH}" == "arm64" ]]; then
+  JDK_ARCH=aarch64
+  # https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-aarch64_bin.tar.gz.sha256
+  export JDK21_SHA256SUM=08db1392a48d4eb5ea5315cf8f18b89dbaf36cda663ba882cf03c704c9257ec2
+else
+  echo "** ERROR: UNEXEPCTED ARCH **"; exit 1;
+fi
+mkdir -p /tmp/java
+wget -P /tmp/java "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz"
+if ! echo "$JDK21_SHA256SUM /tmp/java/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz" | sudo chroot /mnt/image /usr/bin/sha256sum -c ; then
+  echo "** ERROR: KEY MISMATCH **"; popd >/dev/null; exit 1;
+fi
+tar xvzf "/tmp/java/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz" -C /usr/java
+rm "/tmp/java/openjdk-21.0.2_linux-${JDK_ARCH}_bin.tar.gz"
+ENV_JAVA_HOME='/usr/java/jdk-21.0.2'
+echo "JAVA_HOME=$ENV_JAVA_HOME" | tee -a /etc/environment >/dev/null
+echo "JAVA_HOME=$ENV_JAVA_HOME" | tee -a /etc/profile >/dev/null
+echo 'PATH=$JAVA_HOME/bin:$PATH' | tee -a /etc/profile >/dev/null
+echo "PATH=$ENV_JAVA_HOME/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games" | tee -a /etc/environment >/dev/null
