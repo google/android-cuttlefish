@@ -21,6 +21,7 @@
 
 namespace cuttlefish {
 
+class ConcatReaderSeeker;
 class IoVisitor;
 class ReadWindowView;
 
@@ -111,6 +112,7 @@ class IoVisitor {
  public:
   virtual ~IoVisitor() = default;
 
+  virtual Result<void> Accept(ConcatReaderSeeker&) = 0;
   virtual Result<void> Accept(ReadWindowView&) = 0;
   virtual Result<void> Accept(Reader&) = 0;
   virtual Result<void> Accept(ReaderSeeker&) = 0;

@@ -17,12 +17,18 @@
 
 #include <stdint.h>
 
+#include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_window_view.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
+
+Result<void> DefaultIoVisitor::Accept(ConcatReaderSeeker& io) {
+  CF_EXPECT(Accept(static_cast<ReaderSeeker&>(io)));
+  return {};
+}
 
 Result<void> DefaultIoVisitor::Accept(ReadWindowView& io) {
   CF_EXPECT(Accept(static_cast<ReaderSeeker&>(io)));
