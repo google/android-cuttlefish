@@ -305,17 +305,12 @@ Result<void> RepackBootImage(const Avb& avb,
   return {};
 }
 
-bool RepackVendorBootImage(const std::string& new_ramdisk,
-                           const std::string& vendor_boot_image_path,
-                           const std::string& new_vendor_boot_image_path,
-                           const std::string& unpack_dir,
-                           bool bootconfig_supported) {
-  Result<VendorBootImage> unpack =
-      UnpackVendorBootImageIfNotUnpacked(vendor_boot_image_path, unpack_dir);
-  if (!unpack.ok()) {
-    LOG(ERROR) << unpack.error();
-    return false;
-  }
+Result<void> RepackVendorBootImage(
+    const std::string& new_ramdisk, const std::string& vendor_boot_image_path,
+    const std::string& new_vendor_boot_image_path,
+    const std::string& unpack_dir, bool bootconfig_supported) {
+  VendorBootImage unpack = CF_EXPECT(
+      UnpackVendorBootImageIfNotUnpacked(vendor_boot_image_path, unpack_dir));
 
   std::string ramdisk_path;
   if (!new_ramdisk.empty()) {
@@ -332,7 +327,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   std::string bootconfig = ReadFile(unpack_dir + "/bootconfig");
   VLOG(0) << "Bootconfig parameters from vendor boot image are " << bootconfig;
   std::string kernel_cmdline =
-      unpack->KernelCommandLine() +
+      unpack.KernelCommandLine() +
       (bootconfig_supported
            ? ""
            : " " + android::base::StringReplace(bootconfig, "\n", " ", true));
@@ -365,21 +360,15 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     repack_cmd.AddParameter(unpack_dir + "/bootconfig");
   }
 
-  int success = repack_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run mkbootimg. Exited with status " << success;
-    return false;
-  }
+  CF_EXPECT_EQ(repack_cmd.Start().Wait(), 0, "Unable to run mkbootimg.");
 
-  Result<void> result =
-      Avb().AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
-                          FileSize(vendor_boot_image_path));
-  if (!result.ok()) {
-    LOG(ERROR) << result.error().Trace();
-    return false;
-  }
+  CF_EXPECT(Avb().AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
+                                FileSize(vendor_boot_image_path)));
 
-  return DeleteTmpFileIfNotChanged(tmp_vendor_boot_image_path, new_vendor_boot_image_path);
+  CF_EXPECT(DeleteTmpFileIfNotChanged(tmp_vendor_boot_image_path,
+                                      new_vendor_boot_image_path));
+
+  return {};
 }
 
 Result<void> RepackVendorBootImageWithEmptyRamdisk(
