@@ -24,6 +24,7 @@ namespace cuttlefish {
 
 class DefaultIoVisitor : public IoVisitor {
  public:
+  Result<void> Accept(ConcatReaderSeeker&);
   Result<void> Accept(ReadWindowView&);
   Result<void> Accept(Reader&);
   Result<void> Accept(ReaderSeeker&);
