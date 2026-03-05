@@ -20,6 +20,7 @@
 #include "cuttlefish/io/concat.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_window_view.h"
+#include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -51,6 +52,11 @@ Result<void> DefaultIoVisitor::Accept(ReaderWriterSeeker& io) {
 
 Result<void> DefaultIoVisitor::Accept(Seeker&) {
   return CF_ERR("Unimplemented");
+}
+
+Result<void> DefaultIoVisitor::Accept(SharedFdIo& io) {
+  CF_EXPECT(Accept(static_cast<ReaderWriterSeeker&>(io)));
+  return {};
 }
 
 Result<void> DefaultIoVisitor::Accept(Writer&) {
