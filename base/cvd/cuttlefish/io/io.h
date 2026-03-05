@@ -24,6 +24,7 @@ namespace cuttlefish {
 class ConcatReaderSeeker;
 class IoVisitor;
 class ReadWindowView;
+class SharedFdIo;
 
 /** Used to determine the runtime type of an IO instance object. */
 class IoVisitable {
@@ -118,6 +119,7 @@ class IoVisitor {
   virtual Result<void> Accept(ReaderSeeker&) = 0;
   virtual Result<void> Accept(ReaderWriterSeeker&) = 0;
   virtual Result<void> Accept(Seeker&) = 0;
+  virtual Result<void> Accept(SharedFdIo&) = 0;
   virtual Result<void> Accept(Writer&) = 0;
   virtual Result<void> Accept(WriterSeeker&) = 0;
 };

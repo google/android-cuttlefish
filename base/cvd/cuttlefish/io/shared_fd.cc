@@ -28,6 +28,11 @@ namespace cuttlefish {
 
 SharedFdIo::SharedFdIo(SharedFD fd) : fd_(std::move(fd)) {}
 
+Result<void> SharedFdIo::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
 Result<uint64_t> SharedFdIo::Read(void* buf, uint64_t count) {
   int64_t data_read = fd_->Read(buf, count);
   CF_EXPECT_GE(data_read, 0, fd_->StrError());

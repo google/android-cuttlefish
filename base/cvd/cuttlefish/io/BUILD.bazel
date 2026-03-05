@@ -95,6 +95,7 @@ cf_cc_library(
         "//cuttlefish/io",
         "//cuttlefish/io:concat",
         "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:shared_fd",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
