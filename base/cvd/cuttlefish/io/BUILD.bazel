@@ -187,8 +187,10 @@ cf_cc_test(
 
 cf_cc_library(
     name = "io",
+    srcs = ["io.cc"],
     hdrs = ["io.h"],
     deps = [
+        "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
 )
