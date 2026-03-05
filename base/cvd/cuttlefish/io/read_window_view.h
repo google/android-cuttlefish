@@ -30,6 +30,7 @@ class ReadWindowView : public ReaderFakeSeeker {
  public:
   ReadWindowView(const ReaderSeeker&, uint64_t begin, uint64_t length);
 
+  Result<void> Visit(IoVisitor&) override;
   Result<uint64_t> PRead(void* buf, uint64_t count,
                          uint64_t offset) const override;
 

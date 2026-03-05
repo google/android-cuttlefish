@@ -93,6 +93,7 @@ cf_cc_library(
     hdrs = ["default_visitor.h"],
     deps = [
         "//cuttlefish/io",
+        "//cuttlefish/io:read_window_view",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
     ],
