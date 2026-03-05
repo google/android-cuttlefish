@@ -88,6 +88,17 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "default_visitor",
+    srcs = ["default_visitor.cc"],
+    hdrs = ["default_visitor.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "disjoint_range_set",
     srcs = ["disjoint_range_set.cc"],
     hdrs = ["disjoint_range_set.h"],
