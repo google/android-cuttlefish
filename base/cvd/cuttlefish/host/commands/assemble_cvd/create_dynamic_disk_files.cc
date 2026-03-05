@@ -244,8 +244,9 @@ Result<void> CreateDynamicDiskFiles(
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
     if (VmManagerIsGem5(config)) {
-      RepackGem5BootImage(instance.PerInstancePath("initrd.img"), boot_config,
-                          config.assembly_dir(), instance.initramfs_path());
+      CF_EXPECT(RepackGem5BootImage(instance.PerInstancePath("initrd.img"),
+                                    boot_config, config.assembly_dir(),
+                                    instance.initramfs_path()));
     }
     ++instance_index;
   }

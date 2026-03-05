@@ -396,7 +396,7 @@ Result<void> RepackVendorBootImageWithEmptyRamdisk(
   return {};
 }
 
-void RepackGem5BootImage(
+Result<void> RepackGem5BootImage(
     const std::string& initrd_path,
     const std::optional<BootConfigPartition>& bootconfig_partition,
     const std::string& unpack_dir, const std::string& input_ramdisk_path) {
@@ -468,6 +468,8 @@ void RepackGem5BootImage(
   // Append bootconfig trailer
   final_rd << "#BOOTCONFIG\n";
   final_rd.close();
+
+  return {};
 }
 
 // TODO(290586882) switch this function to rely on avb footers instead of
