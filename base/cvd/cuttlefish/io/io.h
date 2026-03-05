@@ -22,6 +22,7 @@
 namespace cuttlefish {
 
 class IoVisitor;
+class ReadWindowView;
 
 /** Used to determine the runtime type of an IO instance object. */
 class IoVisitable {
@@ -110,6 +111,7 @@ class IoVisitor {
  public:
   virtual ~IoVisitor() = default;
 
+  virtual Result<void> Accept(ReadWindowView&) = 0;
   virtual Result<void> Accept(Reader&) = 0;
   virtual Result<void> Accept(ReaderSeeker&) = 0;
   virtual Result<void> Accept(ReaderWriterSeeker&) = 0;

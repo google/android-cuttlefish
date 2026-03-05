@@ -32,6 +32,11 @@ ReadWindowView::ReadWindowView(const ReaderSeeker& data_provider,
       begin_(begin),
       length_(length) {}
 
+Result<void> ReadWindowView::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
 Result<uint64_t> ReadWindowView::PRead(void* const buf, uint64_t count,
                                        uint64_t offset) const {
   if (offset >= length_) {
