@@ -134,13 +134,14 @@ Result<void> RepackKernelRamdisk(
       CF_EXPECT(RepackSuperAndVbmeta(instance, superimg_build_dir,
                                      vendor_dlkm_build_dir,
                                      system_dlkm_build_dir, ramdisk_repacked));
-      bool success = RepackVendorBootImage(
+      Result<void> res = RepackVendorBootImage(
           ramdisk_repacked, instance.vendor_boot_image(),
           new_vendor_boot_image_path, config.assembly_dir(),
           instance.bootconfig_supported());
-      if (!success) {
+      if (!res.ok()) {
         LOG(ERROR) << "Failed to regenerate the vendor boot image with the "
-                      "new ramdisk";
+                      "new ramdisk: "
+                   << res.error();
       } else {
         // This control flow implies a kernel with all configs built in.
         // If it's just the kernel, repack the vendor boot image without a
