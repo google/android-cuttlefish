@@ -35,7 +35,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk_path,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& unpack_dir,
                            bool bootconfig_supported);
-bool RepackVendorBootImageWithEmptyRamdisk(
+Result<void> RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
     const std::string& unpack_dir, bool bootconfig_supported);

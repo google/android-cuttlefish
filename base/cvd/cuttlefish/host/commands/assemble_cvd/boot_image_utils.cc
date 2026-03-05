@@ -382,15 +382,18 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   return DeleteTmpFileIfNotChanged(tmp_vendor_boot_image_path, new_vendor_boot_image_path);
 }
 
-bool RepackVendorBootImageWithEmptyRamdisk(
+Result<void> RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
     const std::string& unpack_dir, bool bootconfig_supported) {
-  auto empty_ramdisk_file =
-      SharedFD::Creat(unpack_dir + "/empty_ramdisk", 0666);
-  return RepackVendorBootImage(
-      unpack_dir + "/empty_ramdisk", vendor_boot_image_path,
-      new_vendor_boot_image_path, unpack_dir, bootconfig_supported);
+  std::string empty_ramdisk_path = unpack_dir + "/empty_ramdisk";
+  SharedFD empty_ramdisk = SharedFD::Creat(empty_ramdisk_path, 0666);
+  CF_EXPECTF(empty_ramdisk->IsOpen(), "Failed to open '{}': '{}'",
+             empty_ramdisk_path, empty_ramdisk->StrError());
+  CF_EXPECT(RepackVendorBootImage(empty_ramdisk_path, vendor_boot_image_path,
+                                  new_vendor_boot_image_path, unpack_dir,
+                                  bootconfig_supported));
+  return {};
 }
 
 void RepackGem5BootImage(
