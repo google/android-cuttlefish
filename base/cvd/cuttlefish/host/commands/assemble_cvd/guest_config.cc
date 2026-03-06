@@ -44,6 +44,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/optional.h"
 #include "cuttlefish/pretty/string.h"
 
@@ -60,6 +61,20 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
                         {config::DeviceType::Tv, DeviceType::Tv},
                         {config::DeviceType::Minidroid, DeviceType::Minidroid},
                         {config::DeviceType::Go, DeviceType::Go}};
+
+  static const std::unordered_map<config::GpuMode, GpuMode> kGpuModeMap = {
+      {config::GpuMode::AUTO, GpuMode::Auto},
+      {config::GpuMode::CUSTOM, GpuMode::Custom},
+      {config::GpuMode::DRM_VIRGL, GpuMode::DrmVirgl},
+      {config::GpuMode::GFXSTREAM, GpuMode::Gfxstream},
+      {config::GpuMode::GFXSTREAM_GUEST_ANGLE, GpuMode::GfxstreamGuestAngle},
+      {config::GpuMode::GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE,
+       GpuMode::GfxstreamGuestAngleHostLavapipe},
+      {config::GpuMode::GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER,
+       GpuMode::GfxstreamGuestAngleHostSwiftshader},
+      {config::GpuMode::GUEST_SWIFTSHADER, GpuMode::GuestSwiftshader},
+      {config::GpuMode::NONE, GpuMode::None},
+  };
 
   config::GuestConfigFile proto_config;
 
@@ -96,6 +111,12 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   if (graphics_config.has_prefer_drm_virgl_when_supported()) {
     guest_config.prefer_drm_virgl_when_supported =
         graphics_config.prefer_drm_virgl_when_supported();
+  }
+  for (int i = 0; i < graphics_config.gpu_mode_candidates_size(); i++) {
+    config::GpuMode candidate = graphics_config.gpu_mode_candidates(i);
+    const auto it = kGpuModeMap.find(candidate);
+    CF_EXPECT(it != kGpuModeMap.end());
+    guest_config.gpu_mode_candidates.push_back(it->second);
   }
 
   const auto& input_config = proto_config.input();

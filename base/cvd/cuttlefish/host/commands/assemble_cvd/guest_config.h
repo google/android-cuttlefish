@@ -25,6 +25,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/pretty.h"
 #include "cuttlefish/pretty/struct.h"
 
@@ -51,6 +52,7 @@ struct GuestConfig {
   std::optional<bool> enforce_mac80211_hwsim;
   int blank_data_image_mb = 0;
   bool lights_server_enabled = true; // true for backwards compatibility
+  std::vector<GpuMode> gpu_mode_candidates;
 };
 
 PrettyStruct Pretty(const GuestConfig&,
