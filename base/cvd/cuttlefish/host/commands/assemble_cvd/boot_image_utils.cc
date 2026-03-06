@@ -56,16 +56,19 @@ constexpr char TMP_RD_DIR[] = "stripped_ramdisk_dir";
 constexpr char STRIPPED_RD[] = "stripped_ramdisk";
 constexpr char kConcatenatedVendorRamdisk[] = "concatenated_vendor_ramdisk";
 
-void RunMkBootFs(const std::string& input_dir, const std::string& output) {
+Result<void> RunMkBootFs(const std::string& input_dir,
+                         const std::string& output) {
   SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
-  CHECK(output_fd->IsOpen()) << output_fd->StrError();
+  CF_EXPECTF(output_fd->IsOpen(), "Failed to open '{}': '{}'", output,
+             output_fd->StrError());
 
   int success = Command(HostBinaryPath("mkbootfs"))
                     .AddParameter(input_dir)
                     .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
                     .Start()
                     .Wait();
-  CHECK_EQ(success, 0) << "`mkbootfs` failed.";
+  CF_EXPECT_EQ(success, 0, "`mkbootfs` failed.");
+  return {};
 }
 
 void RunLz4(const std::string& input, const std::string& output) {
@@ -158,7 +161,7 @@ bool IsCpioArchive(const std::string& path) {
 
 Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
                          const std::string& output_ramdisk) {
-  RunMkBootFs(ramdisk_stage_dir, output_ramdisk + kCpioExt);
+  CF_EXPECT(RunMkBootFs(ramdisk_stage_dir, output_ramdisk + kCpioExt));
   RunLz4(output_ramdisk + kCpioExt, output_ramdisk);
   return {};
 }
