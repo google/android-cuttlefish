@@ -18,13 +18,15 @@
 
 #include <ostream>
 #include <string_view>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
-#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -46,6 +48,192 @@
 
 namespace cuttlefish {
 namespace {
+
+struct CommonState {
+  const VmmMode vmm_mode;
+  const GuestConfig& guest_config;
+  const gfxstream::proto::GraphicsAvailability& graphics_availability;
+};
+
+bool IsLikelySoftwareRenderer(const std::string& renderer) {
+  const std::string lower_renderer = absl::AsciiStrToLower(renderer);
+  return lower_renderer.find("llvmpipe") != std::string::npos;
+}
+
+using MeetsRequirementFunc = std::function<bool(const CommonState& common)>;
+
+struct RequirementWithReason {
+  MeetsRequirementFunc func;
+  std::string_view success_explanation;
+  std::string_view failure_explanation;
+};
+
+const std::unordered_map<GpuMode, std::vector<RequirementWithReason>>&
+GetGpuModeRequirementsMap() {
+  const RequirementWithReason kHostIsNonArm{
+      .func = [](const CommonState&) { return HostArch() != Arch::Arm64; },
+      .success_explanation = "The host is not ARM64.",
+      .failure_explanation =
+          "The host is ARM64. Not enabling accelerated modes on ARM64 until "
+          "vhost-user-gpu has been more thoroughly tested. Please explicitly "
+          "use --gpu_mode=gfxstream or --gpu_mode=gfxstream_guest_angle to "
+          "enable for now.",
+  };
+  const RequirementWithReason kNotUsingHostQemu{
+      .func =
+          [](const CommonState& common) {
+            return common.vmm_mode != VmmMode::kQemu || UseQemuPrebuilt();
+          },
+      .success_explanation = "The instance is not using the system QEMU.",
+      .failure_explanation =
+          "The instance is using the system QEMU which may not have Gfxstream "
+          "support. Please explicitly use --gpu_mode=gfxstream or "
+          "--gpu_mode=gfxstream_guest_angle to enable for now.",
+  };
+  const RequirementWithReason kGuestSupportsGfxstream{
+      .func =
+          [](const CommonState& common) {
+            return common.guest_config.gfxstream_supported;
+          },
+      .success_explanation = "The guest supports Gfxstream.",
+      .failure_explanation =
+          "The guest does not support Gfxstream. This is configured in the "
+          "`android-info.txt` file associated with the guest target build.",
+  };
+  const RequirementWithReason kHostGlesAvailable{
+      .func =
+          [](const CommonState& common) {
+            const auto& availability = common.graphics_availability;
+            const bool has_gles2 = availability.has_egl() &&
+                                   availability.egl().has_gles2_availability();
+            const bool has_gles3 = availability.has_egl() &&
+                                   availability.egl().has_gles3_availability();
+            return has_gles2 || has_gles3;
+          },
+      .success_explanation = "The host has GLES support.",
+      .failure_explanation =
+          "The host does not have GLES support. Please ensure the GLES "
+          "userspace drivers are installed and available.",
+  };
+  const RequirementWithReason kHostGlesIsNonSoftwareRenderer{
+      .func =
+          [](const CommonState& common) {
+            const auto& availability = common.graphics_availability;
+            if (availability.has_egl()) {
+              if (availability.egl().has_gles2_availability() &&
+                  IsLikelySoftwareRenderer(
+                      availability.egl().gles2_availability().renderer())) {
+                return false;
+              }
+              if (availability.egl().has_gles3_availability() &&
+                  IsLikelySoftwareRenderer(
+                      availability.egl().gles3_availability().renderer())) {
+                return false;
+              }
+            }
+            return true;
+          },
+      .success_explanation =
+          "The host GLES driver is not a software implementation.",
+      .failure_explanation =
+          "The host does not have a non-software implementation GLES driver. "
+          "Consider enabling --gpu_mode=gfxstream_guest_angle_host_swiftshader "
+          "for host software rendering which has a vetted software renderer.",
+  };
+  // TODO: separate host vulkan loader check out.
+  const RequirementWithReason kHostVulkanAvailable{
+      .func =
+          [](const CommonState& common) {
+            const auto& availability = common.graphics_availability;
+            return availability.has_vulkan();
+          },
+      .success_explanation = "The host has Vulkan support.",
+      .failure_explanation =
+          "The host does not have Vulkan support. Please ensure the Vulkan "
+          "userspace drivers and the Vulkan loader are installed and "
+          "available.",
+  };
+  const RequirementWithReason kHostVulkanIsNonSoftwareRenderer{
+      .func =
+          [](const CommonState& common) {
+            const auto& availability = common.graphics_availability;
+            if (availability.has_vulkan() &&
+                !availability.vulkan().physical_devices().empty() &&
+                (availability.vulkan().physical_devices(0).type() !=
+                 ::gfxstream::proto::VulkanPhysicalDevice::TYPE_DISCRETE_GPU)) {
+              return false;
+            }
+            return true;
+          },
+      .success_explanation =
+          "The host Vulkan driver is not a software implementation.",
+      .failure_explanation =
+          "The host does not have a non-software implementation Vulkan driver. "
+          "Consider enabling --gpu_mode=gfxstream_guest_angle_host_swiftshader "
+          "for host software rendering which has a vetted software renderer.",
+  };
+  static const auto* kGpuModeRequirements =
+      new std::unordered_map<GpuMode, std::vector<RequirementWithReason>>{
+          {
+              GpuMode::Custom,
+              /*no requirements*/ {},
+          },
+          {
+              GpuMode::DrmVirgl,
+              {
+                  kHostGlesAvailable,
+              },
+          },
+          {
+              GpuMode::Gfxstream,
+              {
+                  kGuestSupportsGfxstream,
+                  kHostGlesAvailable,
+                  kHostGlesIsNonSoftwareRenderer,
+                  kHostIsNonArm,
+                  kHostVulkanAvailable,
+                  kHostVulkanIsNonSoftwareRenderer,
+              },
+          },
+          {
+              GpuMode::GfxstreamGuestAngle,
+              {
+                  kGuestSupportsGfxstream,
+                  kHostIsNonArm,
+                  kHostVulkanAvailable,
+                  kHostVulkanIsNonSoftwareRenderer,
+                  kNotUsingHostQemu,
+              },
+          },
+          {
+              GpuMode::GfxstreamGuestAngleHostSwiftshader,
+              {
+                  kGuestSupportsGfxstream,
+                  kHostIsNonArm,
+                  kHostVulkanAvailable,
+                  kNotUsingHostQemu,
+              },
+          },
+          {
+              GpuMode::GfxstreamGuestAngleHostLavapipe,
+              {
+                  kGuestSupportsGfxstream,
+                  kHostIsNonArm,
+                  kHostVulkanAvailable,
+                  kNotUsingHostQemu,
+              },
+          },
+          {
+              GpuMode::GuestSwiftshader,
+              /*no requirements*/ {},
+          },
+          {
+              GpuMode::None,
+              /*no requirements*/ {},
+          },
+      };
+  return *kGpuModeRequirements;
+};
 
 struct AngleFeatures {
   // Prefer linear filtering for YUV AHBs to pass
@@ -102,37 +290,6 @@ Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
   }
 
   return features;
-}
-
-std::string ToLower(const std::string& v) {
-  std::string result = v;
-  std::transform(result.begin(), result.end(), result.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return result;
-}
-
-bool IsLikelySoftwareRenderer(const std::string& renderer) {
-  const std::string lower_renderer = ToLower(renderer);
-  return lower_renderer.find("llvmpipe") != std::string::npos;
-}
-
-CF_UNUSED_ON_MACOS
-bool ShouldEnableAcceleratedRendering(
-    const ::gfxstream::proto::GraphicsAvailability& availability) {
-  const bool sufficient_gles2 =
-      availability.has_egl() && availability.egl().has_gles2_availability() &&
-      !IsLikelySoftwareRenderer(
-          availability.egl().gles2_availability().renderer());
-  const bool sufficient_gles3 =
-      availability.has_egl() && availability.egl().has_gles3_availability() &&
-      !IsLikelySoftwareRenderer(
-          availability.egl().gles3_availability().renderer());
-  const bool has_discrete_gpu =
-      availability.has_vulkan() &&
-      !availability.vulkan().physical_devices().empty() &&
-      (availability.vulkan().physical_devices(0).type() ==
-       ::gfxstream::proto::VulkanPhysicalDevice::TYPE_DISCRETE_GPU);
-  return (sufficient_gles2 || sufficient_gles3) && has_discrete_gpu;
 }
 
 struct AngleFeatureOverrides {
@@ -226,65 +383,114 @@ GetNeededVhostUserGpuHostRendererFeatures(
 }
 
 #ifndef __APPLE__
-GpuMode SelectGpuMode(
-    GpuMode gpu_mode, VmmMode vmm, const GuestConfig& guest_config,
-    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
-  if (gpu_mode == GpuMode::Auto) {
-    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
-      if (HostArch() == Arch::Arm64) {
-        LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                     "rendering support but enabling "
-                     "--gpu_mode=guest_swiftshader until vhost-user-gpu "
-                     "based accelerated rendering on ARM has been more "
-                     "thoroughly tested. Please explicitly use "
-                     "--gpu_mode=gfxstream or "
-                     "--gpu_mode=gfxstream_guest_angle to enable for now.";
-        return GpuMode::GuestSwiftshader;
-      }
+std::vector<GpuMode> GetGpuModeCandidates(const GuestConfig& guest_config) {
+  if (!guest_config.gpu_mode_candidates.empty()) {
+    VLOG(0) << "GPU mode candidates provided by guest.";
+    return guest_config.gpu_mode_candidates;
+  }
 
-      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                << "rendering support.";
+  VLOG(0) << "GPU mode candidates not provided by guest config. "
+             "Assuming the historically accepted modes.";
 
-      if (VmManagerIsQemu(vmm) && !UseQemuPrebuilt()) {
-        LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
-        return GpuMode::GuestSwiftshader;
-      } else if (guest_config.prefer_drm_virgl_when_supported) {
-        LOG(INFO) << "GPU mode from guest config: drm_virgl";
-        return GpuMode::DrmVirgl;
-      } else if (!guest_config.gfxstream_supported) {
-        LOG(INFO) << "GPU auto mode: guest does not support gfxstream, "
-                     "enabling --gpu_mode=guest_swiftshader";
-        return GpuMode::GuestSwiftshader;
-      } else {
-        LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
-        return GpuMode::Gfxstream;
-      }
+  std::vector<GpuMode> gpu_mode_candidates;
+  if (guest_config.prefer_drm_virgl_when_supported) {
+    gpu_mode_candidates.push_back(GpuMode::DrmVirgl);
+  }
+  gpu_mode_candidates.push_back(GpuMode::Gfxstream);
+  gpu_mode_candidates.push_back(GpuMode::GuestSwiftshader);
+  gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngle);
+  gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostLavapipe);
+  gpu_mode_candidates.push_back(GpuMode::GfxstreamGuestAngleHostSwiftshader);
+  gpu_mode_candidates.push_back(GpuMode::None);
+  return gpu_mode_candidates;
+}
+
+Result<bool> GpuModeRequirementsMet(const CommonState& common,
+                                    const GpuMode gpu_mode) {
+  const auto& requirements_map = GetGpuModeRequirementsMap();
+  const auto requirements_it = requirements_map.find(gpu_mode);
+  CF_EXPECTF(requirements_it != requirements_map.end(),
+             "Failed to find requirements for mode {}", gpu_mode);
+  const auto& requirements = requirements_it->second;
+
+  VLOG(0) << "Checking requirements for --gpu_mode=" << GpuModeString(gpu_mode);
+  bool all_requirements_met = true;
+  for (size_t i = 0; i < requirements.size(); i++) {
+    const RequirementWithReason& requirement = requirements[i];
+    const bool meets_requirement = requirement.func(common);
+    VLOG(0) << "  " << (i + 1) << ". "
+            << (meets_requirement ? "PASSED: " : "FAILED: ")
+            << (meets_requirement ? requirement.success_explanation
+                                  : requirement.failure_explanation);
+    all_requirements_met &= meets_requirement;
+  }
+  return all_requirements_met;
+}
+
+Result<std::vector<GpuMode>> GetSupportedGpuModeCandidates(
+    const CommonState& common, const std::vector<GpuMode>& candidates) {
+  std::vector<GpuMode> supported_candidates;
+  supported_candidates.reserve(candidates.size());
+  for (const GpuMode candidate : candidates) {
+    if (CF_EXPECT(GpuModeRequirementsMet(common, candidate))) {
+      VLOG(0) << "  All requirements met.";
+      supported_candidates.push_back(candidate);
     } else {
-      LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
-                   "accelerated rendering support, enabling "
-                   "--gpu_mode=guest_swiftshader.";
-      return GpuMode::GuestSwiftshader;
+      VLOG(0)
+          << "  All requirements not met. Removing mode from candidate modes.";
     }
+    VLOG(0) << "";
+  }
+  return supported_candidates;
+}
+
+Result<GpuMode> SelectGpuMode(
+    const GpuMode gpu_mode_arg, VmmMode vmm, const GuestConfig& guest_config,
+    const gfxstream::proto::GraphicsAvailability& graphics_availability) {
+  const CommonState common = {
+      .vmm_mode = vmm,
+      .guest_config = guest_config,
+      .graphics_availability = graphics_availability,
+  };
+  if (gpu_mode_arg != GpuMode::Auto) {
+    // User explicitly supplied a mode. Double check the requirements but only
+    // log warnings and respect their choice:
+    if (!CF_EXPECT(GpuModeRequirementsMet(common, gpu_mode_arg))) {
+      LOG(ERROR)
+          << "--gpu_mode=" << GpuModeString(gpu_mode_arg)
+          << " was requested but the prerequisites were not detected "
+             "so the device may not function correctly. Please consider "
+             "switching to --gpu_mode=auto or --gpu_mode=guest_swiftshader.";
+    }
+    return gpu_mode_arg;
   }
 
-  if (gpu_mode == GpuMode::Gfxstream ||
-      gpu_mode == GpuMode::GfxstreamGuestAngle ||
-      gpu_mode == GpuMode::DrmVirgl) {
-    if (!ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(ERROR) << "--gpu_mode=" << GpuModeString(gpu_mode)
-                 << " was requested but the prerequisites for accelerated "
-                    "rendering were not detected so the device may not "
-                    "function correctly. Please consider switching to "
-                    "--gpu_mode=auto or --gpu_mode=guest_swiftshader.";
-    }
+  const std::vector<GpuMode> gpu_mode_candidates =
+      GetGpuModeCandidates(guest_config);
+  VLOG(0) << "Initial GPU mode candidates:";
+  for (size_t i = 0; i < gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": " << GpuModeString(gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
 
-    if (VmManagerIsQemu(vmm) && !UseQemuPrebuilt()) {
-      LOG(INFO) << "Not using QEMU prebuilt (QEMU 8+): selecting guest swiftshader";
-      return GpuMode::GuestSwiftshader;
-    }
+  const std::vector<GpuMode> supported_gpu_mode_candidates =
+      CF_EXPECT(GetSupportedGpuModeCandidates(common, gpu_mode_candidates));
+
+  if (supported_gpu_mode_candidates.empty()) {
+    LOG(ERROR) << "Unexpected empty list of candidates...";
+    return GpuMode::GuestSwiftshader;
   }
 
-  return gpu_mode;
+  VLOG(0) << "GPU mode candidates with satisfied requirements:";
+  for (size_t i = 0; i < supported_gpu_mode_candidates.size(); i++) {
+    VLOG(0) << "  " << (i + 1) << ": "
+            << GpuModeString(supported_gpu_mode_candidates[i]);
+  }
+  VLOG(0) << "";
+
+  const GpuMode selected_gpu_mode = supported_gpu_mode_candidates[0];
+  VLOG(0) << "GPU auto mode: selecting --gpu_mode=" << selected_gpu_mode;
+  return selected_gpu_mode;
 }
 
 Result<bool> SelectGpuVhostUserMode(const GpuMode gpu_mode,
@@ -535,15 +741,15 @@ Result<GpuMode> ConfigureGpuSettings(
   (void)guest_config;
   CF_EXPECT(gpu_mode_arg == GpuMode::Auto ||
             gpu_mode_arg == GpuMode::GuestSwiftshader ||
-            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode == GpuMode::None);
+            gpu_mode_arg == GpuMode::DrmVirgl || gpu_mode_arg == GpuMode::None);
   if (gpu_mode_arg == GpuMode::Auto) {
     gpu_mode_arg = GpuMode::GuestSwiftshader;
   }
   instance.set_gpu_mode(gpu_mode_arg);
   instance.set_enable_gpu_vhost_user(false);
 #else
-  const GpuMode gpu_mode =
-      SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability);
+  const GpuMode gpu_mode = CF_EXPECT(
+      SelectGpuMode(gpu_mode_arg, vmm, guest_config, graphics_availability));
   const bool enable_gpu_vhost_user =
       CF_EXPECT(SelectGpuVhostUserMode(gpu_mode, gpu_vhost_user_mode_arg, vmm));
 

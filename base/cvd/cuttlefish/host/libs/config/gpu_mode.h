@@ -35,8 +35,56 @@ enum class GpuMode {
   None,
 };
 
+inline constexpr std::string_view kGpuModeAuto = "auto";
+inline constexpr std::string_view kGpuModeCustom = "custom";
+inline constexpr std::string_view kGpuModeDrmVirgl = "drm_virgl";
+inline constexpr std::string_view kGpuModeGfxstream = "gfxstream";
+inline constexpr std::string_view kGpuModeGfxstreamGuestAngle =
+    "gfxstream_guest_angle";
+inline constexpr std::string_view kGpuModeGfxstreamGuestAngleHostLavapipe =
+    "gfxstream_guest_angle_host_lavapipe";
+inline constexpr std::string_view kGpuModeGfxstreamGuestAngleHostSwiftshader =
+    "gfxstream_guest_angle_host_swiftshader";
+inline constexpr std::string_view kGpuModeGuestSwiftshader =
+    "guest_swiftshader";
+inline constexpr std::string_view kGpuModeNone = "none";
+
+template <typename Sink>
+void AbslStringify(Sink& sink, GpuMode mode) {
+  switch (mode) {
+    case GpuMode::Auto:
+      sink.Append(kGpuModeAuto);
+      break;
+    case GpuMode::Custom:
+      sink.Append(kGpuModeCustom);
+      break;
+    case GpuMode::DrmVirgl:
+      sink.Append(kGpuModeGfxstream);
+      break;
+    case GpuMode::Gfxstream:
+      sink.Append(kGpuModeGfxstream);
+      break;
+    case GpuMode::GfxstreamGuestAngle:
+      sink.Append(kGpuModeGfxstreamGuestAngle);
+      break;
+    case GpuMode::GfxstreamGuestAngleHostLavapipe:
+      sink.Append(kGpuModeGfxstreamGuestAngleHostLavapipe);
+      break;
+    case GpuMode::GfxstreamGuestAngleHostSwiftshader:
+      sink.Append(kGpuModeGfxstreamGuestAngleHostSwiftshader);
+      break;
+    case GpuMode::GuestSwiftshader:
+      sink.Append(kGpuModeGuestSwiftshader);
+      break;
+    case GpuMode::None:
+      sink.Append(kGpuModeNone);
+      break;
+  }
+}
+
 Result<GpuMode> GpuModeFromString(std::string_view mode);
 std::string GpuModeString(GpuMode mode);
+std::string_view format_as(GpuMode mode);  // For libfmt
 
 bool IsGfxstreamMode(GpuMode mode);
 bool IsGfxstreamGuestAngleMode(GpuMode mode);

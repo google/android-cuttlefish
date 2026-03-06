@@ -19,70 +19,65 @@
 #include <string>
 #include <string_view>
 
+#include "absl/strings/str_cat.h"
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-namespace {
-
-constexpr std::string_view kAuto = "auto";
-constexpr std::string_view kCustom = "custom";
-constexpr std::string_view kDrmVirgl = "drm_virgl";
-constexpr std::string_view kGfxstream = "gfxstream";
-constexpr std::string_view kGfxstreamGuestAngle = "gfxstream_guest_angle";
-constexpr std::string_view kGfxstreamGuestAngleHostSwiftshader =
-    "gfxstream_guest_angle_host_swiftshader";
-constexpr std::string_view kGfxstreamGuestAngleHostLavapipe =
-    "gfxstream_guest_angle_host_lavapipe";
-constexpr std::string_view kGuestSwiftshader = "guest_swiftshader";
-constexpr std::string_view kNone = "none";
-
-}  // namespace
-
 Result<GpuMode> GpuModeFromString(std::string_view mode) {
-  if (mode == kAuto) {
+  if (mode == kGpuModeAuto) {
     return GpuMode::Auto;
-  } else if (mode == kCustom) {
+  } else if (mode == kGpuModeCustom) {
     return GpuMode::Custom;
-  } else if (mode == kDrmVirgl) {
+  } else if (mode == kGpuModeDrmVirgl) {
     return GpuMode::DrmVirgl;
-  } else if (mode == kGfxstream) {
+  } else if (mode == kGpuModeGfxstream) {
     return GpuMode::Gfxstream;
-  } else if (mode == kGfxstreamGuestAngle) {
+  } else if (mode == kGpuModeGfxstreamGuestAngle) {
     return GpuMode::GfxstreamGuestAngle;
-  } else if (mode == kGfxstreamGuestAngleHostSwiftshader) {
+  } else if (mode == kGpuModeGfxstreamGuestAngleHostSwiftshader) {
     return GpuMode::GfxstreamGuestAngleHostSwiftshader;
-  } else if (mode == kGfxstreamGuestAngleHostLavapipe) {
+  } else if (mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
     return GpuMode::GfxstreamGuestAngleHostLavapipe;
-  } else if (mode == kGuestSwiftshader) {
+  } else if (mode == kGpuModeGuestSwiftshader) {
     return GpuMode::GuestSwiftshader;
-  } else if (mode == kNone) {
+  } else if (mode == kGpuModeNone) {
     return GpuMode::None;
   } else {
     return CF_ERRF("Invalid gpu_mode provided: ", mode);
   }
 }
 
-std::string GpuModeString(GpuMode mode) {
+std::string GpuModeString(GpuMode mode) { return absl::StrCat(mode); }
+
+std::string_view format_as(GpuMode mode) {
   switch (mode) {
     case GpuMode::Auto:
-      return std::string(kAuto);
+      return kGpuModeAuto;
     case GpuMode::Custom:
-      return std::string(kCustom);
+      return kGpuModeCustom;
+      break;
     case GpuMode::DrmVirgl:
-      return std::string(kDrmVirgl);
+      return kGpuModeGfxstream;
+      break;
     case GpuMode::Gfxstream:
-      return std::string(kGfxstream);
+      return kGpuModeGfxstream;
+      break;
     case GpuMode::GfxstreamGuestAngle:
-      return std::string(kGfxstreamGuestAngle);
+      return kGpuModeGfxstreamGuestAngle;
+      break;
     case GpuMode::GfxstreamGuestAngleHostLavapipe:
-      return std::string(kGfxstreamGuestAngleHostLavapipe);
+      return kGpuModeGfxstreamGuestAngleHostLavapipe;
+      break;
     case GpuMode::GfxstreamGuestAngleHostSwiftshader:
-      return std::string(kGfxstreamGuestAngleHostSwiftshader);
+      return kGpuModeGfxstreamGuestAngleHostSwiftshader;
+      break;
     case GpuMode::GuestSwiftshader:
-      return std::string(kGuestSwiftshader);
+      return kGpuModeGuestSwiftshader;
+      break;
     case GpuMode::None:
-      return std::string(kNone);
+      return kGpuModeNone;
   }
 }
 

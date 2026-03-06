@@ -26,6 +26,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
 #include "fmt/format.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 #include "google/protobuf/text_format.h"
@@ -44,11 +45,32 @@
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/pretty/optional.h"
 #include "cuttlefish/pretty/string.h"
 
 namespace cuttlefish {
 namespace {
+
+const std::unordered_map<config::GpuMode, GpuMode>& GetGpuModeMap() {
+  static const auto* kGpuModeMap =
+      new std::unordered_map<config::GpuMode, GpuMode>{
+          {config::GpuMode::GPU_MODE_AUTO, GpuMode::Auto},
+          {config::GpuMode::GPU_MODE_CUSTOM, GpuMode::Custom},
+          {config::GpuMode::GPU_MODE_DRM_VIRGL, GpuMode::DrmVirgl},
+          {config::GpuMode::GPU_MODE_GFXSTREAM, GpuMode::Gfxstream},
+          {config::GpuMode::GPU_MODE_GFXSTREAM_GUEST_ANGLE,
+           GpuMode::GfxstreamGuestAngle},
+          {config::GpuMode::GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE,
+           GpuMode::GfxstreamGuestAngleHostLavapipe},
+          {config::GpuMode::GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER,
+           GpuMode::GfxstreamGuestAngleHostSwiftshader},
+          {config::GpuMode::GPU_MODE_GUEST_SWIFTSHADER,
+           GpuMode::GuestSwiftshader},
+          {config::GpuMode::GPU_MODE_NONE, GpuMode::None},
+      };
+  return *kGpuModeMap;
+}
 
 Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
                                        GuestConfig& guest_config) {
@@ -96,6 +118,13 @@ Result<void> ParseGuestConfigTextProto(const std::string& guest_config_path,
   if (graphics_config.has_prefer_drm_virgl_when_supported()) {
     guest_config.prefer_drm_virgl_when_supported =
         graphics_config.prefer_drm_virgl_when_supported();
+  }
+  const auto& gpu_mode_map = GetGpuModeMap();
+  for (int i = 0; i < graphics_config.gpu_mode_candidates_size(); i++) {
+    config::GpuMode candidate = graphics_config.gpu_mode_candidates(i);
+    const auto it = gpu_mode_map.find(candidate);
+    CF_EXPECT(it != gpu_mode_map.end());
+    guest_config.gpu_mode_candidates.push_back(it->second);
   }
 
   const auto& input_config = proto_config.input();
@@ -176,6 +205,18 @@ Result<void> ParseGuestConfigTxt(const std::string& guest_config_path,
 
   guest_config.gfxstream_gl_program_binary_link_status_supported =
       MapHasValue(info, "gfxstream_gl_program_binary_link_status", "supported");
+
+  if (const auto res = MapGetResult(info, "gpu_mode_candidates"); res.ok()) {
+    const std::string& gpu_mode_candidates_str = *res;
+    for (const std::string_view candidate_str :
+         absl::StrSplit(gpu_mode_candidates_str, ",")) {
+      const GpuMode candidate =
+          CF_EXPECTF(GpuModeFromString(candidate_str),
+                     "Failed to parse GPU modes from `gpu_mode_candidates`: {}",
+                     gpu_mode_candidates_str);
+      guest_config.gpu_mode_candidates.push_back(candidate);
+    }
+  }
 
   guest_config.mouse_supported = MapHasValue(info, "mouse", "supported");
 
