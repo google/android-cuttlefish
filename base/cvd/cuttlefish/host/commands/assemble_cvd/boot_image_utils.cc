@@ -121,17 +121,15 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
   return true;
 }
 
-void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
-                         const std::string& original_ramdisk_path,
-                         const std::string& new_ramdisk_path,
-                         const std::string& build_dir) {
-  int success = 0;
+Result<void> RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
+                                 const std::string& original_ramdisk_path,
+                                 const std::string& new_ramdisk_path,
+                                 const std::string& build_dir) {
   const std::string ramdisk_stage_dir = build_dir + "/" + TMP_RD_DIR;
   UnpackRamdisk(original_ramdisk_path, ramdisk_stage_dir);
 
-  success = Execute({"rm", "-rf", ramdisk_stage_dir + "/lib/modules"});
-  CHECK(success == 0) << "Could not rmdir \"lib/modules\" in TMP_RD_DIR. "
-                      << "Exited with status " << success;
+  int success = Execute({"rm", "-rf", ramdisk_stage_dir + "/lib/modules"});
+  CF_EXPECT_EQ(success, 0, "Could not rmdir 'lib/modules' in TMP_RD_DIR. ");
 
   const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
 
@@ -142,6 +140,8 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
   std::ifstream ramdisk_a(stripped_ramdisk_path, std::ios_base::binary);
   std::ifstream ramdisk_b(kernel_modules_ramdisk_path, std::ios_base::binary);
   final_rd << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
+
+  return {};
 }
 
 bool IsCpioArchive(const std::string& path) {
@@ -316,9 +316,9 @@ Result<void> RepackVendorBootImage(
   if (!new_ramdisk.empty()) {
     ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
     if (!FileExists(ramdisk_path)) {
-      RepackVendorRamdisk(new_ramdisk,
-                          unpack_dir + "/" + kConcatenatedVendorRamdisk,
-                          ramdisk_path, unpack_dir);
+      CF_EXPECT(RepackVendorRamdisk(
+          new_ramdisk, unpack_dir + "/" + kConcatenatedVendorRamdisk,
+          ramdisk_path, unpack_dir));
     }
   } else {
     ramdisk_path = unpack_dir + "/" + kConcatenatedVendorRamdisk;
@@ -399,9 +399,9 @@ Result<void> RepackGem5BootImage(
   std::string new_ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
   // Test to make sure new ramdisk hasn't already been repacked if input ramdisk is provided
   if (FileExists(input_ramdisk_path) && !FileExists(new_ramdisk_path)) {
-    RepackVendorRamdisk(input_ramdisk_path,
-                        unpack_dir + "/" + kConcatenatedVendorRamdisk,
-                        new_ramdisk_path, unpack_dir);
+    CF_EXPECT(RepackVendorRamdisk(input_ramdisk_path,
+                                  unpack_dir + "/" + kConcatenatedVendorRamdisk,
+                                  new_ramdisk_path, unpack_dir));
   }
   std::ifstream vendor_boot_ramdisk(FileExists(new_ramdisk_path) ? new_ramdisk_path : unpack_dir +
                                     "/concatenated_vendor_ramdisk",
