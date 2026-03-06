@@ -25,6 +25,14 @@ namespace cuttlefish {
 
 Result<void> ReadExact(Reader&, char* buf, size_t size);
 
+template <typename T>
+Result<T> ReadExactBinary(ReaderSeeker& reader) {
+  T data;
+  char* const data_char = reinterpret_cast<char*>(&data);
+  CF_EXPECT(ReadExact(reader, data_char, sizeof(data)));
+  return data;
+}
+
 Result<void> PReadExact(ReaderSeeker&, char* buf, size_t size, uint64_t offset);
 
 template <typename T>
