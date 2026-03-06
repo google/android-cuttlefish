@@ -529,7 +529,7 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
                             system_modules_dir + "/modules.dep"));
   CF_EXPECT(WriteLinesToFile(system_dlkm_modules,
                              system_modules_dir + "/modules.load"));
-  PackRamdisk(ramdisk_stage_dir, ramdisk_path);
+  CF_EXPECT(PackRamdisk(ramdisk_stage_dir, ramdisk_path));
   return {};
 }
 

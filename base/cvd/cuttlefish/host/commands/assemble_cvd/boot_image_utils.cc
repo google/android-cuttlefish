@@ -133,7 +133,7 @@ Result<void> RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
 
   const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
 
-  PackRamdisk(ramdisk_stage_dir, stripped_ramdisk_path);
+  CF_EXPECT(PackRamdisk(ramdisk_stage_dir, stripped_ramdisk_path));
 
   // Concatenates the stripped ramdisk and input ramdisk and places the result at new_ramdisk_path
   std::ofstream final_rd(new_ramdisk_path, std::ios_base::binary | std::ios_base::trunc);
@@ -156,10 +156,11 @@ bool IsCpioArchive(const std::string& path) {
 
 }  // namespace
 
-void PackRamdisk(const std::string& ramdisk_stage_dir,
-                 const std::string& output_ramdisk) {
+Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
+                         const std::string& output_ramdisk) {
   RunMkBootFs(ramdisk_stage_dir, output_ramdisk + kCpioExt);
   RunLz4(output_ramdisk + kCpioExt, output_ramdisk);
+  return {};
 }
 
 void UnpackRamdisk(const std::string& original_ramdisk_path,
