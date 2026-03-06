@@ -80,3 +80,20 @@ cf_cc_library(
         "@mkbootimg//:bootimg_header",
     ],
 )
+
+cf_cc_test(
+    name = "vendor_boot_image_test",
+    srcs = ["vendor_boot_image_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image",
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image_builder",
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
