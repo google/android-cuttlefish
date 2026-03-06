@@ -17,30 +17,24 @@
 
 #include <stdint.h>
 
+#include <string>
+#include <string_view>
+
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> ReadExact(Reader&, char* buf, size_t size);
+class AvbParser {
+ public:
+  static Result<AvbParser> Parse(ReaderSeeker&);
 
-template <typename T>
-Result<T> ReadExactBinary(ReaderSeeker& reader) {
-  T data;
-  char* const data_char = reinterpret_cast<char*>(&data);
-  CF_EXPECT(ReadExact(reader, data_char, sizeof(data)));
-  return data;
-}
+  Result<std::string> LookupProperty(std::string_view key) const;
 
-Result<void> PReadExact(ReaderSeeker&, char* buf, size_t size, uint64_t offset);
+ private:
+  AvbParser(std::vector<uint8_t> vbmeta);
 
-template <typename T>
-Result<T> PReadExactBinary(ReaderSeeker& reader, uint64_t offset) {
-  T data;
-  char* const data_char = reinterpret_cast<char*>(&data);
-  CF_EXPECT(PReadExact(reader, data_char, sizeof(data), offset));
-  return data;
-}
+  std::vector<uint8_t> vbmeta_;
+};
 
 }  // namespace cuttlefish

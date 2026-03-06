@@ -16,8 +16,20 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
-        "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "parser",
+    srcs = ["parser.cc"],
+    hdrs = ["parser.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@avb//:libavb",
     ],
 )
