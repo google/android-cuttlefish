@@ -21,3 +21,16 @@ cf_cc_library(
         "//cuttlefish/result",
     ],
 )
+
+cf_cc_library(
+    name = "parser",
+    srcs = ["parser.cc"],
+    hdrs = ["parser.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@avb//:libavb",
+    ],
+)
