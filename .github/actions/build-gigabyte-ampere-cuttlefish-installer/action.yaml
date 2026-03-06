@@ -14,7 +14,7 @@ runs:
       apt-get install -y fdisk
   - name: Build the iso image
     env:
-      DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/bookworm/main/installer-arm64/current/images/netboot/mini.iso"
+      DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/trixie/main/installer-arm64/current/images/netboot/mini.iso"
       CI_PROJECT_NAME: ${{ github.event.repository.name }}
       CI_PIPELINE_ID: ${{ github.run_id }}
     shell: bash
