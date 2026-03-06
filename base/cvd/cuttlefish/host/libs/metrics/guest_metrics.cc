@@ -25,11 +25,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-namespace {
-
-constexpr char kAvbtool[] = "avbtool";
-
-}  // namespace
 
 Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
   std::vector<GuestMetrics> result;
@@ -38,15 +33,11 @@ Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
   for (const GuestInfo& guest : guests.guest_infos) {
     const std::string boot_image_path =
         fmt::format("{}/boot.img", guest.product_out);
-    const std::string avbtool_path =
-        fmt::format("{}/bin/{}", guests.host_artifacts, kAvbtool);
     result.emplace_back(GuestMetrics{
         .instance_id = guest.instance_id,
         .os_version = CF_EXPECTF(
-            ReadAndroidVersionFromBootImage(boot_image_path, avbtool_path),
-            "Failed to read guest os version from \"{}\" using `{}` at "
-            "\"{}\".",
-            boot_image_path, kAvbtool, avbtool_path),
+            ReadAndroidVersionFromBootImage(boot_image_path),
+            "Failed to read guest os version from '{}'.", boot_image_path),
     });
   }
   return result;

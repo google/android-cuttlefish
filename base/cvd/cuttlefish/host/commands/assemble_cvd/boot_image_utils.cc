@@ -37,6 +37,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image_builder.h"
 #include "cuttlefish/host/libs/avb/avb.h"
+#include "cuttlefish/host/libs/avb/parser.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/io/chroot.h"
@@ -89,18 +90,6 @@ Result<void> RunLz4(const std::string& input, const std::string& output) {
       success, 0,
       "`lz4` failed to transform '" << input << "' to '" << output << "'");
   return {};
-}
-
-std::string ExtractValue(const std::string& dictionary, const std::string& key) {
-  size_t index = dictionary.find(key);
-  if (index != std::string::npos) {
-    size_t end_index = dictionary.find('\n', index + key.length());
-    if (end_index != std::string::npos) {
-      return dictionary.substr(index + key.length(),
-          end_index - index - key.length());
-    }
-  }
-  return "";
 }
 
 // Though it is just as fast to overwrite the existing boot images with the newly generated ones,
@@ -477,37 +466,28 @@ Result<void> RepackGem5BootImage(
   return {};
 }
 
-// TODO(290586882) switch this function to rely on avb footers instead of
-// the os version field in the boot image header.
-// https://source.android.com/docs/core/architecture/bootloader/boot-image-header
 Result<std::string> ReadAndroidVersionFromBootImage(
-    const std::string& boot_image_path,
-    const std::optional<std::string>& avbtool_path) {
-  Avb avbtool;
-  if (avbtool_path) {
-    avbtool = Avb(*avbtool_path);
-  }
-  std::string boot_params =
-      CF_EXPECTF(avbtool.InfoImage(boot_image_path),
-                 "Failed to get avb boot data from '{}'", boot_image_path);
+    const std::string& boot_image_path) {
+  NativeFilesystem fs;
+  std::unique_ptr<ReaderSeeker> boot_image =
+      CF_EXPECT(fs.OpenReadOnly(boot_image_path));
+  CF_EXPECT(boot_image.get());
 
-  std::string os_version =
-      ExtractValue(boot_params, "Prop: com.android.build.boot.os_version -> ");
+  AvbParser avb_parser = CF_EXPECT(AvbParser::Parse(*boot_image));
+
+  Result<std::string> os_version =
+      avb_parser.LookupProperty("com.android.build.boot.os_version");
   // if the OS version is "None", or the prop does not exist, it wasn't set
   // when the boot image was made.
-  if (os_version == "None" || os_version.empty()) {
+  if (!os_version.ok() || *os_version == "None") {
     LOG(INFO) << "Could not extract os version from " << boot_image_path
               << ". Defaulting to 0.0.0.";
     return "0.0.0";
   }
 
-  // os_version returned above is surrounded by single quotes. Removing the
-  // single quotes.
-  os_version.erase(remove(os_version.begin(), os_version.end(), '\''),
-                   os_version.end());
-
   std::regex re("[1-9][0-9]*([.][0-9]+)*");
-  CF_EXPECT(std::regex_match(os_version, re), "Version string is not a valid version \"" + os_version + "\"");
+  CF_EXPECTF(std::regex_match(*os_version, re),
+             "Version string is not a valid version: '{}'", *os_version);
   return os_version;
 }
 } // namespace cuttlefish
