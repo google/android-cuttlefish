@@ -18,6 +18,18 @@ edition = "2023";
 
 package cuttlefish.config;
 
+enum GpuMode {
+  AUTO = 0;
+  CUSTOM = 1;
+  DRM_VIRGL = 2;
+  GFXSTREAM = 3;
+  GFXSTREAM_GUEST_ANGLE = 4;
+  GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE = 5;
+  GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER = 6;
+  GUEST_SWIFTSHADER = 7;
+  NONE = 8;
+}
+
 message Graphics {
   // Whether the guest supports the Gfxstream graphics driver.
   bool gfxstream_supported = 1;
@@ -32,6 +44,9 @@ message Graphics {
   // If true, the system will prefer using the drm_virgl display mode when
   // available.
   bool prefer_drm_virgl_when_supported = 4;
+
+  // The list of gpu modes supported by the guest in order of preference.
+  repeated GpuMode gpu_mode_candidates = 5;
 }
 
 message Audio {
