@@ -17,6 +17,8 @@ runs:
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
             base/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
+            container/debian/changelog
+          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
             frontend/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
             cuttlefish-integration-gigabyte-arm64/debian/changelog
@@ -27,6 +29,8 @@ runs:
           SUFFIX="~git${INPUTS_YYYYMMDDHHMM}.${SHORT_SHA}"
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             base/debian/changelog
+          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
+            container/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             frontend/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
