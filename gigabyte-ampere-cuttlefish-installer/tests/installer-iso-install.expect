@@ -178,12 +178,14 @@ expect {
     timeout { exit 1 }
 }
 
-set timeout 120
-
 expect {
-    "Password:" { sleep 1; send -- "cuttlefish\r" }
+    "login:" { sleep 1; send -- "vsoc-01\r"; exp_continue }
+    "Password:" { sleep 1; send -- "cuttlefish\r"; exp_continue }
+    -re "(\\$) $" { send -- "\r" }
     timeout { exit 1 }
 }
+
+set timeout 120
 
 expect {
     -re "(\\$) $" { send -- "echo $content1 > $filename1 ; sync\r" }
