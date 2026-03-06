@@ -530,6 +530,7 @@ class CuttlefishConfig {
     int modem_simulator_sim_type() const;
 
     GpuMode gpu_mode() const;
+    std::vector<GpuMode> gpu_mode_candidates() const;
     std::string gpu_angle_feature_overrides_enabled() const;
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
@@ -769,6 +770,7 @@ class CuttlefishConfig {
     void set_modem_simulator_sim_type(int sim_type);
 
     void set_gpu_mode(GpuMode mode);
+    void set_gpu_mode_candidates(const std::vector<GpuMode>& candidates);
     void set_gpu_angle_feature_overrides_enabled(const std::string& overrides);
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
