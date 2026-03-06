@@ -53,8 +53,8 @@ Result<std::string> ReadAndroidVersionFromBootImage(
     const std::string& boot_image_path,
     const std::optional<std::string>& avbtool_path = std::nullopt);
 
-void UnpackRamdisk(const std::string& original_ramdisk_path,
-                   const std::string& ramdisk_stage_dir);
+Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
+                           const std::string& ramdisk_stage_dir);
 Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
                          const std::string& output_ramdisk);
 }

@@ -435,7 +435,7 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
   CF_EXPECT(EnsureDirectoryExists(vendor_modules_dir));
   CF_EXPECT(EnsureDirectoryExists(system_modules_dir));
 
-  UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
+  CF_EXPECT(UnpackRamdisk(ramdisk_path, ramdisk_stage_dir));
 
   std::string module_load_file =
       CF_EXPECT(FindFile(ramdisk_stage_dir, "modules.load"),

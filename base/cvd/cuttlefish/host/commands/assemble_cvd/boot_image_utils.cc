@@ -132,7 +132,7 @@ Result<void> RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                                  const std::string& new_ramdisk_path,
                                  const std::string& build_dir) {
   const std::string ramdisk_stage_dir = build_dir + "/" + TMP_RD_DIR;
-  UnpackRamdisk(original_ramdisk_path, ramdisk_stage_dir);
+  CF_EXPECT(UnpackRamdisk(original_ramdisk_path, ramdisk_stage_dir));
 
   int success = Execute({"rm", "-rf", ramdisk_stage_dir + "/lib/modules"});
   CF_EXPECT_EQ(success, 0, "Could not rmdir 'lib/modules' in TMP_RD_DIR. ");
@@ -169,17 +169,18 @@ Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
   return {};
 }
 
-void UnpackRamdisk(const std::string& original_ramdisk_path,
-                   const std::string& ramdisk_stage_dir) {
+Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
+                           const std::string& ramdisk_stage_dir) {
   int success = 0;
   if (IsCpioArchive(original_ramdisk_path)) {
-    CHECK(Copy(original_ramdisk_path, original_ramdisk_path + kCpioExt))
-        << "failed to copy " << original_ramdisk_path << " to "
-        << original_ramdisk_path + kCpioExt;
+    CF_EXPECTF(Copy(original_ramdisk_path, original_ramdisk_path + kCpioExt),
+               "Failed to copy '{}' to '{}'", original_ramdisk_path,
+               original_ramdisk_path + kCpioExt);
   } else {
     SharedFD output_fd = SharedFD::Open(original_ramdisk_path + kCpioExt,
                                         O_CREAT | O_RDWR | O_TRUNC, 0644);
-    CHECK(output_fd->IsOpen()) << output_fd->StrError();
+    CF_EXPECTF(output_fd->IsOpen(), "Failed to open '{}': '{}'",
+               original_ramdisk_path + kCpioExt, output_fd->StrError());
 
     success = Command(HostBinaryPath("lz4"))
                   .AddParameter("-c")
@@ -189,11 +190,11 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                   .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
                   .Start()
                   .Wait();
-    CHECK_EQ(success, 0) << "Unable to run lz4 on file '"
-                         << original_ramdisk_path << "'.";
+    CF_EXPECT_EQ(
+        success, 0,
+        "Unable to run lz4 on file '" << original_ramdisk_path << "'.");
   }
-  const auto ret = EnsureDirectoryExists(ramdisk_stage_dir);
-  CHECK(ret.ok()) << ret.error();
+  CF_EXPECT(EnsureDirectoryExists(ramdisk_stage_dir));
 
   SharedFD input = SharedFD::Open(original_ramdisk_path + kCpioExt, O_RDONLY);
   int cpio_status;
@@ -206,6 +207,7 @@ void UnpackRamdisk(const std::string& original_ramdisk_path,
                       .Start()
                       .Wait();
   } while (cpio_status == 0);
+  return {};
 }
 
 Result<void> UnpackBootImage(const std::string& boot_image_path,
