@@ -26,6 +26,14 @@ namespace cuttlefish {
 
 class VendorBootImageBuilder {
  public:
+  // https://cs.android.com/android/platform/superproject/main/+/main:system/tools/mkbootimg/mkbootimg.py;l=517;drc=053c389f03f3c14f86b808608ccb5669ff8b887a
+  static constexpr uint32_t kDefaultPageSize = 2048;
+  static constexpr uint32_t kDefaultBaseAddress = 0x10000000;
+  static constexpr uint32_t kDefaultKernelOffset = 0x8000;
+  static constexpr uint32_t kDefaultRamdiskOffset = 0x1000000;
+  static constexpr uint32_t kDefaultTagsOffset = 0x100;
+  static constexpr uint64_t kDefaultDtbOffset = 0x01f00000;
+
   VendorBootImageBuilder& PageSize(uint32_t) &;
   VendorBootImageBuilder PageSize(uint32_t) &&;
 
@@ -59,23 +67,16 @@ class VendorBootImageBuilder {
   Result<ConcatReaderSeeker> BuildV4();
 
  private:
-  // https://cs.android.com/android/platform/superproject/main/+/main:system/tools/mkbootimg/mkbootimg.py;l=517;drc=053c389f03f3c14f86b808608ccb5669ff8b887a
-  static constexpr uint32_t kBaseAddress = 0x10000000;
-  static constexpr uint32_t kKernelOffset = 0x8000;
-  static constexpr uint32_t kRamdiskOffset = 0x1000000;
-  static constexpr uint32_t kTagsOffset = 0x100;
-  static constexpr uint64_t kDtbOffset = 0x01f00000;
-
   // https://cs.android.com/android/platform/superproject/main/+/main:system/tools/mkbootimg/mkbootimg.py;l=536;drc=053c389f03f3c14f86b808608ccb5669ff8b887a
-  uint32_t page_size_ = 2048;
-  uint32_t kernel_addr_ = kBaseAddress + kKernelOffset;
-  uint32_t ramdisk_addr_ = kBaseAddress + kRamdiskOffset;
+  uint32_t page_size_ = kDefaultPageSize;
+  uint32_t kernel_addr_ = kDefaultBaseAddress + kDefaultKernelOffset;
+  uint32_t ramdisk_addr_ = kDefaultBaseAddress + kDefaultRamdiskOffset;
   std::unique_ptr<ReaderSeeker> vendor_ramdisk_;
   std::string kernel_command_line_;
-  uint32_t tags_addr_ = kBaseAddress + kTagsOffset;
+  uint32_t tags_addr_ = kDefaultBaseAddress + kDefaultTagsOffset;
   std::string name_;
   std::unique_ptr<ReaderSeeker> dtb_;
-  uint64_t dtb_addr_ = kBaseAddress + kDtbOffset;
+  uint64_t dtb_addr_ = kDefaultBaseAddress + kDefaultDtbOffset;
   std::unique_ptr<ReaderSeeker> bootconfig_;
 };
 
