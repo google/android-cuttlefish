@@ -71,9 +71,10 @@ Result<void> RunMkBootFs(const std::string& input_dir,
   return {};
 }
 
-void RunLz4(const std::string& input, const std::string& output) {
+Result<void> RunLz4(const std::string& input, const std::string& output) {
   SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
-  CHECK(output_fd->IsOpen()) << output_fd->StrError();
+  CF_EXPECTF(output_fd->IsOpen(), "Failed to open '{}': '{}'", output,
+             output_fd->StrError());
   int success = Command(HostBinaryPath("lz4"))
                     .AddParameter("-c")
                     .AddParameter("-l")
@@ -83,8 +84,10 @@ void RunLz4(const std::string& input, const std::string& output) {
                     .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
                     .Start()
                     .Wait();
-  CHECK_EQ(success, 0) << "`lz4` failed to transform '" << input << "' to '"
-                       << output << "'";
+  CF_EXPECT_EQ(
+      success, 0,
+      "`lz4` failed to transform '" << input << "' to '" << output << "'");
+  return {};
 }
 
 std::string ExtractValue(const std::string& dictionary, const std::string& key) {
@@ -162,7 +165,7 @@ bool IsCpioArchive(const std::string& path) {
 Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
                          const std::string& output_ramdisk) {
   CF_EXPECT(RunMkBootFs(ramdisk_stage_dir, output_ramdisk + kCpioExt));
-  RunLz4(output_ramdisk + kCpioExt, output_ramdisk);
+  CF_EXPECT(RunLz4(output_ramdisk + kCpioExt, output_ramdisk));
   return {};
 }
 
