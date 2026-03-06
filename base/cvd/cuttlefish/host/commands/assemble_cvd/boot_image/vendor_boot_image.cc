@@ -70,10 +70,11 @@ std::optional<ReadWindowView> VendorBootImage::Bootconfig() const {
   if (!v4) {
     return std::nullopt;
   }
+  // https://android.googlesource.com/platform/system/tools/mkbootimg/+/refs/heads/android16-qpr2-release/include/bootimg/bootimg.h#359
   const uint32_t page_size = v4->page_size;
-  const uint32_t dtb_pages = (v4->dtb_size + page_size) / page_size;
+  const uint32_t dtb_pages = (v4->dtb_size + page_size - 1) / page_size;
   const uint32_t table_pages =
-      (v4->vendor_ramdisk_table_size + page_size) / page_size;
+      (v4->vendor_ramdisk_table_size + page_size - 1) / page_size;
   const uint64_t bootconfig_begin =
       DtbBegin() + (dtb_pages + table_pages) * page_size;
   return ReadWindowView(*reader_, bootconfig_begin, v4->bootconfig_size);
