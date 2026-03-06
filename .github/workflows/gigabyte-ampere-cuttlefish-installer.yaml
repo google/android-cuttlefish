@@ -12,7 +12,7 @@ jobs:
   build-installer-iso-job:
     runs-on: ubuntu-22.04
     container:
-      image: debian@sha256:9258a75a7e4323c9e5562b361effc84ee747920116d8adfc98a465a5cdc9150e # debian:bookworm-20250407 (amd64)
+      image: debian@sha256:13f29b6806e531c3ff3b565bb6eed73f2132506c8c9d41bb996065ca20fb27f2 # debian:trixie-20260223 (amd64)
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
