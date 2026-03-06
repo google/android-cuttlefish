@@ -31,12 +31,24 @@ class VendorBootImage {
  public:
   static Result<VendorBootImage> Read(std::unique_ptr<ReaderSeeker>);
 
-  std::string KernelCommandLine() const;
+  uint32_t PageSize() const;
+
+  uint32_t KernelAddr() const;
+
+  uint32_t RamdiskAddr() const;
 
   // All the vendor ramdisks concatenated together
   ReadWindowView VendorRamdisk() const;
 
+  std::string KernelCommandLine() const;
+
+  uint32_t TagsAddr() const;
+
+  std::string Name() const;
+
   ReadWindowView Dtb() const;
+
+  uint64_t DtbAddr() const;
 
   std::optional<ReadWindowView> Bootconfig() const;
 

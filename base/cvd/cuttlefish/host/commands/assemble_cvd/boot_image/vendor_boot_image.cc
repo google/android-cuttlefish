@@ -49,9 +49,11 @@ static_assert(sizeof(vendor_boot_img_hdr_v4) >= sizeof(vendor_boot_img_hdr_v3));
   }
 }
 
-std::string VendorBootImage::KernelCommandLine() const {
-  return reinterpret_cast<const char*>(AsV3().cmdline);
-}
+uint32_t VendorBootImage::PageSize() const { return AsV3().page_size; }
+
+uint32_t VendorBootImage::KernelAddr() const { return AsV3().kernel_addr; }
+
+uint32_t VendorBootImage::RamdiskAddr() const { return AsV3().ramdisk_addr; }
 
 ReadWindowView VendorBootImage::VendorRamdisk() const {
   const uint64_t begin = VendorRamdiskBegin();
@@ -59,11 +61,23 @@ ReadWindowView VendorBootImage::VendorRamdisk() const {
   return ReadWindowView(*reader_, begin, size);
 }
 
+std::string VendorBootImage::KernelCommandLine() const {
+  return reinterpret_cast<const char*>(AsV3().cmdline);
+}
+
+uint32_t VendorBootImage::TagsAddr() const { return AsV3().tags_addr; }
+
+std::string VendorBootImage::Name() const {
+  return reinterpret_cast<const char*>(AsV3().name);
+}
+
 ReadWindowView VendorBootImage::Dtb() const {
   const uint64_t begin = DtbBegin();
   const uint32_t size = AsV3().dtb_size;
   return ReadWindowView(*reader_, begin, size);
 }
+
+uint64_t VendorBootImage::DtbAddr() const { return AsV3().dtb_addr; }
 
 std::optional<ReadWindowView> VendorBootImage::Bootconfig() const {
   auto v4 = std::get_if<vendor_boot_img_hdr_v4>(&header_);
