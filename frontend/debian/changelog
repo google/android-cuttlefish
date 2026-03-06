@@ -1,8 +1,9 @@
-cuttlefish-frontend (1.46.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.46.0) unstable; urgency=medium
 
-  * 
+  * Re-apply reverted commits by @cjreynol in https://github.com/google/android-cuttlefish/pull/2202
+  * Move podcvd and libcfcontainer from frontend/src/ to container/src/ by @0405ysj in https://github.com/google/android-cuttlefish/pull/2212
 
- -- Chad Reynolds <chadreynolds@google.com>  Fri, 27 Feb 2026 15:19:01 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 13:35:38 -0800
 
 cuttlefish-frontend (1.45.0) unstable; urgency=medium
 

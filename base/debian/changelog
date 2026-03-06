@@ -1,8 +1,28 @@
-cuttlefish-common (1.46.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.46.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.46.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2201
+  * Replace e2e cvd runner scripts with shared go library by @jmacnak in https://github.com/google/android-cuttlefish/pull/2170
+  * Replace non-vendor-boot unpack_bootimg.py invocations with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2203
+  * Updated debian host image to trixie by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2204
+  * Replace vendor-boot unpack_bootimg.py invocations with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2207
+  * Move DisjointRangeSet and LazilyLoadedFile to //cuttlefish/io by @Databean in https://github.com/google/android-cuttlefish/pull/2208
+  * Make `cvd login` display help text on invalid invocations by @cjreynol in https://github.com/google/android-cuttlefish/pull/2211
+  * Github workflow deploys cuttlefish-metrics to Artifact Registry by @0405ysj in https://github.com/google/android-cuttlefish/pull/2209
+  * Introduce cuttlefish-podcvd debian package by @0405ysj in https://github.com/google/android-cuttlefish/pull/2198
+  * Document how to download arm64 on-premise server image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2210
+  * Describe playbook guidance on container/src/podcvd/README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/2214
+  * Allow omitting connection to light server by @jemoreira in https://github.com/google/android-cuttlefish/pull/2215
+  * Fix some go linter findings by @jmacnak in https://github.com/google/android-cuttlefish/pull/2219
+  * Replace mkbootimg calls for boot images with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2217
+  * Check device availability on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2216
+  * Don't read the vendor boot kernel command line from `vendor_boot_params` by @Databean in https://github.com/google/android-cuttlefish/pull/2218
+  * Port virtio media simple device as a vhost user media device. by @ser-io in https://github.com/google/android-cuttlefish/pull/1895
+  * Return `Result`s from some more functions in boot_image_utils by @Databean in https://github.com/google/android-cuttlefish/pull/2224
+  * Add a test for BootImage and BootImageBuilder by @Databean in https://github.com/google/android-cuttlefish/pull/2221
+  * Deploy cuttlefish-podcvd into unstable/nightly channel by @0405ysj in https://github.com/google/android-cuttlefish/pull/2223
+  * Implement a vendor boot image builder in C++ by @Databean in https://github.com/google/android-cuttlefish/pull/2225
 
- -- Chad Reynolds <chadreynolds@google.com>  Fri, 27 Feb 2026 15:18:42 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 13:33:27 -0800
 
 cuttlefish-common (1.45.0) unstable; urgency=medium
 
