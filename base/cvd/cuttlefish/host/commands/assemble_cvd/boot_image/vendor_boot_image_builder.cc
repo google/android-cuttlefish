@@ -24,11 +24,18 @@
 #include "bootimg.h"
 
 #include "cuttlefish/io/concat.h"
+#include "cuttlefish/io/in_memory.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/length.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+
+static std::unique_ptr<ReaderSeeker> PagePadding(uint64_t size,
+                                                 uint64_t page_size) {
+  uint64_t padding = (page_size - (size % page_size)) % page_size;
+  return InMemoryIo(std::vector<char>(padding));
+}
 
 VendorBootImageBuilder& VendorBootImageBuilder::PageSize(uint32_t page_size) & {
   page_size_ = page_size;
@@ -123,7 +130,48 @@ VendorBootImageBuilder VendorBootImageBuilder::Bootconfig(
 }
 
 Result<ConcatReaderSeeker> VendorBootImageBuilder::BuildV4() {
-  return CF_ERR("unimplemented");
+  vendor_boot_img_hdr_v4 header;
+  memcpy(header.magic, VENDOR_BOOT_MAGIC, sizeof(header.magic));
+  header.header_version = 4;
+  header.page_size = page_size_;
+  header.kernel_addr = kernel_addr_;
+  header.ramdisk_addr = ramdisk_addr_;
+  header.vendor_ramdisk_size =
+      vendor_ramdisk_ ? CF_EXPECT(Length(*vendor_ramdisk_)) : 0;
+  CF_EXPECT_LT(kernel_command_line_.size(), sizeof(header.cmdline));
+  snprintf(reinterpret_cast<char*>(header.cmdline), sizeof(header.cmdline),
+           "%s", kernel_command_line_.c_str());
+  header.tags_addr = tags_addr_;
+  CF_EXPECT_LT(name_.size(), sizeof(header.name));
+  snprintf(reinterpret_cast<char*>(header.name), sizeof(header.name), "%s",
+           name_.c_str());
+  header.header_size = sizeof(header);
+  header.dtb_size = dtb_ ? CF_EXPECT(Length(*dtb_)) : 0;
+  header.dtb_addr = dtb_addr_;
+  header.vendor_ramdisk_table_size = 0;
+  header.vendor_ramdisk_table_entry_num = 0;
+  header.vendor_ramdisk_table_entry_size =
+      sizeof(vendor_ramdisk_table_entry_v4);
+  header.bootconfig_size = bootconfig_ ? CF_EXPECT(Length(*bootconfig_)) : 0;
+
+  std::vector<std::unique_ptr<ReaderSeeker>> members;
+  members.emplace_back(InMemoryIo(
+      std::string_view(reinterpret_cast<char*>(&header), sizeof(header))));
+  members.emplace_back(PagePadding(sizeof(header), page_size_));
+  if (vendor_ramdisk_) {
+    members.emplace_back(std::move(vendor_ramdisk_));
+    members.emplace_back(PagePadding(header.vendor_ramdisk_size, page_size_));
+  }
+  if (dtb_) {
+    members.emplace_back(std::move(dtb_));
+    members.emplace_back(PagePadding(header.dtb_size, page_size_));
+  }
+  // No vendor ramdisk table
+  if (bootconfig_) {
+    members.emplace_back(std::move(bootconfig_));
+    members.emplace_back(PagePadding(header.bootconfig_size, page_size_));
+  }
+  return CF_EXPECT(ConcatReaderSeeker::Create(std::move(members)));
 }
 
 }  // namespace cuttlefish
