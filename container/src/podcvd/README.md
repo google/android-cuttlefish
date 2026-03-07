@@ -9,40 +9,40 @@ interfere host environment of each other.
 
 ## User setup guide
 
-### Prerequisites
-
-<!-- TODO(seungjaeyoo): Hide this from users and deal with from deb package -->
-Before installing `cuttlefish-podcvd` debian package, some precedures are
-required in advance.
-```bash
-# UID/GID setup
-sudo apt install podman -y
-sudo usermod --add-subuids 600000-665535 --add-subgids 600000-665535 $(whoami)
-podman system migrate
-
-# Device permission setup, needs for every boot
-sudo setfacl -m u:$(whoami):rw /dev/kvm
-sudo setfacl -m u:$(whoami):rw /dev/vhost-net
-sudo setfacl -m u:$(whoami):rw /dev/vhost-vsock
+<!-- TODO(seungjaeyoo): Modify repository after we have deb at stable/unstable -->
+Execute following commands to register apt repository containing
+`cuttlefish-podcvd` package on your machine.
+```
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg -o /etc/apt/keyrings/android-cuttlefish-artifacts.asc
+sudo chmod a+r /etc/apt/keyrings/android-cuttlefish-artifacts.asc
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/android-cuttlefish-artifacts.asc] \
+  https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts android-cuttlefish-nightly main" | \
+  sudo tee /etc/apt/sources.list.d/android-cuttlefish-artifacts.list > /dev/null
+sudo apt update
 ```
 
-### Build cuttlefish-podcvd debian package
-
-<!-- TODO(seungjaeyoo): Move this into dev guide after it's deployed to AR -->
-[tools/buildutils/cw/README.md#container](/tools/buildutils/cw/README.md#container)
-describes how to build `cuttlefish-podcvd` debian package.
-
-### Install cuttlefish-podcvd debian package
-
-<!-- TODO(seungjaeyoo): Modify command after it's deployed to AR -->
-Execute `sudo apt install ./cuttlefish-podcvd_*.deb` to install the debian
-package.
+Execute following commands to install `cuttlefish-podcvd` and setup your
+machine.
+```
+sudo apt install cuttlefish-podcvd
+/usr/lib/cuttlefish-common/bin/cuttlefish-podcvd-prerequisites.sh
+```
 
 Now it's available to execute `podcvd help` or `podcvd create` as you could
 execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
 ## Development guide
 
-### Manually build podcvd
+### Manually build podcvd binary
 
 Execute `go build` from `container/src/podcvd` directory.
+
+### Manually build cuttlefish-podcvd debian package
+
+[tools/buildutils/cw/README.md#container](/tools/buildutils/cw/README.md#container)
+describes how to build `cuttlefish-podcvd` debian package.
+
+Execute `sudo apt install ./cuttlefish-podcvd_*.deb` to install it on your
+machine.
