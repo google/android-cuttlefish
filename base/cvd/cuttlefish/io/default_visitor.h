@@ -17,27 +17,22 @@
 
 #include <stdint.h>
 
-#include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-/**
- * Wraps another `ReaderSeeker` implementation and presents a view to a subset
- * of the data that can be read from the wrapped instance.
- */
-class ReadWindowView : public ReaderFakeSeeker {
+class DefaultIoVisitor : public IoVisitor {
  public:
-  ReadWindowView(const ReaderSeeker&, uint64_t begin, uint64_t length);
-
-  Result<void> Visit(IoVisitor&) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
-
- private:
-  ReaderSeeker const* data_provider_;
-  uint64_t begin_ = 0;
-  uint64_t length_ = 0;
+  Result<void> Accept(ConcatReaderSeeker&);
+  Result<void> Accept(ReadWindowView&);
+  Result<void> Accept(Reader&);
+  Result<void> Accept(ReaderSeeker&);
+  Result<void> Accept(ReaderWriterSeeker&);
+  Result<void> Accept(Seeker&);
+  Result<void> Accept(SharedFdIo&);
+  Result<void> Accept(Writer&);
+  Result<void> Accept(WriterSeeker&);
 };
 
 }  // namespace cuttlefish

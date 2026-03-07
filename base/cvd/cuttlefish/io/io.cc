@@ -13,31 +13,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "cuttlefish/io/io.h"
 
 #include <stdint.h>
 
-#include "cuttlefish/io/fake_seek.h"
+#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-/**
- * Wraps another `ReaderSeeker` implementation and presents a view to a subset
- * of the data that can be read from the wrapped instance.
- */
-class ReadWindowView : public ReaderFakeSeeker {
- public:
-  ReadWindowView(const ReaderSeeker&, uint64_t begin, uint64_t length);
+Result<void> Reader::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
 
-  Result<void> Visit(IoVisitor&) override;
-  Result<uint64_t> PRead(void* buf, uint64_t count,
-                         uint64_t offset) const override;
+Result<void> Writer::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
 
- private:
-  ReaderSeeker const* data_provider_;
-  uint64_t begin_ = 0;
-  uint64_t length_ = 0;
-};
+Result<void> Seeker::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
+Result<void> ReaderSeeker::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
+Result<void> WriterSeeker::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
+
+Result<void> ReaderWriterSeeker::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(*this));
+  return {};
+}
 
 }  // namespace cuttlefish

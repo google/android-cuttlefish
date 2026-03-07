@@ -57,6 +57,8 @@ class SeekingZipSourceReader : public ZipSourceReader, public ReaderSeeker {
   ~SeekingZipSourceReader() override;
   SeekingZipSourceReader& operator=(SeekingZipSourceReader&&);
 
+  Result<void> Visit(IoVisitor&) override;
+
   Result<uint64_t> Read(void* data, uint64_t length) override;
   Result<uint64_t> PRead(void* buf, uint64_t count, uint64_t offset) const override;
 

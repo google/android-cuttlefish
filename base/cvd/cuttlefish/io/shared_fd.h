@@ -27,6 +27,7 @@ class SharedFdIo : public ReaderWriterSeeker {
  public:
   explicit SharedFdIo(SharedFD);
 
+  Result<void> Visit(IoVisitor&) override;
   Result<uint64_t> Read(void* buf, uint64_t count) override;
   Result<uint64_t> Write(const void* buf, uint64_t count) override;
   Result<uint64_t> SeekSet(uint64_t offset) override;

@@ -150,6 +150,11 @@ SeekingZipSourceReader::~SeekingZipSourceReader() = default;
 SeekingZipSourceReader& SeekingZipSourceReader::operator=(
     SeekingZipSourceReader&&) = default;
 
+Result<void> SeekingZipSourceReader::Visit(IoVisitor& visitor) {
+  CF_EXPECT(visitor.Accept(static_cast<ReaderSeeker&>(*this)));
+  return {};
+}
+
 Result<uint64_t> SeekingZipSourceReader::SeekSet(uint64_t offset) {
   return CF_EXPECT(Seek(offset, SEEK_SET));
 }
