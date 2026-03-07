@@ -120,10 +120,10 @@ std::string AndroidBuildUrl::GetLatestBuildIdUrl(std::string_view branch,
   UrlBuilder builder = UrlBuilder::GetLatestBuildIdBaseUrl(api_base_url_);
   builder.AddQueryParameter("buildAttemptStatus", "complete");
   builder.AddQueryParameter("buildType", "submitted");
-  builder.AddQueryParameter("pageSize", "1");
+  builder.AddQueryParameter("maxResults", "1");
   builder.AddQueryParameter("successful", "true");
-  builder.AddQueryParameter("branches", branch);
-  builder.AddQueryParameter("targets", target);
+  builder.AddQueryParameter("branch", branch);
+  builder.AddQueryParameter("target", target);
   builder.AddApiKeyAndProjectId(api_key_, project_id_);
 
   return builder.GetUrl();
@@ -143,7 +143,7 @@ std::string AndroidBuildUrl::GetArtifactUrl(
     std::string_view page_token) {
   UrlBuilder builder =
       UrlBuilder::GetArtifactBaseUrl(api_base_url_, id, target);
-  builder.AddQueryParameter("pageSize", "100"); // maximum value allowed by API
+  builder.AddQueryParameter("maxResults", "100");
   if (!artifact_filenames.empty()) {
     builder.AddQueryParameter("nameRegexp",
                               BuildNameRegexp(artifact_filenames));
