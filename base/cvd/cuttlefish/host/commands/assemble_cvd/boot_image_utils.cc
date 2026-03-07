@@ -35,6 +35,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/boot_image_builder.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image_builder.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
@@ -352,24 +353,30 @@ Result<void> RepackVendorBootImage(
 
   auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
 
-  auto repack_cmd =
-      Command(MkbootimgBinary())
-          .AddParameter("--vendor_ramdisk")
-          .AddParameter(ramdisk_path)
-          .AddParameter("--header_version")
-          .AddParameter("4")
-          .AddParameter("--vendor_cmdline")
-          .AddParameter(kernel_cmdline)
-          .AddParameter("--vendor_boot")
-          .AddParameter(tmp_vendor_boot_image_path)
-          .AddParameter("--dtb")
-          .AddParameter(unpack_dir + "/dtb");
+  NativeFilesystem fs;
+
+  VendorBootImageBuilder builder =
+      VendorBootImageBuilder()
+          .PageSize(unpack.PageSize())
+          .KernelAddr(unpack.KernelAddr())
+          .RamdiskAddr(unpack.RamdiskAddr())
+          .VendorRamdisk(CF_EXPECT(fs.OpenReadOnly(ramdisk_path)))
+          .KernelCommandLine(kernel_cmdline)
+          .TagsAddr(unpack.TagsAddr())
+          .Name(unpack.Name())
+          .Dtb(CF_EXPECT(fs.OpenReadOnly(unpack_dir + "/dtb")))
+          .DtbAddr(unpack.DtbAddr());
   if (bootconfig_supported) {
-    repack_cmd.AddParameter("--vendor_bootconfig");
-    repack_cmd.AddParameter(unpack_dir + "/bootconfig");
+    builder.Bootconfig(CF_EXPECT(fs.OpenReadOnly(unpack_dir + "/bootconfig")));
   }
 
-  CF_EXPECT_EQ(repack_cmd.Start().Wait(), 0, "Unable to run mkbootimg.");
+  ConcatReaderSeeker new_vendor_boot_image = CF_EXPECT(builder.BuildV4());
+
+  (void)fs.DeleteFile(tmp_vendor_boot_image_path);
+  std::unique_ptr<Writer> tmp_vendor_boot_image_file =
+      CF_EXPECT(fs.CreateFile(tmp_vendor_boot_image_path));
+
+  CF_EXPECT(Copy(new_vendor_boot_image, *tmp_vendor_boot_image_file));
 
   CF_EXPECT(Avb().AddHashFooter(tmp_vendor_boot_image_path, "vendor_boot",
                                 FileSize(vendor_boot_image_path)));
