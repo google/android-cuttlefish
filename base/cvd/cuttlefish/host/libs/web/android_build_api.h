@@ -86,6 +86,15 @@ class AndroidBuildApi : public BuildApi {
       const DirectoryBuild& build,
       const std::vector<std::string>& artifact_filenames);
 
+  // Defensive stubs: URL builds are routed to GcsBuildApi/HttpBuildApi.
+  // These exist solely to satisfy std::visit dispatch on the Build variant.
+  Result<std::unordered_set<std::string>> Artifacts(
+      const GcsBuild& build,
+      const std::vector<std::string>& artifact_filenames);
+  Result<std::unordered_set<std::string>> Artifacts(
+      const HttpBuild& build,
+      const std::vector<std::string>& artifact_filenames);
+
   Result<std::unordered_set<std::string>> Artifacts(
       const Build& build, const std::vector<std::string>& artifact_filenames);
 
@@ -96,6 +105,14 @@ class AndroidBuildApi : public BuildApi {
                               const std::string& path);
 
   Result<void> ArtifactToFile(const DirectoryBuild& build,
+                              const std::string& artifact,
+                              const std::string& path);
+
+  // Defensive stubs; see Artifacts() comment above.
+  Result<void> ArtifactToFile(const GcsBuild& build,
+                              const std::string& artifact,
+                              const std::string& path);
+  Result<void> ArtifactToFile(const HttpBuild& build,
                               const std::string& artifact,
                               const std::string& path);
 
@@ -111,10 +128,18 @@ class AndroidBuildApi : public BuildApi {
 
   Result<Build> GetBuild(const DeviceBuildString& build_string);
   Result<Build> GetBuild(const DirectoryBuildString& build_string);
+  // Defensive stubs; see Artifacts() comment above.
+  Result<Build> GetBuild(const GcsBuildString& build_string);
+  Result<Build> GetBuild(const HttpBuildString& build_string);
 
   Result<SeekableZipSource> FileReader(const DeviceBuild&,
                                        const std::string& artifact_name);
   Result<SeekableZipSource> FileReader(const DirectoryBuild&,
+                                       const std::string& artifact_name);
+  // Defensive stubs; see Artifacts() comment above.
+  Result<SeekableZipSource> FileReader(const GcsBuild&,
+                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(const HttpBuild&,
                                        const std::string& artifact_name);
 
   HttpClient& http_client_;

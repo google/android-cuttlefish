@@ -49,7 +49,33 @@ bool operator==(const DirectoryBuildString& lhs,
 bool operator!=(const DirectoryBuildString& lhs,
                 const DirectoryBuildString& rhs);
 
-using BuildString = std::variant<DeviceBuildString, DirectoryBuildString>;
+// A build source identified by a Google Cloud Storage URL
+// (gs://bucket/object). Parsed from build flags like
+// --default_build=gs://bucket/image.zip.
+struct GcsBuildString {
+  std::string url;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream& out,
+                         const GcsBuildString& build_string);
+bool operator==(const GcsBuildString& lhs, const GcsBuildString& rhs);
+bool operator!=(const GcsBuildString& lhs, const GcsBuildString& rhs);
+
+// A build source identified by a public https:// or http:// URL.
+// Parsed from build flags like --default_build=https://example.com/image.zip.
+struct HttpBuildString {
+  std::string url;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream& out,
+                         const HttpBuildString& build_string);
+bool operator==(const HttpBuildString& lhs, const HttpBuildString& rhs);
+bool operator!=(const HttpBuildString& lhs, const HttpBuildString& rhs);
+
+using BuildString = std::variant<DeviceBuildString, DirectoryBuildString,
+                                 GcsBuildString, HttpBuildString>;
 
 std::ostream& operator<<(std::ostream& out, const BuildString& build_string);
 

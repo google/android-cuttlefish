@@ -105,20 +105,6 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "build_api_zip",
-    srcs = ["build_api_zip.cc"],
-    hdrs = ["build_api_zip.h"],
-    deps = [
-        "//cuttlefish/host/libs/web:android_build",
-        "//cuttlefish/host/libs/web:build_api",
-        "//cuttlefish/host/libs/zip:buffered_zip_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:archive",
-        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_library(
     name = "caching_build_api",
     srcs = ["caching_build_api.cpp"],
     hdrs = ["caching_build_api.h"],
@@ -169,6 +155,40 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
         "@boringssl//:crypto",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "gcs_build_api",
+    srcs = ["gcs_build_api.cc"],
+    hdrs = ["gcs_build_api.h"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_file",
+        "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/host/libs/zip:remote_zip",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
+        "//libbase",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "http_build_api",
+    srcs = ["http_build_api.cc"],
+    hdrs = ["http_build_api.h"],
+    deps = [
+        "//cuttlefish/host/libs/web:android_build",
+        "//cuttlefish/host/libs/web:android_build_string",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_file",
+        "//cuttlefish/host/libs/zip:remote_zip",
+        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/result",
     ],
 )
 

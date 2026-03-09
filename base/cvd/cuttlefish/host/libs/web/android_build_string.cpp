@@ -136,6 +136,36 @@ bool operator!=(const DirectoryBuildString& lhs,
   return !(lhs == rhs);
 }
 
+std::ostream& operator<<(std::ostream& out,
+                         const GcsBuildString& build_string) {
+  fmt::print(out, "(url=\"{}\", filepath=\"{}\")", build_string.url,
+             build_string.filepath.value_or(""));
+  return out;
+}
+
+bool operator==(const GcsBuildString& lhs, const GcsBuildString& rhs) {
+  return lhs.url == rhs.url && lhs.filepath == rhs.filepath;
+}
+
+bool operator!=(const GcsBuildString& lhs, const GcsBuildString& rhs) {
+  return !(lhs == rhs);
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         const HttpBuildString& build_string) {
+  fmt::print(out, "(url=\"{}\", filepath=\"{}\")", build_string.url,
+             build_string.filepath.value_or(""));
+  return out;
+}
+
+bool operator==(const HttpBuildString& lhs, const HttpBuildString& rhs) {
+  return lhs.url == rhs.url && lhs.filepath == rhs.filepath;
+}
+
+bool operator!=(const HttpBuildString& lhs, const HttpBuildString& rhs) {
+  return !(lhs == rhs);
+}
+
 std::ostream& operator<<(std::ostream& out, const BuildString& build_string) {
   std::visit([&out](auto&& arg) { out << arg; }, build_string);
   return out;
@@ -163,6 +193,15 @@ Result<BuildString> ParseBuildString(const std::string& build_string) {
   CF_EXPECT(!build_string.empty(), "The given build string cannot be empty");
   auto [remaining_build_string, filepath] =
       CF_EXPECT(ParseFilepath(build_string));
+  // URL detection must come before the ':' check, because URLs contain
+  // '://' which would otherwise be misinterpreted as a directory separator.
+  if (android::base::StartsWith(remaining_build_string, "gs://")) {
+    return GcsBuildString{.url = remaining_build_string, .filepath = filepath};
+  }
+  if (android::base::StartsWith(remaining_build_string, "https://") ||
+      android::base::StartsWith(remaining_build_string, "http://")) {
+    return HttpBuildString{.url = remaining_build_string, .filepath = filepath};
+  }
   if (remaining_build_string.find(':') != std::string::npos) {
     return CF_EXPECT(
         ParseDirectoryBuildString(remaining_build_string, filepath));
@@ -223,6 +262,15 @@ struct WithFallbackTargetVisitor {
 
   BuildString operator()(DirectoryBuildString build_string,
                          const std::string&) {
+    return build_string;
+  }
+
+  // URL builds have no target concept, so the fallback is unused.
+  BuildString operator()(GcsBuildString build_string, const std::string&) {
+    return build_string;
+  }
+
+  BuildString operator()(HttpBuildString build_string, const std::string&) {
     return build_string;
   }
 };

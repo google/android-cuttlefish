@@ -48,7 +48,26 @@ struct DirectoryBuild {
 
 std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
 
-using Build = std::variant<DeviceBuild, DirectoryBuild>;
+// A resolved build source backed by a Google Cloud Storage object.
+// Always downloaded with Google OAuth credentials via the GCS JSON API.
+struct GcsBuild {
+  std::string bucket;
+  std::string object;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream&, const GcsBuild&);
+
+// A resolved build source backed by a public https:// or http:// URL.
+// Downloaded without authentication headers.
+struct HttpBuild {
+  std::string url;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream&, const HttpBuild&);
+
+using Build = std::variant<DeviceBuild, DirectoryBuild, GcsBuild, HttpBuild>;
 
 std::ostream& operator<<(std::ostream&, const Build&);
 

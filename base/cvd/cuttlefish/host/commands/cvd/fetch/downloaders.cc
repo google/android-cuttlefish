@@ -18,18 +18,23 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_credentials.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/android_build_api_key.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/caching_build_api.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
+#include "cuttlefish/host/libs/web/gcs_build_api.h"
+#include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/http_client/curl_http_client.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
@@ -50,6 +55,8 @@ struct Downloaders::Impl {
   std::unique_ptr<CredentialSource> luci_credential_source_;
   std::unique_ptr<CredentialSource> gsutil_credential_source_;
   std::unique_ptr<LuciBuildApi> luci_build_api_;
+  std::unique_ptr<GcsBuildApi> gcs_build_api_;
+  std::unique_ptr<HttpBuildApi> http_build_api_;
 };
 
 Downloaders::Downloaders(std::unique_ptr<Downloaders::Impl> impl)
@@ -114,6 +121,16 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
       *impl->retrying_http_client_, impl->luci_credential_source_.get(),
       impl->gsutil_credential_source_.get());
 
+  // GcsBuildApi requires credentials; only construct it if available.
+  // Reuses the gsutil credential source.
+  if (impl->gsutil_credential_source_) {
+    impl->gcs_build_api_ = std::make_unique<GcsBuildApi>(
+        *impl->retrying_http_client_, *impl->gsutil_credential_source_);
+  }
+
+  impl->http_build_api_ =
+      std::make_unique<HttpBuildApi>(*impl->retrying_http_client_);
+
   return Downloaders(std::move(impl));
 }
 
@@ -126,5 +143,87 @@ BuildApi& Downloaders::AndroidBuild() {
 }
 
 LuciBuildApi& Downloaders::Luci() { return *impl_->luci_build_api_; }
+
+GcsBuildApi* Downloaders::Gcs() { return impl_->gcs_build_api_.get(); }
+
+HttpBuildApi& Downloaders::Http() { return *impl_->http_build_api_; }
+
+Result<Build> Downloaders::GetBuild(const BuildString& build_string) {
+  struct Visitor {
+    Downloaders& self;
+    const BuildString& build_string;
+
+    Result<Build> operator()(const DeviceBuildString&) {
+      return self.AndroidBuild().GetBuild(build_string);
+    }
+    Result<Build> operator()(const DirectoryBuildString&) {
+      return self.AndroidBuild().GetBuild(build_string);
+    }
+    Result<Build> operator()(const GcsBuildString& bs) {
+      CF_EXPECT(self.Gcs() != nullptr,
+                "GCS build requested but no GCS credentials are configured");
+      return self.Gcs()->GetBuild(bs);
+    }
+    Result<Build> operator()(const HttpBuildString& bs) {
+      return self.Http().GetBuild(bs);
+    }
+  };
+  return std::visit(Visitor{*this, build_string}, build_string);
+}
+
+Result<std::string> Downloaders::DownloadFile(
+    const Build& build, const std::string& target_directory,
+    const std::string& artifact_name) {
+  struct Visitor {
+    Downloaders& self;
+    const Build& build;
+    const std::string& target_directory;
+    const std::string& artifact_name;
+
+    Result<std::string> operator()(const DeviceBuild&) {
+      return self.AndroidBuild().DownloadFile(build, target_directory,
+                                              artifact_name);
+    }
+    Result<std::string> operator()(const DirectoryBuild&) {
+      return self.AndroidBuild().DownloadFile(build, target_directory,
+                                              artifact_name);
+    }
+    Result<std::string> operator()(const GcsBuild& b) {
+      CF_EXPECT(self.Gcs() != nullptr,
+                "GCS build requested but no GCS credentials are configured");
+      return self.Gcs()->DownloadFile(b, target_directory, artifact_name);
+    }
+    Result<std::string> operator()(const HttpBuild& b) {
+      return self.Http().DownloadFile(b, target_directory, artifact_name);
+    }
+  };
+  return std::visit(
+      Visitor{*this, build, target_directory, artifact_name}, build);
+}
+
+Result<SeekableZipSource> Downloaders::FileReader(
+    const Build& build, const std::string& artifact_name) {
+  struct Visitor {
+    Downloaders& self;
+    const Build& build;
+    const std::string& artifact_name;
+
+    Result<SeekableZipSource> operator()(const DeviceBuild&) {
+      return self.AndroidBuild().FileReader(build, artifact_name);
+    }
+    Result<SeekableZipSource> operator()(const DirectoryBuild&) {
+      return self.AndroidBuild().FileReader(build, artifact_name);
+    }
+    Result<SeekableZipSource> operator()(const GcsBuild& b) {
+      CF_EXPECT(self.Gcs() != nullptr,
+                "GCS build requested but no GCS credentials are configured");
+      return self.Gcs()->FileReader(b, artifact_name);
+    }
+    Result<SeekableZipSource> operator()(const HttpBuild& b) {
+      return self.Http().FileReader(b, artifact_name);
+    }
+  };
+  return std::visit(Visitor{*this, build, artifact_name}, build);
+}
 
 }  // namespace cuttlefish

@@ -132,6 +132,15 @@ Result<Build> AndroidBuildApi::GetBuild(
                         build_string.filepath);
 }
 
+// Defensive stubs: URL builds are routed to GcsBuildApi/HttpBuildApi.
+Result<Build> AndroidBuildApi::GetBuild(const GcsBuildString&) {
+  return CF_ERR("AndroidBuildApi does not handle GcsBuildString");
+}
+
+Result<Build> AndroidBuildApi::GetBuild(const HttpBuildString&) {
+  return CF_ERR("AndroidBuildApi does not handle HttpBuildString");
+}
+
 Result<Build> AndroidBuildApi::GetBuild(const BuildString& build_string) {
   Result<Build> result =
       std::visit([this](auto&& arg) { return GetBuild(arg); }, build_string);
@@ -174,6 +183,17 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
   std::string url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact_name));
   std::vector<std::string> headers = CF_EXPECT(Headers());
   return CF_EXPECT(ZipSourceFromUrl(http_client_, url, headers));
+}
+
+// Defensive stubs: URL builds are routed to GcsBuildApi/HttpBuildApi.
+Result<SeekableZipSource> AndroidBuildApi::FileReader(const GcsBuild&,
+                                                      const std::string&) {
+  return CF_ERR("AndroidBuildApi does not handle GcsBuild");
+}
+
+Result<SeekableZipSource> AndroidBuildApi::FileReader(const HttpBuild&,
+                                                      const std::string&) {
+  return CF_ERR("AndroidBuildApi does not handle HttpBuild");
 }
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
@@ -326,6 +346,17 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
   return artifacts;
 }
 
+// Defensive stubs: URL builds are routed to GcsBuildApi/HttpBuildApi.
+Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
+    const GcsBuild&, const std::vector<std::string>&) {
+  return CF_ERR("AndroidBuildApi does not handle GcsBuild");
+}
+
+Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
+    const HttpBuild&, const std::vector<std::string>&) {
+  return CF_ERR("AndroidBuildApi does not handle HttpBuild");
+}
+
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const DirectoryBuild& build, const std::vector<std::string>&) {
   std::unordered_set<std::string> artifacts;
@@ -371,6 +402,19 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
   CF_EXPECTF(response.HttpSuccess(), "Failed to download file: {}",
              response.StatusDescription());
   return {};
+}
+
+// Defensive stubs: URL builds are routed to GcsBuildApi/HttpBuildApi.
+Result<void> AndroidBuildApi::ArtifactToFile(const GcsBuild&,
+                                             const std::string&,
+                                             const std::string&) {
+  return CF_ERR("AndroidBuildApi does not handle GcsBuild");
+}
+
+Result<void> AndroidBuildApi::ArtifactToFile(const HttpBuild&,
+                                             const std::string&,
+                                             const std::string&) {
+  return CF_ERR("AndroidBuildApi does not handle HttpBuild");
 }
 
 Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
@@ -447,10 +491,29 @@ Result<std::string> AndroidBuildApi::DownloadTargetFile(
   return {target_filepath};
 }
 
+// Returns an (id, target) tuple used for config registration and tracing.
+// URL-based builds use the URL as the id and "url" as a synthetic target,
+// since URL builds have no Android Build id or target.
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
-  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  auto target = std::visit([](auto&& arg) { return arg.target; }, build);
-  return {id, target};
+  struct Visitor {
+    std::tuple<std::string, std::string> operator()(
+        const DeviceBuild& b) const {
+      return {b.id, b.target};
+    }
+    std::tuple<std::string, std::string> operator()(
+        const DirectoryBuild& b) const {
+      return {b.id, b.target};
+    }
+    std::tuple<std::string, std::string> operator()(
+        const GcsBuild& b) const {
+      return {"gs://" + b.bucket + "/" + b.object, "url"};
+    }
+    std::tuple<std::string, std::string> operator()(
+        const HttpBuild& b) const {
+      return {b.url, "url"};
+    }
+  };
+  return std::visit(Visitor{}, build);
 }
 
 std::optional<std::string> GetFilepath(const Build& build) {

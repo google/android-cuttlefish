@@ -19,8 +19,13 @@
 #include <string>
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+#include "cuttlefish/host/libs/web/android_build.h"
+#include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/gcs_build_api.h"
+#include "cuttlefish/host/libs/web/http_build_api.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -36,6 +41,21 @@ class Downloaders {
 
   BuildApi& AndroidBuild();
   LuciBuildApi& Luci();
+  // Returns nullptr when no GCS credentials are configured.
+  GcsBuildApi* Gcs();
+  HttpBuildApi& Http();
+
+  // Dispatches over the Build/BuildString variant to the appropriate
+  // per-type build API. Centralizes the variant inspection so callers
+  // don't need to.
+  Result<Build> GetBuild(const BuildString& build_string);
+
+  Result<std::string> DownloadFile(const Build& build,
+                                   const std::string& target_directory,
+                                   const std::string& artifact_name);
+
+  Result<SeekableZipSource> FileReader(const Build& build,
+                                       const std::string& artifact_name);
 
  private:
   struct Impl;  // for pimpl

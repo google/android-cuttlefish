@@ -51,6 +51,16 @@ std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
              << "\", filepath=\"" << build.filepath.value_or("") << "\")";
 }
 
+std::ostream& operator<<(std::ostream& out, const GcsBuild& build) {
+  return out << "(bucket=\"" << build.bucket << "\", object=\"" << build.object
+             << "\", filepath=\"" << build.filepath.value_or("") << "\")";
+}
+
+std::ostream& operator<<(std::ostream& out, const HttpBuild& build) {
+  return out << "(url=\"" << build.url << "\", filepath=\""
+             << build.filepath.value_or("") << "\")";
+}
+
 std::ostream& operator<<(std::ostream& out, const Build& build) {
   std::visit([&out](auto&& arg) { out << arg; }, build);
   return out;

@@ -22,17 +22,21 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
+#include "cuttlefish/host/commands/cvd/fetch/downloaders.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/commands/cvd/fetch/target_directories.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/web/android_build.h"
-#include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+// Manages downloading and extracting a single artifact from a build.
+// Handles both Android Build API artifacts and URL-based artifacts
+// transparently. Tracks whether the artifact has already been downloaded
+// to avoid redundant fetches.
 class FetchArtifact {
  public:
   Result<void> Download();
@@ -107,13 +111,11 @@ class FetchBuildContext {
 
 std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
 
-/**
- * References common state used by most download operations and produces
- * `FetchBuildContext` instances.
- */
+// References common state used by most download operations and produces
+// FetchBuildContext instances for each configured build component.
 class FetchContext {
  public:
-  FetchContext(BuildApi&, const TargetDirectories&, const Builds&,
+  FetchContext(Downloaders&, const TargetDirectories&, const Builds&,
                FetcherConfig&, FetchTracer&);
 
   std::optional<FetchBuildContext> DefaultBuild();
@@ -129,7 +131,7 @@ class FetchContext {
   friend class FetchArtifact;
   friend class FetchBuildContext;
 
-  BuildApi& build_api_;
+  Downloaders& downloaders_;
   const TargetDirectories& target_directories_;
   const Builds& builds_;
   FetcherConfig& fetcher_config_;
