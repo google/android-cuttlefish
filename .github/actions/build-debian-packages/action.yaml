@@ -29,7 +29,7 @@ runs:
           SUFFIX="~git${INPUTS_YYYYMMDDHHMM}.${SHORT_SHA}"
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             base/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
+          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             container/debian/changelog
           sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
             frontend/debian/changelog
