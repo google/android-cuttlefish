@@ -47,41 +47,6 @@
 namespace cuttlefish {
 namespace {
 
-enum class RenderingMode {
-  kNone,
-  kCustom,
-  kGuestSwiftShader,
-  kGfxstream,
-  kGfxstreamGuestAngle,
-  kGfxstreamGuestAngleHostSwiftshader,
-  kGfxstreamGuestAngleHostLavapipe,
-  kVirglRenderer,
-};
-
-CF_UNUSED_ON_MACOS
-Result<RenderingMode> GetRenderingMode(const GpuMode gpu_mode) {
-  switch (gpu_mode) {
-    case GpuMode::Auto:
-      return CF_ERR("Unsupported rendering mode: " << GpuModeString(gpu_mode));
-    case GpuMode::Custom:
-      return RenderingMode::kCustom;
-    case GpuMode::DrmVirgl:
-      return RenderingMode::kVirglRenderer;
-    case GpuMode::Gfxstream:
-      return RenderingMode::kGfxstream;
-    case GpuMode::GfxstreamGuestAngle:
-      return RenderingMode::kGfxstreamGuestAngle;
-    case GpuMode::GfxstreamGuestAngleHostLavapipe:
-      return RenderingMode::kGfxstreamGuestAngleHostLavapipe;
-    case GpuMode::GfxstreamGuestAngleHostSwiftshader:
-      return RenderingMode::kGfxstreamGuestAngleHostSwiftshader;
-    case GpuMode::GuestSwiftshader:
-      return RenderingMode::kGuestSwiftShader;
-    case GpuMode::None:
-      return RenderingMode::kNone;
-  }
-}
-
 struct AngleFeatures {
   // Prefer linear filtering for YUV AHBs to pass
   // android.media.decoder.cts.DecodeAccuracyTest on older branches.
@@ -116,10 +81,10 @@ std::ostream& operator<<(std::ostream& stream, const AngleFeatures& features) {
 }
 
 Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
-    const RenderingMode mode,
+    const GpuMode mode,
     const ::gfxstream::proto::GraphicsAvailability& availability) {
   AngleFeatures features = {};
-  if (mode == RenderingMode::kGfxstreamGuestAngle) {
+  if (mode == GpuMode::GfxstreamGuestAngle) {
     if (availability.has_vulkan() &&
         !availability.vulkan().physical_devices().empty() &&
         availability.vulkan().physical_devices(0).has_quirks() &&
@@ -131,8 +96,8 @@ Result<AngleFeatures> GetNeededAngleFeaturesBasedOnQuirks(
     }
   }
 
-  if (mode == RenderingMode::kGuestSwiftShader ||
-      mode == RenderingMode::kGfxstreamGuestAngleHostSwiftshader) {
+  if (mode == GpuMode::GuestSwiftshader ||
+      mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     features.disable_expose_opengles_3_2_for_testing = true;
   }
 
@@ -177,7 +142,7 @@ struct AngleFeatureOverrides {
 
 CF_UNUSED_ON_MACOS
 Result<AngleFeatureOverrides> GetNeededAngleFeatures(
-    const RenderingMode mode,
+    const GpuMode mode,
     const ::gfxstream::proto::GraphicsAvailability& availability) {
   const AngleFeatures features =
       CF_EXPECT(GetNeededAngleFeaturesBasedOnQuirks(mode, availability));
@@ -226,12 +191,12 @@ struct VhostUserGpuHostRendererFeatures {
 CF_UNUSED_ON_MACOS
 Result<VhostUserGpuHostRendererFeatures>
 GetNeededVhostUserGpuHostRendererFeatures(
-    RenderingMode mode,
+    GpuMode mode,
     const ::gfxstream::proto::GraphicsAvailability& availability) {
   VhostUserGpuHostRendererFeatures features = {};
 
   // No features needed for guest rendering.
-  if (mode == RenderingMode::kGuestSwiftShader) {
+  if (mode == GpuMode::GuestSwiftshader) {
     return features;
   }
 
@@ -240,7 +205,7 @@ GetNeededVhostUserGpuHostRendererFeatures(
   features.external_blob = true;
 
   // Prebuilt SwiftShader includes VK_EXT_external_memory_host.
-  if (mode == RenderingMode::kGfxstreamGuestAngleHostSwiftshader) {
+  if (mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
     features.system_blob = true;
   } else {
     const bool has_external_memory_host =
@@ -250,7 +215,7 @@ GetNeededVhostUserGpuHostRendererFeatures(
                  "VK_EXT_external_memory_host");
 
     CF_EXPECT(
-        has_external_memory_host || mode != RenderingMode::kGfxstreamGuestAngle,
+        has_external_memory_host || mode != GpuMode::GfxstreamGuestAngle,
         "VK_EXT_external_memory_host is required for running with "
         "--gpu_mode=gfxstream_guest_angle and --enable_gpu_vhost_user=true");
 
@@ -597,7 +562,7 @@ Result<GpuMode> ConfigureGpuSettings(
   }
 
   const auto angle_features = CF_EXPECT(GetNeededAngleFeatures(
-      CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
+      gpu_mode, graphics_availability));
   instance.set_gpu_angle_feature_overrides_enabled(
       angle_features.angle_feature_overrides_enabled);
   instance.set_gpu_angle_feature_overrides_disabled(
@@ -606,7 +571,7 @@ Result<GpuMode> ConfigureGpuSettings(
   if (enable_gpu_vhost_user) {
     const auto gpu_vhost_user_features =
         CF_EXPECT(GetNeededVhostUserGpuHostRendererFeatures(
-            CF_EXPECT(GetRenderingMode(gpu_mode)), graphics_availability));
+            gpu_mode, graphics_availability));
     instance.set_enable_gpu_external_blob(
         gpu_vhost_user_features.external_blob);
     instance.set_enable_gpu_system_blob(gpu_vhost_user_features.system_blob);
