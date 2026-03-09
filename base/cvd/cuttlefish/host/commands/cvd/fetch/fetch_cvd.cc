@@ -166,14 +166,17 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
 Result<Build> GetHostBuild(BuildApi& build_api,
                            const HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
-  auto host_package_build = CF_EXPECT(
+  std::optional<Build> host_package_build = CF_EXPECT(
       GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
-  CF_EXPECT(host_package_build.has_value() || fallback_host_build.has_value(),
-            "Either `--host_package_build` or `--default_build` needs to be "
-            "specified. Try "
-            "`--default_build=aosp-android-latest-release/"
-            "aosp_cf_x86_64_only_phone-userdebug");
-  return host_package_build.value_or(*fallback_host_build);
+  if (host_package_build.has_value()) {
+    return host_package_build.value();
+  } else if (fallback_host_build.has_value()) {
+    return fallback_host_build.value();
+  }
+  return CF_ERR(
+      "Either `--host_package_build` or `--default_build` needs to be "
+      "specified. Try `--default_build=aosp-android-latest-release/"
+      "aosp_cf_x86_64_only_phone-userdebug");
 }
 
 Result<std::string> SaveConfig(FetcherConfig& config,
