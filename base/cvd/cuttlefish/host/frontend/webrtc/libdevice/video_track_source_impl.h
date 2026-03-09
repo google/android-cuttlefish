@@ -24,6 +24,18 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
+/// Video source implementation that bridges Cuttlefish display frames to WebRTC.
+///
+/// Receives video frames from the display compositor (via VideoSink interface)
+/// and broadcasts them to WebRTC video tracks. Handles both YUV (I420) and
+/// native RGBA frame formats.
+///
+/// Key features:
+///   - Supports native ARGB/ABGR buffers for hardware encoder passthrough
+///   - Enforces strictly monotonic timestamps to prevent frame drops
+///   - Broadcasts frames to all registered WebRTC sinks
+///
+/// Thread safety: OnFrame() may be called from any thread after construction.
 class VideoTrackSourceImpl : public webrtc::VideoTrackSource {
  public:
   VideoTrackSourceImpl(int width, int height);
@@ -48,6 +60,7 @@ class VideoTrackSourceImpl : public webrtc::VideoTrackSource {
  private:
   int width_;
   int height_;
+  int64_t last_timestamp_us_ = 0;  // Ensure strictly monotonic timestamps
   rtc::VideoBroadcaster broadcaster_;
 };
 
