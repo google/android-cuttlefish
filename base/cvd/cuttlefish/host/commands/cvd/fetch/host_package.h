@@ -21,13 +21,18 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_tracer.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/url_downloader.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+// Downloads and extracts the host tools package (cvd-host_package.tar.gz).
+// For URL builds, downloads via `url_downloader` instead of the build API.
+// `url_downloader` may be nullptr when the build is not a URL build.
 Result<void> FetchHostPackage(
-    BuildApi& build_api, const Build& build, const std::string& target_dir,
-    bool keep_archives, const std::vector<std::string>& host_substitutions,
+    BuildApi& build_api, UrlDownloader* url_downloader, const Build& build,
+    const std::string& target_dir, bool keep_archives,
+    const std::vector<std::string>& host_substitutions,
     FetchTracer::Trace trace);
 
 }  // namespace cuttlefish

@@ -49,7 +49,20 @@ bool operator==(const DirectoryBuildString& lhs,
 bool operator!=(const DirectoryBuildString& lhs,
                 const DirectoryBuildString& rhs);
 
-using BuildString = std::variant<DeviceBuildString, DirectoryBuildString>;
+// A build source identified by a URL (gs://, https://, or http://).
+// Parsed from build flags like --default_build=gs://bucket/image.zip.
+struct UrlBuildString {
+  std::string url;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream& out,
+                         const UrlBuildString& build_string);
+bool operator==(const UrlBuildString& lhs, const UrlBuildString& rhs);
+bool operator!=(const UrlBuildString& lhs, const UrlBuildString& rhs);
+
+using BuildString =
+    std::variant<DeviceBuildString, DirectoryBuildString, UrlBuildString>;
 
 std::ostream& operator<<(std::ostream& out, const BuildString& build_string);
 

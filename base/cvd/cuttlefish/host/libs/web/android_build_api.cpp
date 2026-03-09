@@ -41,6 +41,7 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/android_build_url.h"
+#include "cuttlefish/host/libs/web/url_downloader.h"
 #include "cuttlefish/host/libs/web/cas/cas_downloader.h"
 #include "cuttlefish/host/libs/web/credential_source.h"
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -132,6 +133,16 @@ Result<Build> AndroidBuildApi::GetBuild(
                         build_string.filepath);
 }
 
+// URL builds bypass the Android Build API entirely. Validation is limited
+// to checking the URL scheme; the actual download is handled by
+// UrlDownloader at fetch time.
+Result<Build> AndroidBuildApi::GetBuild(
+    const UrlBuildString& build_string) {
+  CF_EXPECT(ParseUrlScheme(build_string.url),
+            "Invalid URL scheme in build string: " << build_string.url);
+  return UrlBuild{.url = build_string.url, .filepath = build_string.filepath};
+}
+
 Result<Build> AndroidBuildApi::GetBuild(const BuildString& build_string) {
   Result<Build> result =
       std::visit([this](auto&& arg) { return GetBuild(arg); }, build_string);
@@ -174,6 +185,13 @@ Result<SeekableZipSource> AndroidBuildApi::FileReader(
   std::string url = CF_EXPECT(GetArtifactDownloadUrl(build, artifact_name));
   std::vector<std::string> headers = CF_EXPECT(Headers());
   return CF_EXPECT(ZipSourceFromUrl(http_client_, url, headers));
+}
+
+// URL builds are downloaded via UrlDownloader, not the Android Build API.
+// These stubs satisfy the std::visit dispatch on the Build variant.
+Result<SeekableZipSource> AndroidBuildApi::FileReader(
+    const UrlBuild& build, const std::string&) {
+  return CF_ERR("FileReader is not supported for URL builds: " << build.url);
 }
 
 Result<SeekableZipSource> AndroidBuildApi::FileReader(
@@ -326,6 +344,13 @@ Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
   return artifacts;
 }
 
+// URL builds have no artifact listing; see FileReader(UrlBuild) comment.
+Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
+    const UrlBuild& build, const std::vector<std::string>&) {
+  return CF_ERR("Artifact listing is not supported for URL builds: "
+                << build.url);
+}
+
 Result<std::unordered_set<std::string>> AndroidBuildApi::Artifacts(
     const DirectoryBuild& build, const std::vector<std::string>&) {
   std::unordered_set<std::string> artifacts;
@@ -371,6 +396,14 @@ Result<void> AndroidBuildApi::ArtifactToFile(const DeviceBuild& build,
   CF_EXPECTF(response.HttpSuccess(), "Failed to download file: {}",
              response.StatusDescription());
   return {};
+}
+
+// URL builds have no per-artifact API; see FileReader(UrlBuild) comment.
+Result<void> AndroidBuildApi::ArtifactToFile(const UrlBuild& build,
+                                             const std::string&,
+                                             const std::string&) {
+  return CF_ERR("ArtifactToFile is not supported for URL builds: "
+                << build.url);
 }
 
 Result<void> AndroidBuildApi::ArtifactToFile(const DirectoryBuild& build,
@@ -447,10 +480,25 @@ Result<std::string> AndroidBuildApi::DownloadTargetFile(
   return {target_filepath};
 }
 
+// Returns an (id, target) tuple used for config registration and tracing.
+// UrlBuild uses the URL as the id and "url" as a synthetic target, since
+// URL builds have no Android Build id or target.
 std::tuple<std::string, std::string> GetBuildIdAndTarget(const Build& build) {
-  auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  auto target = std::visit([](auto&& arg) { return arg.target; }, build);
-  return {id, target};
+  struct Visitor {
+    std::tuple<std::string, std::string> operator()(
+        const DeviceBuild& b) const {
+      return {b.id, b.target};
+    }
+    std::tuple<std::string, std::string> operator()(
+        const DirectoryBuild& b) const {
+      return {b.id, b.target};
+    }
+    std::tuple<std::string, std::string> operator()(
+        const UrlBuild& b) const {
+      return {b.url, "url"};
+    }
+  };
+  return std::visit(Visitor{}, build);
 }
 
 std::optional<std::string> GetFilepath(const Build& build) {

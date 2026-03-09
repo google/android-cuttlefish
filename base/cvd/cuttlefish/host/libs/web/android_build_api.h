@@ -87,6 +87,10 @@ class AndroidBuildApi : public BuildApi {
       const std::vector<std::string>& artifact_filenames);
 
   Result<std::unordered_set<std::string>> Artifacts(
+      const UrlBuild& build,
+      const std::vector<std::string>& artifact_filenames);
+
+  Result<std::unordered_set<std::string>> Artifacts(
       const Build& build, const std::vector<std::string>& artifact_filenames);
 
   Result<std::string> GetArtifactDownloadUrl(const DeviceBuild& build,
@@ -96,6 +100,10 @@ class AndroidBuildApi : public BuildApi {
                               const std::string& path);
 
   Result<void> ArtifactToFile(const DirectoryBuild& build,
+                              const std::string& artifact,
+                              const std::string& path);
+
+  Result<void> ArtifactToFile(const UrlBuild& build,
                               const std::string& artifact,
                               const std::string& path);
 
@@ -111,10 +119,13 @@ class AndroidBuildApi : public BuildApi {
 
   Result<Build> GetBuild(const DeviceBuildString& build_string);
   Result<Build> GetBuild(const DirectoryBuildString& build_string);
+  Result<Build> GetBuild(const UrlBuildString& build_string);
 
   Result<SeekableZipSource> FileReader(const DeviceBuild&,
                                        const std::string& artifact_name);
   Result<SeekableZipSource> FileReader(const DirectoryBuild&,
+                                       const std::string& artifact_name);
+  Result<SeekableZipSource> FileReader(const UrlBuild&,
                                        const std::string& artifact_name);
 
   HttpClient& http_client_;

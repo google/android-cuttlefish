@@ -201,4 +201,70 @@ TEST(BuildStringGflagsCompatFlagTests, MultiValueMixedWithEmptySuccess) {
           DeviceBuildString{.branch_or_id = "abcde", .target = "test_target"}));
 }
 
+TEST(ParseBuildStringTests, UrlBuildStringGcsSuccess) {
+  auto result = ParseBuildString("gs://bucket/file.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<UrlBuildString>(
+                  UrlBuildString{.url = "gs://bucket/file.zip"}));
+}
+
+TEST(ParseBuildStringTests, UrlBuildStringHttpsSuccess) {
+  auto result = ParseBuildString("https://example.com/file.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<UrlBuildString>(
+                  UrlBuildString{.url = "https://example.com/file.zip"}));
+}
+
+TEST(ParseBuildStringTests, UrlBuildStringHttpSuccess) {
+  auto result = ParseBuildString("http://host/file.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<UrlBuildString>(
+                                  UrlBuildString{.url = "http://host/file.zip"}));
+}
+
+TEST(ParseBuildStringTests, UrlBuildStringWithFilepathSuccess) {
+  auto result = ParseBuildString("gs://bucket/img.zip{boot.img}");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<UrlBuildString>(UrlBuildString{
+                  .url = "gs://bucket/img.zip", .filepath = "boot.img"}));
+}
+
+TEST(ParseBuildStringTests, UrlBuildStringNotMisparsedAsDirectory) {
+  // URLs contain "://" which includes ":" — ensure this is not
+  // misinterpreted as a directory build string separator.
+  auto result = ParseBuildString("gs://bucket/path/file.zip");
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(),
+              VariantWith<UrlBuildString>(
+                  UrlBuildString{.url = "gs://bucket/path/file.zip"}));
+}
+
+TEST(ParseBuildStringTests, UnsupportedUrlSchemeFail) {
+  auto result = ParseBuildString("ftp://server/file");
+  EXPECT_THAT(result, IsError());
+}
+
+TEST(ParseBuildStringTests, UnsupportedS3SchemeFail) {
+  auto result = ParseBuildString("s3://bucket/file");
+  // s3:// does not start with gs://, https://, or http://, so it falls
+  // through to non-URL parsing. With the ":" it becomes a directory
+  // build string, which is allowed but not a URL.
+  EXPECT_THAT(result, IsOk());
+  EXPECT_THAT(result.value(), VariantWith<DirectoryBuildString>(testing::_));
+}
+
+TEST(SingleBuildStringGflagsCompatFlagTests, UrlBuildStringSuccess) {
+  std::optional<BuildString> value;
+  auto flag = GflagsCompatFlag("myflag", value);
+
+  ASSERT_THAT(flag.Parse({"--myflag=gs://bucket/image.zip"}), IsOk());
+  ASSERT_THAT(
+      value,
+      Optional(VariantWith<UrlBuildString>(
+          UrlBuildString{.url = "gs://bucket/image.zip"})));
+}
+
 }  // namespace cuttlefish
