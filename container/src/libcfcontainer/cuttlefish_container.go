@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -172,28 +171,15 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 	if err != nil {
 		return "", fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
 	}
-	waitCh := make(chan struct{})
-	go func() {
-		defer close(waitCh)
-		if _, err := io.Copy(attachRes.Conn, os.Stdin); err != nil {
-			log.Printf("failed to propagate standard input: %v", err)
-		}
-	}()
+	defer attachRes.Close()
 	var stdoutBuf bytes.Buffer
-	go func() {
-		defer close(waitCh)
-		var stdout io.Writer
-		if interact {
-			stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
-		} else {
-			stdout = &stdoutBuf
-		}
-		if _, err := stdcopy.StdCopy(stdout, os.Stderr, attachRes.Reader); err != nil {
-			log.Printf("failed to propagate standard output: %v", err)
-		}
-	}()
-	<-waitCh
-	attachRes.Close()
+	stdout := io.Writer(&stdoutBuf)
+	if interact {
+		stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	}
+	go io.Copy(attachRes.Conn, os.Stdin)
+	stdcopy.StdCopy(stdout, os.Stderr, attachRes.Reader)
+
 	if result, err := m.cli.ContainerExecInspect(ctx, createRes.ID); err != nil {
 		return "", fmt.Errorf("failed to run command on the container: %w", err)
 	} else if result.ExitCode != 0 {
