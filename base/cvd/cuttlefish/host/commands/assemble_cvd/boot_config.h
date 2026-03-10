@@ -25,8 +25,12 @@ class BootloaderEnvPartition {
   static Result<BootloaderEnvPartition> Create(
       const CuttlefishConfig&, const CuttlefishConfig::InstanceSpecific&);
 
+  const std::string& UbootEnvImagePath() const;
+
  private:
-  BootloaderEnvPartition() = default;
+  BootloaderEnvPartition(std::string uboot_env_image_path);
+
+  std::string uboot_env_image_path_;
 };
 
 class ApBootloaderEnvPartition {

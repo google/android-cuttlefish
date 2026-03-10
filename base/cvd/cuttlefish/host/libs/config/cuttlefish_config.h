@@ -380,8 +380,6 @@ class CuttlefishConfig {
 
     std::string ap_composite_disk_path() const;
 
-    std::string uboot_env_image_path() const;
-
     std::string ap_uboot_env_image_path() const;
 
     std::string ap_esp_image_path() const;

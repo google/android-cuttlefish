@@ -21,6 +21,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
@@ -33,6 +34,7 @@ namespace {
 
 std::vector<ImagePartition> PersistentCompositeDiskConfig(
     const CuttlefishConfig::InstanceSpecific& instance,
+    const BootloaderEnvPartition& bootloader_env,
     const std::optional<BootConfigPartition>& bootconfig_partition,
     const FactoryResetProtectedImage& frp,
     const PersistentVbmeta& persistent_vbmeta) {
@@ -43,7 +45,7 @@ std::vector<ImagePartition> PersistentCompositeDiskConfig(
   // cuttlefish.fragment in external/u-boot).
   partitions.push_back(ImagePartition{
       .label = "uboot_env",
-      .image_file_path = AbsolutePath(instance.uboot_env_image_path()),
+      .image_file_path = bootloader_env.UbootEnvImagePath(),
   });
   partitions.push_back(persistent_vbmeta.Partition());
   partitions.push_back(frp.Partition());
@@ -76,6 +78,7 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
     const std::optional<BootConfigPartition>& bootconfig_partition,
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
+    const BootloaderEnvPartition& bootloader_env,
     const FactoryResetProtectedImage& frp,
     const PersistentVbmeta& persistent_vbmeta) {
   const auto ipath = [&instance](const std::string& path) -> std::string {
@@ -85,8 +88,9 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
   auto persistent_disk_builder =
       DiskBuilder()
           .ReadOnly(false)
-          .Partitions(PersistentCompositeDiskConfig(
-              instance, *bootconfig_partition, frp, persistent_vbmeta))
+          .Partitions(PersistentCompositeDiskConfig(instance, bootloader_env,
+                                                    *bootconfig_partition, frp,
+                                                    persistent_vbmeta))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
           .ConfigPath(ipath("persistent_composite_disk_config.txt"))

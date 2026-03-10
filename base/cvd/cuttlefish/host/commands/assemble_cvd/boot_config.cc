@@ -208,9 +208,16 @@ Result<void> PrepareBootEnvImage(
 Result<BootloaderEnvPartition> BootloaderEnvPartition::Create(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  CF_EXPECT(PrepareBootEnvImage(
-      config, instance, instance.uboot_env_image_path(), instance.boot_flow()));
-  return BootloaderEnvPartition();
+  std::string path = AbsolutePath(instance.PerInstancePath("uboot_env.img"));
+  CF_EXPECT(PrepareBootEnvImage(config, instance, path, instance.boot_flow()));
+  return BootloaderEnvPartition(std::move(path));
+}
+
+BootloaderEnvPartition::BootloaderEnvPartition(std::string path)
+    : uboot_env_image_path_(std::move(path)) {}
+
+const std::string& BootloaderEnvPartition::UbootEnvImagePath() const {
+  return uboot_env_image_path_;
 }
 
 Result<std::optional<ApBootloaderEnvPartition>>

@@ -1407,10 +1407,6 @@ std::string CuttlefishConfig::InstanceSpecific::ap_composite_disk_path()
   return AbsolutePath(PerInstancePath("ap_composite.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
-  return AbsolutePath(PerInstancePath("uboot_env.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("ap_uboot_env.img"));
 }

@@ -200,9 +200,9 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECT(FactoryResetProtectedImage::Create(instance));
 
     // TODO: schuffelen - do something with these types
-    CF_EXPECT(InstanceCompositeDisk::Create(boot_config, config, instance,
-                                            factory_reset_protected,
-                                            persistent_vbmeta));
+    CF_EXPECT(InstanceCompositeDisk::Create(
+        boot_config, config, instance, bootloader_env_partition,
+        factory_reset_protected, persistent_vbmeta));
     CF_EXPECT(ApCompositeDisk::Create(ap_persistent_vbmeta, config, instance));
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
