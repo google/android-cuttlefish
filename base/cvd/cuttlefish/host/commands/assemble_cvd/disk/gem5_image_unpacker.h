@@ -16,11 +16,12 @@
 
 #pragma once
 
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 // Requires KernelRamdiskRepacker
-Result<void> Gem5ImageUnpacker(const CuttlefishConfig&);
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig&, const BootImageFlag&);
 
 }  // namespace cuttlefish

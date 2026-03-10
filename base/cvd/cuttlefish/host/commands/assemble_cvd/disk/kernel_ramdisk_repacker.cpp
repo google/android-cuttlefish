@@ -22,6 +22,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -94,9 +95,10 @@ Result<void> RepackSuperAndVbmeta(
 
 Result<void> RepackKernelRamdisk(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb) {
-  CF_EXPECTF(FileHasContent(instance.boot_image()), "File not found: {}",
-             instance.boot_image());
+    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb,
+    const BootImageFlag& boot_image_flag) {
+  std::string boot_image = boot_image_flag.ForIndex(instance.index());
+  CF_EXPECTF(FileHasContent(boot_image), "File not found: {}", boot_image);
   // The init_boot partition is be optional for testing boot.img
   // with the ramdisk inside.
   if (!FileHasContent(instance.init_boot_image())) {
@@ -113,7 +115,7 @@ Result<void> RepackKernelRamdisk(
   // not fail (..and the repacked kernel wouldn't be used anyway).
   if (!instance.kernel_path().empty() && !VmManagerIsGem5(config)) {
     CF_EXPECT(
-        RepackBootImage(avb, instance.kernel_path(), instance.boot_image(),
+        RepackBootImage(avb, instance.kernel_path(), boot_image,
                         instance.new_boot_image(), instance.instance_dir()),
         "Failed to regenerate the boot image with the new kernel");
   }
