@@ -87,11 +87,13 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
 
 AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  CredentialSource* credential_source,
+                                 std::string catchall_api_key,
                                  AndroidBuildUrl* android_build_url,
                                  const std::chrono::seconds retry_period,
                                  CasDownloader* cas_downloader)
     : http_client_(http_client),
       credential_source_(credential_source),
+      catchall_api_key_(catchall_api_key),
       android_build_url_(android_build_url),
       retry_period_(retry_period),
       cas_downloader_(cas_downloader) {}
@@ -212,15 +214,18 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
           << no_auth_error_message);
 
   bool is_signed = false;
-  if (json.isMember("signed")) {
-    is_signed = json["signed"].asBool();
+  if (HasValue(json, {"build", "buildSigned"})) {
+    is_signed = CF_EXPECT(GetValue<bool>(json, {"build", "buildSigned"}));
   }
 
   return AndroidBuildApi::BuildInfo{
-      .branch = CF_EXPECT(GetValue<std::string>(json, {"branch"})),
-      .product = CF_EXPECT(GetValue<std::string>(json, {"target", "product"})),
-      .status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"})),
-      .target = CF_EXPECT(GetValue<std::string>(json, {"target", "name"})),
+      .branch = CF_EXPECT(GetValue<std::string>(json, {"build", "branch"})),
+      .product = CF_EXPECT(
+          GetValue<std::string>(json, {"build", "target", "product"})),
+      .status = CF_EXPECT(
+          GetValue<std::string>(json, {"build", "buildAttemptStatus"})),
+      .target =
+          CF_EXPECT(GetValue<std::string>(json, {"build", "target", "name"})),
       .is_signed = is_signed,
   };
 }
@@ -262,6 +267,8 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
   if (credential_source_) {
     headers.push_back("Authorization: Bearer " +
                       CF_EXPECT(credential_source_->Credential()));
+  } else if (!catchall_api_key_.empty()) {
+    headers.push_back("X-goog-api-key: " + catchall_api_key_);
   }
   return headers;
 }

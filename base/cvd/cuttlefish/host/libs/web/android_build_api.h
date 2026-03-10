@@ -41,6 +41,7 @@ class AndroidBuildApi : public BuildApi {
   AndroidBuildApi(AndroidBuildApi&&) = delete;
   virtual ~AndroidBuildApi() = default;
   AndroidBuildApi(HttpClient& http_client, CredentialSource* credential_source,
+                  std::string catchall_api_key,
                   AndroidBuildUrl* android_build_url,
                   std::chrono::seconds retry_period,
                   CasDownloader* cas_downloader = nullptr);
@@ -118,6 +119,7 @@ class AndroidBuildApi : public BuildApi {
 
   HttpClient& http_client_;
   CredentialSource* credential_source_;
+  std::string catchall_api_key_;
   AndroidBuildUrl* android_build_url_;
   std::chrono::seconds retry_period_;
   CasDownloader* cas_downloader_;
