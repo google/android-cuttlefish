@@ -25,7 +25,6 @@ namespace cuttlefish {
 // This class is not thread safe.
 class InstanceLockFile {
   friend class InstanceLockFileManager;
-  using LockFile = cvd_impl::LockFile;
 
  public:
   unsigned Instance() const;
@@ -39,9 +38,6 @@ class InstanceLockFile {
 };
 
 class InstanceLockFileManager {
-  using LockFile = cvd_impl::LockFile;
-  using LockFileManager = cvd_impl::LockFileManager;
-
  public:
   InstanceLockFileManager(std::string instance_locks_path);
 

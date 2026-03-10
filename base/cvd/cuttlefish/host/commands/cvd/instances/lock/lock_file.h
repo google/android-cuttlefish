@@ -32,8 +32,6 @@ enum class InUseState : char {
 // Replicates tempfile.gettempdir() in Python
 std::string TempDir();
 
-namespace cvd_impl {
-
 // This class is not thread safe.
 class LockFile {
   friend class LockFileManager;
@@ -91,5 +89,4 @@ class LockFileManager {
   static Result<SharedFD> OpenLockFile(const std::string& file_path);
 };
 
-}  // namespace cvd_impl
 }  // namespace cuttlefish
