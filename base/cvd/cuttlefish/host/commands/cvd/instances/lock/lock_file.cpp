@@ -36,7 +36,6 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
-namespace cvd_impl {
 
 static Result<void> SetStatus(SharedFD& fd, const InUseState state) {
   CF_EXPECT(fd->LSeek(0, SEEK_SET) == 0, fd->StrError());
@@ -137,8 +136,6 @@ Result<std::optional<LockFile>> LockFileManager::TryAcquireLock(
   CF_EXPECT(std::move(flock_result));
   return {};
 }
-
-}  // namespace cvd_impl
 
 // Replicates tempfile.gettempdir() in Python
 std::string TempDir() {
