@@ -279,7 +279,13 @@ jobs:
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -a'
         test $(sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -n') -ge 2048
+    - name: Check iptables points to iptables-legacy
+      run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'update-alternatives --display iptables' | grep "link currently points to /usr/sbin/iptables-legacy"
+    - name: Test Java version
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'java --version'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'java --version' | grep 21.0
     - name: Shutdown qemu
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
