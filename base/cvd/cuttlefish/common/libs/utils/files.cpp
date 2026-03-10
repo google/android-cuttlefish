@@ -68,6 +68,7 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -187,9 +188,7 @@ Result<void> MoveDirectoryContents(const std::string& source,
     std::string src_filepath = source + "/" + filepath;
     std::string dst_filepath = destination + "/" + filepath;
     if (should_rename) {
-      CF_EXPECT(rename(src_filepath.c_str(), dst_filepath.c_str()) == 0,
-                "rename " << src_filepath << " to " << dst_filepath
-                          << " failed: " << strerror(errno));
+      CF_EXPECT(Rename(src_filepath, dst_filepath));
     } else {
       CF_EXPECT(
           Copy(src_filepath, dst_filepath),
@@ -490,9 +489,7 @@ Result<std::chrono::system_clock::time_point> FileModificationTime(
 Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath) {
   if (current_filepath != target_filepath) {
-    CF_EXPECT(rename(current_filepath.c_str(), target_filepath.c_str()) == 0,
-              "rename " << current_filepath << " to " << target_filepath
-                        << " failed: " << strerror(errno));
+    CF_EXPECT(Rename(current_filepath, target_filepath));
   }
   return target_filepath;
 }

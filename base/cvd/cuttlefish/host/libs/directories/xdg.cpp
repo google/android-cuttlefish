@@ -27,10 +27,10 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -175,9 +175,7 @@ Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {
   CF_EXPECT_EQ(WriteAll(file_fd, contents), contents.size(),
                file_fd->StrError());
 
-  CF_EXPECTF(rename(full_path_template.data(), full_path.data()) == 0,
-             "Failed to rename '{}' to '{}': '{}'", full_path_template,
-             full_path, StrError(errno));
+  CF_EXPECT(Rename(full_path_template, full_path));
 
   return {};
 }

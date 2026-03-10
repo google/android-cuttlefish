@@ -79,9 +79,11 @@ cf_cc_library(
     hdrs = ["de_android_sparse.h"],
     deps = [
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/posix:rename",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@android_system_core//:libsparse",
     ],
 )

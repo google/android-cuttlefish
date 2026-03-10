@@ -16,15 +16,16 @@
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
 
 #include <cstddef>
-#include <iostream>
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
-#include <sparse/sparse.h>
+#include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "android-base/file.h"
+#include "sparse/sparse.h"
 
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -71,11 +72,8 @@ bool ConvertToRawImageNoBinary(const std::string& image_path) {
     PLOG(FATAL) << "Unable to delete original sparse image";
   }
 
-  int success = rename(tmp_raw_image_path.c_str(), image_path.c_str());
-  if (success != 0) {
-    LOG(FATAL) << "Unable to rename raw image " << success;
-    return false;
-  }
+  Result<void> result = Rename(tmp_raw_image_path, image_path.c_str());
+  CHECK(result.ok()) << "Unable to rename raw image: " << result.error();
 
   return true;
 }
