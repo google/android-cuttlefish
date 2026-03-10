@@ -45,6 +45,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 
@@ -81,20 +82,16 @@ bool WriteLinesToFile(const Container& lines, const std::string& path) {
 }
 
 // Generate a filesystem_config.txt for all files in |fs_root|
-Result<bool> WriteFsConfig(const std::string& output_path,
+Result<void> WriteFsConfig(const std::string& output_path,
                            const std::string& fs_root,
                            const std::string& mount_point) {
   android::base::unique_fd fd(open(
       output_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
-  if (!fd.ok()) {
-    PLOG(ERROR) << "Failed to open " << output_path;
-    return false;
-  }
-  if (!android::base::WriteStringToFd(
-          " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n", fd)) {
-    PLOG(ERROR) << "Failed to write to " << output_path;
-    return false;
-  }
+  CF_EXPECTF(fd.ok(), "Couldn't open '{}': '{}'", output_path, StrError(errno));
+  static constexpr std::string_view kBeginning =
+      " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n";
+  CF_EXPECTF(android::base::WriteStringToFd(kBeginning, fd),
+             "Failed to write to '{}'", output_path);
   auto res = WalkDirectory(fs_root, [&fd, &output_path, &mount_point,
                                      &fs_root](const std::string& file_path) {
     const auto filename = file_path.substr(
@@ -110,10 +107,8 @@ Result<bool> WriteFsConfig(const std::string& output_path,
     }
     return true;
   });
-  if (!res.ok()) {
-    return false;
-  }
-  return true;
+  CF_EXPECT(std::move(res));
+  return {};
 }
 
 std::vector<std::string> GetRamdiskModules(
