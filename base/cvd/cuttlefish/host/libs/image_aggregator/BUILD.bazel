@@ -132,7 +132,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/image_aggregator:disk_image",
-        "//cuttlefish/posix:strerror",
+        "//cuttlefish/posix:rename",
         "//cuttlefish/result",
         "//libbase",
         "@android_system_core//:libsparse",
