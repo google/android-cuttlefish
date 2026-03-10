@@ -14,11 +14,13 @@ Homepage: https://github.com/google/android-cuttlefish
 Package: cuttlefish-integration-gigabyte-arm64
 Architecture: any
 Multi-Arch: foreign
-Depends: dkms,
+Depends: default-jdk (>= 2:1.21),
+         dkms,
          libc6-dev,
          libglvnd-dev,
          lzop,
          ntpsec,
+         openjdk-25-jdk,
          pkgconf,
          ${misc:Depends},
          ${shlibs:Depends}
