@@ -259,10 +259,6 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	defer h.cleanupDetachDisk(insName, attachedDiskName)
 	log.Println("disk attached")
 
-	if err := WaitForInstance(project, zone, insName); err != nil {
-		return fmt.Errorf("waiting for instance error: %v", err)
-	}
-
 	if err := UploadBashScript(project, zone, insName, "mount_attached_disk.sh", scripts.MountAttachedDisk); err != nil {
 		return fmt.Errorf("error uploading script: %v", err)
 	}
@@ -274,13 +270,10 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 		return fmt.Errorf("modify func failed: %v", err)
 	}
 
-	// Reboot the instance to force a clean umount of the attached disk's file system.
-	if err := RunCmd(project, zone, insName, "sudo reboot"); err != nil {
+	if err := RunCmd(project, zone, insName, "sudo shutdown -h now"); err != nil {
 		return err
 	}
-	if err := WaitForInstance(project, zone, insName); err != nil {
-		return fmt.Errorf("waiting for instance error: %v", err)
-	}
+
 	log.Printf("deleting instance %q...", insName)
 	if err := h.StopInstance(insName); err != nil {
 		return fmt.Errorf("error deleting instance: %v", err)
