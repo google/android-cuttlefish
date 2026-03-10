@@ -113,14 +113,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_images_dir(
     const std::string& dir) {
   (*Dictionary())[kImagesDir] = dir;
 }
-static constexpr char kBootImage[] = "boot_image";
-std::string CuttlefishConfig::InstanceSpecific::boot_image() const {
-  return (*Dictionary())[kBootImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_boot_image(
-    const std::string& boot_image) {
-  (*Dictionary())[kBootImage] = boot_image;
-}
 static constexpr char kNewBootImage[] = "new_boot_image";
 std::string CuttlefishConfig::InstanceSpecific::new_boot_image() const {
   return (*Dictionary())[kNewBootImage].asString();

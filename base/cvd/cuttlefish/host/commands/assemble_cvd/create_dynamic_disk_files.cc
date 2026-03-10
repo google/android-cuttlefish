@@ -47,6 +47,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
@@ -96,7 +97,7 @@ Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
 
 Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
-    AndroidBuilds& android_builds,
+    AndroidBuilds& android_builds, const BootImageFlag& boot_image,
     const SystemImageDirFlag& system_image_dirs) {
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
       InstanceImageFiles(config);
@@ -119,10 +120,11 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
     CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
-    CF_EXPECT(RepackKernelRamdisk(config, instance, Avb()));
+    CF_EXPECT(RepackKernelRamdisk(config, instance, Avb(), boot_image));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));
-    CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk
+    CF_EXPECT(
+        Gem5ImageUnpacker(config, boot_image));  // Requires RepackKernelRamdisk
     CF_EXPECT(InitializeEspImage(config, instance));
 
     CF_EXPECT(InitializeAccessKregistryImage(instance));

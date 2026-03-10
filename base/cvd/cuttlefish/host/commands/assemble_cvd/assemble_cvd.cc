@@ -483,7 +483,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
                            absl::StrCat(Pretty(android_builds))));
 
   CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, android_builds,
-                                   system_image_dir));
+                                   boot_image, system_image_dir));
 
   return config;
 }

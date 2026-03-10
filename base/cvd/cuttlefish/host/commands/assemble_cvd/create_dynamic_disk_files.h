@@ -17,6 +17,7 @@
 #pragma once
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
@@ -26,6 +27,7 @@ namespace cuttlefish {
 
 Result<void> CreateDynamicDiskFiles(const FetcherConfigs& fetcher_config,
                                     const CuttlefishConfig& config,
-                                    AndroidBuilds&, const SystemImageDirFlag&);
+                                    AndroidBuilds&, const BootImageFlag&,
+                                    const SystemImageDirFlag&);
 
 }  // namespace cuttlefish
