@@ -18,6 +18,7 @@
 
 #include <optional>
 
+#include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/factory_reset_protected.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_vbmeta.h"
@@ -31,6 +32,7 @@ class InstanceCompositeDisk {
   static Result<InstanceCompositeDisk> Create(
       const std::optional<BootConfigPartition>&, const CuttlefishConfig&,
       const CuttlefishConfig::InstanceSpecific&,
+      const BootloaderEnvPartition& bootloader_env,
       const FactoryResetProtectedImage&, const PersistentVbmeta&);
 
  private:
