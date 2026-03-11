@@ -24,7 +24,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/expect.h"
@@ -125,10 +124,9 @@ Result<std::string> InstanceBootImage::Generate() {
              previous_boot_image);
 
   std::string new_path = instance_->PerInstancePath("boot_repacked.img");
-  CF_EXPECT(
-      RepackBootImage(Avb(), instance_->kernel_path(), previous_boot_image,
-                      new_path, instance_->instance_dir()),
-      "Failed to regenerate the boot image with the new kernel");
+  CF_EXPECT(RepackBootImage(instance_->kernel_path(), previous_boot_image,
+                            new_path, instance_->instance_dir()),
+            "Failed to regenerate the boot image with the new kernel");
   path_ = new_path;
 
   return *path_;
