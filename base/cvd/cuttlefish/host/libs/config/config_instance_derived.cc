@@ -38,6 +38,10 @@ std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("console"));
 }
 
+std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstanceInternalPath("hwcomposer-pmem"));
+}
+
 std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("kernel-log-pipe"));
 }

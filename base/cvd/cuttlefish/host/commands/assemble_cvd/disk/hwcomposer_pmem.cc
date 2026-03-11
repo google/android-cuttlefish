@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/hwcomposer_pmem.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/result/result.h"
@@ -25,12 +26,11 @@ namespace cuttlefish {
 
 Result<void> InitializeHwcomposerPmemImage(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.hwcomposer_pmem_path())) {
+  if (FileExists(HwcomposerPmemPath(instance))) {
     return {};
   }
-  CF_EXPECT(
-      CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */, "none"),
-      "Failed creating \"" << instance.hwcomposer_pmem_path() << "\"");
+  CF_EXPECTF(CreateBlankImage(HwcomposerPmemPath(instance), 2 /* mb */, "none"),
+             "Failed creating '{}'", HwcomposerPmemPath(instance));
   return {};
 }
 

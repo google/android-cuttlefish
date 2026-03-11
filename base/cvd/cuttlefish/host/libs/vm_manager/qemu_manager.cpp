@@ -332,12 +332,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   auto hwcomposer_pmem_size_bytes = 0;
   if (instance.hwcomposer() != kHwComposerNone) {
-    if (FileExists(instance.hwcomposer_pmem_path())) {
-      hwcomposer_pmem_size_bytes = FileSize(instance.hwcomposer_pmem_path());
-      CF_EXPECT((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
-                instance.hwcomposer_pmem_path()
-                    << " file size (" << hwcomposer_pmem_size_bytes
-                    << ") not a multiple of 1MB");
+    const std::string pmem_path = HwcomposerPmemPath(instance);
+    if (FileExists(pmem_path)) {
+      hwcomposer_pmem_size_bytes = FileSize(pmem_path);
+      CF_EXPECTF((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
+                 "'{}' file size ({}) not a multiple of 1MB", pmem_path,
+                 hwcomposer_pmem_size_bytes);
     }
   }
 
@@ -737,8 +737,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       qemu_cmd.AddParameter("-object");
       qemu_cmd.AddParameter(
           "memory-backend-file,id=objpmem2,share=on,mem-path=",
-          instance.hwcomposer_pmem_path(),
-          ",size=", hwcomposer_pmem_size_bytes);
+          HwcomposerPmemPath(instance), ",size=", hwcomposer_pmem_size_bytes);
 
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(
