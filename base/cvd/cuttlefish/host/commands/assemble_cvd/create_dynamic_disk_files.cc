@@ -51,7 +51,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -120,7 +119,7 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
     CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
-    CF_EXPECT(RepackKernelRamdisk(config, instance, Avb(), boot_image));
+    CF_EXPECT(RepackKernelRamdisk(config, instance, boot_image));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(

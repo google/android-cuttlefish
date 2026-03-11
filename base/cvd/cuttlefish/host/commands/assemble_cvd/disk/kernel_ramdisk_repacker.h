@@ -17,14 +17,12 @@
 #pragma once
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 Result<void> RepackKernelRamdisk(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb,
-    const BootImageFlag&);
+    const CuttlefishConfig::InstanceSpecific& instance, const BootImageFlag&);
 
 }  // namespace cuttlefish

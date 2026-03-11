@@ -95,7 +95,7 @@ Result<void> RepackSuperAndVbmeta(
 
 Result<void> RepackKernelRamdisk(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb,
+    const CuttlefishConfig::InstanceSpecific& instance,
     const BootImageFlag& boot_image_flag) {
   std::string boot_image = boot_image_flag.ForIndex(instance.index());
   CF_EXPECTF(FileHasContent(boot_image), "File not found: {}", boot_image);
@@ -115,7 +115,7 @@ Result<void> RepackKernelRamdisk(
   // not fail (..and the repacked kernel wouldn't be used anyway).
   if (!instance.kernel_path().empty() && !VmManagerIsGem5(config)) {
     CF_EXPECT(
-        RepackBootImage(avb, instance.kernel_path(), boot_image,
+        RepackBootImage(Avb(), instance.kernel_path(), boot_image,
                         instance.new_boot_image(), instance.instance_dir()),
         "Failed to regenerate the boot image with the new kernel");
   }
