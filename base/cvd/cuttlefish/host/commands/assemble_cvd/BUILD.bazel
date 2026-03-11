@@ -483,6 +483,7 @@ cf_cc_library(
     srcs = ["instance_image_files.cc"],
     hdrs = ["instance_image_files.h"],
     deps = [
+        "//cuttlefish/host/commands/assemble_cvd/disk:efi_loader",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/disk:kernel_ramdisk_repacker",
         "//cuttlefish/host/commands/assemble_cvd/disk:metadata_image",
