@@ -20,13 +20,11 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<void> RepackBootImage(const Avb& avb,
-                             const std::string& new_kernel_path,
+Result<void> RepackBootImage(const std::string& new_kernel_path,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
                              const std::string& build_dir);

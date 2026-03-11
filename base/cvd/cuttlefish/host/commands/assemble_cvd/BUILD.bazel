@@ -601,6 +601,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:kernel_module_parser",
+        "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/io:shared_fd",

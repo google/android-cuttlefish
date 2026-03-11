@@ -42,6 +42,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
+#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/io/shared_fd.h"

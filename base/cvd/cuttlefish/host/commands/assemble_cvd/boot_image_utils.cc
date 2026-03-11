@@ -262,8 +262,7 @@ Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
   return vendor_boot;
 }
 
-Result<void> RepackBootImage(const Avb& avb,
-                             const std::string& new_kernel_path,
+Result<void> RepackBootImage(const std::string& new_kernel_path,
                              const std::string& boot_image_path,
                              const std::string& new_boot_image_path,
                              const std::string& build_dir) {
@@ -295,9 +294,10 @@ Result<void> RepackBootImage(const Avb& avb,
   CF_EXPECT(Copy(new_boot_image, *tmp_boot_image));
 
   if (new_boot_image_size <= FileSize(boot_image_path)) {
-    CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", FileSize(boot_image_path)));
+    CF_EXPECT(Avb().AddHashFooter(tmp_boot_image_path, "boot",
+                                  FileSize(boot_image_path)));
   } else {
-    CF_EXPECT(avb.AddHashFooter(tmp_boot_image_path, "boot", 0));
+    CF_EXPECT(Avb().AddHashFooter(tmp_boot_image_path, "boot", 0));
   }
   CF_EXPECT(DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path));
 
