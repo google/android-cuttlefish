@@ -78,34 +78,22 @@ Result<void> SubstituteWithFlag(
   const std::string bin_dir_parent = CF_EXPECT(GetCuttlefishCommonDir());
 
   if (host_substitutions == std::vector<std::string>{"all"}) {
-    bool substitution_error = false;
-    std::function<bool(const std::string& path)> callback =
-        [&bin_dir_parent, &target_dir,
-         &substitution_error](const std::string& path) -> bool {
+    auto callback = [&bin_dir_parent,
+                     &target_dir](const std::string& path) -> Result<void> {
       std::string_view local_path(path);
-      if (!android::base::ConsumePrefix(&local_path, bin_dir_parent)) {
-        LOG(ERROR) << "Unexpected prefix in : '" << local_path << "'";
-        substitution_error = true;
-        return false;
-      }
-      std::string to_substitute = target_dir + std::string(local_path);
+      CF_EXPECTF(android::base::ConsumePrefix(&local_path, bin_dir_parent),
+                 "Unexpected prefix in : '{}'", local_path);
+
+      const std::string to_substitute = target_dir + std::string(local_path);
       if (FileExists(to_substitute) && !IsDirectory(to_substitute)) {
-        if (unlink(to_substitute.c_str()) != 0) {
-          PLOG(ERROR) << "Failed to unlink '" << to_substitute << "'";
-          substitution_error = true;
-          return false;
-        }
-        Result<void> symlink_res = Symlink(path, to_substitute);
-        if (!symlink_res.ok()) {
-          LOG(ERROR) << symlink_res.error();
-          substitution_error = true;
-          return false;
-        }
+        CF_EXPECTF(unlink(to_substitute.c_str()) >= 0,
+                   "Failed to unlink '{}': '{}'", to_substitute,
+                   StrError(errno));
+        CF_EXPECT(Symlink(path, to_substitute));
       }
-      return true;
+      return {};
     };
     CF_EXPECT(WalkDirectory(bin_dir_parent, callback));
-    CF_EXPECT(!substitution_error);
   } else {
     for (const std::string& substitution : host_substitutions) {
       std::string source = fmt::format("{}/{}", bin_dir_parent, substitution);

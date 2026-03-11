@@ -29,7 +29,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/stringprintf.h"
 #include "android-base/strings.h"
 #include "fmt/format.h"
 
@@ -93,21 +92,21 @@ Result<void> WriteFsConfig(const std::string& output_path,
       " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n";
   CF_EXPECTF(android::base::WriteStringToFd(kBeginning, fd),
              "Failed to write to '{}'", output_path);
-  auto res = WalkDirectory(fs_root, [&fd, &output_path, &mount_point,
-                                     &fs_root](const std::string& file_path) {
-    const auto filename = file_path.substr(
-        fs_root.back() == '/' ? fs_root.size() : fs_root.size() + 1);
-    std::string fs_context = " 0 0 644 capabilities=0x0\n";
-    if (DirectoryExists(file_path)) {
-      fs_context = " 0 0 755 capabilities=0x0\n";
-    }
-    if (!android::base::WriteStringToFd(
-            mount_point + "/" + filename + fs_context, fd)) {
-      PLOG(ERROR) << "Failed to write to " << output_path;
-      return false;
-    }
-    return true;
-  });
+  Result<void> res = WalkDirectory(
+      fs_root,
+      [&fd, &output_path, &mount_point,
+       &fs_root](const std::string& file_path) -> Result<void> {
+        const std::string filename = file_path.substr(
+            fs_root.back() == '/' ? fs_root.size() : fs_root.size() + 1);
+        const std::string fs_context = DirectoryExists(file_path)
+                                           ? " 0 0 755 capabilities=0x0\n"
+                                           : " 0 0 644 capabilities=0x0\n";
+        CF_EXPECTF(android::base::WriteStringToFd(
+                       mount_point + "/" + filename + fs_context, fd),
+                   "Failed to write to '{}': '{}'", output_path,
+                   StrError(errno));
+        return {};
+      });
   CF_EXPECT(std::move(res));
   return {};
 }

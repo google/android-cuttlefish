@@ -34,16 +34,16 @@ Result<std::vector<std::string>> ExtractImageContents(
 
   // The image is already uncompressed. Link or move its contents.
   std::vector<std::string> files;
-  const std::function<bool(const std::string&)> file_collector =
+  auto file_collector =
       [&files, &image_filepath,
-       &target_dir](const std::string& filepath) mutable {
-        std::string target_filepath =
-            target_dir + "/" + filepath.substr(image_filepath.size() + 1);
-        if (!IsDirectory(filepath)) {
-          files.push_back(target_filepath);
-        }
-        return true;
-      };
+       &target_dir](const std::string& filepath) mutable -> Result<void> {
+    std::string target_filepath =
+        target_dir + "/" + filepath.substr(image_filepath.size() + 1);
+    if (!IsDirectory(filepath)) {
+      files.push_back(target_filepath);
+    }
+    return {};
+  };
   CF_EXPECT(WalkDirectory(image_filepath, file_collector));
 
   if (keep_archive) {
@@ -52,7 +52,6 @@ Result<std::vector<std::string>> ExtractImageContents(
   } else {
     CF_EXPECT(MoveDirectoryContents(image_filepath, target_dir));
     // Ignore even if removing directory fails - harmless.
-    // TODO: b/471069557 - diagnose unused
     Result<void> unused = RecursivelyRemoveDirectory(image_filepath);
   }
   return files;
