@@ -26,8 +26,7 @@ namespace cuttlefish {
 
 Result<void> RepackBootImage(const std::string& new_kernel_path,
                              const std::string& boot_image_path,
-                             const std::string& new_boot_image_path,
-                             const std::string& build_dir);
+                             const std::string& new_boot_image_path);
 Result<void> RepackVendorBootImage(
     const std::string& new_ramdisk_path,
     const std::string& vendor_boot_image_path,

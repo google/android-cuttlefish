@@ -264,8 +264,7 @@ Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
 
 Result<void> RepackBootImage(const std::string& new_kernel_path,
                              const std::string& boot_image_path,
-                             const std::string& new_boot_image_path,
-                             const std::string& build_dir) {
+                             const std::string& new_boot_image_path) {
   NativeFilesystem native_filesystem;
 
   std::unique_ptr<ReaderSeeker> boot_image_reader =
