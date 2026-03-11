@@ -614,24 +614,6 @@ bool FileIsSocket(const std::string& path) {
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
-/**
- * Find an image file through the input path and pattern.
- *
- * If it finds the file, return the path string.
- * If it can't find the file, return empty string.
- */
-std::string FindImage(const std::string& search_path,
-                      const std::vector<std::string>& pattern) {
-  const std::string& search_path_extend = search_path + "/";
-  for (const auto& name : pattern) {
-    std::string image = search_path_extend + name;
-    if (FileExists(image)) {
-      return image;
-    }
-  }
-  return "";
-}
-
 Result<std::string> FindFile(const std::string& path,
                              const std::string& target_name) {
   std::string ret;
