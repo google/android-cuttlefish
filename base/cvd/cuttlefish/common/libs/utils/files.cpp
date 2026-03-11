@@ -628,24 +628,6 @@ Result<std::string> FindFile(const std::string& path,
 // path to each file/directory.
 Result<void> WalkDirectory(
     const std::string& dir,
-    const std::function<bool(const std::string&)>& callback) {
-  const auto files = CF_EXPECT(DirectoryContents(dir));
-  for (const auto& filename : files) {
-    auto file_path = dir + "/";
-    file_path.append(filename);
-    callback(file_path);
-    if (DirectoryExists(file_path)) {
-      auto res = WalkDirectory(file_path, callback);
-      if (!res.ok()) {
-        return res;
-      }
-    }
-  }
-  return {};
-}
-
-Result<void> WalkDirectory(
-    const std::string& dir,
     const std::function<Result<void>(const std::string&)>& callback) {
   for (const std::string& filename : CF_EXPECT(DirectoryContents(dir))) {
     auto file_path = dir + "/";

@@ -101,9 +101,6 @@ Result<std::string> FindFile(const std::string& path,
 
 Result<void> WalkDirectory(
     const std::string& dir,
-    const std::function<bool(const std::string&)>& callback);
-Result<void> WalkDirectory(
-    const std::string& dir,
     const std::function<Result<void>(const std::string&)>& callback);
 
 // parameter to EmulateAbsolutePath
