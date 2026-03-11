@@ -232,10 +232,13 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
+        "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
         "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/libs/avb",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
     ],
 )

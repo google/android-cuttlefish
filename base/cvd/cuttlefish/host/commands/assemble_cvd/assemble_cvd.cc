@@ -351,7 +351,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // then don't preserve any files and delete everything.
 
     std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
-        InstanceImageFiles(config);
+        InstanceImageFiles(config, boot_image);
 
     size_t index = 0;
     for (const auto& instance : config.Instances()) {
