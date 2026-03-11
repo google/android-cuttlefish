@@ -108,6 +108,17 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "efi_loader",
+    srcs = ["efi_loader.cc"],
+    hdrs = ["efi_loader.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "factory_reset_protected",
     srcs = ["factory_reset_protected.cc"],
     hdrs = ["factory_reset_protected.h"],
