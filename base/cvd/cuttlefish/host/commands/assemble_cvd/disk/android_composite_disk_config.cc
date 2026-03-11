@@ -34,6 +34,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/build_super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/image_aggregator/gpt_type_guid.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/host/libs/image_aggregator/super_builder.h"
 #include "cuttlefish/result/result.h"
@@ -43,6 +44,7 @@ namespace {
 
 // Defined as constants to avoid typos in repeated names
 constexpr struct {
+  std::string_view android_esp = "android_esp";
   std::string_view boot = "boot";
   std::string_view hibernation = "hibernation";
   std::string_view init_boot = "init_boot";
@@ -92,6 +94,10 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
       kPartitions.init_boot,          kPartitions.vbmeta_vendor_dlkm,
       kPartitions.vbmeta_system_dlkm, kPartitions.hibernation,
       kPartitions.vvmtruststore,
+  };
+
+  const std::set<std::string_view> efi_partitions = {
+      kPartitions.android_esp,
   };
 
   std::map<std::string, std::string> primary_paths = {
@@ -172,19 +178,26 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
       return CF_ERRF("Could not find file for partition '{}'", partition);
     }
 
+    GptPartitionType type = efi_partitions.count(partition) > 0
+                                ? GptPartitionType::kEfiSystemPartition
+                                : GptPartitionType::kLinuxFilesystem;
+
     if (ab_partitions.count(partition)) {
       partitions.push_back(ImagePartition{
           .label = absl::StrCat(partition, "_a"),
           .image_file_path = AbsolutePath(path_used),
+          .type = type,
       });
       partitions.push_back(ImagePartition{
           .label = absl::StrCat(partition, "_b"),
           .image_file_path = AbsolutePath(path_used),
+          .type = type,
       });
     } else {
       partitions.push_back(ImagePartition{
           .label = std::string(partition),
           .image_file_path = AbsolutePath(path_used),
+          .type = type,
       });
     }
   }

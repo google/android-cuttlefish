@@ -29,6 +29,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:gpt_type_guid",
         "//cuttlefish/host/libs/image_aggregator:super_builder",
         "//cuttlefish/result",
         "//libbase",
