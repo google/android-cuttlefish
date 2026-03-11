@@ -374,7 +374,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   // TODO: b/471069557 - diagnose unused
   Result<void> unused = CreateBlankImage(kregistry_path, 2 /* mb */, "none");
 
-  auto hwcomposer_pmem_path = instance_.hwcomposer_pmem_path();
+  const std::string hwcomposer_pmem_path = HwcomposerPmemPath(instance_);
   unlink(hwcomposer_pmem_path.c_str());
   // TODO: b/471069557 - diagnose unused
   unused = CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none");

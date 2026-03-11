@@ -595,9 +595,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
 
   if (instance.hwcomposer() != kHwComposerNone) {
     const bool pmem_disabled = instance.mte() || !instance.use_pmem();
-    if (!pmem_disabled && FileExists(instance.hwcomposer_pmem_path())) {
-      crosvm_cmd.Cmd().AddParameter("--pmem=path=",
-                                    instance.hwcomposer_pmem_path());
+    const std::string pmem_path = HwcomposerPmemPath(instance);
+    if (!pmem_disabled && FileExists(pmem_path)) {
+      crosvm_cmd.Cmd().AddParameter("--pmem=path=", pmem_path);
     }
   }
 
