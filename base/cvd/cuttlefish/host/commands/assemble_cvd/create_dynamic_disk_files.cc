@@ -99,7 +99,7 @@ Result<void> CreateDynamicDiskFiles(
     AndroidBuilds& android_builds, const BootImageFlag& boot_image,
     const SystemImageDirFlag& system_image_dirs) {
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
-      InstanceImageFiles(config);
+      InstanceImageFiles(config, boot_image);
   size_t instance_index = 0;
   for (const auto& instance : config.Instances()) {
     const FetcherConfig& fetcher_config =
@@ -119,7 +119,7 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
     CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
-    CF_EXPECT(RepackKernelRamdisk(config, instance, boot_image));
+    CF_EXPECT(RepackKernelRamdisk(config, instance));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));
     CF_EXPECT(
