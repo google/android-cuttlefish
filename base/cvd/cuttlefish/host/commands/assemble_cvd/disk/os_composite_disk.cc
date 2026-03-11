@@ -25,7 +25,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/android_composite_disk_config.h"
-#include "cuttlefish/host/commands/assemble_cvd/disk/android_efi_loader_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_composite_disk.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/chromeos_state.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/fuchsia_composite_disk.h"
@@ -48,10 +47,8 @@ Result<std::vector<ImagePartition>> GetOsCompositeDiskConfig(
     AndroidBuild& android_build, const SystemImageDirFlag& system_image_dir) {
   switch (instance.boot_flow()) {
     case BootFlow::Android:
-      return CF_EXPECT(AndroidCompositeDiskConfig(
-          instance, image_files, android_build, system_image_dir));
     case BootFlow::AndroidEfiLoader:
-      return CF_EXPECT(AndroidEfiLoaderCompositeDiskConfig(
+      return CF_EXPECT(AndroidCompositeDiskConfig(
           instance, image_files, android_build, system_image_dir));
     case BootFlow::ChromeOs:
       CHECK(chrome_os_state.has_value());

@@ -91,9 +91,9 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
   };
 
   const std::set<std::string_view> optional_partitions = {
-      kPartitions.init_boot,          kPartitions.vbmeta_vendor_dlkm,
-      kPartitions.vbmeta_system_dlkm, kPartitions.hibernation,
-      kPartitions.vvmtruststore,
+      kPartitions.android_esp,        kPartitions.init_boot,
+      kPartitions.vbmeta_vendor_dlkm, kPartitions.vbmeta_system_dlkm,
+      kPartitions.hibernation,        kPartitions.vvmtruststore,
   };
 
   const std::set<std::string_view> efi_partitions = {
@@ -101,9 +101,11 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
   };
 
   std::map<std::string, std::string> primary_paths = {
+      {std::string(kPartitions.android_esp), ""},
       {std::string(kPartitions.init_boot), instance.init_boot_image()},
       {std::string(kPartitions.metadata), ""},
       {std::string(kPartitions.misc), ""},
+      {std::string(kPartitions.super), instance.new_super_image()},
       {std::string(kPartitions.userdata), instance.new_data_image()},
       {std::string(kPartitions.vbmeta), instance.new_vbmeta_image()},
       {std::string(kPartitions.vbmeta_system), instance.vbmeta_system_image()},
@@ -113,7 +115,6 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
        instance.new_vbmeta_vendor_dlkm_image()},
       {std::string(kPartitions.vendor_boot), instance.new_vendor_boot_image()},
       {std::string(kPartitions.vvmtruststore), instance.vvmtruststore_path()},
-      {std::string(kPartitions.super), instance.new_super_image()},
   };
 
   for (std::string partition : CF_EXPECT(android_build.PhysicalPartitions())) {
@@ -182,23 +183,33 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
                                 ? GptPartitionType::kEfiSystemPartition
                                 : GptPartitionType::kLinuxFilesystem;
 
+    // Cuttlefish uboot EFI bootflow by default looks at the first partition
+    // for EFI application. Thus we put "android_esp" at the beginning.
+    std::vector<ImagePartition>::iterator insert_location =
+        type == GptPartitionType::kEfiSystemPartition ? partitions.begin()
+                                                      : partitions.end();
+
     if (ab_partitions.count(partition)) {
-      partitions.push_back(ImagePartition{
-          .label = absl::StrCat(partition, "_a"),
-          .image_file_path = AbsolutePath(path_used),
-          .type = type,
-      });
-      partitions.push_back(ImagePartition{
-          .label = absl::StrCat(partition, "_b"),
-          .image_file_path = AbsolutePath(path_used),
-          .type = type,
-      });
+      insert_location = partitions.insert(
+          insert_location, ImagePartition{
+                               .label = absl::StrCat(partition, "_a"),
+                               .image_file_path = AbsolutePath(path_used),
+                               .type = type,
+                           });
+      insert_location++;
+      partitions.insert(insert_location,
+                        ImagePartition{
+                            .label = absl::StrCat(partition, "_b"),
+                            .image_file_path = AbsolutePath(path_used),
+                            .type = type,
+                        });
     } else {
-      partitions.push_back(ImagePartition{
-          .label = std::string(partition),
-          .image_file_path = AbsolutePath(path_used),
-          .type = type,
-      });
+      partitions.insert(insert_location,
+                        ImagePartition{
+                            .label = std::string(partition),
+                            .image_file_path = AbsolutePath(path_used),
+                            .type = type,
+                        });
     }
   }
 
