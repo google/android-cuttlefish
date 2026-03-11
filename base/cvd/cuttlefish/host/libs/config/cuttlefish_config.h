@@ -555,7 +555,6 @@ class CuttlefishConfig {
 
     // android artifacts
     std::string images_dir() const;
-    std::string new_boot_image() const;
     std::string init_boot_image() const;
     std::string data_image() const;
     std::string new_data_image() const;
@@ -791,7 +790,6 @@ class CuttlefishConfig {
 
     // system image files
     void set_images_dir(const std::string& dir);
-    void set_new_boot_image(const std::string& new_boot_image);
     void set_init_boot_image(const std::string& init_boot_image);
     void set_data_image(const std::string& data_image);
     void set_new_data_image(const std::string& new_data_image);

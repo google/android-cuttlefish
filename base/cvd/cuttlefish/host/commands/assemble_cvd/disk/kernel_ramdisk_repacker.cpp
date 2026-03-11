@@ -124,11 +124,12 @@ Result<std::string> InstanceBootImage::Generate() {
   CF_EXPECTF(FileHasContent(previous_boot_image), "File not found: {}",
              previous_boot_image);
 
+  std::string new_path = instance_->PerInstancePath("boot_repacked.img");
   CF_EXPECT(
       RepackBootImage(Avb(), instance_->kernel_path(), previous_boot_image,
-                      instance_->new_boot_image(), instance_->instance_dir()),
+                      new_path, instance_->instance_dir()),
       "Failed to regenerate the boot image with the new kernel");
-  path_ = instance_->new_boot_image();
+  path_ = new_path;
 
   return *path_;
 }
