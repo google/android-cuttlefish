@@ -650,6 +650,20 @@ Result<void> WalkDirectory(
   return {};
 }
 
+Result<void> WalkDirectory(
+    const std::string& dir,
+    const std::function<Result<void>(const std::string&)>& callback) {
+  for (const std::string& filename : CF_EXPECT(DirectoryContents(dir))) {
+    auto file_path = dir + "/";
+    file_path.append(filename);
+    CF_EXPECT(callback(file_path));
+    if (DirectoryExists(file_path)) {
+      CF_EXPECT(WalkDirectory(file_path, callback));
+    }
+  }
+  return {};
+}
+
 namespace {
 
 std::vector<std::string> FoldPath(std::vector<std::string> elements,
