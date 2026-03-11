@@ -97,7 +97,6 @@ Result<void> DiskImageFlagsVectorization(
   for (const auto& num : instance_nums) {
     auto instance = config.ForInstance(num);
     instance.set_images_dir(system_image_dir.ForIndex(instance_index));
-    instance.set_new_boot_image(boot_image.ForIndex(instance_index));
 
     instance.set_init_boot_image(system_image_dir.ForIndex(instance_index) +
                                  "/init_boot.img");
@@ -207,13 +206,6 @@ Result<void> DiskImageFlagsVectorization(
         const_cast<const CuttlefishConfig&>(config);
     const CuttlefishConfig::InstanceSpecific const_instance =
         const_config.ForInstance(num);
-    if (!kernel_path.KernelPathForIndex(instance_index).empty() &&
-        !VmManagerIsGem5(config)) {
-      const std::string new_boot_image_path =
-          const_instance.PerInstancePath("boot_repacked.img");
-      // change the new flag value to corresponding instance
-      instance.set_new_boot_image(new_boot_image_path);
-    }
 
     instance.set_data_image(system_image_dir.ForIndex(instance_index) +
                             "/userdata.img");
