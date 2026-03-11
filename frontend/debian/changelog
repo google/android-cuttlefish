@@ -1,4 +1,4 @@
-cuttlefish-frontend (1.45.0) unstable; urgency=medium
+cuttlefish-frontend (1.45.0) stable; urgency=medium
 
   * Start development on v1.45 by @Databean in https://github.com/google/android-cuttlefish/pull/2172
   * podcvd checks host's routing table to find CIDR by @0405ysj in https://github.com/google/android-cuttlefish/pull/2166
