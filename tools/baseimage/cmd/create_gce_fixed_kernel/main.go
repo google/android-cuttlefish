@@ -31,10 +31,12 @@ const debianSourceImageProject = "debian-cloud"
 
 var sourceImageMap = map[gce.Arch]map[int]string{
 	gce.ArchX86: {
-		13: "debian-13-trixie-v20260210",
+		12: "debian-12-bookworm-v20260114",
+		13: "debian-13-trixie-v20260114",
 	},
 	gce.ArchArm: {
-		13: "debian-13-trixie-arm64-v20260210",
+		12: "debian-12-bookworm-arm64-v20260114",
+		13: "debian-13-trixie-arm64-v20260114",
 	},
 }
 
