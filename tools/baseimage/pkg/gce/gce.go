@@ -259,6 +259,13 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	defer h.cleanupDetachDisk(insName, attachedDiskName)
 	log.Println("disk attached")
 
+	if err := UploadBashScript(project, zone, insName, "fill_available_disk_space.sh", scripts.FillAvailableDiskSpace); err != nil {
+		return fmt.Errorf("error uploading script: %v", err)
+	}
+	if err := RunCmd(project, zone, insName, "./fill_available_disk_space.sh"); err != nil {
+		return fmt.Errorf("fill_available_disk_space.sh failed: %v", err)
+	}
+
 	if err := UploadBashScript(project, zone, insName, "mount_attached_disk.sh", scripts.MountAttachedDisk); err != nil {
 		return fmt.Errorf("error uploading script: %v", err)
 	}
