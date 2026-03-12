@@ -45,6 +45,7 @@
 #include "cuttlefish/io/copy.h"
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/length.h"
+#include "cuttlefish/io/lz4_legacy.h"
 #include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/io/shared_fd.h"
 #include "cuttlefish/result/result.h"
@@ -161,29 +162,20 @@ Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
 
 Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
                            const std::string& ramdisk_stage_dir) {
-  int success = 0;
-  if (IsCpioArchive(original_ramdisk_path)) {
-    CF_EXPECTF(Copy(original_ramdisk_path, original_ramdisk_path + kCpioExt),
-               "Failed to copy '{}' to '{}'", original_ramdisk_path,
-               original_ramdisk_path + kCpioExt);
-  } else {
-    SharedFD output_fd = SharedFD::Open(original_ramdisk_path + kCpioExt,
-                                        O_CREAT | O_RDWR | O_TRUNC, 0644);
-    CF_EXPECTF(output_fd->IsOpen(), "Failed to open '{}': '{}'",
-               original_ramdisk_path + kCpioExt, output_fd->StrError());
+  NativeFilesystem fs;
+  std::unique_ptr<Reader> ramdisk_input = CF_EXPECT(fs.OpenReadOnly(original_ramdisk_path));
+  CF_EXPECT(ramdisk_input.get());
 
-    success = Command(HostBinaryPath("lz4"))
-                  .AddParameter("-c")
-                  .AddParameter("-d")
-                  .AddParameter("-l")
-                  .AddParameter(original_ramdisk_path)
-                  .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
-                  .Start()
-                  .Wait();
-    CF_EXPECT_EQ(
-        success, 0,
-        "Unable to run lz4 on file '" << original_ramdisk_path << "'.");
+  const std::string output_path = original_ramdisk_path + kCpioExt;
+  (void) fs.DeleteFile(output_path);
+  std::unique_ptr<WriterSeeker> output = CF_EXPECT(fs.CreateFile(output_path));
+
+  if (!IsCpioArchive(original_ramdisk_path)) {
+    ramdisk_input = CF_EXPECT(Lz4LegacyReader(std::move(ramdisk_input)));
   }
+  CF_EXPECTF(Copy(*ramdisk_input, *output), "Failed to copy '{}' to '{}'",
+             original_ramdisk_path, output_path);
+
   CF_EXPECT(EnsureDirectoryExists(ramdisk_stage_dir));
 
   SharedFD input = SharedFD::Open(original_ramdisk_path + kCpioExt, O_RDONLY);
