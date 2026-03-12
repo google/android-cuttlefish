@@ -15,32 +15,17 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <memory>
 
 #include "cuttlefish/io/io.h"
-#include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<void> ReadExact(Reader&, char* buf, size_t size);
+// Handles the LZ4 Legacy frame format, used by the linux kernel.
+//
+// https://github.com/lz4/lz4/blob/5c4c1fb2354133e1f3b087a341576985f8114bd5/doc/lz4_Frame_format.md#legacy-frame
 
-template <typename T>
-Result<T> ReadExactBinary(Reader& reader) {
-  T data;
-  char* const data_char = reinterpret_cast<char*>(&data);
-  CF_EXPECT(ReadExact(reader, data_char, sizeof(data)));
-  return data;
-}
-
-Result<void> PReadExact(ReaderSeeker&, char* buf, size_t size, uint64_t offset);
-
-template <typename T>
-Result<T> PReadExactBinary(ReaderSeeker& reader, uint64_t offset) {
-  T data;
-  char* const data_char = reinterpret_cast<char*>(&data);
-  CF_EXPECT(PReadExact(reader, data_char, sizeof(data), offset));
-  return data;
-}
+Result<std::unique_ptr<Reader>> Lz4LegacyReader(std::unique_ptr<Reader>);
 
 }  // namespace cuttlefish
