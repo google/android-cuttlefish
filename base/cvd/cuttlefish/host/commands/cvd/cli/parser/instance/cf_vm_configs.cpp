@@ -114,6 +114,24 @@ static std::string V4l2Proxy(const Instance& instance) {
   return crosvm.has_v4l2_proxy() ? crosvm.v4l2_proxy() : default_val;
 }
 
+static std::vector<std::string> UserPageSize(const EnvironmentSpecification& cfg) {
+  std::vector<std::string> ret;
+  for (const auto& instance : cfg.instances()) {
+    if (instance.vm().has_page_size())
+    {
+      if (instance.vm().page_size() == cvd::config::USER_PAGE_SIZE_16KB) {
+        ret.emplace_back("--extra_kernel_cmdline=page_shift=14");
+        return ret;
+      } else if (instance.vm().page_size() == cvd::config::USER_PAGE_SIZE_64KB) {
+        ret.emplace_back("--extra_kernel_cmdline=page_shift=16");
+        return ret;
+      }
+    }
+  }
+
+  return ret;
+}
+
 static Result<std::optional<std::string>> CustomConfigsFlagValue(
     const Instance& instance) {
   if (instance.vm().custom_actions().empty()) {
@@ -157,7 +175,11 @@ Result<std::vector<std::string>> GenerateVmFlags(
       GenerateInstanceFlag("crosvm_simple_media_device", cfg, SimpleMediaDevice),
       GenerateInstanceFlag("crosvm_v4l2_proxy", cfg, V4l2Proxy),
   };
-  return MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
+
+  std::vector<std::string> merged = MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
+  merged = MergeResults(merged, UserPageSize(cfg));
+
+  return merged;
 }
 
 }  // namespace cuttlefish
