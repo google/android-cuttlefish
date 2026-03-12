@@ -27,4 +27,12 @@ namespace cuttlefish {
 // the data, reading and writing starts from that point.
 Result<void> Copy(Reader&, Writer&, size_t buffer_size = 1 << 26);
 
+// Moves data from the Reader to the WriterSeeker. Uses heuristics to detect
+// large chunks of zeroes, and performs forward seeks on the output rather than
+// writing the zeroes.
+//
+// This is helpful for writing large files to the filesystem, as it can use the
+// linux-sparse mechanism to not fully allocate blocks.
+Result<void> SparseCopy(Reader&, WriterSeeker&, size_t buffer_size = 1 << 26);
+
 }  // namespace cuttlefish

@@ -76,4 +76,9 @@ Result<uint64_t> SharedFdIo::PWrite(const void* buf, uint64_t count,
   return data_written;
 }
 
+Result<void> SharedFdIo::Truncate(uint64_t size) {
+  CF_EXPECT_EQ(fd_->Truncate(size), 0);
+  return {};
+}
+
 }  // namespace cuttlefish

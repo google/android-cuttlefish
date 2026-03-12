@@ -37,6 +37,7 @@ class SharedFdIo : public ReaderWriterSeeker {
                          uint64_t offset) const override;
   Result<uint64_t> PWrite(const void* buf, uint64_t count,
                           uint64_t offset) override;
+  Result<void> Truncate(uint64_t size) override;
 
  private:
   SharedFD fd_;

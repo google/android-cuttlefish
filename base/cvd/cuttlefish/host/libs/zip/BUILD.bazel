@@ -114,6 +114,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
         "//cuttlefish/io",
         "//cuttlefish/io:copy",
+        "//cuttlefish/io:native_filesystem",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
     ],
