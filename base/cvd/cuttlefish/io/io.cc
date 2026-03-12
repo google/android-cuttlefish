@@ -52,4 +52,12 @@ Result<void> ReaderWriterSeeker::Visit(IoVisitor& visitor) {
   return {};
 }
 
+Result<void> WriterSeeker::Truncate(uint64_t size) {
+  return CF_ERR("Unimplemented");
+}
+
+Result<void> ReaderWriterSeeker::Truncate(uint64_t size) {
+  return CF_ERR("Unimplemented");
+}
+
 }  // namespace cuttlefish

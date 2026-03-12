@@ -79,6 +79,7 @@ class WriterSeeker : public Writer, public Seeker {
   // Has the semantics of pwrite(2)
   virtual Result<uint64_t> PWrite(const void* buf, uint64_t count,
                                   uint64_t offset) = 0;
+  virtual Result<void> Truncate(uint64_t size);
 };
 
 class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
@@ -96,6 +97,7 @@ class ReaderWriterSeeker : public ReaderSeeker, public WriterSeeker {
                          uint64_t offset) const override = 0;
   Result<uint64_t> PWrite(const void* buf, uint64_t count,
                           uint64_t offset) override = 0;
+  Result<void> Truncate(uint64_t size) override;
 };
 
 /**
