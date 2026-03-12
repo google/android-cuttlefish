@@ -198,12 +198,12 @@ func main() {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	if internal.HasHelpFlag(cvdArgs.SubCommandArgs) {
 		switch subcommand {
-		case "cache", "clear", "create", "display", "env", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
+		case "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
 			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
 				log.Fatal(err)
 			}
-		case "bugreport", "fetch", "start":
+		case "bugreport", "start":
 			// TODO(seungjaeyoo): Support help flag for other subcommands of cvd as well.
 			log.Fatalf("help flag support for subcommand %q is not implemented yet", subcommand)
 		default:
