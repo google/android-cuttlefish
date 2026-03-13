@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& stream, const ChromeOsBuilder& cob) {
 static Result<ChromeOsBuildString> ParseChromeOsBuildString(
     const std::string& build_string) {
   std::vector<std::string> fragments =
-      android::base::Tokenize(build_string, "/");
+      absl::StrSplit(build_string, '/', absl::SkipEmpty());
   if (fragments.size() == 1) {
     return fragments[0];
   } else if (fragments.size() == 3) {
@@ -72,7 +72,7 @@ Flag GflagsCompatFlag(const std::string& name,
           return {};
         }
         std::vector<std::string> str_vals =
-            android::base::Split(match.value, ",");
+            absl::StrSplit(match.value, ',');
         value.clear();
         for (const auto& str_val : str_vals) {
           if (str_val.empty()) {

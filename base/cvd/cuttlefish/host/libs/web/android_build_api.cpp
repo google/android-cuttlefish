@@ -87,11 +87,13 @@ Result<Json::Value> GetResponseJson(const HttpResponse<Json::Value>& response,
 
 AndroidBuildApi::AndroidBuildApi(HttpClient& http_client,
                                  CredentialSource* credential_source,
+                                 std::string catchall_api_key,
                                  AndroidBuildUrl* android_build_url,
                                  const std::chrono::seconds retry_period,
                                  CasDownloader* cas_downloader)
     : http_client_(http_client),
       credential_source_(credential_source),
+      catchall_api_key_(catchall_api_key),
       android_build_url_(android_build_url),
       retry_period_(retry_period),
       cas_downloader_(cas_downloader) {}
@@ -212,15 +214,18 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
           << no_auth_error_message);
 
   bool is_signed = false;
-  if (json.isMember("signed")) {
-    is_signed = json["signed"].asBool();
+  if (HasValue(json, {"build", "buildSigned"})) {
+    is_signed = CF_EXPECT(GetValue<bool>(json, {"build", "buildSigned"}));
   }
 
   return AndroidBuildApi::BuildInfo{
-      .branch = CF_EXPECT(GetValue<std::string>(json, {"branch"})),
-      .product = CF_EXPECT(GetValue<std::string>(json, {"target", "product"})),
-      .status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"})),
-      .target = CF_EXPECT(GetValue<std::string>(json, {"target", "name"})),
+      .branch = CF_EXPECT(GetValue<std::string>(json, {"build", "branch"})),
+      .product = CF_EXPECT(
+          GetValue<std::string>(json, {"build", "target", "product"})),
+      .status = CF_EXPECT(
+          GetValue<std::string>(json, {"build", "buildAttemptStatus"})),
+      .target =
+          CF_EXPECT(GetValue<std::string>(json, {"build", "target", "name"})),
       .is_signed = is_signed,
   };
 }
@@ -231,12 +236,23 @@ Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
   const std::string url = android_build_url_->GetBuildUrl(build_id, target);
   CF_EXPECTF(!initial_status.empty(),
              "\"{}\" is not a valid branch or build id.", build_id);
+
   std::string status(initial_status);
+  bool has_retried = false;
   while (retry_period_ != std::chrono::seconds::zero() &&
          !StatusIsTerminal(status)) {
-    VLOG(0) << "Status is \"" << status << "\". Waiting for "
-            << retry_period_.count() << " seconds and checking again.";
+    LOG(INFO) << build_id << " build status is \"" << status
+              << "\".  Waiting for " << retry_period_.count()
+              << " seconds to check again.";
+    if (!has_retried) {
+      LOG(WARNING)
+          << "Retries will continue indefinitely until a terminal build status "
+             "is detected.  Consider using a <branch>/<target> build specifier "
+             "to default to the latest green build completed.";
+      has_retried = true;
+    }
     std::this_thread::sleep_for(retry_period_);
+
     auto response =
         CF_EXPECT(HttpGetToJson(http_client_, url, CF_EXPECT(Headers())));
     Json::Value json = CF_EXPECT(GetResponseJson(response),
@@ -251,6 +267,8 @@ Result<std::vector<std::string>> AndroidBuildApi::Headers() {
   if (credential_source_) {
     headers.push_back("Authorization: Bearer " +
                       CF_EXPECT(credential_source_->Credential()));
+  } else if (!catchall_api_key_.empty()) {
+    headers.push_back("X-goog-api-key: " + catchall_api_key_);
   }
   return headers;
 }

@@ -1,8 +1,30 @@
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "build_api_credentials",
+    srcs = [
+        "build_api_credentials.cc",
+    ],
+    hdrs = [
+        "build_api_credentials.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
+        "//cuttlefish/host/commands/cvd/fetch:credential_flags",
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+    ],
 )
 
 cf_cc_library(
@@ -13,10 +35,11 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/host/commands/cvd/cache",
         "//cuttlefish/host/commands/cvd/fetch:credential_flags",
-        "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -56,9 +79,11 @@ cf_cc_library(
     hdrs = ["de_android_sparse.h"],
     deps = [
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/posix:rename",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
         "@android_system_core//:libsparse",
     ],
 )
@@ -79,8 +104,11 @@ cf_cc_library(
     hdrs = ["downloaders.h"],
     deps = [
         "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_credentials",
+        "//cuttlefish/host/commands/cvd/fetch:build_api_flags",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/libs/web:android_build_api",
+        "//cuttlefish/host/libs/web:android_build_api_key",
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:caching_build_api",
@@ -179,6 +207,8 @@ cf_cc_library(
         "//cuttlefish/host/libs/web/http_client:curl_global_init",
         "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
+        "//cuttlefish/io",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

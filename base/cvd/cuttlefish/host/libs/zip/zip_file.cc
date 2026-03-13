@@ -19,15 +19,18 @@
 #include <stdint.h>
 #include <sys/stat.h>
 
+#include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
-#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
-#include "cuttlefish/host/libs/zip/zip_copy.h"
+#include "cuttlefish/io/copy.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -56,19 +59,20 @@ Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
   return {};
 }
 
-Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
+Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
                          const std::string& host_path) {
-  ReadableZipSource source = CF_EXPECT(zip.GetFile(zip_path));
-  WritableZipSource dest = CF_EXPECT(WritableZipSource::FromFile(host_path));
-  CF_EXPECT(Copy(source, dest));
+  std::unique_ptr<ReaderSeeker> reader = CF_EXPECT(zip.OpenReadOnly(zip_path));
+  CF_EXPECT(reader.get());
 
-  ZipStat stat_out = CF_EXPECT(source.Stat());
-  uint64_t index = CF_EXPECT(std::move(stat_out.index));
+  NativeFilesystem fs;
+  (void)fs.DeleteFile(host_path);
+  std::unique_ptr<WriterSeeker> writer = CF_EXPECT(fs.CreateFile(host_path));
+  CF_EXPECT(writer.get());
 
-  Result<uint32_t> attributes = zip.EntryUnixAttributes(index);
-  if (attributes.ok()) {
-    uint32_t mode = (*attributes >> 16) & 0777;
-    CF_EXPECT_EQ(chmod(host_path.c_str(), mode), 0, StrError(errno));
+  CF_EXPECT(SparseCopy(*reader, *writer));
+
+  if (Result<uint32_t> attr = zip.FileAttributes(zip_path); attr.ok()) {
+    CF_EXPECT_EQ(chmod(host_path.c_str(), *attr), 0, StrError(errno));
   }
   return {};
 }

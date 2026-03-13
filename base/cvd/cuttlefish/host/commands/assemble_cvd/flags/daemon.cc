@@ -39,12 +39,12 @@ constexpr char kFlagName[] = "daemon";
 
 Result<DaemonFlag> DaemonFlag::FromGlobalGflags() {
   const auto flag_info = gflags::GetCommandLineFlagInfoOrDie(kFlagName);
-  std::vector<bool> flag_values =
+  FromGflags<bool> result =
       CF_EXPECT(BoolFromGlobalGflags(flag_info, kFlagName));
-  return DaemonFlag(std::move(flag_values));
+  return DaemonFlag(std::move(result.values), result.is_default);
 }
 
-DaemonFlag::DaemonFlag(std::vector<bool> flag_values)
-    : FlagBase<bool>(std::move(flag_values)) {}
+DaemonFlag::DaemonFlag(std::vector<bool> flag_values, bool is_default)
+    : FlagBase<bool>(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

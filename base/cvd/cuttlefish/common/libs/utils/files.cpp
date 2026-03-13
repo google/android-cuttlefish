@@ -48,25 +48,27 @@
 #include <iosfwd>
 #include <memory>
 #include <numeric>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/macros.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <android-base/unique_fd.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -186,9 +188,7 @@ Result<void> MoveDirectoryContents(const std::string& source,
     std::string src_filepath = source + "/" + filepath;
     std::string dst_filepath = destination + "/" + filepath;
     if (should_rename) {
-      CF_EXPECT(rename(src_filepath.c_str(), dst_filepath.c_str()) == 0,
-                "rename " << src_filepath << " to " << dst_filepath
-                          << " failed: " << strerror(errno));
+      CF_EXPECT(Rename(src_filepath, dst_filepath));
     } else {
       CF_EXPECT(
           Copy(src_filepath, dst_filepath),
@@ -427,12 +427,12 @@ bool Copy(const std::string& from, const std::string& to) {
   return true;
 }
 
-std::string AbsolutePath(const std::string& path) {
+std::string AbsolutePath(std::string_view path) {
   if (path.empty()) {
     return {};
   }
   if (path[0] == '/') {
-    return path;
+    return std::string(path);
   }
   if (path[0] == '~') {
     LOG(WARNING) << "Tilde expansion in path " << path <<" is not supported";
@@ -445,7 +445,7 @@ std::string AbsolutePath(const std::string& path) {
                  << ": " << strerror(errno);
     return {};
   }
-  return std::string{buffer.data()} + "/" + path;
+  return absl::StrCat(buffer.data(), "/", path);
 }
 
 off_t FileSize(const std::string& path) {
@@ -489,9 +489,7 @@ Result<std::chrono::system_clock::time_point> FileModificationTime(
 Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath) {
   if (current_filepath != target_filepath) {
-    CF_EXPECT(rename(current_filepath.c_str(), target_filepath.c_str()) == 0,
-              "rename " << current_filepath << " to " << target_filepath
-                        << " failed: " << strerror(errno));
+    CF_EXPECT(Rename(current_filepath, target_filepath));
   }
   return target_filepath;
 }
@@ -616,24 +614,6 @@ bool FileIsSocket(const std::string& path) {
   return stat(path.c_str(), &st) == 0 && S_ISSOCK(st.st_mode);
 }
 
-/**
- * Find an image file through the input path and pattern.
- *
- * If it finds the file, return the path string.
- * If it can't find the file, return empty string.
- */
-std::string FindImage(const std::string& search_path,
-                      const std::vector<std::string>& pattern) {
-  const std::string& search_path_extend = search_path + "/";
-  for (const auto& name : pattern) {
-    std::string image = search_path_extend + name;
-    if (FileExists(image)) {
-      return image;
-    }
-  }
-  return "";
-}
-
 Result<std::string> FindFile(const std::string& path,
                              const std::string& target_name) {
   std::string ret;
@@ -696,9 +676,9 @@ Result<std::vector<std::string>> CalculatePrefix(
   if (path == "~" || absl::StartsWith(path, "~/")) {
     const auto home_dir =
         path_info.home_dir.value_or(CF_EXPECT(SystemWideUserHome()));
-    prefix = android::base::Tokenize(home_dir, "/");
+    prefix = absl::StrSplit(home_dir, '/', absl::SkipEmpty());
   } else if (!absl::StartsWith(path, "/")) {
-    prefix = android::base::Tokenize(working_dir, "/");
+    prefix = absl::StrSplit(working_dir, '/', absl::SkipEmpty());
   }
   return prefix;
 }
@@ -724,9 +704,9 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
   auto prefix = CF_EXPECT(CalculatePrefix(path_info));
   std::vector<std::string> components;
   components.insert(components.end(), prefix.begin(), prefix.end());
-  auto tokens = android::base::Tokenize(path, "/");
+  std::vector<std::string_view> tokens = absl::StrSplit(path, '/', absl::SkipEmpty());
   // remove first ~
-  if (!tokens.empty() && tokens.at(0) == "~") {
+  if (!tokens.empty() && tokens[0] == "~") {
     tokens.erase(tokens.begin());
   }
   components.insert(components.end(), tokens.begin(), tokens.end());

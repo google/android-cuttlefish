@@ -17,11 +17,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "zip.h"
@@ -30,7 +31,9 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/host/libs/zip/libzip_cc/stat.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -77,7 +80,7 @@ Result<std::string> ReadableZip::EntryName(uint64_t index) {
   return std::string(name_cstr);
 }
 
-Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
+Result<uint32_t> ReadableZip::EntryAttributes(uint64_t index) const {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   uint8_t opsys;
@@ -85,14 +88,18 @@ Result<uint32_t> ReadableZip::EntryUnixAttributes(uint64_t index) {
   int res =
       zip_file_get_external_attributes(raw_zip, index, 0, &opsys, &attributes);
   CF_EXPECT_EQ(res, 0, ZipErrorString(raw_zip));
-  CF_EXPECT_EQ(opsys, ZIP_OPSYS_UNIX);
+
+  // The fetcher must occasionally download archives from Android 10 or 11
+  // which had incorrectly set the extents for the smaller files to DOS.
+  // Don't error out for those.
+  CF_EXPECT(opsys == ZIP_OPSYS_UNIX || opsys == ZIP_OPSYS_DOS);
 
   return attributes;
 }
 
 Result<bool> ReadableZip::EntryIsDirectory(uint64_t index) {
   const uint32_t attributes =
-      CF_EXPECT(EntryUnixAttributes(index),
+      CF_EXPECT(EntryAttributes(index),
                 "Failed to get attributes for entry " << index);
 
   // See
@@ -103,7 +110,7 @@ Result<bool> ReadableZip::EntryIsDirectory(uint64_t index) {
   return S_ISDIR(mode);
 }
 
-Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
+Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) const {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   int64_t index = zip_name_locate(raw_zip, name.c_str(), 0);
@@ -112,7 +119,7 @@ Result<SeekableZipSource> ReadableZip::GetFile(const std::string& name) {
   return CF_EXPECT(GetFile(index));
 }
 
-Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
+Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) const {
   zip_t* raw_zip = CF_EXPECT(raw_.get());
 
   ManagedZipError error = NewZipError();
@@ -122,6 +129,21 @@ Result<SeekableZipSource> ReadableZip::GetFile(uint64_t index) {
   CF_EXPECT(raw_source.get(), ZipErrorString(error.get()));
 
   return SeekableZipSource(std::move(raw_source));
+}
+
+Result<std::unique_ptr<ReaderSeeker>> ReadableZip::OpenReadOnly(
+    std::string_view path) {
+  SeekableZipSource source = CF_EXPECT(GetFile(std::string(path)));
+  return CF_EXPECT(ZipSourceAsReaderSeeker(std::move(source)));
+}
+
+Result<uint32_t> ReadableZip::FileAttributes(std::string_view path) const {
+  ReadableZipSource source = CF_EXPECT(GetFile(std::string(path)));
+  ZipStat stat_out = CF_EXPECT(source.Stat());
+  uint64_t index = CF_EXPECT(std::move(stat_out.index));
+  uint32_t attributes = CF_EXPECT(EntryAttributes(index));
+  uint32_t mode = (attributes >> 16) & 0777;
+  return mode;
 }
 
 ReadableZip::ReadableZip(ManagedZip raw, WritableZipSource source)

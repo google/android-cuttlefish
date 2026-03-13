@@ -16,6 +16,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/result/result.h"
@@ -29,7 +30,7 @@ Result<void> AddFile(WritableZip& zip, const std::string& fs_path);
 Result<void> AddFileAt(WritableZip& zip, const std::string& fs_path,
                        const std::string& zip_path);
 
-Result<void> ExtractFile(ReadableZip& zip, const std::string& zip_path,
+Result<void> ExtractFile(ReadableZip& zip, std::string_view zip_path,
                          const std::string& host_path);
 
 }  // namespace cuttlefish

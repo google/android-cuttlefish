@@ -20,8 +20,7 @@
 
 #include <android-base/file.h>
 #include <android-base/no_destructor.h>
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
@@ -40,6 +39,7 @@
 #include "cuttlefish/host/commands/start/override_bool_arg.h"
 #include "cuttlefish/host/commands/start/start_flags.h"
 #include "cuttlefish/host/commands/start/validate_metrics_confirmation.h"
+#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -154,6 +154,7 @@ const std::unordered_set<std::string>& BoolFlags() {
       "enable_sandbox",
       "enable_usb",
       "enable_virtiofs",
+      "experimental_build_super_image",
       "fail_fast",
       "guest_enforce_security",
       "kgdb",
@@ -303,7 +304,8 @@ int CvdInternalStartMain(int argc, char** argv) {
   }
 
   std::string conf_path;
-  for (const auto& line : android::base::Tokenize(assembler_output, "\n")) {
+  for (std::string_view line :
+       absl::StrSplit(assembler_output, '\n', absl::SkipEmpty())) {
     if (absl::EndsWith(line, "cuttlefish_config.json")) {
       conf_path = line;
     }

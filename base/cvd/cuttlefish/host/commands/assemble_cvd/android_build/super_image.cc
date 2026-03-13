@@ -23,7 +23,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -38,6 +37,12 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/liblp/liblp.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/map.h"          // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/result.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"          // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep: overloads
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -57,7 +62,9 @@ Result<std::vector<LpMetadataExtent>> PartitionExtents(
     const android::fs_mgr::LpMetadata& metadata, std::string_view name) {
   for (const LpMetadataPartition& partition : metadata.partitions) {
     std::string partition_name = android::fs_mgr::GetPartitionName(partition);
-    if (name != WithoutSlotSuffix(partition_name)) {
+    bool exact_match = name == partition_name;
+    bool without_suffix_match = name == WithoutSlotSuffix(partition_name);
+    if (!(exact_match || without_suffix_match)) {
       continue;
     }
     std::vector<LpMetadataExtent> extents;
@@ -104,6 +111,20 @@ class SuperImageAsBuildImpl : public AndroidBuild {
       : android_build_(&android_build),
         super_metadata_(std::move(super_metadata)) {}
 
+  std::string Name() const override { return "SuperImageAsBuild"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("Images()", Images())
+        .Member("LogicalPartitions()", LogicalPartitions())
+        .Member("AbPartitions()", AbPartitions())
+        .Member("SystemPartitions()", SystemPartitions())
+        .Member("VendorPartitions()", VendorPartitions())
+        .Member("super_metadata_", super_metadata_)
+        .Member("extracted_", extracted_)
+        .Member("extract_dir", extract_dir_);
+  }
+
   Result<std::set<std::string, std::less<void>>> Images() override {
     std::set<std::string, std::less<void>> images =
         CF_EXPECT(android_build_->Images());
@@ -126,7 +147,7 @@ class SuperImageAsBuildImpl : public AndroidBuild {
     std::string extract_path = absl::StrCat(extract_dir_, "/", name, ".img");
     unlink(extract_path.c_str());  // Ignore errors
     SharedFD extract_fd =
-        SharedFD::Open(extract_path, O_RDWR | O_CREAT | O_EXCL);
+        SharedFD::Open(extract_path, O_RDWR | O_CREAT | O_EXCL, 0644);
     CF_EXPECTF(extract_fd->IsOpen(), "Failed to open '{}': ", extract_path,
                extract_fd->StrError());
 
@@ -188,11 +209,8 @@ class SuperImageAsBuildImpl : public AndroidBuild {
   Result<std::set<std::string, std::less<void>>> VendorPartitions() override {
     return CF_EXPECT(PartitionsInGroup("vendor"));
   }
- private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "MetadataFromSuperImage";
-  }
 
+ private:
   AndroidBuild* android_build_;
   std::unique_ptr<android::fs_mgr::LpMetadata> super_metadata_;
   std::map<std::string, std::string, std::less<void>> extracted_;

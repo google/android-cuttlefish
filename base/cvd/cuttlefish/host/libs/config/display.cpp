@@ -18,11 +18,12 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -48,14 +49,13 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
 
   std::unordered_map<std::string, std::string> props;
 
-  const std::vector<std::string> pairs = android::base::Split(flag, ",");
-  for (const std::string& pair : pairs) {
-    const std::vector<std::string> keyvalue = android::base::Split(pair, "=");
+  for (std::string_view pair : absl::StrSplit(flag, ',')) {
+    const std::vector<std::string_view> keyvalue = absl::StrSplit(pair, '=');
     CF_EXPECT_EQ(keyvalue.size(), 2,
                  "Invalid display flag key-value: \"" << flag << "\"");
-    const std::string& prop_key = keyvalue[0];
-    const std::string& prop_val = keyvalue[1];
-    props[prop_key] = prop_val;
+    std::string_view prop_key = keyvalue[0];
+    std::string_view prop_val = keyvalue[1];
+    props.emplace(prop_key, prop_val);
   }
 
   CF_EXPECT(Contains(props, "width"),
@@ -64,24 +64,24 @@ Result<std::optional<CuttlefishConfig::DisplayConfig>> ParseDisplayConfig(
             "Display configuration missing 'height' in \"" << flag << "\"");
 
   int display_width;
-  CF_EXPECT(android::base::ParseInt(props["width"], &display_width),
+  CF_EXPECT(absl::SimpleAtoi(props["width"], &display_width),
             "Display configuration invalid 'width' in \"" << flag << "\"");
 
   int display_height;
-  CF_EXPECT(android::base::ParseInt(props["height"], &display_height),
+  CF_EXPECT(absl::SimpleAtoi(props["height"], &display_height),
             "Display configuration invalid 'height' in \"" << flag << "\"");
 
   int display_dpi = CF_DEFAULTS_DISPLAY_DPI;
   auto display_dpi_it = props.find("dpi");
   if (display_dpi_it != props.end()) {
-    CF_EXPECT(android::base::ParseInt(display_dpi_it->second, &display_dpi),
+    CF_EXPECT(absl::SimpleAtoi(display_dpi_it->second, &display_dpi),
               "Display configuration invalid 'dpi' in \"" << flag << "\"");
   }
 
   int display_refresh_rate_hz = CF_DEFAULTS_DISPLAY_REFRESH_RATE;
   auto display_refresh_rate_hz_it = props.find("refresh_rate_hz");
   if (display_refresh_rate_hz_it != props.end()) {
-    CF_EXPECT(android::base::ParseInt(display_refresh_rate_hz_it->second,
+    CF_EXPECT(absl::SimpleAtoi(display_refresh_rate_hz_it->second,
                                       &display_refresh_rate_hz),
               "Display configuration invalid 'refresh_rate_hz' in \"" << flag
                                                                       << "\"");

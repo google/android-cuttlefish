@@ -73,6 +73,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -103,6 +104,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:users",
+        "//cuttlefish/posix:rename",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/posix:symlink",
         "//cuttlefish/result",
@@ -110,6 +112,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",
+        "@fmt",
     ],
 )
 
@@ -303,6 +306,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -381,6 +385,7 @@ cf_cc_library(
         "@abseil-cpp//absl/log:log_entry",
         "@abseil-cpp//absl/log:log_sink",
         "@abseil-cpp//absl/log:log_sink_registry",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

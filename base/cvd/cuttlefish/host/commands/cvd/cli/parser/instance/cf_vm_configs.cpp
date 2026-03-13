@@ -15,7 +15,8 @@
  */
 #include "cuttlefish/host/commands/cvd/cli/parser/instance/cf_vm_configs.h"
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <optional>
 #include <string>
 #include <utility>
@@ -54,7 +55,7 @@ static std::string VmManager(const Instance& instance) {
   }
 }
 
-static std::uint32_t Cpus(const Instance& instance) {
+static uint32_t Cpus(const Instance& instance) {
   if (instance.vm().has_cpus()) {
     return instance.vm().cpus();
   } else {
@@ -62,7 +63,7 @@ static std::uint32_t Cpus(const Instance& instance) {
   }
 }
 
-static std::uint32_t MemoryMb(const Instance& instance) {
+static uint32_t MemoryMb(const Instance& instance) {
   if (instance.vm().has_memory_mb()) {
     return instance.vm().memory_mb();
   } else {

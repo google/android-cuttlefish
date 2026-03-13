@@ -23,12 +23,14 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/users.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -69,14 +71,14 @@ std::string XdgRuntimeDir() {
 Result<std::vector<std::string>> XdgDataDirs() {
   static constexpr char kDefault[] = "/usr/local/share/:/usr/share/";
   std::string str = NonEmptyEnv("XDG_DATA_DIRS").value_or(kDefault);
-  std::vector<std::string> dirs = android::base::Tokenize(str, ":");
+  std::vector<std::string> dirs = absl::StrSplit(str, ':', absl::SkipEmpty());
   dirs.emplace(dirs.begin(), CF_EXPECT(XdgDataHome()));
   return dirs;
 }
 
 Result<std::vector<std::string>> XdgConfigDirs() {
   std::string str = NonEmptyEnv("XDG_CONFIG_DIRS").value_or("/etc/xdg");
-  std::vector<std::string> dirs = android::base::Tokenize(str, ":");
+  std::vector<std::string> dirs = absl::StrSplit(str, ':', absl::SkipEmpty());
   dirs.emplace(dirs.begin(), CF_EXPECT(XdgConfigHome()));
   return dirs;
 }
@@ -123,7 +125,8 @@ Result<std::string> ReadCvdDataFile(std::string_view path) {
   for (const auto& dir : CF_EXPECT(CvdDataDirs())) {
     std::string contents;
     if (android::base::ReadFileToString(fmt::format("{}/{}", dir, path),
-                                        &contents)) {
+                                        &contents,
+                                        /* follow_symlinks */ true)) {
       return contents;
     }
   }
@@ -172,9 +175,7 @@ Result<void> WriteCvdDataFile(std::string_view path, std::string contents) {
   CF_EXPECT_EQ(WriteAll(file_fd, contents), contents.size(),
                file_fd->StrError());
 
-  CF_EXPECTF(rename(full_path_template.data(), full_path.data()) == 0,
-             "Failed to rename '{}' to '{}': '{}'", full_path_template,
-             full_path, StrError(errno));
+  CF_EXPECT(Rename(full_path_template, full_path));
 
   return {};
 }

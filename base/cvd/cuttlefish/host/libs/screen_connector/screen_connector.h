@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <functional>
 #include <mutex>
 #include <string>
@@ -30,8 +31,8 @@
 #include "cuttlefish/common/libs/confui/confui.h"
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/confui/host_mode_ctrl.h"
 #include "cuttlefish/host/libs/confui/host_utils.h"
 #include "cuttlefish/host/libs/screen_connector/screen_connector_common.h"
@@ -44,7 +45,7 @@ namespace cuttlefish {
 template <typename ProcessedFrameType>
 class ScreenConnector : public ScreenConnectorFrameRenderer {
  public:
-  static_assert(cuttlefish::is_movable<ProcessedFrameType>::value,
+  static_assert(is_movable<ProcessedFrameType>::value,
                 "ProcessedFrameType should be std::move-able.");
   static_assert(
       std::is_base_of<ScreenConnectorFrameInfo, ProcessedFrameType>::value,
@@ -59,21 +60,22 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
         on_next_frame_cnt_{0},
         render_confui_cnt_{0},
         sc_frame_multiplexer_{host_mode_ctrl_} {
-    auto config = cuttlefish::CuttlefishConfig::Get();
+    auto config = CuttlefishConfig::Get();
     if (!config) {
       LOG(FATAL) << "CuttlefishConfig is not available.";
     }
     auto instance = config->ForDefaultInstance();
-    std::unordered_set<std::string_view> valid_gpu_modes{
-        cuttlefish::kGpuModeCustom,
-        cuttlefish::kGpuModeDrmVirgl,
-        cuttlefish::kGpuModeGfxstream,
-        cuttlefish::kGpuModeGfxstreamGuestAngle,
-        cuttlefish::kGpuModeGfxstreamGuestAngleHostSwiftShader,
-        cuttlefish::kGpuModeGfxstreamGuestAngleHostLavapipe,
-        cuttlefish::kGpuModeGuestSwiftshader};
+    std::unordered_set<GpuMode> valid_gpu_modes{
+        GpuMode::Custom,
+        GpuMode::DrmVirgl,
+        GpuMode::Gfxstream,
+        GpuMode::GfxstreamGuestAngle,
+        GpuMode::GfxstreamGuestAngleHostSwiftshader,
+        GpuMode::GfxstreamGuestAngleHostLavapipe,
+        GpuMode::GuestSwiftshader,
+    };
     if (!Contains(valid_gpu_modes, instance.gpu_mode())) {
-      LOG(FATAL) << "Invalid gpu mode: " << instance.gpu_mode();
+      LOG(FATAL) << "Invalid gpu mode: " << GpuModeString(instance.gpu_mode());
     }
   }
 
@@ -86,9 +88,9 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
    *
    */
   using GenerateProcessedFrameCallback = std::function<void(
-      std::uint32_t /*display_number*/, std::uint32_t /*frame_width*/,
-      std::uint32_t /*frame_height*/, std::uint32_t /*frame_fourcc_format*/,
-      std::uint32_t /*frame_stride_bytes*/, std::uint8_t* /*frame_bytes*/,
+      uint32_t /*display_number*/, uint32_t /*frame_width*/,
+      uint32_t /*frame_height*/, uint32_t /*frame_fourcc_format*/,
+      uint32_t /*frame_stride_bytes*/, uint8_t* /*frame_bytes*/,
       /* ScImpl enqueues this type into the Q */
       ProcessedFrameType& msg)>;
 
@@ -105,18 +107,17 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
     streamer_callback_set_cv_.notify_all();
 
     sc_android_src_.SetFrameCallback(
-        [this](std::uint32_t display_number, std::uint32_t frame_w,
-               std::uint32_t frame_h, std::uint32_t frame_fourcc_format,
-               std::uint32_t frame_stride_bytes, std::uint8_t* frame_bytes) {
+        [this](uint32_t display_number, uint32_t frame_w, uint32_t frame_h,
+               uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
+               uint8_t* frame_bytes) {
           InjectFrame(display_number, frame_w, frame_h, frame_fourcc_format,
                       frame_stride_bytes, frame_bytes);
         });
   }
 
-  void InjectFrame(std::uint32_t display_number, std::uint32_t frame_w,
-                   std::uint32_t frame_h, std::uint32_t frame_fourcc_format,
-                   std::uint32_t frame_stride_bytes,
-                   std::uint8_t* frame_bytes) {
+  void InjectFrame(uint32_t display_number, uint32_t frame_w, uint32_t frame_h,
+                   uint32_t frame_fourcc_format, uint32_t frame_stride_bytes,
+                   uint8_t* frame_bytes) {
     const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
     if (is_confui_mode) {
       return;
@@ -159,12 +160,10 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
    * Android guest frames if Confirmation UI HAL is not active.
    *
    */
-  bool RenderConfirmationUi(std::uint32_t display_number,
-                            std::uint32_t frame_width,
-                            std::uint32_t frame_height,
-                            std::uint32_t frame_fourcc_format,
-                            std::uint32_t frame_stride_bytes,
-                            std::uint8_t* frame_bytes) override {
+  bool RenderConfirmationUi(uint32_t display_number, uint32_t frame_width,
+                            uint32_t frame_height, uint32_t frame_fourcc_format,
+                            uint32_t frame_stride_bytes,
+                            uint8_t* frame_bytes) override {
     render_confui_cnt_++;
     // wait callback is not set, the streamer is not ready
     // return with LOG(ERROR)
@@ -173,7 +172,7 @@ class ScreenConnector : public ScreenConnectorFrameRenderer {
       return false;
     }
     ProcessedFrameType processed_frame;
-    auto this_thread_name = cuttlefish::confui::thread::GetName();
+    auto this_thread_name = confui::thread::GetName();
     ConfUiLogDebug << this_thread_name
                    << "is sending a #" + std::to_string(render_confui_cnt_)
                    << "Conf UI frame";

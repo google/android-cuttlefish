@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <mutex>
 #include <string>
 #include <utility>
 
@@ -26,6 +27,7 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/error.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/fake_pread_pwrite.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -82,9 +84,12 @@ ZipSourceWriter::~ZipSourceWriter() {
   }
 }
 
-Result<uint64_t> ZipSourceWriter::Write(void* data, uint64_t length) {
+Result<uint64_t> ZipSourceWriter::Write(const void* data, uint64_t length) {
+  std::lock_guard lock(mutex_);
+
   CF_EXPECT_NE(data, nullptr);
   CF_EXPECT_NE(source_, nullptr);
+
   zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
 
   int64_t written = zip_source_write(raw_source, data, length);
@@ -92,23 +97,47 @@ Result<uint64_t> ZipSourceWriter::Write(void* data, uint64_t length) {
   return static_cast<uint64_t>(written);
 }
 
-Result<void> ZipSourceWriter::SeekFromStart(int64_t offset) {
-  CF_EXPECT_NE(source_, nullptr);
-  zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
+Result<uint64_t> ZipSourceWriter::SeekSet(uint64_t offset) {
+  return CF_EXPECT(Seek(offset, SEEK_SET));
+}
 
-  CF_EXPECT_EQ(zip_source_seek_write(raw_source, offset, SEEK_SET), 0,
-               ZipErrorString(raw_source));
+Result<uint64_t> ZipSourceWriter::SeekCur(int64_t offset) {
+  return CF_EXPECT(Seek(offset, SEEK_CUR));
+}
 
-  return {};
+Result<uint64_t> ZipSourceWriter::SeekEnd(int64_t offset) {
+  return CF_EXPECT(Seek(offset, SEEK_END));
+}
+
+Result<uint64_t> ZipSourceWriter::PWrite(const void* data, uint64_t count,
+                                         uint64_t offset) {
+  auto& non_const = const_cast<ZipSourceWriter&>(*this);
+  return CF_EXPECT(FakePWrite(non_const, data, count, offset));
 }
 
 Result<void> ZipSourceWriter::Finalize(ZipSourceWriter writer) {
   CF_EXPECT_NE(writer.source_, nullptr);
+
   zip_source_t* raw = CF_EXPECT(writer.source_->raw_.get());
 
   CF_EXPECT_EQ(zip_source_commit_write(raw), 0, ZipErrorString(raw));
 
   return {};
+}
+
+Result<uint64_t> ZipSourceWriter::Seek(int64_t offset, int whence) {
+  std::lock_guard lock(mutex_);
+
+  CF_EXPECT_NE(source_, nullptr);
+  zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
+
+  CF_EXPECT_EQ(zip_source_seek_write(raw_source, offset, whence), 0,
+               ZipErrorString(raw_source));
+
+  int64_t tell = zip_source_tell_write(raw_source);
+  CF_EXPECT_GE(tell, 0, ZipErrorString(raw_source));
+
+  return tell;
 }
 
 }  // namespace cuttlefish

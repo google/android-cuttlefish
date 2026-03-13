@@ -22,10 +22,12 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/vendor_dlkm_utils.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 namespace {
@@ -75,9 +77,12 @@ Result<void> RepackSuperAndVbmeta(
              system_dlkm_build_dir);
 
   const auto new_super_img = instance.new_super_image();
-  CF_EXPECTF(Copy(instance.super_image(), new_super_img),
-             "Failed to copy super image '{}' to '{}': '{}'",
-             instance.super_image(), new_super_img, StrError(errno));
+  // This file may have already been created by super_image_mixer.cc
+  if (!FileExists(new_super_img)) {
+    CF_EXPECTF(Copy(instance.super_image(), new_super_img),
+               "Failed to copy super image '{}' to '{}': '{}'",
+               instance.super_image(), new_super_img, StrError(errno));
+  }
 
   CF_EXPECT(RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
                                      "vendor_dlkm"),
@@ -92,11 +97,52 @@ Result<void> RepackSuperAndVbmeta(
 
 }  // namespace
 
+InstanceBootImage::InstanceBootImage(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const BootImageFlag& boot_image_flag)
+    : config_(&config),
+      instance_(&instance),
+      boot_image_flag_(&boot_image_flag) {
+  // Repacking a boot.img doesn't work with Gem5 because the user must always
+  // specify a vmlinux instead of an arm64 Image, and that file can be too
+  // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
+  // able to extract the ramdisk.img in a later stage and so this step must
+  // not fail (..and the repacked kernel wouldn't be used anyway).
+  if (instance_->kernel_path().empty() || VmManagerIsGem5(*config_)) {
+    path_ = boot_image_flag.ForIndex(instance.index());
+  }
+}
+
+std::string InstanceBootImage::Name() const { return "boot"; }
+
+Result<std::string> InstanceBootImage::Generate() {
+  if (path_.has_value()) {
+    return *path_;
+  }
+
+  std::string previous_boot_image =
+      boot_image_flag_->ForIndex(instance_->index());
+  CF_EXPECTF(FileHasContent(previous_boot_image), "File not found: {}",
+             previous_boot_image);
+
+  std::string new_path = instance_->PerInstancePath("boot_repacked.img");
+  CF_EXPECT(
+      RepackBootImage(instance_->kernel_path(), previous_boot_image, new_path),
+      "Failed to regenerate the boot image with the new kernel");
+  path_ = new_path;
+
+  return *path_;
+}
+
+Result<std::string> InstanceBootImage::Path() const {
+  CF_EXPECT(path_.has_value());
+  return *path_;
+}
+
 Result<void> RepackKernelRamdisk(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb) {
-  CF_EXPECTF(FileHasContent(instance.boot_image()), "File not found: {}",
-             instance.boot_image());
+    const CuttlefishConfig::InstanceSpecific& instance) {
   // The init_boot partition is be optional for testing boot.img
   // with the ramdisk inside.
   if (!FileHasContent(instance.init_boot_image())) {
@@ -105,18 +151,6 @@ Result<void> RepackKernelRamdisk(
 
   CF_EXPECTF(FileHasContent(instance.vendor_boot_image()), "File not found: {}",
              instance.vendor_boot_image());
-
-  // Repacking a boot.img doesn't work with Gem5 because the user must always
-  // specify a vmlinux instead of an arm64 Image, and that file can be too
-  // large to be repacked. Skip repack of boot.img on Gem5, as we need to be
-  // able to extract the ramdisk.img in a later stage and so this step must
-  // not fail (..and the repacked kernel wouldn't be used anyway).
-  if (!instance.kernel_path().empty() && !VmManagerIsGem5(config)) {
-    CF_EXPECT(
-        RepackBootImage(avb, instance.kernel_path(), instance.boot_image(),
-                        instance.new_boot_image(), instance.instance_dir()),
-        "Failed to regenerate the boot image with the new kernel");
-  }
 
   if (!instance.kernel_path().empty() || !instance.initramfs_path().empty()) {
     const std::string new_vendor_boot_image_path =
@@ -134,13 +168,14 @@ Result<void> RepackKernelRamdisk(
       CF_EXPECT(RepackSuperAndVbmeta(instance, superimg_build_dir,
                                      vendor_dlkm_build_dir,
                                      system_dlkm_build_dir, ramdisk_repacked));
-      bool success = RepackVendorBootImage(
+      Result<void> res = RepackVendorBootImage(
           ramdisk_repacked, instance.vendor_boot_image(),
           new_vendor_boot_image_path, config.assembly_dir(),
           instance.bootconfig_supported());
-      if (!success) {
+      if (!res.ok()) {
         LOG(ERROR) << "Failed to regenerate the vendor boot image with the "
-                      "new ramdisk";
+                      "new ramdisk: "
+                   << res.error();
       } else {
         // This control flow implies a kernel with all configs built in.
         // If it's just the kernel, repack the vendor boot image without a

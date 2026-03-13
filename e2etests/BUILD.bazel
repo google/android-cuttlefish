@@ -21,3 +21,5 @@ gazelle(
     external = "external",
     prefix = GO_PREFIX,
 )
+
+exports_files(["debian_substitution_marker"])

@@ -15,7 +15,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -49,14 +50,14 @@ bool SendAck(SharedFD fd, const std::string& session_id, const bool is_success,
              const std::string& status_message);
 bool SendResponse(SharedFD fd, const std::string& session_id,
                   const UserResponse::type& plain_selection,
-                  const std::vector<std::uint8_t>& signed_response,
+                  const std::vector<uint8_t>& signed_response,
                   // signing is a function of message, key
-                  const std::vector<std::uint8_t>& message);
+                  const std::vector<uint8_t>& message);
 
 // for HAL
 bool SendStartCmd(SharedFD fd, const std::string& session_id,
                   const std::string& prompt_text,
-                  const std::vector<std::uint8_t>& extra_data,
+                  const std::vector<uint8_t>& extra_data,
                   const std::string& locale,
                   const std::vector<teeui::UIOption>& ui_opts);
 

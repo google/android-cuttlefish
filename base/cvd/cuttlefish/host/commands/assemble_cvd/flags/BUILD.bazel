@@ -78,7 +78,22 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@fmt",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "build_super_image",
+    srcs = ["build_super_image.cc"],
+    hdrs = ["build_super_image.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/result",
+        "//libbase",
         "@gflags",
     ],
 )
@@ -112,6 +127,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "data_policy",
+    srcs = ["data_policy.cc"],
+    hdrs = ["data_policy.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/host/libs/config:data_image_policy",
+        "//cuttlefish/result",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
     name = "display_proto",
     srcs = ["display_proto.cc"],
     hdrs = ["display_proto.h"],
@@ -124,6 +153,17 @@ cf_cc_library(
         "@fmt",
         "@gflags",
         "@protobuf",
+    ],
+)
+
+cf_cc_library(
+    name = "extra_kernel_cmdline",
+    srcs = ["extra_kernel_cmdline.cc"],
+    hdrs = ["extra_kernel_cmdline.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "@gflags",
     ],
 )
 
@@ -147,6 +187,35 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "gpu_mode",
+    srcs = ["gpu_mode.cc"],
+    hdrs = ["gpu_mode.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/result",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "guest_enforce_security",
+    srcs = ["guest_enforce_security.cc"],
+    hdrs = ["guest_enforce_security.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/result",
+        "@fmt",
         "@gflags",
     ],
 )
@@ -161,6 +230,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_configs",
         "//cuttlefish/host/libs/config:file_source",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -175,6 +245,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_configs",
         "//cuttlefish/host/libs/config:file_source",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -190,8 +261,35 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
         "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "memory_mb",
+    srcs = ["memory_mb.cc"],
+    hdrs = ["memory_mb.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/result",
+        "@gflags",
+    ],
+)
+
+cf_cc_library(
+    name = "restart_subprocesses",
+    srcs = ["restart_subprocesses.cc"],
+    hdrs = ["restart_subprocesses.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
+        "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
+        "//cuttlefish/result",
+        "@gflags",
     ],
 )
 
@@ -203,6 +301,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -213,8 +312,10 @@ cf_cc_library(
     hdrs = ["system_image_dir.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -225,6 +326,7 @@ cf_cc_library(
     hdrs = ["use_cvdalloc.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/assemble_cvd/flags:flag_base",
         "//cuttlefish/host/commands/assemble_cvd/flags:from_gflags",
         "//cuttlefish/host/libs/config/defaults",
         "//cuttlefish/result",
@@ -240,6 +342,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )
@@ -254,6 +357,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:vmm_mode",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@gflags",
     ],
 )

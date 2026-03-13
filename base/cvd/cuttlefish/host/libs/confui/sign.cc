@@ -16,11 +16,14 @@
 
 #include "cuttlefish/host/libs/confui/sign.h"
 
+#include <stdint.h>
+
+#include <optional>
+#include <string>
+#include <vector>
+
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
-
-#include <string>
-
 #include "absl/log/check.h"
 
 #include "cuttlefish/common/libs/confui/confui.h"
@@ -86,12 +89,12 @@ enum class TestKeyBits : uint8_t {
   BYTE = 165 /* 0xA5 */,
 };
 
-std::optional<std::vector<std::uint8_t>> TestSign(
-    const std::vector<std::uint8_t>& message) {
+std::optional<std::vector<uint8_t>> TestSign(
+    const std::vector<uint8_t>& message) {
   // the same as userConfirm()
   using namespace support;
   auth_token_key_t key;
-  key.fill(static_cast<std::uint8_t>(TestKeyBits::BYTE));
+  key.fill(static_cast<uint8_t>(TestKeyBits::BYTE));
   using HMacer = HMacImplementation;
   auto confirm_signed_opt =
       HMacer::hmac256(key, {"confirmation token", message});
@@ -99,12 +102,10 @@ std::optional<std::vector<std::uint8_t>> TestSign(
     return std::nullopt;
   }
   auto confirm_signed = confirm_signed_opt.value();
-  return {
-      std::vector<std::uint8_t>(confirm_signed.begin(), confirm_signed.end())};
+  return {std::vector<uint8_t>(confirm_signed.begin(), confirm_signed.end())};
 }
 
-std::optional<std::vector<std::uint8_t>> Sign(
-    const std::vector<std::uint8_t>& message) {
+std::optional<std::vector<uint8_t>> Sign(const std::vector<uint8_t>& message) {
   SharedFD socket_to_secure_env = ConnectToSecureEnv();
   if (!socket_to_secure_env->IsOpen()) {
     ConfUiLog(ERROR) << "Failed to connect to secure_env signing server.";

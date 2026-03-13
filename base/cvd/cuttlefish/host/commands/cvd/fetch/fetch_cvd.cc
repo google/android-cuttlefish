@@ -15,20 +15,19 @@
 
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 
-#include <android-base/file.h>
+#include <stddef.h>
 #include <sys/stat.h>
 
-#include <cstddef>
 #include <functional>
 #include <future>
-#include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
 
-#include <android-base/strings.h>
+#include <android-base/file.h>
 #include "absl/log/log.h"
 #include "absl/strings/str_split.h"
 
@@ -55,7 +54,8 @@
 #include "cuttlefish/host/libs/web/http_client/curl_global_init.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
-#include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -86,7 +86,7 @@ bool ShouldAppendSubdirectory(const FetchFlags& flags) {
 std::vector<Target> GetFetchTargets(const FetchFlags& flags,
                                     const bool append_subdirectory) {
   std::vector<Target> result(flags.vector_flags.NumberOfBuilds().value_or(1));
-  for (std::size_t i = 0; i < result.size(); ++i) {
+  for (size_t i = 0; i < result.size(); ++i) {
     result[i] = Target{
         .build_strings = BuildStrings::Create(flags.vector_flags, i),
         .download_flags = DownloadFlags::Create(flags.vector_flags, i),
@@ -166,14 +166,17 @@ Result<void> UpdateTargetsWithBuilds(BuildApi& build_api,
 Result<Build> GetHostBuild(BuildApi& build_api,
                            const HostToolsTarget& host_target,
                            const std::optional<Build>& fallback_host_build) {
-  auto host_package_build = CF_EXPECT(
+  std::optional<Build> host_package_build = CF_EXPECT(
       GetBuildHelper(build_api, host_target.build_string, kDefaultBuildTarget));
-  CF_EXPECT(host_package_build.has_value() || fallback_host_build.has_value(),
-            "Either `--host_package_build` or `--default_build` needs to be "
-            "specified. Try "
-            "`--default_build=aosp-android-latest-release/"
-            "aosp_cf_x86_64_only_phone-userdebug");
-  return host_package_build.value_or(*fallback_host_build);
+  if (host_package_build.has_value()) {
+    return host_package_build.value();
+  } else if (fallback_host_build.has_value()) {
+    return fallback_host_build.value();
+  }
+  return CF_ERR(
+      "Either `--host_package_build` or `--default_build` needs to be "
+      "specified. Try `--default_build=aosp-android-latest-release/"
+      "aosp_cf_x86_64_only_phone-userdebug");
 }
 
 Result<std::string> SaveConfig(FetcherConfig& config,
@@ -232,10 +235,11 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
   }
   if (flags.dynamic_super_image) {
     ReadableZip* target_files_zip = CF_EXPECT(target_files.AsZip());
-    ReadableZipSource ab_partitions_source =
-        CF_EXPECT(target_files_zip->GetFile("META/ab_partitions.txt"));
+    std::unique_ptr<ReaderSeeker> ab_partitions_source =
+        CF_EXPECT(target_files_zip->OpenReadOnly("META/ab_partitions.txt"));
+    CF_EXPECT(ab_partitions_source.get());
     std::string ab_partitions_contents =
-        CF_EXPECT(ReadToString(ab_partitions_source));
+        CF_EXPECT(ReadToString(*ab_partitions_source));
 
     CF_EXPECT(target_files.ExtractOneTo("META/ab_partitions.txt",
                                         "default/ab_partitions.txt"));

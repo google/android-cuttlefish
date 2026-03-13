@@ -18,10 +18,13 @@
 #include <stddef.h>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+Result<SeekableZipSource> BufferZipSource(std::unique_ptr<ReaderSeeker>,
+                                          size_t buffer_size);
 Result<SeekableZipSource> BufferZipSource(SeekableZipSource,
                                           size_t buffer_size);
 

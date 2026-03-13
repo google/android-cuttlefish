@@ -7,17 +7,17 @@ OUTPUT_DIR="$(pwd)"
 CREDENTIAL_SOURCE="${CREDENTIAL_SOURCE:-}"
 
 bazel_test_tag_filter_arg="--test_tag_filters=-requires_gpu"
-while getopts "g:" opt; do
+while getopts "g" opt; do
   case "${opt}" in
     g)
-      bazel_test_tag_filter_arg=""
+      bazel_test_tag_filter_arg="--test_tag_filters=requires_gpu"
       ;;
     *)
     echo "Invalid option: -${opt}"
     echo "Usage: $0 [-g]"
     echo ""
     echo "Options"
-    echo " -g  include tests with the `requires_gpu` tag"
+    echo " -g  only run tests with the 'requires_gpu' tag"
     exit 1
     ;;
   esac
@@ -26,17 +26,25 @@ done
 function gather_test_results() {
   # Don't immediately exit on error anymore
   set +e
-  for d in "${REPO_DIR}"/e2etests/bazel-testlogs/cvd/*; do
-    dir="${OUTPUT_DIR}/$(basename "$d")"
-    mkdir -p "${dir}"
-    cp "${d}/test.log" "${dir}/sponge_log.log"
-    cp "${d}/test.xml" "${dir}/sponge_log.xml"
-    if [[ -f "${d}/test.outputs/outputs.zip" ]]; then
-      unzip "${d}/test.outputs/outputs.zip" -d "${dir}/device_logs"
+
+  # Keep in sync with `.kokoro/presubmit*.cfg`:
+  output_tests_directory="${OUTPUT_DIR}/kokoro_test_results"
+
+  tests_directory="${REPO_DIR}/e2etests/bazel-testlogs/cvd"
+  for file in $(find ${tests_directory} -name test.xml); do
+    test_directory="$(dirname ${file})"
+    test_directory_relative=${test_directory/#$tests_directory}
+    outdir="${output_tests_directory}/${test_directory_relative}"
+    mkdir -p "${outdir}"
+    cp "${test_directory}/test.log" "${outdir}/sponge_log.log"
+    cp "${test_directory}/test.xml" "${outdir}/sponge_log.xml"
+    if [[ -f "${test_directory}/test.outputs/outputs.zip" ]]; then
+      unzip "${test_directory}/test.outputs/outputs.zip" -d "${outdir}"
     fi
-    # Make sure everyone has access to the output files
-    chmod -R a+rw "${dir}"
   done
+
+  # Make sure everyone has access to the output files
+  chmod -R a+rw "${output_tests_directory}"
 }
 
 cd "${REPO_DIR}/e2etests"

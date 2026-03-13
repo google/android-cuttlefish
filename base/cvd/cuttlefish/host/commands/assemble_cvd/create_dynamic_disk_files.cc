@@ -21,9 +21,6 @@
 #include <memory>
 #include <string>
 
-#include <android-base/parsebool.h>
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -50,10 +47,10 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/sd_card.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/vbmeta_enforce_minimum_size.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk_builder.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/super_image_mixer.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
@@ -99,10 +96,10 @@ Result<BuildArchive> FindImgZip(const FetcherConfig& fetcher_config,
 
 Result<void> CreateDynamicDiskFiles(
     const FetcherConfigs& fetcher_configs, const CuttlefishConfig& config,
-    AndroidBuilds& android_builds,
+    AndroidBuilds& android_builds, const BootImageFlag& boot_image,
     const SystemImageDirFlag& system_image_dirs) {
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
-      InstanceImageFiles(config);
+      InstanceImageFiles(config, boot_image);
   size_t instance_index = 0;
   for (const auto& instance : config.Instances()) {
     const FetcherConfig& fetcher_config =
@@ -121,12 +118,13 @@ Result<void> CreateDynamicDiskFiles(
     std::optional<ChromeOsStateImage> chrome_os_state =
         CF_EXPECT(ChromeOsStateImage::CreateIfNecessary(instance));
 
-    CF_EXPECT(RepackKernelRamdisk(config, instance, Avb()));
+    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
+    CF_EXPECT(RepackKernelRamdisk(config, instance));
     CF_EXPECT(VbmetaEnforceMinimumSize(instance));
     CF_EXPECT(BootloaderPresentCheck(instance));
-    CF_EXPECT(Gem5ImageUnpacker(config));  // Requires RepackKernelRamdisk
+    CF_EXPECT(
+        Gem5ImageUnpacker(config, boot_image));  // Requires RepackKernelRamdisk
     CF_EXPECT(InitializeEspImage(config, instance));
-    CF_EXPECT(RebuildSuperImageIfNecessary(fetcher_config, instance));
 
     CF_EXPECT(InitializeAccessKregistryImage(instance));
     CF_EXPECT(InitializeHwcomposerPmemImage(instance));
@@ -203,9 +201,9 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECT(FactoryResetProtectedImage::Create(instance));
 
     // TODO: schuffelen - do something with these types
-    CF_EXPECT(InstanceCompositeDisk::Create(boot_config, config, instance,
-                                            factory_reset_protected,
-                                            persistent_vbmeta));
+    CF_EXPECT(InstanceCompositeDisk::Create(
+        boot_config, config, instance, bootloader_env_partition,
+        factory_reset_protected, persistent_vbmeta));
     CF_EXPECT(ApCompositeDisk::Create(ap_persistent_vbmeta, config, instance));
 
     auto ap_disk_builder = ApCompositeDiskBuilder(config, instance);
@@ -219,10 +217,10 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECTF(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
                    "Failed for '{}'", access_kregistry);
       }
-      if (FileExists(instance.hwcomposer_pmem_path())) {
-        CF_EXPECT(CreateBlankImage(instance.hwcomposer_pmem_path(), 2 /* mb */,
-                                   "none"),
-                  "Failed for \"" << instance.hwcomposer_pmem_path() << "\"");
+      const std::string hwcomposer_pmem = HwcomposerPmemPath(instance);
+      if (FileExists(hwcomposer_pmem)) {
+        CF_EXPECTF(CreateBlankImage(hwcomposer_pmem, 2 /* mb */, "none"),
+                   "Failed for '{}'", hwcomposer_pmem);
       }
       if (FileExists(instance.pstore_path())) {
         CF_EXPECT(CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none"),
@@ -247,8 +245,9 @@ Result<void> CreateDynamicDiskFiles(
     // Gem5 Simulate per-instance what the bootloader would usually do
     // Since on other devices this runs every time, just do it here every time
     if (VmManagerIsGem5(config)) {
-      RepackGem5BootImage(instance.PerInstancePath("initrd.img"), boot_config,
-                          config.assembly_dir(), instance.initramfs_path());
+      CF_EXPECT(RepackGem5BootImage(instance.PerInstancePath("initrd.img"),
+                                    boot_config, config.assembly_dir(),
+                                    instance.initramfs_path()));
     }
     ++instance_index;
   }

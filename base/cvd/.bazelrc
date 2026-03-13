@@ -5,3 +5,47 @@ build --copt=-fdiagnostics-color=always
 build --output_filter='^//((?!(external/libarchive|external/libevent|external/rules_flex|external/rules_m4):).)*$'
 build --test_output=errors
 build --test_summary=terse
+
+# Match go/ubsan for always-enabled features
+# Docs: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+
+# Use of a misaligned pointer or creation of a misaligned reference. Also
+# sanitizes assume_aligned-like attributes.
+build --copt=-fsanitize=alignment
+build --linkopt=-fsanitize=alignment
+
+# Out-of-bounds access into a statically sized array.
+build --copt=-fsanitize=array-bounds
+build --linkopt=-fsanitize=array-bounds
+
+# Load of a value of an enumerated type which is not in the range of
+# representable values for that enumerated type.
+build --copt=-fsanitize=enum
+build --linkopt=-fsanitize=enum
+
+# Conversion to, from, or between floating-point types which would overflow the
+# destination. Because the range of representable values for all floating-point
+# types supported by Clang is [-inf, +inf], the only cases detected are
+# conversions from floating point to integer types.
+build --copt=-fsanitize=float-cast-overflow
+build --linkopt=-fsanitize=float-cast-overflow
+
+# Use of a null pointer or creation of a null reference.
+build --copt=-fsanitize=null
+build --linkopt=-fsanitize=null
+
+# In C++, reaching the end of a value-returning function without returning a value.
+build --copt=-fsanitize=return
+build --linkopt=-fsanitize=return
+
+# Returning null pointer from a function which is declared to never return null.
+build --copt=-fsanitize=returns-nonnull-attribute
+build --linkopt=-fsanitize=returns-nonnull-attribute
+
+# If control flow reaches an unreachable program point.
+build --copt=-fsanitize=unreachable
+build --linkopt=-fsanitize=unreachable
+
+# A variable-length array whose bound does not evaluate to a positive value.
+build --copt=-fsanitize=vla-bound
+build --linkopt=-fsanitize=vla-bound

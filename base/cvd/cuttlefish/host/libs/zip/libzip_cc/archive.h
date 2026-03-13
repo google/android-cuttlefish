@@ -18,17 +18,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
 #include <string>
+#include <string_view>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/managed.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/writable_source.h"
+#include "cuttlefish/io/filesystem.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-class ReadableZip {
+class ReadableZip : public ReadFilesystem {
  public:
   friend class WritableZip;
   friend class WritableZipSource;
@@ -43,15 +47,21 @@ class ReadableZip {
   Result<uint64_t> NumEntries();
 
   Result<std::string> EntryName(uint64_t index);
-  Result<uint32_t> EntryUnixAttributes(uint64_t index);
+  Result<uint32_t> EntryAttributes(uint64_t index) const;
   Result<bool> EntryIsDirectory(uint64_t index);
 
   /* Decompresses and extract a file from the archive. */
-  Result<SeekableZipSource> GetFile(const std::string& name);
-  Result<SeekableZipSource> GetFile(uint64_t index);
+  Result<SeekableZipSource> GetFile(uint64_t index) const;
+
+  Result<std::unique_ptr<ReaderSeeker>> OpenReadOnly(
+      std::string_view path) override;
+
+  Result<uint32_t> FileAttributes(std::string_view path) const override;
 
  protected:
   ReadableZip(ManagedZip, WritableZipSource);
+
+  Result<SeekableZipSource> GetFile(const std::string& name) const;
 
   ManagedZip raw_;
   WritableZipSource source_;

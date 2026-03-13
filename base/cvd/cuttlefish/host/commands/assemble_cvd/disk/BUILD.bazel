@@ -25,9 +25,11 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
+        "//cuttlefish/host/commands/assemble_cvd/flags:build_super_image",
         "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/image_aggregator",
+        "//cuttlefish/host/libs/image_aggregator:super_builder",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -136,6 +138,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
@@ -186,6 +189,7 @@ cf_cc_library(
     hdrs = ["hwcomposer_pmem.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",
@@ -207,6 +211,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:boot_config",
         "//cuttlefish/host/commands/assemble_cvd:disk_builder",
         "//cuttlefish/host/commands/assemble_cvd/disk:factory_reset_protected",
         "//cuttlefish/host/commands/assemble_cvd/disk:generate_persistent_bootconfig",
@@ -228,9 +233,12 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
         "//cuttlefish/host/commands/assemble_cvd:vendor_dlkm_utils",
-        "//cuttlefish/host/libs/avb",
+        "//cuttlefish/host/commands/assemble_cvd/disk:image_file",
+        "//cuttlefish/host/commands/assemble_cvd/flags:boot_image",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/posix:strerror",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -272,6 +280,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -297,6 +306,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

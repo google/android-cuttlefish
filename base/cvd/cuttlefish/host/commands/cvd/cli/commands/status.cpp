@@ -24,9 +24,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <json/value.h>
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -80,7 +80,7 @@ Args:
 Result<unsigned> IdFromInstanceNameFlag(std::string_view name_or_id) {
   android::base::ConsumePrefix(&name_or_id, kCvdNamePrefix);
   unsigned id;
-  CF_EXPECT(android::base::ParseUint(std::string(name_or_id), &id),
+  CF_EXPECT(absl::SimpleAtoi(std::string(name_or_id), &id),
             "--instance_name should be either cvd-<id> or id. To use it as a "
             "selector flag it must appear before the subcommand.");
   return id;

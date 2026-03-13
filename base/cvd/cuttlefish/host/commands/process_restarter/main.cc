@@ -22,7 +22,6 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
 

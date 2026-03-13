@@ -27,6 +27,7 @@ cf_cc_library(
         "//teeui/libteeui",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
         "@boringssl//:crypto",
     ],
 )

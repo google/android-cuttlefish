@@ -15,6 +15,8 @@
 
 #include "confui_sign_server.h"
 
+#include <stdint.h>
+
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 
@@ -64,8 +66,8 @@ ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
     auto request = request_opt.value();
 
     // hmac over (prefix || data)
-    std::vector<std::uint8_t> data{std::begin(kConfirmationTokenMessageTag),
-                                   std::end(kConfirmationTokenMessageTag) - 1};
+    std::vector<uint8_t> data{std::begin(kConfirmationTokenMessageTag),
+                              std::end(kConfirmationTokenMessageTag) - 1};
 
     data.insert(data.end(), request.payload_.data(),
                 request.payload_.data() + request.payload_.size());
@@ -81,8 +83,7 @@ ConfUiSignServer::ConfUiSignServer(TpmResourceManager& tpm_resource_manager,
         << keymaster::kConfirmationTokenSize;
 
     // send hmac
-    std::vector<std::uint8_t> hmac_buffer(hmac->buffer,
-                                          hmac->buffer + hmac->size);
+    std::vector<uint8_t> hmac_buffer(hmac->buffer, hmac->buffer + hmac->size);
     if (!sign_sender.Send(confui::SignMessageError::kOk, hmac_buffer)) {
       LOG(ERROR) << "Sending signature failed likely due to I/O error";
     }

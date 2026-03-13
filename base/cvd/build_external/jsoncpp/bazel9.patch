@@ -1,0 +1,22 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+index 45f448e..8f14f11 100644
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1,5 +1,7 @@
+ licenses(["unencumbered"])  # Public Domain or MIT
+ 
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ exports_files(["LICENSE"])
+ 
+ cc_library(
+diff --git a/MODULE.bazel b/MODULE.bazel
+index d81a5d6..f9e1e8b 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -3,3 +3,5 @@ module(
+     version = "1.9.6",
+     compatibility_level = 1,
+ )
++
++bazel_dep(name = "rules_cc", version = "0.0.9")

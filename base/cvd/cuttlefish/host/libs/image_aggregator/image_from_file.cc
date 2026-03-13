@@ -15,8 +15,11 @@
  */
 #include "cuttlefish/host/libs/image_aggregator/image_from_file.h"
 
+#include <stdint.h>
+
 #include <memory>
 #include <string>
+#include <utility>
 
 #include <android-base/file.h>
 #include "absl/strings/match.h"
@@ -37,7 +40,7 @@ Result<std::unique_ptr<DiskImage>> ImageFromFile(const std::string& file_path) {
   CF_EXPECTF(fd.get() >= 0, "Could not open '{}': {}", file_path,
              StrError(errno));
 
-  std::uint64_t file_size = FileSize(file_path);
+  uint64_t file_size = FileSize(file_path);
 
   // Try to read the disk in a nicely-aligned block size unless the whole file
   // is smaller.

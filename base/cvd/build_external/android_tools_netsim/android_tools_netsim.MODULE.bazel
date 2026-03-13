@@ -17,6 +17,7 @@ netsim_crates.annotation(
         "BINDING_PATH": "$(execpath bindings/bindings.rs)",
     },
     additive_build_file_content = """
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
     name = "grpc_wrap",

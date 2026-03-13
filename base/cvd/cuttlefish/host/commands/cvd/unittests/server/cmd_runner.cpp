@@ -15,7 +15,7 @@
 
 #include "cuttlefish/host/commands/cvd/unittests/server/cmd_runner.h"
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 namespace cuttlefish {
 
@@ -36,7 +36,7 @@ CmdResult CmdRunner::Run(const cvd_common::Args& args,
 
 CmdResult CmdRunner::Run(const std::string& args,
                          const cvd_common::Envs& envs) {
-  return CmdRunner::Run(android::base::Tokenize(args, " "), envs);
+  return CmdRunner::Run(absl::StrSplit(args, ' ', absl::SkipEmpty()), envs);
 }
 
 CmdRunner::CmdRunner(Command&& cmd, const cvd_common::Args& args,

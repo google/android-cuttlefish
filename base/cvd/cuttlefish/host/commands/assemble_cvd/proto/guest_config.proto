@@ -18,6 +18,18 @@ edition = "2023";
 
 package cuttlefish.config;
 
+enum GpuMode {
+  GPU_MODE_AUTO = 0;
+  GPU_MODE_CUSTOM = 1;
+  GPU_MODE_DRM_VIRGL = 2;
+  GPU_MODE_GFXSTREAM = 3;
+  GPU_MODE_GFXSTREAM_GUEST_ANGLE = 4;
+  GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_LAVAPIPE = 5;
+  GPU_MODE_GFXSTREAM_GUEST_ANGLE_HOST_SWIFTSHADER = 6;
+  GPU_MODE_GUEST_SWIFTSHADER = 7;
+  GPU_MODE_NONE = 8;
+}
+
 message Graphics {
   // Whether the guest supports the Gfxstream graphics driver.
   bool gfxstream_supported = 1;
@@ -32,6 +44,9 @@ message Graphics {
   // If true, the system will prefer using the drm_virgl display mode when
   // available.
   bool prefer_drm_virgl_when_supported = 4;
+
+  // The list of gpu modes supported by the guest in order of preference.
+  repeated GpuMode gpu_mode_candidates = 5;
 }
 
 message Audio {
@@ -119,6 +134,9 @@ enum DeviceType {
   Unknown = 7;
 }
 
+// The presence of this field in the proto indicates the lights HAL is enabled.
+message Lights {}
+
 // GuestConfigFile represents the configuration for a Cuttlefish guest device,
 // typically parsed from an cuttlefish-guest-config.txtpb file. It defines the
 // device's hardware capabilities, software features, and virtualization
@@ -137,4 +155,6 @@ message GuestConfigFile {
   Storage storage = 6;
 
   Virtualization virtualization = 7;
+
+  Lights lights = 8;
 }

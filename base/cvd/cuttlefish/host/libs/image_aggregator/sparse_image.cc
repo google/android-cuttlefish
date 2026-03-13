@@ -29,7 +29,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/posix/rename.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -91,9 +91,7 @@ Result<void> ForceRawImage(const std::string& image_path) {
   // `rename` can fail if these are on different mounts, but they are files
   // within the same directory so they can only be in different mounts if one
   // is a bind mount, in which case `rename` won't work anyway.
-  CF_EXPECTF(rename(tmp_raw_image_path.c_str(), image_path.c_str()) == 0,
-             "rename('{}','{}') failed: {}", tmp_raw_image_path, image_path,
-             StrError(errno));
+  CF_EXPECT(Rename(tmp_raw_image_path, image_path));
 
   return {};
 }

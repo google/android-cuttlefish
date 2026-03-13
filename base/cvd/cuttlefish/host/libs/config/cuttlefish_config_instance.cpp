@@ -30,7 +30,7 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-#include "android-base/strings.h"
+#include "absl/strings/str_split.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "google/protobuf/text_format.h"
@@ -46,7 +46,9 @@
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/result/result.h"
@@ -110,22 +112,6 @@ std::string CuttlefishConfig::InstanceSpecific::images_dir() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_images_dir(
     const std::string& dir) {
   (*Dictionary())[kImagesDir] = dir;
-}
-static constexpr char kBootImage[] = "boot_image";
-std::string CuttlefishConfig::InstanceSpecific::boot_image() const {
-  return (*Dictionary())[kBootImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_boot_image(
-    const std::string& boot_image) {
-  (*Dictionary())[kBootImage] = boot_image;
-}
-static constexpr char kNewBootImage[] = "new_boot_image";
-std::string CuttlefishConfig::InstanceSpecific::new_boot_image() const {
-  return (*Dictionary())[kNewBootImage].asString();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_new_boot_image(
-    const std::string& new_boot_image) {
-  (*Dictionary())[kNewBootImage] = new_boot_image;
 }
 static constexpr char kInitBootImage[] = "init_boot_image";
 std::string CuttlefishConfig::InstanceSpecific::init_boot_image() const {
@@ -478,34 +464,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_external_network_mode(
   (*Dictionary())[kExternalNetworkMode] = fmt::format("{}", mode);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
-  return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_pipe_prefix() const {
-  return AbsolutePath(PerInstanceInternalPath("console"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
-  return console_pipe_prefix() + ".in";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
-  return console_pipe_prefix() + ".out";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_pipe_prefix() const {
-  return AbsolutePath(PerInstanceInternalPath("gnss"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
-  return gnss_pipe_prefix() + ".in";
-}
-
-std::string CuttlefishConfig::InstanceSpecific::gnss_out_pipe_name() const {
-  return gnss_pipe_prefix() + ".out";
-}
-
 static constexpr char kGnssGrpcProxyServerPort[] =
     "gnss_grpc_proxy_server_port";
 int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {
@@ -576,11 +534,11 @@ std::string CuttlefishConfig::InstanceSpecific::vcpu_config_path() const {
 
 static constexpr char kDataPolicy[] = "data_policy";
 void CuttlefishConfig::MutableInstanceSpecific::set_data_policy(
-    const std::string& data_policy) {
-  (*Dictionary())[kDataPolicy] = data_policy;
+    DataImagePolicy data_policy) {
+  (*Dictionary())[kDataPolicy] = DataImagePolicyString(data_policy);
 }
-std::string CuttlefishConfig::InstanceSpecific::data_policy() const {
-  return (*Dictionary())[kDataPolicy].asString();
+DataImagePolicy CuttlefishConfig::InstanceSpecific::data_policy() const {
+  return DataImagePolicyFromString((*Dictionary())[kDataPolicy].asString());
 }
 
 static constexpr char kBlankDataImageMb[] = "blank_data_image_mb";
@@ -709,11 +667,43 @@ int CuttlefishConfig::InstanceSpecific::modem_simulator_sim_type() const {
 }
 
 static constexpr char kGpuMode[] = "gpu_mode";
-std::string CuttlefishConfig::InstanceSpecific::gpu_mode() const {
-  return (*Dictionary())[kGpuMode].asString();
+GpuMode CuttlefishConfig::InstanceSpecific::gpu_mode() const {
+  Result<GpuMode> gpu_mode_result =
+      GpuModeFromString((*Dictionary())[kGpuMode].asString());
+  // The value should be already be validated via `set_gpu_mode` and is only a
+  // string internally.  No need for a `Result` on every getter call
+  CHECK(gpu_mode_result.ok());
+  return *gpu_mode_result;
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(const std::string& name) {
-  (*Dictionary())[kGpuMode] = name;
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode(GpuMode mode) {
+  (*Dictionary())[kGpuMode] = GpuModeString(mode);
+}
+
+static constexpr char kGpuModeCandidates[] = "gpu_mode_candidates";
+std::vector<GpuMode> CuttlefishConfig::InstanceSpecific::gpu_mode_candidates()
+    const {
+  auto json_candidates = (*Dictionary())[kGpuModeCandidates];
+  CHECK(json_candidates.isArray())
+      << "Unexpected type for 'gpu_mode_candidates'.";
+
+  std::vector<GpuMode> candidates;
+
+  for (auto& json_candidate : json_candidates) {
+    CHECK(json_candidate.isString())
+        << "Unexpected type for 'gpu_mode_candidate'.";
+    Result<GpuMode> candidate = GpuModeFromString(json_candidate.asString());
+    CHECK(candidate.ok());
+    candidates.push_back(*candidate);
+  }
+  return candidates;
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_gpu_mode_candidates(
+    const std::vector<GpuMode>& candidates) {
+  Json::Value json_candidates(Json::arrayValue);
+  for (GpuMode candidate : candidates) {
+    json_candidates.append(Json::Value(GpuModeString(candidate)));
+  }
+  (*Dictionary())[kGpuModeCandidates] = json_candidates;
 }
 
 static constexpr char kGpuAngleFeatureOverridesEnabled[] =
@@ -958,9 +948,9 @@ CuttlefishConfig::InstanceSpecific::extra_bootconfig_args() const {
       (*Dictionary())[kExtraBootconfigArgsInstanced].asString();
   std::vector<std::string> bootconfig;
   if (!extra_bootconfig_args_str.empty()) {
-    for (const auto& arg :
-         android::base::Split(extra_bootconfig_args_str, " ")) {
-      bootconfig.push_back(arg);
+    for (std::string_view arg :
+         absl::StrSplit(extra_bootconfig_args_str, ' ')) {
+      bootconfig.emplace_back(arg);
     }
   }
   return bootconfig;
@@ -1351,10 +1341,6 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
   return console_dev;
 }
 
-std::string CuttlefishConfig::InstanceSpecific::hwcomposer_pmem_path() const {
-  return AbsolutePath(PerInstancePath("hwcomposer-pmem"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
   return AbsolutePath(PerInstancePath("pstore"));
 }
@@ -1426,10 +1412,6 @@ std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path()
 std::string CuttlefishConfig::InstanceSpecific::ap_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("ap_composite.img"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
-  return AbsolutePath(PerInstancePath("uboot_env.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::ap_uboot_env_image_path() const {

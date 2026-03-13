@@ -21,6 +21,8 @@
 #include <string>
 #include <string_view>
 
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -35,8 +37,8 @@ Result<std::string> AndroidBuild::ImageFile(std::string_view name,
                  name, extract);
 }
 
-Result<void> AndroidBuild::SetExtractDir(std::string_view dir) {
-  return CF_ERRF("Unimplemented for '{}': (dir = '{}'", *this, dir);
+Result<void> AndroidBuild::SetExtractDir(std::string_view) {
+  return {};
 }
 
 Result<std::set<std::string, std::less<void>>> AndroidBuild::AbPartitions() {
@@ -64,7 +66,13 @@ AndroidBuild::PhysicalPartitions() {
 }
 
 std::ostream& operator<<(std::ostream& out, const AndroidBuild& build) {
-  return build.Format(out);
+  return out << build.Name();
+}
+
+std::string format_as(const AndroidBuild& build) { return build.Name(); }
+
+PrettyStruct Pretty(AndroidBuild& build, PrettyAdlPlaceholder) {
+  return build.Pretty();
 }
 
 }  // namespace cuttlefish

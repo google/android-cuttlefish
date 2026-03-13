@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <android-base/strings.h>
 #include <gtest/gtest.h>
 
 #include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"

@@ -16,7 +16,8 @@
 
 #include "cuttlefish/common/libs/security/confui_sign.h"
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <optional>
 #include <vector>
 
@@ -25,7 +26,7 @@
 namespace cuttlefish {
 bool ConfUiSignerImpl::Send(SharedFD output,
                             const confui::SignMessageError error,
-                            const std::vector<std::uint8_t>& payload) {
+                            const std::vector<uint8_t>& payload) {
 #define SET_FLAG_AND_RETURN_SEND \
   sign_status_ |= kIoError;      \
   return false
@@ -75,7 +76,7 @@ std::optional<confui::SignRawMessage> ConfUiSignerImpl::Receive(
     return std::nullopt;
   }
 
-  std::vector<std::uint8_t> buffer(payload_size);
+  std::vector<uint8_t> buffer(payload_size);
   char* buf_data = reinterpret_cast<char*>(buffer.data());
   n_read = ReadExact(input, buf_data, payload_size);
   if (n_read != payload_size) {
@@ -91,7 +92,7 @@ std::optional<confui::SignRawMessage> ConfUiSignSender::Receive() {
 }
 
 bool ConfUiSignSender::Send(const SignMessageError error,
-                            const std::vector<std::uint8_t>& encoded_hmac) {
+                            const std::vector<uint8_t>& encoded_hmac) {
   if (!impl_.IsOk()) {
     return false;
   }
@@ -99,7 +100,7 @@ bool ConfUiSignSender::Send(const SignMessageError error,
   return impl_.IsOk();
 }
 
-bool ConfUiSignRequester::Request(const std::vector<std::uint8_t>& message) {
+bool ConfUiSignRequester::Request(const std::vector<uint8_t>& message) {
   impl_.Send(client_fd_, confui::SignMessageError::kOk, message);
   return impl_.IsOk();
 }

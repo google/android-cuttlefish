@@ -28,6 +28,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/start:start_flags",
+        "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:host_tools_version",
         "//cuttlefish/host/libs/config:instance_nums",

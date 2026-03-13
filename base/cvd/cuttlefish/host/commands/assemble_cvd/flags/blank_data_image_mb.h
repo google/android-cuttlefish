@@ -31,7 +31,7 @@ class BlankDataImageMbFlag : public FlagBase<int> {
   ~BlankDataImageMbFlag() override = default;
 
  private:
-  BlankDataImageMbFlag(std::vector<int>);
+  explicit BlankDataImageMbFlag(std::vector<int> flag_values, bool is_default);
 };
 
 }  // namespace cuttlefish

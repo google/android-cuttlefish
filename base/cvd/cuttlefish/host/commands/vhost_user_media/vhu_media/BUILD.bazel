@@ -1,0 +1,23 @@
+load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@vhost_user_media_workspace_crates//:defs.bzl", "crate_deps")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "vhu_media",
+    srcs = ["src/lib.rs"],
+    edition = "2024",
+    deps = crate_deps([
+        "libc",
+        "log",
+        "thiserror",
+        "vhost",
+        "vhost-user-backend",
+        "virtio-bindings",
+        "virtio-media",
+        "virtio-queue",
+        "vm-allocator",
+        "vm-memory",
+        "vmm-sys-util",
+    ]),
+)

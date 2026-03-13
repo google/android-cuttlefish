@@ -19,11 +19,10 @@
 #include <sys/statvfs.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include <android-base/parsebool.h>
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
@@ -62,8 +61,8 @@ Result<void> ResolveInstanceFiles(
   std::string comma_str = "";
   auto instance_nums =
       CF_EXPECT(InstanceNumsCalculator().FromGlobalGflags().Calculate());
-  auto default_vvmtruststore_file_name =
-      android::base::Split(FLAGS_default_vvmtruststore_file_name, ",");
+  std::vector<std::string_view> default_vvmtruststore_file_name =
+      absl::StrSplit(FLAGS_default_vvmtruststore_file_name, ',');
   for (int instance_index = 0; instance_index < instance_nums.size();
        instance_index++) {
     if (instance_index > 0) {
@@ -86,8 +85,9 @@ Result<void> ResolveInstanceFiles(
       if (default_vvmtruststore_file_name[instance_index].empty()) {
         vvmtruststore_path += comma_str;
       } else {
-        vvmtruststore_path += comma_str + cur_system_image_dir + "/" +
-                              default_vvmtruststore_file_name[instance_index];
+        vvmtruststore_path +=
+            fmt::format("{}{}/{}", comma_str, cur_system_image_dir,
+                        default_vvmtruststore_file_name[instance_index]);
       }
     }
   }

@@ -15,9 +15,9 @@
  */
 #pragma once
 
+#include <stdint.h>
 #include <sys/socket.h>
 
-#include <cstdint>
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -82,7 +82,7 @@ class UnixMessageSocket {
 
  private:
   SharedFD socket_;
-  std::uint32_t max_message_size_;
+  uint32_t max_message_size_;
 };
 
 }  // namespace cuttlefish

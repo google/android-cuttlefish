@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
 #include "cuttlefish/common/libs/concurrency/multiplexer.h"
 #include "cuttlefish/common/libs/confui/confui.h"
@@ -59,10 +59,9 @@ class ScreenConnectorInputMultiplexer {
     // callback to select the queue index, and update is_discard_frame
     auto selector = [this, &is_discard_frame]() -> int {
       if (multiplexer_.IsEmpty(sc_android_queue_id_)) {
-        ConfUiLogVerbose
-            << "Streamer gets Conf UI frame with host ctrl mode = "
-            << static_cast<std::uint32_t>(host_mode_ctrl_.GetMode())
-            << " and cnd = #" << on_next_frame_cnt_;
+        ConfUiLogVerbose << "Streamer gets Conf UI frame with host ctrl mode = "
+                         << static_cast<uint32_t>(host_mode_ctrl_.GetMode())
+                         << " and cnd = #" << on_next_frame_cnt_;
         return sc_confui_queue_id_;
       }
       auto mode = host_mode_ctrl_.GetMode();
@@ -71,21 +70,20 @@ class ScreenConnectorInputMultiplexer {
         // before it becomes Conf UI mode.
         ConfUiLogVerbose
             << "Streamer ignores Android frame with host ctrl mode ="
-            << static_cast<std::uint32_t>(mode) << "and cnd = #"
+            << static_cast<uint32_t>(mode) << "and cnd = #"
             << on_next_frame_cnt_;
         is_discard_frame = true;
       }
       ConfUiLogVerbose << "Streamer gets Android frame with host ctrl mode ="
-                         << static_cast<std::uint32_t>(mode) << "and cnd = #"
-                         << on_next_frame_cnt_;
+                       << static_cast<uint32_t>(mode) << "and cnd = #"
+                       << on_next_frame_cnt_;
       return sc_android_queue_id_;
     };
 
     while (true) {
       ConfUiLogVerbose << "Streamer waiting Semaphore with host ctrl mode ="
-                         << static_cast<std::uint32_t>(
-                                host_mode_ctrl_.GetMode())
-                         << " and cnd = #" << on_next_frame_cnt_;
+                       << static_cast<uint32_t>(host_mode_ctrl_.GetMode())
+                       << " and cnd = #" << on_next_frame_cnt_;
       auto processed_frame = multiplexer_.Pop(selector);
       if (!is_discard_frame) {
         return processed_frame;

@@ -1,0 +1,2 @@
+cc_compatibility_proxy = use_extension("@rules_cc//cc:extensions.bzl", "compatibility_proxy")
+use_repo(cc_compatibility_proxy, "cc_compatibility_proxy")

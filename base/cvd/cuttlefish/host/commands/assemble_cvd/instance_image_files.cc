@@ -19,14 +19,16 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
+#include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/misc_image.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
 std::vector<std::vector<std::unique_ptr<ImageFile>>> InstanceImageFiles(
-    const CuttlefishConfig& config) {
+    const CuttlefishConfig& config, const BootImageFlag& boot_image_flag) {
   std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files;
 
   for (const auto& instance : config.Instances()) {
@@ -36,6 +38,8 @@ std::vector<std::vector<std::unique_ptr<ImageFile>>> InstanceImageFiles(
     instance_image_files.emplace_back(
         std::make_unique<MetadataImage>(instance));
     instance_image_files.emplace_back(std::make_unique<MiscImage>(instance));
+    instance_image_files.emplace_back(
+        std::make_unique<InstanceBootImage>(config, instance, boot_image_flag));
   }
 
   return image_files;

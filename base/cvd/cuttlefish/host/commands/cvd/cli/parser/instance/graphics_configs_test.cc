@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -65,7 +67,7 @@ Result<std::optional<InstancesDisplays>> DisplaysFlag(std::vector<std::string> a
   }
   auto flag_str = CF_EXPECT(std::move(flag_str_opt));
 
-  std::vector<std::uint8_t> decoded;
+  std::vector<uint8_t> decoded;
   CF_EXPECT(DecodeBase64(flag_str, &decoded));
 
   InstancesDisplays ret;

@@ -16,6 +16,10 @@
 
 #include "cuttlefish/host/libs/wayland/wayland_surfaces.h"
 
+#include <stdint.h>
+
+#include <mutex>
+
 #include <drm/drm_fourcc.h>
 #include <wayland-server-protocol.h>
 
@@ -37,12 +41,11 @@ void Surfaces::SetFramesAreRGBA(bool frames_are_rgba) {
   frames_are_rgba_ = frames_are_rgba;
 }
 
-void Surfaces::HandleSurfaceFrame(std::uint32_t display_number,
-                                  std::uint32_t frame_width,
-                                  std::uint32_t frame_height,
-                                  std::uint32_t frame_fourcc_format,
-                                  std::uint32_t frame_stride_bytes,
-                                  std::uint8_t* frame_bytes) {
+void Surfaces::HandleSurfaceFrame(uint32_t display_number, uint32_t frame_width,
+                                  uint32_t frame_height,
+                                  uint32_t frame_fourcc_format,
+                                  uint32_t frame_stride_bytes,
+                                  uint8_t* frame_bytes) {
   if (frames_are_rgba_) {
     frame_fourcc_format = DRM_FORMAT_ABGR8888;
   }
@@ -55,9 +58,9 @@ void Surfaces::HandleSurfaceFrame(std::uint32_t display_number,
   }
 }
 
-void Surfaces::HandleSurfaceCreated(std::uint32_t display_number,
-                                    std::uint32_t display_width,
-                                    std::uint32_t display_height) {
+void Surfaces::HandleSurfaceCreated(uint32_t display_number,
+                                    uint32_t display_width,
+                                    uint32_t display_height) {
   const DisplayEvent event{DisplayCreatedEvent{
       .display_number = display_number,
       .display_width = display_width,
@@ -70,7 +73,7 @@ void Surfaces::HandleSurfaceCreated(std::uint32_t display_number,
   }
 }
 
-void Surfaces::HandleSurfaceDestroyed(std::uint32_t display_number) {
+void Surfaces::HandleSurfaceDestroyed(uint32_t display_number) {
   const DisplayEvent event{DisplayDestroyedEvent{
       .display_number = display_number,
   }};

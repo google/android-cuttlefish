@@ -56,9 +56,8 @@ Result<BootImageFlag> BootImageFlag::FromGlobalGflags(
              : BootImageFlag(absl::StrSplit(FLAGS_boot_image, ","), false);
 }
 
-bool BootImageFlag::IsDefault() const { return is_default_; }
-
-BootImageFlag::BootImageFlag(std::vector<std::string> paths, bool is_default)
-    : FlagBase(std::move(paths)), is_default_(is_default) {}
+BootImageFlag::BootImageFlag(std::vector<std::string> flag_values,
+                             bool is_default)
+    : FlagBase(std::move(flag_values), is_default) {}
 
 }  // namespace cuttlefish

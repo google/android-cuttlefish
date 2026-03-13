@@ -1,0 +1,2 @@
+debian/cuttlefish-podcvd-prerequisites.sh /usr/lib/cuttlefish-common/bin/
+src/podcvd/podcvd /usr/lib/cuttlefish-common/bin/

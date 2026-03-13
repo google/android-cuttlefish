@@ -16,13 +16,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <array>
-#include <cstdint>
 
 namespace cuttlefish {
 namespace confui {
 namespace support {
-using auth_token_key_t = std::array<std::uint8_t, 32>;
+using auth_token_key_t = std::array<uint8_t, 32>;
 using hmac_t = auth_token_key_t;
 
 template <typename T>

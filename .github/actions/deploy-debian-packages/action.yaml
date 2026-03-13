@@ -13,24 +13,32 @@ runs:
       version: '>= 363.0.0'
   - name: Deploy deb packages into Artifact Registry
     run: |
-      if [[ ${{ inputs.deploy-channel }} == "stable" ]]; then
+      PACKAGES=(
+        "cuttlefish-base"
+        "cuttlefish-integration-gigabyte-arm64"
+        "cuttlefish-metrics"
+        "cuttlefish-orchestration"
+        "cuttlefish-user"
+      )
+
+      if [[ ${INPUTS_DEPLOY_CHANNEL} == "stable" ]]; then
         REPO=android-cuttlefish
       else
-        REPO=android-cuttlefish-${{ inputs.deploy-channel }}
+        REPO=android-cuttlefish-${INPUTS_DEPLOY_CHANNEL}
+        # TODO: include cuttlefish-podcvd on stable afterwards
+        PACKAGES+=("cuttlefish-podcvd")
       fi
 
-      pushd ${{ inputs.path }}
-      for var in base user orchestration; do
+      pushd ${INPUTS_PATH}
+      for package in "${PACKAGES[@]}"; do
         gcloud --project=android-cuttlefish-artifacts \
           artifacts apt upload \
           ${REPO} \
           --location=us \
-          --source=$(find . -name cuttlefish-${var}_*.deb)
+          --source=$(find . -name ${package}_*.deb)
       done
-      gcloud --project=android-cuttlefish-artifacts \
-        artifacts apt upload \
-        ${REPO} \
-        --location=us \
-        --source=$(find . -name cuttlefish-integration-gigabyte-arm64_*.deb)
       popd
     shell: bash
+    env:
+      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+      INPUTS_PATH: ${{ inputs.path }}

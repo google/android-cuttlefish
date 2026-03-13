@@ -28,11 +28,11 @@ bool NetworkInterfaceExists(const std::string& interface_name);
 std::set<std::string> TapInterfacesInUse();
 #endif
 
-void GenerateCorrespondingIpv6ForMac(const std::uint8_t mac[6], std::uint8_t out[16]);
-void GenerateMobileMacForInstance(int index, std::uint8_t out[6]);
-void GenerateEthMacForInstance(int index, std::uint8_t out[6]);
-void GenerateWifiMacForInstance(int index, std::uint8_t out[6]);
+void GenerateCorrespondingIpv6ForMac(const uint8_t mac[6], uint8_t out[16]);
+void GenerateMobileMacForInstance(int index, uint8_t out[6]);
+void GenerateEthMacForInstance(int index, uint8_t out[6]);
+void GenerateWifiMacForInstance(int index, uint8_t out[6]);
 
-std::string MacAddressToString(const std::uint8_t mac[6]);
-std::string Ipv6ToString(const std::uint8_t ip[16]);
+std::string MacAddressToString(const uint8_t mac[6]);
+std::string Ipv6ToString(const uint8_t ip[16]);
 }

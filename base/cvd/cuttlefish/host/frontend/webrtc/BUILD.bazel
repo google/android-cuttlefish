@@ -1,3 +1,5 @@
+load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
@@ -77,6 +79,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/host/libs/config:openwrt_args",
         "//cuttlefish/host/libs/confui:host_confui",

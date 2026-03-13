@@ -19,11 +19,13 @@
 #include <unistd.h>
 
 #include <string>
+#include <string_view>
 #include <optional>
 #include <unordered_set>
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -55,15 +57,16 @@ Result<std::string> HandleGroupName(const std::string& group_name) {
 
 Result<std::vector<std::string>> HandleInstanceNames(
     const std::string& per_instance_names) {
-  auto instance_names = android::base::Split(per_instance_names, ",");
-  std::unordered_set<std::string> duplication_check;
+  std::vector<std::string> instance_names =
+      absl::StrSplit(per_instance_names, ',');
+  std::unordered_set<std::string_view> duplication_check;
   for (const auto& instance_name : instance_names) {
     CF_EXPECT(IsValidInstanceName(instance_name));
     // Check that provided non-empty instance names are unique. Empty names will
     // be replaced later with defaults guaranteed to be unique.
     CF_EXPECT(instance_name.empty() ||
               !Contains(duplication_check, instance_name));
-    duplication_check.insert(instance_name);
+    duplication_check.emplace(instance_name);
   }
   return instance_names;
 }

@@ -24,63 +24,101 @@
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 
+#include "cuttlefish/host/libs/wayland/wayland_utils.h"
+
 namespace wayland {
 namespace {
 
-void buffer_destroy(wl_client*, wl_resource* buffer) {
-  VLOG(1) << __FUNCTION__ << " buffer=" << buffer;
+void buffer_destroy_resource(struct wl_resource* buffer_resource) {
+	wl_resource_destroy(buffer_resource);
+}
 
-  wl_resource_destroy(buffer);
+void buffer_destroy(wl_client*, wl_resource* dmabuf_resource) {
+  VLOG(1) << __FUNCTION__ << " buffer=" << dmabuf_resource;
+
+  Dmabuf* dmabuf = GetUserData<Dmabuf>(dmabuf_resource);
+  if (dmabuf != nullptr) {
+    delete dmabuf;
+  }
 }
 
 const struct wl_buffer_interface buffer_implementation = {
-    .destroy = buffer_destroy
+    .destroy = buffer_destroy,
 };
 
-void linux_buffer_params_destroy(wl_client*, wl_resource* params) {
-  VLOG(1) << __FUNCTION__ << " params=" << params;
-
-  wl_resource_destroy(params);
+void params_destroy_resource(struct wl_resource* params_resource) {
+	wl_resource_destroy(params_resource);
 }
 
-void params_destroy_resource_callback(struct wl_resource*) {}
+void params_destroy(struct wl_client*, struct wl_resource* params_resource) {
+  VLOG(1) << __FUNCTION__ << " params=" << params_resource;
 
-void linux_buffer_params_add(wl_client*,
-                             wl_resource* params,
-                             int32_t fd,
-                             uint32_t plane,
-                             uint32_t offset,
-                             uint32_t stride,
-                             uint32_t modifier_hi,
-                             uint32_t modifier_lo) {
+  DmabufParams* dmabuf_params = GetUserData<DmabufParams>(params_resource);
+  if (dmabuf_params != nullptr) {
+    delete dmabuf_params;
+  }
+}
+
+void params_add(wl_client*,
+                wl_resource* params,
+                int32_t fd,
+                uint32_t plane,
+                uint32_t offset,
+                uint32_t stride,
+                uint32_t modifier_hi,
+                uint32_t modifier_lo) {
   VLOG(1) << __FUNCTION__ << " params=" << params << " fd=" << fd
           << " plane=" << plane << " offset=" << offset << " stride=" << stride
           << " mod_hi=" << modifier_hi << " mod_lo=" << modifier_lo;
+
+  DmabufParams* dmabuf_params = GetUserData<DmabufParams>(params);
+
+  DmabufPlane dma_plane = {
+      .fd = android::base::unique_fd(fd),
+      .plane = plane,
+      .offset = offset,
+      .stride = stride,
+      .modifier_hi = modifier_hi,
+      .modifier_lo = modifier_lo,
+  };
+
+  dmabuf_params->planes[plane] = std::move(dma_plane);
 }
 
-void linux_buffer_params_create(wl_client* client,
-                                wl_resource* params,
-                                int32_t w,
-                                int32_t h,
-                                uint32_t format,
-                                uint32_t flags) {
+void params_create(wl_client* client,
+                   wl_resource* params,
+                   int32_t w,
+                   int32_t h,
+                   uint32_t format,
+                   uint32_t flags) {
   VLOG(1) << __FUNCTION__ << " params=" << params << " w=" << w << " h=" << h
           << " format=" << format << " flags=" << flags;
 
   wl_resource* buffer_resource =
       wl_resource_create(client, &wl_buffer_interface, 1, 0);
 
+  DmabufParams* dmabuf_params = GetUserData<DmabufParams>(params);
+
+  Dmabuf* dmabuf = new Dmabuf();
+  dmabuf->width = w;
+  dmabuf->height = h;
+  dmabuf->format = format;
+  dmabuf->flags = flags;
+  dmabuf->params = std::move(*dmabuf_params);
+
   wl_resource_set_implementation(buffer_resource, &buffer_implementation,
-                                 nullptr, params_destroy_resource_callback);
+                                 dmabuf, &buffer_destroy_resource);
+
+  zwp_linux_buffer_params_v1_send_created(params, buffer_resource);
 }
 
-void linux_buffer_params_create_immed(wl_client* client,
-                                      wl_resource* params,
-                                      uint32_t id,
-                                      int32_t w,
-                                      int32_t h,
-                                      uint32_t format,
-                                      uint32_t flags) {
+void params_create_immed(wl_client* client,
+                         wl_resource* params,
+                         uint32_t id,
+                         int32_t w,
+                         int32_t h,
+                         uint32_t format,
+                         uint32_t flags) {
   VLOG(1) << __FUNCTION__ << " params=" << params << " id=" << id << " w=" << w
           << " h=" << h << " format=" << format << " flags=" << flags;
 
@@ -88,15 +126,16 @@ void linux_buffer_params_create_immed(wl_client* client,
       wl_resource_create(client, &wl_buffer_interface, 1, id);
 
   wl_resource_set_implementation(buffer_resource, &buffer_implementation,
-                                 nullptr, params_destroy_resource_callback);
+                                 nullptr, &buffer_destroy_resource);
 }
 
 const struct zwp_linux_buffer_params_v1_interface
     zwp_linux_buffer_params_implementation = {
-        .destroy = linux_buffer_params_destroy,
-        .add = linux_buffer_params_add,
-        .create = linux_buffer_params_create,
-        .create_immed = linux_buffer_params_create_immed};
+        .destroy = params_destroy,
+        .add = params_add,
+        .create = params_create,
+        .create_immed = params_create_immed,
+    };
 
 void linux_dmabuf_destroy(wl_client*, wl_resource* dmabuf) {
   VLOG(1) << __FUNCTION__ << " dmabuf=" << dmabuf;
@@ -109,18 +148,22 @@ void linux_dmabuf_create_params(wl_client* client,
                                 uint32_t id) {
   VLOG(1) << __FUNCTION__ << " display=" << display << " id=" << id;
 
+  DmabufParams* dmabuf_params = new DmabufParams();
+
   wl_resource* buffer_params_resource =
       wl_resource_create(client, &zwp_linux_buffer_params_v1_interface, 1, id);
 
   wl_resource_set_implementation(buffer_params_resource,
                                  &zwp_linux_buffer_params_implementation,
-                                 nullptr, params_destroy_resource_callback);
+                                 dmabuf_params,
+                                 &params_destroy_resource);
 }
 
 const struct zwp_linux_dmabuf_v1_interface
     zwp_linux_dmabuf_v1_implementation = {
         .destroy = linux_dmabuf_destroy,
-        .create_params = linux_dmabuf_create_params};
+        .create_params = linux_dmabuf_create_params,
+    };
 
 constexpr uint32_t kLinuxDmabufVersion = 2;
 
@@ -143,6 +186,11 @@ void bind_linux_dmabuf(wl_client* client,
 void BindDmabufInterface(wl_display* display) {
   wl_global_create(display, &zwp_linux_dmabuf_v1_interface,
                    kLinuxDmabufVersion, nullptr, bind_linux_dmabuf);
+}
+
+bool IsDmabufResource(struct wl_resource* resource) {
+  return wl_resource_instance_of(resource, &wl_buffer_interface,
+                                 &buffer_implementation);
 }
 
 }  // namespace wayland

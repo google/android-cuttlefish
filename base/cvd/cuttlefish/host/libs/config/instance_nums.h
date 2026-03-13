@@ -15,7 +15,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -32,11 +33,11 @@ class InstanceNumsCalculator {
   InstanceNumsCalculator& FromGlobalGflags() &;
   InstanceNumsCalculator FromGlobalGflags() &&;
 
-  InstanceNumsCalculator& BaseInstanceNum(std::int32_t) &;
-  InstanceNumsCalculator BaseInstanceNum(std::int32_t) &&;
+  InstanceNumsCalculator& BaseInstanceNum(int32_t) &;
+  InstanceNumsCalculator BaseInstanceNum(int32_t) &&;
 
-  InstanceNumsCalculator& NumInstances(std::int32_t) &;
-  InstanceNumsCalculator NumInstances(std::int32_t) &&;
+  InstanceNumsCalculator& NumInstances(int32_t) &;
+  InstanceNumsCalculator NumInstances(int32_t) &&;
 
   InstanceNumsCalculator& InstanceNums(const std::string&) &;
   InstanceNumsCalculator InstanceNums(const std::string&) &&;
@@ -44,8 +45,8 @@ class InstanceNumsCalculator {
   // if any element is duplicated, only the first one of them is taken.
   //   E.g. InstanceNums({1, 2, 3, 2}) == InstanceNums({1, 2, 3})
   // That is how the code was implemented in Android 14
-  InstanceNumsCalculator& InstanceNums(std::vector<std::int32_t>) &;
-  InstanceNumsCalculator InstanceNums(std::vector<std::int32_t>) &&;
+  InstanceNumsCalculator& InstanceNums(std::vector<int32_t>) &;
+  InstanceNumsCalculator InstanceNums(std::vector<int32_t>) &&;
 
   /**
    * Finds set of ids using the flags only.
@@ -57,21 +58,21 @@ class InstanceNumsCalculator {
    * CUTTLEFISH_INSTANCE environment variable, etc, than the launcher
    * effectively sees. This util method is still helpful for that.
    */
-  Result<std::vector<std::int32_t>> CalculateFromFlags();
+  Result<std::vector<int32_t>> CalculateFromFlags();
 
   // Calculates the base from the --instance_nums, --base_instance_num,
   // CUTTLEFISH_INSTANCE, suffix of the user account, and the default value.
   // Then, figures out the set if ids.
-  Result<std::vector<std::int32_t>> Calculate();
+  Result<std::vector<int32_t>> Calculate();
 
  private:
   template <typename T>
   void TrySet(T& field, Result<T> result);
 
   Result<void> setter_result_;
-  std::optional<std::int32_t> base_instance_num_;
-  std::optional<std::int32_t> num_instances_;
-  std::vector<std::int32_t> instance_nums_;
+  std::optional<int32_t> base_instance_num_;
+  std::optional<int32_t> num_instances_;
+  std::vector<int32_t> instance_nums_;
 };
 
 }  // namespace cuttlefish

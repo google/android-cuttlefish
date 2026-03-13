@@ -21,13 +21,15 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config) {
+Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config,
+                               const BootImageFlag& boot_image) {
   if (!VmManagerIsGem5(config)) {
     return {};
   }
@@ -43,8 +45,7 @@ Result<void> Gem5ImageUnpacker(const CuttlefishConfig& config) {
    * binaries specially. This code is just part of the solution; it only
    * does the parts which are instance agnostic.
    */
-
-  CF_EXPECT(FileHasContent(instance_.boot_image()), instance_.boot_image());
+  CF_EXPECT(FileHasContent(boot_image.ForIndex(instance_.index())));
 
   const std::string unpack_dir = config.assembly_dir();
   // The init_boot partition is be optional for testing boot.img

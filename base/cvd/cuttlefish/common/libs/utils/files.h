@@ -81,14 +81,10 @@ Result<std::chrono::system_clock::time_point> FileModificationTime(
 bool FileIsSocket(const std::string& path);
 Result<uid_t> FileOwner(const std::string& path);
 
-// acloud related API
-std::string FindImage(const std::string& search_path,
-                      const std::vector<std::string>& pattern);
-
 // The returned value may contain .. or . if these are present in the path
 // argument.
 // path must not contain ~
-std::string AbsolutePath(const std::string& path);
+std::string AbsolutePath(std::string_view path);
 
 std::string CurrentDirectory();
 

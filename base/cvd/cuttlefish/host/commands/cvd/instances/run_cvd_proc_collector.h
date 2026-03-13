@@ -25,7 +25,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/parseint.h>
 
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/result/result.h"

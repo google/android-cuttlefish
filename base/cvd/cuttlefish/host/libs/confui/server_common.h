@@ -16,15 +16,17 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "cuttlefish/common/libs/confui/confui.h"
 
 namespace cuttlefish {
 namespace confui {
-enum class MainLoopState : std::uint32_t {
+enum class MainLoopState : uint32_t {
   kInit = 1,
   kInSession = 2,
   kWaitStop = 3,  // wait ack after sending confirm/cancel
@@ -33,10 +35,10 @@ enum class MainLoopState : std::uint32_t {
   kInvalid = 9
 };
 
-using TeeUiFrame = std::vector<std::uint32_t>;
+using TeeUiFrame = std::vector<uint32_t>;
 
 // FSM input to Session FSM
-enum class FsmInput : std::uint32_t {
+enum class FsmInput : uint32_t {
   kUserEvent = 1,
   kHalStart,
   kHalStop,

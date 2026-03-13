@@ -31,10 +31,11 @@
 #include "cuttlefish/host/commands/assemble_cvd/proto/guest_config.pb.h"
 #include "cuttlefish/host/libs/config/ap_boot_flow.h"
 #include "cuttlefish/host/libs/config/boot_flow.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
@@ -353,8 +354,6 @@ class CuttlefishConfig {
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
 
-    std::string hwcomposer_pmem_path() const;
-
     std::string pstore_path() const;
 
     std::string pflash_path() const;
@@ -362,16 +361,6 @@ class CuttlefishConfig {
     std::string console_path() const;
 
     std::string logcat_path() const;
-
-    std::string kernel_log_pipe_name() const;
-
-    std::string console_pipe_prefix() const;
-    std::string console_in_pipe_name() const;
-    std::string console_out_pipe_name() const;
-
-    std::string gnss_pipe_prefix() const;
-    std::string gnss_in_pipe_name() const;
-    std::string gnss_out_pipe_name() const;
 
     std::string launcher_log_path() const;
 
@@ -388,8 +377,6 @@ class CuttlefishConfig {
     std::string os_composite_disk_path() const;
 
     std::string ap_composite_disk_path() const;
-
-    std::string uboot_env_image_path() const;
 
     std::string ap_uboot_env_image_path() const;
 
@@ -470,7 +457,7 @@ class CuttlefishConfig {
 
     std::string vcpu_config_path() const;
 
-    std::string data_policy() const;
+    DataImagePolicy data_policy() const;
 
     int blank_data_image_mb() const;
 
@@ -538,7 +525,8 @@ class CuttlefishConfig {
     int modem_simulator_instance_number() const;
     int modem_simulator_sim_type() const;
 
-    std::string gpu_mode() const;
+    GpuMode gpu_mode() const;
+    std::vector<GpuMode> gpu_mode_candidates() const;
     std::string gpu_angle_feature_overrides_enabled() const;
     std::string gpu_angle_feature_overrides_disabled() const;
     std::string gpu_capture_binary() const;
@@ -564,8 +552,6 @@ class CuttlefishConfig {
 
     // android artifacts
     std::string images_dir() const;
-    std::string boot_image() const;
-    std::string new_boot_image() const;
     std::string init_boot_image() const;
     std::string data_image() const;
     std::string new_data_image() const;
@@ -707,7 +693,7 @@ class CuttlefishConfig {
     void set_target_arch(Arch target_arch);
     void set_cpus(int cpus);
     void set_vcpu_config_path(const std::string& vcpu_config_path);
-    void set_data_policy(const std::string& data_policy);
+    void set_data_policy(DataImagePolicy data_policy);
     void set_blank_data_image_mb(int blank_data_image_mb);
     void set_gdb_port(int gdb_port);
     void set_display_configs(const std::vector<DisplayConfig>& display_configs);
@@ -777,7 +763,8 @@ class CuttlefishConfig {
     void set_modem_simulator_instance_number(int instance_numbers);
     void set_modem_simulator_sim_type(int sim_type);
 
-    void set_gpu_mode(const std::string& name);
+    void set_gpu_mode(GpuMode mode);
+    void set_gpu_mode_candidates(const std::vector<GpuMode>& candidates);
     void set_gpu_angle_feature_overrides_enabled(const std::string& overrides);
     void set_gpu_angle_feature_overrides_disabled(const std::string& overrides);
     void set_gpu_capture_binary(const std::string&);
@@ -801,8 +788,6 @@ class CuttlefishConfig {
 
     // system image files
     void set_images_dir(const std::string& dir);
-    void set_boot_image(const std::string& boot_image);
-    void set_new_boot_image(const std::string& new_boot_image);
     void set_init_boot_image(const std::string& init_boot_image);
     void set_data_image(const std::string& data_image);
     void set_new_data_image(const std::string& new_data_image);

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include "absl/log/log.h"
 
@@ -67,7 +68,7 @@ std::vector<GuestInfo> GetGuestInfos(
 
   // Split always returns at least one element
   std::vector<std::string> product_out_paths =
-      android::base::Split(group_product_out, ",");
+      absl::StrSplit(group_product_out, ',');
   for (int i = 0; i < instances.size(); i++) {
     auto guest = GuestInfo{
         .instance_id = instances[i].id(),

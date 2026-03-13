@@ -14,6 +14,7 @@
 
 load("//:build_variables.bzl", BUILD_VAR_COPTS = "COPTS")
 load("//tools/lint:linters.bzl", "clang_tidy_test")
+load("@cc_compatibility_proxy//:proxy.bzl", "cc_binary", "cc_library", "cc_test")
 
 visibility(["//..."])
 
@@ -22,7 +23,7 @@ COPTS = BUILD_VAR_COPTS
 def _cf_cc_binary_implementation(name, clang_tidy_enabled, copts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
-    native.cc_binary(
+    cc_binary(
         name = name,
         copts = (copts or []) + COPTS,
         **kwargs,
@@ -36,7 +37,7 @@ def _cf_cc_binary_implementation(name, clang_tidy_enabled, copts, **kwargs):
         )
 
 cf_cc_binary = macro(
-    inherit_attrs = native.cc_binary,
+    inherit_attrs = cc_binary,
     attrs = {
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
@@ -47,7 +48,7 @@ cf_cc_binary = macro(
 def _cf_cc_library_implementation(name, clang_tidy_enabled, copts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
-    native.cc_library(
+    cc_library(
         name = name,
         copts = (copts or []) + COPTS,
         **kwargs,
@@ -61,7 +62,7 @@ def _cf_cc_library_implementation(name, clang_tidy_enabled, copts, **kwargs):
         )
 
 cf_cc_library = macro(
-    inherit_attrs = native.cc_library,
+    inherit_attrs = cc_library,
     attrs = {
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
@@ -72,7 +73,7 @@ cf_cc_library = macro(
 def _cf_cc_test_implementation(name, clang_tidy_enabled, copts, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
-    native.cc_test(
+    cc_test(
         name = name,
         copts = (copts or []) + COPTS,
         **kwargs,
@@ -86,7 +87,7 @@ def _cf_cc_test_implementation(name, clang_tidy_enabled, copts, **kwargs):
         )
 
 cf_cc_test = macro(
-    inherit_attrs = native.cc_test,
+    inherit_attrs = cc_test,
     attrs = {
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),

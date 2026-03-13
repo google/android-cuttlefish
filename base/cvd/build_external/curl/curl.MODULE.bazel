@@ -1,0 +1,6 @@
+single_version_override(
+    module_name = "curl",
+    version = "8.8.0.bcr.2",
+    patch_strip = 1,
+    patches = ["@//build_external/curl:bazel9.patch"],
+)

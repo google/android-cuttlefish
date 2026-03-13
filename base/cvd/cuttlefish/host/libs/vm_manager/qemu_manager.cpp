@@ -30,9 +30,9 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <vulkan/vulkan.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
@@ -40,9 +40,10 @@
 #include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/wait_for_unix_socket.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/config_instance_derived.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/external_network_mode.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/vm_manager/vhost_user.h"
 #include "cuttlefish/result/result.h"
@@ -104,7 +105,8 @@ Result<std::pair<int, int>> GetQemuVersion(const std::string& qemu_binary) {
     qemu_version_output.resize(space_pos);
   }
 
-  auto qemu_version_bits = android::base::Split(qemu_version_output, ".");
+  std::vector<std::string> qemu_version_bits =
+      absl::StrSplit(qemu_version_output, '.');
   return {{std::stoi(qemu_version_bits[0]), std::stoi(qemu_version_bits[1])}};
 }
 
@@ -125,8 +127,8 @@ QemuManager::ConfigureGraphics(
   // HALs.
 
   std::unordered_map<std::string, std::string> bootconfig_args;
-  auto gpu_mode = instance.gpu_mode();
-  if (gpu_mode == kGpuModeGuestSwiftshader) {
+  const GpuMode gpu_mode = instance.gpu_mode();
+  if (gpu_mode == GpuMode::GuestSwiftshader) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", std::to_string(VK_API_VERSION_1_2)},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -139,7 +141,7 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.1
         {"androidboot.opengles.version", "196609"},
     };
-  } else if (gpu_mode == kGpuModeDrmVirgl) {
+  } else if (gpu_mode == GpuMode::DrmVirgl) {
     bootconfig_args = {
         {"androidboot.cpuvulkan.version", "0"},
         {"androidboot.hardware.gralloc", "minigbm"},
@@ -153,15 +155,9 @@ QemuManager::ConfigureGraphics(
         // OpenGL ES 3.0
         {"androidboot.opengles.version", "196608"},
     };
-  } else if (gpu_mode == kGpuModeGfxstream ||
-             gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
-    const bool uses_angle =
-        gpu_mode == kGpuModeGfxstreamGuestAngle ||
-        gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-        gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe;
-    const std::string gles_impl = uses_angle ? "angle" : "emulation";
+  } else if (IsGfxstreamMode(gpu_mode)) {
+    const std::string gles_impl =
+        IsGfxstreamGuestAngleMode(gpu_mode) ? "angle" : "emulation";
     const std::string gltransport =
         (instance.guest_android_version() == "11.0.0") ? "virtio-gpu-pipe"
                                                        : "virtio-gpu-asg";
@@ -177,10 +173,10 @@ QemuManager::ConfigureGraphics(
         {"androidboot.hardware.gltransport", gltransport},
         {"androidboot.opengles.version", "196609"},  // OpenGL ES 3.1
     };
-  } else if (instance.gpu_mode() == kGpuModeNone) {
+  } else if (gpu_mode == GpuMode::None) {
     return {};
   } else {
-    return CF_ERR("Unhandled GPU mode: " << instance.gpu_mode());
+    return CF_ERR("Unhandled GPU mode: " << GpuModeString(gpu_mode));
   }
 
   if (!instance.gpu_angle_feature_overrides_enabled().empty()) {
@@ -336,12 +332,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
 
   auto hwcomposer_pmem_size_bytes = 0;
   if (instance.hwcomposer() != kHwComposerNone) {
-    if (FileExists(instance.hwcomposer_pmem_path())) {
-      hwcomposer_pmem_size_bytes = FileSize(instance.hwcomposer_pmem_path());
-      CF_EXPECT((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
-                instance.hwcomposer_pmem_path()
-                    << " file size (" << hwcomposer_pmem_size_bytes
-                    << ") not a multiple of 1MB");
+    const std::string pmem_path = HwcomposerPmemPath(instance);
+    if (FileExists(pmem_path)) {
+      hwcomposer_pmem_size_bytes = FileSize(pmem_path);
+      CF_EXPECTF((hwcomposer_pmem_size_bytes & (1024 * 1024 - 1)) == 0,
+                 "'{}' file size ({}) not a multiple of 1MB", pmem_path,
+                 hwcomposer_pmem_size_bytes);
     }
   }
 
@@ -442,18 +438,15 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
-  auto gpu_mode = instance.gpu_mode();
-  if (gpu_mode == kGpuModeDrmVirgl) {
+  const GpuMode gpu_mode = instance.gpu_mode();
+  if (gpu_mode == GpuMode::DrmVirgl) {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("egl-headless");
 
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
-  } else if (gpu_mode == kGpuModeGuestSwiftshader ||
-             gpu_mode == kGpuModeGfxstream ||
-             gpu_mode == kGpuModeGfxstreamGuestAngle ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-             gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+  } else if (gpu_mode == GpuMode::GuestSwiftshader ||
+             IsGfxstreamMode(gpu_mode)) {
     qemu_cmd.AddParameter("-vnc");
     qemu_cmd.AddParameter("127.0.0.1:", instance.qemu_vnc_server_port());
   } else {
@@ -469,22 +462,20 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-device");
 
     std::string gpu_device;
-    if (gpu_mode == kGpuModeGuestSwiftshader || qemu_version.first < 6) {
+    if (gpu_mode == GpuMode::GuestSwiftshader || qemu_version.first < 6) {
       gpu_device = "virtio-gpu-pci";
-    } else if (gpu_mode == kGpuModeDrmVirgl) {
+    } else if (gpu_mode == GpuMode::DrmVirgl) {
       gpu_device = "virtio-gpu-gl-pci";
-    } else if (gpu_mode == kGpuModeGfxstream) {
+    } else if (gpu_mode == GpuMode::Gfxstream) {
       gpu_device =
           "virtio-gpu-rutabaga,x-gfxstream-gles=on,gfxstream-vulkan=on,"
           "x-gfxstream-composer=on,hostmem=256M";
-    } else if (gpu_mode == kGpuModeGfxstreamGuestAngle ||
-               gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader ||
-               gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+    } else if (IsGfxstreamGuestAngleMode(gpu_mode)) {
       gpu_device =
           "virtio-gpu-rutabaga,gfxstream-vulkan=on,"
           "x-gfxstream-composer=on,hostmem=256M";
 
-      if (gpu_mode == kGpuModeGfxstreamGuestAngleHostSwiftShader) {
+      if (gpu_mode == GpuMode::GfxstreamGuestAngleHostSwiftshader) {
         // See https://github.com/KhronosGroup/Vulkan-Loader.
         const std::string swiftshader_icd_json =
             HostUsrSharePath("vulkan/icd.d/vk_swiftshader_icd.json");
@@ -492,7 +483,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
                                         swiftshader_icd_json);
         qemu_cmd.AddEnvironmentVariable("VK_ICD_FILENAMES",
                                         swiftshader_icd_json);
-      } else if (gpu_mode == kGpuModeGfxstreamGuestAngleHostLavapipe) {
+      } else if (gpu_mode == GpuMode::GfxstreamGuestAngleHostLavapipe) {
         // See https://github.com/KhronosGroup/Vulkan-Loader.
         const std::string lavapipe_icd_json =
             HostUsrSharePath("vulkan/icd.d/vk_lavapipe_icd.cf.json");
@@ -514,7 +505,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     // flags appear in the right order and "append=on" does the right thing
     if (instance.enable_kernel_log() &&
         (instance.kgdb() || instance.use_bootloader())) {
-      add_serial_console_ro(instance.kernel_log_pipe_name());
+      add_serial_console_ro(KernelLogPipeName(instance));
     }
   }
 
@@ -534,12 +525,12 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   // (Note that QEMU does not automatically generate console= parameters for
   //  the bootloader/kernel cmdline, so the control of whether this pipe is
   //  actually managed by the kernel as a console is handled elsewhere.)
-  add_hvc_ro(instance.kernel_log_pipe_name());
+  add_hvc_ro(KernelLogPipeName(instance));
 
   // /dev/hvc1 = serial console
   if (instance.console()) {
     if (instance.kgdb() || instance.use_bootloader()) {
-      add_serial_console(instance.console_pipe_prefix());
+      add_serial_console(ConsolePipePrefix(instance));
 
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
@@ -549,7 +540,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       add_hvc_sink();
     } else {
       add_serial_sink();
-      add_hvc(instance.console_pipe_prefix());
+      add_hvc(ConsolePipePrefix(instance));
     }
   } else {
     if (instance.kgdb() || instance.use_bootloader()) {
@@ -746,8 +737,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
       qemu_cmd.AddParameter("-object");
       qemu_cmd.AddParameter(
           "memory-backend-file,id=objpmem2,share=on,mem-path=",
-          instance.hwcomposer_pmem_path(),
-          ",size=", hwcomposer_pmem_size_bytes);
+          HwcomposerPmemPath(instance), ",size=", hwcomposer_pmem_size_bytes);
 
       qemu_cmd.AddParameter("-device");
       qemu_cmd.AddParameter(

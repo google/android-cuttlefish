@@ -19,28 +19,33 @@
 #include <string>
 #include <utility>
 
-#include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/image_aggregator/cdisk_spec.pb.h"
-#include "cuttlefish/posix/strerror.h"
+#include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/string.h"
+#include "cuttlefish/io/shared_fd.h"
 
 namespace cuttlefish {
 
 Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(
     const std::string& path) {
   SharedFD fd = SharedFD::Open(path, O_CLOEXEC, O_RDONLY);
-  CF_EXPECT(fd->IsOpen(), fd->StrError());
+  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", path, fd->StrError());
 
+  SharedFdIo io(fd);
+
+  return CF_EXPECT(OpenExisting(io));
+}
+
+Result<CompositeDiskImage> CompositeDiskImage::OpenExisting(Reader& reader) {
   std::string magic = MagicString();
-  CF_EXPECT_EQ(ReadExact(fd, &magic), magic.size(), fd->StrError());
+  CF_EXPECT(ReadExact(reader, magic.data(), magic.size()));
   CF_EXPECT_EQ(magic, MagicString());
 
-  std::string message;
-  CF_EXPECTF(ReadAll(fd, &message) >= 0, "{}", fd->StrError());
+  std::string message = CF_EXPECT(ReadToString(reader));
 
   CompositeDisk cdisk;
-  CF_EXPECTF(cdisk.ParseFromString(message), "Failed to parse '{}': {}", path,
-             StrError(errno));
+  CF_EXPECT(cdisk.ParseFromString(message));
 
   return CompositeDiskImage(std::move(cdisk));
 }

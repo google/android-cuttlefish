@@ -13,7 +13,8 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
-        "//cuttlefish/host/libs/zip/libzip_cc:stat",
+        "//cuttlefish/io",
+        "//cuttlefish/io:length",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
@@ -27,6 +28,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip:buffered_zip_source",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/io:in_memory",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
@@ -39,12 +41,12 @@ cf_cc_library(
     srcs = ["cached_zip_source.cc"],
     hdrs = ["cached_zip_source.h"],
     deps = [
-        "//cuttlefish/host/libs/zip:lazily_loaded_file",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:source_callback",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
+        "//cuttlefish/io",
+        "//cuttlefish/io:lazily_loaded_file",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -61,51 +63,6 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
-    ],
-)
-
-cf_cc_library(
-    name = "disjoint_range_set",
-    srcs = ["disjoint_range_set.cc"],
-    hdrs = ["disjoint_range_set.h"],
-    deps = [
-        "//libbase",
-        "@abseil-cpp//absl/log:check",
-    ],
-)
-
-proto_library(
-    name = "disjoint_range_set_proto",
-    srcs = ["disjoint_range_set.proto"],
-)
-
-cc_proto_library(
-    name = "disjoint_range_set_cc_proto",
-    deps = ["//cuttlefish/host/libs/zip:disjoint_range_set_proto"],
-)
-
-cf_cc_test(
-    name = "disjoint_range_set_test",
-    srcs = ["disjoint_range_set_test.cc"],
-    deps = [
-        "//cuttlefish/host/libs/zip:disjoint_range_set",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cf_cc_library(
-    name = "lazily_loaded_file",
-    srcs = ["lazily_loaded_file.cc"],
-    hdrs = ["lazily_loaded_file.h"],
-    deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/zip:disjoint_range_set",
-        "//cuttlefish/host/libs/zip:serialize_disjoint_range_set",
-        "//cuttlefish/result",
-        "//libbase",
-        "@abseil-cpp//absl/log",
     ],
 )
 
@@ -135,58 +92,11 @@ cf_cc_test(
         "//cuttlefish/host/libs/zip:zip_string",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "@abseil-cpp//absl/strings",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cf_cc_library(
-    name = "serialize_disjoint_range_set",
-    srcs = ["serialize_disjoint_range_set.cc"],
-    hdrs = ["serialize_disjoint_range_set.h"],
-    deps = [
-        "//cuttlefish/host/libs/zip:disjoint_range_set",
-        "//cuttlefish/host/libs/zip:disjoint_range_set_cc_proto",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_test(
-    name = "serialize_disjoint_range_set_test",
-    srcs = ["serialize_disjoint_range_set_test.cc"],
-    deps = [
-        "//cuttlefish/host/libs/zip:disjoint_range_set",
-        "//cuttlefish/host/libs/zip:serialize_disjoint_range_set",
-        "//cuttlefish/result",
-        "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cf_cc_library(
-    name = "zip_copy",
-    srcs = ["zip_copy.cc"],
-    hdrs = ["zip_copy.h"],
-    deps = [
-        "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
-        "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
-        "//cuttlefish/result",
-    ],
-)
-
-cf_cc_test(
-    name = "zip_copy_test",
-    srcs = ["zip_copy_test.cc"],
-    deps = [
-        "//cuttlefish/host/libs/zip:zip_copy",
-        "//cuttlefish/host/libs/zip:zip_string",
-        "//cuttlefish/host/libs/zip/libzip_cc:seekable_source",
-        "//cuttlefish/result",
-        "//cuttlefish/result:result_matchers",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
@@ -198,11 +108,13 @@ cf_cc_library(
     hdrs = ["zip_file.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/zip:zip_copy",
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:stat",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/io",
+        "//cuttlefish/io:copy",
+        "//cuttlefish/io:native_filesystem",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
     ],
@@ -216,6 +128,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/zip/libzip_cc:archive",
         "//cuttlefish/host/libs/zip/libzip_cc:readable_source",
         "//cuttlefish/host/libs/zip/libzip_cc:writable_source",
+        "//cuttlefish/io:string",
         "//cuttlefish/result",
     ],
 )

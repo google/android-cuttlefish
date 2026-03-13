@@ -34,7 +34,6 @@
 
 #include <android-base/file.h>
 #include <android-base/macros.h>
-#include <android-base/parseint.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 #include <android-base/threads.h>
@@ -44,6 +43,7 @@
 #include "absl/log/log_entry.h"
 #include "absl/log/log_sink.h"
 #include "absl/log/log_sink_registry.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -289,7 +289,7 @@ Result<LogSeverity> ToSeverity(const std::string& value) {
     return it->second;
   }
   int value_int;
-  CF_EXPECT(android::base::ParseInt(value, &value_int),
+  CF_EXPECT(absl::SimpleAtoi(value, &value_int),
             "Unable to determine severity from \"" << value << "\"");
   for (const auto& [name, value] : string_to_severity) {
     if (static_cast<int>(value) == value_int) {

@@ -20,15 +20,20 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "absl/log/check.h"
-#include "fmt/ostream.h"
-#include "fmt/ranges.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
+#include "cuttlefish/pretty/map.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/struct.h"
+#include "cuttlefish/pretty/unique_ptr.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/vector.h"      // IWYU pragma: keep: overloads
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -76,13 +81,18 @@ const AndroidBuild& AndroidBuilds::ForIndex(size_t index) const {
 size_t AndroidBuilds::Size() const { return keys_.size(); }
 
 std::ostream& operator<<(std::ostream& out, const AndroidBuilds& builds) {
-  fmt::print(out, "AndroidBuilds {{ .keys_ = [{}], .builds_= {{",
-             fmt::join(builds.keys_, ", "));
-  for (const auto& [key, value] : builds.builds_) {
-    CHECK(value.get() != nullptr);
-    fmt::print(out, "{} -> {}, ", key, *value);
-  }
-  return out << "}}";
+  return out << format_as(builds);
 };
+
+std::string format_as(const AndroidBuilds& builds) {
+  return absl::StrCat("AndroidBuilds(", builds.keys_.size(), " builds, ",
+                      builds.builds_.size(), " distinct)");
+}
+
+PrettyStruct Pretty(AndroidBuilds& builds, PrettyAdlPlaceholder) {
+  return PrettyStruct("AndroidBuilds")
+      .Member("keys_", builds.keys_)
+      .Member("builds_", builds.builds_);
+}
 
 }  // namespace cuttlefish

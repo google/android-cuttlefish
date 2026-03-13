@@ -22,14 +22,17 @@
 
 #include <iostream>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <json/value.h>
@@ -51,7 +54,6 @@ namespace cuttlefish {
 namespace {
 
 using android::base::Join;
-using android::base::Tokenize;
 
 Result<std::string> AuthorizationCodeFromUrl(const std::string_view url) {
   std::string_view code = url;
@@ -98,8 +100,10 @@ class HttpServer {
     }
     CF_EXPECT_EQ(client->GetErrno(), 0, client->StrError());
 
-    CF_EXPECT(request.str().find("\r\n") != std::string::npos);
-    std::vector<std::string> request_lines = Tokenize(request.str(), "\r\n");
+    std::string request_str = request.str();
+    CF_EXPECT(request_str.find("\r\n") != std::string::npos);
+    std::vector<std::string_view> request_lines =
+        absl::StrSplit(request_str, absl::ByAnyChar("\r\n"), absl::SkipEmpty());
     CF_EXPECT(!request_lines.empty(), "no lines in input");
 
     std::string code = CF_EXPECT(AuthorizationCodeFromUrl(request_lines[0]));
@@ -132,11 +136,10 @@ static constexpr char kRefreshToken[] = "refresh_token";
 static constexpr char kScope[] = "scope";
 
 Result<std::string> GetRefreshToken(HttpClient& http_client,
-                                    const Oauth2ConsentRequest& request,
-                                    bool ssh) {
+                                    const Oauth2ConsentRequest& request) {
   std::unique_ptr<HttpServer> http_server;
   uint16_t port;
-  if (ssh) {
+  if (request.is_ssh) {
     port = 1024 + (rand() % ((1 << 16) - 1024));
   } else {
     http_server = std::make_unique<HttpServer>(CF_EXPECT(HttpServer::Create()));
@@ -156,7 +159,7 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
 
   std::string code;
 
-  if (ssh) {
+  if (request.is_ssh) {
     http_server.reset(nullptr);
 
     std::cout << "Open this URL in your browser: " << consent.rdbuf();
@@ -198,8 +201,9 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   CF_EXPECTF(token_json.isMember(kScope), "No '{}'", kScope);
   CF_EXPECT_EQ(token_json[kScope].type(), Json::ValueType::stringValue);
   std::string response_scope = token_json[kScope].asString();
-  std::vector<std::string> response_scopes = Tokenize(response_scope, " ");
-  for (const std::string& scope : request.scopes) {
+  std::set<std::string_view> response_scopes =
+      absl::StrSplit(response_scope, ' ', absl::SkipEmpty());
+  for (std::string_view scope : request.scopes) {
     CF_EXPECTF(Contains(response_scopes, scope), "Response missing '{}'",
                scope);
   }
@@ -214,34 +218,12 @@ static constexpr char kClientId[] = "client_id";
 static constexpr char kClientSecret[] = "client_secret";
 static constexpr char kCredentials[] = "credentials";
 
-Result<std::unique_ptr<CredentialSource>> Oauth2Login(
-    HttpClient& http_client, const Oauth2ConsentRequest& request, bool ssh) {
-  std::string refresh_token =
-      CF_EXPECT(GetRefreshToken(http_client, request, ssh));
-
-  Json::Value serialized;
-  serialized[kClientId] = request.client_id;
-  serialized[kClientSecret] = request.client_secret;
-  serialized[kRefreshToken] = refresh_token;
-  for (const std::string& scope : request.scopes) {
-    serialized[kScope].append(scope);
-  }
-
-  uint32_t checksum = ScopeChecksum(request.scopes);
-  std::string filename = fmt::format("{}/{}.json", kCredentials, checksum);
-  std::string contents = serialized.toStyledString();
-
-  CF_EXPECT(WriteCvdDataFile(filename, std::move(contents)));
-
-  return CreateRefreshTokenCredentialSource(
-      http_client, request.client_id, request.client_secret, refresh_token);
-}
-
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     HttpClient& http_client, const std::vector<std::string>& scopes,
     const std::string& file_path) {
   std::string contents;
-  CF_EXPECTF(android::base::ReadFileToString(file_path, &contents),
+  CF_EXPECTF(android::base::ReadFileToString(file_path, &contents,
+                                             /* follow_symlinks */ true),
              "Failed to read '{}'", file_path);
 
   Json::Value json = CF_EXPECT(ParseJson(contents));
@@ -269,20 +251,37 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
   CF_EXPECT_EQ(json[kRefreshToken].type(), Json::ValueType::stringValue);
   std::string refresh_token = json[kRefreshToken].asString();
 
-  return CreateRefreshTokenCredentialSource(http_client, client_id,
-                                            client_secret, refresh_token);
+  return CF_EXPECT(RefreshTokenCredentialSource::Make(
+      http_client, client_id, client_secret, refresh_token));
 }
 
 }  // namespace
 
-Result<std::unique_ptr<CredentialSource>> Oauth2LoginLocal(
-    HttpClient& http_client, const Oauth2ConsentRequest& request) {
-  return CF_EXPECT(Oauth2Login(http_client, request, false));
+bool IsPopulated(const Oauth2ConsentRequest& request) {
+  return !request.client_id.empty() && !request.client_secret.empty() &&
+         !request.scopes.empty();
 }
 
-Result<std::unique_ptr<CredentialSource>> Oauth2LoginSsh(
+Result<std::unique_ptr<CredentialSource>> Oauth2Login(
     HttpClient& http_client, const Oauth2ConsentRequest& request) {
-  return CF_EXPECT(Oauth2Login(http_client, request, true));
+  std::string refresh_token = CF_EXPECT(GetRefreshToken(http_client, request));
+
+  Json::Value serialized;
+  serialized[kClientId] = request.client_id;
+  serialized[kClientSecret] = request.client_secret;
+  serialized[kRefreshToken] = refresh_token;
+  for (const std::string& scope : request.scopes) {
+    serialized[kScope].append(scope);
+  }
+
+  uint32_t checksum = ScopeChecksum(request.scopes);
+  std::string filename = fmt::format("{}/{}.json", kCredentials, checksum);
+  std::string contents = serialized.toStyledString();
+
+  CF_EXPECT(WriteCvdDataFile(filename, std::move(contents)));
+
+  return CF_EXPECT(RefreshTokenCredentialSource::Make(
+      http_client, request.client_id, request.client_secret, refresh_token));
 }
 
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(

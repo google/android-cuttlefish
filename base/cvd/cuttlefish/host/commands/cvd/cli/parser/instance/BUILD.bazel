@@ -4,65 +4,143 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+cf_cc_test(
+    name = "boot_configs_test",
+    srcs = ["boot_configs_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
 cf_cc_library(
-    name = "instance",
-    srcs = [
-        "cf_boot_configs.cpp",
-        "cf_connectivity_configs.cpp",
-        "cf_disk_configs.cpp",
-        "cf_graphics_configs.cpp",
-        "cf_security_configs.cpp",
-        "cf_streaming_configs.cpp",
-        "cf_vm_configs.cpp",
-    ],
-    hdrs = [
-        "cf_boot_configs.h",
-        "cf_connectivity_configs.h",
-        "cf_disk_configs.h",
-        "cf_graphics_configs.h",
-        "cf_security_configs.h",
-        "cf_streaming_configs.h",
-        "cf_vm_configs.h",
-    ],
+    name = "cf_boot_configs",
+    srcs = ["cf_boot_configs.cpp"],
+    hdrs = ["cf_boot_configs.h"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
-        "//cuttlefish/common/libs/utils:flags_validator",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_connectivity_configs",
+    srcs = ["cf_connectivity_configs.cpp"],
+    hdrs = ["cf_connectivity_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_disk_configs",
+    srcs = ["cf_disk_configs.cpp"],
+    hdrs = ["cf_disk_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_graphics_configs",
+    srcs = ["cf_graphics_configs.cpp"],
+    hdrs = ["cf_graphics_configs.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
-        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "//cuttlefish/result",
+        "//libbase",
+        "@protobuf",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_security_configs",
+    srcs = ["cf_security_configs.cpp"],
+    hdrs = ["cf_security_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_streaming_configs",
+    srcs = ["cf_streaming_configs.cpp"],
+    hdrs = ["cf_streaming_configs.h"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
+        "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
+    ],
+)
+
+cf_cc_library(
+    name = "cf_vm_configs",
+    srcs = ["cf_vm_configs.cpp"],
+    hdrs = ["cf_vm_configs.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flags_validator",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:load_config_cc_proto",
         "//cuttlefish/result",
         "//libbase",
         "@fmt",
-        "@jsoncpp",
-        "@protobuf",
         "@protobuf//:json_util",
     ],
 )
 
 cf_cc_test(
-    name = "instance_test",
-    srcs = [
-        "boot_configs_test.cc",
-        "disk_configs_test.cc",
-        "graphics_configs_test.cc",
-        "vm_configs_test.cc",
+    name = "disk_configs_test",
+    srcs = ["disk_configs_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
     ],
+)
+
+cf_cc_test(
+    name = "graphics_configs_test",
+    srcs = ["graphics_configs_test.cc"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
-        "//cuttlefish/host/commands/cvd/cli/parser",
-        "//cuttlefish/host/commands/cvd/cli/parser:configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "//libbase",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
         "@jsoncpp",
         "@protobuf",
         "@protobuf//:differencer",
+    ],
+)
+
+cf_cc_test(
+    name = "vm_configs_test",
+    srcs = ["vm_configs_test.cc"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/commands/cvd/cli/parser:test_common",
+        "//cuttlefish/result:result_matchers",
+        "//libbase",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
     ],
 )

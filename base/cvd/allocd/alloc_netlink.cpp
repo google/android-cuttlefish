@@ -75,7 +75,8 @@ Result<void> AddTapIface(std::string_view name) {
   CF_EXPECT(tunfd->IsOpen(), "AddTapIface: open: " << tunfd->StrError());
 
   struct ifreq ifr;
-  strlcpy(ifr.ifr_name, std::string(name).c_str(), IFNAMSIZ);
+  strncpy(ifr.ifr_name, std::string(name).c_str(), IFNAMSIZ);
+  ifr.ifr_name[IFNAMSIZ - 1] = '\0';
   ifr.ifr_flags = IFF_TAP | IFF_VNET_HDR;
   ifr.ifr_flags |= IFF_TUN_EXCL;
   int r = tunfd->Ioctl(TUNSETIFF, (void*)&ifr);

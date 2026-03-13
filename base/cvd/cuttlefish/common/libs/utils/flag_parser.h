@@ -16,7 +16,9 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <functional>
 #include <optional>
 #include <ostream>
@@ -185,8 +187,8 @@ Flag UnexpectedArgumentGuard();
 // is saved to the defined reference.
 Flag GflagsCompatFlag(const std::string& name);
 Flag GflagsCompatFlag(const std::string& name, std::string& value);
-Flag GflagsCompatFlag(const std::string& name, std::int32_t& value);
-Flag GflagsCompatFlag(const std::string& name, std::size_t& value);
+Flag GflagsCompatFlag(const std::string& name, int32_t& value);
+Flag GflagsCompatFlag(const std::string& name, size_t& value);
 Flag GflagsCompatFlag(const std::string& name, bool& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<std::string>& value);
 Flag GflagsCompatFlag(const std::string& name, std::vector<bool>& value,

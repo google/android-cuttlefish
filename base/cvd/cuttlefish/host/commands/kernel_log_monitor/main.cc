@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include <json/value.h>
 #include "absl/log/check.h"
@@ -31,10 +31,11 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
@@ -57,7 +58,7 @@ std::vector<SharedFD> SubscribersFromCmdline() {
     }
   }
 
-  auto fds = android::base::Split(FLAGS_subscriber_fds, ",");
+  std::vector<std::string> fds = absl::StrSplit(FLAGS_subscriber_fds, ',');
   std::vector<SharedFD> shared_fds;
   for (auto& fd_str: fds) {
     auto fd = std::stoi(fd_str);
@@ -89,8 +90,8 @@ int KernelLogMonitorMain(int argc, char** argv) {
 
   SharedFD pipe;
   if (FLAGS_log_pipe_fd < 0) {
-    auto log_name = instance.kernel_log_pipe_name();
-    pipe = SharedFD::Open(log_name.c_str(), O_RDONLY);
+    std::string log_name = KernelLogPipeName(instance);
+    pipe = SharedFD::Open(log_name, O_RDONLY);
   } else {
     pipe = SharedFD::Dup(FLAGS_log_pipe_fd);
     close(FLAGS_log_pipe_fd);

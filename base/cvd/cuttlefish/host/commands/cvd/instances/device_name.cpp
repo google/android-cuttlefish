@@ -19,7 +19,7 @@
 #include <regex>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 namespace cuttlefish {
 
@@ -33,7 +33,7 @@ bool IsValidInstanceName(const std::string& token) {
     return true;
   }
   std::regex base_regular_expr("[A-Za-z_0-9]+");
-  std::vector<std::string> pieces = android::base::Split(token, "-");
+  std::vector<std::string> pieces = absl::StrSplit(token, '-');
   for (const std::string& piece : pieces) {
     if (!std::regex_match(piece, base_regular_expr)) {
       return false;

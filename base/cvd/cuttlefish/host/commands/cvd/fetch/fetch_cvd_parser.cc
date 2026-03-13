@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"

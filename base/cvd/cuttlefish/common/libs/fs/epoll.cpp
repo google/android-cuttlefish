@@ -44,32 +44,18 @@ Epoll::Epoll() = default;
 Epoll::Epoll(SharedFD epoll_fd) : epoll_fd_(epoll_fd) {}
 
 Epoll::Epoll(Epoll&& other) {
-  std::unique_lock own_watched(watched_mutex_, std::defer_lock);
-  std::unique_lock own_epoll(epoll_mutex_, std::defer_lock);
-  std::unique_lock other_epoll(other.epoll_mutex_, std::defer_lock);
-  std::unique_lock other_watched(other.watched_mutex_, std::defer_lock);
-  std::lock(own_watched, own_epoll, other_epoll, other_watched);
-
   epoll_fd_ = std::move(other.epoll_fd_);
   watched_ = std::move(other.watched_);
 }
 
 Epoll& Epoll::operator=(Epoll&& other) {
-  std::unique_lock own_watched(watched_mutex_, std::defer_lock);
-  std::unique_lock own_epoll(epoll_mutex_, std::defer_lock);
-  std::unique_lock other_epoll(other.epoll_mutex_, std::defer_lock);
-  std::unique_lock other_watched(other.watched_mutex_, std::defer_lock);
-  std::lock(own_watched, own_epoll, other_epoll, other_watched);
-
   epoll_fd_ = std::move(other.epoll_fd_);
   watched_ = std::move(other.watched_);
   return *this;
 }
 
 Result<void> Epoll::Add(SharedFD fd, uint32_t events) {
-  std::unique_lock watched_lock(watched_mutex_, std::defer_lock);
-  std::shared_lock epoll_lock(epoll_mutex_, std::defer_lock);
-  std::lock(watched_lock, epoll_lock);
+  std::lock_guard lock(watched_mutex_);
   CF_EXPECT(epoll_fd_->IsOpen(), "Empty Epoll instance");
 
   if (watched_.count(fd) != 0) {
@@ -90,9 +76,7 @@ Result<void> Epoll::Add(SharedFD fd, uint32_t events) {
 }
 
 Result<void> Epoll::AddOrModify(SharedFD fd, uint32_t events) {
-  std::unique_lock watched_lock(watched_mutex_, std::defer_lock);
-  std::shared_lock epoll_lock(epoll_mutex_, std::defer_lock);
-  std::lock(watched_lock, epoll_lock);
+  std::lock_guard lock(watched_mutex_);
   CF_EXPECT(epoll_fd_->IsOpen(), "Empty Epoll instance");
 
   epoll_event event;
@@ -109,9 +93,7 @@ Result<void> Epoll::AddOrModify(SharedFD fd, uint32_t events) {
 }
 
 Result<void> Epoll::Modify(SharedFD fd, uint32_t events) {
-  std::unique_lock watched_lock(watched_mutex_, std::defer_lock);
-  std::shared_lock epoll_lock(epoll_mutex_, std::defer_lock);
-  std::lock(watched_lock, epoll_lock);
+  std::shared_lock lock(watched_mutex_);
   CF_EXPECT(epoll_fd_->IsOpen(), "Empty Epoll instance");
 
   if (watched_.count(fd) == 0) {
@@ -128,9 +110,7 @@ Result<void> Epoll::Modify(SharedFD fd, uint32_t events) {
 }
 
 Result<void> Epoll::Delete(SharedFD fd) {
-  std::unique_lock watched_lock(watched_mutex_, std::defer_lock);
-  std::shared_lock epoll_lock(epoll_mutex_, std::defer_lock);
-  std::lock(watched_lock, epoll_lock);
+  std::lock_guard lock(watched_mutex_);
   CF_EXPECT(epoll_fd_->IsOpen(), "Empty Epoll instance");
 
   if (watched_.count(fd) == 0) {
@@ -147,11 +127,8 @@ Result<void> Epoll::Delete(SharedFD fd) {
 Result<std::optional<EpollEvent>> Epoll::Wait() {
   epoll_event event;
   int success;
-  {
-    std::shared_lock lock(epoll_mutex_);
-    CF_EXPECT(epoll_fd_->IsOpen(), "Empty Epoll instance");
-    success = TEMP_FAILURE_RETRY(epoll_wait(epoll_fd_->fd_, &event, 1, -1));
-  }
+  CF_EXPECT(epoll_fd_->IsOpen(), "Empty Epoll instance");
+  success = TEMP_FAILURE_RETRY(epoll_wait(epoll_fd_->fd_, &event, 1, -1));
   if (success == -1) {
     return CF_ERRNO("epoll_wait failed");
   } else if (success == 0) {

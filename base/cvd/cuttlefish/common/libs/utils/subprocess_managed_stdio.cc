@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"

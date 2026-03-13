@@ -75,12 +75,12 @@ jobs:
       matrix:
         dir:
           - "e2etests"
+          - "container/src/libcfcontainer"
+          - "container/src/podcvd"
           - "frontend/src/host_orchestrator"
-          - "frontend/src/libcfcontainer"
           - "frontend/src/libhoclient"
           - "frontend/src/liboperator"
           - "frontend/src/operator"
-          - "frontend/src/podcvd"
           - "tools/baseimage"
     steps:
     - name: Checkout repository
@@ -88,7 +88,7 @@ jobs:
     - name: Install dependencies
       uses: actions/setup-go@v6
       with:
-        go-version: '1.24.2'
+        go-version: '1.25.0'
     - run: go version
     - name: Staticcheck
       uses: dominikh/staticcheck-action@v1.3.1
@@ -165,7 +165,7 @@ jobs:
           popd
         done
   run-cvd-unit-tests:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-4core
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@v1.3.1
@@ -391,10 +391,6 @@ jobs:
             exit 1
           fi
         done
-        sudo podman rm -f tester
-        # Run create_with_gce_credentials_test
-        sudo podman run --name tester -d --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests --add-host="metadata.google.internal:127.0.0.1" android-cuttlefish-e2etest:latest
-        sudo podman exec --user=testrunner -it tester bazel --output_user_root=/tmp/cw_bazel/output test //orchestration/create_with_gce_credentials_test:create_with_gce_credentials_test_test
         sudo podman rm -f tester
         # Run verify_access_token_test
         sudo podman run --name tester -d  --privileged --pids-limit=8192 -v /tmp/cw_bazel:/tmp/cw_bazel -v .:/src/workspace -w /src/workspace/e2etests android-cuttlefish-e2etest:latest

@@ -1,10 +1,170 @@
-cuttlefish-common (1.41.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.47.0) UNRELEASED; urgency=medium
 
-  * 
+  * N/A
 
- -- Ram Muthiah <rammuthiah@google.com>  Sun, 25 Jan 2026 15:13:16 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 14:10:07 -0800
 
-cuttlefish-common (1.40.0) unstable; urgency=medium
+cuttlefish-common (1.46.0) unstable; urgency=medium
+
+  * Start development on v1.46.0 by @cjreynol in https://github.com/google/android-cuttlefish/pull/2201
+  * Replace e2e cvd runner scripts with shared go library by @jmacnak in https://github.com/google/android-cuttlefish/pull/2170
+  * Replace non-vendor-boot unpack_bootimg.py invocations with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2203
+  * Updated debian host image to trixie by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2204
+  * Replace vendor-boot unpack_bootimg.py invocations with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2207
+  * Move DisjointRangeSet and LazilyLoadedFile to //cuttlefish/io by @Databean in https://github.com/google/android-cuttlefish/pull/2208
+  * Make `cvd login` display help text on invalid invocations by @cjreynol in https://github.com/google/android-cuttlefish/pull/2211
+  * Github workflow deploys cuttlefish-metrics to Artifact Registry by @0405ysj in https://github.com/google/android-cuttlefish/pull/2209
+  * Introduce cuttlefish-podcvd debian package by @0405ysj in https://github.com/google/android-cuttlefish/pull/2198
+  * Document how to download arm64 on-premise server image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2210
+  * Describe playbook guidance on container/src/podcvd/README.md by @0405ysj in https://github.com/google/android-cuttlefish/pull/2214
+  * Allow omitting connection to light server by @jemoreira in https://github.com/google/android-cuttlefish/pull/2215
+  * Fix some go linter findings by @jmacnak in https://github.com/google/android-cuttlefish/pull/2219
+  * Replace mkbootimg calls for boot images with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2217
+  * Check device availability on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2216
+  * Don't read the vendor boot kernel command line from `vendor_boot_params` by @Databean in https://github.com/google/android-cuttlefish/pull/2218
+  * Port virtio media simple device as a vhost user media device. by @ser-io in https://github.com/google/android-cuttlefish/pull/1895
+  * Return `Result`s from some more functions in boot_image_utils by @Databean in https://github.com/google/android-cuttlefish/pull/2224
+  * Add a test for BootImage and BootImageBuilder by @Databean in https://github.com/google/android-cuttlefish/pull/2221
+  * Deploy cuttlefish-podcvd into unstable/nightly channel by @0405ysj in https://github.com/google/android-cuttlefish/pull/2223
+  * Implement a vendor boot image builder in C++ by @Databean in https://github.com/google/android-cuttlefish/pull/2225
+
+ -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 13:33:27 -0800
+
+cuttlefish-common (1.45.0) stable; urgency=medium
+
+  * Start development on v1.45 by @Databean in https://github.com/google/android-cuttlefish/pull/2172
+  * Support generic IO types in `CompositeDisk` by @Databean in https://github.com/google/android-cuttlefish/pull/2168
+  * Support building `//cuttlefish/package:cvd` with bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2164
+  * Delete local toolchain logic by @Databean in https://github.com/google/android-cuttlefish/pull/2174
+  * Replace android::base::Split with absl::StrSplit by @jemoreira in https://github.com/google/android-cuttlefish/pull/2171
+  * host image: install custom configs by @ser-io in https://github.com/google/android-cuttlefish/pull/2176
+  * Expand on the message for fetch status blocking by @cjreynol in https://github.com/google/android-cuttlefish/pull/2178
+  * Replace android::base::Tokenize with absl::StrSplit by @jemoreira in https://github.com/google/android-cuttlefish/pull/2177
+  * Create a Length method based on the Seeker& interface by @Databean in https://github.com/google/android-cuttlefish/pull/2180
+  * otheros: Drops ia32 Grub support by @dimorinny in https://github.com/google/android-cuttlefish/pull/2173
+  * Replace LazilyLoadedFileReadCallback with ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/2182
+  * Support creating a BufferedZipSource from a ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/2181
+  * Use adb fron debian package in e2etests. by @ser-io in https://github.com/google/android-cuttlefish/pull/2185
+  * baseimage tools refactoring by @ser-io in https://github.com/google/android-cuttlefish/pull/2184
+  * Make sure to follow symlinks when reading files by @jemoreira in https://github.com/google/android-cuttlefish/pull/2186
+  * Implement ReadFilesystem for ReadableZip by @Databean in https://github.com/google/android-cuttlefish/pull/2187
+  * Remove unused fill_available_disk_space script. by @ser-io in https://github.com/google/android-cuttlefish/pull/2192
+  * Implement IsKernelModuleSigned using IO types and add test coverage by @Databean in https://github.com/google/android-cuttlefish/pull/2188
+  * Support Reader implementations with only PRead by @Databean in https://github.com/google/android-cuttlefish/pull/2189
+  * Migrate `cvd fetch` to the V4 Android Build API by @cjreynol in https://github.com/google/android-cuttlefish/pull/1830
+  * Cleanup stale logic around using service account credentials in cvd fetch calls. by @ser-io in https://github.com/google/android-cuttlefish/pull/2193
+  * .github/workflows: deploy Gigabyte Ampere server image to artifactory by @grandpaul in https://github.com/google/android-cuttlefish/pull/2183
+  * Create a ReadWindow type that presents a subset of another ReaderSeeker type by @Databean in https://github.com/google/android-cuttlefish/pull/2194
+  * Suppress error on variable version though artifact doesn't exist by @0405ysj in https://github.com/google/android-cuttlefish/pull/2195
+  * Put appropriate inputs to actions for deployment towards AR of GCP by @0405ysj in https://github.com/google/android-cuttlefish/pull/2196
+  * tools/buildutils/cw/Containerfile installs go from bookworm backports by @0405ysj in https://github.com/google/android-cuttlefish/pull/2197
+  * Pre-installed docker image on on-premise arm64 image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2158
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 27 Feb 2026 14:39:34 -0800
+
+cuttlefish-common (1.44.0) unstable; urgency=medium
+
+  * Add fallback physical partition calculation by @Databean in https://github.com/google/android-cuttlefish/pull/2139
+  * Update Angular to 21, Add explicit ChangeDetectionStrategy for components by @k311093 in https://github.com/google/android-cuttlefish/pull/2132
+  * Start development of version 1.44 by @jemoreira in https://github.com/google/android-cuttlefish/pull/2144
+  * Replace android::base::Parse* with absl::SimpleAto* by @jemoreira in https://github.com/google/android-cuttlefish/pull/2141
+  * Gather `system_image_dir_specified` metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2136
+  * Isolate `CredentialSource` construction decision logic by @cjreynol in https://github.com/google/android-cuttlefish/pull/2148
+  * Refactor Github Action per b/485167538 by @google-admin in https://github.com/google/android-cuttlefish/pull/2153
+  * Add adb to the host image by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2138
+  * Add user page size configuration to Cuttlefish environment spec by @Kalesh-Singh in https://github.com/google/android-cuttlefish/pull/2146
+  * Add a test for `CombinedAndroidBuild` by @Databean in https://github.com/google/android-cuttlefish/pull/2149
+  * Prefer no `std::` prefixes on integer types by @cjreynol in https://github.com/google/android-cuttlefish/pull/2142
+  * Lift ReadToString(ReadableZipSource&) to be ReadToString(Reader&) by @Databean in https://github.com/google/android-cuttlefish/pull/2155
+  * Create a filesystem abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2150
+  * Expanding file extent check in cvd fetch by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2160
+  * Support dmabuf in Cuttlefish wayland server by @jmacnak in https://github.com/google/android-cuttlefish/pull/1602
+  * Split up `//cuttlefish/host/commands/cvd/cli/parser` targets by @Databean in https://github.com/google/android-cuttlefish/pull/2156
+  * Upgrade cxx to a version supporting bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2157
+  * Switch BootImage::Read to use ReaderSeeker by @Databean in https://github.com/google/android-cuttlefish/pull/2159
+  * Add missing build dependency for internal build by @Databean in https://github.com/google/android-cuttlefish/pull/2162
+  * Lift `Copy` to be over generic IO types rather than zip IO types by @Databean in https://github.com/google/android-cuttlefish/pull/2163
+  * Split up `//cuttlefish/host/commands/cvd/cli/parser/instance` targets by @Databean in https://github.com/google/android-cuttlefish/pull/2161
+  * Don't perform zero-length memcpy operations in InMemoryIo by @Databean in https://github.com/google/android-cuttlefish/pull/2165
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 20 Feb 2026 14:27:29 -0800
+
+cuttlefish-common (1.43.0) unstable; urgency=medium
+
+  * Add .0 suffix on version described at */debian/changelog by @0405ysj in https://github.com/google/android-cuttlefish/pull/2119
+  * Delete unused field, matching internal changes by @cjreynol in https://github.com/google/android-cuttlefish/pull/2113
+  * Implement the standard IO interfaces for the zip types by @Databean in https://github.com/google/android-cuttlefish/pull/2112
+  * Update file time of composite disk when powerwashing by @Databean in https://github.com/google/android-cuttlefish/pull/2123
+  * Replace `reserve` with `resize` call in BlankDataImageMbFlag by @Databean in https://github.com/google/android-cuttlefish/pull/2126
+  * Add gigabyte-ampere-cuttlefish-installer subdirectory by @grandpaul in https://github.com/google/android-cuttlefish/pull/2067
+  * Mark 1.41.0 as stable by @jmacnak in https://github.com/google/android-cuttlefish/pull/2127
+  * Support default values containing commas in FromGlobalFlags by @Databean in https://github.com/google/android-cuttlefish/pull/2125
+  * Unblock copybara by @jemoreira in https://github.com/google/android-cuttlefish/pull/2124
+  * Mark 1.42 as stable. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2134
+  * Always apply common ubsan checks by @Databean in https://github.com/google/android-cuttlefish/pull/2129
+  * Update GPU config to *only* run `requires_gpu` tagged tests by @jmacnak in https://github.com/google/android-cuttlefish/pull/2137
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 18:10:17 -0800
+
+cuttlefish-common (1.42.0) stable; urgency=medium
+
+  * Start development on v1.42 by @jmacnak in https://github.com/google/android-cuttlefish/pull/2097
+  * Add `data_policy` to list of flags gathered for metrics by @cjreynol in https://github.com/google/android-cuttlefish/pull/2065
+  * Extract some CuttlefishConfig::InstanceSpecific members to be free functions (#2) by @Databean in https://github.com/google/android-cuttlefish/pull/2094
+  * Don't mandate that AndroidBuild implementations provide SetExtractDir by @Databean in https://github.com/google/android-cuttlefish/pull/2101
+  * Create a generic I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2096
+  * Introduce a utility for reading boot images by @Databean in https://github.com/google/android-cuttlefish/pull/2095
+  * Gather metrics for `restart_subprocesses` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2098
+  * Gather metrics for `memory_mb` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2099
+  * Avoid access before initialization in DisplayHandler by @jemoreira in https://github.com/google/android-cuttlefish/pull/2104
+  * Gather metrics for `guest_enforce_security` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2100
+  * Skip group name check on the container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2102
+  * Create an in-memory implementation of the I/O abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2106
+  * Gather metrics for `extra_kernel_cmdline` flag by @cjreynol in https://github.com/google/android-cuttlefish/pull/2103
+  * Use more posix-like names in the IO abstraction by @Databean in https://github.com/google/android-cuttlefish/pull/2109
+  * Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
+  * Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
+  * Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
+  * Mark 1.40 as stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2108
+
+ -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:00:34 +0000
+
+cuttlefish-common (1.41.0) stable; urgency=medium
+
+  * Start development on v1.41 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2056
+  * Upgrade Vulkan Headers and fix build by @jmacnak in https://github.com/google/android-cuttlefish/pull/2057
+  * Reduce CLI output during fetch invocations by @cjreynol in https://github.com/google/android-cuttlefish/pull/2048
+  * Mark some intrinsically Linux-specific targets. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2052
+  * Add initial flag metrics gathering by @cjreynol in https://github.com/google/android-cuttlefish/pull/2043
+  * Caching directory creation refactor by @cjreynol in https://github.com/google/android-cuttlefish/pull/2024
+  * Move external build configuration into build_external (#5) by @Databean in https://github.com/google/android-cuttlefish/pull/2058
+  * Bazel 9 readiness: libbase by @Databean in https://github.com/google/android-cuttlefish/pull/2059
+  * Move external build configuration into `build_external` (#6) by @Databean in https://github.com/google/android-cuttlefish/pull/2060
+  * Add missing include for CuttlefishFlags by @jmacnak in https://github.com/google/android-cuttlefish/pull/2061
+  * Update some dependencies for bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2063
+  * Bazel 9 readiness: more libraries by @Databean in https://github.com/google/android-cuttlefish/pull/2064
+  * Apply misc-include-cleaner to run_cvd by @Databean in https://github.com/google/android-cuttlefish/pull/2066
+  * Move external build configuration into build_external (#7) by @Databean in https://github.com/google/android-cuttlefish/pull/2062
+  * Make the presubmit "command line flag" envvar more generic by @jmacnak in https://github.com/google/android-cuttlefish/pull/2068
+  * Bazel 9 readiness: //adb by @Databean in https://github.com/google/android-cuttlefish/pull/2069
+  * Move gen_ffi_header into build_external/libffi by @Databean in https://github.com/google/android-cuttlefish/pull/2070
+  * Bazel 9 readiness: teeui by @Databean in https://github.com/google/android-cuttlefish/pull/2071
+  * Bazel 9 readiness: //fastboot by @Databean in https://github.com/google/android-cuttlefish/pull/2072
+  * Bazel 9 readiness: libwebrtc by @Databean in https://github.com/google/android-cuttlefish/pull/2074
+  * Bazel 9 readiness: more targets by @Databean in https://github.com/google/android-cuttlefish/pull/2075
+  * Enforce misc-include-cleaner on assemble_cvd/android_build by @Databean in https://github.com/google/android-cuttlefish/pull/2076
+  * Remove extra registry for freetype by @Databean in https://github.com/google/android-cuttlefish/pull/2081
+  * Reapply "Add pretty-printing for liblp types" by @Databean in https://github.com/google/android-cuttlefish/pull/2083
+  * Make the cf_cc.* rules work with Bazel 9. by @3405691582 in https://github.com/google/android-cuttlefish/pull/2080
+  * Write a pretty-printed `AndroidBuild` to an instance log directory by @Databean in https://github.com/google/android-cuttlefish/pull/2084
+  * Add some graphics e2e tests by @jmacnak in https://github.com/google/android-cuttlefish/pull/2082
+  * Add missing bazel dependency by @jmacnak in https://github.com/google/android-cuttlefish/pull/2090
+  * podcvd can make adb connection after executing cvd create on container by @0405ysj in https://github.com/google/android-cuttlefish/pull/2093
+  * New flag and behavior `--experimental_build_super_image` by @Databean in https://github.com/google/android-cuttlefish/pull/2092
+
+ -- Jason Macnak <natsu@google.com>  Fri, 30 Jan 2026 22:53:20 -0800
+
+cuttlefish-common (1.40.0) stable; urgency=medium
 
   * Mark release 1.39.0 as unstable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2027
   * Use format_as to format some enum types by @Databean in https://github.com/google/android-cuttlefish/pull/2022

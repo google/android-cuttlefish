@@ -1,125 +1,15 @@
-load("boot_tests.bzl", "cvd_command_boot_test", "cvd_load_boot_test", "launch_cvd_boot_test", "metrics_test")
-
-# cvd fetch + launch_cvd tests
-launch_cvd_boot_test(
-    name = "fetch_and_launch_git_main_x64_phone",
-    branch = "git_main",
-    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_main_x64_phone",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android14_phone",
-    branch = "aosp-android14-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android13_phone",
-    branch = "aosp-android13-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
-
-launch_cvd_boot_test(
-    name = "fetch_and_launch_aosp_android12_phone",
-    branch = "aosp-android12-gsi",
-    target = "aosp_cf_x86_64_phone-userdebug",
-)
-
-# cvd load tests
-cvd_load_boot_test(
-    name = "load_git_main_x64_phone",
-    env_file = "environment_specs/git_main_x64_phone.json",
-)
-
-cvd_load_boot_test(
-    name = "load_aosp_main_x64_phone",
-    env_file = "environment_specs/aosp_main_x64_phone.json",
-)
-
-cvd_load_boot_test(
-    name = "load_aosp_main_x64_phone_x2",
-    size = "enormous",
-    env_file = "environment_specs/aosp_main_x64_phone_x2.json",
-)
-
-cvd_command_boot_test(
-    name = "list_env_services",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "env",
-        "ls",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "aosp_additional_substitution",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    substitutions = [
-        "bin/assemble_cvd",
-        "bin/run_cvd",
-    ],
-)
-
-cvd_command_boot_test(
-    name = "git_main_additional_substitution",
-    branch = "git_main",
-    target = "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
-    substitutions = [
-        "bin/assemble_cvd",
-        "bin/run_cvd",
-    ],
-)
-
-cvd_command_boot_test(
-    name = "take_bugreport",
-    branch = "aosp-android-latest-release",
-    cvd_command = ["host_bugreport"],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "add_displays",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "display",
-        "add",
-        "--display=width=500,height=500",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "list_displays",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "display",
-        "list",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
-
-cvd_command_boot_test(
-    name = "this_test_will_fail",
-    branch = "aosp-android-latest-release",
-    cvd_command = [
-        "this_command_does_not_exist",
-    ],
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-    tags = ["requires_gpu"],
-)
-
-metrics_test(
-    name = "verify_metrics_transmission",
-    branch = "aosp-android-latest-release",
-    target = "aosp_cf_x86_64_only_phone-userdebug",
-)
+# Copyright (C) 2026 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # TODO(b/329100411) test loading older branches

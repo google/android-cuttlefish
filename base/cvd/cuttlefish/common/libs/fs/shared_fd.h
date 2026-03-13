@@ -358,6 +358,7 @@ class FileInstance {
   ssize_t Recv(void* buf, size_t len, int flags);
   ssize_t RecvMsg(struct msghdr* msg, int flags);
   ssize_t Read(void* buf, size_t count);
+  ssize_t PRead(void* buf, size_t count, size_t offset);
 #ifdef __linux__
   int EventfdRead(eventfd_t* value);
 #endif
@@ -391,6 +392,7 @@ class FileInstance {
    *
    */
   ssize_t Write(const void* buf, size_t count);
+  ssize_t PWrite(const void* buf, size_t count, size_t offset);
 #ifdef __linux__
   int EventfdWrite(eventfd_t value);
 #endif

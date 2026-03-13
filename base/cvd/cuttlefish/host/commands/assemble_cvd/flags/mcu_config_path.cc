@@ -23,6 +23,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include <json/value.h>
 
@@ -52,7 +53,7 @@ McuConfigPathFlag McuConfigPathFlag::FromGlobalGflags() {
       flag_info.is_default ? default_path : flag_info.current_value;
 
   std::vector<std::string> paths =
-      android::base::Split(mcu_config_path_flag, ",");
+      absl::StrSplit(mcu_config_path_flag, ',');
 
   if (paths.empty()) {
     paths.emplace_back("");

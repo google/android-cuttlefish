@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
@@ -30,7 +29,6 @@
 #include "absl/strings/str_split.h"
 #include "absl/strings/strip.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/combined_android_build.h"
-#include "fmt/ostream.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
@@ -39,6 +37,11 @@
 #include "cuttlefish/host/libs/config/build_archive.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
+#include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/result.h"    // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -56,6 +59,17 @@ class TargetFilesImpl : public AndroidBuild {
     CF_EXPECT(!target_files.archive_.Members().empty());
 
     return std::make_unique<TargetFilesImpl>(std::move(target_files));
+  }
+
+  std::string Name() const override { return "TargetFiles"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name())
+        .Member("MiscInfo()", MiscInfo())
+        .Member("Images()", Images())
+        .Member("AbPartitions()", AbPartitions())
+        .Member("archive_", archive_)
+        .Member("extract_dir_", extract_dir_);
   }
 
   Result<std::map<std::string, std::string, std::less<void>>> MiscInfo() {
@@ -81,7 +95,7 @@ class TargetFilesImpl : public AndroidBuild {
   }
 
   Result<std::string> ImageFile(std::string_view name, bool extract) override {
-    std::string member_name = absl::StrCat(name, kImgSuffix);
+    std::string member_name = absl::StrCat("IMAGES/", name, kImgSuffix);
     if (extract) {
       return CF_EXPECT(archive_.MemberFilepath(member_name, std::nullopt));
     } else {
@@ -104,11 +118,6 @@ class TargetFilesImpl : public AndroidBuild {
   TargetFilesImpl(BuildArchive archive) : archive_(std::move(archive)) {}
 
   // The `META/ab_partitions.txt` archive member has one entry per line.
-
-  std::ostream& Format(std::ostream& out) const override {
-    fmt::print(out, "TargetFiles {{ {} }}", archive_);
-    return out;
-  }
 
   BuildArchive archive_;
   std::optional<std::string> extract_dir_;

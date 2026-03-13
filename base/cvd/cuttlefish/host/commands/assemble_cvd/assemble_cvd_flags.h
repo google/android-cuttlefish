@@ -20,7 +20,6 @@
 
 #define DECLARE_vec DECLARE_string
 
-DECLARE_vec(data_policy);
 DECLARE_vec(gdb_port);
 
 // TODO(b/192495477): combine these into a single repeatable '--display' flag
@@ -37,13 +36,9 @@ DECLARE_string(y_res);
 DECLARE_string(dpi);
 DECLARE_string(refresh_rate_hz);
 DECLARE_string(overlays);
-DECLARE_string(extra_kernel_cmdline);
 DECLARE_string(extra_bootconfig_args);
-DECLARE_vec(guest_enforce_security);
-DECLARE_vec(memory_mb);
 DECLARE_vec(serial_number);
 DECLARE_vec(use_random_serial);
-DECLARE_vec(gpu_mode);
 DECLARE_vec(gpu_vhost_user_mode);
 DECLARE_vec(hwcomposer);
 DECLARE_vec(gpu_capture_binary);
@@ -117,7 +112,6 @@ DECLARE_vec(gem5_checkpoint_dir);
 DECLARE_vec(gem5_debug_file);
 DECLARE_string(gem5_debug_flags);
 
-DECLARE_vec(restart_subprocesses);
 DECLARE_vec(boot_slot);
 DECLARE_int32(num_instances);
 DECLARE_string(instance_nums);

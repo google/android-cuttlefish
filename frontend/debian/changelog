@@ -1,10 +1,71 @@
-cuttlefish-frontend (1.41.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.47.0) UNRELEASED; urgency=medium
 
-  * 
+  * N/A 
 
- -- Ram Muthiah <rammuthiah@google.com>  Sun, 25 Jan 2026 15:13:42 -0800
+ -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 14:10:23 -0800
 
-cuttlefish-frontend (1.40.0) unstable; urgency=medium
+cuttlefish-frontend (1.46.0) unstable; urgency=medium
+
+  * Re-apply reverted commits by @cjreynol in https://github.com/google/android-cuttlefish/pull/2202
+  * Move podcvd and libcfcontainer from frontend/src/ to container/src/ by @0405ysj in https://github.com/google/android-cuttlefish/pull/2212
+
+ -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 13:35:38 -0800
+
+cuttlefish-frontend (1.45.0) stable; urgency=medium
+
+  * Start development on v1.45 by @Databean in https://github.com/google/android-cuttlefish/pull/2172
+  * podcvd checks host's routing table to find CIDR by @0405ysj in https://github.com/google/android-cuttlefish/pull/2166
+  * Support building `//cuttlefish/package:cvd` with bazel 9 by @Databean in https://github.com/google/android-cuttlefish/pull/2164
+  * host image: install custom configs by @ser-io in https://github.com/google/android-cuttlefish/pull/2176
+  * baseimage tools refactoring by @ser-io in https://github.com/google/android-cuttlefish/pull/2184
+  * Use nightly tag for podcvd development by @0405ysj in https://github.com/google/android-cuttlefish/pull/2190
+  * Remove unused fill_available_disk_space script. by @ser-io in https://github.com/google/android-cuttlefish/pull/2192
+  * Cleanup stale logic around using service account credentials in cvd fetch calls. by @ser-io in https://github.com/google/android-cuttlefish/pull/2193
+  * Suppress error on variable version though artifact doesn't exist by @0405ysj in https://github.com/google/android-cuttlefish/pull/2195
+  * Put appropriate inputs to actions for deployment towards AR of GCP by @0405ysj in https://github.com/google/android-cuttlefish/pull/2196
+  * tools/buildutils/cw/Containerfile installs go from bookworm backports by @0405ysj in https://github.com/google/android-cuttlefish/pull/2197
+  * Podcvd can execute cvd help/version, and also help flags for most subcommands by @0405ysj in https://github.com/google/android-cuttlefish/pull/2191
+  * Revert for internal import blockage by @cjreynol in https://github.com/google/android-cuttlefish/pull/2199
+
+ -- Chad Reynolds <chadreynolds@google.com>  Fri, 27 Feb 2026 14:41:13 -0800
+
+cuttlefish-frontend (1.44.0) unstable; urgency=medium
+
+  * N/A
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Fri, 20 Feb 2026 14:29:18 -0800
+
+cuttlefish-frontend (1.43.0) unstable; urgency=medium
+
+  [ 3405691582 ]
+  * Support powerwash/remove/start/stop on cvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2118
+  * Support podcvd to execute cvd clear/fleet/reset by @0405ysj in https://github.com/google/android-cuttlefish/pull/2120
+  * Auto-select group name from podcvd, if there's only one group by @0405ysj in https://github.com/google/android-cuttlefish/pull/2121
+  * Replace --host_substitution in e2e tests with LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE by @Databean in https://github.com/google/android-cuttlefish/pull/2130
+  * Import sh_binary for e2etests/orchestration/artifacts by @k311093 in https://github.com/google/android-cuttlefish/pull/2133
+  * Add `_additional_substitution` versions of all `cvd_load_boot_test`s `cvd_command_boot_test`s, `metrics_test`s, and `cvd_cts_test`s by @Databean in https://github.com/google/android-cuttlefish/pull/2131
+  * Upgrade go version for staticcheck by @Databean in https://github.com/google/android-cuttlefish/pull/2140
+
+ -- Jorge Moreira <jemoreira@google.com>  Fri, 13 Feb 2026 18:16:14 -0800
+
+cuttlefish-frontend (1.42.0) stable; urgency=medium
+
+  * Support multiple container instances on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2107
+  * Podcvd can execute cvd bugreport/display/env/screen_recording/status by @0405ysj in https://github.com/google/android-cuttlefish/pull/2114
+  * Continue implementation of podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2115
+
+ -- 3405691582 <dsk@google.com>  Fri, 06 Feb 2026 22:01:35 +0000
+
+cuttlefish-frontend (1.41.0) stable; urgency=medium
+
+  * cvdexec is available to pull our container image into local podman engine by @0405ysj in https://github.com/google/android-cuttlefish/pull/2017
+  * Rename cvdexec into podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2077
+  * podcvd can create Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2078
+  * podcvd can execute cvd create on Cuttlefish container instance by @0405ysj in https://github.com/google/android-cuttlefish/pull/2085
+
+ -- Jason Macnak <natsu@google.com>  Thu, 29 Jan 2026 13:01:30 -0800
+
+cuttlefish-frontend (1.40.0) stable; urgency=medium
 
   *  N/A
 

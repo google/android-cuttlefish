@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <google/protobuf/text_format.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/proto/launch_cvd.pb.h"

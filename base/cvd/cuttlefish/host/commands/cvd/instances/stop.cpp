@@ -28,7 +28,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
 #include <fmt/core.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference

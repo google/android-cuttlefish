@@ -15,14 +15,15 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <chrono>
-#include <cstddef>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cache/cache.h"
 #include "cuttlefish/host/commands/cvd/fetch/credential_flags.h"
-#include "cuttlefish/host/libs/web/android_build_api.h"
+#include "cuttlefish/host/libs/web/android_build_url.h"
 #include "cuttlefish/host/libs/web/cas/cas_flags.h"
 
 namespace cuttlefish {
@@ -44,7 +45,7 @@ struct BuildApiFlags {
   std::chrono::seconds wait_retry_period = kDefaultWaitRetryPeriod;
   std::string api_base_url = kAndroidBuildServiceUrl;
   bool enable_caching = kDefaultEnableCaching;
-  std::size_t max_cache_size_gb = kDefaultCacheSizeGb;
+  size_t max_cache_size_gb = kDefaultCacheSizeGb;
   CasDownloaderFlags cas_downloader_flags;
 };
 

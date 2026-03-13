@@ -40,6 +40,7 @@ cf_cc_binary(
         "//cuttlefish/posix:strerror",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@android_system_core//:libsparse",
         "@fmt",
         "@protobuf",

@@ -18,42 +18,39 @@
 #include <optional>
 #include <string>
 
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
-#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<void> RepackBootImage(const Avb& avb,
-                             const std::string& new_kernel_path,
+Result<void> RepackBootImage(const std::string& new_kernel_path,
                              const std::string& boot_image_path,
-                             const std::string& new_boot_image_path,
-                             const std::string& build_dir);
-bool RepackVendorBootImage(const std::string& new_ramdisk_path,
-                           const std::string& vendor_boot_image_path,
-                           const std::string& new_vendor_boot_image_path,
-                           const std::string& unpack_dir,
-                           bool bootconfig_supported);
-bool RepackVendorBootImageWithEmptyRamdisk(
+                             const std::string& new_boot_image_path);
+Result<void> RepackVendorBootImage(
+    const std::string& new_ramdisk_path,
+    const std::string& vendor_boot_image_path,
+    const std::string& new_vendor_boot_image_path,
+    const std::string& unpack_dir, bool bootconfig_supported);
+Result<void> RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
     const std::string& unpack_dir, bool bootconfig_supported);
 
-Result<std::string> UnpackBootImage(const std::string& boot_image_path,
-                                    const std::string& unpack_dir);
+Result<void> UnpackBootImage(const std::string& boot_image_path,
+                             const std::string& unpack_dir);
 
-bool UnpackVendorBootImageIfNotUnpacked(
+Result<VendorBootImage> UnpackVendorBootImageIfNotUnpacked(
     const std::string& vendor_boot_image_path, const std::string& unpack_dir);
-void RepackGem5BootImage(const std::string& initrd_path,
-                         const std::optional<BootConfigPartition>&,
-                         const std::string& unpack_dir,
-                         const std::string& input_ramdisk_path);
+Result<void> RepackGem5BootImage(const std::string& initrd_path,
+                                 const std::optional<BootConfigPartition>&,
+                                 const std::string& unpack_dir,
+                                 const std::string& input_ramdisk_path);
 Result<std::string> ReadAndroidVersionFromBootImage(
-    const std::string& boot_image_path,
-    const std::optional<std::string>& avbtool_path = std::nullopt);
+    const std::string& boot_image_path);
 
-void UnpackRamdisk(const std::string& original_ramdisk_path,
-                   const std::string& ramdisk_stage_dir);
-void PackRamdisk(const std::string& ramdisk_stage_dir,
-                 const std::string& output_ramdisk);
+Result<void> UnpackRamdisk(const std::string& original_ramdisk_path,
+                           const std::string& ramdisk_stage_dir);
+Result<void> PackRamdisk(const std::string& ramdisk_stage_dir,
+                         const std::string& output_ramdisk);
 }

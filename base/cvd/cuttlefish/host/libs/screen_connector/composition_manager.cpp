@@ -27,14 +27,17 @@
 
 #include "cuttlefish/host/libs/screen_connector/composition_manager.h"
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 #include "libyuv.h"
 
 #include <drm/drm_fourcc.h>
@@ -49,19 +52,17 @@ static const int kAlphaIdx = 3;
 
 namespace cuttlefish {
 
-void alpha_blend_layer(std::uint8_t* frame_pixels, std::uint32_t h,
-                       std::uint32_t w, std::uint8_t* overlay) {
-  std::uint8_t* dst = frame_pixels;
-  std::uint8_t* src = overlay;
+void alpha_blend_layer(uint8_t* frame_pixels, uint32_t h, uint32_t w,
+                       uint8_t* overlay) {
+  uint8_t* dst = frame_pixels;
+  uint8_t* src = overlay;
   int max = w * h;
   for (int idx = 0; idx < max; idx++) {
     float a = ((float)src[kAlphaIdx]) / 255.0f;
     float a_inv = 1.0f - a;
-    dst[kRedIdx] = (std::uint8_t)((src[kRedIdx] * a) + (dst[kRedIdx] * a_inv));
-    dst[kBlueIdx] =
-        (std::uint8_t)((src[kBlueIdx] * a) + (dst[kBlueIdx] * a_inv));
-    dst[kGreenIdx] =
-        (std::uint8_t)((src[kGreenIdx] * a) + (dst[kGreenIdx] * a_inv));
+    dst[kRedIdx] = (uint8_t)((src[kRedIdx] * a) + (dst[kRedIdx] * a_inv));
+    dst[kBlueIdx] = (uint8_t)((src[kBlueIdx] * a) + (dst[kBlueIdx] * a_inv));
+    dst[kGreenIdx] = (uint8_t)((src[kGreenIdx] * a) + (dst[kGreenIdx] * a_inv));
     dst[kAlphaIdx] = 255;
     dst += 4;
     src += 4;
@@ -84,19 +85,18 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
 
     std::vector<DisplayOverlay>& display_overlays = overlays[display_index];
 
-    std::vector<std::string> overlay_list =
-        android::base::Split(overlay_item, " ");
+    std::vector<std::string_view> overlay_list =
+        absl::StrSplit(overlay_item, ' ');
 
     for (const auto& overlay_tuple_str : overlay_list) {
-      std::vector<std::string> overlay_tuple =
-          android::base::Split(overlay_tuple_str, ":");
+      std::vector<std::string_view> overlay_tuple =
+          absl::StrSplit(overlay_tuple_str, ':');
 
       DisplayOverlay docfg;
 
       if (overlay_tuple.size() == 2) {
-        if (!(android::base::ParseInt(overlay_tuple[0], &docfg.src_vm_index) &&
-              android::base::ParseInt(overlay_tuple[1],
-                                      &docfg.src_display_index))) {
+        if (!(absl::SimpleAtoi(overlay_tuple[0], &docfg.src_vm_index) &&
+              absl::SimpleAtoi(overlay_tuple[1], &docfg.src_display_index))) {
           LOG(FATAL) << "Failed to parse display overlay directive: "
                      << overlay_tuple_str;
         } else {
@@ -187,15 +187,14 @@ void CompositionManager::OnDisplayCreated(const DisplayCreatedEvent& e) {
 }
 
 // Called every frame.
-void CompositionManager::OnFrame(std::uint32_t display_number,
-                                 std::uint32_t frame_width,
-                                 std::uint32_t frame_height,
-                                 std::uint32_t frame_fourcc_format,
-                                 std::uint32_t frame_stride_bytes,
-                                 std::uint8_t* frame_pixels) {
+void CompositionManager::OnFrame(uint32_t display_number, uint32_t frame_width,
+                                 uint32_t frame_height,
+                                 uint32_t frame_fourcc_format,
+                                 uint32_t frame_stride_bytes,
+                                 uint8_t* frame_pixels) {
   // First step is to push the local display pixels to the shared memory region
   // ringbuffer
-  std::uint8_t* shmem_local_display = display_ring_buffer_manager_.WriteFrame(
+  uint8_t* shmem_local_display = display_ring_buffer_manager_.WriteFrame(
       cluster_index_, display_number, frame_pixels,
       frame_width * frame_height * 4);
 
@@ -203,7 +202,7 @@ void CompositionManager::OnFrame(std::uint32_t display_number,
   // computations.
   LastFrameInfo last_frame_info = LastFrameInfo(
       display_number, frame_width, frame_height, frame_fourcc_format,
-      frame_stride_bytes, (std::uint8_t*)shmem_local_display);
+      frame_stride_bytes, (uint8_t*)shmem_local_display);
 
   last_frame_info_map_[display_number] = last_frame_info;
 
@@ -228,10 +227,10 @@ void CompositionManager::ComposeFrame(
                last_frame_info.frame_stride_bytes_, buffer);
 }
 
-std::uint8_t* CompositionManager::AlphaBlendLayers(std::uint8_t* frame_pixels,
-                                                   int display_number,
-                                                   int frame_width,
-                                                   int frame_height) {
+uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
+                                              int display_number,
+                                              int frame_width,
+                                              int frame_height) {
   if (cfg_overlays_.count(display_number) == 0) {
     return frame_pixels;
   }
@@ -255,24 +254,22 @@ std::uint8_t* CompositionManager::AlphaBlendLayers(std::uint8_t* frame_pixels,
 
   for (auto i : overlays) {
     if (i) {
-      alpha_blend_layer(frame_pixels, frame_height, frame_width,
-                        (std::uint8_t*)i);
+      alpha_blend_layer(frame_pixels, frame_height, frame_width, (uint8_t*)i);
     }
   }
-  return (std::uint8_t*)frame_pixels;
+  return (uint8_t*)frame_pixels;
 }
 
 void CompositionManager::ComposeFrame(
-    int display, int width, int height, std::uint32_t frame_fourcc_format,
-    std::uint32_t frame_stride_bytes,
-    std::shared_ptr<VideoFrameBuffer> buffer) {
-  std::uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
+    int display, int width, int height, uint32_t frame_fourcc_format,
+    uint32_t frame_stride_bytes, std::shared_ptr<VideoFrameBuffer> buffer) {
+  uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
 
   if (frame_work_buffer_.find(display) == frame_work_buffer_.end()) {
-    frame_work_buffer_[display] = std::vector<std::uint8_t>(width * height * 4);
+    frame_work_buffer_[display] = std::vector<uint8_t>(width * height * 4);
   }
-  std::uint8_t* tmp_buffer = frame_work_buffer_[display].data();
+  uint8_t* tmp_buffer = frame_work_buffer_[display].data();
   memcpy(tmp_buffer, shmem_local_display, width * height * 4);
 
   AlphaBlendLayers(tmp_buffer, display, width, height);

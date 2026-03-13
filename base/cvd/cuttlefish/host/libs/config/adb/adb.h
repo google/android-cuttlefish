@@ -17,6 +17,7 @@
 
 #include <fruit/fruit.h>
 #include <set>
+#include <string_view>
 
 #include "cuttlefish/host/libs/config/config_flag.h"
 #include "cuttlefish/host/libs/config/config_fragment.h"
@@ -33,7 +34,7 @@ enum class AdbMode {
   Unknown,
 };
 
-AdbMode StringToAdbMode(const std::string& mode);
+AdbMode StringToAdbMode(std::string_view mode);
 std::string AdbModeToString(AdbMode mode);
 
 class AdbConfig {

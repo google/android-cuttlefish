@@ -20,12 +20,12 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -116,8 +116,8 @@ Result<GroupCreationInfo> CreationAnalyzer::ExtractGroupInfo() {
   group_directories.product_out_paths.reserve(num_instances);
   auto it = envs_.find(kAndroidProductOut);
   if (it != envs_.end()) {
-    std::vector<std::string> env_product_out =
-        android::base::Split(it->second, ",");
+    std::vector<std::string_view> env_product_out =
+        absl::StrSplit(it->second, ',');
     if (env_product_out.size() > num_instances) {
       LOG(WARNING) << env_product_out.size()
                    << " product paths provided, but only " << num_instances

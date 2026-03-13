@@ -25,7 +25,6 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/result/result.h"
 
@@ -34,7 +33,6 @@ namespace {
 
 constexpr char kAddHashFooter[] = "add_hash_footer";
 constexpr char kDefaultAlgorithm[] = "SHA256_RSA4096";
-constexpr char kInfoImage[] = "info_image";
 constexpr char kMakeVbmetaImage[] = "make_vbmeta_image";
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the
 // headers
@@ -87,14 +85,6 @@ Result<void> Avb::AddHashFooter(const std::string& image_path,
   CF_EXPECTF(exit_code == 0, "Failure running {} {}. Exited with status {}",
              command.Executable(), kAddHashFooter, exit_code);
   return {};
-}
-
-Result<std::string> Avb::InfoImage(const std::string& image_path) const {
-  Command avbtool_cmd = Command(avbtool_path_)
-                            .AddParameter(kInfoImage)
-                            .AddParameter("--image")
-                            .AddParameter(image_path);
-  return CF_EXPECT(RunAndCaptureStdout(std::move(avbtool_cmd)));
 }
 
 Command Avb::GenerateMakeVbMetaImage(

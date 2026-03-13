@@ -17,9 +17,7 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/parsebool.h>
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -68,6 +66,7 @@
 #include "cuttlefish/host/libs/config/defaults/defaults.h"
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
@@ -352,7 +351,7 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     // then don't preserve any files and delete everything.
 
     std::vector<std::vector<std::unique_ptr<ImageFile>>> image_files =
-        InstanceImageFiles(config);
+        InstanceImageFiles(config, boot_image);
 
     size_t index = 0;
     for (const auto& instance : config.Instances()) {
@@ -480,8 +479,11 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(Symlink(first_instance, double_legacy_instance_dir));
   }
 
+  CF_EXPECT(LogStringToDir(config->Instances()[0], "build_info.log",
+                           absl::StrCat(Pretty(android_builds))));
+
   CF_EXPECT(CreateDynamicDiskFiles(fetcher_configs, *config, android_builds,
-                                   system_image_dir));
+                                   boot_image, system_image_dir));
 
   return config;
 }
@@ -541,7 +543,7 @@ Result<std::vector<std::string>> ReadInputFiles() {
   auto bytes_read = ReadAll(input_fd, &input_files_str);
   CF_EXPECT(bytes_read >= 0, "Failed to read input files. Error was \""
                                  << input_fd->StrError() << "\"");
-  return android::base::Split(input_files_str, "\n");
+  return absl::StrSplit(input_files_str, "\n");
 }
 
 Result<AndroidBuilds> FindAndroidBuilds(
@@ -676,7 +678,7 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
                   "aborting: "
                << defaults.error().Message();
   }
-  auto config = CF_EXPECT(
+  const CuttlefishConfig* config = CF_EXPECT(
       InitFilesystemAndCreateConfig(
           std::move(fetcher_configs), guest_configs, injector, log, boot_image,
           initramfs_path, kernel_path, super_image, system_image_dir,

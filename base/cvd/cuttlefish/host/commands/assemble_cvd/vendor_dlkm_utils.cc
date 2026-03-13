@@ -25,11 +25,13 @@
 #include <string>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/stringprintf.h>
-#include <android-base/strings.h>
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_split.h"
+#include "android-base/file.h"
+#include "android-base/stringprintf.h"
+#include "android-base/strings.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -40,8 +42,11 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/assemble_cvd/boot_image_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/kernel_module_parser.h"
+#include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
+#include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 
@@ -78,20 +83,16 @@ bool WriteLinesToFile(const Container& lines, const std::string& path) {
 }
 
 // Generate a filesystem_config.txt for all files in |fs_root|
-Result<bool> WriteFsConfig(const std::string& output_path,
+Result<void> WriteFsConfig(const std::string& output_path,
                            const std::string& fs_root,
                            const std::string& mount_point) {
   android::base::unique_fd fd(open(
       output_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
-  if (!fd.ok()) {
-    PLOG(ERROR) << "Failed to open " << output_path;
-    return false;
-  }
-  if (!android::base::WriteStringToFd(
-          " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n", fd)) {
-    PLOG(ERROR) << "Failed to write to " << output_path;
-    return false;
-  }
+  CF_EXPECTF(fd.ok(), "Couldn't open '{}': '{}'", output_path, StrError(errno));
+  static constexpr std::string_view kBeginning =
+      " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n";
+  CF_EXPECTF(android::base::WriteStringToFd(kBeginning, fd),
+             "Failed to write to '{}'", output_path);
   auto res = WalkDirectory(fs_root, [&fd, &output_path, &mount_point,
                                      &fs_root](const std::string& file_path) {
     const auto filename = file_path.substr(
@@ -107,14 +108,12 @@ Result<bool> WriteFsConfig(const std::string& output_path,
     }
     return true;
   });
-  if (!res.ok()) {
-    return false;
-  }
-  return true;
+  CF_EXPECT(std::move(res));
+  return {};
 }
 
 std::vector<std::string> GetRamdiskModules(
-    const std::vector<std::string>& all_modules) {
+    const std::set<std::string>& all_modules) {
   static constexpr auto kRamdiskModules = {
       "failover.ko",
       "nd_virtio.ko",
@@ -238,11 +237,12 @@ std::map<std::string, std::vector<std::string>> LoadModuleDeps(
     const std::string& filename) {
   std::map<std::string, std::vector<std::string>> dependency_map;
   const auto dep_str = android::base::Trim(ReadFile(filename));
-  const auto dep_lines = android::base::Split(dep_str, "\n");
+  const std::vector<std::string_view> dep_lines = absl::StrSplit(dep_str, "\n");
   for (const auto& line : dep_lines) {
     const auto mod_name = line.substr(0, line.find(":"));
-    auto deps = android::base::Tokenize(line.substr(mod_name.size() + 1), " ");
-    dependency_map[mod_name] = std::move(deps);
+    std::vector<std::string> deps = absl::StrSplit(
+        line.substr(mod_name.size() + 1), ' ', absl::SkipEmpty());
+    dependency_map.emplace(mod_name, std::move(deps));
   }
 
   return dependency_map;
@@ -421,12 +421,6 @@ Result<void> BuildVbmetaImage(const std::string& vendor_dlkm_img,
   return {};
 }
 
-std::vector<std::string> Dedup(std::vector<std::string>&& vec) {
-  std::sort(vec.begin(), vec.end());
-  vec.erase(unique(vec.begin(), vec.end()), vec.end());
-  return vec;
-}
-
 Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
                                  const std::string& ramdisk_stage_dir,
                                  const std::string& vendor_dlkm_build_dir,
@@ -437,7 +431,7 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
   CF_EXPECT(EnsureDirectoryExists(vendor_modules_dir));
   CF_EXPECT(EnsureDirectoryExists(system_modules_dir));
 
-  UnpackRamdisk(ramdisk_path, ramdisk_stage_dir);
+  CF_EXPECT(UnpackRamdisk(ramdisk_path, ramdisk_stage_dir));
 
   std::string module_load_file =
       CF_EXPECT(FindFile(ramdisk_stage_dir, "modules.load"),
@@ -449,8 +443,8 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
              ramdisk_path);
 
   LOG(INFO) << "modules.load location " << module_load_file;
-  const auto module_list =
-      Dedup(android::base::Tokenize(ReadFile(module_load_file), "\n"));
+  const std::set<std::string> module_list =
+      absl::StrSplit(ReadFile(module_load_file), '\n', absl::SkipEmpty());
   const auto module_base_dir = android::base::Dirname(module_load_file);
   const auto deps = LoadModuleDeps(module_base_dir + "/modules.dep");
   const auto ramdisk_modules =
@@ -464,12 +458,16 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
       continue;
     }
 
-    const auto module_location =
-        fmt::format("{}/{}", module_base_dir, module_path);
+    const std::string module_location =
+        absl::StrCat(module_base_dir, "/", module_path);
     if (!FileExists(module_location)) {
       continue;
     }
-    if (IsKernelModuleSigned(module_location)) {
+    SharedFD module_fd = SharedFD::Open(module_location, O_RDONLY);
+    CF_EXPECT(module_fd->IsOpen(), module_fd->StrError());
+    SharedFdIo module_io(module_fd);
+
+    if (IsKernelModuleSigned(module_io).value_or(false)) {
       const auto system_dlkm_module_location =
           fmt::format("{}/{}", system_modules_dir, module_path);
 
@@ -527,7 +525,7 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
                             system_modules_dir + "/modules.dep"));
   CF_EXPECT(WriteLinesToFile(system_dlkm_modules,
                              system_modules_dir + "/modules.load"));
-  PackRamdisk(ramdisk_stage_dir, ramdisk_path);
+  CF_EXPECT(PackRamdisk(ramdisk_stage_dir, ramdisk_path));
   return {};
 }
 

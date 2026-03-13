@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
 
 #include "cuttlefish/host/commands/cvd/cli/selector/selector_common_parser.h"
 #include "cuttlefish/result/result.h"

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <future>
 #include <memory>
 #include <mutex>
@@ -41,13 +42,12 @@ class Surfaces {
   Surfaces(Surfaces&& rhs) = delete;
   Surfaces& operator=(Surfaces&& rhs) = delete;
 
-  using FrameCallback =
-      std::function<void(std::uint32_t /*display_number*/,       //
-                         std::uint32_t /*frame_width*/,          //
-                         std::uint32_t /*frame_height*/,         //
-                         std::uint32_t /*frame_fourcc_format*/,  //
-                         std::uint32_t /*frame_stride_bytes*/,   //
-                         std::uint8_t* /*frame_bytes*/)>;
+  using FrameCallback = std::function<void(uint32_t /*display_number*/,       //
+                                           uint32_t /*frame_width*/,          //
+                                           uint32_t /*frame_height*/,         //
+                                           uint32_t /*frame_fourcc_format*/,  //
+                                           uint32_t /*frame_stride_bytes*/,   //
+                                           uint8_t* /*frame_bytes*/)>;
 
   void SetFrameCallback(FrameCallback callback);
 
@@ -57,18 +57,17 @@ class Surfaces {
 
  private:
   friend class Surface;
-  void HandleSurfaceFrame(std::uint32_t display_number,       //
-                          std::uint32_t frame_width,          //
-                          std::uint32_t frame_height,         //
-                          std::uint32_t frame_fourcc_format,  //
-                          std::uint32_t frame_stride_bytes,   //
-                          std::uint8_t* frame_bytes);
+  void HandleSurfaceFrame(uint32_t display_number,       //
+                          uint32_t frame_width,          //
+                          uint32_t frame_height,         //
+                          uint32_t frame_fourcc_format,  //
+                          uint32_t frame_stride_bytes,   //
+                          uint8_t* frame_bytes);
 
-  void HandleSurfaceCreated(std::uint32_t display_number,
-                            std::uint32_t display_width,
-                            std::uint32_t display_height);
+  void HandleSurfaceCreated(uint32_t display_number, uint32_t display_width,
+                            uint32_t display_height);
 
-  void HandleSurfaceDestroyed(std::uint32_t display_number);
+  void HandleSurfaceDestroyed(uint32_t display_number);
 
   std::mutex callback_mutex_;
   std::optional<FrameCallback> callback_;

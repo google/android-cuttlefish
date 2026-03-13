@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,6 +34,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
@@ -71,7 +73,7 @@ namespace cuttlefish {
 namespace {
 
 std::optional<std::string> GetConfigPath(cvd_common::Args& args) {
-  std::size_t initial_size = args.size();
+  size_t initial_size = args.size();
   std::string config_file;
   std::vector<Flag> config_flags = {
       GflagsCompatFlag("config_file", config_file)};
@@ -116,7 +118,7 @@ Result<std::vector<std::string>> ExtractWebRTCDeviceIds(
   if (flag_value.empty()) {
     return {};
   }
-  return android::base::Split(flag_value, ",");
+  return absl::StrSplit(flag_value, ',');
 }
 
 // Some webrtc device ids could be empty (for example, when not specified in the

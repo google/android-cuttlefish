@@ -32,6 +32,7 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -56,6 +57,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/libs/config:config_constants",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
     ],
 )
@@ -80,6 +82,7 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/cvd/cli:types",
         "//libbase",
+        "@abseil-cpp//absl/strings",
         "@googletest//:gtest",
     ],
 )
@@ -110,6 +113,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -125,6 +129,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/instances:device_name",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -135,12 +140,13 @@ cf_cc_library(
 
 cf_cc_library(
     name = "selector_option_parser_utils",
-    srcs = ["selector_option_parser_utils.cpp"],
+    srcs = [],
     hdrs = ["selector_option_parser_utils.h"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -158,5 +164,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/result",
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )

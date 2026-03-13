@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -37,7 +38,7 @@ namespace cuttlefish {
 namespace {
 
 struct StatusFlags {
-  std::int32_t wait_for_launcher = 5;
+  int32_t wait_for_launcher = 5;
   std::string instance_name;
   bool print = false;
   bool all_instances = false;

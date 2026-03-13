@@ -27,10 +27,6 @@
 
 #define DEFINE_vec DEFINE_string
 
-DEFINE_vec(data_policy, CF_DEFAULTS_DATA_POLICY,
-           "How to handle userdata partition."
-           " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "
-           "'always_create'.");
 DEFINE_vec(gdb_port, std::to_string(CF_DEFAULTS_GDB_PORT),
              "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
              "kernel must have been built with CONFIG_RANDOMIZE_BASE "
@@ -52,28 +48,16 @@ DEFINE_string(refresh_rate_hz, "60", "Screen refresh rate in Hertz");
 DEFINE_string(overlays, "",
               "List of displays to overlay. Format is: 'vm_index:display_index "
               "vm_index2:display_index2 [...]'");
-DEFINE_string(extra_kernel_cmdline, CF_DEFAULTS_EXTRA_KERNEL_CMDLINE,
-              "Additional flags to put on the kernel command line");
 DEFINE_vec(extra_bootconfig_args, CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS,
               "Space-separated list of extra bootconfig args. "
               "Note: overwriting an existing bootconfig argument "
               "requires ':=' instead of '='. "
               "If multiple instances are used, use comma as a separator "
               "for each instance.");
-DEFINE_vec(guest_enforce_security,
-           fmt::format("{}", CF_DEFAULTS_GUEST_ENFORCE_SECURITY),
-           "Whether to run in enforcing mode (non permissive).");
-DEFINE_vec(memory_mb, std::to_string(CF_DEFAULTS_MEMORY_MB),
-             "Total amount of memory available for guest, MB.");
 DEFINE_vec(serial_number, CF_DEFAULTS_SERIAL_NUMBER,
               "Serial number to use for the device");
 DEFINE_vec(use_random_serial, fmt::format("{}", CF_DEFAULTS_USE_RANDOM_SERIAL),
            "Whether to use random serial for the device.");
-DEFINE_vec(gpu_mode, CF_DEFAULTS_GPU_MODE,
-           "What gpu configuration to use, one of {auto, custom, drm_virgl, "
-           "gfxstream, gfxstream_guest_angle, "
-           "gfxstream_guest_angle_host_swiftshader, "
-           "gfxstream_guest_angle_host_lavapipe, guest_swiftshader}");
 DEFINE_vec(gpu_vhost_user_mode,
            fmt::format("{}", CF_DEFAULTS_GPU_VHOST_USER_MODE),
            "Whether or not to run the Virtio GPU worker in a separate"
@@ -242,9 +226,6 @@ DEFINE_vec(gem5_debug_file, CF_DEFAULTS_GEM5_DEBUG_FILE,
 DEFINE_string(gem5_debug_flags, CF_DEFAULTS_GEM5_DEBUG_FLAGS,
               "The debug flags gem5 uses to print debugs to file");
 
-DEFINE_vec(restart_subprocesses,
-           fmt::format("{}", CF_DEFAULTS_RESTART_SUBPROCESSES),
-           "Restart any crashed host process");
 DEFINE_vec(boot_slot, CF_DEFAULTS_BOOT_SLOT,
               "Force booting into the given slot. If empty, "
               "the slot will be chosen based on the misc partition if using a "

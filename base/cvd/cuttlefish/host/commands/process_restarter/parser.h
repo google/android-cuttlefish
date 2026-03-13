@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 
@@ -36,7 +37,7 @@ struct Parser {
    * TODO(288166029): if the flag is not given, do not restart
    * with the exit code of -1 or 255.
    */
-  std::int32_t when_exited_with_code = -1;
+  int32_t when_exited_with_code = -1;
   std::string first_time_argument;
 };
 

@@ -1,0 +1,42 @@
+name: 'Prepare testbed for Gigabyte Ampere Cuttlefish installer'
+
+runs:
+  using: "composite"
+  steps:
+  - name: Install required packages
+    shell: bash
+    run: |
+      apt-get update
+      apt-get upgrade -y
+      apt-get install -y sudo
+      apt-get install -y debconf-utils
+      echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v
+      echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v
+      DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+      dpkg-reconfigure --frontend noninteractive tzdata
+      echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v
+      DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder
+      dpkg-reconfigure --frontend noninteractive pbuilder
+      apt-get install -y util-linux util-linux-extra
+      apt-get install -y xz-utils
+      apt-get install -y qemu-system-arm
+      apt-get install -y expect
+      apt-get install -y gdisk
+      apt-get install -y e2tools e2fsprogs
+      apt-get install -y fatcat mtools dosfstools
+      apt-get install -y guestfish
+      apt-get install -y lvm2
+      apt-get install -y ubuntu-dev-tools
+      apt-get install -y sshpass
+      apt-get install -y openssh-client
+      apt-get install -y u-boot-qemu
+      apt-get install -y udev libgudev-1.0-dev
+      apt-get install -y wget curl
+      apt-get install -y screen
+  - name: Extract artifacts
+    working-directory: ./gigabyte-ampere-cuttlefish-installer
+    shell: bash
+    run: |
+      mv ../preseed-mini.iso.xz .
+      xz -d preseed-mini.iso.xz
+      chmod a-w preseed-mini.iso

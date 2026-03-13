@@ -16,10 +16,10 @@
 #include "cuttlefish/host/libs/config/data_image.h"
 
 #include <fcntl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <sys/types.h>
 
-#include <cstddef>
-#include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -36,6 +36,7 @@
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/esp.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
@@ -47,10 +48,6 @@
 namespace cuttlefish {
 
 namespace {
-
-static constexpr std::string_view kDataPolicyUseExisting = "use_existing";
-static constexpr std::string_view kDataPolicyAlwaysCreate = "always_create";
-static constexpr std::string_view kDataPolicyResizeUpTo = "resize_up_to";
 
 const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
@@ -114,14 +111,14 @@ std::string GetFsType(const std::string& path) {
 
   static constexpr std::string_view kTypePrefix = "TYPE=\"";
 
-  std::size_t type_begin = blkid_out->find(kTypePrefix);
+  size_t type_begin = blkid_out->find(kTypePrefix);
   if (type_begin == std::string::npos) {
     LOG(ERROR) << "blkid did not report a TYPE. stdout='" << *blkid_out << "'";
     return "";
   }
   type_begin += kTypePrefix.size();
 
-  std::size_t type_end = blkid_out->find('"', type_begin);
+  size_t type_end = blkid_out->find('"', type_begin);
   if (type_end == std::string::npos) {
     LOG(ERROR) << "unable to find the end of the blkid TYPE. stdout='"
                << *blkid_out << "'";
@@ -135,24 +132,25 @@ enum class DataImageAction { kNoAction, kResizeImage, kCreateBlankImage };
 
 static Result<DataImageAction> ChooseDataImageAction(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (instance.data_policy() == kDataPolicyAlwaysCreate) {
+  if (instance.data_policy() == DataImagePolicy::AlwaysCreate) {
     return DataImageAction::kCreateBlankImage;
   }
   if (!FileHasContent(instance.data_image())) {
     return DataImageAction::kCreateBlankImage;
   }
-  if (instance.data_policy() == kDataPolicyUseExisting) {
+  if (instance.data_policy() == DataImagePolicy::UseExisting) {
     return DataImageAction::kNoAction;
   }
   auto current_fs_type = GetFsType(instance.data_image());
   if (current_fs_type != instance.userdata_format()) {
-    CF_EXPECT(instance.data_policy() != kDataPolicyResizeUpTo,
-              "Changing the fs format is incompatible with -data_policy="
-                  << kDataPolicyResizeUpTo << " (\"" << current_fs_type
-                  << "\" != \"" << instance.userdata_format() << "\")");
+    CF_EXPECT(instance.data_policy() != DataImagePolicy::ResizeUpTo,
+              "Changing the fs format is incompatible with --data_policy="
+                  << DataImagePolicyString(DataImagePolicy::ResizeUpTo)
+                  << " (\"" << current_fs_type << "\" != \""
+                  << instance.userdata_format() << "\")");
     return DataImageAction::kCreateBlankImage;
   }
-  if (instance.data_policy() == kDataPolicyResizeUpTo) {
+  if (instance.data_policy() == DataImagePolicy::ResizeUpTo) {
     return DataImageAction::kResizeImage;
   }
   return DataImageAction::kNoAction;
@@ -193,8 +191,8 @@ Result<void> CreateBlankImage(const std::string& image, int num_mb,
     MasterBootRecord mbr = {
         .partitions = {{
             .partition_type = 0xC,
-            .first_lba = (std::uint32_t)offset_size_bytes / kSectorSize,
-            .num_sectors = (std::uint32_t)image_size_bytes / kSectorSize,
+            .first_lba = (uint32_t)offset_size_bytes / kSectorSize,
+            .num_sectors = (uint32_t)image_size_bytes / kSectorSize,
         }},
         .boot_signature = {0x55, 0xAA},
     };

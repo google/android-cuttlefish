@@ -15,22 +15,27 @@
  */
 #include "cuttlefish/host/commands/assemble_cvd/flags.h"
 
+#include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <optional>
 #include <regex>
 #include <set>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/parseint.h"
 #include "android-base/strings.h"
 #include "fmt/format.h"
 #include "fruit/fruit.h"
@@ -56,10 +61,16 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/bootloader.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/cpus.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/daemon.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/data_policy.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/extra_kernel_cmdline.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/gpu_mode.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/guest_enforce_security.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/memory_mb.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/restart_subprocesses.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/use_cvdalloc.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vendor_boot_image.h"
@@ -74,6 +85,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
@@ -116,7 +128,7 @@ std::string StrForInstance(const std::string& prefix, int num) {
 
 Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     const CuttlefishConfig& tmp_config_obj,
-    const std::vector<std::int32_t>& instance_nums,
+    const std::vector<int32_t>& instance_nums,
     const std::string& webrtc_device_id_flag) {
   std::unordered_map<int, std::string> output_map;
   if (webrtc_device_id_flag.empty()) {
@@ -126,7 +138,8 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     }
     return output_map;
   }
-  auto tokens = android::base::Tokenize(webrtc_device_id_flag, ",");
+  std::vector<std::string_view> tokens =
+      absl::StrSplit(webrtc_device_id_flag, ',', absl::SkipEmpty());
   CF_EXPECT(tokens.size() == 1 || tokens.size() == instance_nums.size(),
             "--webrtc_device_ids provided " << tokens.size()
                                             << " tokens"
@@ -135,7 +148,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
                                             << " is expected.");
   CF_EXPECT(!tokens.empty(), "--webrtc_device_ids is ill-formatted");
 
-  std::vector<std::string> device_ids;
+  std::vector<std::string_view> device_ids;
   if (tokens.size() != instance_nums.size()) {
     /* this is only possible when tokens.size() == 1
      * and instance_nums.size() > 1. The token must include {num}
@@ -145,7 +158,7 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
     CF_EXPECT(device_id.find("{num}") != std::string::npos,
               "If one webrtc_device_ids is given for multiple instances, "
                   << " {num} should be included in webrtc_device_id.");
-    device_ids = std::vector<std::string>(instance_nums.size(), tokens.front());
+    device_ids = std::vector<std::string_view>(instance_nums.size(), tokens.front());
   }
 
   if (tokens.size() == instance_nums.size()) {
@@ -211,12 +224,12 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
     const std::string& flag_values, int32_t instances_size,
     const std::string& flag_name,
     const std::map<std::string, std::string>& name_to_default_value) {
-  std::vector<std::string> flag_vec = absl::StrSplit(flag_values, ",");
+  std::vector<std::string_view> flag_vec = absl::StrSplit(flag_values, ",");
   std::vector<int> value_vec(instances_size);
 
   auto default_value_it = name_to_default_value.find(flag_name);
   CF_EXPECT(default_value_it != name_to_default_value.end());
-  std::vector<std::string> default_value_vec =
+  std::vector<std::string_view> default_value_vec =
       absl::StrSplit(default_value_it->second, ",");
 
   for (int instance_index=0; instance_index<instances_size; instance_index++) {
@@ -224,15 +237,15 @@ Result<std::vector<int>> GetFlagIntValueForInstances(
       value_vec[instance_index] = value_vec[0];
     } else {
       if (flag_vec[instance_index] == "unset" || flag_vec[instance_index] == "\"unset\"") {
-        std::string default_value = default_value_vec[0];
+        std::string_view default_value = default_value_vec[0];
         if (instance_index < default_value_vec.size()) {
           default_value = default_value_vec[instance_index];
         }
         CF_EXPECTF(
-            android::base::ParseInt(default_value, &value_vec[instance_index]),
+            absl::SimpleAtoi(default_value, &value_vec[instance_index]),
             "Failed to parse value '{}' for '{}'", default_value, flag_name);
       } else {
-        CF_EXPECTF(android::base::ParseInt(flag_vec[instance_index],
+        CF_EXPECTF(absl::SimpleAtoi(flag_vec[instance_index],
                                            &value_vec[instance_index]),
                    "Failed to parse value '{}' for '{}'",
                    flag_vec[instance_index], flag_name);
@@ -274,7 +287,7 @@ Result<std::vector<std::string>> GetFlagStrValueForInstances(
 
 Result<void> CheckSnapshotCompatible(
     const bool must_be_compatible,
-    const std::map<int, std::string>& calculated_gpu_mode) {
+    const std::map<int, GpuMode>& calculated_gpu_mode) {
   if (!must_be_compatible) {
     return {};
   }
@@ -302,7 +315,7 @@ Result<void> CheckSnapshotCompatible(
    */
   for (const auto& [instance_index, instance_gpu_mode] : calculated_gpu_mode) {
     CF_EXPECTF(
-        instance_gpu_mode == "guest_swiftshader",
+        instance_gpu_mode == GpuMode::GuestSwiftshader,
         "Only 2D guest_swiftshader is supported for snapshot. Consider \"{}\"",
         "--gpu_mode=guest_swiftshader");
   }
@@ -392,7 +405,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   CF_EXPECT(ValidateSecureHals(secure_hals));
   tmp_config_obj.set_secure_hals(secure_hals);
 
-  tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
+  ExtraKernelCmdlineFlag extra_kernel_cmdline_value =
+      ExtraKernelCmdlineFlag::FromGlobalGflags();
+  tmp_config_obj.set_extra_kernel_cmdline(
+      extra_kernel_cmdline_value.ForIndex(0));
 
   if (FLAGS_track_host_tools_crc) {
     tmp_config_obj.set_host_tools_version(HostToolsCrc());
@@ -421,7 +437,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   // all instances
   std::string ap_rootfs_image = "";
   if (!FLAGS_ap_rootfs_image.empty()) {
-    ap_rootfs_image = android::base::Split(FLAGS_ap_rootfs_image, ",")[0];
+    ap_rootfs_image =
+        std::vector<std::string>(absl::StrSplit(FLAGS_ap_rootfs_image, ','))[0];
   }
 
   tmp_config_obj.set_ap_rootfs_image(ap_rootfs_image);
@@ -486,7 +503,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       refresh_rate_hz));
   std::vector<std::string> overlays_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(overlays));
-  std::vector<int> memory_mb_vec = CF_EXPECT(GET_FLAG_INT_VALUE(memory_mb));
+  MemoryMbFlag memory_mb_values = CF_EXPECT(MemoryMbFlag::FromGlobalGflags());
   std::vector<int> camera_server_port_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
       camera_server_port));
   std::vector<int> vsock_guest_cid_vec = CF_EXPECT(GET_FLAG_INT_VALUE(
@@ -501,8 +518,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(setupwizard_mode));
   std::vector<std::string> userdata_format_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(userdata_format));
-  std::vector<bool> guest_enforce_security_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      guest_enforce_security));
+  GuestEnforceSecurityFlag guest_enforce_security_values =
+      CF_EXPECT(GuestEnforceSecurityFlag::FromGlobalGflags());
   std::vector<std::string> serial_number_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(serial_number));
   std::vector<bool> use_random_serial_vec =
@@ -566,9 +583,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> enable_virtiofs_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(enable_virtiofs));
 
-  std::vector<std::string> gpu_mode_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(gpu_mode));
-  std::map<int, std::string> calculated_gpu_mode_vec;
+  GpuModeFlag gpu_mode_values = CF_EXPECT(GpuModeFlag::FromGlobalGflags());
+  std::map<int, GpuMode> calculated_gpu_mode_vec;
   std::vector<std::string> gpu_vhost_user_mode_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_vhost_user_mode));
   std::vector<std::string> gpu_renderer_features_vec =
@@ -586,8 +602,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   std::vector<std::string> gpu_capture_binary_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gpu_capture_binary));
-  std::vector<bool> restart_subprocesses_vec = CF_EXPECT(GET_FLAG_BOOL_VALUE(
-      restart_subprocesses));
+  RestartSubprocessesFlag restart_subprocesses_values =
+      CF_EXPECT(RestartSubprocessesFlag::FromGlobalGflags());
   std::vector<std::string> hwcomposer_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(hwcomposer));
   std::vector<bool> enable_gpu_udmabuf_vec =
@@ -605,8 +621,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(GET_FLAG_STR_VALUE(gem5_binary_dir));
   std::vector<std::string> gem5_checkpoint_dir_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(gem5_checkpoint_dir));
-  std::vector<std::string> data_policy_vec =
-      CF_EXPECT(GET_FLAG_STR_VALUE(data_policy));
+  DataPolicyFlag data_policy_values =
+      CF_EXPECT(DataPolicyFlag::FromGlobalGflags());
 
   // multi-virtual-device multi-display proto input
   DisplaysProtoFlag instances_display_configs =
@@ -690,9 +706,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   tmp_config_obj.set_pica_uci_port(7000 + pica_instance_num);
   VLOG(0) << "launch pica: " << (FLAGS_pica_instance_num <= 0);
 
-  auto straced = android::base::Tokenize(FLAGS_straced_host_executables, ",");
-  std::set<std::string> straced_set(straced.begin(), straced.end());
-  tmp_config_obj.set_straced_host_executables(straced_set);
+  tmp_config_obj.set_straced_host_executables(
+      absl::StrSplit(FLAGS_straced_host_executables, ',', absl::SkipEmpty()));
 
   tmp_config_obj.set_kvm_path(FLAGS_kvm_path);
   tmp_config_obj.set_vhost_vsock_path(FLAGS_vhost_vsock_path);
@@ -750,7 +765,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       CF_EXPECT(CreateNumToWebrtcDeviceIdMap(tmp_config_obj, instance_nums,
                                              FLAGS_webrtc_device_id));
   size_t provided_serials_cnt =
-      android::base::Split(FLAGS_serial_number, ",").size();
+      std::count(FLAGS_serial_number.begin(), FLAGS_serial_number.end(), ',') +
+      1;
   CF_EXPECTF(
       provided_serials_cnt == 1 || provided_serials_cnt == instances_size,
       "Must have a single serial number prefix or one serial number per "
@@ -969,12 +985,13 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     auto touchpad_configs = touchpad_configs_bindings[0]->GetConfigs();
     instance.set_touchpad_configs(touchpad_configs);
 
-    instance.set_memory_mb(memory_mb_vec[instance_index]);
-    instance.set_ddr_mem_mb(memory_mb_vec[instance_index] * 1.2);
+    instance.set_memory_mb(memory_mb_values.ForIndex(instance_index));
+    instance.set_ddr_mem_mb(memory_mb_values.ForIndex(instance_index) * 1.2);
     CF_EXPECT(
         instance.set_setupwizard_mode(setupwizard_mode_vec[instance_index]));
     instance.set_userdata_format(userdata_format_vec[instance_index]);
-    instance.set_guest_enforce_security(guest_enforce_security_vec[instance_index]);
+    instance.set_guest_enforce_security(
+        guest_enforce_security_values.ForIndex(instance_index));
     instance.set_pause_in_bootloader(pause_in_bootloader_vec[instance_index]);
     instance.set_run_as_daemon(daemon_values.ForIndex(instance_index));
     instance.set_enable_modem_simulator(enable_modem_simulator_vec[instance_index] &&
@@ -986,7 +1003,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_camera_server_port(camera_server_port_vec[instance_index]);
     instance.set_gem5_binary_dir(gem5_binary_dir_vec[instance_index]);
     instance.set_gem5_checkpoint_dir(gem5_checkpoint_dir_vec[instance_index]);
-    instance.set_data_policy(data_policy_vec[instance_index]);
+    instance.set_data_policy(data_policy_values.ForIndex(instance_index));
 
     instance.set_has_wifi_card(enable_wifi_vec[instance_index]);
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
@@ -1050,10 +1067,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_vhal_proxy_server_port(
         cuttlefish::vhal_proxy_server::kDefaultEthPort + num - 1);
 
-    std::uint8_t ethernet_mac[6] = {};
-    std::uint8_t mobile_mac[6] = {};
-    std::uint8_t wifi_mac[6] = {};
-    std::uint8_t ethernet_ipv6[16] = {};
+    uint8_t ethernet_mac[6] = {};
+    uint8_t mobile_mac[6] = {};
+    uint8_t wifi_mac[6] = {};
+    uint8_t ethernet_ipv6[16] = {};
     GenerateEthMacForInstance(num - 1, ethernet_mac);
     GenerateMobileMacForInstance(num - 1, mobile_mac);
     GenerateWifiMacForInstance(num - 1, wifi_mac);
@@ -1067,44 +1084,48 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_tombstone_receiver_port(calc_vsock_port(6600));
     instance.set_audiocontrol_server_port(
         9410); /* OK to use the same port number across instances */
-    instance.set_lights_server_port(calc_vsock_port(6900));
+    if (guest_configs[instance_index].lights_server_enabled) {
+      instance.set_lights_server_port(calc_vsock_port(6900));
+    }
 
     // gpu related settings
-    const std::string gpu_mode = CF_EXPECT(ConfigureGpuSettings(
-        graphics_availability, gpu_mode_vec[instance_index],
+    const GpuMode gpu_mode = CF_EXPECT(ConfigureGpuSettings(
+        graphics_availability, gpu_mode_values.ForIndex(instance_index),
         gpu_vhost_user_mode_vec[instance_index],
         gpu_renderer_features_vec[instance_index],
         gpu_context_types_vec[instance_index],
         guest_hwui_renderer_vec[instance_index],
         guest_renderer_preload_vec[instance_index], vm_manager_flag.Mode(),
         guest_configs[instance_index], instance));
-    calculated_gpu_mode_vec[instance_index] = gpu_mode_vec[instance_index];
+    calculated_gpu_mode_vec[instance_index] =
+        gpu_mode_values.ForIndex(instance_index);
 
-    instance.set_restart_subprocesses(restart_subprocesses_vec[instance_index]);
+    instance.set_restart_subprocesses(
+        restart_subprocesses_values.ForIndex(instance_index));
     instance.set_gpu_capture_binary(gpu_capture_binary_vec[instance_index]);
     if (!gpu_capture_binary_vec[instance_index].empty()) {
-      CF_EXPECT(gpu_mode == kGpuModeGfxstream ||
-                    gpu_mode == kGpuModeGfxstreamGuestAngle,
+      CF_EXPECT(gpu_mode == GpuMode::Gfxstream ||
+                    gpu_mode == GpuMode::GfxstreamGuestAngle,
                 "GPU capture only supported with --gpu_mode=gfxstream");
 
       // GPU capture runs in a detached mode where the "launcher" process
       // intentionally exits immediately.
-      CF_EXPECT(!restart_subprocesses_vec[instance_index],
-          "GPU capture only supported with --norestart_subprocesses");
+      CF_EXPECT(!restart_subprocesses_values.ForIndex(instance_index),
+                "GPU capture only supported with --norestart_subprocesses");
     }
 
     instance.set_hwcomposer(hwcomposer_vec[instance_index]);
     if (!hwcomposer_vec[instance_index].empty()) {
       if (hwcomposer_vec[instance_index] == kHwComposerRanchu) {
-        CF_EXPECT(gpu_mode != kGpuModeDrmVirgl,
+        CF_EXPECT(gpu_mode != GpuMode::DrmVirgl,
                   "ranchu hwcomposer not supported with --gpu_mode=drm_virgl");
       }
     }
 
     if (hwcomposer_vec[instance_index] == kHwComposerAuto) {
-      if (gpu_mode == kGpuModeDrmVirgl) {
+      if (gpu_mode == GpuMode::DrmVirgl) {
         instance.set_hwcomposer(kHwComposerDrm);
-      } else if (gpu_mode == kGpuModeNone) {
+      } else if (gpu_mode == GpuMode::None) {
         instance.set_hwcomposer(kHwComposerNone);
       } else {
         instance.set_hwcomposer(kHwComposerRanchu);
@@ -1135,7 +1156,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     // auto-enabling sandbox when gpu is enabled (b/152323505).
     default_enable_sandbox += comma_str;
     default_enable_virtiofs += comma_str;
-    if (gpu_mode != kGpuModeGuestSwiftshader) {
+    if (gpu_mode != GpuMode::GuestSwiftshader) {
       // original code, just moved to each instance setting block
       default_enable_sandbox += "false";
       default_enable_virtiofs += "false";
@@ -1238,7 +1259,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
       // TODO(264537774): Ubuntu grub modules / grub monoliths cannot be used to
       // boot 64 bit kernel using 32 bit u-boot / grub. Enable this code back
       // after making sure it works across all popular environments if
-      // (CanGenerateEsp(guest_configs[0].target_arch)) {
+      // (CanGenerateGrubEsp(guest_configs[0].target_arch)) {
       //   instance.set_ap_boot_flow(APBootFlow::Grub);
       // } else {
       //   instance.set_ap_boot_flow(APBootFlow::LegacyDirect);
@@ -1386,7 +1407,8 @@ Result<void> SetDefaultFlagsForCrosvm(
 
 void SetDefaultFlagsForGem5() {
   // TODO: Add support for gem5 gpu models
-  SetCommandLineOptionWithMode("gpu_mode", kGpuModeGuestSwiftshader,
+  SetCommandLineOptionWithMode("gpu_mode",
+                               GpuModeString(GpuMode::GuestSwiftshader).c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   SetCommandLineOptionWithMode("cpus", "1",

@@ -32,6 +32,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:container",
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
@@ -46,6 +47,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:external_network_mode",
+        "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/config:guest_hwui_renderer",
         "//cuttlefish/host/libs/config:guest_renderer_preload",
         "//cuttlefish/host/libs/config:known_paths",
@@ -57,6 +59,7 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
         "@fmt",
         "@fruit",
         "@jsoncpp",

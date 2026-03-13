@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <set>
@@ -30,8 +31,6 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
 #include "android-base/file.h"
-#include "fmt/ostream.h"
-#include "fmt/ranges.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -39,7 +38,13 @@
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/readable_source.h"
 #include "cuttlefish/host/libs/zip/zip_file.h"
-#include "cuttlefish/host/libs/zip/zip_string.h"
+#include "cuttlefish/io/io.h"
+#include "cuttlefish/io/string.h"
+#include "cuttlefish/pretty/map.h"       // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/optional.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/pretty.h"
+#include "cuttlefish/pretty/set.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -66,9 +71,12 @@ Result<BuildArchive> BuildArchive::FromFetcherConfig(
   // To validate `xyz.zip` only has exact matches and not `/abc-xyz.zip`.
   std::string slash_archive = absl::StrCat("/", archive);
   for (const auto& [path, member] : fetcher_config.get_cvd_files()) {
-    if (member.source != source) {
-      continue;
-    }
+    // TODO: schuffelen - actually limit to `source`.
+    // This is disabled as a hack right now since BuildArchive is currently only
+    // created once for the default build, but that is incomplete in scenarios
+    // where another file like boot.img is provided by the boot build and not
+    // the default build. This is a possible scenario based on `cvd fetch`
+    // flags.
 
     bool name_matches = path == archive || absl::EndsWith(path, slash_archive);
     if (name_matches && absl::EndsWith(archive, ".zip")) {
@@ -150,28 +158,31 @@ Result<std::string> BuildArchive::MemberContents(std::string_view name) {
   CF_EXPECTF(members_.count(name), "'{}' not in archive", name);
   if (auto it = extracted_.find(name); it != extracted_.end()) {
     std::string contents;
-    CF_EXPECTF(android::base::ReadFileToString(it->second, &contents),
+    CF_EXPECTF(android::base::ReadFileToString(it->second, &contents,
+                                               /* follow_symlinks */ true),
                "Failed to read '{}'", it->second);
     return contents;
   }
   CF_EXPECT(zip_file_.has_value(), "'{}' not extracted, no source archive");
 
-  ReadableZipSource reader = CF_EXPECT(zip_file_->GetFile(std::string(name)));
-  return CF_EXPECT(ReadToString(reader));
+  std::unique_ptr<ReaderSeeker> reader =
+      CF_EXPECT(zip_file_->OpenReadOnly(name));
+  CF_EXPECT(reader.get());
+  return CF_EXPECT(ReadToString(*reader));
 }
 
+std::string format_as(const BuildArchive& archive) { return "BuildArchive"; }
+
 std::ostream& operator<<(std::ostream& out, const BuildArchive& build_archive) {
-  out << "BuildArchive {\n";
-  if (build_archive.source_.has_value()) {
-    fmt::print(out, "\tsource: '{}'\n,", *build_archive.source_);
-  }
-  fmt::print(out, "\textracted_members: [{}]\n",
-             fmt::join(build_archive.extracted_, ", "));
-  fmt::print(out, "\tmembers: [{}]\n", fmt::join(build_archive.members_, ", "));
-  if (build_archive.zip_file_.has_value()) {
-    out << "\tzip: present\n";
-  }
-  return out << "}";
+  return out << format_as(build_archive);
+}
+
+PrettyStruct Pretty(const BuildArchive& archive, PrettyAdlPlaceholder) {
+  return PrettyStruct("BuildArchive")
+      .Member("source_", archive.source_)
+      .Member("extracted_", archive.extracted_)
+      .Member("members_", archive.members_)
+      .Member("zip_file_", archive.zip_file_.has_value());
 }
 
 }  // namespace cuttlefish

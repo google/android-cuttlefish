@@ -16,8 +16,11 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
+#include "cuttlefish/host/libs/config/data_image_policy.h"
+#include "cuttlefish/host/libs/config/gpu_mode.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -25,6 +28,13 @@ namespace cuttlefish {
 struct FlagMetrics {
   int cpus;
   bool daemon;
+  DataImagePolicy data_policy;
+  std::string extra_kernel_cmdline;
+  GpuMode gpu_mode;
+  bool guest_enforce_security;
+  int memory_mb;
+  bool restart_subprocesses;
+  bool system_image_dir_specified;
 };
 
 // depends on gflags::ParseCommandLineFlags being called previously

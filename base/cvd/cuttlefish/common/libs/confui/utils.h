@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include "absl/log/check.h"
@@ -52,7 +53,7 @@ std::string ArgsToString(Args&&... args) {
   return ArgsToStringWithDelim("", std::forward<Args>(args)...);
 }
 
-inline bool IsOnlyDigits(const std::string& src) {
+inline bool IsOnlyDigits(std::string_view src) {
   return std::all_of(src.begin(), src.end(),
                      [](int c) -> bool { return std::isdigit(c); });
 }

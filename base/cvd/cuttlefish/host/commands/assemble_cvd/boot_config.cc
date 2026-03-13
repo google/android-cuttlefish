@@ -16,11 +16,12 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/boot_config.h"
 
+#include <stdint.h>
+#include <sys/stat.h>
+
 #include <fstream>
 #include <sstream>
 #include <string>
-
-#include <sys/stat.h>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
@@ -72,7 +73,7 @@ void WriteAndroidEnvironment(
 }
 
 void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
-                         std::optional<std::uint16_t> partition_num,
+                         std::optional<uint16_t> partition_num,
                          std::ostream& env) {
   std::string partition_str =
       partition_num ? fmt::format("setenv devplist {:x};", *partition_num) : "";
@@ -81,8 +82,6 @@ void WriteEFIEnvironment(const CuttlefishConfig::InstanceSpecific& instance,
           "load virtio 0:${devplist} ${loadaddr} efi/boot/bootaa64.efi "
           "&& bootefi ${loadaddr} ${fdtcontroladdr}; "
           "load virtio 0:${devplist} ${loadaddr} efi/boot/bootx64.efi && "
-          "bootefi ${loadaddr} ${fdtcontroladdr}; "
-          "load virtio 0:${devplist} ${loadaddr} efi/boot/bootia32.efi && "
           "bootefi ${loadaddr} ${fdtcontroladdr}; "
           "load virtio 0:${devplist} ${loadaddr} efi/boot/bootriscv64.efi && "
           "bootefi ${loadaddr} ${fdtcontroladdr}",
@@ -209,9 +208,16 @@ Result<void> PrepareBootEnvImage(
 Result<BootloaderEnvPartition> BootloaderEnvPartition::Create(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance) {
-  CF_EXPECT(PrepareBootEnvImage(
-      config, instance, instance.uboot_env_image_path(), instance.boot_flow()));
-  return BootloaderEnvPartition();
+  std::string path = AbsolutePath(instance.PerInstancePath("uboot_env.img"));
+  CF_EXPECT(PrepareBootEnvImage(config, instance, path, instance.boot_flow()));
+  return BootloaderEnvPartition(std::move(path));
+}
+
+BootloaderEnvPartition::BootloaderEnvPartition(std::string path)
+    : uboot_env_image_path_(std::move(path)) {}
+
+const std::string& BootloaderEnvPartition::UbootEnvImagePath() const {
+  return uboot_env_image_path_;
 }
 
 Result<std::optional<ApBootloaderEnvPartition>>

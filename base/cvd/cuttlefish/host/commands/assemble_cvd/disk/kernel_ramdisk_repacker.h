@@ -16,13 +16,35 @@
 
 #pragma once
 
-#include "cuttlefish/host/libs/avb/avb.h"
+#include <optional>
+#include <string>
+
+#include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
+class InstanceBootImage : public ImageFile {
+ public:
+  InstanceBootImage(const CuttlefishConfig&,
+                    const CuttlefishConfig::InstanceSpecific&,
+                    const BootImageFlag&);
+
+  std::string Name() const override;
+  Result<std::string> Generate() override;
+  Result<std::string> Path() const override;
+
+ private:
+  const CuttlefishConfig* config_;
+  const CuttlefishConfig::InstanceSpecific* instance_;
+  const BootImageFlag* boot_image_flag_;
+  std::optional<std::string> path_;
+};
+
 Result<void> RepackKernelRamdisk(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance, const Avb& avb);
+    const CuttlefishConfig::InstanceSpecific& instance);
 
 }  // namespace cuttlefish

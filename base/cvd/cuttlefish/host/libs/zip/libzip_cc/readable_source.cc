@@ -18,9 +18,9 @@
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <utility>
@@ -202,6 +202,8 @@ ZipSourceReader::~ZipSourceReader() {
 }
 
 Result<uint64_t> ZipSourceReader::Read(void* data, uint64_t length) {
+  std::lock_guard lock(mutex_);
+
   CF_EXPECT_NE(source_, nullptr);
   zip_source_t* raw_source = CF_EXPECT(source_->raw_.get());
 

@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
@@ -40,7 +40,7 @@ VendorBootImageFlag VendorBootImageFlag::FromGlobalGflags(
 
   std::vector<std::string> vendor_boot_images =
       flag_info.is_default ? std::vector<std::string>{}
-                           : android::base::Split(FLAGS_vendor_boot_image, ",");
+                           : absl::StrSplit(FLAGS_vendor_boot_image, ',');
 
   return VendorBootImageFlag(system_image_dir, vendor_boot_images);
 }

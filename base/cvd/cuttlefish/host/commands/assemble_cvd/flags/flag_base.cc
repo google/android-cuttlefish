@@ -16,28 +16,9 @@
 
 #include "cuttlefish/host/commands/assemble_cvd/flags/flag_base.h"
 
-#include <cstdlib>
 #include <string>
-#include <utility>
-#include <vector>
 
 namespace cuttlefish {
-
-template <typename T>
-T FlagBase<T>::ForIndex(const std::size_t index) const {
-  if (index < values_.size()) {
-    return values_[index];
-  } else {
-    return values_[0];
-  }
-}
-
-template <typename T>
-FlagBase<T>::FlagBase(std::vector<T> flag_values)
-    : values_(std::move(flag_values)) {}
-
-template <typename T>
-FlagBase<T>::~FlagBase() {}
 
 template class FlagBase<bool>;
 template class FlagBase<int>;

@@ -15,18 +15,22 @@
  */
 #include <sys/socket.h>
 
+#include <stddef.h>
+
 #include <cstdlib>
 #include <string>
+#include <string_view>
 
-#include <android-base/strings.h>
+#include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 
 // Messages are always 128 bytes.
-static constexpr std::size_t kMessageSize = 128;
+static constexpr size_t kMessageSize = 128;
 
 int main(int argc, char** argv) {
   if (argc <= 1) {
@@ -61,9 +65,10 @@ int main(int argc, char** argv) {
       LOG(WARNING) << "Failed to read the correct number of bytes.";
       break;
     }
-    auto split = android::base::Split(buf, ":");
-    std::string command = split[0];
-    std::string state = split[1];
+    std::vector<std::string_view> split = absl::StrSplit(buf, ':');
+    CHECK(split.size() == 2) << "Malformed message: " << buf;
+    std::string_view command = split[0];
+    std::string_view state = split[1];
 
     // Ignore button-release events, when state != down.
     if (state != "down") {

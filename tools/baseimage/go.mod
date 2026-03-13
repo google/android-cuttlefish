@@ -1,6 +1,6 @@
 module github.com/google/android-cuttlefish/tools/baseimage
 
-go 1.24.2
+go 1.25.0
 
 require google.golang.org/api v0.236.0
 

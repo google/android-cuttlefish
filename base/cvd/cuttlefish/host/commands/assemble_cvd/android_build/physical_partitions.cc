@@ -17,11 +17,13 @@
 
 #include <functional>
 #include <memory>
-#include <ostream>
 #include <set>
 #include <string>
 
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
+#include "cuttlefish/pretty/result.h"  // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/set.h"     // IWYU pragma: keep: overloads
+#include "cuttlefish/pretty/struct.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -31,14 +33,42 @@ class PhysicalPartitionsImpl : public AndroidBuild {
  public:
   PhysicalPartitionsImpl(AndroidBuild& build) : build_(build) {}
 
+  std::string Name() const override { return "PhysicalPartitions"; }
+
+  PrettyStruct Pretty() override {
+    return PrettyStruct(Name()).Member("PhysicalPartitions()",
+                                       PhysicalPartitions());
+  }
+
   Result<std::set<std::string, std::less<void>>> PhysicalPartitions() override {
     if (auto res = build_.PhysicalPartitions(); res.ok()) {
       return *res;
     }
 
-    std::set<std::string, std::less<void>> partitions =
-        CF_EXPECT(build_.Images());
-    for (std::string logical : CF_EXPECT(build_.LogicalPartitions())) {
+    std::set<std::string, std::less<void>> partitions = CF_EXPECT(build_.Images());
+    Result<std::set<std::string, std::less<void>>> logical_partitions =
+        build_.LogicalPartitions();
+    if (!logical_partitions.ok()) {
+      if (partitions.count("super")) {
+        // Best effort attempt to remove all partitions we know that could be in
+        // the super image, since we both couldn't read the super image and have
+        // no other metadata, from e.g. the misc info text file.
+        logical_partitions = std::set<std::string, std::less<void>>{
+            "odm",
+            "odm_dlkm",
+            "product",
+            "system",
+            "system_dlkm",
+            "system_ext",
+            "vendor",
+            "vendor_dlkm",
+        };
+      } else {
+        // Assume every image is a physical partition.
+        logical_partitions = std::set<std::string, std::less<void>>();
+      }
+    }
+    for (std::string logical : *logical_partitions) {
       partitions.erase(logical);
     }
 
@@ -51,10 +81,6 @@ class PhysicalPartitionsImpl : public AndroidBuild {
   }
 
  private:
-  std::ostream& Format(std::ostream& out) const override {
-    return out << "PhysicalPartitions";
-  }
-
   AndroidBuild& build_;
 };
 

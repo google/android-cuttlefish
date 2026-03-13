@@ -18,10 +18,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <memory>
+#include <mutex>
 #include <string>
 
 #include "cuttlefish/host/libs/zip/libzip_cc/seekable_source.h"
+#include "cuttlefish/io/io.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -50,7 +51,7 @@ class WritableZipSource : public SeekableZipSource {
 };
 
 /* A `WritableZipSource` in an "open for writing" state. */
-class ZipSourceWriter {
+class ZipSourceWriter : public WriterSeeker {
  public:
   friend class WritableZipSource;
 
@@ -60,8 +61,12 @@ class ZipSourceWriter {
 
   /* Writes are not committed until `Finalize` is called. Returns number of
    * bytes written. */
-  Result<uint64_t> Write(void* data, uint64_t length);
-  Result<void> SeekFromStart(int64_t offset);
+  Result<uint64_t> Write(const void* data, uint64_t length) override;
+  Result<uint64_t> SeekSet(uint64_t offset) override;
+  Result<uint64_t> SeekCur(int64_t offset) override;
+  Result<uint64_t> SeekEnd(int64_t offset) override;
+  Result<uint64_t> PWrite(const void* data, uint64_t count,
+                          uint64_t offset) override;
 
   /* Commits writes and closes the writer. */
   static Result<void> Finalize(ZipSourceWriter);
@@ -69,7 +74,10 @@ class ZipSourceWriter {
  private:
   ZipSourceWriter(WritableZipSource*);
 
+  Result<uint64_t> Seek(int64_t offset, int whence);
+
   WritableZipSource* source_;
+  std::recursive_mutex mutex_;
 };
 
 }  // namespace cuttlefish

@@ -25,13 +25,24 @@
 
 namespace cuttlefish {
 
-Result<std::vector<bool>> BoolFromGlobalGflags(
+template <typename T>
+struct FromGflags {
+  std::vector<T> values;
+  bool is_default;
+};
+
+extern template struct FromGflags<bool>;
+extern template struct FromGflags<int>;
+extern template struct FromGflags<std::string>;
+
+Result<FromGflags<bool>> BoolFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name);
-Result<std::vector<bool>> BoolFromGlobalGflags(
-    const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name, bool default_value);
-Result<std::vector<int>> IntFromGlobalGflags(
+Result<FromGflags<bool>> BoolFromGlobalGflags(
+    const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name,
+    bool default_value);
+Result<FromGflags<int>> IntFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name);
-Result<std::vector<std::string>> StringFromGlobalGflags(
+Result<FromGflags<std::string>> StringFromGlobalGflags(
     const gflags::CommandLineFlagInfo& flag_info, const std::string& flag_name);
 
 }  // namespace cuttlefish

@@ -23,15 +23,17 @@
 #include <chrono>
 #include <map>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <vector>
 
 #include <json/json.h>
 
-#include <android-base/parsedouble.h>
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/utils/json.h"
@@ -247,7 +249,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
 
   void OnSensorsMessage(const uint8_t *msg, size_t size) override {
     std::string msgstr(msg, msg + size);
-    std::vector<std::string> xyz = android::base::Split(msgstr, " ");
+    std::vector<std::string_view> xyz = absl::StrSplit(msgstr, ' ');
 
     if (xyz.size() != 3) {
       LOG(WARNING) << "Invalid rotation angles: Expected 3, received "
@@ -256,11 +258,11 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
     }
 
     double x, y, z;
-    CHECK(android::base::ParseDouble(xyz.at(0), &x))
+    CHECK(absl::SimpleAtod(xyz.at(0), &x))
         << "X rotation value must be a double";
-    CHECK(android::base::ParseDouble(xyz.at(1), &y))
+    CHECK(absl::SimpleAtod(xyz.at(1), &y))
         << "Y rotation value must be a double";
-    CHECK(android::base::ParseDouble(xyz.at(2), &z))
+    CHECK(absl::SimpleAtod(xyz.at(2), &z))
         << "Z rotation value must be a double";
     sensors_handler_.HandleMessage(x, y, z);
   }
@@ -288,7 +290,7 @@ class ConnectionObserverImpl : public webrtc_streaming::ConnectionObserver {
   void OnLocationMessage(const uint8_t *msg, size_t size) override {
     std::string msgstr(msg, msg + size);
 
-    std::vector<std::string> inputs = android::base::Split(msgstr, ",");
+    std::vector<std::string> inputs = absl::StrSplit(msgstr, ',');
 
     if (inputs.size() != 3) {
       LOG(WARNING) << "Invalid location length , length = " << inputs.size();

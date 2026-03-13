@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/libs/command_util/util.h"
 
+#include <stdint.h>
 #include "sys/time.h"
 #include "sys/types.h"
 
@@ -111,7 +112,7 @@ Result<std::optional<LauncherActionInfo>> ReadLauncherActionFromFd(SharedFD moni
         .extended_action = {},
     };
   }
-  std::uint32_t length = 0;
+  uint32_t length = 0;
   CF_EXPECT(ReadExactBinaryResult(monitor_socket, &length),
             "Error reading proto length");
   if (length == 0) {
@@ -179,7 +180,7 @@ Result<void> RunLauncherAction(
   const LauncherAction action = LauncherAction::kExtended;
   CF_EXPECT(WriteAllBinaryResult(monitor_socket, &action),
             "Error writing LauncherAction");
-  const std::uint32_t length = serialized_data.size();
+  const uint32_t length = serialized_data.size();
   CF_EXPECT(WriteAllBinaryResult(monitor_socket, &length),
             "Error writing proto length");
   if (!serialized_data.empty()) {

@@ -15,14 +15,15 @@
  */
 
 #include <memory>
+#include <string_view>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <libyuv.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -40,7 +41,6 @@
 #include "cuttlefish/host/frontend/webrtc/webrtc_command_channel.h"
 #include "cuttlefish/host/frontend/webrtc/webrtc_commands.pb.h"
 #include "cuttlefish/host/libs/audio_connector/server.h"
-#include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
@@ -275,13 +275,14 @@ int CuttlefishMain() {
   cuttlefish::InputConnectorBuilder inputs_builder;
 
   const auto display_count = instance.display_configs().size();
-  const auto touch_fds = android::base::Split(FLAGS_touch_fds, ",");
+  const std::vector<std::string_view> touch_fds =
+      absl::StrSplit(FLAGS_touch_fds, ',');
   CHECK(touch_fds.size() == display_count + instance.touchpad_configs().size())
       << "Number of touch FDs does not match the number of configured displays "
          "and touchpads";
   for (int i = 0; i < touch_fds.size(); i++) {
     int touch_fd;
-    CHECK(android::base::ParseInt(touch_fds[i], &touch_fd))
+    CHECK(absl::SimpleAtoi(touch_fds[i], &touch_fd))
         << "Invalid touch_fd: " << touch_fds[i];
     // Displays are listed first, then touchpads
     auto label_prefix =
@@ -429,31 +430,31 @@ int CuttlefishMain() {
                             std::to_string(instance.memory_mb()) + " mb");
 
   std::string user_friendly_gpu_mode;
-  if (instance.gpu_mode() == kGpuModeGuestSwiftshader) {
+  if (instance.gpu_mode() == GpuMode::GuestSwiftshader) {
     user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
-  } else if (instance.gpu_mode() == kGpuModeDrmVirgl) {
+  } else if (instance.gpu_mode() == GpuMode::DrmVirgl) {
     user_friendly_gpu_mode =
         "VirglRenderer (Accelerated Rendering using Host OpenGL)";
-  } else if (instance.gpu_mode() == kGpuModeGfxstream) {
+  } else if (instance.gpu_mode() == GpuMode::Gfxstream) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host OpenGL and Vulkan)";
-  } else if (instance.gpu_mode() == kGpuModeGfxstreamGuestAngle) {
+  } else if (instance.gpu_mode() == GpuMode::GfxstreamGuestAngle) {
     user_friendly_gpu_mode =
         "Gfxstream (Accelerated Rendering using Host Vulkan)";
   } else {
-    user_friendly_gpu_mode = instance.gpu_mode();
+    user_friendly_gpu_mode = GpuModeString(instance.gpu_mode());
   }
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
-  for (const std::string& action_server :
-       android::base::Split(FLAGS_action_servers, ",")) {
+  for (const std::string_view action_server :
+       absl::StrSplit(FLAGS_action_servers, ',')) {
     if (action_server.empty()) {
       continue;
     }
     const std::vector<std::string> server_and_fd =
-        android::base::Split(action_server, ":");
+        absl::StrSplit(action_server, ':');
     CHECK(server_and_fd.size() == 2)
         << "Wrong format for action server flag: " << action_server;
     std::string server = server_and_fd[0];

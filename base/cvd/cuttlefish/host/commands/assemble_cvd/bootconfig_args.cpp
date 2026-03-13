@@ -18,11 +18,13 @@
 
 #include <array>
 #include <string>
+#include <string_view>
 #include <vector>
 
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include "absl/log/log.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
@@ -232,7 +234,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.vhal_proxy_server_port"] =
         std::to_string(instance.vhal_proxy_server_port());
     int32_t instance_id;
-    CF_EXPECT(android::base::ParseInt(instance.id(), &instance_id),
+    CF_EXPECT(absl::SimpleAtoi(instance.id(), &instance_id),
               "instance id: " << instance.id() << " is not a valid int");
     // The static ethernet IP address assigned for the guest.
     bootconfig_args["androidboot.auto_eth_guest_addr"] =
@@ -264,10 +266,10 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     if (kv.empty()) {
       continue;
     }
-    const auto& parts = android::base::Split(kv, "=");
+    const std::vector<std::string_view> parts = absl::StrSplit(kv, '=');
     CF_EXPECT_EQ(parts.size(), 2,
                  "Failed to parse --extra_bootconfig_args: \"" << kv << "\"");
-    bootconfig_args[parts[0]] = parts[1];
+    bootconfig_args.emplace(parts[0], parts[1]);
   }
 
   return bootconfig_args;

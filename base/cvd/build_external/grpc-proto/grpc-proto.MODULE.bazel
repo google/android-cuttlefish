@@ -1,0 +1,5 @@
+git_override(
+    module_name = "grpc-proto",
+    remote = "https://github.com/grpc/grpc-proto.git",
+    commit = "dafe8c0aa9c80e28da7808ffade0f33638a16e3d",
+)

@@ -26,11 +26,12 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/parseint.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -61,12 +62,14 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
   std::regex uid_pattern(R"(Uid:\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]+))");
   std::string status_path = fmt::format("/proc/{}/status", pid);
   std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content,
+                                            /* follow_symlinks */ true));
   std::vector<uid_t> uids;
-  for (const std::string& line :
-       android::base::Tokenize(status_content, "\n")) {
+  for (std::string_view line :
+       absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
     std::smatch matches;
-    if (!std::regex_match(line, matches, uid_pattern)) {
+    std::string line_str(line);
+    if (!std::regex_match(line_str, matches, uid_pattern)) {
       continue;
     }
     // the line, then 4 uids
@@ -75,7 +78,7 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
     uids.reserve(4);
     for (int i = 1; i < 5; i++) {
       unsigned uid = 0;
-      CF_EXPECT(android::base::ParseUint(matches[i], &uid));
+      CF_EXPECT(absl::SimpleAtoi(matches[i].str(), &uid));
       uids.push_back(uid);
     }
     break;
@@ -114,37 +117,6 @@ static Result<std::string> ReadAll(const std::string& file_path) {
   return output;
 }
 
-/**
- * Tokenizes the given string, using '\0' as a delimiter
- *
- * android::base::Tokenize works mostly except the delimiter can't be '\0'.
- * The /proc/<pid>/environ file has the list of environment variables, delimited
- * by '\0'. Needs a dedicated tokenizer.
- *
- */
-static std::vector<std::string> TokenizeByNullChar(const std::string& input) {
-  if (input.empty()) {
-    return {};
-  }
-  std::vector<std::string> tokens;
-  std::string token;
-  for (int i = 0; i < input.size(); i++) {
-    if (input.at(i) != '\0') {
-      token.append(1, input.at(i));
-    } else {
-      if (token.empty()) {
-        break;
-      }
-      tokens.push_back(token);
-      token.clear();
-    }
-  }
-  if (!token.empty()) {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
-
 Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
   CF_EXPECT(DirectoryExists(kProcDir));
   auto subdirs = CF_EXPECT(DirectoryContents(kProcDir));
@@ -155,9 +127,9 @@ Result<std::vector<pid_t>> CollectPids(const uid_t uid) {
       continue;
     }
     int pid;
-    // Shouldn't failed here. If failed, either regex or
-    // android::base::ParseInt needs serious fixes
-    CF_EXPECT(android::base::ParseInt(subdir, &pid));
+    // Shouldn't fail here. If failed, either regex or
+    // absl::SimpleAtoi needs serious fixes
+    CF_EXPECT(absl::SimpleAtoi(subdir, &pid));
     auto owner_uid_result = OwnerUids(pid);
     if (owner_uid_result.ok() && owner_uid_result->real_ == uid) {
       pids.push_back(pid);
@@ -171,7 +143,7 @@ Result<std::vector<std::string>> GetCmdArgs(const pid_t pid) {
   auto owner = CF_EXPECT(FileOwnerUid(cmdline_file_path));
   CF_EXPECT(getuid() == owner);
   std::string contents = CF_EXPECT(ReadAll(cmdline_file_path));
-  return TokenizeByNullChar(contents);
+  return absl::StrSplit(contents, '\0', absl::SkipEmpty());
 }
 
 Result<std::string> GetExecutablePath(const pid_t pid) {
@@ -191,16 +163,15 @@ static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
                                             const pid_t pid) {
   std::string status_path = fmt::format("/proc/{}/status", pid);
   std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content,
+                                            /* follow_symlinks */ true));
   bool found = false;
-  for (const std::string& line :
-       android::base::Tokenize(status_content, "\n")) {
-    std::string_view line_view(line);
-    if (!android::base::ConsumePrefix(&line_view, "Name:")) {
+  for (std::string_view line :
+       absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
+    if (!android::base::ConsumePrefix(&line, "Name:")) {
       continue;
     }
-    auto trimmed_line = android::base::Trim(line_view);
-    if (trimmed_line == exec_name) {
+    if (android::base::Trim(line) == exec_name) {
       found = true;
       break;
     }
@@ -280,18 +251,11 @@ Result<std::unordered_map<std::string, std::string>> GetEnvs(const pid_t pid) {
   auto owner = CF_EXPECT(FileOwnerUid(environ_file_path));
   CF_EXPECT(getuid() == owner, "Owned by another user of uid" << owner);
   std::string environ = CF_EXPECT(ReadAll(environ_file_path));
-  std::vector<std::string> lines = TokenizeByNullChar(environ);
   // now, each line looks like:  HOME=/home/user
   std::unordered_map<std::string, std::string> envs;
-  for (const auto& line : lines) {
-    auto pos = line.find_first_of('=');
-    if (pos == std::string::npos) {
-      LOG(ERROR) << "Found an invalid env: " << line << " and ignored.";
-      continue;
-    }
-    std::string key = line.substr(0, pos);
-    std::string value = line.substr(pos + 1);
-    envs[key] = value;
+  for (std::string_view line :
+       absl::StrSplit(environ, '\0', absl::SkipEmpty())) {
+    envs.emplace(absl::StrSplit(line, absl::MaxSplits('=', 1)));
   }
   return envs;
 }
@@ -311,14 +275,17 @@ Result<pid_t> Ppid(const pid_t pid) {
   std::regex uid_pattern(R"(PPid:\s*([0-9]+))");
   std::string status_path = fmt::format("/proc/{}/status", pid);
   std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content));
-  for (const auto& line : android::base::Tokenize(status_content, "\n")) {
+  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content,
+                                            /* follow_symlinks */ true));
+  for (std::string_view line :
+       absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
     std::smatch matches;
-    if (!std::regex_match(line, matches, uid_pattern)) {
+    std::string line_str(line);
+    if (!std::regex_match(line_str, matches, uid_pattern)) {
       continue;
     }
     unsigned ppid;
-    CF_EXPECT(android::base::ParseUint(matches[1], &ppid));
+    CF_EXPECT(absl::SimpleAtoi(matches[1].str(), &ppid));
     return static_cast<pid_t>(ppid);
   }
   return CF_ERR("Status file does not have PPid: line in the right format");

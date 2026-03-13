@@ -29,7 +29,7 @@
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-#include "android-base/strings.h"
+#include "absl/strings/str_split.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "json/reader.h"
@@ -238,9 +238,9 @@ int CuttlefishConfig::casimir_instance_num() const {
 static constexpr char kCasimirArgs[] = "casimir_args";
 void CuttlefishConfig::set_casimir_args(const std::string& casimir_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(casimir_args, " ")) {
+  for (std::string_view arg : absl::StrSplit(casimir_args, ' ')) {
     if (!arg.empty()) {
-      args_json_obj.append(arg);
+      args_json_obj.append(std::string(arg));
     }
   }
   (*dictionary_)[kCasimirArgs] = args_json_obj;
@@ -305,8 +305,9 @@ void CuttlefishConfig::set_netsim_connector_instance_num(
 static constexpr char kNetsimArgs[] = "netsim_args";
 void CuttlefishConfig::set_netsim_args(const std::string& netsim_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Tokenize(netsim_args, " ")) {
-    args_json_obj.append(arg);
+  for (std::string_view arg :
+       absl::StrSplit(netsim_args, ' ', absl::SkipEmpty())) {
+    args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kNetsimArgs] = args_json_obj;
 }
@@ -367,8 +368,8 @@ static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
 void CuttlefishConfig::set_extra_kernel_cmdline(
     const std::string& extra_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(extra_cmdline, " ")) {
-    args_json_obj.append(arg);
+  for (std::string_view arg : absl::StrSplit(extra_cmdline, ' ')) {
+    args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kExtraKernelCmdline] = args_json_obj;
 }
@@ -407,8 +408,8 @@ void CuttlefishConfig::set_ap_kernel_image(const std::string& ap_kernel_image) {
 static constexpr char kRootcanalArgs[] = "rootcanal_args";
 void CuttlefishConfig::set_rootcanal_args(const std::string& rootcanal_args) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(rootcanal_args, " ")) {
-    args_json_obj.append(arg);
+  for (std::string_view arg : absl::StrSplit(rootcanal_args, ' ')) {
+    args_json_obj.append(std::string(arg));
   }
   (*dictionary_)[kRootcanalArgs] = args_json_obj;
 }

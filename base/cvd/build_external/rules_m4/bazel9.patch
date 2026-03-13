@@ -1,0 +1,34 @@
+diff --git a/m4/internal/gnulib/gnulib.BUILD b/m4/internal/gnulib/gnulib.BUILD
+index d920390..44c9b13 100644
+--- a/m4/internal/gnulib/gnulib.BUILD
++++ b/m4/internal/gnulib/gnulib.BUILD
+@@ -12,6 +12,8 @@
+ #
+ # SPDX-License-Identifier: Apache-2.0
+ 
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ cc_library(
+     name = "config_h",
+     hdrs = select({
+diff --git a/m4/rules/m4_repository.bzl b/m4/rules/m4_repository.bzl
+index de8588f..f3e1b1d 100644
+--- a/m4/rules/m4_repository.bzl
++++ b/m4/rules/m4_repository.bzl
+@@ -21,6 +21,8 @@ load("//m4/internal:versions.bzl", "VERSION_URLS")
+ 
+ _M4_BUILD = """
++load("@rules_cc//cc:defs.bzl", "cc_library")
++
+ cc_library(
+     name = "m4_lib",
+     srcs = glob([
+@@ -48,6 +50,8 @@ config_setting(
+ """
+ 
+ _M4_BIN_BUILD = """
++load("@rules_cc//cc:defs.bzl", "cc_binary")
++
+ M4_LINKOPTS = select({{
+     "//:cc_compiler_msvc": [
+         # LNK4001: no object files specified; libraries used

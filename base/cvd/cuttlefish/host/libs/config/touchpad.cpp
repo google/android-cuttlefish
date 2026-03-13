@@ -17,11 +17,12 @@
 #include "cuttlefish/host/libs/config/touchpad.h"
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
@@ -35,13 +36,13 @@ Result<CuttlefishConfig::TouchpadConfig> ParseTouchpadConfig(
   CF_EXPECT(!flag.empty(), "Touchpad configuration empty");
 
   std::unordered_map<std::string, std::string> props;
-  for (const auto& pair : android::base::Split(flag, ",")) {
-    const std::vector<std::string> keyvalue = android::base::Split(pair, "=");
+  for (std::string_view pair : absl::StrSplit(flag, ',')) {
+    const std::vector<std::string_view> keyvalue = absl::StrSplit(pair, '=');
     CF_EXPECT_EQ(keyvalue.size(), 2,
                  "Invalid touchpad flag key-value: \"" << flag << "\"");
-    const std::string& prop_key = keyvalue[0];
-    const std::string& prop_val = keyvalue[1];
-    props[prop_key] = prop_val;
+    std::string_view prop_key = keyvalue[0];
+    std::string_view prop_val = keyvalue[1];
+    props.emplace(prop_key, prop_val);
   }
 
   CF_EXPECT(Contains(props, "width"),
@@ -53,9 +54,9 @@ Result<CuttlefishConfig::TouchpadConfig> ParseTouchpadConfig(
       "Touchpad configuration should only have width and height properties");
 
   CuttlefishConfig::TouchpadConfig config = {};
-  CF_EXPECT(android::base::ParseInt(props["width"], &config.width),
+  CF_EXPECT(absl::SimpleAtoi(props["width"], &config.width),
             "Touchpad configuration invalid 'width' in \"" << flag << "\"");
-  CF_EXPECT(android::base::ParseInt(props["height"], &config.height),
+  CF_EXPECT(absl::SimpleAtoi(props["height"], &config.height),
             "Touchpad configuration invalid 'height' in \"" << flag << "\"");
 
   return config;

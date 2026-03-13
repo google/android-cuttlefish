@@ -1,4 +1,4 @@
-load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -11,8 +11,9 @@ cf_cc_library(
     srcs = ["android_build.cc"],
     hdrs = ["android_build.h"],
     deps = [
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
-        "@fmt",
     ],
 )
 
@@ -23,9 +24,14 @@ cf_cc_library(
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
         "//cuttlefish/host/commands/assemble_cvd/android_build:identify_build",
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:struct",
+        "//cuttlefish/pretty:unique_ptr",
+        "//cuttlefish/pretty:vector",
         "//cuttlefish/result",
         "@abseil-cpp//absl/log:check",
-        "@fmt",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -43,7 +49,6 @@ cf_cc_library(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
 
@@ -54,10 +59,12 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
     ],
 )
 
@@ -67,9 +74,44 @@ cf_cc_library(
     hdrs = ["combined_android_build.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
+        "//cuttlefish/pretty:unique_ptr",
+        "//cuttlefish/pretty:vector",
         "//cuttlefish/result",
-        "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cf_cc_test(
+    name = "combined_android_build_test",
+    srcs = ["combined_android_build_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:combined_android_build",
+        "//cuttlefish/host/commands/assemble_cvd/android_build:fake_android_build",
+        "//cuttlefish/result",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "fake_android_build",
+    testonly = True,
+    srcs = ["fake_android_build.cc"],
+    hdrs = ["fake_android_build.h"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:optional",
+        "//cuttlefish/pretty:pair",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -87,8 +129,6 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/result",
         "//libbase",
-        "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
     ],
 )
 
@@ -123,10 +163,11 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd/android_build:super_image",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
-        "@fmt",
     ],
 )
 
@@ -142,10 +183,13 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:build_archive",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:optional",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
         "@protobuf",
     ],
 )
@@ -156,10 +200,12 @@ cf_cc_library(
     hdrs = ["misc_info_metadata.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
-        "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
     ],
 )
 
@@ -169,6 +215,9 @@ cf_cc_library(
     hdrs = ["physical_partitions.h"],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
     ],
 )
@@ -180,10 +229,16 @@ cf_cc_library(
     deps = [
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/host/commands/assemble_cvd/android_build",
+        "//cuttlefish/pretty",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
+        "//cuttlefish/pretty:unique_ptr",
+        "//cuttlefish/pretty/liblp",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@android_system_core//:liblp",
-        "@fmt",
     ],
 )
 
@@ -200,9 +255,13 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:build_archive",
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
+        "//cuttlefish/pretty:map",
+        "//cuttlefish/pretty:optional",
+        "//cuttlefish/pretty:result",
+        "//cuttlefish/pretty:set",
+        "//cuttlefish/pretty:struct",
         "//cuttlefish/result",
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/strings:str_format",
-        "@fmt",
     ],
 )

@@ -1,0 +1,99 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library", "cf_cc_test")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "boot_image",
+    srcs = ["boot_image.cc"],
+    hdrs = ["boot_image.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:copy",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:length",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
+
+cf_cc_library(
+    name = "boot_image_builder",
+    srcs = ["boot_image_builder.cc"],
+    hdrs = ["boot_image_builder.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:length",
+        "//cuttlefish/result",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
+
+cf_cc_test(
+    name = "boot_image_test",
+    srcs = ["boot_image_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/boot_image",
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:boot_image_builder",
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cf_cc_library(
+    name = "vendor_boot_image",
+    srcs = ["vendor_boot_image.cc"],
+    hdrs = ["vendor_boot_image.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
+
+cf_cc_library(
+    name = "vendor_boot_image_builder",
+    srcs = ["vendor_boot_image_builder.cc"],
+    hdrs = ["vendor_boot_image_builder.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:length",
+        "//cuttlefish/result",
+        "@mkbootimg//:bootimg_header",
+    ],
+)
+
+cf_cc_test(
+    name = "vendor_boot_image_test",
+    srcs = ["vendor_boot_image_test.cc"],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image",
+        "//cuttlefish/host/commands/assemble_cvd/boot_image:vendor_boot_image_builder",
+        "//cuttlefish/io",
+        "//cuttlefish/io:concat",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)

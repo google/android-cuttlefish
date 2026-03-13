@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include <optional>
 #include <vector>
 
@@ -23,20 +25,20 @@
 
 namespace cuttlefish {
 namespace confui {
-enum class SignMessageError : std::uint8_t {
+enum class SignMessageError : uint8_t {
   kOk = 0,
   kUnknownError = 1,
 };
 
 struct SignRawMessage {
   SignMessageError error_;
-  std::vector<std::uint8_t> payload_;
+  std::vector<uint8_t> payload_;
 };
 }  // end of namespace confui
 
 class ConfUiSignerImpl {
   // status and its mask bits
-  using ReceiveError = std::uint8_t;
+  using ReceiveError = uint8_t;
   static const ReceiveError kIoError = 1;
   static const ReceiveError kLogicError = 2;
 
@@ -52,7 +54,7 @@ class ConfUiSignerImpl {
   // set the sign_status_ if there was an error
   // TODO(kwstephenkim@): use android::base::Result. aosp/1940753
   bool Send(SharedFD output, const confui::SignMessageError error,
-            const std::vector<std::uint8_t>& payload);
+            const std::vector<uint8_t>& payload);
   std::optional<confui::SignRawMessage> Receive(SharedFD input);
 
  private:
@@ -74,7 +76,7 @@ class ConfUiSignSender {
   // note that the error is IO error
   std::optional<confui::SignRawMessage> Receive();
   bool Send(const SignMessageError error,
-            const std::vector<std::uint8_t>& encoded_hmac);
+            const std::vector<uint8_t>& encoded_hmac);
 
   bool IsOk() const { return impl_.IsOk(); }
   bool IsIoError() const { return impl_.IsIoError(); }
@@ -96,7 +98,7 @@ class ConfUiSignRequester {
 
  public:
   ConfUiSignRequester(SharedFD fd) : client_fd_(fd) {}
-  bool Request(const std::vector<std::uint8_t>& message);
+  bool Request(const std::vector<uint8_t>& message);
   std::optional<confui::SignRawMessage> Receive();
 
  private:

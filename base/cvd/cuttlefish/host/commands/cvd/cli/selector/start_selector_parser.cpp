@@ -16,17 +16,19 @@
 
 #include "cuttlefish/host/commands/cvd/cli/selector/start_selector_parser.h"
 
+#include <stdint.h>
 #include <unistd.h>
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include <android-base/parseint.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
+#include "absl/strings/numbers.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -44,11 +46,11 @@ static bool Unique(const std::vector<unsigned>& v) {
   return v.size() == hash_set.size();
 }
 
-static Result<unsigned> ParseNaturalNumber(const std::string& token) {
-  std::int32_t value;
-  CF_EXPECT(android::base::ParseInt(token, &value));
+static Result<unsigned> ParsePositiveNumber(std::string_view token) {
+  unsigned value;
+  CF_EXPECT(absl::SimpleAtoi(token, &value));
   CF_EXPECT(value > 0);
-  return static_cast<unsigned>(value);
+  return value;
 }
 
 Result<StartSelectorParser> StartSelectorParser::ConductSelectFlagsParser(
@@ -90,7 +92,7 @@ std::optional<unsigned> TryFromCuttlefishInstance(
   if (cuttlefish_instance.empty()) {
     return std::nullopt;
   }
-  auto parsed = ParseNaturalNumber(cuttlefish_instance);
+  auto parsed = ParsePositiveNumber(cuttlefish_instance);
   return parsed.ok() ? std::optional(*parsed) : std::nullopt;
 }
 
@@ -133,7 +135,7 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
 
   std::optional<unsigned> num_instances;
   if (num_instances_flag) {
-    num_instances = CF_EXPECT(ParseNaturalNumber(*num_instances_flag));
+    num_instances = CF_EXPECT(ParsePositiveNumber(*num_instances_flag));
   }
   if (instance_names && !instance_names->empty()) {
     auto implied_n_instances = instance_names->size();
@@ -146,10 +148,10 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
     num_instances = implied_n_instances;
   }
   if (instance_nums_flag) {
-    std::vector<std::string> tokens =
-        android::base::Split(*instance_nums_flag, ",");
+    std::vector<std::string_view> tokens =
+        absl::StrSplit(*instance_nums_flag, ',');
     for (const auto& t : tokens) {
-      CF_EXPECT(ParseNaturalNumber(t), t << " must be a natural number");
+      CF_EXPECT(ParsePositiveNumber(t), t << " must be a natural number");
     }
     if (!num_instances) {
       num_instances = tokens.size();
@@ -163,11 +165,11 @@ Result<unsigned> StartSelectorParser::VerifyNumOfInstances(
 static Result<std::vector<unsigned>> ParseInstanceNums(
     const std::string& instance_nums_flag) {
   std::vector<unsigned> nums;
-  std::vector<std::string> tokens =
-      android::base::Split(instance_nums_flag, ",");
+  std::vector<std::string_view> tokens =
+      absl::StrSplit(instance_nums_flag, ',');
   for (const auto& t : tokens) {
     unsigned num =
-        CF_EXPECT(ParseNaturalNumber(t), t << " must be a natural number");
+        CF_EXPECT(ParsePositiveNumber(t), t << " must be a natural number");
     nums.emplace_back(num);
   }
   CF_EXPECT(Unique(nums), "--instance_nums include duplicated numbers");
@@ -208,7 +210,7 @@ StartSelectorParser::HandleInstanceIds(
   }
 
   InstanceNumsCalculator calculator;
-  calculator.NumInstances(static_cast<std::int32_t>(num_instances));
+  calculator.NumInstances(static_cast<int32_t>(num_instances));
   if (instance_nums) {
     CF_EXPECT(base_instance_num == std::nullopt,
               "-base_instance_num and -instance_nums are mutually exclusive.");
@@ -217,8 +219,8 @@ StartSelectorParser::HandleInstanceIds(
     return ParsedInstanceIdsOpt(parsed_nums);
   }
   if (base_instance_num) {
-    unsigned base = CF_EXPECT(ParseNaturalNumber(*base_instance_num));
-    calculator.BaseInstanceNum(static_cast<std::int32_t>(base));
+    unsigned base = CF_EXPECT(ParsePositiveNumber(*base_instance_num));
+    calculator.BaseInstanceNum(static_cast<int32_t>(base));
   }
   auto instance_ids = CF_EXPECT(calculator.CalculateFromFlags());
   CF_EXPECT(!instance_ids.empty(),
