@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <string>
 #include <vector>
 
@@ -24,13 +26,19 @@
 
 namespace cuttlefish {
 
-struct FetchResult {
+struct FetchArtifacts {
   std::string fetcher_config_path;
+  bool status_blocked = false;  // blocked fetching waiting on terminal status
   Builds builds;
+};
+
+struct FetchResult {
+  std::vector<FetchArtifacts> fetch_artifacts;
+  size_t fetch_size_bytes = 0;
 };
 
 std::string GetFetchLogsFileName(const std::string& target_directory);
 
-Result<std::vector<FetchResult>> FetchCvdMain(const FetchFlags& flags);
+Result<FetchResult> FetchCvdMain(const FetchFlags& flags);
 
 }  // namespace cuttlefish

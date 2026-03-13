@@ -443,10 +443,10 @@ Result<void> FetchTarget(FetchContext& fetch_context,
   return {};
 }
 
-Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
-                                       const std::string& cache_base_path,
-                                       const HostToolsTarget& host_target,
-                                       std::vector<Target>& targets) {
+Result<FetchResult> Fetch(const FetchFlags& flags,
+                          const std::string& cache_base_path,
+                          const HostToolsTarget& host_target,
+                          std::vector<Target>& targets) {
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);
@@ -475,7 +475,7 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
       std::cref(flags.keep_downloaded_archives),
       std::cref(flags.host_substitutions), tracer.NewTrace("Host Package"));
   size_t count = 1;
-  std::vector<FetchResult> fetch_results;
+  FetchResult fetch_result;
   for (const auto& target : targets) {
     FetcherConfig config;
     FetchContext fetch_context(downloaders.AndroidBuild(), target.directories,
@@ -492,7 +492,7 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
 
     const std::string config_path =
         CF_EXPECT(SaveConfig(config, target.directories.root));
-    fetch_results.emplace_back(FetchResult{
+    fetch_result.fetch_artifacts.emplace_back(FetchArtifacts{
         .fetcher_config_path = config_path,
         .builds = target.builds,
     });
@@ -505,7 +505,7 @@ Result<std::vector<FetchResult>> Fetch(const FetchFlags& flags,
   VLOG(0) << "Performance stats:\n" << tracer.ToStyledString();
 
   LOG(INFO) << "Completed all fetches";
-  return fetch_results;
+  return fetch_result;
 }
 
 }  // namespace
@@ -514,7 +514,7 @@ std::string GetFetchLogsFileName(const std::string& target_directory) {
   return target_directory + "/fetch.log";
 }
 
-Result<std::vector<FetchResult>> FetchCvdMain(const FetchFlags& flags) {
+Result<FetchResult> FetchCvdMain(const FetchFlags& flags) {
   const bool append_subdirectory = ShouldAppendSubdirectory(flags);
   std::vector<Target> targets = GetFetchTargets(flags, append_subdirectory);
   HostToolsTarget host_target =
