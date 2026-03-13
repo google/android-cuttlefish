@@ -59,7 +59,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
   ScopedLogger logger(SeverityTarget::FromFile(log_file), "");
 
-  Result<std::vector<FetchResult>> result = FetchCvdMain(flags);
+  Result<FetchResult> result = FetchCvdMain(flags);
   if (flags.build_api_flags.enable_caching) {
     VLOG(0) << "Running automatic cache cleanup";
     const std::string cache_directory = PerUserCacheDir();
