@@ -841,6 +841,10 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
     instance.set_audio_output_streams_count(
         guest_configs[instance_index].output_audio_streams_count);
+    const auto& audio_settings = guest_configs[instance_index].audio_settings;
+    if (audio_settings.has_value()) {
+      instance.set_audio_settings(audio_settings.value());
+    }
 
     // jcardsim
     instance.set_enable_jcard_simulator(
