@@ -77,9 +77,12 @@ Result<void> RepackSuperAndVbmeta(
              system_dlkm_build_dir);
 
   const auto new_super_img = instance.new_super_image();
-  CF_EXPECTF(Copy(instance.super_image(), new_super_img),
-             "Failed to copy super image '{}' to '{}': '{}'",
-             instance.super_image(), new_super_img, StrError(errno));
+  // This file may have already been created by super_image_mixer.cc
+  if (!FileExists(new_super_img)) {
+    CF_EXPECTF(Copy(instance.super_image(), new_super_img),
+               "Failed to copy super image '{}' to '{}': '{}'",
+               instance.super_image(), new_super_img, StrError(errno));
+  }
 
   CF_EXPECT(RepackSuperWithPartition(new_super_img, new_vendor_dlkm_img,
                                      "vendor_dlkm"),
