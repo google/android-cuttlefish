@@ -225,11 +225,12 @@ func (h *GceHelper) CreateImage(ins, disk, name string) error {
 }
 
 type BuildImageOpts struct {
-	Arch               Arch
-	SourceImageProject string
-	SourceImage        string
-	ImageName          string
-	ModifyFunc         func(project, zone, insName string) error
+	Arch                   Arch
+	SourceImageProject     string
+	SourceImage            string
+	ImageName              string
+	CreateAttachedDiskOpts CreateDiskOpts
+	ModifyFunc             func(project, zone, insName string) error
 }
 
 const BuildImageMountPoint = "/mnt/image"
@@ -239,7 +240,7 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
 
 	log.Println("creating disk...")
-	if _, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName, CreateDiskOpts{}); err != nil {
+	if _, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName, opts.CreateAttachedDiskOpts); err != nil {
 		return fmt.Errorf("failed to create disk: %w", err)
 	}
 	defer h.cleanupDeleteDisk(attachedDiskName)
