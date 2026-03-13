@@ -44,6 +44,8 @@ cf_cc_binary(
         "client_server.h",
         "connection_observer.cpp",
         "connection_observer.h",
+        "cvd_abgr_video_frame_buffer.cpp",
+        "cvd_abgr_video_frame_buffer.h",
         "cvd_video_frame_buffer.cpp",
         "cvd_video_frame_buffer.h",
         "display_handler.cpp",

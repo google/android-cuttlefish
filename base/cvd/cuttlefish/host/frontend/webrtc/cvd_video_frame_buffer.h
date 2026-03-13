@@ -52,6 +52,8 @@ class CvdVideoFrameBuffer : public VideoFrameBuffer {
   size_t DataSizeU() const override { return u_.size(); }
   size_t DataSizeV() const override { return v_.size(); }
 
+  std::unique_ptr<VideoFrameBuffer> Clone() const override;
+
  private:
   const int width_;
   const int height_;

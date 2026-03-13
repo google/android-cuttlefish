@@ -16,7 +16,10 @@
 
 #include "cuttlefish/host/frontend/webrtc/libdevice/video_track_source_impl.h"
 
+#include <drm/drm_fourcc.h>
 #include <api/video/video_frame_buffer.h>
+
+#include "cuttlefish/host/frontend/webrtc/libcommon/abgr_buffer.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -54,10 +57,29 @@ VideoTrackSourceImpl::VideoTrackSourceImpl(int width, int height)
 
 void VideoTrackSourceImpl::OnFrame(std::shared_ptr<VideoFrameBuffer> frame,
                                    int64_t timestamp_us) {
+  // Ensure strictly monotonic timestamps to prevent WebRTC from dropping
+  // frames with "Same/old NTP timestamp" errors. This can happen when
+  // frames arrive in bursts faster than system clock resolution.
+  if (timestamp_us <= last_timestamp_us_) {
+    timestamp_us = last_timestamp_us_ + 1;
+  }
+  last_timestamp_us_ = timestamp_us;
+
+  rtc::scoped_refptr<webrtc::VideoFrameBuffer> buffer;
+
+  uint32_t fmt = frame->PixelFormat();
+  if (fmt == DRM_FORMAT_ABGR8888 || fmt == DRM_FORMAT_XBGR8888 ||
+      fmt == DRM_FORMAT_ARGB8888 || fmt == DRM_FORMAT_XRGB8888) {
+      buffer = rtc::scoped_refptr<webrtc::VideoFrameBuffer>(
+          new rtc::RefCountedObject<AbgrBuffer>(frame));
+  } else {
+      buffer = rtc::scoped_refptr<webrtc::VideoFrameBuffer>(
+          new rtc::RefCountedObject<VideoFrameWrapper>(frame));
+  }
+
   auto video_frame =
       webrtc::VideoFrame::Builder()
-          .set_video_frame_buffer(rtc::scoped_refptr<webrtc::VideoFrameBuffer>(
-              new rtc::RefCountedObject<VideoFrameWrapper>(frame)))
+          .set_video_frame_buffer(buffer)
           .set_timestamp_us(timestamp_us)
           .build();
   broadcaster_.OnFrame(video_frame);
