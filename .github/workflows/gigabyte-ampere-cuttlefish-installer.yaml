@@ -286,3 +286,50 @@ jobs:
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
         while ! grep "reboot: Power down" console_001.log; do sleep 30; done
         tail -n +"${CONSOLELINES}" console_001.log
+
+  test-iso-cf-container-qemu-job:
+    needs: [build-installer-iso-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cuttlefish-installer-artifacts
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-prepare-testbed
+    - name: Copy test scripts
+      run: |
+        cp -f tests/installer-iso-* .
+    - name: Run installer on qemu
+      run: |
+        ./installer-iso-install.expect
+    - name: Download Cuttlefish
+      run: |
+        ./utils/download-ci-cf.sh
+    - name: Start qemu again. Normal boot.
+      run: |
+        screen -d -m -L -Logfile console_001.log ./installer-iso-run-qemu.sh
+        while ! egrep "[^[:space:]]+[[:space:]]login:" console_001.log; do sleep 30; done
+        cp -f console_001.log console_001_p1.log
+        CONSOLELINES=$(cat console_001_p1.log | wc -l)
+        cat console_001_p1.log
+        grep "login:" console_001_p1.log > /dev/null
+        echo "CONSOLELINES=${CONSOLELINES}" >> $GITHUB_ENV
+    - name: Test whether Host Orchestrator in the docker instance is alive or not.
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k docker pull us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k docker run -d --privileged -p 4080:2080 us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v --retry 6 --retry-all-errors --retry-delay 10'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v' | grep -qx '{"cvds":[]}'
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
