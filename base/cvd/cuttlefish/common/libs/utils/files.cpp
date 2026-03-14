@@ -626,9 +626,8 @@ Result<std::string> FindFile(const std::string& path,
 
 // Recursively enumerate files in |dir|, and invoke the callback function with
 // path to each file/directory.
-Result<void> WalkDirectory(
-    const std::string& dir,
-    const std::function<Result<void>(const std::string&)>& callback) {
+Result<void> WalkDirectory(const std::string& dir,
+                           const WalkDirectoryCallback& callback) {
   for (const std::string& filename : CF_EXPECT(DirectoryContents(dir))) {
     auto file_path = dir + "/";
     file_path.append(filename);
