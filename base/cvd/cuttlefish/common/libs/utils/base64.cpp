@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <openssl/base64.h>
@@ -41,6 +42,10 @@ Result<std::string> EncodeBase64(const void* data, size_t size) {
   CF_EXPECT_GE(enc_res, 0);
   out.resize(enc_res);  // Don't count the terminating \0 character
   return out;
+}
+
+Result<std::string> EncodeBase64(std::string_view data) {
+  return CF_EXPECT(EncodeBase64(data.data(), data.size()));
 }
 
 Result<std::vector<uint8_t>> DecodeBase64(const std::string& data) {

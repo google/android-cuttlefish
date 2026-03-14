@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "cuttlefish/result/result_type.h"
@@ -27,6 +28,7 @@
 namespace cuttlefish {
 
 Result<std::string> EncodeBase64(const void* _data, size_t size);
+Result<std::string> EncodeBase64(std::string_view);
 
 Result<std::vector<uint8_t>> DecodeBase64(const std::string& data);
 

@@ -27,27 +27,21 @@
 namespace cuttlefish {
 
 TEST(Base64Test, EncodeMult3) {
-  std::string in = "foobar";
-  std::string expected("Zm9vYmFy");
-  ASSERT_THAT(EncodeBase64(in.c_str(), in.size()), IsOkAndValue(expected));
+  ASSERT_THAT(EncodeBase64("foobar"), IsOkAndValue("Zm9vYmFy"));
 }
 
 TEST(Base64Test, EncodeNonMult3) {
-  std::string in = "foobar1";
-  std::string expected("Zm9vYmFyMQ==");
-  ASSERT_THAT(EncodeBase64(in.c_str(), in.size()), IsOkAndValue(expected));
+  ASSERT_THAT(EncodeBase64("foobar1"), IsOkAndValue("Zm9vYmFyMQ=="));
 }
 
 TEST(Base64Test, DecodeMult3) {
-  std::string in = "Zm9vYmFy";
   std::vector<uint8_t> expected{'f','o','o','b','a','r'};
-  ASSERT_THAT(DecodeBase64(in), IsOkAndValue(expected));
+  ASSERT_THAT(DecodeBase64("Zm9vYmFy"), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, DecodeNonMult3) {
-  std::string in = "Zm9vYmFyMQ==";
   std::vector<uint8_t> expected{'f','o','o','b','a','r','1'};
-  ASSERT_THAT(DecodeBase64(in), IsOkAndValue(expected));
+  ASSERT_THAT(DecodeBase64("Zm9vYmFyMQ=="), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, EncodeOneZero) {
