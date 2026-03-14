@@ -22,9 +22,11 @@
 #include <string>
 #include <vector>
 
+#include "cuttlefish/result/result_type.h"
+
 namespace cuttlefish {
 
-bool EncodeBase64(const void* _data, size_t size, std::string* out);
+Result<std::string> EncodeBase64(const void* _data, size_t size);
 
 bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer);
 

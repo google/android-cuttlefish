@@ -35,11 +35,9 @@ using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 Result<std::string> GetSerializedProtoArgument(
     const CuttlefishLogEvent& cf_log_event) {
   const std::string serialized_event = cf_log_event.SerializeAsString();
-  std::string encoded_str_out;
-  CF_EXPECTF(EncodeBase64(serialized_event.c_str(), serialized_event.size(),
-                          &encoded_str_out),
-             "Unable to base64-encode string: {}", serialized_event);
-  return encoded_str_out;
+  return CF_EXPECTF(
+      EncodeBase64(serialized_event.c_str(), serialized_event.size()),
+      "Unable to base64-encode string: '{}'", serialized_event);
 }
 
 Command BuildCommand(const std::string& transmitter_binary,

@@ -76,10 +76,8 @@ Result<void> InsecureJsonStorage::Write(const std::string& key, const StorageDat
     root = CF_EXPECT(ReadJson(path_));
   }
 
-  std::string value_base64;
-  CF_EXPECT(EncodeBase64(data.payload, data.size, &value_base64),
-            "Failed to encode base64 to write key: " << key);
-  root[key] = value_base64;
+  root[key] = CF_EXPECTF(EncodeBase64(data.payload, data.size),
+                         "Failed to encode base64 to write key '{}'", key);
 
   CF_EXPECT(WriteJson(path_, root));
   return {};

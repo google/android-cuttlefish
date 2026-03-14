@@ -22,7 +22,11 @@ cf_cc_library(
     name = "base64",
     srcs = ["base64.cpp"],
     hdrs = ["base64.h"],
-    deps = ["@boringssl//:crypto"],
+    deps = [
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@boringssl//:crypto",
+    ],
 )
 
 cf_cc_test(
@@ -30,6 +34,8 @@ cf_cc_test(
     srcs = ["base64_test.cpp"],
     deps = [
         "//cuttlefish/common/libs/utils:base64",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
         "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
