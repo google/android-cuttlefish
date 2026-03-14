@@ -1,0 +1,21 @@
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+exports_files([".clang-tidy"])
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cf_cc_library(
+    name = "make_fat_image",
+    srcs = ["make_fat_image.cc"],
+    hdrs = ["make_fat_image.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/libs/config:known_paths",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
