@@ -621,7 +621,10 @@ Result<std::string> FindFile(const std::string& path,
     }
     return {};
   };
-  return WalkDirectory(path, callback).ok() ? "" : ret;
+  CF_EXPECT(WalkDirectory(path, callback));
+  CF_EXPECTF(!ret.empty(), "No file matching '{}' found in '{}'", target_name,
+             path);
+  return ret;
 }
 
 // Recursively enumerate files in |dir|, and invoke the callback function with
