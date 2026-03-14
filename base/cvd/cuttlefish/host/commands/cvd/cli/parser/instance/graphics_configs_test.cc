@@ -65,10 +65,9 @@ Result<std::optional<InstancesDisplays>> DisplaysFlag(std::vector<std::string> a
   if (!flag_str_opt.has_value()) {
     return {};
   }
-  auto flag_str = CF_EXPECT(std::move(flag_str_opt));
+  std::string flag_str = CF_EXPECT(std::move(flag_str_opt));
 
-  std::vector<uint8_t> decoded;
-  CF_EXPECT(DecodeBase64(flag_str, &decoded));
+  std::vector<uint8_t> decoded = CF_EXPECT(DecodeBase64(flag_str));
 
   InstancesDisplays ret;
   CF_EXPECT(ret.ParseFromArray(decoded.data(), decoded.size()));
