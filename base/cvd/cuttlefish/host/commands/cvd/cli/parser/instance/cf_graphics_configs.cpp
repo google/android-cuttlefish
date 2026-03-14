@@ -93,7 +93,7 @@ Result<std::optional<std::string>> GenerateDisplayFlag(const EnvironmentSpecific
             "Failed to convert display proto to binary string ");
 
   std::string base64_output =
-      CF_EXPECT(EncodeBase64(bin_output.data(), bin_output.size()),
+      CF_EXPECT(EncodeBase64(bin_output),
                 "Failed to apply EncodeBase64 to binary string ");
 
   return "--displays_binproto=" + base64_output;
