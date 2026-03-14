@@ -63,8 +63,7 @@ std::string CollectSslErrors() {
 }
 
 Result<std::string> Base64Url(const char* data, size_t size) {
-  std::string base64;
-  CF_EXPECT(EncodeBase64(data, size, &base64));
+  std::string base64 = CF_EXPECT(EncodeBase64(data, size));
   base64 = android::base::StringReplace(base64, "+", "-", /* all */ true);
   base64 = android::base::StringReplace(base64, "/", "_", /* all */ true);
   return base64;

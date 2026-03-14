@@ -46,8 +46,7 @@ static Result<std::string> BootCfgArgs(const Instance& instance) {
   } else {
     args = CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS;
   }
-  std::string encoded;
-  CF_EXPECT(EncodeBase64(args.data(), args.size(), &encoded));
+  std::string encoded = CF_EXPECT(EncodeBase64(args.data(), args.size()));
   return encoded;
 }
 
