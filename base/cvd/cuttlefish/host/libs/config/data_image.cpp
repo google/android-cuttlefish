@@ -38,6 +38,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/esp.h"
+#include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 #include "cuttlefish/host/libs/config/openwrt_args.h"
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/result/result.h"

@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
-#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -87,9 +86,6 @@ class FuchsiaEspBuilder {
   std::string zedboot_;
   std::optional<Arch> arch_;
 };
-
-Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
-                          int offset_num_mb);
 
 bool CanGenerateGrubEsp(Arch arch);
 

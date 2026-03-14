@@ -15,10 +15,6 @@
 
 #include "cuttlefish/host/libs/config/esp.h"
 
-#include <sys/types.h>
-
-#include <fcntl.h>
-
 #include <algorithm>
 #include <array>
 #include <iterator>
@@ -37,8 +33,8 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/host/libs/config/esp/make_fat_image.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
-#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -88,63 +84,6 @@ static constexpr std::array kGrubModules{
     "cat",    "help",       "fat",   "part_msdos", "part_gpt"};
 static constexpr char kGrubModulesPath[] = "/usr/lib/grub";
 static constexpr char kGrubModulesX64Name[] = "x86_64-efi";
-
-Result<void> MakeFatImage(const std::string& data_image, int data_image_mb,
-                          int offset_num_mb) {
-  off_t offset_size_bytes = static_cast<off_t>(offset_num_mb) << 20;
-  off_t image_size_bytes = static_cast<off_t>(data_image_mb) << 20;
-
-  if (FileExists(MkfsFat())) {
-    auto fd = SharedFD::Open(data_image, O_CREAT | O_TRUNC | O_RDWR, 0666);
-    CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
-               "`truncate --size={}M '{}'` failed: {}", data_image_mb,
-               data_image, fd->StrError());
-
-    CF_EXPECT(Execute({MkfsFat(),
-                       "-F",
-                       "32",
-                       "-M",
-                       "0xf8",
-                       "-h",
-                       "0",
-                       "-s",
-                       "8",
-                       "-g",
-                       "255/63",
-                       "-S",
-                       "512",
-                       "--offset=" + std::to_string(offset_size_bytes),
-                       data_image}) == 0);
-  } else {
-    image_size_bytes -= offset_size_bytes;
-    off_t image_size_sectors = image_size_bytes / 512;
-
-    CF_EXPECT(Execute({NewfsMsdos(),
-                       "-F",
-                       "32",
-                       "-m",
-                       "0xf8",
-                       "-o",
-                       "0",
-                       "-c",
-                       "8",
-                       "-h",
-                       "255",
-                       "-u",
-                       "63",
-                       "-S",
-                       "512",
-                       "-s",
-                       std::to_string(image_size_sectors),
-                       "-C",
-                       std::to_string(data_image_mb) + "M",
-                       "-@",
-                       std::to_string(offset_size_bytes),
-                       data_image}) == 0);
-  }
-
-  return {};
-}
 
 bool CanGenerateGrubEsp(Arch arch) {
   switch (arch) {
