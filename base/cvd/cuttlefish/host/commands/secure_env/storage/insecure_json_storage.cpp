@@ -61,9 +61,9 @@ Result<ManagedStorageData> InsecureJsonStorage::Read(const std::string& key) con
   auto root = CF_EXPECT(ReadJson(path_));
   CF_EXPECT(root.isMember(key), "Key: " << key << " not found in " << path_);
 
-  std::vector<uint8_t> base64_buffer;
-  CF_EXPECT(DecodeBase64(root[key].asString(), &base64_buffer),
-            "Failed to decode base64 to read key: " << key);
+  std::vector<uint8_t> base64_buffer =
+      CF_EXPECTF(DecodeBase64(root[key].asString()),
+                 "Failed to decode base64 to read key '{}'", key);
   auto storage_data = CF_EXPECT(CreateStorageData(base64_buffer.size()));
   std::memcpy(storage_data->payload, reinterpret_cast<unsigned char *>(base64_buffer.data()),
               base64_buffer.size());

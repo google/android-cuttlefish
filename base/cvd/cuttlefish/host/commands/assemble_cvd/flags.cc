@@ -816,9 +816,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     instance.set_extra_bootconfig_args(
         extra_bootconfig_args_vec[instance_index]);
     if (!extra_bootconfig_args_base64_vec[instance_index].empty()) {
-      std::vector<uint8_t> decoded_args;
-      CF_EXPECT(DecodeBase64(extra_bootconfig_args_base64_vec[instance_index],
-                             &decoded_args));
+      std::vector<uint8_t> decoded_args = CF_EXPECT(
+          DecodeBase64(extra_bootconfig_args_base64_vec[instance_index]));
       std::string decoded_args_str(decoded_args.begin(), decoded_args.end());
       instance.set_extra_bootconfig_args(decoded_args_str);
     }

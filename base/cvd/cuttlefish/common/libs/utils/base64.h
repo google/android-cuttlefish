@@ -28,6 +28,6 @@ namespace cuttlefish {
 
 Result<std::string> EncodeBase64(const void* _data, size_t size);
 
-bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer);
+Result<std::vector<uint8_t>> DecodeBase64(const std::string& data);
 
 }  // namespace cuttlefish

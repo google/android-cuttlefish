@@ -43,18 +43,16 @@ Result<std::string> EncodeBase64(const void* data, size_t size) {
   return out;
 }
 
-bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer) {
-  buffer->resize(data.size());
+Result<std::vector<uint8_t>> DecodeBase64(const std::string& data) {
+  std::vector<uint8_t> buffer(data.size());
   size_t actual_len = 0;
-  int success = EVP_DecodeBase64(buffer->data(), &actual_len, buffer->size(),
-                                 reinterpret_cast<const uint8_t *>(data.data()),
-                                 data.size());
-  if (success != 1) {
-    return false;
-  }
-  buffer->resize(actual_len);
+  CF_EXPECT_EQ(EVP_DecodeBase64(buffer.data(), &actual_len, buffer.size(),
+                                reinterpret_cast<const uint8_t*>(data.data()),
+                                data.size()),
+               1);
+  buffer.resize(actual_len);
 
-  return true;
+  return buffer;
 }
 
 }  // namespace cuttlefish

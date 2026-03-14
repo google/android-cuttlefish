@@ -41,19 +41,13 @@ TEST(Base64Test, EncodeNonMult3) {
 TEST(Base64Test, DecodeMult3) {
   std::string in = "Zm9vYmFy";
   std::vector<uint8_t> expected{'f','o','o','b','a','r'};
-  std::vector<uint8_t> out;
-  ASSERT_TRUE(DecodeBase64(in, &out));
-  ASSERT_EQ(out.size(), expected.size());
-  ASSERT_EQ(out, expected);
+  ASSERT_THAT(DecodeBase64(in), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, DecodeNonMult3) {
   std::string in = "Zm9vYmFyMQ==";
   std::vector<uint8_t> expected{'f','o','o','b','a','r','1'};
-  std::vector<uint8_t> out;
-  ASSERT_TRUE(DecodeBase64(in, &out));
-  ASSERT_EQ(out.size(), expected.size());
-  ASSERT_EQ(out, expected);
+  ASSERT_THAT(DecodeBase64(in), IsOkAndValue(expected));
 }
 
 TEST(Base64Test, EncodeOneZero) {
@@ -62,10 +56,7 @@ TEST(Base64Test, EncodeOneZero) {
   Result<std::string> string_encoding = EncodeBase64(in.data(), in.size());
   ASSERT_THAT(string_encoding, IsOk());
 
-  std::vector<uint8_t> out;
-  ASSERT_TRUE(DecodeBase64(*string_encoding, &out));
-
-  ASSERT_EQ(in, out);
+  ASSERT_THAT(DecodeBase64(*string_encoding), IsOkAndValue(in));
 }
 
 TEST(Base64Test, EncodeTwoZeroes) {
@@ -74,10 +65,7 @@ TEST(Base64Test, EncodeTwoZeroes) {
   Result<std::string> string_encoding = EncodeBase64(in.data(), in.size());
   ASSERT_THAT(string_encoding, IsOk());
 
-  std::vector<uint8_t> out;
-  ASSERT_TRUE(DecodeBase64(*string_encoding, &out));
-
-  ASSERT_EQ(in, out);
+  ASSERT_THAT(DecodeBase64(*string_encoding), IsOkAndValue(in));
 }
 
 TEST(Base64Test, EncodeThreeZeroes) {
@@ -86,9 +74,6 @@ TEST(Base64Test, EncodeThreeZeroes) {
   Result<std::string> string_encoding = EncodeBase64(in.data(), in.size());
   ASSERT_THAT(string_encoding, IsOk());
 
-  std::vector<uint8_t> out;
-  ASSERT_TRUE(DecodeBase64(*string_encoding, &out));
-
-  ASSERT_EQ(in, out);
+  ASSERT_THAT(DecodeBase64(*string_encoding), IsOkAndValue(in));
 }
 }
