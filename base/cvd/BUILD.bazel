@@ -30,6 +30,7 @@ filegroup(
         "//cuttlefish/host/commands/mkenvimage_slim:.clang-tidy",
         "//cuttlefish/host/commands/run_cvd:.clang-tidy",
         "//cuttlefish/host/libs/config:.clang-tidy",
+        "//cuttlefish/host/libs/config/esp:.clang-tidy",
         "//cuttlefish/host/libs/web:.clang-tidy",
         "//cuttlefish/host/libs/zip:.clang-tidy",
         "//cuttlefish/host/libs/zip/libzip_cc:.clang-tidy",
