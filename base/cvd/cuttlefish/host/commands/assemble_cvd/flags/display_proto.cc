@@ -51,8 +51,7 @@ template <typename ProtoType>
 Result<ProtoType> ParseBinProtoFlagHelper(const std::string& flag_value,
                                           const std::string& flag_name) {
   ProtoType proto_result;
-  std::vector<uint8_t> output;
-  CF_EXPECT(DecodeBase64(flag_value, &output));
+  std::vector<uint8_t> output = CF_EXPECT(DecodeBase64(flag_value));
   std::string serialized = std::string(output.begin(), output.end());
   CF_EXPECT(proto_result.ParseFromString(serialized),
             "Failed to parse binary proto, flag: " << flag_name << ", value: "

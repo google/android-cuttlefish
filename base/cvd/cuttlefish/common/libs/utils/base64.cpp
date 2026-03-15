@@ -20,40 +20,44 @@
 #include <stdint.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <openssl/base64.h>
 
+#include "cuttlefish/result/expect.h"
+#include "cuttlefish/result/result_type.h"
+
 namespace cuttlefish {
 
-bool EncodeBase64(const void* data, size_t size, std::string* out) {
+Result<std::string> EncodeBase64(const void* data, size_t size) {
   size_t max_length = 0;
-  if (EVP_EncodedLength(&max_length, size) == 0) {
-    return false;
-  }
+  CF_EXPECT_NE(EVP_EncodedLength(&max_length, size), 0);
 
-  out->resize(max_length);
-  auto enc_res = EVP_EncodeBlock(reinterpret_cast<uint8_t*>(out->data()),
-                                 reinterpret_cast<const uint8_t*>(data), size);
-  if (enc_res < 0) {
-    return false;
-  }
-  out->resize(enc_res);  // Don't count the terminating \0 character
-  return true;
+  std::string out;
+  out.resize(max_length);
+  ssize_t enc_res =
+      EVP_EncodeBlock(reinterpret_cast<uint8_t*>(out.data()),
+                      reinterpret_cast<const uint8_t*>(data), size);
+  CF_EXPECT_GE(enc_res, 0);
+  out.resize(enc_res);  // Don't count the terminating \0 character
+  return out;
 }
 
-bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer) {
-  buffer->resize(data.size());
-  size_t actual_len = 0;
-  int success = EVP_DecodeBase64(buffer->data(), &actual_len, buffer->size(),
-                                 reinterpret_cast<const uint8_t *>(data.data()),
-                                 data.size());
-  if (success != 1) {
-    return false;
-  }
-  buffer->resize(actual_len);
+Result<std::string> EncodeBase64(std::string_view data) {
+  return CF_EXPECT(EncodeBase64(data.data(), data.size()));
+}
 
-  return true;
+Result<std::vector<uint8_t>> DecodeBase64(const std::string& data) {
+  std::vector<uint8_t> buffer(data.size());
+  size_t actual_len = 0;
+  CF_EXPECT_EQ(EVP_DecodeBase64(buffer.data(), &actual_len, buffer.size(),
+                                reinterpret_cast<const uint8_t*>(data.data()),
+                                data.size()),
+               1);
+  buffer.resize(actual_len);
+
+  return buffer;
 }
 
 }  // namespace cuttlefish

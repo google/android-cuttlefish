@@ -50,9 +50,9 @@ Flag Base64GflagsCompatFlag(const std::string& name, std::string& value) {
   return GflagsCompatFlag(name)
       .Getter([&value]() { return value; })
       .Setter([name, &value](const FlagMatch& match) -> Result<void> {
-        std::vector<uint8_t> decoded_out;
-        CF_EXPECTF(DecodeBase64(match.value, &decoded_out),
-                   "Unable to base64 decode string: {}", match.value);
+        std::vector<uint8_t> decoded_out =
+            CF_EXPECTF(DecodeBase64(match.value),
+                       "Unable to base64 decode string: '{}'", match.value);
         value = std::string(decoded_out.begin(), decoded_out.end());
         return {};
       });

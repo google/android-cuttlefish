@@ -40,14 +40,10 @@ static bool EnableBootAnimation(const Instance& instance) {
 
 static Result<std::string> BootCfgArgs(const Instance& instance) {
   const auto& boot = instance.boot();
-  std::string args;
-  if (boot.has_extra_bootconfig_args()) {
-    args = instance.boot().extra_bootconfig_args();
-  } else {
-    args = CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS;
-  }
-  std::string encoded;
-  CF_EXPECT(EncodeBase64(args.data(), args.size(), &encoded));
+  const std::string args = boot.has_extra_bootconfig_args()
+                               ? instance.boot().extra_bootconfig_args()
+                               : CF_DEFAULTS_EXTRA_BOOTCONFIG_ARGS;
+  const std::string encoded = CF_EXPECT(EncodeBase64(args));
   return encoded;
 }
 
