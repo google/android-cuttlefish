@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 
+#include "cuttlefish/host/commands/assemble_cvd/disk/efi_loader.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/kernel_ramdisk_repacker.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/metadata_image.h"
@@ -40,6 +41,12 @@ std::vector<std::vector<std::unique_ptr<ImageFile>>> InstanceImageFiles(
     instance_image_files.emplace_back(std::make_unique<MiscImage>(instance));
     instance_image_files.emplace_back(
         std::make_unique<InstanceBootImage>(config, instance, boot_image_flag));
+
+    if (std::optional<EfiLoaderImage> efi = EfiLoaderImage::Create(instance);
+        efi.has_value()) {
+      instance_image_files.emplace_back(
+          std::make_unique<EfiLoaderImage>(std::move(*efi)));
+    }
   }
 
   return image_files;

@@ -16,21 +16,30 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
+#include <optional>
+#include <string>
 
-#include "cuttlefish/host/commands/assemble_cvd/android_build/android_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/image_file.h"
-#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
-#include "cuttlefish/result/result.h"
+#include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
 
-Result<std::vector<ImagePartition>> AndroidEfiLoaderCompositeDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance,
-    const std::vector<std::unique_ptr<ImageFile>>&, AndroidBuild&,
-    const SystemImageDirFlag&);
+class EfiLoaderImage : public ImageFile {
+ public:
+  static std::optional<EfiLoaderImage> Create(
+      const CuttlefishConfig::InstanceSpecific&);
+
+  std::string Name() const override;
+
+  Result<std::string> Generate() override;
+
+  Result<std::string> Path() const override;
+
+ private:
+  EfiLoaderImage(std::string);
+
+  std::string path_;
+};
 
 }  // namespace cuttlefish
