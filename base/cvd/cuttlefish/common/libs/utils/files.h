@@ -99,9 +99,10 @@ FileSizes SparseFileSizes(const std::string& path);
 Result<std::string> FindFile(const std::string& path,
                              const std::string& target_name);
 
-Result<void> WalkDirectory(
-    const std::string& dir,
-    const std::function<bool(const std::string&)>& callback);
+using WalkDirectoryCallback = std::function<Result<void>(const std::string&)>;
+
+Result<void> WalkDirectory(const std::string& dir,
+                           const WalkDirectoryCallback& callback);
 
 // parameter to EmulateAbsolutePath
 struct InputPathForm {

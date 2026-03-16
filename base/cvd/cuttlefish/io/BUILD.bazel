@@ -249,6 +249,19 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "lz4_legacy",
+    srcs = ["lz4_legacy.cc"],
+    hdrs = ["lz4_legacy.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@lz4",
+    ],
+)
+
+cf_cc_library(
     name = "native_filesystem",
     srcs = ["native_filesystem.cc"],
     hdrs = ["native_filesystem.h"],

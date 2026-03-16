@@ -1,8 +1,14 @@
-cuttlefish-frontend (1.47.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.48.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Alistair Delva <adelva@google.com>  Fri, 13 Mar 2026 15:02:27 -0700
+
+cuttlefish-frontend (1.47.0) unstable; urgency=medium
 
   * N/A 
 
- -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 14:10:23 -0800
+ -- Alistair Delva <adelva@google.com>  Fri, 13 Mar 2026 14:55:13 -0700
 
 cuttlefish-frontend (1.46.0) unstable; urgency=medium
 
@@ -151,7 +157,7 @@ cuttlefish-frontend (1.27.0) stable; urgency=medium
 
  -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 20:23:38 +0100
 
-cuttlefish-frontend (1.26.0) unstable; urgency=medium
+cuttlefish-frontend (1.26.0) stable; urgency=medium
 
   * No changes.
 

@@ -1,8 +1,43 @@
-cuttlefish-common (1.47.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.48.0) UNRELEASED; urgency=medium
 
-  * N/A
+  * 
 
- -- Jason Macnak <natsu@google.com>  Fri, 06 Mar 2026 14:10:07 -0800
+ -- Alistair Delva <adelva@google.com>  Fri, 13 Mar 2026 15:02:06 -0700
+
+cuttlefish-common (1.47.0) unstable; urgency=medium
+
+  * Mark release 1.46.0 as unstable by @jmacnak in https://github.com/google/android-cuttlefish/pull/2230
+  * Start development on v1.47.0 by @jmacnak in https://github.com/google/android-cuttlefish/pull/2231
+  * Use `Result` more in `boot_image_utils.cc` by @Databean in https://github.com/google/android-cuttlefish/pull/2233
+  * Modify version format when building cuttlefish-podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2226
+  * Introduce script required to be run after installing deb package by @0405ysj in https://github.com/google/android-cuttlefish/pull/2222
+  * Fix build-debian-packages/action.yaml to be working by @0405ysj in https://github.com/google/android-cuttlefish/pull/2236
+  * Support visiting IO types to find runtime implementations by @Databean in https://github.com/google/android-cuttlefish/pull/2220
+  * Replace mkbootimg calls for vendor boot images with a C++ implementation by @Databean in https://github.com/google/android-cuttlefish/pull/2234
+  * ExecOnContainer handles when stdin is closed as well. by @0405ysj in https://github.com/google/android-cuttlefish/pull/2227
+  * Migration from Bookworm to Trixie for the Gigabyte Ampere server installer by @grandpaul in https://github.com/google/android-cuttlefish/pull/2228
+  * Revert the migration to the v4 AB API by @cjreynol in https://github.com/google/android-cuttlefish/pull/2235
+  * baseimage: avoid reboot, use full shutdown instead. by @ser-io in https://github.com/google/android-cuttlefish/pull/2243
+  * Return a `Result<void>` from `WriteFsConfig` by @Databean in https://github.com/google/android-cuttlefish/pull/2242
+  * Fix invalid optional access in GetHostBuild by @Databean in https://github.com/google/android-cuttlefish/pull/2241
+  * Remove the cvd_impl namespace by @Databean in https://github.com/google/android-cuttlefish/pull/2247
+  * Mark `cuttlefish-*` v1.45.0 as stable by @cjreynol in https://github.com/google/android-cuttlefish/pull/2251
+  * Remove `CuttlefishConfig::InstanceSpecific::boot_image` by @Databean in https://github.com/google/android-cuttlefish/pull/2250
+  * Move uboot_env_image_path from CuttlefishConfig to BootloaderEnvPartition by @Databean in https://github.com/google/android-cuttlefish/pull/2246
+  * Replace `avbtool info_image` with property extraction via libavb by @Databean in https://github.com/google/android-cuttlefish/pull/2232
+  * Remove `CuttlefishConfig::InstanceSpecific::new_boot_image` by @Databean in https://github.com/google/android-cuttlefish/pull/2253
+  * rename(2) wrapper by @Databean in https://github.com/google/android-cuttlefish/pull/2245
+  * Replace CuttlefishConfig::InstanceSpecific::hwcomposer_pmem_path with a free function by @Databean in https://github.com/google/android-cuttlefish/pull/2255
+  * Delete `FindImage` by @Databean in https://github.com/google/android-cuttlefish/pull/2257
+  * Adds a "gpu_mode_candidates" opt for restricting allowed modes by @jmacnak in https://github.com/google/android-cuttlefish/pull/2229
+  * Revert "Updated debian host image to trixie" by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2259
+  * Reapply "Revert the migration to the v4 AB API" by @cjreynol in https://github.com/google/android-cuttlefish/pull/2248
+  * Attached disk size by @ser-io in https://github.com/google/android-cuttlefish/pull/2260
+  * Mark printing help msg for fetch subcommand as supported on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2263
+  * Fix mixing of both kernel and super image by @Databean in https://github.com/google/android-cuttlefish/pull/2262
+  * Create linux-sparse files when extracting zip archive members by @Databean in https://github.com/google/android-cuttlefish/pull/2261
+
+ -- Alistair Delva <adelva@google.com>  Fri, 13 Mar 2026 14:53:29 -0700
 
 cuttlefish-common (1.46.0) unstable; urgency=medium
 
@@ -538,7 +573,7 @@ cuttlefish-common (1.27.0) stable; urgency=medium
 
  -- Ram Muthiah <rammuthiah@google.com>  Fri, 03 Oct 2025 20:03:54 +0100
 
-cuttlefish-common (1.26.0) unstable; urgency=medium
+cuttlefish-common (1.26.0) stable; urgency=medium
 
   * Homogenize group directory structure by @jemoreira in https://github.com/google/android-cuttlefish/pull/1654
   * Move metrics protos outside of the  directory by @Databean in https://github.com/google/android-cuttlefish/pull/1661

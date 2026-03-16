@@ -92,10 +92,11 @@ func main() {
 	}
 
 	buildImageOpts := gce.BuildImageOpts{
-		Arch:               arch.GceArch(),
-		SourceImageProject: sourceImageProject,
-		SourceImage:        sourceImage,
-		ImageName:          imageName,
+		Arch:                   arch.GceArch(),
+		SourceImageProject:     sourceImageProject,
+		SourceImage:            sourceImage,
+		ImageName:              imageName,
+		CreateAttachedDiskOpts: gce.CreateDiskOpts{SizeGb: 32},
 		ModifyFunc: func(project, zone, insName string) error {
 			dstSrcs := []string{}
 			for _, src := range debSrcs.Srcs {

@@ -154,24 +154,21 @@ Result<void> HardLinkDirecoryContentsRecursively(
     const std::string& source, const std::string& destination) {
   CF_EXPECTF(IsDirectory(source), "Source '{}' is not a directory", source);
 
-  // TODO: b/471069557 - diagnose need
-  Result<void> unused = EnsureDirectoryExists(destination, 0755);
+  CF_EXPECT(EnsureDirectoryExists(destination, 0755));
 
-  const std::function<bool(const std::string&)> linker =
-      [&source, &destination](const std::string& filepath) mutable {
-        std::string src_path = filepath;
-        std::string dst_path =
-            destination + "/" + filepath.substr(source.size() + 1);
-        if (IsDirectory(src_path)) {
-          // TODO: b/471069557 - diagnose need
-          Result<void> unused = EnsureDirectoryExists(dst_path);
-          return true;
-        }
-        bool overwrite_existing = true;
-        Result<std::string> result =
-            CreateHardLink(src_path, dst_path, overwrite_existing);
-        return result.ok();
-      };
+  auto linker = [&source, &destination](
+                    const std::string& filepath) mutable -> Result<void> {
+    const std::string src_path = filepath;
+    const std::string dst_path =
+        destination + "/" + filepath.substr(source.size() + 1);
+    if (IsDirectory(src_path)) {
+      CF_EXPECT(EnsureDirectoryExists(dst_path));
+      return {};
+    }
+    const bool overwrite_existing = true;
+    CF_EXPECT(CreateHardLink(src_path, dst_path, overwrite_existing));
+    return {};
+  };
   CF_EXPECT(WalkDirectory(source, linker));
 
   return {};
@@ -617,34 +614,29 @@ bool FileIsSocket(const std::string& path) {
 Result<std::string> FindFile(const std::string& path,
                              const std::string& target_name) {
   std::string ret;
-  auto res = WalkDirectory(
-      path, [&ret, &target_name](const std::string& filename) mutable {
-        if (android::base::Basename(filename) == target_name) {
-          ret = filename;
-        }
-        return true;
-      });
-  if (!res.ok()) {
-    return "";
-  }
+  auto callback = [&ret, &target_name](
+                      const std::string& filename) mutable -> Result<void> {
+    if (android::base::Basename(filename) == target_name) {
+      ret = filename;
+    }
+    return {};
+  };
+  CF_EXPECT(WalkDirectory(path, callback));
+  CF_EXPECTF(!ret.empty(), "No file matching '{}' found in '{}'", target_name,
+             path);
   return ret;
 }
 
 // Recursively enumerate files in |dir|, and invoke the callback function with
 // path to each file/directory.
-Result<void> WalkDirectory(
-    const std::string& dir,
-    const std::function<bool(const std::string&)>& callback) {
-  const auto files = CF_EXPECT(DirectoryContents(dir));
-  for (const auto& filename : files) {
+Result<void> WalkDirectory(const std::string& dir,
+                           const WalkDirectoryCallback& callback) {
+  for (const std::string& filename : CF_EXPECT(DirectoryContents(dir))) {
     auto file_path = dir + "/";
     file_path.append(filename);
-    callback(file_path);
+    CF_EXPECT(callback(file_path));
     if (DirectoryExists(file_path)) {
-      auto res = WalkDirectory(file_path, callback);
-      if (!res.ok()) {
-        return res;
-      }
+      CF_EXPECT(WalkDirectory(file_path, callback));
     }
   }
   return {};
