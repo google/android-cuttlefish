@@ -3,6 +3,7 @@ name: Workflow for Gigabyte Ampere Server Cuttlefish Installer
 on:
   pull_request:
     paths:
+      - '.github/workflows/gigabyte-ampere-cuttlefish-installer.yaml'
       - 'gigabyte-ampere-cuttlefish-installer/**'
   push:
     branchs:
