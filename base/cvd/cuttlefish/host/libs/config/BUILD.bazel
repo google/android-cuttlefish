@@ -397,6 +397,20 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "mkenvimage_slim",
+    srcs = ["mkenvimage_slim.cc"],
+    hdrs = ["mkenvimage_slim.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/log",
+        "@zlib",
+    ],
+)
+
+cf_cc_library(
     name = "openwrt_args",
     srcs = ["openwrt_args.cpp"],
     hdrs = ["openwrt_args.h"],
