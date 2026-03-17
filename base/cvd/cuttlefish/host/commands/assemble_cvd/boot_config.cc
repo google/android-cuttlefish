@@ -26,7 +26,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_replace.h"
 #include "android-base/strings.h"
-#include "gflags/gflags.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
@@ -37,6 +36,7 @@
 #include "cuttlefish/host/libs/config/boot_flow.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/kernel_args.h"
+#include "cuttlefish/host/libs/config/mkenvimage_slim.h"
 #include "cuttlefish/host/libs/vm_manager/crosvm_manager.h"
 #include "cuttlefish/result/result.h"
 
@@ -176,14 +176,7 @@ Result<void> PrepareBootEnvImage(
   CF_EXPECTF(WriteEnvironment(instance, flow, kernel_cmdline, uboot_env_path),
              "Unable to write out plaintext env '{}'", uboot_env_path);
 
-  int mkenvimage_slim_status = Execute({
-      HostBinaryPath("mkenvimage_slim"),
-      "-output_path",
-      tmp_boot_env_image_path,
-      "-input_path",
-      uboot_env_path,
-  });
-  CF_EXPECT_EQ(mkenvimage_slim_status, 0, "mkenvimage_slim failed.");
+  CF_EXPECT(MkenvimageSlim(uboot_env_path, tmp_boot_env_image_path));
 
   const off_t boot_env_size_bytes =
       AlignToPowerOf2(kMaxAvbMetadataSize + 4096, PARTITION_SIZE_SHIFT);
