@@ -29,6 +29,8 @@ struct DeviceBuild {
   std::string target;
   std::string product;
   bool is_signed = false;
+  // did retrieving build details block waiting for a terminal status
+  bool status_blocked = false;
   std::optional<std::string> filepath;
 };
 

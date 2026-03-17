@@ -114,14 +114,15 @@ Result<Build> AndroidBuildApi::GetBuild(const DeviceBuildString& build_string) {
 
   AndroidBuildApi::BuildInfo build_info =
       CF_EXPECT(GetBuildInfo(proposed_build_id, *build_string.target));
-  CF_EXPECT(BlockUntilTerminalStatus(build_info.status, proposed_build_id,
-                                     build_info.target));
+  const bool blocked_on_status = CF_EXPECT(BlockUntilTerminalStatus(
+      build_info.status, proposed_build_id, build_info.target));
   return DeviceBuild{
       .id = proposed_build_id,
       .branch = build_info.branch,
       .target = build_info.target,
       .product = build_info.product,
       .is_signed = build_info.is_signed,
+      .status_blocked = blocked_on_status,
       .filepath = build_string.filepath,
   };
 }
@@ -230,7 +231,7 @@ Result<AndroidBuildApi::BuildInfo> AndroidBuildApi::GetBuildInfo(
   };
 }
 
-Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
+Result<bool> AndroidBuildApi::BlockUntilTerminalStatus(
     std::string_view initial_status, std::string_view build_id,
     std::string_view target) {
   const std::string url = android_build_url_->GetBuildUrl(build_id, target);
@@ -259,7 +260,7 @@ Result<void> AndroidBuildApi::BlockUntilTerminalStatus(
                                  "Error retrying build status retrieval");
     status = CF_EXPECT(GetValue<std::string>(json, {"buildAttemptStatus"}));
   }
-  return {};
+  return has_retried;
 }
 
 Result<std::vector<std::string>> AndroidBuildApi::Headers() {
