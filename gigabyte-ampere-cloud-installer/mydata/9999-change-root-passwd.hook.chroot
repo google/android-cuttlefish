@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Uncomment this for debugging purpose
+#echo "I: update root password"
+#echo "root:linaro" | chpasswd
+
