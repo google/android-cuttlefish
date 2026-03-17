@@ -70,7 +70,7 @@ class AndroidBuildApi : public BuildApi {
   };
   Result<BuildInfo> GetBuildInfo(std::string_view build_id,
                                  std::string_view target);
-  Result<void> BlockUntilTerminalStatus(std::string_view initial_status,
+  Result<bool> BlockUntilTerminalStatus(std::string_view initial_status,
                                         std::string_view build_id,
                                         std::string_view target);
   Result<std::vector<std::string>> Headers();
