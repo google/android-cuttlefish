@@ -8,17 +8,13 @@ exports_files([".clang-tidy"])
 
 cf_cc_binary(
     name = "mkenvimage_slim",
-    srcs = [
-        "mkenvimage_slim.cc",
-    ],
+    srcs = ["mkenvimage_slim.cc"],
     deps = [
-        "//cuttlefish/common/libs/fs",
-        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/libs/config:mkenvimage_slim",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@gflags",
-        "@zlib",
     ],
 )
