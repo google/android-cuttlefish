@@ -1,0 +1,25 @@
+name: 'Gigabyte Cloud installer first-boot with qemu'
+
+runs:
+  using: "composite"
+  steps:
+  - name: Cloud image first boot with qemu
+    working-directory: ./gigabyte-ampere-cloud-installer
+    shell: bash
+    run: |
+      screen -d -m -L -Logfile console_001.log ./tests/run-qemu.sh gigabyte-cidata.iso "-nographic"
+      while ! egrep "[^[:space:]]+[[:space:]]login:" console_001.log; do sleep 30; done
+      cp -f console_001.log console_001_p1.log
+      CONSOLELINES=$(cat console_001_p1.log | wc -l)
+      cat console_001_p1.log
+      grep "login:" console_001_p1.log > /dev/null
+      echo "CONSOLELINES=${CONSOLELINES}" >> $GITHUB_ENV
+  - name: Wait for post install script finish
+    working-directory: ./gigabyte-ampere-cloud-installer
+    shell: bash
+    run: |
+      sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'while [ ! -e /var/log/custom-startup.log ]; do sleep 30; echo "Check custom-startup.log"; done'
+      sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 vsoc-01@localhost:/var/log/custom-startup.log ./custom-startup.log
+      CUSTOM_LOG_LINES=$(wc -l < ./custom-startup.log)
+      cat ./custom-startup.log
+      while ! grep "VM successful" ./custom-startup.log; do sleep 30; sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 vsoc-01@localhost:/var/log/custom-startup.log ./custom-startup.log; tail -n +${CUSTOM_LOG_LINES} ./custom-startup.log; CUSTOM_LOG_LINES=$(wc -l < ./custom-startup.log); done

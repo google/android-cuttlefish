@@ -1,0 +1,485 @@
+name: Workflow for Cloud image installer for Gigabye Ampere server.
+
+on:
+  pull_request:
+    paths:
+      - 'gigabyte-ampere-cloud-installer/**'
+  push:
+    branchs:
+      - '**'
+
+jobs:
+  build-cloud-installer-initramfs-job:
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+      options: --privileged
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Setting up build environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y debconf-utils
+        echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v
+        echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+        dpkg-reconfigure --frontend noninteractive tzdata
+        echo "pbuilder pbuilder/mirrorsite string http://deb.debian.org/debian/" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y pbuilder
+        dpkg-reconfigure --frontend noninteractive pbuilder
+        apt-get install -y lsb-release
+    - name: Generate new initramfs
+      run: |
+        export HOME=$GITHUB_WORKSPACE
+        ./regenerate-initramfs.sh
+    - name: Upload artifacts for initramfs
+      uses: actions/upload-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-initramfs-artifacts
+        path: gigabyte-ampere-cloud-installer/initrd.img-*
+
+  build-cloud-installer-job:
+    needs: [build-cloud-installer-initramfs-job]
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+      options: --privileged
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-initramfs-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Setting up build environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y debconf-utils
+        echo "tzdata tzdata/Areas select Etc" | debconf-set-selections -v
+        echo "tzdata tzdata/Zones/Etc select UTC" | debconf-set-selections -v
+        DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
+        dpkg-reconfigure --frontend noninteractive tzdata
+        apt-get install -y util-linux util-linux-extra
+        apt-get install -y xz-utils
+        apt-get install -y qemu-system-arm qemu-user-static binfmt-support
+        apt-get install -y e2tools e2fsprogs
+        apt-get install -y ubuntu-dev-tools
+        apt-get install -y wget curl
+        apt-get install -y live-build
+    - name: Download Debian cloud image
+      run: ./download_debian.sh
+    - name: Modify Debian's cloud image for new initramfs.
+      run: ./replace-initramfs.sh
+    - name: Live build
+      run: |
+        ./lb_setup.sh
+        ./lb_build.sh
+    - name: Compression
+      run: xz -9e live-image-arm64.iso
+    - name: Clean build directory
+      run: ./lb_clean.sh
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: gigabyte-ampere-cloud-installer/live-image-arm64.iso.xz
+
+  download-cidata-job:
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use github CLI to search for run-id
+      id: search-run
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        RUN_ID=$(gh run list --workflow "Workflow for Cloud init image for Cuttlefish" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+        echo "Found Run ID is : ${RUN_ID}"
+        echo "target_id=$RUN_ID" >> $GITHUB_OUTPUT
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: cloud-init-image-for-cuttlefish-artifacts
+        run-id: ${{ steps.search-run.outputs.target_id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Reupload artifact for later test cases
+      uses: actions/upload-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: gigabyte-cidata.iso
+
+  test-iso-qemu-job:
+    needs:
+      - build-cloud-installer-job
+      - download-cidata-job
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download installer artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Download cidata artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-prepare-testbed
+    - name: Extract artifacts
+      run: xz -d live-image-arm64.iso.xz
+    - name: Run installer on qemu
+      run: ./tests/run-qemu.sh live-image-arm64.iso "-display none"
+    - name: Check partitions
+      run: |
+        partx uboot_qemu_disk1.img
+        partx uboot_qemu_disk1.img | grep esp
+        partx uboot_qemu_disk1.img | grep pvlina
+    - name: Cloud image first boot with qemu
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
+    - name: Extract partitions
+      run: |
+        ./tests/installer-iso-extract-partitions-multidisk.sh
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l rootfs.img:/boot/vmlinuz-*
+        e2cp rootfs.img:/boot/$(e2ls rootfs.img:/boot/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-multidisk-qemu-empty-disk-job:
+    needs:
+      - build-cloud-installer-job
+      - download-cidata-job
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download installer artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Download cidata artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-prepare-testbed
+    - name: Extract artifacts
+      run: xz -d live-image-arm64.iso.xz
+    - name: Create Empty 2 disks
+      run: ../gigabyte-ampere-cuttlefish-installer/tests/multidisk/installer-create-empty-disk2.sh
+    - name: Run installer on qemu
+      run: ./tests/run-qemu.sh live-image-arm64.iso "-display none"
+    - name: Check partitions
+      run: |
+        partx uboot_qemu_disk1.img
+        partx uboot_qemu_disk1.img | grep esp
+        partx uboot_qemu_disk1.img | grep pvlina
+    - name: Cloud image first boot with qemu
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
+    - name: Extract partitions
+      run: |
+        ./tests/installer-iso-extract-partitions-multidisk.sh
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l rootfs.img:/boot/vmlinuz-*
+        e2cp rootfs.img:/boot/$(e2ls rootfs.img:/boot/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-multidisk-qemu-disk2-with-data-job:
+    needs:
+      - build-cloud-installer-job
+      - download-cidata-job
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download installer artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Download cidata artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-prepare-testbed
+    - name: Extract artifacts
+      run: xz -d live-image-arm64.iso.xz
+    - name: Create 2 disks with preinstalled partitions.
+      run: ../gigabyte-ampere-cuttlefish-installer/tests/multidisk/installer-create-preinstalled-disk2.sh
+    - name: Run installer on qemu
+      run: ./tests/run-qemu.sh live-image-arm64.iso "-display none"
+    - name: Check partitions
+      run: |
+        partx uboot_qemu_disk1.img
+        partx uboot_qemu_disk1.img | grep esp
+        partx uboot_qemu_disk1.img | grep pvlina
+    - name: Cloud image first boot with qemu
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
+    - name: Extract partitions
+      run: |
+        ./tests/installer-iso-extract-partitions-multidisk.sh
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l rootfs.img:/boot/vmlinuz-*
+        e2cp rootfs.img:/boot/$(e2ls rootfs.img:/boot/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-multidisk-qemu-disk5-with-data-job:
+    needs:
+      - build-cloud-installer-job
+      - download-cidata-job
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download installer artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Download cidata artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-prepare-testbed
+    - name: Extract artifacts
+      run: xz -d live-image-arm64.iso.xz
+    - name: Create 5 disks with preinstalled partitions.
+      run: ../gigabyte-ampere-cuttlefish-installer/tests/multidisk/installer-create-preinstalled-disk5.sh
+    - name: Run installer on qemu
+      run: ./tests/run-qemu.sh live-image-arm64.iso "-display none"
+    - name: Check partitions
+      run: |
+        partx uboot_qemu_disk0.img
+        partx uboot_qemu_disk0.img | grep esp
+        partx uboot_qemu_disk0.img | grep pvlina
+        partx uboot_qemu_disk1.img
+        partx uboot_qemu_disk1.img | grep pvlina
+    - name: Cloud image first boot with qemu
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
+    - name: Extract partitions
+      run: |
+        ./tests/installer-iso-extract-partitions-multidisk.sh
+    - name: Check if kernel is installed
+      run: |
+        e2ls -l rootfs.img:/boot/vmlinuz-*
+        e2cp rootfs.img:/boot/$(e2ls rootfs.img:/boot/vmlinuz-* | tail -1) .
+        test -e vmlinuz-*
+    - name: Check if Cuttlefish Debian packages are installed
+      run: |
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator
+        e2ls -l rootfs.img:/usr/bin/cvd_host_orchestrator | grep cvd_host_orchestrator | grep root
+
+  test-iso-cf-qemu-job:
+    needs:
+      - build-cloud-installer-job
+      - download-cidata-job
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    env:
+      TEST_DISK_SIZE: "10G"
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download installer artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Download cidata artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-prepare-testbed
+    - name: Extract artifacts
+      run: xz -d live-image-arm64.iso.xz
+    - name: Run installer on qemu
+      run: ./tests/run-qemu.sh live-image-arm64.iso "-display none"
+    - name: Check partitions
+      run: |
+        partx uboot_qemu_disk1.img
+        partx uboot_qemu_disk1.img | grep esp
+        partx uboot_qemu_disk1.img | grep pvlina
+    - name: Cloud image first boot with qemu
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
+    - name: Download Cuttlefish
+      run: |
+        ../gigabyte-ampere-cuttlefish-installer/utils/download-ci-cf.sh
+    - name: Deploy cuttlefish
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k apt-get install -y unzip'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'mkdir cf'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 cvd-host_package.tar.gz vsoc-01@localhost:/home/vsoc-01/
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; tar -xvf ../cvd-host_package.tar.gz'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'rm -f cvd-host_package.tar.gz'
+        sshpass -p cuttlefish scp -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -P 33322 aosp_cf_arm64*_phone-*.zip vsoc-01@localhost:/home/vsoc-01/
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; unzip ../aosp_cf_arm64*_phone-*.zip'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'rm -f aosp_cf_arm64*_phone-*.zip'
+    - name: Run cuttlefish command line
+      run: sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'cd cf; HOME=$PWD ./bin/launch_cvd -help' || true
+    - name: Run apt-cache policy
+      run: sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'apt-cache policy'
+    - name: Test for lzop
+      run: sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'lzop -V'
+    - name: Test for Google NTP server
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p'
+        CHECK_GOOGLE_TIME_SERVER=0
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p' | grep 'time1.google' && CHECK_GOOGLE_TIME_SERVER=1
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ntpq -p' | grep '.GOOG.' && CHECK_GOOGLE_TIME_SERVER=1
+        if [ x"${CHECK_GOOGLE_TIME_SERVER}" != x"1" ]; then echo "Google Time Servers not found!"; false; fi
+    - name: Test for ulimit
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -a'
+        test $(sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'ulimit -n') -ge 2048
+    - name: Test for iptables
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'update-alternatives --display iptables' | grep "link currently points to /usr/sbin/iptables-legacy"
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
+
+  test-iso-cf-container-qemu-job:
+    needs:
+      - build-cloud-installer-job
+      - download-cidata-job
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cloud-installer
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Download installer artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-artifacts
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Download cidata artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: gigabyte-ampere-cloud-installer-cidata
+        path: ./gigabyte-ampere-cloud-installer
+    - name: Prepare test environment
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-prepare-testbed
+    - name: Extract artifacts
+      run: xz -d live-image-arm64.iso.xz
+    - name: Run installer on qemu
+      run: ./tests/run-qemu.sh live-image-arm64.iso "-display none"
+    - name: Check partitions
+      run: |
+        partx uboot_qemu_disk1.img
+        partx uboot_qemu_disk1.img | grep esp
+        partx uboot_qemu_disk1.img | grep pvlina
+    - name: Cloud image first boot with qemu
+      uses: ./.github/actions/gigabyte-ampere-cloud-installer-test-first-boot
+    - name: Download Cuttlefish
+      run: |
+        ../gigabyte-ampere-cuttlefish-installer/utils/download-ci-cf.sh
+    - name: Test whether Host Orchestrator in the docker instance is alive or not.
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k docker pull us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k docker run -d --privileged -p 4080:2080 us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v --retry 6 --retry-all-errors --retry-delay 10'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v' | tr -d '[:space:]' | grep -xq '{"cvds":\[\]}'
+    - name: Shutdown qemu
+      run: |
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k shutdown -h 1'
+        while ! grep "reboot: Power down" console_001.log; do sleep 30; done
+        tail -n +"${CONSOLELINES}" console_001.log
