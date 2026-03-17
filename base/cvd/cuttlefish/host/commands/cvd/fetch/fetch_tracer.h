@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -47,6 +49,7 @@ class FetchTracer {
   Trace NewTrace(std::string name);
 
   std::string ToStyledString() const;
+  size_t TotalSizeBytes() const;
 
  private:
   std::vector<std::pair<std::string, std::shared_ptr<TraceImpl>>> traces_;

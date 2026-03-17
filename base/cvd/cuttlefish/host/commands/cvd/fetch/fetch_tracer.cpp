@@ -151,4 +151,14 @@ std::string FetchTracer::ToStyledString() const {
   return ss.str();
 }
 
+size_t FetchTracer::TotalSizeBytes() const {
+  size_t total = 0;
+  for (const auto& [name, trace] : traces_) {
+    for (const auto& phase : trace->phases) {
+      total += phase.size_bytes.value_or(0);
+    }
+  }
+  return total;
+}
+
 }  // namespace cuttlefish

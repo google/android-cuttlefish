@@ -503,6 +503,7 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
   VLOG(0) << "Waiting for host package fetch";
   CF_EXPECT(host_package_future.get());
   VLOG(0) << "Performance stats:\n" << tracer.ToStyledString();
+  fetch_result.fetch_size_bytes = tracer.TotalSizeBytes();
 
   LOG(INFO) << "Completed all fetches";
   return fetch_result;
