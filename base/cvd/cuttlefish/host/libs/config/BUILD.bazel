@@ -405,7 +405,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
-        "@abseil-cpp//absl/log",
         "@zlib",
     ],
 )
