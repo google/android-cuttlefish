@@ -17,7 +17,6 @@ package internal
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -34,14 +33,14 @@ type CvdArgs struct {
 	flagSet        *flag.FlagSet
 }
 
-func ParseCvdArgs() *CvdArgs {
+func ParseCvdArgs(allArgs []string) *CvdArgs {
 	fs := flag.NewFlagSet("podcvd", flag.ExitOnError)
 	commonArgs := CvdCommonArgs{}
 	fs.StringVar(&commonArgs.GroupName, "group_name", "", "Cuttlefish instance group")
 	fs.StringVar(&commonArgs.InstanceName, "instance_name", "", "Cuttlefish instance name or names with comma-separated")
 	fs.BoolVar(&commonArgs.Help, "help", false, "Print help message")
 	fs.StringVar(&commonArgs.Verbosity, "verbosity", "", "Verbosity level of the command")
-	fs.Parse(os.Args[1:])
+	fs.Parse(allArgs)
 	return &CvdArgs{
 		CommonArgs: &commonArgs,
 		// Golang's standard library 'flag' stops parsing just before the first

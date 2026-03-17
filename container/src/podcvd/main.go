@@ -185,7 +185,7 @@ func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvd
 }
 
 func main() {
-	cvdArgs := internal.ParseCvdArgs()
+	cvdArgs := internal.ParseCvdArgs(os.Args[1:])
 	if len(cvdArgs.SubCommandArgs) == 0 {
 		cvdArgs.SubCommandArgs = []string{"help"}
 	}
