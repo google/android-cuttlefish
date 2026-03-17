@@ -100,3 +100,81 @@ func TestRandStr(t *testing.T) {
 		t.Error("randStr returned two equal strings of len 100")
 	}
 }
+
+// TestWsClientImplementsClient verifies WsClient implements the Client interface.
+// This is a compile-time check, but we include it as a test for documentation.
+func TestWsClientImplementsClient(t *testing.T) {
+	// This is checked at compile time via: var _ Client = (*WsClient)(nil)
+	// If WsClient doesn't implement Client, the code won't compile.
+}
+
+// TestWsClientClose verifies that Close() can be called multiple times safely.
+func TestWsClientClose(t *testing.T) {
+	// Create a minimal WsClient without a real connection
+	// to test the Close() sync.Once behavior
+	c := &WsClient{
+		send: make(chan interface{}, 1),
+		done: make(chan struct{}),
+	}
+
+	// First close should work
+	c.Close()
+
+	// Verify done channel is closed
+	select {
+	case <-c.done:
+		// Expected
+	default:
+		t.Error("done channel not closed after Close()")
+	}
+
+	// Second close should not panic
+	c.Close()
+}
+
+// TestWsClientDone verifies the Done() channel behavior.
+func TestWsClientDone(t *testing.T) {
+	c := &WsClient{
+		send: make(chan interface{}, 1),
+		done: make(chan struct{}),
+	}
+
+	// Done() should return the done channel
+	done := c.Done()
+	if done == nil {
+		t.Error("Done() returned nil")
+	}
+
+	// Channel should be open initially
+	select {
+	case <-done:
+		t.Error("done channel closed before Close() called")
+	default:
+		// Expected
+	}
+
+	// After Close(), channel should be closed
+	c.Close()
+	select {
+	case <-done:
+		// Expected
+	default:
+		t.Error("done channel not closed after Close()")
+	}
+}
+
+// TestWsClientSendAfterClose verifies Send() returns without blocking after Close().
+func TestWsClientSendAfterClose(t *testing.T) {
+	c := &WsClient{
+		send: make(chan interface{}, 1),
+		done: make(chan struct{}),
+	}
+
+	c.Close()
+
+	// Send should return immediately without blocking
+	err := c.Send("test message")
+	if err != nil {
+		t.Error("Send() returned error after Close()")
+	}
+}
