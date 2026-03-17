@@ -180,7 +180,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 			PidsLimit: &pidsLimit,
 		},
 	}
-	var err error
+	var lastErr error
 	const retryCount = 5
 	for i := 0; i < retryCount; i++ {
 		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
@@ -197,19 +197,19 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "tcp", 15550, 15599)
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
 		containerHostCfg.NetworkMode = container.NetworkMode(fmt.Sprintf("pasta:-a,%s", ip))
-		var groupName string
-		if commonArgs.GroupName == "" {
+		groupName := commonArgs.GroupName
+		if groupName == "" {
 			groupName = findAvailableGroupName(groupNameIpAddrMap)
-		} else {
-			groupName = commonArgs.GroupName
 		}
 		containerCfg.Labels[labelGroupName] = groupName
-		if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ContainerName(groupName)); err == nil {
-			commonArgs.GroupName = groupName
-			return ip, nil
+		if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ContainerName(groupName)); err != nil {
+			lastErr = err
+			continue
 		}
+		commonArgs.GroupName = groupName
+		return ip, nil
 	}
-	return "", err
+	return "", lastErr
 }
 
 func ensureOperatorHealthy(ip string) error {
