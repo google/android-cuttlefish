@@ -24,8 +24,6 @@
 
 #include <zlib.h>
 
-#include "absl/log/log.h"
-
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -34,39 +32,36 @@
 
 namespace cuttlefish {
 
-#define PAD_VALUE (0xff)
-#define CRC_SIZE (sizeof(uint32_t))
-
+static constexpr uint8_t kPadValue = 0xff;
+static constexpr uint32_t kCrcSize = sizeof(uint32_t);
 // One NULL needed at the end of the env.
-#define NULL_PAD_LENGTH (1)
+static constexpr size_t kNullPadLength = 1;
 
 Result<void> MkenvimageSlim(const std::string& input_path,
                             const std::string& output_path, size_t env_size) {
   std::string env_readout = ReadFile(std::string(input_path));
-  CF_EXPECT(env_readout.length(), "Input env is empty");
-  CF_EXPECT(env_readout.length() <= (env_size - CRC_SIZE - NULL_PAD_LENGTH),
+  CF_EXPECT_GT(env_readout.length(), 0, "Input env is empty");
+  CF_EXPECT(env_readout.length() <= (env_size - kCrcSize - kNullPadLength),
             "Input env must fit within env_size specified.");
 
-  std::vector<uint8_t> env_buffer(env_size, PAD_VALUE);
-  uint8_t* env_ptr = env_buffer.data() + CRC_SIZE;
+  std::vector<uint8_t> env_buffer(env_size, kPadValue);
+  uint8_t* env_ptr = env_buffer.data() + kCrcSize;
   memcpy(env_ptr, env_readout.c_str(), FileSize(std::string(input_path)));
   env_ptr[env_readout.length()] = 0;  // final byte after the env must be NULL
-  uint32_t crc = crc32(0, env_ptr, env_size - CRC_SIZE);
+  uint32_t crc = crc32(0, env_ptr, env_size - kCrcSize);
   memcpy(env_buffer.data(), &crc, sizeof(uint32_t));
 
-  // NOLINTBEGIN(misc-include-cleaner)
-  auto output_fd = SharedFD::Creat(std::string(output_path),
-                                   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-  // NOLINTEND(misc-include-cleaner)
-  if (!output_fd->IsOpen()) {
-    return CF_ERR("Couldn't open the output file " + output_path);
-  } else if (env_size !=
-             WriteAll(output_fd, (char*)env_buffer.data(), env_size)) {
-    if (Result<void> res = RemoveFile(output_path); !res.ok()) {
-      LOG(ERROR) << res.error();
-    }
-    return CF_ERR("Couldn't complete write to " + output_path);
-  }
+  SharedFD output_fd =  // NOLINTNEXTLINE(misc-include-cleaner)
+      SharedFD::Creat(output_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+
+  CF_EXPECTF(output_fd->IsOpen(), "Couldn't open the output file '{}': '{}'",
+             output_path, output_fd->StrError());
+
+  CF_EXPECT_EQ(env_size,
+               WriteAll(output_fd, (char*)env_buffer.data(), env_size),
+               "Couldn't complete write to '"
+                   << output_path << "': " << output_fd->StrError());
+
   return {};
 }
 
