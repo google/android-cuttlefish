@@ -43,6 +43,9 @@ struct CmdLineArgs {
     /// Location of vhost-user Unix domain socket.
     #[clap(short, long, value_name = "SOCKET")]
     socket_path: PathBuf,
+    /// Log verbosity, one of Off, Error, Warning, Info, Debug, Trace.
+    #[clap(short, long, default_value_t = log::LevelFilter::Debug)]
+    verbosity: log::LevelFilter,
 }
 
 #[derive(PartialEq, Debug)]
@@ -60,10 +63,17 @@ impl TryFrom<CmdLineArgs> for Config {
     }
 }
 
+fn init_logging(verbosity: log::LevelFilter) -> Result<()> {
+    env_logger::builder()
+        .format_timestamp_secs()
+        .filter_level(verbosity)
+        .init();
+    Ok(())
+}
+
 const VFL_TYPE_VIDEO: u32 = 0;
 
-fn start_backend(args: CmdLineArgs) -> Result<()> {
-    let config = Config::try_from(args)?;
+fn start_backend(config: Config) -> Result<()> {
     let socket_path = config.socket_path.clone();
     let handle: JoinHandle<Result<()>> = spawn(move || {
         loop {
@@ -96,7 +106,9 @@ fn start_backend(args: CmdLineArgs) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    env_logger::init();
+    let args = CmdLineArgs::parse();
 
-    start_backend(CmdLineArgs::parse())
+    init_logging(args.verbosity)?;
+
+    start_backend(Config::try_from(args)?)
 }
