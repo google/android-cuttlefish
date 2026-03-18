@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -84,6 +85,16 @@ func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
 		return nil
 	}
 	return ccm.PullImage(context.Background(), imageName)
+}
+
+func cvdDataHome() (string, error) {
+	if xdgDataHome := os.Getenv("XDG_DATA_HOME"); xdgDataHome != "" {
+		return filepath.Join(xdgDataHome, "cvd"), nil
+	}
+	if home := os.Getenv("HOME"); home != "" {
+		return filepath.Join(home, ".local/share", "cvd"), nil
+	}
+	return "", fmt.Errorf("failed to find cvd data home dir")
 }
 
 func appendPortBindingRange(portMap nat.PortMap, hostIP string, protocol string, portStart int, portEnd int) {
@@ -168,12 +179,20 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		Image:  imageName,
 		Labels: map[string]string{},
 	}
+	cvdDataHome, err := cvdDataHome()
+	if err != nil {
+		return "", fmt.Errorf("failed to get cvd data home: %w", err)
+	}
+	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
+		return "", fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
+	}
 	pidsLimit := int64(8192)
 	containerHostCfg := &container.HostConfig{
 		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
 		Binds: []string{
 			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
 			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
+			fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
 		},
 		CapAdd: []string{"NET_RAW"},
 		Resources: container.Resources{
@@ -243,7 +262,19 @@ func createAndStartToolingContainer(ccm libcfcontainer.CuttlefishContainerManage
 	containerCfg := &container.Config{
 		Image: imageName,
 	}
-	if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, nil, ToolingContainerName); err != nil {
+	cvdDataHome, err := cvdDataHome()
+	if err != nil {
+		return fmt.Errorf("failed to get cvd data home: %w", err)
+	}
+	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
+		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
+	}
+	containerHostCfg := &container.HostConfig{
+		Binds: []string{
+			fmt.Sprintf("%s:/root/.local/share/cvd:rw", cvdDataHome),
+		},
+	}
+	if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ToolingContainerName); err != nil {
 		return err
 	}
 	return nil
