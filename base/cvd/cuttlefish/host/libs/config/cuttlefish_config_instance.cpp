@@ -1388,11 +1388,6 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
 }
 
-std::string
-CuttlefishConfig::InstanceSpecific::persistent_composite_overlay_path() const {
-  return AbsolutePath(PerInstancePath("persistent_composite_overlay.img"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::persistent_ap_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("ap_persistent_composite.img"));
@@ -1424,14 +1419,6 @@ std::string CuttlefishConfig::InstanceSpecific::esp_image_path() const {
 
 std::string CuttlefishConfig::InstanceSpecific::ap_esp_image_path() const {
   return AbsolutePath(PerInstancePath("ap_esp.img"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::otheros_esp_grub_config() const {
-  return AbsolutePath(PerInstancePath("grub.cfg"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::ap_esp_grub_config() const {
-  return AbsolutePath(PerInstancePath("ap_grub.cfg"));
 }
 
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
@@ -1734,14 +1721,6 @@ int CuttlefishConfig::InstanceSpecific::audiocontrol_server_port() const {
 }
 void CuttlefishConfig::MutableInstanceSpecific::set_audiocontrol_server_port(int audiocontrol_server_port) {
   (*Dictionary())[kAudioControlServerPort] = audiocontrol_server_port;
-}
-
-static constexpr char kConfigServerPort[] = "config_server_port";
-int CuttlefishConfig::InstanceSpecific::config_server_port() const {
-  return (*Dictionary())[kConfigServerPort].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int config_server_port) {
-  (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
 static constexpr char kLightsServerPort[] = "lights_server_port";
