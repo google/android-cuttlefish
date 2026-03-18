@@ -229,12 +229,24 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
 		return "", fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
 	}
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %w", err)
+	}
+	hostOut := os.Getenv("ANDROID_HOST_OUT")
+	if hostOut == "" {
+		hostOut = currentDir
+	}
+	productOut := os.Getenv("ANDROID_PRODUCT_OUT")
+	if productOut == "" {
+		productOut = currentDir
+	}
 	pidsLimit := int64(8192)
 	containerHostCfg := &container.HostConfig{
 		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
 		Binds: []string{
-			fmt.Sprintf("%s:/host_out:O", os.Getenv("ANDROID_HOST_OUT")),
-			fmt.Sprintf("%s:/product_out:O", os.Getenv("ANDROID_PRODUCT_OUT")),
+			fmt.Sprintf("%s:/host_out:O", hostOut),
+			fmt.Sprintf("%s:/product_out:O", productOut),
 			fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
 		},
 		CapAdd: []string{"NET_RAW"},
