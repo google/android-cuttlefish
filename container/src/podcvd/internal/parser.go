@@ -86,3 +86,23 @@ func (a *CvdArgs) HasHelpFlagOnSubCommandArgs() bool {
 	}
 	return false
 }
+
+func (a *CvdArgs) GetStringFlagValueOnSubCommandArgs(flagName string) string {
+	flags := make(map[string]struct{})
+	flags["-"+flagName] = struct{}{}
+	flags["--"+flagName] = struct{}{}
+
+	for idx, arg := range a.SubCommandArgs {
+		if _, exists := flags[arg]; exists && idx+1 < len(a.SubCommandArgs) {
+			return a.SubCommandArgs[idx+1]
+		}
+		splitArg := strings.SplitN(arg, "=", 2)
+		if len(splitArg) != 2 {
+			continue
+		}
+		if _, exists := flags[splitArg[0]]; exists {
+			return splitArg[1]
+		}
+	}
+	return ""
+}
