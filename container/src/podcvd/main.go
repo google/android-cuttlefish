@@ -230,7 +230,7 @@ func main() {
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
 				log.Fatal(err)
 			}
-		case "cache", "fetch", "lint", "load":
+		case "cache", "fetch", "lint":
 			// TODO(seungjaeyoo): Support other subcommands of cvd as well.
 			log.Fatalf("subcommand %q is not implemented yet", subcommand)
 		default:
