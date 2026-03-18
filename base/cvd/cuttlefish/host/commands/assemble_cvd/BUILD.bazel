@@ -32,6 +32,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:camera",
         "//cuttlefish/host/commands/assemble_cvd:clean",
         "//cuttlefish/host/commands/assemble_cvd:create_dynamic_disk_files",
         "//cuttlefish/host/commands/assemble_cvd:display",
@@ -308,6 +309,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/host/commands/assemble_cvd:alloc",
         "//cuttlefish/host/commands/assemble_cvd:assemble_cvd_flags",
+        "//cuttlefish/host/commands/assemble_cvd:camera",
         "//cuttlefish/host/commands/assemble_cvd:disk_image_flags_vectorization",
         "//cuttlefish/host/commands/assemble_cvd:display",
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
@@ -639,4 +641,20 @@ cf_cc_library(
     ],
     # required for the gflags `DEFINE`s when included in other targets
     alwayslink = 1,
+)
+
+cf_cc_library(
+    name = "camera",
+    srcs = ["camera.cpp"],
+    hdrs = ["camera.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/libs/config:camera",
+        "//cuttlefish/host/libs/config:config_flag",
+        "//cuttlefish/host/libs/config:config_fragment",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/feature",
+        "@abseil-cpp//absl/log",
+        "@fruit",
+    ],
 )

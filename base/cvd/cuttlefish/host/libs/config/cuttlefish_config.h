@@ -113,6 +113,16 @@ class CuttlefishConfig {
     static TouchpadConfig Deserialize(const Json::Value& config_json);
   };
 
+  enum class CameraType {
+    kUnknown = 0,
+    kV4l2Emulated,
+    kV4l2Proxy,
+  };
+
+  struct CameraConfig {
+    CameraType type;
+  };
+
   void set_secure_hals(const std::set<SecureHal>&);
   Result<std::set<SecureHal>> secure_hals() const;
 
@@ -587,6 +597,8 @@ class CuttlefishConfig {
     std::optional<::cuttlefish::config::Audio> audio_settings() const;
 
     bool enable_tap_devices() const;
+
+    std::vector<CameraConfig> camera_configs() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -810,6 +822,8 @@ class CuttlefishConfig {
     void set_audio_settings(const ::cuttlefish::config::Audio& audio_settings);
 
     void set_enable_tap_devices(bool);
+
+    void set_camera_configs(const std::vector<CameraConfig>& configs);
 
    private:
     void SetPath(const std::string& key, const std::string& path);

@@ -929,6 +929,14 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--pflash=", PflashPath(instance));
   }
 
+  for (const auto& config : instance.camera_configs()) {
+    if (config.type == CuttlefishConfig::CameraType::kV4l2Emulated) {
+      crosvm_cmd.Cmd().AddParameter("--simple-media-device");
+    } else if (config.type == CuttlefishConfig::CameraType::kV4l2Proxy) {
+      crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=", "/dev/video0");
+    }
+  }
+
   // This needs to be the last parameter
   crosvm_cmd.Cmd().AddParameter("--bios=", instance.bootloader());
 
