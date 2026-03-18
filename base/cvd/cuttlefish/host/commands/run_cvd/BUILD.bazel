@@ -93,6 +93,7 @@ cf_cc_binary(
         "//cuttlefish/host/commands/run_cvd/launch:vhal_proxy_server",
         "//cuttlefish/host/commands/run_cvd/launch:vhost_device_vsock",
         "//cuttlefish/host/commands/run_cvd/launch:vhost_input_devices",
+        "//cuttlefish/host/commands/run_cvd/launch:vhost_user_media_devices",
         "//cuttlefish/host/commands/run_cvd/launch:webrtc_controller",
         "//cuttlefish/host/commands/run_cvd/launch:wmediumd_server",
         "//cuttlefish/host/libs/config:config_flag",

@@ -1868,6 +1868,10 @@ std::string CuttlefishConfig::InstanceSpecific::switches_socket_path() const {
   return PerInstanceInternalUdsPath("switches.sock");
 }
 
+std::string CuttlefishConfig::InstanceSpecific::camera_socket_path(int index) const {
+  return PerInstanceInternalUdsPath(absl::StrCat("camera_", index, ".sock"));
+}
+
 static constexpr char kFrameSockPath[] = "frame_sock_path";
 void CuttlefishConfig::MutableInstanceSpecific::set_frames_socket_path(
     const std::string& frame_socket_path) {
