@@ -64,6 +64,7 @@
 #include "cuttlefish/host/commands/run_cvd/launch/uwb_connector.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhal_proxy_server.h"
 #include "cuttlefish/host/commands/run_cvd/launch/vhost_device_vsock.h"
+#include "cuttlefish/host/commands/run_cvd/launch/vhost_user_media_devices.h"
 #include "cuttlefish/host/commands/run_cvd/launch/webrtc_controller.h"
 #include "cuttlefish/host/commands/run_cvd/launch/wmediumd_server.h"
 #include "cuttlefish/host/commands/run_cvd/reporting.h"
@@ -172,6 +173,7 @@ fruit::Component<> runCvdComponent(
       .install(launchStreamerComponent)
       .install(AutoCmd<VhalProxyServer>::Component)
       .install(Ti50EmulatorComponent)
+      .install(VhostUserMediaDevicesComponent)
 #endif
       .install(CvdallocComponent)
       .install(AdbConfigComponent)
