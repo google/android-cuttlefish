@@ -222,9 +222,9 @@ Result<void> CreateDynamicDiskFiles(
         CF_EXPECTF(CreateBlankImage(hwcomposer_pmem, 2 /* mb */, "none"),
                    "Failed for '{}'", hwcomposer_pmem);
       }
-      if (FileExists(instance.pstore_path())) {
-        CF_EXPECT(CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none"),
-                  "Failed for\"" << instance.pstore_path() << "\"");
+      if (FileExists(PstorePath(instance))) {
+        CF_EXPECT(CreateBlankImage(PstorePath(instance), 2 /* mb */, "none"),
+                  "Failed for\"" << PstorePath(instance) << "\"");
       }
     }
 

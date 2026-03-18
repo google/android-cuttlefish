@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/pstore.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/result/result.h"
@@ -25,12 +26,11 @@ namespace cuttlefish {
 
 Result<void> InitializePstore(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.pstore_path())) {
+  if (FileExists(PstorePath(instance))) {
     return {};
   }
-
-  CF_EXPECT(CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none"),
-            "Failed to create \"" << instance.pstore_path() << "\"");
+  CF_EXPECT(CreateBlankImage(PstorePath(instance), 2 /* mb */, "none"),
+            "Failed to create \"" << PstorePath(instance) << "\"");
   return {};
 }
 

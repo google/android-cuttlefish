@@ -28,6 +28,7 @@ std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific&);
 std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific&);
 std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins);
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific&);
+std::string PstorePath(const CuttlefishConfig::InstanceSpecific&);
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific&);
 
 }  // namespace cuttlefish

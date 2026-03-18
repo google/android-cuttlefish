@@ -687,9 +687,9 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--pmem=path=", access_kregistry);
   }
 
-  if (!pmem_disabled && FileExists(instance.pstore_path())) {
-    crosvm_cmd.Cmd().AddParameter("--pstore=path=", instance.pstore_path(),
-                                  ",size=", FileSize(instance.pstore_path()));
+  if (!pmem_disabled && FileExists(PstorePath(instance))) {
+    crosvm_cmd.Cmd().AddParameter("--pstore=path=", PstorePath(instance),
+                                  ",size=", FileSize(PstorePath(instance)));
   }
 
   if (instance.enable_sandbox()) {
