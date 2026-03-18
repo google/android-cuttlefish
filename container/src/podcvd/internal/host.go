@@ -78,6 +78,49 @@ func DeleteToolingHost(ccm libcfcontainer.CuttlefishContainerManager) error {
 	}
 }
 
+func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	if err := pullContainerImage(ccm); err != nil {
+		return err
+	}
+	containerCfg := &container.Config{
+		Image: imageName,
+	}
+	cvdDataHome, err := cvdDataHome()
+	if err != nil {
+		return fmt.Errorf("failed to get cvd data home: %w", err)
+	}
+	if err := os.MkdirAll(cvdDataHome, 0755); err != nil {
+		return fmt.Errorf("failed to eusure directory at %q: %w", cvdDataHome, err)
+	}
+	targetDir := cvdArgs.GetStringFlagValueOnSubCommandArgs("target_directory")
+	if targetDir == "" {
+		return fmt.Errorf("target_directory is missing")
+	}
+	if info, err := os.Stat(targetDir); err != nil || !info.IsDir() {
+		return fmt.Errorf("target_directory %q doesn't exist", targetDir)
+	}
+	containerHostCfg := &container.HostConfig{
+		Binds: []string{
+			fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
+			fmt.Sprintf("%s:%s:rw", targetDir, targetDir),
+		},
+	}
+	containerID, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, "")
+	if err != nil {
+		return fmt.Errorf("failed to create and start container: %w", err)
+	}
+	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
+	args = append(args, cvdArgs.SubCommandArgs...)
+	if _, err := ccm.ExecOnContainer(context.Background(), containerID, true, args); err != nil {
+		return fmt.Errorf("failed to execute fetch command on the container: %w", err)
+	}
+	if err := ccm.StopAndRemoveContainer(context.Background(), containerID); err != nil {
+		return fmt.Errorf("failed to stop and remove container: %w", err)
+	}
+	return nil
+
+}
+
 func pullContainerImage(ccm libcfcontainer.CuttlefishContainerManager) error {
 	if exists, err := ccm.ImageExists(context.Background(), imageName); err != nil {
 		return err
