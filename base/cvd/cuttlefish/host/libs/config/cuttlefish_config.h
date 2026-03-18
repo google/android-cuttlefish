@@ -353,6 +353,8 @@ class CuttlefishConfig {
 
     std::string touch_socket_path(int touch_dev_idx) const;
 
+    std::string media_socket_path(int index) const;
+
     std::string launcher_log_path() const;
 
     std::string sdcard_path() const;
