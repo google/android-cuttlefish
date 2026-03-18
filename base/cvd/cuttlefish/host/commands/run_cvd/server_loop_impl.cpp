@@ -379,7 +379,7 @@ bool ServerLoopImpl::PowerwashFiles() {
   // TODO: b/471069557 - diagnose unused
   unused = CreateBlankImage(hwcomposer_pmem_path, 2 /* mb */, "none");
 
-  auto pstore_path = instance_.pstore_path();
+  auto pstore_path = PstorePath(instance_);
   unlink(pstore_path.c_str());
   // TODO: b/471069557 - diagnose unused
   unused = CreateBlankImage(pstore_path, 2 /* mb */, "none");

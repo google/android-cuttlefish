@@ -342,11 +342,11 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
   }
 
   auto pstore_size_bytes = 0;
-  if (FileExists(instance.pstore_path())) {
-    pstore_size_bytes = FileSize(instance.pstore_path());
+  if (FileExists(PstorePath(instance))) {
+    pstore_size_bytes = FileSize(PstorePath(instance));
     CF_EXPECT((pstore_size_bytes & (1024 * 1024 - 1)) == 0,
-              instance.pstore_path() << " file size (" << pstore_size_bytes
-                                     << ") not a multiple of 1MB");
+              PstorePath(instance) << " file size (" << pstore_size_bytes
+                                   << ") not a multiple of 1MB");
   }
 
   qemu_cmd.AddParameter("-name");
@@ -707,13 +707,13 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     ++i;
   }
 
-  if (is_x86 && FileExists(instance.pstore_path())) {
+  if (is_x86 && FileExists(PstorePath(instance))) {
     // QEMU will assign the NVDIMM (ramoops pstore region) 150000000-1501fffff
     // As we will pass this to ramoops, define this region first so it is always
     // located at this address. This is currently x86 only.
     qemu_cmd.AddParameter("-object");
     qemu_cmd.AddParameter("memory-backend-file,id=objpmem0,share=on,mem-path=",
-                          instance.pstore_path(), ",size=", pstore_size_bytes);
+                          PstorePath(instance), ",size=", pstore_size_bytes);
 
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("nvdimm,memdev=objpmem0,id=ramoops");
