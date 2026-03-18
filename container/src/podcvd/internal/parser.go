@@ -63,7 +63,7 @@ func (a *CvdArgs) SerializeCommonArgs() []string {
 	return args
 }
 
-func HasHelpFlag(subCommandArgs []string) bool {
+func (a *CvdArgs) HasHelpFlagOnSubCommandArgs() bool {
 	helpFlagNames := []string{
 		"h",
 		"help",
@@ -80,7 +80,7 @@ func HasHelpFlag(subCommandArgs []string) bool {
 		helpFlags["-"+name] = struct{}{}
 		helpFlags["--"+name] = struct{}{}
 	}
-	for _, arg := range subCommandArgs {
+	for _, arg := range a.SubCommandArgs {
 		if _, exists := helpFlags[strings.Split(arg, "=")[0]]; exists {
 			return true
 		}
