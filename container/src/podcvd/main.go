@@ -196,7 +196,7 @@ func main() {
 	}
 
 	subcommand := cvdArgs.SubCommandArgs[0]
-	if internal.HasHelpFlag(cvdArgs.SubCommandArgs) {
+	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
 		switch subcommand {
 		case "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
 			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
