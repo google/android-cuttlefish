@@ -221,10 +221,6 @@ class CuttlefishConfig {
   void set_rootcanal_test_port(int rootcanal_test_port);
   int rootcanal_test_port() const;
 
-  // The path of an AP image in composite disk
-  std::string ap_image_dev_path() const;
-  void set_ap_image_dev_path(const std::string& dev_path);
-
   // path to the saved snapshot file(s)
   std::string snapshot_path() const;
   void set_snapshot_path(const std::string& snapshot_path);
@@ -277,8 +273,6 @@ class CuttlefishConfig {
     int qemu_vnc_server_port() const;
     // Port number to connect to the tombstone receiver on the host
     int tombstone_receiver_port() const;
-    // Port number to connect to the config server on the host
-    int config_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
@@ -360,7 +354,6 @@ class CuttlefishConfig {
     std::string sdcard_overlay_path() const;
 
     std::string persistent_composite_disk_path() const;
-    std::string persistent_composite_overlay_path() const;
     std::string persistent_ap_composite_disk_path() const;
     std::string persistent_ap_composite_overlay_path() const;
 
@@ -373,10 +366,6 @@ class CuttlefishConfig {
     std::string ap_esp_image_path() const;
 
     std::string esp_image_path() const;
-
-    std::string otheros_esp_grub_config() const;
-
-    std::string ap_esp_grub_config() const;
 
     std::string audio_server_path() const;
 
@@ -613,12 +602,6 @@ class CuttlefishConfig {
     void set_serial_number(const std::string& serial_number);
     void set_qemu_vnc_server_port(int qemu_vnc_server_port);
     void set_tombstone_receiver_port(int tombstone_receiver_port);
-    void set_config_server_port(int config_server_port);
-    void set_frames_server_port(int config_server_port);
-    void set_touch_server_port(int config_server_port);
-    void set_keyboard_server_port(int config_server_port);
-    void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
-    void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_lights_server_port(int lights_server_port);
     void set_adb_host_port(int adb_host_port);
