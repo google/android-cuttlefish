@@ -48,6 +48,8 @@
 #include "cuttlefish/io/lz4_legacy.h"
 #include "cuttlefish/io/native_filesystem.h"
 #include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/io/string.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -75,21 +77,14 @@ Result<void> RunMkBootFs(const std::string& input_dir,
 }
 
 Result<void> RunLz4(const std::string& input, const std::string& output) {
-  SharedFD output_fd = SharedFD::Open(output, O_CREAT | O_RDWR | O_TRUNC, 0644);
-  CF_EXPECTF(output_fd->IsOpen(), "Failed to open '{}': '{}'", output,
-             output_fd->StrError());
-  int success = Command(HostBinaryPath("lz4"))
-                    .AddParameter("-c")
-                    .AddParameter("-l")
-                    .AddParameter("-12")
-                    .AddParameter("--favor-decSpeed")
-                    .AddParameter(input)
-                    .RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_fd)
-                    .Start()
-                    .Wait();
-  CF_EXPECT_EQ(
-      success, 0,
-      "`lz4` failed to transform '" << input << "' to '" << output << "'");
+  NativeFilesystem fs;
+  std::unique_ptr<Reader> input_reader = CF_EXPECT(fs.OpenReadOnly(input));
+  (void)fs.DeleteFile(output);
+  std::unique_ptr<Writer> output_writer = CF_EXPECT(fs.CreateFile(output));
+  std::unique_ptr<Writer> lz4_writer =
+      CF_EXPECT(Lz4LegacyWriter(std::move(output_writer)));
+  std::string input_data = CF_EXPECT(ReadToString(*input_reader));
+  CF_EXPECT(WriteExact(*lz4_writer, input_data.data(), input_data.size()));
   return {};
 }
 
