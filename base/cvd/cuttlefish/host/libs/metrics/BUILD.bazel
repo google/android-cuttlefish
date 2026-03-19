@@ -52,6 +52,22 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fetch_metrics",
+    srcs = [
+        "fetch_metrics.cc",
+    ],
+    hdrs = [
+        "fetch_metrics.h",
+    ],
+    deps = [
+        "//cuttlefish/host/commands/cvd/fetch:builds",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
     name = "flag_metrics",
     srcs = [
         "flag_metrics.cc",
