@@ -20,6 +20,7 @@
 
 #include <chrono>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <android-base/strings.h>
@@ -83,7 +84,8 @@ std::vector<GuestInfo> GetGuestInfos(
   return result;
 }
 
-MetricsPaths GetMetricsPaths(const LocalInstanceGroup& instance_group) {
+MetricsPaths GetInstanceGroupMetricsPaths(
+    const LocalInstanceGroup& instance_group) {
   return MetricsPaths{
       .metrics_directory = instance_group.MetricsDir(),
       .guests =
@@ -110,26 +112,29 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
-      .guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests)),
-      .flag_metrics =
-          CF_EXPECT(GetFlagMetrics(metrics_paths.guests.guest_infos.size())),
   };
 
-  CF_EXPECT_EQ(result.guest_metrics.size(), result.flag_metrics.size(),
-               "The gathered guest and flag metrics vectors must be equal, as "
-               "flags are per guest.");
+  if (!metrics_paths.guests.IsEmpty()) {
+    result.guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests));
+    result.flag_metrics =
+        CF_EXPECT(GetFlagMetrics(metrics_paths.guests.guest_infos.size()));
+    CF_EXPECT_EQ(
+        result.guest_metrics.size(), result.flag_metrics.size(),
+        "The gathered guest and flag metrics vectors must be equal, as "
+        "flags are per guest.");
+  }
+
   return result;
 }
 
 Result<void> OutputMetrics(EventType event_type,
-                           const MetricsPaths& metrics_paths,
+                           const std::string_view& metrics_directory,
                            const MetricsData& metrics_data) {
   if (AreMetricsEnabled()) {
     const CuttlefishLogEvent cf_log_event =
         BuildCuttlefishLogEvent(metrics_data);
     CF_EXPECT(TransmitMetrics(kTransmitterPath, cf_log_event));
-    CF_EXPECT(WriteMetricsEvent(event_type, metrics_paths.metrics_directory,
-                                cf_log_event));
+    CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, cf_log_event));
   }
   return {};
 }
@@ -157,8 +162,8 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
     return;
   }
 
-  Result<void> output_result =
-      OutputMetrics(event_type, metrics_paths, *gather_result);
+  Result<void> output_result = OutputMetrics(
+      event_type, metrics_paths.metrics_directory, *gather_result);
   if (!output_result.ok()) {
     VLOG(0) << fmt::format("Failed to output metrics for {}.  Error: {}",
                            EventTypeString(event_type), output_result.error());
@@ -168,7 +173,8 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
 }  // namespace
 
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  const MetricsPaths metrics_paths =
+      GetInstanceGroupMetricsPaths(instance_group);
   Result<void> metrics_setup_result =
       SetUpMetrics(metrics_paths.metrics_directory);
   if (!metrics_setup_result.ok()) {
@@ -185,22 +191,26 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  const MetricsPaths metrics_paths =
+      GetInstanceGroupMetricsPaths(instance_group);
   RunMetrics(metrics_paths, EventType::DeviceBootStart);
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  const MetricsPaths metrics_paths =
+      GetInstanceGroupMetricsPaths(instance_group);
   RunMetrics(metrics_paths, EventType::DeviceBootComplete);
 }
 
 void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  const MetricsPaths metrics_paths =
+      GetInstanceGroupMetricsPaths(instance_group);
   RunMetrics(metrics_paths, EventType::DeviceBootFailed);
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths = GetMetricsPaths(instance_group);
+  const MetricsPaths metrics_paths =
+      GetInstanceGroupMetricsPaths(instance_group);
   RunMetrics(metrics_paths, EventType::DeviceStop);
 }
 
