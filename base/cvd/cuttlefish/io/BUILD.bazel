@@ -359,3 +359,14 @@ cf_cc_library(
         "//cuttlefish/result:result_type",
     ],
 )
+
+cf_cc_library(
+    name = "write_exact",
+    srcs = ["write_exact.cc"],
+    hdrs = ["write_exact.h"],
+    deps = [
+        "//cuttlefish/io",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
