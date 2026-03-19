@@ -4,6 +4,217 @@ package(
     default_visibility = ["//:android_cuttlefish"],
 )
 
+# =============================================================================
+# Plugin Framework (Upstream - Codec Agnostic)
+# =============================================================================
+
+cf_cc_library(
+    name = "encoder_provider",
+    hdrs = ["encoder_provider.h"],
+    deps = ["@libwebrtc"],
+    visibility = ["//visibility:public"],
+)
+
+cf_cc_library(
+    name = "encoder_provider_registry",
+    srcs = ["encoder_provider_registry.cpp"],
+    hdrs = ["encoder_provider_registry.h"],
+    deps = [
+        ":encoder_provider",
+        "@libwebrtc",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cf_cc_library(
+    name = "composite_encoder_factory",
+    srcs = ["composite_encoder_factory.cpp"],
+    hdrs = ["composite_encoder_factory.h"],
+    deps = [
+        ":encoder_provider_registry",
+        "@libwebrtc",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cf_cc_library(
+    name = "builtin_encoder_provider",
+    srcs = ["builtin_encoder_provider.cpp"],
+    deps = [
+        ":encoder_provider",
+        ":encoder_provider_registry",
+        "@libwebrtc",
+    ],
+    alwayslink = True,  # Static initializer must be linked
+)
+
+cf_cc_library(
+    name = "decoder_provider",
+    hdrs = ["decoder_provider.h"],
+    deps = ["@libwebrtc"],
+    visibility = ["//visibility:public"],
+)
+
+cf_cc_library(
+    name = "decoder_provider_registry",
+    srcs = ["decoder_provider_registry.cpp"],
+    hdrs = ["decoder_provider_registry.h"],
+    deps = [
+        ":decoder_provider",
+        "@libwebrtc",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cf_cc_library(
+    name = "composite_decoder_factory",
+    srcs = ["composite_decoder_factory.cpp"],
+    hdrs = ["composite_decoder_factory.h"],
+    deps = [
+        ":decoder_provider_registry",
+        "@libwebrtc",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cf_cc_library(
+    name = "builtin_decoder_provider",
+    srcs = ["builtin_decoder_provider.cpp"],
+    deps = [
+        ":decoder_provider",
+        ":decoder_provider_registry",
+        "@libwebrtc",
+    ],
+    alwayslink = True,  # Static initializer must be linked
+)
+
+# =============================================================================
+# NVENC/CUDA Support
+# =============================================================================
+
+cf_cc_library(
+    name = "cuda_context",
+    srcs = ["cuda_context.cpp"],
+    hdrs = ["cuda_context.h"],
+    deps = [
+        "@cuda//:cuda_headers",
+        "@libwebrtc",
+    ],
+    linkopts = [
+        "-lcuda",
+    ],
+)
+
+cf_cc_library(
+    name = "nvenc_encoder_config",
+    hdrs = ["nvenc_encoder_config.h"],
+    deps = [
+        "@libwebrtc",
+        "@nv_codec_headers//:nv_headers",
+    ],
+)
+
+cf_cc_library(
+    name = "nvenc_capabilities",
+    srcs = ["nvenc_capabilities.cpp"],
+    hdrs = ["nvenc_capabilities.h"],
+    deps = [
+        ":cuda_context",
+        "@libwebrtc",
+        "@nv_codec_headers//:nv_headers",
+    ],
+    linkopts = [
+        "-lnvidia-encode",
+    ],
+)
+
+cf_cc_library(
+    name = "stub_decoder",
+    hdrs = ["stub_decoder.h"],
+    deps = [
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "nvenc_video_encoder",
+    srcs = ["nvenc_video_encoder.cpp"],
+    hdrs = ["nvenc_video_encoder.h"],
+    deps = [
+        ":abgr_buffer",
+        ":cuda_context",
+        ":nvenc_encoder_config",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+        "@nv_codec_headers//:nv_headers",
+        "@cuda//:cuda_headers",
+        "@cuda//:cuda_runtime",
+        "@libyuv",
+    ],
+    linkopts = [
+        "-lnvidia-encode",
+        "-lcuda",
+        "-lcudart",
+    ],
+)
+
+# =============================================================================
+# Per-Codec NVENC Providers
+# =============================================================================
+
+cf_cc_library(
+    name = "av1_nvenc_encoder_provider",
+    srcs = ["av1_nvenc_encoder_provider.cpp"],
+    deps = [
+        ":encoder_provider",
+        ":encoder_provider_registry",
+        ":nvenc_capabilities",
+        ":nvenc_encoder_config",
+        ":nvenc_video_encoder",
+        "@abseil-cpp//absl/strings",
+        "@libwebrtc",
+        "@nv_codec_headers//:nv_headers",
+    ],
+    alwayslink = True,
+)
+
+cf_cc_library(
+    name = "av1_nvenc_decoder_provider",
+    srcs = ["av1_nvenc_decoder_provider.cpp"],
+    deps = [
+        ":decoder_provider",
+        ":decoder_provider_registry",
+        ":nvenc_capabilities",
+        ":stub_decoder",
+        "@abseil-cpp//absl/strings",
+        "@libwebrtc",
+        "@nv_codec_headers//:nv_headers",
+    ],
+    alwayslink = True,
+)
+
+# Injection point for future private repo providers.
+# Currently a no-op cc_library. When the public/private repo split
+# happens, replace with a label_flag that points to private repo
+# providers.
+cc_library(name = "extra_codec_providers")
+
+# =============================================================================
+# Common Components
+# =============================================================================
+
+cf_cc_library(
+    name = "abgr_buffer",
+    srcs = ["abgr_buffer.cpp"],
+    hdrs = ["abgr_buffer.h"],
+    deps = [
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "@libdrm//:libdrm_fourcc",
+        "@libwebrtc",
+        "@libyuv",
+    ],
+)
+
 cf_cc_library(
     name = "audio_device",
     srcs = ["audio_device.cpp"],
@@ -43,8 +254,17 @@ cf_cc_library(
     srcs = ["peer_connection_utils.cpp"],
     hdrs = ["peer_connection_utils.h"],
     deps = [
-        "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
-        "//cuttlefish/host/frontend/webrtc/libcommon:vp8only_encoder_factory",
+        ":audio_device",
+        ":composite_encoder_factory",
+        ":composite_decoder_factory",
+        ":encoder_provider_registry",
+        ":decoder_provider_registry",
+        ":builtin_encoder_provider",
+        ":builtin_decoder_provider",
+        # Per-codec NVENC providers
+        ":av1_nvenc_encoder_provider",
+        ":av1_nvenc_decoder_provider",
+        ":extra_codec_providers",
         "//cuttlefish/result",
         "@libwebrtc",
     ],

@@ -104,7 +104,25 @@ ClientHandler::AddTrackToConnection(
     LOG(ERROR) << "Failed to add track to the peer connection";
     return nullptr;
   }
-  return err_or_sender.MoveValue();
+  auto sender = err_or_sender.MoveValue();
+
+  // Set higher bitrate limits for video tracks to improve quality at higher
+  // resolutions. Without this, WebRTC defaults to conservative per-track
+  // limits that cause poor quality even when bandwidth is available.
+  if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+    auto params = sender->GetParameters();
+    for (auto& encoding : params.encodings) {
+      encoding.min_bitrate_bps = 500000;      // 500 kbps
+      encoding.max_bitrate_bps = 15000000;    // 15 Mbps per track
+    }
+    auto result = sender->SetParameters(params);
+    if (!result.ok()) {
+      LOG(WARNING) << "Failed to set video encoding parameters: "
+                   << result.message();
+    }
+  }
+
+  return sender;
 }
 
 bool ClientHandler::AddDisplay(
@@ -187,12 +205,13 @@ ClientHandler::Build(
     CF_EXPECT(AddTrackToConnection(audio_track, peer_connection, label).get());
   }
 
-  // libwebrtc configures the video encoder with a start bitrate of just 300kbs
-  // which causes it to drop the first 4 frames it receives. Any value over 2Mbs
-  // will be capped at 2Mbs when passed to the encoder by the peer_connection
-  // object, so we pass the maximum possible value here.
+  // Set explicit bitrate limits for WebRTC's bandwidth estimator. Without
+  // max_bitrate_bps, the estimator defaults to -1 which causes it to be overly
+  // conservative, resulting in poor video quality at higher resolutions.
   webrtc::BitrateSettings bitrate_settings;
-  bitrate_settings.start_bitrate_bps = 2000000;  // 2Mbs
+  bitrate_settings.min_bitrate_bps = 500000;      // 500 kbps
+  bitrate_settings.start_bitrate_bps = 4000000;   // 4 Mbps
+  bitrate_settings.max_bitrate_bps = 20000000;    // 20 Mbps
   peer_connection->SetBitrate(bitrate_settings);
 
   // At least one data channel needs to be created on the side that creates the
@@ -226,7 +245,7 @@ void ClientHandler::Close() {
 void ClientHandler::OnConnectionStateChange(
     Result<webrtc::PeerConnectionInterface::PeerConnectionState> new_state) {
   if (!new_state.ok()) {
-    LOG(ERROR) << "Connection error: " << new_state.error();
+    LOG(ERROR) << "Connection error: " << new_state.error().Message();
     Close();
     return;
   }
