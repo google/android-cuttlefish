@@ -37,7 +37,7 @@ execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
 ### Manually build podcvd binary
 
-Execute `go build` from `container/src/podcvd` directory.
+Execute `go build ./cmd/podcvd` from `container/src/podcvd` directory.
 
 ### Manually build cuttlefish-podcvd debian package
 
