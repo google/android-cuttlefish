@@ -113,6 +113,12 @@ CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
     case EventType::DeviceBootFailed:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED;
+    case EventType::FetchStart:
+    case EventType::FetchComplete:
+    case EventType::FetchFailed:
+      // TODO: b/491968279 - Update this when wiring in fetch metrics
+      return CuttlefishGuest_EventType::
+          CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_UNSPECIFIED;
   }
 }
 
