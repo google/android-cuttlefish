@@ -236,7 +236,7 @@ int ConsoleForwarderMain(int argc, char** argv) {
   CHECK(config) << "Unable to get config object";
 
   auto instance = config->ForDefaultInstance();
-  auto console_path = instance.console_path();
+  auto console_path = ConsolePath(instance);
   auto console_log = instance.PerInstancePath("console_log");
   auto console_log_fd =
       SharedFD::Open(console_log.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);

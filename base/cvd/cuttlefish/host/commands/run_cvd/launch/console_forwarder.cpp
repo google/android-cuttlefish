@@ -30,7 +30,7 @@ namespace cuttlefish {
 
 std::string ConsoleInfo(const CuttlefishConfig::InstanceSpecific& instance) {
   if (instance.console()) {
-    return "To access the console run: screen " + instance.console_path();
+    return "To access the console run: screen " + ConsolePath(instance);
   } else {
     return "Serial console is disabled; use -console=true to enable it.";
   }
