@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     return 2;
   }
 
-  auto path = instance.logcat_path();
+  auto path = cuttlefish::LogcatPath(instance);
   auto logcat_file =
       cuttlefish::SharedFD::Open(path.c_str(), O_CREAT | O_APPEND | O_WRONLY, 0666);
 

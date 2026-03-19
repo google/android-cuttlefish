@@ -28,6 +28,7 @@ std::string ConsolePath(const CuttlefishConfig::InstanceSpecific&);
 std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific&);
 std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific&);
 std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins);
+std::string LogcatPath(const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific&);
 std::string PflashPath(const CuttlefishConfig::InstanceSpecific&);
 std::string PstorePath(const CuttlefishConfig::InstanceSpecific&);

@@ -28,7 +28,7 @@
 namespace cuttlefish {
 
 std::string LogcatInfo(const CuttlefishConfig::InstanceSpecific& instance) {
-  return "Logcat output: " + instance.logcat_path();
+  return "Logcat output: " + LogcatPath(instance);
 }
 
 Result<MonitorCommand> LogcatReceiver(
