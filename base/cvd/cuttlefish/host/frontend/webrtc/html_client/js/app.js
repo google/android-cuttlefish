@@ -605,10 +605,10 @@ class DeviceControlApp {
     }
 
     var filename= file_selector.files[0];
-    if (filename.type.match('\gpx')) {
+    if (filename.name.endsWith('.gpx')) {
       console.debug("import Gpx locations handling");
       loadFile(onLoad_send_gpx_data);
-    } else if(filename.type.match('\kml')){
+    } else if(filename.name.endsWith('.kml')){
       console.debug("import Kml locations handling");
       loadFile(onLoad_send_kml_data);
     }
