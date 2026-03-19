@@ -68,6 +68,30 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "fetch_metrics_orchestration",
+    srcs = [
+        "fetch_metrics_orchestration.cc",
+    ],
+    hdrs = [
+        "fetch_metrics_orchestration.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
+        "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
+        "//cuttlefish/host/libs/metrics:enabled",
+        "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:metrics_conversion",
+        "//cuttlefish/host/libs/metrics:metrics_orchestration",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "flag_metrics",
     srcs = [
         "flag_metrics.cc",
@@ -141,6 +165,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:gpu_mode",
         "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:fetch_metrics",
         "//cuttlefish/host/libs/metrics:flag_metrics",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//external_proto:cf_flags_cc_proto",
