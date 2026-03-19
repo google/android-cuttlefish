@@ -889,7 +889,7 @@ Result<std::vector<MonitorCommand>> QemuManager::StartCommands(
     qemu_cmd.AddParameter("if=pflash,format=raw,readonly=on,file=",
                           instance.bootloader());
     qemu_cmd.AddParameter("-drive");
-    qemu_cmd.AddParameter("if=pflash,format=raw,file=", instance.pflash_path());
+    qemu_cmd.AddParameter("if=pflash,format=raw,file=", PflashPath(instance));
   }
 
   if (instance.gdb_port() > 0) {
