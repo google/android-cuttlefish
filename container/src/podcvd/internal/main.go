@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package internal
 
 import (
 	"context"
@@ -24,31 +24,89 @@ import (
 	"sync"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
-	"github.com/google/android-cuttlefish/container/src/podcvd/internal"
 )
 
-func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
-	stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(groupName), false, []string{"cvd", "fleet"})
-	if err != nil {
-		return err
+func Main(args []string) {
+	cvdArgs := ParseCvdArgs(args)
+	if len(cvdArgs.SubCommandArgs) == 0 {
+		cvdArgs.SubCommandArgs = []string{"help"}
 	}
-	instanceGroup, err := internal.ParseInstanceGroups(stdout, groupName)
+
+	ccm, err := CuttlefishContainerManager()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	return internal.DisconnectAdb(ccm, *instanceGroup)
+
+	subcommand := cvdArgs.SubCommandArgs[0]
+	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
+		switch subcommand {
+		case "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
+			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
+			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
+				log.Fatal(err)
+			}
+		case "bugreport", "start":
+			// TODO(seungjaeyoo): Support help flag for other subcommands of cvd as well.
+			log.Fatalf("help flag support for subcommand %q is not implemented yet", subcommand)
+		default:
+			log.Fatalf("unknown subcommand %q", subcommand)
+		}
+	} else {
+		if err := CheckDeviceAccessible(); err != nil {
+			log.Fatal(err)
+		}
+		switch subcommand {
+		case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
+			if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
+				log.Fatal(err)
+			}
+		case "clear", "reset":
+			if err := clearAllCuttlefishHosts(ccm); err != nil {
+				log.Fatal(err)
+			}
+		case "fleet":
+			if err := fleetAllCuttlefishHosts(ccm); err != nil {
+				log.Fatal(err)
+			}
+		case "help", "login", "version":
+			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
+				log.Fatal(err)
+			}
+		case "fetch":
+			if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
+				log.Fatal(err)
+			}
+		case "cache", "lint":
+			// TODO(seungjaeyoo): Support other subcommands of cvd as well.
+			log.Fatalf("subcommand %q is not implemented yet", subcommand)
+		default:
+			log.Fatalf("unknown subcommand %q", subcommand)
+		}
+	}
 }
 
-func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *internal.CvdArgs) error {
+func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
+	stdout, err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), false, []string{"cvd", "fleet"})
+	if err != nil {
+		return err
+	}
+	instanceGroup, err := ParseInstanceGroups(stdout, groupName)
+	if err != nil {
+		return err
+	}
+	return DisconnectAdb(ccm, *instanceGroup)
+}
+
+func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
 	subcommand := cvdArgs.SubCommandArgs[0]
 	switch subcommand {
 	case "create":
-		if err := internal.CreateCuttlefishHost(ccm, cvdArgs.CommonArgs); err != nil {
+		if err := CreateCuttlefishHost(ccm, cvdArgs.CommonArgs); err != nil {
 			return err
 		}
 	default:
 		if cvdArgs.CommonArgs.GroupName == "" {
-			groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
+			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
 			if err != nil {
 				return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 			}
@@ -70,22 +128,22 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 		// If the subcommand is 'remove', it doesn't need to execute cvd on the
 		// container instance as it should be removed in the end.
 		if subcommand == "remove" {
-			return internal.DeleteCuttlefishHost(ccm, cvdArgs.CommonArgs.GroupName)
+			return DeleteCuttlefishHost(ccm, cvdArgs.CommonArgs.GroupName)
 		}
 	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(cvdArgs.CommonArgs.GroupName), true, args)
+	stdout, err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), true, args)
 	if err != nil {
 		return err
 	}
 	switch subcommand {
 	case "create", "start":
-		instanceGroup, err := internal.ParseInstanceGroup(stdout, cvdArgs.CommonArgs.GroupName)
+		instanceGroup, err := ParseInstanceGroup(stdout, cvdArgs.CommonArgs.GroupName)
 		if err != nil {
 			return err
 		}
-		if err := internal.ConnectAdb(ccm, *instanceGroup); err != nil {
+		if err := ConnectAdb(ccm, *instanceGroup); err != nil {
 			return err
 		}
 	}
@@ -93,7 +151,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 }
 
 func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) error {
-	groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -107,12 +165,12 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 				errCh <- err
 				return
 			}
-			errCh <- internal.DeleteCuttlefishHost(ccm, groupName)
+			errCh <- DeleteCuttlefishHost(ccm, groupName)
 		}()
 	}
 	go func() {
 		defer wg.Done()
-		errCh <- internal.DeleteToolingHost(ccm)
+		errCh <- DeleteToolingHost(ccm)
 	}()
 	wg.Wait()
 	close(errCh)
@@ -128,7 +186,7 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 		Groups []json.RawMessage `json:"groups"`
 	}
 
-	groupNameIpAddrMap, err := internal.Ipv4AddressesByGroupNames(ccm)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -139,7 +197,7 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	for groupName := range groupNameIpAddrMap {
 		go func() {
 			defer wg.Done()
-			stdout, err := ccm.ExecOnContainer(context.Background(), internal.ContainerName(groupName), false, []string{"cvd", "fleet"})
+			stdout, err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), false, []string{"cvd", "fleet"})
 			if err != nil {
 				errCh <- err
 				return
@@ -172,73 +230,14 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	return nil
 }
 
-func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *internal.CvdArgs) error {
-	if err := internal.CreateToolingHost(ccm); err != nil {
+func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvdArgs *CvdArgs) error {
+	if err := CreateToolingHost(ccm); err != nil {
 		return err
 	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	if _, err := ccm.ExecOnContainer(context.Background(), internal.ToolingContainerName, true, args); err != nil {
+	if _, err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, true, args); err != nil {
 		return err
 	}
 	return nil
-}
-
-func main() {
-	cvdArgs := internal.ParseCvdArgs(os.Args[1:])
-	if len(cvdArgs.SubCommandArgs) == 0 {
-		cvdArgs.SubCommandArgs = []string{"help"}
-	}
-
-	ccm, err := internal.CuttlefishContainerManager()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	subcommand := cvdArgs.SubCommandArgs[0]
-	if cvdArgs.HasHelpFlagOnSubCommandArgs() {
-		switch subcommand {
-		case "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
-			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
-			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
-			}
-		case "bugreport", "start":
-			// TODO(seungjaeyoo): Support help flag for other subcommands of cvd as well.
-			log.Fatalf("help flag support for subcommand %q is not implemented yet", subcommand)
-		default:
-			log.Fatalf("unknown subcommand %q", subcommand)
-		}
-	} else {
-		if err := internal.CheckDeviceAccessible(); err != nil {
-			log.Fatal(err)
-		}
-		switch subcommand {
-		case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
-			if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
-			}
-		case "clear", "reset":
-			if err := clearAllCuttlefishHosts(ccm); err != nil {
-				log.Fatal(err)
-			}
-		case "fleet":
-			if err := fleetAllCuttlefishHosts(ccm); err != nil {
-				log.Fatal(err)
-			}
-		case "help", "login", "version":
-			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
-			}
-		case "fetch":
-			if err := internal.ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
-			}
-		case "cache", "lint":
-			// TODO(seungjaeyoo): Support other subcommands of cvd as well.
-			log.Fatalf("subcommand %q is not implemented yet", subcommand)
-		default:
-			log.Fatalf("unknown subcommand %q", subcommand)
-		}
-	}
 }

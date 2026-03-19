@@ -9,17 +9,18 @@
 
 GOBIN := $$(which go || echo /usr/lib/$$(ls /usr/lib | grep "^go-1." | sort -V | tail -1)/bin/go)
 PODCVD_SOURCE_DIR := src/podcvd
+PODCVD_BIN_DIR := ./cmd/podcvd
 
 %:
 	dh $@ --with=config-package
 
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w")
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w" ${PODCVD_BIN_DIR})
 
 .PHONY: override_dh_auto_test
 override_dh_auto_test:
-	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) test)
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) test ./...)
 	dh_auto_test
 
 .PHONY: override_dh_installinit
