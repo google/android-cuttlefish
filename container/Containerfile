@@ -19,8 +19,6 @@ EXPOSE 6520-6620
 # to make sure this file always exist
 RUN touch /.dockerenv
 
-USER root
-WORKDIR /root
 RUN set -x
 RUN apt update
 RUN apt install -y --no-install-recommends \
@@ -31,17 +29,17 @@ RUN apt install -y --no-install-recommends \
     sudo
 RUN update-ca-certificates
 
-COPY ./container/guest/run_services.sh /root/
-RUN chmod +x /root/run_services.sh
+COPY ./container/guest/run_services.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/run_services.sh
 
 
 FROM runner-base AS runner-dev
 
-COPY cuttlefish-*.deb /root/debian/
+COPY cuttlefish-*.deb /usr/local/etc/debian/
 RUN apt install -y --no-install-recommends -f \
-    /root/debian/cuttlefish-base_*.deb \
-    /root/debian/cuttlefish-user_*.deb \
-    /root/debian/cuttlefish-orchestration_*.deb
+    /usr/local/etc/debian/cuttlefish-base_*.deb \
+    /usr/local/etc/debian/cuttlefish-user_*.deb \
+    /usr/local/etc/debian/cuttlefish-orchestration_*.deb
 
 
 FROM runner-base AS runner-prod
@@ -60,6 +58,4 @@ RUN apt install -y --no-install-recommends \
 
 FROM runner-${BUILD_OPTION} AS runner
 
-RUN usermod -aG kvm root
-RUN usermod -aG cvdnetwork root
-ENTRYPOINT ["/root/run_services.sh"]
+ENTRYPOINT ["/usr/local/bin/run_services.sh"]
