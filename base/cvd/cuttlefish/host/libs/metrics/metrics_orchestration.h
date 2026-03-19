@@ -16,18 +16,27 @@
 
 #pragma once
 
-#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include <string>
+#include <string_view>
+
+#include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/metrics_conversion.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group);
+struct MetricsPaths {
+  std::string metrics_directory;
+  Guests guests;
+};
 
-void GatherVmStartMetrics(const LocalInstanceGroup& instance_group);
-
-void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group);
-
-void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group);
-
-void GatherVmStopMetrics(const LocalInstanceGroup& instance_group);
+Result<void> SetUpMetrics(const std::string& metrics_directory);
+ScopedLogger CreateLogger(std::string_view metrics_directory);
+Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
+                                  EventType event_type);
+Result<void> OutputMetrics(EventType event_type,
+                           std::string_view metrics_directory,
+                           const MetricsData& metrics_data);
 
 }  // namespace cuttlefish
