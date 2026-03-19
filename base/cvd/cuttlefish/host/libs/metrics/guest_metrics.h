@@ -33,6 +33,8 @@ struct GuestInfo {
 struct Guests {
   std::string host_artifacts;
   std::vector<GuestInfo> guest_infos;
+
+  bool IsEmpty() const;
 };
 
 struct GuestMetrics {
