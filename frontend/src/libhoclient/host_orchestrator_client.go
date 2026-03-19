@@ -136,6 +136,8 @@ type InstanceOperationsClient interface {
 	Powerwash(groupName, instanceName string) error
 	// Stop the device.
 	Stop(groupName, instanceName string) error
+	// Restart the device.
+	Restart(groupName, instanceName string) error
 	// Press power button.
 	Powerbtn(groupName, instanceName string) error
 	// Start the device.
@@ -485,6 +487,12 @@ func (c *HostOrchestratorClientImpl) Powerbtn(groupName, instanceName string) er
 
 func (c *HostOrchestratorClientImpl) Stop(groupName, instanceName string) error {
 	path := fmt.Sprintf("/cvds/%s/%s/:stop", groupName, instanceName)
+	rb := c.HTTPHelper.NewPostRequest(path, nil)
+	return c.doEmptyResponseRequest(rb)
+}
+
+func (c *HostOrchestratorClientImpl) Restart(groupName, instanceName string) error {
+	path := fmt.Sprintf("/cvds/%s/%s/:restart", groupName, instanceName)
 	rb := c.HTTPHelper.NewPostRequest(path, nil)
 	return c.doEmptyResponseRequest(rb)
 }
