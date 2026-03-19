@@ -255,9 +255,26 @@ cf_cc_library(
     deps = [
         "//cuttlefish/io",
         "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:write_exact",
         "//cuttlefish/result:expect",
         "//cuttlefish/result:result_type",
         "@lz4",
+    ],
+)
+
+cf_cc_test(
+    name = "lz4_legacy_test",
+    srcs = ["lz4_legacy_test.cc"],
+    deps = [
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:lz4_legacy",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:string",
+        "//cuttlefish/io:write_exact",
+        "//cuttlefish/result:result_matchers",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
