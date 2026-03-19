@@ -34,6 +34,10 @@ std::string ConsoleOutPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return ConsolePipePrefix(ins) + ".out";
 }
 
+std::string ConsolePath(const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstancePath("console"));
+}
+
 std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("console"));
 }

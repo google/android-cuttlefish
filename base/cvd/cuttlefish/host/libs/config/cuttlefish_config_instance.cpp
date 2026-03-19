@@ -1341,10 +1341,6 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
   return console_dev;
 }
 
-std::string CuttlefishConfig::InstanceSpecific::console_path() const {
-  return AbsolutePath(PerInstancePath("console"));
-}
-
 std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
   return AbsolutePath(PerInstanceLogPath("logcat"));
 }
