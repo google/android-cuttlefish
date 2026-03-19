@@ -20,7 +20,7 @@ go_test(
     deps = [
         "//cvd/common:common",
     ],
-    size = "enormous",
+    size = "large",
     tags = [
         "exclusive",
         "external",
@@ -36,7 +36,7 @@ go_test(
     ],
     data = ["//:debian_substitution_marker"],
     env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
-    size = "enormous",
+    size = "large",
     tags = [
         "exclusive",
         "external",

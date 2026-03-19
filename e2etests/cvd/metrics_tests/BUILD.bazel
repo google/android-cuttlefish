@@ -20,7 +20,7 @@ go_test(
     deps = [
         "//cvd/common:common",
     ],
-    size = "enormous",
+    size = "large",
     tags = [
         "exclusive",
         "external",
