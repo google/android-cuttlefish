@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/pflash.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/result/result.h"
@@ -25,15 +26,15 @@ namespace cuttlefish {
 
 Result<void> InitializePflash(
     const CuttlefishConfig::InstanceSpecific& instance) {
-  if (FileExists(instance.pflash_path())) {
+  if (FileExists(PflashPath(instance))) {
     return {};
   }
 
   auto boot_size_mb = FileSize(instance.bootloader()) / (1 << 20);
 
   // Pad out bootloader space to 4MB
-  CF_EXPECTF(CreateBlankImage(instance.pflash_path(), 4 - boot_size_mb, "none"),
-             "Failed to create '{}'", instance.pflash_path());
+  CF_EXPECTF(CreateBlankImage(PflashPath(instance), 4 - boot_size_mb, "none"),
+             "Failed to create '{}'", PflashPath(instance));
   return {};
 }
 

@@ -310,6 +310,7 @@ cf_cc_library(
     hdrs = ["pflash.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",

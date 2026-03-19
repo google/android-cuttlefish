@@ -926,7 +926,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
   }
 
   if (instance.target_arch() == Arch::X86_64) {
-    crosvm_cmd.Cmd().AddParameter("--pflash=", instance.pflash_path());
+    crosvm_cmd.Cmd().AddParameter("--pflash=", PflashPath(instance));
   }
 
   // This needs to be the last parameter

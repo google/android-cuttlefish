@@ -50,6 +50,10 @@ std::string LogcatPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("logcat-pipe"));
 }
 
+std::string PflashPath(const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstancePath("pflash.img"));
+}
+
 std::string PstorePath(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstancePath("pstore"));
 }
