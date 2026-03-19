@@ -65,7 +65,7 @@
 #include "cuttlefish/host/commands/cvd/utils/subprocess_waiter.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
-#include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
+#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
