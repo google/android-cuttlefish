@@ -5,6 +5,30 @@ package(
 )
 
 cf_cc_library(
+    name = "device_metrics_orchestration",
+    srcs = [
+        "device_metrics_orchestration.cc",
+    ],
+    hdrs = [
+        "device_metrics_orchestration.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/metrics:enabled",
+        "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:guest_metrics",
+        "//cuttlefish/host/libs/metrics:metrics_conversion",
+        "//cuttlefish/host/libs/metrics:metrics_orchestration",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "enabled",
     srcs = [
         "enabled.cc",
@@ -143,7 +167,6 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:tee_logging",
-        "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/version",
         "//cuttlefish/host/libs/metrics:enabled",
         "//cuttlefish/host/libs/metrics:event_type",
@@ -155,9 +178,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:session_id",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
-        "//libbase",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@fmt",
     ],
 )
