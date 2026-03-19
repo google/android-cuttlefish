@@ -23,16 +23,12 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
-#include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
-#include "cuttlefish/host/commands/cvd/instances/local_instance.h"
-#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/event_type.h"
@@ -52,55 +48,27 @@ using logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent;
 
 constexpr char kMetricsLogName[] = "metrics.log";
 
-struct MetricsPaths {
-  std::string metrics_directory;
-  Guests guests;
-};
-
 std::chrono::milliseconds GetEpochTime() {
   auto now = std::chrono::system_clock::now().time_since_epoch();
   return std::chrono::duration_cast<std::chrono::milliseconds>(now);
 }
 
-std::vector<GuestInfo> GetGuestInfos(
-    const std::string& group_product_out,
-    const std::vector<LocalInstance>& instances) {
-  std::vector<GuestInfo> result;
-
-  // Split always returns at least one element
-  std::vector<std::string> product_out_paths =
-      absl::StrSplit(group_product_out, ',');
-  for (int i = 0; i < instances.size(); i++) {
-    auto guest = GuestInfo{
-        .instance_id = instances[i].id(),
-    };
-    if (product_out_paths.size() > i) {
-      guest.product_out = product_out_paths[i];
-    } else {  // pad with the first value
-      guest.product_out = product_out_paths.front();
-    }
-    result.emplace_back(guest);
-  }
-  return result;
-}
-
-MetricsPaths GetInstanceGroupMetricsPaths(
-    const LocalInstanceGroup& instance_group) {
-  return MetricsPaths{
-      .metrics_directory = instance_group.MetricsDir(),
-      .guests =
-          Guests{
-              .host_artifacts = instance_group.HostArtifactsPath(),
-              .guest_infos = GetGuestInfos(instance_group.ProductOutPath(),
-                                           instance_group.Instances()),
-          },
-  };
-}
+}  // namespace
 
 Result<void> SetUpMetrics(const std::string& metrics_directory) {
   CF_EXPECT(EnsureDirectoryExists(metrics_directory));
   CF_EXPECT(GenerateSessionIdFile(metrics_directory));
   return {};
+}
+
+ScopedLogger CreateLogger(std::string_view metrics_directory) {
+  MetadataLevel metadata_level =
+      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
+  return ScopedLogger(
+      SeverityTarget::FromFile(
+          fmt::format("{}/{}", metrics_directory, kMetricsLogName),
+          metadata_level),
+      "");
 }
 
 Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
@@ -137,81 +105,6 @@ Result<void> OutputMetrics(EventType event_type,
     CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, cf_log_event));
   }
   return {};
-}
-
-void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
-  MetadataLevel metadata_level =
-      isatty(0) ? MetadataLevel::ONLY_MESSAGE : MetadataLevel::FULL;
-  ScopedLogger logger(SeverityTarget::FromFile(
-                          fmt::format("{}/{}", metrics_paths.metrics_directory,
-                                      kMetricsLogName),
-                          metadata_level),
-                      "");
-
-  if (!FileExists(metrics_paths.metrics_directory)) {
-    VLOG(0) << "Metrics directory does not exist, perhaps metrics were not "
-               "initialized.";
-    return;
-  }
-
-  Result<MetricsData> gather_result = GatherMetrics(metrics_paths, event_type);
-  if (!gather_result.ok()) {
-    VLOG(0) << fmt::format(
-        "Failed to gather all metrics data for {}.  Error: {}",
-        EventTypeString(event_type), gather_result.error());
-    return;
-  }
-
-  Result<void> output_result = OutputMetrics(
-      event_type, metrics_paths.metrics_directory, *gather_result);
-  if (!output_result.ok()) {
-    VLOG(0) << fmt::format("Failed to output metrics for {}.  Error: {}",
-                           EventTypeString(event_type), output_result.error());
-  }
-}
-
-}  // namespace
-
-void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths =
-      GetInstanceGroupMetricsPaths(instance_group);
-  Result<void> metrics_setup_result =
-      SetUpMetrics(metrics_paths.metrics_directory);
-  if (!metrics_setup_result.ok()) {
-    VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_setup_result.error());
-    return;
-  }
-  if (AreMetricsEnabled()) {
-    LOG(INFO) << "This will automatically send diagnostic information to "
-                 "Google, such as crash reports and usage data from the host "
-                 "machine managing the Android Virtual Device.";
-  }
-  RunMetrics(metrics_paths, EventType::DeviceInstantiation);
-}
-
-void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths =
-      GetInstanceGroupMetricsPaths(instance_group);
-  RunMetrics(metrics_paths, EventType::DeviceBootStart);
-}
-
-void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths =
-      GetInstanceGroupMetricsPaths(instance_group);
-  RunMetrics(metrics_paths, EventType::DeviceBootComplete);
-}
-
-void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths =
-      GetInstanceGroupMetricsPaths(instance_group);
-  RunMetrics(metrics_paths, EventType::DeviceBootFailed);
-}
-
-void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
-  const MetricsPaths metrics_paths =
-      GetInstanceGroupMetricsPaths(instance_group);
-  RunMetrics(metrics_paths, EventType::DeviceStop);
 }
 
 }  // namespace cuttlefish
