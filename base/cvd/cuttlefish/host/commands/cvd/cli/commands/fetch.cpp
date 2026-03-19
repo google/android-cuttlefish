@@ -34,6 +34,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/metrics/fetch_metrics_orchestration.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -55,6 +56,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
+  GatherFetchStartMetrics(flags);
 
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
   ScopedLogger logger(SeverityTarget::FromFile(log_file), "");
@@ -73,6 +75,13 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
           cache_directory, prune_result.before, prune_result.after,
           flags.build_api_flags.max_cache_size_gb);
     }
+  }
+
+  if (result.ok()) {
+    GatherFetchCompleteMetrics(flags.target_directory, *result);
+  }
+  {
+    GatherFetchFailedMetrics(flags.target_directory);
   }
   CF_EXPECT(std::move(result));
   return {};
