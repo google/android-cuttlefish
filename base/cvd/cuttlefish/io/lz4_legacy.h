@@ -22,10 +22,21 @@
 
 namespace cuttlefish {
 
+constexpr uint32_t kLz4LegacyFrameBlockSize = 8 << 20;
+
 // Handles the LZ4 Legacy frame format, used by the linux kernel.
 //
 // https://github.com/lz4/lz4/blob/5c4c1fb2354133e1f3b087a341576985f8114bd5/doc/lz4_Frame_format.md#legacy-frame
 
 Result<std::unique_ptr<Reader>> Lz4LegacyReader(std::unique_ptr<Reader>);
+
+// LZ4 Legacy frames are terminated by a 4-byte 0 length block. This
+// implementation handles this by assuming that any write call with a size less
+// than or equal to the block size (8 MB) is intended to be the last block in
+// the frame. Subsequent writes will fail after the last block is written.
+//
+// Because of this, callers should prefer WriteExact with this writer instead
+// of Copy, to avoid premature termination from small writes.
+Result<std::unique_ptr<Writer>> Lz4LegacyWriter(std::unique_ptr<Writer>);
 
 }  // namespace cuttlefish

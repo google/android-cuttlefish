@@ -18,13 +18,16 @@
 #include <endian.h>
 #include <stdint.h>
 
+#include <algorithm>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "lz4.h"
 
 #include "cuttlefish/io/io.h"
 #include "cuttlefish/io/read_exact.h"
+#include "cuttlefish/io/write_exact.h"
 #include "cuttlefish/result/expect.h"
 #include "cuttlefish/result/result_type.h"
 
@@ -32,7 +35,6 @@ namespace cuttlefish {
 namespace {
 
 constexpr uint32_t kLz4LegacyFrameMagic = 0x184C2102;
-constexpr uint32_t kLz4LegacyFrameBlockSize = 8 << 20;
 
 class Lz4LegacyReaderImpl : public Reader {
  public:
@@ -77,6 +79,39 @@ class Lz4LegacyReaderImpl : public Reader {
   std::vector<char> decompressed_;
 };
 
+class Lz4LegacyWriterImpl : public Writer {
+ public:
+  Lz4LegacyWriterImpl(std::unique_ptr<Writer> sink) : sink_(std::move(sink)) {}
+
+  Result<uint64_t> Write(const void* buf, uint64_t count) override {
+    CF_EXPECT(!footer_written_, "Write called after LZ4 frame was closed");
+    uint64_t to_write = std::min<uint64_t>(count, kLz4LegacyFrameBlockSize);
+
+    if (to_write > 0) {
+      compressed_.resize(LZ4_compressBound(to_write));
+      int compressed_size = LZ4_compress_default(
+          reinterpret_cast<const char*>(buf), compressed_.data(), to_write,
+          compressed_.size());
+      CF_EXPECT_GT(compressed_size, 0, "LZ4 compression failed");
+
+      CF_EXPECT(WriteExactBinary<uint32_t>(*sink_, htole32(compressed_size)));
+      CF_EXPECT(WriteExact(*sink_, compressed_.data(), compressed_size));
+    }
+
+    if (count <= kLz4LegacyFrameBlockSize) {
+      CF_EXPECT(WriteExactBinary<uint32_t>(*sink_, 0));
+      footer_written_ = true;
+    }
+
+    return to_write;
+  }
+
+ private:
+  std::unique_ptr<Writer> sink_;
+  std::vector<char> compressed_;
+  bool footer_written_ = false;
+};
+
 }  // namespace
 
 Result<std::unique_ptr<Reader>> Lz4LegacyReader(
@@ -85,6 +120,13 @@ Result<std::unique_ptr<Reader>> Lz4LegacyReader(
   uint32_t magic = le32toh(CF_EXPECT(ReadExactBinary<uint32_t>(*source)));
   CF_EXPECT_EQ(magic, kLz4LegacyFrameMagic);
   return std::make_unique<Lz4LegacyReaderImpl>(std::move(source));
+}
+
+Result<std::unique_ptr<Writer>> Lz4LegacyWriter(std::unique_ptr<Writer> sink) {
+  CF_EXPECT(sink.get());
+  const uint32_t magic_le = htole32(kLz4LegacyFrameMagic);
+  CF_EXPECT(WriteExactBinary(*sink, magic_le));
+  return std::make_unique<Lz4LegacyWriterImpl>(std::move(sink));
 }
 
 }  // namespace cuttlefish
