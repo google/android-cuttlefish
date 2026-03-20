@@ -61,6 +61,8 @@ Result<void> Substitute(const std::string& target,
     return {};
   }
 
+  CF_EXPECT(EnsureDirectoryExists(android::base::Dirname(full_link_name)));
+
   if (FileExists(full_link_name)) {
     CF_EXPECTF(unlink(full_link_name.c_str()) == 0, "{}", StrError(errno));
   }
@@ -80,17 +82,15 @@ Result<void> SubstituteWithFlag(
   if (host_substitutions == std::vector<std::string>{"all"}) {
     auto callback = [&bin_dir_parent,
                      &target_dir](const std::string& path) -> Result<void> {
+      if (IsDirectory(path)) {
+        return {};
+      }
       std::string_view local_path(path);
       CF_EXPECTF(android::base::ConsumePrefix(&local_path, bin_dir_parent),
                  "Unexpected prefix in : '{}'", local_path);
 
       const std::string to_substitute = target_dir + std::string(local_path);
-      if (FileExists(to_substitute) && !IsDirectory(to_substitute)) {
-        CF_EXPECTF(unlink(to_substitute.c_str()) >= 0,
-                   "Failed to unlink '{}': '{}'", to_substitute,
-                   StrError(errno));
-        CF_EXPECT(Symlink(path, to_substitute));
-      }
+      CF_EXPECT(Substitute(path, to_substitute));
       return {};
     };
     CF_EXPECT(WalkDirectory(bin_dir_parent, callback));

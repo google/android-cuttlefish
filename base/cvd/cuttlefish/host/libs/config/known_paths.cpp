@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
 
 namespace cuttlefish {
@@ -28,7 +29,14 @@ std::string AutomotiveProxyBinary() {
   return HostBinaryPath("automotive_vsock_proxy");
 }
 
-std::string AvbToolBinary() { return HostBinaryPath("avbtool.py"); }
+std::string AvbToolBinary() {
+  const std::string py_ext = HostBinaryPath("avbtool.py");
+  if (FileExists(py_ext)) {
+    return py_ext;
+  } else {
+    return HostBinaryPath("avbtool");
+  }
+}
 
 std::string CasimirBinary() { return HostBinaryPath("casimir"); }
 
@@ -156,7 +164,12 @@ std::string TestKeyRsa2048() {
 }
 
 std::string TestKeyRsa4096() {
-  return DefaultHostArtifactsPath("etc/cvd_avb_testkey_rsa4096.pem");
+  const std::string rsa_4096 = DefaultHostArtifactsPath("etc/cvd_avb_testkey_rsa4096.pem");
+  if (FileExists(rsa_4096)) {
+    return rsa_4096;
+  } else {
+    return DefaultHostArtifactsPath("etc/cvd_avb_testkey.pem");
+  }
 }
 
 std::string TestPubKeyRsa2048() {
@@ -164,7 +177,12 @@ std::string TestPubKeyRsa2048() {
 }
 
 std::string TestPubKeyRsa4096() {
-  return DefaultHostArtifactsPath("etc/cvd_rsa4096.avbpubkey");
+  const std::string rsa_4096 = DefaultHostArtifactsPath("etc/cvd_rsa4096.avbpubkey");
+  if (FileExists(rsa_4096)) {
+    return rsa_4096;
+  } else {
+    return DefaultHostArtifactsPath("etc/cvd.avbpubkey");
+  }
 }
 
 std::string TombstoneReceiverBinary() {
