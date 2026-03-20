@@ -37,6 +37,10 @@ func TestLaunchingWithAutoEnablesGfxstream(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err := c.RunAdbWaitForDevice(); err != nil {
+		t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
+	}
+
 	output, err := c.RunCmd("adb", "shell", "getprop", "ro.hardware.egl")
 	if err != nil {
 		t.Fatalf("failed to get EGL sysprop: %w", err)
