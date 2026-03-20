@@ -23,6 +23,7 @@ import (
 func TestListEnvServices(t *testing.T) {
 	c := e2etests.TestContext{}
 	c.SetUp(t)
+	defer c.TearDown()
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
@@ -38,6 +39,4 @@ func TestListEnvServices(t *testing.T) {
 	if _, err := c.RunCmd("cvd", "env", "ls",); err != nil {
 		t.Fatal(err)
 	}
-
-	c.TearDown()
 }

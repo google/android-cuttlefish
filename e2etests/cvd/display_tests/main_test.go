@@ -20,9 +20,9 @@ import (
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
 
-func TestAddDisplay(t *testing.T) {
-	c := e2etests.TestContext{}
+func addDisplay(c e2etests.TestContext, t *testing.T) {
 	c.SetUp(t)
+	defer c.TearDown()
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
@@ -38,13 +38,11 @@ func TestAddDisplay(t *testing.T) {
 	if _, err := c.RunCmd("cvd", "display", "add", "--display=width=500,height=500",); err != nil {
 		t.Fatal(err)
 	}
-
-	c.TearDown()
 }
 
-func TestListDisplays(t *testing.T) {
-	c := e2etests.TestContext{}
+func listDisplays(c e2etests.TestContext, t *testing.T) {
 	c.SetUp(t)
+	defer c.TearDown()
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
@@ -60,6 +58,10 @@ func TestListDisplays(t *testing.T) {
 	if _, err := c.RunCmd("cvd", "display", "list",); err != nil {
 		t.Fatal(err)
 	}
+}
 
-	c.TearDown()
+func TestRunAll(t *testing.T) {
+	c := e2etests.TestContext{}
+	t.Run("AddDisplay", func(t *testing.T) { addDisplay(c, t) })
+	t.Run("ListDisplays", func(t *testing.T) { listDisplays(c, t) })
 }

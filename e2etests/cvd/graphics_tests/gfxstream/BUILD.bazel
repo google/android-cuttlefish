@@ -25,6 +25,7 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
-        "requires_gpu"
+        "requires_gpu",
+        "supports-graceful-termination",
     ],
 )

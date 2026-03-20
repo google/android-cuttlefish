@@ -24,6 +24,7 @@ import (
 func TestLaunchingWithAutoEnablesGfxstream(t *testing.T) {
 	c := e2etests.TestContext{}
 	c.SetUp(t)
+	defer c.TearDown()
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
@@ -44,6 +45,4 @@ func TestLaunchingWithAutoEnablesGfxstream(t *testing.T) {
 	if output != "emulation" {
 		t.Errorf(`"ro.hardware.egl" was "%s"; expected "emulation"`, output)
 	}
-
-	c.TearDown()
 }

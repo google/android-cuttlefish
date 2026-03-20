@@ -109,9 +109,9 @@ func TestCvdLoad(t *testing.T) {
   }
 }`,
 		},
-    {
-      name: "AospMainX64PhoneX2",
-      loadconfig: `
+		{
+			name: "AospMainX64PhoneX2",
+			loadconfig: `
 {
   "instances": [
     {
@@ -134,20 +134,20 @@ func TestCvdLoad(t *testing.T) {
     "host_package": "@ab\/aosp-android-latest-release\/aosp_cf_x86_64_only_phone-userdebug"
   }
 }`,
-    },
+		},
 	}
+	c := e2etests.TestContext{}
 	for _, tc := range testcases {
 		t.Run(fmt.Sprintf("BUILD=%s", tc.name), func(t *testing.T) {
-			c := e2etests.TestContext{}
-      c.SetUp(t)
+			c.SetUp(t)
+			defer c.TearDown()
 
-			if err := c.CVDLoad(e2etests.LoadArgs{
-        LoadConfig: tc.loadconfig,
-      }); err != nil {
-        t.Fatal(err)
-      }
-
-      c.TearDown()
+			err := c.CVDLoad(e2etests.LoadArgs{
+				LoadConfig: tc.loadconfig,
+			});
+			if err != nil {
+				t.Fatal(err)
+			}
 		})
 	}
 }
