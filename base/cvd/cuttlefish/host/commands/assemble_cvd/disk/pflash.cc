@@ -33,7 +33,7 @@ Result<void> InitializePflash(
   auto boot_size_mb = FileSize(instance.bootloader()) / (1 << 20);
 
   // Pad out bootloader space to 4MB
-  CF_EXPECTF(CreateBlankImage(PflashPath(instance), 4 - boot_size_mb, "none"),
+  CF_EXPECTF(CreateBlankEmptyImage(PflashPath(instance), 4 - boot_size_mb),
              "Failed to create '{}'", PflashPath(instance));
   return {};
 }

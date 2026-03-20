@@ -247,11 +247,10 @@ Result<void> InitializeDataImage(
       CF_EXPECT(instance.blank_data_image_mb() != 0,
                 "Expected `-blank_data_image_mb` to be set for "
                 "image creation.");
-      CF_EXPECT(CreateBlankImage(instance.new_data_image(),
-                                 instance.blank_data_image_mb(), "none"),
-                "Failed to create a blank image at \""
-                    << instance.new_data_image() << "\" with size "
-                    << instance.blank_data_image_mb() << "\"");
+      CF_EXPECTF(CreateBlankEmptyImage(instance.new_data_image(),
+                                       instance.blank_data_image_mb()),
+                 "Failed to create a blank image at '{}' with size '{}'",
+                 instance.new_data_image(), instance.blank_data_image_mb());
       return {};
     }
     case DataImageAction::kResizeImage: {

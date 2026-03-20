@@ -29,8 +29,8 @@ Result<void> InitializePstore(
   if (FileExists(PstorePath(instance))) {
     return {};
   }
-  CF_EXPECT(CreateBlankImage(PstorePath(instance), 2 /* mb */, "none"),
-            "Failed to create \"" << PstorePath(instance) << "\"");
+  CF_EXPECTF(CreateBlankEmptyImage(PstorePath(instance), 2 /* mb */),
+             "Failed to create '{}'", PstorePath(instance));
   return {};
 }
 

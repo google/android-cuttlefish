@@ -50,8 +50,8 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
       instance.PerInstanceInternalPath("bootconfig");
 
   if (!FileExists(bootconfig_path)) {
-    CF_EXPECT(CreateBlankImage(bootconfig_path, 1 /* mb */, "none"),
-              "Failed to create image at " << bootconfig_path);
+    CF_EXPECTF(CreateBlankEmptyImage(bootconfig_path, 1 /* mb */),
+               "Failed to create image at '{}'", bootconfig_path);
   }
 
   auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
