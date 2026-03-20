@@ -214,25 +214,6 @@ Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb) {
   return {};
 }
 
-Result<void> CreateBlankImage(const std::string& image, int num_mb,
-                              const std::string& image_fmt) {
-  VLOG(0) << "Creating " << image;
-
-  if (image_fmt == "sdcard") {
-    CF_EXPECT(CreateBlankSdcardImage(image, num_mb));
-  } else if (image_fmt == "ext4") {
-    CF_EXPECT(CreateBlankExt4Image(image, num_mb));
-  } else if (image_fmt == "f2fs") {
-    CF_EXPECT(CreateBlankF2fsImage(image, num_mb));
-  }
-  if (image_fmt != "none") {
-    LOG(WARNING) << "Unknown image format '" << image_fmt
-                 << "' for " << image << ", treating as 'none'.";
-  }
-  CF_EXPECT(CreateBlankEmptyImage(image, num_mb));
-  return {};
-}
-
 Result<void> InitializeDataImage(
     const CuttlefishConfig::InstanceSpecific& instance) {
   auto action = CF_EXPECT(ChooseDataImageAction(instance));
