@@ -247,6 +247,10 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.wifi_impl"] = "virt_wifi";
   }
 
+  bootconfig_args
+    ["androidboot.vendor.apex.com.google.emulated.camera.provider.hal"] =
+        "com.google.emulated.camera.provider.hal";
+
   if (!instance.vcpu_config_path().empty()) {
     auto vcpu_config_json =
         CF_EXPECT(LoadFromFile(instance.vcpu_config_path()));
