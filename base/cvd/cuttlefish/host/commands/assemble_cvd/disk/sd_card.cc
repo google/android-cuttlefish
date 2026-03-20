@@ -33,9 +33,9 @@ Result<void> InitializeSdCard(
   if (FileExists(instance.sdcard_path())) {
     return {};
   }
-  CF_EXPECT(CreateBlankImage(instance.sdcard_path(),
-                             instance.blank_sdcard_image_mb(), "sdcard"),
-            "Failed to create \"" << instance.sdcard_path() << "\"");
+  CF_EXPECTF(CreateBlankSdcardImage(instance.sdcard_path(),
+                                    instance.blank_sdcard_image_mb()),
+             "Failed to create '{}'", instance.sdcard_path());
   if (VmManagerIsQemu(config)) {
     const std::string crosvm_path = instance.crosvm_binary();
     CF_EXPECT(Qcow2Image::Create(crosvm_path, instance.sdcard_path(),

@@ -46,7 +46,7 @@ Result<std::string> MetadataImage::Path() const {
 
 Result<std::string> MetadataImage::Generate() {
   if (!ready_) {
-    CF_EXPECTF(CreateBlankImage(path_, kMetadataImageMb, "none"),
+    CF_EXPECTF(CreateBlankEmptyImage(path_, kMetadataImageMb),
                "Failed to create '{}' with size '{}' MB", path_,
                kMetadataImageMb);
     ready_ = true;

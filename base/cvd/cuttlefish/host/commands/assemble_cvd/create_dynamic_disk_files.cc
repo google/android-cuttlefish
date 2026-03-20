@@ -214,16 +214,16 @@ Result<void> CreateDynamicDiskFiles(
     if (os_built_composite) {
       const std::string access_kregistry = AccessKregistryPath(instance);
       if (FileExists(access_kregistry)) {
-        CF_EXPECTF(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
+        CF_EXPECTF(CreateBlankEmptyImage(access_kregistry, 2 /* mb */),
                    "Failed for '{}'", access_kregistry);
       }
       const std::string hwcomposer_pmem = HwcomposerPmemPath(instance);
       if (FileExists(hwcomposer_pmem)) {
-        CF_EXPECTF(CreateBlankImage(hwcomposer_pmem, 2 /* mb */, "none"),
+        CF_EXPECTF(CreateBlankEmptyImage(hwcomposer_pmem, 2 /* mb */),
                    "Failed for '{}'", hwcomposer_pmem);
       }
       if (FileExists(PstorePath(instance))) {
-        CF_EXPECT(CreateBlankImage(PstorePath(instance), 2 /* mb */, "none"),
+        CF_EXPECT(CreateBlankEmptyImage(PstorePath(instance), 2 /* mb */),
                   "Failed for\"" << PstorePath(instance) << "\"");
       }
     }
