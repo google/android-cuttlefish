@@ -35,6 +35,7 @@ func anyFileExists(pattern string) bool {
 func TestMetrics(t *testing.T) {
 	c := e2etests.TestContext{}
 	c.SetUp(t)
+	defer c.TearDown()
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
@@ -88,6 +89,4 @@ func TestMetrics(t *testing.T) {
 	if !anyFileExists(path.Join(metricsdir, "device_stop*.txtpb")) {
 		t.Errorf("failed to find `device_stop*.txtpb` file.")
 	}
-
-	c.TearDown()
 }

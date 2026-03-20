@@ -35,10 +35,11 @@ func TestCvdCreate(t *testing.T) {
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
 	}
+	c := e2etests.TestContext{}
 	for _, tc := range testcases {
 		t.Run(fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target), func(t *testing.T) {
-			c := e2etests.TestContext{}
 			c.SetUp(t)
+			defer c.TearDown()
 
 			if err := c.CVDFetch(e2etests.FetchArgs{
 				DefaultBuildBranch: tc.branch,
@@ -51,7 +52,6 @@ func TestCvdCreate(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			c.TearDown()
 		})
 	}
 }

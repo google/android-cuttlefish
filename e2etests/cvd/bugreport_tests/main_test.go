@@ -23,6 +23,7 @@ import (
 func TestTakeBugreport(t *testing.T) {
 	c := e2etests.TestContext{}
 	c.SetUp(t)
+	defer c.TearDown()
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",
@@ -37,6 +38,4 @@ func TestTakeBugreport(t *testing.T) {
 	if _, err := c.RunCmd("cvd", "host_bugreport"); err != nil {
 		t.Fatal(err)
 	}
-
-	c.TearDown()
 }

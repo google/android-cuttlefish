@@ -25,6 +25,7 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
+        "supports-graceful-termination",
     ],
 )
 
@@ -41,5 +42,6 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
+        "supports-graceful-termination",
     ],
 )

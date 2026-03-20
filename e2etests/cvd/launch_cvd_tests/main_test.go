@@ -52,10 +52,11 @@ func TestLaunchCvd(t *testing.T) {
 			target: "aosp_cf_x86_64_phone-userdebug",
 		},
 	}
+	c := e2etests.TestContext{}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			c := e2etests.TestContext{}
 			c.SetUp(t)
+			defer c.TearDown()
 
 			if err := c.CVDFetch(e2etests.FetchArgs{
 				DefaultBuildBranch: tc.branch,
@@ -68,7 +69,6 @@ func TestLaunchCvd(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			c.TearDown()
 		})
 	}
 }

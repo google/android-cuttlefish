@@ -18,6 +18,7 @@ package e2etests
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -26,9 +27,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
@@ -68,11 +71,13 @@ type TestContext struct {
 	// registered cleanup functions are invoked.
 	cleanups []func()
 	teardownCalled bool
+
+	context context.Context
+	cancelled bool
 }
 
-// Runs the given command with the given set of envvars overrided.
-func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string) (string, error) {
-	cmd := exec.CommandContext(tc.t.Context(), command[0], command[1:]...)
+func runCmdWithContextEnv(ctx context.Context, command []string, envvars map[string]string) (string, error) {
+	cmd := exec.CommandContext(ctx, command[0], command[1:]...)
 
 	cmdOutputBuf := bytes.Buffer{}
 	cmdWriter := io.MultiWriter(&cmdOutputBuf, log.Writer())
@@ -84,7 +89,7 @@ func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string
 		envvarPairs = append(envvarPairs, fmt.Sprintf("%s=%s", k, v))
 	}
 	cmd.Env = os.Environ()
-    cmd.Env = append(cmd.Env, envvarPairs...)
+	cmd.Env = append(cmd.Env, envvarPairs...)
 
 	log.Printf("Running `%s %s`\n", strings.Join(envvarPairs, " "), strings.Join(command, " "))
 	err := cmd.Run()
@@ -93,6 +98,11 @@ func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string
 	}
 
 	return cmdOutputBuf.String(), nil
+}
+
+// Runs the given command with the given set of envvars overrided.
+func (tc *TestContext) RunCmdWithEnv(command []string, envvars map[string]string) (string, error) {
+	return runCmdWithContextEnv(tc.context, command, envvars)
 }
 
 // Waits for a device to be available via adb.
@@ -283,6 +293,8 @@ func  (tc *TestContext) CVDLoad(load LoadArgs) error {
 func (tc *TestContext) SetUp(t *testing.T) {
 	tc.t = t
 	tc.teardownCalled = false
+	cancellableContext, cancel := context.WithCancel(t.Context())
+	tc.context = cancellableContext
 
 	log.Printf("Initializing %s test...", tc.t.Name())
 
@@ -313,6 +325,21 @@ func (tc *TestContext) SetUp(t *testing.T) {
 	}
 
 	log.Printf("Initialized %s test!", tc.t.Name())
+
+	sigChan := make(chan os.Signal, 10)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		for sig := range sigChan {
+			t.Errorf("Received signal '%s'", sig.String())
+			tc.cancelled = true
+			cancel()
+		}
+	}()
+
+	if tc.cancelled {
+		t.Fatalf("Previous test was cancelled")
+	}
 
 	tc.t.Cleanup(func() {
 		if !tc.teardownCalled {
@@ -373,7 +400,7 @@ func (tc *TestContext) TearDown() {
 					err := os.MkdirAll(outinstancedir, os.ModePerm)
 					if err == nil {
 						logdir := path.Join(instancedir, "logs")
-						_, err := tc.RunCmd("cp", "-r", "--dereference", logdir, outinstancedir)
+						_, err := runCmdWithContextEnv(context.TODO(), []string{"cp", "-r", "--dereference", logdir, outinstancedir}, map[string]string{})
 						if err != nil {
 							log.Printf("failed to copy %s to %s: %w", logdir, outinstancedir, err)
 						}
@@ -387,7 +414,7 @@ func (tc *TestContext) TearDown() {
 		}
 	}
 
-	tc.RunCmd("cvd", "reset", "-y")
+	runCmdWithContextEnv(context.TODO(), []string{"cvd", "reset", "-y"}, map[string]string{})
 
 	log.Printf("Finished cleaning up after test!")
 }
@@ -459,6 +486,7 @@ type XtsArgs struct {
 func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 	tc := TestContext{}
 	tc.SetUp(t)
+	defer tc.TearDown()
 
 	localXtsDir := findLocalXTS(cuttlefishArgs, xtsArgs)
 	if localXtsDir != "" {
@@ -511,9 +539,9 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 	}
 
 	var xtsResult xtsResult
-    if err := xml.Unmarshal([]byte(xtsResultsBytes), &xtsResult); err != nil {
+	if err := xml.Unmarshal([]byte(xtsResultsBytes), &xtsResult); err != nil {
 		t.Fatalf("failed to parse XTS XML results from %s: %w", xtsResultsPath, err)
-    }
+	}
 
 	for _, xtsModule := range(xtsResult.Modules) {
 		for _, xtsTestCase := range(xtsModule.TestCases) {
@@ -529,6 +557,4 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 		}
 	}
 	log.Printf("Finished parsing XTS results!", err)
-
-	tc.TearDown()
 }
