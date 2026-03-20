@@ -1341,11 +1341,6 @@ std::string CuttlefishConfig::InstanceSpecific::console_dev() const {
   return console_dev;
 }
 
-std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
-    const {
-  return AbsolutePath(PerInstanceUdsPath("launcher_monitor.sock"));
-}
-
 static constexpr char kModemSimulatorPorts[] = "modem_simulator_ports";
 std::string CuttlefishConfig::InstanceSpecific::modem_simulator_ports() const {
   return (*Dictionary())[kModemSimulatorPorts].asString();

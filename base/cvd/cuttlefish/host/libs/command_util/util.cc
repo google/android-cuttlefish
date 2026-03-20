@@ -28,6 +28,7 @@
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -81,7 +82,7 @@ Result<RunnerExitCodes> ReadExitCode(SharedFD monitor_socket) {
 Result<SharedFD> GetLauncherMonitorFromInstance(
     const CuttlefishConfig::InstanceSpecific& instance_config,
     const int timeout_seconds) {
-  std::string monitor_path = instance_config.launcher_monitor_socket_path();
+  std::string monitor_path = LauncherMonitorSocketPath(instance_config);
   CF_EXPECT(!monitor_path.empty(), "No path to launcher monitor found");
 
   SharedFD monitor_socket = SharedFD::SocketLocalClient(

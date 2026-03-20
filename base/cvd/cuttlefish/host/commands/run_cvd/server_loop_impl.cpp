@@ -164,7 +164,7 @@ Result<void> ServerLoopImpl::Run() {
 }
 
 Result<void> ServerLoopImpl::ResultSetup() {
-  auto launcher_monitor_path = instance_.launcher_monitor_socket_path();
+  auto launcher_monitor_path = LauncherMonitorSocketPath(instance_);
   server_ = SharedFD::SocketLocalServer(launcher_monitor_path.c_str(), false,
                                         SOCK_STREAM, 0666);
   CF_EXPECTF(server_->IsOpen(), "Error when opening launcher server: {}",

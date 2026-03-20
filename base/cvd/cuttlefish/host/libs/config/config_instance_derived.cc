@@ -50,6 +50,11 @@ std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("kernel-log-pipe"));
 }
 
+std::string LauncherMonitorSocketPath(
+    const CuttlefishConfig::InstanceSpecific& ins) {
+  return AbsolutePath(ins.PerInstanceUdsPath("launcher_monitor.sock"));
+}
+
 std::string LogcatPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceLogPath("logcat"));
 }
