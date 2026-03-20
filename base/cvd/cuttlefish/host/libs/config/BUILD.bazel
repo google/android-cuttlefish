@@ -454,3 +454,18 @@ cf_cc_library(
         "@abseil-cpp//absl/strings",
     ],
 )
+
+cf_cc_library(
+    name = "camera",
+    srcs = ["camera.cpp"],
+    hdrs = ["camera.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:contains",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/strings",
+    ],
+)

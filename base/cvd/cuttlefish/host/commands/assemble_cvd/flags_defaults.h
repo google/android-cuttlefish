@@ -263,3 +263,6 @@
 
 // Virtual Cpufreq default configuration path
 #define CF_DEFAULTS_VCPU_CONFIG_PATH ""
+
+// Camera
+#define CF_DEFAULTS_CAMERA_TYPE 1

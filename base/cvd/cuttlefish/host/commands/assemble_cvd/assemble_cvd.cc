@@ -35,6 +35,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
+#include "cuttlefish/host/commands/assemble_cvd/camera.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/ap_composite_disk.h"
@@ -520,7 +521,10 @@ fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
       .install(FastbootConfigFragmentComponent)
       .install(GflagsComponent)
       .install(ConfigFlagComponent)
-      .install(CustomActionsComponent);
+      .install(CustomActionsComponent)
+      .install(CamerasConfigsComponent)
+      .install(CamerasConfigsFlagComponent)
+      .install(CamerasConfigsFragmentComponent);
 }
 
 Result<void> CheckNoTTY() {

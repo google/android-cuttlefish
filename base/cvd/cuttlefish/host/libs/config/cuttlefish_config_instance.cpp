@@ -1970,6 +1970,33 @@ CuttlefishConfig::InstanceSpecific::audio_settings() const {
   return audio_settings;
 }
 
+static constexpr char kCameraConfigs[] = "camera_configs";
+static constexpr char kCameraType[] = "type";
+std::vector<CuttlefishConfig::CameraConfig>
+CuttlefishConfig::InstanceSpecific::camera_configs() const {
+  std::vector<CameraConfig> configs;
+  for (auto& json : (*Dictionary())[kCameraConfigs]) {
+    CameraConfig config = {};
+    config.type =
+        static_cast<CuttlefishConfig::CameraType>(json[kCameraType].asInt());
+    configs.emplace_back(config);
+  }
+  return configs;
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_camera_configs(
+    const std::vector<CameraConfig>& configs) {
+  Json::Value configs_json(Json::arrayValue);
+
+  for (const CameraConfig& config : configs) {
+    Json::Value json(Json::objectValue);
+    json[kCameraType] = static_cast<int>(config.type);
+    configs_json.append(json);
+  }
+
+  (*Dictionary())[kCameraConfigs] = configs_json;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
     std::string_view file_name) const {
   return absl::StrCat(instance_dir(), "/", file_name);
