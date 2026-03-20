@@ -74,7 +74,8 @@ Result<std::unordered_map<std::string, std::string>> ConsoleBootconfig(
 
 Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const CuttlefishConfig::InstanceSpecific& instance,
+    const std::map<std::string, std::string, std::less<void>> /* builtin_bootconfig_args */) {
   std::unordered_map<std::string, std::string> bootconfig_args;
 
   AppendMapWithReplacement(&bootconfig_args,

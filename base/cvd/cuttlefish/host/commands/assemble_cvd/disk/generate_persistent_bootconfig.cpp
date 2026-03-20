@@ -23,17 +23,38 @@
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
 #include "cuttlefish/host/commands/assemble_cvd/bootconfig_args.h"
+#include "cuttlefish/host/commands/assemble_cvd/boot_image/vendor_boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/generate_persistent_bootconfig.h"
 #include "cuttlefish/host/libs/avb/avb.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
+#include "cuttlefish/io/shared_fd.h"
+#include "cuttlefish/io/string.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
+
+Result<std::map<std::string, std::string, std::less<void>>> ReadBuiltInBootconfigArgs(
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  std::string image_path = instance.vendor_boot_image();
+  SharedFD fd = SharedFD::Open(image_path, O_RDONLY);
+  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image_path, fd->StrError());
+  VendorBootImage vendor_boot = CF_EXPECT(VendorBootImage::Read(std::make_unique<SharedFdIo>(fd)));
+  auto bootconfig_opt = vendor_boot.Bootconfig();
+  if (!bootconfig_opt) {
+    return {};
+  }
+  std::string bootconfig = CF_EXPECT(ReadToString(bootconfig_opt.value()));
+  return CF_EXPECT(ParseKeyEqualsValue(bootconfig));
+}
+
+}
 
 Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
     const CuttlefishConfig& config,
@@ -58,8 +79,10 @@ Result<std::optional<BootConfigPartition>> BootConfigPartition::CreateIfNeeded(
   CF_EXPECT(bootconfig_fd->IsOpen(),
             "Unable to open bootconfig file: " << bootconfig_fd->StrError());
 
+  auto builtin_bootconfig_args = CF_EXPECT(ReadBuiltInBootconfigArgs(instance));
+
   const auto bootconfig_args =
-      CF_EXPECT(BootconfigArgsFromConfig(config, instance));
+      CF_EXPECT(BootconfigArgsFromConfig(config, instance, builtin_bootconfig_args));
   const auto bootconfig =
       CF_EXPECT(BootconfigArgsString(bootconfig_args, "\n")) + "\n";
 

@@ -142,8 +142,9 @@ Result<void> PrepareBootEnvImage(
   // args need to be passed in via the uboot env. This won't be an issue for
   // protect kvm which is running a kernel with bootconfig support.
   if (!instance.bootconfig_supported()) {
+    std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args;
     auto bootconfig_args =
-        CF_EXPECT(BootconfigArgsFromConfig(config, instance));
+        CF_EXPECT(BootconfigArgsFromConfig(config, instance, builtin_bootconfig_args));
 
     // "androidboot.hardware" kernel parameter has changed to "hardware" in
     // bootconfig and needs to be replaced before being used in the kernel
