@@ -30,8 +30,8 @@ Result<void> InitializeAccessKregistryImage(
   if (FileExists(access_kregistry)) {
     return {};
   }
-  CF_EXPECT(CreateBlankImage(access_kregistry, 2 /* mb */, "none"),
-            "Failed to create \"" << access_kregistry << "\"");
+  CF_EXPECTF(CreateBlankEmptyImage(access_kregistry, 2 /* mb */),
+             "Failed to create '{}'", access_kregistry);
   return {};
 }
 

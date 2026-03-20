@@ -159,51 +159,58 @@ static Result<DataImageAction> ChooseDataImageAction(
 
 } // namespace
 
-Result<void> CreateBlankImage(const std::string& image, int num_mb,
-                              const std::string& image_fmt) {
+Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
   VLOG(0) << "Creating " << image;
 
-  off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
-  // MakeFatImage will do the same as below to zero the image files, so we
-  // don't need to do it here
-  if (image_fmt != "sdcard") {
-    auto fd = SharedFD::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666);
-    CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
-               "`truncate --size={}M '{}'` failed: {}", num_mb, image,
-               fd->StrError());
-  }
+  uint64_t image_size_bytes = static_cast<uint64_t>(num_mb) << 20;
+  SharedFD fd =
+      SharedFD::Open(std::string(image), O_CREAT | O_TRUNC | O_RDWR, 0666);
+  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image, fd->StrError());
+  CF_EXPECTF(fd->Truncate(image_size_bytes) == 0,
+             "`truncate --size={}M '{}'` failed: {}", num_mb, image,
+             fd->StrError());
+  return {};
+}
 
-  if (image_fmt == "ext4") {
-    CF_EXPECT(Execute({"/sbin/mkfs.ext4", image}) == 0);
-  } else if (image_fmt == "f2fs") {
-    auto make_f2fs_path = HostBinaryPath("make_f2fs");
-    CF_EXPECT(
-        Execute({make_f2fs_path, "-l", "data", image, "-C", "utf8", "-O",
-                 "compression,extra_attr,project_quota,casefold", "-g",
-                 "android", "-b", F2FS_BLOCKSIZE, "-w", F2FS_BLOCKSIZE}) == 0);
-  } else if (image_fmt == "sdcard") {
-    // Reserve 1MB in the image for the MBR and padding, to simulate what
-    // other OSes do by default when partitioning a drive
-    off_t offset_size_bytes = 1 << 20;
-    image_size_bytes -= offset_size_bytes;
-    CF_EXPECT(MakeFatImage(image, num_mb, 1), "Failed to create SD-Card fs");
-    // Write the MBR after the filesystem is formatted, as the formatting tools
-    // don't consistently preserve the image contents
-    MasterBootRecord mbr = {
-        .partitions = {{
-            .partition_type = 0xC,
-            .first_lba = (uint32_t)offset_size_bytes / kSectorSize,
-            .num_sectors = (uint32_t)image_size_bytes / kSectorSize,
-        }},
-        .boot_signature = {0x55, 0xAA},
-    };
-    auto fd = SharedFD::Open(image, O_RDWR);
-    CF_EXPECTF(WriteAllBinary(fd, &mbr) == sizeof(MasterBootRecord),
-               "Writing MBR to '{}' failed: '{}'", image, fd->StrError());
-  } else if (image_fmt != "none") {
-    LOG(WARNING) << "Unknown image format '" << image_fmt
-                 << "' for " << image << ", treating as 'none'.";
-  }
+Result<void> CreateBlankExt4Image(std::string_view image, int num_mb) {
+  CF_EXPECT(CreateBlankEmptyImage(image, num_mb));
+  CF_EXPECT_EQ(Execute({"/sbin/mkfs.ext4", std::string(image)}), 0);
+  return {};
+}
+
+Result<void> CreateBlankF2fsImage(std::string_view image, int num_mb) {
+  CF_EXPECT(CreateBlankEmptyImage(image, num_mb));
+  const std::string make_f2fs_path = HostBinaryPath("make_f2fs");
+  CF_EXPECT_EQ(
+      Execute({make_f2fs_path, "-l", "data", std::string(image), "-C", "utf8",
+               "-O", "compression,extra_attr,project_quota,casefold", "-g",
+               "android", "-b", F2FS_BLOCKSIZE, "-w", F2FS_BLOCKSIZE}),
+      0);
+  return {};
+}
+
+Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb) {
+  off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
+  // Reserve 1MB in the image for the MBR and padding, to simulate what
+  // other OSes do by default when partitioning a drive
+  off_t offset_size_bytes = 1 << 20;
+  image_size_bytes -= offset_size_bytes;
+  CF_EXPECT(MakeFatImage(std::string(image), num_mb, 1),
+            "Failed to create SD-Card fs");
+  // Write the MBR after the filesystem is formatted, as the formatting tools
+  // don't consistently preserve the image contents
+  MasterBootRecord mbr = {
+      .partitions = {{
+          .partition_type = 0xC,
+          .first_lba = (uint32_t)offset_size_bytes / kSectorSize,
+          .num_sectors = (uint32_t)image_size_bytes / kSectorSize,
+      }},
+      .boot_signature = {0x55, 0xAA},
+  };
+  SharedFD fd = SharedFD::Open(std::string(image), O_RDWR);
+  CF_EXPECTF(fd->IsOpen(), "Failed to open '{}': '{}'", image, fd->StrError());
+  CF_EXPECTF(WriteAllBinary(fd, &mbr) == sizeof(MasterBootRecord),
+             "Writing MBR to '{}' failed: '{}'", image, fd->StrError());
   return {};
 }
 
@@ -221,11 +228,10 @@ Result<void> InitializeDataImage(
       CF_EXPECT(instance.blank_data_image_mb() != 0,
                 "Expected `-blank_data_image_mb` to be set for "
                 "image creation.");
-      CF_EXPECT(CreateBlankImage(instance.new_data_image(),
-                                 instance.blank_data_image_mb(), "none"),
-                "Failed to create a blank image at \""
-                    << instance.new_data_image() << "\" with size "
-                    << instance.blank_data_image_mb() << "\"");
+      CF_EXPECTF(CreateBlankEmptyImage(instance.new_data_image(),
+                                       instance.blank_data_image_mb()),
+                 "Failed to create a blank image at '{}' with size '{}'",
+                 instance.new_data_image(), instance.blank_data_image_mb());
       return {};
     }
     case DataImageAction::kResizeImage: {
