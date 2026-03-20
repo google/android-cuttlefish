@@ -37,7 +37,7 @@ Result<FactoryResetProtectedImage> FactoryResetProtectedImage::Create(
   if (FileExists(frp.path_)) {
     return frp;
   }
-  CF_EXPECTF(CreateBlankImage(frp.path_, 1 /* mb */, "none"),
+  CF_EXPECTF(CreateBlankEmptyImage(frp.path_, 1 /* mb */),
              "Failed to create '{}'", frp.path_);
   return frp;
 }

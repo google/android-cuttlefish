@@ -32,8 +32,8 @@ std::string MiscImage::Name() const { return std::string(kName); }
 
 Result<std::string> MiscImage::Generate() {
   if (!ready_) {
-    CF_EXPECT(CreateBlankImage(path_, 1 /* mb */, "none"),
-              "Failed to create misc image");
+    CF_EXPECTF(CreateBlankEmptyImage(path_, 1 /* mb */),
+               "Failed to create misc image at '{}'", path_);
     ready_ = true;
   }
   return path_;

@@ -29,7 +29,7 @@ Result<void> InitializeHwcomposerPmemImage(
   if (FileExists(HwcomposerPmemPath(instance))) {
     return {};
   }
-  CF_EXPECTF(CreateBlankImage(HwcomposerPmemPath(instance), 2 /* mb */, "none"),
+  CF_EXPECTF(CreateBlankEmptyImage(HwcomposerPmemPath(instance), 2 /* mb */),
              "Failed creating '{}'", HwcomposerPmemPath(instance));
   return {};
 }

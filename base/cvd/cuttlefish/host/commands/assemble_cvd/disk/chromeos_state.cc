@@ -30,7 +30,6 @@ namespace cuttlefish {
 
 static constexpr char kImageName[] = "chromeos_state.img";
 static constexpr int kImageSizeMb = 8096;
-static constexpr char kFilesystemFormat[] = "ext4";
 
 Result<std::optional<ChromeOsStateImage>> ChromeOsStateImage::CreateIfNecessary(
     const CuttlefishConfig::InstanceSpecific& instance) {
@@ -39,7 +38,7 @@ Result<std::optional<ChromeOsStateImage>> ChromeOsStateImage::CreateIfNecessary(
   }
   std::string path = AbsolutePath(instance.PerInstancePath(kImageName));
   if (!FileExists(path)) {
-    CF_EXPECT(CreateBlankImage(path, kImageSizeMb,kFilesystemFormat));
+    CF_EXPECT(CreateBlankExt4Image(path, kImageSizeMb));
   }
   return ChromeOsStateImage(std::move(path));
 }
