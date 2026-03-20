@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <string>
+#include <string_view>
 
 #include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/result/result.h"
@@ -25,7 +25,7 @@
 namespace cuttlefish {
 
 Result<void> WriteMetricsEvent(
-    EventType event_type, const std::string& metrics_directory,
+    EventType event_type, const std::string_view& metrics_directory,
     const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
         cf_log_event);
 

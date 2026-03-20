@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,16 @@
 
 #include <string>
 
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
+
 namespace cuttlefish {
 
-enum class EventType {
-  DeviceInstantiation,
-  DeviceBootStart,
-  DeviceBootComplete,
-  DeviceStop,
-  DeviceBootFailed,
-  FetchStart,
-  FetchComplete,
-  FetchFailed,
-};
+void GatherFetchStartMetrics(const FetchFlags& fetch_flags);
 
-std::string EventTypeString(EventType event_type);
+void GatherFetchCompleteMetrics(const std::string& target_directory,
+                                const FetchResult& fetch_result);
+
+void GatherFetchFailedMetrics(const std::string& target_directory);
 
 }  // namespace cuttlefish
