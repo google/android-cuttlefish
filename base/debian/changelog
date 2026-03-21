@@ -1,8 +1,37 @@
-cuttlefish-common (1.48.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.48.0) unstable; urgency=medium
 
-  * 
+  * Mark release 1.47.0 as unstable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2266
+  * Add cloud-init-image-for-cuttlefish subdirectory by @grandpaul in https://github.com/google/android-cuttlefish/pull/2111
+  * Start development on v1.48.0 by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2267
+  * Mark release 1.26.0 as stable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/1700
+  * hostimage: use 32gb attached disk when installing cuttlefish packages. by @ser-io in https://github.com/google/android-cuttlefish/pull/2265
+  * Run lz4 decompression in-process for ramdisks by @Databean in https://github.com/google/android-cuttlefish/pull/2258
+  * Report `Result`s through the WalkDirectory callback by @Databean in https://github.com/google/android-cuttlefish/pull/2256
+  * Move MakeFatImage out of esp.cpp by @Databean in https://github.com/google/android-cuttlefish/pull/2269
+  * Fix ignored error while creating container on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2272
+  * Move the `mkenvimage_slim` logic into `assemble_cvd` by @Databean in https://github.com/google/android-cuttlefish/pull/2271
+  * changed extra_bootconfig_args to vector for multy vm support by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2270
+  * Use `Result`s in base64.h by @Databean in https://github.com/google/android-cuttlefish/pull/2268
+  * Fetch metrics gathering by @cjreynol in https://github.com/google/android-cuttlefish/pull/2273
+  * Tests container instance on arm64 on-premise server image by @0405ysj in https://github.com/google/android-cuttlefish/pull/2237
+  * Merge AndroidEfiLoaderCompositeDiskConfig with AndroidCompositeDiskConfig by @Databean in https://github.com/google/android-cuttlefish/pull/2254
+  * Revert "changed extra_bootconfig_args to vector for multy vm support" by @Databean in https://github.com/google/android-cuttlefish/pull/2275
+  * Check for null lights_observer in webrtc connection observer by @chihchiachen in https://github.com/google/android-cuttlefish/pull/2278
+  * Split EspBuilder into its own file under config/esp by @Databean in https://github.com/google/android-cuttlefish/pull/2280
+  * Support `fetch` and `login` subcommand on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2276
+  * Move podcvd/main.go into podcvd/cmd/podcvd/main.go by @0405ysj in https://github.com/google/android-cuttlefish/pull/2285
+  * Move pstore_path to a freestanding function in config_instance_derived by @Databean in https://github.com/google/android-cuttlefish/pull/2279
+  * Move most sanitize options under `dbg` and `fastbuild` configs by @jmacnak in https://github.com/google/android-cuttlefish/pull/2287
+  * Update default size of cvd e2etests to "large" by @jmacnak in https://github.com/google/android-cuttlefish/pull/2288
+  * Identify gpx and kml files by file name not type. by @bridadan in https://github.com/google/android-cuttlefish/pull/2289
+  * vhost user media device verbosity flag by @ser-io in https://github.com/google/android-cuttlefish/pull/2274
+  * Do not preserve owner user/group when extracting tar archive by @0405ysj in https://github.com/google/android-cuttlefish/pull/2286
+  * Best-effort attempt to preserve log files in e2e tests by @Databean in https://github.com/google/android-cuttlefish/pull/2293
+  * Ensure graphics detector tests wait for the device by @jmacnak in https://github.com/google/android-cuttlefish/pull/2296
+  * Create more freestanding functions in config_instance_derived by @Databean in https://github.com/google/android-cuttlefish/pull/2291
+  * Partial fix for running udc-qpr-dev with host_substitution=all by @Databean in https://github.com/google/android-cuttlefish/pull/2297
 
- -- Alistair Delva <adelva@google.com>  Fri, 13 Mar 2026 15:02:06 -0700
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 21 Mar 2026 05:22:48 +0000
 
 cuttlefish-common (1.47.0) unstable; urgency=medium
 
