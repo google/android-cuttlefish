@@ -1,3 +1,9 @@
+cuttlefish-common (1.49.0) UNRELEASED; urgency=medium
+
+  *
+
+ -- Ram Muthiah <rammuthiah@google.com>  Sat, 21 Mar 2026 14:53:36 +0000
+
 cuttlefish-common (1.48.0) unstable; urgency=medium
 
   * Mark release 1.47.0 as unstable by @adelva1984 in https://github.com/google/android-cuttlefish/pull/2266
