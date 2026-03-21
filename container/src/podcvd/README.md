@@ -46,3 +46,27 @@ describes how to build `cuttlefish-podcvd` debian package.
 
 Execute `sudo apt install ./cuttlefish-podcvd_*.deb` to install it on your
 machine.
+
+### Manually build podcvd_mcp_server
+
+Execute `go build ./cmd/podcvd_mcp_server` from `container/src/podcvd`
+directory.
+
+### Test podcvd_mcp_server on your local machine
+
+Execute `podcvd_mcp_server`, then it'll be running on port `8080`.
+
+With Gemini CLI for example, append this JSON object into
+`$HOME/.gemini/settings.json`.
+```json
+{
+  "mcpServers": {
+    "podcvd-mcp-server": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+Afterwards, `podcvd_mcp_server` is getting to be applied with any further
+Gemini CLI sessions.
