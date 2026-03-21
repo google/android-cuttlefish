@@ -99,7 +99,7 @@ std::function<void(AudioStatus, uint32_t, uint32_t)> SendStatusCallback(
 }  // namespace
 
 std::unique_ptr<AudioClientConnection> AudioServer::AcceptClient(
-    uint32_t num_streams, uint32_t num_jacks, uint32_t num_chmaps,
+    uint32_t num_streams, uint32_t num_jacks, uint32_t num_chmaps, uint32_t num_controls,
     size_t tx_shm_len, size_t rx_shm_len) {
   auto conn_fd = SharedFD::Accept(*server_socket_, nullptr, 0);
   if (!conn_fd->IsOpen()) {
@@ -107,13 +107,13 @@ std::unique_ptr<AudioClientConnection> AudioServer::AcceptClient(
     return nullptr;
   }
   return AudioClientConnection::Create(conn_fd, num_streams, num_jacks,
-                                       num_chmaps, tx_shm_len, rx_shm_len);
+                                       num_chmaps, num_controls, tx_shm_len, rx_shm_len);
 }
 
 /* static */
 std::unique_ptr<AudioClientConnection> AudioClientConnection::Create(
     SharedFD client_socket, uint32_t num_streams, uint32_t num_jacks,
-    uint32_t num_chmaps, size_t tx_shm_len, size_t rx_shm_len) {
+    uint32_t num_chmaps, uint32_t num_controls, size_t tx_shm_len, size_t rx_shm_len) {
   SharedFD event_socket, event_pair;
   SharedFD tx_socket, tx_pair;
   SharedFD rx_socket, rx_pair;
@@ -143,6 +143,7 @@ std::unique_ptr<AudioClientConnection> AudioClientConnection::Create(
       .jacks = num_jacks,
       .streams = num_streams,
       .chmaps = num_chmaps,
+      .controls = num_controls,
   };
 
   auto sent = client_socket->SendFileDescriptors(
@@ -160,10 +161,9 @@ std::unique_ptr<AudioClientConnection> AudioClientConnection::Create(
 }
 
 bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
-  // The largest msg the client will send is 24 bytes long, using uint64_t
-  // guarantees it's aligned to 64 bits.
-  uint64_t recv_buffer[3];
-  auto recv_size =
+  constexpr auto kBufSize = sizeof(virtio_snd_ctl_hdr) + sizeof(virtio_snd_ctl_value);
+  alignas(uint64_t) uint8_t recv_buffer[kBufSize];
+  const auto recv_size =
       ReceiveMsg(control_socket_, &recv_buffer, sizeof(recv_buffer));
   if (recv_size <= 0) {
     return false;
@@ -298,6 +298,47 @@ bool AudioClientConnection::ReceiveCommands(AudioServerExecutor& executor) {
     case AudioCommandType::VIRTIO_SND_R_JACK_REMAP:
       LOG(ERROR) << "Unsupported command type: " << cmd_hdr->code.as_uint32_t();
       return CmdReply(AudioStatus::VIRTIO_SND_S_NOT_SUPP);
+    case AudioCommandType::VIRTIO_SND_R_CTL_INFO: {
+      if (recv_size < sizeof(virtio_snd_query_info)) {
+        VLOG(0) << "Received QUERY_INFO message is too small: " << recv_size;
+        return false;
+      }
+      const auto& query_info = *reinterpret_cast<const virtio_snd_query_info*>(recv_buffer);
+      const auto info_count = query_info.count.as_uint32_t();
+      const auto start_id = query_info.start_id.as_uint32_t();
+      std::vector<virtio_snd_ctl_info> reply(info_count);
+      ControlInfoCommand cmd(start_id, info_count, reply.data());
+      VLOG(0) << "VIRTIO_SND_R_CTL_INFO: start_id=" << start_id
+                 << ", count=" << info_count;
+
+      executor.ControlsInfo(cmd);
+      return CmdReply(cmd.status(), reply.data(), reply.size() * sizeof(virtio_snd_ctl_info));
+    }
+    case AudioCommandType::VIRTIO_SND_R_CTL_READ: {
+      if (recv_size < sizeof(virtio_snd_ctl_hdr)) {
+        VLOG(0) << "Received CTL_READ message is too small: " << recv_size;
+        return false;
+      }
+      const auto& ctl_hdr = *reinterpret_cast<const virtio_snd_ctl_hdr*>(recv_buffer);
+      virtio_snd_ctl_value reply_value = {};
+      ControlCommand cmd(AudioCommandType::VIRTIO_SND_R_CTL_READ,
+                         ctl_hdr.control_id.as_uint32_t(), &reply_value);
+      executor.OnControlCommand(cmd);
+      return CmdReply(cmd.status(), &reply_value, sizeof(reply_value));
+    }
+    case AudioCommandType::VIRTIO_SND_R_CTL_WRITE: {
+      constexpr auto kHdrSize = sizeof(virtio_snd_ctl_hdr);
+      if (recv_size < sizeof(virtio_snd_ctl_value) + kHdrSize) {
+        VLOG(0) << "Received CTL_WRITE message is too small: " << recv_size;
+        return false;
+      }
+      const auto& ctl_hdr = *reinterpret_cast<const virtio_snd_ctl_hdr*>(recv_buffer);
+      const auto ctl_value =
+          reinterpret_cast<virtio_snd_ctl_value*>(&recv_buffer[kHdrSize]);
+      ControlCommand cmd(AudioCommandType::VIRTIO_SND_R_CTL_WRITE, ctl_hdr.control_id.as_uint32_t(), ctl_value);
+      executor.OnControlCommand(cmd);
+      return CmdReply(cmd.status());
+    }
     default:
       LOG(ERROR) << "Unknown command type: " << cmd_hdr->code.as_uint32_t();
       return CmdReply(AudioStatus::VIRTIO_SND_S_BAD_MSG);
