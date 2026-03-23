@@ -59,7 +59,7 @@ std::string_view format_as(GpuMode mode) {
       return kGpuModeCustom;
       break;
     case GpuMode::DrmVirgl:
-      return kGpuModeGfxstream;
+      return kGpuModeDrmVirgl;
       break;
     case GpuMode::Gfxstream:
       return kGpuModeGfxstream;
