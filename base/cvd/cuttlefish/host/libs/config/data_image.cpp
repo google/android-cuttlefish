@@ -43,11 +43,7 @@
 #include "cuttlefish/host/libs/image_aggregator/mbr.h"
 #include "cuttlefish/result/result.h"
 
-// https://cs.android.com/android/platform/superproject/main/+/main:device/google/cuttlefish/Android.bp;l=127;drc=6f7d6a4db58efcc2ddd09eda07e009c6329414cd
-#define F2FS_BLOCKSIZE "4096"
-
 namespace cuttlefish {
-
 namespace {
 
 const int FSCK_ERROR_CORRECTED = 1;
@@ -175,17 +171,6 @@ Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb) {
 Result<void> CreateBlankExt4Image(std::string_view image, int num_mb) {
   CF_EXPECT(CreateBlankEmptyImage(image, num_mb));
   CF_EXPECT_EQ(Execute({"/sbin/mkfs.ext4", std::string(image)}), 0);
-  return {};
-}
-
-Result<void> CreateBlankF2fsImage(std::string_view image, int num_mb) {
-  CF_EXPECT(CreateBlankEmptyImage(image, num_mb));
-  const std::string make_f2fs_path = HostBinaryPath("make_f2fs");
-  CF_EXPECT_EQ(
-      Execute({make_f2fs_path, "-l", "data", std::string(image), "-C", "utf8",
-               "-O", "compression,extra_attr,project_quota,casefold", "-g",
-               "android", "-b", F2FS_BLOCKSIZE, "-w", F2FS_BLOCKSIZE}),
-      0);
   return {};
 }
 

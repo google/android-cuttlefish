@@ -31,8 +31,6 @@ Result<void> CreateBlankEmptyImage(std::string_view image, int num_mb);
 
 Result<void> CreateBlankExt4Image(std::string_view image, int num_mb);
 
-Result<void> CreateBlankF2fsImage(std::string_view image, int num_mb);
-
 Result<void> CreateBlankSdcardImage(std::string_view image, int num_mb);
 
 } // namespace cuttlefish
