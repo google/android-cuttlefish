@@ -75,7 +75,7 @@ Result<std::unordered_map<std::string, std::string>> ConsoleBootconfig(
 Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
-    const std::map<std::string, std::string, std::less<void>> /* builtin_bootconfig_args */) {
+    const std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args) {
   std::unordered_map<std::string, std::string> bootconfig_args;
 
   AppendMapWithReplacement(&bootconfig_args,
@@ -246,6 +246,12 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     bootconfig_args["androidboot.wifi_impl"] = "mac80211_hwsim_virtio";
   } else {
     bootconfig_args["androidboot.wifi_impl"] = "virt_wifi";
+  }
+
+  if (!builtin_bootconfig_args.count("androidboot.vendor.apex.com.google.emulated.camera.provider.hal")){
+    bootconfig_args
+      ["androidboot.vendor.apex.com.google.emulated.camera.provider.hal"] =
+          "com.google.emulated.camera.provider.hal";
   }
 
   if (!instance.vcpu_config_path().empty()) {
