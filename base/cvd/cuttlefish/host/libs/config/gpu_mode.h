@@ -59,7 +59,7 @@ void AbslStringify(Sink& sink, GpuMode mode) {
       sink.Append(kGpuModeCustom);
       break;
     case GpuMode::DrmVirgl:
-      sink.Append(kGpuModeGfxstream);
+      sink.Append(kGpuModeDrmVirgl);
       break;
     case GpuMode::Gfxstream:
       sink.Append(kGpuModeGfxstream);
