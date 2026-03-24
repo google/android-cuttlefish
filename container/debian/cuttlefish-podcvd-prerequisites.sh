@@ -16,8 +16,10 @@
 
 set -e
 
+username="$USER"
+: "${username:?username is empty}"
+
 setup_device_availability() {
-    local username=$(logname)
     # Execute both usermod and setfacl, to make podcvd working right after
     # executing this script and rebooting the machine.
     sudo usermod -aG kvm "$username"
@@ -27,7 +29,6 @@ setup_device_availability() {
 }
 
 setup_rootless_podman() {
-    local username=$(logname)
     if grep -q "^$username:" /etc/subuid /etc/subgid; then
         echo "Skip adding subuid/subgid. However, you may need to configure" \
              "it manually. Watch here for details." \
