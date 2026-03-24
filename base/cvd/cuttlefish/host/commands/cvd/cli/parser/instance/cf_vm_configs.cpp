@@ -176,10 +176,10 @@ Result<std::vector<std::string>> GenerateVmFlags(
       GenerateInstanceFlag("crosvm_v4l2_proxy", cfg, V4l2Proxy),
   };
 
-  std::vector<std::string> merged = MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
-  merged = MergeResults(merged, UserPageSize(cfg));
+  flags = MergeResults(std::move(flags), CF_EXPECT(CustomConfigsFlags(cfg)));
+  flags = MergeResults(std::move(flags), UserPageSize(cfg));
 
-  return merged;
+  return flags;
 }
 
 }  // namespace cuttlefish
