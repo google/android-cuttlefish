@@ -60,17 +60,9 @@ cf_cc_library(
         "flag_metrics.h",
     ],
     deps = [
-        "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
-        "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
-        "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
-        "//cuttlefish/host/commands/assemble_cvd/flags:extra_kernel_cmdline",
-        "//cuttlefish/host/commands/assemble_cvd/flags:gpu_mode",
-        "//cuttlefish/host/commands/assemble_cvd/flags:guest_enforce_security",
-        "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
-        "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
-        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:gpu_mode",
+        "//cuttlefish/host/libs/metrics:parsed_flags",
         "//cuttlefish/result",
     ],
 )
@@ -175,6 +167,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_transmitter",
         "//cuttlefish/host/libs/metrics:metrics_writer",
+        "//cuttlefish/host/libs/metrics:parsed_flags",
         "//cuttlefish/host/libs/metrics:session_id",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
@@ -218,6 +211,28 @@ cf_cc_library(
         "//external_proto:cf_log_cc_proto",
         "@fmt",
         "@protobuf",
+    ],
+)
+
+cf_cc_library(
+    name = "parsed_flags",
+    srcs = [
+        "parsed_flags.cc",
+    ],
+    hdrs = [
+        "parsed_flags.h",
+    ],
+    deps = [
+        "//cuttlefish/host/commands/assemble_cvd/flags:cpus",
+        "//cuttlefish/host/commands/assemble_cvd/flags:daemon",
+        "//cuttlefish/host/commands/assemble_cvd/flags:data_policy",
+        "//cuttlefish/host/commands/assemble_cvd/flags:extra_kernel_cmdline",
+        "//cuttlefish/host/commands/assemble_cvd/flags:gpu_mode",
+        "//cuttlefish/host/commands/assemble_cvd/flags:guest_enforce_security",
+        "//cuttlefish/host/commands/assemble_cvd/flags:memory_mb",
+        "//cuttlefish/host/commands/assemble_cvd/flags:restart_subprocesses",
+        "//cuttlefish/host/commands/assemble_cvd/flags:system_image_dir",
+        "//cuttlefish/result",
     ],
 )
 
