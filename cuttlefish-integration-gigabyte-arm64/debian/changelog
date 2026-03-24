@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.49.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Seungjae Yoo <seungjaeyoo@google.com>  Tue, 24 Mar 2026 13:40:03 +0900
+
 cuttlefish-integration-gigabyte-arm64 (1.31.0) unstable; urgency=low
 
   * First release under https://github.com/google/android-cuttlefish.
