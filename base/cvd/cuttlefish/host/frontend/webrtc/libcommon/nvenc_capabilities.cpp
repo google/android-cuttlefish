@@ -1,16 +1,18 @@
-// Copyright 2026 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright (C) 2026 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // Queries NVENC codec support from the GPU at startup and caches the
 // result. The temporary encode session is opened once via std::call_once
@@ -26,6 +28,8 @@
 #include <nvEncodeAPI.h>
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/cuda_context.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/cuda_loader.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/nvenc_loader.h"
 #include "rtc_base/logging.h"
 
 namespace cuttlefish {
@@ -36,9 +40,15 @@ const std::vector<GUID>& QuerySupportedCodecGuids() {
   static std::vector<GUID> guids;
 
   std::call_once(flag, [] {
-    // Load NVENC API.
+    const auto* nvenc = TryLoadNvenc();
+    if (nvenc == nullptr) {
+      RTC_LOG(LS_WARNING) << "NVENC capabilities: "
+                          << "NVENC not available";
+      return;
+    }
+
     NV_ENCODE_API_FUNCTION_LIST funcs = {NV_ENCODE_API_FUNCTION_LIST_VER};
-    if (NvEncodeAPICreateInstance(&funcs) != NV_ENC_SUCCESS) {
+    if (nvenc->NvEncodeAPICreateInstance(&funcs) != NV_ENC_SUCCESS) {
       RTC_LOG(LS_WARNING) << "NVENC capabilities: "
                           << "NvEncodeAPICreateInstance failed";
       return;

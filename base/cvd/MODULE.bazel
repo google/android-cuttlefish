@@ -13,19 +13,20 @@ bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
 zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
 use_repo(zig_toolchains, "zig_sdk")
 
-# CUDA support for NVENC
-bazel_dep(name = "rules_cuda", version = "0.2.5")
+# CUDA support for NVENC (hermetic headers via redist_json, runtime dlopen)
+bazel_dep(name = "rules_cuda", version = "0.3.0")
 git_override(
     module_name = "rules_cuda",
-    commit = "32414222a7997ee66035d51404fc5427df94c699",
+    commit = "e10b718bc8d37abcb4c18d721806ef8ad74aa324",
     remote = "https://github.com/bazel-contrib/rules_cuda.git",
 )
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.local_toolchain(
-    name = "local_cuda",
-    toolkit_path = "",
+cuda.redist_json(
+    name = "cuda_redist",
+    version = "12.6.3",
 )
-use_repo(cuda, cuda = "local_cuda")
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")
 bazel_dep(name = "aspect_bazel_lib", version = "2.19.3")
 bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)

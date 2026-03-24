@@ -27,7 +27,6 @@
 #include "modules/video_coding/include/video_codec_interface.h"
 
 #include <cuda.h>
-#include <cuda_runtime.h>
 #include <nvEncodeAPI.h>
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/cuda_context.h"
@@ -35,18 +34,16 @@
 
 namespace cuttlefish {
 
+struct CudaFunctions;
+
 // Hardware-accelerated video encoder using NVIDIA NVENC.
 //
 // This encoder accepts native ARGB/ABGR input buffers from the display
 // compositor and uses NVENC's internal RGB-to-YUV conversion for optimal
 // performance. No custom CUDA kernels are needed for color space conversion.
 //
-// Key features:
-//   - Native ARGB/ABGR input (no CPU-side color conversion)
-//   - CBR rate control optimized for low-latency WebRTC streaming
-//   - Ultra-low latency tuning (no B-frames, infinite GOP)
-//   - Resolution-based bitrate limits for high-quality streaming
-//   - Lazy input resource registration (detects pixel format on first frame)
+// CUDA and NVENC libraries are loaded at runtime via dlopen/dlsym, so
+// this code compiles and links without any CUDA shared libraries present.
 //
 // Thread safety: InitEncode() must be called before Encode(). After
 // initialization, Encode() and SetRates() may be called from any thread.
@@ -62,7 +59,8 @@ class NvencVideoEncoder : public webrtc::VideoEncoder {
       webrtc::EncodedImageCallback* callback) override;
   int32_t Release() override;
   int32_t Encode(const webrtc::VideoFrame& frame,
-                 const std::vector<webrtc::VideoFrameType>* frame_types) override;
+                 const std::vector<webrtc::VideoFrameType>* frame_types)
+      override;
   void SetRates(const RateControlParameters& parameters) override;
   EncoderInfo GetEncoderInfo() const override;
 
@@ -80,20 +78,25 @@ class NvencVideoEncoder : public webrtc::VideoEncoder {
   uint32_t framerate_ = 30;
   bool inited_ = false;
 
+  // Dynamically loaded CUDA functions
+  const CudaFunctions* cuda_ = nullptr;
+
   // CUDA context
   std::shared_ptr<CudaContext> shared_context_;
   CUcontext cuda_context_ = nullptr;
-  cudaStream_t cuda_stream_ = nullptr;
+  CUstream cuda_stream_ = nullptr;
 
-  // GPU buffer for RGBA input (NVENC handles RGB->YUV conversion internally)
-  void* d_rgba_buffer_ = nullptr;
+  // GPU buffer for RGBA input (NVENC handles RGB->YUV conversion
+  // internally)
+  CUdeviceptr d_rgba_buffer_ = 0;
   NV_ENC_INPUT_PTR nvenc_input_buffer_ = nullptr;
   NV_ENC_OUTPUT_PTR nvenc_output_bitstream_ = nullptr;
 
   // Input resource registration state (lazy registration on first frame)
   bool input_resource_registered_ = false;
   uint32_t registered_pixel_format_ = 0;
-  NV_ENC_BUFFER_FORMAT nvenc_input_format_ = NV_ENC_BUFFER_FORMAT_UNDEFINED;
+  NV_ENC_BUFFER_FORMAT nvenc_input_format_ =
+      NV_ENC_BUFFER_FORMAT_UNDEFINED;
 
   // NVENC encoder
   void* encoder_ = nullptr;

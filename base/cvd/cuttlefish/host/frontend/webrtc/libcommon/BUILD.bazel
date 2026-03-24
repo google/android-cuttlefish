@@ -1,4 +1,3 @@
-load("@rules_cuda//cuda:defs.bzl", "requires_cuda")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
@@ -90,27 +89,45 @@ cf_cc_library(
 )
 
 # =============================================================================
-# NVENC/CUDA Support
+# NVENC/CUDA Support (runtime dlopen, no link-time CUDA dependency)
 # =============================================================================
+
+cf_cc_library(
+    name = "cuda_loader",
+    srcs = ["cuda_loader.cpp"],
+    hdrs = ["cuda_loader.h"],
+    deps = [
+        "@cuda//:cudart_headers",
+        "@libwebrtc",
+    ],
+    linkopts = ["-ldl"],
+)
+
+cf_cc_library(
+    name = "nvenc_loader",
+    srcs = ["nvenc_loader.cpp"],
+    hdrs = ["nvenc_loader.h"],
+    deps = [
+        "@nv_codec_headers//:nv_headers",
+        "@libwebrtc",
+    ],
+    linkopts = ["-ldl"],
+)
 
 cf_cc_library(
     name = "cuda_context",
     srcs = ["cuda_context.cpp"],
     hdrs = ["cuda_context.h"],
-    target_compatible_with = requires_cuda(),
     deps = [
-        "@cuda//:cuda_headers",
+        ":cuda_loader",
+        "@cuda//:cudart_headers",
         "@libwebrtc",
-    ],
-    linkopts = [
-        "-lcuda",
     ],
 )
 
 cf_cc_library(
     name = "nvenc_encoder_config",
     hdrs = ["nvenc_encoder_config.h"],
-    target_compatible_with = requires_cuda(),
     deps = [
         "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
@@ -121,14 +138,12 @@ cf_cc_library(
     name = "nvenc_capabilities",
     srcs = ["nvenc_capabilities.cpp"],
     hdrs = ["nvenc_capabilities.h"],
-    target_compatible_with = requires_cuda(),
     deps = [
         ":cuda_context",
+        ":cuda_loader",
+        ":nvenc_loader",
         "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
-    ],
-    linkopts = [
-        "-lnvidia-encode",
     ],
 )
 
@@ -144,22 +159,16 @@ cf_cc_library(
     name = "nvenc_video_encoder",
     srcs = ["nvenc_video_encoder.cpp"],
     hdrs = ["nvenc_video_encoder.h"],
-    target_compatible_with = requires_cuda(),
     deps = [
         ":abgr_buffer",
         ":cuda_context",
+        ":cuda_loader",
         ":nvenc_encoder_config",
+        ":nvenc_loader",
+        "@cuda//:cudart_headers",
         "@libdrm//:libdrm_fourcc",
         "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
-        "@cuda//:cuda_headers",
-        "@cuda//:cuda_runtime",
-        "@libyuv",
-    ],
-    linkopts = [
-        "-lnvidia-encode",
-        "-lcuda",
-        "-lcudart",
     ],
 )
 
@@ -170,7 +179,6 @@ cf_cc_library(
 cf_cc_library(
     name = "av1_nvenc_encoder_provider",
     srcs = ["av1_nvenc_encoder_provider.cpp"],
-    target_compatible_with = requires_cuda(),
     deps = [
         ":encoder_provider",
         ":encoder_provider_registry",
@@ -187,7 +195,6 @@ cf_cc_library(
 cf_cc_library(
     name = "av1_nvenc_decoder_provider",
     srcs = ["av1_nvenc_decoder_provider.cpp"],
-    target_compatible_with = requires_cuda(),
     deps = [
         ":decoder_provider",
         ":decoder_provider_registry",
@@ -269,15 +276,11 @@ cf_cc_library(
         ":builtin_encoder_provider",
         ":builtin_decoder_provider",
         ":extra_codec_providers",
+        ":av1_nvenc_encoder_provider",
+        ":av1_nvenc_decoder_provider",
         "//cuttlefish/result",
         "@libwebrtc",
-    ] + select({
-        "@rules_cuda//cuda:is_enabled": [
-            ":av1_nvenc_encoder_provider",
-            ":av1_nvenc_decoder_provider",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cf_cc_library(
