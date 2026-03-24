@@ -1,8 +1,8 @@
-cuttlefish-integration-gigabyte-arm64 (1.31.0) UNRELEASED; urgency=low
+cuttlefish-integration-gigabyte-arm64 (1.31.0) unstable; urgency=low
 
-  *
+  * First release under https://github.com/google/android-cuttlefish.
 
- -- Ying-Chun Liu (PaulLiu) <liupa@google.com>  Mon, 10 Nov 2025 12:14:05 +0000
+ -- Seungjae Yoo <seungjaeyoo@google.com>  Tue, 24 Mar 2026 13:37:09 +0900
 
 cuttlefish-integration-gigabyte-arm64 (0.0.2) stable; urgency=medium
 
