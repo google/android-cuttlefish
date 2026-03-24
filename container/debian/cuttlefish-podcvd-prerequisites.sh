@@ -41,6 +41,7 @@ setup_rootless_podman() {
         sudo usermod --add-subuids "$id_range" --add-subgids "$id_range" "$username"
     fi
     podman system migrate
+    systemctl --user enable --now podman.socket
 }
 
 setup_device_availability
