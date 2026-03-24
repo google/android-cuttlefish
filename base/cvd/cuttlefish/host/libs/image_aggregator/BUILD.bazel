@@ -34,6 +34,21 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "composite_io",
+    srcs = ["composite_io.cc"],
+    hdrs = ["composite_io.h"],
+    deps = [
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_seek",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_library(
     name = "disk_image",
     hdrs = ["disk_image.h"],
     deps = [
