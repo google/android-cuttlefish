@@ -1,3 +1,4 @@
+load("@rules_cuda//cuda:defs.bzl", "requires_cuda")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
 
 package(
@@ -96,6 +97,7 @@ cf_cc_library(
     name = "cuda_context",
     srcs = ["cuda_context.cpp"],
     hdrs = ["cuda_context.h"],
+    target_compatible_with = requires_cuda(),
     deps = [
         "@cuda//:cuda_headers",
         "@libwebrtc",
@@ -108,6 +110,7 @@ cf_cc_library(
 cf_cc_library(
     name = "nvenc_encoder_config",
     hdrs = ["nvenc_encoder_config.h"],
+    target_compatible_with = requires_cuda(),
     deps = [
         "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
@@ -118,6 +121,7 @@ cf_cc_library(
     name = "nvenc_capabilities",
     srcs = ["nvenc_capabilities.cpp"],
     hdrs = ["nvenc_capabilities.h"],
+    target_compatible_with = requires_cuda(),
     deps = [
         ":cuda_context",
         "@libwebrtc",
@@ -140,6 +144,7 @@ cf_cc_library(
     name = "nvenc_video_encoder",
     srcs = ["nvenc_video_encoder.cpp"],
     hdrs = ["nvenc_video_encoder.h"],
+    target_compatible_with = requires_cuda(),
     deps = [
         ":abgr_buffer",
         ":cuda_context",
@@ -165,6 +170,7 @@ cf_cc_library(
 cf_cc_library(
     name = "av1_nvenc_encoder_provider",
     srcs = ["av1_nvenc_encoder_provider.cpp"],
+    target_compatible_with = requires_cuda(),
     deps = [
         ":encoder_provider",
         ":encoder_provider_registry",
@@ -181,6 +187,7 @@ cf_cc_library(
 cf_cc_library(
     name = "av1_nvenc_decoder_provider",
     srcs = ["av1_nvenc_decoder_provider.cpp"],
+    target_compatible_with = requires_cuda(),
     deps = [
         ":decoder_provider",
         ":decoder_provider_registry",
@@ -261,13 +268,16 @@ cf_cc_library(
         ":decoder_provider_registry",
         ":builtin_encoder_provider",
         ":builtin_decoder_provider",
-        # Per-codec NVENC providers
-        ":av1_nvenc_encoder_provider",
-        ":av1_nvenc_decoder_provider",
         ":extra_codec_providers",
         "//cuttlefish/result",
         "@libwebrtc",
-    ],
+    ] + select({
+        "@rules_cuda//cuda:is_enabled": [
+            ":av1_nvenc_encoder_provider",
+            ":av1_nvenc_decoder_provider",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cf_cc_library(

@@ -56,6 +56,10 @@ void Av1SetPicParams(NV_ENC_PIC_PARAMS* params) {
 // AV1 achieves similar quality at ~60-70% of H.264 bitrate.
 // These are initial estimates and should be tuned with real
 // encoding measurements on target hardware (L4/L40).
+// ResolutionBitrateLimits(frame_size_pixels,
+//                         min_start_bitrate_bps,
+//                         min_bitrate_bps,
+//                         max_bitrate_bps)
 const webrtc::VideoEncoder::ResolutionBitrateLimits
     kAv1BitrateLimits[] = {
         {320 * 240,    80000,   40000,   800000},

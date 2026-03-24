@@ -90,7 +90,7 @@ include("//toolchain:rust.MODULE.bazel")
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "nv_codec_headers",
-    build_file = "@//:BUILD.nv_codec_headers.bazel",
+    build_file = "//build_external/nv_codec_headers:BUILD.nv_codec_headers.bazel",
     strip_prefix = "nv-codec-headers-n12.1.14.0",
     urls = [
         "https://github.com/FFmpeg/nv-codec-headers/archive/refs/tags/n12.1.14.0.tar.gz",
