@@ -698,6 +698,6 @@ int main(int argc, char** argv) {
   if (res.ok()) {
     return *res;
   }
-  LOG(ERROR) << "assemble_cvd failed: \n" << res.error();
+  LOG(ERROR) << "assemble_cvddfdf failed: \n" << res.error();
   abort();
 }
