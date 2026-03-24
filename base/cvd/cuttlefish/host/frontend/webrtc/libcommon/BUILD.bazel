@@ -11,30 +11,30 @@ package(
 cf_cc_library(
     name = "encoder_provider",
     hdrs = ["encoder_provider.h"],
-    deps = ["@libwebrtc"],
     visibility = ["//visibility:public"],
+    deps = ["@libwebrtc"],
 )
 
 cf_cc_library(
     name = "encoder_provider_registry",
     srcs = ["encoder_provider_registry.cpp"],
     hdrs = ["encoder_provider_registry.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":encoder_provider",
         "@libwebrtc",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cf_cc_library(
     name = "composite_encoder_factory",
     srcs = ["composite_encoder_factory.cpp"],
     hdrs = ["composite_encoder_factory.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":encoder_provider_registry",
         "@libwebrtc",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cf_cc_library(
@@ -51,30 +51,30 @@ cf_cc_library(
 cf_cc_library(
     name = "decoder_provider",
     hdrs = ["decoder_provider.h"],
-    deps = ["@libwebrtc"],
     visibility = ["//visibility:public"],
+    deps = ["@libwebrtc"],
 )
 
 cf_cc_library(
     name = "decoder_provider_registry",
     srcs = ["decoder_provider_registry.cpp"],
     hdrs = ["decoder_provider_registry.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":decoder_provider",
         "@libwebrtc",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cf_cc_library(
     name = "composite_decoder_factory",
     srcs = ["composite_decoder_factory.cpp"],
     hdrs = ["composite_decoder_factory.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":decoder_provider_registry",
         "@libwebrtc",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cf_cc_library(
@@ -96,22 +96,22 @@ cf_cc_library(
     name = "cuda_loader",
     srcs = ["cuda_loader.cpp"],
     hdrs = ["cuda_loader.h"],
+    linkopts = ["-ldl"],
     deps = [
         "@cuda//:cudart_headers",
         "@libwebrtc",
     ],
-    linkopts = ["-ldl"],
 )
 
 cf_cc_library(
     name = "nvenc_loader",
     srcs = ["nvenc_loader.cpp"],
     hdrs = ["nvenc_loader.h"],
-    deps = [
-        "@nv_codec_headers//:nv_headers",
-        "@libwebrtc",
-    ],
     linkopts = ["-ldl"],
+    deps = [
+        "@libwebrtc",
+        "@nv_codec_headers//:nv_headers",
+    ],
 )
 
 cf_cc_library(
@@ -269,15 +269,15 @@ cf_cc_library(
     hdrs = ["peer_connection_utils.h"],
     deps = [
         ":audio_device",
-        ":composite_encoder_factory",
-        ":composite_decoder_factory",
-        ":encoder_provider_registry",
-        ":decoder_provider_registry",
-        ":builtin_encoder_provider",
-        ":builtin_decoder_provider",
-        ":extra_codec_providers",
-        ":av1_nvenc_encoder_provider",
         ":av1_nvenc_decoder_provider",
+        ":av1_nvenc_encoder_provider",
+        ":builtin_decoder_provider",
+        ":builtin_encoder_provider",
+        ":composite_decoder_factory",
+        ":composite_encoder_factory",
+        ":decoder_provider_registry",
+        ":encoder_provider_registry",
+        ":extra_codec_providers",
         "//cuttlefish/result",
         "@libwebrtc",
     ],
