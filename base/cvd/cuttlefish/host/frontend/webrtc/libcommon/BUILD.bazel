@@ -211,7 +211,7 @@ cf_cc_library(
 # Currently a no-op cc_library. When the public/private repo split
 # happens, replace with a label_flag that points to private repo
 # providers.
-cc_library(name = "extra_codec_providers")
+cf_cc_library(name = "extra_codec_providers")
 
 # =============================================================================
 # Common Components
