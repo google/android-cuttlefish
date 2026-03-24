@@ -39,7 +39,7 @@ NvencVideoEncoder::NvencVideoEncoder(const NvencEncoderConfig& config,
 }
 
 NvencVideoEncoder::~NvencVideoEncoder() {
-  Release();
+  DestroyEncoder();
 }
 
 int32_t NvencVideoEncoder::Release() {
