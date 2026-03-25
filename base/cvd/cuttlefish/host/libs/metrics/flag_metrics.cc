@@ -16,35 +16,27 @@
 
 #include "cuttlefish/host/libs/metrics/flag_metrics.h"
 
-#include <vector>
-
 #include "cuttlefish/host/libs/metrics/parsed_flags.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-Result<std::vector<FlagMetrics>> GetFlagMetrics(const ParsedFlags& parsed_flags,
-                                                const int guest_count) {
-  std::vector<FlagMetrics> result;
-  result.reserve(guest_count);
-
-  for (int i = 0; i < guest_count; i++) {
-    result.emplace_back(FlagMetrics{
-        .cpus = parsed_flags.cpus.ForIndex(i),
-        .daemon = parsed_flags.daemon.ForIndex(i),
-        .data_policy = parsed_flags.data_policy.ForIndex(i),
-        // the same extra_kernel_cmdline value is used for all guests
-        .extra_kernel_cmdline = parsed_flags.extra_kernel_cmdline.ForIndex(0),
-        .gpu_mode = parsed_flags.gpu_mode.ForIndex(i),
-        .guest_enforce_security =
-            parsed_flags.guest_enforce_security.ForIndex(i),
-        .memory_mb = parsed_flags.memory_mb.ForIndex(i),
-        .restart_subprocesses = parsed_flags.restart_subprocesses.ForIndex(i),
-        .system_image_dir_specified =
-            !parsed_flags.system_image_dir.IsDefault(),
-    });
-  }
-  return result;
+Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
+                                   const int guest_index) {
+  return FlagMetrics{
+      .cpus = parsed_flags.cpus.ForIndex(guest_index),
+      .daemon = parsed_flags.daemon.ForIndex(guest_index),
+      .data_policy = parsed_flags.data_policy.ForIndex(guest_index),
+      // the same extra_kernel_cmdline value is used for all guests
+      .extra_kernel_cmdline = parsed_flags.extra_kernel_cmdline.ForIndex(0),
+      .gpu_mode = parsed_flags.gpu_mode.ForIndex(guest_index),
+      .guest_enforce_security =
+          parsed_flags.guest_enforce_security.ForIndex(guest_index),
+      .memory_mb = parsed_flags.memory_mb.ForIndex(guest_index),
+      .restart_subprocesses =
+          parsed_flags.restart_subprocesses.ForIndex(guest_index),
+      .system_image_dir_specified = !parsed_flags.system_image_dir.IsDefault(),
+  };
 }
 
 }  // namespace cuttlefish
