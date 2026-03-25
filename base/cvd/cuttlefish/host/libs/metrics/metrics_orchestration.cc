@@ -37,7 +37,6 @@
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
-#include "cuttlefish/host/libs/metrics/parsed_flags.h"
 #include "cuttlefish/host/libs/metrics/session_id.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/cf_log.pb.h"
@@ -84,14 +83,7 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
   };
 
   if (!metrics_paths.guests.IsEmpty()) {
-    const ParsedFlags parsed_flags = CF_EXPECT(GetParsedFlags());
     result.guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests));
-    result.flag_metrics = CF_EXPECT(
-        GetFlagMetrics(parsed_flags, metrics_paths.guests.guest_infos.size()));
-    CF_EXPECT_EQ(
-        result.guest_metrics.size(), result.flag_metrics.size(),
-        "The gathered guest and flag metrics vectors must be equal, as "
-        "flags are per guest.");
   }
 
   return result;

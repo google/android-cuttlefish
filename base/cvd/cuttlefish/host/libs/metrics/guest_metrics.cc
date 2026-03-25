@@ -34,14 +34,15 @@ Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
   std::vector<GuestMetrics> result;
   result.reserve(guests.guest_infos.size());
 
-  for (const GuestInfo& guest : guests.guest_infos) {
+  for (int i = 0; i < guests.guest_infos.size(); i++) {
     const std::string boot_image_path =
-        fmt::format("{}/boot.img", guest.product_out);
+        fmt::format("{}/boot.img", guests.guest_infos[i].product_out);
     result.emplace_back(GuestMetrics{
-        .instance_id = guest.instance_id,
+        .instance_id = guests.guest_infos[i].instance_id,
         .os_version = CF_EXPECTF(
             ReadAndroidVersionFromBootImage(boot_image_path),
             "Failed to read guest os version from '{}'.", boot_image_path),
+        .flag_metrics = CF_EXPECT(GetFlagMetrics(guests.parsed_flags, i)),
     });
   }
   return result;

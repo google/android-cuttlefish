@@ -17,7 +17,6 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
 #include "cuttlefish/host/libs/config/data_image_policy.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
@@ -38,7 +37,7 @@ struct FlagMetrics {
   bool system_image_dir_specified;
 };
 
-Result<std::vector<FlagMetrics>> GetFlagMetrics(const ParsedFlags& parsed_flags,
-                                                int guest_count);
+Result<FlagMetrics> GetFlagMetrics(const ParsedFlags& parsed_flags,
+                                   int guest_index);
 
 }  // namespace cuttlefish
