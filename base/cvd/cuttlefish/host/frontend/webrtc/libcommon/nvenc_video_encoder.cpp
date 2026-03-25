@@ -50,16 +50,16 @@ int32_t NvencVideoEncoder::Release() {
 void NvencVideoEncoder::DestroyEncoder() {
   if (encoder_) {
     if (nvenc_input_buffer_) {
-      nvenc_funcs_.nvEncUnregisterResource(encoder_,
+      nvenc_funcs_->nvEncUnregisterResource(encoder_,
                                            nvenc_input_buffer_);
       nvenc_input_buffer_ = nullptr;
     }
     if (nvenc_output_bitstream_) {
-      nvenc_funcs_.nvEncDestroyBitstreamBuffer(encoder_,
+      nvenc_funcs_->nvEncDestroyBitstreamBuffer(encoder_,
                                                nvenc_output_bitstream_);
       nvenc_output_bitstream_ = nullptr;
     }
-    nvenc_funcs_.nvEncDestroyEncoder(encoder_);
+    nvenc_funcs_->nvEncDestroyEncoder(encoder_);
     encoder_ = nullptr;
   }
 
@@ -192,27 +192,14 @@ bool NvencVideoEncoder::InitCuda() {
 }
 
 bool NvencVideoEncoder::InitNvenc() {
-  const auto* nvenc = TryLoadNvenc();
-  if (nvenc == nullptr) {
+  nvenc_funcs_ = TryLoadNvenc();
+  if (nvenc_funcs_ == nullptr) {
     RTC_LOG(LS_ERROR) << "InitNvenc: NVENC not available";
     return false;
   }
-
-  RTC_LOG(LS_INFO) << "InitNvenc: Loading NVENC API (version "
+  RTC_LOG(LS_INFO) << "InitNvenc: NVENC API loaded (version "
                    << NVENCAPI_MAJOR_VERSION << "."
-                   << NVENCAPI_MINOR_VERSION << ")...";
-
-  nvenc_funcs_ = {NV_ENCODE_API_FUNCTION_LIST_VER};
-  NVENCSTATUS status =
-      nvenc->NvEncodeAPICreateInstance(&nvenc_funcs_);
-  if (status != NV_ENC_SUCCESS) {
-    RTC_LOG(LS_ERROR) << "NvEncodeAPICreateInstance failed: "
-                      << status;
-    RTC_LOG(LS_ERROR) << "Check that libnvidia-encode.so is "
-                      << "installed and matches driver version";
-    return false;
-  }
-  RTC_LOG(LS_INFO) << "InitNvenc: NVENC API loaded successfully";
+                   << NVENCAPI_MINOR_VERSION << ")";
 
   RTC_LOG(LS_INFO) << "InitNvenc: Opening encode session with "
                    << "CUDA context " << cuda_context_;
@@ -222,7 +209,7 @@ bool NvencVideoEncoder::InitNvenc() {
   open_params.deviceType = NV_ENC_DEVICE_TYPE_CUDA;
   open_params.apiVersion = NVENCAPI_VERSION;
 
-  status = nvenc_funcs_.nvEncOpenEncodeSessionEx(
+  NVENCSTATUS status = nvenc_funcs_->nvEncOpenEncodeSessionEx(
       &open_params, &encoder_);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncOpenEncodeSessionEx failed: "
@@ -264,7 +251,7 @@ bool NvencVideoEncoder::InitNvenc() {
   NV_ENC_PRESET_CONFIG preset_config = {NV_ENC_PRESET_CONFIG_VER};
   preset_config.presetCfg = {NV_ENC_CONFIG_VER};
 
-  status = nvenc_funcs_.nvEncGetEncodePresetConfigEx(
+  status = nvenc_funcs_->nvEncGetEncodePresetConfigEx(
       encoder_, stored_init_params_.encodeGUID,
       stored_init_params_.presetGUID,
       stored_init_params_.tuningInfo, &preset_config);
@@ -293,7 +280,7 @@ bool NvencVideoEncoder::InitNvenc() {
   stored_init_params_.encodeConfig = &stored_encode_config_;
 
   RTC_LOG(LS_INFO) << "InitNvenc: Initializing encoder...";
-  status = nvenc_funcs_.nvEncInitializeEncoder(
+  status = nvenc_funcs_->nvEncInitializeEncoder(
       encoder_, &stored_init_params_);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncInitializeEncoder failed: "
@@ -314,7 +301,7 @@ bool NvencVideoEncoder::InitNvenc() {
                    << "buffer...";
   NV_ENC_CREATE_BITSTREAM_BUFFER create_bs =
       {NV_ENC_CREATE_BITSTREAM_BUFFER_VER};
-  status = nvenc_funcs_.nvEncCreateBitstreamBuffer(
+  status = nvenc_funcs_->nvEncCreateBitstreamBuffer(
       encoder_, &create_bs);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncCreateBitstreamBuffer failed: "
@@ -374,7 +361,7 @@ bool NvencVideoEncoder::RegisterInputResource(
   reg_res.pitch = rgba_pitch_;
   reg_res.bufferFormat = nvenc_fmt;
 
-  NVENCSTATUS status = nvenc_funcs_.nvEncRegisterResource(
+  NVENCSTATUS status = nvenc_funcs_->nvEncRegisterResource(
       encoder_, &reg_res);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncRegisterResource failed: "
@@ -446,7 +433,7 @@ void NvencVideoEncoder::Reconfigure(
   reconfig.resetEncoder = 0;
   reconfig.forceIDR = 0;
 
-  NVENCSTATUS status = nvenc_funcs_.nvEncReconfigureEncoder(
+  NVENCSTATUS status = nvenc_funcs_->nvEncReconfigureEncoder(
       encoder_, &reconfig);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncReconfigureEncoder failed: "
@@ -567,7 +554,7 @@ int32_t NvencVideoEncoder::Encode(
   NV_ENC_MAP_INPUT_RESOURCE map_input =
       {NV_ENC_MAP_INPUT_RESOURCE_VER};
   map_input.registeredResource = nvenc_input_buffer_;
-  NVENCSTATUS status = nvenc_funcs_.nvEncMapInputResource(
+  NVENCSTATUS status = nvenc_funcs_->nvEncMapInputResource(
       encoder_, &map_input);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncMapInputResource failed: " << status;
@@ -591,16 +578,16 @@ int32_t NvencVideoEncoder::Encode(
     pic_params.encodePicFlags |= NV_ENC_PIC_FLAG_FORCEIDR;
   }
 
-  status = nvenc_funcs_.nvEncEncodePicture(encoder_, &pic_params);
+  status = nvenc_funcs_->nvEncEncodePicture(encoder_, &pic_params);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncEncodePicture failed: " << status;
-    nvenc_funcs_.nvEncUnmapInputResource(
+    nvenc_funcs_->nvEncUnmapInputResource(
         encoder_, map_input.mappedResource);
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
   // Unmap Input
-  nvenc_funcs_.nvEncUnmapInputResource(
+  nvenc_funcs_->nvEncUnmapInputResource(
       encoder_, map_input.mappedResource);
 
   // Retrieve Bitstream
@@ -608,7 +595,7 @@ int32_t NvencVideoEncoder::Encode(
   lock_bs.outputBitstream = nvenc_output_bitstream_;
   lock_bs.doNotWait = 0;
 
-  status = nvenc_funcs_.nvEncLockBitstream(encoder_, &lock_bs);
+  status = nvenc_funcs_->nvEncLockBitstream(encoder_, &lock_bs);
   if (status != NV_ENC_SUCCESS) {
     RTC_LOG(LS_ERROR) << "nvEncLockBitstream failed: " << status;
     return WEBRTC_VIDEO_CODEC_ERROR;
@@ -634,7 +621,7 @@ int32_t NvencVideoEncoder::Encode(
 
   callback_->OnEncodedImage(encoded_image, &codec_specific);
 
-  nvenc_funcs_.nvEncUnlockBitstream(encoder_,
+  nvenc_funcs_->nvEncUnlockBitstream(encoder_,
                                     nvenc_output_bitstream_);
 
   return WEBRTC_VIDEO_CODEC_OK;

@@ -20,41 +20,48 @@
 
 #include <mutex>
 
-#include "rtc_base/logging.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
-const NvencFunctions* TryLoadNvenc() {
+Result<NV_ENCODE_API_FUNCTION_LIST> LoadNvenc() {
+  void* lib = dlopen("libnvidia-encode.so.1", RTLD_LAZY);
+  CF_EXPECT_NE(lib, nullptr,
+               "libnvidia-encode.so.1 not available: "
+                   << dlerror());
+
+  auto fn = reinterpret_cast<NVENCSTATUS (*)(
+      NV_ENCODE_API_FUNCTION_LIST*)>(
+      dlsym(lib, "NvEncodeAPICreateInstance"));
+  CF_EXPECT_NE(fn, nullptr,
+               "Cannot load NvEncodeAPICreateInstance");
+
+  NV_ENCODE_API_FUNCTION_LIST funcs{};
+  funcs.version = NV_ENCODE_API_FUNCTION_LIST_VER;
+  NVENCSTATUS status = fn(&funcs);
+  CF_EXPECT(status == NV_ENC_SUCCESS,
+            "NvEncodeAPICreateInstance failed: " << status);
+
+  return funcs;
+}
+
+}  // namespace
+
+const NV_ENCODE_API_FUNCTION_LIST* TryLoadNvenc() {
   static std::once_flag flag;
-  static const NvencFunctions* result = nullptr;
+  static Result<NV_ENCODE_API_FUNCTION_LIST>* cached =
+      nullptr;
 
   std::call_once(flag, [] {
-    void* lib = dlopen("libnvidia-encode.so.1", RTLD_LAZY);
-    if (lib == nullptr) {
-      RTC_LOG(LS_INFO) << "NVENC loader: libnvidia-encode.so.1 not "
-                       << "available (" << dlerror() << ")";
-      return;
-    }
-    RTC_LOG(LS_INFO) << "NVENC loader: loaded libnvidia-encode.so.1";
-
-    auto fn = reinterpret_cast<NVENCSTATUS (*)(
-        NV_ENCODE_API_FUNCTION_LIST*)>(
-        dlsym(lib, "NvEncodeAPICreateInstance"));
-    if (fn == nullptr) {
-      RTC_LOG(LS_WARNING) << "NVENC loader: cannot load "
-                          << "NvEncodeAPICreateInstance";
-      return;
-    }
-
-    auto* f = new NvencFunctions{};
-    f->NvEncodeAPICreateInstance = fn;
-
-    RTC_LOG(LS_INFO) << "NVENC loader: NvEncodeAPICreateInstance "
-                     << "resolved";
-    result = f;
+    cached = new Result<NV_ENCODE_API_FUNCTION_LIST>(
+        LoadNvenc());
   });
 
-  return result;
+  if (cached->ok()) {
+    return &(cached->value());
+  }
+  return nullptr;
 }
 
 }  // namespace cuttlefish

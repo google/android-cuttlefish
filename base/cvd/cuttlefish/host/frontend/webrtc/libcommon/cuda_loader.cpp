@@ -20,89 +20,81 @@
 
 #include <mutex>
 
-#include "rtc_base/logging.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 namespace {
 
-bool LoadSymbol(void* lib, const char* name, void** out) {
+Result<void> LoadSymbol(void* lib, const char* name,
+                        void** out) {
   *out = dlsym(lib, name);
-  if (*out == nullptr) {
-    RTC_LOG(LS_WARNING) << "CUDA loader: cannot load " << name;
-    return false;
-  }
-  return true;
+  CF_EXPECT_NE(*out, nullptr,
+               "Failed to load symbol: " << name);
+  return {};
+}
+
+Result<CudaFunctions> LoadCuda() {
+  void* lib = dlopen("libcuda.so.1", RTLD_LAZY);
+  CF_EXPECT_NE(lib, nullptr,
+               "libcuda.so.1 not available: " << dlerror());
+
+  CudaFunctions f{};
+
+  // Context management (versioned symbols per CUDA ABI)
+  CF_EXPECT(LoadSymbol(lib, "cuInit",
+      reinterpret_cast<void**>(&f.cuInit)));
+  CF_EXPECT(LoadSymbol(lib, "cuDeviceGet",
+      reinterpret_cast<void**>(&f.cuDeviceGet)));
+  CF_EXPECT(LoadSymbol(lib, "cuDeviceGetName",
+      reinterpret_cast<void**>(&f.cuDeviceGetName)));
+  CF_EXPECT(LoadSymbol(lib, "cuDevicePrimaryCtxRetain",
+      reinterpret_cast<void**>(
+          &f.cuDevicePrimaryCtxRetain)));
+  CF_EXPECT(LoadSymbol(lib, "cuDevicePrimaryCtxRelease",
+      reinterpret_cast<void**>(
+          &f.cuDevicePrimaryCtxRelease)));
+  CF_EXPECT(LoadSymbol(lib, "cuCtxPushCurrent_v2",
+      reinterpret_cast<void**>(&f.cuCtxPushCurrent)));
+  CF_EXPECT(LoadSymbol(lib, "cuCtxPopCurrent_v2",
+      reinterpret_cast<void**>(&f.cuCtxPopCurrent)));
+
+  // Stream management
+  CF_EXPECT(LoadSymbol(lib, "cuStreamCreate",
+      reinterpret_cast<void**>(&f.cuStreamCreate)));
+  CF_EXPECT(LoadSymbol(lib, "cuStreamDestroy_v2",
+      reinterpret_cast<void**>(&f.cuStreamDestroy)));
+  CF_EXPECT(LoadSymbol(lib, "cuStreamSynchronize",
+      reinterpret_cast<void**>(&f.cuStreamSynchronize)));
+
+  // Memory management
+  CF_EXPECT(LoadSymbol(lib, "cuMemAllocPitch_v2",
+      reinterpret_cast<void**>(&f.cuMemAllocPitch)));
+  CF_EXPECT(LoadSymbol(lib, "cuMemFree_v2",
+      reinterpret_cast<void**>(&f.cuMemFree)));
+  CF_EXPECT(LoadSymbol(lib, "cuMemcpy2DAsync_v2",
+      reinterpret_cast<void**>(&f.cuMemcpy2DAsync)));
+
+  // Error handling
+  CF_EXPECT(LoadSymbol(lib, "cuGetErrorString",
+      reinterpret_cast<void**>(&f.cuGetErrorString)));
+
+  return f;
 }
 
 }  // namespace
 
 const CudaFunctions* TryLoadCuda() {
   static std::once_flag flag;
-  static const CudaFunctions* result = nullptr;
+  static Result<CudaFunctions>* cached = nullptr;
 
   std::call_once(flag, [] {
-    void* lib = dlopen("libcuda.so.1", RTLD_LAZY);
-    if (lib == nullptr) {
-      RTC_LOG(LS_INFO) << "CUDA loader: libcuda.so.1 not available"
-                       << " (" << dlerror() << ")";
-      return;
-    }
-    RTC_LOG(LS_INFO) << "CUDA loader: loaded libcuda.so.1";
-
-    auto* f = new CudaFunctions{};
-    bool ok = true;
-
-    // Context management (versioned symbols where required by ABI)
-    ok &= LoadSymbol(lib, "cuInit",
-                     reinterpret_cast<void**>(&f->cuInit));
-    ok &= LoadSymbol(lib, "cuDeviceGet",
-                     reinterpret_cast<void**>(&f->cuDeviceGet));
-    ok &= LoadSymbol(lib, "cuDeviceGetName",
-                     reinterpret_cast<void**>(&f->cuDeviceGetName));
-    ok &= LoadSymbol(lib, "cuDevicePrimaryCtxRetain",
-                     reinterpret_cast<void**>(
-                         &f->cuDevicePrimaryCtxRetain));
-    ok &= LoadSymbol(lib, "cuDevicePrimaryCtxRelease",
-                     reinterpret_cast<void**>(
-                         &f->cuDevicePrimaryCtxRelease));
-    ok &= LoadSymbol(lib, "cuCtxPushCurrent_v2",
-                     reinterpret_cast<void**>(&f->cuCtxPushCurrent));
-    ok &= LoadSymbol(lib, "cuCtxPopCurrent_v2",
-                     reinterpret_cast<void**>(&f->cuCtxPopCurrent));
-
-    // Stream management
-    ok &= LoadSymbol(lib, "cuStreamCreate",
-                     reinterpret_cast<void**>(&f->cuStreamCreate));
-    ok &= LoadSymbol(lib, "cuStreamDestroy_v2",
-                     reinterpret_cast<void**>(&f->cuStreamDestroy));
-    ok &= LoadSymbol(lib, "cuStreamSynchronize",
-                     reinterpret_cast<void**>(
-                         &f->cuStreamSynchronize));
-
-    // Memory management
-    ok &= LoadSymbol(lib, "cuMemAllocPitch_v2",
-                     reinterpret_cast<void**>(&f->cuMemAllocPitch));
-    ok &= LoadSymbol(lib, "cuMemFree_v2",
-                     reinterpret_cast<void**>(&f->cuMemFree));
-    ok &= LoadSymbol(lib, "cuMemcpy2DAsync_v2",
-                     reinterpret_cast<void**>(&f->cuMemcpy2DAsync));
-
-    // Error handling
-    ok &= LoadSymbol(lib, "cuGetErrorString",
-                     reinterpret_cast<void**>(&f->cuGetErrorString));
-
-    if (!ok) {
-      RTC_LOG(LS_WARNING) << "CUDA loader: failed to resolve all "
-                          << "symbols, CUDA unavailable";
-      delete f;
-      return;
-    }
-
-    RTC_LOG(LS_INFO) << "CUDA loader: all 14 symbols resolved";
-    result = f;
+    cached = new Result<CudaFunctions>(LoadCuda());
   });
 
-  return result;
+  if (cached->ok()) {
+    return &(cached->value());
+  }
+  return nullptr;
 }
 
 }  // namespace cuttlefish

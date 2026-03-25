@@ -98,6 +98,7 @@ cf_cc_library(
     hdrs = ["cuda_loader.h"],
     linkopts = ["-ldl"],
     deps = [
+        "//cuttlefish/result",
         "@cuda//:cudart_headers",
         "@libwebrtc",
     ],
@@ -109,6 +110,7 @@ cf_cc_library(
     hdrs = ["nvenc_loader.h"],
     linkopts = ["-ldl"],
     deps = [
+        "//cuttlefish/result",
         "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
     ],

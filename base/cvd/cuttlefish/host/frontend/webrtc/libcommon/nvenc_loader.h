@@ -21,21 +21,15 @@
 
 namespace cuttlefish {
 
-// Function pointers for NVENC API loaded at runtime via dlopen/dlsym.
-// Only NvEncodeAPICreateInstance is needed; it populates the
-// NV_ENCODE_API_FUNCTION_LIST with all other NVENC operations.
-struct NvencFunctions {
-  NVENCSTATUS (*NvEncodeAPICreateInstance)(
-      NV_ENCODE_API_FUNCTION_LIST*);
-};
-
-// Attempts to load libnvidia-encode.so.1 and resolve
-// NvEncodeAPICreateInstance.
+// Attempts to load libnvidia-encode.so.1, resolve
+// NvEncodeAPICreateInstance, and populate the NVENC function table.
 //
-// Returns a pointer to a static NvencFunctions struct on success, or
-// nullptr if the library is not available. Thread-safe (loads once via
-// std::call_once). The dlopen handle is intentionally leaked.
-const NvencFunctions* TryLoadNvenc();
+// Returns a pointer to a static NV_ENCODE_API_FUNCTION_LIST on
+// success, or nullptr if the library is not available or
+// NvEncodeAPICreateInstance fails. Thread-safe (loads once via
+// std::call_once). The dlopen handle and function list are
+// intentionally leaked.
+const NV_ENCODE_API_FUNCTION_LIST* TryLoadNvenc();
 
 }  // namespace cuttlefish
 

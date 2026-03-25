@@ -100,7 +100,7 @@ class NvencVideoEncoder : public webrtc::VideoEncoder {
 
   // NVENC encoder
   void* encoder_ = nullptr;
-  NV_ENCODE_API_FUNCTION_LIST nvenc_funcs_{};
+  const NV_ENCODE_API_FUNCTION_LIST* nvenc_funcs_ = nullptr;
 
   // Stored initialization params for reconfiguration
   NV_ENC_INITIALIZE_PARAMS stored_init_params_{};

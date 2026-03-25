@@ -40,17 +40,10 @@ const std::vector<GUID>& QuerySupportedCodecGuids() {
   static std::vector<GUID> guids;
 
   std::call_once(flag, [] {
-    const auto* nvenc = TryLoadNvenc();
-    if (nvenc == nullptr) {
+    const auto* funcs = TryLoadNvenc();
+    if (funcs == nullptr) {
       RTC_LOG(LS_WARNING) << "NVENC capabilities: "
                           << "NVENC not available";
-      return;
-    }
-
-    NV_ENCODE_API_FUNCTION_LIST funcs = {NV_ENCODE_API_FUNCTION_LIST_VER};
-    if (nvenc->NvEncodeAPICreateInstance(&funcs) != NV_ENC_SUCCESS) {
-      RTC_LOG(LS_WARNING) << "NVENC capabilities: "
-                          << "NvEncodeAPICreateInstance failed";
       return;
     }
 
@@ -69,7 +62,7 @@ const std::vector<GUID>& QuerySupportedCodecGuids() {
 
     void* encoder = nullptr;
     NVENCSTATUS status =
-        funcs.nvEncOpenEncodeSessionEx(&open_params, &encoder);
+        funcs->nvEncOpenEncodeSessionEx(&open_params, &encoder);
     if (status != NV_ENC_SUCCESS) {
       RTC_LOG(LS_WARNING) << "NVENC capabilities: "
                           << "nvEncOpenEncodeSessionEx failed: "
@@ -78,11 +71,11 @@ const std::vector<GUID>& QuerySupportedCodecGuids() {
     }
 
     uint32_t guid_count = 0;
-    funcs.nvEncGetEncodeGUIDCount(encoder, &guid_count);
+    funcs->nvEncGetEncodeGUIDCount(encoder, &guid_count);
     guids.resize(guid_count);
-    funcs.nvEncGetEncodeGUIDs(encoder, guids.data(), guid_count,
-                              &guid_count);
-    funcs.nvEncDestroyEncoder(encoder);
+    funcs->nvEncGetEncodeGUIDs(encoder, guids.data(), guid_count,
+                               &guid_count);
+    funcs->nvEncDestroyEncoder(encoder);
 
     RTC_LOG(LS_INFO) << "NVENC capabilities: " << guids.size()
                      << " codec GUID(s) supported by GPU";
