@@ -13,6 +13,7 @@ users:
 
 packages:
   - git
+  - lvm2
 
 growpart:
   mode: auto
