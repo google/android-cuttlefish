@@ -15,6 +15,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -25,6 +26,9 @@ func TestLaunchingWithAutoEnablesGfxstream(t *testing.T) {
 	c := e2etests.TestContext{}
 	c.SetUp(t)
 	defer c.TearDown()
+
+	nvidia_smi_output, nvidia_smi_err := c.RunCmd("nvidia-smi");
+	fmt.Println("nvidia_smi_err:%w nvidia_smi_output:%s\n", nvidia_smi_err, nvidia_smi_output)
 
 	if err := c.CVDFetch(e2etests.FetchArgs{
 		DefaultBuildBranch: "aosp-android-latest-release",

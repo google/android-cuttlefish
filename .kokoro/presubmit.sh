@@ -20,6 +20,10 @@ retry() {
 
 retry sudo apt update
 
+# Avoid updating Nvidia libs as this can create a situation where the library
+# and kernel get out of sync.
+sudo apt-mark hold *nvidia*
+
 # environment variable and options to force answer prompts
 retry sudo DEBIAN_FRONTEND=noninteractive apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
 
