@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/device_event_type.h"
 
 #include <string>
 
 namespace cuttlefish {
 
-std::string EventTypeString(EventType event_type) {
+std::string DeviceEventTypeString(DeviceEventType event_type) {
   switch (event_type) {
-    case EventType::DeviceInstantiation:
+    case DeviceEventType::DeviceInstantiation:
       return "device_instantiation";
-    case EventType::DeviceBootStart:
+    case DeviceEventType::DeviceBootStart:
       return "device_boot_start";
-    case EventType::DeviceBootComplete:
+    case DeviceEventType::DeviceBootComplete:
       return "device_boot_complete";
-    case EventType::DeviceStop:
+    case DeviceEventType::DeviceStop:
       return "device_stop";
-    case EventType::DeviceBootFailed:
-      return "device_failed";
+    case DeviceEventType::DeviceBootFailed:
+      return "device_boot_failed";
   }
 }
 

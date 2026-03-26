@@ -20,7 +20,7 @@
 
 namespace cuttlefish {
 
-enum class EventType {
+enum class DeviceEventType {
   DeviceInstantiation,
   DeviceBootStart,
   DeviceBootComplete,
@@ -28,6 +28,6 @@ enum class EventType {
   DeviceBootFailed,
 };
 
-std::string EventTypeString(EventType event_type);
+std::string DeviceEventTypeString(DeviceEventType event_type);
 
 }  // namespace cuttlefish

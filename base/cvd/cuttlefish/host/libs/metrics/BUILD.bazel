@@ -16,8 +16,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:enabled",
-        "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
         "//cuttlefish/host/libs/metrics:metrics_orchestration",
@@ -43,12 +43,12 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "event_type",
+    name = "device_event_type",
     srcs = [
-        "event_type.cc",
+        "device_event_type.cc",
     ],
     hdrs = [
-        "event_type.h",
+        "device_event_type.h",
     ],
 )
 
@@ -119,7 +119,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/host/libs/config:data_image_policy",
         "//cuttlefish/host/libs/config:gpu_mode",
-        "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:flag_metrics",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//external_proto:cf_flags_cc_proto",
@@ -163,8 +163,8 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:host_info",
         "//cuttlefish/common/libs/utils:tee_logging",
         "//cuttlefish/host/commands/cvd/version",
+        "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:enabled",
-        "//cuttlefish/host/libs/metrics:event_type",
         "//cuttlefish/host/libs/metrics:flag_metrics",
         "//cuttlefish/host/libs/metrics:guest_metrics",
         "//cuttlefish/host/libs/metrics:metrics_conversion",
@@ -208,7 +208,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:random",
-        "//cuttlefish/host/libs/metrics:event_type",
+        "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/result",
         "//external_proto:cf_log_cc_proto",
         "@fmt",

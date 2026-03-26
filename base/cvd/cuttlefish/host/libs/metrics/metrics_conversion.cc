@@ -24,7 +24,7 @@
 
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/config/data_image_policy.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "external_proto/cf_flags.pb.h"
 #include "external_proto/cf_guest.pb.h"
@@ -98,21 +98,21 @@ CuttlefishFlags_GpuMode ConvertGpuMode(GpuMode mode) {
   }
 }
 
-CuttlefishGuest_EventType ConvertEventType(EventType event_type) {
+CuttlefishGuest_EventType ConvertDeviceEventType(DeviceEventType event_type) {
   switch (event_type) {
-    case EventType::DeviceInstantiation:
+    case DeviceEventType::DeviceInstantiation:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_INSTANTIATION;
-    case EventType::DeviceBootStart:
+    case DeviceEventType::DeviceBootStart:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_START;
-    case EventType::DeviceBootComplete:
+    case DeviceEventType::DeviceBootComplete:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_COMPLETED;
-    case EventType::DeviceStop:
+    case DeviceEventType::DeviceStop:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_VM_STOP;
-    case EventType::DeviceBootFailed:
+    case DeviceEventType::DeviceBootFailed:
       return CuttlefishGuest_EventType::
           CuttlefishGuest_EventType_CUTTLEFISH_GUEST_EVENT_TYPE_DEVICE_BOOT_FAILED;
   }
@@ -146,9 +146,9 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
 
 void PopulateCuttlefishGuest(CuttlefishGuest& guest,
                              const GuestMetrics& guest_metrics,
-                             const EventType event_type,
+                             const DeviceEventType event_type,
                              std::string_view session_id) {
-  guest.set_event_type(ConvertEventType(event_type));
+  guest.set_event_type(ConvertDeviceEventType(event_type));
   guest.set_guest_id(
       fmt::format("{}-{}", session_id, guest_metrics.instance_id));
   guest.set_guest_os_version(guest_metrics.os_version);

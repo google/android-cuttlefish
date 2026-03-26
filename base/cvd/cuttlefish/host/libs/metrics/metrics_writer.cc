@@ -25,7 +25,7 @@
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/random.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/cf_log.pb.h"
 
@@ -41,11 +41,11 @@ std::string GenerateFilenameSuffix() {
 
 }  // namespace
 
-Result<void> WriteMetricsEvent(EventType event_type,
+Result<void> WriteMetricsEvent(DeviceEventType event_type,
                                std::string_view metrics_directory,
                                const CuttlefishLogEvent& cf_log_event) {
   const std::string event_filepath = fmt::format(
-      "{}/{}_{}_{}.txtpb", metrics_directory, EventTypeString(event_type),
+      "{}/{}_{}_{}.txtpb", metrics_directory, DeviceEventTypeString(event_type),
       std::chrono::system_clock::now(), GenerateFilenameSuffix());
   std::string text_proto_out;
   google::protobuf::TextFormat::PrintToString(cf_log_event, &text_proto_out);
