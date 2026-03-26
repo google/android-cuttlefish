@@ -71,17 +71,17 @@ ScopedLogger CreateLogger(std::string_view metrics_directory) {
       "");
 }
 
-Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths) {
+Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
   auto result = MetricsData{
       .session_id =
-          CF_EXPECT(ReadSessionIdFile(metrics_paths.metrics_directory)),
+          CF_EXPECT(ReadSessionIdFile(metrics_input.metrics_directory)),
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
   };
 
-  if (!metrics_paths.guests.IsEmpty()) {
-    result.guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_paths.guests));
+  if (!metrics_input.guests.IsEmpty()) {
+    result.guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_input.guests));
   }
 
   return result;

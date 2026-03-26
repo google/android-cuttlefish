@@ -61,10 +61,10 @@ std::vector<GuestInfo> GetGuestInfos(
   return result;
 }
 
-Result<MetricsPaths> GetInstanceGroupMetricsPaths(
+Result<MetricsInput> GetInstanceGroupMetricsInput(
     const LocalInstanceGroup& instance_group,
     const DeviceEventType event_type) {
-  return MetricsPaths{
+  return MetricsInput{
       .metrics_directory = instance_group.MetricsDir(),
       .guests =
           Guests{
@@ -77,30 +77,30 @@ Result<MetricsPaths> GetInstanceGroupMetricsPaths(
   };
 }
 
-void RunMetrics(const MetricsPaths& metrics_paths) {
-  ScopedLogger logger = CreateLogger(metrics_paths.metrics_directory);
-  if (!FileExists(metrics_paths.metrics_directory)) {
+void RunMetrics(const MetricsInput& metrics_input) {
+  ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
+  if (!FileExists(metrics_input.metrics_directory)) {
     VLOG(0) << "Metrics directory does not exist, perhaps metrics were not "
                "initialized.";
     return;
   }
 
-  Result<MetricsData> gather_result = GatherMetrics(metrics_paths);
+  Result<MetricsData> gather_result = GatherMetrics(metrics_input);
   if (!gather_result.ok()) {
     VLOG(0) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
-        DeviceEventTypeString(metrics_paths.guests.event_type),
+        DeviceEventTypeString(metrics_input.guests.event_type),
         gather_result.error());
     return;
   }
 
   Result<void> output_result =
-      OutputMetrics(metrics_paths.guests.event_type,
-                    metrics_paths.metrics_directory, *gather_result);
+      OutputMetrics(metrics_input.guests.event_type,
+                    metrics_input.metrics_directory, *gather_result);
   if (!output_result.ok()) {
     VLOG(0) << fmt::format(
         "Failed to output metrics for {}.  Error: {}",
-        DeviceEventTypeString(metrics_paths.guests.event_type),
+        DeviceEventTypeString(metrics_input.guests.event_type),
         output_result.error());
   }
 }
@@ -108,15 +108,15 @@ void RunMetrics(const MetricsPaths& metrics_paths) {
 }  // namespace
 
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsPaths> metrics_paths_result = GetInstanceGroupMetricsPaths(
+  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
       instance_group, DeviceEventType::DeviceInstantiation);
-  if (!metrics_paths_result.ok()) {
+  if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_paths_result.error());
+                           metrics_input_result.error());
     return;
   }
   Result<void> metrics_setup_result =
-      SetUpMetrics(metrics_paths_result->metrics_directory);
+      SetUpMetrics(metrics_input_result->metrics_directory);
   if (!metrics_setup_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_setup_result.error());
@@ -127,51 +127,51 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
   }
-  RunMetrics(*metrics_paths_result);
+  RunMetrics(*metrics_input_result);
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsPaths> metrics_paths_result = GetInstanceGroupMetricsPaths(
+  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
       instance_group, DeviceEventType::DeviceBootStart);
-  if (!metrics_paths_result.ok()) {
+  if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_paths_result.error());
+                           metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result);
+  RunMetrics(*metrics_input_result);
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsPaths> metrics_paths_result = GetInstanceGroupMetricsPaths(
+  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
       instance_group, DeviceEventType::DeviceBootComplete);
-  if (!metrics_paths_result.ok()) {
+  if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_paths_result.error());
+                           metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result);
+  RunMetrics(*metrics_input_result);
 }
 
 void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsPaths> metrics_paths_result = GetInstanceGroupMetricsPaths(
+  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
       instance_group, DeviceEventType::DeviceBootFailed);
-  if (!metrics_paths_result.ok()) {
+  if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_paths_result.error());
+                           metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result);
+  RunMetrics(*metrics_input_result);
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsPaths> metrics_paths_result =
-      GetInstanceGroupMetricsPaths(instance_group, DeviceEventType::DeviceStop);
-  if (!metrics_paths_result.ok()) {
+  Result<MetricsInput> metrics_input_result =
+      GetInstanceGroupMetricsInput(instance_group, DeviceEventType::DeviceStop);
+  if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
-                           metrics_paths_result.error());
+                           metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result);
+  RunMetrics(*metrics_input_result);
 }
 
 }  // namespace cuttlefish
