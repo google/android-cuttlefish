@@ -77,38 +77,24 @@ Result<MetricsInput> GetInstanceGroupMetricsInput(
   };
 }
 
-void RunMetrics(const MetricsInput& metrics_input) {
+Result<void> RunMetrics(const MetricsInput& metrics_input) {
   ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
-  if (!FileExists(metrics_input.metrics_directory)) {
-    VLOG(0) << "Metrics directory does not exist, perhaps metrics were not "
-               "initialized.";
-    return;
-  }
+  CF_EXPECTF(FileExists(metrics_input.metrics_directory),
+             "Metrics directory({}) does not exist.  Perhaps metrics were not "
+             "initialized?",
+             metrics_input.metrics_directory);
+  CF_EXPECT(metrics_input.guests.has_value(),
+            "Guest information not populated for device metrics event, cannot "
+            "gather metrics data.");
 
-  if (!metrics_input.guests) {
-    VLOG(0) << "Guest information not populated for device metrics event, "
-               "cannot gather metrics data.";
-    return;
-  }
-
-  Result<MetricsData> gather_result = GatherMetrics(metrics_input);
-  if (!gather_result.ok()) {
-    VLOG(0) << fmt::format(
-        "Failed to gather all metrics data for {}.  Error: {}",
-        DeviceEventTypeString(metrics_input.guests->event_type),
-        gather_result.error());
-    return;
-  }
-
-  Result<void> output_result =
-      OutputMetrics(metrics_input.guests->event_type,
-                    metrics_input.metrics_directory, *gather_result);
-  if (!output_result.ok()) {
-    VLOG(0) << fmt::format(
-        "Failed to output metrics for {}.  Error: {}",
-        DeviceEventTypeString(metrics_input.guests->event_type),
-        output_result.error());
-  }
+  const MetricsData metrics_data = CF_EXPECTF(
+      GatherMetrics(metrics_input), "Failed to gather all metrics data for {}.",
+      DeviceEventTypeString(metrics_input.guests->event_type));
+  CF_EXPECTF(OutputMetrics(metrics_input.guests->event_type,
+                           metrics_input.metrics_directory, metrics_data),
+             "Failed to output metrics for {}.",
+             DeviceEventTypeString(metrics_input.guests->event_type));
+  return {};
 }
 
 }  // namespace
@@ -133,7 +119,13 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
   }
-  RunMetrics(*metrics_input_result);
+  Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
+  if (!run_metrics_result.ok()) {
+    VLOG(0) << fmt::format(
+        "Failed during metrics gathering and (possible) outputting.  Error: {}",
+        run_metrics_result.error());
+    return;
+  }
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
@@ -144,7 +136,13 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_input_result);
+  Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
+  if (!run_metrics_result.ok()) {
+    VLOG(0) << fmt::format(
+        "Failed during metrics gathering and (possible) outputting.  Error: {}",
+        run_metrics_result.error());
+    return;
+  }
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
@@ -155,7 +153,13 @@ void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_input_result);
+  Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
+  if (!run_metrics_result.ok()) {
+    VLOG(0) << fmt::format(
+        "Failed during metrics gathering and (possible) outputting.  Error: {}",
+        run_metrics_result.error());
+    return;
+  }
 }
 
 void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
@@ -166,7 +170,13 @@ void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_input_result);
+  Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
+  if (!run_metrics_result.ok()) {
+    VLOG(0) << fmt::format(
+        "Failed during metrics gathering and (possible) outputting.  Error: {}",
+        run_metrics_result.error());
+    return;
+  }
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
@@ -177,7 +187,13 @@ void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_input_result.error());
     return;
   }
-  RunMetrics(*metrics_input_result);
+  Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
+  if (!run_metrics_result.ok()) {
+    VLOG(0) << fmt::format(
+        "Failed during metrics gathering and (possible) outputting.  Error: {}",
+        run_metrics_result.error());
+    return;
+  }
 }
 
 }  // namespace cuttlefish
