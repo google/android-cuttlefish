@@ -78,6 +78,7 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/host/commands/assemble_cvd:boot_image_utils",
+        "//cuttlefish/host/libs/metrics:device_event_type",
         "//cuttlefish/host/libs/metrics:flag_metrics",
         "//cuttlefish/host/libs/metrics:parsed_flags",
         "//cuttlefish/result",
