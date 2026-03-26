@@ -71,10 +71,8 @@ ScopedLogger CreateLogger(std::string_view metrics_directory) {
       "");
 }
 
-Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
-                                  DeviceEventType event_type) {
+Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths) {
   auto result = MetricsData{
-      .event_type = event_type,
       .session_id =
           CF_EXPECT(ReadSessionIdFile(metrics_paths.metrics_directory)),
       .cf_common_version = GetVersionIds().ToString(),

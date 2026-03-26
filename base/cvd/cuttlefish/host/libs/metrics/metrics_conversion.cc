@@ -146,9 +146,8 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
 
 void PopulateCuttlefishGuest(CuttlefishGuest& guest,
                              const GuestMetrics& guest_metrics,
-                             const DeviceEventType event_type,
                              std::string_view session_id) {
-  guest.set_event_type(ConvertDeviceEventType(event_type));
+  guest.set_event_type(ConvertDeviceEventType(guest_metrics.event_type));
   guest.set_guest_id(
       fmt::format("{}-{}", session_id, guest_metrics.instance_id));
   guest.set_guest_os_version(guest_metrics.os_version);
@@ -186,8 +185,7 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
 
   for (const GuestMetrics& guest_metric : metrics_data.guest_metrics) {
     CuttlefishGuest& guest = *metrics_event.add_guest();
-    PopulateCuttlefishGuest(guest, guest_metric, metrics_data.event_type,
-                            metrics_data.session_id);
+    PopulateCuttlefishGuest(guest, guest_metric, metrics_data.session_id);
   }
 
   CuttlefishHost& host = *metrics_event.mutable_host();

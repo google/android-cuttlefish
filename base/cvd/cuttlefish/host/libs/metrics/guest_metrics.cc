@@ -42,6 +42,7 @@ Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
         .os_version = CF_EXPECTF(
             ReadAndroidVersionFromBootImage(boot_image_path),
             "Failed to read guest os version from '{}'.", boot_image_path),
+        .event_type = guests.event_type,
         .flag_metrics = CF_EXPECT(GetFlagMetrics(guests.parsed_flags, i)),
     });
   }
