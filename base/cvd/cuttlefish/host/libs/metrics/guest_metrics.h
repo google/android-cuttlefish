@@ -38,8 +38,6 @@ struct Guests {
   DeviceEventType event_type;
   ParsedFlags parsed_flags;
   std::vector<GuestInfo> guest_infos;
-
-  bool IsEmpty() const;
 };
 
 struct GuestMetrics {

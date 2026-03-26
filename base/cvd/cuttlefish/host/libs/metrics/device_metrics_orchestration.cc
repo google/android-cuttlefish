@@ -85,22 +85,28 @@ void RunMetrics(const MetricsInput& metrics_input) {
     return;
   }
 
+  if (!metrics_input.guests) {
+    VLOG(0) << "Guest information not populated for device metrics event, "
+               "cannot gather metrics data.";
+    return;
+  }
+
   Result<MetricsData> gather_result = GatherMetrics(metrics_input);
   if (!gather_result.ok()) {
     VLOG(0) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
-        DeviceEventTypeString(metrics_input.guests.event_type),
+        DeviceEventTypeString(metrics_input.guests->event_type),
         gather_result.error());
     return;
   }
 
   Result<void> output_result =
-      OutputMetrics(metrics_input.guests.event_type,
+      OutputMetrics(metrics_input.guests->event_type,
                     metrics_input.metrics_directory, *gather_result);
   if (!output_result.ok()) {
     VLOG(0) << fmt::format(
         "Failed to output metrics for {}.  Error: {}",
-        DeviceEventTypeString(metrics_input.guests.event_type),
+        DeviceEventTypeString(metrics_input.guests->event_type),
         output_result.error());
   }
 }

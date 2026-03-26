@@ -26,10 +26,6 @@
 
 namespace cuttlefish {
 
-bool Guests::IsEmpty() const {
-  return host_artifacts.empty() && guest_infos.empty();
-}
-
 Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests) {
   std::vector<GuestMetrics> result;
   result.reserve(guests.guest_infos.size());
