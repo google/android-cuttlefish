@@ -18,14 +18,14 @@
 
 #include <string_view>
 
-#include "cuttlefish/host/libs/metrics/event_type.h"
+#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/result/result.h"
 #include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
 
 Result<void> WriteMetricsEvent(
-    EventType event_type, std::string_view metrics_directory,
+    DeviceEventType event_type, std::string_view metrics_directory,
     const logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent&
         cf_log_event);
 

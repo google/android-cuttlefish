@@ -30,8 +30,8 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/flag_metrics.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
@@ -72,7 +72,7 @@ ScopedLogger CreateLogger(std::string_view metrics_directory) {
 }
 
 Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
-                                  EventType event_type) {
+                                  DeviceEventType event_type) {
   auto result = MetricsData{
       .event_type = event_type,
       .session_id =
@@ -89,7 +89,7 @@ Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths,
   return result;
 }
 
-Result<void> OutputMetrics(EventType event_type,
+Result<void> OutputMetrics(DeviceEventType event_type,
                            std::string_view metrics_directory,
                            const MetricsData& metrics_data) {
   if (AreMetricsEnabled()) {

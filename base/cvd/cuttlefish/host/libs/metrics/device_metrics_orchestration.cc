@@ -28,8 +28,8 @@
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
+#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
-#include "cuttlefish/host/libs/metrics/event_type.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
@@ -75,7 +75,7 @@ Result<MetricsPaths> GetInstanceGroupMetricsPaths(
   };
 }
 
-void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
+void RunMetrics(const MetricsPaths& metrics_paths, DeviceEventType event_type) {
   ScopedLogger logger = CreateLogger(metrics_paths.metrics_directory);
   if (!FileExists(metrics_paths.metrics_directory)) {
     VLOG(0) << "Metrics directory does not exist, perhaps metrics were not "
@@ -87,7 +87,7 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
   if (!gather_result.ok()) {
     VLOG(0) << fmt::format(
         "Failed to gather all metrics data for {}.  Error: {}",
-        EventTypeString(event_type), gather_result.error());
+        DeviceEventTypeString(event_type), gather_result.error());
     return;
   }
 
@@ -95,7 +95,8 @@ void RunMetrics(const MetricsPaths& metrics_paths, EventType event_type) {
       event_type, metrics_paths.metrics_directory, *gather_result);
   if (!output_result.ok()) {
     VLOG(0) << fmt::format("Failed to output metrics for {}.  Error: {}",
-                           EventTypeString(event_type), output_result.error());
+                           DeviceEventTypeString(event_type),
+                           output_result.error());
   }
 }
 
@@ -121,7 +122,7 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
                  "Google, such as crash reports and usage data from the host "
                  "machine managing the Android Virtual Device.";
   }
-  RunMetrics(*metrics_paths_result, EventType::DeviceInstantiation);
+  RunMetrics(*metrics_paths_result, DeviceEventType::DeviceInstantiation);
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
@@ -132,7 +133,7 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_paths_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result, EventType::DeviceBootStart);
+  RunMetrics(*metrics_paths_result, DeviceEventType::DeviceBootStart);
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
@@ -143,7 +144,7 @@ void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_paths_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result, EventType::DeviceBootComplete);
+  RunMetrics(*metrics_paths_result, DeviceEventType::DeviceBootComplete);
 }
 
 void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
@@ -154,7 +155,7 @@ void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_paths_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result, EventType::DeviceBootFailed);
+  RunMetrics(*metrics_paths_result, DeviceEventType::DeviceBootFailed);
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
@@ -165,7 +166,7 @@ void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
                            metrics_paths_result.error());
     return;
   }
-  RunMetrics(*metrics_paths_result, EventType::DeviceStop);
+  RunMetrics(*metrics_paths_result, DeviceEventType::DeviceStop);
 }
 
 }  // namespace cuttlefish
