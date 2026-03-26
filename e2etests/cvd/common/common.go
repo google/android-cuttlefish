@@ -252,6 +252,21 @@ func (tc *TestContext) StopCVD() error {
 	return nil
 }
 
+// Performs `cvd powerwash`.
+func (tc *TestContext) CVDPowerwash() error {
+	tempdirEnv := map[string]string{
+		"HOME": tc.tempdir,
+	}
+
+	createCmd := []string{"cvd", "powerwash"};
+	if _, err := tc.RunCmdWithEnv(createCmd, tempdirEnv); err != nil {
+		log.Printf("Failed to powerwash instance(s): %w", err)
+		return err
+	}
+
+	return nil
+}
+
 // Common parameters for `cvd load`.
 type LoadArgs struct {
 	LoadConfig string
