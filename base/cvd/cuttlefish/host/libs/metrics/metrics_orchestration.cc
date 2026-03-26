@@ -80,8 +80,9 @@ Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
       .host_metrics = GetHostInfo(),
   };
 
-  if (!metrics_input.guests.IsEmpty()) {
-    result.guest_metrics = CF_EXPECT(GetGuestMetrics(metrics_input.guests));
+  if (metrics_input.guests) {
+    result.guest_metrics =
+        CF_EXPECT(GetGuestMetrics(metrics_input.guests.value()));
   }
 
   return result;
