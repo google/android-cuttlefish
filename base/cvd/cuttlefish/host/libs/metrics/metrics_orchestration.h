@@ -26,14 +26,14 @@
 
 namespace cuttlefish {
 
-struct MetricsPaths {
+struct MetricsInput {
   std::string metrics_directory;
   Guests guests;
 };
 
 Result<void> SetUpMetrics(const std::string& metrics_directory);
 ScopedLogger CreateLogger(std::string_view metrics_directory);
-Result<MetricsData> GatherMetrics(const MetricsPaths& metrics_paths);
+Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input);
 Result<void> OutputMetrics(DeviceEventType event_type,
                            std::string_view metrics_directory,
                            const MetricsData& metrics_data);
