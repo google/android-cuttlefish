@@ -36,7 +36,7 @@ func TestListEnvServices(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := c.RunCmd("cvd", "env", "ls",); err != nil {
+	if _, err := c.RunCmd(c.TargetBin(), "env", "ls",); err != nil {
 		t.Fatal(err)
 	}
 }
