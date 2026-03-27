@@ -1,8 +1,10 @@
-cuttlefish-integration-gigabyte-arm64 (1.49.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.49.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.49 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2299
+  * cuttlefish-integration-gigabyte-arm64: install openjdk by default by @grandpaul in https://github.com/google/android-cuttlefish/pull/2249
+  * cloud-init-image-for-cuttlefish: user-data: add lvm2 to package list by @grandpaul in https://github.com/google/android-cuttlefish/pull/2310
 
- -- Seungjae Yoo <seungjaeyoo@google.com>  Tue, 24 Mar 2026 13:40:03 +0900
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 16:48:39 -0400
 
 cuttlefish-integration-gigabyte-arm64 (1.31.0) unstable; urgency=low
 

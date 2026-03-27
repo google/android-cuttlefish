@@ -1,8 +1,8 @@
-cuttlefish-frontend (1.49.0) UNRELEASED; urgency=medium
+cuttlefish-frontend (1.49.0) unstable; urgency=medium
 
-  *
+  * N/A
 
- -- Ram Muthiah <rammuthiah@google.com>  Sat, 21 Mar 2026 14:53:59 +0000
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 16:50:16 -0400
 
 cuttlefish-frontend (1.48.0) stable; urgency=medium
 
