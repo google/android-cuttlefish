@@ -29,7 +29,7 @@ Execute following commands to install `cuttlefish-podcvd` and setup your
 machine.
 ```
 sudo apt install cuttlefish-podcvd
-/usr/lib/cuttlefish-common/bin/cuttlefish-podcvd-prerequisites.sh
+/usr/lib/cuttlefish-podcvd/bin/cuttlefish-podcvd-prerequisites.sh
 ```
 
 Now it's available to execute `podcvd help` or `podcvd create` as you could
@@ -39,7 +39,7 @@ execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
 cuttlefish-mcp-server requires additional setup beyond podcvd.
 
-Execute `gemini extensions install /usr/lib/cuttlefish-common/cuttlefish-mcp-server/`.
+Execute `gemini extensions install /usr/lib/cuttlefish-podcvd/cuttlefish-mcp-server/`.
 
 ## Development guide
 
