@@ -358,6 +358,8 @@ class CuttlefishConfig {
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
 
+    std::string camera_socket_path(int index) const;
+
     std::string launcher_log_path() const;
 
     std::string sdcard_path() const;
