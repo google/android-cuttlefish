@@ -1,8 +1,10 @@
-cuttlefish-container (1.49.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.49.0) unstable; urgency=medium
 
-  * 
+  * Start development on v1.49 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2299
+  * Modify cuttlefish-podcvd-prerequisites.sh by @0405ysj in https://github.com/google/android-cuttlefish/pull/2305
+  * Resolve version mismatch between debian versions by @0405ysj in https://github.com/google/android-cuttlefish/pull/2306
 
- -- Seungjae Yoo <seungjaeyoo@google.com>  Tue, 24 Mar 2026 13:40:00 +0900
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 16:46:10 -0400
 
 cuttlefish-container (1.46.0) unstable; urgency=medium
 

@@ -1,8 +1,24 @@
-cuttlefish-common (1.49.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.49.0) unstable; urgency=medium
 
-  *
+  * Start development on v1.49 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2299
+  * Fix copy-paste failure in gpu mode by @jmacnak in https://github.com/google/android-cuttlefish/pull/2301
+  * Run lz4 compression in-process for ramdisks by @Databean in https://github.com/google/android-cuttlefish/pull/2283
+  * Delete unused members from CuttlefishConfig by @Databean in https://github.com/google/android-cuttlefish/pull/2282
+  * Replace calls to CreateBlankImage with filesystem-specific versions by @Databean in https://github.com/google/android-cuttlefish/pull/2292
+  * Select emulated camera apex via assemble_cvd. by @ser-io in https://github.com/google/android-cuttlefish/pull/2295
+  * Modify cuttlefish-podcvd-prerequisites.sh by @0405ysj in https://github.com/google/android-cuttlefish/pull/2305
+  * Resolve version mismatch between debian versions by @0405ysj in https://github.com/google/android-cuttlefish/pull/2306
+  * Add an "additional substitution" test for "cvd create" on git_main and latest AOSP by @Databean in https://github.com/google/android-cuttlefish/pull/2309
+  * Fix referenced kokoro build script in gpu config by @jmacnak in https://github.com/google/android-cuttlefish/pull/2308
+  * Add support for page size emulation by @MarcinSzymczyk in https://github.com/google/android-cuttlefish/pull/2302
+  * cuttlefish-integration-gigabyte-arm64: install openjdk by default by @grandpaul in https://github.com/google/android-cuttlefish/pull/2249
+  * virtio-media: Introduce `-camera` flag by @ser-io in https://github.com/google/android-cuttlefish/pull/2281
+  * Mark release 1.48.0 as stable by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2314
+  * cloud-init-image-for-cuttlefish: user-data: add lvm2 to package list by @grandpaul in https://github.com/google/android-cuttlefish/pull/2310
+  * Increase retry delay for POST /cvds on CF container on on-premise img by @0405ysj in https://github.com/google/android-cuttlefish/pull/2316
+  * Prevent nvidia upgrades in kokoro runs by @jmacnak in https://github.com/google/android-cuttlefish/pull/2317
 
- -- Ram Muthiah <rammuthiah@google.com>  Sat, 21 Mar 2026 14:53:36 +0000
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 16:43:45 -0400
 
 cuttlefish-common (1.48.0) stable; urgency=medium
 
