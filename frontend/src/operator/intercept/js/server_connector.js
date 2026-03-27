@@ -42,7 +42,19 @@ export function deviceId() {
 }
 
 // Creates a connector capable of communicating with the signaling server.
+// Tries WebSocket first, falls back to HTTP polling if WebSocket is unavailable.
 export async function createConnector() {
+  // Check if WebSocket is supported
+  if (typeof WebSocket !== 'undefined') {
+    try {
+      const connector = new WebSocketConnector();
+      console.log('Using WebSocket signaling');
+      return connector;
+    } catch (e) {
+      console.warn('WebSocket connector creation failed, falling back to polling:', e);
+    }
+  }
+  console.log('Using HTTP polling signaling');
   return new PollingConnector();
 }
 
@@ -271,6 +283,116 @@ class PollingConnector extends Connector {
 
     this.#pollQuicklyUntil = Date.now() + durationMilliseconds;
     this.#startPolling();
+  }
+}
+
+// WebSocket connection timeout in milliseconds
+const WS_CONNECT_TIMEOUT = 3000;
+
+// Implementation of the Connector interface using WebSocket
+class WebSocketConnector extends Connector {
+  #configUrl = httpUrl('infra_config');
+  #ws;
+  #config = undefined;
+  #deviceInfo = undefined;
+  #onDeviceMsgCb = msg =>
+      console.error('Received device message without registered listener');
+
+  onDeviceMsg(cb) {
+    this.#onDeviceMsgCb = cb;
+  }
+
+  constructor() {
+    super();
+  }
+
+  async requestDevice(deviceId) {
+    let config = await this.#getConfig();
+
+    return new Promise((resolve, reject) => {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${location.host}/devices/${deviceId}/connect`;
+
+      const timeout = setTimeout(() => {
+        this.#ws.close();
+        reject(new Error('WebSocket connection timeout'));
+      }, WS_CONNECT_TIMEOUT);
+
+      this.#ws = new WebSocket(wsUrl);
+
+      this.#ws.onopen = () => {
+        console.debug('WebSocket signaling connection opened');
+      };
+
+      this.#ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+
+        // First message should be device_info
+        if (this.#deviceInfo === undefined && message.device_info !== undefined) {
+          clearTimeout(timeout);
+          this.#deviceInfo = message.device_info;
+          resolve({
+            deviceInfo: this.#deviceInfo,
+            infraConfig: config,
+          });
+          return;
+        }
+
+        // Handle error messages
+        if (message.error !== undefined) {
+          if (this.#deviceInfo === undefined) {
+            clearTimeout(timeout);
+            reject(new Error(message.error));
+          } else {
+            console.error('Device error:', message.error);
+          }
+          return;
+        }
+
+        // Normal message - forward to callback
+        // Messages from device come with payload wrapper
+        if (message.payload !== undefined) {
+          this.#onDeviceMsgCb(message.payload);
+        } else {
+          this.#onDeviceMsgCb(message);
+        }
+      };
+
+      this.#ws.onerror = (error) => {
+        clearTimeout(timeout);
+        reject(new Error('WebSocket connection failed'));
+      };
+
+      this.#ws.onclose = (event) => {
+        clearTimeout(timeout);
+        if (this.#deviceInfo === undefined) {
+          reject(new Error('WebSocket closed before receiving device info'));
+        }
+      };
+    });
+  }
+
+  async sendToDevice(msg) {
+    if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
+      this.#ws.send(JSON.stringify(msg));
+    } else {
+      throw new Error('WebSocket not connected');
+    }
+  }
+
+  async #getConfig() {
+    if (this.#config === undefined) {
+      this.#config = await (await fetch(this.#configUrl, {
+                       method: 'GET',
+                       redirect: 'follow',
+                     })).json();
+    }
+    return this.#config;
+  }
+
+  // WebSocket is always "fast", so this is a no-op
+  expectMessagesSoon(durationMilliseconds) {
+    // No action needed for WebSocket - messages are delivered immediately
   }
 }
 
