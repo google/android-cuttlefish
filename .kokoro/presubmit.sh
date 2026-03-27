@@ -18,6 +18,11 @@ retry() {
   done
 }
 
+# Freeze the current version of the Nvidia libraries to
+# prevent updates from causing version mismatches.
+# TODO(b/466404901): move into kokoro image.
+sudo apt-mark hold *nvidia*
+
 retry sudo apt update
 
 # environment variable and options to force answer prompts
