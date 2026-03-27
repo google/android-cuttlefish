@@ -1,0 +1,8 @@
+#!/bin/sh
+
+cat >> /etc/skel/.bashrc <<EOF
+if [ -x /usr/local/bin/run_after_autologin.sh ]; then
+    /usr/local/bin/run_after_autologin.sh
+fi
+EOF
+
