@@ -483,7 +483,7 @@ jobs:
         cd e2etests
         bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
   e2etests-podcvd:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-8core
     needs: [build-debian-package-amd64, build-docker-image-amd64]
     steps:
     - name: Free disk space
