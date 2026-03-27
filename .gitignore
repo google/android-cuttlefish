@@ -23,6 +23,7 @@ cuttlefish-*_*.*.*.tar.xz
 /*/debian/*.log
 
 container/src/podcvd/podcvd
+container/src/podcvd/cuttlefish_mcp_server
 
 frontend/src/operator/webui/src/environments/version.ts
 

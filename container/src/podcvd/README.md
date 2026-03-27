@@ -46,3 +46,8 @@ describes how to build `cuttlefish-podcvd` debian package.
 
 Execute `sudo apt install ./cuttlefish-podcvd_*.deb` to install it on your
 machine.
+
+### Manually build cuttlefish_mcp_server
+
+Execute `go build ./cmd/cuttlefish_mcp_server` from `container/src/podcvd`
+directory.
