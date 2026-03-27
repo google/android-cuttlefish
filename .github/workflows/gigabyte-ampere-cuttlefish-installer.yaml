@@ -334,7 +334,7 @@ jobs:
       run: |
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k docker pull us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly'
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'echo cuttlefish | sudo -S -k docker run -d --privileged -p 4080:2080 us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:nightly'
-        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v --retry 6 --retry-all-errors --retry-delay 10'
+        sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v --retry 6 --retry-all-errors --retry-delay 30'
         sshpass -p cuttlefish ssh -o "StrictHostKeyChecking no" -o "UserKnownHostsFile /dev/null" -p 33322 vsoc-01@localhost 'curl http://localhost:4080/cvds -v' | tr -d '[:space:]' | grep -xq '{"cvds":\[\]}'
     - name: Shutdown qemu
       run: |
