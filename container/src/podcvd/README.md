@@ -9,6 +9,8 @@ interfere host environment of each other.
 
 ## User setup guide
 
+### podcvd
+
 <!-- TODO(seungjaeyoo): Modify repository after we have deb at stable/unstable -->
 Execute following commands to register apt repository containing
 `cuttlefish-podcvd` package on your machine.
@@ -33,6 +35,12 @@ sudo apt install cuttlefish-podcvd
 Now it's available to execute `podcvd help` or `podcvd create` as you could
 execute `cvd help` or `cvd create` after installing `cuttlefish-base`.
 
+### cuttlefish-mcp-server
+
+cuttlefish-mcp-server requires additional setup beyond podcvd.
+
+Execute `gemini extensions install /usr/lib/cuttlefish-common/cuttlefish-mcp-server/`.
+
 ## Development guide
 
 ### Manually build podcvd binary
@@ -51,3 +59,7 @@ machine.
 
 Execute `go build ./cmd/cuttlefish_mcp_server` from `container/src/podcvd`
 directory.
+
+### Test cuttlefish_mcp_server on your local machine
+
+Execute `gemini extensions install container/src/podcvd`.

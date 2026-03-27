@@ -1,2 +1,4 @@
 debian/cuttlefish-podcvd-prerequisites.sh /usr/lib/cuttlefish-common/bin/
+src/podcvd/cuttlefish_mcp_server /usr/lib/cuttlefish-common/cuttlefish-mcp-server/
+src/podcvd/gemini-extension.json /usr/lib/cuttlefish-common/cuttlefish-mcp-server/
 src/podcvd/podcvd /usr/lib/cuttlefish-common/bin/
