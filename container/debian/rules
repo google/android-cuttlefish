@@ -9,14 +9,16 @@
 
 GOBIN := $$(which go || echo /usr/lib/$$(ls /usr/lib | grep "^go-1." | sort -V | tail -1)/bin/go)
 PODCVD_SOURCE_DIR := src/podcvd
-PODCVD_BIN_DIR := ./cmd/podcvd
+PODCVD_BINARY_NAME := podcvd
+CUTTLEFISH_MCP_SERVER_BINARY_NAME := cuttlefish_mcp_server
 
 %:
 	dh $@ --with=config-package
 
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w" ${PODCVD_BIN_DIR})
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w" ./cmd/${PODCVD_BINARY_NAME})
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w" ./cmd/${CUTTLEFISH_MCP_SERVER_BINARY_NAME})
 
 .PHONY: override_dh_auto_test
 override_dh_auto_test:
@@ -30,7 +32,8 @@ override_dh_installinit:
 
 .PHONY: override_dh_auto_clean
 override_dh_auto_clean:
-	rm -f $(PODCVD_SOURCE_DIR)/podcvd
+	rm -f $(PODCVD_SOURCE_DIR)/${PODCVD_BINARY_NAME}
+	rm -f $(PODCVD_SOURCE_DIR)/${CUTTLEFISH_MCP_SERVER_BINARY_NAME}
 	dh_auto_clean
 
 # Debug info was stripped by ldflags=-w
