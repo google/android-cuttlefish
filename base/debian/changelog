@@ -1,3 +1,9 @@
+cuttlefish-common (1.50.0) UNRELEASED; urgency=medium
+
+  *
+
+ -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 18:55:48 -0400
+
 cuttlefish-common (1.49.0) unstable; urgency=medium
 
   * Start development on v1.49 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2299
