@@ -79,4 +79,8 @@ int CvdVideoFrameBuffer::StrideV() const {
   return AlignStride((width_ + 1) / 2);
 }
 
+std::unique_ptr<VideoFrameBuffer> CvdVideoFrameBuffer::Clone() const {
+  return std::make_unique<CvdVideoFrameBuffer>(*this);
+}
+
 }  // namespace cuttlefish

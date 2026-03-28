@@ -19,6 +19,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <memory>
+
 namespace cuttlefish {
 
 class VideoFrameBuffer {
@@ -27,15 +29,26 @@ class VideoFrameBuffer {
 
   virtual int width() const = 0;
   virtual int height() const = 0;
-  virtual int StrideY() const = 0;
-  virtual int StrideU() const = 0;
-  virtual int StrideV() const = 0;
-  virtual uint8_t* DataY() = 0;
-  virtual uint8_t* DataU() = 0;
-  virtual uint8_t* DataV() = 0;
-  virtual size_t DataSizeY() const = 0;
-  virtual size_t DataSizeU() const = 0;
-  virtual size_t DataSizeV() const = 0;
+
+  // YUV Interfaces (Planar)
+  virtual int StrideY() const { return 0; }
+  virtual int StrideU() const { return 0; }
+  virtual int StrideV() const { return 0; }
+  virtual uint8_t* DataY() { return nullptr; }
+  virtual uint8_t* DataU() { return nullptr; }
+  virtual uint8_t* DataV() { return nullptr; }
+  virtual size_t DataSizeY() const { return 0; }
+  virtual size_t DataSizeU() const { return 0; }
+  virtual size_t DataSizeV() const { return 0; }
+
+  // Packed Interfaces (ABGR/ARGB)
+  virtual uint8_t* Data() const { return nullptr; }
+  virtual int Stride() const { return 0; }
+  virtual size_t DataSize() const { return 0; }
+  virtual uint32_t PixelFormat() const { return 0; }
+
+  // Clone interface
+  virtual std::unique_ptr<VideoFrameBuffer> Clone() const = 0;
 };
 
 }  // namespace cuttlefish
