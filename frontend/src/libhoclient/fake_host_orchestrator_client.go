@@ -132,6 +132,8 @@ func (c *FakeHostOrchestratorClient) Powerwash(groupName, instanceName string) e
 
 func (c *FakeHostOrchestratorClient) Stop(groupName, instanceName string) error { return nil }
 
+func (c *FakeHostOrchestratorClient) Restart(groupName, instanceName string) error { return nil }
+
 func (c *FakeHostOrchestratorClient) Start(groupName, instanceName string, req *hoapi.StartCVDRequest) error {
 	return nil
 }
