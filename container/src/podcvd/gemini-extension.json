@@ -1,0 +1,10 @@
+{
+  "name": "cuttlefish-mcp-server",
+  "version": "0.0.1",
+  "mcpServers": {
+    "cuttlefishMcp": {
+      "command": "${extensionPath}/cuttlefish_mcp_server",
+      "timeout": 600000
+    }
+  }
+}
