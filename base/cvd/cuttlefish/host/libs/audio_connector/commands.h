@@ -16,6 +16,7 @@
 
 #include <stdint.h>
 
+#include <span>
 #include <vector>
 
 #include "cuttlefish/host/libs/audio_connector/shm_layout.h"
@@ -78,6 +79,14 @@ class JackInfoCommand : public InfoCommand<virtio_snd_jack_info> {
              const std::vector<virtio_snd_jack_info>& reply);
 };
 
+class ControlInfoCommand : public InfoCommand<virtio_snd_ctl_info> {
+ public:
+  ControlInfoCommand(uint32_t start_id, size_t count,
+                     virtio_snd_ctl_info* ctl_info);
+
+  void Reply(AudioStatus status, std::span<const virtio_snd_ctl_info> reply);
+};
+
 class StreamInfoCommand : public InfoCommand<virtio_snd_pcm_info> {
  public:
   StreamInfoCommand(uint32_t start_id, size_t count,
@@ -120,6 +129,21 @@ struct StreamSetParamsCommand : public StreamControlCommand {
   const uint8_t channels_;
   const uint8_t format_;
   const uint8_t rate_;
+};
+
+class ControlCommand : public AudioCommand {
+ public:
+  ControlCommand(AudioCommandType type, uint32_t control_id,
+                 virtio_snd_ctl_value* value);
+
+  uint32_t control_id() const { return control_id_; }
+  virtio_snd_ctl_value* value() { return value_; }
+
+  void Reply(AudioStatus status);
+
+ private:
+  const uint32_t control_id_;
+  virtio_snd_ctl_value* value_;
 };
 
 }  // namespace cuttlefish
