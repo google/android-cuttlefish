@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The Android Open Source Project
+ * Copyright (C) 2026 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,30 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <string_view>
+#include <stdint.h>
+
 #include <vector>
 
+#include "cuttlefish/host/commands/cvd/fetch/builds.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
+#include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-struct GuestInfo {
-  uint32_t instance_id;
-  std::string product_out;
+struct FetchStartMetrics {
+  bool enable_local_caching = false;
+  bool dynamic_super_image_mixing = false;
 };
 
-struct Guests {
-  std::string host_artifacts;
-  std::vector<GuestInfo> guest_infos;
-
-  bool IsEmpty() const;
+struct FetchCompleteMetrics {
+  bool status_blocked = false;
+  uint64_t fetch_size_bytes = 0;
+  std::vector<Builds> fetched_builds;
 };
 
-struct GuestMetrics {
-  uint32_t instance_id;
-  std::string os_version;
-};
-
-Result<std::vector<GuestMetrics>> GetGuestMetrics(const Guests& guests);
+Result<FetchStartMetrics> GetFetchStartMetrics(const FetchFlags& fetch_flags);
+Result<FetchCompleteMetrics> GetFetchCompleteMetrics(
+    const FetchResult& fetch_result);
 
 }  // namespace cuttlefish

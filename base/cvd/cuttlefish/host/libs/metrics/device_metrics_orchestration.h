@@ -16,21 +16,18 @@
 
 #pragma once
 
-#include <string>
+#include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 
 namespace cuttlefish {
 
-enum class EventType {
-  DeviceInstantiation,
-  DeviceBootStart,
-  DeviceBootComplete,
-  DeviceStop,
-  DeviceBootFailed,
-  FetchStart,
-  FetchComplete,
-  FetchFailed,
-};
+void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group);
 
-std::string EventTypeString(EventType event_type);
+void GatherVmStartMetrics(const LocalInstanceGroup& instance_group);
+
+void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group);
+
+void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group);
+
+void GatherVmStopMetrics(const LocalInstanceGroup& instance_group);
 
 }  // namespace cuttlefish

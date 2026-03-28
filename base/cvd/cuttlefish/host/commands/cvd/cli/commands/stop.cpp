@@ -36,7 +36,7 @@
 #include "cuttlefish/host/commands/cvd/cli/utils.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/metrics/metrics_orchestration.h"
+#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
