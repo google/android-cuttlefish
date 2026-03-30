@@ -1,8 +1,6 @@
 module github.com/google/android-cuttlefish/container/src/libcfcontainer
 
-go 1.24.0
-
-toolchain go1.24.8
+go 1.25.0
 
 require (
 	dario.cat/mergo v1.0.2
@@ -34,7 +32,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.39.0 // indirect
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
