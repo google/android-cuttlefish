@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# Remove old connection that is not working.
+if nmcli connection show | grep "Wired connection 1"; then
+    nmcli connection delete "Wired connection 1"
+fi
+
+# Rescan all the ethernet devices that are disconnected.
+LIST1=$(nmcli -t -f DEVICE,TYPE,STATE device status | grep "^en.*:ethernet:disconnected$" | cut -d: -f1)
+
+for i in $LIST1; do
+    nmcli device connect "$i"
+done
