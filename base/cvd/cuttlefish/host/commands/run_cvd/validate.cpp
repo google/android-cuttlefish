@@ -21,8 +21,8 @@
 
 #include "absl/log/log.h"
 
+#include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
-#include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -35,13 +35,13 @@ static Result<void> TestTapDevices(
   if (InSandbox()) {
     return {};
   }
-  auto taps = TapInterfacesInUse();
   auto wifi = instance.wifi_tap_name();
-  CF_EXPECTF(taps.count(wifi) == 0, "Device \"{}\" in use", wifi);
+  CF_EXPECTF(ValidateTapInterfaceIsUsable(wifi), "Device \"{}\" in use", wifi);
   auto mobile = instance.mobile_tap_name();
-  CF_EXPECTF(taps.count(mobile) == 0, "Device \"{}\" in use", mobile);
+  CF_EXPECTF(ValidateTapInterfaceIsUsable(mobile), "Device \"{}\" in use",
+             mobile);
   auto eth = instance.ethernet_tap_name();
-  CF_EXPECTF(taps.count(eth) == 0, "Device \"{}\" in use", eth);
+  CF_EXPECTF(ValidateTapInterfaceIsUsable(eth), "Device \"{}\" in use", eth);
 #else
   (void)instance;
 #endif

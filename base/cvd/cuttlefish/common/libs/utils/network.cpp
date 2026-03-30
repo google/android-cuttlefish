@@ -16,20 +16,9 @@
 
 #include "cuttlefish/common/libs/utils/network.h"
 
-#ifdef __linux__
-#include <linux/if_ether.h>
-// Kernel headers don't mix well with userspace headers, but there is no
-// userspace header that provides the if_tun.h #defines.  Include the kernel
-// header, but move conflicting definitions out of the way using macros.
-#define ethhdr __kernel_ethhdr
-#include <linux/if_tun.h>
-#undef ethhdr
-#endif
-
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <ifaddrs.h>
-#include <net/if.h>
 #include <stdint.h>
 
 #include <cstring>
@@ -85,68 +74,6 @@ bool NetworkInterfaceExists(const std::string& interface_name) {
   freeifaddrs(ifa_list);
   return ret;
 }
-
-#ifdef __linux__
-static std::optional<Command> GrepCommand() {
-  if (FileExists("/usr/bin/grep")) {
-    return Command("/usr/bin/grep");
-  } else if (FileExists("/bin/grep")) {
-    return Command("/bin/grep");
-  } else {
-    return {};
-  }
-}
-
-std::set<std::string> TapInterfacesInUse() {
-  std::vector<std::string> fdinfo_list;
-
-  Result<std::vector<std::string>> processes = DirectoryContents("/proc");
-  if (!processes.ok()) {
-    LOG(ERROR) << "Failed to get contents of `/proc/`";
-    return {};
-  }
-  for (const std::string& process : *processes) {
-    std::string fdinfo_path = fmt::format("/proc/{}/fdinfo", process);
-    Result<std::vector<std::string>> fdinfos = DirectoryContents(fdinfo_path);
-    if (!fdinfos.ok()) {
-      VLOG(1) << "Failed to get contents of '" << fdinfo_path << "'";
-      continue;
-    }
-    for (const std::string& fdinfo : *fdinfos) {
-      std::string path = fmt::format("/proc/{}/fdinfo/{}", process, fdinfo);
-      fdinfo_list.emplace_back(std::move(path));
-    }
-  }
-
-  std::optional<Command> cmd = GrepCommand();
-  if (!cmd) {
-    LOG(WARNING) << "Unable to test TAP interface usage";
-    return {};
-  }
-  cmd->AddParameter("-E").AddParameter("-h").AddParameter("-e").AddParameter(
-      "^iff:.*");
-
-  for (const std::string& fdinfo : fdinfo_list) {
-    cmd->AddParameter(fdinfo);
-  }
-
-  std::string stdout_str = RunAndCaptureStdout(std::move(*cmd)).value_or("");
-
-  std::vector<std::string_view> lines = absl::StrSplit(stdout_str, '\n');
-  std::set<std::string> tap_interfaces;
-  for (const auto& line : lines) {
-    if (line.empty()) {
-      continue;
-    }
-    if (!absl::StartsWith(line, "iff:\t")) {
-      LOG(ERROR) << "Unexpected line \"" << line << "\"";
-      continue;
-    }
-    tap_interfaces.emplace(line.substr(std::string("iff:\t").size()));
-  }
-  return tap_interfaces;
-}
-#endif
 
 std::string MacAddressToString(const uint8_t mac[6]) {
   std::vector<uint8_t> mac_vec(mac, mac + 6);

@@ -22,12 +22,6 @@
 namespace cuttlefish {
 // Check network interface with given name exists, such as cvd-ebr.
 bool NetworkInterfaceExists(const std::string& interface_name);
-
-#ifdef __linux__
-// Returns a list of TAP devices that have open file descriptors
-std::set<std::string> TapInterfacesInUse();
-#endif
-
 void GenerateCorrespondingIpv6ForMac(const uint8_t mac[6], uint8_t out[16]);
 void GenerateMobileMacForInstance(int index, uint8_t out[6]);
 void GenerateEthMacForInstance(int index, uint8_t out[6]);
