@@ -30,6 +30,12 @@
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/result/result.h"
 
+#ifdef __linux__
+#include <linux/if_tun.h>
+#endif
+
+#include <net/if.h>
+
 namespace cuttlefish {
 
 bool CreateEthernetIface(std::string_view name, std::string_view bridge_name) {
@@ -123,6 +129,27 @@ bool CreateTap(std::string_view name) {
 
   return true;
 }
+
+#ifdef __linux__
+Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name) {
+  constexpr auto kTunTapDev = "/dev/net/tun";
+
+  auto tap_fd = SharedFD::Open(kTunTapDev, O_RDWR | O_NONBLOCK);
+  CF_EXPECTF(tap_fd->IsOpen(), "Unable to open tun device: {}",
+             tap_fd->StrError());
+
+  struct ifreq ifr;
+  memset(&ifr, 0, sizeof(ifr));
+  ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
+  strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
+
+  int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
+  CF_EXPECTF(err == 0, "Unable to connect to {} tap interface: {}",
+             interface_name, tap_fd->StrError());
+
+  return {};
+}
+#endif
 
 bool DestroyIface(std::string_view name) {
   if (!ShutdownIface(name).ok()) {

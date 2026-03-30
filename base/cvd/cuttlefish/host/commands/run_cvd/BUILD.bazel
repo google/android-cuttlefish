@@ -162,6 +162,7 @@ cf_cc_library(
     srcs = ["validate.cpp"],
     hdrs = ["validate.h"],
     deps = [
+        "//allocd:alloc_utils",
         "//cuttlefish/common/libs/utils:in_sandbox",
         "//cuttlefish/common/libs/utils:network",
         "//cuttlefish/host/libs/config:cuttlefish_config",

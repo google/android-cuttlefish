@@ -23,6 +23,7 @@
 
 #include <optional>
 #include <string_view>
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -52,6 +53,10 @@ int RunExternalCommand(const std::string& command);
 std::optional<std::string> GetUserName(uid_t uid);
 
 bool CreateTap(std::string_view name);
+
+#ifdef __linux__
+Result<void> ValidateTapInterfaceIsUsable(const std::string& interface_name);
+#endif
 
 
 bool DestroyIface(std::string_view name);
