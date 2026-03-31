@@ -11,6 +11,11 @@ case "$(uname -m)" in
     export NODE_DISTRO=linux-arm64
     export NODE_SHA256SUM=a43100595e7960b9e8364bff5641e0956a9929feee2759e70cbb396a1d827b7c
     ;;
+  riscv64)
+    echo "error: no Node.js binary available for riscv64 in base/setup-nodejs-env.sh" >&2
+    echo "error: if this script is now being called during build, implement riscv64 support here" >&2
+    exit 1
+    ;;
 esac
 
 export NODE_ROOT=/tmp/nodejs
