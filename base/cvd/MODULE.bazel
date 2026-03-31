@@ -65,3 +65,13 @@ include("//toolchain:bazel.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
 include("//toolchain:rust.MODULE.bazel")
+
+# riscv64: rules_rust does not support riscv64 host out of the box.
+# Patch triple.bzl to add riscv64gc to the supported linux architectures
+# and map the riscv64 arch string to riscv64gc (Rust's triple prefix).
+single_version_override(
+    module_name = "rules_rust",
+    patches = ["//patches/rules_rust:riscv64_triple.patch"],
+    patch_strip = 1,
+)
+
