@@ -40,4 +40,28 @@ function install_bazel_aarch64() {
   popd
 }
 
+<<<<<<< HEAD
+=======
+function install_bazel_riscv64() {
+  # No official Bazel binary exists for riscv64. Bazel must be built from
+  # source (~30-60 minutes).
+  echo "error: bazel is not installed and cannot be installed automatically on riscv64." >&2
+  echo "error: bazel must be built from source. Run the following script then re-run build_packages.sh:" >&2
+  cat >&2 << 'BUILD_SCRIPT'
+
+#!/usr/bin/env bash
+set -e
+BAZEL_VERSION=8.5.1
+sudo apt-get install -y build-essential openjdk-21-jdk python3 zip unzip
+mkdir bazel-${BAZEL_VERSION} && cd bazel-${BAZEL_VERSION}
+wget https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip
+unzip bazel-${BAZEL_VERSION}-dist.zip
+env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
+sudo cp output/bazel /usr/local/bin/bazel
+
+BUILD_SCRIPT
+  exit 1
+}
+
+>>>>>>> 826e01940 (installbazel: add riscv64 support with build-from-source instructions)
 install_bazel_$(uname -m)
