@@ -114,6 +114,8 @@ func SetupControlEndpoint(pool *DevicePool, path string) (func() error, error) {
 // GET  /devices/{deviceId}/services/{serviceName}/{typeName}/type
 // GET  /devices/{deviceId}/openwrt{path:/.*}
 // POST /devices/{deviceId}/openwrt{path:/.*}
+// GET  /devices/{deviceId}/adb (WebSocket)
+// GET  /devices/{deviceId}/connect (WebSocket signaling)
 // GET  /polled_connections
 // GET  /polled_connections/{connId}/messages
 // POST /polled_connections/{connId}/:forward
@@ -156,6 +158,9 @@ func CreateHttpHandlers(
 	}).Methods("GET", "POST")
 	router.HandleFunc("/devices/{deviceId}/adb", func(w http.ResponseWriter, r *http.Request) {
 		adbProxy(w, r, pool)
+	}).Methods("GET")
+	router.HandleFunc("/devices/{deviceId}/connect", func(w http.ResponseWriter, r *http.Request) {
+		connectWebSocket(w, r, pool)
 	}).Methods("GET")
 	router.HandleFunc("/polled_connections/{connId}/:forward", func(w http.ResponseWriter, r *http.Request) {
 		forward(w, r, polledSet)
@@ -548,6 +553,46 @@ func adbProxy(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
 	if _, err = io.Copy(tcpConn, wsWrapper); err != nil {
 		log.Print("Error while io.Copy from WebSocket to ADB: ", err)
 	}
+}
+
+// WebSocket upgrader for signaling connections
+var wsSignalingUpgrader = websocket.Upgrader{
+	ReadBufferSize:  4096,
+	WriteBufferSize: 4096,
+	CheckOrigin: func(r *http.Request) bool {
+		// Allow all origins; restrict in production via reverse proxy
+		return true
+	},
+}
+
+// WebSocket endpoint for signaling
+func connectWebSocket(w http.ResponseWriter, r *http.Request, pool *DevicePool) {
+	vars := mux.Vars(r)
+	deviceId := vars["deviceId"]
+
+	device := pool.GetDevice(deviceId)
+	if device == nil {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	conn, err := wsSignalingUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("WebSocket upgrade failed for device %s: %v", deviceId, err)
+		return
+	}
+
+	client := NewWsClient(conn, device, deviceId)
+	clientId := device.Register(client)
+	client.clientId = clientId
+
+	log.Printf("WebSocket client %d connected to device %s", clientId, deviceId)
+
+	// Send device info to the client
+	client.Send(map[string]interface{}{
+		"device_info": device.privateData,
+	})
+	// The client manages the connection lifecycle.
 }
 
 // Wrapper for implementing io.ReadWriteCloser of websocket.Conn
