@@ -46,8 +46,10 @@ func Main(args []string) {
 				log.Fatal(err)
 			}
 		case "bugreport", "start":
-			// TODO(seungjaeyoo): Support help flag for other subcommands of cvd as well.
-			log.Fatalf("help flag support for subcommand %q is not implemented yet", subcommand)
+			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
+			if err := ExecHelpCmdOnDisposableHost(ccm, cvdArgs); err != nil {
+				log.Fatal(err)
+			}
 		default:
 			log.Fatalf("unknown subcommand %q", subcommand)
 		}
