@@ -80,3 +80,14 @@ single_version_override(
     patch_strip = 1,
 )
 
+# riscv64: toolchains_llvm does not support riscv64 as a host architecture.
+# Patch to add linux-riscv64 to SUPPORTED_TARGETS and its target system name.
+single_version_override(
+    module_name = "toolchains_llvm",
+    patches = [
+        "//patches/toolchains_llvm:riscv64_common.patch",
+        "//patches/toolchains_llvm:riscv64_configure.patch",
+        "//patches/toolchains_llvm:riscv64_cc_toolchain_config.patch",
+    ],
+    patch_strip = 1,
+)
