@@ -1,8 +1,9 @@
-cuttlefish-common (1.50.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.50.0) unstable; urgency=medium
 
-  *
+* Remove the nvidia package hold from kokoro presubmit script by @jmacnak in https://github.com/google/android-cuttlefish/pull/2321
+* Fixed mtools build. by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2320
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 18:55:48 -0400
+ -- 34056916582 <dsk@google.com>  Thu, 02 Apr 2026 13:44:46 +0000
 
 cuttlefish-common (1.49.0) unstable; urgency=medium
 
