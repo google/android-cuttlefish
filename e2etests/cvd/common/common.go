@@ -532,7 +532,7 @@ func RunXts(t *testing.T, cuttlefishArgs FetchAndCreateArgs, xtsArgs XtsArgs) {
 	log.Printf("Chdir to %s", xtsDir)
 	tc.t.Chdir(xtsDir)
 
-	log.Printf("Running XTS...")
+	log.Printf("12345 Running XTS...")
 	xtsCommand := []string{
 		xtsTradefedPath(xtsArgs),
 		"run",
