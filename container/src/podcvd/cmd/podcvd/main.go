@@ -15,11 +15,14 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/google/android-cuttlefish/container/src/podcvd/internal"
 )
 
 func main() {
-	internal.Main(os.Args[1:])
+	if err := internal.Main(os.Args[1:]); err != nil {
+		log.Fatal(err)
+	}
 }

@@ -32,8 +32,9 @@ func main() {
 		Name:        "create",
 		Description: "Create a Cuttlefish instance group within the container instance",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, args CreateArgs) (*mcp.CallToolResult, any, error) {
-		internal.Main([]string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"})
-
+		if err := internal.Main([]string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"}); err != nil {
+			return nil, nil, err
+		}
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{
 				&mcp.TextContent{Text: "created a Cuttlefish instance group successfully"},
