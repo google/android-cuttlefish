@@ -16,31 +16,47 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/google/android-cuttlefish/container/src/podcvd/internal"
-
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type CreateArgs struct{}
+type toolHandler struct {
+	// TODO(seungjaeyoo): Add client ID to distinguish AI agents.
+}
+
+type groupNameArg struct {
+	GroupName string `json:"group_name,omitempty"`
+}
+
+type createArgs struct {
+	groupNameArg
+}
+
+func (h *toolHandler) Create(ctx context.Context, req *mcp.CallToolRequest, args createArgs) (*mcp.CallToolResult, any, error) {
+	cmd := []string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"}
+	if args.GroupName != "" {
+		cmd = append([]string{fmt.Sprintf("--group_name=%s", args.GroupName)}, cmd...)
+	}
+	if err := internal.Main(cmd); err != nil {
+		return nil, nil, err
+	}
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			&mcp.TextContent{Text: "Successfully created Cuttlefish instance group"},
+		},
+	}, nil, nil
+}
 
 func main() {
+	handlers := &toolHandler{}
 	server := mcp.NewServer(&mcp.Implementation{Name: "cuttlefish-mcp-server", Version: "v0.0.1"}, nil)
-
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "create",
-		Description: "Create a Cuttlefish instance group within the container instance",
-	}, func(ctx context.Context, req *mcp.CallToolRequest, args CreateArgs) (*mcp.CallToolResult, any, error) {
-		if err := internal.Main([]string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"}); err != nil {
-			return nil, nil, err
-		}
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: "created a Cuttlefish instance group successfully"},
-			},
-		}, nil, nil
-	})
+		Description: "Create a Cuttlefish instance group",
+	}, handlers.Create)
 
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		log.Fatalf("Server failed: %v", err)
