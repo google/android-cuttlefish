@@ -1,8 +1,10 @@
-cuttlefish-container (1.50.0) UNRELEASED; urgency=medium
+cuttlefish-container (1.50.0) unstable; urgency=medium
 
-  *
+* Initial implementation of Cuttlefish MCP server by @0405ysj in https://github.com/google/android-cuttlefish/pull/2277
+* podcvd clear deletes container though it failed to disconnect adb by @0405ysj in https://github.com/google/android-cuttlefish/pull/2329
+* Support podcvd start/bugreport --help by @0405ysj in https://github.com/google/android-cuttlefish/pull/2330
 
- -- Sergio Rodriguez <sorama@google.com>  Fri, 27 Mar 2026 18:56:36 -0400
+ -- 3405691582 <dsk@google.com>  Thu, 02 Apr 2026 13:52:47 +0000
 
 cuttlefish-container (1.49.0) unstable; urgency=medium
 
