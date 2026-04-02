@@ -1,3 +1,27 @@
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+
+# Register the normal Rust compile toolchains from the root module.
+rust.toolchain(
+    edition = "2024",
+    versions = ["1.87.0"],
+)
+
+# Add an explicit riscv64gc Linux repository_set, because rules_rust 0.68.1's
+# default toolchain triple table does not include riscv64gc-unknown-linux-gnu.
+rust.repository_set(
+    name = "rust_linux_riscv64gc",
+    exec_triple = "riscv64gc-unknown-linux-gnu",
+    target_triple = "riscv64gc-unknown-linux-gnu",
+    versions = ["1.87.0"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:riscv64",
+    ],
+)
+
+use_repo(rust, "rust_toolchains")
+register_toolchains("@rust_toolchains//:all")
+
 rust_host_tools = use_extension("@rules_rust//rust:extensions.bzl", "rust_host_tools")
 rust_host_tools.host_tools(
     name = "rust_host_tools_nightly",
