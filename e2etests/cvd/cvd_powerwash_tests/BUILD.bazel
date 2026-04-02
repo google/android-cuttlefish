@@ -22,9 +22,6 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
-        # This does not actual require a GPU but it does require ADB which is currently only
-        # availabe in the GPU kokoro image.
-        "requires_gpu",
         "supports-graceful-termination",
     ],
     deps = [
@@ -42,9 +39,6 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
-        # This does not actual require a GPU but it does require ADB which is currently only
-        # availabe in the GPU kokoro image.
-        "requires_gpu",
         "supports-graceful-termination",
 
     ],
