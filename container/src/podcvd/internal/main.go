@@ -19,14 +19,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 )
 
-func Main(args []string) {
+func Main(args []string) error {
 	cvdArgs := ParseCvdArgs(args)
 	if len(cvdArgs.SubCommandArgs) == 0 {
 		cvdArgs.SubCommandArgs = []string{"help"}
@@ -34,7 +33,7 @@ func Main(args []string) {
 
 	ccm, err := CuttlefishContainerManager()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	subcommand := cvdArgs.SubCommandArgs[0]
@@ -43,48 +42,49 @@ func Main(args []string) {
 		case "cache", "clear", "create", "display", "env", "fetch", "fleet", "help", "lint", "load", "login", "powerbtn", "powerwash", "remove", "reset", "restart", "resume", "screen_recording", "snapshot_take", "status", "stop", "suspend", "version":
 			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		case "bugreport", "start":
 			cvdArgs.SubCommandArgs = []string{subcommand, "--help"}
 			if err := ExecHelpCmdOnDisposableHost(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		default:
-			log.Fatalf("unknown subcommand %q", subcommand)
+			return fmt.Errorf("unknown subcommand %q", subcommand)
 		}
 	} else {
 		if err := CheckDeviceAccessible(); err != nil {
-			log.Fatal(err)
+			return err
 		}
 		switch subcommand {
 		case "bugreport", "create", "display", "env", "powerbtn", "powerwash", "remove", "restart", "resume", "screen_recording", "snapshot_take", "start", "status", "stop", "suspend":
 			if err := handleSubcommandsForSingleInstanceGroup(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		case "clear", "reset":
 			if err := clearAllCuttlefishHosts(ccm); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		case "fleet":
 			if err := fleetAllCuttlefishHosts(ccm); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		case "help", "login", "version":
 			if err := handleToolingSubcommands(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		case "fetch":
 			if err := ExecFetchCmdOnDisposableHost(ccm, cvdArgs); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		case "cache", "lint":
 			// TODO(seungjaeyoo): Support other subcommands of cvd as well.
-			log.Fatalf("subcommand %q is not implemented yet", subcommand)
+			return fmt.Errorf("subcommand %q is not implemented yet", subcommand)
 		default:
-			log.Fatalf("unknown subcommand %q", subcommand)
+			return fmt.Errorf("unknown subcommand %q", subcommand)
 		}
 	}
+	return nil
 }
 
 func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
