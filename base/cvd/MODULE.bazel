@@ -97,3 +97,17 @@ single_version_override(
     patches = ["//patches/aspect_bazel_lib:riscv64_expand_template.patch"],
     patch_strip = 1,
 )
+
+# riscv64: openssl 3.3.1.bcr.1 overlay does not include riscv64 constants.
+# Use a patched overlay tarball that adds constants-linux-riscv64.bzl.
+# Also patch BUILD.bazel to add riscv64 to all select() blocks.
+# Source: https://github.com/monkey-jsun/android-cuttlefish/releases/tag/openssl-overlay-riscv64-3.3.1.bcr.1
+single_version_override(
+    module_name = "openssl",
+    patches = [
+        "//patches/openssl:riscv64_overlay.patch",
+        "//patches/openssl:openssl_riscv64_build.patch",
+    ],
+    patch_strip = 1,
+)
+
