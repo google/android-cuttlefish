@@ -1447,6 +1447,10 @@ cc_library(
             "third_party/llvm-16.0/llvm/lib/Target/X86/X86VZeroUpper.cpp",
             "third_party/llvm-16.0/llvm/lib/Target/X86/X86WinEHState.cpp",
         ],
+        "@platforms//cpu:riscv64": [
+            # No arch-specific LLVM JIT backend sources for riscv64.
+            # SwiftShader will build but JIT compilation will not be available.
+        ],
     }),
     hdrs = glob([
         "third_party/llvm-16.0/configs/common/include/**/*.h",
