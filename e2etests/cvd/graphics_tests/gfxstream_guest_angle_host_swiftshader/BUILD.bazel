@@ -25,9 +25,6 @@ go_test(
         "exclusive",
         "external",
         "no-sandbox",
-        # This does not actually require a GPU but currently only the GPU image
-        # has the XTS requirements preinstalled.
-        "requires_gpu",
         "supports-graceful-termination",
     ],
 )
