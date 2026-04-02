@@ -1,7 +1,13 @@
+cuttlefish-integration-gigabyte-arm64 (1.51.0) UNRELEASED; urgency=medium
+
+  *
+
+ -- 3405691582 <dsk@google.com>  Thu, 02 Apr 2026 15:41:02 +0000
+
 cuttlefish-integration-gigabyte-arm64 (1.50.0) unstable; urgency=medium
 
-* Change branch and target used for downloading CF artifacts during test by @0405ysj in https://github.com/google/android-cuttlefish/pull/2328
-* cuttlefish-integration-gigabyte-arm64: fix NetworkManager connections. by @grandpaul in https://github.com/google/android-cuttlefish/pull/2327
+  * Change branch and target used for downloading CF artifacts during test by @0405ysj in https://github.com/google/android-cuttlefish/pull/2328
+  * cuttlefish-integration-gigabyte-arm64: fix NetworkManager connections. by @grandpaul in https://github.com/google/android-cuttlefish/pull/2327
 
  -- 3405691582 <dsk@google.com>  Thu, 02 Apr 2026 13:54:09 +0000
 
