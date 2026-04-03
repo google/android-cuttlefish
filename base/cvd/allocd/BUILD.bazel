@@ -37,6 +37,7 @@ cc_library(
         "//conditions:default": [":alloc_iproute2"],
     }) + [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/cvd/utils:common",
         "//cuttlefish/host/libs/config:logging",

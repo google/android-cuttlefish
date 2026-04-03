@@ -22,7 +22,9 @@
 #include <unistd.h>
 
 #include <optional>
+#include <string>
 #include <string_view>
+
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -50,6 +52,7 @@ struct GatewayConfig {
 };
 
 int RunExternalCommand(const std::string& command);
+Result<std::string> IptablesPath();
 std::optional<std::string> GetUserName(uid_t uid);
 
 bool CreateTap(std::string_view name);
