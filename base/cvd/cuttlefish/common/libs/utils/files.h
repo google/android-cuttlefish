@@ -131,4 +131,9 @@ struct InputPathForm {
  */
 Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info);
 
+std::vector<std::string> Path(const std::string& env_name = "PATH");
+
+Result<std::string> Search(const std::vector<std::string>& path,
+                           std::string_view name);
+
 }  // namespace cuttlefish

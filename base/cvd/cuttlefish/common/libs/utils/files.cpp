@@ -61,11 +61,13 @@
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/contains.h"
+#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/posix/rename.h"
@@ -718,6 +720,25 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
                "Failed to effectively conduct readpath -f {}", processed_path);
   }
   return real_path;
+}
+
+std::vector<std::string> Path(const std::string& env_name) {
+  // TODO: Assumes a SUS system. Elsewhere we may need to change the delimiter.
+  // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html
+  return absl::StrSplit(StringFromEnv(env_name).value_or(""), ':');
+}
+
+Result<std::string> Search(const std::vector<std::string>& path,
+                           std::string_view name) {
+  // TODO: Assumes a SUS system. Elsewhere we may need to change the delimiter.
+  // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap08.html
+  for (const auto& dir : path) {
+    std::string abs_path = absl::StrCat(dir, "/", name);
+    if (FileExists(abs_path)) {
+      return abs_path;
+    }
+  }
+  return CF_ERR("Not found: ") << name << ", path " << absl::StrJoin(path, ":");
 }
 
 }  // namespace cuttlefish

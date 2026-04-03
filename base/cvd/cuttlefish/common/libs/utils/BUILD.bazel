@@ -104,6 +104,7 @@ cf_cc_library(
         "@platforms//os:linux",  # SEEK_DATA
     ],
     deps = [
+        ":environment",
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:in_sandbox",
@@ -140,6 +141,8 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
