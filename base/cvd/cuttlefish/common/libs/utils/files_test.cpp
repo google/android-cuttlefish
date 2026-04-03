@@ -21,6 +21,8 @@
 #include <android-base/file.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include "absl/cleanup/cleanup.h"
+#include "absl/strings/str_cat.h"
 
 #include "cuttlefish/common/libs/utils/files_test_helper.h"
 #include "cuttlefish/result/result.h"
@@ -179,5 +181,50 @@ INSTANTIATE_TEST_SUITE_P(
                     InputOutput{.path_to_convert_ = "~/k/../../t/./q",
                                 .home_dir_ = "/x/y/z",
                                 .expected_ = "/x/y/t/q"}));
+
+TEST(FilesTest, PathWithCustomEnv) {
+  const std::string env_name = "TEST_PATH";
+  const std::string dir1 = "/foo/bar";
+  const std::string dir2 = "/baz";
+  const std::string env_value = absl::StrCat(dir1, ":", dir2);
+  setenv(env_name.c_str(), env_value.c_str(), 1);
+  absl::Cleanup cleanup = [&env_name]() { unsetenv(env_name.c_str()); };
+
+  std::vector<std::string> result = Path(env_name);
+  ASSERT_EQ(result.size(), 2);
+  EXPECT_EQ(result[0], dir1);
+  EXPECT_EQ(result[1], dir2);
+}
+
+TEST(FilesTest, PathWithSecondCustomEnv) {
+  const std::string env_name = "TEST_PATH";
+  const std::string dir = "/foo";
+  setenv(env_name.c_str(), dir.c_str(), 1);
+  absl::Cleanup cleanup = [&env_name]() { unsetenv(env_name.c_str()); };
+
+  auto result = Path(env_name);
+  ASSERT_EQ(result.size(), 1);
+  EXPECT_EQ(result[0], dir);
+}
+
+TEST(FilesTest, SearchFindsFile) {
+  const std::string temp_dir = testing::TempDir();
+  const std::string file_name = "search_test_file";
+  const std::string full_path = absl::StrCat(temp_dir, "/", file_name);
+
+  EXPECT_TRUE(android::base::WriteStringToFile("", full_path));
+  absl::Cleanup cleanup = [full_path]() { unlink(full_path.c_str()); };
+
+  auto result = Search({temp_dir}, file_name);
+  EXPECT_THAT(result, IsOkAndValue(full_path));
+}
+
+TEST(FilesTest, SearchFileNotFoundReturnsError) {
+  const std::string temp_dir = testing::TempDir();
+  EXPECT_FALSE(FileExists(absl::StrCat(temp_dir, "/search_non_existent_file")));
+
+  auto result = Search({temp_dir}, "search_non_existent_file");
+  EXPECT_FALSE(result.ok());
+}
 
 }  // namespace cuttlefish
