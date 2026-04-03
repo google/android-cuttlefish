@@ -97,9 +97,11 @@ Result<void> CreateBridge(std::string_view name) {
   return {};
 }
 
-Result<void> IptableConfig(std::string_view network, bool add) {
-  CF_EXPECT(Execute({"iptables", "-t", "nat", add ? "-A" : "-D", "POSTROUTING",
-                     "-s", std::string(network), "-j", "MASQUERADE"}) == 0,
+Result<void> IptableConfig(std::string_view iptables_path,
+                           std::string_view network, bool add) {
+  CF_EXPECT(Execute({std::string(iptables_path), "-t", "nat", add ? "-A" : "-D",
+                     "POSTROUTING", "-s", std::string(network), "-j",
+                     "MASQUERADE"}) == 0,
             "IptableConfig");
   return {};
 }

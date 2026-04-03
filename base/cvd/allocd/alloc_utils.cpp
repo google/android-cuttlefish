@@ -85,7 +85,7 @@ bool CreateMobileIface(std::string_view name, uint16_t id,
     DestroyIface(name);
   }
 
-  if (!IptableConfig(network, true).ok()) {
+  if (!IptableConfig("/sbin/iptables", network, true).ok()) {
     DestroyGateway(name, gateway, netmask);
     DestroyIface(name);
     return false;
@@ -105,7 +105,7 @@ bool DestroyMobileIface(std::string_view name, uint16_t id,
   auto gateway = MobileGatewayName(ipaddr, id);
   auto network = MobileNetworkName(ipaddr, netmask, id);
 
-  IptableConfig(network, false);
+  IptableConfig("/sbin/iptables", network, false);
   DestroyGateway(name, gateway, netmask);
   return DestroyIface(name);
 }
@@ -211,7 +211,7 @@ bool SetupBridgeGateway(std::string_view bridge_name,
 
   config.has_dnsmasq = true;
 
-  auto ret = IptableConfig(network, true).ok();
+  auto ret = IptableConfig("/sbin/iptables", network, true).ok();
   if (!ret) {
     CleanupBridgeGateway(bridge_name, ipaddr, config);
     LOG(WARNING) << "Failed to setup ip tables";
@@ -228,7 +228,7 @@ void CleanupBridgeGateway(std::string_view name, std::string_view ipaddr,
   auto dhcp_range = absl::StrFormat("%s.2,%s.255", ipaddr, ipaddr);
 
   if (config.has_iptable) {
-    IptableConfig(network, false);
+    IptableConfig("/sbin/iptables", network, false);
   }
 
   if (config.has_dnsmasq) {
