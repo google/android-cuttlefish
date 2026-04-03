@@ -31,6 +31,7 @@
 #include <fruit/fruit_forward_decls.h>
 #include "absl/log/log.h"
 
+#include "allocd/alloc_utils.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/cvdalloc/privilege.h"
 #include "cuttlefish/host/commands/cvdalloc/sem.h"
@@ -70,7 +71,14 @@ Result<std::vector<MonitorCommand>> Cvdalloc::Commands() {
 }
 
 std::string Cvdalloc::Name() const { return "Cvdalloc"; }
-bool Cvdalloc::Enabled() const { return instance_.use_cvdalloc(); }
+
+bool Cvdalloc::Enabled() const {
+  if (!IsUsable().ok()) {
+    return false;
+  }
+  return instance_.use_cvdalloc();
+}
+
 std::unordered_set<SetupFeature *> Cvdalloc::Dependencies() const { return {}; }
 
 Result<void> Cvdalloc::WaitForAvailability() {
@@ -103,6 +111,11 @@ Result<void> Cvdalloc::BinaryIsValid(std::string_view path) {
   CF_EXPECT(r == 0, "Could not stat the cvdalloc binary at "
                         << path << ": " << StrError(errno));
   CF_EXPECT(ValidateCvdallocBinary(path));
+  return {};
+}
+
+Result<void> Cvdalloc::IsUsable() const {
+  CF_EXPECT(IptablesPath());
   return {};
 }
 

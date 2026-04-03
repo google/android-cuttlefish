@@ -47,6 +47,7 @@ class Cvdalloc : public vm_manager::VmmDependencyCommand {
  private:
   Result<void> ResultSetup() override;
   Result<void> BinaryIsValid(std::string_view path);
+  Result<void> IsUsable() const;
   StopperResult Stop();
 
   const CuttlefishConfig::InstanceSpecific &instance_;
