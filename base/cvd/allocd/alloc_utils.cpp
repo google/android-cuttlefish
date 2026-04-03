@@ -22,6 +22,7 @@
 #include <string_view>
 #include <sstream>
 
+#include "absl/base/no_destructor.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
@@ -37,6 +38,20 @@
 #endif
 
 #include <net/if.h>
+
+namespace {
+
+cuttlefish::Result<std::string> SearchForIptables() {
+  cuttlefish::Result<std::string> p =
+      cuttlefish::Search(cuttlefish::Path(), "iptables");
+  if (p.ok()) {
+    return p;
+  }
+
+  return cuttlefish::Search({"/usr/sbin", "/sbin"}, "iptables");
+}
+
+}  // namespace
 
 namespace cuttlefish {
 
@@ -337,17 +352,11 @@ bool DestroyEthernetBridgeIface(std::string_view name,
 }
 
 Result<std::string> IptablesPath() {
-  Result<std::string> path = Search(Path(), "iptables");
-  if (path.ok()) {
-    return *path;
-  }
+  static const absl::NoDestructor<std::string> iptables_path(
+     SearchForIptables().value_or(""));
 
-  path = Search({"/usr/sbin", "/sbin"}, "iptables");
-  if (path.ok()) {
-    return *path;
-  }
-
-  return CF_ERR("iptables not found in PATH or standard system locations");
+  CF_EXPECT(!iptables_path->empty(), "could not find iptables");
+  return *iptables_path;
 }
 
 }  // namespace cuttlefish
