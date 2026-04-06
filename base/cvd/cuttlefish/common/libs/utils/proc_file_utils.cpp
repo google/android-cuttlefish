@@ -27,6 +27,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include "absl/log/log.h"
@@ -168,7 +169,7 @@ static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
   bool found = false;
   for (std::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
-    if (!android::base::ConsumePrefix(&line, "Name:")) {
+    if (!absl::ConsumePrefix(&line, "Name:")) {
       continue;
     }
     if (android::base::Trim(line) == exec_name) {

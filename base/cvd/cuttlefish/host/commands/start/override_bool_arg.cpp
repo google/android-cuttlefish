@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 
 namespace cuttlefish {
 namespace {
@@ -40,10 +40,10 @@ BooleanFlag IsBoolArg(const std::string& argument,
   // and convert to -flag=true, --flag=true, -flag=false, --flag=false
   // others not in this format just return false
   std::string_view name = argument;
-  if (!android::base::ConsumePrefix(&name, "-")) {
+  if (!absl::ConsumePrefix(&name, "-")) {
     return {false, false, ""};
   }
-  android::base::ConsumePrefix(&name, "-");
+  absl::ConsumePrefix(&name, "-");
   size_t found = name.find('=');
   if (found != std::string::npos) {
     // found "=", --flag=value case, it doesn't need convert
@@ -59,7 +59,7 @@ BooleanFlag IsBoolArg(const std::string& argument,
   if (flag_set.find(result_name) != flag_set.end()) {
     // matched -flag, --flag
     return {true, true, result_name};
-  } else if (android::base::ConsumePrefix(&new_name, "no")) {
+  } else if (absl::ConsumePrefix(&new_name, "no")) {
     // 2nd chance to check -noflag, --noflag
     result_name = new_name;
     if (flag_set.find(result_name) != flag_set.end()) {

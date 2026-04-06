@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/load_config.pb.h"
@@ -56,7 +56,7 @@ bool ShouldFetch(const Instance& instance) {
 
 Result<std::string> GetFetchBuildString(const std::string& strVal) {
   std::string_view view = strVal;
-  if (!android::base::ConsumePrefix(&view, kFetchPrefix)) {
+  if (!absl::ConsumePrefix(&view, kFetchPrefix)) {
     // intentionally return an empty string when there are local, non-prefixed
     // paths.  Fetch does not process the local paths
     return "";

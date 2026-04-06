@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include <json/value.h>
 #include "absl/strings/numbers.h"
 
@@ -78,7 +78,7 @@ Args:
 )";
 
 Result<unsigned> IdFromInstanceNameFlag(std::string_view name_or_id) {
-  android::base::ConsumePrefix(&name_or_id, kCvdNamePrefix);
+  absl::ConsumePrefix(&name_or_id, kCvdNamePrefix);
   unsigned id;
   CF_EXPECT(absl::SimpleAtoi(std::string(name_or_id), &id),
             "--instance_name should be either cvd-<id> or id. To use it as a "

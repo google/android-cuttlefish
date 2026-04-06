@@ -25,7 +25,7 @@
 #include <unordered_map>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -227,7 +227,7 @@ Result<Json::Value> CreateMetaInfo(const CuttlefishConfig& cuttlefish_config,
         instance.instance_dir() + "/" + kGuestSnapshotField;
     std::string_view sv_relative_path(instance_snapshot_dir);
 
-    CF_EXPECTF(android::base::ConsumePrefix(&sv_relative_path, cuttlefish_home),
+    CF_EXPECTF(absl::ConsumePrefix(&sv_relative_path, cuttlefish_home),
                "Instance Guest Snapshot Directory \"{}\""
                "is not a subdirectory of \"{}\"",
                instance_snapshot_dir, cuttlefish_home);

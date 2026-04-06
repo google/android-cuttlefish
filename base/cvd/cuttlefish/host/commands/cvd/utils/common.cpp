@@ -22,7 +22,7 @@
 #include <unordered_map>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include "absl/strings/str_format.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -130,9 +130,9 @@ std::string InstanceLocksPath() {
 Result<std::string> GroupDirFromHome(std::string_view dir) {
   std::string per_user_dir = PerUserDir();
   // Just in case it has a / at the end, ignore result
-  while (android::base::ConsumeSuffix(&dir, "/")) {
+  while (absl::ConsumeSuffix(&dir, "/")) {
   }
-  CF_EXPECTF(android::base::ConsumeSuffix(&dir, "/home"),
+  CF_EXPECTF(absl::ConsumeSuffix(&dir, "/home"),
              "Unexpected group home directory: {}", dir);
   return std::string(dir);
 }

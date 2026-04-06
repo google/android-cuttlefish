@@ -27,7 +27,7 @@
 #include <utility>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include <json/reader.h>
 #include <json/value.h>
 #include <json/writer.h>
@@ -250,13 +250,13 @@ Result<CvdFile> BuildFetcherConfigMember(
     std::string path, std::string directory_prefix, std::string archive_source,
     std::string archive_path) {
   std::string_view local_path(path);
-  if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
+  if (!absl::ConsumePrefix(&local_path, directory_prefix)) {
     LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
                << local_path;
     return {};
   }
   while (absl::StartsWith(local_path, "/")) {
-    android::base::ConsumePrefix(&local_path, "/");
+    absl::ConsumePrefix(&local_path, "/");
   }
   std::string normalized = CF_EXPECT(NormalizePath(std::string(local_path)));
   // TODO(schuffelen): Do better for local builds here.

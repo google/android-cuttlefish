@@ -25,7 +25,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include <gflags/gflags.h>
 #include <libxml/parser.h>
 #include "absl/log/check.h"
@@ -342,10 +342,10 @@ std::vector<std::string> FlagForwarder::ArgvForSubprocess(
   if (!args.empty()) {
     for (int index = 0; index < args.size(); index++) {
       std::string_view argument = args[index];
-      if (!android::base::ConsumePrefix(&argument, "-")) {
+      if (!absl::ConsumePrefix(&argument, "-")) {
         continue;
       }
-      android::base::ConsumePrefix(&argument, "-");
+      absl::ConsumePrefix(&argument, "-");
       size_t qual_pos = argument.find('=');
       if (qual_pos == std::string::npos) {
         // to handle error cases: --flag value and -flag value

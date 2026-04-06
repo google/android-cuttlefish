@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -107,10 +107,10 @@ bool IsTargetFilesBuildProp(const std::string& filename) {
 Result<std::string> GetPartitionNameFromPath(const std::string& path) {
   std::string_view result(path);
   CF_EXPECTF(
-      android::base::ConsumePrefix(&result, "IMAGES/"),
+      absl::ConsumePrefix(&result, "IMAGES/"),
       "target_files filepath {} expected to be in the \"IMAGES\" directory",
       path);
-  CF_EXPECTF(android::base::ConsumeSuffix(&result, ".img"),
+  CF_EXPECTF(absl::ConsumeSuffix(&result, ".img"),
              "target_files filepath {} expected to be a \".img\" file", path);
   return std::string(result);
 }
