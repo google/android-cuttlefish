@@ -36,6 +36,7 @@ cf_cc_library(
     hdrs = ["command_parser.h"],
     deps = [
         "//libbase",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

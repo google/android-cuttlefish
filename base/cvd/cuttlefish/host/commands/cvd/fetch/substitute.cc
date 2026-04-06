@@ -25,6 +25,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -86,7 +87,7 @@ Result<void> SubstituteWithFlag(
         return {};
       }
       std::string_view local_path(path);
-      CF_EXPECTF(android::base::ConsumePrefix(&local_path, bin_dir_parent),
+      CF_EXPECTF(absl::ConsumePrefix(&local_path, bin_dir_parent),
                  "Unexpected prefix in : '{}'", local_path);
 
       const std::string to_substitute = target_dir + std::string(local_path);

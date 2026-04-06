@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include <android-base/strings.h>
+#include "absl/strings/strip.h"
 
 #include <algorithm>
 #include <string>
@@ -70,7 +71,7 @@ inline void CommandParser::SkipPrefix() {
  * updates command_
  */
 inline void CommandParser::SkipPrefixAT() {
-  android::base::ConsumePrefix(&command_, std::string_view("AT"));
+  absl::ConsumePrefix(&command_, std::string_view("AT"));
 }
 
 /**

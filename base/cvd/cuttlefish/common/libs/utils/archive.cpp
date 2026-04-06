@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
@@ -86,7 +86,7 @@ Result<std::vector<std::string>> ExtractFiles(
   std::vector<std::string> outputs;
   outputs.reserve(split.size());
   for (std::string_view& view: split) {
-    android::base::ConsumePrefix(&view, "x ");
+    absl::ConsumePrefix(&view, "x ");
     outputs.emplace_back(view);
   }
 

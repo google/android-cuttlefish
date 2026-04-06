@@ -22,7 +22,7 @@
 #include <variant>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -104,7 +104,7 @@ Result<std::optional<ChromeOsBuildArtifacts>> LuciBuildApi::GetBuildArtifacts(
   }
   constexpr std::string_view kPreventXssiPrefix = ")]}'\n";
   std::string_view response_data = response.data;
-  CF_EXPECT(android::base::ConsumePrefix(&response_data, kPreventXssiPrefix));
+  CF_EXPECT(absl::ConsumePrefix(&response_data, kPreventXssiPrefix));
   auto response_json = CF_EXPECT(ParseJson(response_data));
 
   ChromeOsBuildArtifacts chrome_os_build;
@@ -140,7 +140,7 @@ Result<void> LuciBuildApi::DownloadArtifact(const std::string& artifact_link,
                                             const std::string& artifact_file,
                                             const std::string& target_path) {
   std::string_view trim_link = artifact_link;
-  CF_EXPECT(android::base::ConsumePrefix(&trim_link, "gs://"));
+  CF_EXPECT(absl::ConsumePrefix(&trim_link, "gs://"));
   std::vector<std::string_view> path_fragments = absl::StrSplit(trim_link, '/');
   CF_EXPECT(!path_fragments.empty());
   auto bucket = path_fragments[0];

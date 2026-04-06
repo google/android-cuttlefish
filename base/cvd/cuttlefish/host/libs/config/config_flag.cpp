@@ -29,7 +29,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/strip.h"
 #include <fmt/ranges.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
@@ -93,8 +93,8 @@ class ConfigReader : public FlagFeature {
     auto dir_contents = CF_EXPECT(DirectoryContents(config_path));
     for (const std::string& file : dir_contents) {
       std::string_view local_file(file);
-      if (android::base::ConsumePrefix(&local_file, "cvd_config_") &&
-          android::base::ConsumeSuffix(&local_file, ".json")) {
+      if (absl::ConsumePrefix(&local_file, "cvd_config_") &&
+          absl::ConsumeSuffix(&local_file, ".json")) {
         allowed_config_presets_.emplace(local_file);
       }
     }

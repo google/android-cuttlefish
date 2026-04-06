@@ -267,17 +267,17 @@ bool Flag::WriteGflagsCompatXml(std::ostream& out) const {
   std::unordered_set<std::string> name_guesses;
   for (const auto& alias : aliases_) {
     std::string_view name = alias.name;
-    if (!android::base::ConsumePrefix(&name, "-")) {
+    if (!absl::ConsumePrefix(&name, "-")) {
       continue;
     }
-    android::base::ConsumePrefix(&name, "-");
+    absl::ConsumePrefix(&name, "-");
     if (alias.mode == FlagAliasMode::kFlagExact) {
-      android::base::ConsumePrefix(&name, "no");
+      absl::ConsumePrefix(&name, "no");
       name_guesses.insert(std::string{name});
     } else if (alias.mode == FlagAliasMode::kFlagConsumesFollowing) {
       name_guesses.insert(std::string{name});
     } else if (alias.mode == FlagAliasMode::kFlagPrefix) {
-      if (!android::base::ConsumeSuffix(&name, "=")) {
+      if (!absl::ConsumeSuffix(&name, "=")) {
         continue;
       }
       name_guesses.insert(std::string{name});
