@@ -17,6 +17,7 @@ package libcfcontainer
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -189,18 +190,19 @@ func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ct
 }
 
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
-	timeout := int(30)
+	timeout := int(0)
 	stopConfig := container.StopOptions{
 		Signal:  "SIGKILL",
 		Timeout: &timeout,
 	}
+	errs := []error{}
 	if err := m.cli.ContainerStop(ctx, ctr, stopConfig); err != nil {
-		return fmt.Errorf("failed to stop docker container: %w", err)
+		errs = append(errs, fmt.Errorf("failed to stop docker container: %w", err))
 	}
 	if err := m.cli.ContainerRemove(ctx, ctr, container.RemoveOptions{}); err != nil {
-		return fmt.Errorf("failed to remove docker container: %w", err)
+		errs = append(errs, fmt.Errorf("failed to remove docker container: %w", err))
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 func RootlessPodmanSocketAddr() string {
