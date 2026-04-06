@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/subprocess.h"
@@ -53,7 +53,7 @@ Result<int> CrosvmDisplayController::Add(
     const std::string rr = std::to_string(display_config.refresh_rate_hz);
 
     const std::string add_display_flag =
-        "--gpu-display=" + android::base::Join(
+        "--gpu-display=" + absl::StrJoin(
                                std::vector<std::string>{
                                    "mode=windowed[" + w + "," + h + "]",
                                    "dpi=[" + dpi + "," + dpi + "]",

@@ -23,7 +23,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <fmt/format.h>
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
@@ -80,7 +80,7 @@ std::string MergePartitionLists(const std::string& vendor,
   std::set_intersection(full_set.cbegin(), full_set.cend(),
                         extracted_images.cbegin(), extracted_images.cend(),
                         std::inserter(filtered_set, filtered_set.begin()));
-  return android::base::Join(filtered_set, " ");
+  return absl::StrJoin(filtered_set, " ");
 }
 
 std::string GetPartitionList(const MiscInfo& vendor_info,

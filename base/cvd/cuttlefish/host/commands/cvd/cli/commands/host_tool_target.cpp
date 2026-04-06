@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
 
@@ -114,7 +114,7 @@ Result<std::string> HostToolTarget::GetBinName(
     }
   }
   return CF_ERRF("'{}/bin/' does not contain any of '[{}]'.", artifacts_path_,
-                 android::base::Join(alternatives, ", "));
+                 absl::StrJoin(alternatives, ", "));
 }
 
 }  // namespace cuttlefish

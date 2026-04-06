@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <json/value.h>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -46,7 +46,7 @@ class CvdCmdlistHandler : public CvdCommandHandler {
     const auto subcmds = executor_.CmdList();
 
     std::vector<std::string> subcmds_vec{subcmds.begin(), subcmds.end()};
-    const auto subcmds_str = android::base::Join(subcmds_vec, ",");
+    const auto subcmds_str = absl::StrJoin(subcmds_vec, ",");
     Json::Value subcmd_info;
     subcmd_info["subcmd"] = subcmds_str;
     std::cout << subcmd_info.toStyledString();

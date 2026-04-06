@@ -34,6 +34,7 @@
 
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/check.h"
@@ -664,7 +665,7 @@ Flag GflagsCompatFlag(const std::string& name, bool& value) {
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::string>& value) {
   return GflagsCompatFlag(name)
-      .Getter([&value]() { return android::base::Join(value, ','); })
+      .Getter([&value]() { return absl::StrJoin(value, ","); })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
         if (match.value.empty()) {
           value.clear();

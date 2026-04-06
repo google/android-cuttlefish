@@ -29,7 +29,7 @@
 #include <vector>
 
 #include <android-base/expected.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <json/value.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -160,7 +160,7 @@ std::vector<std::string> CreateCasFlags(std::string downloader_path,
 
   if (!ignored_flags.empty()) {
     LOG(WARNING) << "CAS Downloader flags ignored: '"
-                 << android::base::Join(ignored_flags, "', '") << "'";
+                 << absl::StrJoin(ignored_flags, "', '") << "'";
   }
 
   return cas_flags;

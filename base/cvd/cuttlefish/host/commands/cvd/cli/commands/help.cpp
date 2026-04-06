@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/log/check.h"
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -111,7 +111,7 @@ class CvdHelpHandler : public CvdCommandHandler {
     std::stringstream help_message;
     help_message << kHelpIntroText << std::endl;
     for (const auto& handler : request_handlers_) {
-      std::string command_list = android::base::Join(handler->CmdList(), ", ");
+      std::string command_list = absl::StrJoin(handler->CmdList(), ", ");
       // exclude commands without any command list values as not intended for
       // use by users or sub-subcommands
       if (!command_list.empty() && command_list != kIgnorableHandlerCommand) {

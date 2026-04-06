@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "android-base/strings.h"
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_common.h"
 #include "cuttlefish/host/commands/cvd/cli/parser/cf_configs_instances.h"
@@ -50,7 +50,7 @@ std::optional<std::string> GenerateUndefOkFlag(std::vector<std::string>& flags) 
     auto flag_name = std::regex_replace(flag_without_dashes, value_re, "");
     flag_names.emplace_back(std::move(flag_name));
   }
-  return "--undefok=" + android::base::Join(flag_names, ',');
+  return "--undefok=" + absl::StrJoin(flag_names, ",");
 }
 
 Result<std::vector<std::string>> GenerateCfFlags(

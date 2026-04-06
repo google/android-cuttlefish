@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -159,7 +159,7 @@ Result<void> UpdateWebrtcDeviceIds(cvd_common::Args& args,
                                    LocalInstanceGroup& group) {
   std::vector<std::string> webrtc_ids = CF_EXPECT(ReplaceEmptyWebRTCDeviceIds(
       group, CF_EXPECT(ExtractWebRTCDeviceIds(args))));
-  args.push_back("--webrtc_device_id=" + android::base::Join(webrtc_ids, ","));
+  args.push_back("--webrtc_device_id=" + absl::StrJoin(webrtc_ids, ","));
 
   for (size_t i = 0; i < webrtc_ids.size(); ++i) {
     group.Instances()[i].set_webrtc_device_id(std::move(webrtc_ids[i]));
@@ -203,7 +203,7 @@ static Result<void> UpdateInstanceArgs(cvd_common::Args& args,
   }
 
   if (!have_consecutive_ids) {
-    std::string flag_value = android::base::Join(ids, ",");
+    std::string flag_value = absl::StrJoin(ids, ",");
     args.push_back("--instance_nums=" + flag_value);
     return {};
   }

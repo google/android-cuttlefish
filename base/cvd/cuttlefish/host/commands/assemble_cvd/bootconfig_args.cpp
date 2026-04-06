@@ -21,7 +21,7 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
@@ -272,7 +272,7 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
   std::vector<std::string> args = instance.extra_bootconfig_args();
 
   VLOG(0) << "Parsing extra_bootconfig_args of size:" << args.size()
-          << "; Contents: " << android::base::Join(args, "\n");
+          << "; Contents: " << absl::StrJoin(args, "\n");
 
   for (const std::string& kv : args) {
     if (kv.empty()) {
@@ -295,7 +295,7 @@ Result<std::string> BootconfigArgsString(
     CF_EXPECT(!v.empty(), "Found empty bootconfig value for " << k);
     combined_args.push_back(k + "=" + v);
   }
-  return android::base::Join(combined_args, separator);
+  return absl::StrJoin(combined_args, separator);
 }
 
 }  // namespace cuttlefish

@@ -22,7 +22,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
 #include "absl/log/log.h"
@@ -142,11 +142,11 @@ Result<void> CleanPriorFiles(const std::set<std::string>& preserving,
       GetGlobalConfigFileLink(),
   };
   paths.insert(paths.end(), clean_dirs.begin(), clean_dirs.end());
-  using android::base::Join;
+  using absl::StrJoin;
   CF_EXPECT(CleanPriorFiles(paths, preserving),
             "CleanPriorFiles("
-                << "paths = {" << Join(paths, ", ") << "}, "
-                << "preserving = {" << Join(preserving, ", ") << "}) failed");
+                << "paths = {" << StrJoin(paths, ", ") << "}, "
+                << "preserving = {" << StrJoin(preserving, ", ") << "}) failed");
   return {};
 }
 

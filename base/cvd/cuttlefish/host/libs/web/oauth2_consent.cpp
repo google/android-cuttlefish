@@ -31,7 +31,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -53,7 +53,7 @@
 namespace cuttlefish {
 namespace {
 
-using android::base::Join;
+using absl::StrJoin;
 
 Result<std::string> AuthorizationCodeFromUrl(const std::string_view url) {
   std::string_view code = url;
@@ -126,7 +126,7 @@ class HttpServer {
 };
 
 uint32_t ScopeChecksum(const std::vector<std::string>& scopes) {
-  std::string scopes_str = Join(scopes, " ");
+  std::string scopes_str = StrJoin(scopes, " ");
 
   unsigned char* data = (unsigned char*)scopes_str.data();
   return crc32(0, data, scopes_str.size());
@@ -147,7 +147,7 @@ Result<std::string> GetRefreshToken(HttpClient& http_client,
   }
 
   std::string redirect_uri = fmt::format("http://localhost:{}", port);
-  std::string scopes_str = Join(request.scopes, " ");
+  std::string scopes_str = StrJoin(request.scopes, " ");
 
   // https://developers.google.com/identity/protocols/oauth2/native-app
   std::stringstream consent;
