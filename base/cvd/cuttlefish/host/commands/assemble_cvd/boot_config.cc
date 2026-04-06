@@ -25,8 +25,8 @@
 #include <string_view>
 
 #include "absl/log/log.h"
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_replace.h"
-#include "android-base/strings.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/size_utils.h"
@@ -137,7 +137,7 @@ Result<void> PrepareBootEnvImage(
   auto tmp_boot_env_image_path = image_path + ".tmp";
   auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
   auto kernel_cmdline =
-      android::base::Join(KernelCommandLineFromConfig(config, instance), " ");
+      absl::StrJoin(KernelCommandLineFromConfig(config, instance), " ");
   // If the bootconfig isn't supported in the guest kernel, the bootconfig
   // args need to be passed in via the uboot env. This won't be an issue for
   // protect kvm which is running a kernel with bootconfig support.

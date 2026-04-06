@@ -29,7 +29,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <json/json.h>
 #include <vulkan/vulkan.h>
 
@@ -440,7 +440,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
       const auto display_h = std::to_string(display_config.height);
       const auto display_dpi = std::to_string(display_config.dpi);
       const auto display_rr = std::to_string(display_config.refresh_rate_hz);
-      gpu_displays_strings.push_back(android::base::Join(
+      gpu_displays_strings.push_back(absl::StrJoin(
           std::vector<std::string>{
               "mode=windowed[" + display_w + "," + display_h + "]",
               "dpi=[" + display_dpi + "," + display_dpi + "]",
@@ -449,7 +449,7 @@ Result<void> ConfigureGpu(const CuttlefishConfig& config, Command* crosvm_cmd) {
           ","));
     }
     gpu_displays_string = "displays=[[" +
-                          android::base::Join(gpu_displays_strings, "],[") +
+                          absl::StrJoin(gpu_displays_strings, "],[") +
                           "]],";
 
     crosvm_cmd->AddParameter("--wayland-sock=", instance.frames_socket_path());

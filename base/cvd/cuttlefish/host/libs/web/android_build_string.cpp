@@ -25,7 +25,7 @@
 #include <variant>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
@@ -191,7 +191,9 @@ Flag GflagsCompatFlag(const std::string& name,
 Flag GflagsCompatFlag(const std::string& name,
                       std::vector<std::optional<BuildString>>& value) {
   return GflagsCompatFlag(name)
-      .Getter([&value]() { return android::base::Join(value, ','); })
+      .Getter([&value]() {
+        return absl::StrJoin(value, ",", absl::StreamFormatter());
+      })
       .Setter([&value](const FlagMatch& match) -> Result<void> {
         if (match.value.empty()) {
           value.clear();

@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <fmt/format.h>
 #include <json/value.h>
 
@@ -39,7 +39,7 @@ std::string SerializeFreqDomains(
     }
     first_vector = false;
 
-    freq_domain_arg << "[" << android::base::Join(pair.second, ",") << "]";
+    freq_domain_arg << "[" << absl::StrJoin(pair.second, ",") << "]";
   }
 
   return {fmt::format("[{}]", freq_domain_arg.str())};

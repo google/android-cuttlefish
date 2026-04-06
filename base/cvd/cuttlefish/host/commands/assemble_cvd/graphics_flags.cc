@@ -21,7 +21,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
@@ -322,9 +322,9 @@ Result<AngleFeatureOverrides> GetNeededAngleFeatures(
 
   return AngleFeatureOverrides{
       .angle_feature_overrides_enabled =
-          android::base::Join(enable_feature_strings, ':'),
+          absl::StrJoin(enable_feature_strings, ":"),
       .angle_feature_overrides_disabled =
-          android::base::Join(disable_feature_strings, ':'),
+          absl::StrJoin(disable_feature_strings, ":"),
   };
 }
 
@@ -613,7 +613,7 @@ std::string GetGfxstreamRendererFeaturesString(
     parts.push_back(feature_name + ":" +
                     (feature_enabled ? "enabled" : "disabled"));
   }
-  return android::base::Join(parts, ",");
+  return absl::StrJoin(parts, ",");
 }
 
 CF_UNUSED_ON_MACOS

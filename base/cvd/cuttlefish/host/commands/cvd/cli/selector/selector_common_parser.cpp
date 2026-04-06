@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/contains.h"
@@ -44,7 +44,7 @@ std::vector<std::string> SelectorOptions::AsArgs() const {
   }
   if (instance_names) {
     ret.push_back(fmt::format("--{}={}", SelectorFlags::kInstanceName,
-                              android::base::Join(*instance_names, ",")));
+                              absl::StrJoin(*instance_names, ",")));
   }
   return ret;
 }

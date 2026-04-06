@@ -25,7 +25,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <json/json.h>
 
 #include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
@@ -132,7 +132,7 @@ Result<LocalInstanceGroup> LocalInstanceGroup::Builder::Build() {
   }
 
   group_proto_.set_product_out_path(
-      android::base::Join(product_out_paths, ","));
+      absl::StrJoin(product_out_paths, ","));
   return CF_EXPECT(LocalInstanceGroup::Create(group_proto_));
 }
 

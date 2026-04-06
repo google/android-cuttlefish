@@ -22,7 +22,7 @@
 #include <variant>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 
@@ -46,7 +46,7 @@ DirectoryBuild::DirectoryBuild(std::vector<std::string> paths,
 }
 
 std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
-  auto paths = android::base::Join(build.paths, ":");
+  auto paths = absl::StrJoin(build.paths, ":");
   return out << "(paths=\"" << paths << "\", target=\"" << build.target
              << "\", filepath=\"" << build.filepath.value_or("") << "\")";
 }

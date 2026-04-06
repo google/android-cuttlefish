@@ -34,7 +34,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include <fmt/format.h>
 #include <json/value.h>
 #include "absl/log/log.h"
@@ -73,7 +73,9 @@ bool IsLocalBuild(std::string path) {
 Flag GflagsCompatFlagOverride(const std::string& name,
                               std::vector<Override>& values) {
   return GflagsCompatFlag(name)
-      .Getter([&values]() { return android::base::Join(values, ','); })
+      .Getter([&values]() {
+        return absl::StrJoin(values, ",", absl::StreamFormatter());
+      })
       .Setter([&values](const FlagMatch& match) -> Result<void> {
         size_t separator_index = match.value.find(kOverrideSeparator);
         CF_EXPECTF(separator_index != std::string::npos,

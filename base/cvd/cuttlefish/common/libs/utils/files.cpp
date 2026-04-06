@@ -54,7 +54,7 @@
 
 #include <android-base/file.h>
 #include <android-base/macros.h>
-#include <android-base/strings.h>
+#include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include <android-base/unique_fd.h>
 #include "absl/log/check.h"
@@ -703,14 +703,14 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
   }
   components.insert(components.end(), tokens.begin(), tokens.end());
 
-  std::string combined = android::base::Join(components, "/");
+  std::string combined = absl::StrJoin(components, "/");
   CF_EXPECTF(!Contains(components, "~"),
              "~ is not allowed in the middle of the path: {}", combined);
 
   auto processed_tokens = std::accumulate(components.begin(), components.end(),
                                           std::vector<std::string>{}, FoldPath);
 
-  const auto processed_path = "/" + android::base::Join(processed_tokens, "/");
+  const auto processed_path = "/" + absl::StrJoin(processed_tokens, "/");
 
   std::string real_path = processed_path;
   if (path_info.follow_symlink && FileExists(processed_path)) {
