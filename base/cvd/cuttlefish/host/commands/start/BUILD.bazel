@@ -34,6 +34,7 @@ cf_cc_binary(
         "//cuttlefish/host/libs/config:instance_nums",
         "//cuttlefish/host/libs/vm_manager",
         "//libbase",
+        "@abseil-cpp//absl/base:no_destructor",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
         "@abseil-cpp//absl/strings",

@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/no_destructor.h>
+#include "absl/base/no_destructor.h"
 #include <android-base/strings.h>
 
 #include "cuttlefish/common/libs/utils/files.h"
@@ -104,7 +104,7 @@ Result<int> DoHelp(std::vector<std::string>& args) {
     return 0;
   }
 
-  static const android::base::NoDestructor<
+  static const absl::NoDestructor<
       std::unordered_map<std::string, std::string>>
       kSubCommandUsages({
           {"add", kAddUsage},

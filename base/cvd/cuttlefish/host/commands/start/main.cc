@@ -19,7 +19,7 @@
 #include <unordered_set>
 
 #include <android-base/file.h>
-#include <android-base/no_destructor.h>
+#include "absl/base/no_destructor.h"
 #include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include <gflags/gflags.h>
@@ -50,7 +50,7 @@
 namespace cuttlefish {
 namespace {
 
-using android::base::NoDestructor;
+using absl::NoDestructor;
 
 // NOTE: "/bin" appended to certain return values to match the return value of
 // android::base::GetExecutableDirectory

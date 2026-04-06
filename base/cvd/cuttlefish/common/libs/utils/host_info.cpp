@@ -24,7 +24,7 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/no_destructor.h>
+#include "absl/base/no_destructor.h"
 #include <android-base/strings.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -98,7 +98,7 @@ std::string_view format_as(Arch arch) { return ArchToStringView(arch); }
 
 /** Returns e.g. aarch64, x86_64, etc */
 const std::string& HostArchStr() {
-  static android::base::NoDestructor<std::string> arch(
+  static absl::NoDestructor<std::string> arch(
       [] { return GetHostUname().arch; }());
   return *arch;
 }
