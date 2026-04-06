@@ -294,7 +294,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 	var lastErr error
 	const retryCount = 5
 	for i := 0; i < retryCount; i++ {
-		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
+		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)
 		if err != nil {
 			return "", err
 		}
@@ -309,12 +309,17 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		appendPortBindingRange(containerHostCfg.PortBindings, ip, "udp", 15550, 15599)
 		containerHostCfg.NetworkMode = container.NetworkMode(fmt.Sprintf("pasta:-a,%s", ip))
 		groupName := commonArgs.GroupName
-		if groupName == "" {
+		if groupName != "" {
+			if _, exists := groupNameIpAddrMap[groupName]; exists {
+				return "", fmt.Errorf("container instance for group name %q already exists", groupName)
+			}
+		} else {
 			groupName = findAvailableGroupName(groupNameIpAddrMap)
 		}
 		containerCfg.Labels[labelGroupName] = groupName
 		if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ContainerName(groupName)); err != nil {
 			lastErr = err
+			ccm.StopAndRemoveContainer(context.Background(), ContainerName(groupName))
 			continue
 		}
 		commonArgs.GroupName = groupName

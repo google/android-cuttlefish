@@ -30,7 +30,7 @@ func DisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup 
 }
 
 func connectOrDisconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, instanceGroup InstanceGroup, enable bool) error {
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}

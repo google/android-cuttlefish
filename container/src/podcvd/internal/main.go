@@ -108,7 +108,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 		}
 	default:
 		if cvdArgs.CommonArgs.GroupName == "" {
-			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
+			groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
 			if err != nil {
 				return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 			}
@@ -153,7 +153,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 }
 
 func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) error {
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
@@ -184,7 +184,7 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 		Groups []json.RawMessage `json:"groups"`
 	}
 
-	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
+	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
 	if err != nil {
 		return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
 	}
