@@ -42,4 +42,6 @@ func TestGfxstreamGuestAngleHostSwiftShader(t *testing.T) {
 				"--module-arg=CtsDeqpTestCases:include-filter:dEQP-VK.api.smoke*",
 			},
 		})
+
+	t.Fatal("testing that this blocks")
 }
