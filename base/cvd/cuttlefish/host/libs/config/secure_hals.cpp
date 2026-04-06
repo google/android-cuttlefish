@@ -21,12 +21,12 @@
 #include <string_view>
 #include <unordered_map>
 
-#include <android-base/no_destructor.h>
+#include "absl/base/no_destructor.h"
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/result/result.h"
 
-using android::base::NoDestructor;
+using absl::NoDestructor;
 
 namespace cuttlefish {
 namespace {
