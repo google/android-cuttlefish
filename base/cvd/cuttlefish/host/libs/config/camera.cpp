@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -36,9 +36,9 @@ Result<std::optional<CuttlefishConfig::CameraConfig>> ParseCameraConfig(
     const std::string& flag) {
   std::unordered_map<std::string, std::string> props;
   if (!flag.empty()) {
-    const std::vector<std::string> pairs = android::base::Split(flag, ",");
+    const std::vector<std::string> pairs = absl::StrSplit(flag, ",");
     for (const std::string& pair : pairs) {
-      const std::vector<std::string> keyvalue = android::base::Split(pair, "=");
+      const std::vector<std::string> keyvalue = absl::StrSplit(pair, "=");
       CF_EXPECT_EQ(keyvalue.size(), 2,
                    "Invalid camera flag key-value: \"" << flag << "\"");
       const std::string& prop_key = keyvalue[0];
