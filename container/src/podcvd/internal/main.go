@@ -142,9 +142,25 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
 			return err
 		}
-		stdout := stdoutBuf.String()
-		os.Stdout.Write([]byte(stdout))
-		instanceGroup, err := ParseInstanceGroup(stdout, cvdArgs.CommonArgs.GroupName)
+		var res map[string]any
+		if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
+			return fmt.Errorf("failed to unmarshal json: %w", err)
+		}
+		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, false)
+		if err != nil {
+			return fmt.Errorf("failed to get IPv4 addresses for group names: %w", err)
+		}
+		ip, exists := groupNameIpAddrMap[cvdArgs.CommonArgs.GroupName]
+		if !exists {
+			return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
+		}
+		UpdateCvdGroupJsonRaw(res, ContainerName(cvdArgs.CommonArgs.GroupName), ip)
+		stdout, err := json.MarshalIndent(res, "", "        ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal json: %w", err)
+		}
+		os.Stdout.Write(stdout)
+		instanceGroup, err := ParseInstanceGroup(string(stdout), cvdArgs.CommonArgs.GroupName)
 		if err != nil {
 			return err
 		}
@@ -188,7 +204,7 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 
 func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) error {
 	type cvdFleetResponse struct {
-		Groups []json.RawMessage `json:"groups"`
+		Groups []any `json:"groups"`
 	}
 
 	groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm)
@@ -199,18 +215,25 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	wg.Add(len(groupNameIpAddrMap))
 	resCh := make(chan cvdFleetResponse, len(groupNameIpAddrMap))
 	errCh := make(chan error, len(groupNameIpAddrMap))
-	for groupName := range groupNameIpAddrMap {
-		go func() {
+	for groupName, ip := range groupNameIpAddrMap {
+		go func(groupName, ip string) {
 			defer wg.Done()
+			containerName := ContainerName(groupName)
 			var stdoutBuf bytes.Buffer
-			if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
+			if err := ccm.ExecOnContainer(context.Background(), containerName, []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
 				errCh <- err
 				return
 			}
 			var res cvdFleetResponse
-			errCh <- json.Unmarshal(stdoutBuf.Bytes(), &res)
+			if err := json.Unmarshal(stdoutBuf.Bytes(), &res); err != nil {
+				errCh <- err
+				return
+			}
+			for idx := range res.Groups {
+				UpdateCvdGroupJsonRaw(res.Groups[idx], containerName, ip)
+			}
 			resCh <- res
-		}()
+		}(groupName, ip)
 	}
 	wg.Wait()
 	close(resCh)
