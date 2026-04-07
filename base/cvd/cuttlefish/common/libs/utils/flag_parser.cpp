@@ -32,7 +32,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include "absl/strings/str_join.h"
 #include <fmt/format.h>

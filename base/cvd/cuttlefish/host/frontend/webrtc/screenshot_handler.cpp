@@ -25,8 +25,8 @@
 #include <string>
 #include <vector>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/match.h"
-#include "android-base/scopeguard.h"
 #include "jpeglib.h"
 #include "libyuv.h"
 #include "png.h"
@@ -50,19 +50,20 @@ Result<void> PngScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
   FILE* outfile = fopen(screenshot_path.c_str(), "wb");
   CF_EXPECTF(outfile != NULL, "opening {} failed: {}", screenshot_path,
              StrError(errno));
-  android::base::ScopeGuard close_file([outfile]() { fclose(outfile); });
+  absl::Cleanup close_file = [outfile]() { fclose(outfile); };
 
   png_structp png_ptr =
       png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   CF_EXPECT(png_ptr != nullptr, "Failed to create png write struct");
-  android::base::ScopeGuard free_png_ptr(
-      [&png_ptr]() { png_destroy_write_struct(&png_ptr, (png_infopp)NULL); });
+  absl::Cleanup free_png_ptr = [&png_ptr]() {
+    png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+  };
 
   png_infop info_ptr = png_create_info_struct(png_ptr);
   CF_EXPECT(info_ptr != nullptr, "Failed to create png info struct");
-  android::base::ScopeGuard free_info_ptr([png_ptr, info_ptr]() {
+  absl::Cleanup free_info_ptr = [png_ptr, info_ptr]() {
     png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
-  });
+  };
 
   png_init_io(png_ptr, outfile);
 
@@ -103,12 +104,13 @@ Result<void> JpegScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
   // could cause this is jpeg_write_raw_data, which is unlikely to fail anyways.
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
-  android::base::ScopeGuard destroy_compress(
-      [&cinfo]() { jpeg_destroy_compress(&cinfo); });
+  absl::Cleanup destroy_compress = [&cinfo]() {
+    jpeg_destroy_compress(&cinfo);
+  };
 
   CF_EXPECTF((outfile = fopen(screenshot_path.c_str(), "wb")) != NULL,
              "Failed to open screenshot destination ({})", screenshot_path);
-  android::base::ScopeGuard close_file([&outfile]() { fclose(outfile); });
+  absl::Cleanup close_file = [&outfile]() { fclose(outfile); };
   jpeg_stdio_dest(&cinfo, outfile);
 
   cinfo.image_width = frame->width();

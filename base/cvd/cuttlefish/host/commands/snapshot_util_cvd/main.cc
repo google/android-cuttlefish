@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-#include <android-base/scopeguard.h>
+#include "absl/cleanup/cleanup.h"
 #include <fmt/core.h>
 #include <google/protobuf/text_format.h>
 #include "absl/log/log.h"
@@ -105,8 +105,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
         extended_action.mutable_suspend();
         CF_EXPECT(BroadcastLauncherAction(*config, parsed, extended_action));
       }
-      auto maybe_resume_on_exit =
-          android::base::ScopeGuard([&parsed, &config]() {
+      absl::Cleanup maybe_resume_on_exit = [&parsed, &config]() {
             if (!parsed.auto_suspend) {
               return;
             }
@@ -117,10 +116,10 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
             if (!result.ok()) {
               LOG(FATAL) << "RunLauncherAction failed: " << result.error();
             }
-          });
+          };
 
       // Delete incomplete snapshot if we fail partway.
-      android::base::ScopeGuard delete_snapshot_on_fail([&parsed]() {
+      absl::Cleanup delete_snapshot_on_fail = [&parsed]() {
         if (!parsed.cleanup_snapshot_path) {
           return;
         }
@@ -130,7 +129,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
           LOG(ERROR) << "Failed to delete incomplete snapshot: "
                      << result.error();
         }
-      });
+      };
 
       // Snapshot group-level host runtime files and generate snapshot metadata
       // file.
@@ -142,7 +141,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
       extended_action.mutable_snapshot_take()->set_snapshot_path(
           meta_json_path);
       CF_EXPECT(BroadcastLauncherAction(*config, parsed, extended_action));
-      delete_snapshot_on_fail.Disable();
+      std::move(delete_snapshot_on_fail).Cancel();
       return {};
     }
     default: {
