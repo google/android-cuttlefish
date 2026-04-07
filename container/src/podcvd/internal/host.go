@@ -111,7 +111,7 @@ func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager,
 	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	if _, err := ccm.ExecOnContainer(context.Background(), containerID, true, args); err != nil {
+	if err := ccm.ExecOnContainer(context.Background(), containerID, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("failed to execute fetch command on the container: %w", err)
 	}
 	if err := ccm.StopAndRemoveContainer(context.Background(), containerID); err != nil {
@@ -149,7 +149,7 @@ func ExecHelpCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager, 
 	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	if _, err := ccm.ExecOnContainer(context.Background(), containerID, true, args); err != nil {
+	if err := ccm.ExecOnContainer(context.Background(), containerID, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 		return fmt.Errorf("failed to execute help command on the container: %w", err)
 	}
 	if err := ccm.StopAndRemoveContainer(context.Background(), containerID); err != nil {

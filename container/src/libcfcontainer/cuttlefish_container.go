@@ -15,7 +15,6 @@
 package libcfcontainer
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -39,7 +38,7 @@ type CuttlefishContainerManager interface {
 	// Create and start a container instance
 	CreateAndStartContainer(ctx context.Context, additionalConfig *container.Config, additionalHostConfig *container.HostConfig, name string) (string, error)
 	// Execute a command on a running container instance
-	ExecOnContainer(ctx context.Context, ctr string, interact bool, cmd []string) (string, error)
+	ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error
 	// Stop and remove a container instance
 	StopAndRemoveContainer(ctx context.Context, ctr string) error
 }
@@ -155,37 +154,34 @@ func (m *CuttlefishContainerManagerImpl) CreateAndStartContainer(ctx context.Con
 	return createRes.ID, nil
 }
 
-func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, interact bool, cmd []string) (string, error) {
+func (m *CuttlefishContainerManagerImpl) ExecOnContainer(ctx context.Context, ctr string, cmd []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) error {
 	execConfig := container.ExecOptions{
-		AttachStderr: interact,
-		AttachStdin:  interact,
-		AttachStdout: true,
+		AttachStderr: stderr != nil,
+		AttachStdin:  stdin != nil,
+		AttachStdout: stdout != nil,
 		Cmd:          cmd,
 		Tty:          false,
 	}
 	createRes, err := m.cli.ContainerExecCreate(ctx, ctr, execConfig)
 	if err != nil {
-		return "", fmt.Errorf("failed to create container execution %q: %w", strings.Join(cmd, " "), err)
+		return fmt.Errorf("failed to create container execution %q: %w", strings.Join(cmd, " "), err)
 	}
 	attachRes, err := m.cli.ContainerExecAttach(ctx, createRes.ID, container.ExecStartOptions{})
 	if err != nil {
-		return "", fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
+		return fmt.Errorf("failed to attach container execution %q: %w", strings.Join(cmd, " "), err)
 	}
 	defer attachRes.Close()
-	var stdoutBuf bytes.Buffer
-	stdout := io.Writer(&stdoutBuf)
-	if interact {
-		stdout = io.MultiWriter(os.Stdout, &stdoutBuf)
+	if stdin != nil {
+		go io.Copy(attachRes.Conn, stdin)
 	}
-	go io.Copy(attachRes.Conn, os.Stdin)
-	stdcopy.StdCopy(stdout, os.Stderr, attachRes.Reader)
+	stdcopy.StdCopy(stdout, stderr, attachRes.Reader)
 
 	if result, err := m.cli.ContainerExecInspect(ctx, createRes.ID); err != nil {
-		return "", fmt.Errorf("failed to run command on the container: %w", err)
+		return fmt.Errorf("failed to run command on the container: %w", err)
 	} else if result.ExitCode != 0 {
-		return "", fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
+		return fmt.Errorf("failed to run command on the container with exit code %d", result.ExitCode)
 	}
-	return stdoutBuf.String(), nil
+	return nil
 }
 
 func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Context, ctr string) error {
