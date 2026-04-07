@@ -21,7 +21,7 @@
 #include <optional>
 #include <string>
 
-#include <android-base/scopeguard.h>
+#include "absl/cleanup/cleanup.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/posix/strerror.h"
@@ -52,10 +52,10 @@ Result<std::string> InterruptibleTerminal::ReadLine() {
     int num_fds = Select(&read_set, nullptr, nullptr, nullptr);
 
     std::lock_guard lock(terminal_mutex_);
-    auto return_action = android::base::ScopeGuard([this]() {
+    absl::Cleanup return_action = [this]() {
       owner_tid_ = std::nullopt;
       readline_done_.notify_one();
-    });
+    };
     CF_EXPECT(interrupted_ == false, "Interrupted");
     CF_EXPECTF(num_fds >= 0,
                "Select call to read the user input returned error: {}",

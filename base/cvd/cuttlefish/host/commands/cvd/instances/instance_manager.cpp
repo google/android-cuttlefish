@@ -25,7 +25,6 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/scopeguard.h>
 #include <fmt/format.h>
 #include "absl/log/log.h"
 #include "absl/strings/match.h"

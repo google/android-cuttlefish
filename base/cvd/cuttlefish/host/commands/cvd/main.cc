@@ -27,7 +27,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/scopeguard.h>
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/str_split.h"
 #include <fmt/format.h>
 #include "absl/log/log.h"
@@ -184,10 +184,10 @@ std::string ColoredUrl(const std::string& url) {
     colors.emplace(tokenized.front(), tokenized.back());
   }
 
-  android::base::ScopeGuard return_action([&coloring_prefix, url, &output]() {
+  absl::Cleanup return_action = [&coloring_prefix, url, &output]() {
     static constexpr char kRestoreColor[] = "\033[0m";
     output = fmt::format("{}{}{}", coloring_prefix, url, kRestoreColor);
-  });
+  };
   auto deb_color_itr = colors.find("*.deb");
   auto zip_color_itr = colors.find("*.zip");
   if (deb_color_itr == colors.end() && zip_color_itr == colors.end()) {

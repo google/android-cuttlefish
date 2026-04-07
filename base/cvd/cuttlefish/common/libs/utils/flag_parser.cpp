@@ -32,7 +32,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
