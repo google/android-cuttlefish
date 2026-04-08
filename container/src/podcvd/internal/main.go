@@ -191,7 +191,9 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	}
 	go func() {
 		defer wg.Done()
-		errCh <- DeleteToolingHost(ccm)
+		if _, exists := os.LookupEnv(envClientID); !exists {
+			errCh <- DeleteToolingHost(ccm)
+		}
 	}()
 	wg.Wait()
 	close(errCh)

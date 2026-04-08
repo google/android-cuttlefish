@@ -259,6 +259,10 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		Image:  imageName,
 		Labels: map[string]string{},
 	}
+	clientID := os.Getenv(envClientID)
+	if clientID != "" {
+		containerCfg.Labels[labelClientID] = clientID
+	}
 	cvdDataHome, err := cvdDataHome()
 	if err != nil {
 		return "", fmt.Errorf("failed to get cvd data home: %w", err)
