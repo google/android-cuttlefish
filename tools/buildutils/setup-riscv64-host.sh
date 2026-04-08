@@ -94,17 +94,51 @@ else
   echo "Bazel ${BAZEL_VERSION} installed to /usr/local/bin/bazel"
 fi
 
-# cargo-bazel: no prebuilt riscv64 binary; build from source if not installed.
-# rules_rust's crate_universe needs this at build time.  The build expects
-# CARGO_BAZEL_GENERATOR_URL to point to the binary.
-if ! command -v cargo-bazel &>/dev/null; then
-  echo "Building cargo-bazel from source..."
-  cargo install cargo-bazel
+# cargo-bazel: no prebuilt riscv64 binary; build from rules_rust source.
+# cargo-bazel is not published on crates.io — it's an internal tool in
+# rules_rust's crate_universe directory.  Must match the rules_rust version
+# used by the project (currently 0.68.1).
+RULES_RUST_VERSION=0.68.1
+CARGO_BAZEL_DIR="${HOME}/.local/cargo-bazel-rules-rust-${RULES_RUST_VERSION}"
+CARGO_BAZEL_BIN="${CARGO_BAZEL_DIR}/bin/cargo-bazel"
+if [ ! -x "${CARGO_BAZEL_BIN}" ]; then
+  echo "Building cargo-bazel from rules_rust ${RULES_RUST_VERSION} source..."
+  tmpdir="$(mktemp -d)"
+  trap "rm -rf $tmpdir" EXIT
+  pushd "$tmpdir"
+  wget -q "https://github.com/bazelbuild/rules_rust/archive/refs/tags/${RULES_RUST_VERSION}.tar.gz"
+  tar xzf "${RULES_RUST_VERSION}.tar.gz"
+  cargo install --path "rules_rust-${RULES_RUST_VERSION}/crate_universe" \
+    --root "${CARGO_BAZEL_DIR}"
+  popd
+  echo "cargo-bazel installed to ${CARGO_BAZEL_BIN}"
+else
+  echo "cargo-bazel already installed at ${CARGO_BAZEL_BIN}"
 fi
+
+# Bazel: no official riscv64 binary; build from source if not installed.
+BAZEL_VERSION=8.5.1
+if command -v bazel &>/dev/null; then
+  echo "Bazel already installed: $(bazel --version)"
+else
+  echo "Building Bazel ${BAZEL_VERSION} from source (this takes 30-60 minutes)..."
+  tmpdir="$(mktemp -d)"
+  trap "rm -rf $tmpdir" EXIT
+  pushd "$tmpdir"
+  wget -q "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip"
+  unzip -q "bazel-${BAZEL_VERSION}-dist.zip"
+  env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
+  sudo cp output/bazel /usr/local/bin/bazel
+  popd
+  echo "Bazel ${BAZEL_VERSION} installed to /usr/local/bin/bazel"
+fi
+
+CARGO_BAZEL_SHA256="$(sha256sum "${CARGO_BAZEL_BIN}" | cut -d' ' -f1)"
 echo ""
 echo "riscv64 host setup complete."
 echo ""
-echo "Before building, set the cargo-bazel generator URL:"
-echo "  export CARGO_BAZEL_GENERATOR_URL=\"file://\$(which cargo-bazel)\""
+echo "Before building, set the cargo-bazel environment variables:"
+echo "  export CARGO_BAZEL_GENERATOR_URL=\"file://${CARGO_BAZEL_BIN}\""
+echo "  export CARGO_BAZEL_GENERATOR_SHA256=\"${CARGO_BAZEL_SHA256}\""
 
 echo "All done!"
