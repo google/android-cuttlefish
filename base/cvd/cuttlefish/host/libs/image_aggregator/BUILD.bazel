@@ -1,6 +1,6 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_cc_library")
+load("//cuttlefish/bazel:rules.bzl", "COPTS", "cf_cc_library", "cf_cc_test")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
@@ -30,6 +30,40 @@ cf_cc_library(
         "//cuttlefish/io:string",
         "//cuttlefish/posix:strerror",
         "//cuttlefish/result",
+    ],
+)
+
+cf_cc_library(
+    name = "composite_io",
+    srcs = ["composite_io.cc"],
+    hdrs = ["composite_io.h"],
+    deps = [
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/io",
+        "//cuttlefish/io:fake_seek",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "composite_io_test",
+    srcs = ["composite_io_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/image_aggregator:cdisk_spec_cc_proto",
+        "//cuttlefish/host/libs/image_aggregator:composite_disk",
+        "//cuttlefish/host/libs/image_aggregator:composite_io",
+        "//cuttlefish/io",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+        "//cuttlefish/result:result_type",
+        "@abseil-cpp//absl/strings",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
