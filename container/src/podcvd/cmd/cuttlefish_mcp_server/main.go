@@ -19,14 +19,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func runPodcvd(args []string) (string, error) {
+func runPodcvd(clientID string, args []string) (string, error) {
 	cmd := exec.Command("podcvd", args...)
+	cmd.Env = append(os.Environ(), fmt.Sprintf("PODCVD_CLIENT_ID=%s", clientID))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -38,7 +41,7 @@ func runPodcvd(args []string) (string, error) {
 }
 
 type toolHandler struct {
-	// TODO(seungjaeyoo): Add client ID to distinguish AI agents.
+	clientID string
 }
 
 type groupNameArg struct {
@@ -56,7 +59,7 @@ type removeArgs struct {
 type clearArgs struct{}
 
 func (h *toolHandler) Create(ctx context.Context, req *mcp.CallToolRequest, args createArgs) (*mcp.CallToolResult, any, error) {
-	output, err := runPodcvd([]string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"})
+	output, err := runPodcvd(h.clientID, []string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -68,7 +71,7 @@ func (h *toolHandler) Create(ctx context.Context, req *mcp.CallToolRequest, args
 }
 
 func (h *toolHandler) Fleet(ctx context.Context, req *mcp.CallToolRequest, args fleetArgs) (*mcp.CallToolResult, any, error) {
-	output, err := runPodcvd([]string{"fleet"})
+	output, err := runPodcvd(h.clientID, []string{"fleet"})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -84,7 +87,7 @@ func (h *toolHandler) Remove(ctx context.Context, req *mcp.CallToolRequest, args
 	if args.GroupName != "" {
 		cmd = append([]string{fmt.Sprintf("--group_name=%s", args.GroupName)}, cmd...)
 	}
-	if _, err := runPodcvd(cmd); err != nil {
+	if _, err := runPodcvd(h.clientID, cmd); err != nil {
 		return nil, nil, err
 	}
 	return &mcp.CallToolResult{
@@ -95,7 +98,7 @@ func (h *toolHandler) Remove(ctx context.Context, req *mcp.CallToolRequest, args
 }
 
 func (h *toolHandler) Clear(ctx context.Context, req *mcp.CallToolRequest, args clearArgs) (*mcp.CallToolResult, any, error) {
-	if _, err := runPodcvd([]string{"clear"}); err != nil {
+	if _, err := runPodcvd(h.clientID, []string{"clear"}); err != nil {
 		return nil, nil, err
 	}
 	return &mcp.CallToolResult{
@@ -114,7 +117,7 @@ component for orchestrating lifecycle of Cuttlefish instances and their groups.
 `
 
 func main() {
-	handlers := &toolHandler{}
+	handlers := &toolHandler{clientID: uuid.New().String()}
 	server := mcp.NewServer(
 		&mcp.Implementation{
 			Name:    "cuttlefish-mcp-server",
@@ -131,15 +134,15 @@ func main() {
 	}, handlers.Create)
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "fleet",
-		Description: "List all Cuttlefish instance groups",
+		Description: "List all Cuttlefish instance groups created by this agent or the human user",
 	}, handlers.Fleet)
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "remove",
-		Description: "Remove a Cuttlefish instance group and also destroy corresponding ADB connections",
+		Description: "Remove a Cuttlefish instance group created by this agent or the human user and also destroy corresponding ADB connections",
 	}, handlers.Remove)
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "clear",
-		Description: "Clear all Cuttlefish instance groups and also destroy corresponding ADB connections",
+		Description: "Clear all Cuttlefish instance groups created by this agent or the human user and also destroy corresponding ADB connections",
 	}, handlers.Clear)
 
 	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
