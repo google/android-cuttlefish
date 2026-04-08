@@ -25,5 +25,7 @@ const (
 	envClientID          = "PODCVD_CLIENT_ID"
 	labelClientID        = "client_id"
 	labelGroupName       = "group_name"
+	labelCreatedBy       = "created_by"
+	valueCreatedBy       = "podcvd"
 	ToolingContainerName = "tooling"
 )
