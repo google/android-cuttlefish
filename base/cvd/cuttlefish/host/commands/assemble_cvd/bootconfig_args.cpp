@@ -26,6 +26,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
 
+#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/libs/config/config_constants.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
@@ -39,6 +40,23 @@ using vm_manager::CrosvmManager;
 using vm_manager::QemuManager;
 
 namespace {
+
+static constexpr std::string_view kLegacyBoardBootconfigKeysShared[] = {
+  "androidboot.hardware",
+  "androidboot.vendor.apex.com.google.emulated.camera.provider.hal",
+  "kernel.vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size",
+};
+
+static constexpr std::string_view kLegacyBoardBootconfigKeysAuto[] = {
+  "androidboot.cuttlefish_service_bluetooth_checker",
+  "androidboot.hibernation_resume_device",
+};
+
+static constexpr std::string_view kLegacyBoardBootconfigKeysMinidroid[] = {
+  "androidboot.adb.enabled",
+  "androidboot.init_rc",
+  "androidboot.microdroid.debuggable",
+};
 
 template <typename T>
 void AppendMapWithReplacement(T* destination, const T& source) {
@@ -72,10 +90,32 @@ Result<std::unordered_map<std::string, std::string>> ConsoleBootconfig(
 
 }  // namespace
 
+// Bootconfing args should be added to the launcher and no longer via the build system variable
+// `BOARD_BOOTCONFIG`. Allow legacy keys for backward compatibility.
+Result<void> ValidateBoardBootconfigKeys(
+    const cuttlefish::DeviceType type,
+    const std::map<std::string, std::string, std::less<void>> args) {
+  std::vector<std::string> allowed_args(std::begin(kLegacyBoardBootconfigKeysShared), std::end(kLegacyBoardBootconfigKeysShared));
+  if (type == cuttlefish::DeviceType::Auto) {
+    allowed_args.insert(allowed_args.end(), std::begin(kLegacyBoardBootconfigKeysAuto), std::end(kLegacyBoardBootconfigKeysAuto));
+  } else if (type == cuttlefish::DeviceType::Minidroid) {
+    allowed_args.insert(allowed_args.end(), std::begin(kLegacyBoardBootconfigKeysMinidroid), std::end(kLegacyBoardBootconfigKeysMinidroid));
+  }
+
+  for(auto iter = args.begin(); iter != args.end(); iter++) {
+    CF_EXPECTF(Contains(allowed_args, iter->first),
+        "Error: detected new `BOARD_BOOTCONFIG` key: \"{}\"!!! Please add new bootconfig args to the `cvd` launcher.", iter->first);
+  }
+
+  return {};
+}
+
 Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
     const CuttlefishConfig& config,
     const CuttlefishConfig::InstanceSpecific& instance,
     const std::map<std::string, std::string, std::less<void>> builtin_bootconfig_args) {
+  CF_EXPECT(ValidateBoardBootconfigKeys(instance.device_type(), builtin_bootconfig_args));
+
   std::unordered_map<std::string, std::string> bootconfig_args;
 
   AppendMapWithReplacement(&bootconfig_args,
