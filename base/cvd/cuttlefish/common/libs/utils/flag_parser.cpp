@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_replace.h"
 #include "absl/strings/str_join.h"
 #include <fmt/format.h>
 #include <fmt/ranges.h>  // NOLINT(misc-include-cleaner): version difference
@@ -171,13 +171,12 @@ Result<int> ParseInt(const std::string& value, std::string_view name) {
 
 Result<Flag::FlagProcessResult> Flag::Process(
     const std::string& arg, const std::optional<std::string>& next_arg) const {
-  using android::base::StringReplace;
-  auto normalized_arg = StringReplace(arg, "-", "_", true);
+  auto normalized_arg = absl::StrReplaceAll(arg, {{"-", "_"}});
   if (!setter_ && !aliases_.empty()) {
     return CF_ERRF("No setter for flag with alias {}", aliases_[0].name);
   }
   for (auto& alias : aliases_) {
-    auto normalized_alias = StringReplace(alias.name, "-", "_", true);
+    auto normalized_alias = absl::StrReplaceAll(alias.name, {{"-", "_"}});
     switch (alias.mode) {
       case FlagAliasMode::kFlagConsumesArbitrary:
         if (normalized_arg != normalized_alias) {
@@ -258,8 +257,7 @@ bool Flag::HasAlias(const FlagAlias& test) const {
 }
 
 static std::string XmlEscape(const std::string& s) {
-  using android::base::StringReplace;
-  return StringReplace(StringReplace(s, "<", "&lt;", true), ">", "&gt;", true);
+  return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
 }
 
 bool Flag::WriteGflagsCompatXml(std::ostream& out) const {

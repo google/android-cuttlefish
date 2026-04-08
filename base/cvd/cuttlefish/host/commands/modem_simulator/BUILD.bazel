@@ -16,6 +16,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/modem_simulator:virtual_modem_simulator",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
@@ -236,6 +237,7 @@ cf_cc_test(
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//libbase",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
         "@gflags",
         "@googletest//:gtest",
         "@googletest//:gtest_main",

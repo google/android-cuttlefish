@@ -27,7 +27,7 @@
 
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "android-base/strings.h"
+#include "absl/strings/str_replace.h"
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/files.h"
@@ -315,14 +315,13 @@ Result<void> RepackVendorBootImage(
       unpack.KernelCommandLine() +
       (bootconfig_supported
            ? ""
-           : " " + android::base::StringReplace(bootconfig, "\n", " ", true));
+           : " " + absl::StrReplaceAll(bootconfig, {{"\n", " "}}));
   if (!bootconfig_supported) {
     // TODO(b/182417593): Until we pass the module parameters through
     // modules.options, we pass them through bootconfig using
     // 'kernel.<key>=<value>' But if we don't support bootconfig, we need to
     // rename them back to the old cmdline version
-    kernel_cmdline = android::base::StringReplace(
-        kernel_cmdline, " kernel.", " ", true);
+    absl::StrReplaceAll({{" kernel.", " "}}, &kernel_cmdline);
   }
   VLOG(0) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
