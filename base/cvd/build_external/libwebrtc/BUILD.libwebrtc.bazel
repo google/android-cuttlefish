@@ -1205,6 +1205,11 @@ cc_library(
             "modules/audio_processing/aec3/vector_math_avx2.cc",
             "modules/audio_processing/agc2/rnn_vad/vector_math_avx2.cc",
         ],
+        "@platforms//cpu:riscv64": [
+            "common_audio/signal_processing/complex_bit_reverse.c",
+            "common_audio/signal_processing/filter_ar_fast_q12.c",
+            "common_audio/third_party/spl_sqrt_floor/spl_sqrt_floor.c",
+        ],
         "//conditions:default": [],
     }),
     hdrs = [
