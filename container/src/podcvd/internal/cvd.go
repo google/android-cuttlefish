@@ -17,6 +17,8 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -66,4 +68,35 @@ func ParseInstanceGroups(jsonStr, groupName string) (*InstanceGroup, error) {
 		return nil, fmt.Errorf("unexpected group name observed while parsing JSON object (expected: %q, actual: %q)", groupName, instanceGroup.GroupName)
 	}
 	return &instanceGroup, nil
+}
+
+func UpdateCvdGroupJsonRaw(data any, containerName, ipAddr string) {
+	switch v := data.(type) {
+	case map[string]any:
+		for k, val := range v {
+			if s, ok := val.(string); ok {
+				v[k] = updateStringOnCvdGroupJsonRaw(s, containerName, ipAddr)
+			} else {
+				UpdateCvdGroupJsonRaw(val, containerName, ipAddr)
+			}
+		}
+	case []any:
+		for k, val := range v {
+			if s, ok := val.(string); ok {
+				v[k] = updateStringOnCvdGroupJsonRaw(s, containerName, ipAddr)
+			} else {
+				UpdateCvdGroupJsonRaw(val, containerName, ipAddr)
+			}
+		}
+	}
+}
+
+func updateStringOnCvdGroupJsonRaw(data, containerName, ipAddr string) string {
+	data = strings.ReplaceAll(data, "0.0.0.0", ipAddr)
+	data = strings.ReplaceAll(data, "localhost", ipAddr)
+	data = strings.ReplaceAll(data, "127.0.0.1", ipAddr)
+	if filepath.IsAbs(data) {
+		data = fmt.Sprintf("%s:%s", containerName, data)
+	}
+	return data
 }
