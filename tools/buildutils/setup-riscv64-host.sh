@@ -77,23 +77,6 @@ fi
 # Rust toolchain
 sudo apt-get install -y rustc cargo
 
-# Bazel: no official riscv64 binary; build from source if not installed.
-BAZEL_VERSION=8.5.1
-if command -v bazel &>/dev/null; then
-  echo "Bazel already installed: $(bazel --version)"
-else
-  echo "Building Bazel ${BAZEL_VERSION} from source (this takes 30-60 minutes)..."
-  tmpdir="$(mktemp -d)"
-  trap "rm -rf $tmpdir" EXIT
-  pushd "$tmpdir"
-  wget -q "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip"
-  unzip -q "bazel-${BAZEL_VERSION}-dist.zip"
-  env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
-  sudo cp output/bazel /usr/local/bin/bazel
-  popd
-  echo "Bazel ${BAZEL_VERSION} installed to /usr/local/bin/bazel"
-fi
-
 # cargo-bazel: no prebuilt riscv64 binary; build from rules_rust source.
 # cargo-bazel is not published on crates.io — it's an internal tool in
 # rules_rust's crate_universe directory.  Must match the rules_rust version
