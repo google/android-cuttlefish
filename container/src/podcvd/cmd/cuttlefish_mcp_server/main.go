@@ -45,9 +45,7 @@ type groupNameArg struct {
 	GroupName string `json:"group_name,omitempty"`
 }
 
-type createArgs struct {
-	groupNameArg
-}
+type createArgs struct{}
 
 type fleetArgs struct{}
 
@@ -58,11 +56,7 @@ type removeArgs struct {
 type clearArgs struct{}
 
 func (h *toolHandler) Create(ctx context.Context, req *mcp.CallToolRequest, args createArgs) (*mcp.CallToolResult, any, error) {
-	cmd := []string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"}
-	if args.GroupName != "" {
-		cmd = append([]string{fmt.Sprintf("--group_name=%s", args.GroupName)}, cmd...)
-	}
-	output, err := runPodcvd(cmd)
+	output, err := runPodcvd([]string{"create", "--vhost_user_vsock=true", "--report_anonymous_usage_stats=n"})
 	if err != nil {
 		return nil, nil, err
 	}
