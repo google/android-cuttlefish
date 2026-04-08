@@ -69,9 +69,14 @@ include("//toolchain:rust.MODULE.bazel")
 # riscv64: rules_rust does not support riscv64 host out of the box.
 # Patch triple.bzl to add riscv64gc to the supported linux architectures
 # and map the riscv64 arch string to riscv64gc (Rust's triple prefix).
+# Also patch crate_universe to include riscv64gc-unknown-linux-gnu in the
+# default SUPPORTED_PLATFORM_TRIPLES so generated BUILD files are compatible.
 single_version_override(
     module_name = "rules_rust",
-    patches = ["//patches/rules_rust:riscv64_triple.patch"],
+    patches = [
+        "//patches/rules_rust:riscv64_triple.patch",
+        "//patches/rules_rust:riscv64_supported_platform.patch",
+    ],
     patch_strip = 1,
 )
 
