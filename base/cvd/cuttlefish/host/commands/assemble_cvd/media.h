@@ -25,33 +25,33 @@
 
 namespace cuttlefish {
 
-// Component to share data between CamerasConfigsFlag and CamerasConfigsFragment
-class CamerasConfigs {
+// Component to share data between MediaConfigsFlag and MediaConfigsFragment
+class MediaConfigs {
  public:
-  virtual ~CamerasConfigs() = default;
+  virtual ~MediaConfigs() = default;
 
   virtual std::string Name() const = 0;
 
-  virtual const std::vector<CuttlefishConfig::CameraConfig>& GetConfigs()
+  virtual const std::vector<CuttlefishConfig::MediaConfig>& GetConfigs()
       const = 0;
   virtual void SetConfigs(
-      const std::vector<CuttlefishConfig::CameraConfig>& configs) = 0;
+      const std::vector<CuttlefishConfig::MediaConfig>& configs) = 0;
 };
 
-// Component to parse the --camera command line flag and update the
-// CamerasConfigs.
-class CamerasConfigsFlag : public FlagFeature {};
+// Component to parse the --media command line flag and update the
+// MediaConfigs.
+class MediaConfigsFlag : public FlagFeature {};
 
-// Component to serialize and deserialize the CamerasConfigs to/from Json.
-class CamerasConfigsFragment : public ConfigFragment {};
+// Component to serialize and deserialize the MediaConfigs to/from Json.
+class MediaConfigsFragment : public ConfigFragment {};
 
-fruit::Component<CamerasConfigs> CamerasConfigsComponent();
+fruit::Component<MediaConfigs> MediaConfigsComponent();
 
-fruit::Component<fruit::Required<CamerasConfigs, ConfigFlag>,
-                 CamerasConfigsFlag>
-CamerasConfigsFlagComponent();
+fruit::Component<fruit::Required<MediaConfigs, ConfigFlag>,
+                 MediaConfigsFlag>
+MediaConfigsFlagComponent();
 
-fruit::Component<fruit::Required<CamerasConfigs>, CamerasConfigsFragment>
-CamerasConfigsFragmentComponent();
+fruit::Component<fruit::Required<MediaConfigs>, MediaConfigsFragment>
+MediaConfigsFragmentComponent();
 
 }  // namespace cuttlefish

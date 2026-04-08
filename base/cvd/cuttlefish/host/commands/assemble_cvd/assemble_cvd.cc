@@ -35,7 +35,6 @@
 #include "cuttlefish/host/commands/assemble_cvd/android_build/android_builds.h"
 #include "cuttlefish/host/commands/assemble_cvd/android_build/identify_build.h"
 #include "cuttlefish/host/commands/assemble_cvd/assemble_cvd_flags.h"
-#include "cuttlefish/host/commands/assemble_cvd/camera.h"
 #include "cuttlefish/host/commands/assemble_cvd/clean.h"
 #include "cuttlefish/host/commands/assemble_cvd/create_dynamic_disk_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/disk/ap_composite_disk.h"
@@ -56,6 +55,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags_defaults.h"
 #include "cuttlefish/host/commands/assemble_cvd/instance_image_files.h"
+#include "cuttlefish/host/commands/assemble_cvd/media.h"
 #include "cuttlefish/host/commands/assemble_cvd/required_directories.h"
 #include "cuttlefish/host/commands/assemble_cvd/resolve_instance_files.h"
 #include "cuttlefish/host/commands/assemble_cvd/touchpad.h"
@@ -522,9 +522,9 @@ fruit::Component<> FlagsComponent(SystemImageDirFlag* system_image_dir) {
       .install(GflagsComponent)
       .install(ConfigFlagComponent)
       .install(CustomActionsComponent)
-      .install(CamerasConfigsComponent)
-      .install(CamerasConfigsFlagComponent)
-      .install(CamerasConfigsFragmentComponent);
+      .install(MediaConfigsComponent)
+      .install(MediaConfigsFlagComponent)
+      .install(MediaConfigsFragmentComponent);
 }
 
 Result<void> CheckNoTTY() {

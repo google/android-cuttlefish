@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cuttlefish/host/libs/config/camera.h"
+#include "cuttlefish/host/libs/config/media.h"
 
 #include <optional>
 #include <string>
@@ -29,10 +29,10 @@
 
 namespace cuttlefish {
 
-static constexpr char kCameraTypeV4l2Emulated[] = "v4l2_emulated";
-static constexpr char kCameraTypeV4l2Proxy[] = "v4l2_proxy";
+static constexpr char kMediaTypeV4l2EmulatedCamera[] = "v4l2_emulated_camera";
+static constexpr char kMediaTypeV4l2Proxy[] = "v4l2_proxy";
 
-Result<std::optional<CuttlefishConfig::CameraConfig>> ParseCameraConfig(
+Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag) {
   std::unordered_map<std::string, std::string> props;
   if (!flag.empty()) {
@@ -40,7 +40,7 @@ Result<std::optional<CuttlefishConfig::CameraConfig>> ParseCameraConfig(
     for (const std::string& pair : pairs) {
       const std::vector<std::string> keyvalue = absl::StrSplit(pair, "=");
       CF_EXPECT_EQ(keyvalue.size(), 2,
-                   "Invalid camera flag key-value: \"" << flag << "\"");
+                   "Invalid media flag key-value: \"" << flag << "\"");
       const std::string& prop_key = keyvalue[0];
       const std::string& prop_val = keyvalue[1];
       props[prop_key] = prop_val;
@@ -48,36 +48,36 @@ Result<std::optional<CuttlefishConfig::CameraConfig>> ParseCameraConfig(
   }
 
   auto type_it = props.find("type");
-  CF_EXPECT(type_it != props.end(), "Missing camera type");
-  CuttlefishConfig::CameraType type { CuttlefishConfig::CameraType::kUnknown };
-  if (type_it->second == kCameraTypeV4l2Emulated) {
-    type = CuttlefishConfig::CameraType::kV4l2Emulated;
-  } else if (type_it->second == kCameraTypeV4l2Proxy) {
-    type = CuttlefishConfig::CameraType::kV4l2Proxy;
+  CF_EXPECT(type_it != props.end(), "Missing media type");
+  CuttlefishConfig::MediaType type { CuttlefishConfig::MediaType::kUnknown };
+  if (type_it->second == kMediaTypeV4l2EmulatedCamera) {
+    type = CuttlefishConfig::MediaType::kV4l2EmulatedCamera;
+  } else if (type_it->second == kMediaTypeV4l2Proxy) {
+    type = CuttlefishConfig::MediaType::kV4l2Proxy;
   } else {
-    return CF_ERRF("Unknown camera type value: \"{}\"", type_it->second);
+    return CF_ERRF("Unknown media type value: \"{}\"", type_it->second);
   }
 
-  return CuttlefishConfig::CameraConfig{
+  return CuttlefishConfig::MediaConfig{
       .type = type,
   };
 }
 
-Result<std::vector<CuttlefishConfig::CameraConfig>> ParseCameraConfigsFromArgs(
+Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
     std::vector<std::string>& args) {
-  std::vector<std::string> repeated_camera_flag_values;
-  const std::vector<Flag> camera_flags = {
-      GflagsCompatFlag(kCameraFlag)
-          .Help(kCameraHelp)
+  std::vector<std::string> repeated_media_flag_values;
+  const std::vector<Flag> media_flags = {
+      GflagsCompatFlag(kMediaFlag)
+          .Help(kMediaHelp)
           .Setter([&](const FlagMatch& match) -> Result<void> {
-            repeated_camera_flag_values.push_back(match.value);
+            repeated_media_flag_values.push_back(match.value);
             return {};
           }),
   };
-  CF_EXPECT(ConsumeFlags(camera_flags, args), "Failed to parse camera flags.");
-  std::vector<CuttlefishConfig::CameraConfig> configs;
-  for (const std::string& param : repeated_camera_flag_values) {
-    auto config = CF_EXPECT(ParseCameraConfig(param));
+  CF_EXPECT(ConsumeFlags(media_flags, args), "Failed to parse media flags.");
+  std::vector<CuttlefishConfig::MediaConfig> configs;
+  for (const std::string& param : repeated_media_flag_values) {
+    auto config = CF_EXPECT(ParseMediaConfig(param));
     if (config) {
       configs.push_back(*config);
     }
