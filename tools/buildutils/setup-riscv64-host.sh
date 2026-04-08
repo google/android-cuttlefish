@@ -42,6 +42,13 @@ sudo apt-get install -y \
   unzip \
   wget
 
+# packages needed by debuild
+sudo apt-get install -y \
+  devscripts \
+  config-package-dev \
+  debhelper-compat \
+  equivs
+
 # LLVM/Clang toolchain - used by Bazel via toolchains_llvm.
 # libc++ is required because toolchains_llvm defaults to builtin-libc++
 # and expects headers at /usr/lib/llvm-19/include/c++/v1/.
@@ -110,6 +117,17 @@ else
   pushd "$tmpdir"
   wget -q "https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-dist.zip"
   unzip -q "bazel-${BAZEL_VERSION}-dist.zip"
+
+  # Fix locale-dependent sorting mismatch: Bazel's bootstrap compile.sh
+  # uses `sort` and `comm` on file lists.  When the locale's collation
+  # order differs between the two commands, `comm` rejects the input as
+  # unsorted and exits non-zero (fatal under `set -e`).  Forcing LC_ALL=C
+  # ensures both tools agree on byte-order sorting.
+  sed -i \
+    -e 's#| sort >#| LC_ALL=C sort >#g' \
+    -e 's#comm -#LC_ALL=C comm -#g' \
+    scripts/bootstrap/compile.sh
+
   env EXTRA_BAZEL_ARGS="--tool_java_runtime_version=local_jdk" bash ./compile.sh
   sudo cp output/bazel /usr/local/bin/bazel
   popd
