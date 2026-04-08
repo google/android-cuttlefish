@@ -19,13 +19,13 @@
 #include <string>
 #include <vector>
 
-#include <android-base/hex.h>
 #include <gflags/gflags.h>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
 #include "absl/log/log.h"
+#include "absl/strings/escaping.h"
 
 #include "cuttlefish/host/commands/casimir_control_server/casimir_control.grpc.pb.h"
 #include "cuttlefish/host/commands/casimir_control_server/casimir_controller.h"
@@ -207,8 +207,8 @@ class CasimirControlServiceImpl final : public CasimirControlService::Service {
       std::vector<uint8_t> bytes =
           CF_EXPECT(device_->SendApdu(id, std::move(apdu_bytes[i])),
                     "Failed to send APDU bytes");
-      std::string resp = android::base::HexString(
-          reinterpret_cast<void*>(bytes.data()), bytes.size());
+      std::string resp = absl::BytesToHexString(
+          std::string_view(reinterpret_cast<const char*>(bytes.data()), bytes.size()));
       response->add_response_hex_strings(std::move(resp));
     }
 
