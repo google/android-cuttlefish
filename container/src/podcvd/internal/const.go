@@ -22,6 +22,8 @@ const (
 )
 
 const (
+	envClientID          = "PODCVD_CLIENT_ID"
+	labelClientID        = "client_id"
 	labelGroupName       = "group_name"
 	ToolingContainerName = "tooling"
 )

@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"os"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
 
@@ -42,7 +43,13 @@ func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager, al
 		return nil, fmt.Errorf("failed to list containers: %w", err)
 	}
 	groupNameIpAddrMap := make(map[string]string)
+	clientID := os.Getenv(envClientID)
 	for _, container := range containers {
+		if clientID != "" {
+			if val, exists := container.Labels[labelClientID]; exists && val != clientID {
+				continue
+			}
+		}
 		groupName, exists := container.Labels[labelGroupName]
 		if !exists {
 			continue
