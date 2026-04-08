@@ -40,8 +40,6 @@ function install_bazel_aarch64() {
   popd
 }
 
-<<<<<<< HEAD
-=======
 function install_bazel_riscv64() {
   # No official Bazel binary exists for riscv64. Bazel must be built from
   # source (~30-60 minutes).
@@ -63,5 +61,4 @@ BUILD_SCRIPT
   exit 1
 }
 
->>>>>>> 826e01940 (installbazel: add riscv64 support with build-from-source instructions)
 install_bazel_$(uname -m)
