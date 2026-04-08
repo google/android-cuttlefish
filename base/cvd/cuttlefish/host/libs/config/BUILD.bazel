@@ -460,9 +460,9 @@ cf_cc_library(
 )
 
 cf_cc_library(
-    name = "camera",
-    srcs = ["camera.cpp"],
-    hdrs = ["camera.h"],
+    name = "media",
+    srcs = ["media.cpp"],
+    hdrs = ["media.h"],
     deps = [
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:flag_parser",

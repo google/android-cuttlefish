@@ -22,23 +22,20 @@
 
 namespace cuttlefish {
 
-constexpr const char kCameraFlag[] = "camera";
-constexpr const char kCameraHelp[] =
-    "NOTE: Flag is only used to manage virtio-media host emulated cameras "
-    "devices. It's **NOT** used or meant for managing Guest Emulated Cameras.\n"
-    "\n"
-    "Comma separated key=value pairs of camera properties. Supported "
+constexpr const char kMediaFlag[] = "media";
+constexpr const char kMediaHelp[] =
+    "Comma separated key=value pairs of media device properties. Supported "
     "properties:\n"
-    " 'type': optional, default to 'v4l2_emulated', supported values:\n"
-    "    'v4l2_emulated': host emulated camera streamed through v4l2\n"
-    "    'v4l2_proxy': host external camera streamed through v4l2\n "
+    " 'type': optional, defaults to 'v4l2_emulated_camera', supported values:\n"
+    "    'v4l2_emulated_camera': emulated media capture device\n"
+    "    'v4l2_proxy': proxy a host V4L2 device into the guest\n "
     "Example usage:\n"
-    "  --camera=type=v4l2_emulated\n";
+    "  --media=type=v4l2_emulated_camera\n";
 
-Result<std::optional<CuttlefishConfig::CameraConfig>> ParseCameraConfig(
+Result<std::optional<CuttlefishConfig::MediaConfig>> ParseMediaConfig(
     const std::string& flag);
 
-Result<std::vector<CuttlefishConfig::CameraConfig>> ParseCameraConfigsFromArgs(
+Result<std::vector<CuttlefishConfig::MediaConfig>> ParseMediaConfigsFromArgs(
     std::vector<std::string>& args);
 
 }  // namespace cuttlefish

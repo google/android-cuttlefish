@@ -929,10 +929,10 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
     crosvm_cmd.Cmd().AddParameter("--pflash=", PflashPath(instance));
   }
 
-  for (const auto& config : instance.camera_configs()) {
-    if (config.type == CuttlefishConfig::CameraType::kV4l2Emulated) {
+  for (const auto& config : instance.media_configs()) {
+    if (config.type == CuttlefishConfig::MediaType::kV4l2EmulatedCamera) {
       crosvm_cmd.Cmd().AddParameter("--simple-media-device");
-    } else if (config.type == CuttlefishConfig::CameraType::kV4l2Proxy) {
+    } else if (config.type == CuttlefishConfig::MediaType::kV4l2Proxy) {
       crosvm_cmd.Cmd().AddParameter("--v4l2-proxy=", "/dev/video0");
     }
   }
