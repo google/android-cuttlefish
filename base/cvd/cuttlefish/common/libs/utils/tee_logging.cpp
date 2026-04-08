@@ -34,8 +34,6 @@
 
 #include <android-base/file.h>
 #include <android-base/macros.h>
-#include <android-base/stringprintf.h>
-#include <android-base/strings.h>
 #include <android-base/threads.h>
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
@@ -44,15 +42,15 @@
 #include "absl/log/log_sink.h"
 #include "absl/log/log_sink_registry.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
 #include "cuttlefish/result/result.h"
 
 using android::base::GetThreadId;
-using android::base::StringPrintf;
+using absl::StrFormat;
 
 namespace cuttlefish {
 namespace {
@@ -142,11 +140,11 @@ std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t tid,
   std::string line_prefix;
   if (file != nullptr) {
     line_prefix =
-        StringPrintf("%s %c %s %5d %5" PRIu64 " %s:%u] ", tag ? tag : "nullptr",
+        StrFormat("%s %c %s %5d %5" PRIu64 " %s:%u] ", tag ? tag : "nullptr",
                      severity_char, timestamp, pid, tid, file, line);
   } else {
     line_prefix =
-        StringPrintf("%s %c %s %5d %5" PRIu64 " ", tag ? tag : "nullptr",
+        StrFormat("%s %c %s %5d %5" PRIu64 " ", tag ? tag : "nullptr",
                      severity_char, timestamp, pid, tid);
   }
 
