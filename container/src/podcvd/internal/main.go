@@ -15,6 +15,7 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -88,11 +89,11 @@ func Main(args []string) error {
 }
 
 func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
-	stdout, err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), false, []string{"cvd", "fleet"})
-	if err != nil {
+	var stdoutBuf bytes.Buffer
+	if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
 		return err
 	}
-	instanceGroup, err := ParseInstanceGroups(stdout, groupName)
+	instanceGroup, err := ParseInstanceGroups(stdoutBuf.String(), groupName)
 	if err != nil {
 		return err
 	}
@@ -135,17 +136,23 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	stdout, err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), true, args)
-	if err != nil {
-		return err
-	}
 	switch subcommand {
 	case "create", "start":
+		var stdoutBuf bytes.Buffer
+		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, &stdoutBuf, os.Stderr); err != nil {
+			return err
+		}
+		stdout := stdoutBuf.String()
+		os.Stdout.Write([]byte(stdout))
 		instanceGroup, err := ParseInstanceGroup(stdout, cvdArgs.CommonArgs.GroupName)
 		if err != nil {
 			return err
 		}
 		if err := ConnectAdb(ccm, *instanceGroup); err != nil {
+			return err
+		}
+	default:
+		if err := ccm.ExecOnContainer(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName), args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 			return err
 		}
 	}
@@ -195,13 +202,13 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	for groupName := range groupNameIpAddrMap {
 		go func() {
 			defer wg.Done()
-			stdout, err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), false, []string{"cvd", "fleet"})
-			if err != nil {
+			var stdoutBuf bytes.Buffer
+			if err := ccm.ExecOnContainer(context.Background(), ContainerName(groupName), []string{"cvd", "fleet"}, nil, &stdoutBuf, nil); err != nil {
 				errCh <- err
 				return
 			}
 			var res cvdFleetResponse
-			errCh <- json.Unmarshal([]byte(stdout), &res)
+			errCh <- json.Unmarshal(stdoutBuf.Bytes(), &res)
 			resCh <- res
 		}()
 	}
@@ -234,7 +241,7 @@ func handleToolingSubcommands(ccm libcfcontainer.CuttlefishContainerManager, cvd
 	}
 	args := append([]string{"cvd"}, cvdArgs.SerializeCommonArgs()...)
 	args = append(args, cvdArgs.SubCommandArgs...)
-	if _, err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, true, args); err != nil {
+	if err := ccm.ExecOnContainer(context.Background(), ToolingContainerName, args, os.Stdin, os.Stdout, os.Stderr); err != nil {
 		return err
 	}
 	return nil
