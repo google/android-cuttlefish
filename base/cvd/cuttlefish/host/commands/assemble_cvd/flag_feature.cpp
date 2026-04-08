@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_replace.h"
 #include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
@@ -28,8 +28,7 @@
 namespace cuttlefish {
 
 static std::string XmlEscape(const std::string& s) {
-  using android::base::StringReplace;
-  return StringReplace(StringReplace(s, "<", "&lt;", true), ">", "&gt;", true);
+  return absl::StrReplaceAll(s, {{"<", "&lt;"}, {">", "&gt;"}});
 }
 
 class ParseGflagsImpl : public ParseGflags {

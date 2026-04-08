@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_replace.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
@@ -48,8 +48,7 @@ std::string BashEscape(const std::string& input) {
     }
     safe = false;
   }
-  using android::base::StringReplace;
-  return safe ? input : "'" + StringReplace(input, "'", "\\'", true) + "'";
+  return safe ? input : "'" + absl::StrReplaceAll(input, {{"'", "\\'"}}) + "'";
 }
 
 std::string FormattedCommand(const CommandRequest& command) {

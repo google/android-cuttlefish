@@ -36,7 +36,6 @@
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/strings.h"
 #include "fmt/format.h"
 #include "fruit/fruit.h"
 #include "gflags/gflags.h"
@@ -170,8 +169,8 @@ Result<std::unordered_map<int, std::string>> CreateNumToWebrtcDeviceIdMap(
   auto itr = device_ids.begin();
   for (const auto num : instance_nums) {
     std::string_view device_id_view(itr->data(), itr->size());
-    output_map[num] = android::base::StringReplace(device_id_view, "{num}",
-                                                   std::to_string(num), true);
+    output_map[num] =
+        absl::StrReplaceAll(device_id_view, {{"{num}", std::to_string(num)}});
     ++itr;
   }
   return output_map;

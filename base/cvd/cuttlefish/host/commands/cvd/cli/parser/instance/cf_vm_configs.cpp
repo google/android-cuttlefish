@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
 #include <google/protobuf/util/json_util.h>
 
 #include "cuttlefish/common/libs/utils/flags_validator.h"
@@ -35,7 +34,6 @@
 
 namespace cuttlefish {
 
-using android::base::StringReplace;
 using cvd::config::EnvironmentSpecification;
 using cvd::config::Instance;
 using cvd::config::Vm;

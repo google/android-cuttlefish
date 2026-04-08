@@ -18,7 +18,7 @@
 
 #include <algorithm>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_replace.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/fs/shared_select.h"
@@ -114,7 +114,7 @@ void ChannelMonitor::ReadCommand(Client& client) {
   incomplete_command.clear();
 
   // Replacing '\n' with '\r'
-  commands = android::base::StringReplace(commands, "\n", "\r", true);
+  absl::StrReplaceAll({{"\n", "\r"}}, &commands);
 
   // Split into commands and dispatch
   size_t pos = 0, r_pos = 0;  // '\r' or '\n'

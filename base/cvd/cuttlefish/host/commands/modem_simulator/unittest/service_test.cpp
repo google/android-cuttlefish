@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <stdlib.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_replace.h"
 
 #include <filesystem>
 #include <fstream>
@@ -125,7 +126,7 @@ class ModemServiceTest : public ::testing::Test {
       incomplete_command.resize(0);
 
       // replacing '\n' with '\r'
-      commands = android::base::StringReplace(commands, "\n", "\r", true);
+      absl::StrReplaceAll({{"\n", "\r"}}, &commands);
 
       // split into commands and dispatch
       size_t pos = 0, r_pos = 0;  // '\r' or '\n'

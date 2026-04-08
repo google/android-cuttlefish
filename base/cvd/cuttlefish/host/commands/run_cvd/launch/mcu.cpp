@@ -19,7 +19,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/str_replace.h"
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
@@ -69,14 +69,13 @@ class Mcu : public vm_manager::VmmDependencyCommand {
     CF_EXPECT(start.type() == Json::arrayValue,
               "mcu: config: start-cmd: array expected");
     CF_EXPECT(!start.empty(), "mcu: config: empty start-cmd");
-    Command command(android::base::StringReplace(start[0].asString(), "${bin}",
-                                                 HostBinaryPath(""), true));
+    Command command(absl::StrReplaceAll(start[0].asString(),
+                                       {{"${bin}", HostBinaryPath("")}}));
 
     for (unsigned int i = 1; i < start.size(); i++) {
       auto param = start[i].asString();
-      param = android::base::StringReplace(param, "${wdir}", mcu_dir_, true);
-      param = android::base::StringReplace(param, "${bin}", HostBinaryPath(""),
-                                           true);
+      absl::StrReplaceAll({{"${wdir}", mcu_dir_}, {"${bin}", HostBinaryPath("")}},
+                          &param);
       command.AddParameter(param);
     }
 
