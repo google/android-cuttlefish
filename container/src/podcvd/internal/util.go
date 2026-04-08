@@ -35,8 +35,11 @@ func CuttlefishContainerManager() (libcfcontainer.CuttlefishContainerManager, er
 
 func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager, allContainers bool) (map[string]string, error) {
 	opts := container.ListOptions{
-		Filters: filters.NewArgs(filters.Arg("label", labelGroupName)),
-		All:     allContainers,
+		Filters: filters.NewArgs(
+			filters.Arg("label", labelGroupName),
+			filters.Arg("label", fmt.Sprintf("%s=%s", labelCreatedBy, valueCreatedBy)),
+		),
+		All: allContainers,
 	}
 	containers, err := ccm.GetClient().ContainerList(context.Background(), opts)
 	if err != nil {

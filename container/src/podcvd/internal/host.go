@@ -84,6 +84,9 @@ func ExecFetchCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager,
 	}
 	containerCfg := &container.Config{
 		Image: imageName,
+		Labels: map[string]string{
+			labelCreatedBy: valueCreatedBy,
+		},
 	}
 	cvdDataHome, err := cvdDataHome()
 	if err != nil {
@@ -129,6 +132,9 @@ func ExecHelpCmdOnDisposableHost(ccm libcfcontainer.CuttlefishContainerManager, 
 			"ANDROID_HOST_OUT=/host_out",
 		},
 		Image: imageName,
+		Labels: map[string]string{
+			labelCreatedBy: valueCreatedBy,
+		},
 	}
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -256,8 +262,10 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 			"ANDROID_HOST_OUT=/host_out",
 			"ANDROID_PRODUCT_OUT=/product_out",
 		},
-		Image:  imageName,
-		Labels: map[string]string{},
+		Image: imageName,
+		Labels: map[string]string{
+			labelCreatedBy: valueCreatedBy,
+		},
 	}
 	clientID := os.Getenv(envClientID)
 	if clientID != "" {
@@ -362,6 +370,9 @@ func ensureOperatorHealthy(ip string) error {
 func createAndStartToolingContainer(ccm libcfcontainer.CuttlefishContainerManager) error {
 	containerCfg := &container.Config{
 		Image: imageName,
+		Labels: map[string]string{
+			labelCreatedBy: valueCreatedBy,
+		},
 	}
 	cvdDataHome, err := cvdDataHome()
 	if err != nil {
