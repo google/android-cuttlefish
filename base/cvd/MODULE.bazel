@@ -83,6 +83,11 @@ single_version_override(
         "//patches/toolchains_llvm:riscv64_common.patch",
         "//patches/toolchains_llvm:riscv64_configure.patch",
         "//patches/toolchains_llvm:riscv64_cc_toolchain_config.patch",
+        # Fix: system_module_map filtering needs to strip %workspace% prefix,
+        # so non-existing include dirs (lib64/, arch-specific c++/v1) are 
+        # filtered out when using toolchain_root with an absolute path.
+        # This is a generic bug affecting any toolchain_root usage.
+        "//patches/toolchains_llvm:system_modulemap_filter.patch",
     ],
     patch_strip = 1,
 )
