@@ -1,5 +1,5 @@
---- a/BUILD.bazel	2026-04-02 01:27:29.348447657 +0000
-+++ b/BUILD.bazel	2026-04-02 01:27:29.412449567 +0000
+--- a/BUILD.bazel	2026-04-07 04:53:37.512538708 +0000
++++ b/BUILD.bazel	2026-04-07 05:22:07.136257395 +0000
 @@ -45,6 +45,20 @@
      _LINUX_ARM64_PERLASM_TOOLS = "PERLASM_TOOLS",
  )
@@ -81,7 +81,46 @@
      }),
      # To make sure downstream targets add the right copts to be able to include the headers.
      includes = ["include"],
-@@ -359,6 +381,10 @@
+@@ -273,7 +295,7 @@
+ )
+ 
+ PERLASM_TOOLS = glob(
+-    ["crypto/perlasm/*.pl"],
++    ["crypto/perlasm/*.pl", "crypto/perlasm/*.pm"],
+     exclude = COMMON_GENERATED_FILES,
+ )
+ 
+@@ -291,10 +313,15 @@
+             "@bazel_tools//src/conditions:linux_x86_64": CC_ENV_CMD + _LINUX_X86_64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:darwin_arm64": CC_ENV_CMD + _DARWIN_ARM64_PERLASM_GEN,
+             "@bazel_tools//src/conditions:darwin_x86_64": CC_ENV_CMD + _DARWIN_X86_64_PERLASM_GEN,
++            # Post-process perlasm output: replace non-PIC 'jal ra,SYMBOL' with
++            # PIC-compatible 'call SYMBOL' (auipc+jalr pseudo-instruction).
++            # Upstream perlasm bug: aes-riscv64.pl generates jal for AES_set_encrypt_key.
++            "@bazel_tools//src/conditions:linux_riscv64": CC_ENV_CMD + _LINUX_RISCV64_PERLASM_GEN + "\n".join(["sed -i 's/jal\\s\\+ra,/call /g' $(OUTS)"]),
+         }),
+         target_compatible_with = [{
+             "arm64": "@platforms//cpu:arm64",
+             "x86_64": "@platforms//cpu:x86_64",
++            "riscv64": "@platforms//cpu:riscv64",
+         }[k]],
+         toolchains = [
+             "@bazel_tools//tools/cpp:current_cc_toolchain",
+@@ -305,11 +332,13 @@
+             "@bazel_tools//src/conditions:linux_x86_64": depset(direct = _LINUX_X86_64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:darwin_arm64": depset(direct = _DARWIN_ARM64_PERLASM_TOOLS).to_list(),
+             "@bazel_tools//src/conditions:darwin_x86_64": depset(direct = _DARWIN_X86_64_PERLASM_TOOLS).to_list(),
++            "@bazel_tools//src/conditions:linux_riscv64": depset(direct = _LINUX_RISCV64_PERLASM_TOOLS).to_list(),
+         }),
+     )
+     for k, v in {
+         "arm64": _DARWIN_ARM64_PERLASM_OUTS,
+         "x86_64": _LINUX_X86_64_PERLASM_OUTS,
++        "riscv64": _LINUX_RISCV64_PERLASM_OUTS,
+     }.items()
+ ]
+ 
+@@ -359,6 +388,10 @@
              contents = v,
              filename = k,
          ) for k, v in _DARWIN_X86_64_GEN_FILES.items()]),
