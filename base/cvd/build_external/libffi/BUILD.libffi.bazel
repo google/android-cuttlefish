@@ -33,6 +33,12 @@ SRCS_ARM64 = [
     "src/aarch64/sysv.S",
 ]
 
+SRCS_RISCV64 = [
+    "src/riscv/ffi.c",
+    "src/riscv/ffitarget.h",
+    "src/riscv/sysv.S",
+]
+
 COPTS_X86_64 = [
     "-DHAVE_AS_X86_PCREL",
     "-DHAVE_AS_ASCII_PSEUDO_OP",
@@ -41,12 +47,19 @@ COPTS_X86_64 = [
 COPTS_ARM64 = [
 ]
 
+COPTS_RISCV64 = [
+]
+
 DEPS_X86_64 = [
     "@//build_external/libffi/linux-x86:libffi_linux_x86",
 ]
 
 DEPS_ARM64 = [
     "@//build_external/libffi/linux-arm64:libffi_linux_arm64",
+]
+
+DEPS_RISCV64 = [
+    "@//build_external/libffi/linux-riscv64:libffi_linux_riscv64",
 ]
 
 genrule(
@@ -76,6 +89,7 @@ cc_library(
     srcs = COMMON_SRCS + select({
         "@platforms//cpu:x86_64": SRCS_X86_64,
         "@platforms//cpu:arm64": SRCS_ARM64,
+        "@platforms//cpu:riscv64": SRCS_RISCV64,
         "//conditions:default": [],
     }),
     copts = [
@@ -94,11 +108,13 @@ cc_library(
     ] + select({
         "@platforms//cpu:x86_64": COPTS_X86_64,
         "@platforms//cpu:arm64": COPTS_ARM64,
+        "@platforms//cpu:riscv64": COPTS_RISCV64,
         "//conditions:default": [],
     }),
     deps = [":libffi_include"] + select({
         "@platforms//cpu:x86_64": DEPS_X86_64,
         "@platforms//cpu:arm64": DEPS_ARM64,
+        "@platforms//cpu:riscv64": DEPS_RISCV64,
         "//conditions:default": [],
     }),
 )
