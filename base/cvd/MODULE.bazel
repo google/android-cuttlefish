@@ -83,11 +83,13 @@ single_version_override(
 # riscv64: rules_foreign_cc does not recognize riscv64 as a supported CPU,
 # and its bundled pkg-config 0.29.2 config.guess (2015) cannot detect riscv64.
 # Patch to add riscv64 support, pass --build explicitly to configure,
+# Provide prebuilt cmake 3.31.8 for riscv64 to avoid long bootstrap.
 single_version_override(
     module_name = "rules_foreign_cc",
     patches = [
         "//patches/rules_foreign_cc:riscv64_platform.patch",
         "//patches/rules_foreign_cc:riscv64_pkgconfig.patch",
+        "//patches/rules_foreign_cc:riscv64_cmake_prebuilt.patch",
     ],
     patch_strip = 1,
 )
