@@ -32,7 +32,7 @@ if [ -f "$CACHE_CONFIG_FILE" ]; then
     source "$CACHE_CONFIG_FILE"
 fi
 
-"${TOOL_DIR}/buildutils/build_packages.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
+"${TOOL_DIR}/buildutils/build_packages_cw.sh" -r "${BAZEL_REMOTE_CACHE}" -c "${CACHE_VERSION}"
 
 # Add test user to the kokoro group so it has access to the source dir
 "${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
