@@ -103,6 +103,11 @@ override_dh_install:
 	rm -rf ${cuttlefish_metrics}/bin/cvd.repo_mapping
 	rm -rf ${cuttlefish_metrics}/bin/cvd.runfiles*
 
+# Some shared libraries lack standard Debian shlib metadata. Allow missing info.
+.PHONY: override_dh_shlibdeps
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
 # Repair output files bazel actions made executable
 .PHONY: override_dh_fixperms
 override_dh_fixperms:
