@@ -19,34 +19,21 @@ import (
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
-	"github.com/google/android-cuttlefish/e2etests/cvd/cvd_powerwash_tests/common"
 )
 
 func TestCvdPowerwash(t *testing.T) {
 	testcases := []struct {
-		shortName string
 		branch string
 		target string
-		createArgs []string
 	}{
 		{
-			shortName: "Aosp",
 			branch: "aosp-android-latest-release",
 			target: "aosp_cf_x86_64_only_phone-userdebug",
-			createArgs: []string{},
-		},
-		{
-			shortName: "AospGfxstreamSwangle",
-			branch: "aosp-android-latest-release",
-			target: "aosp_cf_x86_64_only_phone-userdebug",
-			createArgs: []string{
-				"--gpu_mode=gfxstream_guest_angle_host_swiftshader",
-			},
 		},
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
-		t.Run(fmt.Sprintf("BUILD=%s", tc.shortName), func(t *testing.T) {
+		t.Run(fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target), func(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
@@ -57,12 +44,29 @@ func TestCvdPowerwash(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{Args: tc.createArgs}); err != nil {
+			if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
 				t.Fatal(err)
 			}
 
-			if err := powerwash_common.VerifyPowerwash(&c); err != nil {
+			if err := c.RunAdbWaitForDevice(); err != nil {
+				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
+			}
+
+			const tmpFile = "/data/local/tmp/foo"
+			if _, err := c.RunCmd("adb", "shell", "touch", tmpFile); err != nil {
+				t.Fatalf("failed to create %s: %w", tmpFile, err)
+			}
+
+			if _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err != nil {
+				t.Fatal("failed to verify %s created: %w", err)
+			}
+
+			if err := c.CVDPowerwash(); err != nil {
 				t.Fatal(err)
+			}
+
+			if _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err == nil {
+				t.Fatal("failed to powerwash, %s still exists")
 			}
 		})
 	}

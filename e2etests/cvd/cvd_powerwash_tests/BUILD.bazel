@@ -26,7 +26,6 @@ go_test(
     ],
     deps = [
         "//cvd/common",
-        "//cvd/cvd_powerwash_tests/common",
     ],
 )
 
@@ -45,6 +44,5 @@ go_test(
     ],
     deps = [
         "//cvd/common",
-        "//cvd/cvd_powerwash_tests/common",
     ],
 )
