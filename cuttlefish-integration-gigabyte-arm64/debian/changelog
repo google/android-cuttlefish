@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.52.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 09 Apr 2026 16:45:11 -0700
+
 cuttlefish-integration-gigabyte-arm64 (1.51.0) unstable; urgency=medium
 
   * Add cloud image installer for Gigabyte Ampere server. by @grandpaul in https://github.com/google/android-cuttlefish/pull/2303
