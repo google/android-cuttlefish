@@ -1,8 +1,9 @@
-cuttlefish-integration-gigabyte-arm64 (1.51.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.51.0) unstable; urgency=medium
 
-  *
+  * Add cloud image installer for Gigabyte Ampere server. by @grandpaul in https://github.com/google/android-cuttlefish/pull/2303
+  * gigabyte-ampere-cuttlefish-installer: preseed.cfg: make dhcp timeout … by @grandpaul in https://github.com/google/android-cuttlefish/pull/2352
 
- -- 3405691582 <dsk@google.com>  Thu, 02 Apr 2026 15:41:02 +0000
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 09 Apr 2026 15:57:01 -0700
 
 cuttlefish-integration-gigabyte-arm64 (1.50.0) unstable; urgency=medium
 
