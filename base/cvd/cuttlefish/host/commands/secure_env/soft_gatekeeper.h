@@ -24,7 +24,6 @@ extern "C" {
 #include <crypto_scrypt.h>
 }
 
-#include <android-base/memory.h>
 #include <gatekeeper/gatekeeper.h>
 
 #include <iostream>
@@ -149,7 +148,8 @@ class SoftGateKeeper : public GateKeeper {
     }
 
     bool DoVerify(const password_handle_t* expected_handle, const SizedBuffer& password) {
-        uint64_t user_id = android::base::get_unaligned<secure_id_t>(&expected_handle->user_id);
+        uint64_t user_id;
+        memcpy(&user_id, &expected_handle->user_id, sizeof(user_id));
         FastHashMap::const_iterator it = fast_hash_map_.find(user_id);
         if (it != fast_hash_map_.end() && VerifyFast(it->second, password)) {
             return true;
