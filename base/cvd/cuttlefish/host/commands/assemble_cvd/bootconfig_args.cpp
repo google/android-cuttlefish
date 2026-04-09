@@ -299,6 +299,13 @@ Result<std::unordered_map<std::string, std::string>> BootconfigArgsFromConfig(
             : "com.google.emulated.camera.provider.hal.v4l2";
   }
 
+  if (instance.device_type() == cuttlefish::DeviceType::Auto) {
+    if (!builtin_bootconfig_args.count("androidboot.cuttlefish_service_bluetooth_checker")) {
+      // # TODO (b/405655265) Remove once the BT issue is fixed
+      bootconfig_args["androidboot.cuttlefish_service_bluetooth_checker"] = "false";
+    }
+  }
+
   if (!instance.vcpu_config_path().empty()) {
     auto vcpu_config_json =
         CF_EXPECT(LoadFromFile(instance.vcpu_config_path()));
