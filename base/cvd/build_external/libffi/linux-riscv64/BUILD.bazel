@@ -1,0 +1,11 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+cc_library(
+    name = "libffi_linux_riscv64",
+    hdrs = [
+        "ffi.h",
+        "fficonfig.h",
+    ],
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
