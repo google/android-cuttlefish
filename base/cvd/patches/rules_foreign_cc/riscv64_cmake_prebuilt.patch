@@ -1,0 +1,34 @@
+--- a/toolchains/prebuilt_toolchains.bzl	2026-04-05 16:09:47.142551103 +0000
++++ b/toolchains/prebuilt_toolchains.bzl	2026-04-05 16:11:36.532335454 +0000
+@@ -1411,6 +1411,20 @@
+ 
+         maybe(
+             http_archive,
++            name = "cmake-3.31.8-linux-riscv64",
++            urls = [
++                "https://github.com/monkey-jsun/android-cuttlefish/releases/download/prebuilt-riscv64-assests/cmake-3.31.8-linux-riscv64.tar.gz",
++            ],
++            sha256 = "72ecaea0cad6a0e0ede3b99ebb594cec89579a9104916fcb2cfb7cc4d5f2eac7",
++            strip_prefix = "cmake-3.31.8-linux-riscv64",
++            build_file_content = _CMAKE_BUILD_FILE.format(
++                bin = "cmake",
++                env = "{\"CMAKE\": \"$(execpath :cmake_bin)\"}",
++            ),
++        )
++
++        maybe(
++            http_archive,
+             name = "cmake-3.31.8-linux-x86_64",
+             urls = [
+                 "https://github.com/Kitware/CMake/releases/download/v3.31.8/cmake-3.31.8-linux-x86_64.tar.gz",
+@@ -1474,6 +1488,10 @@
+                     "@platforms//cpu:aarch64",
+                     "@platforms//os:linux",
+                 ],
++                "cmake-3.31.8-linux-riscv64": [
++                    "@platforms//cpu:riscv64",
++                    "@platforms//os:linux",
++                ],
+                 "cmake-3.31.8-linux-x86_64": [
+                     "@platforms//cpu:x86_64",
+                     "@platforms//os:linux",
