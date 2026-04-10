@@ -778,10 +778,10 @@ bool SimService::SetPhoneNumber(std::string_view number) {
   std::string bcd_number = PDUParser::StringToBCD(number);
   int newLength = 0;
   // Skip Type(91) and Country Code(68)
-  if (number.size() == 12 && number.compare("68") == 0) {
+  if (number.size() == 12 && number == "68") {
     record.replace(footerOffset + 6, bcd_number.size(), bcd_number);
     newLength = 8;
-  } else { // Skip Type(81)
+  } else {  // Skip Type(81)
     record.replace(footerOffset + 4, bcd_number.size(), bcd_number);
     newLength = (bcd_number.size() + 2) / 2;
   }
@@ -957,7 +957,7 @@ void SimService::HandleSIM_IO(const Client& client,
   }
 
   SimFileSystem::EFId fileid = (SimFileSystem::EFId)std::stoi(id, nullptr, 16);
-  if (path == "") {
+  if (path.empty()) {
     path = SimFileSystem::GetUsimEFPath(fileid);
   }
   // EF_ADN under DF_PHONEBOOK is mapped to EF_ADN under DF_TELECOM per
