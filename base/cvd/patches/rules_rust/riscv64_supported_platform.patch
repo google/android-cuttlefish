@@ -1,0 +1,10 @@
+--- a/crate_universe/private/crates_repository.bzl
++++ b/crate_universe/private/crates_repository.bzl
+@@ -34,6 +34,7 @@
+     "x86_64-pc-windows-msvc",
+     "x86_64-unknown-linux-gnu",
+     "x86_64-unknown-nixos-gnu",
++    "riscv64gc-unknown-linux-gnu",
+ ]
+
+ def _crates_repository_impl(repository_ctx):
