@@ -26,7 +26,7 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include "absl/strings/strip.h"
 #include "absl/strings/str_split.h"
 #include <fmt/core.h>
@@ -172,7 +172,7 @@ static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
     if (!absl::ConsumePrefix(&line, "Name:")) {
       continue;
     }
-    if (android::base::Trim(line) == exec_name) {
+    if (absl::StripAsciiWhitespace(line) == exec_name) {
       found = true;
       break;
     }

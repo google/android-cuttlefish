@@ -34,7 +34,7 @@
 #include <string_view>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 #include "absl/strings/numbers.h"
@@ -77,7 +77,8 @@ CompositionManager::ParseOverlays(std::vector<std::string> overlay_items) {
   // index within that vm.  Structured types are created as result.
   for (int display_index = 0; display_index < overlay_items.size();
        display_index++) {
-    auto overlay_item = android::base::Trim(overlay_items[display_index]);
+    std::string_view overlay_item =
+        absl::StripAsciiWhitespace(overlay_items[display_index]);
 
     if (overlay_item.empty() || overlay_item == "_") {
       continue;

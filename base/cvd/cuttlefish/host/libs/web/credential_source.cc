@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/strip.h"
 #include "absl/strings/str_split.h"
@@ -210,18 +210,18 @@ RefreshTokenCredentialSource::FromOauth2ClientFile(
          absl::StrSplit(oauth_contents, '\n', absl::SkipEmpty())) {
       static constexpr std::string_view kClientIdPrefix = "client_id =";
       if (absl::ConsumePrefix(&line, kClientIdPrefix)) {
-        client_id = android::base::Trim(line);
+        client_id = std::string(absl::StripAsciiWhitespace(line));
         continue;
       }
       static constexpr std::string_view kClientSecretPrefix = "client_secret =";
       if (absl::ConsumePrefix(&line, kClientSecretPrefix)) {
-        client_secret = android::base::Trim(line);
+        client_secret = std::string(absl::StripAsciiWhitespace(line));
         continue;
       }
       static constexpr std::string_view kRefreshTokenPrefix =
           "gs_oauth2_refresh_token =";
       if (absl::ConsumePrefix(&line, kRefreshTokenPrefix)) {
-        refresh_token = android::base::Trim(line);
+        refresh_token = std::string(absl::StripAsciiWhitespace(line));
         continue;
       }
     }
