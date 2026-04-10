@@ -10,6 +10,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.19.3")
 bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
 bazel_dep(name = "boringssl", version = "0.20241024.0")
+bazel_dep(name = "rules_perl", version = "0.2.4")
 bazel_dep(name = "brotli")
 bazel_dep(name = "crc32c")
 bazel_dep(name = "curl")
@@ -107,3 +108,31 @@ single_version_override(
     patches = ["//patches/aspect_bazel_lib:riscv64_expand_template.patch"],
     patch_strip = 1,
 )
+
+# riscv64: rules_perl 0.2.4 has no riscv64 perl toolchain and its MODULE.bazel
+# cannot be patched via single_version_override.  Instead, download the prebuilt
+# perl tarball ourselves and register a local toolchain definition.
+perl_riscv64 = use_repo_rule("@rules_perl//perl:repo.bzl", "perl_download")
+perl_riscv64(
+    name = "perl_linux_riscv64",
+    urls = ["https://github.com/monkey-jsun/relocatable-perl-riscv/releases/download/5.42.2.0-riscv64/perl-linux-riscv64.tar.xz"],
+    sha256 = "23049b4574d76e35ec774160f6231ddae6127d1918de800c9d11eb25636e7351",
+    strip_prefix = "perl-linux-riscv64",
+)
+
+register_toolchains("//toolchain:perl_linux_riscv64_toolchain")
+
+# riscv64: openssl 3.3.1.bcr.1 overlay does not include riscv64 constants.
+# Use a patched overlay tarball that adds constants-linux-riscv64.bzl.
+# Also patch BUILD.bazel to add riscv64 to all select() blocks.
+# Source: https://github.com/monkey-jsun/android-cuttlefish/releases/tag/prebuilt-riscv64-assests
+single_version_override(
+    module_name = "openssl",
+    patches = [
+        "//patches/openssl:riscv64_overlay.patch",
+        "//patches/openssl:openssl_riscv64_build.patch",
+        "//patches/openssl:openssl_riscv64_def_hdrs.patch",
+    ],
+    patch_strip = 1,
+)
+
