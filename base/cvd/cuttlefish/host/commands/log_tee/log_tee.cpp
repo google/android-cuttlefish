@@ -20,7 +20,7 @@
 
 #include <regex>
 
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include <gflags/gflags.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -136,7 +136,8 @@ int main(int argc, char** argv) {
       if (chars_read == 0) {
         break;
       }
-      auto trimmed = android::base::Trim(std::string_view(buf, chars_read));
+      std::string trimmed(
+          absl::StripAsciiWhitespace(std::string_view(buf, chars_read)));
       // Newlines inside `trimmed` are handled by the android logging code.
       // These checks attempt to determine the log severity coming from crosvm.
       // There is no guarantee of success all the time since log line boundaries

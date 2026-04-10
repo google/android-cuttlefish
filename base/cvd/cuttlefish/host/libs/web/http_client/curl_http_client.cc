@@ -25,10 +25,11 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include "absl/log/log.h"
 
 #include "cuttlefish/host/libs/web/http_client/http_client.h"
@@ -39,8 +40,8 @@ namespace cuttlefish {
 namespace {
 
 std::string TrimWhitespace(const char* data, const size_t size) {
-  std::string converted(data, size);
-  return android::base::Trim(converted);
+  std::string_view converted(data, size);
+  return std::string(absl::StripAsciiWhitespace(converted));
 }
 
 int LoggingCurlDebugFunction(CURL*, curl_infotype type, char* data, size_t size,

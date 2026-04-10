@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include "absl/strings/numbers.h"
 
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
@@ -114,7 +114,7 @@ Result<LocalInstanceGroup> PromptUserForGroup(
       }
       chosen_group_name = groups[selection].GroupName();
     } else {
-      chosen_group_name = android::base::Trim(input_line);
+      chosen_group_name = std::string(absl::StripAsciiWhitespace(input_line));
     }
 
     filter.group_name = chosen_group_name;

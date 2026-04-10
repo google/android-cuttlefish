@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/strings.h>
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
 #include "absl/log/log.h"
 
@@ -161,8 +161,8 @@ bool KernelLogServer::HandleIncomingMessage() {
             // Expect space-separated key=value pairs in the log message.
             const std::vector<std::string> fields =
                 absl::StrSplit(line_.substr(pos + stage.size()), ' ');
-            for (std::string field : fields) {
-              field = android::base::Trim(field);
+            for (std::string_view field : fields) {
+              field = absl::StripAsciiWhitespace(field);
               if (field.empty()) {
                 // Expected; absl::StrSplit() always returns at least
                 // one (possibly empty) string.

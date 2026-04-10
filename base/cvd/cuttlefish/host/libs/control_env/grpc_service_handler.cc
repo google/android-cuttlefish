@@ -24,9 +24,9 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_split.h"
-#include "android-base/strings.h"
 #include "grpcpp/security/credentials.h"
 #include "json/json.h"
 #include "test/cpp/util/cli_credentials.h"
@@ -38,7 +38,6 @@
 
 using absl::EndsWith;
 using absl::StrSplit;
-using android::base::Trim;
 using grpc::InsecureChannelCredentials;
 
 namespace cuttlefish {
@@ -198,7 +197,7 @@ Result<std::string> HandleLsCmd(
       Json::Value json;
       json["services"] = Json::Value(Json::arrayValue);
       for (std::string_view full_service_name :
-           StrSplit(Trim(command_output), "\n")) {
+           StrSplit(absl::StripAsciiWhitespace(command_output), "\n")) {
         if (full_service_name == kServiceServerReflection ||
             full_service_name == kServiceHealth ||
             full_service_name == kServiceControlEnvProxyFull) {
@@ -225,8 +224,8 @@ Result<std::string> HandleLsCmd(
 
       Json::Value json;
       json["methods"] = Json::Value(Json::arrayValue);
-      for (const auto& method_name :
-           std::vector<std::string>(StrSplit(Trim(command_output), "\n"))) {
+      for (const auto& method_name : std::vector<std::string>(
+               StrSplit(absl::StripAsciiWhitespace(command_output), "\n"))) {
         json["methods"].append(method_name);
       }
       Json::StreamWriterBuilder builder;
@@ -252,7 +251,7 @@ Result<std::string> HandleLsCmd(
       //   rpc SetTxpower(wmediumdserver.SetTxpowerRequest) returns
       // (google.protobuf.Empty) {}
       std::vector<std::string> parsed_output =
-          StrSplit(Trim(command_output), "()");
+          StrSplit(absl::StripAsciiWhitespace(command_output), "()");
       CF_EXPECT(parsed_output.size() == 5, "Unexpected parsing result");
       Json::Value json;
       json["request_type"] = parsed_output[1];

@@ -26,10 +26,10 @@
 #include <vector>
 
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 #include "android-base/file.h"
-#include "android-base/strings.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -235,7 +235,7 @@ bool WriteDepsToFile(
 std::map<std::string, std::vector<std::string>> LoadModuleDeps(
     const std::string& filename) {
   std::map<std::string, std::vector<std::string>> dependency_map;
-  const auto dep_str = android::base::Trim(ReadFile(filename));
+  const std::string dep_str(absl::StripAsciiWhitespace(ReadFile(filename)));
   const std::vector<std::string_view> dep_lines = absl::StrSplit(dep_str, "\n");
   for (const auto& line : dep_lines) {
     const auto mod_name = line.substr(0, line.find(":"));
@@ -435,7 +435,7 @@ Result<void> SplitRamdiskModules(const std::string& ramdisk_path,
   std::string module_load_file =
       CF_EXPECT(FindFile(ramdisk_stage_dir, "modules.load"),
                 "Failed to find modules.dep file in input ramdisk");
-  module_load_file = android::base::Trim(module_load_file);
+  module_load_file = std::string(absl::StripAsciiWhitespace(module_load_file));
 
   CF_EXPECTF(!module_load_file.empty(),
              "Failed to find modules.dep file in input ramdisk '{}'",
