@@ -1,0 +1,41 @@
+--- a/BUILD.bazel	2026-04-03 21:44:20.553444101 +0000
++++ b/BUILD.bazel	2026-04-03 21:44:43.881933926 +0000
+@@ -43,6 +43,14 @@
+ )
+ 
+ config_setting(
++    name = "linux_riscv64",
++    constraint_values = [
++        "@platforms//os:linux",
++        "@platforms//cpu:riscv64",
++    ],
++)
++
++config_setting(
+     name = "wasm32",
+     constraint_values = [
+         "@platforms//os:none",
+@@ -77,11 +85,23 @@
+     template = "config.lzma-linux.h",
+ )
+ 
++expand_template(
++    name = "config_linux_riscv64",
++    out = "config.lzma-linux-riscv64.h",
++    substitutions = {
++        "{HAVE_IMMINTRIN_H}": "#undef HAVE_IMMINTRIN_H",
++        "{HAVE_CPUID_H}": "#undef HAVE_CPUID_H",
++        "{HAVE_USABLE_CLMUL}": "#undef HAVE_USABLE_CLMUL",
++    },
++    template = "config.lzma-linux.h",
++)
++
+ copy_file(
+     name = "copy_config",
+     src = selects.with_or({
+         "@platforms//os:android": "config.lzma-android.h",
+         ":linux_arm64": "config.lzma-linux-arm64.h",
++        ":linux_riscv64": "config.lzma-linux-riscv64.h",
+         ":linux_x86_64": "config.lzma-linux-x86_64.h",
+         ":osx_arm64": "config.lzma-osx-arm64.h",
+         ":osx_x86_64": "config.lzma-osx-x86_64.h",
