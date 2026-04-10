@@ -178,7 +178,7 @@ void NetworkService::InitializeSimOperator() {
     return;
   }
   auto sim_operator_numeric = sim_service_->GetSimOperator();
-  if (sim_operator_numeric == "") {
+  if (sim_operator_numeric.empty()) {
     return;
   }
 

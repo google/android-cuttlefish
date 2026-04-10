@@ -105,7 +105,7 @@ int ModemSimulatorMain(int argc, char** argv) {
 
     auto modem_simulator = std::make_unique<ModemSimulator>(modem_id);
     auto channel_monitor =
-        std::make_unique<ChannelMonitor>(*modem_simulator.get(), fd);
+        std::make_unique<ChannelMonitor>(*modem_simulator, fd);
 
     modem_simulator->Initialize(std::move(channel_monitor));
 

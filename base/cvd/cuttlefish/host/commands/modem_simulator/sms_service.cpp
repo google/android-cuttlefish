@@ -286,7 +286,7 @@ void SmsService::HandleSendSMSPDU(const Client& client, std::string& command) {
     port = std::stoi(phone_number);
   }
 
-  if (phone_number == "") {  /* Phone number unknown */
+  if (phone_number.empty()) {  /* Phone number unknown */
     LOG(ERROR) << "Failed to get phone number form address";
     client.SendCommandResponse(kCmsErrorSCAddressUnknown);
     return;
@@ -330,7 +330,7 @@ void SmsService::HandleSendSMSPDU(const Client& client, std::string& command) {
 /* AT+CMGS callback function */
 void SmsService::HandleReceiveSMS(PDUParser sms_pdu) {
   std::string pdu = sms_pdu.CreatePDU();
-  if (pdu != "") {
+  if (!pdu.empty()) {
     SendUnsolicitedCommand("+CMT: 0");
     SendUnsolicitedCommand(pdu);
   }
@@ -361,7 +361,7 @@ void SmsService::HandleSMSStatuReport(PDUParser sms_pdu, int message_reference) 
 
   auto pdu = sms_pdu.CreateStatuReport(message_reference);
   auto pdu_length = (pdu.size() - 2) / 2;  // Not Including SMSC Address
-  if (pdu != "" && pdu_length > 0) {
+  if (!pdu.empty() && pdu_length > 0) {
     ss << "+CDS: " << pdu_length;
     SendUnsolicitedCommand(ss.str());
     SendUnsolicitedCommand(pdu);
@@ -380,7 +380,7 @@ void SmsService::HandleReceiveRemoteSMS(const Client& /*client*/, std::string& c
     return;
   }
   pdu = sms_pdu.CreatePDU();
-  if (pdu != "") {
+  if (!pdu.empty()) {
     SendUnsolicitedCommand("+CMT: 0");
     SendUnsolicitedCommand(pdu);
   }

@@ -247,7 +247,7 @@ void StkService::OnUnsolicitedCommandForTR(std::string& command) {
 
   if (menu_id == "11") {  // BACKWARD_MOVE_BY_USER
     current_select_item_menu_ids_.pop_back();
-    if (current_select_item_menu_ids_.size() >= 1) {
+    if (!current_select_item_menu_ids_.empty()) {
       select_item = GetCurrentSelectItem();
       auto text = select_item->FindAttribute("text");
       if (text) {
