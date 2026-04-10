@@ -1,1 +1,1 @@
-exports_files(["riscv64_triple.patch"])
+exports_files(glob(["*.patch"]))
