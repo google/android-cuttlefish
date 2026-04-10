@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <string>
+#include <string_view>
 
 #include <fmt/format.h>
 #include <google/protobuf/text_format.h>
@@ -41,7 +42,7 @@ std::string GenerateFilenameSuffix() {
 }  // namespace
 
 Result<void> WriteMetricsEvent(EventType event_type,
-                               const std::string& metrics_directory,
+                               const std::string_view& metrics_directory,
                                const CuttlefishLogEvent& cf_log_event) {
   const std::string event_filepath = fmt::format(
       "{}/{}_{}_{}.txtpb", metrics_directory, EventTypeString(event_type),
