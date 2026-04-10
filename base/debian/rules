@@ -9,6 +9,20 @@
 
 include /usr/share/dpkg/buildflags.mk
 
+# for riscv64 host, we rely on environment vars for cargo-bazel
+ifeq ($(DEB_HOST_ARCH),riscv64)
+  ifndef CARGO_BAZEL_GENERATOR_URL
+    $(error riscv64 requires CARGO_BAZEL_GENERATOR_URL to be set. \
+      cargo-bazel must be built from source and the URL provided. \
+      Example: export CARGO_BAZEL_GENERATOR_URL=file:///usr/local/bin/cargo-bazel \
+      See docs/riscv64-setup.md for full instructions.)
+  endif
+  export CARGO_BAZEL_GENERATOR_URL
+  ifdef CARGO_BAZEL_GENERATOR_SHA256
+    export CARGO_BAZEL_GENERATOR_SHA256
+  endif
+endif
+
 # Retrieve bazel's view of the current compilation_mode
 compilation_mode :=
 default_compilation_mode := \
