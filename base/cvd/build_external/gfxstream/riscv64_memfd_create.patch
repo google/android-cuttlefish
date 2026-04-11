@@ -1,0 +1,10 @@
+--- a/common/base/SharedMemory_posix.cpp
++++ b/common/base/SharedMemory_posix.cpp
+@@ -16,6 +16,7 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+
++#include <sys/syscall.h>
+ #include "gfxstream/EintrWrapper.h"
+ #include "gfxstream/Macros.h"
+ #include "gfxstream/files/PathUtils.h"
