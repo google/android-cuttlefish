@@ -2,4 +2,4 @@ module github.com/google/android-cuttlefish/base/cvd/cuttlefish/host/commands/cv
 
 go 1.19
 
-require google.golang.org/protobuf v1.32.0
+require google.golang.org/protobuf v1.33.0
