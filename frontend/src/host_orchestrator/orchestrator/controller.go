@@ -82,7 +82,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds/{group}/{name}/:start",
 		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:stop",
-		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &stopCvdCommand{}))).Methods("POST")
+		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &stopCvdInstanceCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerwash",
 		httpHandler(newExecCVDInstanceCommandHandler(c.Config, c.OperationManager, &powerwashCvdCommand{}))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}/:powerbtn",

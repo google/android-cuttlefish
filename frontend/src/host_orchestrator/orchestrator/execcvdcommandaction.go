@@ -84,6 +84,12 @@ type execCvdInstanceCommand interface {
 	exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error
 }
 
+type stopCvdInstanceCommand struct{}
+
+func (a *stopCvdInstanceCommand) exec(cvdCLI *cvd.CLI, sel cvd.InstanceSelector) error {
+	return cvdCLI.LazySelectInstance(sel).Stop()
+}
+
 type powerwashCvdCommand struct{}
 
 func (a *powerwashCvdCommand) exec(cvd *cvd.CLI, sel cvd.InstanceSelector) error {
