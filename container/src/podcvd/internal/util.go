@@ -48,7 +48,7 @@ func Ipv4AddressesByGroupNames(ccm libcfcontainer.CuttlefishContainerManager, al
 	groupNameIpAddrMap := make(map[string]string)
 	clientID := os.Getenv(envClientID)
 	for _, container := range containers {
-		if clientID != "" {
+		if !allContainers && clientID != "" {
 			if val, exists := container.Labels[labelClientID]; exists && val != clientID {
 				continue
 			}
