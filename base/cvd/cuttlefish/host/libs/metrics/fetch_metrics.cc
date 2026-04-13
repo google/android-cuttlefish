@@ -25,8 +25,17 @@
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
-Result<FetchMetrics> GetFetchStartMetrics(const FetchFlags& fetch_flags) {
+struct GetEventLabel {
+  std::string operator()(const FetchStartMetrics&) { return "fetch_start"; }
+  std::string operator()(const FetchCompleteMetrics&) {
+    return "fetch_complete";
+  }
+  std::string operator()(const FetchFailedMetrics&) { return "fetch_failed"; }
+};
+
+Result<FetchMetrics> GetFetchMetrics(const FetchFlags& fetch_flags) {
   return FetchStartMetrics{
       .enable_local_caching = fetch_flags.build_api_flags.enable_caching,
       .dynamic_super_image_mixing =
@@ -36,7 +45,7 @@ Result<FetchMetrics> GetFetchStartMetrics(const FetchFlags& fetch_flags) {
   };
 }
 
-Result<FetchMetrics> GetFetchCompleteMetrics(const FetchResult& fetch_result) {
+Result<FetchMetrics> GetFetchMetrics(const FetchResult& fetch_result) {
   std::vector<Builds> builds;
   for (const FetchArtifacts& artifact : fetch_result.fetch_artifacts) {
     builds.push_back(artifact.builds);
@@ -49,6 +58,18 @@ Result<FetchMetrics> GetFetchCompleteMetrics(const FetchResult& fetch_result) {
       .fetch_size_bytes = fetch_result.fetch_size_bytes,
       .fetched_builds = builds,
   };
+}
+
+}  // namespace
+
+std::string ToEventLabel(const FetchMetrics& fetch_metrics) {
+  return std::visit(GetEventLabel(), fetch_metrics);
+}
+
+Result<FetchMetrics> GetFetchMetrics(const FetchInput& fetch_input) {
+  Result<FetchMetrics> result =
+      std::visit([](auto&& arg) { return GetFetchMetrics(arg); }, fetch_input);
+  return CF_EXPECT(std::move(result));
 }
 
 }  // namespace cuttlefish
