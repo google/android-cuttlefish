@@ -132,9 +132,7 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
     return;
   }
   if (AreMetricsEnabled()) {
-    LOG(INFO) << "This will automatically send diagnostic information to "
-                 "Google, such as crash reports and usage data from the host "
-                 "machine managing the Android Virtual Device.";
+    LOG(INFO) << kMetricsEnabledNotice;
   }
   Result<void> run_metrics_result = RunMetrics(*metrics_input_result);
   if (!run_metrics_result.ok()) {
