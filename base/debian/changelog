@@ -1,4 +1,4 @@
-cuttlefish-common (1.49.0) unstable; urgency=medium
+cuttlefish-common (1.49.0) stable; urgency=medium
 
   * Start development on v1.49 by @rmuthiah in https://github.com/google/android-cuttlefish/pull/2299
   * Fix copy-paste failure in gpu mode by @jmacnak in https://github.com/google/android-cuttlefish/pull/2301
