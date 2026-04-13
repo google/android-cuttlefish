@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/netip"
@@ -28,6 +29,7 @@ import (
 	"time"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
+	"github.com/google/uuid"
 
 	"github.com/containerd/errdefs"
 	"github.com/docker/docker/api/types/container"
@@ -257,6 +259,7 @@ func findAvailableGroupName(groupNameIpAddrMap map[string]string) string {
 }
 
 func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, commonArgs *CvdCommonArgs) (string, error) {
+	attemptID := uuid.New().String()
 	containerCfg := &container.Config{
 		Env: []string{
 			"ANDROID_HOST_OUT=/host_out",
@@ -265,6 +268,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		Image: imageName,
 		Labels: map[string]string{
 			labelCreatedBy: valueCreatedBy,
+			labelAttemptID: attemptID,
 		},
 	}
 	clientID := os.Getenv(envClientID)
@@ -304,8 +308,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		},
 	}
 	var lastErr error
-	const retryCount = 5
-	for i := 0; i < retryCount; i++ {
+	for retryCount := 0; retryCount < 10; retryCount++ {
 		groupNameIpAddrMap, err := Ipv4AddressesByGroupNames(ccm, true)
 		if err != nil {
 			return "", err
@@ -331,7 +334,13 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		containerCfg.Labels[labelGroupName] = groupName
 		if _, err := ccm.CreateAndStartContainer(context.Background(), containerCfg, containerHostCfg, ContainerName(groupName)); err != nil {
 			lastErr = err
-			ccm.StopAndRemoveContainer(context.Background(), ContainerName(groupName))
+			// Cleanup created container if it failed.
+			inspectRes, inspectErr := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(groupName))
+			if inspectErr == nil && inspectRes.Config.Labels[labelAttemptID] == attemptID {
+				ccm.StopAndRemoveContainer(context.Background(), ContainerName(groupName))
+			}
+			retryInterval := time.Duration(100+rand.Intn(201)) * time.Millisecond // 100-300 ms
+			time.Sleep(retryInterval)
 			continue
 		}
 		commonArgs.GroupName = groupName
