@@ -142,6 +142,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/cvd/utils:common",
+        "//cuttlefish/host/libs/metrics:fetch_metrics_orchestration",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
