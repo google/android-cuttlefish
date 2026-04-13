@@ -26,6 +26,7 @@ const (
 	labelClientID        = "client_id"
 	labelGroupName       = "group_name"
 	labelCreatedBy       = "created_by"
+	labelAttemptID       = "attempt_id"
 	valueCreatedBy       = "podcvd"
 	ToolingContainerName = "tooling"
 )
