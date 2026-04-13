@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <string_view>
 
@@ -28,7 +27,6 @@ namespace cuttlefish {
 
 struct MetricsInput {
   std::string metrics_directory;
-  std::optional<Guests> guests;
 };
 
 Result<void> SetUpMetrics(const std::string& metrics_directory);
