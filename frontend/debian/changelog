@@ -16,7 +16,7 @@ cuttlefish-frontend (1.50.0) unstable; urgency=medium
 
  -- 3405691582 <dsk@google.com>  Thu, 02 Apr 2026 13:56:08 +0000
 
-cuttlefish-frontend (1.49.0) unstable; urgency=medium
+cuttlefish-frontend (1.49.0) stable; urgency=medium
 
   * N/A
 
