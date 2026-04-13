@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -15,6 +15,6 @@
+ 
+ http_archive(
+     name = "openssl-generated-overlay",
+-    integrity = "sha256-fXZ0Cr/DKjm29wLDqlmqKr2XnXMbWMjGYuVnsuVxWdA=",
+-    url = "https://github.com/raccoons-build/bazel-openssl-cc/releases/download/3.3.1.bcr.1/bazel-openssl-cc-3.3.1.bcr.1.tar.gz",
++    integrity = "sha256-3+93Mm6Z+pl4pf8tPebqgp35OVH4YqTYJzGaKf+/1PQ=",
++    url = "https://github.com/monkey-jsun/android-cuttlefish/releases/download/prebuilt-riscv64-assests/bazel-openssl-cc-3.3.1.bcr.1+riscv64.tar.gz",
+ )
