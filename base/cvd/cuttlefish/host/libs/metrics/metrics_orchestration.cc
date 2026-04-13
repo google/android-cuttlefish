@@ -30,7 +30,6 @@
 #include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
-#include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/flag_metrics.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
@@ -88,14 +87,15 @@ Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
   return result;
 }
 
-Result<void> OutputMetrics(DeviceEventType event_type,
+Result<void> OutputMetrics(std::string_view event_type_label,
                            std::string_view metrics_directory,
                            const MetricsData& metrics_data) {
   if (AreMetricsEnabled()) {
     const CuttlefishLogEvent cf_log_event =
         BuildCuttlefishLogEvent(metrics_data);
     CF_EXPECT(TransmitMetrics(kTransmitterPath, cf_log_event));
-    CF_EXPECT(WriteMetricsEvent(event_type, metrics_directory, cf_log_event));
+    CF_EXPECT(
+        WriteMetricsEvent(event_type_label, metrics_directory, cf_log_event));
   }
   return {};
 }

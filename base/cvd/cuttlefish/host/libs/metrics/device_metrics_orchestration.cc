@@ -90,10 +90,11 @@ Result<void> RunMetrics(const MetricsInput& metrics_input) {
   const MetricsData metrics_data = CF_EXPECTF(
       GatherMetrics(metrics_input), "Failed to gather all metrics data for {}.",
       DeviceEventTypeString(metrics_input.guests->event_type));
-  CF_EXPECTF(OutputMetrics(metrics_input.guests->event_type,
-                           metrics_input.metrics_directory, metrics_data),
-             "Failed to output metrics for {}.",
-             DeviceEventTypeString(metrics_input.guests->event_type));
+  CF_EXPECTF(
+      OutputMetrics(DeviceEventTypeString(metrics_input.guests->event_type),
+                    metrics_input.metrics_directory, metrics_data),
+      "Failed to output metrics for {}.",
+      DeviceEventTypeString(metrics_input.guests->event_type));
   return {};
 }
 
