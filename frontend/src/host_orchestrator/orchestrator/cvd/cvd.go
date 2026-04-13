@@ -370,6 +370,20 @@ func (i *Instance) ADBSerial() string {
 	return i.instance.ADBSerial
 }
 
+func (i *Instance) CVDStatus() (map[string]interface{}, error) {
+	args := i.selectorArgs()
+	args = append(args, "status", "--print")
+	out, err := i.cli.exec(CVDBin, args...)
+	if err != nil {
+		return nil, err
+	}
+	var status map[string]interface{}
+	if err := json.Unmarshal(out, &status); err != nil {
+		return nil, fmt.Errorf("error parsing `cvd status` output: %w", err)
+	}
+	return status, nil
+}
+
 type DisplayAddOpts struct {
 	Width         int
 	Height        int
@@ -536,6 +550,20 @@ func (g *Group) Remove() error {
 	args = append(args, "remove")
 	_, err := g.cli.exec(CVDBin, args...)
 	return err
+}
+
+func (g *Group) CVDStatus() (map[string]interface{}, error) {
+	args := g.selectorArgs()
+	args = append(args, "status", "--print")
+	out, err := g.cli.exec(CVDBin, args...)
+	if err != nil {
+		return nil, err
+	}
+	var status map[string]interface{}
+	if err := json.Unmarshal(out, &status); err != nil {
+		return nil, fmt.Errorf("error parsing `cvd status` output: %w", err)
+	}
+	return status, nil
 }
 
 type StartOptions struct {

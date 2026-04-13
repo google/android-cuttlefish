@@ -212,3 +212,7 @@ type DisplayScreenshotResponse struct {
 type ListScreenRecordingsResponse struct {
 	ScreenRecordings []string `json:"screen_recordings"`
 }
+
+type CVDStatusResponse struct {
+	Status map[string]interface{} `json:"status"`
+}

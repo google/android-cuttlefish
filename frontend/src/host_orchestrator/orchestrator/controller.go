@@ -68,6 +68,10 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 		httpHandler(newCreateCVDHandler(c.Config, c.OperationManager, c.UserArtifactsManager))).Methods("POST")
 	router.Handle("/cvds", httpHandler(&listCVDsHandlerAll{Config: c.Config})).Methods("GET")
 	router.Handle("/cvds/{group}", httpHandler(&listCVDsHandler{Config: c.Config})).Methods("GET")
+	router.Handle("/cvds/{group}/:status",
+		httpHandler(newGetCVDGroupStatusHandler(c.Config, c.OperationManager))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}/:status",
+		httpHandler(newGetCVDInstanceStatusHandler(c.Config, c.OperationManager))).Methods("GET")
 	router.PathPrefix("/cvds/{group}/{name}/logs").Handler(&getCVDLogsHandler{Config: c.Config}).Methods("GET")
 	router.Handle("/cvds/{group}/:start",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &startCvdCommand{}))).Methods("POST")
@@ -936,6 +940,44 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+}
+
+type getCVDGroupStatusHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newGetCVDGroupStatusHandler(c Config, om OperationManager) *getCVDGroupStatusHandler {
+	return &getCVDGroupStatusHandler{Config: c, OM: om}
+}
+
+func (h *getCVDGroupStatusHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	opts := CVDGroupStatusActionOpts{
+		Selector:         cvd.GroupSelector{Name: vars["group"]},
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewCVDGroupStatusAction(opts).Run()
+}
+
+type getCVDInstanceStatusHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newGetCVDInstanceStatusHandler(c Config, om OperationManager) *getCVDInstanceStatusHandler {
+	return &getCVDInstanceStatusHandler{Config: c, OM: om}
+}
+
+func (h *getCVDInstanceStatusHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	opts := CVDInstanceStatusActionOpts{
+		Selector:         cvd.InstanceSelector{GroupName: vars["group"], Name: vars["name"]},
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewCVDInstanceStatusAction(opts).Run()
 }
 
 func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.FetchCredentials {
