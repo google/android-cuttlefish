@@ -39,6 +39,11 @@
 namespace cuttlefish {
 namespace {
 
+struct DeviceMetricsInput {
+  MetricsInput base_input;
+  Guests guests;
+};
+
 std::vector<GuestInfo> GetGuestInfos(
     const std::string& group_product_out,
     const std::vector<LocalInstance>& instances) {
@@ -61,11 +66,14 @@ std::vector<GuestInfo> GetGuestInfos(
   return result;
 }
 
-Result<MetricsInput> GetInstanceGroupMetricsInput(
+Result<DeviceMetricsInput> GetDeviceMetricsInput(
     const LocalInstanceGroup& instance_group,
     const DeviceEventType event_type) {
-  return MetricsInput{
-      .metrics_directory = instance_group.MetricsDir(),
+  return DeviceMetricsInput{
+      .base_input =
+          MetricsInput{
+              .metrics_directory = instance_group.MetricsDir(),
+          },
       .guests =
           Guests{
               .host_artifacts = instance_group.HostArtifactsPath(),
@@ -77,31 +85,39 @@ Result<MetricsInput> GetInstanceGroupMetricsInput(
   };
 }
 
-Result<void> RunMetrics(const MetricsInput& metrics_input) {
-  ScopedLogger logger = CreateLogger(metrics_input.metrics_directory);
-  CF_EXPECTF(FileExists(metrics_input.metrics_directory),
+Result<MetricsData> GatherDeviceMetrics(
+    const DeviceMetricsInput& device_metrics_input) {
+  MetricsData metrics_data =
+      CF_EXPECT(GatherMetrics(device_metrics_input.base_input));
+  metrics_data.guest_metrics =
+      CF_EXPECT(GetGuestMetrics(device_metrics_input.guests));
+  return metrics_data;
+}
+
+Result<void> RunMetrics(const DeviceMetricsInput& metrics_input) {
+  ScopedLogger logger =
+      CreateLogger(metrics_input.base_input.metrics_directory);
+  CF_EXPECTF(FileExists(metrics_input.base_input.metrics_directory),
              "Metrics directory({}) does not exist.  Perhaps metrics were not "
              "initialized?",
-             metrics_input.metrics_directory);
-  CF_EXPECT(metrics_input.guests.has_value(),
-            "Guest information not populated for device metrics event, cannot "
-            "gather metrics data.");
+             metrics_input.base_input.metrics_directory);
 
-  const MetricsData metrics_data = CF_EXPECTF(
-      GatherMetrics(metrics_input), "Failed to gather all metrics data for {}.",
-      DeviceEventTypeString(metrics_input.guests->event_type));
+  const std::string event_type_label =
+      DeviceEventTypeString(metrics_input.guests.event_type);
+  const MetricsData metrics_data =
+      CF_EXPECTF(GatherDeviceMetrics(metrics_input),
+                 "Failed to gather all metrics data for {}.", event_type_label);
   CF_EXPECTF(
-      OutputMetrics(DeviceEventTypeString(metrics_input.guests->event_type),
-                    metrics_input.metrics_directory, metrics_data),
-      "Failed to output metrics for {}.",
-      DeviceEventTypeString(metrics_input.guests->event_type));
+      OutputMetrics(event_type_label,
+                    metrics_input.base_input.metrics_directory, metrics_data),
+      "Failed to output metrics for {}.", event_type_label);
   return {};
 }
 
 }  // namespace
 
 void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
+  Result<DeviceMetricsInput> metrics_input_result = GetDeviceMetricsInput(
       instance_group, DeviceEventType::DeviceInstantiation);
   if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
@@ -109,7 +125,7 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
     return;
   }
   Result<void> metrics_setup_result =
-      SetUpMetrics(metrics_input_result->metrics_directory);
+      SetUpMetrics(metrics_input_result->base_input.metrics_directory);
   if (!metrics_setup_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_setup_result.error());
@@ -130,8 +146,8 @@ void GatherVmInstantiationMetrics(const LocalInstanceGroup& instance_group) {
 }
 
 void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
-      instance_group, DeviceEventType::DeviceBootStart);
+  Result<DeviceMetricsInput> metrics_input_result =
+      GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceBootStart);
   if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
@@ -147,7 +163,7 @@ void GatherVmStartMetrics(const LocalInstanceGroup& instance_group) {
 }
 
 void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
+  Result<DeviceMetricsInput> metrics_input_result = GetDeviceMetricsInput(
       instance_group, DeviceEventType::DeviceBootComplete);
   if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
@@ -164,8 +180,8 @@ void GatherVmBootCompleteMetrics(const LocalInstanceGroup& instance_group) {
 }
 
 void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsInput> metrics_input_result = GetInstanceGroupMetricsInput(
-      instance_group, DeviceEventType::DeviceBootFailed);
+  Result<DeviceMetricsInput> metrics_input_result =
+      GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceBootFailed);
   if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());
@@ -181,8 +197,8 @@ void GatherVmBootFailedMetrics(const LocalInstanceGroup& instance_group) {
 }
 
 void GatherVmStopMetrics(const LocalInstanceGroup& instance_group) {
-  Result<MetricsInput> metrics_input_result =
-      GetInstanceGroupMetricsInput(instance_group, DeviceEventType::DeviceStop);
+  Result<DeviceMetricsInput> metrics_input_result =
+      GetDeviceMetricsInput(instance_group, DeviceEventType::DeviceStop);
   if (!metrics_input_result.ok()) {
     VLOG(0) << fmt::format("Failed to initialize metrics.  Error: {}",
                            metrics_input_result.error());

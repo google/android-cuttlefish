@@ -32,7 +32,6 @@
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/flag_metrics.h"
-#include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
@@ -71,20 +70,13 @@ ScopedLogger CreateLogger(std::string_view metrics_directory) {
 }
 
 Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
-  auto result = MetricsData{
+  return MetricsData{
       .session_id =
           CF_EXPECT(ReadSessionIdFile(metrics_input.metrics_directory)),
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
       .host_metrics = GetHostInfo(),
   };
-
-  if (metrics_input.guests) {
-    result.guest_metrics =
-        CF_EXPECT(GetGuestMetrics(metrics_input.guests.value()));
-  }
-
-  return result;
 }
 
 Result<void> OutputMetrics(std::string_view event_type_label,
