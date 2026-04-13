@@ -16,39 +16,18 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <string>
-#include <variant>
-#include <vector>
 
-#include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
-#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-using FetchInput = std::variant<FetchFlags, FetchResult>;
+void GatherFetchStartMetrics(const FetchFlags& fetch_flags);
 
-struct FetchStartMetrics {
-  bool enable_local_caching = false;
-  bool dynamic_super_image_mixing = false;
-};
+void GatherFetchCompleteMetrics(const std::string& target_directory,
+                                const FetchResult& fetch_result);
 
-struct FetchCompleteMetrics {
-  bool status_blocked = false;
-  uint64_t fetch_size_bytes = 0;
-  std::vector<Builds> fetched_builds;
-};
-
-struct FetchFailedMetrics {};
-
-using FetchMetrics =
-    std::variant<FetchStartMetrics, FetchCompleteMetrics, FetchFailedMetrics>;
-
-std::string ToEventLabel(const FetchMetrics& fetch_metrics);
-
-Result<FetchMetrics> GetFetchMetrics(const FetchInput& fetch_input);
+void GatherFetchFailedMetrics(const std::string& target_directory);
 
 }  // namespace cuttlefish

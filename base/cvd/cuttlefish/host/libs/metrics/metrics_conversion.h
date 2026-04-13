@@ -17,10 +17,12 @@
 #pragma once
 
 #include <chrono>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/host/libs/metrics/fetch_metrics.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
 #include "external_proto/cf_log.pb.h"
 
@@ -32,6 +34,7 @@ struct MetricsData {
   std::chrono::milliseconds now;
   HostInfo host_metrics;
   std::vector<GuestMetrics> guest_metrics;
+  std::optional<FetchMetrics> fetch_metrics;
 };
 
 logs::proto::wireless::android::cuttlefish::CuttlefishLogEvent
