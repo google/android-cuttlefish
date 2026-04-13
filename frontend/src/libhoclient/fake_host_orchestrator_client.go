@@ -245,3 +245,12 @@ func (c *FakeHostOrchestratorClient) unusedCVDId() int {
 func (c *FakeHostOrchestratorClient) randomString() string {
 	return fmt.Sprint(time.Now().UnixNano())
 }
+
+
+func (c *FakeHostOrchestratorClient) CVDStatus(groupName, instanceName string) (*hoapi.CVDStatusResponse, error) {
+	return &hoapi.CVDStatusResponse{}, nil
+}
+
+func (c *FakeHostOrchestratorClient) CVDGroupStatus(groupName string) (*hoapi.CVDStatusResponse, error) {
+	return &hoapi.CVDStatusResponse{}, nil
+}
