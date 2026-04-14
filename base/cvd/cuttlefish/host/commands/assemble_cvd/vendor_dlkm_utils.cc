@@ -61,19 +61,18 @@ constexpr size_t RoundUp(size_t a, size_t divisor) {
 
 template <typename Container>
 bool WriteLinesToFile(const Container& lines, const std::string& path) {
-  android::base::unique_fd fd(
-      open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640));
-  if (!fd.ok()) {
+  SharedFD fd = SharedFD::Open(path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0640);
+  if (!fd->IsOpen()) {
     PLOG(ERROR) << "Failed to open " << path;
     return false;
   }
   for (const auto& line : lines) {
-    if (!android::base::WriteFully(fd, line.data(), line.size())) {
+    if (WriteAll(fd, line) != line.size()) {
       PLOG(ERROR) << "Failed to write to " << path;
       return false;
     }
     const char c = '\n';
-    if (write(fd.get(), &c, 1) != 1) {
+    if (fd->Write(&c, 1) != 1) {
       PLOG(ERROR) << "Failed to write to " << path;
       return false;
     }
