@@ -1,0 +1,21 @@
+--- a/rust/platform/triple.bzl
++++ b/rust/platform/triple.bzl
+@@ -129,7 +129,7 @@
+     # Detect the host's cpu architecture
+ 
+     supported_architectures = {
+-        "linux": ["aarch64", "x86_64", "s390x", "powerpc64le"],
++        "linux": ["aarch64", "x86_64", "s390x", "powerpc64le", "riscv64gc"],
+         "macos": ["aarch64", "x86_64"],
+         "windows": ["aarch64", "x86_64"],
+     }
+@@ -141,6 +141,9 @@
+     if arch == "ppc64le":
+         arch = "powerpc64le"
+ 
++    if arch == "riscv64":
++        arch = "riscv64gc"
++
+     if "linux" in repository_ctx.os.name:
+         _validate_cpu_architecture(arch, supported_architectures["linux"])
+         prefix = "{}-unknown-linux".format(arch)
