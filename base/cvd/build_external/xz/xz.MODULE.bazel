@@ -2,5 +2,12 @@ single_version_override(
     module_name = "xz",
     version = "5.4.5.bcr.5",
     patch_strip = 1,
-    patches = ["@//build_external/xz:bazel9.patch"],
+    patches = [
+        "@//build_external/xz:bazel9.patch",
+        # riscv64: xz BUILD.bazel only has x86_64 and arm64 config settings.
+        # On riscv64 it falls through to //conditions:default (x86_64 config)
+        # which defines HAVE_IMMINTRIN_H — but immintrin.h is x86-only.
+        # Add a linux_riscv64 config that undefs x86 intrinsics (mirrors arm64).
+        "//patches/xz:riscv64_config.patch",
+    ],
 )
