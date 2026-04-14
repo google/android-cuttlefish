@@ -45,7 +45,6 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/io/shared_fd.h"
-#include "cuttlefish/posix/strerror.h"
 
 namespace cuttlefish {
 
@@ -84,12 +83,13 @@ bool WriteLinesToFile(const Container& lines, const std::string& path) {
 Result<void> WriteFsConfig(const std::string& output_path,
                            const std::string& fs_root,
                            const std::string& mount_point) {
-  android::base::unique_fd fd(open(
-      output_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
-  CF_EXPECTF(fd.ok(), "Couldn't open '{}': '{}'", output_path, StrError(errno));
+  SharedFD fd = SharedFD::Open(output_path,
+                               O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
+  CF_EXPECTF(fd->IsOpen(), "Couldn't open '{}': '{}'", output_path,
+             fd->StrError());
   static constexpr std::string_view kBeginning =
       " 0 0 755 selabel=u:object_r:rootfs:s0 capabilities=0x0\n";
-  CF_EXPECTF(android::base::WriteStringToFd(kBeginning, fd),
+  CF_EXPECTF(WriteAll(fd, kBeginning) == kBeginning.size(),
              "Failed to write to '{}'", output_path);
   Result<void> res = WalkDirectory(
       fs_root,
@@ -100,10 +100,10 @@ Result<void> WriteFsConfig(const std::string& output_path,
         const std::string fs_context = DirectoryExists(file_path)
                                            ? " 0 0 755 capabilities=0x0\n"
                                            : " 0 0 644 capabilities=0x0\n";
-        CF_EXPECTF(android::base::WriteStringToFd(
-                       mount_point + "/" + filename + fs_context, fd),
+        std::string to_write = mount_point + "/" + filename + fs_context;
+        CF_EXPECTF(WriteAll(fd, to_write) == to_write.size(),
                    "Failed to write to '{}': '{}'", output_path,
-                   StrError(errno));
+                   fd->StrError());
         return {};
       });
   CF_EXPECT(std::move(res));
