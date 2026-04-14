@@ -295,7 +295,7 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     }
     Result<std::unique_ptr<CredentialSource>> credential =
         CredentialForScopes(http_client, scopes, credential_path);
-    if (credential.ok() && credential->get() != nullptr) {
+    if (credential.ok() && *credential != nullptr) {
       return std::move(*credential);
     }
   }
