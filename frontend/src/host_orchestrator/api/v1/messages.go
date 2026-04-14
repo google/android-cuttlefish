@@ -214,5 +214,5 @@ type ListScreenRecordingsResponse struct {
 }
 
 type CVDStatusResponse struct {
-	Status map[string]interface{} `json:"status"`
+	Status interface{} `json:"status"`
 }

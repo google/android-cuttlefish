@@ -370,14 +370,14 @@ func (i *Instance) ADBSerial() string {
 	return i.instance.ADBSerial
 }
 
-func (i *Instance) CVDStatus() (map[string]interface{}, error) {
+func (i *Instance) CVDStatus() (interface{}, error) {
 	args := i.selectorArgs()
 	args = append(args, "status", "--print")
 	out, err := i.cli.exec(CVDBin, args...)
 	if err != nil {
 		return nil, err
 	}
-	var status map[string]interface{}
+	var status interface{}
 	if err := json.Unmarshal(out, &status); err != nil {
 		return nil, fmt.Errorf("error parsing `cvd status` output: %w", err)
 	}
@@ -552,14 +552,14 @@ func (g *Group) Remove() error {
 	return err
 }
 
-func (g *Group) CVDStatus() (map[string]interface{}, error) {
+func (g *Group) CVDStatus() (interface{}, error) {
 	args := g.selectorArgs()
 	args = append(args, "status", "--print")
 	out, err := g.cli.exec(CVDBin, args...)
 	if err != nil {
 		return nil, err
 	}
-	var status map[string]interface{}
+	var status interface{}
 	if err := json.Unmarshal(out, &status); err != nil {
 		return nil, fmt.Errorf("error parsing `cvd status` output: %w", err)
 	}

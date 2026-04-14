@@ -791,12 +791,11 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 	return out
 }
 
-
 func (c *HostOrchestratorClientImpl) CVDStatus(groupName, instanceName string) (*hoapi.CVDStatusResponse, error) {
 	path := fmt.Sprintf("/cvds/%s/%s/:status", groupName, instanceName)
 	res := &hoapi.CVDStatusResponse{}
 	rb := c.HTTPHelper.NewGetRequest(path)
-	
+
 	op := &hoapi.Operation{}
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
@@ -811,7 +810,7 @@ func (c *HostOrchestratorClientImpl) CVDGroupStatus(groupName string) (*hoapi.CV
 	path := fmt.Sprintf("/cvds/%s/:status", groupName)
 	res := &hoapi.CVDStatusResponse{}
 	rb := c.HTTPHelper.NewGetRequest(path)
-	
+
 	op := &hoapi.Operation{}
 	if err := rb.JSONResDo(op); err != nil {
 		return nil, err
