@@ -10,7 +10,60 @@ on:
       - '**'
 
 jobs:
+  check-install-gigabyte-package-deb-job:
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    steps:
+    - name: Prepare test environment
+      run: |
+        apt-get update
+        apt-get upgrade -y
+        apt-get install -y sudo
+        apt-get install -y curl ca-certificates
+    - name: Setup repository
+      run: |
+        curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg -o /etc/apt/trusted.gpg.d/artifact-registry.asc
+        chmod a+r /etc/apt/trusted.gpg.d/artifact-registry.asc
+        echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts android-cuttlefish main" | tee -a /etc/apt/sources.list.d/artifact-registry.list
+        apt-get update
+    - name: Install meta package
+      run: apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 install cuttlefish-integration-gigabyte-arm64
+    - name: ulimit config test
+      run: |
+        test -e /etc/security/limits.d/95-cuttlefish-integration-gigabyte-arm64-nofile.conf
+        ulimit -n
+    - name: NTP config test
+      run: test -e /etc/ntpsec/ntp.d/google-time-server.conf
+    - name: Package purge test
+      run: |
+        apt -o Apt::Get::Assume-Yes=true -o APT::Color=0 -o DPkgPM::Progress-Fancy=0 purge cuttlefish-integration-gigabyte-arm64
+        test ! -e /etc/ntpsec/ntp.d/google-time-server.conf
+
+  check-preseed-after-install-script-gpu-job:
+    runs-on: ubuntu-22.04-arm
+    container:
+      image: debian@sha256:2c91e484d93f0830a7e05a2b9d92a7b102be7cab562198b984a84fdbc7806d91 # debian:trixie-20260202
+    defaults:
+      run:
+        working-directory: ./gigabyte-ampere-cuttlefish-installer
+    strategy:
+      matrix:
+        amd_gpu: ["true", "false"]
+        nvidia_gpu: ["true", "false"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Check preseed after install script
+      uses: ./.github/actions/gigabyte-ampere-cuttlefish-installer-check-preseed-after-install-script
+      with:
+        emulate-nvidia: ${{ matrix.nvidia_gpu }}
+        emulate-amd: ${{ matrix.amd_gpu }}
+
   build-installer-iso-job:
+    needs:
+      - check-install-gigabyte-package-deb-job
+      - check-preseed-after-install-script-gpu-job
     runs-on: ubuntu-22.04
     container:
       image: debian@sha256:13f29b6806e531c3ff3b565bb6eed73f2132506c8c9d41bb996065ca20fb27f2 # debian:trixie-20260223 (amd64)
