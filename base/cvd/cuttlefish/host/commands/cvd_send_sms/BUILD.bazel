@@ -49,7 +49,5 @@ cf_cc_test(
         "//cuttlefish/common/libs/fs",
         "//libbase",
         "@abseil-cpp//absl/log:check",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )

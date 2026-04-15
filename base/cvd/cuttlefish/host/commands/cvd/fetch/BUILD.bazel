@@ -133,8 +133,6 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
         "//libbase",
         "@fmt",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -239,8 +237,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

@@ -75,8 +75,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:instance_database_helper",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -145,19 +143,13 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/host/commands/cvd/instances:cvd_persistent_data",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
 cf_cc_test(
     name = "local_instance_test",
     srcs = ["local_instance_test.cpp"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/instances",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = ["//cuttlefish/host/commands/cvd/instances"],
 )
 
 cf_cc_library(

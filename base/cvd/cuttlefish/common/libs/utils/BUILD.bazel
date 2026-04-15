@@ -36,8 +36,6 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:base64",
         "//cuttlefish/result:result_matchers",
         "//cuttlefish/result:result_type",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -142,8 +140,6 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -175,8 +171,6 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@libxml2",
     ],
 )
@@ -251,11 +245,7 @@ cf_cc_library(
 cf_cc_test(
     name = "network_test",
     srcs = ["network_test.cpp"],
-    deps = [
-        ":network",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = [":network"],
 )
 
 cf_cc_library(
@@ -280,8 +270,6 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:proc_file_utils",
         "//cuttlefish/result",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -437,8 +425,6 @@ cf_cc_test(
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log:check",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

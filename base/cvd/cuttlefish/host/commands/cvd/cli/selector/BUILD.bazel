@@ -43,8 +43,6 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:environment",
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -69,8 +67,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/selector:parser_ids_helper",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -95,8 +91,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/selector:selector_common_parser",
         "//cuttlefish/host/commands/cvd/cli/selector:start_selector_parser",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

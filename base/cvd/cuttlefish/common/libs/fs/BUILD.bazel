@@ -51,8 +51,6 @@ cf_cc_test(
     deps = [
         ":fs",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

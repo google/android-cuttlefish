@@ -9,8 +9,6 @@ cf_cc_test(
     srcs = ["boot_configs_test.cc"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@jsoncpp",
     ],
 )
@@ -107,8 +105,6 @@ cf_cc_test(
     srcs = ["disk_configs_test.cc"],
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@jsoncpp",
     ],
 )
@@ -123,8 +119,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/assemble_cvd:launch_cvd_cc_proto",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@jsoncpp",
         "@protobuf",
         "@protobuf//:differencer",
@@ -139,8 +133,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//cuttlefish/result:result_matchers",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@jsoncpp",
     ],
 )

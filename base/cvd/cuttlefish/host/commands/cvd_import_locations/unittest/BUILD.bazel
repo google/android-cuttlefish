@@ -14,7 +14,5 @@ cf_cc_test(
         "//cuttlefish/host/libs/location",
         "//cuttlefish/host/libs/location:string_parse",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )

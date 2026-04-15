@@ -459,8 +459,6 @@ cf_cc_test(
         "//cuttlefish/io",
         "//cuttlefish/io:in_memory",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

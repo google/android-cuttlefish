@@ -23,7 +23,5 @@ cf_cc_test(
         "//cuttlefish/common/libs/key_equals_value",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )

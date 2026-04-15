@@ -35,8 +35,6 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/commands/cvd/cli:frontline_parser",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

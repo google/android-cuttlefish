@@ -93,8 +93,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/assemble_cvd/android_build:fake_android_build",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

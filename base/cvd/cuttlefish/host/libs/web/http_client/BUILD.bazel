@@ -46,8 +46,6 @@ cf_cc_test(
         "//cuttlefish/host/libs/web/http_client:http_string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -123,8 +121,6 @@ cf_cc_test(
     srcs = ["scrub_secrets_test.cc"],
     deps = [
         "//cuttlefish/host/libs/web/http_client:scrub_secrets",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@jsoncpp",
     ],
 )

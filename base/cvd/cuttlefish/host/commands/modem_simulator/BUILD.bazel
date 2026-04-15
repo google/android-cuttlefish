@@ -44,11 +44,7 @@ cf_cc_library(
 cf_cc_test(
     name = "command_parser_test",
     srcs = ["unittest/command_parser_test.cpp"],
-    deps = [
-        "//cuttlefish/host/commands/modem_simulator:command_parser",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = ["//cuttlefish/host/commands/modem_simulator:command_parser"],
 )
 
 cf_cc_library(
@@ -213,11 +209,7 @@ cf_cc_library(
 cf_cc_test(
     name = "pdu_parser_test",
     srcs = ["unittest/pdu_parser_test.cpp"],
-    deps = [
-        "//cuttlefish/host/commands/modem_simulator:pdu_parser",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = ["//cuttlefish/host/commands/modem_simulator:pdu_parser"],
 )
 
 cf_cc_test(
@@ -239,8 +231,6 @@ cf_cc_test(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@gflags",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

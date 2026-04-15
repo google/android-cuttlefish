@@ -43,8 +43,6 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
