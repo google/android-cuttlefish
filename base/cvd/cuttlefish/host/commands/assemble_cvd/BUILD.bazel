@@ -145,7 +145,6 @@ cf_cc_library(
     srcs = ["bootconfig_args.cpp"],
     hdrs = ["bootconfig_args.h"],
     deps = [
-        "//cuttlefish/common/libs/utils:contains",
         "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/libs/config:config_constants",
         "//cuttlefish/host/libs/config:cuttlefish_config",
