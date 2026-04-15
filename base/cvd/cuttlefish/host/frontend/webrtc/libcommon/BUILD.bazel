@@ -26,6 +26,7 @@ cf_cc_library(
     deps = [
         ":encoder_provider",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@libwebrtc",
     ],
 )
@@ -38,6 +39,7 @@ cf_cc_library(
     deps = [
         ":encoder_provider_registry",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@libwebrtc",
     ],
 )
@@ -72,6 +74,7 @@ cf_cc_library(
     deps = [
         ":decoder_provider",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@libwebrtc",
     ],
 )
@@ -84,6 +87,7 @@ cf_cc_library(
     deps = [
         ":decoder_provider_registry",
         "//libbase",
+        "@abseil-cpp//absl/log",
         "@libwebrtc",
     ],
 )
@@ -148,7 +152,7 @@ cf_cc_library(
         ":nvenc_video_encoder",
         "//cuttlefish/host/libs/gpu:nvenc_capabilities",
         "//cuttlefish/result",
-        "//libbase",
+        "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@libwebrtc",
         "@nv_codec_headers//:nv_headers",
@@ -172,7 +176,7 @@ cf_cc_library(
     hdrs = ["abgr_buffer.h"],
     deps = [
         "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
-        "//libbase",
+        "@abseil-cpp//absl/log",
         "@libdrm//:libdrm_fourcc",
         "@libwebrtc",
         "@libyuv",

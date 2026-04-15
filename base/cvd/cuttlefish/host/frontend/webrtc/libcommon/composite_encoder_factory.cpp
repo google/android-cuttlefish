@@ -19,7 +19,7 @@
 #include <set>
 #include <string>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {

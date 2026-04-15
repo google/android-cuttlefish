@@ -20,7 +20,7 @@
 #include <libyuv.h>
 #include <drm/drm_fourcc.h>
 
-#include "android-base/logging.h"
+#include "absl/log/log.h"
 
 namespace cuttlefish {
 
@@ -37,7 +37,7 @@ int AbgrBuffer::Stride() const { return buffer_->Stride(); }
 rtc::scoped_refptr<webrtc::I420BufferInterface> AbgrBuffer::ToI420() {
   rtc::scoped_refptr<webrtc::I420Buffer> i420_buffer =
       webrtc::I420Buffer::Create(width(), height());
-  
+
   uint32_t format = buffer_->PixelFormat();
 
   int res = -1;

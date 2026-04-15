@@ -22,7 +22,6 @@
 #include <api/peer_connection_interface.h>
 
 #include "absl/log/log.h"
-#include "android-base/logging.h"
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_device.h"
 #include "cuttlefish/host/frontend/webrtc/libcommon/composite_decoder_factory.h"
