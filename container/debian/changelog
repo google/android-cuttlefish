@@ -1,3 +1,9 @@
+cuttlefish-container (1.50.1) unstable; urgency=medium
+
+  * N/A
+
+ -- Ram Muthiah <rammuthiah@google.com>  Wed, 15 Apr 2026 11:29:15 +0000
+
 cuttlefish-container (1.50.0) unstable; urgency=medium
 
 * Initial implementation of Cuttlefish MCP server by @0405ysj in https://github.com/google/android-cuttlefish/pull/2277
