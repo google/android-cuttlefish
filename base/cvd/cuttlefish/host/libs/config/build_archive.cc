@@ -27,10 +27,10 @@
 #include <string_view>
 #include <utility>
 
+#include <android-base/file.h>
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/strip.h"
-#include "android-base/file.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
@@ -157,11 +157,8 @@ Result<std::string> BuildArchive::MemberFilepath(
 Result<std::string> BuildArchive::MemberContents(std::string_view name) {
   CF_EXPECTF(members_.count(name), "'{}' not in archive", name);
   if (auto it = extracted_.find(name); it != extracted_.end()) {
-    std::string contents;
-    CF_EXPECTF(android::base::ReadFileToString(it->second, &contents,
-                                               /* follow_symlinks */ true),
-               "Failed to read '{}'", it->second);
-    return contents;
+    return CF_EXPECTF(ReadFileContents(it->second),
+                      "Failed to read '{}'", it->second);
   }
   CF_EXPECT(zip_file_.has_value(), "'{}' not extracted, no source archive");
 

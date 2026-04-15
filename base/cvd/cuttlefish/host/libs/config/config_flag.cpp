@@ -26,9 +26,9 @@
 #include <string>
 #include <string_view>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/strings/strip.h"
 #include <fmt/ranges.h>
 #include <fruit/component.h>
@@ -51,7 +51,6 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/result/result.h"
 
-using android::base::ReadFileToString;
 using gflags::FlagSettingMode::SET_FLAGS_DEFAULT;
 
 namespace cuttlefish {
@@ -77,10 +76,8 @@ class ConfigReader : public FlagFeature {
   Result<Json::Value> ReadConfig(const std::string& name) const {
     auto path =
         DefaultHostArtifactsPath("etc/cvd_config/cvd_config_" + name + ".json");
-    std::string config_contents;
-    CF_EXPECTF(
-        ReadFileToString(path, &config_contents, /* follow_symlinks */ true),
-        "Could not read config file \"{}\"", path);
+    std::string config_contents = CF_EXPECTF(
+        ReadFileContents(path), "Could not read config file \"{}\"", path);
     return CF_EXPECTF(ParseJson(config_contents),
                       "Could not parse config file \"{}\"", path);
   }
@@ -194,11 +191,11 @@ class ConfigFlagImpl : public ConfigFlag {
     if (!FileExists(info_path)) {
       return {};
     }
-    std::string android_info;
-    if (!ReadFileToString(info_path, &android_info,
-                          /* follow_symlinks */ true)) {
+    Result<std::string> android_info_result = ReadFileContents(info_path);
+    if (!android_info_result.ok()) {
       return {};
     }
+    std::string android_info = std::move(*android_info_result);
     Result<std::map<std::string, std::string, std::less<void>>> parsed_config =
         ParseKeyEqualsValue(android_info);
     if (!parsed_config.ok()) {

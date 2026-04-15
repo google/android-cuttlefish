@@ -22,7 +22,6 @@
 #include <string>
 
 #include <android-base/file.h>
-#include <android-base/strings.h>
 #include "absl/strings/str_split.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
@@ -123,11 +122,10 @@ Result<std::vector<std::string>> CvdConfigDirs() {
 
 Result<std::string> ReadCvdDataFile(std::string_view path) {
   for (const auto& dir : CF_EXPECT(CvdDataDirs())) {
-    std::string contents;
-    if (android::base::ReadFileToString(fmt::format("{}/{}", dir, path),
-                                        &contents,
-                                        /* follow_symlinks */ true)) {
-      return contents;
+    Result<std::string> contents =
+        ReadFileContents(fmt::format("{}/{}", dir, path));
+    if (contents.ok()) {
+      return std::move(*contents);
     }
   }
   return CF_ERRF("Not able to open '{}'", path);

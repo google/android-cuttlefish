@@ -21,8 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
-#include <android-base/strings.h>
 #include "absl/strings/str_split.h"
 #include <gflags/gflags.h>
 #include <json/value.h>
@@ -37,8 +35,6 @@ DEFINE_string(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
               "configuration file for the MCU emulator");
 
 namespace cuttlefish {
-
-using android::base::ReadFileToString;
 
 McuConfigPathFlag McuConfigPathFlag::FromGlobalGflags() {
   std::string default_path = DefaultHostArtifactsPath("etc/mcu_config.json");
@@ -77,10 +73,9 @@ Result<Json::Value> McuConfigPathFlag::JsonForIndex(
   }
   CF_EXPECT(FileExists(mcu_cfg_path), "MCU config file does not exist");
 
-  std::string content;
-  CF_EXPECTF(ReadFileToString(mcu_cfg_path, &content,
-                              /* follow_symlinks */ true),
-             "Failed to read mcu config file '{}'", mcu_cfg_path);
+  std::string content =
+      CF_EXPECTF(ReadFileContents(mcu_cfg_path),
+                 "Failed to read mcu config file '{}'", mcu_cfg_path);
 
   return CF_EXPECTF(ParseJson(content), "Failed to parse '{}'", mcu_cfg_path);
 }

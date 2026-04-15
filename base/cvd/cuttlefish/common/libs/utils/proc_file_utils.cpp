@@ -26,13 +26,13 @@
 #include <vector>
 
 #include <android-base/file.h>
-#include "absl/strings/ascii.h"
-#include "absl/strings/strip.h"
-#include "absl/strings/str_split.h"
 #include <fmt/core.h>
 #include "absl/log/log.h"
+#include "absl/strings/ascii.h"
 #include "absl/strings/match.h"
 #include "absl/strings/numbers.h"
+#include "absl/strings/str_split.h"
+#include "absl/strings/strip.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
@@ -62,9 +62,7 @@ static Result<ProcStatusUids> OwnerUids(const pid_t pid) {
   // parse from /proc/<pid>/status
   std::regex uid_pattern(R"(Uid:\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]+))");
   std::string status_path = fmt::format("/proc/{}/status", pid);
-  std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content,
-                                            /* follow_symlinks */ true));
+  std::string status_content = CF_EXPECT(ReadFileContents(status_path));
   std::vector<uid_t> uids;
   for (std::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
@@ -163,9 +161,7 @@ Result<std::string> GetExecutablePath(const pid_t pid) {
 static Result<void> CheckExecNameFromStatus(const std::string& exec_name,
                                             const pid_t pid) {
   std::string status_path = fmt::format("/proc/{}/status", pid);
-  std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content,
-                                            /* follow_symlinks */ true));
+  std::string status_content = CF_EXPECT(ReadFileContents(status_path));
   bool found = false;
   for (std::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
@@ -275,9 +271,7 @@ Result<pid_t> Ppid(const pid_t pid) {
   // parse from /proc/<pid>/status
   std::regex uid_pattern(R"(PPid:\s*([0-9]+))");
   std::string status_path = fmt::format("/proc/{}/status", pid);
-  std::string status_content;
-  CF_EXPECT(android::base::ReadFileToString(status_path, &status_content,
-                                            /* follow_symlinks */ true));
+  std::string status_content = CF_EXPECT(ReadFileContents(status_path));
   for (std::string_view line :
        absl::StrSplit(status_content, '\n', absl::SkipEmpty())) {
     std::smatch matches;

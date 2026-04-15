@@ -21,10 +21,10 @@
 #include <string>
 #include <string_view>
 
-#include <android-base/file.h>
 #include "absl/container/btree_map.h"
 
 #include "cuttlefish/common/libs/key_equals_value/key_equals_value.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -51,10 +51,8 @@ std::optional<bool> Defaults::BoolValue(std::string_view k) const {
 }
 
 Result<Defaults> Defaults::FromFile(const std::string &path) {
-  std::string defaults_str;
-  CF_EXPECT(android::base::ReadFileToString(path, &defaults_str,
-                                            /* follow_symlinks */ true),
-            "Couldn't read defaults file.");
+  std::string defaults_str =
+      CF_EXPECT(ReadFileContents(path), "Couldn't read defaults file.");
   std::map<std::string, std::string, std::less<void>> defaults_map = CF_EXPECT(
       ParseKeyEqualsValue(defaults_str), "Couldn't parse defaults file.");
   return Defaults(defaults_map);

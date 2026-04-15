@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include <fruit/component.h>
 #include <fruit/fruit_forward_decls.h>
 #include <fruit/macro.h>
@@ -343,9 +342,7 @@ class CustomActionConfigImpl : public CustomActionConfigProvider {
     }
     for (const auto& config : custom_action_config_) {
       if (!config.empty()) {
-        std::string config_contents;
-        CF_EXPECT(android::base::ReadFileToString(config, &config_contents,
-                                                  /* follow_symlinks */ true));
+        std::string config_contents = CF_EXPECT(ReadFileContents(config));
         auto custom_action_array = CF_EXPECT(ParseJson(config_contents));
         CF_EXPECTF(AddJsonCustomActionConfigs(custom_action_array),
                    "Failed to parse config at \"{}\"", config);

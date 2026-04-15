@@ -14,8 +14,8 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/key_equals_value",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/container:btree",
     ],
 )

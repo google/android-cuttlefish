@@ -122,10 +122,8 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
   static constexpr std::string_view kSensorsSimulatorKeyword =
       "bin/sensors_simulator";
 
-  std::string content;
-  CF_EXPECTF(android::base::ReadFileToString(marker_file, &content,
-                                             /* follow_symlinks */ true),
-             "failed to read '{}'", marker_file);
+  std::string content = CF_EXPECTF(ReadFileContents(marker_file),
+                                   "failed to read '{}'", marker_file);
   fetch::HostPkgMigrationConfig config;
   CF_EXPECT(google::protobuf::TextFormat::ParseFromString(content, &config),
             "failed parsing debian_substitution_marker file");
