@@ -38,8 +38,6 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
         "//libbase",
         "@fmt",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -50,8 +48,6 @@ cf_cc_test(
         "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/web/cas:cas_flags",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

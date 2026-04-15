@@ -38,9 +38,5 @@ cf_cc_test(
     srcs = [
         "unittest/update_security_algorithm_command_builder_test.cc",
     ],
-    deps = [
-        ":libcvd_update_security_algorithm_builder",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = [":libcvd_update_security_algorithm_builder"],
 )

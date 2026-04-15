@@ -47,8 +47,6 @@ cf_cc_test(
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -93,7 +91,5 @@ cf_cc_test(
         "//cuttlefish/io:read_window_view",
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )

@@ -70,12 +70,16 @@ cf_cc_library = macro(
     implementation = _cf_cc_library_implementation,
 )
 
-def _cf_cc_test_implementation(name, clang_tidy_enabled, copts, **kwargs):
+def _cf_cc_test_implementation(name, clang_tidy_enabled, copts, deps, **kwargs):
     if not clang_tidy_enabled and not kwargs["deprecation"]:
         kwargs["deprecation"] = "Not covered by clang-tidy"
     cc_test(
         name = name,
         copts = (copts or []) + COPTS,
+        deps = deps + [
+            "@googletest//:gtest",
+            "@googletest//:gtest_main",
+        ],
         **kwargs,
     )
     if clang_tidy_enabled:
@@ -91,6 +95,7 @@ cf_cc_test = macro(
     attrs = {
         "clang_tidy_enabled": attr.bool(configurable = False, default = True, doc = "Decide if a corresponding clang_tidy_test target is generated"),
         "copts": attr.string_list(configurable = False, default = []),
+        "deps": attr.label_list(configurable = False),
     },
     implementation = _cf_cc_test_implementation,
 )

@@ -38,9 +38,5 @@ cf_cc_test(
     srcs = [
         "unittest/cellular_identifier_disclosure_command_builder_test.cc",
     ],
-    deps = [
-        ":libcvd_id_disclosure_builder",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = [":libcvd_id_disclosure_builder"],
 )

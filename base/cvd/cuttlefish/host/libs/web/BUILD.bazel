@@ -77,8 +77,6 @@ cf_cc_test(
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 

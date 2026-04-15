@@ -170,9 +170,5 @@ cf_cc_library(
 cf_cc_test(
     name = "utils_test",
     srcs = ["utils_tests.cpp"],
-    deps = [
-        "//cuttlefish/host/commands/metrics:utils",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = ["//cuttlefish/host/commands/metrics:utils"],
 )

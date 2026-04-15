@@ -68,8 +68,6 @@ cf_cc_test(
         "//cuttlefish/host/commands/cvd/cli/parser:cf_configs_common",
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -93,8 +91,6 @@ cf_cc_test(
     deps = [
         "//cuttlefish/host/commands/cvd/cli/parser:test_common",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -180,8 +176,6 @@ cf_cc_test(
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
         "//libbase",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
         "@jsoncpp",
     ],
 )

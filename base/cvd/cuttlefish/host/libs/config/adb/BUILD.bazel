@@ -46,7 +46,5 @@ cf_cc_test(
         "//cuttlefish/host/libs/config:config_flag",
         "//cuttlefish/host/libs/feature",
         "@fruit",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )

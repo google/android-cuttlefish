@@ -30,8 +30,6 @@ cf_cc_test(
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -57,8 +55,6 @@ cf_cc_test(
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -82,8 +78,6 @@ cf_cc_test(
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:read_exact",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -124,11 +118,7 @@ proto_library(
 cf_cc_test(
     name = "disjoint_range_set_test",
     srcs = ["disjoint_range_set_test.cc"],
-    deps = [
-        "//cuttlefish/io:disjoint_range_set",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
+    deps = ["//cuttlefish/io:disjoint_range_set"],
 )
 
 cf_cc_library(
@@ -160,8 +150,6 @@ cf_cc_test(
         "//cuttlefish/io:fake_seek",
         "//cuttlefish/result:result_matchers",
         "//cuttlefish/result:result_type",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -194,8 +182,6 @@ cf_cc_test(
         "//cuttlefish/result:result_matchers",
         "//cuttlefish/result:result_type",
         "@abseil-cpp//absl/strings",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -243,8 +229,6 @@ cf_cc_test(
         "//cuttlefish/io:in_memory",
         "//cuttlefish/io:length",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -273,8 +257,6 @@ cf_cc_test(
         "//cuttlefish/io:string",
         "//cuttlefish/io:write_exact",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -325,8 +307,6 @@ cf_cc_test(
         "//cuttlefish/io:string",
         "//cuttlefish/result:result_matchers",
         "//cuttlefish/result:result_type",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
@@ -349,8 +329,6 @@ cf_cc_test(
         "//cuttlefish/io:serialize_disjoint_range_set",
         "//cuttlefish/result",
         "//cuttlefish/result:result_matchers",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )
 
