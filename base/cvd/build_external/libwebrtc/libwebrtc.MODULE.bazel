@@ -5,8 +5,5 @@ git_repository(
     commit = "e093c481bf8fd8e141fee4c007d63da488ce0ef5",
     build_file = "@//build_external/libwebrtc:BUILD.libwebrtc.bazel",
     remote = "https://webrtc.googlesource.com/src/",
-    patches = [
-        "@//build_external/libwebrtc:PATCH.third_party_libyuv.patch",
-        "@//build_external/libwebrtc:PATCH.dav1d_include.patch",
-    ],
+    patches = ["@//build_external/libwebrtc:PATCH.third_party_libyuv.patch"],
 )

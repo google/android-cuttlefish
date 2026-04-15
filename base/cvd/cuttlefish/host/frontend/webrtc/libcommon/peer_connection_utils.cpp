@@ -20,15 +20,11 @@
 #include <api/audio_codecs/builtin_audio_encoder_factory.h>
 #include <api/create_peerconnection_factory.h>
 #include <api/peer_connection_interface.h>
-
-#include "absl/log/log.h"
-#include "android-base/logging.h"
+#include <api/video_codecs/builtin_video_decoder_factory.h>
+#include <api/video_codecs/builtin_video_encoder_factory.h>
 
 #include "cuttlefish/host/frontend/webrtc/libcommon/audio_device.h"
-#include "cuttlefish/host/frontend/webrtc/libcommon/composite_decoder_factory.h"
-#include "cuttlefish/host/frontend/webrtc/libcommon/composite_encoder_factory.h"
-#include "cuttlefish/host/frontend/webrtc/libcommon/decoder_provider_registry.h"
-#include "cuttlefish/host/frontend/webrtc/libcommon/encoder_provider_registry.h"
+#include "cuttlefish/host/frontend/webrtc/libcommon/vp8only_encoder_factory.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -47,52 +43,14 @@ CreatePeerConnectionFactory(
     rtc::Thread* network_thread, rtc::Thread* worker_thread,
     rtc::Thread* signal_thread,
     rtc::scoped_refptr<webrtc::AudioDeviceModule> audio_device_module) {
-
-  VLOG(1) << "Available encoder providers:";
-  for (EncoderProvider* provider :
-       EncoderProviderRegistry::Get().GetProviders()) {
-    VLOG(1) << "  - " << provider->GetName()
-            << " (priority=" << provider->GetPriority() << ")";
-    for (const webrtc::SdpVideoFormat& fmt : provider->GetSupportedFormats()) {
-      VLOG(1) << "      " << fmt.ToString();
-    }
-  }
-
-  VLOG(1) << "Available decoder providers:";
-  for (DecoderProvider* provider :
-       DecoderProviderRegistry::Get().GetProviders()) {
-    VLOG(1) << "  - " << provider->GetName()
-            << " (priority=" << provider->GetPriority() << ")";
-    for (const webrtc::SdpVideoFormat& fmt : provider->GetSupportedFormats()) {
-      VLOG(1) << "      " << fmt.ToString();
-    }
-  }
-
-  std::unique_ptr<webrtc::VideoEncoderFactory> video_encoder_factory =
-      CreateCompositeEncoderFactory();
-  std::unique_ptr<webrtc::VideoDecoderFactory> video_decoder_factory =
-      CreateCompositeDecoderFactory();
-
-  std::vector<webrtc::SdpVideoFormat> encoder_formats =
-      video_encoder_factory->GetSupportedFormats();
-  std::vector<webrtc::SdpVideoFormat> decoder_formats =
-      video_decoder_factory->GetSupportedFormats();
-  LOG(INFO) << "PeerConnectionFactory: "
-            << encoder_formats.size() << " encoder format(s), "
-            << decoder_formats.size() << " decoder format(s)";
-  for (const webrtc::SdpVideoFormat& fmt : encoder_formats) {
-    VLOG(1) << "  encoder: " << fmt.ToString();
-  }
-  for (const webrtc::SdpVideoFormat& fmt : decoder_formats) {
-    VLOG(1) << "  decoder: " << fmt.ToString();
-  }
-
   auto peer_connection_factory = webrtc::CreatePeerConnectionFactory(
       network_thread, worker_thread, signal_thread, audio_device_module,
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
-      std::move(video_encoder_factory),
-      std::move(video_decoder_factory), nullptr /* audio_mixer */,
+      // Only VP8 is supported
+      std::make_unique<VP8OnlyEncoderFactory>(
+          webrtc::CreateBuiltinVideoEncoderFactory()),
+      webrtc::CreateBuiltinVideoDecoderFactory(), nullptr /* audio_mixer */,
       nullptr /* audio_processing */);
   CF_EXPECT(peer_connection_factory.get(),
             "Failed to create peer connection factory");
