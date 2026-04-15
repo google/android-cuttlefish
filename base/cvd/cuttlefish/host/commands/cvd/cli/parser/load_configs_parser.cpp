@@ -199,11 +199,8 @@ Result<Json::Value> ParseJsonFile(const std::string& file_path) {
   CF_EXPECTF(FileExists(file_path),
              "Provided file \"{}\" to cvd command does not exist", file_path);
 
-  std::string file_content;
-  using android::base::ReadFileToString;
-  CF_EXPECTF(ReadFileToString(file_path.c_str(), &file_content,
-                              /* follow_symlinks */ true),
-             "Failed to read file \"{}\"", file_path);
+  std::string file_content = CF_EXPECTF(
+      ReadFileContents(file_path), "Failed to read file \"{}\"", file_path);
   auto root = CF_EXPECTF(ParseJson(file_content),
                          "Failed parsing file \"{}\" as JSON", file_path);
   return root;

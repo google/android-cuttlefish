@@ -260,7 +260,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/assemble_cvd:flags_defaults",
         "//cuttlefish/host/libs/config:config_utils",
         "//cuttlefish/result",
-        "//libbase",
         "@abseil-cpp//absl/strings",
         "@gflags",
         "@jsoncpp",

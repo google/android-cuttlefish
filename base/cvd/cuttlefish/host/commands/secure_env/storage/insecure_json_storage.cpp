@@ -29,9 +29,7 @@ namespace secure_env {
 namespace {
 
 Result<Json::Value> ReadJson(const std::string& path) {
-  std::string json;
-  CF_EXPECT(
-      android::base::ReadFileToString(path, &json, /* follow_symlinks */ true));
+  std::string json = CF_EXPECT(ReadFileContents(path));
   return CF_EXPECT(ParseJson(json));
 }
 
