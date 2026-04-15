@@ -216,7 +216,7 @@ void CompositionManager::OnFrame(uint32_t display_number, uint32_t frame_width,
 // triggered by a thread to force displays to constantly update so that when
 // layers are updated, the user will see the blended result.
 void CompositionManager::ComposeFrame(
-    int display_index, std::shared_ptr<PlanarVideoFrameBuffer> buffer) {
+    int display_index, std::shared_ptr<VideoFrameBuffer> buffer) {
   if (!last_frame_info_map_.count(display_index)) {
     return;
   }
@@ -263,8 +263,7 @@ uint8_t* CompositionManager::AlphaBlendLayers(uint8_t* frame_pixels,
 
 void CompositionManager::ComposeFrame(
     int display, int width, int height, uint32_t frame_fourcc_format,
-    uint32_t frame_stride_bytes,
-    std::shared_ptr<PlanarVideoFrameBuffer> buffer) {
+    uint32_t frame_stride_bytes, std::shared_ptr<VideoFrameBuffer> buffer) {
   uint8_t* shmem_local_display = display_ring_buffer_manager_.ReadFrame(
       cluster_index_, display, width, height);
 

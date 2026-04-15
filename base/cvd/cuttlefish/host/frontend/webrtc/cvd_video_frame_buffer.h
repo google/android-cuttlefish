@@ -25,7 +25,7 @@
 
 namespace cuttlefish {
 
-class CvdVideoFrameBuffer : public PlanarVideoFrameBuffer {
+class CvdVideoFrameBuffer : public VideoFrameBuffer {
  public:
   CvdVideoFrameBuffer(int width, int height);
   CvdVideoFrameBuffer(CvdVideoFrameBuffer&& cvd_frame_buf) = default;
@@ -51,8 +51,6 @@ class CvdVideoFrameBuffer : public PlanarVideoFrameBuffer {
   size_t DataSizeY() const override { return y_.size(); }
   size_t DataSizeU() const override { return u_.size(); }
   size_t DataSizeV() const override { return v_.size(); }
-
-  std::unique_ptr<VideoFrameBuffer> Clone() const override;
 
  private:
   const int width_;

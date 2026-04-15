@@ -37,7 +37,7 @@
 namespace cuttlefish {
 namespace {
 
-Result<void> PngScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
+Result<void> PngScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
                            const std::string& screenshot_path) {
   int width = frame->width();
   int height = frame->height();
@@ -84,7 +84,7 @@ Result<void> PngScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
   return {};
 }
 
-Result<void> JpegScreenshot(std::shared_ptr<PlanarVideoFrameBuffer> frame,
+Result<void> JpegScreenshot(std::shared_ptr<VideoFrameBuffer> frame,
                             const std::string& screenshot_path) {
   // libjpeg uses an MCU size of 16x16 so we require the stride to be a multiple
   // of 16 bytes and to have at least 16 rows (we'll use the previous rows as
@@ -190,14 +190,11 @@ Result<void> ScreenshotHandler::Screenshot(uint32_t display_number,
                 << kScreenshotTimeoutSeconds << " seconds.");
 
   SharedFrame frame = frame_future.get();
-  auto planar =
-      std::dynamic_pointer_cast<PlanarVideoFrameBuffer>(frame);
-  CF_EXPECT(planar != nullptr, "Screenshot requires a planar frame");
 
   if (absl::EndsWith(screenshot_path, ".jpg")) {
-    CF_EXPECT(JpegScreenshot(planar, screenshot_path));
+    CF_EXPECT(JpegScreenshot(frame, screenshot_path));
   } else if (absl::EndsWith(screenshot_path, ".png")) {
-    CF_EXPECT(PngScreenshot(planar, screenshot_path));
+    CF_EXPECT(PngScreenshot(frame, screenshot_path));
   } else {
     return CF_ERR("Unsupport file format: " << screenshot_path);
   }

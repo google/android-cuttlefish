@@ -42,13 +42,12 @@ class CompositionManager;
  */
 struct WebRtcScProcessedFrame : public ScreenConnectorFrameInfo {
   // must support move semantic
-  std::unique_ptr<VideoFrameBuffer> buf_;
+  std::unique_ptr<CvdVideoFrameBuffer> buf_;
   std::unique_ptr<WebRtcScProcessedFrame> Clone() {
     // copy internal buffer, not move
+    CvdVideoFrameBuffer* new_buffer = new CvdVideoFrameBuffer(*(buf_.get()));
     auto cloned_frame = std::make_unique<WebRtcScProcessedFrame>();
-    if (buf_) {
-        cloned_frame->buf_ = buf_->Clone();
-    }
+    cloned_frame->buf_ = std::unique_ptr<CvdVideoFrameBuffer>(new_buffer);
     return cloned_frame;
   }
 };

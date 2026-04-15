@@ -741,7 +741,6 @@ cc_library(
         "modules/video_capture/video_capture_impl.cc",
         "modules/video_coding/chain_diff_calculator.cc",
         "modules/video_coding/codecs/av1/av1_svc_config.cc",
-        "modules/video_coding/codecs/av1/dav1d_decoder.cc",
         "modules/video_coding/codecs/h264/h264.cc",
         "modules/video_coding/codecs/h264/h264_color_space.cc",
         "modules/video_coding/codecs/h264/h264_decoder_impl.cc",
@@ -3282,7 +3281,6 @@ cc_library(
         "WEBRTC_APM_DEBUG_DUMP=0",
         "WEBRTC_OPUS_VARIABLE_COMPLEXITY=0",
         "USE_X11=1",
-        "RTC_DAV1D_IN_INTERNAL_DECODER_FACTORY",
     ] + select({
         "@platforms//cpu:arm": [
             "HAVE_MM_PREFETCH=0",
@@ -3321,7 +3319,6 @@ cc_library(
         "@crc32c",
         "@libevent//:event",
         "@libpffft",
-        "@dav1d",
         "@libvpx",
         "@libyuv",
         "@protobuf",

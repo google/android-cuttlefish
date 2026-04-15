@@ -6,27 +6,6 @@
 ###############################################################################
 
 bazel_dep(name = "abseil-cpp", version = "20260107.0")
-bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
-
-# Hermetic C/C++ toolchain using zig cc for cross-compilation and GLIBC targeting.
-# Use with: bazel build ... --extra_toolchains=@zig_sdk//toolchain:linux_amd64_gnu.2.36
-zig_toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
-use_repo(zig_toolchains, "zig_sdk")
-
-# CUDA support for NVENC (hermetic headers via redist_json, runtime dlopen)
-bazel_dep(name = "rules_cuda", version = "0.3.0")
-git_override(
-    module_name = "rules_cuda",
-    commit = "e10b718bc8d37abcb4c18d721806ef8ad74aa324",
-    remote = "https://github.com/bazel-contrib/rules_cuda.git",
-)
-cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.redist_json(
-    name = "cuda_redist",
-    version = "12.6.3",
-)
-cuda.toolkit(name = "cuda")
-use_repo(cuda, "cuda")
 bazel_dep(name = "aspect_bazel_lib", version = "2.19.3")
 bazel_dep(name = "aspect_rules_lint", version = "1.4.4", dev_dependency = True)
 bazel_dep(name = "bazel_skylib", version = "1.8.2", dev_dependency = True)
@@ -86,15 +65,3 @@ include("//toolchain:bazel.MODULE.bazel")
 include("//toolchain:llvm.MODULE.bazel")
 include("//toolchain:python.MODULE.bazel")
 include("//toolchain:rust.MODULE.bazel")
-
-# NVENC video encoding headers (nv-codec-headers SDK 12.1)
-http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-http_archive(
-    name = "nv_codec_headers",
-    build_file = "//build_external/nv_codec_headers:BUILD.nv_codec_headers.bazel",
-    strip_prefix = "nv-codec-headers-n12.1.14.0",
-    urls = [
-        "https://github.com/FFmpeg/nv-codec-headers/archive/refs/tags/n12.1.14.0.tar.gz",
-    ],
-    sha256 = "2fefaa227d2a3b4170797796425a59d1dd2ed5fd231db9b4244468ba327acd0b",
-)
