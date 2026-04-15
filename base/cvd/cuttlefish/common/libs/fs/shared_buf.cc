@@ -17,7 +17,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <thread>
 #include <vector>
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
