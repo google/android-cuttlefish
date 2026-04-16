@@ -158,8 +158,9 @@ std::string DefaultEnvironmentPath(const std::string& environment_key,
 }
 
 bool IsValidAndroidHostOutPath(const std::string& path) {
-  std::string start_bin_path = path + "/bin/cvd_internal_start";
-  return FileExists(start_bin_path);
+  std::string internal_start_bin_path = path + "/bin/cvd_internal_start";
+  std::string launch_cvd_bin_path = path + "/bin/launch_cvd";
+  return FileExists(internal_start_bin_path) || FileExists(launch_cvd_bin_path);
 }
 
 // In practice this is mostly validating that the `cuttlefish-base` debian

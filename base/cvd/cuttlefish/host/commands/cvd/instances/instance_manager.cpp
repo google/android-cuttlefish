@@ -259,7 +259,7 @@ Result<void> InstanceManager::Clear() {
     if (Result<void> res = RemoveFile(runtime_link);!res.ok()) {
       LOG(ERROR) << res.error();
     }
-    std::string config_link = group.HomeDir() + config_json_name;
+    std::string config_link = group.HomeDir() + "/" + config_json_name;
     if (Result<void> res = RemoveFile(config_link);!res.ok()) {
       LOG(ERROR) << res.error();
     }
