@@ -11,13 +11,13 @@ cuttlefish-container (1.52.0) unstable; urgency=medium
 
  -- Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 14:16:04 -0700
 
-cuttlefish-container (1.51.0) unstable; urgency=medium
+cuttlefish-container (1.51.0) stable; urgency=medium
 
   * Add tools on cuttlefish_mcp_server, but executing podcvd directly by @0405ysj in https://github.com/google/android-cuttlefish/pull/2338
   * Fixes some bugs around container lifecycle on podcvd by @0405ysj in https://github.com/google/android-cuttlefish/pull/2341
   * Isolate Cuttlefish instance groups between AI agents on CF MCP server by @0405ysj in https://github.com/google/android-cuttlefish/pull/2351
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 09 Apr 2026 15:56:45 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 16 Apr 2026 10:15:45 -0700
 
 cuttlefish-container (1.50.0) unstable; urgency=medium
 

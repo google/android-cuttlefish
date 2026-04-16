@@ -10,11 +10,11 @@ cuttlefish-frontend (1.52.0) unstable; urgency=medium
 
  -- Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 14:17:17 -0700
 
-cuttlefish-frontend (1.51.0) unstable; urgency=medium
+cuttlefish-frontend (1.51.0) stable; urgency=medium
 
   * N/A
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 09 Apr 2026 15:57:09 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 16 Apr 2026 10:15:09 -0700
 
 cuttlefish-frontend (1.50.0) unstable; urgency=medium
 
