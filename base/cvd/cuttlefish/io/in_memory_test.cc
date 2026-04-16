@@ -25,6 +25,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(InMemoryIoTest, WriteSeek) {
   std::unique_ptr<ReaderWriterSeeker> instance = InMemoryIo();
@@ -84,4 +85,5 @@ TEST(InMemoryIoTest, WriteWriteReadAt) {
   ASSERT_EQ(absl::StrCat(str, str), data_read);
 }
 
+}  // namespace
 }  // namespace cuttlefish

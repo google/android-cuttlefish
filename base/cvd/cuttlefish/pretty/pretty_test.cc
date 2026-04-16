@@ -71,8 +71,6 @@ PrettyStruct Pretty(const OuterStruct& outer,
       .Member("int_opt_unset", outer.int_opt_unset);
 }
 
-}  // namespace
-
 TEST(Pretty, OuterInnerStruct) {
   OuterStruct outer{
       .number_vector = {1, 2, 3},
@@ -152,4 +150,5 @@ OuterStruct {
   EXPECT_EQ(absl::StrCat(Pretty(outer)), expected);
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -32,6 +32,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(FlagParser, DuplicateAlias) {
   FlagAlias alias = {FlagAliasMode::kFlagExact, "--flag"};
@@ -481,4 +482,5 @@ TEST_F(FlagConsumesArbitraryTest, TwoValuesOtherFlag) {
   ASSERT_EQ(elems_, (std::vector<std::string>{"v1", "v2", ""}));
 }
 
+}  // namespace
 }  // namespace cuttlefish

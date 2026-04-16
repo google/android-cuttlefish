@@ -29,6 +29,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 using testing::IsTrue;
 
@@ -227,4 +228,5 @@ TEST(FilesTest, SearchFileNotFoundReturnsError) {
   EXPECT_FALSE(result.ok());
 }
 
+}  // namespace
 }  // namespace cuttlefish

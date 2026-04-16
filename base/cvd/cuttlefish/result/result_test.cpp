@@ -30,8 +30,6 @@ namespace {
 using ::testing::HasSubstr;
 using ::testing::StrEq;
 
-}  // namespace
-
 TEST(ResultTest, ExpectBoolGoodNoMessage) {
   const auto result = []() -> Result<std::string> {
     CF_EXPECT(true);
@@ -147,4 +145,5 @@ TEST(ResultTest, ExpectEqBadWithMessage) {
               IsErrorAndMessage(HasSubstr("ExpectEqBadWithMessage message")));
 }
 
+}  // namespace
 }  // namespace cuttlefish

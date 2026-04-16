@@ -27,6 +27,7 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
+namespace {
 
 SharedFD CreateMemFDWithData(const std::string& data) {
   auto memfd = SharedFD::MemfdCreate("");
@@ -197,4 +198,5 @@ TEST(UnixMessageSocket, AutoCredentials) {
   ASSERT_EQ(getgid(), credentials_out->gid);
 }
 
+}  // namespace
 }  // namespace cuttlefish
