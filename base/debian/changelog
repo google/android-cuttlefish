@@ -1,4 +1,4 @@
-cuttlefish-common (1.51.0) unstable; urgency=medium
+cuttlefish-common (1.51.0) stable; urgency=medium
 
   * Add a powerwash e2etest by @jmacnak in https://github.com/google/android-cuttlefish/pull/2311
   * Remove "requires_gpu" tag from gfxstream+swangle tests by @jmacnak in https://github.com/google/android-cuttlefish/pull/2336
@@ -17,7 +17,7 @@ cuttlefish-common (1.51.0) unstable; urgency=medium
   * Use memcpy instead of android::base::get_unaligned by @jemoreira in https://github.com/google/android-cuttlefish/pull/2360
   * Fail if new BOARD_BOOTCONFIG keys are found. by @ser-io in https://github.com/google/android-cuttlefish/pull/2358
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 09 Apr 2026 15:51:57 -0700
+ -- Jorge Moreira <jemoreira@google.com>  Thu, 16 Apr 2026 10:15:57 -0700
 
 cuttlefish-common (1.50.0) unstable; urgency=medium
 
