@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.53.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 16:07:21 -0700
+
 cuttlefish-integration-gigabyte-arm64 (1.52.0) unstable; urgency=medium
 
   * gigabyte-ampere-cuttlefish-installer: preseed.cfg: disable backports by @grandpaul in https://github.com/google/android-cuttlefish/pull/2394
