@@ -31,10 +31,11 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 #include "cuttlefish/result/result_matchers.h"
 
+namespace cuttlefish {
+namespace {
+
 using google::protobuf::Message;
 using google::protobuf::util::MessageDifferencer;
-
-namespace cuttlefish {
 
 // TODO: schuffelen - make this into a matcher
 static void AssertProtoEquals(const Message& expected, const Message& actual) {
@@ -241,4 +242,5 @@ TEST(BootFlagsParserTest, ParseTwoInstancesAutoTabletDisplaysFlag) {
   AssertProtoEquals(expected, (*display).value());
 }
 
+}  // namespace
 }  // namespace cuttlefish

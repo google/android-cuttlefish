@@ -25,6 +25,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 using ::testing::IsTrue;
 using ::testing::Not;
@@ -125,4 +126,5 @@ TEST(MetricsFlagsParserTest, ParseTwoInstancesMetricsReportFlagEmptyJson) {
       << "report_anonymous_usage_stats flag is missing or wrongly formatted";
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -19,6 +19,7 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
 
 /**
  * Note that invalid inputs must be tested at the InstanceDatabase level
@@ -47,5 +48,6 @@ TEST(LocalinstanceTest, Fields) {
   EXPECT_EQ(parent_group.Proto().name(), "super");
 }
 
+}  // namespace
 }  // namespace selector
 }  // namespace cuttlefish

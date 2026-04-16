@@ -25,6 +25,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 using testing::Eq;
 
@@ -60,4 +61,5 @@ TEST(FetchCvdParserTests, CreatesCasDownloaderFlags) {
               Eq(10000000000));
 }
 
+}  // namespace
 }  // namespace cuttlefish

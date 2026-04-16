@@ -26,6 +26,7 @@
 #include "cuttlefish/host/commands/cvd/utils/flags_collector.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(CvdHelpFlagCollect, LauncCvd) {
   cvd_common::Envs envs;
@@ -58,4 +59,5 @@ TEST(CvdHelpFlagCollect, LauncCvd) {
   ASSERT_EQ(bad_flag_itr, flags.cend());
 }
 
+}  // namespace
 }  // namespace cuttlefish

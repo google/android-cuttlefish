@@ -23,6 +23,7 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
 
 TEST_P(ValidNamesTest, ValidInputs) {
   auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
@@ -89,5 +90,6 @@ INSTANTIATE_TEST_SUITE_P(CvdParser, InvalidNamesTest,
                                          "--group_name=3a", "--instance_name",
                                          "--instance_name=*7a"));
 
+}  // namespace
 }  // namespace selector
 }  // namespace cuttlefish

@@ -25,6 +25,7 @@
 #include "cuttlefish/host/commands/secure_env/tpm_resource_manager.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(TpmEncryptedSerializable, BinaryData) {
   TestTpm tpm;
@@ -52,4 +53,5 @@ TEST(TpmEncryptedSerializable, BinaryData) {
   ASSERT_EQ(0, memcmp(input_data, output.begin(), sizeof(input_data)));
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -29,6 +29,7 @@
 #include "cuttlefish/host/libs/feature/feature.h"
 
 namespace cuttlefish {
+namespace {
 
 struct TestData {
   INJECT(TestData(AdbConfig& config, AdbConfigFragment& fragment))
@@ -79,4 +80,5 @@ TEST(AdbConfigTest, SerializeDeserialize) {
   ASSERT_EQ(data1.config.RunConnector(), data2.config.RunConnector());
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -24,6 +24,7 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
 
 static std::string GroupName() { return "yah_ong"; }
 
@@ -81,5 +82,6 @@ TEST_F(LocalInstanceGroupUnitTest, SearchById) {
   }
 }
 
+}  // namespace
 }  // namespace selector
 }  // namespace cuttlefish

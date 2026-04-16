@@ -21,6 +21,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageEmptyJson) {
   const char* test_string = R""""(
@@ -108,4 +109,5 @@ TEST(BootFlagsParserTest, ParseTwoInstancesBlankDataImageFullJson) {
       << "blank_data_image_mb flag is missing or wrongly formatted";
 }
 
+}  // namespace
 }  // namespace cuttlefish

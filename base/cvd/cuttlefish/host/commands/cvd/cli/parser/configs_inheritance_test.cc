@@ -23,6 +23,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(FlagsInheritanceTest, MergeTwoIndependentJson) {
   const char* dst_string = R""""(
@@ -140,4 +141,5 @@ TEST(FlagsInheritanceTest, MergeTwoOverlappedJson) {
   EXPECT_EQ(dst_object["instances"][0]["vm"]["memory_mb"], 2048);
 }
 
+}  // namespace
 }  // namespace cuttlefish

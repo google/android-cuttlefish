@@ -20,6 +20,7 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
 
 TEST_P(InstanceIdTest, InstanceIdCalculation) {
   auto selector_options_res = ParseCommonSelectorArguments(selector_args_);
@@ -122,5 +123,6 @@ INSTANTIATE_TEST_SUITE_P(
             .requested_num_instances = 3,
             .expected_result = false}));
 
+}  // namespace
 }  // namespace selector
 }  // namespace cuttlefish

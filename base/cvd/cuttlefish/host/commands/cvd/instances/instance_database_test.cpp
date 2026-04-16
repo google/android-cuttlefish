@@ -50,6 +50,7 @@
 
 namespace cuttlefish {
 namespace selector {
+namespace {
 
 LocalInstanceGroup::Builder GroupParamWithInstances(
     const std::string& name, const std::string& home_dir,
@@ -404,5 +405,6 @@ TEST_F(CvdInstanceDatabaseTest, UpdateInstances) {
   EXPECT_EQ(find_res->Instances()[1].state(), cvd::INSTANCE_STATE_STARTING);
 }
 
+}  // namespace
 }  // namespace selector
 }  // namespace cuttlefish
