@@ -1,8 +1,30 @@
-cuttlefish-common (1.52.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.52.0) unstable; urgency=medium
 
-  * 
+  * Start development of version 1.52 by @jemoreira in https://github.com/google/android-cuttlefish/pull/2371
+  * Use `androidboot.cuttlefish_service_bluetooth_checker` in launcher. by @ser-io in https://github.com/google/android-cuttlefish/pull/2367
+  * Rename `camera` flag to `media`. by @ser-io in https://github.com/google/android-cuttlefish/pull/2353
+  * Replace android::base::Append with fold expression by @jemoreira in https://github.com/google/android-cuttlefish/pull/2369
+  * Add udev rules for reverse ncm device interface service by @zenczykowski in https://github.com/google/android-cuttlefish/pull/2366
+  * Use absl::StripAsciiWhitespace instead of android::base::Trim by @jemoreira in https://github.com/google/android-cuttlefish/pull/2372
+  * Fix 9 ClangTidyReadability findings: by @jemoreira in https://github.com/google/android-cuttlefish/pull/2373
+  * Metrics refactors in preparation for incoming fetch metrics gathering by @cjreynol in https://github.com/google/android-cuttlefish/pull/2387
+  * Fix redundant get() call on smart pointer in oauth2_consent.cpp by @Databean in https://github.com/google/android-cuttlefish/pull/2392
+  * Mark release 1.49.0 as stable by @ser-io in https://github.com/google/android-cuttlefish/pull/2390
+  * Update Gfxstream to 765baff by @jmacnak in https://github.com/google/android-cuttlefish/pull/2393
+  * webrtc: Add Sound volume and mute controls support by @thjnk in https://github.com/google/android-cuttlefish/pull/2213
+  * swiftshader: add riscv64 default condition to select() blocks by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2379
+  * Add NVENC AV1 hardware video encoding for WebRTC by @larsers in https://github.com/google/android-cuttlefish/pull/2240
+  * gigabyte-ampere-cuttlefish-installer: preseed.cfg: disable backports by @grandpaul in https://github.com/google/android-cuttlefish/pull/2394
+  * Add missing include to audio_settings.h by @Databean in https://github.com/google/android-cuttlefish/pull/2397
+  * debian: add riscv64 bazel output paths to dh-exec install files by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2385
+  * libwebrtc: add generic DSP implementations for riscv64 by @monkey-jsun in https://github.com/google/android-cuttlefish/pull/2383
+  * Revert "Fail if new BOARD_BOOTCONFIG keys are found." by @ser-io in https://github.com/google/android-cuttlefish/pull/2404
+  * Replace libbase's ReadFully and WriteFully by @jemoreira in https://github.com/google/android-cuttlefish/pull/2398
+  * Revert "Add NVENC AV1 hardware video encoding for WebRTC" by @jmacnak in https://github.com/google/android-cuttlefish/pull/2407
+  * Bump bzip2 ver to 1.0.8.bcr.4 and remove patch. by @dxapd in https://github.com/google/android-cuttlefish/pull/2399
+  * Implicitly add :gtest and :gtest_main dependencies to cf_cc_test targets by @Databean in https://github.com/google/android-cuttlefish/pull/2408
 
- -- Jorge Moreira <jemoreira@google.com>  Thu, 09 Apr 2026 16:45:03 -0700
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 14:14:12 -0700
 
 cuttlefish-common (1.51.0) unstable; urgency=medium
 
