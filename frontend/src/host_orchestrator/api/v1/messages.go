@@ -213,6 +213,16 @@ type ListScreenRecordingsResponse struct {
 	ScreenRecordings []string `json:"screen_recordings"`
 }
 
+type CVDInstanceStatus struct {
+	InstanceName   string `json:"instance_name"`
+	Status         string `json:"status"`
+	AssemblyDir    string `json:"assembly_dir"`
+	InstanceDir    string `json:"instance_dir"`
+	WebAccess      string `json:"web_access,omitempty"`
+	WebRTCDeviceID string `json:"webrtc_device_id,omitempty"`
+	ADBPort        int    `json:"adb_port,omitempty"`
+}
+
 type CVDStatusResponse struct {
-	Status interface{} `json:"status"`
+	Status []*CVDInstanceStatus `json:"status"`
 }

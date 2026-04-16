@@ -1,6 +1,7 @@
 package orchestrator
 
 import (
+	"encoding/json"
 	"log"
 
 	apiv1 "github.com/google/android-cuttlefish/frontend/src/host_orchestrator/api/v1"
@@ -33,9 +34,14 @@ func (a *CVDGroupStatusAction) Run() (apiv1.Operation, error) {
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}
-		status, err := a.cvdCLI.LazySelectGroup(a.selector).CVDStatus()
+		statusBytes, err := a.cvdCLI.LazySelectGroup(a.selector).CVDStatus()
 		if err == nil {
-			result.Value = &apiv1.CVDStatusResponse{Status: status}
+			var status []*apiv1.CVDInstanceStatus
+			if err := json.Unmarshal(statusBytes, &status); err != nil {
+				result.Error = operator.NewInternalError("cvd group status failed", err)
+			} else {
+				result.Value = &apiv1.CVDStatusResponse{Status: status}
+			}
 		} else {
 			result.Error = operator.NewInternalError("cvd group status failed", err)
 		}
@@ -70,9 +76,14 @@ func (a *CVDInstanceStatusAction) Run() (apiv1.Operation, error) {
 	op := a.om.New()
 	go func(op apiv1.Operation) {
 		result := &OperationResult{}
-		status, err := a.cvdCLI.LazySelectInstance(a.selector).CVDStatus()
+		statusBytes, err := a.cvdCLI.LazySelectInstance(a.selector).CVDStatus()
 		if err == nil {
-			result.Value = &apiv1.CVDStatusResponse{Status: status}
+			var status []*apiv1.CVDInstanceStatus
+			if err := json.Unmarshal(statusBytes, &status); err != nil {
+				result.Error = operator.NewInternalError("cvd instance status failed", err)
+			} else {
+				result.Value = &apiv1.CVDStatusResponse{Status: status}
+			}
 		} else {
 			result.Error = operator.NewInternalError("cvd instance status failed", err)
 		}

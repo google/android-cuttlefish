@@ -57,16 +57,7 @@ func TestCvdStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// 1. Check Group Status
-	groupStatus, err := srv.CVDGroupStatus(cvd.Group)
-	if err != nil {
-		t.Fatalf("CVDGroupStatus failed: %v", err)
-	}
-	if groupStatus == nil || groupStatus.Status == nil {
-		t.Fatalf("groupStatus is empty")
-	}
-
-	// 2. Check Instance Status
+	// Check Instance Status
 	instanceStatus, err := srv.CVDStatus(cvd.Group, cvd.Name)
 	if err != nil {
 		t.Fatalf("CVDStatus failed: %v", err)
@@ -75,5 +66,5 @@ func TestCvdStatus(t *testing.T) {
 		t.Fatalf("instanceStatus is empty")
 	}
 
-	log.Printf("Successfully retrieved group status and instance status")
+	log.Printf("Successfully retrieved instance status")
 }

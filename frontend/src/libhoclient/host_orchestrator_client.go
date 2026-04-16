@@ -153,7 +153,6 @@ type InstanceOperationsClient interface {
 	// Stop recording the screen
 	StopScreenRecording(groupName, instanceName string) error
 	CVDStatus(groupName, instanceName string) (*hoapi.CVDStatusResponse, error)
-	CVDGroupStatus(groupName string) (*hoapi.CVDStatusResponse, error)
 }
 
 // Manage direct two-way communication channels with remote instances.
@@ -792,22 +791,7 @@ func asWebRTCICEServers(in []opapi.IceServer) []webrtc.ICEServer {
 }
 
 func (c *HostOrchestratorClientImpl) CVDStatus(groupName, instanceName string) (*hoapi.CVDStatusResponse, error) {
-	path := fmt.Sprintf("/cvds/%s/%s/:status", groupName, instanceName)
-	res := &hoapi.CVDStatusResponse{}
-	rb := c.HTTPHelper.NewGetRequest(path)
-
-	op := &hoapi.Operation{}
-	if err := rb.JSONResDo(op); err != nil {
-		return nil, err
-	}
-	if err := c.waitForOperation(op.Name, res); err != nil {
-		return nil, err
-	}
-	return res, nil
-}
-
-func (c *HostOrchestratorClientImpl) CVDGroupStatus(groupName string) (*hoapi.CVDStatusResponse, error) {
-	path := fmt.Sprintf("/cvds/%s/:status", groupName)
+	path := fmt.Sprintf("/cvds/%s/%s", groupName, instanceName)
 	res := &hoapi.CVDStatusResponse{}
 	rb := c.HTTPHelper.NewGetRequest(path)
 
