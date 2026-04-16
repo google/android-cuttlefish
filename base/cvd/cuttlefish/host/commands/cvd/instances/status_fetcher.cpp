@@ -126,8 +126,30 @@ Result<Json::Value> FetchInstanceStatus(LocalInstance& instance,
   envs["HOME"] = home;
   // old cvd_internal_status expects CUTTLEFISH_INSTANCE=<k>
   envs[kCuttlefishInstanceEnvVarName] = std::to_string(instance.id());
-  std::vector<std::string> args{"--print", "--wait_for_launcher",
+
+  ConstructCommandParam help_cmd_param{
+      .bin_path = bin_path,
+      .home = home,
+      .args = {"--help"},
+      .envs = envs,
+      .working_dir = working_dir,
+      .command_name = bin,
+  };
+  Command help_cmd = CF_EXPECT(ConstructCommand(help_cmd_param));
+
+  std::string stdout_str, stderr_str;
+  RunWithManagedStdio(std::move(help_cmd), nullptr, &stdout_str, &stderr_str);
+
+  bool has_print = stdout_str.find("--print") != std::string::npos ||
+                   stderr_str.find("--print") != std::string::npos;
+
+  std::vector<std::string> args{"--wait_for_launcher",
                                 std::to_string(timeout.count())};
+  if (has_print) {
+    args.push_back("--print");
+  } else {
+    LOG(INFO) << bin << " does not support --print. Omitting flag.";
+  }
 
   ConstructCommandParam construct_cmd_param{
       .bin_path = bin_path,

@@ -60,8 +60,14 @@ void LocalInstance::set_state(cvd::InstanceState state) {
 }
 
 std::string LocalInstance::instance_dir() const {
-  return fmt::format("{}/cuttlefish/instances/cvd-{}",
-                     group_proto_->home_directory(), id());
+  std::string to_ret = fmt::format("{}/cuttlefish/instances/cvd-{}",
+                                   group_proto_->home_directory(), id());
+  if(!FileExists(to_ret)) {
+    // Legacy launchers create cuttlefish_runtime.{$ID}
+    to_ret = fmt::format("{}/cuttlefish_runtime.{}",
+                         group_proto_->home_directory(), id());
+  }
+  return to_ret;
 }
 
 int LocalInstance::adb_port() const {

@@ -138,7 +138,12 @@ Result<std::string> GroupDirFromHome(std::string_view dir) {
 }
 
 std::string AssemblyDirFromHome(const std::string& group_home_dir) {
-  return group_home_dir + "/cuttlefish/assembly";
+  std::string to_ret = group_home_dir + "/cuttlefish/assembly";
+  if(!FileExists(to_ret)) {
+    // Legacy launchers create cuttlefish_assembly instead
+    to_ret = group_home_dir + "/cuttlefish_assembly";
+  }
+  return to_ret;
 }
 
 }  // namespace cuttlefish
