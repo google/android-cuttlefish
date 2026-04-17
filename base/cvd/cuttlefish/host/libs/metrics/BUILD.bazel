@@ -108,6 +108,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "github_environment",
+    srcs = [
+        "github_environment.cc",
+    ],
+    hdrs = [
+        "github_environment.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+    ],
+)
+
+cf_cc_library(
     name = "guest_metrics",
     srcs = [
         "guest_metrics.cc",
