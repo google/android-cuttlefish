@@ -87,6 +87,10 @@ std::string RotarySocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return ins.PerInstanceInternalUdsPath("rotary.sock");
 }
 
+std::string SwitchesSocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("switches.sock");
+}
+
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("restore-pipe-adbd"));
 }

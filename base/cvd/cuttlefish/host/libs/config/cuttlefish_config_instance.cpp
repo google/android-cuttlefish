@@ -1848,10 +1848,6 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
   return PerInstanceInternalUdsPath(name);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::switches_socket_path() const {
-  return PerInstanceInternalUdsPath("switches.sock");
-}
-
 static constexpr char kFrameSockPath[] = "frame_sock_path";
 void CuttlefishConfig::MutableInstanceSpecific::set_frames_socket_path(
     const std::string& frame_socket_path) {

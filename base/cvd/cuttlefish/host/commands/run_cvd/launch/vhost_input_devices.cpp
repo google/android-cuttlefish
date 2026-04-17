@@ -296,7 +296,7 @@ class VhostInputDevices : public CommandSource,
         CF_EXPECT(NewDeviceSockets(KeyboardSocketPath(instance_)),
                   "Failed to setup sockets for keyboard device");
     switches_sockets_ =
-        CF_EXPECT(NewDeviceSockets(instance_.switches_socket_path()),
+        CF_EXPECT(NewDeviceSockets(SwitchesSocketPath(instance_)),
                   "Failed to setup sockets for switches device");
     touchscreen_sockets_.reserve(instance_.display_configs().size());
     for (int i = 0; i < instance_.display_configs().size(); ++i) {
