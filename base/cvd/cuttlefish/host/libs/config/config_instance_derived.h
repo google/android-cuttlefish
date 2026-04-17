@@ -29,6 +29,7 @@ std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific&);
 std::string GamepadSocketPath(const CuttlefishConfig::InstanceSpecific&);
 std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific&);
 std::string KernelLogPipeName(const CuttlefishConfig::InstanceSpecific& ins);
+std::string KeyboardSocketPath(const CuttlefishConfig::InstanceSpecific&);
 std::string LauncherMonitorSocketPath(
     const CuttlefishConfig::InstanceSpecific&);
 std::string LogcatPath(const CuttlefishConfig::InstanceSpecific&);
