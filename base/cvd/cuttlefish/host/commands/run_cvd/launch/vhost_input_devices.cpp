@@ -281,9 +281,8 @@ class VhostInputDevices : public CommandSource,
   std::string Name() const override { return "VhostInputDevices"; }
   std::unordered_set<SetupFeature*> Dependencies() const override { return {}; }
   Result<void> ResultSetup() override {
-    rotary_sockets_ =
-        CF_EXPECT(NewDeviceSockets(instance_.rotary_socket_path()),
-                  "Failed to setup sockets for rotary device");
+    rotary_sockets_ = CF_EXPECT(NewDeviceSockets(RotarySocketPath(instance_)),
+                                "Failed to setup sockets for rotary device");
     if (instance_.enable_mouse()) {
       mouse_sockets_ = CF_EXPECT(NewDeviceSockets(MouseSocketPath(instance_)),
                                  "Failed to setup sockets for mouse device");
