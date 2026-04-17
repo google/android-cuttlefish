@@ -290,7 +290,7 @@ class VhostInputDevices : public CommandSource,
     }
     if (instance_.enable_gamepad()) {
       gamepad_sockets_ =
-          CF_EXPECT(NewDeviceSockets(instance_.gamepad_socket_path()),
+          CF_EXPECT(NewDeviceSockets(GamepadSocketPath(instance_)),
                     "Failed to setup sockets for gamepad device");
     }
     keyboard_sockets_ =
