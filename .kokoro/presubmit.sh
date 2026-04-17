@@ -37,6 +37,9 @@ fi
 # Add test user to the kokoro group so it has access to the source dir
 "${TOOL_DIR}/testutils/prepare_host.sh" -d "${REPO_DIR}" -u testrunner -g kokoro
 
+# Allow kokoro group to the source dir:
+sudo chmod -R g+w /tmpfs/src
+
 # Run as different user without sudo privileges
 sudo -u testrunner CREDENTIAL_SOURCE=gce "${TOOL_DIR}/testutils/runcvde2etests.sh" \
     "${ANDROID_CUTTLEFISH_KOKORO_BUILD_SCRIPT_ARGS}"
