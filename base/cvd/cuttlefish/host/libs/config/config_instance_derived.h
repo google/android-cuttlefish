@@ -38,6 +38,7 @@ std::string MouseSocketPath(const CuttlefishConfig::InstanceSpecific&);
 std::string PflashPath(const CuttlefishConfig::InstanceSpecific&);
 std::string PstorePath(const CuttlefishConfig::InstanceSpecific&);
 std::string RotarySocketPath(const CuttlefishConfig::InstanceSpecific&);
+std::string SwitchesSocketPath(const CuttlefishConfig::InstanceSpecific&);
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific&);
 
 }  // namespace cuttlefish
