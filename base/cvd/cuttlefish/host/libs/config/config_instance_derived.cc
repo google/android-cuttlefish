@@ -42,6 +42,10 @@ std::string ConsolePipePrefix(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("console"));
 }
 
+std::string GamepadSocketPath(const CuttlefishConfig::InstanceSpecific& ins) {
+  return ins.PerInstanceInternalUdsPath("gamepad.sock");
+}
+
 std::string HwcomposerPmemPath(const CuttlefishConfig::InstanceSpecific& ins) {
   return AbsolutePath(ins.PerInstanceInternalPath("hwcomposer-pmem"));
 }
