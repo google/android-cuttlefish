@@ -4,7 +4,7 @@ load("@vhost_user_media_workspace_crates//:defs.bzl", "crate_deps")
 package(default_visibility = ["//:android_cuttlefish"])
 
 rust_binary(
-    name = "emulated_camera",
+    name = "emulated_camera_mplane",
     srcs = [
         "src/device.rs",
         "src/main.rs",

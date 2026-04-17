@@ -1,5 +1,5 @@
 [package]
-name = "emulated_camera"
+name = "emulated_camera_mplane"
 version = "0.1.0"
 edition = "2024"
 
