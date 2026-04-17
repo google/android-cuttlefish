@@ -648,7 +648,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.AddVhostUser("input", instance.touch_socket_path(touch_idx));
     }
     if (instance.enable_mouse()) {
-      crosvm_cmd.AddVhostUser("input", instance.mouse_socket_path());
+      crosvm_cmd.AddVhostUser("input", MouseSocketPath(instance));
     }
     if (instance.enable_gamepad()) {
       crosvm_cmd.AddVhostUser("input", instance.gamepad_socket_path());

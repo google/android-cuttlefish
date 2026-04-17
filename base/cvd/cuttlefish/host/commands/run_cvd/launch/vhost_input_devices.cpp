@@ -36,6 +36,7 @@
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/commands/run_cvd/launch/enable_multitouch.h"
 #include "cuttlefish/host/commands/run_cvd/launch/log_tee_creator.h"
+#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
@@ -284,9 +285,8 @@ class VhostInputDevices : public CommandSource,
         CF_EXPECT(NewDeviceSockets(instance_.rotary_socket_path()),
                   "Failed to setup sockets for rotary device");
     if (instance_.enable_mouse()) {
-      mouse_sockets_ =
-          CF_EXPECT(NewDeviceSockets(instance_.mouse_socket_path()),
-                    "Failed to setup sockets for mouse device");
+      mouse_sockets_ = CF_EXPECT(NewDeviceSockets(MouseSocketPath(instance_)),
+                                 "Failed to setup sockets for mouse device");
     }
     if (instance_.enable_gamepad()) {
       gamepad_sockets_ =
