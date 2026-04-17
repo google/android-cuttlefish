@@ -30,6 +30,7 @@
 #include "absl/strings/match.h"
 #include "absl/strings/strip.h"
 
+#include "cuttlefish/common/libs/utils/archive.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/fetch/builds.h"
 #include "cuttlefish/host/commands/cvd/fetch/de_android_sparse.h"
@@ -64,10 +65,20 @@ Result<void> FetchArtifact::DownloadTo(std::string local_path) {
       fmt::format("{}/{}", fetch_build_context_.target_directory_, local_path);
 
   if (downloaded_path_.empty()) {
-    std::string downloaded =
-        CF_EXPECT(fetch_build_context_.fetch_context_.build_api_.DownloadFile(
-            fetch_build_context_.build_, fetch_build_context_.target_directory_,
-            artifact_name_));
+    std::string downloaded;
+    // URL builds are downloaded via UrlDownloader, bypassing the Android
+    // Build API which does not support arbitrary URLs.
+    if (auto* url_build =
+            std::get_if<UrlBuild>(&fetch_build_context_.build_)) {
+      downloaded = CF_EXPECT(
+          fetch_build_context_.fetch_context_.url_downloader_.Download(
+              url_build->url, fetch_build_context_.target_directory_));
+    } else {
+      downloaded = CF_EXPECT(
+          fetch_build_context_.fetch_context_.build_api_.DownloadFile(
+              fetch_build_context_.build_,
+              fetch_build_context_.target_directory_, artifact_name_));
+    }
     size_t size = FileSize(downloaded);
     std::string download_phase = fmt::format("Downloaded '{}'", artifact_name_);
     fetch_build_context_.trace_.CompletePhase(download_phase, size);
@@ -91,9 +102,19 @@ Result<void> FetchArtifact::DownloadTo(std::string local_path) {
 
 Result<ReadableZip*> FetchArtifact::AsZip() {
   if (!zip_) {
-    zip_ = CF_EXPECT(
-        ::cuttlefish::OpenZip(fetch_build_context_.fetch_context_.build_api_,
-                              fetch_build_context_.build_, artifact_name_));
+    if (std::holds_alternative<UrlBuild>(fetch_build_context_.build_)) {
+      // URL builds cannot stream zip contents from a build API, so the
+      // artifact must be downloaded to disk first.
+      if (downloaded_path_.empty()) {
+        CF_EXPECT(Download());
+      }
+      CF_EXPECT(zip_.has_value(),
+                "Downloaded URL artifact is not a zip file");
+    } else {
+      zip_ = CF_EXPECT(
+          ::cuttlefish::OpenZip(fetch_build_context_.fetch_context_.build_api_,
+                                fetch_build_context_.build_, artifact_name_));
+    }
   }
   return &*zip_;
 }
@@ -104,6 +125,32 @@ Result<void> FetchArtifact::ExtractAll() {
 }
 
 Result<void> FetchArtifact::ExtractAll(const std::string& local_path) {
+  // Non-zip archives (tar.gz, tgz) require downloading first and use the
+  // system archive utility for extraction.
+  if (absl::EndsWith(artifact_name_, ".tar.gz") ||
+      absl::EndsWith(artifact_name_, ".tgz")) {
+    if (downloaded_path_.empty()) {
+      CF_EXPECT(Download());
+    }
+    std::string extract_dir = fetch_build_context_.target_directory_;
+    if (!local_path.empty()) {
+      extract_dir = fmt::format("{}/{}", extract_dir, local_path);
+      CF_EXPECT(EnsureDirectoryExists(extract_dir, kRwxAllMode));
+    }
+    std::vector<std::string> extracted = CF_EXPECT(
+        ExtractArchiveContents(downloaded_path_, extract_dir,
+                               /* keep_archive= */ true));
+    size_t total_size = 0;
+    for (const std::string& file : extracted) {
+      total_size += FileSize(file);
+      CF_EXPECT(fetch_build_context_.AddFileToConfig(file));
+    }
+    std::string phase = fmt::format("Extracted '{}'", artifact_name_);
+    fetch_build_context_.trace_.CompletePhase(std::move(phase), total_size);
+    return {};
+  }
+
+  // Zip extraction uses the streaming zip reader.
   ReadableZip* zip = CF_EXPECT(AsZip());
   size_t entries = CF_EXPECT(zip->NumEntries());
   for (uint64_t i = 0; i < entries; i++) {
@@ -181,8 +228,14 @@ FetchBuildContext::FetchBuildContext(FetchContext& fetch_context,
 const Build& FetchBuildContext::Build() const { return build_; }
 
 std::string FetchBuildContext::GetBuildZipName(const std::string& name) const {
-  std::string product =
-      std::visit([](auto&& arg) { return arg.product; }, build_);
+  struct ProductVisitor {
+    std::string operator()(const DeviceBuild& b) const { return b.product; }
+    std::string operator()(const DirectoryBuild& b) const {
+      return b.product;
+    }
+    std::string operator()(const UrlBuild&) const { return "url"; }
+  };
+  std::string product = std::visit(ProductVisitor{}, build_);
   std::string id = std::get<0>(GetBuildIdAndTarget(build_));
   return product + "-" + name + "-" + id + ".zip";
 }
@@ -233,10 +286,12 @@ std::ostream& operator<<(std::ostream& out, const FetchBuildContext& context) {
 }
 
 FetchContext::FetchContext(BuildApi& build_api,
+                           UrlDownloader& url_downloader,
                            const TargetDirectories& target_directories,
                            const Builds& builds, FetcherConfig& fetcher_config,
                            FetchTracer& tracer)
     : build_api_(build_api),
+      url_downloader_(url_downloader),
       target_directories_(target_directories),
       builds_(builds),
       fetcher_config_(fetcher_config),

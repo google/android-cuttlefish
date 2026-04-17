@@ -35,6 +35,7 @@
 #include "cuttlefish/host/libs/web/http_client/retrying_http_client.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
 #include "cuttlefish/host/libs/web/oauth2_consent.h"
+#include "cuttlefish/host/libs/web/url_downloader.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -50,6 +51,7 @@ struct Downloaders::Impl {
   std::unique_ptr<CredentialSource> luci_credential_source_;
   std::unique_ptr<CredentialSource> gsutil_credential_source_;
   std::unique_ptr<LuciBuildApi> luci_build_api_;
+  std::unique_ptr<UrlDownloader> url_downloader_;
 };
 
 Downloaders::Downloaders(std::unique_ptr<Downloaders::Impl> impl)
@@ -114,6 +116,10 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
       *impl->retrying_http_client_, impl->luci_credential_source_.get(),
       impl->gsutil_credential_source_.get());
 
+  // Create URL downloader with the same credential source used for GCS
+  impl->url_downloader_ = std::make_unique<UrlDownloader>(
+      *impl->retrying_http_client_, impl->gsutil_credential_source_.get());
+
   return Downloaders(std::move(impl));
 }
 
@@ -126,5 +132,7 @@ BuildApi& Downloaders::AndroidBuild() {
 }
 
 LuciBuildApi& Downloaders::Luci() { return *impl_->luci_build_api_; }
+
+UrlDownloader& Downloaders::Url() { return *impl_->url_downloader_; }
 
 }  // namespace cuttlefish

@@ -31,6 +31,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/web:android_build_url",
         "//cuttlefish/host/libs/web:build_api",
         "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web:url_downloader",
         "//cuttlefish/host/libs/web/cas:cas_downloader",
         "//cuttlefish/host/libs/web/http_client",
         "//cuttlefish/host/libs/web/http_client:http_file",
@@ -62,6 +63,7 @@ cf_cc_library(
     hdrs = ["android_build_string.h"],
     deps = [
         "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/host/libs/web:url_downloader",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/strings",
@@ -210,5 +212,32 @@ cf_cc_library(
         "@fmt",
         "@jsoncpp",
         "@zlib",
+    ],
+)
+
+cf_cc_library(
+    name = "url_downloader",
+    srcs = ["url_downloader.cc"],
+    hdrs = ["url_downloader.h"],
+    deps = [
+        "//cuttlefish/host/libs/web:credential_source",
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:http_file",
+        "//cuttlefish/host/libs/web/http_client:url_escape",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@fmt",
+    ],
+)
+
+cf_cc_test(
+    name = "url_downloader_test",
+    srcs = ["url_downloader_test.cc"],
+    deps = [
+        "//cuttlefish/host/libs/web:url_downloader",
+        "//cuttlefish/result",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
