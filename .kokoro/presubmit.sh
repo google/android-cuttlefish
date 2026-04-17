@@ -2,6 +2,8 @@
 
 set -e -x
 
+echo "hello"
+
 retry() {
   local attempt=1
   while true; do
