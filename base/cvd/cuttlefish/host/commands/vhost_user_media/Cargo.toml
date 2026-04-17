@@ -12,8 +12,8 @@ libc = "0.2"
 log = "0.4"
 thiserror = "2.0"
 v4l2r = { version = "0.0.6", features = ["arch64"] }
-vhost = { git = "https://github.com/rust-vmm/vhost.git", rev = "03c9524", features = ["vhost-user-backend"] }
-vhost-user-backend = { git = "https://github.com/rust-vmm/vhost.git", rev = "03c9524" }
+vhost = { version = "0.16.0", features = ["vhost-user-backend"] }
+vhost-user-backend = {  version = "0.22.0" }
 vhu_media = { path = "vhu_media" }
 virtio-bindings = "0.2.6"
 virtio-media = "0.0.7"
