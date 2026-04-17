@@ -560,6 +560,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/commands/run_cvd/launch:enable_multitouch",
         "//cuttlefish/host/commands/run_cvd/launch:log_tee_creator",
+        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
         "//cuttlefish/host/libs/config:guest_os",
         "//cuttlefish/host/libs/config:known_paths",

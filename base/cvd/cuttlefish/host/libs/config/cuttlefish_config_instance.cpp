@@ -1848,10 +1848,6 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
   return PerInstanceInternalUdsPath(name);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::mouse_socket_path() const {
-  return PerInstanceInternalUdsPath("mouse.sock");
-}
-
 std::string CuttlefishConfig::InstanceSpecific::gamepad_socket_path() const {
   return PerInstanceInternalUdsPath("gamepad.sock");
 }
