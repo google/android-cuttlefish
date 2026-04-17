@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "emulated_camera",
+    "emulated_camera_mplane",
     "simple_device",
     "vhu_media",
 ]
