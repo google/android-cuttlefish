@@ -1848,10 +1848,6 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
   return PerInstanceInternalUdsPath(name);
 }
 
-std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
-  return PerInstanceInternalUdsPath("keyboard.sock");
-}
-
 std::string CuttlefishConfig::InstanceSpecific::switches_socket_path() const {
   return PerInstanceInternalUdsPath("switches.sock");
 }

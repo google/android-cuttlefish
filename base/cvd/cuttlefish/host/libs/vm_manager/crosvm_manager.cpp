@@ -654,7 +654,7 @@ Result<std::vector<MonitorCommand>> CrosvmManager::StartCommands(
       crosvm_cmd.AddVhostUser("input", GamepadSocketPath(instance));
     }
     crosvm_cmd.AddVhostUser("input", RotarySocketPath(instance));
-    crosvm_cmd.AddVhostUser("input", instance.keyboard_socket_path());
+    crosvm_cmd.AddVhostUser("input", KeyboardSocketPath(instance));
     crosvm_cmd.AddVhostUser("input", instance.switches_socket_path());
   }
 

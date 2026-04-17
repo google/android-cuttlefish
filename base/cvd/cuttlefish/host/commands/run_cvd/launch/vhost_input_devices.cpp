@@ -293,7 +293,7 @@ class VhostInputDevices : public CommandSource,
                     "Failed to setup sockets for gamepad device");
     }
     keyboard_sockets_ =
-        CF_EXPECT(NewDeviceSockets(instance_.keyboard_socket_path()),
+        CF_EXPECT(NewDeviceSockets(KeyboardSocketPath(instance_)),
                   "Failed to setup sockets for keyboard device");
     switches_sockets_ =
         CF_EXPECT(NewDeviceSockets(instance_.switches_socket_path()),
