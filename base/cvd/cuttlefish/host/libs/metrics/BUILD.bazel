@@ -69,6 +69,25 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "gce_environment",
+    srcs = [
+        "gce_environment.cc",
+    ],
+    hdrs = [
+        "gce_environment.h",
+    ],
+    deps = [
+        "//cuttlefish/host/libs/web/http_client",
+        "//cuttlefish/host/libs/web/http_client:curl_global_init",
+        "//cuttlefish/host/libs/web/http_client:curl_http_client",
+        "//cuttlefish/host/libs/web/http_client:http_string",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+    ],
+)
+
+cf_cc_library(
     name = "github_environment",
     srcs = [
         "github_environment.cc",
