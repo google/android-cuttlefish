@@ -21,6 +21,7 @@
 #include "json/value.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(PrettyJson, Structured) {
   Json::Value structured;
@@ -42,4 +43,5 @@ TEST(PrettyJson, Structured) {
   EXPECT_TRUE(absl::StrContains(formatted, "\"value\""));
 }
 
+}  // namespace
 }  // namespace cuttlefish

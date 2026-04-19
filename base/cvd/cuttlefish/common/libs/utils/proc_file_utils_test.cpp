@@ -25,6 +25,7 @@
 #include "cuttlefish/common/libs/utils/proc_file_utils.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(ProcFileUid, SelfUidTest) {
   auto my_pid = getpid();
@@ -43,4 +44,5 @@ TEST(ProcFilePid, CurrentPidCollected) {
   ASSERT_TRUE(Contains(*pids_result, this_pid));
 }
 
+}  // namespace
 }  // namespace cuttlefish

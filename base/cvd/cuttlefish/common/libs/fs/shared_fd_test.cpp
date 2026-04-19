@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 namespace cuttlefish {
+namespace {
 
 char pipe_message[] = "Testing the pipe";
 
@@ -34,4 +35,5 @@ TEST(SendFD, Basic) {
   EXPECT_EQ(0, strcmp(buf, pipe_message));
 }
 
-}
+}  // namespace
+}  // namespace cuttlefish

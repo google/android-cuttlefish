@@ -21,6 +21,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(FrontlineParserTest, SelectorArgs) {
   cvd_common::Args input{"cvd", "--instance_name=1", "status"};
@@ -32,4 +33,5 @@ TEST(FrontlineParserTest, SelectorArgs) {
   ASSERT_EQ(input, (std::vector<std::string>{"cvd", "status"}));
 }
 
+}  // namespace
 }  // namespace cuttlefish

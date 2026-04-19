@@ -22,6 +22,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(HostToolTarget, KnownFlags) {
   std::string android_host_out = StringFromEnv("ANDROID_HOST_OUT", "");
@@ -60,4 +61,5 @@ TEST(HostToolManager, KnownBins) {
       << "stop_bin was " << *stop_bin;
 }
 
+}  // namespace
 }  // namespace cuttlefish

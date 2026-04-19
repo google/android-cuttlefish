@@ -25,6 +25,7 @@
 
 namespace cuttlefish {
 namespace cvdsnapshot {
+namespace {
 
 TEST_F(CvdSnapshotTest, CvdSuspendResume) {
   auto cmd_suspend = CmdRunner::Run("cvd suspend", envs);
@@ -83,5 +84,6 @@ TEST_F(CvdSnapshotTest, CvdSuspendSnapshotResumeRestore) {
   ASSERT_TRUE(cmd_rm.Success()) << cmd_rm.Stderr();
 }
 
+}  // namespace
 }  // namespace cvdsnapshot
 }  // namespace cuttlefish

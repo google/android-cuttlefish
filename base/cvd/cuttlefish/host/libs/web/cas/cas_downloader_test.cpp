@@ -39,6 +39,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 std::string CreateTempFileWithText(const std::string& filepath,
                                    const std::string& text) {
@@ -671,6 +672,8 @@ TEST_F(CasDownloaderTests, CacheMaxSize_OverriddenWhenTooSmall) {
   EXPECT_THAT(output,
               HasSubstr(fmt::format("-cache-max-size={}", kMinCacheMaxSize)));
 }
+
+}  // namespace
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);

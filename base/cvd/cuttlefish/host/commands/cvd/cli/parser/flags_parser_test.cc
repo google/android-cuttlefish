@@ -22,6 +22,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(FlagsParserTest, ParseInvalidJson) {
   const char* test_string = R""""(
@@ -170,4 +171,5 @@ TEST(BootFlagsParserTest, ParseNetSimFlagEnabled) {
       << "netsim_uwb flag is missing or wrongly formatted";
 }
 
+}  // namespace
 }  // namespace cuttlefish

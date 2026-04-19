@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+namespace {
+
 TEST(CommandParserUnitTest, SkipPrefix) {
   std::string command = "AT+SPUSATENVECMD=\"D3078202018190014E\"";
 
@@ -101,3 +103,5 @@ TEST(CommandParserUnitTest, GetNextStrDeciToHex) {
   std::string result2(cmd.GetNextStrDeciToHex());
   ASSERT_STREQ("6F05", result2.c_str());  // 28421
 }
+
+}  // namespace

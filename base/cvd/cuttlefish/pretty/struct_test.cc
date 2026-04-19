@@ -37,8 +37,6 @@ void ExpectFormatsTo(const PrettyStruct& ps, const std::string_view expected) {
   EXPECT_EQ(sstream.str(), trimmed);
 }
 
-}  // namespace
-
 TEST(PrettyStruct, Empty) {
   ExpectFormatsTo(PrettyStruct("Empty"), "Empty {}");
 }
@@ -87,4 +85,5 @@ Outer {
 )");
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -25,6 +25,7 @@
 #include "cuttlefish/result/result_type.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(Base64Test, EncodeMult3) {
   ASSERT_THAT(EncodeBase64("foobar"), IsOkAndValue("Zm9vYmFy"));
@@ -70,4 +71,6 @@ TEST(Base64Test, EncodeThreeZeroes) {
 
   ASSERT_THAT(DecodeBase64(*string_encoding), IsOkAndValue(in));
 }
-}
+
+}  // namespace
+}  // namespace cuttlefish

@@ -38,8 +38,6 @@ void ExpectFormatsTo(const PrettyContainerType& ps,
   EXPECT_EQ(sstream.str(), trimmed);
 }
 
-}  // namespace
-
 TEST(PrettyContainer, Empty) {
   ExpectFormatsTo(PrettyContainer(std::vector<int>{}), "{}");
 }
@@ -96,4 +94,5 @@ TEST(PrettyContainer, NestedMember) {
 )");
 }
 
+}  // namespace
 }  // namespace cuttlefish

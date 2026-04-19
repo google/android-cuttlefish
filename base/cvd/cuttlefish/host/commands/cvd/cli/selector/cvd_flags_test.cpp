@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/unittests/selector/cvd_flags_helper.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST_F(CvdFlagCollectionTest, Init) {
   auto output_result = flag_collection_.FilterFlags(input_);
@@ -70,4 +71,5 @@ TEST(CvdFlagTest, FlagProxyFilter) {
             cvd_common::Args{"--bar --foo=name --enable_vnc"});
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -21,6 +21,7 @@
 #include "cuttlefish/host/commands/cvd/cli/parser/test_common.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(BootFlagsParserTest, ParseTwoInstancesBootAnimationFlagEmptyJson) {
   const char* test_string = R""""(
@@ -352,4 +353,5 @@ TEST(BootFlagsParserTest, ParseTwoInstancesEnforceSecurityFlagFullJson) {
       << "guest_enforce_security flag is missing or wrongly formatted";
 }
 
+}  // namespace
 }  // namespace cuttlefish

@@ -22,6 +22,7 @@
 #include "launch_cvd.pb.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(DisplayConfigTest, ParseProto) {
   std::string flag_value = "ChoKCgi4CBDYBBh4IDwKDAi4CBDYBBh4IDwqAA==";
@@ -42,4 +43,5 @@ TEST(DisplayConfigTest, ParseProto) {
   ASSERT_TRUE(result);
 }
 
+}  // namespace
 }  // namespace cuttlefish

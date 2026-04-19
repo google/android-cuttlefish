@@ -21,6 +21,8 @@
 #include "cuttlefish/host/commands/metrics/utils.h"
 
 namespace cuttlefish {
+namespace {
+
 TEST(MacAddressTest, ValidMacAddress) {
   std::string mac = metrics::GetMacAddress();
   ASSERT_FALSE(mac.empty());
@@ -38,4 +40,5 @@ TEST(MacAddressTest, MacAddressFormat) {
   EXPECT_EQ(mac[14], ':');
 }
 
+}  // namespace
 }  // namespace cuttlefish

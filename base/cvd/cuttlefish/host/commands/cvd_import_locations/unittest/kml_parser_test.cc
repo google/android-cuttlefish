@@ -41,7 +41,6 @@ bool ParseKmlString(GpsFixArray* locations, char* text, std::string* error) {
   result = KmlParser::parseString(text, strlen(text), locations, error);
   return result;
 }
-}  // namespace
 
 TEST(KmlParser, ParseNonexistentFile) {
   GpsFixArray locations;
@@ -658,4 +657,5 @@ TEST(KmlParser, ParsePlacemarkNullNameNoCrashString) {
   EXPECT_STREQ("", locations.front().description.c_str());
 }
 
+}  // namespace
 }  // namespace cuttlefish

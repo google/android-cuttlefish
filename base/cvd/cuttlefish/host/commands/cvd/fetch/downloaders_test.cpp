@@ -28,6 +28,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 std::string CreateTempFileWithText(const std::string& filepath,
                                    const std::string& text) {
@@ -123,4 +124,5 @@ TEST_F(FetchCvdTests, CasDownloaderInvokedIfDownloaderPathSetInCasConfig) {
   EXPECT_THAT(FileExists(cas_output_filepath_), IsTrue());
 }
 
+}  // namespace
 }  // namespace cuttlefish

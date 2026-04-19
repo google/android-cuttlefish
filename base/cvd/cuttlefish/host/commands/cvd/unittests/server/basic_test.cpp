@@ -22,6 +22,7 @@
 #include "cuttlefish/host/commands/cvd/unittests/server/cmd_runner.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(CvdBasic, CvdDefaultStart) {
   cvd_common::Envs envs;
@@ -49,4 +50,5 @@ TEST(CvdBasic, CvdDefaultStart) {
   CmdRunner::Run("cvd reset -y", envs);
 }
 
+}  // namespace
 }  // namespace cuttlefish

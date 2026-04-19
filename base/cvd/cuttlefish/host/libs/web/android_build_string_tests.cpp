@@ -26,6 +26,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 using ::testing::ElementsAre;
 using ::testing::Eq;
@@ -201,4 +202,5 @@ TEST(BuildStringGflagsCompatFlagTests, MultiValueMixedWithEmptySuccess) {
           DeviceBuildString{.branch_or_id = "abcde", .target = "test_target"}));
 }
 
+}  // namespace
 }  // namespace cuttlefish

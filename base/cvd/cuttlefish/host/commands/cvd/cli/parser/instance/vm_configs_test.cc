@@ -26,6 +26,7 @@
 #include "cuttlefish/result/result_matchers.h"
 
 namespace cuttlefish {
+namespace {
 
 TEST(VmFlagsParserTest, ParseTwoInstancesCpuFlagEmptyJson) {
   const char* test_string = R""""(
@@ -994,4 +995,5 @@ TEST(VmFlagsParserTest, ParseTwoInstancesCustomActionsFlagPartialJson) {
   EXPECT_THAT(ParseJson(custom_actions[0]), IsOkAndValue(expected_actions));
 }
 
+}  // namespace
 }  // namespace cuttlefish

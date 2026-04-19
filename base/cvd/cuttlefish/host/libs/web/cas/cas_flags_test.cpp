@@ -24,6 +24,7 @@
 #include <gtest/gtest.h>
 
 namespace cuttlefish {
+namespace {
 
 class CasFlagsTests : public ::testing::Test {
  protected:
@@ -197,4 +198,5 @@ TEST_F(CasFlagsTests, PriorityLogicCliBlocksConfig) {
   EXPECT_EQ(flag.value(), 200);
 }
 
+}  // namespace
 }  // namespace cuttlefish

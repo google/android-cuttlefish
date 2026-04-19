@@ -58,8 +58,6 @@ bool MaybeCvdStart(const CmdResult& result) {
   return ContainsAll(stdout, {"vhost", "modem", "daemon", "adb"});
 }
 
-}  // namespace
-
 TEST(CvdDriver, CvdHelp) {
   cvd_common::Envs envs;
   CmdRunner::Run("cvd reset -y", envs);
@@ -137,4 +135,5 @@ TEST(CvdSubtool, CvdStartHelp) {
   CmdRunner::Run("cvd reset -y", envs);
 }
 
+}  // namespace
 }  // namespace cuttlefish

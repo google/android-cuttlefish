@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+namespace {
+
 TEST(PDUParserTest, IsValidPDU_true) {
   std::string pdu = "0001000D91688118109844F0000017AFD7903AB55A9BBA69D639D4ADCBF99E3DCCAE9701";
   cuttlefish::PDUParser smspdu(pdu);
@@ -57,3 +59,5 @@ TEST(PDUParserTest, BCDToString) {
   const char *expect = "21436587";
   ASSERT_STREQ(process_value.c_str(), expect);
 }
+
+}  // namespace

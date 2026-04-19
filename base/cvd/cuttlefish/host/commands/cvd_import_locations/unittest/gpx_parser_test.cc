@@ -22,8 +22,8 @@
 #include "cuttlefish/host/libs/location/StringParse.h"
 
 namespace cuttlefish {
-
 namespace {
+
 bool ParseGpxFile(GpsFixArray* locations, char* text, std::string* error) {
   bool result;
   TemporaryDir myDir;
@@ -42,8 +42,6 @@ bool ParseGpxString(GpsFixArray* locations, char* text, std::string* error) {
   result = GpxParser::parseString(text, strlen(text), locations, error);
   return result;
 }
-
-}  // namespace
 
 TEST(GpxParser, ParseFileNotFound) {
   GpsFixArray locations;
@@ -378,4 +376,5 @@ TEST(GpxParser, ParseValidDocumentString) {
   EXPECT_EQ("Trkpt 2-2", locations[7].name);
 }
 
+}  // namespace
 }  // namespace cuttlefish
