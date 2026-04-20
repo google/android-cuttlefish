@@ -82,6 +82,33 @@ cf_cc_test(
 )
 
 cf_cc_library(
+    name = "cpio",
+    srcs = ["cpio.cc"],
+    hdrs = ["cpio.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:size_utils",
+        "//cuttlefish/io",
+        "//cuttlefish/io:filesystem",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:read_window_view",
+        "//cuttlefish/result:expect",
+        "//cuttlefish/result:result_type",
+    ],
+)
+
+cf_cc_test(
+    name = "cpio_test",
+    srcs = ["cpio_test.cc"],
+    deps = [
+        "//cuttlefish/io:cpio",
+        "//cuttlefish/io:in_memory",
+        "//cuttlefish/io:read_exact",
+        "//cuttlefish/io:string",
+        "//cuttlefish/result:result_matchers",
+    ],
+)
+
+cf_cc_library(
     name = "default_visitor",
     srcs = ["default_visitor.cc"],
     hdrs = ["default_visitor.h"],
