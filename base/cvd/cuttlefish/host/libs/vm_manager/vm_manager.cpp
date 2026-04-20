@@ -54,7 +54,7 @@ static std::unique_ptr<VmManager> Allocate(VmmMode mode, Arch arch) {
 
 std::unique_ptr<VmManager> GetVmManager(VmmMode vmm_mode, Arch arch) {
   std::unique_ptr<VmManager> vmm = Allocate(vmm_mode, arch);
-  if (vmm.get() != nullptr && !vmm->IsSupported()) {
+  if (vmm != nullptr && !vmm->IsSupported()) {
     LOG(ERROR) << "VM manager " << vmm_mode
                << " is not supported on this machine.";
     return {};
