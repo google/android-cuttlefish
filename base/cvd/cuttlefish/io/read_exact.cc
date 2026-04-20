@@ -33,7 +33,7 @@ Result<void> ReadExact(Reader& reader, char* buf, size_t size) {
   return {};
 }
 
-Result<void> PReadExact(ReaderSeeker& reader, char* buf, size_t size,
+Result<void> PReadExact(const ReaderSeeker& reader, char* buf, size_t size,
                         uint64_t offset) {
   while (size > 0) {
     size_t data_read = CF_EXPECT(reader.PRead((void*)buf, size, offset));

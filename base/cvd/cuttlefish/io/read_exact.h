@@ -33,10 +33,10 @@ Result<T> ReadExactBinary(Reader& reader) {
   return data;
 }
 
-Result<void> PReadExact(ReaderSeeker&, char* buf, size_t size, uint64_t offset);
+Result<void> PReadExact(const ReaderSeeker&, char* buf, size_t size, uint64_t offset);
 
 template <typename T>
-Result<T> PReadExactBinary(ReaderSeeker& reader, uint64_t offset) {
+Result<T> PReadExactBinary(const ReaderSeeker& reader, uint64_t offset) {
   T data;
   char* const data_char = reinterpret_cast<char*>(&data);
   CF_EXPECT(PReadExact(reader, data_char, sizeof(data), offset));
