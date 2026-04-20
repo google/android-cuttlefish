@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "emulated_camera_mplane",
+    "emulated_camera_splane",
     "simple_device",
     "vhu_media",
 ]
@@ -8,6 +9,7 @@ members = [
 [workspace.dependencies]
 clap = { version = "4.5",  features = ["derive"] }
 env_logger = "0.11"
+image = "0.24"
 libc = "0.2"
 log = "0.4"
 thiserror = "2.0"
