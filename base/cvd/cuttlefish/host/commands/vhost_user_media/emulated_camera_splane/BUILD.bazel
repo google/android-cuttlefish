@@ -1,0 +1,26 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@vhost_user_media_workspace_crates//:defs.bzl", "crate_deps")
+
+package(default_visibility = ["//:android_cuttlefish"])
+
+rust_binary(
+    name = "emulated_camera_splane",
+    srcs = [
+        "src/device.rs",
+        "src/main.rs",
+    ],
+    edition = "2024",
+    deps = crate_deps([
+        "clap",
+        "env_logger",
+        "image",
+        "libc",
+        "log",
+        "v4l2r",
+        "vhost-user-backend",
+        "virtio-media",
+        "vm-memory",
+    ]) + [
+        "//cuttlefish/host/commands/vhost_user_media/vhu_media",
+    ],
+)
