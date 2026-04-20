@@ -10,8 +10,8 @@ cf_cc_library(
     hdrs = ["access_kregistry.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config_paths",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",
     ],
@@ -188,8 +188,8 @@ cf_cc_library(
     hdrs = ["hwcomposer_pmem.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config_paths",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",
     ],
@@ -314,8 +314,8 @@ cf_cc_library(
     hdrs = ["pflash.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config_paths",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",
     ],
@@ -327,8 +327,8 @@ cf_cc_library(
     hdrs = ["pstore.h"],
     deps = [
         "//cuttlefish/common/libs/utils:files",
-        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config_paths",
         "//cuttlefish/host/libs/config:data_image",
         "//cuttlefish/result",
     ],

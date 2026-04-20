@@ -17,8 +17,8 @@
 #include "cuttlefish/host/commands/assemble_cvd/disk/pflash.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config_paths.h"
 #include "cuttlefish/host/libs/config/data_image.h"
 #include "cuttlefish/result/result.h"
 

@@ -42,4 +42,3 @@ std::string SwitchesSocketPath(const CuttlefishConfig::InstanceSpecific&);
 std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific&);
 
 }  // namespace cuttlefish
-

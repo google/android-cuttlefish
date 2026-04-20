@@ -28,8 +28,8 @@
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/libs/command_util/runner/defs.h"
 #include "cuttlefish/host/libs/command_util/runner/run_cvd.pb.h"
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config_paths.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 

@@ -31,8 +31,8 @@
 
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/fs/shared_select.h"
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config_paths.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/posix/strerror.h"
 

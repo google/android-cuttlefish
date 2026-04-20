@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config_paths.h"
 
 #include <string>
 
@@ -96,4 +96,3 @@ std::string RestoreAdbdPipeName(const CuttlefishConfig::InstanceSpecific& ins) {
 }
 
 }  // namespace cuttlefish
-

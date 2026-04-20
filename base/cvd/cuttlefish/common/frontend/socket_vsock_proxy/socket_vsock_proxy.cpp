@@ -28,8 +28,8 @@
 #include "cuttlefish/common/libs/fs/shared_fd.h"
 #include "cuttlefish/common/libs/utils/socket2socket_proxy.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config_paths.h"
 #include "cuttlefish/host/libs/config/logging.h"
 #include "cuttlefish/result/result.h"
 
