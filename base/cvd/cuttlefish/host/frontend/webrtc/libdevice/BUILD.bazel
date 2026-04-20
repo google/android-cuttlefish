@@ -5,64 +5,232 @@ package(
 )
 
 cf_cc_library(
-    name = "libdevice",
-    srcs = [
-        "audio_track_source_impl.cpp",
-        "camera_streamer.cpp",
-        "client_handler.cpp",
-        "data_channels.cpp",
-        "gamepad.cpp",
-        "keyboard.cpp",
-        "lights_observer.cpp",
-        "local_recorder.cpp",
-        "recording_manager.cpp",
-        "server_connection.cpp",
-        "streamer.cpp",
-        "video_track_source_impl.cpp",
+    name = "audio_frame_buffer",
+    hdrs = ["audio_frame_buffer.h"],
+    deps = [
+        "@libwebrtc",
     ],
-    hdrs = [
-        "audio_frame_buffer.h",
-        "audio_sink.h",
-        "audio_track_source_impl.h",
-        "camera_controller.h",
-        "camera_streamer.h",
-        "client_handler.h",
-        "connection_observer.h",
-        "data_channels.h",
-        "gamepad.h",
-        "keyboard.h",
-        "lights_observer.h",
-        "local_recorder.h",
-        "recording_manager.h",
-        "server_connection.h",
-        "streamer.h",
-        "video_sink.h",
-        "video_track_source_impl.h",
+)
+
+cf_cc_library(
+    name = "audio_sink",
+    hdrs = ["audio_sink.h"],
+    deps = [
+        ":audio_frame_buffer",
     ],
+)
+
+cf_cc_library(
+    name = "audio_track_source_impl",
+    srcs = ["audio_track_source_impl.cpp"],
+    hdrs = ["audio_track_source_impl.h"],
+    deps = [
+        ":audio_sink",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "camera_controller",
+    hdrs = ["camera_controller.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:json",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "camera_streamer",
+    srcs = ["camera_streamer.cpp"],
+    hdrs = ["camera_streamer.h"],
+    deps = [
+        ":camera_controller",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/common/libs/utils:vsock_connection",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "client_handler",
+    srcs = ["client_handler.cpp"],
+    hdrs = ["client_handler.h"],
+    deps = [
+        ":connection_observer",
+        ":data_channels",
+        "//cuttlefish/host/frontend/webrtc/libcommon:connection_controller",
+        "//cuttlefish/host/frontend/webrtc/libcommon:peer_connection_utils",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+        "@boringssl//:crypto",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "connection_observer",
+    hdrs = ["connection_observer.h"],
+    deps = [
+        ":camera_controller",
+        ":lights_observer",
+        "//cuttlefish/common/libs/utils:json",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "data_channels",
+    srcs = ["data_channels.cpp"],
+    hdrs = ["data_channels.h"],
+    deps = [
+        ":connection_observer",
+        ":gamepad",
+        ":keyboard",
+        "//cuttlefish/common/libs/utils:json",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/libs/config:custom_actions",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "gamepad",
+    srcs = ["gamepad.cpp"],
+    hdrs = ["gamepad.h"],
+    deps = [
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
+    name = "keyboard",
+    srcs = ["keyboard.cpp"],
+    hdrs = ["keyboard.h"],
+    deps = [
+        "//libbase",
+    ],
+)
+
+cf_cc_library(
+    name = "lights_observer",
+    srcs = ["lights_observer.cpp"],
+    hdrs = ["lights_observer.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:vsock_connection",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "local_recorder",
+    srcs = ["local_recorder.cpp"],
+    hdrs = ["local_recorder.h"],
     linkopts = [
         "-lopus",
     ],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@libvpx",
+        "@libwebm//:mkvmuxer",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "recording_manager",
+    srcs = ["recording_manager.cpp"],
+    hdrs = ["recording_manager.h"],
+    deps = [
+        ":local_recorder",
+        "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "server_connection",
+    srcs = ["server_connection.cpp"],
+    hdrs = ["server_connection.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:json",
-        "//cuttlefish/common/libs/utils:vsock_connection",
+        "//cuttlefish/host/frontend/webrtc/libcommon:utils",
+        "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
+        "//cuttlefish/result",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@boringssl//:crypto",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "streamer",
+    srcs = ["streamer.cpp"],
+    hdrs = ["streamer.h"],
+    deps = [
+        ":audio_sink",
+        ":audio_track_source_impl",
+        ":camera_controller",
+        ":camera_streamer",
+        ":client_handler",
+        ":connection_observer",
+        ":recording_manager",
+        ":server_connection",
+        ":video_sink",
+        ":video_track_source_impl",
+        "//cuttlefish/common/libs/utils:json",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_device",
         "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
-        "//cuttlefish/host/frontend/webrtc/libcommon:connection_controller",
         "//cuttlefish/host/frontend/webrtc/libcommon:peer_connection_utils",
         "//cuttlefish/host/frontend/webrtc/libcommon:utils",
         "//cuttlefish/host/frontend/webrtc_operator/constants:webrtc_signaling_headers",
         "//cuttlefish/host/libs/config:custom_actions",
         "//cuttlefish/host/libs/config:cuttlefish_config",
-        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/log:check",
-        "@boringssl//:crypto",
         "@jsoncpp",
-        "@libvpx",
-        "@libwebm//:mkvmuxer",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "video_sink",
+    hdrs = ["video_sink.h"],
+    deps = [
+        "//cuttlefish/host/libs/screen_connector:video_frame_buffer",
+    ],
+)
+
+cf_cc_library(
+    name = "video_track_source_impl",
+    srcs = ["video_track_source_impl.cpp"],
+    hdrs = ["video_track_source_impl.h"],
+    deps = [
+        ":video_sink",
         "@libwebrtc",
     ],
 )
