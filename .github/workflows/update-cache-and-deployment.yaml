@@ -144,7 +144,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build docker image
-      run: container/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
+      run: container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
@@ -172,7 +172,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build docker image
-      run: container/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
+      run: container/image/image-builder.sh -m ${INPUTS_DEPLOY_CHANNEL}
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
