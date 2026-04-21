@@ -27,13 +27,13 @@
 #include "absl/log/log.h"
 
 #include "cuttlefish/common/libs/utils/files.h"
-#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
 #include "cuttlefish/host/libs/metrics/device_event_type.h"
 #include "cuttlefish/host/libs/metrics/enabled.h"
 #include "cuttlefish/host/libs/metrics/flag_metrics.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
+#include "cuttlefish/host/libs/metrics/host_metrics.h"
 #include "cuttlefish/host/libs/metrics/metrics_conversion.h"
 #include "cuttlefish/host/libs/metrics/metrics_transmitter.h"
 #include "cuttlefish/host/libs/metrics/metrics_writer.h"
@@ -77,7 +77,7 @@ Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
           CF_EXPECT(ReadSessionIdFile(metrics_input.metrics_directory)),
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
-      .host_metrics = GetHostInfo(),
+      .host_metrics = GetHostMetrics(),
   };
 
   if (metrics_input.guests) {
