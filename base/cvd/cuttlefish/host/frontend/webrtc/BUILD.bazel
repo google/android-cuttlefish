@@ -44,14 +44,52 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "libcuttlefish_webrtc_audio_handler",
+    srcs = ["audio_handler.cpp"],
+    hdrs = ["audio_handler.h"],
+    deps = [
+        ":libcuttlefish_webrtc_audio_mixer",
+        ":libcuttlefish_webrtc_audio_settings",
+        "//cuttlefish/host/frontend/webrtc/libcommon:audio_source",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
+        "//cuttlefish/host/libs/audio_connector",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
+        "@libwebrtc",
+    ],
+)
+
+cf_cc_library(
+    name = "libcuttlefish_webrtc_audio_mixer",
+    srcs = ["audio_mixer.cpp"],
+    hdrs = ["audio_mixer.h"],
+    deps = [
+        ":libcuttlefish_webrtc_audio_settings",
+        "//cuttlefish/host/frontend/webrtc/libdevice:audio_sink",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
+    ],
+)
+
+cf_cc_library(
+    name = "libcuttlefish_webrtc_audio_settings",
+    hdrs = ["audio_settings.h"],
+)
+
 cf_cc_binary(
     name = "webRTC",
     srcs = [
-        "audio_handler.cpp",
-        "audio_handler.h",
-        "audio_mixer.cpp",
-        "audio_mixer.h",
-        "audio_settings.h",
         "bluetooth_handler.cpp",
         "bluetooth_handler.h",
         "client_server.cpp",
@@ -78,6 +116,9 @@ cf_cc_binary(
     ],
     deps = [
         ":libcuttlefish_webrtc_adb_handler",
+        ":libcuttlefish_webrtc_audio_handler",
+        ":libcuttlefish_webrtc_audio_mixer",
+        ":libcuttlefish_webrtc_audio_settings",
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/fs",
