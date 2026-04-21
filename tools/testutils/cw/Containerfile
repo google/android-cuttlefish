@@ -25,7 +25,13 @@ RUN --mount=source=.,target=/mnt,type=bind apt-get install -y \
 
 FROM with_cuttlefish_packages
 
+RUN usermod -aG kvm root
+RUN usermod -aG cvdnetwork root
+
+# User used on Github CI using rootfull podman.
 RUN useradd -m "testrunner"
+RUN usermod -aG kvm testrunner
+RUN usermod -aG cvdnetwork testrunner
 
 CMD [ "/usr/sbin/init" ]
 
