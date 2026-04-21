@@ -128,6 +128,10 @@ cf_cc_library(
     ],
     deps = [
         "//cuttlefish/common/libs/utils:host_info",
+        "//cuttlefish/host/libs/metrics:gce_environment",
+        "//cuttlefish/host/libs/metrics:github_environment",
+        "//cuttlefish/host/libs/metrics:invoker",
+        "//cuttlefish/result",
     ],
 )
 

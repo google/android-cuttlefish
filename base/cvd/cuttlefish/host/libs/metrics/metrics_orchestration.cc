@@ -77,7 +77,7 @@ Result<MetricsData> GatherMetrics(const MetricsInput& metrics_input) {
           CF_EXPECT(ReadSessionIdFile(metrics_input.metrics_directory)),
       .cf_common_version = GetVersionIds().ToString(),
       .now = GetEpochTime(),
-      .host_metrics = GetHostMetrics(),
+      .host_metrics = CF_EXPECT(GetHostMetrics()),
   };
 
   if (metrics_input.guests) {

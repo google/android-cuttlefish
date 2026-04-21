@@ -16,14 +16,25 @@
 
 #pragma once
 
+#include <optional>
+#include <variant>
+
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/host/libs/metrics/gce_environment.h"
+#include "cuttlefish/host/libs/metrics/github_environment.h"
+#include "cuttlefish/host/libs/metrics/invoker.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+using Environment = std::variant<GceEnvironment, GitHubRepository>;
+
 struct HostMetrics {
   HostInfo os;
+  Invoker invoker;
+  std::optional<Environment> environment;
 };
 
-HostMetrics GetHostMetrics();
+Result<HostMetrics> GetHostMetrics();
 
 }  // namespace cuttlefish
