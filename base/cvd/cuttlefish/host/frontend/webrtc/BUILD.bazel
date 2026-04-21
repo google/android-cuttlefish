@@ -103,11 +103,25 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "libcuttlefish_webrtc_client_server",
+    srcs = ["client_server.cpp"],
+    hdrs = ["client_server.h"],
+    deps = [
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
+        "@libwebsockets",
+    ],
+)
+
 cf_cc_binary(
     name = "webRTC",
     srcs = [
-        "client_server.cpp",
-        "client_server.h",
         "connection_observer.cpp",
         "connection_observer.h",
         "cvd_video_frame_buffer.cpp",
@@ -134,6 +148,7 @@ cf_cc_binary(
         ":libcuttlefish_webrtc_audio_mixer",
         ":libcuttlefish_webrtc_audio_settings",
         ":libcuttlefish_webrtc_bluetooth_handler",
+        ":libcuttlefish_webrtc_client_server",
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/fs",
