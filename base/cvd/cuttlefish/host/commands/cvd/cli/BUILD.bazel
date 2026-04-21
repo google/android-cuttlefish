@@ -57,7 +57,6 @@ cf_cc_library(
     srcs = [
         "command_sequence.cpp",
         "request_context.cpp",
-        "//cuttlefish/host/commands/cvd/cli/commands:cmd_list.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:create.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:help.cpp",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.cpp",
@@ -65,7 +64,6 @@ cf_cc_library(
     hdrs = [
         "command_sequence.h",
         "request_context.h",
-        "//cuttlefish/host/commands/cvd/cli/commands:cmd_list.h",
         "//cuttlefish/host/commands/cvd/cli/commands:create.h",
         "//cuttlefish/host/commands/cvd/cli/commands:help.h",
         "//cuttlefish/host/commands/cvd/cli/commands:load_configs.h",
@@ -91,7 +89,6 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli/commands:host_tool_target",
         "//cuttlefish/host/commands/cvd/cli/commands:lint",
         "//cuttlefish/host/commands/cvd/cli/commands:login",
-        "//cuttlefish/host/commands/cvd/cli/commands:noop",
         "//cuttlefish/host/commands/cvd/cli/commands:power_btn",
         "//cuttlefish/host/commands/cvd/cli/commands:powerwash",
         "//cuttlefish/host/commands/cvd/cli/commands:remove",

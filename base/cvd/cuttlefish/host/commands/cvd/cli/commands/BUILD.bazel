@@ -6,8 +6,6 @@ package(
 
 exports_files([
     ".clang-tidy",
-    "cmd_list.cpp",
-    "cmd_list.h",
     "create.cpp",
     "create.h",
     "help.cpp",
@@ -215,19 +213,6 @@ cf_cc_library(
         "//libbase",
         "@abseil-cpp//absl/strings",
         "@zlib",
-    ],
-)
-
-cf_cc_library(
-    name = "noop",
-    srcs = ["noop.cpp"],
-    hdrs = ["noop.h"],
-    deps = [
-        "//cuttlefish/host/commands/cvd/cli:command_request",
-        "//cuttlefish/host/commands/cvd/cli:types",
-        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
-        "//cuttlefish/result",
-        "@fmt",
     ],
 )
 

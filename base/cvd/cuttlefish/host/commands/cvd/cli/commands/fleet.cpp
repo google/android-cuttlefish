@@ -52,6 +52,8 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
 
   bool ShouldInterceptHelp() const override { return true; }
 
+  bool RequiresDeviceExists() const override { return true; }
+
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
     return kHelpMessage;
   }

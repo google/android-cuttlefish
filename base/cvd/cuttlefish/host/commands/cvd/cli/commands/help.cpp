@@ -21,15 +21,16 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_join.h"
-#include "absl/log/check.h"
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -39,6 +40,16 @@ constexpr char kHelpIntroText[] = R"(Cuttlefish Virtual Device (CVD) CLI.
 
 usage: cvd <selector/driver options> <command> <args>
 
+Driver Options:
+  -help                  Print this message
+  -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
+                         severity. (Required: cvd >= v1.3)
+
+Commands (cvd help <command> for more information):
+
+)";
+
+constexpr char kSelectorOptionsText[] = R"(
 Selector Options:
   -group_name <name>     Specify the name of the instance group created
                          or selected.
@@ -46,13 +57,7 @@ Selector Options:
                          commands for.
   -instance_name <names> Takes the names of the devices to create within an
                          instance group. The 'names' is comma-separated.
-
-Driver Options:
-  -help                  Print this message
-  -verbosity=<LEVEL>     Adjust Cvd verbosity level. LEVEL is Android log
-                         severity. (Required: cvd >= v1.3)
-
-Commands (cvd help <command> for more information):)";
+)";
 
 constexpr char kSummaryHelpText[] =
     "Used to display help information for other commands";
@@ -66,15 +71,15 @@ Example usage:
   cvd help <command> - displays more detailed help for the specific command
 )";
 
-constexpr char kIgnorableHandlerCommand[] = "experimental";
-
 }  // namespace
 
 class CvdHelpHandler : public CvdCommandHandler {
  public:
   CvdHelpHandler(
-      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers)
-      : request_handlers_(request_handlers) {}
+      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers,
+      InstanceManager& instance_manager)
+      : request_handlers_(request_handlers),
+        instance_manager_(instance_manager) {}
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
@@ -100,34 +105,47 @@ class CvdHelpHandler : public CvdCommandHandler {
   }
 
  private:
-  CommandRequest GetLookupRequest(const std::string& arg) {
-    auto result = CommandRequestBuilder().AddArguments({"cvd", arg}).Build();
-    CHECK(result.ok()) << "Failed to build cvd command request"
-                       << result.error();
-    return result.value();
+  Result<CommandRequest> GetLookupRequest(const std::string& arg) {
+    auto builder = CommandRequestBuilder().AddArguments({"cvd", arg});
+    return CF_EXPECT(std::move(builder).Build());
   }
 
   Result<std::string> TopLevelHelp() {
     std::stringstream help_message;
-    help_message << kHelpIntroText << std::endl;
+    help_message << kHelpIntroText;
+
     for (const auto& handler : request_handlers_) {
-      std::string command_list = absl::StrJoin(handler->CmdList(), ", ");
-      // exclude commands without any command list values as not intended for
-      // use by users or sub-subcommands
-      if (!command_list.empty() && command_list != kIgnorableHandlerCommand) {
-        help_message << "\t" << command_list << " - ";
-        help_message << CF_EXPECT(handler->SummaryHelp()) << std::endl
-                     << std::endl;
+      if (!handler->RequiresDeviceExists()) {
+        CF_EXPECT(PrintHandler(help_message, *handler));
       }
     }
+
+    if (CF_EXPECT(instance_manager_.HasInstanceGroups())) {
+      help_message << kSelectorOptionsText;
+      help_message << "\nDevice-Specific Commands (cvd help <command> for more "
+                      "information):\n";
+      for (const auto& handler : request_handlers_) {
+        if (handler->RequiresDeviceExists()) {
+          CF_EXPECT(PrintHandler(help_message, *handler));
+        }
+      }
+    }
+
     return help_message.str();
+  }
+
+  Result<void> PrintHandler(std::stringstream& help_message,
+                            const CvdCommandHandler& handler) const {
+    help_message << "\t" << absl::StrJoin(handler.CmdList(), ", ") << " - ";
+    help_message << CF_EXPECT(handler.SummaryHelp()) << "\n\n";
+    return {};
   }
 
   Result<std::string> SubCommandHelp(std::vector<std::string>& args) {
     CF_EXPECT(
         !args.empty(),
         "Cannot process subcommand help without valid subcommand argument");
-    auto lookup_request = GetLookupRequest(args.front());
+    CommandRequest lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
     auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
 
     std::stringstream help_message;
@@ -136,11 +154,14 @@ class CvdHelpHandler : public CvdCommandHandler {
   }
 
   const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers_;
+  InstanceManager& instance_manager_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers) {
-  return std::unique_ptr<CvdCommandHandler>(new CvdHelpHandler(server_handlers));
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers,
+    InstanceManager& instance_manager) {
+  return std::unique_ptr<CvdCommandHandler>(
+      new CvdHelpHandler(server_handlers, instance_manager));
 }
 
 }  // namespace cuttlefish

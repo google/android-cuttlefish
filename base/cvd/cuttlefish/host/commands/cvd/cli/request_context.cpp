@@ -27,7 +27,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/cache.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/clear.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/cmd_list.h"
+
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/create.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/display.h"
@@ -38,7 +38,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/lint.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
-#include "cuttlefish/host/commands/cvd/cli/commands/noop.h"
+
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
@@ -83,8 +83,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
                                InstanceLockFileManager& lock_file_manager)
     : command_sequence_executor_(this->request_handlers_) {
   request_handlers_.emplace_back(NewCvdCacheCommandHandler());
-  request_handlers_.emplace_back(
-      NewCvdCmdlistHandler(command_sequence_executor_));
+
   request_handlers_.emplace_back(
       NewCvdCreateCommandHandler(instance_manager, command_sequence_executor_));
   request_handlers_.emplace_back(NewCvdDisplayCommandHandler(instance_manager));
@@ -95,7 +94,8 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(
       NewCvdBugreportCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStopCommandHandler(instance_manager));
-  request_handlers_.emplace_back(NewCvdHelpHandler(this->request_handlers_));
+  request_handlers_.emplace_back(
+      NewCvdHelpHandler(this->request_handlers_, instance_manager));
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager));
@@ -115,7 +115,6 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdVersionHandler());
-  request_handlers_.emplace_back(NewCvdNoopHandler());
 }
 
 Result<CvdCommandHandler*> RequestContext::Handler(

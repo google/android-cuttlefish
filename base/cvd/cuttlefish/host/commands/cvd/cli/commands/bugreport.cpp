@@ -98,6 +98,7 @@ class CvdBugreportCommandHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
+  bool RequiresDeviceExists() const override;
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
@@ -187,6 +188,7 @@ Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
 }
 
 bool CvdBugreportCommandHandler::ShouldInterceptHelp() const { return false; }
+bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
     std::vector<std::string>& arguments) const {
