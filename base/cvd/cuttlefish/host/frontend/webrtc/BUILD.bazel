@@ -87,11 +87,25 @@ cf_cc_library(
     hdrs = ["audio_settings.h"],
 )
 
+cf_cc_library(
+    name = "libcuttlefish_webrtc_bluetooth_handler",
+    srcs = ["bluetooth_handler.cpp"],
+    hdrs = ["bluetooth_handler.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
+    ],
+)
+
 cf_cc_binary(
     name = "webRTC",
     srcs = [
-        "bluetooth_handler.cpp",
-        "bluetooth_handler.h",
         "client_server.cpp",
         "client_server.h",
         "connection_observer.cpp",
@@ -119,6 +133,7 @@ cf_cc_binary(
         ":libcuttlefish_webrtc_audio_handler",
         ":libcuttlefish_webrtc_audio_mixer",
         ":libcuttlefish_webrtc_audio_settings",
+        ":libcuttlefish_webrtc_bluetooth_handler",
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/fs",
