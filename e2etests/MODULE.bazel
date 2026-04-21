@@ -4,7 +4,7 @@ bazel_dep(name = "rules_python", version = "1.1.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.download(version = "1.24.0")
+go_sdk.download(version = "1.24.12")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
@@ -15,20 +15,8 @@ use_repo(
     "com_github_google_go_cmp",
 )
 
-bazel_dep(name = "com_github_google_android_cuttlefish_frontend_src_host_orchestrator")
+bazel_dep(name = "com_github_google_android_cuttlefish_frontend")
 local_path_override(
-    module_name = "com_github_google_android_cuttlefish_frontend_src_host_orchestrator",
-    path = "../frontend/src/host_orchestrator",
-)
-
-bazel_dep(name = "com_github_google_android_cuttlefish_frontend_src_libhoclient")
-local_path_override(
-    module_name = "com_github_google_android_cuttlefish_frontend_src_libhoclient",
-    path = "../frontend/src/libhoclient",
-)
-
-bazel_dep(name = "com_github_google_android_cuttlefish_frontend_src_liboperator")
-local_path_override(
-    module_name = "com_github_google_android_cuttlefish_frontend_src_liboperator",
-    path = "../frontend/src/liboperator",
+    module_name = "com_github_google_android_cuttlefish_frontend",
+    path = "../frontend",
 )

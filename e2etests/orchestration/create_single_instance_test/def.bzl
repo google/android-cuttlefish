@@ -25,7 +25,7 @@ def create_single_instance_test(name, build_id, build_target):
         deps = [
             "//orchestration/common",
             "@com_github_google_go_cmp//cmp",
-            "@com_github_google_android_cuttlefish_frontend_src_host_orchestrator//api/v1:api",
-            "@com_github_google_android_cuttlefish_frontend_src_libhoclient//:libhoclient",
+            "@com_github_google_android_cuttlefish_frontend//src/host_orchestrator/api/v1:api",
+            "@com_github_google_android_cuttlefish_frontend//src/libhoclient:libhoclient",
         ],
     )
