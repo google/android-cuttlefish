@@ -119,6 +119,19 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "invoker",
+    srcs = [
+        "invoker.cc",
+    ],
+    hdrs = [
+        "invoker.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+    ],
+)
+
+cf_cc_library(
     name = "metrics",
     srcs = [
         "metrics_receiver.cc",
