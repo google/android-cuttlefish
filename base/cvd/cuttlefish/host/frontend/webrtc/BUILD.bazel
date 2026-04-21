@@ -28,11 +28,25 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "libcuttlefish_webrtc_adb_handler",
+    srcs = ["adb_handler.cpp"],
+    hdrs = ["adb_handler.h"],
+    deps = [
+        "//cuttlefish/common/libs/fs",
+        "//libbase",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/log:check",
+        "@abseil-cpp//absl/strings",
+        "@fmt",
+        "@fruit",
+        "@jsoncpp",
+    ],
+)
+
 cf_cc_binary(
     name = "webRTC",
     srcs = [
-        "adb_handler.cpp",
-        "adb_handler.h",
         "audio_handler.cpp",
         "audio_handler.h",
         "audio_mixer.cpp",
@@ -63,6 +77,7 @@ cf_cc_binary(
         "sensors_handler.h",
     ],
     deps = [
+        ":libcuttlefish_webrtc_adb_handler",
         ":libcuttlefish_webrtc_command_channel",
         ":libcuttlefish_webrtc_commands_proto",
         "//cuttlefish/common/libs/fs",
