@@ -1,0 +1,4 @@
+load("@gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/google/android-cuttlefish/frontend
+gazelle(name = "gazelle")
