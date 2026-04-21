@@ -55,6 +55,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
   }
 
   bool ShouldInterceptHelp() const override { return true; }
+  bool RequiresDeviceExists() const override { return true; }
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));

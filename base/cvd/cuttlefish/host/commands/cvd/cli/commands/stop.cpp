@@ -83,6 +83,7 @@ class CvdStopCommandHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override { return true; }
+  bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:

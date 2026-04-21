@@ -26,4 +26,6 @@ Result<bool> CvdCommandHandler::CanHandle(const CommandRequest& request) const {
   return Contains(CmdList(), request.Subcommand());
 }
 
+bool CvdCommandHandler::RequiresDeviceExists() const { return false; }
+
 }  // namespace cuttlefish

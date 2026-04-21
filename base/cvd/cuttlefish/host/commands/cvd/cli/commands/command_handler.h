@@ -35,6 +35,7 @@ class CvdCommandHandler {
   virtual cvd_common::Args CmdList() const = 0;
   // used for command help text
   virtual Result<std::string> SummaryHelp() const = 0;
+  virtual bool RequiresDeviceExists() const;
   virtual bool ShouldInterceptHelp() const = 0;
   virtual Result<std::string> DetailedHelp(std::vector<std::string>&) const = 0;
 };
