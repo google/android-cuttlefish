@@ -32,7 +32,7 @@ Please run below command to build docker image manually.
 
 ```bash
 cd /path/to/android-cuttlefish
-container/image-builder.sh -m dev -c docker
+container/image/image-builder.sh -m dev -c docker
 ```
 
 You can validate if the docker image is successfully built by checking
@@ -50,13 +50,13 @@ Please run below command to build podman image manually.
 
 ```bash
 cd /path/to/android-cuttlefish
-sudo container/image-builder.sh -m dev -c podman
+container/image/image-builder.sh -m dev -c podman
 ```
 
 You can validate if the podman image is successfully built by checking
-`cuttlefish-orchestration` in `sudo podman image list` like below.
+`cuttlefish-orchestration` in `podman image list` like below.
 ```
-$ sudo podman image list
+$ podman image list
 REPOSITORY                            TAG                IMAGE ID      CREATED         SIZE
 localhost/cuttlefish-orchestration    latest             b5870005843b  39 minutes ago  1.12 GB
 ...

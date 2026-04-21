@@ -31,7 +31,7 @@ RUN apt install -y --no-install-recommends \
     sudo
 RUN update-ca-certificates
 
-COPY ./container/guest/run_services.sh /root/
+COPY ./container/image/guest/run_services.sh /root/
 RUN chmod +x /root/run_services.sh
 
 

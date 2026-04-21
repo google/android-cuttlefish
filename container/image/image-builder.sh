@@ -5,7 +5,7 @@
 # so it could execute CF instance with API in HO.
 
 script_location=`realpath -s $(dirname ${BASH_SOURCE[0]})`
-android_cuttlefish_root_dir=$(realpath -s $script_location/..)
+android_cuttlefish_root_dir=$(realpath -s $script_location/../..)
 
 usage() {
   echo "usage: $0 [-t <tag>] [-m <mode>] [-c <container_type>]"
@@ -89,7 +89,7 @@ pushd $android_cuttlefish_root_dir
 "${container_type}" build \
   --force-rm \
   --no-cache \
-  -f container/Containerfile \
+  -f container/image/Containerfile \
   -t "${name}" \
   --target runner \
   --build-arg "BUILD_OPTION=${build_option}" \
