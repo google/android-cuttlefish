@@ -64,6 +64,9 @@ fi
 if [ -n "${https_proxy:-}" ]; then
   preserve_envvar+=" -e https_proxy=${https_proxy}"
 fi
+if [ -n "${container_image_name:-}" ]; then
+  preserve_envvar+=" -e container_image_name=${container_image_name}"
+fi
 
 pushd "${PKGDIR}"
 echo "Installing package dependencies"

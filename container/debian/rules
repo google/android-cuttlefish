@@ -17,7 +17,12 @@ CUTTLEFISH_MCP_SERVER_BINARY_NAME := cuttlefish_mcp_server
 
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
-	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w" ./cmd/${PODCVD_BINARY_NAME})
+	if [ -n "$${container_image_name}" ]; then \
+		GO_LDFLAGS="-X 'github.com/google/android-cuttlefish/container/src/podcvd/internal.imageName=$${container_image_name}'"; \
+	else \
+		GO_LDFLAGS="-X 'github.com/google/android-cuttlefish/container/src/podcvd/internal.imageName=localhost/cuttlefish-orchestration:latest'"; \
+	fi; \
+	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w $${GO_LDFLAGS}" ./cmd/${PODCVD_BINARY_NAME})
 	(cd ${PODCVD_SOURCE_DIR} && $(GOBIN) build -v -buildmode=pie -ldflags="-w" ./cmd/${CUTTLEFISH_MCP_SERVER_BINARY_NAME})
 
 .PHONY: override_dh_auto_test

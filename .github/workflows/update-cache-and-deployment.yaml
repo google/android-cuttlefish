@@ -100,6 +100,7 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         debian-version: ${{ needs.set-variables.outputs.debian-version }}
+        image-version: ${{ needs.set-variables.outputs.image-version }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v3'
@@ -132,6 +133,7 @@ jobs:
       uses: ./.github/actions/build-debian-packages
       with:
         debian-version: ${{ needs.set-variables.outputs.debian-version }}
+        image-version: ${{ needs.set-variables.outputs.image-version }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v3'
