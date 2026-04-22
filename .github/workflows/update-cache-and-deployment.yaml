@@ -251,4 +251,4 @@ jobs:
         done
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
-        NEEDS_SET_VARIABLES_OUTPUTS_IMAGE_VERSION: ${{ needs.set-variables.outputs.image_version }}
+        NEEDS_SET_VARIABLES_OUTPUTS_IMAGE_VERSION: ${{ needs.set-variables.outputs.image-version }}
