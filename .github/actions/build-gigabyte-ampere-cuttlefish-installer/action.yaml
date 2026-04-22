@@ -1,4 +1,9 @@
 name: 'Build iso installer for Gigabyte Ampere server'
+inputs:
+  deploy-channel:
+    required: false
+  debian-version:
+    required: false
 runs:
   using: "composite"
   steps:
@@ -17,11 +22,17 @@ runs:
       DEBIAN_ISO_URL: "https://deb.debian.org/debian/dists/trixie/main/installer-arm64/current/images/netboot/mini.iso"
       CI_PROJECT_NAME: ${{ github.event.repository.name }}
       CI_PIPELINE_ID: ${{ github.run_id }}
+      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
+      INPUTS_DEBIAN_VERSION: ${{ inputs.debian-version }}
     shell: bash
     working-directory: ./gigabyte-ampere-cuttlefish-installer
     run: |
       sed -i "2i CI_PROJECT_NAME=${CI_PROJECT_NAME}" preseed/after_install_1.sh
       sed -i "3i CI_PIPELINE_ID=${CI_PIPELINE_ID}" preseed/after_install_1.sh
+      if [ x"${INPUTS_DEPLOY_CHANNEL}" != x"" ]; then
+        sed -i "s/^#DEPLOY_CHANNEL=/DEPLOY_CHANNEL=${INPUTS_DEPLOY_CHANNEL}/" preseed/after_install_1.sh
+        sed -i "s/^#DEPLOY_VERSION=/DEPLOY_VERSION=${INPUTS_DEBIAN_VERSION}/" preseed/after_install_1.sh
+      fi
       wget -nv -c ${DEBIAN_ISO_URL}
       ./addpreseed.sh
       xz -9e preseed-mini.iso
