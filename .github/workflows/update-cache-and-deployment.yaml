@@ -155,6 +155,9 @@ jobs:
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Build Gigabyte Ampere installer
       uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
+      with:
+        deploy-channel: ${{ inputs.deploy-channel }}
+        debian-version: ${{ needs.set-variables.outputs.debian-version }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       uses: 'google-github-actions/auth@v3'
       with:
