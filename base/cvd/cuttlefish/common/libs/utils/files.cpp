@@ -432,10 +432,6 @@ std::string AbsolutePath(std::string_view path) {
   if (path[0] == '/') {
     return std::string(path);
   }
-  if (path[0] == '~') {
-    LOG(WARNING) << "Tilde expansion in path " << path <<" is not supported";
-    return {};
-  }
 
   std::array<char, PATH_MAX> buffer{};
   if (!realpath(".", buffer.data())) {
