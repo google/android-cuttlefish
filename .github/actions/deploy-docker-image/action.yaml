@@ -2,42 +2,19 @@ name: 'Deploy docker image cuttlefish-orchestration'
 inputs:
   arch:
     required: true
-  deploy-channel:
+  image-version:
     required: true
-  yyyymmddhhmm:
-    required: false
 runs:
   using: "composite"
   steps:
   - name: Deploy docker image into Artifact Registry
     run: |
-      case "${INPUTS_DEPLOY_CHANNEL}" in
-        stable)
-          # Stable version tag : X.Y.Z-<amd64|arm64>
-          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
-          TAG="${SEMVER}-${INPUTS_ARCH}"
-          ;;
-        unstable)
-          # Unstable version tag : X.Y-<Github SHA 8 digit>-<amd64|arm64>
-          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          TAG="${SEMVER}-${SHORT_SHA}-${INPUTS_ARCH}"
-          ;;
-        nightly)
-          # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>-<amd64|arm64>
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          TAG="git${INPUTS_YYYYMMDDHHMM}-${SHORT_SHA}-${INPUTS_ARCH}"
-          ;;
-        *)
-          exit 1
-          ;;
-      esac
+      TAG=${INPUTS_IMAGE_VERSION}-${INPUTS_ARCH}
       REMOTE_IMAGE_TAG=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${TAG}
 
       docker tag cuttlefish-orchestration ${REMOTE_IMAGE_TAG}
       docker push ${REMOTE_IMAGE_TAG}
     shell: bash
     env:
-      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
       INPUTS_ARCH: ${{ inputs.arch }}
-      INPUTS_YYYYMMDDHHMM: ${{ inputs.yyyymmddhhmm }}
+      INPUTS_IMAGE_VERSION: ${{ inputs.image-version }}

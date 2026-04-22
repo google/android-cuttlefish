@@ -18,13 +18,38 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       yyyymmddhhmm: ${{ steps.define-version.outputs.time }}
+      image-version: ${{ steps.define-version.outputs.image_version }}
     steps:
     - name: Define version
       id: define-version
       run: |
         TIME=$(date -u +'%Y%m%d%H%M')
+        case "${INPUTS_DEPLOY_CHANNEL}" in
+          stable)
+            # Stable version tag : X.Y.Z
+            SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
+            IMAGE_VERSION="${SEMVER}"
+            ;;
+          unstable)
+            # Unstable version tag : X.Y-<Github SHA 8 digit>
+            SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            IMAGE_VERSION="${SEMVER}-${SHORT_SHA}"
+            ;;
+          nightly)
+            # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            IMAGE_VERSION="git${TIME}-${SHORT_SHA}"
+            ;;
+          *)
+            IMAGE_VERSION=
+        esac
         echo "time=$TIME" >> $GITHUB_OUTPUT
         echo "time is $TIME"
+        echo "image_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+        echo "image_version is $IMAGE_VERSION"
+      env:
+        INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
   update-cvd-test-bazel-cache:
     if: inputs.update-cache
     runs-on: ubuntu-24.04
@@ -130,7 +155,7 @@ jobs:
       uses: ./.github/actions/deploy-gigabyte-ampere-cuttlefish-installer
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+        image-version: ${{ needs.set-variables.outputs.image-version }}
         path: ./gigabyte-ampere-cuttlefish-installer
 
   deploy-docker-image-amd64:
@@ -159,8 +184,7 @@ jobs:
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: amd64
-        deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+        image-version: ${{ needs.set-variables.outputs.image-version }}
   deploy-docker-image-arm64:
     if: inputs.deploy-channel != ''
     needs: [set-variables, update-bazel-cache-and-deploy-debian-package-arm64]
@@ -187,8 +211,7 @@ jobs:
       uses: ./.github/actions/deploy-docker-image
       with:
         arch: arm64
-        deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+        image-version: ${{ needs.set-variables.outputs.image-version }}
   deploy-docker-manifest:
     if: inputs.deploy-channel != ''
     needs: [set-variables, deploy-docker-image-amd64, deploy-docker-image-arm64]
@@ -209,28 +232,8 @@ jobs:
         password: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy manifests
       run: |
-        case "${INPUTS_DEPLOY_CHANNEL}" in
-          stable)
-            # Stable version tag : X.Y.Z
-            SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
-            TAG="${SEMVER}"
-            ;;
-          unstable)
-            # Unstable version tag : X.Y-<Github SHA 8 digit>
-            SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
-            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-            TAG="${SEMVER}-${SHORT_SHA}"
-            ;;
-          nightly)
-            # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
-            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-            TAG="git${NEEDS_SET_VARIABLES_OUTPUTS_YYYYMMDDHHMM}-${SHORT_SHA}"
-            ;;
-          *)
-            exit 1
-            ;;
-        esac
         IMAGE=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration
+        TAG=${NEEDS_SET_VARIABLES_OUTPUTS_IMAGE_VERSION}
 
         for MANIFEST_TAG in ${TAG} ${INPUTS_DEPLOY_CHANNEL}; do
           docker manifest create ${IMAGE}:${MANIFEST_TAG} \
@@ -240,4 +243,4 @@ jobs:
         done
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
-        NEEDS_SET_VARIABLES_OUTPUTS_YYYYMMDDHHMM: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+        NEEDS_SET_VARIABLES_OUTPUTS_IMAGE_VERSION: ${{ needs.set-variables.outputs.image_version }}
