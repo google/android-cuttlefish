@@ -2,6 +2,8 @@ name: 'Build debian packages for Cuttlefish host'
 inputs:
   debian-version:
     required: false
+  image-version:
+    required: false
 runs:
   using: "composite"
   steps:
@@ -23,9 +25,16 @@ runs:
       INPUTS_DEBIAN_VERSION: ${{ inputs.debian-version }}
   - name: Build CF debian packages
     run: |
+      IMAGE_OPT=""
+      if [ -n "${INPUTS_IMAGE_VERSION}" ]; then
+        IMAGE_OPT="-e container_image_name=us-docker.pkg.dev/android-cuttlefish-artifacts/cuttlefish-orchestration/cuttlefish-orchestration:${INPUTS_IMAGE_VERSION}"
+      fi
+
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build -v=$HOME/bazel-disk-cache:/root/bazel-disk-cache android-cuttlefish-build base -d /root/bazel-disk-cache
-      sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build container
+      sudo docker run ${IMAGE_OPT} -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build container
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build frontend
       sudo docker run -v=$PWD:/mnt/build -w /mnt/build android-cuttlefish-build cuttlefish-integration-gigabyte-arm64
     shell: bash
+    env:
+      INPUTS_IMAGE_VERSION: ${{ inputs.image-version }}
