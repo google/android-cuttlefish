@@ -199,9 +199,10 @@ AudioChannelsLayout ConvertChannelLayout(
       return AudioChannelsLayout::Stereo;
     case ChannelLayout::Audio_ChannelLayout_SURROUND51:
       return AudioChannelsLayout::Surround51;
+    default:
+      VLOG(0) << "Unsupported channel layout: " << layout;
   }
 
-  VLOG(0) << "Unsupported channel layout: " << layout;
   return AudioChannelsLayout::Stereo;
 }
 
@@ -216,9 +217,10 @@ uint32_t ConvertSampleRate(::cuttlefish::config::Audio_SampleRate rate) {
       return 48000;
     case SampleRate::Audio_SampleRate_RATE_64000:
       return 64000;
+    default:
+      VLOG(0) << "Unsupported sample rate: " << rate;
   }
 
-  VLOG(0) << "Unsupported sample rate: " << rate;
   return 48000;
 }
 
