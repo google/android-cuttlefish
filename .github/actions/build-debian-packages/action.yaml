@@ -1,49 +1,26 @@
 name: 'Build debian packages for Cuttlefish host'
 inputs:
-  deploy-channel:
-    required: false
-  yyyymmddhhmm:
+  debian-version:
     required: false
 runs:
   using: "composite"
   steps:
   - name: Modify version format
-    if: inputs.deploy-channel != ''
+    if: inputs.debian-version != ''
     run: |
-      case "${INPUTS_DEPLOY_CHANNEL}" in
-        stable)
-          # Stable version format : X.Y.Z
-          SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
-            base/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
-            container/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
-            frontend/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${SEMVER})/g" \
-            cuttlefish-integration-gigabyte-arm64/debian/changelog
-          ;;
-        unstable|nightly)
-          # Unstable/nightly version format : X.Y.Z~gitYYYYMMDDHHMM.<Github SHA 8 digit>
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
-          SUFFIX="~git${INPUTS_YYYYMMDDHHMM}.${SHORT_SHA}"
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
-            base/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
-            container/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
-            frontend/debian/changelog
-          sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(\1${SUFFIX})/g" \
-            cuttlefish-integration-gigabyte-arm64/debian/changelog
-          ;;
-        *)
-          exit 1
-          ;;
-      esac
+      FILES=(
+        "base/debian/changelog"
+        "container/debian/changelog"
+        "frontend/debian/changelog"
+        "cuttlefish-integration-gigabyte-arm64/debian/changelog"
+      )
+
+      for FILE in "${FILES[@]}"; do
+        sed -i "1s/(\([0-9]\+.[0-9]\+.[0-9]\+\))/(${INPUTS_DEBIAN_VERSION})/g" "$FILE"
+      done
     shell: bash
     env:
-      INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
-      INPUTS_YYYYMMDDHHMM: ${{ inputs.yyyymmddhhmm }}
+      INPUTS_DEBIAN_VERSION: ${{ inputs.debian-version }}
   - name: Build CF debian packages
     run: |
       sudo docker build --file "tools/buildutils/cw/Containerfile" --tag "android-cuttlefish-build" .
