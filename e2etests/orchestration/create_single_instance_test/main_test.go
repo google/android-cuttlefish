@@ -84,6 +84,7 @@ func TestCreateSingleInstance(t *testing.T) {
 				Displays:       []string{"720 x 1280 ( 320 )"},
 				WebRTCDeviceID: "cvd-1-1",
 				ADBSerial:      "0.0.0.0:6520",
+				ADBPort:        6520,
 			},
 		},
 	}

@@ -30,6 +30,7 @@ type Instance struct {
 	InstanceDir    string   `json:"instance_dir"`
 	WebRTCDeviceID string   `json:"webrtc_device_id"`
 	ADBSerial      string   `json:"adb_serial"`
+	ADBPort        uint32   `json:"adb_port"`
 }
 
 // The output of the cvd fleet command

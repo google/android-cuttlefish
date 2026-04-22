@@ -69,6 +69,9 @@ definitions:
     type: object
   v1.CVD:
     properties:
+      adb_port:
+        description: '[Output Only]'
+        type: integer
       adb_serial:
         description: '[Output Only]'
         type: string
