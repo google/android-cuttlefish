@@ -111,6 +111,7 @@ jobs:
         deploy-channel: ${{ inputs.deploy-channel }}
         path: .
   deploy-gigabyte-ampere-installer-arm64:
+    if: inputs.deploy-channel != ''
     needs: [set-variables]
     environment: deployment
     runs-on: ubuntu-22.04
@@ -122,12 +123,10 @@ jobs:
     - name: Build Gigabyte Ampere installer
       uses: ./.github/actions/build-gigabyte-ampere-cuttlefish-installer
     - name: Authentication on GCP project android-cuttlefish-artifacts
-      if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v3'
       with:
         credentials_json: '${{ secrets.artifact-registry-uploader-json-creds }}'
     - name: Deploy Gigabyte Ampere server iso installer image.
-      if: inputs.deploy-channel != ''
       uses: ./.github/actions/deploy-gigabyte-ampere-cuttlefish-installer
       with:
         deploy-channel: ${{ inputs.deploy-channel }}
