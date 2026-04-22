@@ -48,6 +48,17 @@ std::string CreateTempFileWithText(const std::string& filepath,
   return filepath;
 }
 
+namespace {
+
+Result<void> RemoveFileIfExists(const std::string& path) {
+  if (FileExists(path)) {
+    CF_EXPECT(RemoveFile(path));
+  }
+  return {};
+}
+
+}  // namespace
+
 class CasDownloaderTests : public ::testing::Test {
  protected:
   std::string FakeCasdownloader(const std::string& text) {
@@ -510,7 +521,7 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
 
   // No download of the digests file if for the same build id and target.
   digest_fetched = false;
-  android::base::RemoveFileIfExists(cas_output_filepath_);
+  EXPECT_THAT(RemoveFileIfExists(cas_output_filepath_), IsOk());
   {
     download = cas->DownloadFile(MakeDeviceBuild("id_1", "target_1"),
                                  "artifact_2", target_dir_, digests_fetcher);
@@ -523,8 +534,8 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
 
   // Downloads the digests file if for a different build id.
   digest_fetched = false;
-  android::base::RemoveFileIfExists(cas_output_filepath_);
-  android::base::RemoveFileIfExists(target_dir_ + "/artifact_1");
+  EXPECT_THAT(RemoveFileIfExists(cas_output_filepath_), IsOk());
+  EXPECT_THAT(RemoveFileIfExists(target_dir_ + "/artifact_1"), IsOk());
   {
     download = cas->DownloadFile(MakeDeviceBuild("id_2", "target_1"),
                                  "artifact_1", target_dir_, digests_fetcher);
@@ -536,13 +547,13 @@ TEST_F(CasDownloaderTests, DownloadsDigestsOnlyIfNeeded) {
 
   // Downloads the digests file if for a different build target.
   digest_fetched = false;
-  android::base::RemoveFileIfExists(cas_output_filepath_);
-  android::base::RemoveFileIfExists(target_dir_ + "/artifact_1");
+  EXPECT_THAT(RemoveFileIfExists(cas_output_filepath_), IsOk());
+  EXPECT_THAT(RemoveFileIfExists(target_dir_ + "/artifact_1"), IsOk());
   {
     download = cas->DownloadFile(MakeDeviceBuild("id_2", "target_2"),
                                  "artifact_1", target_dir_, digests_fetcher);
   }
-  android::base::RemoveFileIfExists(target_dir_ + "/artifact_1");
+  EXPECT_THAT(RemoveFileIfExists(target_dir_ + "/artifact_1"), IsOk());
   output = ReadFile(cas_output_filepath_);
   EXPECT_THAT(output, HasSubstr("digest=digest_1"));
   EXPECT_THAT(digest_fetched, IsTrue());
