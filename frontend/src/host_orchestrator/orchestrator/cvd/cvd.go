@@ -370,6 +370,13 @@ func (i *Instance) ADBSerial() string {
 	return i.instance.ADBSerial
 }
 
+func (i *Instance) ADBPort() uint32 {
+	if i.instance == nil {
+		panic("Lazy loaded instance is not yet initialized")
+	}
+	return i.instance.ADBPort
+}
+
 type DisplayAddOpts struct {
 	Width         int
 	Height        int

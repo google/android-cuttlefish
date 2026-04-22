@@ -37,6 +37,7 @@ func TestListCVDsSucceeds(t *testing.T) {
                       "group_name": "foo",
                       "instances": [
                         {
+                          "adb_port": 6520,
                           "adb_serial": "0.0.0.0:6520",
                           "assembly_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/assembly",
                           "displays": [
@@ -55,6 +56,7 @@ func TestListCVDsSucceeds(t *testing.T) {
                       "group_name": "bar",
                       "instances": [
                         {
+                          "adb_port": 6520,
                           "adb_serial": "0.0.0.0:6520",
                           "assembly_dir": "/var/lib/cuttlefish-common/runtimes/cuttlefish/assembly",
                           "displays": [
@@ -89,6 +91,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
 			ADBSerial:      "0.0.0.0:6520",
+			ADBPort:        6520,
 		},
 		{
 			Group:          "bar",
@@ -98,6 +101,7 @@ func TestListCVDsSucceeds(t *testing.T) {
 			Displays:       []string{"720 x 1280 ( 320 )"},
 			WebRTCDeviceID: "cvd-1",
 			ADBSerial:      "0.0.0.0:6520",
+			ADBPort:        6520,
 		},
 	}
 	var tests = []struct {

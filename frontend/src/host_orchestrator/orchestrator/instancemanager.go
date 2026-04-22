@@ -65,6 +65,7 @@ func CvdInstanceToAPIObject(instance *cvd.Instance, group string) *apiv1.CVD {
 		Displays:       instance.Displays(),
 		WebRTCDeviceID: instance.WebRTCDeviceID(),
 		ADBSerial:      instance.ADBSerial(),
+		ADBPort:        instance.ADBPort(),
 	}
 }
 
