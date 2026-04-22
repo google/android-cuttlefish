@@ -263,7 +263,9 @@ cf_cc_library(
     srcs = ["fetcher_configs.cc"],
     hdrs = ["fetcher_configs.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/libs/config:fetcher_config",
+        "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",

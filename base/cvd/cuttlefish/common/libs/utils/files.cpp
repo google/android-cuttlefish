@@ -433,13 +433,24 @@ std::string AbsolutePath(std::string_view path) {
     return std::string(path);
   }
 
-  std::array<char, PATH_MAX> buffer{};
-  if (!realpath(".", buffer.data())) {
-    LOG(WARNING) << "Could not get real path for current directory \".\""
-                 << ": " << strerror(errno);
+  Result<std::string> real_cwd = RealPath(".");
+  if (!real_cwd.ok()) {
+    LOG(WARNING) << "Could not get real path for current directory \".\": "
+                 << real_cwd.error();
     return {};
   }
-  return absl::StrCat(buffer.data(), "/", path);
+  return absl::StrCat(*real_cwd, "/", path);
+}
+
+Result<std::string> RealPath(const std::string& path) {
+  std::array<char, PATH_MAX> buffer{};
+  char* res;
+  do {
+    res = realpath(path.c_str(), buffer.data());
+  } while (res == nullptr && errno == EINTR);
+  CF_EXPECTF(res != nullptr, "Could not get real path for path \"{}\": {}",
+             path, StrError(errno));
+  return std::string(buffer.data());
 }
 
 off_t FileSize(const std::string& path) {
@@ -709,12 +720,11 @@ Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
 
   const auto processed_path = "/" + absl::StrJoin(processed_tokens, "/");
 
-  std::string real_path = processed_path;
   if (path_info.follow_symlink && FileExists(processed_path)) {
-    CF_EXPECTF(android::base::Realpath(processed_path, &real_path),
-               "Failed to effectively conduct readpath -f {}", processed_path);
+    return CF_EXPECTF(RealPath(processed_path),
+                           "Failed to effectively conduct readpath -f {}", processed_path);
   }
-  return real_path;
+  return processed_path;
 }
 
 std::vector<std::string> Path(const std::string& env_name) {

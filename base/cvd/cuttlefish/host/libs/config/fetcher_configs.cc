@@ -24,9 +24,10 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/types/span.h"
-#include "android-base/file.h"
 
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/libs/config/fetcher_config.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
@@ -40,9 +41,13 @@ FetcherConfigs FetcherConfigs::ReadFromDirectories(
 
   for (const std::string& dir : directories) {
     std::string real;
-    if (!android::base::Realpath(dir, &real)) {
-      LOG(WARNING) << "Failed to resolve real path for '" << dir << "'";
+    Result<std::string> real_res = cuttlefish::RealPath(dir);
+    if (!real_res.ok()) {
+      LOG(WARNING) << "Failed to resolve real path for '" << dir
+                   << "': " << real_res.error();
       real = dir;
+    } else {
+      real = *real_res;
     }
 
     auto [it, inserted] =
