@@ -17,37 +17,47 @@ jobs:
   set-variables:
     runs-on: ubuntu-22.04
     outputs:
-      yyyymmddhhmm: ${{ steps.define-version.outputs.time }}
+      debian-version: ${{ steps.define-version.outputs.debian_version }}
       image-version: ${{ steps.define-version.outputs.image_version }}
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
     - name: Define version
       id: define-version
       run: |
         TIME=$(date -u +'%Y%m%d%H%M')
         case "${INPUTS_DEPLOY_CHANNEL}" in
           stable)
-            # Stable version tag : X.Y.Z
+            # Debian package format                : X.Y.Z
+            # Docker tag / os image version format : X.Y.Z
             SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+.[0-9]+')
+            DEBIAN_VERSION="${SEMVER}"
             IMAGE_VERSION="${SEMVER}"
             ;;
           unstable)
-            # Unstable version tag : X.Y-<Github SHA 8 digit>
+            # Debian package format                : X.Y~gitYYYYMMDDHHMM-<Github SHA 8 digit>
+            # Docker tag / os image version format : X.Y-<Github SHA 8 digit>
             SEMVER=$(echo ${GITHUB_REF_NAME} | grep -oE '[0-9]+.[0-9]+')
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            DEBIAN_VERSION="${SEMVER}~git${TIME}.${SHORT_SHA}"
             IMAGE_VERSION="${SEMVER}-${SHORT_SHA}"
             ;;
           nightly)
-            # Nightly version tag : gitYYYYMMDDHHMM-<Github SHA 8 digit>
+            # Debian package format                : X.Y.Z~gitYYYYMMDDHHMM-<Github SHA 8 digit>
+            # Docker tag / os image version format : gitYYYYMMDDHHMM-<Github SHA 8 digit>
             SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            BASE_VERSION=$(sed -n '1s/.*(\([0-9]\+\.[0-9]\+\.[0-9]\+\)).*/\1/p' base/debian/changelog)
+            DEBIAN_VERSION="${BASE_VERSION}~git${TIME}.${SHORT_SHA}"
             IMAGE_VERSION="git${TIME}-${SHORT_SHA}"
             ;;
           *)
-            IMAGE_VERSION=
+            DEBIAN_VERSION=""
+            IMAGE_VERSION=""
         esac
-        echo "time=$TIME" >> $GITHUB_OUTPUT
-        echo "time is $TIME"
         echo "image_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
         echo "image_version is $IMAGE_VERSION"
+        echo "debian_version=$DEBIAN_VERSION" >> $GITHUB_OUTPUT
+        echo "debian_version is $DEBIAN_VERSION"
       env:
         INPUTS_DEPLOY_CHANNEL: ${{ inputs.deploy-channel }}
   update-cvd-test-bazel-cache:
@@ -89,8 +99,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
-        deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+        debian-version: ${{ needs.set-variables.outputs.debian-version }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v3'
@@ -122,8 +131,7 @@ jobs:
     - name: Build CF host debian packages
       uses: ./.github/actions/build-debian-packages
       with:
-        deploy-channel: ${{ inputs.deploy-channel }}
-        yyyymmddhhmm: ${{ needs.set-variables.outputs.yyyymmddhhmm }}
+        debian-version: ${{ needs.set-variables.outputs.debian-version }}
     - name: Authentication on GCP project android-cuttlefish-artifacts
       if: inputs.deploy-channel != ''
       uses: 'google-github-actions/auth@v3'
