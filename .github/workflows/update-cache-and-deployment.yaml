@@ -17,15 +17,14 @@ jobs:
   set-variables:
     runs-on: ubuntu-22.04
     outputs:
-      yyyymmddhhmm: ${{ steps.yyyymmddhhmm.outputs.time }}
+      yyyymmddhhmm: ${{ steps.define-version.outputs.time }}
     steps:
-    - name: Set YYYYMMDDHHMM
-      id: yyyymmddhhmm
-      run: echo "time=$(date -u +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
-    - name: Echo YYYYMMDDHHMM
-      run: echo ${STEPS_YYYYMMDDHHMM_OUTPUTS_TIME}
-      env:
-        STEPS_YYYYMMDDHHMM_OUTPUTS_TIME: ${{ steps.yyyymmddhhmm.outputs.time }}
+    - name: Define version
+      id: define-version
+      run: |
+        TIME=$(date -u +'%Y%m%d%H%M')
+        echo "time=$TIME" >> $GITHUB_OUTPUT
+        echo "time is $TIME"
   update-cvd-test-bazel-cache:
     if: inputs.update-cache
     runs-on: ubuntu-24.04
