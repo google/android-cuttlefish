@@ -128,6 +128,7 @@ cf_cc_library(
     hdrs = ["sparse_image.h"],
     deps = [
         "//cuttlefish/common/libs/fs",
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/host/libs/config:known_paths",
         "//cuttlefish/host/libs/image_aggregator:disk_image",

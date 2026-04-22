@@ -142,9 +142,9 @@ Result<void> CopyDirectoryImpl(
  * If emulating absolute path fails, "path" is returned as is.
  */
 std::string RealpathOrSelf(const std::string& path) {
-  std::string output;
-  if (android::base::Realpath(path, &output)) {
-    return output;
+  Result<std::string> output = RealPath(path);
+  if (output.ok()) {
+    return *output;
   }
   struct InputPathForm input_form {
     .path_to_convert = path, .follow_symlink = true,
