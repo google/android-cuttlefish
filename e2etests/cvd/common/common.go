@@ -30,6 +30,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"testing"
@@ -304,6 +305,25 @@ func  (tc *TestContext) CVDLoad(load LoadArgs) error {
 	return nil
 }
 
+func (tc *TestContext) GetMetricsDir() (string, error) {
+		output, err := tc.RunCmd("cvd", "fleet")
+		if err != nil {
+			return "", fmt.Errorf("failed to run `cvd fleet`")
+		}
+
+		re := regexp.MustCompile(`"metrics_dir" : "(.*)",`)
+		matches := re.FindStringSubmatch(output)
+		if len(matches) != 2 {
+			return "", fmt.Errorf("failed to find metrics directory")
+		}
+
+		metricsdir := matches[1]
+		if !DirectoryExists(metricsdir) {
+			return "", fmt.Errorf("failed to find directory %s", metricsdir)
+		}
+		return metricsdir, nil
+}
+
 // Creates a standard environment for an e2etests.
 func (tc *TestContext) SetUp(t *testing.T) {
 	tc.t = t
@@ -420,6 +440,21 @@ func (tc *TestContext) TearDown() {
 							log.Printf("failed to copy %s to %s: %w", logdir, outinstancedir, err)
 						}
 					}
+				}
+			}
+
+			// gather cvd V2 metrics files, if they exist
+			metricsdir, err := tc.GetMetricsDir()
+			if err != nil {
+				log.Printf("Failed to find v2 metrics directory: %w", err)
+			} else {
+				outmetricsdir := path.Join(testoutdir, "metrics_files")
+				err := os.MkdirAll(outmetricsdir, os.ModePerm)
+				if err == nil {
+						_, err := runCmdWithContextEnv(context.TODO(), []string{"cp", "-r", "--dereference", metricsdir, outmetricsdir}, map[string]string{})
+						if err != nil {
+							log.Printf("failed to copy %s to %s: %w", metricsdir, outmetricsdir, err)
+						}
 				}
 			}
 
