@@ -534,6 +534,19 @@ Result<std::string> ReadFileContents(const std::string& filepath) {
   return file_content;
 }
 
+Result<std::string> ReadLink(const std::string& path) {
+  std::vector<char> buf(4096);
+  while (true) {
+    ssize_t size = readlink(path.c_str(), buf.data(), buf.size());
+    CF_EXPECTF(size != -1, "readlink(\"{}\") failed: {}", path,
+               StrError(errno));
+    if (static_cast<size_t>(size) < buf.size()) {
+      return std::string(buf.data(), size);
+    }
+    buf.resize(buf.size() * 2);
+  }
+}
+
 Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
                           mode_t mode) {
   CF_EXPECTF(!FileExists(filepath), "File already exists: {}", filepath);
