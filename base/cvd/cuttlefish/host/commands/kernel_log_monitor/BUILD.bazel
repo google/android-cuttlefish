@@ -14,8 +14,8 @@ cf_cc_binary(
     deps = [
         ":kernel_log_monitor_utils",
         "//cuttlefish/common/libs/fs",
-        "//cuttlefish/host/libs/config:config_instance_derived",
         "//cuttlefish/host/libs/config:cuttlefish_config",
+        "//cuttlefish/host/libs/config:cuttlefish_config_paths",
         "//cuttlefish/host/libs/config:logging",
         "//cuttlefish/result",
         "//libbase",

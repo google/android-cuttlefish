@@ -33,8 +33,8 @@
 #include "cuttlefish/common/libs/fs/shared_select.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "cuttlefish/host/commands/kernel_log_monitor/utils.h"
-#include "cuttlefish/host/libs/config/config_instance_derived.h"
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
+#include "cuttlefish/host/libs/config/cuttlefish_config_paths.h"
 #include "cuttlefish/host/libs/config/logging.h"
 
 DEFINE_int32(log_pipe_fd, -1,
