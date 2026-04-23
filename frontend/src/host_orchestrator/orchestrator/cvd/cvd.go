@@ -376,6 +376,12 @@ func (i *Instance) ADBSerial() string {
 	return i.instance.ADBSerial
 }
 
+func (i *Instance) CVDStatus() ([]byte, error) {
+	args := i.selectorArgs()
+	args = append(args, "status", "--print")
+	return i.cli.exec(CVDBin, args...)
+}
+
 type DisplayAddOpts struct {
 	Width         int
 	Height        int
@@ -542,6 +548,12 @@ func (g *Group) Remove() error {
 	args = append(args, "remove")
 	_, err := g.cli.exec(CVDBin, args...)
 	return err
+}
+
+func (g *Group) CVDStatus() ([]byte, error) {
+	args := g.selectorArgs()
+	args = append(args, "status", "--print")
+	return g.cli.exec(CVDBin, args...)
 }
 
 type StartOptions struct {

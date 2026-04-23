@@ -7,6 +7,7 @@ go_library(
         "createcvdaction.go",
         "createcvdbugreportaction.go",
         "createsnapshotaction.go",
+        "cvdstatusaction.go",
         "execcvdcommandaction.go",
         "fetchartifactsaction.go",
         "getscreenrecordingaction.go",

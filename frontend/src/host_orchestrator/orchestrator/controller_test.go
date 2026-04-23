@@ -53,7 +53,7 @@ func TestGetCVDLogsIsHandled(t *testing.T) {
 	dir := orchtesting.TempDir(t)
 	defer orchtesting.RemoveDir(t, dir)
 	rr := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", "/cvds/cvd-1/logs", strings.NewReader("{}"))
+	req, err := http.NewRequest("GET", "/cvds/cvd-1/cvd-1/logs", strings.NewReader("{}"))
 	if err != nil {
 		t.Fatal(err)
 	}
