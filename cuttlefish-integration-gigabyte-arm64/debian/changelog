@@ -1,8 +1,13 @@
-cuttlefish-integration-gigabyte-arm64 (1.53.0) UNRELEASED; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.53.0) unstable; urgency=medium
 
-  * 
+  * Mark 1.52 as stable by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2449
+  * Start development on 1.53.0 by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2414
+  * Mark release 1.51 as stable by @jemoreira in
+    https://github.com/google/android-cuttlefish/pull/2410
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 16:07:21 -0700
+ -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 15:11:02 -0700
 
 cuttlefish-integration-gigabyte-arm64 (1.52.0) stable; urgency=medium
 
