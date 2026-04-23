@@ -484,7 +484,7 @@ jobs:
         bazel test orchestration/create_from_images_zip_test:create_from_images_zip_test_test
   e2etests-podcvd:
     runs-on: ubuntu-24.04
-    needs: [build-debian-package-amd64, build-docker-image-amd64]
+    # needs: [build-debian-package-amd64, build-docker-image-amd64]
     steps:
     - name: Free disk space
       uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # aka v1.3.1
@@ -494,27 +494,37 @@ jobs:
         tool-cache: true
     - name: Checkout repository
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+    # - name: Download cuttlefish debs
+    #   uses: actions/download-artifact@v7
+    #   with:
+    #     name: debs_amd64
+    # - name: Install cuttlefish-podcvd
+    #   run: |
+    #     tar -xvf debs_amd64.tar
+    #     sudo apt install -y ./cuttlefish-podcvd_*.deb
+    #     /usr/lib/cuttlefish-podcvd/bin/cuttlefish-podcvd-prerequisites.sh
+    # - name: Download docker image
+    #   uses: actions/download-artifact@v7
+    #   with:
+    #     name: cuttlefish-orchestration-amd64
+    # - name: Load docker image as podman image
+    #   run: |
+    #     sudo sysctl -w kernel.unprivileged_userns_clone=1
+    #     sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+    #     sudo apt install -y skopeo
+    #     skopeo copy \
+    #       docker-archive:cuttlefish-orchestration.tar \
+    #       containers-storage:localhost/cuttlefish-orchestration:latest
     - name: Download cuttlefish debs
-      uses: actions/download-artifact@v7
-      with:
-        name: debs_amd64
-    - name: Install cuttlefish-podcvd
       run: |
-        tar -xvf debs_amd64.tar
-        sudo apt install -y ./cuttlefish-podcvd_*.deb
+        sudo curl -fsSL https://us-apt.pkg.dev/doc/repo-signing-key.gpg \
+          -o /etc/apt/trusted.gpg.d/artifact-registry.asc
+        sudo chmod a+r /etc/apt/trusted.gpg.d/artifact-registry.asc
+        echo "deb https://us-apt.pkg.dev/projects/android-cuttlefish-artifacts android-cuttlefish-unstable main" \
+          | sudo tee -a /etc/apt/sources.list.d/artifact-registry.list
+        sudo apt update
+        sudo apt install -y cuttlefish-podcvd
         /usr/lib/cuttlefish-podcvd/bin/cuttlefish-podcvd-prerequisites.sh
-    - name: Download docker image
-      uses: actions/download-artifact@v7
-      with:
-        name: cuttlefish-orchestration-amd64
-    - name: Load docker image as podman image
-      run: |
-        sudo sysctl -w kernel.unprivileged_userns_clone=1
-        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-        sudo apt install -y skopeo
-        skopeo copy \
-          docker-archive:cuttlefish-orchestration.tar \
-          containers-storage:localhost/cuttlefish-orchestration:latest
     - name: Run cvd e2e test for podcvd
       run: |
         # Grant permission on devices as it's hard to grant on test env
