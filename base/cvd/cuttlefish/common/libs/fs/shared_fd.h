@@ -399,10 +399,6 @@ class FileInstance {
 
   int Futimens(const struct timespec times[2]);
 
-  // Returns the target of "/proc/getpid()/fd/" + std::to_string(fd_)
-  // if appropriate
-  Result<std::string> ProcFdLinkTarget() const;
-
   // inotify related functions
   int InotifyAddWatch(const std::string& pathname, uint32_t mask);
   void InotifyRmWatch(int watch);

@@ -37,7 +37,6 @@
 #include <utility>
 #include <vector>
 
-#include <android-base/file.h>
 #include <fmt/format.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
@@ -1059,19 +1058,6 @@ int FileInstance::Futimens(const struct timespec times[2]) {
 
   return TEMP_FAILURE_RETRY(futimens(fd_, times));
 }
-
-#ifdef __linux__
-Result<std::string> FileInstance::ProcFdLinkTarget() const {
-  std::stringstream output_composer;
-  output_composer << "/proc/" << getpid() << "/fd/" << fd_;
-  const std::string mem_fd_link = output_composer.str();
-  std::string mem_fd_target;
-  CF_EXPECT(
-      android::base::Readlink(mem_fd_link, &mem_fd_target),
-      "Getting link for the memory file \"" << mem_fd_link << "\" failed");
-  return mem_fd_target;
-}
-#endif
 
 // inotify related functions
 int FileInstance::InotifyAddWatch(const std::string& pathname, uint32_t mask) {
