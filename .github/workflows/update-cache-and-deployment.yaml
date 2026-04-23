@@ -147,7 +147,7 @@ jobs:
         path: .
   deploy-gigabyte-ampere-installer-arm64:
     if: inputs.deploy-channel != ''
-    needs: [set-variables]
+    needs: [set-variables, update-bazel-cache-and-deploy-debian-package-arm64]
     environment: deployment
     runs-on: ubuntu-22.04
     container:
