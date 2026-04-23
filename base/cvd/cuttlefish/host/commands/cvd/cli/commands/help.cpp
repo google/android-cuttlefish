@@ -120,14 +120,12 @@ class CvdHelpHandler : public CvdCommandHandler {
       }
     }
 
-    if (CF_EXPECT(instance_manager_.HasInstanceGroups())) {
-      help_message << kSelectorOptionsText;
-      help_message << "\nDevice-Specific Commands (cvd help <command> for more "
-                      "information):\n";
-      for (const auto& handler : request_handlers_) {
-        if (handler->RequiresDeviceExists()) {
-          CF_EXPECT(PrintHandler(help_message, *handler));
-        }
+    help_message << kSelectorOptionsText;
+    help_message << "\nDevice-Specific Commands (cvd help <command> for more "
+                    "information):\n";
+    for (const auto& handler : request_handlers_) {
+      if (handler->RequiresDeviceExists()) {
+        CF_EXPECT(PrintHandler(help_message, *handler));
       }
     }
 
