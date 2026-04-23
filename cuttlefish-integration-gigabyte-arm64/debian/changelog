@@ -1,4 +1,4 @@
-cuttlefish-integration-gigabyte-arm64 (1.52.0) unstable; urgency=medium
+cuttlefish-integration-gigabyte-arm64 (1.52.0) stable; urgency=medium
 
   * gigabyte-ampere-cuttlefish-installer: preseed.cfg: disable backports by @grandpaul in https://github.com/google/android-cuttlefish/pull/2394
 

@@ -1,4 +1,4 @@
-cuttlefish-common (1.52.0) unstable; urgency=medium
+cuttlefish-common (1.52.0) stable; urgency=medium
 
   * Start development of version 1.52 by @jemoreira in https://github.com/google/android-cuttlefish/pull/2371
   * Use `androidboot.cuttlefish_service_bluetooth_checker` in launcher. by @ser-io in https://github.com/google/android-cuttlefish/pull/2367
