@@ -1,8 +1,46 @@
-cuttlefish-common (1.53.0) UNRELEASED; urgency=medium
+cuttlefish-common (1.53.0) unstable; urgency=medium
 
-  * 
+  * Always show all help commands by @cjreynol in
+    https://github.com/google/android-cuttlefish/pull/2452
+  * Mark 1.52 as stable by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2449
+  * Replace android::base::RemoveFileIfExists by @jemoreira in
+    https://github.com/google/android-cuttlefish/pull/2445
+  * Protbuf best practice: Do Include an Unspecified Value in an Enum by
+    @ser-io in https://github.com/google/android-cuttlefish/pull/2444
+  * Reapply "Fail if new `BOARD_BOOTCONFIG` keys are found." by @ser-io
+    in https://github.com/google/android-cuttlefish/pull/2441
+  * Remove select() use in cuttlefish/package/BUILD.bazel by @ser-io in
+    https://github.com/google/android-cuttlefish/pull/2437
+  * Separate the webRTC target by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2433
+  * Hide irrelevant commands in cvd help by default by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2429
+  * Fix clang-tidy readability finding by @jemoreira in
+    https://github.com/google/android-cuttlefish/pull/2426
+  * Introduce emulated camera device generating single planar (MJPEG)
+    for… by @ser-io in https://github.com/google/android-
+    cuttlefish/pull/2425
+  * Add CpioReader for reading CPIO archives by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2423
+  * Add more functions to config_instance_derived.cc by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2422
+  * Enable launching legacy Cuttlefish builds by @rmuthiah in
+    https://github.com/google/android-cuttlefish/pull/2421
+  * Rename emulated_camera to emulated_camera_mplane by @ser-io in
+    https://github.com/google/android-cuttlefish/pull/2417
+  * Bump vhost and vhost-user-backend deps. by @ser-io in
+    https://github.com/google/android-cuttlefish/pull/2416
+  * Start development on 1.53.0 by @Databean in
+    https://github.com/google/android-cuttlefish/pull/2414
+  * Mark release 1.51 as stable by @jemoreira in
+    https://github.com/google/android-cuttlefish/pull/2410
+  * Replace libbase's ReadFileToString by @jemoreira in
+    https://github.com/google/android-cuttlefish/pull/2406
+  * Add some utilities for PATH searching. by @3405691582 in
+    https://github.com/google/android-cuttlefish/pull/2405
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 16:06:57 -0700
+ -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 15:10:53 -0700
 
 cuttlefish-common (1.52.0) stable; urgency=medium
 
