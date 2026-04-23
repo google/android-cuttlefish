@@ -221,8 +221,8 @@ std::string VhostUserInputBinary() {
   return HostBinaryPath("cf_vhost_user_input");
 }
 
-std::string VhostUserMediaSimpleDeviceBinary() {
-  return HostBinaryPath("vhu_media_simple_device");
+std::string VhostUserMediaEmulatedCameraSPlaneBinary() {
+  return HostBinaryPath("vhu_media_emulated_camera_splane");
 }
 
 }  // namespace cuttlefish

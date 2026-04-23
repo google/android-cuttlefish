@@ -97,7 +97,7 @@ package_files(
         "cuttlefish-common/bin/tcp_connector": "//cuttlefish/host/commands/tcp_connector",
         "cuttlefish-common/bin/tombstone_receiver": "//cuttlefish/host/commands/tombstone_receiver",
         "cuttlefish-common/bin/unpack_bootimg.py": "@mkbootimg//:unpack_bootimg.py",
-        "cuttlefish-common/bin/vhu_media_simple_device": "//cuttlefish/host/commands/vhost_user_media/simple_device:simple_device",
+        "cuttlefish-common/bin/vhu_media_emulated_camera_splane": "//cuttlefish/host/commands/vhost_user_media/emulated_camera_splane",
         "cuttlefish-common/bin/vk_lavapipe_icd.json": "//cuttlefish/host/graphics/vulkan:vk_lavapipe_icd",
         "cuttlefish-common/bin/vk_swiftshader_icd.json": "//cuttlefish/host/graphics/vulkan:vk_swiftshader_icd",
         "cuttlefish-common/bin/webRTC": "//cuttlefish/host/frontend/webrtc:webRTC",
