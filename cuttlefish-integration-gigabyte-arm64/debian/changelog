@@ -1,3 +1,9 @@
+cuttlefish-integration-gigabyte-arm64 (1.54.0) UNRELEASED; urgency=medium
+
+  * 
+
+ -- Chad Reynolds <chadreynolds@google.com>  Thu, 23 Apr 2026 16:34:55 -0700
+
 cuttlefish-integration-gigabyte-arm64 (1.53.0) unstable; urgency=medium
 
   * Mark 1.52 as stable by @Databean in
