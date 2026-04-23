@@ -41,7 +41,7 @@ namespace {
 using Subprocess::StdIOChannel::kStdErr;
 
 Command NewCommand(const std::string& socket_path) {
-  Command cmd(VhostUserMediaSimpleDeviceBinary());
+  Command cmd(VhostUserMediaEmulatedCameraSPlaneBinary());
   cmd.AddParameter("--socket-path=", socket_path);
   cmd.AddParameter("--verbosity=", "debug");
   cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,

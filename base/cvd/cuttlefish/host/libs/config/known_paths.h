@@ -69,7 +69,7 @@ std::string UnpackBootimgBinary();
 std::string VhalProxyServerBinary();
 std::string VhalProxyServerConfig();
 std::string VhostUserInputBinary();
-std::string VhostUserMediaSimpleDeviceBinary();
+std::string VhostUserMediaEmulatedCameraSPlaneBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string WebRtcSigServerProxyBinary();

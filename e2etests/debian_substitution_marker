@@ -221,8 +221,8 @@ symlinks: {
 }
 
 symlinks: {
-  target: "/usr/lib/cuttlefish-common/bin/vhu_media_simple_device"
-  link_name: "bin/vhu_media_simple_device"
+  target: "/usr/lib/cuttlefish-common/bin/vhu_media_emulated_camera_splane"
+  link_name: "bin/vhu_media_emulated_camera_splane"
 }
 
 symlinks: {

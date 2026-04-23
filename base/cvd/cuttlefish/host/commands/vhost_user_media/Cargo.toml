@@ -2,7 +2,6 @@
 members = [
     "emulated_camera_mplane",
     "emulated_camera_splane",
-    "simple_device",
     "vhu_media",
 ]
 
