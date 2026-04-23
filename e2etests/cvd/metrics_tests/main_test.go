@@ -73,7 +73,7 @@ func TestMetrics(t *testing.T) {
 		}
 		for _, p := range patterns {
 			if !anyFileExists(path.Join(metricsdir, p)) {
-				return fmt.Errorf("failed to find a file matching `%s`", p)
+				return fmt.Errorf("failed to find a file matching `%s` in `%s`", p, metricsdir)
 			}
 		}
 		return nil
