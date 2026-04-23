@@ -311,7 +311,7 @@ func (tc *TestContext) SetUp(t *testing.T) {
 	cancellableContext, cancel := context.WithCancel(t.Context())
 	tc.context = cancellableContext
 
-	log.Printf("Initializing %s test...", tc.t.Name())
+	log.Printf("Initializing 123 %s test...", tc.t.Name())
 
 	log.Printf("Cleaning up any pre-existing instances...")
 	if _, err := tc.RunCmd("cvd", "reset", "-y"); err != nil {
