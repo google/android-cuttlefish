@@ -4,7 +4,7 @@ cuttlefish-frontend (1.53.0) UNRELEASED; urgency=medium
 
  -- A. Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 16:07:38 -0700
 
-cuttlefish-frontend (1.52.0) unstable; urgency=medium
+cuttlefish-frontend (1.52.0) stable; urgency=medium
 
   * N/A
 

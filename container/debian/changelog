@@ -4,7 +4,7 @@ cuttlefish-container (1.53.0) UNRELEASED; urgency=medium
 
  -- A. Cody Schuffelen <schuffelen@google.com>  Thu, 16 Apr 2026 16:06:52 -0700
 
-cuttlefish-container (1.52.0) unstable; urgency=medium
+cuttlefish-container (1.52.0) stable; urgency=medium
 
   * Do not filter containers when allContainers is set by @0405ysj in https://github.com/google/android-cuttlefish/pull/2388
   * Fix `podcvd create` to deal with parallel execution properly by @0405ysj in https://github.com/google/android-cuttlefish/pull/2389
