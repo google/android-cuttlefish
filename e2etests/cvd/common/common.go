@@ -74,6 +74,8 @@ type TestContext struct {
 
 	context context.Context
 	cancelled bool
+
+	usePodcvd bool
 }
 
 func runCmdWithContextEnv(ctx context.Context, command []string, envvars map[string]string) (string, error) {
@@ -127,6 +129,14 @@ func (tc *TestContext) RunCmd(args... string) (string, error) {
 	return tc.RunCmdWithEnv(command, map[string]string{})
 }
 
+// Returns the binary name to test.
+func (tc *TestContext) TargetBin() string {
+	if tc.usePodcvd {
+		return "podcvd"
+	}
+	return "cvd"
+}
+
 // Common parameters passed to `cvd fetch`.
 type FetchArgs struct {
     DefaultBuildBranch string
@@ -150,7 +160,7 @@ type FetchAndCreateArgs struct {
 func (tc *TestContext) CVDFetch(args FetchArgs) error {
 	log.Printf("Fetching...")
 	fetchCmd := []string{
-		"cvd",
+		tc.TargetBin(),
 		"fetch",
 		fmt.Sprintf("--default_build=%s/%s", args.DefaultBuildBranch, args.DefaultBuildTarget),
 		fmt.Sprintf("--target_directory=%s", tc.tempdir),
@@ -185,7 +195,7 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 		"HOME": tc.tempdir,
 	}
 
-	createCmd := []string{"cvd", "create"};
+	createCmd := []string{tc.TargetBin(), "create"};
 	createCmd = append(createCmd, "--report_anonymous_usage_stats=y")
 	createCmd = append(createCmd, "--undefok=report_anonymous_usage_stats")
 	if len(args.Args) > 0 {
@@ -206,7 +216,7 @@ func (tc *TestContext) CVDStop() error {
 		"HOME": tc.tempdir,
 	}
 
-	stopCmd := []string{"cvd", "stop"};
+	stopCmd := []string{tc.TargetBin(), "stop"};
 	if _, err := tc.RunCmdWithEnv(stopCmd, tempdirEnv); err != nil {
 		log.Printf("Failed to stop instance(s): %w", err)
 		return err
@@ -258,7 +268,7 @@ func (tc *TestContext) CVDPowerwash() error {
 		"HOME": tc.tempdir,
 	}
 
-	createCmd := []string{"cvd", "powerwash"};
+	createCmd := []string{tc.TargetBin(), "powerwash"};
 	if _, err := tc.RunCmdWithEnv(createCmd, tempdirEnv); err != nil {
 		log.Printf("Failed to powerwash instance(s): %w", err)
 		return err
@@ -286,7 +296,7 @@ func  (tc *TestContext) CVDLoad(load LoadArgs) error {
 
 	log.Printf("Creating instance(s) via `cvd load`...")
 	loadCmd := []string{
-		"cvd",
+		tc.TargetBin(),
 		"load",
 		configpath,
 	};
@@ -310,11 +320,12 @@ func (tc *TestContext) SetUp(t *testing.T) {
 	tc.teardownCalled = false
 	cancellableContext, cancel := context.WithCancel(t.Context())
 	tc.context = cancellableContext
+	tc.usePodcvd = os.Getenv("USE_PODCVD") == "true"
 
 	log.Printf("Initializing %s test...", tc.t.Name())
 
 	log.Printf("Cleaning up any pre-existing instances...")
-	if _, err := tc.RunCmd("cvd", "reset", "-y"); err != nil {
+	if _, err := tc.RunCmd(tc.TargetBin(), "reset", "-y"); err != nil {
 		log.Printf("Failed to cleanup any pre-existing instances: %w", err)
 	}
 	log.Printf("Finished cleaning up any pre-existing instances!")
@@ -429,7 +440,7 @@ func (tc *TestContext) TearDown() {
 		}
 	}
 
-	runCmdWithContextEnv(context.TODO(), []string{"cvd", "reset", "-y"}, map[string]string{})
+	runCmdWithContextEnv(context.TODO(), []string{tc.TargetBin(), "reset", "-y"}, map[string]string{})
 
 	log.Printf("Finished cleaning up after test!")
 }
