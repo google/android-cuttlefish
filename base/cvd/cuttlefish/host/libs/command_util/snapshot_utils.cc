@@ -81,9 +81,8 @@ Result<void> CopyDirectoryImpl(
     CF_EXPECTF(lstat(src_path.data(), &src_stat) != -1, "Failed in lstat({})",
                src_path);
     if (IsSymlink(src_stat)) {
-      std::string target;
-      CF_EXPECTF(android::base::Readlink(src_path, &target),
-                 "Readlink failed for {}", src_path);
+      std::string target =
+          CF_EXPECTF(ReadLink(src_path), "Readlink failed for {}", src_path);
       VLOG(0) << "Creating link from " << dest_path << " to " << target;
       if (FileExists(dest_path, /* follow_symlink */ false)) {
         CF_EXPECTF(RemoveFile(dest_path), "Failed to unlink/remove file \"{}\"",

@@ -72,6 +72,7 @@ Result<std::string> RenameFile(const std::string& current_filepath,
                                const std::string& target_filepath);
 std::string ReadFile(const std::string& file);
 Result<std::string> ReadFileContents(const std::string& filepath);
+Result<std::string> ReadLink(const std::string& path);
 Result<void> WriteNewFile(const std::string& filepath, std::string_view content,
                           mode_t mode = S_IRWXU | S_IRGRP | S_IROTH);
 bool MakeFileExecutable(const std::string& path);
