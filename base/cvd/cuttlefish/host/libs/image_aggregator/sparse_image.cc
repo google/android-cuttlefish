@@ -23,10 +23,12 @@
 #include <string_view>
 #include <utility>
 
-#include <android-base/file.h>
+#include <android-base/unique_fd.h>
 #include <sparse/sparse.h>
 
+
 #include "cuttlefish/common/libs/fs/shared_fd.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/host/libs/config/known_paths.h"
 #include "cuttlefish/posix/rename.h"
@@ -38,8 +40,7 @@ namespace {
 constexpr std::string_view kAndroidSparseImageMagic = "\x3A\xFF\x26\xED";
 
 Result<SharedFD> AcquireLockForImage(const std::string& image_path) {
-  std::string image_realpath;
-  CF_EXPECT(android::base::Realpath(image_path, &image_realpath));
+  std::string image_realpath = CF_EXPECT(RealPath(image_path));
   std::string tmp_lock_image_path = image_realpath + ".lock";
   SharedFD fd =
       SharedFD::Open(tmp_lock_image_path.c_str(), O_RDWR | O_CREAT, 0666);

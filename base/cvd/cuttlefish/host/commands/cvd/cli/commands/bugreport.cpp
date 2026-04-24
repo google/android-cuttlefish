@@ -34,7 +34,6 @@
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
@@ -120,9 +119,6 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   cvd_common::Envs env = request.Env();
 
-  std::string android_host_out;
-  std::string home = CF_EXPECT(SystemWideUserHome());
-
   if (CF_EXPECT(HasHelpFlag(cmd_args))) {
     CF_EXPECT(HandleHelp(env, cmd_args, request));
     return {};
@@ -136,8 +132,8 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
 
   auto instance_group =
       CF_EXPECT(selector::SelectGroup(instance_manager_, request));
-  android_host_out = instance_group.HostArtifactsPath();
-  home = instance_group.HomeDir();
+  std::string android_host_out = instance_group.HostArtifactsPath();
+  std::string home = instance_group.HomeDir();
   env["HOME"] = home;
   env[kAndroidHostOut] = android_host_out;
   const std::string bin_path =

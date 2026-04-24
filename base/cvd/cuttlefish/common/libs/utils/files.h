@@ -84,8 +84,9 @@ Result<uid_t> FileOwner(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
-// path must not contain ~
 std::string AbsolutePath(std::string_view path);
+
+Result<std::string> RealPath(const std::string& path);
 
 std::string CurrentDirectory();
 

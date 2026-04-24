@@ -110,11 +110,7 @@ Result<std::string> SystemWideUserHome() {
       return CF_ERRNO("Failed to find the home directory using " << uid);
     }
   }
-  std::string home_realpath;
-  if (!android::base::Realpath(home_dir, &home_realpath)) {
-    return CF_ERRNO("Failed to convert " << home_dir << " to its Realpath");
-  }
-  return home_realpath;
+  return home_dir;
 }
 
 Result<std::string> CurrentUserName() {
