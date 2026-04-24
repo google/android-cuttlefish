@@ -19,7 +19,6 @@ go_test(
     size = "large",
     srcs = ["main_test.go"],
     tags = [
-        "exclusive",
         "external",
         "no-sandbox",
         "supports-graceful-termination",
@@ -36,7 +35,6 @@ go_test(
     data = ["//:debian_substitution_marker"],
     env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
     tags = [
-        "exclusive",
         "external",
         "no-sandbox",
         "supports-graceful-termination",

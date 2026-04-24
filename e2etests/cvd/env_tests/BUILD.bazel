@@ -22,7 +22,6 @@ go_test(
     ],
     size = "large",
     tags = [
-        "exclusive",
         "external",
         "no-sandbox",
         "supports-graceful-termination",
@@ -39,7 +38,6 @@ go_test(
     env = {"LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE": "$(rlocationpath //:debian_substitution_marker)"},
     size = "large",
     tags = [
-        "exclusive",
         "external",
         "no-sandbox",
         "supports-graceful-termination",

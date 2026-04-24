@@ -198,6 +198,9 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 	createCmd := []string{tc.TargetBin(), "--verbosity=DEBUG", "create"};
 	createCmd = append(createCmd, "--report_anonymous_usage_stats=y")
 	createCmd = append(createCmd, "--undefok=report_anonymous_usage_stats")
+	if tc.usePodcvd {
+		createCmd = append(createCmd, "--vhost_user_vsock=true")
+	}
 	if len(args.Args) > 0 {
 		createCmd = append(createCmd, args.Args...)
 	}
