@@ -34,6 +34,9 @@ has_backports=$(apt-cache policy | grep "${DEBIAN_DISTRIBUTION}-backports")
 if [ x"$has_backports" != x"" ]; then
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-headers-arm64
     apt install -y -t "${DEBIAN_DISTRIBUTION}-backports" linux-image-arm64
+else
+    apt install -y linux-headers-arm64
+    apt install -y linux-image-arm64
 fi
 
 # Install nVidia or AMD GPU driver
