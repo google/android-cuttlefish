@@ -12,6 +12,7 @@ Package: cuttlefish-podcvd
 Architecture: any
 Depends: adb,
          android-sdk-platform-tools-common,
+         crun,
          podman,
 Pre-Depends: ${misc:Pre-Depends}
 Description: Cuttlefish Android Virtual Device companion package
