@@ -497,10 +497,14 @@ DEFINE_string(fuchsia_root_image, CF_DEFAULTS_FUCHSIA_ROOT_IMAGE,
 
 DEFINE_string(
     custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
-    "Location of custom image that will be passed as a \"custom\" partition"
-    "to rootfs and can be used by /dev/block/by-name/custom. Multiple images "
-    "can be passed, separated by semicolons and can be used as "
-    "/dev/block/by-name/custom_1, /dev/block/by-name/custom_2, etc. Example: "
+    "Location of custom image that will be passed as a custom partition "
+    "to rootfs. Multiple entries can be passed, separated by semicolons. "
+    "Each entry format is 'name:path[:ab]'. If ':ab' suffix is present, "
+    "A/B partition slots (name_a, name_b) are created. "
+    "If no name is provided (legacy), defaults to 'custom', 'custom_1', etc. "
+    "Example with A/B: "
+    "--custom_partition_path=\"oem:./oem.img:ab;config:./config.img\" "
+    "Example without names (legacy): "
     "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\"");
 
 DEFINE_string(

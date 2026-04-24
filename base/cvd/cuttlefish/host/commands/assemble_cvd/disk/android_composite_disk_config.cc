@@ -26,6 +26,7 @@
 #include <string_view>
 #include <vector>
 
+#include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
 
@@ -214,10 +215,39 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     std::vector<std::string_view> custom_partition_paths =
         absl::StrSplit(custom_partition_path, ';');
     for (int i = 0; i < custom_partition_paths.size(); i++) {
-      partitions.push_back(ImagePartition{
-          .label = i > 0 ? "custom_" + std::to_string(i) : "custom",
-          .image_file_path = AbsolutePath(custom_partition_paths[i]),
-      });
+      std::string label;
+      std::string image_path;
+      bool ab_enabled = false;
+      std::vector<std::string_view> parts =
+          absl::StrSplit(custom_partition_paths[i], ':');
+      if (parts.size() >= 2) {
+        label = std::string(parts[0]);
+        image_path = std::string(parts[1]);
+        if (parts.size() >= 3 && parts[2] == "ab") {
+          ab_enabled = true;
+        }
+      } else {
+        label = i > 0 ? "custom_" + std::to_string(i) : "custom";
+        image_path = std::string(custom_partition_paths[i]);
+      }
+      if (ab_enabled) {
+        LOG(INFO) << "Adding custom partition: " << label + "_a";
+        partitions.push_back(ImagePartition{
+            .label = label + "_a",
+            .image_file_path = AbsolutePath(image_path),
+        });
+        LOG(INFO) << "Adding custom partition: " << label + "_b";
+        partitions.push_back(ImagePartition{
+            .label = label + "_b",
+            .image_file_path = AbsolutePath(image_path),
+        });
+      } else {
+        LOG(INFO) << "Adding custom partition: " << label;
+        partitions.push_back(ImagePartition{
+            .label = label,
+            .image_file_path = AbsolutePath(image_path),
+        });
+      }
     }
   }
 
