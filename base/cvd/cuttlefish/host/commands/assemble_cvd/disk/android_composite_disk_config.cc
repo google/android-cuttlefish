@@ -73,6 +73,63 @@ std::optional<ImagePartition> HibernationImage(
   return FileExists(path) ? std::optional<ImagePartition>(image) : std::nullopt;
 }
 
+struct CustomPartitionSpec {
+  std::string label;
+  std::string path;
+  bool ab_enabled;
+};
+
+Result<CustomPartitionSpec> ParseCustomPartitionSpec(std::string_view spec,
+                                                     int index) {
+  std::string label;
+  std::string path;
+  bool ab_enabled = false;
+
+  // Key=value format: "name=oem,path=./oem.img,ab=true"
+  if (spec.find('=') != std::string_view::npos) {
+    std::vector<std::string_view> kvpairs = absl::StrSplit(spec, ',');
+    for (const auto& kvpair : kvpairs) {
+      std::vector<std::string_view> kv = absl::StrSplit(kvpair, '=');
+      CF_EXPECTF(kv.size() == 2,
+                 "Invalid key=value pair '{}' in custom partition spec '{}'",
+                 kvpair, spec);
+      std::string_view key = kv[0];
+      std::string_view value = kv[1];
+      if (key == "name") {
+        label = std::string(value);
+      } else if (key == "path") {
+        path = std::string(value);
+      } else if (key == "ab") {
+        CF_EXPECTF(value == "true" || value == "false",
+                   "Invalid value '{}' for key 'ab' in custom partition spec "
+                   "'{}'. Expected 'true' or 'false'",
+                   value, spec);
+        ab_enabled = (value == "true");
+      } else {
+        return CF_ERRF("Unknown key '{}' in custom partition spec '{}'. "
+                       "Valid keys are: name, path, ab",
+                       key, spec);
+      }
+    }
+    CF_EXPECTF(!path.empty(),
+               "Missing required 'path' key in custom partition spec '{}'",
+               spec);
+    if (label.empty()) {
+      label = index > 0 ? "custom_" + std::to_string(index) : "custom";
+    }
+  } else {
+    // Legacy format: plain path only
+    label = index > 0 ? "custom_" + std::to_string(index) : "custom";
+    path = std::string(spec);
+  }
+
+  return CustomPartitionSpec{
+      .label = std::move(label),
+      .path = std::move(path),
+      .ab_enabled = ab_enabled,
+  };
+}
+
 }  // namespace
 
 Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
@@ -215,37 +272,24 @@ Result<std::vector<ImagePartition>> AndroidCompositeDiskConfig(
     std::vector<std::string_view> custom_partition_paths =
         absl::StrSplit(custom_partition_path, ';');
     for (int i = 0; i < custom_partition_paths.size(); i++) {
-      std::string label;
-      std::string image_path;
-      bool ab_enabled = false;
-      std::vector<std::string_view> parts =
-          absl::StrSplit(custom_partition_paths[i], ':');
-      if (parts.size() >= 2) {
-        label = std::string(parts[0]);
-        image_path = std::string(parts[1]);
-        if (parts.size() >= 3 && parts[2] == "ab") {
-          ab_enabled = true;
-        }
-      } else {
-        label = i > 0 ? "custom_" + std::to_string(i) : "custom";
-        image_path = std::string(custom_partition_paths[i]);
-      }
-      if (ab_enabled) {
-        LOG(INFO) << "Adding custom partition: " << label + "_a";
+      CustomPartitionSpec spec =
+          CF_EXPECT(ParseCustomPartitionSpec(custom_partition_paths[i], i));
+      if (spec.ab_enabled) {
+        VLOG(1) << "Adding custom partition: " << spec.label + "_a";
         partitions.push_back(ImagePartition{
-            .label = label + "_a",
-            .image_file_path = AbsolutePath(image_path),
+            .label = spec.label + "_a",
+            .image_file_path = AbsolutePath(spec.path),
         });
-        LOG(INFO) << "Adding custom partition: " << label + "_b";
+        VLOG(1) << "Adding custom partition: " << spec.label + "_b";
         partitions.push_back(ImagePartition{
-            .label = label + "_b",
-            .image_file_path = AbsolutePath(image_path),
+            .label = spec.label + "_b",
+            .image_file_path = AbsolutePath(spec.path),
         });
       } else {
-        LOG(INFO) << "Adding custom partition: " << label;
+        VLOG(1) << "Adding custom partition: " << spec.label;
         partitions.push_back(ImagePartition{
-            .label = label,
-            .image_file_path = AbsolutePath(image_path),
+            .label = spec.label,
+            .image_file_path = AbsolutePath(spec.path),
         });
       }
     }

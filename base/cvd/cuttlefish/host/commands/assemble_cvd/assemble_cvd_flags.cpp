@@ -499,13 +499,16 @@ DEFINE_string(
     custom_partition_path, CF_DEFAULTS_CUSTOM_PARTITION_PATH,
     "Location of custom image that will be passed as a custom partition "
     "to rootfs. Multiple entries can be passed, separated by semicolons. "
-    "Each entry format is 'name:path[:ab]'. If ':ab' suffix is present, "
-    "A/B partition slots (name_a, name_b) are created. "
-    "If no name is provided (legacy), defaults to 'custom', 'custom_1', etc. "
+    "Each entry uses key=value pairs separated by commas. "
+    "Supported keys: name (partition label), path (image file path), "
+    "ab (true/false for A/B slots). 'path' is required; 'name' defaults to "
+    "'custom', 'custom_1', etc.; 'ab' defaults to false. "
     "Example with A/B: "
-    "--custom_partition_path=\"oem:./oem.img:ab;config:./config.img\" "
+    "--custom_partition_path=\"name=oem1,path=./oem1.img,ab=true;"
+    "name=oem2,path=./oem2.img\" "
     "Example without names (legacy): "
-    "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\"");
+    "--custom_partition_path=\"/path/to/custom.img;/path/to/other.img\" "
+    "For multi-instance, separate per-instance values with '|'.");
 
 DEFINE_string(
     blank_sdcard_image_mb, CF_DEFAULTS_BLANK_SDCARD_IMAGE_MB,
