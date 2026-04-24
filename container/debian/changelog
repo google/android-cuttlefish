@@ -1,3 +1,9 @@
+cuttlefish-container (1.52.1) stable; urgency=medium
+
+  * N/A
+
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 24 Apr 2026 16:22:48 -0400
+
 cuttlefish-container (1.52.0) stable; urgency=medium
 
   * Do not filter containers when allContainers is set by @0405ysj in https://github.com/google/android-cuttlefish/pull/2388

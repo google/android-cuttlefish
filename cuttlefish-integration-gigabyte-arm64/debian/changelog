@@ -1,3 +1,10 @@
+cuttlefish-integration-gigabyte-arm64 (1.52.1) stable; urgency=medium
+
+  * gigabyte-ampere-cuttlefish-installer: modify actions and workflow to support pinned version by @grandpaul in https://github.com/google/android-cuttlefish/pull/2442
+  * Install linux-headers/linux-image although not having backports. by @0405ysj in https://github.com/google/android-cuttlefish/pull/2459
+
+ -- Ram Muthiah <rammuthiah@google.com>  Fri, 24 Apr 2026 16:22:48 -0400
+
 cuttlefish-integration-gigabyte-arm64 (1.52.0) stable; urgency=medium
 
   * gigabyte-ampere-cuttlefish-installer: preseed.cfg: disable backports by @grandpaul in https://github.com/google/android-cuttlefish/pull/2394
