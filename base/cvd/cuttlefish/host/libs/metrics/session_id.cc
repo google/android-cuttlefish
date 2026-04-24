@@ -37,9 +37,15 @@ Result<std::string> ReadSessionIdFile(const std::string& metrics_directory) {
 }
 
 Result<void> GenerateSessionIdFile(const std::string& metrics_directory) {
+  const std::string filepath =
+      fmt::format("{}/{}", metrics_directory, kSessionIdFileName);
+  if (FileExists(filepath)) {
+    // a session ID file might already exist from shared directories between
+    // fetching and device creation
+    return {};
+  }
   const std::string session_id = GenerateUuid();
-  CF_EXPECT(WriteNewFile(
-      fmt::format("{}/{}", metrics_directory, kSessionIdFileName), session_id));
+  CF_EXPECT(WriteNewFile(filepath, session_id));
   return {};
 }
 
