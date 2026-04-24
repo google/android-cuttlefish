@@ -520,7 +520,10 @@ jobs:
         # Grant permission on devices as it's hard to grant on test env
         sudo chmod 666 /dev/kvm /dev/vhost-net /dev/vhost-vsock
         cd e2etests
-        bazel test //cvd/display_tests \
+        bazel test \
+          //cvd/cvd_powerwash_tests \
+          //cvd/display_tests \
+          //cvd/env_tests \
           --test_env=HOME=$HOME \
           --test_env=USE_PODCVD=true \
           --test_env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
