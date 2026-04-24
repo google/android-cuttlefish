@@ -67,8 +67,7 @@ Result<std::vector<std::string>> ExtractFiles(
                            .AddParameter(target_directory)
                            .AddParameter("-f")
                            .AddParameter(archive)
-                           .AddParameter("-S")
-                           .AddParameter("--no-same-owner");
+                           .AddParameter("-S");
   for (const auto& extract : to_extract) {
     bsdtar_cmd.AddParameter(extract);
   }
@@ -140,7 +139,6 @@ std::string ExtractArchiveToMemory(const std::string& archive_filepath,
   bsdtar_cmd.AddParameter(archive_filepath);
   bsdtar_cmd.AddParameter("-O");
   bsdtar_cmd.AddParameter(archive_member);
-  bsdtar_cmd.AddParameter("--no-same-owner");
   Result<std::string> stdout_str = RunAndCaptureStdout(std::move(bsdtar_cmd));
 
   if (!stdout_str.ok()) {
