@@ -155,7 +155,7 @@ Result<std::string> DiskBuilder::TextConfig() {
   CF_EXPECT(!partitions_.empty() ^ !entire_disk_.empty(),
             "Specify either partitions or a whole disk");
   for (auto& partition : partitions_) {
-    disk_conf << partition.image_file_path << "\n";
+    disk_conf << partition.label << ":" << partition.image_file_path << "\n";
   }
   if (!entire_disk_.empty()) {
     disk_conf << entire_disk_;
