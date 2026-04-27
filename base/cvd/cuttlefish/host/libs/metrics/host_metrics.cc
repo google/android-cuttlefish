@@ -16,13 +16,39 @@
 
 #include "cuttlefish/host/libs/metrics/host_metrics.h"
 
+#include <optional>
+
 #include "cuttlefish/common/libs/utils/host_info.h"
+#include "cuttlefish/host/libs/metrics/gce_environment.h"
+#include "cuttlefish/host/libs/metrics/github_environment.h"
+#include "cuttlefish/host/libs/metrics/invoker.h"
+#include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
+namespace {
 
-HostMetrics GetHostMetrics() {
+Result<Environment> GetEnvironment() {
+  const std::optional<GitHubRepository> github_environment =
+      DetectGitHubRepository();
+  if (github_environment) {
+    return *github_environment;
+  }
+
+  const std::optional gce_environment = CF_EXPECT(DetectGceEnvironment());
+  if (gce_environment) {
+    return *gce_environment;
+  }
+
+  return UnknownEnvironment{};
+}
+
+}  // namespace
+
+Result<HostMetrics> GetHostMetrics() {
   return HostMetrics{
       .os = GetHostInfo(),
+      .invoker = GetInvoker(),
+      .environment = CF_EXPECT(GetEnvironment()),
   };
 }
 
