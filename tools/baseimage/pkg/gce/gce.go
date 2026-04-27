@@ -101,20 +101,22 @@ func (h *GceHelper) DetachDisk(ins, disk string) error {
 }
 
 func (h *GceHelper) CreateInstance(name string, arch Arch) (*compute.Instance, error) {
-	var machineType, sourceImage string
+	var machineTypes []string
+	var sourceImage string
 	switch arch {
 	case ArchX86:
-		machineType = "n1-standard-16"
+		machineTypes = []string{"n1-standard-16"}
 		sourceImage = "debian-12-bookworm-v20250415"
 	case ArchArm:
-		machineType = "t2a-standard-16"
+		machineTypes = []string{"t2a-standard-16", "c4a-standard-16"}
 		sourceImage = "debian-12-bookworm-arm64-v20250415"
 	default:
 		return nil, errors.New("unsupported arch")
 	}
+
 	payload := &compute.Instance{
 		Name:        name,
-		MachineType: fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, machineType),
+		MachineType: "",
 		Disks: []*compute.AttachedDisk{
 			{
 				InitializeParams: &compute.AttachedDiskInitializeParams{
@@ -135,15 +137,29 @@ func (h *GceHelper) CreateInstance(name string, arch Arch) (*compute.Instance, e
 			},
 		},
 	}
-	op, err := h.Service.Instances.Insert(h.Project, h.Zone, payload).Do()
-	if err != nil {
-		return nil, err
 
+	var lastErr error
+	for _, mt := range machineTypes {
+		payload.MachineType = fmt.Sprintf("zones/%s/machineTypes/%s", h.Zone, mt)
+
+		op, err := h.Service.Instances.Insert(h.Project, h.Zone, payload).Do()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := h.waitForOperation(op); err != nil {
+			lastErr = err
+			if isStockoutError(err) {
+				log.Printf("stockout detected for machine type %s when creating instance %s", mt, name)
+				continue
+			}
+			return nil, err
+		}
+
+		return payload, nil
 	}
-	if err := h.waitForOperation(op); err != nil {
-		return nil, err
-	}
-	return payload, nil
+
+	return nil, lastErr
 }
 
 func (h *GceHelper) CreateInstanceToValidateImage(name, imageProject, image string) (*compute.Instance, error) {
@@ -404,4 +420,11 @@ func runCmd(opts RunCmdOpts, name string, args ...string) error {
 	}
 	log.Printf("Executing command: `%s`\n", cmd.String())
 	return cmd.Run()
+}
+
+func isStockoutError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "STOCKOUT")
 }
