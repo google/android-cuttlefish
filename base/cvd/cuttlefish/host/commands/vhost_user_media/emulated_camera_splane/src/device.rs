@@ -109,10 +109,6 @@ impl Buffer {
             }
             BufferState::Outgoing { sequence } => {
                 self.v4l2_buffer.set_sequence(sequence);
-                self.v4l2_buffer.set_timestamp(bindings::timeval {
-                    tv_sec: (sequence + 1) as bindings::__time_t / 1000,
-                    tv_usec: (sequence + 1) as bindings::__time_t % 1000,
-                });
                 Self::unset_flag(&mut flags, BufferFlags::QUEUED);
             }
         }
@@ -582,7 +578,6 @@ where
                             panic!()
                         }
                         v4l2_buffer.set_field(BufferField::None);
-                        v4l2_buffer.set_flags(BufferFlags::TIMESTAMP_MONOTONIC);
 
                         Ok(Buffer::new(v4l2_buffer, fd, offset))
                     })
