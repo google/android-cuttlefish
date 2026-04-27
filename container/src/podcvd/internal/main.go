@@ -21,6 +21,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"sync"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
@@ -154,7 +156,13 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 		if !exists {
 			return fmt.Errorf("failed to find IPv4 address for group name %q", cvdArgs.CommonArgs.GroupName)
 		}
-		UpdateCvdGroupJsonRaw(res, ContainerName(cvdArgs.CommonArgs.GroupName), ip)
+		inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), ContainerName(cvdArgs.CommonArgs.GroupName))
+		if err != nil {
+			return fmt.Errorf("failed to inspect container: %w", err)
+		}
+		attemptID := inspectRes.Config.Labels["attempt_id"]
+		podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+		UpdateCvdGroupJsonRaw(res, podcvdHomeDir, ip)
 		stdout, err := json.MarshalIndent(res, "", "        ")
 		if err != nil {
 			return fmt.Errorf("failed to marshal json: %w", err)
@@ -201,6 +209,10 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	for err := range errCh {
 		errs = append(errs, err)
 	}
+	uidDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()))
+	if err := os.RemoveAll(uidDir); err != nil {
+		errs = append(errs, fmt.Errorf("failed to remove uid dir: %w", err))
+	}
 	return errors.Join(errs...)
 }
 
@@ -231,8 +243,15 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 				errCh <- err
 				return
 			}
+			inspectRes, err := ccm.GetClient().ContainerInspect(context.Background(), containerName)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			attemptID := inspectRes.Config.Labels["attempt_id"]
+			podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
 			for idx := range res.Groups {
-				UpdateCvdGroupJsonRaw(res.Groups[idx], containerName, ip)
+				UpdateCvdGroupJsonRaw(res.Groups[idx], podcvdHomeDir, ip)
 			}
 			resCh <- res
 		}(groupName, ip)

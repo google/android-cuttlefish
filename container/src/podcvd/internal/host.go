@@ -264,6 +264,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 		Env: []string{
 			"ANDROID_HOST_OUT=/host_out",
 			"ANDROID_PRODUCT_OUT=/product_out",
+			"HOME=/podcvd_home",
 		},
 		Image: imageName,
 		Labels: map[string]string{
@@ -294,6 +295,14 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 	if productOut == "" {
 		productOut = currentDir
 	}
+	podcvdRootDir := "/var/tmp/podcvd"
+	if err := os.MkdirAll(podcvdRootDir, 0777); err != nil {
+		return "", fmt.Errorf("failed to create podcvd root dir: %w", err)
+	}
+	podcvdHomeDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
+	if err := os.MkdirAll(podcvdHomeDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create podcvd home dir: %w", err)
+	}
 	pidsLimit := int64(8192)
 	containerHostCfg := &container.HostConfig{
 		Annotations: map[string]string{"run.oci.keep_original_groups": "1"},
@@ -301,6 +310,7 @@ func createAndStartContainer(ccm libcfcontainer.CuttlefishContainerManager, comm
 			fmt.Sprintf("%s:/host_out:O", hostOut),
 			fmt.Sprintf("%s:/product_out:O", productOut),
 			fmt.Sprintf("%s:/root/.local/share/cvd:ro", cvdDataHome),
+			fmt.Sprintf("%s:/podcvd_home:rw", podcvdHomeDir),
 		},
 		CapAdd: []string{"NET_RAW"},
 		Resources: container.Resources{

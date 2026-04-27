@@ -17,7 +17,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -70,33 +70,35 @@ func ParseInstanceGroups(jsonStr, groupName string) (*InstanceGroup, error) {
 	return &instanceGroup, nil
 }
 
-func UpdateCvdGroupJsonRaw(data any, containerName, ipAddr string) {
+func UpdateCvdGroupJsonRaw(data any, podcvdHomeDir, ipAddr string) {
 	switch v := data.(type) {
 	case map[string]any:
 		for k, val := range v {
 			if s, ok := val.(string); ok {
-				v[k] = updateStringOnCvdGroupJsonRaw(s, containerName, ipAddr)
+				v[k] = updateStringOnCvdGroupJsonRaw(s, podcvdHomeDir, ipAddr)
 			} else {
-				UpdateCvdGroupJsonRaw(val, containerName, ipAddr)
+				UpdateCvdGroupJsonRaw(val, podcvdHomeDir, ipAddr)
 			}
 		}
 	case []any:
 		for k, val := range v {
 			if s, ok := val.(string); ok {
-				v[k] = updateStringOnCvdGroupJsonRaw(s, containerName, ipAddr)
+				v[k] = updateStringOnCvdGroupJsonRaw(s, podcvdHomeDir, ipAddr)
 			} else {
-				UpdateCvdGroupJsonRaw(val, containerName, ipAddr)
+				UpdateCvdGroupJsonRaw(val, podcvdHomeDir, ipAddr)
 			}
 		}
 	}
 }
 
-func updateStringOnCvdGroupJsonRaw(data, containerName, ipAddr string) string {
+var cvdPathRegex = regexp.MustCompile(`^/var/tmp/cvd/[0-9]+/[0-9]+/home`)
+
+func updateStringOnCvdGroupJsonRaw(data, podcvdHomeDir, ipAddr string) string {
 	data = strings.ReplaceAll(data, "0.0.0.0", ipAddr)
 	data = strings.ReplaceAll(data, "localhost", ipAddr)
 	data = strings.ReplaceAll(data, "127.0.0.1", ipAddr)
-	if filepath.IsAbs(data) {
-		data = fmt.Sprintf("%s:%s", containerName, data)
+	if cvdPathRegex.MatchString(data) {
+		data = cvdPathRegex.ReplaceAllString(data, podcvdHomeDir)
 	}
 	return data
 }
