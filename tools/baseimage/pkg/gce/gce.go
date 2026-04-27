@@ -308,6 +308,13 @@ func (h *GceHelper) waitForOperation(op *compute.Operation) error {
 	if op.Status != "DONE" {
 		return fmt.Errorf("wait for operation %q: timed out", op.Name)
 	}
+	if op.Error != nil && len(op.Error.Errors) > 0 {
+		var errMsgs []string
+		for _, e := range op.Error.Errors {
+			errMsgs = append(errMsgs, e.Message)
+		}
+		return fmt.Errorf("operation %q failed: %s", op.Name, strings.Join(errMsgs, "; "))
+	}
 	return nil
 }
 
@@ -322,6 +329,13 @@ func (h *GceHelper) waitForGlobalOperation(op *compute.Operation) error {
 	}
 	if op.Status != "DONE" {
 		return fmt.Errorf("wait for operation %q: timed out", op.Name)
+	}
+	if op.Error != nil && len(op.Error.Errors) > 0 {
+		var errMsgs []string
+		for _, e := range op.Error.Errors {
+			errMsgs = append(errMsgs, e.Message)
+		}
+		return fmt.Errorf("operation %q failed: %s", op.Name, strings.Join(errMsgs, "; "))
 	}
 	return nil
 }
