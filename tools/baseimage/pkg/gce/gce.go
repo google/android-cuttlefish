@@ -345,7 +345,7 @@ func (h *GceHelper) cleanupDeleteInstance(ins string) {
 }
 
 func (h *GceHelper) cleanupDetachDisk(ins, disk string) {
-	log.Printf("cleanup: detaching disk %q from instance %q...", ins, disk)
+	log.Printf("cleanup: detaching disk %q from instance %q...", disk, ins)
 	if err := h.DetachDisk(ins, disk); err != nil {
 		log.Printf("cleanup: error detaching disk: %v", err)
 	} else {
