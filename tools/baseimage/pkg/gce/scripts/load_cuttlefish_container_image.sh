@@ -16,11 +16,12 @@
 
 set -o errexit -o nounset -o pipefail
 
-if [[ $# -eq 0 ]] ; then
-  echo "usage: $0 /path/to/container_image"
+if [[ $# -lt 2 ]] ; then
+  echo "usage: $0 [file|pull] reference"
   exit 1
 fi
-container_image=$1
+mode=$1
+reference=$2
 
 # Load docker image. Internally, it modifies data-root configuration of
 # /etc/docker/daemon.json to load image under default data-root location of
@@ -37,7 +38,14 @@ else
     | sudo tee /etc/docker/daemon.json > /dev/null
 fi
 sudo systemctl start docker.socket docker.service
-sudo docker load --input "$container_image"
+if [ "$mode" == "file" ]; then
+  sudo docker load --input "$reference"
+elif [ "$mode" == "pull" ]; then
+  sudo docker pull "$reference"
+else
+  echo "Unknown mode: $mode"
+  exit 1
+fi
 sudo systemctl stop docker.socket docker.service
 
 sudo chroot /mnt/image /usr/bin/apt install -y docker.io
