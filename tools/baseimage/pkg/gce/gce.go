@@ -83,7 +83,8 @@ func (h *GceHelper) DeleteDisk(name string) error {
 
 func (h *GceHelper) AttachDisk(ins, disk string) error {
 	attachedDisk := &compute.AttachedDisk{
-		Source: fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
+		Source:     fmt.Sprintf("projects/%s/zones/%s/disks/%s", h.Project, h.Zone, disk),
+		DeviceName: disk,
 	}
 	op, err := h.Service.Instances.AttachDisk(h.Project, h.Zone, ins, attachedDisk).Do()
 	if err != nil {
