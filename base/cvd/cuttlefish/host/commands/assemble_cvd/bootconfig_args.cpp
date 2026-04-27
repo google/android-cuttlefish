@@ -77,6 +77,10 @@ static constexpr std::string_view kLegacyBoardBootconfigKeysSdvCore[] = {
     "androidboot.sdv.telemetry.enabled:",
 };
 
+static constexpr std::string_view kLegacyBoardBootconfigKeysDesktop[] = {
+    "androidboot.vendor.apex.com.android.hardware.radio.desktop",
+};
+
 template <typename T>
 void AppendMapWithReplacement(T* destination, const T& source) {
   for (const auto& [k, v] : source) {
@@ -127,6 +131,10 @@ Result<void> ValidateBoardBootconfigKeys(
                         std::begin(kLegacyBoardBootconfigKeysMinidroid),
                         std::end(kLegacyBoardBootconfigKeysMinidroid));
   } else if (type == cuttlefish::DeviceType::Unknown) {
+    // Desktop targets don't define device type yet
+    allowed_args.insert(allowed_args.end(),
+                        std::begin(kLegacyBoardBootconfigKeysDesktop),
+                        std::end(kLegacyBoardBootconfigKeysDesktop));
     // Sdv core targets don't define device type yet.
     allowed_args.insert(allowed_args.end(),
                         std::begin(kLegacyBoardBootconfigKeysSdvCore),
