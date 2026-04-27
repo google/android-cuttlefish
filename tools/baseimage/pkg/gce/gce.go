@@ -279,7 +279,7 @@ func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error 
 
 	log.Println("attaching disk...")
 	if err := h.AttachDisk(insName, attachedDiskName); err != nil {
-		log.Fatalf("failed to attach disk %q to instance %q: %v", attachedDiskName, insName, err)
+		return fmt.Errorf("failed to attach disk %q to instance %q: %v", attachedDiskName, insName, err)
 	}
 	defer h.cleanupDetachDisk(insName, attachedDiskName)
 	log.Println("disk attached")
