@@ -23,6 +23,7 @@
 #include <poll.h>
 #include <sys/file.h>
 #include <sys/mman.h>
+#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -173,6 +174,30 @@ bool FileInstance::CopyAllFrom(FileInstance& in, FileInstance* stop) {
   // Only return false if there was an actual error.
   return !GetErrno() && !in.GetErrno();
 }
+
+bool FileInstance::SendFile(FileInstance& in, off_t* offset, size_t count) {
+  LocalErrno record_errno(errno_);
+  while (count > 0) {
+#ifdef __linux__
+    const auto bytes_written =
+        TEMP_FAILURE_RETRY(sendfile(fd_, in.fd_, offset, count));
+    if (bytes_written <= 0) {
+      return false;
+    }
+#elif defined(__APPLE__)
+    off_t bytes_written = count;
+    auto success = TEMP_FAILURE_RETRY(
+        sendfile(in.fd_, fd_, *offset, &bytes_written, nullptr, 0));
+    *offset += bytes_written;
+    if (success < 0 || bytes_written == 0) {
+      return false;
+    }
+#endif
+    count -= bytes_written;
+  }
+  return true;
+}
+
 
 void FileInstance::Close() {
   std::stringstream message;

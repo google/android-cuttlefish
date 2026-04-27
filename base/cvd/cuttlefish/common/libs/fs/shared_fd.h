@@ -316,6 +316,7 @@ class FileInstance {
   bool CopyFrom(FileInstance& in, size_t length, FileInstance* stop = nullptr);
   // Same as CopyFrom, but reads from input until EOF is reached.
   bool CopyAllFrom(FileInstance& in, FileInstance* stop = nullptr);
+  bool SendFile(FileInstance& in, off_t* offset, size_t count);
 
   int UNMANAGED_Dup();
   int UNMANAGED_Dup2(int newfd);
