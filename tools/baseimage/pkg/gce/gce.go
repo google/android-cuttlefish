@@ -55,6 +55,7 @@ func NewGceHelper(project, zone string) (*GceHelper, error) {
 
 type CreateDiskOpts struct {
 	SizeGb int64
+	Type   string
 }
 
 func (h *GceHelper) CreateDisk(sourceImageProject, sourceImage, name string, opts CreateDiskOpts) (*compute.Disk, error) {
@@ -62,6 +63,9 @@ func (h *GceHelper) CreateDisk(sourceImageProject, sourceImage, name string, opt
 		Name:        name,
 		SourceImage: fmt.Sprintf("projects/%s/global/images/%s", sourceImageProject, sourceImage),
 		SizeGb:      opts.SizeGb,
+	}
+	if opts.Type != "" {
+		payload.Type = opts.Type
 	}
 	op, err := h.Service.Disks.Insert(h.Project, h.Zone, payload).Do()
 	if err != nil {
@@ -238,6 +242,10 @@ const BuildImageMountPoint = "/mnt/image"
 func (h *GceHelper) BuildImage(project, zone string, opts BuildImageOpts) error {
 	insName := opts.ImageName
 	attachedDiskName := fmt.Sprintf("%s-attached-disk", insName)
+
+	if opts.Arch == ArchArm {
+		opts.CreateAttachedDiskOpts.Type = fmt.Sprintf("zones/%s/diskTypes/hyperdisk-balanced", zone)
+	}
 
 	log.Println("creating disk...")
 	if _, err := h.CreateDisk(opts.SourceImageProject, opts.SourceImage, attachedDiskName, opts.CreateAttachedDiskOpts); err != nil {
