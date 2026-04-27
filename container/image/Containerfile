@@ -60,6 +60,13 @@ RUN apt install -y --no-install-recommends \
 
 FROM runner-${BUILD_OPTION} AS runner
 
+# TODO(b/491256959): Seek better option than introducing wrapper of bsdtar.
+# Add bsdtar wrapper, to avoid owner user/group issue when fetching artifacts.
+RUN dpkg-divert --add --rename --divert /usr/bin/bsdtar.real /usr/bin/bsdtar && \
+    echo '#!/bin/bash' > /usr/bin/bsdtar && \
+    echo '/usr/bin/bsdtar.real --no-same-owner "$@"' >> /usr/bin/bsdtar && \
+    chmod +x /usr/bin/bsdtar
+
 RUN usermod -aG kvm root
 RUN usermod -aG cvdnetwork root
 ENTRYPOINT ["/root/run_services.sh"]
