@@ -196,7 +196,7 @@ func (tc *TestContext) CVDCreate(args CreateArgs) error {
 		"HOME": tc.tempdir,
 	}
 
-	createCmd := []string{tc.TargetBin(), "create"};
+	createCmd := []string{tc.TargetBin(), "--verbosity=DEBUG", "create"};
 	createCmd = append(createCmd, "--report_anonymous_usage_stats=y")
 	createCmd = append(createCmd, "--undefok=report_anonymous_usage_stats")
 	if len(args.Args) > 0 {
