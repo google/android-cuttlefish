@@ -56,7 +56,6 @@
 #include <android-base/macros.h>
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include <android-base/unique_fd.h>
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/strings/match.h"
@@ -344,81 +343,57 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
 
 namespace {
 
-bool SendFile(int out_fd, int in_fd, off64_t* offset, size_t count) {
-  while (count > 0) {
-#ifdef __linux__
-    const auto bytes_written =
-        TEMP_FAILURE_RETRY(sendfile(out_fd, in_fd, offset, count));
-    if (bytes_written <= 0) {
-      return false;
-    }
-#elif defined(__APPLE__)
-    off_t bytes_written = count;
-    auto success = TEMP_FAILURE_RETRY(
-        sendfile(in_fd, out_fd, *offset, &bytes_written, nullptr, 0));
-    *offset += bytes_written;
-    if (success < 0 || bytes_written == 0) {
-      return false;
-    }
-#endif
-    count -= bytes_written;
-  }
-  return true;
-}
-
 }  // namespace
 
 bool Copy(const std::string& from, const std::string& to) {
-  android::base::unique_fd fd_from(
-      open(from.c_str(), O_RDONLY | O_CLOEXEC));
-  android::base::unique_fd fd_to(
-      open(to.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644));
+  SharedFD fd_from = SharedFD::Open(from, O_RDONLY);
+  SharedFD fd_to = SharedFD::Open(to, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
-  if (fd_from.get() < 0 || fd_to.get() < 0) {
+  if (!fd_from->IsOpen() || !fd_to->IsOpen()) {
     return false;
   }
 
-  off_t farthest_seek = lseek(fd_from.get(), 0, SEEK_END);
+  off_t farthest_seek = fd_from->LSeek(0, SEEK_END);
   if (farthest_seek == -1) {
-    PLOG(ERROR) << "Could not lseek in \"" << from << "\"";
+    LOG(ERROR) << "Could not lseek in \"" << from
+               << "\": " << fd_from->StrError();
     return false;
   }
-  if (ftruncate64(fd_to.get(), farthest_seek) < 0) {
-    PLOG(ERROR) << "Failed to ftruncate " << to;
+  if (fd_to->Truncate(farthest_seek) < 0) {
+    LOG(ERROR) << "Failed to truncate " << to << ": " << fd_to->StrError();
   }
   off_t offset = 0;
   while (offset < farthest_seek) {
-    off_t new_offset = lseek(fd_from.get(), offset, SEEK_HOLE);
+    off_t new_offset = fd_from->LSeek(offset, SEEK_HOLE);
     if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type
-      // coming.
-      if (errno == ENXIO) {
+      if (fd_from->GetErrno() == ENXIO) {
         return true;
       }
-      PLOG(ERROR) << "Could not lseek in \"" << from << "\"";
+      LOG(ERROR) << "Could not lseek in \"" << from
+                 << "\": " << fd_from->StrError();
       return false;
     }
     auto data_bytes = new_offset - offset;
-    if (lseek(fd_to.get(), offset, SEEK_SET) < 0) {
-      PLOG(ERROR) << "lseek() on " << to << " failed";
+    if (fd_to->LSeek(offset, SEEK_SET) < 0) {
+      LOG(ERROR) << "lseek() on " << to << " failed: " << fd_to->StrError();
       return false;
     }
-    if (!SendFile(fd_to.get(), fd_from.get(), &offset, data_bytes)) {
-      PLOG(ERROR) << "sendfile() failed";
+    if (!fd_to->SendFile(*fd_from, &offset, data_bytes)) {
+      LOG(ERROR) << "SendFile failed: " << fd_to->StrError();
       return false;
     }
     CHECK_EQ(offset, new_offset);
+
     if (offset >= farthest_seek) {
       return true;
     }
-    new_offset = lseek(fd_from.get(), offset, SEEK_DATA);
+    new_offset = fd_from->LSeek(offset, SEEK_DATA);
     if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type
-      // coming.
-      if (errno == ENXIO) {
+      if (fd_from->GetErrno() == ENXIO) {
         return true;
       }
-      PLOG(ERROR) << "Could not lseek in \"" << from << "\"";
+      LOG(ERROR) << "Could not lseek in \"" << from
+                 << "\": " << fd_from->StrError();
       return false;
     }
     offset = new_offset;
