@@ -189,8 +189,8 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
   }
 
   CuttlefishHost& host = *metrics_event.mutable_host();
-  host.set_host_os(ConvertHostOs(metrics_data.host_metrics));
-  host.set_host_os_version(metrics_data.host_metrics.release);
+  host.set_host_os(ConvertHostOs(metrics_data.host_metrics.os));
+  host.set_host_os_version(metrics_data.host_metrics.os.release);
 
   return cf_log_event;
 }
