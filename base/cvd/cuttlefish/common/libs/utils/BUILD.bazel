@@ -96,6 +96,15 @@ cf_cc_library(
     ],
 )
 
+cf_cc_test(
+    name = "environment_test",
+    srcs = ["environment_test.cpp"],
+    deps = [
+        ":environment",
+        "@abseil-cpp//absl/cleanup",
+    ],
+)
+
 cf_cc_library(
     name = "files",
     srcs = ["files.cpp"],

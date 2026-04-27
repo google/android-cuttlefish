@@ -18,21 +18,37 @@
 
 #include <cstdlib>
 #include <string>
+#include <string_view>
 
 namespace cuttlefish {
 
-std::optional<std::string> StringFromEnv(const std::string& varname) {
-
-  const char* const valstr = getenv(varname.c_str());
+std::optional<std::string> StringFromEnv(const char* varname) {
+  const char* const valstr = getenv(varname);
   if (!valstr) {
     return std::nullopt;
   }
   return valstr;
 }
 
+std::optional<std::string> StringFromEnv(const std::string& varname) {
+  return StringFromEnv(varname.c_str());
+}
+
+std::optional<std::string> StringFromEnv(std::string_view varname) {
+  return StringFromEnv(std::string(varname).c_str());
+}
+
+std::string StringFromEnv(const char* varname, const std::string& defval) {
+  return StringFromEnv(varname).value_or(defval);
+}
+
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval) {
-  return StringFromEnv(varname).value_or(defval);
+  return StringFromEnv(varname.c_str(), defval);
+}
+
+std::string StringFromEnv(std::string_view varname, const std::string& defval) {
+  return StringFromEnv(std::string(varname).c_str(), defval);
 }
 
 }  // namespace cuttlefish
