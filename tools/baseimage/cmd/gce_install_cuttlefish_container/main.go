@@ -34,6 +34,7 @@ var (
 	sourceImage        string
 	imageName          string
 	containerImageSrc  string
+	containerImageRef  string
 )
 
 func init() {
@@ -44,6 +45,7 @@ func init() {
 	flag.StringVar(&sourceImage, "source-image", "", "Source image name")
 	flag.StringVar(&imageName, "image-name", "", "output GCE image name")
 	flag.StringVar(&containerImageSrc, "container-image-src", "", "local path to container image")
+	flag.StringVar(&containerImageRef, "container-image-ref", "", "docker pull reference (e.g. user/image:tag)")
 }
 
 func main() {
@@ -68,8 +70,11 @@ func main() {
 	if imageName == "" {
 		log.Fatal("usage: `-image-name` must not be empty")
 	}
-	if containerImageSrc == "" {
-		log.Fatal("usage: `-container-image-src` must not be empty")
+	if containerImageSrc != "" && containerImageRef != "" {
+		log.Fatal("usage: specify either `-container-image-src` or `-container-image-ref`, not both")
+	}
+	if containerImageSrc == "" && containerImageRef == "" {
+		log.Fatal("usage: either `-container-image-src` or `-container-image-ref` must be specified")
 	}
 
 	buildImageOpts := gce.BuildImageOpts{
@@ -81,11 +86,14 @@ func main() {
 			if err := gce.UploadBashScript(project, zone, insName, "load_cuttlefish_container_image.sh", scripts.LoadCuttlefishContainerImage); err != nil {
 				return fmt.Errorf("error uploading bash script: %v", err)
 			}
+			if containerImageRef != "" {
+				return gce.RunCmd(project, zone, insName, "./load_cuttlefish_container_image.sh pull "+containerImageRef)
+			}
 			dst := "/tmp/" + filepath.Base(containerImageSrc)
 			if err := gce.UploadFile(project, zone, insName, containerImageSrc, dst); err != nil {
 				return fmt.Errorf("error uploading %s: %v", containerImageSrc, err)
 			}
-			return gce.RunCmd(project, zone, insName, "./load_cuttlefish_container_image.sh "+dst)
+			return gce.RunCmd(project, zone, insName, "./load_cuttlefish_container_image.sh file "+dst)
 		},
 	}
 
