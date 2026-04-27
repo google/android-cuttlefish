@@ -21,9 +21,9 @@
 #include <string>
 #include <vector>
 
-#include "cuttlefish/common/libs/utils/host_info.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics.h"
 #include "cuttlefish/host/libs/metrics/guest_metrics.h"
+#include "cuttlefish/host/libs/metrics/host_metrics.h"
 #include "external_proto/cf_log.pb.h"
 
 namespace cuttlefish {
@@ -32,7 +32,7 @@ struct MetricsData {
   std::string session_id;
   std::string cf_common_version;
   std::chrono::milliseconds now;
-  HostInfo host_metrics;
+  HostMetrics host_metrics;
   std::vector<GuestMetrics> guest_metrics;
   std::optional<FetchMetrics> fetch_metrics;
 };
