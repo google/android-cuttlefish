@@ -17,12 +17,17 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace cuttlefish {
 
 std::optional<std::string> StringFromEnv(const std::string& varname);
+std::optional<std::string> StringFromEnv(const char* varname);
+std::optional<std::string> StringFromEnv(std::string_view varname);
 
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
+std::string StringFromEnv(const char* varname, const std::string& defval);
+std::string StringFromEnv(std::string_view varname, const std::string& defval);
 
 }  // namespace cuttlefish
