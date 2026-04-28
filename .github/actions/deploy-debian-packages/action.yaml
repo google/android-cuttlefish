@@ -19,14 +19,13 @@ runs:
         "cuttlefish-metrics"
         "cuttlefish-orchestration"
         "cuttlefish-user"
+        "cuttlefish-podcvd"
       )
 
       if [[ ${INPUTS_DEPLOY_CHANNEL} == "stable" ]]; then
         REPO=android-cuttlefish
       else
         REPO=android-cuttlefish-${INPUTS_DEPLOY_CHANNEL}
-        # TODO: include cuttlefish-podcvd on stable afterwards
-        PACKAGES+=("cuttlefish-podcvd")
       fi
 
       pushd ${INPUTS_PATH}
