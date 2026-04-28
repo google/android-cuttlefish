@@ -21,6 +21,7 @@
 
 #include "absl/log/log.h"
 
+#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
@@ -145,6 +146,10 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
                           flags.credential_flags.use_gce_metadata,
                           flags.credential_flags.credential_filepath,
                           flags.credential_flags.service_account_filepath));
+}
+
+std::string GetAcloudOauthFilepath() {
+  return StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
 }
 
 }  // namespace cuttlefish

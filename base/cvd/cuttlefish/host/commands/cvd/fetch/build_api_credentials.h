@@ -32,4 +32,6 @@ Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
     HttpClient& http_client, const BuildApiFlags& flags,
     const std::string& oauth_filepath);
 
+std::string GetAcloudOauthFilepath();
+
 }  // namespace cuttlefish
