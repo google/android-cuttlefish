@@ -74,14 +74,11 @@ Result<Downloaders> Downloaders::Create(const BuildApiFlags& flags,
   Result<std::unique_ptr<CredentialSource>> cvd_creds =
       CredentialForScopes(*impl->curl_, scopes);
 
-  std::string oauth_filepath =
-      StringFromEnv("HOME", ".") + "/.acloud_oauth2.dat";
-
   impl->android_creds_ =
       cvd_creds.ok() && cvd_creds->get()
           ? std::move(*cvd_creds)
-          : CF_EXPECT(GetCredentialSourceFromFlags(*impl->retrying_http_client_,
-                                                   flags, oauth_filepath));
+          : CF_EXPECT(GetCredentialSourceFromFlags(
+                *impl->retrying_http_client_, flags, GetAcloudOauthFilepath()));
 
   impl->android_build_url_ = std::make_unique<AndroidBuildUrl>(
       flags.api_base_url, flags.api_key, flags.project_id);
