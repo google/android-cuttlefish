@@ -2,8 +2,12 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish.events;
 
+import "external_proto/cf_fetch_complete.proto";
+import "external_proto/cf_fetch_failure.proto";
+import "external_proto/cf_fetch_start.proto";
 import "external_proto/cf_guest.proto";
 import "external_proto/cf_host.proto";
+
 import "google/protobuf/cpp_features.proto";
 
 option features.(pb.cpp).string_type = VIEW;
@@ -13,10 +17,16 @@ option features.(pb.cpp).string_type = VIEW;
 //
 // See go/cf-metrics-prd-v2 for more information.
 //
-// Next index: 3
+// Next index: 6
 message MetricsEventV2 {
   // Information about the machine outside the Cuttlefish virtual machine.
   CuttlefishHost host = 1;
   // A cuttlefish virtual machine running under the host.
   repeated CuttlefishGuest guest = 2;
+
+  oneof fetch {
+    CuttlefishFetchComplete complete = 3;
+    CuttlefishFetchFailure failure = 4;
+    CuttlefishFetchStart start = 5;
+  }
 }

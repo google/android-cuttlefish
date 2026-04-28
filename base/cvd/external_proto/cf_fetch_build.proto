@@ -1,0 +1,15 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+// A single build specification from the Android Build API
+//
+// Next index: 5
+message CuttlefishBuild {
+  // all string fields, but effectively limited by the possible options of the
+  // Android Build API
+  string build_id = 1;
+  string branch = 2;
+  string target = 3;
+  string product = 4;
+}

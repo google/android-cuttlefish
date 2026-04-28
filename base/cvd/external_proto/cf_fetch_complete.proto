@@ -1,0 +1,18 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "external_proto/cf_fetch_builds.proto";
+
+// Represents a successful fetch operation result
+//
+// Next index: 4
+message CuttlefishFetchComplete {
+  // amount of data fetched
+  uint64 fetch_size_bytes = 1;
+
+  // did fetching block waiting on a terminal build status
+  bool status_blocked = 2;
+
+  repeated CuttlefishFetchBuilds builds = 3;
+}

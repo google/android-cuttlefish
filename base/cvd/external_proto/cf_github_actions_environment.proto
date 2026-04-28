@@ -1,0 +1,23 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "google/protobuf/cpp_features.proto";
+
+option features.(pb.cpp).string_type = VIEW;
+
+// GitHub Actions environment a Cuttlefish device can run in
+//
+// Next index: 2
+message CuttlefishGitHubActionsEnvironment {
+  enum Repository {
+    CUTTLEFISH_GITHUB_ACTIONS_ENVIRONMENT_REPOSITORY_UNSPECIFIED = 0;
+    CUTTLEFISH_GITHUB_ACTIONS_ENVIRONMENT_REPOSITORY_GOOGLE_ANDROID_CUTTLEFISH =
+        1;
+    CUTTLEFISH_GITHUB_ACTIONS_ENVIRONMENT_REPOSITORY_GOOGLE_CLOUD_ANDROID_ORCHESTRATION =
+        2;
+  }
+
+  // the source repository attached to the GitHub Actions run
+  Repository repository = 1;
+}

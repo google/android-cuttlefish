@@ -1,0 +1,21 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+import "external_proto/cf_fetch_build.proto";
+
+// the full set of builds that can possibly be used to customize a CF device
+//
+// Next index: 9
+message CuttlefishFetchBuilds {
+  // the base set of images, to be potentially overridden by other builds
+  // corresponds to the --default_build flag
+  CuttlefishBuild base = 1;
+  CuttlefishBuild system = 2;
+  CuttlefishBuild kernel = 3;
+  CuttlefishBuild boot = 4;
+  CuttlefishBuild bootloader = 5;
+  CuttlefishBuild android_efi_loader = 6;
+  CuttlefishBuild otatools = 7;
+  CuttlefishBuild test_suites = 8;
+}

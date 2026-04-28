@@ -1,0 +1,13 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+// GCE environment a Cuttlefish device can run in
+//
+// Next index: 3
+message CuttlefishGceEnvironment {
+  // unique identifier for the project
+  string numeric_project_id = 1;
+  // the zone where this VM is located
+  string zone = 2;
+}
