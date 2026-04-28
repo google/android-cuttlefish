@@ -84,12 +84,11 @@ Result<InstanceCompositeDisk> InstanceCompositeDisk::Create(
   const auto ipath = [&instance](const std::string& path) -> std::string {
     return instance.PerInstancePath(path);
   };
-  CF_EXPECT(bootconfig_partition.has_value());
   auto persistent_disk_builder =
       DiskBuilder()
           .ReadOnly(false)
           .Partitions(PersistentCompositeDiskConfig(instance, bootloader_env,
-                                                    *bootconfig_partition, frp,
+                                                    bootconfig_partition, frp,
                                                     persistent_vbmeta))
           .VmManager(config.vm_manager())
           .CrosvmPath(instance.crosvm_binary())
