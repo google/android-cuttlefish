@@ -21,8 +21,8 @@
 #include <vector>
 
 #include "cuttlefish/common/libs/utils/environment.h"
-#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
+#include "cuttlefish/common/libs/utils/is_corp.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
@@ -95,7 +95,7 @@ class CvdLoginCommand : public CvdCommandHandler {
 
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
     std::string google_appendix;
-    if (DirectoryExists("/google")) {
+    if (IsCorp()) {
       google_appendix =
           "\nIf running on corp, use the wrapper script in "
           "google3/cloud/android/login";
