@@ -1,0 +1,14 @@
+edition = "2023";
+
+package logs.proto.wireless.android.cuttlefish.events;
+
+// Marks the start of a fetch operation and its configuration
+//
+// Next index: 3
+message CuttlefishFetchStart {
+  // is the local fetch artifact caching feature enabled
+  bool enable_local_caching = 1;
+
+  // is dynamic super image mixing enabled
+  bool dynamic_super_image = 2;
+}

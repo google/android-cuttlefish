@@ -6,6 +6,61 @@ package(
 )
 
 proto_library(
+    name = "cf_fetch_build_proto",
+    srcs = ["cf_fetch_build.proto"],
+    deps = [],
+)
+
+cc_proto_library(
+    name = "cf_fetch_build_cc_proto",
+    deps = ["//external_proto:cf_fetch_build_proto"],
+)
+
+proto_library(
+    name = "cf_fetch_builds_proto",
+    srcs = ["cf_fetch_builds.proto"],
+    deps = ["//external_proto:cf_fetch_build_proto"],
+)
+
+cc_proto_library(
+    name = "cf_fetch_builds_cc_proto",
+    deps = ["//external_proto:cf_fetch_builds_proto"],
+)
+
+proto_library(
+    name = "cf_fetch_complete_proto",
+    srcs = ["cf_fetch_complete.proto"],
+    deps = ["//external_proto:cf_fetch_builds_proto"],
+)
+
+cc_proto_library(
+    name = "cf_fetch_complete_cc_proto",
+    deps = ["//external_proto:cf_fetch_complete_proto"],
+)
+
+proto_library(
+    name = "cf_fetch_failure_proto",
+    srcs = ["cf_fetch_failure.proto"],
+    deps = [],
+)
+
+cc_proto_library(
+    name = "cf_fetch_failure_cc_proto",
+    deps = ["//external_proto:cf_fetch_failure_proto"],
+)
+
+proto_library(
+    name = "cf_fetch_start_proto",
+    srcs = ["cf_fetch_start.proto"],
+    deps = [],
+)
+
+cc_proto_library(
+    name = "cf_fetch_start_cc_proto",
+    deps = ["//external_proto:cf_fetch_start_proto"],
+)
+
+proto_library(
     name = "cf_flags_proto",
     srcs = ["cf_flags.proto"],
     deps = ["@protobuf//:cpp_features_proto"],
@@ -14,6 +69,28 @@ proto_library(
 cc_proto_library(
     name = "cf_flags_cc_proto",
     deps = ["//external_proto:cf_flags_proto"],
+)
+
+proto_library(
+    name = "cf_gce_environment_proto",
+    srcs = ["cf_gce_environment.proto"],
+    deps = [],
+)
+
+cc_proto_library(
+    name = "cf_gce_environment_cc_proto",
+    deps = ["//external_proto:cf_gce_environment_proto"],
+)
+
+proto_library(
+    name = "cf_github_actions_environment_proto",
+    srcs = ["cf_github_actions_environment.proto"],
+    deps = ["@protobuf//:cpp_features_proto"],
+)
+
+cc_proto_library(
+    name = "cf_github_actions_environment_cc_proto",
+    deps = ["//external_proto:cf_github_actions_environment_proto"],
 )
 
 proto_library(
@@ -33,12 +110,28 @@ cc_proto_library(
 proto_library(
     name = "cf_host_proto",
     srcs = ["cf_host.proto"],
-    deps = ["@protobuf//:cpp_features_proto"],
+    deps = [
+        "//external_proto:cf_gce_environment_proto",
+        "//external_proto:cf_github_actions_environment_proto",
+        "//external_proto:cf_kokoro_environment_proto",
+        "@protobuf//:cpp_features_proto",
+    ],
 )
 
 cc_proto_library(
     name = "cf_host_cc_proto",
     deps = ["//external_proto:cf_host_proto"],
+)
+
+proto_library(
+    name = "cf_kokoro_environment_proto",
+    srcs = ["cf_kokoro_environment.proto"],
+    deps = [],
+)
+
+cc_proto_library(
+    name = "cf_kokoro_environment_cc_proto",
+    deps = ["//external_proto:cf_kokoro_environment_proto"],
 )
 
 proto_library(
@@ -75,6 +168,9 @@ proto_library(
     name = "cf_metrics_event_v2_proto",
     srcs = ["cf_metrics_event_v2.proto"],
     deps = [
+        "//external_proto:cf_fetch_complete_proto",
+        "//external_proto:cf_fetch_failure_proto",
+        "//external_proto:cf_fetch_start_proto",
         "//external_proto:cf_guest_proto",
         "//external_proto:cf_host_proto",
         "@protobuf//:cpp_features_proto",

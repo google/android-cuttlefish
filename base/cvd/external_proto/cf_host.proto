@@ -2,6 +2,10 @@ edition = "2023";
 
 package logs.proto.wireless.android.cuttlefish.events;
 
+import "external_proto/cf_gce_environment.proto";
+import "external_proto/cf_github_actions_environment.proto";
+import "external_proto/cf_kokoro_environment.proto";
+
 import "google/protobuf/cpp_features.proto";
 
 option features.(pb.cpp).string_type = VIEW;
@@ -11,7 +15,7 @@ option features.(pb.cpp).string_type = VIEW;
 //
 // See go/cf-metrics-prd-v2 for more information.
 //
-// Next index: 3
+// Next index: 7
 message CuttlefishHost {
   // Category of operating system outside the Cuttlefish VM.
   // Next index: 6
@@ -29,9 +33,30 @@ message CuttlefishHost {
     CUTTLEFISH_HOST_OS_TYPE_LINUX_RISCV64 = 5;
   }
 
+  // tools that we want to track `cvd` launches from
+  enum Invoker {
+    CUTTLEFISH_HOST_INVOKER_UNSPECIFIED = 0;
+    // direct `cvd` invocation
+    CUTTLEFISH_HOST_INVOKER_NONE = 1;
+    // invoked by `acloud`
+    CUTTLEFISH_HOST_INVOKER_ACLOUD = 2;
+    // invoked by `host orchestrator`
+    CUTTLEFISH_HOST_INVOKER_HOST_ORCHESTRATOR = 3;
+  }
+
   // Category of operating system outside the Cuttlefish VM.
   OsType host_os = 1;
 
   // Freeform string adding more detail to the category.
   string host_os_version = 2;
+
+  // the tool that invoked a `cvd` execution
+  Invoker invoker = 3;
+
+  // the environment running the `cvd` execution
+  oneof environment {
+    CuttlefishGceEnvironment gce = 4;
+    CuttlefishGitHubActionsEnvironment github = 5;
+    CuttlefishKokoroEnvironment kokoro = 6;
+  }
 }
