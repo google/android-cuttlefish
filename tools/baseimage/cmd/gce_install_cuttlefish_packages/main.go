@@ -72,6 +72,9 @@ func main() {
 
 	flag.Parse()
 
+	if arch.String() == "" {
+		log.Fatal("usage: `-arch` must not be empty")
+	}
 	if project == "" {
 		log.Fatal("usage: `-project` must not be empty")
 	}
