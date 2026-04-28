@@ -31,6 +31,8 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/fetch/auto_login.h"
+#include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -50,14 +52,38 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 };
 
+Result<void> RunAutoLogin(const BuildApiFlags& build_api_flags) {
+  if (!CF_EXPECT(ShouldAutoLogin(build_api_flags))) {
+    return {};
+  }
+  LOG(INFO) << "\nNo credentials detected on corp, running credential "
+               "workflow.  Please follow prompts.\n";
+  if (!CanRunAutoLogin()) {
+    LOG(INFO) << "\nUnable to detect necessary files for credentialing.  Do "
+                 "you need to run `gcert`?\n";
+    return {};
+  }
+
+  CF_EXPECT(RunLogin());
+  LOG(INFO)
+      << "\nLogin successful.  This will persist across future executions.";
+  return {};
+}
+
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
-  GatherFetchStartMetrics(flags);
+  Result<void> ensure_credentials_result = RunAutoLogin(flags.build_api_flags);
+  if (!ensure_credentials_result.ok()) {
+    LOG(INFO) << "Auto-login failed with the following error:\n"
+              << ensure_credentials_result.error() << "\n";
+    LOG(INFO) << "Still running the fetch operation.";
+  }
 
+  GatherFetchStartMetrics(flags);
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
   ScopedLogger logger(SeverityTarget::FromFile(log_file), "");
 
