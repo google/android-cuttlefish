@@ -138,6 +138,7 @@ cf_cc_library(
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/fetch:auto_login",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd",
         "//cuttlefish/host/commands/cvd/fetch:fetch_cvd_parser",
         "//cuttlefish/host/commands/cvd/utils",

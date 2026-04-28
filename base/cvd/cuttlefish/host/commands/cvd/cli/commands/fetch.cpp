@@ -17,6 +17,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/fetch.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -31,6 +32,7 @@
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
+#include "cuttlefish/host/commands/cvd/fetch/auto_login.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -50,14 +52,39 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 };
 
+Result<void> AutoLoginFlow(const BuildApiFlags& build_api_flags) {
+  if (!CF_EXPECT(ShouldAutoLogin(build_api_flags))) {
+    return {};
+  }
+
+  LOG(INFO) << "\nNo credentials detected on corp, automatically attempting "
+               "credentialling workflow.  Please follow prompts.\n";
+  if (!CanDetectScript()) {
+    LOG(INFO) << "\nUnable to detect the necessary authentication script.  Do "
+                 "you need to run `gcert`?\n";
+    return {};
+  }
+
+  CF_EXPECT(RunAutoLogin());
+  LOG(INFO) << "\nLogin flow successful, this should persist across future "
+               "`cvd fetch` executions.";
+  return {};
+}
+
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));
-  GatherFetchStartMetrics(flags);
+  Result<void> auto_login_result = AutoLoginFlow(flags.build_api_flags);
+  if (!auto_login_result.ok()) {
+    LOG(INFO) << "Auto login failed with the following error:\n"
+              << auto_login_result.error() << "\n";
+    LOG(INFO) << "Still attempting the fetch operation.";
+  }
 
+  GatherFetchStartMetrics(flags);
   std::string log_file = GetFetchLogsFileName(flags.target_directory);
   ScopedLogger logger(SeverityTarget::FromFile(log_file), "");
 
