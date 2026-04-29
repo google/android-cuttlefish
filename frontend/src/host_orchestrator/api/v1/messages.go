@@ -214,3 +214,21 @@ type DisplayScreenshotResponse struct {
 type ListScreenRecordingsResponse struct {
 	ScreenRecordings []string `json:"screen_recordings"`
 }
+
+type CVDInstanceStatus struct {
+	InstanceName string   `json:"instance_name"`
+	Status       string   `json:"status"`
+	Displays     []string `json:"displays,omitempty"`
+	AssemblyDir  string   `json:"assembly_dir"`
+	InstanceDir  string   `json:"instance_dir"`
+	// Note: The web_access field returned by `cvd status` is intentionally omitted here.
+	// It uses 'localhost' as the address, which is only valid on the machine where cvd ran.
+	// Since the host orchestrator is accessed remotely, that URL is not useful to clients.
+	WebRTCDeviceID string `json:"webrtc_device_id,omitempty"`
+	ADBPort        int    `json:"adb_port,omitempty"`
+	ADBSerial      string `json:"adb_serial,omitempty"`
+}
+
+type CVDStatusResponse struct {
+	Status []*CVDInstanceStatus `json:"status"`
+}
