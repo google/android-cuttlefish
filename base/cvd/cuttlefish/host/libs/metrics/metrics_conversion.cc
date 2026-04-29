@@ -144,6 +144,12 @@ CuttlefishHost_OsType ConvertHostOs(const HostInfo& host_info) {
   }
 }
 
+void PopulateCuttlefishHost(CuttlefishHost& host,
+                            const HostMetrics& host_metrics) {
+  host.set_host_os(ConvertHostOs(host_metrics.os));
+  host.set_host_os_version(host_metrics.os.release);
+}
+
 void PopulateCuttlefishGuest(CuttlefishGuest& guest,
                              const GuestMetrics& guest_metrics,
                              std::string_view session_id) {
@@ -183,14 +189,13 @@ CuttlefishLogEvent BuildCuttlefishLogEvent(const MetricsData& metrics_data) {
 
   MetricsEventV2& metrics_event = *cf_log_event.mutable_metrics_event_v2();
 
+  CuttlefishHost& host = *metrics_event.mutable_host();
+  PopulateCuttlefishHost(host, metrics_data.host_metrics);
+
   for (const GuestMetrics& guest_metric : metrics_data.guest_metrics) {
     CuttlefishGuest& guest = *metrics_event.add_guest();
     PopulateCuttlefishGuest(guest, guest_metric, metrics_data.session_id);
   }
-
-  CuttlefishHost& host = *metrics_event.mutable_host();
-  host.set_host_os(ConvertHostOs(metrics_data.host_metrics.os));
-  host.set_host_os_version(metrics_data.host_metrics.os.release);
 
   return cf_log_event;
 }
