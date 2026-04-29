@@ -163,6 +163,7 @@ cf_cc_library(
     hdrs = ["clean.h"],
     deps = [
         "//cuttlefish/common/libs/utils:in_sandbox",
+        "//cuttlefish/common/libs/utils:proc_file_utils",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:subprocess_managed_stdio",
         "//cuttlefish/host/libs/config:config_utils",
