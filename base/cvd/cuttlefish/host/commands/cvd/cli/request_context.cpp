@@ -116,7 +116,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdVersionHandler());
-  request_handlers_.emplace_back(NewCvdLogsHandler());
+  request_handlers_.emplace_back(NewCvdLogsHandler(instance_manager));
 }
 
 Result<CvdCommandHandler*> RequestContext::Handler(
