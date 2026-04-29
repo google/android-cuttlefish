@@ -1,9 +1,14 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
 
+#include <android-base/file.h>
+
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <string>
 
+#include "absl/log/log.h"
+#include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -28,11 +33,32 @@ class CvdLogsHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
 
-    auto [instance, unused] =
+    auto [instance, _] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request),
                   "Unable to select an instance");
 
-    std::cout << "hello, logs\n";
+    std::string dir = instance.instance_dir();
+    std::string logs_dir = dir + "/logs";
+    if (!FileExists(logs_dir)) {
+      VLOG(0) << "Logs directory `" << logs_dir << "` does not exist.";
+      LOG(INFO) << "There are no logs files available";
+      return {};
+    }
+    CF_EXPECT(IsDirectory(logs_dir));
+
+    auto callback = [](const std::string& filename) -> Result<void> {
+      constexpr int kMaxPadding = 30;
+      std::string basename = android::base::Basename(filename);
+      std::cout << basename;
+      std::cout << std::string(
+          std::max(int(kMaxPadding - basename.length()), 1), ' ');
+      std::cout << filename;
+      std::cout << std::endl;
+      return {};
+    };
+
+    CF_EXPECT(WalkDirectory(logs_dir, callback));
+
     return {};
   }
 
