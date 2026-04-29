@@ -41,6 +41,8 @@
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
+#include "cuttlefish/host/libs/tracing/tracing_session.h"
 #include "cuttlefish/posix/strerror.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
 // #include "cuttlefish/host/commands/cvd/metrics/cvd_metrics_api.h"
@@ -123,7 +125,21 @@ void IncreaseFileLimit() {
   }
 }
 
+Result<bool> IsTracingReqested(cvd_common::Args& all_args) {
+  bool tracing_requested = false;
+  std::vector<Flag> flags{GflagsCompatFlag("trace", tracing_requested)};
+  CF_EXPECT(ConsumeFlags(flags, all_args));
+  return tracing_requested;
+}
+
 Result<void> CvdMain(cvd_common::Args all_args) {
+  std::unique_ptr<TracingSession> tracing_session;
+  if (CF_EXPECT(IsTracingReqested(all_args))) {
+    tracing_session =
+        CF_EXPECT(TracingSession::StartBlocking(absl::Seconds(10)));
+  }
+  CF_TRACE("CvdMain");
+
   if (!isatty(0)) {
     LOG(INFO) << GetVersionIds().ToString();
   }

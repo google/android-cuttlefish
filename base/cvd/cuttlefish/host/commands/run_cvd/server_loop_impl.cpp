@@ -50,6 +50,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -110,8 +111,10 @@ Result<void> ServerLoopImpl::Run() {
       snapshot_control_files_->run_cvd_to_secure_env_fd;
   ProcessMonitor process_monitor(std::move(process_monitor_properties),
                                  channel_to_secure_env);
-
-  CF_EXPECT(process_monitor.StartAndMonitorProcesses());
+  {
+    CF_TRACE("StartAndMonitorProcesses");
+    CF_EXPECT(process_monitor.StartAndMonitorProcesses());
+  }
   device_status_ = DeviceStatus::kActive;
 
   while (true) {
@@ -323,6 +326,8 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
 }
 
 void ServerLoopImpl::DeleteFifos() {
+  CF_TRACE("DeleteFifos");
+
   // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
   std::vector<std::string> pipes = {
       KernelLogPipeName(instance_),
@@ -354,6 +359,8 @@ void ServerLoopImpl::DeleteFifos() {
 }
 
 bool ServerLoopImpl::PowerwashFiles() {
+  CF_TRACE("PowerwashFiles");
+
   DeleteFifos();
 
   // TODO(b/269669405): Figure out why this file is not being deleted

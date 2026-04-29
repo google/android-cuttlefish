@@ -80,6 +80,7 @@
 #include "cuttlefish/host/libs/feature/inject.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/result/result.h"
@@ -126,9 +127,15 @@ class InstanceLifecycle : public LateInjected {
     // One of the setup features can consume most output, so print this early.
     DiagnosticInformation::PrintAll(diagnostics_);
 
-    CF_EXPECT(SetupFeature::RunSetup(setup_features_));
+    {
+      CF_TRACE("RunFeatureSetup");
+      CF_EXPECT(SetupFeature::RunSetup(setup_features_));
+    }
 
-    CF_EXPECT(server_loop_.Run());
+    {
+      CF_TRACE("RunServerLoop");
+      CF_EXPECT(server_loop_.Run());
+    }
 
     return {};
   }

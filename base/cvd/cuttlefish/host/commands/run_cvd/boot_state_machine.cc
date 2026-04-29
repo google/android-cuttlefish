@@ -62,6 +62,7 @@
 #include "cuttlefish/host/libs/config/cuttlefish_config.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/kernel_log_pipe_provider.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
@@ -164,6 +165,9 @@ Result<SharedFD> DaemonizeLauncher(const CuttlefishConfig& config) {
     // Explicitly close here, otherwise we may end up reading forever if the
     // child process dies.
     write_end->Close();
+
+    CF_TRACE("Waiting for Guest to Boot");
+
     RunnerExitCodes exit_code;
     auto bytes_read = read_end->Read(&exit_code, sizeof(exit_code));
     if (bytes_read != sizeof(exit_code)) {

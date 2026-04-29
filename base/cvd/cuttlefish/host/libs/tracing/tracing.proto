@@ -1,0 +1,34 @@
+// Copyright (C) 2026 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+edition = "2023";
+
+package cuttlefish;
+
+enum TraceEventType {
+  TRACE_EVENT_TYPE_BEGIN = 0;
+  TRACE_EVENT_TYPE_END = 1;
+  TRACE_EVENT_TYPE_INSTANT = 2;
+}
+
+message TraceEventProto {
+  TraceEventType type = 1;
+  uint64 timestamp = 2;
+  uint64 process_id = 3;
+  string process_name = 4;
+  uint64 thread_id = 5;
+  string thread_name = 6;
+  string name = 7;
+  uint64 flow = 8;
+}
