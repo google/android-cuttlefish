@@ -45,6 +45,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/host_tools_version.h"
 #include "cuttlefish/host/libs/config/instance_nums.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/symlink.h"
 
 namespace cuttlefish {
@@ -206,6 +207,10 @@ Result<void> LinkLogs2InstanceDir(
 
 int CvdInternalStartMain(int argc, char** argv) {
   LogToStderr();
+  auto scoped_trace_flusher = InitializeTracing();
+
+  CF_TRACE_EVENT_FUNC();
+
   std::vector<std::string> args(argv + 1, argv + argc);
 
   std::vector<std::string> assemble_args;

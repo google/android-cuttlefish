@@ -46,6 +46,7 @@
 #include "cuttlefish/host/libs/config/config_utils.h"
 #include "cuttlefish/host/libs/config/display.h"
 #include "cuttlefish/host/libs/config/gpu_mode.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/pretty/optional.h"
 #include "cuttlefish/pretty/string.h"
 
@@ -309,6 +310,8 @@ PrettyStruct Pretty(const GuestConfig& config, PrettyAdlPlaceholder) {
 Result<std::vector<GuestConfig>> ReadGuestConfig(
     const BootImageFlag& boot_image, const KernelPathFlag& kernel_path,
     const SystemImageDirFlag& system_image_dirs) {
+  CF_TRACE_EVENT_FUNC();
+
   std::vector<GuestConfig> guest_configs;
 
   const std::string env_path = fmt::format(

@@ -90,6 +90,7 @@
 #include "cuttlefish/host/libs/config/instance_nums.h"
 #include "cuttlefish/host/libs/config/secure_hals.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/vhal_proxy_server/vhal_proxy_server_eth_addr.h"
 #include "cuttlefish/host/libs/vm_manager/gem5_manager.h"
 #include "cuttlefish/host/libs/vm_manager/qemu_manager.h"
@@ -352,6 +353,8 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const SystemImageDirFlag& system_image_dir,
     const VendorBootImageFlag& vendor_boot_image,
     const VmManagerFlag& vm_manager_flag, const Defaults& defaults) {
+  CF_TRACE_EVENT_FUNC();
+
   CuttlefishConfig tmp_config_obj;
   // If a snapshot path is provided, do not read all flags to set up the config.
   // Instead, read the config that was saved at time of snapshot and restore

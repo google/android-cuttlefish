@@ -35,6 +35,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics_orchestration.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -51,6 +52,8 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
 };
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
+  CF_TRACE_EVENT_FUNC();
+
   CF_EXPECT(CanHandle(request));
 
   std::vector<std::string> args = request.SubcommandArguments();

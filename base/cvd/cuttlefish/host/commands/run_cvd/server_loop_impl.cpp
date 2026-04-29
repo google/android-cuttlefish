@@ -50,6 +50,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/feature/command_source.h"
 #include "cuttlefish/host/libs/process_monitor/process_monitor.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/result/result.h"
 
@@ -59,6 +60,7 @@ namespace run_cvd_impl {
 bool ServerLoopImpl::CreateQcowOverlay(const std::string& crosvm_path,
                                        const std::string& backing_file,
                                        const std::string& output_overlay_path) {
+  CF_TRACE_EVENT_FUNC();
   Command crosvm_qcow2_cmd(crosvm_path);
   crosvm_qcow2_cmd.AddParameter("create_qcow2");
   crosvm_qcow2_cmd.AddParameter("--backing-file");
@@ -174,12 +176,14 @@ Result<void> ServerLoopImpl::ResultSetup() {
 
 Result<void> ServerLoopImpl::HandleExtended(
     const LauncherActionInfo& action_info, ProcessMonitor& process_monitor) {
+  CF_TRACE_EVENT_FUNC();
   using ActionsCase =
       ::cuttlefish::run_cvd::ExtendedLauncherAction::ActionsCase;
 
   CF_EXPECT(action_info.action == LauncherAction::kExtended);
   switch (action_info.extended_action.actions_case()) {
     case ActionsCase::kSuspend: {
+      CF_TRACE_EVENT("Suspend");
       VLOG(0) << "Run_cvd received suspend request.";
       if (device_status_.load() == DeviceStatus::kActive) {
         CF_EXPECT(HandleSuspend(process_monitor));
@@ -188,6 +192,7 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ActionsCase::kResume: {
+      CF_TRACE_EVENT("Resume");
       VLOG(0) << "Run_cvd received resume request.";
       if (device_status_.load() == DeviceStatus::kSuspended) {
         CF_EXPECT(HandleResume(process_monitor));
@@ -196,6 +201,7 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ActionsCase::kSnapshotTake: {
+      CF_TRACE_EVENT("SnapshotTake");
       VLOG(0) << "Run_cvd received snapshot request.";
       CF_EXPECT(device_status_.load() == DeviceStatus::kSuspended,
                 "The device is not suspended, and snapshot cannot be taken");
@@ -204,16 +210,19 @@ Result<void> ServerLoopImpl::HandleExtended(
       return {};
     }
     case ActionsCase::kStartScreenRecording: {
+      CF_TRACE_EVENT("StartScreenRecording");
       VLOG(0) << "Run_cvd received start screen recording request.";
       CF_EXPECT(HandleStartScreenRecording());
       return {};
     }
     case ActionsCase::kStopScreenRecording: {
+      CF_TRACE_EVENT("StopScreenRecording");
       VLOG(0) << "Run_cvd received stop screen recording request.";
       CF_EXPECT(HandleStopScreenRecording());
       return {};
     }
     case ActionsCase::kScreenshotDisplay: {
+      CF_TRACE_EVENT("ScreenshotDisplay");
       VLOG(0) << "Run_cvd received screenshot display request.";
       const auto& request = action_info.extended_action.screenshot_display();
       CF_EXPECT(HandleScreenshotDisplay(request));
@@ -227,8 +236,10 @@ Result<void> ServerLoopImpl::HandleExtended(
 void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
                                             const SharedFD& client,
                                             ProcessMonitor& process_monitor) {
+  CF_TRACE_EVENT_FUNC();
   switch (action) {
     case LauncherAction::kStop: {
+      CF_TRACE_EVENT("Stop");
       auto stop = process_monitor.StopMonitoredProcesses();
       if (stop.ok()) {
         auto response = LauncherResponse::kSuccess;
@@ -242,6 +253,7 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       break;
     }
     case LauncherAction::kFail: {
+      CF_TRACE_EVENT("Fail");
       auto stop = process_monitor.StopMonitoredProcesses();
       if (stop.ok()) {
         auto response = LauncherResponse::kSuccess;
@@ -261,6 +273,7 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       break;
     }
     case LauncherAction::kPowerwash: {
+      CF_TRACE_EVENT("Powerwash");
       LOG(INFO) << "Received a Powerwash request from the monitor socket";
       const auto& disks = instance_.virtual_disk_paths();
       auto overlay = instance_.PerInstancePath("overlay.img");
@@ -295,6 +308,7 @@ void ServerLoopImpl::HandleActionWithNoData(const LauncherAction action,
       break;
     }
     case LauncherAction::kRestart: {
+      CF_TRACE_EVENT("Restart");
       auto stop = process_monitor.StopMonitoredProcesses();
       if (!stop.ok()) {
         LOG(ERROR) << "Stopping processes failed:\n" << stop.error();
@@ -360,6 +374,8 @@ void ServerLoopImpl::DeleteFifos() {
 }
 
 bool ServerLoopImpl::PowerwashFiles() {
+  CF_TRACE_EVENT_FUNC();
+
   DeleteFifos();
 
   // TODO(b/269669405): Figure out why this file is not being deleted
@@ -430,6 +446,8 @@ bool ServerLoopImpl::PowerwashFiles() {
 }
 
 void ServerLoopImpl::RestartRunCvd(int notification_fd) {
+  CF_TRACE_EVENT_FUNC();
+
   // On device creation, if the file "restore" exists, a restore of the device
   // occurs. This means a restart will instead perform a restore, which is
   // undesired behavior. Always try to delete the file "restore" if a restart is
