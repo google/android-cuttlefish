@@ -456,11 +456,13 @@ cf_cc_library(
     srcs = ["logs.cpp"],
     hdrs = ["logs.h"],
     deps = [
+        "//cuttlefish/common/libs/utils:files",
         "//cuttlefish/host/commands/cvd/cli:command_request",
         "//cuttlefish/host/commands/cvd/cli:types",
         "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
         "//cuttlefish/host/commands/cvd/cli/selector",
         "//cuttlefish/host/commands/cvd/instances",
         "//cuttlefish/result",
+        "//libbase",
     ],
 )
