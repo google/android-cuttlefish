@@ -148,8 +148,7 @@ Result<CommandRequest> CreateLoadCommand(const CommandRequest& request,
                        .Build());
 }
 
-Result<CommandRequest> CreateStartCommand(const CommandRequest& request,
-                                          const LocalInstanceGroup& group,
+Result<CommandRequest> CreateStartCommand(const LocalInstanceGroup& group,
                                           const cvd_common::Args& args,
                                           const cvd_common::Envs& envs) {
   return CF_EXPECT(
@@ -198,6 +197,11 @@ Result<void> EnsureSymlink(const std::string& target, const std::string link) {
   }
   CF_EXPECT(Symlink(target, link));
   return {};
+}
+
+Result<bool> IsDefaultGroup(const CommandRequest& request) {
+  return StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
+         !request.Selectors().HasOptions();
 }
 
 }  // namespace
@@ -337,22 +341,17 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());
-  // TODO: b/471069557 - diagnose unused
-  Result<void> unused = instance_manager_.UpdateInstanceGroup(group);
+  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
   GatherVmInstantiationMetrics(group);
 
   if (flags.start) {
-    auto start_cmd =
-        CF_EXPECT(CreateStartCommand(request, group, subcmd_args, envs));
+    auto start_cmd = CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));
     CF_EXPECT(command_executor_.ExecuteOne(start_cmd, std::cerr));
-    // For backward compatibility, we add extra symlink in system wide home
-    // when HOME is NOT overridden and selector flags are NOT given.
-    auto is_default_group =
-        StringFromEnv("HOME", "") == CF_EXPECT(SystemWideUserHome()) &&
-        !request.Selectors().HasOptions();
 
-    if (is_default_group) {
+    if (CF_EXPECT(IsDefaultGroup(request))) {
+      // For backward compatibility, we add extra symlink in system wide home
+      // when HOME is NOT overridden and selector flags are NOT given.
       auto symlink_res = CreateSymlinks(group);
       if (!symlink_res.ok()) {
         LOG(ERROR) << "Failed to create symlinks for default group: "
