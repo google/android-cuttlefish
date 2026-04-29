@@ -1,0 +1,54 @@
+From 3c24b5504feba80a1f48c22cf4bfaf27733aee34 Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Fri, 15 May 2026 11:37:20 -0700
+Subject: [PATCH 4/4] Expose flush in libperfetto_c
+
+---
+ include/perfetto/public/abi/track_event_abi.h | 2 ++
+ src/shared_lib/track_event/ds.h               | 4 ++++
+ src/shared_lib/track_event/track_event.cc     | 4 ++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/include/perfetto/public/abi/track_event_abi.h b/include/perfetto/public/abi/track_event_abi.h
+index 6c07b30bd4..5c315ea942 100644
+--- a/include/perfetto/public/abi/track_event_abi.h
++++ b/include/perfetto/public/abi/track_event_abi.h
+@@ -145,6 +145,8 @@ enum PerfettoTeType {
+   PERFETTO_TE_TYPE_COUNTER = 4,
+ };
+
++PERFETTO_SDK_EXPORT void PerfettoTeFlush(void);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/shared_lib/track_event/ds.h b/src/shared_lib/track_event/ds.h
+index 199a1e3d6a..be13a0593b 100644
+--- a/src/shared_lib/track_event/ds.h
++++ b/src/shared_lib/track_event/ds.h
+@@ -127,6 +127,10 @@ class TrackEvent
+     Register(dsd);
+   }
+
++  static void Flush() {
++    TrackEvent::Trace([](TrackEvent::TraceContext ctx) { ctx.Flush(); });
++  }
++
+   static void UpdateDescriptorFromCategories(DataSourceDescriptor dsd) {
+     dsd.set_name("track_event");
+     UpdateDescriptor(dsd);
+diff --git a/src/shared_lib/track_event/track_event.cc b/src/shared_lib/track_event/track_event.cc
+index b6f9000ad3..70dd68d61b 100644
+--- a/src/shared_lib/track_event/track_event.cc
++++ b/src/shared_lib/track_event/track_event.cc
+@@ -86,3 +86,7 @@ void PerfettoTeCategoryImplDestroy(struct PerfettoTeCategoryImpl* cat) {
+   perfetto::shlib::GlobalState::Instance().UnregisterCategory(cat);
+   delete cat;
+ }
++
++void PerfettoTeFlush(void) {
++  perfetto::shlib::TrackEvent::Flush();
++}
+--
+2.54.0.563.g4f69b47b94-goog
+

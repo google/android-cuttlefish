@@ -48,6 +48,7 @@
 #include "cuttlefish/host/libs/config/fetcher_config.h"
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/image_aggregator/sparse_image.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_string.h"
 #include "cuttlefish/host/libs/web/chrome_os_build_string.h"
@@ -101,6 +102,8 @@ std::vector<Target> GetFetchTargets(const FetchFlags& flags,
 Result<void> EnsureDirectoriesExist(const std::string& host_tools_directory,
                                     const std::string& cache_base_path,
                                     const std::vector<Target>& targets) {
+  CF_TRACE("EnsureDirectoriesExist");
+
   CF_EXPECT(EnsureDirectoryExists(host_tools_directory));
   CF_EXPECT(EnsureDirectoryExists(cache_base_path));
   for (const auto& target : targets) {
@@ -125,6 +128,7 @@ Result<std::optional<Build>> GetBuildHelper(
 
 Result<Builds> GetBuilds(BuildApi& build_api,
                          const BuildStrings& build_sources) {
+  CF_TRACE("GetBuilds");
   Builds result = Builds{
       .default_build = CF_EXPECT(GetBuildHelper(
           build_api, build_sources.default_build, kDefaultBuildTarget)),
@@ -203,6 +207,8 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
                                 bool keep_downloaded_archives,
                                 const DownloadFlags& flags,
                                 bool has_system_build) {
+  CF_TRACE("FetchDefaultTarget");
+
   constexpr char kSignedPrefix[] = "signed/signed-";
   // Some older builds might not have misc_info.txt, so permit errors on
   // fetching misc_info.txt
@@ -262,6 +268,8 @@ Result<void> FetchDefaultTarget(FetchBuildContext& context,
 Result<void> FetchSystemTarget(FetchBuildContext& context,
                                bool download_img_zip,
                                const bool keep_downloaded_archives) {
+  CF_TRACE("FetchSystemTarget");
+
   std::string target_files_name = context.GetBuildZipName("target_files");
   FetchArtifact target_files = context.Artifact(target_files_name);
 
@@ -303,6 +311,8 @@ Result<void> FetchSystemTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchKernelTarget(FetchBuildContext context) {
+  CF_TRACE("FetchKernelTarget");
+
   // If the kernel is from an arm/aarch64 build, the artifact will be called
   // Image.
   if (!context.Artifact("bzImage").DownloadTo("kernel").ok()) {
@@ -318,6 +328,8 @@ Result<void> FetchKernelTarget(FetchBuildContext context) {
 
 Result<void> FetchBootTarget(FetchBuildContext& context,
                              bool keep_downloaded_archives) {
+  CF_TRACE("FetchBootTarget");
+
   std::string img_zip = context.GetBuildZipName("img");
   std::string to_download = context.GetFilepath().value_or(img_zip);
   FetchArtifact artifact = context.Artifact(to_download);
@@ -335,6 +347,8 @@ Result<void> FetchBootTarget(FetchBuildContext& context,
 }
 
 Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
+  CF_TRACE("FetchBootloaderTarget");
+
   // If the bootloader is from an arm/aarch64 build, the artifact will be of
   // filetype bin.
   if (!context.Artifact("u-boot.rom").DownloadTo("bootloader").ok()) {
@@ -344,6 +358,8 @@ Result<void> FetchBootloaderTarget(FetchBuildContext& context) {
 }
 
 Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
+  CF_TRACE("FetchAndroidEfiLoaderTarget");
+
   std::string filename = context.GetFilepath().value_or("gbl_x86_64.efi");
   CF_EXPECT(context.Artifact(filename).DownloadTo("android_efi_loader.efi"));
   return {};
@@ -351,6 +367,8 @@ Result<void> FetchAndroidEfiLoaderTarget(FetchBuildContext& context) {
 
 Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
                                  bool keep_downloaded_archives) {
+  CF_TRACE("FetchOtaToolsTarget");
+
   FetchArtifact otatools = context.Artifact("otatools.zip");
   CF_EXPECT(otatools.Download());
   CF_EXPECT(otatools.ExtractAll());
@@ -362,6 +380,8 @@ Result<void> FetchOtaToolsTarget(FetchBuildContext& context,
 
 Result<void> FetchTestSuitesTarget(FetchBuildContext& context,
                                    bool keep_downloaded_archives) {
+  CF_TRACE("FetchTestSuitesTarget");
+
   FetchArtifact android_cts = context.Artifact("android-cts.zip");
   // TODO(b/468074996): determine what tradefed actually needs and potentially
   // expose a flag to allow downloading specific parts of the entire zip.
@@ -379,6 +399,8 @@ Result<void> FetchChromeOsTarget(
     const TargetDirectories& target_directories,
     const bool keep_downloaded_archives, FetcherConfig& config,
     FetchTracer::Trace trace) {
+  CF_TRACE("FetchChromeOsTarget");
+
   auto artifacts_opt =
       CF_EXPECT(luci_build_api.GetBuildArtifacts(chrome_os_build_string));
   auto artifacts = CF_EXPECT(std::move(artifacts_opt));
@@ -404,6 +426,8 @@ Result<void> FetchChromeOsTarget(
 Result<void> FetchTarget(FetchContext& fetch_context,
                          const DownloadFlags& flags,
                          const bool keep_downloaded_archives) {
+  CF_TRACE("FetchTarget");
+
   if (std::optional<FetchBuildContext> context = fetch_context.DefaultBuild()) {
     bool has_system_build = fetch_context.SystemBuild().has_value();
     CF_EXPECT(FetchDefaultTarget(*context, keep_downloaded_archives, flags,
@@ -447,6 +471,8 @@ Result<FetchResult> Fetch(const FetchFlags& flags,
                           const std::string& cache_base_path,
                           const HostToolsTarget& host_target,
                           std::vector<Target>& targets) {
+  CF_TRACE("Fetch");
+
 #ifdef __BIONIC__
   // TODO(schuffelen): Find a better way to deal with tzdata
   setenv("ANDROID_TZDATA_ROOT", "/", /* overwrite */ 0);

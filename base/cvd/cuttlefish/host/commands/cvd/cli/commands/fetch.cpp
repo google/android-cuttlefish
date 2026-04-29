@@ -37,6 +37,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/metrics/fetch_metrics_orchestration.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -84,6 +85,8 @@ Result<void> RunCacheCleanup(const BuildApiFlags& build_api_flags) {
 }  // namespace
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
+  CF_TRACE("cvd fetch");
+
   std::vector<std::string> args = request.SubcommandArguments();
   const FetchFlags flags = CF_EXPECT(FetchFlags::Parse(args));
   CF_EXPECT(EnsureDirectoryExists(flags.target_directory));

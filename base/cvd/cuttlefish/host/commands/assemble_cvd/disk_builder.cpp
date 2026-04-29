@@ -26,6 +26,7 @@
 #include "cuttlefish/host/libs/config/vmm_mode.h"
 #include "cuttlefish/host/libs/image_aggregator/image_aggregator.h"
 #include "cuttlefish/host/libs/image_aggregator/qcow2.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 
 namespace cuttlefish {
 
@@ -199,6 +200,8 @@ Result<bool> DiskBuilder::WillRebuildCompositeDisk() {
 }
 
 Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
+  CF_TRACE("BuildCompositeDisk: %s", composite_disk_path_.c_str());
+
   if (!entire_disk_.empty()) {
     VLOG(0) << "No composite disk to build";
     return false;
@@ -228,6 +231,8 @@ Result<bool> DiskBuilder::BuildCompositeDiskIfNecessary() {
 }
 
 Result<bool> DiskBuilder::BuildOverlayIfNecessary() {
+  CF_TRACE("BuildOverlayIfNcessary: %s", overlay_path_.c_str());
+
 #ifdef __APPLE__
   return false;
 #else

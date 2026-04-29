@@ -57,6 +57,7 @@ package_files(
         "cuttlefish-common/bin/libgfxstream_backend.so": "@gfxstream//host:gfxstream_backend",
         "cuttlefish-common/bin/libvk_lavapipe.so": "@mesa//:vk_lavapipe",
         "cuttlefish-common/bin/libvk_swiftshader.so": "@swiftshader//:vk_swiftshader",
+        "cuttlefish-common/bin/libperfetto_c.so": "//cuttlefish/host/libs/tracing:perfetto_c",
         "cuttlefish-common/bin/log_tee": "//cuttlefish/host/commands/log_tee",
         "cuttlefish-common/bin/logcat_receiver": "//cuttlefish/host/commands/logcat_receiver",
         "cuttlefish-common/bin/lpadd": "@android_system_extras//:lpadd",

@@ -18,6 +18,7 @@ cf_cc_library(
         "//cuttlefish/common/libs/fs",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:type_name",
+        "//cuttlefish/host/libs/tracing",
         "//cuttlefish/result",
         "//libbase",
         "@abseil-cpp//absl/log",

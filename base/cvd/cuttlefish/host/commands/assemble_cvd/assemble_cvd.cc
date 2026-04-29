@@ -70,6 +70,7 @@
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/log_names/log_names.h"
 #include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
 
@@ -406,6 +407,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     CF_EXPECT(CleanPriorFiles(preserving, clean_dirs),
               "Failed to clean prior files");
 
+    CF_TRACE("SetupDirectories");
+
     std::string default_group = "cvdnetwork";
     const mode_t default_mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 
@@ -574,6 +577,8 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
 
   CF_EXPECT(CheckNoTTY());
 
+  CF_TRACE("AssembleCvd");
+
   // Read everything that cvd_internal_start writes, but ignore it since
   // fetcher_config.json will be searched for in the system image directory.
   (void) CF_EXPECT(ReadInputFiles());
@@ -637,10 +642,12 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
             "Failed to parse flags.");
 
   if (help || !help_str.empty()) {
+    CF_TRACE("Help");
     LOG(WARNING) << "TODO(schuffelen): Implement `--help` for assemble_cvd.";
     LOG(WARNING) << "In the meantime, call `launch_cvd --help`";
     return 1;
   } else if (helpxml) {
+    CF_TRACE("Help");
     if (!FlagFeature::WriteGflagsHelpXml(flag_features, std::cout)) {
       LOG(ERROR) << "Failure in writing gflags helpxml output";
     }

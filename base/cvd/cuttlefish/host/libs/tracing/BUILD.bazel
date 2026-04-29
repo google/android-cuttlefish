@@ -1,0 +1,30 @@
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("//cuttlefish/bazel:rules.bzl", "cf_cc_library")
+
+package(
+    default_visibility = ["//:android_cuttlefish"],
+)
+
+cc_shared_library(
+    name = "perfetto_c",
+    deps = [
+        "@perfetto//:libperfetto_c",
+    ],
+)
+
+cf_cc_library(
+    name = "tracing",
+    srcs = [
+        "perfetto.h",
+        "tracing.cpp",
+    ],
+    hdrs = [
+        "tracing.h",
+    ],
+    deps = [
+        "//cuttlefish/common/libs/utils:environment",
+        "//cuttlefish/host/libs/config:config_utils",
+        "//cuttlefish/result",
+        "@abseil-cpp//absl/log",
+    ],
+)
