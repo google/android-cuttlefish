@@ -30,8 +30,6 @@ class CommandSequenceExecutor {
   CommandSequenceExecutor(
       const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers);
 
-  Result<void> Execute(const std::vector<CommandRequest>&,
-                       std::ostream& report);
   Result<void> ExecuteOne(const CommandRequest&, std::ostream& report);
 
   std::vector<std::string> CmdList() const;

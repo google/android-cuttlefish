@@ -80,22 +80,14 @@ CommandSequenceExecutor::CommandSequenceExecutor(
     const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers)
     : server_handlers_(server_handlers) {}
 
-Result<void> CommandSequenceExecutor::Execute(
-    const std::vector<CommandRequest>& requests, std::ostream& report) {
-  for (const auto& request : requests) {
-    report << FormattedCommand(request);
-
-    auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
-    handler_stack_.push_back(handler);
-    CF_EXPECT(handler->Handle(request));
-    handler_stack_.pop_back();
-  }
-  return {};
-}
-
 Result<void> CommandSequenceExecutor::ExecuteOne(const CommandRequest& request,
                                                  std::ostream& report) {
-  CF_EXPECT(Execute({request}, report));
+  report << FormattedCommand(request);
+
+  auto handler = CF_EXPECT(RequestHandler(request, server_handlers_));
+  handler_stack_.push_back(handler);
+  CF_EXPECT(handler->Handle(request));
+  handler_stack_.pop_back();
   return {};
 }
 
