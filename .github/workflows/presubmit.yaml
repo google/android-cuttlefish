@@ -520,8 +520,13 @@ jobs:
         # Grant permission on devices as it's hard to grant on test env
         sudo chmod 666 /dev/kvm /dev/vhost-net /dev/vhost-vsock
         # Define storage.conf, as podman cannot read image src location when home dir is changed.
-        echo "[storage]" > $HOME/storage.conf
-        echo "graphroot = \"$(podman info --format '{{.Store.GraphRoot}}')\"" >> $HOME/storage.conf
+        GRAPHROOT=$(podman info --format '{{.Store.GraphRoot}}')
+        echo "[storage]" > $GITHUB_WORKSPACE/storage.conf
+        echo "graphroot = \"${GRAPHROOT}\"" >> $GITHUB_WORKSPACE/storage.conf
+        podman version
+        podman info
+        podman image list
+        cat $GITHUB_WORKSPACE/storage.conf
         cd e2etests
         bazel test \
           //cvd/cvd_powerwash_tests \
@@ -530,5 +535,7 @@ jobs:
           --test_env=HOME=$HOME \
           --test_env=USE_PODCVD=true \
           --test_env=XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
-          --test_env=CONTAINERS_STORAGE_CONF=$HOME/storage.conf \
+          --test_env=CONTAINERS_STORAGE_CONF=$GITHUB_WORKSPACE/storage.conf \
+          --sandbox_writable_path="$GRAPHROOT" \
+          --sandbox_writable_path="$GITHUB_WORKSPACE" \
           --test_output=errors
