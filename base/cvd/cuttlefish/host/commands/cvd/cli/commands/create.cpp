@@ -220,16 +220,16 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
 
  private:
-  Result<LocalInstanceGroup> GetOrCreateGroup(
-      const cvd_common::Args& subcmd_args, const cvd_common::Envs& envs,
-      const CommandRequest& request);
+  Result<LocalInstanceGroup> CreateGroup(const cvd_common::Args& subcmd_args,
+                                         const cvd_common::Envs& envs,
+                                         const CommandRequest& request);
   Result<void> CreateSymlinks(const LocalInstanceGroup& group);
 
   InstanceManager& instance_manager_;
   CommandSequenceExecutor& command_executor_;
 };
 
-Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
+Result<LocalInstanceGroup> CvdCreateCommandHandler::CreateGroup(
     const std::vector<std::string>& subcmd_args, const cvd_common::Envs& envs,
     const CommandRequest& request) {
   GroupCreationInfo creation_info = CF_EXPECT(AnalyzeCreation({
@@ -240,23 +240,11 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
 
   auto groups = CF_EXPECT(instance_manager_.FindGroups(
       {.group_name = creation_info.group_creation_params.group_name}));
-  CF_EXPECT_LE(groups.size(), 1u,
-               "Expected no more than one group with given name: "
-                   << creation_info.group_creation_params.group_name);
-  // When loading an environment spec file the group is already in the database
-  // in PREPARING state. Otherwise the group must be created.
-  if (groups.empty()) {
-    return instance_manager_.CreateInstanceGroup(
-        std::move(creation_info.group_creation_params),
-        std::move(creation_info.group_directories));
-  }
-  auto& group = groups[0];
-  CF_EXPECTF((size_t)group.Instances().size() ==
-                 creation_info.group_creation_params.instances.size(),
-             "Mismatch in number of instances from analisys: {} vs {}",
-             group.Instances().size(),
-             creation_info.group_creation_params.instances.size());
-  return group;
+  CF_EXPECTF(groups.empty(), "Group named '{}' already exists",
+             creation_info.group_creation_params.group_name);
+  return instance_manager_.CreateInstanceGroup(
+      std::move(creation_info.group_creation_params),
+      std::move(creation_info.group_directories));
 }
 
 // For backward compatibility, we add extra symlink in home dir
@@ -337,7 +325,7 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   // CreationAnalyzer needs these to be set in the environment
   envs[kAndroidHostOut] = AbsolutePath(flags.host_path);
   envs[kAndroidProductOut] = AbsolutePath(flags.product_path);
-  auto group = CF_EXPECT(GetOrCreateGroup(subcmd_args, envs, request));
+  auto group = CF_EXPECT(CreateGroup(subcmd_args, envs, request));
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   group.SetStartTime(CvdServerClock::now());

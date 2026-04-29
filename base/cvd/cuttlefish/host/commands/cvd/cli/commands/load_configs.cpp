@@ -36,10 +36,12 @@
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
+#include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
+#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -178,8 +180,15 @@ class LoadConfigsCommand : public CvdCommandHandler {
                  GetFetchLogsFileName(cvd_flags.target_directory));
     }
 
-    auto launch_cmd = CF_EXPECT(BuildLaunchCmd(request, cvd_flags, group));
-    CF_EXPECT(executor_.ExecuteOne(launch_cmd, std::cerr));
+    // Instances go from preparing to stopped state after fetching is done.
+    group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
+    group.SetStartTime(CvdServerClock::now());
+    CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
+
+    GatherVmInstantiationMetrics(group);
+
+    auto start_cmd = CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
+    CF_EXPECT(executor_.ExecuteOne(start_cmd, std::cerr));
     return {};
   }
 
@@ -203,9 +212,9 @@ class LoadConfigsCommand : public CvdCommandHandler {
             .Build());
   }
 
-  Result<CommandRequest> BuildLaunchCmd(const CommandRequest& request,
-                                        const CvdFlags& cvd_flags,
-                                        const LocalInstanceGroup& group) {
+  Result<CommandRequest> BuildStartCommand(const CommandRequest& request,
+                                           const CvdFlags& cvd_flags,
+                                           const LocalInstanceGroup& group) {
     auto env = request.Env();
     env["HOME"] = group.HomeDir();
     env[kAndroidHostOut] = group.HostArtifactsPath();
@@ -223,7 +232,7 @@ class LoadConfigsCommand : public CvdCommandHandler {
              independent of terminal) and will enable reporting automatically
              (to run automatically without question during launch)
              */
-            .AddArguments({"cvd", "create", "--daemon", system_build_arg})
+            .AddArguments({"cvd", "start", "--daemon", system_build_arg})
             .AddArguments(cvd_flags.launch_cvd_flags)
             .AddSelectorArguments(cvd_flags.selector_flags)
             .AddSelectorArguments({"--group_name", group.GroupName()})
