@@ -67,6 +67,8 @@ func TestMetrics(t *testing.T) {
 		}
 
 		patterns := []string{
+			"fetch_start*.txtpb",
+			"fetch_complete*.txtpb",
 			"device_instantiation*.txtpb",
 			"device_boot_start*.txtpb",
 			"device_boot_complete*.txtpb",
