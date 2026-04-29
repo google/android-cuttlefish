@@ -161,17 +161,6 @@ Result<void> SubstituteWithMarker(const std::string& target_dir,
 Result<void> HostPackageSubstitution(
     const std::string& target_dir,
     const std::vector<std::string>& host_substitutions) {
-  std::string marker_file = target_dir + "/etc/debian_substitution_marker";
-  // Use a local debian_substitution_marker file for development purposes.
-  std::optional<std::string> local_marker_file =
-      StringFromEnv("LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE");
-  if (local_marker_file.has_value()) {
-    marker_file = local_marker_file.value();
-    CF_EXPECTF(FileExists(marker_file),
-               "local debian substitution marker file does not exist: {}",
-               marker_file);
-    LOG(INFO) << "using local debian substitution marker file: " << marker_file;
-  }
 
   // TODO: remove when we can safely add this to the marker file.
   std::string cvdalloc_src =
@@ -179,10 +168,25 @@ Result<void> HostPackageSubstitution(
   std::string cvdalloc_name = fmt::format("{}/bin/{}", target_dir, "cvdalloc");
   CF_EXPECT(Substitute(cvdalloc_src, cvdalloc_name));
 
-  if (host_substitutions.empty() && FileExists(marker_file)) {
-    CF_EXPECT(SubstituteWithMarker(target_dir, marker_file));
-  } else {
-    CF_EXPECT(SubstituteWithFlag(target_dir, host_substitutions));
+  // [DEVELOPMENT ONLY] Substitute when `--host_substitutions` flag is used.
+  if (!host_substitutions.empty()) {
+    return SubstituteWithFlag(target_dir, host_substitutions);
+  }
+
+  // [DEVELOPMENT ONLY] Substitute when LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE is set.
+  std::optional<std::string> local_marker_file =
+      StringFromEnv("LOCAL_DEBIAN_SUBSTITUTION_MARKER_FILE");
+  if (local_marker_file.has_value()) {
+    std::string marker_file = local_marker_file.value();
+    CF_EXPECTF(FileExists(marker_file),
+               "local debian substitution marker file does not exist: {}",
+               marker_file);
+    LOG(INFO) << "using local debian substitution marker file: " << marker_file;
+    return SubstituteWithMarker(target_dir, marker_file);
+  }
+
+  if (FileExists(target_dir + "/etc/debian_substitution_marker")) {
+    return SubstituteWithFlag(target_dir, {"all"});
   }
 
   return {};
