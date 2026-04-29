@@ -252,7 +252,6 @@ Result<LocalInstanceGroup> CvdCreateCommandHandler::GetOrCreateGroup(
              "Mismatch in number of instances from analisys: {} vs {}",
              group.Instances().size(),
              creation_info.group_creation_params.instances.size());
-  CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
   return group;
 }
 

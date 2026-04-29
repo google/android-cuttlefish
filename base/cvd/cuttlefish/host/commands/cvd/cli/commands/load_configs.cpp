@@ -219,8 +219,6 @@ class LoadConfigsCommand : public CvdCommandHandler {
     return CF_EXPECT(
         CommandRequestBuilder()
             .SetEnv(env)
-            // The newly created instances don't have an id yet, create will
-            // allocate those.
             /* cvd load will always create instances in daemon mode (to be
              independent of terminal) and will enable reporting automatically
              (to run automatically without question during launch)
