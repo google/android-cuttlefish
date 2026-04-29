@@ -79,6 +79,8 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvds/{group}/:bugreport",
 		httpHandler(newCreateCVDBugReportHandler(c.Config, c.OperationManager))).Methods("POST")
 	router.Handle("/cvds/{group}/{name}",
+		httpHandler(newGetCVDInstanceStatusHandler(c.Config, c.OperationManager))).Methods("GET")
+	router.Handle("/cvds/{group}/{name}",
 		httpHandler(newExecCVDGroupCommandHandler(c.Config, c.OperationManager, &removeCvdCommand{}))).Methods("DELETE")
 	router.Handle("/cvds/{group}/{name}/:start",
 		httpHandler(newStartCVDHandler(c.Config, c.OperationManager))).Methods("POST")
@@ -936,6 +938,25 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+}
+
+type getCVDInstanceStatusHandler struct {
+	Config Config
+	OM     OperationManager
+}
+
+func newGetCVDInstanceStatusHandler(c Config, om OperationManager) *getCVDInstanceStatusHandler {
+	return &getCVDInstanceStatusHandler{Config: c, OM: om}
+}
+
+func (h *getCVDInstanceStatusHandler) Handle(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	opts := CVDInstanceStatusActionOpts{
+		Selector:         cvd.InstanceSelector{GroupName: vars["group"], Name: vars["name"]},
+		OperationManager: h.OM,
+		ExecContext:      exec.CommandContext,
+	}
+	return NewCVDInstanceStatusAction(opts).Run()
 }
 
 func getFetchCredentials(config BuildAPICredentialsConfig, r *http.Request) cvd.FetchCredentials {

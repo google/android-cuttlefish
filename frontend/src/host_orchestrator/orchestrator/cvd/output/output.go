@@ -27,7 +27,9 @@ type Instance struct {
 	InstanceName   string   `json:"instance_name"`
 	Status         string   `json:"status"`
 	Displays       []string `json:"displays"`
+	AssemblyDir    string   `json:"assembly_dir,omitempty"`
 	InstanceDir    string   `json:"instance_dir"`
+	WebAccess      string   `json:"web_access,omitempty"`
 	WebRTCDeviceID string   `json:"webrtc_device_id"`
 	ADBSerial      string   `json:"adb_serial"`
 	ADBPort        uint32   `json:"adb_port"`
@@ -37,6 +39,9 @@ type Instance struct {
 type Fleet struct {
 	Groups []*Group `json:"groups"`
 }
+
+// The output of the cvd status command
+type Status []*Instance
 
 type DisplayMode struct {
 	Windowed []int `json:"windowed"`
