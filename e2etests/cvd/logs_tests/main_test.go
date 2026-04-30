@@ -15,13 +15,14 @@
 package main
 
 import (
-	"fmt"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
 )
 
-func TestEmulatedCameraV4l2Compliance(t *testing.T) {
+func TestPrintLogs(t *testing.T) {
 	testcases := []struct {
 		branch string
 		target string
@@ -33,7 +34,7 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 	}
 	c := e2etests.TestContext{}
 	for _, tc := range testcases {
-		t.Run(fmt.Sprintf("BUILD=%s/%s", tc.branch, tc.target), func(t *testing.T) {
+		t.Run("foo", func(t *testing.T) {
 			c.SetUp(t)
 			defer c.TearDown()
 
@@ -44,21 +45,43 @@ func TestEmulatedCameraV4l2Compliance(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := c.CVDCreate(e2etests.CreateArgs{Args: []string{"--media=type=v4l2_emulated_camera"}}); err != nil {
+			if err := c.CVDCreate(e2etests.CreateArgs{}); err != nil {
 				t.Fatal(err)
 			}
 
-			if err := c.RunAdbWaitForDevice(); err != nil {
-				t.Fatalf("failed to wait for Cuttlefish device to connect to adb: %w", err)
+			stdOut, _, err := c.RunCmd(c.TargetBin(), "logs")
+			if err != nil {
+				t.Fatal(err)
 			}
 
-			if _, _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-ctl", "--list-devices"); err != nil {
-				t.Fatalf("v4l2-ctl --list-devices failed: %w", err)
+			listedNames := []string{}
+			lines := strings.Split(stdOut, "\n")
+			for _, line := range lines[:len(lines)-1] {
+				fields := strings.Fields(line)
+				if len(fields) != 2 {
+					t.Errorf("line %q does not match format '<NAME> <PATH>'", line)
+				}
+				_, stderr, err := c.RunCmd("stat", fields[1])
+				if err != nil {
+					t.Fatal(stderr)
+				}
+				listedNames = append(listedNames, fields[0])
+			}
+			keyExpectedNames := []string{"logcat", "launcher.log", "kernel.log"}
+			for _, name := range keyExpectedNames {
+				if !slices.Contains(listedNames, name) {
+					t.Fatalf("missing log name: %q", name)
+				}
 			}
 
-			if _, _, err := c.RunCmd("adb", "shell", "su", "0", "v4l2-compliance", "-d1", "-s"); err != nil {
-				t.Fatalf("v4l2-compliance failed: %w", err)
+			stdOut, _, err = c.RunCmd(c.TargetBin(), "logs", "--print", "launcher.log")
+			if err != nil {
+				t.Fatal(err)
 			}
+			if len(stdOut) == 0 {
+				t.Fatalf("empty launcher.log")
+			}
+
 		})
 	}
 }

@@ -450,3 +450,21 @@ cf_cc_library(
         "@jsoncpp",
     ],
 )
+
+cf_cc_library(
+    name = "logs",
+    srcs = ["logs.cpp"],
+    hdrs = ["logs.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/common/libs/utils:flag_parser",
+        "//cuttlefish/common/libs/utils:subprocess",
+        "//cuttlefish/host/commands/cvd/cli:command_request",
+        "//cuttlefish/host/commands/cvd/cli:types",
+        "//cuttlefish/host/commands/cvd/cli/commands:command_handler",
+        "//cuttlefish/host/commands/cvd/cli/selector",
+        "//cuttlefish/host/commands/cvd/instances",
+        "//cuttlefish/result",
+        "//libbase",
+    ],
+)

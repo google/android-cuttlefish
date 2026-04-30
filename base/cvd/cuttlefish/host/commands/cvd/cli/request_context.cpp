@@ -38,6 +38,7 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/lint.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/load_configs.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/login.h"
+#include "cuttlefish/host/commands/cvd/cli/commands/logs.h"
 
 #include "cuttlefish/host/commands/cvd/cli/commands/power_btn.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/powerwash.h"
@@ -115,6 +116,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
   request_handlers_.emplace_back(NewCvdStartCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStatusCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdVersionHandler());
+  request_handlers_.emplace_back(NewCvdLogsHandler(instance_manager));
 }
 
 Result<CvdCommandHandler*> RequestContext::Handler(

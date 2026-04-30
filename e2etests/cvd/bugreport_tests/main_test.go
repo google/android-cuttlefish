@@ -35,7 +35,7 @@ func TestTakeBugreport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport"); err != nil {
+	if _, _, err := c.RunCmd(c.TargetBin(), "host_bugreport"); err != nil {
 		t.Fatal(err)
 	}
 }
