@@ -50,7 +50,7 @@ func TestMetrics(t *testing.T) {
 
 	var metricsdir string
 	err := func() error {
-		output, err := c.RunCmd(c.TargetBin(), "fleet")
+		output, _, err := c.RunCmd(c.TargetBin(), "fleet")
 		if err != nil {
 			return fmt.Errorf("failed to run `cvd fleet`")
 		}
