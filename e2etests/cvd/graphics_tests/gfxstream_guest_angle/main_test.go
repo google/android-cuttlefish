@@ -24,8 +24,8 @@ func TestGfxstreamGuestAngleHostSwiftShader(t *testing.T) {
 	e2etests.RunXts(t,
 		e2etests.FetchAndCreateArgs{
 			Fetch: e2etests.FetchArgs{
-				DefaultBuildBranch: "aosp-android-latest-release",
-				DefaultBuildTarget: "aosp_cf_x86_64_only_phone-userdebug",
+				DefaultBuildBranch:   "aosp-android-latest-release",
+				DefaultBuildTarget:   "aosp_cf_x86_64_only_phone-userdebug",
 				TestSuiteBuildBranch: "aosp-android15-tests-release",
 				TestSuiteBuildTarget: "test_suites_x86_64",
 			},

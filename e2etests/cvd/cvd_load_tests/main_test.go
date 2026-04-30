@@ -15,7 +15,7 @@
 package main
 
 import (
-  "fmt"
+	"fmt"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
@@ -23,7 +23,7 @@ import (
 
 func TestCvdLoad(t *testing.T) {
 	testcases := []struct {
-		name string
+		name       string
 		loadconfig string
 	}{
 		{
@@ -144,7 +144,7 @@ func TestCvdLoad(t *testing.T) {
 
 			err := c.CVDLoad(e2etests.LoadArgs{
 				LoadConfig: tc.loadconfig,
-			});
+			})
 			if err != nil {
 				t.Fatal(err)
 			}
