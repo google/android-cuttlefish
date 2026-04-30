@@ -24,15 +24,15 @@ sh_binary(
 aosp_artifact(
     name = "cvd_host_package",
     artifact_name = "cvd-host_package.tar.gz",
-    build_id = "13625421",
+    build_id = "15150359",
     build_target = "aosp_cf_x86_64_only_phone-userdebug",
     out_name = "cvd-host_package.tar.gz",
 )
 
 aosp_artifact(
     name = "images_zip",
-    artifact_name = "aosp_cf_x86_64_only_phone-img-13625421.zip",
-    build_id = "13625421",
+    artifact_name = "aosp_cf_x86_64_only_phone-img-15150359.zip",
+    build_id = "15150359",
     build_target = "aosp_cf_x86_64_only_phone-userdebug",
     out_name = "images.zip",
 )
