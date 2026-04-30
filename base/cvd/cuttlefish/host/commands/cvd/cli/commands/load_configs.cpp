@@ -36,7 +36,6 @@
 #include "cuttlefish/host/commands/cvd/cli/types.h"
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd.h"
 #include "cuttlefish/host/commands/cvd/instances/cvd_persistent_data.pb.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_database_types.h"
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
@@ -182,7 +181,6 @@ class LoadConfigsCommand : public CvdCommandHandler {
 
     // Instances go from preparing to stopped state after fetching is done.
     group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
-    group.SetStartTime(CvdServerClock::now());
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
 
     GatherVmInstantiationMetrics(group);
