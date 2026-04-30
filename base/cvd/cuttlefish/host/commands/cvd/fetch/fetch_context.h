@@ -28,11 +28,16 @@
 #include "cuttlefish/host/libs/config/file_source.h"
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/url_downloader.h"
 #include "cuttlefish/host/libs/zip/libzip_cc/archive.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
+// Manages downloading and extracting a single artifact from a build.
+// Handles both Android Build API artifacts and URL-based artifacts
+// transparently. Tracks whether the artifact has already been downloaded
+// to avoid redundant fetches.
 class FetchArtifact {
  public:
   Result<void> Download();
@@ -60,21 +65,20 @@ class FetchArtifact {
   std::optional<ReadableZip> zip_;
 };
 
-/**
- * Wraps standard download operations with cross-cutting concerns:
- * - Tracing long-running operations with time used.
- * - Tracking the source build of created files.
- * - Placing files under the right target directory.
- * - Desparsing images.
- *
- * File paths for return values and argument values are relative to the target
- * directory.
- *
- * By hiding the target directory from direct access, IO operations are funneled
- * through an instance of this type, which guarantees none of the cross-cutting
- * concerns are missed. Additionally, this could be replaced with a fake
- * implementation later to support unit testing the business logic.
- */
+// Wraps standard download operations with cross-cutting concerns:
+// - Tracing long-running operations with time used.
+// - Tracking the source build of created files.
+// - Placing files under the right target directory.
+// - Desparsing images.
+//
+// File paths for return values and argument values are relative to the target
+// directory.
+//
+// By hiding the target directory from direct access, IO operations are
+// funneled through an instance of this type, which guarantees none of the
+// cross-cutting concerns are missed. Additionally, this could be replaced
+// with a fake implementation later to support unit testing the business
+// logic.
 class FetchBuildContext {
  public:
   const Build& Build() const;
@@ -107,14 +111,12 @@ class FetchBuildContext {
 
 std::ostream& operator<<(std::ostream&, const FetchBuildContext&);
 
-/**
- * References common state used by most download operations and produces
- * `FetchBuildContext` instances.
- */
+// References common state used by most download operations and produces
+// FetchBuildContext instances for each configured build component.
 class FetchContext {
  public:
-  FetchContext(BuildApi&, const TargetDirectories&, const Builds&,
-               FetcherConfig&, FetchTracer&);
+  FetchContext(BuildApi&, UrlDownloader&, const TargetDirectories&,
+               const Builds&, FetcherConfig&, FetchTracer&);
 
   std::optional<FetchBuildContext> DefaultBuild();
   std::optional<FetchBuildContext> SystemBuild();
@@ -130,6 +132,7 @@ class FetchContext {
   friend class FetchBuildContext;
 
   BuildApi& build_api_;
+  UrlDownloader& url_downloader_;
   const TargetDirectories& target_directories_;
   const Builds& builds_;
   FetcherConfig& fetcher_config_;

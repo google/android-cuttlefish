@@ -31,13 +31,14 @@
 #include "cuttlefish/host/libs/web/android_build.h"
 #include "cuttlefish/host/libs/web/android_build_api.h"
 #include "cuttlefish/host/libs/web/build_api.h"
+#include "cuttlefish/host/libs/web/url_downloader.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
 Result<void> FetchHostPackage(
-    BuildApi& build_api, const Build& build, const std::string& target_dir,
-    const bool keep_archives,
+    BuildApi& build_api, UrlDownloader* url_downloader, const Build& build,
+    const std::string& target_dir, const bool keep_archives,
     const std::vector<std::string>& host_substitutions,
     FetchTracer::Trace trace) {
   LOG(INFO) << "Preparing host package for " << build;
@@ -47,9 +48,19 @@ Result<void> FetchHostPackage(
   // The download time will still include time spent waiting for the mutex in
   // the build_api though.
   trace.CompletePhase("Async start delay");
-  auto host_tools_name = GetFilepath(build).value_or("cvd-host_package.tar.gz");
-  std::string host_tools_filepath =
-      CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
+  // URL builds bypass the Android Build API and use UrlDownloader directly.
+  std::string host_tools_filepath;
+  if (auto* url_build = std::get_if<UrlBuild>(&build)) {
+    CF_EXPECT(url_downloader != nullptr,
+              "UrlDownloader required for URL host package builds");
+    host_tools_filepath =
+        CF_EXPECT(url_downloader->Download(url_build->url, target_dir));
+  } else {
+    auto host_tools_name =
+        GetFilepath(build).value_or("cvd-host_package.tar.gz");
+    host_tools_filepath =
+        CF_EXPECT(build_api.DownloadFile(build, target_dir, host_tools_name));
+  }
   trace.CompletePhase("Download", FileSize(host_tools_filepath));
 
   CF_EXPECT(

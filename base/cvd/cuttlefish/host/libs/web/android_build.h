@@ -50,7 +50,17 @@ struct DirectoryBuild {
 
 std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
 
-using Build = std::variant<DeviceBuild, DirectoryBuild>;
+// A resolved build source backed by a downloadable URL. Created from
+// UrlBuildString by AndroidBuildApi::GetBuild(). Downloaded via
+// UrlDownloader rather than the Android Build API.
+struct UrlBuild {
+  std::string url;
+  std::optional<std::string> filepath;
+};
+
+std::ostream& operator<<(std::ostream&, const UrlBuild&);
+
+using Build = std::variant<DeviceBuild, DirectoryBuild, UrlBuild>;
 
 std::ostream& operator<<(std::ostream&, const Build&);
 

@@ -21,6 +21,7 @@
 #include "cuttlefish/host/commands/cvd/fetch/fetch_cvd_parser.h"
 #include "cuttlefish/host/libs/web/build_api.h"
 #include "cuttlefish/host/libs/web/luci_build_api.h"
+#include "cuttlefish/host/libs/web/url_downloader.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -36,6 +37,7 @@ class Downloaders {
 
   BuildApi& AndroidBuild();
   LuciBuildApi& Luci();
+  UrlDownloader& Url();
 
  private:
   struct Impl;  // for pimpl
