@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <list>
 #include <mutex>
 #include <thread>
@@ -27,14 +28,12 @@
 #include "absl/log/log.h"
 
 #include <api/media_stream_interface.h>
-#include <api/rtp_parameters.h>
-#include <api/task_queue/default_task_queue_factory.h>
-#include <api/video/builtin_video_bitrate_allocator_factory.h>
+#include <api/video/encoded_image.h>
+#include <api/video/video_frame.h>
 #include <api/video_codecs/builtin_video_encoder_factory.h>
 #include <api/video_codecs/video_encoder.h>
 #include <mkvmuxer/mkvmuxer.h>
 #include <mkvmuxer/mkvwriter.h>
-#include <system_wrappers/include/clock.h>
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -63,6 +62,9 @@ public:
   virtual webrtc::EncodedImageCallback::Result OnEncodedImage(
       const webrtc::EncodedImage& encoded_image,
       const webrtc::CodecSpecificInfo* codec_specific_info) override;
+  // TODO(sprang): Mark as override when the libwebrtc dependency is bumped.
+  virtual void OnFrameDropped(uint32_t rtp_timestamp, int spatial_id,
+                              bool is_end_of_temporal_unit) {}
 
   LocalRecorder::Impl& impl_;
   std::shared_ptr<webrtc::VideoTrackSourceInterface> source_;
