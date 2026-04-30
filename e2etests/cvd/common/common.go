@@ -342,7 +342,7 @@ func (tc *TestContext) SetUp(t *testing.T) {
 	tc.context = cancellableContext
 	tc.usePodcvd = os.Getenv("USE_PODCVD") == "true"
 
-	log.Printf("Initializing %s test...", tc.t.Name())
+	log.Printf("Initializing 123 %s test...", tc.t.Name())
 
 	log.Printf("Cleaning up any pre-existing instances...")
 	if _, err := tc.RunCmd(tc.TargetBin(), "reset", "-y"); err != nil {
