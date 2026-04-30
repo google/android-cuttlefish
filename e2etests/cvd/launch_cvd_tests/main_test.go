@@ -22,32 +22,32 @@ import (
 
 func TestLaunchCvd(t *testing.T) {
 	testcases := []struct {
-		name string
+		name   string
 		branch string
 		target string
 	}{
 		{
-			name: "GitMainPhone",
+			name:   "GitMainPhone",
 			branch: "git_main",
 			target: "aosp_cf_x86_64_only_phone-trunk_staging-userdebug",
 		},
 		{
-			name: "AospMainPhone",
+			name:   "AospMainPhone",
 			branch: "aosp-android-latest-release",
 			target: "aosp_cf_x86_64_only_phone-userdebug",
 		},
 		{
-			name: "Aosp14GsiPhone",
+			name:   "Aosp14GsiPhone",
 			branch: "aosp-android14-gsi",
 			target: "aosp_cf_x86_64_phone-userdebug",
 		},
 		{
-			name: "Aosp13GsiPhone",
+			name:   "Aosp13GsiPhone",
 			branch: "aosp-android13-gsi",
 			target: "aosp_cf_x86_64_phone-userdebug",
 		},
 		{
-			name: "Aosp12GsiPhone",
+			name:   "Aosp12GsiPhone",
 			branch: "aosp-android12-gsi",
 			target: "aosp_cf_x86_64_phone-userdebug",
 		},
