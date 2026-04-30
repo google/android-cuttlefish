@@ -53,11 +53,11 @@ func TestCvdPowerwash(t *testing.T) {
 			}
 
 			const tmpFile = "/data/local/tmp/foo"
-			if _, err := c.RunCmd("adb", "shell", "touch", tmpFile); err != nil {
+			if _, _, err := c.RunCmd("adb", "shell", "touch", tmpFile); err != nil {
 				t.Fatalf("failed to create %s: %w", tmpFile, err)
 			}
 
-			if _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err != nil {
+			if _, _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err != nil {
 				t.Fatal("failed to verify %s created: %w", err)
 			}
 
@@ -65,7 +65,7 @@ func TestCvdPowerwash(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err == nil {
+			if _, _, err := c.RunCmd("adb", "shell", "stat", tmpFile); err == nil {
 				t.Fatal("failed to powerwash, %s still exists")
 			}
 		})
