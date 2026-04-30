@@ -23,15 +23,13 @@ runs:
         --project="android-cuttlefish-artifacts" \
         --quiet \
         --repository="${REPO}" || true
-      for VERSION in ${INPUTS_IMAGE_VERSION} ${INPUTS_DEPLOY_CHANNEL}; do
-        gcloud artifacts generic upload \
-          --location=us \
-          --package="debian-installer" \
-          --project="android-cuttlefish-artifacts" \
-          --repository="${REPO}" \
-          --version="${VERSION}" \
-          --source=$(find . -name *.iso.xz)
-      done
+      gcloud artifacts generic upload \
+        --location=us \
+        --package="debian-installer" \
+        --project="android-cuttlefish-artifacts" \
+        --repository="${REPO}" \
+        --version="${INPUTS_IMAGE_VERSION}" \
+        --source=$(find . -name *.iso.xz)
       popd
     shell: bash
     env:
