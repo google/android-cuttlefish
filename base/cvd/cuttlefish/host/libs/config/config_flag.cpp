@@ -87,7 +87,11 @@ class ConfigReader : public FlagFeature {
   std::unordered_set<FlagFeature*> Dependencies() const override { return {}; }
   Result<void> Process(std::vector<std::string>&) override {
     auto config_path = DefaultHostArtifactsPath("etc/cvd_config");
-    auto dir_contents = CF_EXPECT(DirectoryContents(config_path));
+    if (!DirectoryExists(config_path)) {
+      return {};
+    }
+    std::vector<std::string> dir_contents =
+        CF_EXPECT(DirectoryContents(config_path));
     for (const std::string& file : dir_contents) {
       std::string_view local_file(file);
       if (absl::ConsumePrefix(&local_file, "cvd_config_") &&
@@ -144,8 +148,14 @@ class ConfigFlagImpl : public ConfigFlag {
     LOG(INFO) << "Launching CVD using --config='"
               << VectorizedFlagValue(configs_) << "'.";
     for (size_t i = 0; i < configs_.size(); ++i) {
-      Json::Value config_values =
-          CF_EXPECT(config_reader_.ReadConfig(configs_[i]));
+      Result<Json::Value> config_values_res =
+          config_reader_.ReadConfig(configs_[i]);
+      if (!config_values_res.ok()) {
+        LOG(WARNING) << "Config '" << configs_[i]
+                     << "' not found: " << config_values_res.error();
+        continue;
+      }
+      Json::Value config_values = CF_EXPECT(std::move(config_values_res));
       for (const std::string& flag : config_values.getMemberNames()) {
         std::string value;
         if (flag == "custom_actions") {
