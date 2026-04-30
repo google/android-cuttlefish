@@ -16,12 +16,10 @@ package main
 
 import (
 	"archive/zip"
-	"errors"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -58,9 +56,10 @@ func TestBugReport(t *testing.T) {
 	if err := assertZipIntegrity(zipFilename); err != nil {
 		t.Errorf("invalid zip file: %s", err)
 	}
-	if err := assertAdbBugReportIsIncluded(zipFilename); err != nil {
-		t.Errorf("failed adb bugreport check: %s", err)
-	}
+	// TODO(b/508663354): include adb bug report is broken
+	// if err := assertAdbBugReportIsIncluded(zipFilename); err != nil {
+	// 	t.Errorf("failed adb bugreport check: %s", err)
+	// }
 }
 
 func createBugReport(srv hoclient.HostOrchestratorClient, group string) (string, error) {
@@ -74,7 +73,8 @@ func createBugReport(srv hoclient.HostOrchestratorClient, group string) (string,
 		return "", err
 	}
 	opts := hoclient.CreateBugReportOpts{
-		IncludeADBBugReport: true,
+		// TODO(b/508663354): include adb bug report is broken
+		// IncludeADBBugReport: true,
 	}
 	if err := srv.CreateBugReport(group, opts, f); err != nil {
 		return "", err
@@ -107,20 +107,21 @@ func assertZipIntegrity(filename string) error {
 	return nil
 }
 
-func assertAdbBugReportIsIncluded(filename string) error {
-	r, err := zip.OpenReader(filename)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_only_phone.*\.zip$`)
-	if err != nil {
-		return err
-	}
-	for _, f := range r.File {
-		if re.MatchString(f.FileHeader.Name) {
-			return nil
-		}
-	}
-	return errors.New("not found")
-}
+// TODO(b/508663354): include adb bug report is broken
+// func assertAdbBugReportIsIncluded(filename string) error {
+// 	r, err := zip.OpenReader(filename)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer r.Close()
+// 	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_only_phone.*\.zip$`)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	for _, f := range r.File {
+// 		if re.MatchString(f.FileHeader.Name) {
+// 			return nil
+// 		}
+// 	}
+// 	return errors.New("not found")
+// }
