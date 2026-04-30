@@ -74,7 +74,8 @@ jobs:
     strategy:
       matrix:
         dir:
-          - "e2etests"
+          - "e2etests/cvd"
+          - "e2etests/orchestration"
           - "container/src/libcfcontainer"
           - "container/src/podcvd"
           - "frontend/src/host_orchestrator"
