@@ -38,6 +38,7 @@
 #include "cuttlefish/host/commands/cvd/instances/stop.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/libs/config/config_utils.h"
+#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
 
@@ -177,6 +178,8 @@ Result<LocalInstanceGroup> InstanceManager::CreateInstanceGroup(
   for (auto& instance_desc : instance_descs) {
     CF_EXPECT(instance_desc.lock_file.Status(InUseState::kInUse));
   }
+
+  GatherVmInstantiationMetrics(group);
 
   return group;
 }
