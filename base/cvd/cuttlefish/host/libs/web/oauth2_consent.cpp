@@ -285,12 +285,9 @@ Result<std::unique_ptr<CredentialSource>> Oauth2Login(
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     HttpClient& http_client, const std::vector<std::string>& scopes) {
   std::vector<std::string> credential_paths =
-      CF_EXPECT(FindCvdDataFiles(kCredentials));
+      CF_EXPECT(GetCvdCredentialFilepaths());
 
   for (const std::string& credential_path : credential_paths) {
-    if (!absl::EndsWith(credential_path, ".json")) {
-      continue;
-    }
     Result<std::unique_ptr<CredentialSource>> credential =
         CredentialForScopes(http_client, scopes, credential_path);
     if (credential.ok() && *credential != nullptr) {
@@ -298,6 +295,18 @@ Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     }
   }
   return CF_ERR("No credentials found.");
+}
+
+Result<std::vector<std::string>> GetCvdCredentialFilepaths() {
+  std::vector<std::string> credential_paths =
+      CF_EXPECT(FindCvdDataFiles(kCredentials));
+  std::vector<std::string> result;
+  for (const std::string& credential_path : credential_paths) {
+    if (absl::EndsWith(credential_path, ".json")) {
+      result.push_back(credential_path);
+    }
+  }
+  return result;
 }
 
 }  // namespace cuttlefish

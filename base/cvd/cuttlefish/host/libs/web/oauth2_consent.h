@@ -45,4 +45,6 @@ Result<std::unique_ptr<CredentialSource>> Oauth2Login(
 Result<std::unique_ptr<CredentialSource>> CredentialForScopes(
     HttpClient&, const std::vector<std::string>&);
 
+Result<std::vector<std::string>> GetCvdCredentialFilepaths();
+
 }  // namespace cuttlefish
