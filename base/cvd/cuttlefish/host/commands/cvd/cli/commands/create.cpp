@@ -50,7 +50,6 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
-#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
@@ -328,8 +327,6 @@ Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
 
   group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
   CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-
-  GatherVmInstantiationMetrics(group);
 
   if (flags.start) {
     auto start_cmd = CF_EXPECT(CreateStartCommand(group, subcmd_args, envs));

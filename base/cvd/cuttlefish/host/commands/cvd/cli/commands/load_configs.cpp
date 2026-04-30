@@ -40,7 +40,6 @@
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/utils/interrupt_listener.h"
-#include "cuttlefish/host/libs/metrics/device_metrics_orchestration.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -182,8 +181,6 @@ class LoadConfigsCommand : public CvdCommandHandler {
     // Instances go from preparing to stopped state after fetching is done.
     group.SetAllStates(cvd::INSTANCE_STATE_STOPPED);
     CF_EXPECT(instance_manager_.UpdateInstanceGroup(group));
-
-    GatherVmInstantiationMetrics(group);
 
     auto start_cmd = CF_EXPECT(BuildStartCommand(request, cvd_flags, group));
     CF_EXPECT(executor_.ExecuteOne(start_cmd, std::cerr));
