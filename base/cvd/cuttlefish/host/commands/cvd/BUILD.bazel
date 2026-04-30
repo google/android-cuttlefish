@@ -1,8 +1,21 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("//:build_variables.bzl", "COPTS")
 load("//cuttlefish/bazel:rules.bzl", "cf_cc_binary", "cf_cc_library")
 
 package(
     default_visibility = ["//:android_cuttlefish"],
+)
+
+bool_flag(
+    name = "all_host_substitutions",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "all_host_substitutions_enabled",
+    flag_values = {
+        ":all_host_substitutions": "true",
+    },
 )
 
 cf_cc_library(

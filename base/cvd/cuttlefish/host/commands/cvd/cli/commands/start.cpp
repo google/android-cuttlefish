@@ -458,6 +458,9 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   const auto bin = CF_EXPECT(FindStartBin(group.HostArtifactsPath()));
 
   std::vector<std::string> host_substitutions;
+#if defined(CUTTLEFISH_ENABLE_ALL_HOST_SUBSTITUTIONS_BY_DEFAULT)
+  host_substitutions.push_back("all");
+#endif
   Flag host_substitutions_flag =
       GflagsCompatFlag("host_substitutions", host_substitutions);
 
