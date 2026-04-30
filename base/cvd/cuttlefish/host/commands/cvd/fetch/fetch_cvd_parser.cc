@@ -84,6 +84,10 @@ std::vector<Flag> GetFlagsVector(FetchFlags& fetch_flags,
 
 Result<FetchFlags> FetchFlags::Parse(std::vector<std::string>& args) {
   FetchFlags fetch_flags;
+#if defined(CUTTLEFISH_ENABLE_ALL_HOST_SUBSTITUTIONS_BY_DEFAULT)
+  fetch_flags.host_substitutions.push_back("all");
+#endif
+
   std::string directory;
   std::vector<Flag> flags = GetFlagsVector(fetch_flags, directory);
   CF_EXPECT(ConsumeFlags(flags, args), "Could not process command line flags.");
