@@ -84,7 +84,7 @@ class CvdDevicePowerwashCommandHandler : public CvdCommandHandler {
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
-  bool ShouldInterceptHelp() const override { return true; }
+
 
   bool RequiresDeviceExists() const override { return true; }
 

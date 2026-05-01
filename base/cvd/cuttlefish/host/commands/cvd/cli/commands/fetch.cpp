@@ -46,7 +46,7 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override { return true; }
+
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 };
 
