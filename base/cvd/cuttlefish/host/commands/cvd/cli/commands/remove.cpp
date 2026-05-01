@@ -17,7 +17,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/remove.h"
 
 #include <chrono>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -86,13 +85,6 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
     }
     CF_EXPECT(instance_manager_.StopInstanceGroup(
         group, std::chrono::seconds(5), InstanceDirActionOnStop::Clear));
-    return {};
-  }
-
-  Result<void> HelpCommand(const CommandRequest& request) const {
-    std::vector<std::string> unused;
-    std::string msg = CF_EXPECT(DetailedHelp(unused));
-    std::cout << msg;
     return {};
   }
 

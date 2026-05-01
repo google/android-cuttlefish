@@ -30,7 +30,6 @@
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/request_context.h"
 #include "cuttlefish/host/commands/cvd/cli/types.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
@@ -76,10 +75,8 @@ Example usage:
 class CvdHelpHandler : public CvdCommandHandler {
  public:
   CvdHelpHandler(
-      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers,
-      InstanceManager& instance_manager)
-      : request_handlers_(request_handlers),
-        instance_manager_(instance_manager) {}
+      const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers)
+      : request_handlers_(request_handlers) {}
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
@@ -152,14 +149,12 @@ class CvdHelpHandler : public CvdCommandHandler {
   }
 
   const std::vector<std::unique_ptr<CvdCommandHandler>>& request_handlers_;
-  InstanceManager& instance_manager_;
 };
 
 std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers,
-    InstanceManager& instance_manager) {
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers) {
   return std::unique_ptr<CvdCommandHandler>(
-      new CvdHelpHandler(server_handlers, instance_manager));
+      new CvdHelpHandler(server_handlers));
 }
 
 }  // namespace cuttlefish
