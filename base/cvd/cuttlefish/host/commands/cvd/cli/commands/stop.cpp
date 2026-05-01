@@ -110,9 +110,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
-  bool has_help_flag = CF_EXPECT(HasHelpFlag(cmd_args));
-  CF_EXPECT(!has_help_flag,
-            "Help flag should be handled by global cvd");
+
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
