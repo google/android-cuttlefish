@@ -104,7 +104,7 @@ Result<StatusCommandOptions> ParseFlags(cvd_common::Args& args) {
       GflagsCompatFlag("wait_for_launcher", ret.wait_for_launcher_seconds),
       GflagsCompatFlag("instance_name", ret.instance_name),
       GflagsCompatFlag("print", ret.print),
-      GflagsCompatFlag("help", ret.help),
+
   };
 
   CF_EXPECT(ConsumeFlags(flags, args));
@@ -144,11 +144,6 @@ Result<void> CvdStatusCommandHandler::Handle(const CommandRequest& request) {
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   StatusCommandOptions flags = CF_EXPECT(ParseFlags(cmd_args));
-
-  if (flags.help) {
-    std::cout << kDetailedHelpText << std::endl;
-    return {};
-  }
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
