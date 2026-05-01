@@ -10,13 +10,6 @@ on:
   pull_request:
     types:
       - 'opened'
-  issues:
-    types:
-      - 'opened'
-      - 'reopened'
-  issue_comment:
-    types:
-      - 'created'
 
 defaults:
   run:
@@ -44,15 +37,11 @@ jobs:
 
   dispatch:
     # For PRs: only if not from a fork
-    # For issues: only on open/reopen
     # For comments: only if user types @gemini-cli and is OWNER/MEMBER/COLLABORATOR
     if: |-
       (
         github.event_name == 'pull_request' &&
         github.event.pull_request.head.repo.fork == false
-      ) || (
-        github.event_name == 'issues' &&
-        contains(fromJSON('["opened", "reopened"]'), github.event.action)
       ) || (
         github.event.sender.type == 'User' &&
         startsWith(github.event.comment.body || github.event.review.body || github.event.issue.body, '@gemini-cli') &&
@@ -61,13 +50,11 @@ jobs:
     runs-on: 'ubuntu-latest'
     permissions:
       contents: 'read'
-      issues: 'write'
       pull-requests: 'write'
     outputs:
       command: '${{ steps.extract_command.outputs.command }}'
       request: '${{ steps.extract_command.outputs.request }}'
       additional_context: '${{ steps.extract_command.outputs.additional_context }}'
-      issue_number: '${{ github.event.pull_request.number || github.event.issue.number }}'
     steps:
       - name: 'Mint identity token'
         id: 'mint_identity_token'
@@ -78,7 +65,6 @@ jobs:
           app-id: '${{ vars.APP_ID }}'
           private-key: '${{ secrets.APP_PRIVATE_KEY }}'
           permission-contents: 'read'
-          permission-issues: 'write'
           permission-pull-requests: 'write'
 
       - name: 'Extract command'
@@ -95,14 +81,10 @@ jobs:
 
             if (eventType === 'pull_request.opened') {
               core.setOutput('command', 'review');
-            } else if (['issues.opened', 'issues.reopened'].includes(eventType)) {
-              core.setOutput('command', 'triage');
             } else if (request.startsWith("@gemini-cli /review")) {
               core.setOutput('command', 'review');
               const additionalContext = request.replace(/^@gemini-cli \/review/, '').trim();
               core.setOutput('additional_context', additionalContext);
-            } else if (request.startsWith("@gemini-cli /triage")) {
-              core.setOutput('command', 'triage');
             } else if (request.startsWith("@gemini-cli /approve")) {
               core.setOutput('command', 'approve');
             } else if (request.startsWith("@gemini-cli")) {
@@ -133,21 +115,6 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-      issues: 'write'
-      pull-requests: 'write'
-    with:
-      additional_context: '${{ needs.dispatch.outputs.additional_context }}'
-    secrets: 'inherit'
-
-  triage:
-    needs: 'dispatch'
-    if: |-
-      ${{ needs.dispatch.outputs.command == 'triage' }}
-    uses: './.github/workflows/gemini-triage.yml'
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-      issues: 'write'
       pull-requests: 'write'
     with:
       additional_context: '${{ needs.dispatch.outputs.additional_context }}'
@@ -161,7 +128,6 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-      issues: 'write'
       pull-requests: 'write'
     with:
       additional_context: '${{ needs.dispatch.outputs.additional_context }}'
@@ -175,7 +141,6 @@ jobs:
     permissions:
       contents: 'write'
       id-token: 'write'
-      issues: 'write'
       pull-requests: 'write'
     with:
       additional_context: '${{ needs.dispatch.outputs.additional_context }}'
@@ -185,7 +150,6 @@ jobs:
     needs:
       - 'dispatch'
       - 'review'
-      - 'triage'
       - 'invoke'
       - 'plan-execute'
     if: |-
@@ -193,7 +157,6 @@ jobs:
     runs-on: 'ubuntu-latest'
     permissions:
       contents: 'read'
-      issues: 'write'
       pull-requests: 'write'
     steps:
       - name: 'Mint identity token'
@@ -205,7 +168,6 @@ jobs:
           app-id: '${{ vars.APP_ID }}'
           private-key: '${{ secrets.APP_PRIVATE_KEY }}'
           permission-contents: 'read'
-          permission-issues: 'write'
           permission-pull-requests: 'write'
 
       - name: 'Send failure comment'
