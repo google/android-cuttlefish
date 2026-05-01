@@ -71,7 +71,7 @@ class CvdLoginCommand : public CvdCommandHandler {
     std::vector<std::string> args = request.SubcommandArguments();
     const Oauth2ConsentRequest oauth2_request = CF_EXPECT(ParseFlags(args));
     if (!IsPopulated(oauth2_request)) {
-      std::cout << CF_EXPECT(DetailedHelp(args)) << std::endl;
+      std::cout << CF_EXPECT(DetailedHelp(request)) << std::endl;
       return {};
     }
 
@@ -93,7 +93,7 @@ class CvdLoginCommand : public CvdCommandHandler {
 
   bool ShouldInterceptHelp() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     std::string google_appendix;
     if (DirectoryExists("/google")) {
       google_appendix =

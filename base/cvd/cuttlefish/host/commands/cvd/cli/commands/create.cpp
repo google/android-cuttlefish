@@ -215,7 +215,7 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   std::vector<std::string> CmdList() const override { return {"create"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override;
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
  private:
   Result<LocalInstanceGroup> CreateGroup(const cvd_common::Args& subcmd_args,
@@ -353,7 +353,7 @@ Result<std::string> CvdCreateCommandHandler::SummaryHelp() const {
 bool CvdCreateCommandHandler::ShouldInterceptHelp() const { return true; }
 
 Result<std::string> CvdCreateCommandHandler::DetailedHelp(
-    std::vector<std::string>&) const {
+    const CommandRequest& request) const {
   return kDetailedHelpText;
 }
 

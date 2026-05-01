@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -42,7 +41,7 @@ class CvdClearCommandHandler : public CvdCommandHandler {
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
   bool ShouldInterceptHelp() const override { return true; }
   bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
  private:
   InstanceManager& instance_manager_;
@@ -59,7 +58,7 @@ Result<void> CvdClearCommandHandler::Handle(const CommandRequest& request) {
 }
 
 Result<std::string> CvdClearCommandHandler::DetailedHelp(
-    std::vector<std::string>& arguments) const {
+    const CommandRequest& request) const {
   return kSummaryHelpText;
 }
 

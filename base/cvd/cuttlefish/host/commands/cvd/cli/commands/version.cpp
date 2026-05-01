@@ -78,7 +78,7 @@ class CvdVersionHandler : public CvdCommandHandler {
 
   bool ShouldInterceptHelp() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kSummaryHelpText;
   }
 };

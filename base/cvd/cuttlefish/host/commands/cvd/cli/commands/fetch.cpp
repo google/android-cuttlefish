@@ -47,7 +47,7 @@ class CvdFetchCommandHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override { return {"fetch", "fetch_cvd"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override { return true; }
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 };
 
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
@@ -91,7 +91,7 @@ Result<std::string> CvdFetchCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdFetchCommandHandler::DetailedHelp(
-    std::vector<std::string>&) const {
+    const CommandRequest& request) const {
   std::vector<std::string> args = {"--help"};
   // TODO: b/389119573 - Should return the help text instead of printing it
   CF_EXPECT(FetchFlags::Parse(args));

@@ -101,7 +101,7 @@ class CvdCacheCommandHandler : public CvdCommandHandler {
   cvd_common::Args CmdList() const override { return {"cache"}; }
   Result<std::string> SummaryHelp() const override;
   bool ShouldInterceptHelp() const override { return true; }
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 };
 
 Result<void> CvdCacheCommandHandler::Handle(const CommandRequest& request) {
@@ -154,7 +154,7 @@ Result<std::string> CvdCacheCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdCacheCommandHandler::DetailedHelp(
-    std::vector<std::string>&) const {
+    const CommandRequest& request) const {
   return fmt::format(R"(usage: cvd cache <action> [<flag>...]
 
 Example usage:
