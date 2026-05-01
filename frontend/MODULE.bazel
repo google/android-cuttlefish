@@ -8,6 +8,7 @@ go_sdk.download(version = "1.25.7")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_work = "//:go.work")
+
 # Note: The following com_github_google_android_cuttlefish_frontend_src_* repos
 # are listed here because Gazelle's go_deps extension reports them as direct
 # dependencies based on go.mod files. However, they are NOT pulled from external
@@ -24,7 +25,6 @@ use_repo(
     "com_github_google_uuid",
     "com_github_gorilla_mux",
     "com_github_gorilla_websocket",
-    "com_github_hashicorp_go_multierror",
     "com_github_pion_logging",
     "com_github_pion_webrtc_v3",
     "org_golang_google_grpc",
