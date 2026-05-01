@@ -26,17 +26,18 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/file.h>
 #include "absl/cleanup/cleanup.h"
-#include "absl/strings/str_split.h"
-#include <fmt/format.h>
 #include "absl/log/log.h"
+#include "absl/strings/str_split.h"
+#include "android-base/file.h"
+#include "fmt/format.h"
 
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
 #include "cuttlefish/common/libs/utils/tee_logging.h"
+#include "cuttlefish/host/commands/cvd/cli/log_files.h"
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
@@ -216,6 +217,7 @@ bool ValidateHostConfiguration() {
 }
 
 }  // namespace
+
 }  // namespace cuttlefish
 
 int main(int argc, char** argv) {
@@ -228,7 +230,13 @@ int main(int argc, char** argv) {
   cuttlefish::MetadataLevel metadata_level =
       isatty(0) ? cuttlefish::MetadataLevel::ONLY_MESSAGE
                 : cuttlefish::MetadataLevel::FULL;
-  cuttlefish::LogToStderr("", metadata_level, verbosity);
+
+  std::optional<std::string> log_file = cuttlefish::GetCvdLogFile();
+  std::vector<std::string> log_files;
+  if (log_file) {
+    log_files.push_back(*log_file);
+  }
+  cuttlefish::LogToStderrAndFiles(log_files, "", metadata_level, verbosity);
 
   if (!cuttlefish::ValidateHostConfiguration()) {
     return -1;
