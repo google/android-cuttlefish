@@ -1,6 +1,6 @@
 module github.com/google/android-cuttlefish/frontend/src/liboperator
 
-go 1.17
+go 1.25
 
 require (
 	github.com/gorilla/mux v1.8.0

@@ -1,6 +1,6 @@
 module github.com/google/android-cuttlefish/frontend/src/host_orchestrator
 
-go 1.17
+go 1.25
 
 require (
 	github.com/google/android-cuttlefish/frontend/src/liboperator v0.0.0-20240822182916-7bea0dafdbde

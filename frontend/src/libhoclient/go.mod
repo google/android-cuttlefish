@@ -1,6 +1,6 @@
 module github.com/google/android-cuttlefish/frontend/src/libhoclient
 
-go 1.18
+go 1.25
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
