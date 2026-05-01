@@ -35,6 +35,7 @@ cf_cc_binary(
         "//cuttlefish/common/libs/utils:flag_parser",
         "//cuttlefish/common/libs/utils:subprocess",
         "//cuttlefish/common/libs/utils:tee_logging",
+        "//cuttlefish/host/commands/cvd/cli:log_files",
         "//cuttlefish/host/commands/cvd/utils",
         "//cuttlefish/host/commands/cvd/version",
         "//cuttlefish/host/libs/vm_manager",
