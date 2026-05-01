@@ -20,12 +20,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/google/android-cuttlefish/container/src/libcfcontainer"
+	"github.com/google/uuid"
 )
 
 func Main(args []string) error {
@@ -34,7 +40,31 @@ func Main(args []string) error {
 		cvdArgs.SubCommandArgs = []string{"help"}
 	}
 
-	ccm, err := CuttlefishContainerManager()
+	podcvdSockDir := filepath.Join(podcvdRootDir, "sock")
+	if err := os.MkdirAll(podcvdSockDir, 0777); err != nil {
+		return fmt.Errorf("failed to create podcvd root dir: %w", err)
+	}
+	sockfilePath := filepath.Join(podcvdSockDir, fmt.Sprintf("podcvd_%s.sock", uuid.New().String()))
+	socketPath := fmt.Sprintf("unix://%s", sockfilePath)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	cmd := exec.Command("podman", "system", "service", "--time=0", socketPath)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start podman system service: %w", err)
+	}
+	defer os.Remove(sockfilePath)
+	defer cmd.Process.Kill()
+	go func() {
+		<-sigChan
+		cmd.Process.Kill()
+		os.Remove(sockfilePath)
+		os.Exit(0)
+	}()
+	if err := waitSocketRunning(sockfilePath); err != nil {
+		return err
+	}
+	os.Setenv("DOCKER_HOST", socketPath)
+	ccm, err := CuttlefishContainerManager(socketPath)
 	if err != nil {
 		return err
 	}
@@ -88,6 +118,18 @@ func Main(args []string) error {
 		}
 	}
 	return nil
+}
+
+func waitSocketRunning(path string) error {
+	start := time.Now()
+	timeout := time.Second
+	for time.Since(start) < timeout {
+		if _, err := net.Dial("unix", path); err == nil {
+			return nil
+		}
+		time.Sleep(1 * time.Millisecond)
+	}
+	return fmt.Errorf("timed out waiting for podman socket to be ready")
 }
 
 func disconnectAdb(ccm libcfcontainer.CuttlefishContainerManager, groupName string) error {
@@ -161,7 +203,7 @@ func handleSubcommandsForSingleInstanceGroup(ccm libcfcontainer.CuttlefishContai
 			return fmt.Errorf("failed to inspect container: %w", err)
 		}
 		attemptID := inspectRes.Config.Labels["attempt_id"]
-		podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+		podcvdHomeDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
 		UpdateCvdGroupJsonRaw(res, podcvdHomeDir, ip)
 		stdout, err := json.MarshalIndent(res, "", "        ")
 		if err != nil {
@@ -209,7 +251,7 @@ func clearAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 	for err := range errCh {
 		errs = append(errs, err)
 	}
-	uidDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()))
+	uidDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()))
 	if err := os.RemoveAll(uidDir); err != nil {
 		errs = append(errs, fmt.Errorf("failed to remove uid dir: %w", err))
 	}
@@ -249,7 +291,7 @@ func fleetAllCuttlefishHosts(ccm libcfcontainer.CuttlefishContainerManager) erro
 				return
 			}
 			attemptID := inspectRes.Config.Labels["attempt_id"]
-			podcvdHomeDir := filepath.Join("/var/tmp/podcvd", strconv.Itoa(os.Getuid()), attemptID)
+			podcvdHomeDir := filepath.Join(podcvdRootDir, strconv.Itoa(os.Getuid()), attemptID)
 			for idx := range res.Groups {
 				UpdateCvdGroupJsonRaw(res.Groups[idx], podcvdHomeDir, ip)
 			}

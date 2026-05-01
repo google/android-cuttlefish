@@ -19,8 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"dario.cat/mergo"
@@ -199,9 +197,4 @@ func (m *CuttlefishContainerManagerImpl) StopAndRemoveContainer(ctx context.Cont
 		errs = append(errs, fmt.Errorf("failed to remove docker container: %w", err))
 	}
 	return errors.Join(errs...)
-}
-
-func RootlessPodmanSocketAddr() string {
-	socketPath := filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), "podman/podman.sock")
-	return fmt.Sprintf("unix://%s", socketPath)
 }
