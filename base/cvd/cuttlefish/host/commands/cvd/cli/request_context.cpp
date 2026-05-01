@@ -95,7 +95,7 @@ RequestContext::RequestContext(InstanceManager& instance_manager,
       NewCvdBugreportCommandHandler(instance_manager));
   request_handlers_.emplace_back(NewCvdStopCommandHandler(instance_manager));
   request_handlers_.emplace_back(
-      NewCvdHelpHandler(this->request_handlers_, instance_manager));
+      NewCvdHelpHandler(this->request_handlers_));
   request_handlers_.emplace_back(NewLintCommand());
   request_handlers_.emplace_back(
       NewLoadConfigsCommand(command_sequence_executor_, instance_manager));

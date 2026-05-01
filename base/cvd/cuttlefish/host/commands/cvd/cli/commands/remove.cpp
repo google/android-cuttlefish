@@ -46,7 +46,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
     return "Remove devices and artifacts from the system.";
   }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return "Removes selected devices from the system.\n\n"
            "Running devices are stopped first. Deletes build and runtime "
            "artifacts, including log files and images (only if downloaded by "

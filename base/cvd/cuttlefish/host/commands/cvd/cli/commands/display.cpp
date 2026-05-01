@@ -93,7 +93,7 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
 
   bool RequiresDeviceExists() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kDetailedHelpText;
   }
 

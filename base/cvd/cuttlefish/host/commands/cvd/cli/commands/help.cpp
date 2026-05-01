@@ -85,7 +85,7 @@ class CvdHelpHandler : public CvdCommandHandler {
     if (args.empty()) {
       std::cout << CF_EXPECT(TopLevelHelp());
     } else {
-      std::cout << CF_EXPECT(SubCommandHelp(args));
+      std::cout << CF_EXPECT(SubCommandHelp(request));
     }
 
     return {};
@@ -97,7 +97,7 @@ class CvdHelpHandler : public CvdCommandHandler {
 
   bool ShouldInterceptHelp() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kDetailedHelpText;
   }
 
@@ -136,15 +136,25 @@ class CvdHelpHandler : public CvdCommandHandler {
     return {};
   }
 
-  Result<std::string> SubCommandHelp(std::vector<std::string>& args) {
+  Result<std::string> SubCommandHelp(const CommandRequest& request) {
+    const std::vector<std::string>& args = request.SubcommandArguments();
     CF_EXPECT(
         !args.empty(),
         "Cannot process subcommand help without valid subcommand argument");
     CommandRequest lookup_request = CF_EXPECT(GetLookupRequest(args.front()));
     auto handler = CF_EXPECT(RequestHandler(lookup_request, request_handlers_));
 
+    // Create new command with "<subcmd> --help" instead of "help <subcmd>"
+    CommandRequest subcmd_request =
+        CF_EXPECT(CommandRequestBuilder()
+                      .AddArguments(args)
+                      .AddArguments({"--help"})
+                      .SetEnv(request.Env())
+                      .AddSelectorArguments(request.Selectors().AsArgs())
+                      .Build());
+
     std::stringstream help_message;
-    help_message << CF_EXPECT(handler->DetailedHelp(args)) << std::endl;
+    help_message << CF_EXPECT(handler->DetailedHelp(subcmd_request)) << std::endl;
     return help_message.str();
   }
 

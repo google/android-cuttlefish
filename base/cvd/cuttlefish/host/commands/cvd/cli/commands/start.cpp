@@ -16,6 +16,7 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/start.h"
 
+#include <signal.h>  // IWYU pragma: keep
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +46,7 @@
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -252,13 +254,9 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   Result<std::string> SummaryHelp() const override {
     return "Start a Cuttlefish virtual device or environment";
   }
-  // TODO(b/315027339): Swap to true.  Will likely need to add `cvd::Request` as
-  // a parameter of DetailedHelp to match current implementation
-  bool ShouldInterceptHelp() const override { return false; }
+  bool ShouldInterceptHelp() const override { return true; }
   bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return "Run cvd start --help for the full help text.";
-  }
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
  private:
   Result<void> LaunchDevice(Command command, LocalInstanceGroup& group,
@@ -284,7 +282,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   Result<void> UpdateEnvs(cvd_common::Envs& envs,
                           const LocalInstanceGroup& group);
 
-  Result<std::string> FindStartBin(const std::string& android_host_out);
+  Result<std::string> FindStartBin(const std::string& android_host_out) const;
 
   InstanceManager& instance_manager_;
   SubprocessWaiter subprocess_waiter_;
@@ -332,7 +330,7 @@ Result<Command> CvdStartCommandHandler::ConstructCvdNonHelpCommand(
 }
 
 Result<std::string> CvdStartCommandHandler::FindStartBin(
-    const std::string& android_host_out) {
+    const std::string& android_host_out) const {
   return CF_EXPECT(HostToolTarget(android_host_out).GetStartBinName());
 }
 
@@ -386,56 +384,6 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
             "The 'start' command doesn't accept --config_file, did you mean "
             "'create'?");
 
-  cvd_common::Envs envs = request.Env();
-  if (Contains(envs, "HOME")) {
-    if (envs["HOME"].empty()) {
-      envs.erase("HOME");
-    } else {
-      // As the end-user may override HOME, this could be a relative path
-      // to client's pwd, or may include "~" which is the client's actual
-      // home directory.
-      auto client_pwd = CurrentDirectory();
-      const auto given_home_dir = envs.at("HOME");
-      /*
-       * Imagine this scenario:
-       *   client$ export HOME=/tmp/new/dir
-       *   client$ HOME="~/subdir" cvd start
-       *
-       * The value of ~ isn't sent to the server. The server can't figure that
-       * out as it might be overridden before the cvd start command.
-       */
-      CF_EXPECT(!absl::StartsWith(given_home_dir, "~") &&
-                    !absl::StartsWith(given_home_dir, "~/"),
-                "The HOME directory should not start with ~");
-      envs["HOME"] = CF_EXPECT(
-          EmulateAbsolutePath({.current_working_dir = client_pwd,
-                               .home_dir = CF_EXPECT(SystemWideUserHome()),
-                               .path_to_convert = given_home_dir,
-                               .follow_symlink = false}));
-    }
-  }
-  // update DB if not help
-  // collect group creation infos
-  const bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
-
-  if (is_help) {
-    auto android_host_out =
-        CF_EXPECT(AndroidHostPath(envs),
-                  "\nTry running this command from the same directory as the "
-                  "downloaded or fetched host tools.");
-    const auto bin = CF_EXPECT(FindStartBin(android_host_out));
-
-    Command command =
-        CF_EXPECT(ConstructCvdHelpCommand(bin, envs, subcmd_args, request));
-    LOG(INFO) << "help command: " << command;
-
-    siginfo_t infop;  // NOLINT(misc-include-cleaner)
-    command.Start().Wait(&infop, WEXITED);
-    // gflags (and flag_parser for compatibility) exit with 1 after help output
-    CF_EXPECT(CheckProcessExitedNormally(infop, 1));
-    return {};
-  }
-
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
   }
@@ -450,6 +398,8 @@ Result<void> CvdStartCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(!group.HasActiveInstances(),
             "Selected instance group is already started, use `cvd create` to "
             "create a new one.");
+
+  cvd_common::Envs envs = request.Env();
 
   CF_EXPECT(UpdateInstanceArgs(subcmd_args, group));
   CF_EXPECT(UpdateWebrtcDeviceIds(subcmd_args, group));
@@ -541,6 +491,7 @@ Result<void> CvdStartCommandHandler::LaunchDevice(
          "handles information generated as you use Google services.";
   GatherVmStartMetrics(group);
 
+  // NOLINTNEXTLINE(misc-include-cleaner)
   siginfo_t infop = CF_EXPECT(subprocess_waiter_.Wait());
   // NOLINTNEXTLINE(misc-include-cleaner)
   if (infop.si_code != CLD_EXITED || infop.si_status != EXIT_SUCCESS) {
@@ -576,6 +527,57 @@ Result<void> CvdStartCommandHandler::LaunchDeviceInterruptible(
   }
 
   return {};
+}
+
+Result<std::string> CvdStartCommandHandler::DetailedHelp(
+    const CommandRequest& request) const {
+  cvd_common::Envs envs = request.Env();
+  Result<LocalInstanceGroup> group_res =
+      selector::SelectGroup(instance_manager_, request);
+  if (group_res.ok()) {
+    envs["HOME"] = group_res.value().HomeDir();
+  } else if (Contains(envs, "HOME")) {
+    if (envs["HOME"].empty()) {
+      envs.erase("HOME");
+    } else {
+      // As the end-user may override HOME, this could be a relative path
+      // to client's pwd, or may include "~" which is the client's actual
+      // home directory.
+      auto client_pwd = CurrentDirectory();
+      const auto given_home_dir = envs.at("HOME");
+      /*
+       * Imagine this scenario:
+       *   client$ export HOME=/tmp/new/dir
+       *   client$ HOME="~/subdir" cvd start
+       *
+       * The value of ~ isn't sent to the server. The server can't figure that
+       * out as it might be overridden before the cvd start command.
+       */
+      CF_EXPECT(!absl::StartsWith(given_home_dir, "~") &&
+                    !absl::StartsWith(given_home_dir, "~/"),
+                "The HOME directory should not start with ~");
+      envs["HOME"] = CF_EXPECT(
+          EmulateAbsolutePath({.current_working_dir = client_pwd,
+                               .home_dir = CF_EXPECT(SystemWideUserHome()),
+                               .path_to_convert = given_home_dir,
+                               .follow_symlink = false}));
+    }
+  }
+  auto android_host_out =
+      CF_EXPECT(AndroidHostPath(envs),
+                "\nTry running this command from the same directory as the "
+                "downloaded or fetched host tools.");
+  const auto bin = CF_EXPECT(FindStartBin(android_host_out));
+
+  Command command = CF_EXPECT(ConstructCvdHelpCommand(
+      bin, envs, request.SubcommandArguments(), request));
+  LOG(INFO) << "help command: " << command;
+  std::string stdout;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
+  // gflags returns exit code 1 when --help is given
+  CF_EXPECTF(res == 0 || res == 1,
+             "Failed to execute start binary, exit code: {}", res);
+  return stdout;
 }
 
 }  // namespace
