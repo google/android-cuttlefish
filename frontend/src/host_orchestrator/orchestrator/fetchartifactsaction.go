@@ -17,7 +17,6 @@ package orchestrator
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -76,7 +75,7 @@ func (a *FetchArtifactsAction) startDownload(op apiv1.Operation) OperationResult
 			Error: operator.NewInternalError("error cloning request", err),
 		}
 	}
-	dir, err := ioutil.TempDir(a.paths.InstancesDir, "ins*")
+	dir, err := os.MkdirTemp(a.paths.InstancesDir, "ins*")
 	if err != nil {
 		return OperationResult{Error: operator.NewInternalError("error creating tmp dir", err)}
 	}

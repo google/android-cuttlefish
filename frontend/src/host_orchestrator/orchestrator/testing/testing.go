@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -13,7 +12,7 @@ import (
 // Similar to https://pkg.go.dev/testing#T.TempDir without the cleanup part. testing#T.TempDir cannot be used
 // as it was introduced in go 1.15.
 func TempDir(t *testing.T) string {
-	name, err := ioutil.TempDir("", "cuttlefishTestDir")
+	name, err := os.MkdirTemp("", "cuttlefishTestDir")
 	if err != nil {
 		t.Fatal(err)
 	}

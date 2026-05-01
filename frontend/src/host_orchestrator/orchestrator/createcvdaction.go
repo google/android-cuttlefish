@@ -16,7 +16,6 @@ package orchestrator
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -145,7 +144,7 @@ const ErrMsgLaunchCVDFailed = "failed to launch cvd"
 
 func (a *CreateCVDAction) launchFromAndroidCI(
 	buildSource *apiv1.AndroidCIBuildSource, instancesCount uint32, op apiv1.Operation) (*cvd.Group, error) {
-	targetDir, err := ioutil.TempDir(a.paths.InstancesDir, "ins*")
+	targetDir, err := os.MkdirTemp(a.paths.InstancesDir, "ins*")
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +213,7 @@ func validateRequest(r *apiv1.CreateCVDRequest) error {
 
 // See https://pkg.go.dev/io/ioutil@go1.13.15#TempFile
 func createTempFile(pattern string, data string, mode os.FileMode) (*os.File, error) {
-	file, err := ioutil.TempFile("", pattern)
+	file, err := os.CreateTemp("", pattern)
 	if err != nil {
 		return nil, err
 	}
