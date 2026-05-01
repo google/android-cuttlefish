@@ -115,7 +115,6 @@ Result<void> AddAdbBugreport(const CuttlefishConfig::InstanceSpecific& instance,
     std::string filename = device_br_dir + "/" + name;
     LogError(AddFileAt(archive, filename, android::base::Basename(filename)));
   }
-  static_cast<void>(RecursivelyRemoveDirectory(device_br_dir));
   return {};
 }
 
