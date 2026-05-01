@@ -15,6 +15,9 @@
 package main
 
 import (
+	"archive/zip"
+	"io"
+	"slices"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/cvd/common"
@@ -35,7 +38,49 @@ func TestTakeBugreport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport"); err != nil {
+	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport", "--output=/tmp/host_bugreport.zip"); err != nil {
 		t.Fatal(err)
 	}
+
+	namesInZip, err := assertZipIntegrity("/tmp/host_bugreport.zip")
+	if err != nil {
+		t.Errorf("invalid zip file: %s", err)
+	}
+
+	expectedNamesSample := []string{
+		"cvd-1/cuttlefish_config.json",
+		"cvd-1/logs/kernel.log",
+		"cvd-1/logs/logcat",
+		"cvd-1/logs/launcher.log",
+		"fetch.log",
+	}
+	for _, name := range expectedNamesSample {
+		if !slices.Contains(namesInZip, name) {
+			t.Errorf("%q not found in zip file", name)
+		}
+	}
+}
+
+// The zip file is verified checking for errors extracting
+// each file in the archive.
+func assertZipIntegrity(filename string) ([]string, error) {
+	names := []string{}
+	r, err := zip.OpenReader(filename)
+	if err != nil {
+		return names, err
+	}
+	defer r.Close()
+	for _, f := range r.File {
+		names = append(names, f.Name)
+		rc, err := f.Open()
+		if err != nil {
+			return names, err
+		}
+		_, readErr := io.Copy(io.Discard, rc)
+		rc.Close()
+		if readErr != nil {
+			return names, readErr
+		}
+	}
+	return names, nil
 }
