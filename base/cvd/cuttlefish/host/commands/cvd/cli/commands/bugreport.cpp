@@ -92,7 +92,7 @@ class CvdBugreportCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override;
+
   bool RequiresDeviceExists() const override;
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
@@ -160,7 +160,7 @@ Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-bool CvdBugreportCommandHandler::ShouldInterceptHelp() const { return true; }
+
 bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(

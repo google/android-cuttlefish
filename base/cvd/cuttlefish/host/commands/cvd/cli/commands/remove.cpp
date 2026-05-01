@@ -53,7 +53,7 @@ class RemoveCvdCommandHandler : public CvdCommandHandler {
            "cvd itself)";
   }
 
-  bool ShouldInterceptHelp() const override { return true; }
+
   bool RequiresDeviceExists() const override { return true; }
 
   Result<void> Handle(const CommandRequest& request) override {

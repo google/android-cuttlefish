@@ -82,7 +82,7 @@ class CvdStopCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override { return true; }
+
   bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
@@ -112,8 +112,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
 
   bool has_help_flag = CF_EXPECT(HasHelpFlag(cmd_args));
   CF_EXPECT(!has_help_flag,
-            "Help flag should be handled by global cvd as "
-            "ShouldInterceptHelp() returns true");
+            "Help flag should be handled by global cvd");
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
