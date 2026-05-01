@@ -3,7 +3,9 @@ runs:
   using: "composite"
   steps:
   - name: Setup apt
-    run: sudo apt-get update -y && sudo apt-get upgrade -y
+    run: |
+      sudo apt-get purge firefox
+      sudo apt-get update -y && sudo apt-get upgrade -y
     shell: bash
   - name: Install dependencies
     run: |
