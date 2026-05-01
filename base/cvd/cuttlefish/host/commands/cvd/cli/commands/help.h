@@ -20,11 +20,9 @@
 #include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
-#include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 
 namespace cuttlefish {
 
 std::unique_ptr<CvdCommandHandler> NewCvdHelpHandler(
-    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers,
-    InstanceManager& instance_manager);
+    const std::vector<std::unique_ptr<CvdCommandHandler>>& server_handlers);
 }
