@@ -9,7 +9,7 @@ on:
         required: false
 
 concurrency:
-  group: '${{ github.workflow }}-review-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}'
+  group: '${{ github.workflow }}-review-${{ github.event_name }}-${{ github.event.pull_request.number }}'
   cancel-in-progress: true
 
 defaults:
@@ -23,7 +23,6 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-      issues: 'write'
       pull-requests: 'write'
     steps:
       - name: 'Mint identity token'
@@ -35,7 +34,6 @@ jobs:
           app-id: '${{ vars.APP_ID }}'
           private-key: '${{ secrets.APP_PRIVATE_KEY }}'
           permission-contents: 'read'
-          permission-issues: 'write'
           permission-pull-requests: 'write'
 
       - name: 'Checkout repository'
@@ -46,9 +44,9 @@ jobs:
         id: 'gemini_pr_review'
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
-          ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
-          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
+          ISSUE_TITLE: '${{ github.event.pull_request.title }}'
+          ISSUE_BODY: '${{ github.event.pull_request.body }}'
+          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number }}'
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
@@ -119,9 +117,9 @@ jobs:
         id: 'gemini_security_analysis'
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
-          ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
-          ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
-          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
+          ISSUE_TITLE: '${{ github.event.pull_request.title }}'
+          ISSUE_BODY: '${{ github.event.pull_request.body }}'
+          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number }}'
           REPOSITORY: '${{ github.repository }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
           GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
@@ -139,7 +137,7 @@ jobs:
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           upload_artifacts: '${{ vars.UPLOAD_ARTIFACTS }}'
           workflow_name: 'gemini-security-analysis'
-           # Explicitly set the PR number to handle `issue_comment` triggers (which GitHub treats as issues, not PRs)
+          # Explicitly set the PR number to handle `issue_comment` triggers (which GitHub treats as issues, not PRs)
           github_pr_number: '${{ github.event.pull_request.number }}'
           settings: |-
             {
