@@ -17,6 +17,7 @@ package main
 import (
 	"archive/zip"
 	"io"
+	"regexp"
 	"slices"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestTakeBugreport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport", "--output=/tmp/host_bugreport.zip"); err != nil {
+	if _, err := c.RunCmd(c.TargetBin(), "host_bugreport", "--output=/tmp/host_bugreport.zip", "--include_adb_bugreport=true"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,6 +48,7 @@ func TestTakeBugreport(t *testing.T) {
 		t.Errorf("invalid zip file: %s", err)
 	}
 
+	// Verify some expected names.
 	expectedNamesSample := []string{
 		"cvd-1/cuttlefish_config.json",
 		"cvd-1/logs/kernel.log",
@@ -58,6 +60,22 @@ func TestTakeBugreport(t *testing.T) {
 		if !slices.Contains(namesInZip, name) {
 			t.Errorf("%q not found in zip file", name)
 		}
+	}
+
+	// Verify adb bugreport is found in the zip file
+	adbBugReportFound := false
+	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_only_phone.*\.zip$`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range namesInZip {
+		if re.MatchString(name) {
+			adbBugReportFound = true
+			break
+		}
+	}
+	if !adbBugReportFound {
+		t.Errorf("adb bugreport not found in zip file")
 	}
 }
 
