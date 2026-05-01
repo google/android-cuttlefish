@@ -254,7 +254,7 @@ class CvdStartCommandHandler : public CvdCommandHandler {
   Result<std::string> SummaryHelp() const override {
     return "Start a Cuttlefish virtual device or environment";
   }
-  bool ShouldInterceptHelp() const override { return true; }
+
   bool RequiresDeviceExists() const override { return true; }
   Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 

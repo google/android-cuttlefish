@@ -50,13 +50,11 @@ Result<void> Cvd::HandleCommand(
 
   RequestContext context(instance_manager_, lock_file_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
-  if (handler->ShouldInterceptHelp()) {
-    if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {
-      std::cout << CF_EXPECT(handler->DetailedHelp(request)) << std::endl;
-      return {};
-    }
+  if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {
+    std::cout << CF_EXPECT(handler->DetailedHelp(request)) << std::endl;
+  } else {
+    CF_EXPECT(handler->Handle(request));
   }
-  CF_EXPECT(handler->Handle(request));
   return {};
 }
 
