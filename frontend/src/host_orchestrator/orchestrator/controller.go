@@ -136,6 +136,7 @@ func (c *Controller) AddRoutes(router *mux.Router) {
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&updateImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager, c.UserArtifactsManager})).Methods("PUT")
 	router.Handle("/cvd_imgs_dirs/{id}", httpHandler(&deleteImageDirectoryHandler{c.ImageDirectoriesManager, c.OperationManager})).Methods("DELETE")
 	router.Handle("/reset", httpHandler(&resetCVDHandler{c.OperationManager})).Methods("POST")
+	router.PathPrefix("/v0/sse").Handler(NewMCPHandler(c.Config, c.OperationManager, c.UserArtifactsManager)).Methods("DELETE", "GET", "POST")
 	// Debug endpoints.
 	router.Handle("/_debug/varz", httpHandler(&getDebugVariablesHandler{c.DebugVariablesManager})).Methods("GET")
 	router.Handle("/_debug/statusz", okHandler()).Methods("GET")

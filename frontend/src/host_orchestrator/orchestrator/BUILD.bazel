@@ -19,6 +19,7 @@ go_library(
         "instancemanager.go",
         "listcvdsaction.go",
         "listscreenrecordingsaction.go",
+        "mcp.go",
         "operation.go",
         "resetcvdaction.go",
         "startcvdaction.go",
@@ -37,6 +38,7 @@ go_library(
         "@com_github_google_btree//:btree",
         "@com_github_google_uuid//:uuid",
         "@com_github_gorilla_mux//:mux",
+        "@com_github_modelcontextprotocol_go_sdk//mcp",
     ],
 )
 
@@ -48,6 +50,7 @@ go_test(
         "imagedirectories_test.go",
         "instancemanager_test.go",
         "listcvdsaction_test.go",
+        "mcp_test.go",
         "operation_test.go",
         "userartifacts_test.go",
         "validation_test.go",
