@@ -69,6 +69,7 @@
 #include "cuttlefish/host/libs/config/fetcher_configs.h"
 #include "cuttlefish/host/libs/config/log_string_to_dir.h"
 #include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/pretty/vector.h"
 
@@ -304,6 +305,8 @@ Result<const CuttlefishConfig*> InitFilesystemAndCreateConfig(
     const VmManagerFlag& vm_manager_flag, const Defaults& defaults,
     AndroidBuilds& android_builds) {
   {
+    CF_TRACE_EVENT_FUNC();
+
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
@@ -572,6 +575,9 @@ Result<int> AssembleCvdMain(int argc, char** argv) {
   auto log = CF_EXPECT(SetLogger(AbsolutePath(FLAGS_instance_dir)));
 
   CF_EXPECT(CheckNoTTY());
+
+  auto scoped_trace_flusher = InitializeTracing();
+  CF_TRACE_EVENT_FUNC();
 
   // Read everything that cvd_internal_start writes, but ignore it since
   // fetcher_config.json will be searched for in the system image directory.

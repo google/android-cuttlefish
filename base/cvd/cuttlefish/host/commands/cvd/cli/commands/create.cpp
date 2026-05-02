@@ -50,6 +50,7 @@
 #include "cuttlefish/host/commands/cvd/instances/instance_manager.h"
 #include "cuttlefish/host/commands/cvd/instances/local_instance_group.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/posix/strerror.h"
 #include "cuttlefish/posix/symlink.h"
 #include "cuttlefish/result/result.h"
@@ -294,6 +295,8 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 }
 
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
+  CF_TRACE_EVENT_FUNC();
+
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
   bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));

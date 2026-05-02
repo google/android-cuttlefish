@@ -78,6 +78,7 @@
 #include "cuttlefish/host/libs/config/fastboot/fastboot.h"
 #include "cuttlefish/host/libs/feature/feature.h"
 #include "cuttlefish/host/libs/feature/inject.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/metrics/metrics_receiver.h"
 #include "cuttlefish/host/libs/version/version.h"
 #include "cuttlefish/host/libs/vm_manager/vm_manager.h"
@@ -255,6 +256,9 @@ void ConfigureLogs(const CuttlefishConfig& config,
 
 Result<void> RunCvdMain(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, false);
+
+  auto scoped_trace_flusher = InitializeTracing();
+  CF_TRACE_EVENT_FUNC();
 
   CF_EXPECT(StdinValid(), "Invalid stdin");
   auto config = CF_EXPECT(CuttlefishConfig::Get());

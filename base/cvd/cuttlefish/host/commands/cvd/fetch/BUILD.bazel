@@ -198,6 +198,7 @@ cf_cc_library(
         "//cuttlefish/host/libs/config:fetcher_config",
         "//cuttlefish/host/libs/config:file_source",
         "//cuttlefish/host/libs/image_aggregator:sparse_image",
+        "//cuttlefish/host/libs/tracing",
         "//cuttlefish/host/libs/web:android_build",
         "//cuttlefish/host/libs/web:android_build_string",
         "//cuttlefish/host/libs/web:chrome_os_build_string",

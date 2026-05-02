@@ -39,6 +39,7 @@
 #include "cuttlefish/host/libs/config/guest_hwui_renderer.h"
 #include "cuttlefish/host/libs/config/guest_renderer_preload.h"
 #include "cuttlefish/host/libs/config/vmm_mode.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 
 #ifdef __APPLE__
 #define CF_UNUSED_ON_MACOS [[maybe_unused]]
@@ -681,6 +682,8 @@ static std::unordered_set<std::string> kSupportedGpuContexts{
 
 gfxstream::proto::GraphicsAvailability
 GetGraphicsAvailabilityWithSubprocessCheck() {
+  CF_TRACE_EVENT_FUNC();
+
 #ifdef __APPLE__
   return {};
 #else
@@ -734,6 +737,8 @@ Result<GpuMode> ConfigureGpuSettings(
     const std::string& guest_renderer_preload_arg, VmmMode vmm,
     const GuestConfig& guest_config,
     CuttlefishConfig::MutableInstanceSpecific& instance) {
+  CF_TRACE_EVENT_FUNC();
+  
 #ifdef __APPLE__
   (void)graphics_availability;
   (void)gpu_vhost_user_mode_arg;

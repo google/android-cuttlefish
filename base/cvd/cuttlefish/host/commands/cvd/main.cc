@@ -40,6 +40,7 @@
 #include "cuttlefish/host/commands/cvd/cvd.h"
 #include "cuttlefish/host/commands/cvd/utils/common.h"
 #include "cuttlefish/host/commands/cvd/version/version.h"
+#include "cuttlefish/host/libs/tracing/tracing.h"
 #include "cuttlefish/host/libs/vm_manager/host_configuration.h"
 #include "cuttlefish/posix/strerror.h"
 // TODO(315772518) Re-enable once metrics send is reenabled
@@ -124,6 +125,10 @@ void IncreaseFileLimit() {
 }
 
 Result<void> CvdMain(cvd_common::Args all_args) {
+  auto scoped_trace_flusher = InitializeTracing();
+
+  CF_TRACE_EVENT("CvdMain");
+
   if (!isatty(0)) {
     LOG(INFO) << GetVersionIds().ToString();
   }
