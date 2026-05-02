@@ -82,9 +82,9 @@ class CvdStopCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   cvd_common::Args CmdList() const override { return {"stop", "stop_cvd"}; }
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override { return true; }
+
   bool RequiresDeviceExists() const override { return true; }
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
  private:
   Result<std::string> GetBin(const std::string& host_artifacts_path) const;
@@ -110,10 +110,7 @@ Result<void> CvdStopCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> cmd_args = request.SubcommandArguments();
 
-  bool has_help_flag = CF_EXPECT(HasHelpFlag(cmd_args));
-  CF_EXPECT(!has_help_flag,
-            "Help flag should be handled by global cvd as "
-            "ShouldInterceptHelp() returns true");
+
 
   if (!CF_EXPECT(instance_manager_.HasInstanceGroups())) {
     return CF_ERR(NoGroupMessage(request));
@@ -143,7 +140,7 @@ Result<std::string> CvdStopCommandHandler::SummaryHelp() const {
 }
 
 Result<std::string> CvdStopCommandHandler::DetailedHelp(
-    std::vector<std::string>& arguments) const {
+    const CommandRequest& request) const {
   return kDetailedHelpText;
 }
 

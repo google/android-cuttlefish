@@ -214,8 +214,8 @@ class CvdCreateCommandHandler : public CvdCommandHandler {
   Result<void> Handle(const CommandRequest& request) override;
   std::vector<std::string> CmdList() const override { return {"create"}; }
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override;
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
  private:
   Result<LocalInstanceGroup> CreateGroup(const cvd_common::Args& subcmd_args,
@@ -296,8 +296,7 @@ Result<void> CvdCreateCommandHandler::CreateSymlinks(
 Result<void> CvdCreateCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
   std::vector<std::string> subcmd_args = request.SubcommandArguments();
-  bool is_help = CF_EXPECT(HasHelpFlag(subcmd_args));
-  CF_EXPECT(!is_help);
+
 
   cvd_common::Envs envs = CF_EXPECT(GetEnvs(request));
   CreateFlags flags = CF_EXPECT(ParseCommandFlags(envs, subcmd_args));
@@ -350,10 +349,10 @@ Result<std::string> CvdCreateCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-bool CvdCreateCommandHandler::ShouldInterceptHelp() const { return true; }
+
 
 Result<std::string> CvdCreateCommandHandler::DetailedHelp(
-    std::vector<std::string>&) const {
+    const CommandRequest& request) const {
   return kDetailedHelpText;
 }
 

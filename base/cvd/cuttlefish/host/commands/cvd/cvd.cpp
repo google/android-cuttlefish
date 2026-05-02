@@ -17,14 +17,12 @@
 #include "cuttlefish/host/commands/cvd/cvd.h"
 
 #include <iostream>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <android-base/file.h>
 
-#include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/frontline_parser.h"
@@ -52,15 +50,11 @@ Result<void> Cvd::HandleCommand(
 
   RequestContext context(instance_manager_, lock_file_manager_);
   auto handler = CF_EXPECT(context.Handler(request));
-  if (handler->ShouldInterceptHelp()) {
-    std::vector<std::string> invocation_args = request.SubcommandArguments();
-    if (CF_EXPECT(HasHelpFlag(invocation_args))) {
-      std::cout << CF_EXPECT(handler->DetailedHelp(invocation_args))
-                << std::endl;
-      return {};
-    }
+  if (CF_EXPECT(HasHelpFlag(request.SubcommandArguments()))) {
+    std::cout << CF_EXPECT(handler->DetailedHelp(request)) << std::endl;
+  } else {
+    CF_EXPECT(handler->Handle(request));
   }
-  CF_EXPECT(handler->Handle(request));
   return {};
 }
 

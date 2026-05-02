@@ -28,11 +28,9 @@
 
 #include "absl/strings/str_cat.h"
 
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
-#include "cuttlefish/common/libs/utils/users.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -71,12 +69,14 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
     const cvd_common::Envs& env = request.Env();
 
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
+    if (subcmd_args.empty()) {
+      // Also print help when given no arguments
+      std::cerr << kDetailedHelpText;
+      return {};
+    }
 
-    bool is_help = CF_EXPECT(IsHelp(subcmd_args));
     // may modify subcmd_args by consuming in parsing
-    Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, env))
-                : CF_EXPECT(NonHelpCommand(request, subcmd_args, env));
+    Command command = CF_EXPECT(BuildCommand(request, subcmd_args, env));
 
     siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
@@ -89,39 +89,18 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
-  bool ShouldInterceptHelp() const override { return true; }
+
 
   bool RequiresDeviceExists() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kDetailedHelpText;
   }
 
  private:
-  Result<Command> HelpCommand(const CommandRequest& request,
-                              const cvd_common::Args& subcmd_args,
-                              cvd_common::Envs envs) {
-    const std::string android_host_out = CF_EXPECT(AndroidHostPath(envs));
-    const std::string cvd_display_bin_path =
-        absl::StrCat(android_host_out, "/bin/", kDisplayBin);
-    std::string home = Contains(envs, "HOME") ? envs.at("HOME")
-                                              : CF_EXPECT(SystemWideUserHome());
-    envs["HOME"] = home;
-    envs[kAndroidHostOut] = android_host_out;
-    envs[kAndroidSoongHostOut] = android_host_out;
-    ConstructCommandParam construct_cmd_param{.bin_path = cvd_display_bin_path,
-                                              .home = home,
-                                              .args = subcmd_args,
-                                              .envs = std::move(envs),
-                                              .working_dir = CurrentDirectory(),
-                                              .command_name = kDisplayBin};
-    Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
-    return command;
-  }
-
-  Result<Command> NonHelpCommand(const CommandRequest& request,
-                                 cvd_common::Args& subcmd_args,
-                                 cvd_common::Envs envs) {
+  Result<Command> BuildCommand(const CommandRequest& request,
+                               cvd_common::Args& subcmd_args,
+                               cvd_common::Envs envs) {
     // test if there is --instance_num flag
     int instance_num = -1;
     Flag instance_num_flag = GflagsCompatFlag("instance_num", instance_num);
@@ -161,15 +140,6 @@ class CvdDisplayCommandHandler : public CvdCommandHandler {
                                               .command_name = kDisplayBin};
     Command command = CF_EXPECT(ConstructCommand(construct_cmd_param));
     return command;
-  }
-
-  Result<bool> IsHelp(const cvd_common::Args& cmd_args) const {
-    // cvd display --help, --helpxml, etc or simply cvd display
-    if (cmd_args.empty() || CF_EXPECT(HasHelpFlag(cmd_args))) {
-      return true;
-    }
-    // cvd display help <subcommand> format
-    return (cmd_args.front() == "help");
   }
 
   InstanceManager& instance_manager_;

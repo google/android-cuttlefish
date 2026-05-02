@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
@@ -52,11 +51,11 @@ class CvdDevicePowerBtnCommandHandler : public CvdCommandHandler {
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
-  bool ShouldInterceptHelp() const override { return true; }
+
 
   bool RequiresDeviceExists() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kSummaryHelpText;
   }
 

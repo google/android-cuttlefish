@@ -50,11 +50,11 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
-  bool ShouldInterceptHelp() const override { return true; }
+
 
   bool RequiresDeviceExists() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
     return kHelpMessage;
   }
 
@@ -62,7 +62,7 @@ class CvdFleetCommandHandler : public CvdCommandHandler {
   InstanceManager& instance_manager_;
 
   static constexpr char kFleetSubcmd[] = "fleet";
-  bool IsHelp(const cvd_common::Args& cmd_args) const;
+
 };
 
 Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
@@ -70,10 +70,7 @@ Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
 
   std::vector<std::string> args = request.SubcommandArguments();
 
-  if (IsHelp(args)) {
-    std::cout << kHelpMessage;
-    return {};
-  }
+
 
   auto all_groups = CF_EXPECT(instance_manager_.FindGroups({}));
   Json::Value groups_json(Json::arrayValue);
@@ -88,14 +85,7 @@ Result<void> CvdFleetCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-bool CvdFleetCommandHandler::IsHelp(const cvd_common::Args& args) const {
-  for (const auto& arg : args) {
-    if (arg == "--help" || arg == "-help") {
-      return true;
-    }
-  }
-  return false;
-}
+
 
 std::unique_ptr<CvdCommandHandler> NewCvdFleetCommandHandler(
     InstanceManager& instance_manager) {

@@ -16,7 +16,6 @@
 
 #include "cuttlefish/host/commands/cvd/cli/commands/bugreport.h"
 
-#include <signal.h>  // IWYU pragma: keep
 #include <stdlib.h>
 
 #include <functional>
@@ -27,13 +26,13 @@
 
 #include "absl/strings/str_cat.h"
 #include "fmt/core.h"
-#include "fmt/format.h"
 
 #include "absl/log/log.h"
 #include "android-base/file.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/interruptible_terminal.h"
@@ -91,14 +90,11 @@ class CvdBugreportCommandHandler : public CvdCommandHandler {
   CvdBugreportCommandHandler(InstanceManager& instance_manager);
 
   Result<void> Handle(const CommandRequest& request) override;
-  Result<void> HandleHelp(const cvd_common::Envs& env,
-                          const cvd_common::Args& cmd_args,
-                          const CommandRequest& request);
   cvd_common::Args CmdList() const override;
   Result<std::string> SummaryHelp() const override;
-  bool ShouldInterceptHelp() const override;
+
   bool RequiresDeviceExists() const override;
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override;
 
  private:
   InstanceManager& instance_manager_;
@@ -118,11 +114,6 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
 
   std::vector<std::string> cmd_args = request.SubcommandArguments();
   cvd_common::Envs env = request.Env();
-
-  if (CF_EXPECT(HasHelpFlag(cmd_args))) {
-    CF_EXPECT(HandleHelp(env, cmd_args, request));
-    return {};
-  }
 
   std::string output_file =
       CF_EXPECT(OutputFileFromArgs(cmd_args), "Failed to parse output flag");
@@ -161,20 +152,6 @@ Result<void> CvdBugreportCommandHandler::Handle(const CommandRequest& request) {
   return {};
 }
 
-Result<void> CvdBugreportCommandHandler::HandleHelp(
-    const cvd_common::Envs& env, const cvd_common::Args& cmd_args,
-    const CommandRequest& request) {
-  std::string android_host_out = CF_EXPECT(AndroidHostPath(env));
-  Command command = CF_EXPECT(
-      ConstructCvdHelpCommand(kHostBugreportBin, env, cmd_args, request));
-
-  siginfo_t infop;  // NOLINT(misc-include-cleaner)
-  command.Start().Wait(&infop, WEXITED);
-
-  CF_EXPECT(CheckProcessExitedNormally(infop));
-  return {};
-}
-
 std::vector<std::string> CvdBugreportCommandHandler::CmdList() const {
   return {"bugreport", "host_bugreport", "cvd_host_bugreport"};
 }
@@ -183,18 +160,21 @@ Result<std::string> CvdBugreportCommandHandler::SummaryHelp() const {
   return kSummaryHelpText;
 }
 
-bool CvdBugreportCommandHandler::ShouldInterceptHelp() const { return false; }
+
 bool CvdBugreportCommandHandler::RequiresDeviceExists() const { return true; }
 
 Result<std::string> CvdBugreportCommandHandler::DetailedHelp(
-    std::vector<std::string>& arguments) const {
-  static constexpr char kDetailedHelpText[] =
-      "Run cvd {} --help for full help text";
-  std::string replacement = "<command>";
-  if (!arguments.empty()) {
-    replacement = arguments.front();
-  }
-  return fmt::format(kDetailedHelpText, replacement);
+    const CommandRequest& request) const {
+  std::string android_host_out = CF_EXPECT(AndroidHostPath(request.Env()));
+  Command command = CF_EXPECT(
+      ConstructCvdHelpCommand(kHostBugreportBin, request.Env(),
+                              request.SubcommandArguments(), request));
+  std::string stdout;
+  int res = RunWithManagedStdio(std::move(command), nullptr, &stdout, nullptr);
+  // gflags returns exit code 1 when --help is given
+  CF_EXPECTF(res == 0 || res == 1,
+             "Failed to execute bugreport binary, exit code: {}", res);
+  return stdout;
 }
 
 }  // namespace

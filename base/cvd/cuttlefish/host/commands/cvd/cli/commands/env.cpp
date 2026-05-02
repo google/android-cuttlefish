@@ -21,12 +21,13 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "absl/strings/str_cat.h"
 
-#include "cuttlefish/common/libs/utils/flag_parser.h"
 #include "cuttlefish/common/libs/utils/subprocess.h"
+#include "cuttlefish/common/libs/utils/subprocess_managed_stdio.h"
 #include "cuttlefish/host/commands/cvd/cli/command_request.h"
 #include "cuttlefish/host/commands/cvd/cli/commands/command_handler.h"
 #include "cuttlefish/host/commands/cvd/cli/selector/selector.h"
@@ -57,24 +58,14 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
 
   Result<void> Handle(const CommandRequest& request) override {
     CF_EXPECT(CanHandle(request));
-    const cvd_common::Envs& env = request.Env();
-
     std::vector<std::string> subcmd_args = request.SubcommandArguments();
 
-    /*
-     * cvd_env --help only. Not --helpxml, etc.
-     *
-     * Otherwise, HasHelpFlag() should be used here instead.
-     */
-    bool help = false;
-    Flag help_flag = GflagsCompatFlag("help", help);
-    cvd_common::Args subcmd_args_copy{subcmd_args};
-    auto help_parse_result = ConsumeFlags({help_flag}, subcmd_args_copy);
-    bool is_help = help_parse_result.ok() && help;
+    // --help and cvd env help are intercepted
+    bool is_help = request.SubcommandArguments().empty();
 
     Command command =
-        is_help ? CF_EXPECT(HelpCommand(request, subcmd_args, env))
-                : CF_EXPECT(NonHelpCommand(request, subcmd_args, env));
+        is_help ? CF_EXPECT(HelpCommand(request))
+                : CF_EXPECT(NonHelpCommand(request));
 
     siginfo_t infop;  // NOLINT(misc-include-cleaner)
     command.Start().Wait(&infop, WEXITED);
@@ -87,27 +78,38 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
 
   Result<std::string> SummaryHelp() const override { return kSummaryHelpText; }
 
-  bool ShouldInterceptHelp() const override { return true; }
+
 
   bool RequiresDeviceExists() const override { return true; }
 
-  Result<std::string> DetailedHelp(std::vector<std::string>&) const override {
-    return kDetailedHelpText;
+  Result<std::string> DetailedHelp(const CommandRequest& request) const override {
+    Result<Command> help_cmd_res = HelpCommand(request);
+    if (!help_cmd_res.ok()) {
+      // Couldn't find an underlying binary to defer to for help
+      return kDetailedHelpText;
+    }
+    std::string stdout;
+    int res = RunWithManagedStdio(std::move(help_cmd_res.value()), nullptr,
+                                  &stdout, nullptr);
+    // gflags returns exit code 1 when --help is given
+    CF_EXPECTF(res == 0 || res == 1,
+               "Failed to execute internal env binary, exit code: {}", res);
+    return stdout;
   }
 
  private:
-  Result<Command> HelpCommand(const CommandRequest& request,
-                              const cvd_common::Args& subcmd_args,
-                              const cvd_common::Envs& envs) {
-    cvd_common::Envs envs_copy = envs;
-    envs_copy[kAndroidHostOut] = CF_EXPECT(AndroidHostPath(envs));
+  Result<Command> HelpCommand(const CommandRequest& request) const {
+    cvd_common::Envs envs_copy = request.Env();
+    std::vector<std::string> help_args = request.SubcommandArguments();
+    if (help_args.empty()) {
+      help_args.push_back("--help");
+    }
+    envs_copy[kAndroidHostOut] = CF_EXPECT(AndroidHostPath(request.Env()));
     return CF_EXPECT(
-        ConstructCvdHelpCommand(kCvdEnvBin, envs_copy, subcmd_args, request));
+        ConstructCvdHelpCommand(kCvdEnvBin, envs_copy, help_args, request));
   }
 
-  Result<Command> NonHelpCommand(const CommandRequest& request,
-                                 const cvd_common::Args& subcmd_args,
-                                 const cvd_common::Envs& envs) {
+  Result<Command> NonHelpCommand(const CommandRequest& request) {
     auto [instance, group] =
         CF_EXPECT(selector::SelectInstance(instance_manager_, request));
     const auto& home = group.Proto().home_directory();
@@ -118,13 +120,14 @@ class CvdEnvCommandHandler : public CvdCommandHandler {
     const std::string internal_device_name =
         absl::StrCat("cvd-", instance.id());
 
+    const cvd_common::Args& subcmd_args = request.SubcommandArguments();
     cvd_common::Args cvd_env_args{internal_device_name};
     cvd_env_args.insert(cvd_env_args.end(), subcmd_args.begin(),
                         subcmd_args.end());
 
     return CF_EXPECT(
         ConstructCvdGenericNonHelpCommand({.bin_file = kCvdEnvBin,
-                                           .envs = envs,
+                                           .envs = request.Env(),
                                            .cmd_args = cvd_env_args,
                                            .android_host_out = android_host_out,
                                            .home = home,
