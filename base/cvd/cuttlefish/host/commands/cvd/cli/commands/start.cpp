@@ -540,27 +540,7 @@ Result<std::string> CvdStartCommandHandler::DetailedHelp(
     if (envs["HOME"].empty()) {
       envs.erase("HOME");
     } else {
-      // As the end-user may override HOME, this could be a relative path
-      // to client's pwd, or may include "~" which is the client's actual
-      // home directory.
-      auto client_pwd = CurrentDirectory();
-      const auto given_home_dir = envs.at("HOME");
-      /*
-       * Imagine this scenario:
-       *   client$ export HOME=/tmp/new/dir
-       *   client$ HOME="~/subdir" cvd start
-       *
-       * The value of ~ isn't sent to the server. The server can't figure that
-       * out as it might be overridden before the cvd start command.
-       */
-      CF_EXPECT(!absl::StartsWith(given_home_dir, "~") &&
-                    !absl::StartsWith(given_home_dir, "~/"),
-                "The HOME directory should not start with ~");
-      envs["HOME"] = CF_EXPECT(
-          EmulateAbsolutePath({.current_working_dir = client_pwd,
-                               .home_dir = CF_EXPECT(SystemWideUserHome()),
-                               .path_to_convert = given_home_dir,
-                               .follow_symlink = false}));
+      envs["HOME"] = AbsolutePath(envs.at("HOME"));
     }
   }
   auto android_host_out =
