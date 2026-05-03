@@ -51,6 +51,17 @@ cf_cc_library(
     ],
 )
 
+cf_cc_library(
+    name = "log_files",
+    srcs = ["log_files.cpp"],
+    hdrs = ["log_files.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+        "//cuttlefish/host/commands/cvd/utils",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
 # Commands that may invoke other commands
 cf_cc_library(
     name = "nesting_commands",
