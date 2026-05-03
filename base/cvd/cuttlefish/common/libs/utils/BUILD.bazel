@@ -228,6 +228,15 @@ cf_cc_library(
 )
 
 cf_cc_library(
+    name = "is_corp",
+    srcs = ["is_corp.cpp"],
+    hdrs = ["is_corp.h"],
+    deps = [
+        "//cuttlefish/common/libs/utils:files",
+    ],
+)
+
+cf_cc_library(
     name = "json",
     srcs = ["json.cpp"],
     hdrs = ["json.h"],

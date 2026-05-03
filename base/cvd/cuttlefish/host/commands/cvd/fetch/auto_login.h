@@ -15,23 +15,15 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "cuttlefish/host/commands/cvd/fetch/build_api_flags.h"
-#include "cuttlefish/host/libs/web/credential_source.h"
-#include "cuttlefish/host/libs/web/http_client/http_client.h"
 #include "cuttlefish/result/result.h"
 
 namespace cuttlefish {
 
-inline constexpr char kAndroidBuildApiScope[] =
-    "https://www.googleapis.com/auth/androidbuild.internal";
+Result<bool> ShouldAutoLogin(const BuildApiFlags&);
 
-Result<std::unique_ptr<CredentialSource>> GetCredentialSourceFromFlags(
-    HttpClient& http_client, const BuildApiFlags& flags,
-    const std::string& oauth_filepath);
+bool CanDetectScript();
 
-std::string GetAcloudOauthFilepath();
+Result<void> RunAutoLogin();
 
 }  // namespace cuttlefish
