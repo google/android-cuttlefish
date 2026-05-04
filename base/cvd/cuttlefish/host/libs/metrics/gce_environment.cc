@@ -86,7 +86,9 @@ Result<std::string> GetZoneValue(std::string_view response_string) {
 
 Result<std::optional<GceEnvironment>> DetectGceEnvironment() {
   CurlGlobalInit curl_init;
-  std::unique_ptr<HttpClient> http_client = CurlHttpClient();
+  const bool use_logging_debug_function = true;
+  std::unique_ptr<HttpClient> http_client =
+      CurlHttpClient(use_logging_debug_function);
   if (!CF_EXPECT(IsGceEnvironment(*http_client))) {
     return std::nullopt;
   }
