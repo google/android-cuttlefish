@@ -70,6 +70,26 @@ Result<void> RunAutoLogin(const BuildApiFlags& build_api_flags) {
   return {};
 }
 
+Result<void> RunCacheCleanup(const BuildApiFlags& build_api_flags) {
+  if (!build_api_flags.enable_caching) {
+    return {};
+  }
+
+  VLOG(0) << "Running automatic cache cleanup";
+  const std::string cache_directory = PerUserCacheDir();
+  const PruneResult prune_result =
+      CF_EXPECTF(PruneCache(cache_directory, build_api_flags.max_cache_size_gb),
+                 "Error pruning cache at {} to {}GB", cache_directory,
+                 build_api_flags.max_cache_size_gb);
+  if (prune_result.before > prune_result.after) {
+    LOG(INFO) << fmt::format(
+        "Cache at \"{}\" pruned from ~{}GB to ~{}GB of {}GB max size",
+        cache_directory, prune_result.before, prune_result.after,
+        build_api_flags.max_cache_size_gb);
+  }
+  return {};
+}
+
 Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   CF_EXPECT(CanHandle(request));
 
@@ -88,20 +108,7 @@ Result<void> CvdFetchCommandHandler::Handle(const CommandRequest& request) {
   ScopedLogger logger(SeverityTarget::FromFile(log_file), "");
 
   Result<FetchResult> result = FetchCvdMain(flags);
-  if (flags.build_api_flags.enable_caching) {
-    VLOG(0) << "Running automatic cache cleanup";
-    const std::string cache_directory = PerUserCacheDir();
-    const PruneResult prune_result = CF_EXPECTF(
-        PruneCache(cache_directory, flags.build_api_flags.max_cache_size_gb),
-        "Error pruning cache at {} to {}GB", cache_directory,
-        flags.build_api_flags.max_cache_size_gb);
-    if (prune_result.before > prune_result.after) {
-      LOG(INFO) << fmt::format(
-          "Cache at \"{}\" pruned from ~{}GB to ~{}GB of {}GB max size",
-          cache_directory, prune_result.before, prune_result.after,
-          flags.build_api_flags.max_cache_size_gb);
-    }
-  }
+  CF_EXPECT(RunCacheCleanup(flags.build_api_flags));
 
   if (result.ok()) {
     GatherFetchCompleteMetrics(flags.target_directory, *result);
