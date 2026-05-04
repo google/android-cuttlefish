@@ -76,7 +76,8 @@ class CvdLoginCommand : public CvdCommandHandler {
     }
 
     CurlGlobalInit init;
-    std::unique_ptr<HttpClient> http_client = CurlHttpClient(true);
+    std::unique_ptr<HttpClient> http_client =
+        CurlHttpClient(/*use_logging_debug_function=*/true);
     CF_EXPECT(http_client.get(), "Failed to create a http client");
 
     if (!oauth2_request.is_ssh) {

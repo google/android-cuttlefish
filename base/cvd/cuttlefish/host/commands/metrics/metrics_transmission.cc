@@ -57,9 +57,8 @@ Result<void> TransmitMetricsEvent(
     const wireless_android_play_playlog::LogRequest& log_request,
     ClearcutEnvironment environment) {
   CurlGlobalInit curl_global_init;
-  const bool use_logging_debug_function = true;
   std::unique_ptr<HttpClient> http_client =
-      CurlHttpClient(use_logging_debug_function);
+      CurlHttpClient(/*use_logging_debug_function=*/true);
   CF_EXPECT(http_client.get() != nullptr,
             "Unable to create cURL client for metrics transmission");
   CF_EXPECT(
