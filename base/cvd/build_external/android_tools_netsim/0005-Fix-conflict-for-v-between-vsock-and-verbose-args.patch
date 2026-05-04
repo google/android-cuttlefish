@@ -1,0 +1,26 @@
+From beb6ccaf338c7bbe082b2b937c7bb3a74b7d5a2b Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Mon, 4 May 2026 23:06:56 +0000
+Subject: [PATCH] Fix conflict for -v between vsock and verbose args
+
+Seems to be covered by ag/35463911.
+---
+ rust/daemon/src/args.rs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rust/daemon/src/args.rs b/rust/daemon/src/args.rs
+index d24442f3..5e20bd44 100644
+--- a/rust/daemon/src/args.rs
++++ b/rust/daemon/src/args.rs
+@@ -65,7 +65,7 @@ pub struct NetsimdArgs {
+     pub forward_host_mdns: bool,
+ 
+     /// Set the vsock port number to be listened by the frontend grpc server
+-    #[arg(short, long)]
++    #[arg(long)]
+     pub vsock: Option<u16>,
+ 
+     /// The name of a config file to load
+-- 
+2.54.0.545.g6539524ca2-goog
+

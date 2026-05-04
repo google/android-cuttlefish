@@ -1,0 +1,34 @@
+From ed8ffd139af3684c01dd31600c275de10a828c1f Mon Sep 17 00:00:00 2001
+From: Jason Macnak <natsu@google.com>
+Date: Mon, 4 May 2026 22:05:48 +0000
+Subject: [PATCH] Remove unused global client context
+
+... which seems to cause segfaults in during startup when
+running with `--host_substitutions=all`:
+
+```
+(gdb) thread apply all bt
+
+Thread 1 (Thread 0x7f29c5013d00 (LWP 350586)):
+(gdb) p $_siginfo._sifields._sigfault.si_addr
+$1 = (void *) 0x0
+```
+---
+ src/backend/grpc_client.cc | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/backend/grpc_client.cc b/src/backend/grpc_client.cc
+index 6031585b..ff43e8f2 100644
+--- a/src/backend/grpc_client.cc
++++ b/src/backend/grpc_client.cc
+@@ -53,7 +53,6 @@ std::unordered_map<uint32_t, grpc::ClientContext> contexts_;
+ // Single connection to a server with multiple StreamPackets calls
+ std::string server_;
+ std::shared_ptr<grpc::Channel> channel_;
+-grpc::ClientContext context_;
+ std::unique_ptr<netsim::packet::PacketStreamer::Stub> stub_;
+ 
+ // Call the StreamPackets RPC on server.
+-- 
+2.54.0.545.g6539524ca2-goog
+
