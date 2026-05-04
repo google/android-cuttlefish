@@ -16,10 +16,11 @@ package main
 
 import (
 	"archive/zip"
-	"io"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/google/android-cuttlefish/e2etests/orchestration/common"
@@ -48,18 +49,15 @@ func TestBugReport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	zipFilename, err := createBugReport(srv, cvd.Group)
+
 	if err != nil {
 		t.Fatalf("failed creating bugreport: %s", err)
 	}
-
-	if err := assertZipIntegrity(zipFilename); err != nil {
-		t.Errorf("invalid zip file: %s", err)
+	if err := assertAdbBugReportIsIncluded(zipFilename); err != nil {
+		t.Errorf("failed adb bugreport check: %s", err)
 	}
-	// TODO(b/508663354): include adb bug report is broken
-	// if err := assertAdbBugReportIsIncluded(zipFilename); err != nil {
-	// 	t.Errorf("failed adb bugreport check: %s", err)
-	// }
 }
 
 func createBugReport(srv hoclient.HostOrchestratorClient, group string) (string, error) {
@@ -73,8 +71,7 @@ func createBugReport(srv hoclient.HostOrchestratorClient, group string) (string,
 		return "", err
 	}
 	opts := hoclient.CreateBugReportOpts{
-		// TODO(b/508663354): include adb bug report is broken
-		// IncludeADBBugReport: true,
+		IncludeADBBugReport: true,
 	}
 	if err := srv.CreateBugReport(group, opts, f); err != nil {
 		return "", err
@@ -85,43 +82,20 @@ func createBugReport(srv hoclient.HostOrchestratorClient, group string) (string,
 	return filename, nil
 }
 
-// The zip file is verified checking for errors extracting
-// each file in the archive.
-func assertZipIntegrity(filename string) error {
+func assertAdbBugReportIsIncluded(filename string) error {
 	r, err := zip.OpenReader(filename)
 	if err != nil {
 		return err
 	}
 	defer r.Close()
+	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_only_phone.*\.zip$`)
+	if err != nil {
+		return err
+	}
 	for _, f := range r.File {
-		rc, err := f.Open()
-		if err != nil {
-			return err
-		}
-		_, readErr := io.Copy(io.Discard, rc)
-		rc.Close()
-		if readErr != nil {
-			return readErr
+		if re.MatchString(f.FileHeader.Name) {
+			return nil
 		}
 	}
-	return nil
+	return errors.New("not found")
 }
-
-// TODO(b/508663354): include adb bug report is broken
-// func assertAdbBugReportIsIncluded(filename string) error {
-// 	r, err := zip.OpenReader(filename)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer r.Close()
-// 	re, err := regexp.Compile(`^bugreport-aosp_cf_x86_64_only_phone.*\.zip$`)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	for _, f := range r.File {
-// 		if re.MatchString(f.FileHeader.Name) {
-// 			return nil
-// 		}
-// 	}
-// 	return errors.New("not found")
-// }
