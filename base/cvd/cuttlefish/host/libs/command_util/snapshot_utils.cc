@@ -146,10 +146,7 @@ std::string RealpathOrSelf(const std::string& path) {
   if (output.ok()) {
     return *output;
   }
-  struct InputPathForm input_form {
-    .path_to_convert = path, .follow_symlink = true,
-  };
-  auto absolute_path = EmulateAbsolutePath(input_form);
+  auto absolute_path = RealPath(path);
   return absolute_path.ok() ? *absolute_path : path;
 }
 

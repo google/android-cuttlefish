@@ -46,7 +46,6 @@
 #include <ios>
 #include <iosfwd>
 #include <memory>
-#include <numeric>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -57,14 +56,12 @@
 #include "absl/strings/str_split.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
-#include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 #include "fmt/format.h"
 
 #include "cuttlefish/common/libs/fs/shared_buf.h"
 #include "cuttlefish/common/libs/fs/shared_fd.h"
-#include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/environment.h"
 #include "cuttlefish/common/libs/utils/in_sandbox.h"
 #include "cuttlefish/common/libs/utils/users.h"
@@ -339,10 +336,6 @@ Result<void> RecursivelyRemoveDirectory(const std::string& path) {
   }
   return {};
 }
-
-namespace {
-
-}  // namespace
 
 bool Copy(const std::string& from, const std::string& to) {
   SharedFD fd_from = SharedFD::Open(from, O_RDONLY);
@@ -636,83 +629,6 @@ Result<void> WalkDirectory(const std::string& dir,
     }
   }
   return {};
-}
-
-namespace {
-
-std::vector<std::string> FoldPath(std::vector<std::string> elements,
-                                  std::string token) {
-  static constexpr std::array kIgnored = {".", "..", ""};
-  if (token == ".." && !elements.empty()) {
-    elements.pop_back();
-  } else if (!Contains(kIgnored, token)) {
-    elements.emplace_back(token);
-  }
-  return elements;
-}
-
-Result<std::vector<std::string>> CalculatePrefix(
-    const InputPathForm& path_info) {
-  const auto& path = path_info.path_to_convert;
-  std::string working_dir;
-  if (path_info.current_working_dir) {
-    working_dir = *path_info.current_working_dir;
-  } else {
-    working_dir = CurrentDirectory();
-  }
-  std::vector<std::string> prefix;
-  if (path == "~" || absl::StartsWith(path, "~/")) {
-    const auto home_dir =
-        path_info.home_dir.value_or(CF_EXPECT(SystemWideUserHome()));
-    prefix = absl::StrSplit(home_dir, '/', absl::SkipEmpty());
-  } else if (!absl::StartsWith(path, "/")) {
-    prefix = absl::StrSplit(working_dir, '/', absl::SkipEmpty());
-  }
-  return prefix;
-}
-
-}  // namespace
-
-Result<std::string> EmulateAbsolutePath(const InputPathForm& path_info) {
-  const auto& path = path_info.path_to_convert;
-  std::string working_dir;
-  if (path_info.current_working_dir) {
-    working_dir = *path_info.current_working_dir;
-  } else {
-    working_dir = CurrentDirectory();
-  }
-  CF_EXPECT(absl::StartsWith(working_dir, "/"),
-            "Current working directory should be given in an absolute path.");
-
-  if (path.empty()) {
-    LOG(ERROR) << "The requested path to convert an absolute path is empty.";
-    return "";
-  }
-
-  auto prefix = CF_EXPECT(CalculatePrefix(path_info));
-  std::vector<std::string> components;
-  components.insert(components.end(), prefix.begin(), prefix.end());
-  std::vector<std::string_view> tokens = absl::StrSplit(path, '/', absl::SkipEmpty());
-  // remove first ~
-  if (!tokens.empty() && tokens[0] == "~") {
-    tokens.erase(tokens.begin());
-  }
-  components.insert(components.end(), tokens.begin(), tokens.end());
-
-  std::string combined = absl::StrJoin(components, "/");
-  CF_EXPECTF(!Contains(components, "~"),
-             "~ is not allowed in the middle of the path: {}", combined);
-
-  auto processed_tokens = std::accumulate(components.begin(), components.end(),
-                                          std::vector<std::string>{}, FoldPath);
-
-  const auto processed_path = "/" + absl::StrJoin(processed_tokens, "/");
-
-  if (path_info.follow_symlink && FileExists(processed_path)) {
-    return CF_EXPECTF(RealPath(processed_path),
-                           "Failed to effectively conduct readpath -f {}", processed_path);
-  }
-  return processed_path;
 }
 
 std::vector<std::string> Path(const std::string& env_name) {

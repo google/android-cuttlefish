@@ -42,12 +42,7 @@ Result<std::string> HandleHostGroupSnapshot(const std::string& path) {
   CF_EXPECT(!cuttlefish_home.empty(),
             "\"HOME\" environment variable must be set.");
 
-  const std::string snapshot_path = CF_EXPECT(EmulateAbsolutePath(InputPathForm{
-      .current_working_dir = CurrentDirectory(),
-      .home_dir = CF_EXPECT(SystemWideUserHome()),
-      .path_to_convert = path,
-      .follow_symlink = false,
-  }));
+  const std::string snapshot_path = AbsolutePath(path);
 
   auto* cuttlefish_config = CuttlefishConfig::Get();
   CF_EXPECT(cuttlefish_config != nullptr, "Cannot find cuttlefish_config.json");

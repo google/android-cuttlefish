@@ -38,19 +38,6 @@
 namespace cuttlefish {
 namespace {
 
-Result<std::string> ToAbsolutePath(const std::string& snapshot_path) {
-  const InputPathForm default_path_form{
-      .current_working_dir = std::nullopt,
-      .home_dir = std::nullopt,
-      .path_to_convert = snapshot_path,
-      .follow_symlink = false,
-  };
-  return CF_EXPECTF(
-      EmulateAbsolutePath(default_path_form),
-      "The snapshot path, \"{}\", cannot be converted to an absolute path",
-      snapshot_path);
-}
-
 // Send a `LauncherAction` RPC to every instance specified in `parsed`.
 Result<void> BroadcastLauncherAction(
     const CuttlefishConfig& config, const Parsed& parsed,
@@ -89,7 +76,7 @@ Result<void> SnapshotCvdMain(std::vector<std::string> args) {
     }
     case SnapshotCmd::kSnapshotTake: {
       CF_EXPECT(!parsed.snapshot_path.empty(), "--snapshot_path is required");
-      parsed.snapshot_path = CF_EXPECT(ToAbsolutePath(parsed.snapshot_path));
+      parsed.snapshot_path = AbsolutePath(parsed.snapshot_path);
       if (parsed.force &&
           FileExists(parsed.snapshot_path, /* follow symlink */ false)) {
         CF_EXPECT(RecursivelyRemoveDirectory(parsed.snapshot_path),
